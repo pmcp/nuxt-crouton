@@ -678,16 +678,12 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length]
 }
 
-/**
- * Async version of email parsing with redirect following support
- *
- * This version supports following click.figma.com redirects to extract file keys.
- * Use this in async contexts (like webhook handlers) for more accurate file key extraction.
- *
- * @param emailData - Raw email data from Mailgun webhook
- * @returns Parsed email with extracted information
- */
-export async function parseEmailAsync(emailData: {
+// ============================================================================
+// Shared email parsing infrastructure
+// ============================================================================
+
+/** Raw email data from Mailgun/Resend webhooks */
+export interface RawEmailData {
   subject?: string
   from?: string
   'body-html'?: string
@@ -695,312 +691,197 @@ export async function parseEmailAsync(emailData: {
   'stripped-text'?: string
   timestamp?: number
   recipient?: string
-}): Promise<ParsedEmail> {
+}
+
+/** Pre-processed email context used by parsing functions */
+interface EmailContext {
+  html: string
+  text: string
+  links: string[]
+}
+
+/** Extract text, html, and links from raw email data */
+function prepareEmailContext(emailData: RawEmailData): EmailContext {
   const html = emailData['body-html'] || ''
   const plainText = emailData['stripped-text'] || emailData['body-plain'] || ''
 
-  logger.debug('Parsing email (async)', {
-    hasHtml: !!html,
-    hasPlainText: !!plainText,
-    htmlLength: html.length,
-    plainTextLength: plainText.length,
-  })
-
-  // Extract text content
   const trimmedPlainText = plainText?.trim() || ''
   const text = trimmedPlainText || (html ? extractTextFromHtml(html) : '')
+  const links = html ? extractLinksFromHtml(html) : []
 
-  logger.debug('Extracted text', {
+  logger.debug('Prepared email context', {
+    hasHtml: !!html,
+    htmlLength: html.length,
     textLength: text.length,
     textPreview: text.substring(0, 200),
   })
 
-  // Extract links
-  const links = html ? extractLinksFromHtml(html) : []
+  return { html, text, links }
+}
 
-  // ========================================
-  // FILE KEY EXTRACTION - Priority System (Async)
-  // ========================================
-  // Priority 1: Sender email (most reliable!)
-  // Priority 2: click.figma.com redirects (FOLLOW redirect with HEAD request)
-  // Priority 3: Direct Figma file links
-  // Priority 4: Upload URL patterns
-  // Priority 5: 40-char hash fallback
-  // ========================================
-
-  let fileKey: string | undefined
-
-  // Priority 1: Extract from sender email address
+/**
+ * Extract file key using priorities 1, 3, 4, 5 (shared between sync/async).
+ * Priority 2 (click.figma.com) is handled differently by each variant and
+ * passed in as clickFigmaFileKey.
+ */
+function extractFileKey(
+  emailData: RawEmailData,
+  ctx: EmailContext,
+  clickFigmaFileKey?: string,
+): string | undefined {
+  // Priority 1: Sender email (most reliable)
   // Format: comments-[FILEKEY]@email.figma.com
   if (emailData.from) {
     const emailKeyMatch = emailData.from.match(/comments-([a-zA-Z0-9]+)@/i)
     if (emailKeyMatch) {
-      fileKey = emailKeyMatch[1]
-      logger.debug('Priority 1: Extracted file key from sender email', { fileKey })
+      logger.debug('Priority 1: Extracted file key from sender email', { fileKey: emailKeyMatch[1] })
+      return emailKeyMatch[1]
     }
   }
 
-  // Priority 2: click.figma.com redirect links (FOLLOW redirect with HEAD request)
-  if (!fileKey && html) {
-    const clickFigmaLink = html.match(/href="(https?:\/\/click\.figma\.com[^"]+)"/)
-    if (clickFigmaLink?.[1]) {
-      const redirectUrl = clickFigmaLink[1]
-      logger.debug('Priority 2: Found click.figma.com redirect URL, following...')
-
-      // Follow the redirect to get the actual file key
-      const extractedKey = await followClickFigmaRedirect(redirectUrl)
-      if (extractedKey) {
-        fileKey = extractedKey
-        logger.debug('Priority 2: Extracted file key from redirect', { fileKey })
-      }
-    }
+  // Priority 2: click.figma.com (resolved by caller)
+  if (clickFigmaFileKey) {
+    logger.debug('Priority 2: Extracted file key from click.figma.com', { fileKey: clickFigmaFileKey })
+    return clickFigmaFileKey
   }
 
   // Priority 3: Direct Figma file links
-  if (!fileKey) {
-    for (const link of links) {
-      const extracted = extractFileKeyFromUrl(link)
-      if (extracted) {
-        fileKey = extracted
-        logger.debug('Priority 3: Extracted file key from direct link', { fileKey })
-        break
-      }
+  for (const link of ctx.links) {
+    const extracted = extractFileKeyFromUrl(link)
+    if (extracted) {
+      logger.debug('Priority 3: Extracted file key from direct link', { fileKey: extracted })
+      return extracted
     }
   }
 
-  // Priority 4: Upload URL patterns
-  // Look for file keys in upload URLs (fonts, images, etc)
-  // Pattern: /uploads/[40-char-hash]
-  if (!fileKey && html) {
+  // Priority 4: Upload URL patterns (/uploads/[40-char-hash])
+  if (ctx.html) {
     const uploadPattern = /figma\.com\/uploads\/([a-zA-Z0-9]+)/gi
-    const uploadMatches = Array.from(html.matchAll(uploadPattern))
+    const uploadMatches = Array.from(ctx.html.matchAll(uploadPattern))
 
     for (const match of uploadMatches) {
       const uploadHash = match[1]
-      // Figma file keys in upload URLs are typically 40 characters
       if (uploadHash && uploadHash.length >= 40) {
-        // File keys are alphanumeric and typically 22-40 characters
         const potentialKey = uploadHash.match(/^[a-zA-Z0-9]{22,40}/)
         if (potentialKey) {
-          fileKey = potentialKey[0]
-          logger.debug('Priority 4: Extracted file key from upload URL', { fileKey })
-          break
+          logger.debug('Priority 4: Extracted file key from upload URL', { fileKey: potentialKey[0] })
+          return potentialKey[0]
         }
       }
     }
   }
 
-  // Priority 5: 40-char hash fallback
-  // Last resort: Look for any 40-character hex string (common Figma file key format)
-  if (!fileKey && html) {
-    const keyPattern = /[a-f0-9]{40}/gi
-    const keyMatches = html.match(keyPattern)
+  // Priority 5: 40-char hex hash fallback
+  if (ctx.html) {
+    const keyMatches = ctx.html.match(/[a-f0-9]{40}/gi)
     if (keyMatches && keyMatches.length > 0) {
-      fileKey = keyMatches[0]
-      logger.debug('Priority 5: Found potential file key from 40-char hash', { fileKey })
+      logger.debug('Priority 5: Found potential file key from 40-char hash', { fileKey: keyMatches[0] })
+      return keyMatches[0]
     }
   }
 
-  // Debug: Log if still no file key found
-  if (!fileKey && html) {
+  // Debug: Log if no file key found
+  if (ctx.html) {
     logger.debug('No file key found, checking for any Figma URLs')
-    const anyFigmaUrl = html.match(/figma\.com[^"'\s]*/gi)
+    const anyFigmaUrl = ctx.html.match(/figma\.com[^"'\s]*/gi)
     if (anyFigmaUrl) {
       logger.debug('Found Figma URLs', { urls: anyFigmaUrl.slice(0, 5) })
     }
   }
 
-  // Extract "View in Figma" link
-  const figmaLink = html ? extractFigmaLink(html) : undefined
+  return undefined
+}
 
-  // Parse timestamp
+/** Find click.figma.com URL in HTML */
+function findClickFigmaUrl(html: string): string | undefined {
+  const match = html.match(/href="(https?:\/\/click\.figma\.com[^"]+)"/)
+  return match?.[1]
+}
+
+/** Resolve click.figma.com file key synchronously via URL decoding */
+function resolveClickFigmaKeySync(html: string): string | undefined {
+  const redirectUrl = findClickFigmaUrl(html)
+  if (!redirectUrl) return undefined
+
+  logger.debug('Priority 2: Found click.figma.com redirect URL')
+  try {
+    const decoded = decodeURIComponent(redirectUrl)
+    const fileMatch = decoded.match(/figma\.com\/file\/([a-zA-Z0-9]+)/)
+    if (fileMatch?.[1]) {
+      return fileMatch[1]
+    }
+  } catch {
+    logger.debug('Priority 2: Could not decode redirect URL')
+  }
+  return undefined
+}
+
+/** Resolve click.figma.com file key asynchronously via HEAD redirect */
+async function resolveClickFigmaKeyAsync(html: string): Promise<string | undefined> {
+  const redirectUrl = findClickFigmaUrl(html)
+  if (!redirectUrl) return undefined
+
+  logger.debug('Priority 2: Found click.figma.com redirect URL, following...')
+  const extractedKey = await followClickFigmaRedirect(redirectUrl)
+  return extractedKey || undefined
+}
+
+/** Build the final ParsedEmail result from context and file key */
+function buildParsedEmail(emailData: RawEmailData, ctx: EmailContext, fileKey?: string): ParsedEmail {
+  const figmaLink = ctx.html ? extractFigmaLink(ctx.html) : undefined
   const timestamp = emailData.timestamp
     ? new Date(emailData.timestamp * 1000)
     : undefined
 
   return {
-    text,
-    html: html || undefined,
+    text: ctx.text,
+    html: ctx.html || undefined,
     fileKey,
     author: emailData.from,
-    links,
+    links: ctx.links,
     figmaLink: figmaLink || undefined,
     subject: emailData.subject,
     timestamp,
   }
 }
 
+// ============================================================================
+// Public email parsing functions
+// ============================================================================
+
 /**
  * Main email parsing function (synchronous version)
  *
- * This version uses inline URL decoding for click.figma.com links but doesn't
- * follow redirects. For better file key extraction, use parseEmailAsync() instead.
- *
- * @param emailData - Raw email data from Mailgun webhook
- * @returns Parsed email with extracted information
+ * Uses inline URL decoding for click.figma.com links.
+ * For better file key extraction via redirect following, use parseEmailAsync().
  */
-export function parseEmail(emailData: {
-  subject?: string
-  from?: string
-  'body-html'?: string
-  'body-plain'?: string
-  'stripped-text'?: string
-  timestamp?: number
-  recipient?: string
-}): ParsedEmail {
-  const html = emailData['body-html'] || ''
-  const plainText = emailData['stripped-text'] || emailData['body-plain'] || ''
+export function parseEmail(emailData: RawEmailData): ParsedEmail {
+  const ctx = prepareEmailContext(emailData)
+  const clickKey = ctx.html ? resolveClickFigmaKeySync(ctx.html) : undefined
+  const fileKey = extractFileKey(emailData, ctx, clickKey)
+  return buildParsedEmail(emailData, ctx, fileKey)
+}
 
-  logger.debug('Parsing email', {
-    hasHtml: !!html,
-    hasPlainText: !!plainText,
-    htmlLength: html.length,
-    plainTextLength: plainText.length,
-  })
-
-  // Extract text content
-  const trimmedPlainText = plainText?.trim() || ''
-  const text = trimmedPlainText || (html ? extractTextFromHtml(html) : '')
-
-  logger.debug('Extracted text', {
-    textLength: text.length,
-    textPreview: text.substring(0, 200),
-  })
-
-  // Extract links
-  const links = html ? extractLinksFromHtml(html) : []
-
-  // ========================================
-  // FILE KEY EXTRACTION - Priority System
-  // ========================================
-  // Priority 1: Sender email (most reliable!)
-  // Priority 2: click.figma.com redirects (decode URL inline)
-  // Priority 3: Direct Figma file links
-  // Priority 4: Upload URL patterns
-  // Priority 5: 40-char hash fallback
-  // ========================================
-
-  let fileKey: string | undefined
-
-  // Priority 1: Extract from sender email address
-  // Format: comments-[FILEKEY]@email.figma.com
-  if (emailData.from) {
-    const emailKeyMatch = emailData.from.match(/comments-([a-zA-Z0-9]+)@/i)
-    if (emailKeyMatch) {
-      fileKey = emailKeyMatch[1]
-      logger.debug('Priority 1: Extracted file key from sender email', { fileKey })
-    }
-  }
-
-  // Priority 2: click.figma.com redirect links (decode URL to find embedded file key)
-  if (!fileKey && html) {
-    const clickFigmaLink = html.match(/href="(https?:\/\/click\.figma\.com[^"]+)"/)
-    if (clickFigmaLink?.[1]) {
-      const redirectUrl = clickFigmaLink[1]
-      logger.debug('Priority 2: Found click.figma.com redirect URL')
-
-      try {
-        const decoded = decodeURIComponent(redirectUrl)
-        const fileMatch = decoded.match(/figma\.com\/file\/([a-zA-Z0-9]+)/)
-        if (fileMatch?.[1]) {
-          fileKey = fileMatch[1]
-          logger.debug('Priority 2: Extracted file key from redirect URL', { fileKey })
-        }
-      } catch (e) {
-        logger.debug('Priority 2: Could not decode redirect URL')
-      }
-    }
-  }
-
-  // Priority 3: Direct Figma file links
-  if (!fileKey) {
-    for (const link of links) {
-      const extracted = extractFileKeyFromUrl(link)
-      if (extracted) {
-        fileKey = extracted
-        logger.debug('Priority 3: Extracted file key from direct link', { fileKey })
-        break
-      }
-    }
-  }
-
-  // Priority 4: Upload URL patterns
-  // Look for file keys in upload URLs (fonts, images, etc)
-  // Pattern: /uploads/[40-char-hash]
-  if (!fileKey && html) {
-    const uploadPattern = /figma\.com\/uploads\/([a-zA-Z0-9]+)/gi
-    const uploadMatches = Array.from(html.matchAll(uploadPattern))
-
-    for (const match of uploadMatches) {
-      const uploadHash = match[1]
-      // Figma file keys in upload URLs are typically 40 characters
-      if (uploadHash && uploadHash.length >= 40) {
-        // File keys are alphanumeric and typically 22-40 characters
-        const potentialKey = uploadHash.match(/^[a-zA-Z0-9]{22,40}/)
-        if (potentialKey) {
-          fileKey = potentialKey[0]
-          logger.debug('Priority 4: Extracted file key from upload URL', { fileKey })
-          break
-        }
-      }
-    }
-  }
-
-  // Priority 5: 40-char hash fallback
-  // Last resort: Look for any 40-character hex string (common Figma file key format)
-  if (!fileKey && html) {
-    const keyPattern = /[a-f0-9]{40}/gi
-    const keyMatches = html.match(keyPattern)
-    if (keyMatches && keyMatches.length > 0) {
-      fileKey = keyMatches[0]
-      logger.debug('Priority 5: Found potential file key from 40-char hash', { fileKey })
-    }
-  }
-
-  // Debug: Log if still no file key found
-  if (!fileKey && html) {
-    logger.debug('No file key found, checking for any Figma URLs')
-    const anyFigmaUrl = html.match(/figma\.com[^"'\s]*/gi)
-    if (anyFigmaUrl) {
-      logger.debug('Found Figma URLs', { urls: anyFigmaUrl.slice(0, 5) })
-    }
-  }
-
-  // Extract "View in Figma" link
-  const figmaLink = html ? extractFigmaLink(html) : undefined
-
-  // Parse timestamp
-  const timestamp = emailData.timestamp
-    ? new Date(emailData.timestamp * 1000)
-    : undefined
-
-  return {
-    text,
-    html: html || undefined,
-    fileKey,
-    author: emailData.from,
-    links,
-    figmaLink: figmaLink || undefined,
-    subject: emailData.subject,
-    timestamp,
-  }
+/**
+ * Async version of email parsing with redirect following support
+ *
+ * Supports following click.figma.com redirects via HEAD requests (3s timeout)
+ * for more accurate file key extraction.
+ */
+export async function parseEmailAsync(emailData: RawEmailData): Promise<ParsedEmail> {
+  const ctx = prepareEmailContext(emailData)
+  const clickKey = ctx.html ? await resolveClickFigmaKeyAsync(ctx.html) : undefined
+  const fileKey = extractFileKey(emailData, ctx, clickKey)
+  return buildParsedEmail(emailData, ctx, fileKey)
 }
 
 /**
  * Full email parsing with Figma-specific metadata extraction
  *
- * This async version supports following click.figma.com redirects for accurate
- * file key extraction using HEAD requests with 3-second timeout.
+ * Async version that follows click.figma.com redirects and adds
+ * Figma metadata (file URL, email type).
  */
-export async function parseFigmaEmail(emailData: {
-  subject?: string
-  from?: string
-  'body-html'?: string
-  'body-plain'?: string
-  'stripped-text'?: string
-  timestamp?: number
-  recipient?: string
-}): Promise<ParsedEmail & FigmaEmailMetadata> {
+export async function parseFigmaEmail(emailData: RawEmailData): Promise<ParsedEmail & FigmaEmailMetadata> {
   const parsed = await parseEmailAsync(emailData)
   const metadata = extractFigmaMetadata(parsed)
 

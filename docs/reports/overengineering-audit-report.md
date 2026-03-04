@@ -362,7 +362,7 @@ These patterns are correct across the entire codebase:
 11. ~~Split `useAuth` god composable~~ ✅ split into `usePasskeys`, `useTwoFactor`, `usePasswordReset`
 12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; remaining: `useAdminStats`, `useCollectionItem`)
 13. ~~Extract shared scaffold infrastructure~~ ✅ pipeline + types + utils to crouton-core
-14. Refactor triage duplications (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`)
+14. ~~Refactor triage duplications~~ ✅ (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`; 14b ✅ email parser deduplicated — extracted `prepareEmailContext`, `extractFileKey`, `buildParsedEmail` shared helpers, `parseEmail`/`parseEmailAsync` now thin wrappers. 1,012→892L, 71 tests pass.)
 15. ~~Split `useBookingCart` and `Flow.vue`~~ ✅ (15a ✅ useBookingCart deduped + composed via useBookingAvailability; 15b ✅ Flow.vue split into useFlowDragDrop + useFlowSyncBridge, script 812→393L)
 
 #### Phase 3 Readiness Assessment (2026-03-03)
@@ -372,10 +372,10 @@ These patterns are correct across the entire codebase:
 | 11 | Split `useAuth` | 1 → 3-4 new | Medium | Yes | 924 lines, 27 exports. Clear split: passkeys (~250L), 2FA (~260L), password reset (~45L). Post-split: ~200L. `withError()` exists but unused. |
 | 12 | Replace manual fetch | 5-6 files / 3 pkgs | Variable | Partial | 3 triage composables easy. `useAdminStats` moderate (interval refresh). `useCollectionItem` difficult (SSR + dynamic URL). `useAuthCache` out of scope (not a fetch wrapper). |
 | 13 | ~~Extract scaffold infra~~ ✅ | ~4 files / 2 pkgs | Medium-High | Yes (tight) | Done — extracted pipeline + types + utils to crouton-core. Both endpoints now thin wrappers. |
-| 14 | Triage duplications | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b**: Email parser (1,011L, 3 functions sharing 60%) = separate session. |
+| 14 | ~~Triage duplications~~ ✅ | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b ✅**: Email parser deduplicated — extracted shared helpers (`prepareEmailContext`, `extractFileKey`, `buildParsedEmail`), `parseEmail`/`parseEmailAsync` now thin wrappers. 1,012→892L. |
 | 15 | ~~Split BookingCart + Flow~~ ✅ | 2 large files | High | No — 1 each | **15a ✅**: BookingCart 669→600L, composed via useBookingAvailability, deduped slot parsing + types. **15b ✅**: Flow.vue script 812→393L, extracted useFlowDragDrop (202L) + useFlowSyncBridge (231L). |
 
-**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → ~~15a (booking)~~ → ~~15b (flow)~~ → 14b (email parser) → 12 (useCollectionItem)
+**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → ~~15a (booking)~~ → ~~15b (flow)~~ → ~~14b (email parser)~~ → 12 (useCollectionItem)
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)
