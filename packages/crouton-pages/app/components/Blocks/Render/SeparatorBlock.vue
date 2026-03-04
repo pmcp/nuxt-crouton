@@ -24,7 +24,7 @@ const borderStyle = computed(() => {
 </script>
 
 <template>
-  <div class="my-8">
+  <div>
     <USeparator
       :label="attrs.label"
       :icon="attrs.icon"

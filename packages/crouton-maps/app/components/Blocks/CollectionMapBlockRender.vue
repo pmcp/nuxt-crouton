@@ -206,7 +206,7 @@ watch(markers, () => {
 </script>
 
 <template>
-  <div class="collection-map-block my-8">
+  <div class="collection-map-block">
     <h2 v-if="attrs.title" class="text-2xl font-bold mb-4">
       {{ attrs.title }}
     </h2>

@@ -99,7 +99,7 @@ const autoColumns = computed(() => {
 </script>
 
 <template>
-  <div class="collection-block my-8">
+  <div class="collection-block">
     <!-- Title if set -->
     <h2
       v-if="attrs.title"

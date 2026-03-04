@@ -19,7 +19,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="file-block my-8">
+  <div class="file-block">
     <!-- No file configured -->
     <UAlert
       v-if="!attrs.file"

@@ -28,7 +28,7 @@ const widthClass = computed(() => {
 </script>
 
 <template>
-  <figure class="image-block my-8" :class="[widthClass, { 'mx-auto': attrs.width && attrs.width !== 'full' }]">
+  <figure class="image-block" :class="[widthClass, { 'mx-auto': attrs.width && attrs.width !== 'full' }]">
     <!-- No image configured -->
     <UAlert
       v-if="!attrs.src"

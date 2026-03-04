@@ -31,13 +31,13 @@ const buttonLinks = computed(() => {
 })
 
 // Tighten default padding — UPageHero defaults are too aggressive (py-24 sm:py-32 lg:py-40)
-// Reduce top further when hero is the first block since the layout already provides top spacing
+// Container gap handles inter-block spacing, so only internal breathing room is needed
 const heroUi = computed(() => {
-  const base = 'pb-12 sm:pb-16 lg:pb-20'
+  const base = 'pb-4 sm:pb-6 lg:pb-8'
   if (props.isFirst) {
     return { container: `pt-8 sm:pt-12 lg:pt-16 ${base}` }
   }
-  return { container: `pt-16 sm:pt-20 lg:pt-24 ${base}` }
+  return { container: `pt-8 sm:pt-10 lg:pt-12 ${base}` }
 })
 </script>
 

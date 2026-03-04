@@ -66,7 +66,8 @@ const blockComponents: Record<string, string> = {
   fileBlock: 'CroutonPagesBlocksRenderFileBlock',
   buttonRowBlock: 'CroutonPagesBlocksRenderButtonRowBlock',
   statsBlock: 'CroutonPagesBlocksRenderStatsBlock',
-  galleryBlock: 'CroutonPagesBlocksRenderGalleryBlock'
+  galleryBlock: 'CroutonPagesBlocksRenderGalleryBlock',
+  contactBlock: 'CroutonPagesBlocksRenderContactBlock'
 }
 
 // Get component name for a block type — checks core blocks then addon blocks
@@ -225,7 +226,7 @@ const headingClasses: Record<number, string> = {
 </script>
 
 <template>
-  <div class="block-content">
+  <div class="block-content flex flex-col gap-12">
 
     <template v-if="renderableBlocks.length > 0">
       <template v-for="(block, index) in renderableBlocks" :key="(block as any).attrs?.blockId || `${block.type}-${index}`">
@@ -240,7 +241,7 @@ const headingClasses: Record<number, string> = {
               :is-first="index === 0"
             />
             <template #fallback>
-              <div class="animate-pulse rounded-xl bg-muted h-40 my-8" />
+              <div class="animate-pulse rounded-xl bg-muted h-40" />
             </template>
           </ClientOnly>
 
@@ -255,7 +256,6 @@ const headingClasses: Record<number, string> = {
           <!-- Native TipTap image node fallback (legacy content) -->
           <figure
             v-else-if="block.type === 'image'"
-            class="my-8"
           >
             <img
               :src="(block as any).attrs?.src"
@@ -282,14 +282,14 @@ const headingClasses: Record<number, string> = {
           <!-- List blocks (native TipTap bulletList/orderedList) -->
           <div
             v-else-if="isList(block.type)"
-            class="block-content-list prose prose-lg dark:prose-invert max-w-none my-4"
+            class="block-content-list prose prose-lg dark:prose-invert max-w-none"
             v-html="listToHtml(block)"
           />
 
           <!-- Unknown block type warning -->
           <div
             v-else
-            class="p-4 bg-warning/10 text-warning rounded-lg my-4"
+            class="p-4 bg-warning/10 text-warning rounded-lg"
           >
             Unknown block type: {{ block.type }}
           </div>
@@ -309,9 +309,7 @@ const headingClasses: Record<number, string> = {
 </template>
 
 <style scoped>
-.block-content > * + * {
-  margin-top: 0;
-}
+/* Gap is handled by flex gap-12 on the container */
 
 /* Default block constraint — comfortable reading width */
 .block-content > * {

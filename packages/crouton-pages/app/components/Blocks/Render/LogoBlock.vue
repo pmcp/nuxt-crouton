@@ -57,7 +57,7 @@ const alignClass = computed(() => {
   <UPageLogos
     :title="attrs.title"
     :marquee="attrs.marquee || false"
-    class="my-8"
+    class=""
     :ui="{ logos: `${alignClass} gap-8`, logo: '' }"
   >
     <template v-for="item in processedItems" :key="item.value">

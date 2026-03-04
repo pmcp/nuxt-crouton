@@ -24,7 +24,7 @@ const gridClass = computed(() => {
 </script>
 
 <template>
-  <div class="stats-block py-12">
+  <div class="stats-block">
     <!-- Header -->
     <div
       v-if="attrs.headline || attrs.title || attrs.description"

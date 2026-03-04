@@ -50,7 +50,7 @@ const bunnySrc = computed(() => {
 </script>
 
 <template>
-  <figure class="video-block my-8" :class="[widthClass, { 'mx-auto': attrs.width && attrs.width !== 'full' }]">
+  <figure class="video-block" :class="[widthClass, { 'mx-auto': attrs.width && attrs.width !== 'full' }]">
     <!-- No video configured -->
     <UAlert
       v-if="!attrs.src"

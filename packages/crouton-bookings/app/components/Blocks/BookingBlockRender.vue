@@ -33,7 +33,7 @@ const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route
 </script>
 
 <template>
-  <div class="booking-block my-8">
+  <div class="booking-block">
     <!-- Members-only: show login prompt when not authenticated -->
     <div
       v-if="requiresLogin"

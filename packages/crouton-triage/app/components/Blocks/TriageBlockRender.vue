@@ -36,7 +36,7 @@ const limit = computed(() => Number(props.attrs.limit) || 30)
 </script>
 
 <template>
-  <div class="triage-block my-8">
+  <div class="triage-block">
     <!-- Members-only: show login prompt when not authenticated -->
     <div
       v-if="requiresLogin"

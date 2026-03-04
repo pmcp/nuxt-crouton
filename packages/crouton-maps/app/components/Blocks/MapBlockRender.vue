@@ -62,7 +62,7 @@ const hasLocation = computed(() => lat.value !== 0 || lng.value !== 0)
 </script>
 
 <template>
-  <div class="map-block my-8">
+  <div class="map-block">
     <!-- No location set -->
     <UAlert
       v-if="!hasLocation"

@@ -37,7 +37,7 @@ const alignClass = computed(() => {
 </script>
 
 <template>
-  <div class="button-row-block my-8">
+  <div class="button-row-block">
     <!-- No buttons configured -->
     <UAlert
       v-if="buttons.length === 0"

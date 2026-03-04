@@ -72,7 +72,7 @@ const hasSource = computed(() => {
 </script>
 
 <template>
-  <div class="chart-block my-8">
+  <div class="chart-block">
     <!-- Preset mode: preset not selected or not found -->
     <UAlert
       v-if="attrs.mode === 'preset' && !resolvedPreset"

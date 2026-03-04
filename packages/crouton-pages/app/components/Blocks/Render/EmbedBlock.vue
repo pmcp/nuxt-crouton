@@ -57,7 +57,7 @@ const height = computed(() => {
 </script>
 
 <template>
-  <figure class="embed-block my-8">
+  <figure class="embed-block">
     <!-- No URL configured -->
     <UAlert
       v-if="!attrs.url"

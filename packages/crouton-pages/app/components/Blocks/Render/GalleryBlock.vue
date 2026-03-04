@@ -25,7 +25,7 @@ const heightClass = computed(() => {
 </script>
 
 <template>
-  <div class="gallery-block py-8">
+  <div class="gallery-block">
     <!-- Header -->
     <div
       v-if="attrs.headline || attrs.title || attrs.description"
