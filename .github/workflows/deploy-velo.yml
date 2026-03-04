@@ -60,6 +60,7 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
           CLOUDFLARE_ENV: ${{ (inputs.environment || 'staging') == 'staging' && 'preview' || '' }}
+          BETTER_AUTH_URL: ${{ (inputs.environment || 'staging') == 'production' && 'https://velo.friendlyinter.net' || 'https://staging.velo-ao7.pages.dev' }}
 
       # Workaround: Wrangler 4.64+ rejects env blocks in redirected configs.
       # Nitro copies the full wrangler.jsonc (including env) into the generated
