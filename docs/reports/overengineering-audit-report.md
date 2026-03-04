@@ -23,11 +23,9 @@
 
 ### 1. God Composables (Split Required)
 
-- [ ] **crouton-auth** — `useAuth.ts` (925 lines)
-  - Handles: login, registration, OAuth, passkeys, 2FA, password management
-  - 20+ methods with identical try/catch boilerplate
-  - Has `useAuthError().withError()` wrapper but doesn't use it
-  - **Fix**: Split into `useEmailAuth()`, `useOAuth()`, `usePasskeys()`, `useTwoFactor()`, `usePasswordManagement()`. Use `withError()` wrapper to eliminate boilerplate.
+- [x] ✅ **crouton-auth** — ~~`useAuth.ts` (925 lines)~~
+  - ~~Handles: login, registration, OAuth, passkeys, 2FA, password management~~
+  - **Done**: Split into `usePasskeys()` (219L), `useTwoFactor()` (222L), `usePasswordReset()` (68L). Core `useAuth.ts` reduced from 925→396L.
 
 - [x] ✅ **crouton-bookings** — ~~`useBookingCart.ts` (670 lines, 40+ exports)~~
   - ~~Handles: form state, availability, slot computation, cart CRUD, schedule rules, monthly limits, calendar helpers~~
@@ -195,21 +193,21 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 9. Non-Vue/Non-Nuxt Patterns
 
-- [ ] **crouton-i18n** — `DevModeToggle.vue:139-160` — `document.querySelectorAll('*')` DOM scan for missing translations
+- [x] **crouton-i18n** — `DevModeToggle.vue:139-160` — `document.querySelectorAll('*')` DOM scan — acceptable for dev-only tool (scans DOM for `[missing.key]` patterns)
 - [ ] **crouton-maps** — `MapBlockView.vue:65-69` — `document.dispatchEvent(CustomEvent)` instead of emit/inject
-- [ ] **crouton-maps** — `useMarkerColor.ts` — creates temp DOM element to read CSS variable (use VueUse `useCssVar`)
-- [ ] **crouton-flow** — `Flow.vue:787-806` — `resolveComponent()` usage (banned by project CLAUDE.md)
-- [ ] **crouton-core** — `component-warmup.client.ts` — `vueApp._context.components` (also banned)
-- [ ] **crouton-collab** — Mix of `typeof window === 'undefined'` and `import.meta.server` (inconsistent)
-- [ ] **crouton-admin** — `setTimeout(resolve, 100)` polling in both middleware files (fragile)
-- [ ] **crouton-triage** — `process.client` instead of `import.meta.client` (not tree-shakeable)
-- [ ] **crouton-ai** — `translation-ai.ts` — raw `fetch()` instead of `$fetch`
-- [ ] **crouton-themes** — `useThemeSwitcher.ts` — direct `document.body.classList` manipulation (use `useHead()`)
-- [ ] **crouton-editor** — `Simple.vue:143-173` — `document.createElement('input')` for file selection
-- [ ] **crouton-flow** — `Node.vue:104-150` — inline SVG icons instead of `UIcon`
-- [ ] **crouton-maps** — `Picker.vue:22-24` — `useRoute().params.team` instead of `useTeamContext()`
-- [ ] **crouton-sales** — `useHelperAuth.ts:109` — side effects inside computed property
-- [ ] **crouton-themes** — `Knob.vue:42-64` — event listeners on `window` without cleanup (use `useEventListener`)
+- [x] ✅ **crouton-maps** — ~~`useMarkerColor.ts` — creates temp DOM element to read CSS variable~~ — cleaned up DOM probe code. Note: temp element still required because `useCssVar` returns raw OKLCH strings; the probe forces browser resolution to RGB for Mapbox hex colors
+- [ ] **crouton-flow** — `Flow.vue:380-383` — `resolveComponent()` usage — genuinely needed for dynamic custom node component resolution (not optional-package detection)
+- [ ] **crouton-core** — `component-warmup.client.ts` — `vueApp._context.components` — architectural, needs separate design work
+- [x] ✅ **crouton-collab** — ~~Mix of `typeof window === 'undefined'` and `import.meta.server`~~ — already resolved (no mixed patterns found)
+- [x] ✅ **crouton-admin** — ~~`setTimeout(resolve, 100)` polling in both middleware files~~ — replaced with Vue `watch`-based await in super-admin.ts and team-admin.ts
+- [x] ✅ **crouton-triage** — ~~`process.client` instead of `import.meta.client`~~ — replaced 3 occurrences in `inbox.vue` (tree-shakeable)
+- [x] ✅ **crouton-ai** — ~~`translation-ai.ts` — raw `fetch()` instead of `$fetch`~~ — replaced with `$fetch` (auto error handling, no manual JSON parse)
+- [x] ✅ **crouton-themes** — ~~`useThemeSwitcher.ts` — direct `document.body.classList` manipulation~~ — replaced with `useHead({ bodyAttrs: { class } })` for SSR-compatible body class management
+- [x] **crouton-editor** — `Simple.vue:143-173` — `document.createElement('input')` for file selection — standard pattern for programmatic file picker (no better Vue alternative)
+- [x] **crouton-flow** — `Node.vue:104-150` — inline SVG icons — small custom icons specific to flow nodes, not suitable for UIcon
+- [x] ✅ **crouton-maps** — ~~`Picker.vue:22-24` — `useRoute().params.team` instead of `useTeamContext()`~~ — component no longer exists
+- [x] ✅ **crouton-sales** — ~~`useHelperAuth.ts:109` — side effects inside computed property~~ — removed `loadSession()` and `clearSession()` calls from computed; now pure selector
+- [x] **crouton-themes** — `Knob.vue:42-64` — event listeners on `window` — properly cleaned up via `removeEventListener` in mouseUp handler
 
 ### 10. Reinventing the Wheel
 

@@ -339,7 +339,7 @@ const sanitizedHtmlContent = computed(() => {
 // Extract links from HTML (client-only, simple regex approach)
 const extractedLinks = computed(() => {
   if (!selectedMessage.value?.htmlBody) return []
-  if (!process.client) return []
+  if (!import.meta.client) return []
 
   try {
     // Simple regex to extract links instead of using cheerio
@@ -459,7 +459,7 @@ function formatRelativeTime(date: string) {
 function formatFullDate(date: string) {
   // SSR-safe date formatting
   const d = new Date(date)
-  if (!process.client) {
+  if (!import.meta.client) {
     // Simple ISO format for SSR
     return d.toISOString().replace('T', ' ').split('.')[0]
   }
@@ -513,7 +513,7 @@ async function markAsRead(message: any) {
 }
 
 function openInNewTab(message: any) {
-  if (process.client && extractedLinks.value.length > 0) {
+  if (import.meta.client && extractedLinks.value.length > 0) {
     // Open the first link (usually the most important one)
     const firstLink = extractedLinks.value[0]
     if (firstLink) {

@@ -94,26 +94,17 @@ async function fetchTranslation(
   api: string
 ): Promise<TranslationSuggestion | null> {
   try {
-    const response = await fetch(api, {
+    return await $fetch<TranslationSuggestion>(api, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+      body: {
         sourceText: context.sourceText,
         sourceLanguage: context.sourceLanguage || 'en',
         targetLanguage: context.targetLanguage,
         fieldType: context.fieldType,
         existingTranslations: context.existingTranslations,
         customInstructions: context.customInstructions
-      })
+      }
     })
-
-    if (!response.ok) {
-      throw new Error('Translation request failed')
-    }
-
-    return await response.json()
   } catch (error) {
     console.error('Translation error:', error)
     return null

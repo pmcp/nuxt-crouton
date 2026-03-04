@@ -81,11 +81,6 @@ export function useThemeSwitcher() {
     currentTheme.value = theme
     storedTheme.value = theme
 
-    if (import.meta.client) {
-      // Update body class for CSS custom properties
-      updateBodyClass(theme)
-    }
-
     // Swap Nuxt UI component styles via updateAppConfig
     // Using 'as any' because Nuxt UI's auto-generated types are complex
     // and don't match our simplified ThemeUIConfig interface
@@ -104,26 +99,18 @@ export function useThemeSwitcher() {
     setTheme(AVAILABLE_THEMES[nextIndex]!.name)
   }
 
-  // Update body class for theme-specific CSS variables
-  function updateBodyClass(theme: ThemeName) {
-    if (!import.meta.client) return
-
-    // Remove all theme classes
-    AVAILABLE_THEMES.forEach(t => {
-      document.body.classList.remove(`theme-${t.name}`)
-    })
-
-    // Add current theme class
-    if (theme !== 'default') {
-      document.body.classList.add(`theme-${theme}`)
+  // Manage body class for theme-specific CSS variables via useHead
+  useHead({
+    bodyAttrs: {
+      class: computed(() => {
+        const theme = currentTheme.value
+        return theme !== 'default' ? `theme-${theme}` : ''
+      })
     }
-  }
+  })
 
-  // Initialize on client
+  // Initialize theme UI config on client
   if (import.meta.client) {
-    updateBodyClass(currentTheme.value)
-
-    // Apply theme UI config on initialization
     const themeUIConfig = THEME_UI_CONFIGS[currentTheme.value]
     if (themeUIConfig) {
       updateAppConfig({

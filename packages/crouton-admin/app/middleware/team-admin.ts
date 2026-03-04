@@ -14,7 +14,7 @@
  * </script>
  * ```
  */
-import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp, useRequestHeaders } from '#imports'
+import { defineNuxtRouteMiddleware, navigateTo, createError, useSession, useTeam, useNuxtApp, useRequestHeaders, watch } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { data: sessionData, isPending, isAuthenticated } = useSession()
@@ -23,7 +23,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Wait for session to load if pending
   if (isPending.value) {
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise<void>((resolve) => {
+      const stop = watch(isPending, (val) => {
+        if (!val) { stop(); resolve() }
+      })
+    })
   }
 
   // Check authentication first

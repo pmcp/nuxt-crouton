@@ -105,14 +105,10 @@ export function useHelperAuth() {
    * Check if helper is authenticated
    */
   const isHelper = computed(() => {
-    if (!helperSession.value) {
-      loadSession()
-    }
     if (!helperSession.value) return false
 
     // Check expiration
     if (new Date(helperSession.value.expiresAt) < new Date()) {
-      clearSession()
       return false
     }
 
