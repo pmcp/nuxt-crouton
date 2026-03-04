@@ -1,4 +1,5 @@
 import { defineNuxtModule } from '@nuxt/kit'
+import { createJiti } from 'jiti'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { resolve, join, dirname } from 'node:path'
 import type { CroutonOptions, CroutonConfig, CroutonLocaleObject } from './types'
@@ -132,9 +133,10 @@ function buildLayerList(features: CroutonOptions, manifests: ManifestMeta[]): st
 // ---------------------------------------------------------------------------
 
 /**
- * Load crouton.config.js synchronously (for use in nuxt.config.ts extends)
+ * Load crouton.config.{js,mjs,cjs,ts} synchronously using jiti.
  */
 function loadCroutonConfig(): CroutonConfig | null {
+  const jiti = createJiti(import.meta.url)
   const extensions = ['.js', '.mjs', '.cjs', '.ts']
   const baseName = 'crouton.config'
 
@@ -142,18 +144,8 @@ function loadCroutonConfig(): CroutonConfig | null {
     const configPath = resolve(process.cwd(), `${baseName}${ext}`)
     if (existsSync(configPath)) {
       try {
-        // For sync loading, we read the file and extract the default export
-        // This is a simplified approach - works for basic configs
-        const content = readFileSync(configPath, 'utf-8')
-
-        // Try to parse as JSON-like object (handles most cases)
-        const match = content.match(/export\s+default\s+(\{[\s\S]*\})/)
-        if (match) {
-          // Use Function constructor to evaluate (safer than eval)
-          // eslint-disable-next-line no-new-func
-          const config = new Function(`return ${match[1]}`)()
-          return config as CroutonConfig
-        }
+        const mod = jiti(configPath) as { default?: CroutonConfig } | CroutonConfig
+        return ('default' in mod && mod.default ? mod.default : mod) as CroutonConfig
       } catch {
         // Ignore parse errors, will fall back to passed options
       }

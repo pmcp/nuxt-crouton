@@ -56,10 +56,10 @@ These use `ref()` at module scope instead of `useState()`, causing state to pers
 
 ### 4. Unsafe Config Loading (`new Function` / eval)
 
-- [ ] **crouton** (main module) — `module.ts:137-163` — `new Function()` to parse config
-- [ ] **crouton-i18n** — `config-utils.ts:64` — `new Function()` to parse config
+- [x] ✅ **crouton** (main module) — ~~`module.ts:137-163` — `new Function()` to parse config~~ → replaced with `jiti` (synchronous `createJiti` + require-like call)
+- [x] ✅ **crouton-i18n** — ~~`config-utils.ts:64` — `new Function()` to parse config~~ → replaced with `jiti` (same pattern)
 
-**Fix**: Use `jiti` (already a Nuxt dependency) or `c12`'s `loadConfig`.
+**Fix**: ~~Use `jiti` (already a Nuxt dependency) or `c12`'s `loadConfig`~~ Done — both use `createJiti(import.meta.url)` for safe, synchronous config loading. Also handles complex configs with imports/variables that the regex approach couldn't.
 
 ---
 
@@ -334,7 +334,7 @@ These patterns are correct across the entire codebase:
 | 5 | Unify AI provider/model registry | ai | ~150 | Medium |
 | 6 | Delete dead code | core, auth, maps, collab, events | ~500 | Low |
 | 7 | ~~Extract shared scaffold infrastructure~~ ✅ | atelier, designer | ~300 | Medium |
-| 8 | Replace `new Function()` with `jiti` | crouton, i18n | ~30 (but fixes security) | Low |
+| 8 | ~~Replace `new Function()` with `jiti`~~ ✅ | crouton, i18n | ~30 (but fixes security) | Low |
 | 9 | Consolidate triage duplications | triage | ~400 | Medium |
 | 10 | Replace custom logger/rate-limiter/metrics | triage | ~980 | Medium |
 
@@ -345,7 +345,7 @@ These patterns are correct across the entire codebase:
 ### Phase 1: Quick Wins (Low effort, high impact)
 1. Delete dead code (empty plugins, unused composables)
 2. Fix SSR-unsafe `ref()` -> `useState()`
-3. Replace `new Function()` config loading
+3. ~~Replace `new Function()` config loading~~ ✅
 4. Fix deprecated Nitro error format
 5. Remove console.log from production code
 

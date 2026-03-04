@@ -6,7 +6,8 @@
  * This file is loaded by nuxt.config.ts at config resolution time, before any
  * packages are built.
  */
-import { readFileSync, existsSync } from 'node:fs'
+import { createJiti } from 'jiti'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 interface CroutonLocaleObject {
@@ -50,6 +51,7 @@ const DEFAULT_LOCALES: { code: string, name: string, file: string }[] = [
 ]
 
 function loadCroutonConfig(): CroutonConfig | null {
+  const jiti = createJiti(import.meta.url)
   const extensions = ['.js', '.mjs', '.cjs', '.ts']
   const baseName = 'crouton.config'
 
@@ -57,13 +59,8 @@ function loadCroutonConfig(): CroutonConfig | null {
     const configPath = resolve(process.cwd(), `${baseName}${ext}`)
     if (existsSync(configPath)) {
       try {
-        const content = readFileSync(configPath, 'utf-8')
-        const match = content.match(/export\s+default\s+(\{[\s\S]*\})/)
-        if (match) {
-          // eslint-disable-next-line no-new-func
-          const config = new Function(`return ${match[1]}`)()
-          return config as CroutonConfig
-        }
+        const mod = jiti(configPath) as { default?: CroutonConfig } | CroutonConfig
+        return ('default' in mod && mod.default ? mod.default : mod) as CroutonConfig
       }
       catch {
         // Ignore parse errors
