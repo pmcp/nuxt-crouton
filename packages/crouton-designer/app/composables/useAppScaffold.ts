@@ -1,33 +1,9 @@
 import type { CollectionWithFields, PackageCollectionEntry } from './useCollectionEditor'
 import type { ProjectConfig, SeedDataMap } from '../types/schema'
+import type { ScaffoldArtifact, ScaffoldStatus, ScaffoldResult } from '@fyit/crouton-core/shared/types/scaffold'
+import { groupArtifactsByCategory, toKebabAppName, FOLDER_NAME_REGEX } from '@fyit/crouton-core/shared/utils/scaffold'
 
-export interface ScaffoldArtifact {
-  filename: string
-  category: 'config' | 'app' | 'server' | 'schema' | 'seed'
-}
-
-export type ScaffoldStatus = 'idle' | 'creating' | 'done' | 'error' | 'conflict'
-
-export interface ScaffoldStepResult {
-  success: boolean
-  error?: string
-  files?: string[]
-  output?: string
-}
-
-export interface ScaffoldResult {
-  success: boolean
-  appDir: string
-  steps: Record<string, ScaffoldStepResult>
-}
-
-const CATEGORY_ICONS: Record<ScaffoldArtifact['category'], string> = {
-  config: 'i-lucide-settings',
-  app: 'i-lucide-layout',
-  server: 'i-lucide-server',
-  schema: 'i-lucide-file-json',
-  seed: 'i-lucide-sprout'
-}
+export type { ScaffoldArtifact, ScaffoldStatus, ScaffoldResult }
 
 export function useAppScaffold(
   collections: Ref<CollectionWithFields[]>,
@@ -46,13 +22,7 @@ export function useAppScaffold(
   const folderOverride = ref('')
 
   // Compute app name from config (kebab-case)
-  const appName = computed(() => {
-    if (!config.value.name) return ''
-    return config.value.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-  })
+  const appName = computed(() => toKebabAppName(config.value.name))
 
   // Build artifact preview grouped by category
   const artifacts = computed<ScaffoldArtifact[]>(() => {
@@ -108,25 +78,11 @@ export function useAppScaffold(
   })
 
   // Group artifacts by category for display
-  const artifactsByCategory = computed(() => {
-    const groups: Record<string, { icon: string, artifacts: ScaffoldArtifact[] }> = {}
-
-    for (const artifact of artifacts.value) {
-      if (!groups[artifact.category]) {
-        groups[artifact.category] = {
-          icon: CATEGORY_ICONS[artifact.category],
-          artifacts: []
-        }
-      }
-      groups[artifact.category]!.artifacts.push(artifact)
-    }
-
-    return groups
-  })
+  const artifactsByCategory = computed(() => groupArtifactsByCategory(artifacts.value))
 
   // Effective folder name: user override or computed from config name
   const effectiveFolderName = computed(() => folderOverride.value || appName.value)
-  const folderNameValid = computed(() => /^[a-z][a-z0-9-]*$/.test(effectiveFolderName.value))
+  const folderNameValid = computed(() => FOLDER_NAME_REGEX.test(effectiveFolderName.value))
 
   async function createApp(): Promise<ScaffoldResult | null> {
     if (!effectiveFolderName.value) return null

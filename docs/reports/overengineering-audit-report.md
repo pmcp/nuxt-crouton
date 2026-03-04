@@ -157,11 +157,11 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: Extract to shared utility
 
 #### crouton-designer / crouton-atelier
-- [ ] Entire scaffold infrastructure duplicated between packages
-- [ ] `ModuleEntry`/`ModuleAIContext` — defined 3 times in designer
-- [ ] `CATEGORY_ICONS` — duplicated between packages
-- [ ] `buildCollectionsContext` — 3 near-identical implementations
-- **Fix**: Extract shared scaffold utility to crouton-core
+- [x] Entire scaffold infrastructure duplicated between packages — ~~server 7-step pipeline + client types/utils~~ → extracted to `crouton-core/server/utils/scaffold-pipeline.ts` + `crouton-core/shared/types/scaffold.ts` + `crouton-core/shared/utils/scaffold.ts`
+- [ ] `ModuleEntry`/`ModuleAIContext` — defined 3 times in designer (internal, not cross-package)
+- [x] `CATEGORY_ICONS` — ~~duplicated between packages~~ → `SCAFFOLD_CATEGORY_ICONS` in `crouton-core/shared/utils/scaffold.ts`
+- [ ] `buildCollectionsContext` — 3 near-identical implementations (internal to designer, not cross-package)
+- **Fix**: ~~Extract shared scaffold utility to crouton-core~~ Scaffold pipeline, types, and client utils extracted; both endpoints now thin wrappers
 
 #### crouton-email
 - [ ] 6 sender functions with identical pattern (render template, call send)
@@ -335,7 +335,7 @@ These patterns are correct across the entire codebase:
 | 4 | Fix SSR-unsafe `ref()` -> `useState()` | auth, admin, core, triage | ~20 (but fixes bugs) | Low |
 | 5 | Unify AI provider/model registry | ai | ~150 | Medium |
 | 6 | Delete dead code | core, auth, maps, collab, events | ~500 | Low |
-| 7 | Extract shared scaffold infrastructure | atelier, designer | ~300 | Medium |
+| 7 | ~~Extract shared scaffold infrastructure~~ ✅ | atelier, designer | ~300 | Medium |
 | 8 | Replace `new Function()` with `jiti` | crouton, i18n | ~30 (but fixes security) | Low |
 | 9 | Consolidate triage duplications | triage | ~400 | Medium |
 | 10 | Replace custom logger/rate-limiter/metrics | triage | ~980 | Medium |
@@ -361,7 +361,7 @@ These patterns are correct across the entire codebase:
 ### Phase 3: Architecture Improvements (Higher effort)
 11. ~~Split `useAuth` god composable~~ ✅ split into `usePasskeys`, `useTwoFactor`, `usePasswordReset`
 12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; remaining: `useAdminStats`, `useCollectionItem`)
-13. Extract shared scaffold infrastructure
+13. ~~Extract shared scaffold infrastructure~~ ✅ pipeline + types + utils to crouton-core
 14. Refactor triage duplications (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`)
 15. Split `useBookingCart` and `Flow.vue`
 
@@ -371,11 +371,11 @@ These patterns are correct across the entire codebase:
 |---|------|-------|-----------|----------------|-------|
 | 11 | Split `useAuth` | 1 → 3-4 new | Medium | Yes | 924 lines, 27 exports. Clear split: passkeys (~250L), 2FA (~260L), password reset (~45L). Post-split: ~200L. `withError()` exists but unused. |
 | 12 | Replace manual fetch | 5-6 files / 3 pkgs | Variable | Partial | 3 triage composables easy. `useAdminStats` moderate (interval refresh). `useCollectionItem` difficult (SSR + dynamic URL). `useAuthCache` out of scope (not a fetch wrapper). |
-| 13 | Extract scaffold infra | ~4 files / 2 pkgs | Medium-High | Yes (tight) | 40-50% overlap between designer/atelier (composables, endpoints, types). Interface design needed for differences. |
+| 13 | ~~Extract scaffold infra~~ ✅ | ~4 files / 2 pkgs | Medium-High | Yes (tight) | Done — extracted pipeline + types + utils to crouton-core. Both endpoints now thin wrappers. |
 | 14 | Triage duplications | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b**: Email parser (1,011L, 3 functions sharing 60%) = separate session. |
 | 15 | Split BookingCart + Flow | 2 large files | High | No — 1 each | BookingCart: 669L, 42 returns. Flow.vue: 1,046L (812 script). Both deeply interconnected internally. |
 
-**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → 13 → 15a (booking) → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
+**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → 15a (booking) → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)

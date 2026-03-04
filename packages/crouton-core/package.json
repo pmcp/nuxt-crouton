@@ -9,6 +9,8 @@
     "./shared/manifest": "./shared/manifest.ts",
     "./shared/utils/date": "./shared/utils/date.ts",
     "./shared/utils/fs": "./shared/utils/fs.ts",
+    "./shared/types/scaffold": "./shared/types/scaffold.ts",
+    "./shared/utils/scaffold": "./shared/utils/scaffold.ts",
     "./app/types/block-definition": "./app/types/block-definition.ts",
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",

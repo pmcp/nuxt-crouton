@@ -101,11 +101,11 @@ async function handleGenerate() {
                 <div class="flex items-center gap-1.5 mb-1">
                   <UIcon :name="group.icon" class="w-3.5 h-3.5 text-muted" />
                   <span class="text-xs font-medium text-muted uppercase">{{ category }}</span>
-                  <UBadge variant="subtle" color="neutral" size="xs">{{ group.items.length }}</UBadge>
+                  <UBadge variant="subtle" color="neutral" size="xs">{{ group.artifacts.length }}</UBadge>
                 </div>
                 <div class="space-y-0.5 ml-5">
                   <div
-                    v-for="art in group.items"
+                    v-for="art in group.artifacts"
                     :key="art.filename"
                     class="text-xs font-mono text-muted"
                   >
@@ -161,9 +161,9 @@ async function handleGenerate() {
         <!-- Footer -->
         <div class="p-4 border-t border-default">
           <UButton
-            :label="status === 'generating' ? 'Creating...' : status === 'done' ? 'Done' : 'Create App'"
-            :loading="status === 'generating'"
-            :disabled="!canGenerate || status === 'generating' || status === 'done'"
+            :label="status === 'creating' ? 'Creating...' : status === 'done' ? 'Done' : 'Create App'"
+            :loading="status === 'creating'"
+            :disabled="!canGenerate || status === 'creating' || status === 'done'"
             color="primary"
             block
             @click="handleGenerate"

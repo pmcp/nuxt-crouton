@@ -1,26 +1,10 @@
-import { ref, computed, type ComputedRef } from 'vue'
-import type { AppComposition, Block } from '../types/blocks'
+import type { ComputedRef } from 'vue'
+import type { AppComposition } from '../types/blocks'
+import type { ScaffoldArtifact, ScaffoldStatus, ScaffoldResult } from '@fyit/crouton-core/shared/types/scaffold'
+import { groupArtifactsByCategory, toKebabAppName, FOLDER_NAME_REGEX } from '@fyit/crouton-core/shared/utils/scaffold'
 import { blocks as allBlocks } from '../data/blocks'
 
-export interface ScaffoldArtifact {
-  filename: string
-  category: 'config' | 'app' | 'server' | 'schema' | 'seed'
-}
-
-export type ScaffoldStatus = 'idle' | 'generating' | 'done' | 'error' | 'conflict'
-
-export interface ScaffoldStepResult {
-  success: boolean
-  error?: string
-  files?: string[]
-  output?: string
-}
-
-export interface ScaffoldResult {
-  success: boolean
-  appDir: string
-  steps: Record<string, ScaffoldStepResult>
-}
+export type { ScaffoldArtifact, ScaffoldStatus, ScaffoldResult }
 
 /**
  * Generate flow — builds ScaffoldRequest from composition state,
@@ -32,16 +16,14 @@ export function useAtelierScaffold(composition: ComputedRef<AppComposition>) {
   const error = ref<string | null>(null)
   const folderOverride = ref('')
 
-  const appName = computed(() => {
-    if (!composition.value.identity.name) return ''
-    return composition.value.identity.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-  })
+  const appName = computed(() => toKebabAppName(composition.value.identity.name))
 
   const effectiveFolderName = computed(() =>
     folderOverride.value || appName.value
+  )
+
+  const folderNameValid = computed(() =>
+    FOLDER_NAME_REGEX.test(effectiveFolderName.value)
   )
 
   const canGenerate = computed(() =>
@@ -128,29 +110,12 @@ export function useAtelierScaffold(composition: ComputedRef<AppComposition>) {
     return items
   })
 
-  const artifactsByCategory = computed(() => {
-    const groups: Record<string, { icon: string, items: ScaffoldArtifact[] }> = {}
-    const icons: Record<string, string> = {
-      config: 'i-lucide-settings',
-      app: 'i-lucide-layout',
-      server: 'i-lucide-server',
-      schema: 'i-lucide-file-json',
-      seed: 'i-lucide-sprout'
-    }
-
-    for (const art of artifacts.value) {
-      if (!groups[art.category]) {
-        groups[art.category] = { icon: icons[art.category] ?? 'i-lucide-file', items: [] }
-      }
-      groups[art.category].items.push(art)
-    }
-    return groups
-  })
+  const artifactsByCategory = computed(() => groupArtifactsByCategory(artifacts.value))
 
   async function generate(): Promise<ScaffoldResult | null> {
     if (!canGenerate.value) return null
 
-    status.value = 'generating'
+    status.value = 'creating'
     error.value = null
     result.value = null
 
@@ -189,6 +154,7 @@ export function useAtelierScaffold(composition: ComputedRef<AppComposition>) {
   return {
     appName,
     effectiveFolderName,
+    folderNameValid,
     folderOverride,
     canGenerate,
     artifacts,
