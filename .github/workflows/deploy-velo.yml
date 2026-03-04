@@ -4,6 +4,18 @@ on:
   push:
     branches:
       - staging
+    paths:
+      - 'apps/velo/**'
+      - 'packages/crouton/**'
+      - 'packages/crouton-core/**'
+      - 'packages/crouton-auth/**'
+      - 'packages/crouton-i18n/**'
+      - 'packages/crouton-assets/**'
+      - 'packages/crouton-bookings/**'
+      - 'packages/crouton-email/**'
+      - 'packages/crouton-pages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-velo.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -37,6 +49,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Cache layer builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/crouton-auth/dist
+            packages/crouton-core/dist
+            packages/crouton/dist
+          key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
 
       - name: Build layer packages
         run: |

@@ -3,8 +3,20 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'packages/**'
+      - 'apps/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'packages/**'
+      - 'apps/**'
+      - 'scripts/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/ci.yml'
 
 jobs:
   lint-and-typecheck:
@@ -100,6 +112,15 @@ jobs:
 
       - name: Install dependencies (skip postinstall scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Cache layer builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/crouton-auth/dist
+            packages/crouton-core/dist
+            packages/crouton/dist
+          key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
 
       - name: Build layer packages
         run: |
