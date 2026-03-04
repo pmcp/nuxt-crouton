@@ -93,7 +93,9 @@
     "calendar": {
       "units": "Eenheden",
       "noBookings": "Geen boekingen",
-      "bookingCount": "{count} boeking | {count} boekingen"
+      "bookingCount": "{count} boeking | {count} boekingen",
+      "closed": "Gesloten",
+      "blocked": "Geblokkeerd"
     },
     "card": {
       "activity": "Activiteit",

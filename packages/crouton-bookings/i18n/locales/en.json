@@ -93,7 +93,9 @@
     "calendar": {
       "units": "Units",
       "noBookings": "No bookings",
-      "bookingCount": "{count} booking | {count} bookings"
+      "bookingCount": "{count} booking | {count} bookings",
+      "closed": "Closed",
+      "blocked": "Blocked"
     },
     "card": {
       "activity": "Activity",

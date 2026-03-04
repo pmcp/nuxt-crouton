@@ -138,6 +138,94 @@ const { parseSlotIds } = useBookingSlots()
 // Preview mode - injected from admin page, defaults to false
 const previewMode = inject<Ref<boolean>>('bookings-preview-mode', ref(false))
 
+// Schedule rules per location — used to disable closed days in the calendar
+const locationScheduleRules = computed(() => {
+  return resolvedLocations.value.map((location) => {
+    const openDaysRaw = location.openDays
+    let openDays: number[] | null = null
+    if (openDaysRaw != null) {
+      if (Array.isArray(openDaysRaw)) {
+        openDays = openDaysRaw.length > 0 ? openDaysRaw : null
+      } else if (typeof openDaysRaw === 'string') {
+        try {
+          const parsed = JSON.parse(openDaysRaw)
+          openDays = Array.isArray(parsed) && parsed.length > 0 ? parsed : null
+        } catch {
+          openDays = null
+        }
+      }
+    }
+
+    let blockedDates: { startDate: string, endDate: string, blockedSlots?: string[] }[] = []
+    const blockedRaw = location.blockedDates
+    if (blockedRaw != null) {
+      if (Array.isArray(blockedRaw)) {
+        blockedDates = blockedRaw
+      } else if (typeof blockedRaw === 'string') {
+        try {
+          const parsed = JSON.parse(blockedRaw)
+          blockedDates = Array.isArray(parsed) ? parsed : []
+        } catch {
+          blockedDates = []
+        }
+      }
+    }
+
+    return { openDays, blockedDates }
+  })
+})
+
+// Check if ALL visible locations are unavailable on a date (closed or fully blocked)
+function isDateUnavailableForAll(date: Date): boolean {
+  const rules = locationScheduleRules.value
+  if (rules.length === 0) return false
+
+  const dayOfWeek = date.getDay()
+  const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+  return rules.every(({ openDays, blockedDates }) => {
+    // Check openDays
+    if (openDays && !openDays.includes(dayOfWeek)) return true
+
+    // Check full-day blocked dates
+    for (const blocked of blockedDates) {
+      if (!blocked.startDate || !blocked.endDate) continue
+      if (dateKey >= blocked.startDate && dateKey <= blocked.endDate) {
+        if (!blocked.blockedSlots || blocked.blockedSlots.length === 0) return true
+      }
+    }
+
+    return false
+  })
+}
+
+// Get reason why a date is unavailable
+function getBlockedReasonForAll(date: Date): string | null {
+  if (!isDateUnavailableForAll(date)) return null
+
+  const dayOfWeek = date.getDay()
+  const rules = locationScheduleRules.value
+  const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+  // Check if all are closed by openDays
+  const allClosedByOpenDays = rules.every(({ openDays }) => openDays && !openDays.includes(dayOfWeek))
+  if (allClosedByOpenDays) return t('bookings.calendar.closed')
+
+  // Check for blocked date reason
+  for (const { blockedDates } of rules) {
+    for (const blocked of blockedDates) {
+      if (!blocked.startDate || !blocked.endDate) continue
+      if (dateKey >= blocked.startDate && dateKey <= blocked.endDate) {
+        if (!blocked.blockedSlots || blocked.blockedSlots.length === 0) {
+          return (blocked as { reason?: string }).reason || t('bookings.calendar.blocked')
+        }
+      }
+    }
+  }
+
+  return t('bookings.calendar.closed')
+}
+
 // Effective admin state - false when preview mode is active
 const effectiveIsAdmin = computed(() => isAdmin.value && !previewMode.value)
 
@@ -379,6 +467,8 @@ function onCalendarDayClick(date: Date) {
   if (previewMode.value) return
   if (resolvedLocations.value.length === 0) return
 
+  if (isDateUnavailableForAll(date)) return
+
   if (isDayFullyBookedAllLocations(date)) {
     notify.warning(t('bookings.notifications.allSlotsTaken'), {
       description: t('bookings.notifications.allSlotsTakenDescription'),
@@ -490,6 +580,8 @@ defineExpose({
             :view="calendarView"
             :selected-dates="selectedDates"
             :creating-at-date="creatingAtDate"
+            :is-date-unavailable="isDateUnavailableForAll"
+            :get-blocked-reason="getBlockedReasonForAll"
             @select="onCalendarSelect"
             @day-click="onCalendarDayClick"
             @hover-booking="(id) => hoveredBookingId = id"

@@ -93,7 +93,9 @@
     "calendar": {
       "units": "Unités",
       "noBookings": "Aucune réservation",
-      "bookingCount": "{count} réservation | {count} réservations"
+      "bookingCount": "{count} réservation | {count} réservations",
+      "closed": "Fermé",
+      "blocked": "Bloqué"
     },
     "card": {
       "activity": "Activité",
