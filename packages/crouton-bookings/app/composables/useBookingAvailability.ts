@@ -1,20 +1,10 @@
 import type { DateValue } from '@internationalized/date'
-import type { BlockedDateItem, SlotSchedule } from '../types/booking'
+import type { BlockedDateItem, SlotSchedule, SlotItem, AvailabilityData } from '../types/booking'
+import { ALL_DAY_SLOT } from '../types/booking'
+import { parseLocationSlots } from './useBookingSlots'
 import { toDateKey as sharedToDateKey } from '@fyit/crouton-core/shared/utils/date'
 
-export interface SlotOption {
-  id: string
-  label: string
-  capacity?: number
-}
-
-export interface AvailabilityData {
-  [dateISO: string]: {
-    bookedSlots: string[]
-    bookedCount?: number // For inventory mode
-    bookedGroupSlots?: Record<string, string[]> // slotId → groupIds that booked it
-  }
-}
+export type { AvailabilityData }
 
 export interface InventoryAvailability {
   available: boolean
@@ -28,25 +18,23 @@ export interface LocationWithInventory {
   inventoryMode?: boolean
   quantity?: number
   maxBookingsPerMonth?: number | null
-  slots?: SlotOption[] | string | null
+  slots?: SlotItem[] | string | null
   // Schedule rule fields
   openDays?: number[] | string | null
   slotSchedule?: SlotSchedule | string | null
   blockedDates?: BlockedDateItem[] | string | null
 }
 
-const ALL_DAY_SLOT: SlotOption = {
-  id: 'all-day',
-  label: 'All Day'
-}
-
 /**
- * Composable for checking booking availability
- * Supports both slot-based and inventory-based booking modes
+ * Composable for checking booking availability.
+ * Supports both slot-based and inventory-based booking modes.
+ *
+ * Used by useBookingCart (composes this for base API availability)
+ * and available standalone for admin-side availability checks.
  */
 export function useBookingAvailability(
   locationId: Ref<string | null>,
-  location: Ref<LocationWithInventory | null | undefined>
+  location: Ref<LocationWithInventory | null | undefined>,
 ) {
   const { currentTeam } = useTeam()
   const loading = ref(false)
@@ -60,20 +48,8 @@ export function useBookingAvailability(
     getRuleBlockedSlotIds,
   } = useScheduleRules(location)
 
-  // Parse slots from location (handles string or array)
-  const locationSlots = computed<SlotOption[]>(() => {
-    if (!location.value?.slots) return []
-    const slots = location.value.slots
-    if (typeof slots === 'string') {
-      try {
-        const parsed = JSON.parse(slots)
-        return Array.isArray(parsed) ? parsed : []
-      } catch {
-        return []
-      }
-    }
-    return Array.isArray(slots) ? slots : []
-  })
+  // Parse slots from location (handles string or array) — uses shared utility
+  const locationSlots = computed<SlotItem[]>(() => parseLocationSlots(location.value))
 
   // Check if location is in inventory mode
   const isInventoryMode = computed(() => location.value?.inventoryMode ?? false)
@@ -82,33 +58,38 @@ export function useBookingAvailability(
   const inventoryQuantity = computed(() => location.value?.quantity ?? 0)
 
   // All slots for slot mode — "All Day" only when no named slots exist
-  const allSlots = computed<SlotOption[]>(() => {
+  const allSlots = computed<SlotItem[]>(() => {
     if (isInventoryMode.value) return []
     if (locationSlots.value.length > 0) return locationSlots.value
     return [ALL_DAY_SLOT]
   })
 
   // Fetch availability for a date range
-  async function fetchAvailability(startDate: Date, endDate: Date) {
+  async function fetchAvailability(startDate: Date, endDate: Date, excludeBookingId?: string) {
     if (!locationId.value || !currentTeam.value?.id) return
 
     loading.value = true
     try {
+      const queryParams: Record<string, string> = {
+        locationId: locationId.value,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      }
+      if (excludeBookingId) {
+        queryParams.excludeBookingId = excludeBookingId
+      }
+
       const data = await $fetch<AvailabilityData>(
         `/api/crouton-bookings/teams/${currentTeam.value.id}/availability`,
-        {
-          query: {
-            locationId: locationId.value,
-            startDate: startDate.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
+        { query: queryParams },
       )
       availabilityData.value = data
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Failed to fetch availability:', error)
       availabilityData.value = {}
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -158,12 +139,12 @@ export function useBookingAvailability(
       available: remaining > 0,
       remaining,
       total,
-      bookedCount
+      bookedCount,
     }
   }
 
   // Get booked slot objects with labels for a specific date
-  function getBookedSlotLabelsForDate(date: Date | DateValue): SlotOption[] {
+  function getBookedSlotLabelsForDate(date: Date | DateValue): SlotItem[] {
     const bookedIds = getBookedSlotsForDate(date)
     return allSlots.value.filter(slot => bookedIds.includes(slot.id))
   }
@@ -204,7 +185,7 @@ export function useBookingAvailability(
   }
 
   // Get available slots for a specific date (slot mode only)
-  function getAvailableSlotsForDate(date: Date | DateValue): SlotOption[] {
+  function getAvailableSlotsForDate(date: Date | DateValue): SlotItem[] {
     if (isInventoryMode.value) return []
 
     // If date is completely unavailable by rules, no slots available
@@ -221,7 +202,7 @@ export function useBookingAvailability(
     // If ANY slot is booked or rule-blocked, "all-day" is not available
     const hasAnyBooking = bookedSlots.length > 0 || ruleBlockedSlots.length > 0
 
-    return allSlots.value.filter(slot => {
+    return allSlots.value.filter((slot) => {
       // Remove rule-blocked slots
       if (ruleBlockedSlots.includes(slot.id)) return false
 
@@ -270,12 +251,13 @@ export function useBookingAvailability(
     isDateFullyBooked,
     normalizeToDateKey,
 
-    // Schedule rules
+    // Schedule rules (pass-through)
     isDateUnavailable,
+    isSlotAvailableByRules,
     getBlockedReason,
     getRuleBlockedSlotIds,
 
     // Constants
-    ALL_DAY_SLOT
+    ALL_DAY_SLOT,
   }
 }

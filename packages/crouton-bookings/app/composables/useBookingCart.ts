@@ -1,29 +1,19 @@
 import { useLocalStorage } from '@vueuse/core'
 import type { LocationData, SlotItem, BookingData, SettingsData, CartItem } from '../types/booking'
+import { ALL_DAY_SLOT } from '../types/booking'
 import { toDateKey, isSameDay } from '@fyit/crouton-core/shared/utils/date'
 import { useBookingMonthlyLimit } from './useBookingMonthlyLimit'
 import { useBookingCartStorage } from './useBookingCartStorage'
-
-interface AvailabilityData {
-  [dateISO: string]: {
-    bookedSlots: string[]
-    bookedCount?: number // For inventory mode
-    bookedGroupSlots?: Record<string, string[]> // slotId → groupIds that booked it
-  }
-}
-
-const ALL_DAY_SLOT: SlotItem = {
-  id: 'all-day',
-  label: 'All Day',
-}
+import { useBookingAvailability } from './useBookingAvailability'
 
 /**
  * Composable for managing the booking cart and customer booking flow.
  * Supports both slot-based and inventory-based booking modes.
  *
  * Delegates to focused sub-composables:
- *   - useBookingCartStorage  — localStorage persistence, cart CRUD, submit/cancel/delete
- *   - useBookingMonthlyLimit — monthly booking limit tracking per location
+ *   - useBookingAvailability  — base API availability, schedule rules, slot parsing
+ *   - useBookingCartStorage   — localStorage persistence, cart CRUD, submit/cancel/delete
+ *   - useBookingMonthlyLimit  — monthly booking limit tracking per location
  */
 export function useBookingCart() {
   const { currentTeam } = useTeam()
@@ -117,10 +107,6 @@ export function useBookingCart() {
     set editingBookingId(v: string | null) { formStateRef.value.editingBookingId = v },
   })
 
-  // Availability data from API
-  const availabilityData = ref<AvailabilityData>({})
-  const availabilityLoading = ref(false)
-
   // Fetch allowed locations
   const { data: locations, status: locationsStatus, refresh: refreshLocations } = useFetch<LocationData[]>(
     () => teamId.value
@@ -139,14 +125,25 @@ export function useBookingCart() {
     return locations.value.find(l => l.id === formState.locationId) || null
   })
 
-  // Schedule rules (open days, slot schedule, blocked dates)
+  // --- Availability sub-composable (replaces inline availability logic) ---
+  const locationIdRef = computed(() => formState.locationId)
   const selectedLocationRef = computed(() => selectedLocation.value ?? null)
+
   const {
+    loading: availabilityLoading,
+    availabilityData,
+    isInventoryMode,
+    inventoryQuantity,
+    allSlots,
+    locationSlots: rawSlots,
+    fetchAvailability: baseFetchAvailability,
+    getBookedSlotsForDate: getApiBookedSlotsForDate,
+    getBookedCountForDate: getApiBookedCountForDate,
     isDateUnavailable,
     isSlotAvailableByRules,
     getBlockedReason,
     getRuleBlockedSlotIds,
-  } = useScheduleRules(selectedLocationRef)
+  } = useBookingAvailability(locationIdRef, selectedLocationRef)
 
   // Monthly booking limit
   const monthlyBookingLimit = computed(() => selectedLocation.value?.maxBookingsPerMonth ?? null)
@@ -155,7 +152,6 @@ export function useBookingCart() {
   const cart = useLocalStorage<CartItem[]>('crouton-booking-cart', [])
 
   // --- Monthly limit sub-composable ---
-  const locationIdRef = computed(() => formState.locationId)
   const selectedDateRef = computed(() => formState.date)
   const editingBookingIdRef = computed(() => formState.editingBookingId)
 
@@ -190,6 +186,11 @@ export function useBookingCart() {
     cart,
   )
 
+  // Fetch availability with excludeBookingId support for editing
+  function fetchAvailability(startDate: Date, endDate: Date) {
+    baseFetchAvailability(startDate, endDate, formState.editingBookingId ?? undefined)
+  }
+
   // Wrap submitAll to re-fetch availability after successful submission
   // so the next BookingCreateCard shows correct slot availability
   async function submitAll() {
@@ -203,73 +204,7 @@ export function useBookingCart() {
     return result
   }
 
-  // Check if selected location is in inventory mode
-  const isInventoryMode = computed(() => selectedLocation.value?.inventoryMode ?? false)
-
-  // Inventory quantity for selected location
-  const inventoryQuantity = computed(() => selectedLocation.value?.quantity ?? 0)
-
-  // Parse raw slots from selected location (without availability filtering)
-  const rawSlots = computed<SlotItem[]>(() => {
-    if (!selectedLocation.value?.slots) return []
-
-    const slots = selectedLocation.value.slots
-
-    if (typeof slots === 'string') {
-      try {
-        const parsed = JSON.parse(slots)
-        return Array.isArray(parsed) ? parsed : []
-      }
-      catch {
-        return []
-      }
-    }
-
-    return Array.isArray(slots) ? slots : []
-  })
-
-  // Fetch availability for a date range
-  async function fetchAvailability(startDate: Date, endDate: Date) {
-    if (!formState.locationId || !teamId.value) return
-
-    availabilityLoading.value = true
-    try {
-      // Build query params, optionally excluding a booking (for editing)
-      const queryParams: Record<string, string> = {
-        locationId: formState.locationId,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      }
-      if (formState.editingBookingId) {
-        queryParams.excludeBookingId = formState.editingBookingId
-      }
-
-      const data = await $fetch<AvailabilityData>(
-        `/api/crouton-bookings/teams/${teamId.value}/availability`,
-        { query: queryParams },
-      )
-      availabilityData.value = data
-    }
-    catch (error) {
-      console.error('Failed to fetch availability:', error)
-      availabilityData.value = {}
-    }
-    finally {
-      availabilityLoading.value = false
-    }
-  }
-
-  // Get booked slots from API for a specific date (slot mode)
-  function getApiBookedSlotsForDate(date: Date): string[] {
-    const dateKey = toDateKey(date)
-    return availabilityData.value[dateKey]?.bookedSlots || []
-  }
-
-  // Get booked count from API for a specific date (inventory mode)
-  function getApiBookedCountForDate(date: Date): number {
-    const dateKey = toDateKey(date)
-    return availabilityData.value[dateKey]?.bookedCount ?? 0
-  }
+  // === Cart-aware availability (overlays cart data on top of API data) ===
 
   // Get booked slots from cart for a specific date and location (slot mode)
   function getCartBookedSlotsForDate(date: Date): string[] {
@@ -297,7 +232,7 @@ export function useBookingCart() {
       .reduce((sum, item) => sum + (item.quantity ?? 1), 0)
   }
 
-  // Get inventory availability for a date
+  // Get inventory availability for a date (API + cart combined)
   function getInventoryAvailability(date: Date) {
     const apiBooked = getApiBookedCountForDate(date)
     const cartBooked = getCartBookedCountForDate(date)
@@ -309,18 +244,11 @@ export function useBookingCart() {
       available: remaining > 0,
       remaining,
       total,
-      bookedCount
+      bookedCount,
     }
   }
 
-  // All slots for slot mode — "All Day" only when no named slots exist
-  const allSlots = computed<SlotItem[]>(() => {
-    if (!selectedLocation.value || isInventoryMode.value) return []
-    if (rawSlots.value.length > 0) return rawSlots.value
-    return [ALL_DAY_SLOT]
-  })
-
-  // Get all booked slot IDs for the selected date (from API + cart, with duplicates for capacity counting)
+  // Get all booked slot IDs for the selected date (API + cart combined, with duplicates for capacity counting)
   const bookedSlotIds = computed<string[]>(() => {
     if (!formState.date || isInventoryMode.value) return []
 
@@ -409,10 +337,9 @@ export function useBookingCart() {
     return allSlots.value.filter(slot => !isSlotDisabled(slot.id))
   })
 
-  // === Calendar availability helpers ===
+  // === Calendar availability helpers (API + cart combined) ===
 
   // Get all booked slots for a date (API + cart combined) - slot mode
-  // Keeps duplicates for capacity counting
   function getBookedSlotsForDate(date: Date): string[] {
     const apiBooked = getApiBookedSlotsForDate(date)
     const cartBooked = getCartBookedSlotsForDate(date)
@@ -470,6 +397,8 @@ export function useBookingCart() {
     }
   }, { immediate: true })
 
+  // === Cart operations ===
+
   // Can add to cart - adapts to inventory mode
   const canAddToCart = computed(() => {
     // Must have location and date
@@ -482,7 +411,8 @@ export function useBookingCart() {
       // Inventory mode: need location + date + enough availability for requested quantity
       const { remaining } = getInventoryAvailability(formState.date)
       if (remaining < formState.quantity) return false
-    } else {
+    }
+    else {
       // Slot mode: need location + date + at least one slot selected
       if (formState.slotIds.length === 0) return false
       // Check that at least one selected slot isn't disabled
@@ -537,7 +467,8 @@ export function useBookingCart() {
     const idx = formState.slotIds.indexOf(slotId)
     if (idx >= 0) {
       formState.slotIds = formState.slotIds.filter(id => id !== slotId)
-    } else {
+    }
+    else {
       formState.slotIds = [...formState.slotIds, slotId]
     }
   }

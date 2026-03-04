@@ -1,5 +1,6 @@
 import type { DateValue } from '@internationalized/date'
 import type { BlockedDateItem, SlotSchedule, SlotItem } from '../types/booking'
+import { parseLocationSlots } from './useBookingSlots'
 import { toDateKey as sharedToDateKey } from '@fyit/crouton-core/shared/utils/date'
 
 /** Minimal interface for schedule rule evaluation */
@@ -71,20 +72,8 @@ export function useScheduleRules(location: Ref<ScheduleRuleLocation | null | und
     return []
   })
 
-  // Parse location slots for "all day" rule evaluation
-  const locationSlots = computed<SlotItem[]>(() => {
-    const raw = location.value?.slots
-    if (!raw) return []
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw)
-        return Array.isArray(parsed) ? parsed : []
-      } catch {
-        return []
-      }
-    }
-    return Array.isArray(raw) ? raw : []
-  })
+  // Parse location slots for "all day" rule evaluation — uses shared utility
+  const locationSlots = computed<SlotItem[]>(() => parseLocationSlots(location.value))
 
   // --- Helpers ---
 

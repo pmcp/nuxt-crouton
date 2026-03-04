@@ -129,6 +129,24 @@ export interface BookingData {
 }
 
 /**
+ * Availability data from the API, keyed by date (YYYY-MM-DD).
+ * Shared between useBookingAvailability and useBookingCart.
+ */
+export interface AvailabilityData {
+  [dateISO: string]: {
+    bookedSlots: string[]
+    bookedCount?: number // For inventory mode
+    bookedGroupSlots?: Record<string, string[]> // slotId → groupIds that booked it
+  }
+}
+
+/** Sentinel slot used when a location has no named slots */
+export const ALL_DAY_SLOT: SlotItem = {
+  id: 'all-day',
+  label: 'All Day',
+}
+
+/**
  * Booking with related data from API
  */
 export interface Booking {
