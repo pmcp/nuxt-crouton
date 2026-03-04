@@ -37,7 +37,7 @@ export default defineNuxtConfig({
 
   // Auto-imports from the layer
   imports: {
-    dirs: ['app/composables']
+    dirs: ['app/composables', 'app/utils']
   },
 
   // Runtime config defaults

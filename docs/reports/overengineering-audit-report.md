@@ -215,10 +215,10 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [ ] **crouton-triage** — 318-line custom rate limiter (`server/utils/rateLimit.ts`) — use `rate-limiter-flexible` or h3
 - [ ] **crouton-triage** — 307-line custom metrics collector (`server/utils/metrics.ts`) — use OpenTelemetry
 - [ ] **crouton-triage** — 213-line `securityCheck.ts` — move to CI or startup plugin
-- [ ] **crouton-cli** — `pascal()`, `toSnakeCase()`, `toKebabCase()` in `helpers.ts` — use `scule`
+- [x] ✅ **crouton-cli** — ~~`pascal()`, `toSnakeCase()`, `toKebabCase()` in `helpers.ts`~~ — replaced with `scule` imports (`pascalCase`, `snakeCase`, `kebabCase`); 251 tests pass
 - [ ] **crouton-core** — hand-rolled English singularization in `useFormatCollections.ts` — use `pluralize` npm package
-- [ ] **crouton-events** — hand-rolled `relativeTime` in `CroutonEventDetail.vue` — use VueUse's `useTimeAgo()`
-- [ ] **crouton-admin** — `formatDate()` duplicated in `UserList.vue` and `TeamList.vue`
+- [x] ✅ **crouton-events** — ~~hand-rolled `relativeTime` in `CroutonEventDetail.vue`~~ — replaced with VueUse's `useTimeAgo()` (reactive, auto-updates)
+- [x] ✅ **crouton-admin** — ~~`formatDate()` duplicated in `UserList.vue` and `TeamList.vue`~~ — extracted to `app/utils/format.ts`, auto-imported via layer config
 
 ### 11. Dead Code
 

@@ -1,25 +1,9 @@
 // Utility functions for case conversion and type mapping
+import { pascalCase, snakeCase, kebabCase } from 'scule'
 
-export function pascal(s: string): string {
-  return String(s).replace(/(^|[_\-\s]+)([a-z])/g, (_, __, c) => c.toUpperCase())
-}
-
-export function toSnakeCase(str: string): string {
-  return str
-    .replace(/([A-Z])/g, '_$1')
-    .replace(/^_/, '')
-    .replace(/-/g, '_')
-    .toLowerCase()
-}
-
-// Convert camelCase or PascalCase to kebab-case
-// e.g., emailTemplates -> email-templates, EmailTemplates -> email-templates
-export function toKebabCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .toLowerCase()
-}
+export const pascal = pascalCase
+export const toSnakeCase = snakeCase
+export const toKebabCase = kebabCase
 
 export interface CaseVariants {
   singular: string
