@@ -38,6 +38,7 @@ jobs:
         run: |
           pnpm --filter '@fyit/crouton-auth' build
           pnpm --filter '@fyit/crouton-core' build
+          pnpm --filter '@fyit/crouton-ai' build
           pnpm --filter '@fyit/crouton' build
 
       - name: Run database migrations
