@@ -180,9 +180,10 @@ async function resolveTeamContext(
     }
 
     // Valid team - switch session if needed (client-only: authClient is not available on server)
+    // Always use targetTeam.slug (not urlTeamParam which may be an ID)
     if (!import.meta.server && activeOrganization.value?.id !== targetTeam.id) {
       try {
-        await switchTeamBySlug(urlTeamParam)
+        await switchTeamBySlug(targetTeam.slug)
       } catch (e) {
         console.error('[@crouton/auth] Failed to switch team:', e)
       }
