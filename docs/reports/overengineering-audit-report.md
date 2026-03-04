@@ -67,10 +67,10 @@ These use `ref()` at module scope instead of `useState()`, causing state to pers
 
 All of these manually manage `loading`, `error`, `data` refs around `$fetch` calls:
 
-- [ ] **crouton-admin** — `useAdminStats.ts` (only auto-refresh via `useIntervalFn` is added value)
+- [x] ✅ **crouton-admin** — ~~`useAdminStats.ts` manual fetch boilerplate~~ → replaced with `useFetch` + `computed` for loading/error, kept `useIntervalFn` for auto-refresh
 - [x] **crouton-admin** — `useAdminTeams.ts` — ~~identical boilerplate~~ → extracted `withLoading()` helper, replaced `URLSearchParams` with `$fetch` `query` option
 - [x] **crouton-admin** — `useAdminUsers.ts` — ~~identical boilerplate~~ → extracted `withLoading()` helper, replaced `URLSearchParams` with `$fetch` `query` option
-- [ ] **crouton-auth** — `useAuthCache.ts` (184 lines reimplementing Nuxt caching)
+- [x] ✅ **crouton-auth** — ~~`useAuthCache.ts` (184 lines reimplementing Nuxt caching)~~ → deleted (zero production callers, dead code)
 - [x] **crouton-core** — `useCollectionItem.ts` — ~~manual $fetch + ref + onMounted retry~~ → `useAsyncData` with `server: false` for SSR-safe deferred fetch, `watch` for reactive ID
 - [x] **crouton-triage** — `useTriageConnectedAccounts.ts` — ~~manual $fetch + ref boilerplate~~ → `useFetch` for data fetching, mutations kept as `$fetch`
 - [x] **crouton-triage** — `useTriageSlackUsers.ts` — ~~manual $fetch + ref boilerplate~~ → `useAsyncData` with `immediate: false`, error mapping preserved
@@ -359,7 +359,7 @@ These patterns are correct across the entire codebase:
 
 ### Phase 3: Architecture Improvements (Higher effort)
 11. ~~Split `useAuth` god composable~~ ✅ split into `usePasskeys`, `useTwoFactor`, `usePasswordReset`
-12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; `useCollectionItem` → `useAsyncData` with SSR-safe `server:false` pattern; remaining: `useAdminStats`)
+12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (all targets done: 4 triage composables, `useCollectionItem`, `useAdminStats` → `useFetch`; `useAuthCache` deleted — zero callers)
 13. ~~Extract shared scaffold infrastructure~~ ✅ pipeline + types + utils to crouton-core
 14. ~~Refactor triage duplications~~ ✅ (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`; 14b ✅ email parser deduplicated — extracted `prepareEmailContext`, `extractFileKey`, `buildParsedEmail` shared helpers, `parseEmail`/`parseEmailAsync` now thin wrappers. 1,012→892L, 71 tests pass.)
 15. ~~Split `useBookingCart` and `Flow.vue`~~ ✅ (15a ✅ useBookingCart deduped + composed via useBookingAvailability; 15b ✅ Flow.vue split into useFlowDragDrop + useFlowSyncBridge, script 812→393L)
@@ -369,7 +369,7 @@ These patterns are correct across the entire codebase:
 | # | Item | Files | Complexity | Single Session? | Notes |
 |---|------|-------|-----------|----------------|-------|
 | 11 | Split `useAuth` | 1 → 3-4 new | Medium | Yes | 924 lines, 27 exports. Clear split: passkeys (~250L), 2FA (~260L), password reset (~45L). Post-split: ~200L. `withError()` exists but unused. |
-| 12 | Replace manual fetch | 5-6 files / 3 pkgs | Variable | Partial | 4 triage composables ✅. `useCollectionItem` ✅ (useAsyncData + server:false). `useAdminStats` remaining (interval refresh). `useAuthCache` out of scope (not a fetch wrapper). |
+| 12 | ~~Replace manual fetch~~ ✅ | 5-6 files / 3 pkgs | Variable | ✅ Done | 4 triage composables ✅. `useCollectionItem` ✅. `useAdminStats` ✅ (useFetch + useIntervalFn). `useAuthCache` ✅ (deleted — zero callers). |
 | 13 | ~~Extract scaffold infra~~ ✅ | ~4 files / 2 pkgs | Medium-High | Yes (tight) | Done — extracted pipeline + types + utils to crouton-core. Both endpoints now thin wrappers. |
 | 14 | ~~Triage duplications~~ ✅ | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b ✅**: Email parser deduplicated — extracted shared helpers (`prepareEmailContext`, `extractFileKey`, `buildParsedEmail`), `parseEmail`/`parseEmailAsync` now thin wrappers. 1,012→892L. |
 | 15 | ~~Split BookingCart + Flow~~ ✅ | 2 large files | High | No — 1 each | **15a ✅**: BookingCart 669→600L, composed via useBookingAvailability, deduped slot parsing + types. **15b ✅**: Flow.vue script 812→393L, extracted useFlowDragDrop (202L) + useFlowSyncBridge (231L). |

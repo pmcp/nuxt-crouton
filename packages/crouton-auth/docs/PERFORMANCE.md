@@ -42,49 +42,17 @@ Components are organized by loading priority:
 
 ### Client-Side Caching
 
-Use `useAuthCache` for caching API responses:
+Use Nuxt's built-in `useFetch`/`useAsyncData` for caching API responses — they provide automatic deduplication, SSR support, and cache management out of the box.
 
 ```typescript
-const { getCached, setCached, withCache, CACHE_TTL } = useAuthCache()
+// Automatic caching via useFetch
+const { data: teams } = useFetch('/api/teams')
 
-// Manual caching
-const cachedTeams = getCached('teams')
-if (!cachedTeams) {
-  const teams = await fetchTeams()
-  setCached('teams', teams, { ttl: CACHE_TTL.TEAMS })
-}
-
-// Automatic caching wrapper
-const fetchTeamsCached = withCache(
-  'teams',
-  () => $fetch('/api/teams'),
-  { ttl: CACHE_TTL.TEAMS }
+// Manual cache key for deduplication
+const { data: members } = useAsyncData(
+  `team-members-${teamId}`,
+  () => $fetch(`/api/teams/${teamId}/members`)
 )
-```
-
-### Cache TTL Guidelines
-
-| Data Type | TTL | Reason |
-|-----------|-----|--------|
-| Session | 30s | Can change (logout, etc.) |
-| Team List | 60s | Rarely changes |
-| Team Members | 60s | Rarely changes |
-| Billing Info | 5m | Rarely changes |
-| User Profile | 60s | User may edit |
-| Invitations | 30s | Can be accepted/revoked |
-
-### Cache Invalidation
-
-Invalidate caches on mutations:
-
-```typescript
-const { invalidate, invalidateByPrefix } = useAuthCache()
-
-// After team creation
-invalidate(cacheKeys.teams(userId))
-
-// After logout
-invalidateByPrefix('auth:')
 ```
 
 ## Server-Side Optimizations

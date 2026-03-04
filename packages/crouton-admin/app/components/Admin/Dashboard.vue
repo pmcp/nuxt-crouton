@@ -5,7 +5,6 @@
  * Admin dashboard with stats cards, recent activity, and quick actions.
  * Uses useAdminStats() composable for data.
  */
-import { computed, onMounted } from 'vue'
 import type { AdminStats } from '../../../types/admin'
 
 const { t } = useT()
@@ -25,17 +24,12 @@ const emit = defineEmits<{
   navigate: [path: string]
 }>()
 
-const { stats: fetchedStats, loading, error, getStats } = useAdminStats()
+const { stats: fetchedStats, loading, error } = useAdminStats({
+  immediate: !props.stats
+})
 
 // Use provided stats or fetch them
 const displayStats = computed(() => props.stats ?? fetchedStats.value)
-
-// Fetch stats on mount if not provided
-onMounted(async () => {
-  if (!props.stats) {
-    await getStats()
-  }
-})
 
 const statCards = computed(() => {
   if (!displayStats.value) return []
