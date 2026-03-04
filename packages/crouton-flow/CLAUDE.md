@@ -10,7 +10,9 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 
 | File | Purpose |
 |------|---------|
-| `app/components/Flow.vue` | Main graph component |
+| `app/components/Flow.vue` | Main graph component (orchestrates composables) |
+| `app/composables/useFlowDragDrop.ts` | External drag-and-drop onto canvas |
+| `app/composables/useFlowSyncBridge.ts` | Yjs ↔ Vue Flow data bridge |
 | `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
 | `app/types/yjs.ts` | Flow node types (uses collab types) |

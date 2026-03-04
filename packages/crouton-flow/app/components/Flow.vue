@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
-import { useThrottleFn, useTimeoutFn } from '@vueuse/core'
+import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import type { Node, NodeDragEvent } from '@vue-flow/core'
-import type { FlowConfig, FlowPosition, CroutonDragData } from '../types/flow'
-import type { YjsFlowNode } from '../types/yjs'
-// Type is re-exported from our local types file
-import type { CollabAwarenessState } from '../types/yjs'
+import type { FlowConfig, FlowPosition } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
 import { useFlowSync } from '../composables/useFlowSync'
+import { useFlowDragDrop } from '../composables/useFlowDragDrop'
+import { useFlowSyncBridge } from '../composables/useFlowSyncBridge'
 import CroutonFlowNode from './Node.vue'
 import CroutonFlowGhostNode from './GhostNode.vue'
 
@@ -130,7 +129,7 @@ if (props.sync && !props.flowId) {
   console.warn('[CroutonFlow] flowId is required when sync mode is enabled')
 }
 
-// Container ref for potential future use
+// Container ref for drag-leave detection
 const containerRef = ref<HTMLElement | null>(null)
 
 // Dark mode detection - useColorMode is auto-imported by Nuxt
@@ -138,7 +137,7 @@ const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
 
 // ============================================
-// SYNC MODE: Use Yjs for real-time sync
+// SYNC MODE: Initialize real-time sync
 // ============================================
 const syncState = props.sync && props.flowId
   ? useFlowSync({
@@ -147,236 +146,58 @@ const syncState = props.sync && props.flowId
     })
   : null
 
-// Seed Yjs doc from rows if needed (when sync mode with rows but empty Yjs doc)
-const seeded = ref(false)
-watch(
-  () => syncState?.synced.value,
-  (synced) => {
-    if (synced && syncState && !seeded.value) {
-      // Check if Yjs already has nodes (from previous session)
-      if (syncState.nodes.value.length > 0) {
-        seeded.value = true
-        return
-      }
+// ============================================
+// VUEFLOW INSTANCE
+// ============================================
+const {
+  onNodeDrag,
+  onNodeDragStop,
+  onNodeClick,
+  onNodeDoubleClick,
+  onEdgeClick,
+  screenToFlowCoordinate
+} = useVueFlow()
 
-      // Yjs doc is empty but we have rows - seed it
-      if (props.rows && props.rows.length > 0) {
-        for (const row of props.rows) {
-          const id = String(row.id || crypto.randomUUID())
-          const title = String(row[props.labelField] || 'Untitled')
-          const parentId = row[props.parentField] as string | null | undefined
-          const rawPosition = row[props.positionField]
-
-          // Handle position - could be string JSON, object, or undefined
-          let position: FlowPosition | null = null
-          if (rawPosition) {
-            if (typeof rawPosition === 'string') {
-              try {
-                position = JSON.parse(rawPosition)
-              } catch {
-                console.warn('[CroutonFlow] Failed to parse position string:', rawPosition)
-              }
-            } else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
-              position = rawPosition as FlowPosition
-            }
-          }
-
-          const finalPosition = position || { x: 0, y: 0 }
-
-          syncState.createNode({
-            id,
-            title,
-            parentId: parentId || null,
-            position: finalPosition,
-            data: { ...row }
-          })
-        }
-        seeded.value = true
-      }
-    }
-  },
-  { immediate: true }
-)
-
-// Watch for new/updated items in rows and sync them to Yjs
-// Watch both seeded state AND rows to trigger when either changes
-watch(
-  () => ({
-    rows: props.rows,
-    length: props.rows?.length ?? 0,
-    seeded: seeded.value
-  }),
-  ({ rows: newRows, seeded: isSeeded }) => {
-    if (!syncState || !isSeeded || !newRows) {
-      return
-    }
-
-    // Get existing nodes from Yjs as a map for quick lookup
-    const existingNodes = new Map(syncState.nodes.value.map(n => [n.id, n]))
-
-    // Sync rows to Yjs (add new, update existing)
-    for (const row of newRows) {
-      const id = String(row.id)
-      const title = String(row[props.labelField] || 'Untitled')
-      const parentId = row[props.parentField] as string | null | undefined
-      const rawPosition = row[props.positionField]
-
-      // Handle position
-      let position: FlowPosition | null = null
-      if (rawPosition) {
-        if (typeof rawPosition === 'string') {
-          try {
-            position = JSON.parse(rawPosition)
-          } catch { /* ignore */ }
-        } else if (typeof rawPosition === 'object' && 'x' in rawPosition && 'y' in rawPosition) {
-          position = rawPosition as FlowPosition
-        }
-      }
-
-      const existingNode = existingNodes.get(id)
-      if (!existingNode) {
-        // New item - add to Yjs
-        syncState.createNode({
-          id,
-          title,
-          parentId: parentId || null,
-          position: position || { x: 0, y: 0 },
-          data: { ...row }
-        })
-      } else {
-        // Existing item - check if data changed (compare title, parentId, and data)
-        const titleChanged = existingNode.title !== title
-        const parentChanged = existingNode.parentId !== (parentId || null)
-        // Compare data by checking key fields (exclude position which is managed by Yjs)
-        const dataChanged = JSON.stringify({ ...existingNode.data, [props.positionField]: undefined })
-          !== JSON.stringify({ ...row, [props.positionField]: undefined })
-
-        if (titleChanged || parentChanged || dataChanged) {
-          syncState.updateNode(id, {
-            title,
-            parentId: parentId || null,
-            data: { ...row }
-          })
-        }
-      }
-    }
-
-    // Handle deletions - remove nodes from Yjs that are no longer in rows
-    const rowIds = new Set(newRows.map(r => String(r.id)))
-    for (const [nodeId] of existingNodes) {
-      if (!rowIds.has(nodeId)) {
-        syncState.deleteNode(nodeId)
-      }
-    }
-  },
-  { deep: true, immediate: true }
-)
-
-// Convert sync nodes to Vue Flow format
-const syncNodes = computed<Node[]>(() => {
-  if (!syncState) return []
-
-  return syncState.nodes.value.map((node: YjsFlowNode) => ({
-    id: node.id,
-    type: 'default',
-    position: node.position,
-    data: {
-      ...node.data,
-      id: node.id,
-      title: node.title,
-      parentId: node.parentId
-    },
-    label: node.title
-  }))
-})
-
-// Watch for new nodes and clear ghost if a real node appears near ghost position
-// This provides smooth visual transition from ghost to real node
-watch(
-  () => syncNodes.value.length,
-  (newLength, oldLength) => {
-    // Only check if a node was added and we have a pending ghost
-    if (newLength > oldLength && localGhostNode.value) {
-      const ghostPos = localGhostNode.value.position
-      // Check if any new node is near the ghost position (within 50px)
-      const hasNodeNearGhost = syncNodes.value.some((node) => {
-        const dx = Math.abs(node.position.x - ghostPos.x)
-        const dy = Math.abs(node.position.y - ghostPos.y)
-        return dx < 50 && dy < 50
-      })
-
-      if (hasNodeNearGhost) {
-        // Real node appeared - clear ghost immediately
-        localGhostNode.value = null
-        if (props.sync && syncState) {
-          syncState.clearGhostNode()
-        }
-        // Clear the timeout if it's still pending
-        stopGhostCleanup()
-      }
-    }
-  }
-)
-
-// Generate edges from sync nodes
-const syncEdges = computed(() => {
-  if (!syncState) return []
-
-  const result: { id: string, source: string, target: string, type: string }[] = []
-  const nodeIds = new Set(syncState.nodes.value.map((n: YjsFlowNode) => n.id))
-
-  for (const node of syncState.nodes.value) {
-    if (node.parentId && nodeIds.has(node.parentId)) {
-      result.push({
-        id: `e-${node.parentId}-${node.id}`,
-        source: node.parentId,
-        target: node.id,
-        type: 'default'
-      })
-    }
-  }
-
-  return result
-})
-
-// Other users in the room (excluding current user)
-const otherUsersInRoom = computed<CollabAwarenessState[]>(() => {
-  if (!syncState) return []
-  const currentUserId = syncState.user.value?.id
-  return syncState.users.value.filter(u => u.user?.id !== currentUserId)
-})
-
-// Ghost nodes from other users' awareness (for multiplayer drag preview)
-const remoteGhostNodes = computed<Node[]>(() => {
-  if (!props.sync || !syncState) return []
-
-  const currentUserId = syncState.user.value?.id
-  return syncState.users.value
-    .filter(u => u.user.id !== currentUserId && u.ghostNode)
-    .map(u => ({
-      id: `ghost-${u.user.id}`,
-      type: 'default',
-      position: u.ghostNode!.position,
-      data: {
-        isGhost: true,
-        // Flow-specific properties stored at top level of awareness state
-        title: (u as Record<string, unknown>).ghostNodeTitle || 'New Node',
-        userName: u.user.name,
-        userColor: u.user.color
-      },
-      draggable: false,
-      selectable: false
-    }))
+// ============================================
+// DRAG & DROP (external items onto canvas)
+// ============================================
+const {
+  isDragOver,
+  localGhostNode,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  stopGhostCleanup
+} = useFlowDragDrop(props, {
+  syncState,
+  containerRef,
+  screenToFlowCoordinate,
+  onDrop: (item, position, collection) => emit('nodeDrop', item, position, collection)
 })
 
 // ============================================
-// STANDALONE MODE: Use props-based data
+// SYNC BRIDGE (Yjs ↔ Vue Flow conversion)
 // ============================================
+const {
+  syncNodes,
+  syncEdges,
+  otherUsersInRoom,
+  remoteGhostNodes
+} = useFlowSyncBridge({
+  syncState,
+  rows: computed(() => props.rows),
+  labelField: props.labelField,
+  parentField: props.parentField,
+  positionField: props.positionField,
+  localGhostNode,
+  stopGhostCleanup
+})
 
-// Convert rows to reactive ref
+// ============================================
+// STANDALONE MODE: Props-based data
+// ============================================
 const rowsRef = computed(() => props.rows || [])
 
-// Convert rows to nodes and edges
 const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
   rowsRef,
   {
@@ -402,28 +223,18 @@ const { debouncedUpdate } = useDebouncedPositionUpdate(
   500
 )
 
-// Track if initial layout has been applied (standalone mode)
+// Apply layout to standalone nodes (once on initial load)
 const initialLayoutApplied = ref(false)
-
-// Apply layout to nodes that need it (standalone mode only)
-// Only applies layout ONCE on initial load, then preserves all positions
 const layoutedNodes = computed(() => {
   const nodes = dataNodes.value
   const edges = dataEdges.value
 
-  // Only apply layout on initial load (when all nodes are at 0,0)
-  // After that, preserve all positions - no dagre at all
   if (!initialLayoutApplied.value && needsLayout(nodes)) {
     const result = applyLayout(nodes, edges)
-    // Mark layout as applied (in nextTick to avoid mutation during render)
-    nextTick(() => {
-      initialLayoutApplied.value = true
-    })
+    nextTick(() => { initialLayoutApplied.value = true })
     return result
   }
 
-  // After initial layout, just return nodes as-is
-  // New nodes will appear at their drop position (or 0,0 if no position set)
   return nodes
 })
 
@@ -431,30 +242,19 @@ const layoutedNodes = computed(() => {
 // FINAL COMPUTED VALUES
 // ============================================
 
-// Track if we've applied initial layout to Yjs
 const layoutAppliedToYjs = ref(false)
 
-// Use sync nodes or legacy nodes based on mode
-// In sync mode: Only apply layout ONCE on initial load (when all nodes are at 0,0)
-// After that, positions are managed by Yjs and preserved across sessions
-// New nodes dropped on canvas get their position from the drop handler
 const finalNodes = computed(() => {
   let baseNodes: Node[]
 
   if (props.sync && syncState) {
     const nodes = syncNodes.value
     const edges = syncEdges.value
-
-    // needsLayout only returns true when ALL nodes are at (0,0) - i.e., initial load
-    // It does NOT return true just because a single new node was added
     const needsLayoutResult = needsLayout(nodes)
 
-    // Only apply initial layout ONCE, then respect Yjs positions forever
     if (needsLayoutResult && !layoutAppliedToYjs.value) {
       const layoutedNodesResult = applyLayout(nodes, edges)
 
-      // Write layout positions back to Yjs so they persist
-      // Use nextTick to avoid updating during render
       nextTick(() => {
         for (const node of layoutedNodesResult) {
           if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
@@ -466,8 +266,6 @@ const finalNodes = computed(() => {
 
       baseNodes = layoutedNodesResult
     } else {
-      // Use Yjs positions as-is - this preserves manually positioned nodes
-      // and new nodes with drop positions
       baseNodes = nodes
     }
   } else {
@@ -494,16 +292,6 @@ const finalEdges = computed(() => {
 // EVENT HANDLERS
 // ============================================
 
-// Use VueFlow instance
-const {
-  onNodeDrag,
-  onNodeDragStop,
-  onNodeClick,
-  onNodeDoubleClick,
-  onEdgeClick,
-  screenToFlowCoordinate
-} = useVueFlow()
-
 // Handle node drag - sync position in real-time (throttled to 50ms)
 const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
   if (!props.draggable || !props.sync || !syncState) return
@@ -514,7 +302,6 @@ const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
     y: Math.round(node.position.y)
   }
 
-  // Sync to Yjs in real-time
   syncState.updatePosition(node.id, position)
 }, 50)
 
@@ -531,14 +318,11 @@ onNodeDragStop((event: NodeDragEvent) => {
   }
 
   if (props.sync && syncState) {
-    // Final sync to Yjs
     syncState.updatePosition(node.id, position)
   } else {
-    // Persist via debounced mutation (standalone mode)
     debouncedUpdate(node.id, position)
   }
 
-  // Emit event
   emit('nodeMove', node.id, position)
 })
 
@@ -579,213 +363,13 @@ onEdgeClick(({ edge }) => {
 })
 
 // ============================================
-// DRAG & DROP FROM EXTERNAL SOURCES
+// CUSTOM NODE RESOLUTION
 // ============================================
-
-// Visual feedback for drag over (legacy - will be replaced by ghost nodes)
-const isDragOver = ref(false)
-
-// Local ghost node state (what this user is dragging)
-const localGhostNode = ref<Node | null>(null)
-
-// Delayed ghost cleanup (auto-cancels on unmount via useTimeoutFn)
-const { start: startGhostCleanup, stop: stopGhostCleanup } = useTimeoutFn(() => {
-  localGhostNode.value = null
-  if (props.sync && syncState) {
-    syncState.clearGhostNode()
-  }
-}, 1000, { immediate: false })
-
-// Throttled ghost node broadcast (sync every 50ms during dragover)
-const broadcastGhostNode = useThrottleFn((position: { x: number; y: number }) => {
-  if (!props.sync || !syncState) return
-  syncState.updateGhostNode({
-    id: `ghost-${syncState.user.value?.id}`,
-    title: 'New Node',
-    collection: props.collection,
-    position: { x: Math.round(position.x), y: Math.round(position.y) }
-  })
-}, 50)
-
-/**
- * Parse drag data from dataTransfer
- */
-function parseDragData(event: DragEvent): CroutonDragData | null {
-  try {
-    const data = event.dataTransfer?.getData('application/json')
-    if (!data) return null
-
-    const parsed = JSON.parse(data)
-    if (parsed.type !== 'crouton-item') return null
-
-    return parsed as CroutonDragData
-  } catch {
-    return null
-  }
-}
-
-/**
- * Check if a drag item is allowed to be dropped
- */
-function isDropAllowed(dragData: CroutonDragData): boolean {
-  if (!props.allowDrop) return false
-
-  // Check allowed collections
-  if (props.allowedCollections && props.allowedCollections.length > 0) {
-    return props.allowedCollections.includes(dragData.collection)
-  }
-
-  return true
-}
-
-/**
- * Handle dragover - show ghost node at cursor position
- */
-function handleDragOver(event: DragEvent) {
-  if (!props.allowDrop) return
-
-  // Check if this is a valid crouton drag (can only check types during dragover, not data)
-  const types = event.dataTransfer?.types || []
-  if (!types.includes('application/json')) return
-
-  event.preventDefault()
-  event.dataTransfer!.dropEffect = 'move'
-  isDragOver.value = true
-
-  // Convert screen coordinates to flow coordinates
-  const position = screenToFlowCoordinate({
-    x: event.clientX,
-    y: event.clientY
-  })
-
-  const userName = props.sync && syncState?.user.value?.name || 'You'
-  const userColor = props.sync && syncState?.user.value?.color || '#3b82f6'
-
-  // Update local ghost node with generic title (browser security blocks reading data during dragover)
-  localGhostNode.value = {
-    id: 'local-ghost',
-    type: 'default',
-    position: { x: position.x, y: position.y },
-    data: {
-      isGhost: true,
-      title: 'New Node',
-      userName,
-      userColor
-    },
-    draggable: false,
-    selectable: false
-  }
-  // Broadcast to other users (throttled) in sync mode
-  broadcastGhostNode(position)
-}
-
-/**
- * Handle dragleave - clear ghost node
- */
-function handleDragLeave(event: DragEvent) {
-  // Only handle if leaving the container (not entering a child)
-  const relatedTarget = event.relatedTarget as HTMLElement | null
-  if (relatedTarget && containerRef.value?.contains(relatedTarget)) return
-
-  isDragOver.value = false
-
-  // Clear local ghost node
-  localGhostNode.value = null
-
-  // Clear broadcast in sync mode
-  if (props.sync && syncState) {
-    syncState.clearGhostNode()
-  }
-}
-
-/**
- * Handle drop - create node from dropped item
- */
-function handleDrop(event: DragEvent) {
-  event.preventDefault()
-  isDragOver.value = false
-
-  // Clear any pending ghost cleanup
-  stopGhostCleanup()
-
-  if (!props.allowDrop) {
-    // Not allowed - clear ghost immediately
-    localGhostNode.value = null
-    if (props.sync && syncState) {
-      syncState.clearGhostNode()
-    }
-    return
-  }
-
-  const dragData = parseDragData(event)
-  if (!dragData || !isDropAllowed(dragData)) {
-    // Invalid drop - clear ghost immediately
-    localGhostNode.value = null
-    if (props.sync && syncState) {
-      syncState.clearGhostNode()
-    }
-    return
-  }
-
-  // Convert screen coordinates to flow coordinates
-  const position = screenToFlowCoordinate({
-    x: event.clientX,
-    y: event.clientY
-  })
-
-  const flowPosition: FlowPosition = {
-    x: Math.round(position.x),
-    y: Math.round(position.y)
-  }
-
-  // Auto-create node in sync mode if enabled
-  if (props.autoCreateOnDrop && props.sync && syncState) {
-    const item = dragData.item
-    const id = String(item.id || crypto.randomUUID())
-    const title = String(item[props.labelField] || 'Untitled')
-
-    syncState.createNode({
-      id,
-      title,
-      parentId: null,
-      position: flowPosition,
-      data: { ...item }
-    })
-
-    // Clear ghost immediately since we created the node
-    localGhostNode.value = null
-    if (props.sync && syncState) {
-      syncState.clearGhostNode()
-    }
-  } else {
-    // When autoCreateOnDrop is false, keep ghost visible as a placeholder
-    // while the parent handles the drop asynchronously
-    // Update ghost position to exact drop position
-    if (localGhostNode.value) {
-      localGhostNode.value = {
-        ...localGhostNode.value,
-        position: flowPosition,
-        data: {
-          ...localGhostNode.value.data,
-          isPending: true // Mark as pending
-        }
-      }
-    }
-
-    // Clear ghost after a delay to allow real node to appear
-    // This prevents visual "jump" when ghost disappears before real node appears
-    startGhostCleanup()
-  }
-
-  // Always emit the event for custom handling
-  emit('nodeDrop', dragData.item, flowPosition, dragData.collection)
-}
 
 // Try to resolve custom node component for this collection.
 // resolveComponent returns a string (the component name) when not found in dev,
 // or throws in production. We check the return type to detect presence.
 const customNodeComponent = computed(() => {
-  // Convert collection name to PascalCase
   const pascalName = props.collection
     .split(/[-_]/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
@@ -793,15 +377,12 @@ const customNodeComponent = computed(() => {
 
   const componentName = `${pascalName}Node`
 
-  // Try the standard variant first
   const resolved = resolveComponent(componentName)
   if (typeof resolved !== 'string') return resolved
 
-  // Try lazy variant
   const lazyResolved = resolveComponent(`Lazy${componentName}`)
   if (typeof lazyResolved !== 'string') return lazyResolved
 
-  // Use default CroutonFlowNode
   return null
 })
 

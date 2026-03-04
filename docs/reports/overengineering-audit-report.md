@@ -34,9 +34,9 @@
   - ~~Duplicates ~40% of `useBookingAvailability` logic~~
   - **Done**: Exported `parseLocationSlots()` standalone from `useBookingSlots.ts`, moved `AvailabilityData`/`ALL_DAY_SLOT` to `types/booking.ts`, refactored `useBookingCart` to compose `useBookingAvailability` (eliminating base availability duplication), deduped slot parsing in `useScheduleRules`. Cart: 669→600L. Public API unchanged.
 
-- [ ] **crouton-flow** — `Flow.vue` (812 lines in `<script setup>`)
-  - Handles: standalone + sync modes, Yjs seeding, layout, drag/drop, ghost nodes, custom node resolution, presence
-  - **Fix**: Extract `useFlowDragDrop()` and `useFlowSyncBridge()` composables.
+- [x] ✅ **crouton-flow** — ~~`Flow.vue` (812 lines in `<script setup>`)~~
+  - ~~Handles: standalone + sync modes, Yjs seeding, layout, drag/drop, ghost nodes, custom node resolution, presence~~
+  - **Done**: Extracted `useFlowDragDrop()` (202L) and `useFlowSyncBridge()` (231L) composables. Flow.vue script: 812→393L (52% reduction). Also deduplicated position parsing via shared `parsePosition()` helper in sync bridge. Public API and template bindings unchanged.
 
 ### 2. SSR-Unsafe Module-Level `ref()` (State Bleed Between Requests)
 
@@ -363,7 +363,7 @@ These patterns are correct across the entire codebase:
 12. ~~Replace manual fetch boilerplate with `useFetch`~~ ✅ (easy targets: 4 triage composables → `useFetch`/`useAsyncData`; remaining: `useAdminStats`, `useCollectionItem`)
 13. ~~Extract shared scaffold infrastructure~~ ✅ pipeline + types + utils to crouton-core
 14. Refactor triage duplications (14a ✅ similarity/field-mapping deduplicated into `shared/utils/field-mapping.ts`)
-15. Split `useBookingCart` and `Flow.vue` (15a ✅ useBookingCart deduped + composed via useBookingAvailability)
+15. ~~Split `useBookingCart` and `Flow.vue`~~ ✅ (15a ✅ useBookingCart deduped + composed via useBookingAvailability; 15b ✅ Flow.vue split into useFlowDragDrop + useFlowSyncBridge, script 812→393L)
 
 #### Phase 3 Readiness Assessment (2026-03-03)
 
@@ -373,9 +373,9 @@ These patterns are correct across the entire codebase:
 | 12 | Replace manual fetch | 5-6 files / 3 pkgs | Variable | Partial | 3 triage composables easy. `useAdminStats` moderate (interval refresh). `useCollectionItem` difficult (SSR + dynamic URL). `useAuthCache` out of scope (not a fetch wrapper). |
 | 13 | ~~Extract scaffold infra~~ ✅ | ~4 files / 2 pkgs | Medium-High | Yes (tight) | Done — extracted pipeline + types + utils to crouton-core. Both endpoints now thin wrappers. |
 | 14 | Triage duplications | 4 files | Medium | Split | **14a ✅**: `calculateSimilarity` + field-mapping deduplicated into `shared/utils/field-mapping.ts`. **14b**: Email parser (1,011L, 3 functions sharing 60%) = separate session. |
-| 15 | Split BookingCart + Flow | 2 large files | High | No — 1 each | **15a ✅**: BookingCart 669→600L, composed via useBookingAvailability, deduped slot parsing + types. **15b**: Flow.vue: 1,046L (812 script). |
+| 15 | ~~Split BookingCart + Flow~~ ✅ | 2 large files | High | No — 1 each | **15a ✅**: BookingCart 669→600L, composed via useBookingAvailability, deduped slot parsing + types. **15b ✅**: Flow.vue script 812→393L, extracted useFlowDragDrop (202L) + useFlowSyncBridge (231L). |
 
-**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → ~~15a (booking)~~ → 15b (flow) → 14b (email parser) → 12 (useCollectionItem)
+**Recommended order**: ~~11~~ → ~~14a (similarity/field-mapping)~~ → ~~12 (easy targets)~~ → ~~13~~ → ~~15a (booking)~~ → ~~15b (flow)~~ → 14b (email parser) → 12 (useCollectionItem)
 
 ### Phase 4: Infrastructure (When time permits)
 16. Replace custom triage infrastructure (logger, rate limiter, metrics)
