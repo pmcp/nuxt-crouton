@@ -311,20 +311,20 @@ const headingClasses: Record<number, string> = {
 <style scoped>
 /* Gap is handled by flex gap-12 on the container */
 
-/* Default block constraint — comfortable reading width */
+/* Default block constraint — comfortable content width */
 .block-content > * {
-  max-width: 48rem;
+  max-width: 64rem;
   margin-left: auto;
   margin-right: auto;
 }
 
 /* Block size presets */
 .block-content > .block-size-narrow {
-  max-width: 36rem;
+  max-width: 48rem;
 }
 
 .block-content > .block-size-wide {
-  max-width: 64rem;
+  max-width: 80rem;
 }
 
 .block-content > .block-size-full {

@@ -114,7 +114,7 @@ function applyLayoutClasses() {
   switch (pageLayout.value) {
     case 'full-height':
       container.className = 'bg-background h-screen flex flex-col overflow-hidden'
-      main.className = `flex-1 overflow-hidden ${pt} px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full`
+      main.className = `flex-1 overflow-hidden ${pt} px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full`
       break
     case 'full-screen':
       container.className = 'bg-background min-h-screen'
@@ -122,7 +122,7 @@ function applyLayoutClasses() {
       break
     default:
       container.className = 'bg-background min-h-screen'
-      main.className = `max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
+      main.className = `max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
   }
 }
 
@@ -156,7 +156,7 @@ const mainClasses = computed(() => {
     case 'full-screen':
       return 'pt-16'
     default:
-      return `max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
+      return `max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${pt} pb-8`
   }
 })
 </script>
