@@ -13,7 +13,7 @@ import { user as userTable } from '@fyit/crouton-auth/server/database/schema/aut
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { bookingsLocations } from '~~/layers/bookings/collections/locations/server/database/schema'
 import { isBookingEmailEnabled } from '../../../../utils/booking-emails'
-import { getBookingEmailStats, getBookingEmailDetails } from '../../../../utils/email-service'
+import { getBatchBookingEmailStats, getBatchBookingEmailDetails } from '../../../../utils/email-service'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -108,23 +108,23 @@ export default defineEventHandler(async (event) => {
     return actions
   }
 
-  // Add email data when email is enabled
+  // Add email data when email is enabled (batch queries: 2 queries instead of 3N)
   let enrichedBookings = bookings
-  if (emailEnabled) {
-    enrichedBookings = await Promise.all(
-      bookings.map(async (booking) => {
-        const [emailStats, emailDetails] = await Promise.all([
-          getBookingEmailStats(booking.id, team.id),
-          getBookingEmailDetails(booking.id, team.id, booking.date, booking.createdAt)
-        ])
-        return {
-          ...booking,
-          emailStats,
-          emailDetails,
-          emailActions: getEmailActionsForBooking(booking)
-        }
-      })
-    )
+  if (emailEnabled && bookings.length > 0) {
+    const bookingIds = bookings.map(b => b.id)
+    const [statsMap, detailsMap] = await Promise.all([
+      getBatchBookingEmailStats(bookingIds, team.id),
+      getBatchBookingEmailDetails(
+        bookings.map(b => ({ id: b.id, date: b.date, createdAt: b.createdAt })),
+        team.id
+      )
+    ])
+    enrichedBookings = bookings.map(booking => ({
+      ...booking,
+      emailStats: statsMap.get(booking.id) ?? { total: 0, sent: 0, pending: 0, failed: 0 },
+      emailDetails: detailsMap.get(booking.id) ?? [],
+      emailActions: getEmailActionsForBooking(booking)
+    }))
   }
 
   // If date params were provided, return with metadata

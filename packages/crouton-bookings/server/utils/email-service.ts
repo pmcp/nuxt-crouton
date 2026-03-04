@@ -12,7 +12,7 @@
  * - Install: @fyit/crouton-email (or implement custom email provider)
  * - Generate: email-template and email-log collections
  */
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
 import {
   isBookingEmailEnabled,
@@ -658,6 +658,208 @@ export async function triggerBookingCancelledEmail(
     adminEmail,
     locale
   })
+}
+
+/**
+ * Get email statistics for multiple bookings in a single query
+ */
+export async function getBatchBookingEmailStats(
+  bookingIds: string[],
+  teamId: string
+): Promise<Map<string, { total: number; sent: number; pending: number; failed: number }>> {
+  const defaultStats = { total: 0, sent: 0, pending: 0, failed: 0 }
+
+  if (!isBookingEmailEnabled() || bookingIds.length === 0) {
+    return new Map()
+  }
+
+  const db = useDB()
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
+    if (!bookingsEmaillogs) return new Map()
+
+    const logs = await db
+      .select({
+        bookingId: bookingsEmaillogs.bookingId,
+        status: bookingsEmaillogs.status
+      })
+      .from(bookingsEmaillogs)
+      .where(
+        and(
+          inArray(bookingsEmaillogs.bookingId, bookingIds),
+          eq(bookingsEmaillogs.teamId, teamId)
+        )
+      )
+
+    // Group by bookingId
+    const statsMap = new Map<string, { total: number; sent: number; pending: number; failed: number }>()
+    for (const log of logs) {
+      const stats = statsMap.get(log.bookingId) ?? { ...defaultStats }
+      stats.total++
+      if (log.status === 'sent') stats.sent++
+      else if (log.status === 'pending') stats.pending++
+      else if (log.status === 'failed') stats.failed++
+      statsMap.set(log.bookingId, stats)
+    }
+
+    return statsMap
+  }
+  catch (error) {
+    console.error('[booking-email] Failed to get batch email stats:', error)
+    return new Map()
+  }
+}
+
+/**
+ * Get detailed email status per trigger type for multiple bookings in batch
+ */
+export async function getBatchBookingEmailDetails(
+  bookings: Array<{ id: string; date: string | Date; createdAt?: string | Date | null }>,
+  teamId: string
+): Promise<Map<string, EmailTriggerStatusResult[]>> {
+  if (!isBookingEmailEnabled() || bookings.length === 0) {
+    return new Map()
+  }
+
+  const db = useDB()
+  const bookingIds = bookings.map(b => b.id)
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: Record<string, any> = await import('~~/server/db/schema')
+    const bookingsEmaillogs = schema.bookingsEmaillogs
+    const bookingsEmailtemplates = schema.bookingsEmailtemplates
+    if (!bookingsEmaillogs || !bookingsEmailtemplates) return new Map()
+
+    // Single query for all logs across all bookings
+    const [allLogs, templates] = await Promise.all([
+      db
+        .select({
+          bookingId: bookingsEmaillogs.bookingId,
+          triggerType: bookingsEmaillogs.triggerType,
+          status: bookingsEmaillogs.status,
+          sentAt: bookingsEmaillogs.sentAt,
+        })
+        .from(bookingsEmaillogs)
+        .where(
+          and(
+            inArray(bookingsEmaillogs.bookingId, bookingIds),
+            eq(bookingsEmaillogs.teamId, teamId)
+          )
+        ),
+      // Single query for templates (shared across all bookings in the team)
+      db
+        .select({
+          triggerType: bookingsEmailtemplates.triggerType,
+          daysOffset: bookingsEmailtemplates.daysOffset,
+        })
+        .from(bookingsEmailtemplates)
+        .where(
+          and(
+            eq(bookingsEmailtemplates.teamId, teamId),
+            eq(bookingsEmailtemplates.isActive, true)
+          )
+        )
+    ])
+
+    // Group logs by bookingId
+    const logsByBooking = new Map<string, typeof allLogs>()
+    for (const log of allLogs) {
+      const existing = logsByBooking.get(log.bookingId) ?? []
+      existing.push(log)
+      logsByBooking.set(log.bookingId, existing)
+    }
+
+    // Template flags (shared for all bookings)
+    const hasConfirmationTemplate = templates.some(t => t.triggerType === 'booking_created')
+    const reminderTemplate = templates.find(t => t.triggerType === 'reminder_before')
+    const hasCancelTemplate = templates.some(t => t.triggerType === 'booking_cancelled')
+    const followUpTemplate = templates.find(t => t.triggerType === 'follow_up_after')
+
+    // Build results per booking
+    const detailsMap = new Map<string, EmailTriggerStatusResult[]>()
+
+    for (const booking of bookings) {
+      const logs = logsByBooking.get(booking.id) ?? []
+      const results: EmailTriggerStatusResult[] = []
+      const bookingDate = new Date(booking.date)
+
+      // Confirmation (booking_created)
+      const confirmationLog = logs.find(l => l.triggerType === 'booking_created')
+      if (confirmationLog) {
+        results.push({
+          triggerType: 'booking_created',
+          status: confirmationLog.status as EmailTriggerStatusResult['status'],
+          sentAt: confirmationLog.sentAt || null,
+        })
+      } else if (hasConfirmationTemplate) {
+        results.push({
+          triggerType: 'booking_created',
+          status: 'not_sent',
+          scheduledFor: booking.createdAt ? new Date(booking.createdAt).toISOString() : null,
+        })
+      }
+
+      // Reminder (reminder_before)
+      const reminderLog = logs.find(l => l.triggerType === 'reminder_before')
+      if (reminderLog) {
+        results.push({
+          triggerType: 'reminder_before',
+          status: reminderLog.status as EmailTriggerStatusResult['status'],
+          sentAt: reminderLog.sentAt || null,
+        })
+      } else if (reminderTemplate) {
+        const daysOffset = Math.abs(reminderTemplate.daysOffset || 1)
+        const scheduledDate = new Date(bookingDate)
+        scheduledDate.setDate(scheduledDate.getDate() - daysOffset)
+        results.push({
+          triggerType: 'reminder_before',
+          status: 'not_sent',
+          scheduledFor: scheduledDate.toISOString(),
+        })
+      }
+
+      // Cancellation (booking_cancelled)
+      const cancelLog = logs.find(l => l.triggerType === 'booking_cancelled')
+      if (cancelLog || hasCancelTemplate) {
+        results.push({
+          triggerType: 'booking_cancelled',
+          status: cancelLog?.status as EmailTriggerStatusResult['status'] || 'not_sent',
+          sentAt: cancelLog?.sentAt || null,
+        })
+      }
+
+      // Follow-up (follow_up_after)
+      const followUpLog = logs.find(l => l.triggerType === 'follow_up_after')
+      if (followUpLog) {
+        results.push({
+          triggerType: 'follow_up_after',
+          status: followUpLog.status as EmailTriggerStatusResult['status'],
+          sentAt: followUpLog.sentAt || null,
+        })
+      } else if (followUpTemplate) {
+        const daysOffset = Math.abs(followUpTemplate.daysOffset || 1)
+        const scheduledDate = new Date(bookingDate)
+        scheduledDate.setDate(scheduledDate.getDate() + daysOffset)
+        results.push({
+          triggerType: 'follow_up_after',
+          status: 'not_sent',
+          scheduledFor: scheduledDate.toISOString(),
+        })
+      }
+
+      detailsMap.set(booking.id, results)
+    }
+
+    return detailsMap
+  }
+  catch (error) {
+    console.error('[booking-email] Failed to get batch email details:', error)
+    return new Map()
+  }
 }
 
 /**
