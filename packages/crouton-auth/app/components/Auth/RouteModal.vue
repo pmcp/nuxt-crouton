@@ -63,11 +63,19 @@ const modalTitle = computed(() => {
   }
 })
 
-// Close without URL restore then navigate to redirect target
+// Close modal, restore URL, refresh teams, then navigate
 async function handleSuccess() {
   const redirectTo = state.value.redirectTo
   state.value.open = false
-  await navigateTo(redirectTo)
+  // The router plugin used pushState to show /auth/* without navigating,
+  // so Vue Router's current route never changed. Restore the URL manually
+  // since navigateTo is a no-op when the router already thinks we're there.
+  if (import.meta.client) {
+    window.history.replaceState(null, '', redirectTo)
+  }
+  // Refresh teams list now that we're authenticated (nanostore doesn't auto-populate)
+  useTeam().refreshTeams()
+  await navigateTo(redirectTo, { replace: true })
 }
 
 // ── OAuth / passkey providers (shared across login & register) ────────────────
