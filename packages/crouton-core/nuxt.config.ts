@@ -52,6 +52,9 @@ export default defineNuxtConfig({
   // Runtime config for server-side secrets
   runtimeConfig: {
     encryptionKey: '', // NUXT_ENCRYPTION_KEY - base64-encoded 32-byte key for AES-256-GCM
+    crouton: {
+      serverTiming: true // Set to false to disable Server-Timing headers
+    }
   },
 
   // NuxtHub configuration for database, KV, blob storage
