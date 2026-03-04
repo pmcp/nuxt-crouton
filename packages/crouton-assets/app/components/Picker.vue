@@ -16,6 +16,7 @@ const searchQuery = ref('')
 const typeFilter = ref('all')
 const pendingSelection = ref<string | null>(null)
 
+const crouton = useCrouton()
 const { getConfig } = useCollections()
 const collectionName = props.collection || getConfig('croutonAssets')?.apiPath || getConfig('assets')?.apiPath || 'assets'
 
@@ -88,6 +89,24 @@ const handleUploaded = async (close: () => void) => {
 }
 
 const totalCount = computed(() => (assets.value as any[] | null)?.length ?? 0)
+
+const handleEdit = (asset: Record<string, any>) => {
+  crouton?.open('update', collectionName, [asset.id], 'modal')
+}
+
+const handleDelete = (asset: Record<string, any>) => {
+  crouton?.open('delete', collectionName, [asset.id])
+}
+
+// Auto-refresh asset list after any mutation on this collection
+useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
+  if (event.collection !== collectionName) return
+  await refresh()
+  // Clear selection if deleted asset was selected
+  if (event.operation === 'delete' && event.itemIds?.includes(pendingSelection.value)) {
+    pendingSelection.value = null
+  }
+})
 </script>
 
 <template>
@@ -216,6 +235,8 @@ const totalCount = computed(() => (assets.value as any[] | null)?.length ?? 0)
                 :selected="pendingSelection === asset.id"
                 :selectable="true"
                 @click="handleTileClick"
+                @edit="handleEdit"
+                @delete="handleDelete"
               />
             </div>
 
