@@ -16,6 +16,8 @@ crouton init <name> [options]                 # Full pipeline: scaffold → gene
 crouton rollback <layer> <collection>        # Remove collection
 crouton rollback-interactive                 # Interactive removal UI
 crouton seed-translations                    # Seed i18n data
+crouton db-pull                              # Pull remote D1 → local dev
+crouton db-pull --env preview                # Pull from staging environment
 ```
 
 ## Add Command (Module Installation)
@@ -119,6 +121,45 @@ crouton init my-app --dry-run
 3. **doctor** — Validates everything is wired correctly
 4. **Summary** — Prints next steps (dev server, deploy)
 
+## DB Pull Command
+
+Pull remote D1 database into local dev in one step (replaces manual export → clear → import workflow):
+
+```bash
+# Pull production database
+crouton db-pull
+
+# Pull from staging/preview environment
+crouton db-pull --env preview
+
+# Keep the exported SQL file
+crouton db-pull --keep-sql
+
+# Preview without executing
+crouton db-pull --dry-run
+
+# Use custom wrangler config
+crouton db-pull --config ./custom-wrangler.jsonc
+```
+
+### DB Pull Options
+
+| Option | Description |
+|--------|-------------|
+| `--env <name>` | Wrangler environment (e.g., `preview` for staging DB) |
+| `--config <path>` | Custom wrangler config path (auto-detects `.toml`/`.jsonc`/`.json`) |
+| `--keep-sql` | Keep the exported `.db-pull-seed.sql` file after import |
+| `--dry-run` | Show what would happen without executing |
+
+### What `crouton db-pull` Does
+
+1. **Detects** wrangler config (`wrangler.toml`, `.jsonc`, `.json`)
+2. **Parses** `d1_databases` to get database name and ID
+3. **Exports** remote DB via `wrangler d1 export --remote`
+4. **Clears** local D1 directory (`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`)
+5. **Imports** via `wrangler d1 execute --local` (with sqlite3 fallback)
+6. **Cleans up** temp seed file (unless `--keep-sql`)
+
 ## Key Options
 
 | Option | Description |
@@ -136,10 +177,11 @@ crouton init my-app --dry-run
 
 | File | Purpose |
 |------|---------|
-| `bin/crouton-generate.js` | CLI entry point (citty with 11 subcommands) |
+| `bin/crouton-generate.js` | CLI entry point (citty with 12 subcommands) |
 | `lib/generate-collection.ts` | Main orchestrator (~74KB) |
 | `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.ts` | Template generators (14 files) |
+| `lib/db-pull.ts` | Remote D1 → local dev pull |
 | `lib/module-registry.ts` | Module definitions for `crouton add` |
 | `lib/add-module.ts` | Module installation implementation |
 | `lib/utils/helpers.ts` | Case conversion, type mapping |

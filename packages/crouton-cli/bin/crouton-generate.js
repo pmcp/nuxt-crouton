@@ -438,6 +438,27 @@ const seedTranslationsCmd = defineCommand({
   }
 })
 
+// ─── db-pull ────────────────────────────────────────────────────
+
+const dbPullCmd = defineCommand({
+  meta: { name: 'db-pull', description: 'Pull remote D1 database into local dev' },
+  args: {
+    env: { type: 'string', description: 'Wrangler environment (e.g., preview for staging)' },
+    config: { type: 'string', description: 'Custom wrangler config path' },
+    keepSql: { type: 'boolean', description: 'Keep the exported SQL file after import' },
+    dryRun: { type: 'boolean', description: 'Show what would happen without executing' },
+  },
+  async run({ args }) {
+    const { dbPull } = await tsImport(join(__dirname, '..', 'lib', 'db-pull.ts'))
+    await dbPull({
+      env: args.env,
+      config: args.config,
+      keepSql: args.keepSql,
+      dryRun: args.dryRun,
+    })
+  }
+})
+
 // ─── main ──────────────────────────────────────────────────────────
 
 const main = defineCommand({
@@ -458,6 +479,7 @@ const main = defineCommand({
     doctor: doctorCmd,
     'scaffold-app': scaffoldAppCmd,
     'seed-translations': seedTranslationsCmd,
+    'db-pull': dbPullCmd,
   },
 })
 
