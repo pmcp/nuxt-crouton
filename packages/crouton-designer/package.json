@@ -29,7 +29,6 @@
   "devDependencies": {
     "@nuxt/kit": "^3.14.0",
     "@nuxt/schema": "^3.14.0",
-    "@nuxthub/core": "^0.8.0",
     "nuxt": "^4.3.1",
     "typescript": "^5.7.0",
     "vue": "^3.5.25"
@@ -38,7 +37,6 @@
     "@fyit/crouton-ai": "workspace:*",
     "@fyit/crouton-core": "workspace:*",
     "@nuxt/ui": "^4.0.0",
-    "@nuxthub/core": ">=0.8.0",
     "nuxt": "^4.0.0"
   },
   "peerDependenciesMeta": {

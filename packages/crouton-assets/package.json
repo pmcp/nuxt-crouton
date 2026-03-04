@@ -42,7 +42,6 @@
   "peerDependencies": {
     "nuxt": "^4.0.0",
     "@fyit/crouton-core": "workspace:*",
-    "@nuxthub/core": "^0.7.0",
     "@vueuse/core": "^11.0.0"
   }
 }
