@@ -17,7 +17,8 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | `app/composables/useTriageNotionSchema.ts` | Fetch Notion database schema |
 | `app/composables/useTriageNotionUsers.ts` | Fetch Notion workspace users |
 | `app/composables/useTriageSlackUsers.ts` | Fetch Slack workspace users |
-| `app/composables/useTriageFieldMapping.ts` | Notion field mapping configuration |
+| `shared/utils/field-mapping.ts` | Shared similarity + field-mapping utils (used by app + server) |
+| `app/composables/useTriageFieldMapping.ts` | Notion field mapping composable (wraps shared utils) |
 | `app/composables/useTriagePromptPreview.ts` | AI prompt preview and testing |
 | `app/components/flows/FlowList.vue` | Flow list with create/edit actions |
 | `app/components/flows/InputManager.vue` | Manage flow inputs (sources) |
