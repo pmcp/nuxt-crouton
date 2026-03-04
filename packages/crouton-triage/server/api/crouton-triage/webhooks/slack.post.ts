@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     const body = JSON.parse(rawBody || '{}')
 
     // Verify Slack HMAC-SHA256 signature (skip for url_verification challenges sent without signing)
-    const runtimeConfig = useRuntimeConfig() as any
+    const runtimeConfig = useRuntimeConfig(event) as any
     const signingSecret = runtimeConfig?.croutonTriage?.slack?.signingSecret as string | undefined
     if (signingSecret) {
       const headers = getHeaders(event)

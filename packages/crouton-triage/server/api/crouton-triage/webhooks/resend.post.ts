@@ -254,7 +254,7 @@ export default defineEventHandler(async (event) => {
     validateResendWebhook(payload)
 
     // 2. Verify webhook signature (if configured)
-    const config = useRuntimeConfig()
+    const config = useRuntimeConfig(event)
     const signingSecret = config.resendWebhookSigningSecret as string | undefined
 
     if (signingSecret) {

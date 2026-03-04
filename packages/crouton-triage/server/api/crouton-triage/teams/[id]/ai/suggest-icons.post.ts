@@ -57,7 +57,7 @@ export default defineEventHandler(async (event): Promise<SuggestIconsResponse> =
   const teamId = getRouterParam(event, 'id')
 
   // Resolve API key: flow-level encrypted key → server runtime config
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
   let apiKey = config.anthropicApiKey as string | undefined
 
   if (body.flowId && teamId) {

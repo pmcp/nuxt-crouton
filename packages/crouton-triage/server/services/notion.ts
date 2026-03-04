@@ -94,7 +94,9 @@ function getNotionApiKey(apiKey?: string): string {
   // Try Nuxt runtime config if not in env (and if available)
   if (!key) {
     try {
-      const config = useRuntimeConfig()
+      let event
+      try { event = useEvent() } catch {}
+      const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
       key = config.notionApiKey as string | undefined
     }
     catch {

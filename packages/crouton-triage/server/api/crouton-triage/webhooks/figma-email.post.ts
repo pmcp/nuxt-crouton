@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
     const payload = await readBody<MailgunPayload>(event)
 
     // 1.5. Verify webhook signature if present
-    const config = useRuntimeConfig()
+    const config = useRuntimeConfig(event)
     const signingKey = config.mailgunSigningKey as string | undefined
 
     if (signingKey && payload.signature) {

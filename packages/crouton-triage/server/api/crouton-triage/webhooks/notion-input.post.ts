@@ -226,7 +226,7 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     // VERIFY WEBHOOK SIGNATURE
     // ============================================================================
-    const config = useRuntimeConfig()
+    const config = useRuntimeConfig(event)
     const signingSecret = config.notionWebhookSecret as string | undefined
 
     // Only verify signature if signing secret is configured

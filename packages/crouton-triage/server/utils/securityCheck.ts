@@ -24,7 +24,9 @@ export interface SecurityCheckResult {
  */
 export function checkWebhookSecurity(): SecurityCheckResult[] {
   const results: SecurityCheckResult[] = []
-  const config = useRuntimeConfig()
+  let event
+  try { event = useEvent() } catch {}
+  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
 
   // Check Slack signing secret
   const slackSigningSecret = config.slackSigningSecret as string | undefined
