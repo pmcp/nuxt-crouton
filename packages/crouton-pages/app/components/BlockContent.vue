@@ -313,6 +313,7 @@ const headingClasses: Record<number, string> = {
 
 /* Default block constraint — comfortable content width */
 .block-content > * {
+  width: 100%;
   max-width: 64rem;
   margin-left: auto;
   margin-right: auto;
