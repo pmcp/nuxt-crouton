@@ -53,10 +53,11 @@ export default defineEventHandler(async (event) => {
     const url = `${endpoint}?access_token=${accessToken}`
     const response = await $fetch<MapboxGeocodeResponse>(url)
     return response
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[crouton-maps] Geocoding failed:', err?.data || err?.message || err)
     throw createError({
       status: 502,
-      statusText: 'Geocoding request failed'
+      statusText: `Geocoding request failed: ${err?.data?.message || err?.message || 'unknown error'}`
     })
   }
 })
