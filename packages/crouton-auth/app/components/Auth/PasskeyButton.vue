@@ -36,7 +36,7 @@ const emit = defineEmits<{
   click: []
 }>()
 
-const { hasPasskeys, isWebAuthnSupported } = useAuth()
+const { hasPasskeys, isWebAuthnSupported } = usePasskeys()
 
 // Check if passkey is available
 const isAvailable = computed(() => {

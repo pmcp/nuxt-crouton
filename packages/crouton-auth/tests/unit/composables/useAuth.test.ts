@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed, readonly } from 'vue'
 import type { User } from '../../../types'
 
-// Import the composable after mocks are set up
+// Import composables after mocks are set up
 import { useAuth } from '../../../app/composables/useAuth'
+import { usePasskeys } from '../../../app/composables/usePasskeys'
+import { useTwoFactor } from '../../../app/composables/useTwoFactor'
+import { usePasswordReset } from '../../../app/composables/usePasswordReset'
 
 // Mock auth client
 const mockAuthClient = {
@@ -30,6 +33,7 @@ const mockAuthClient = {
     enable: vi.fn(),
     disable: vi.fn(),
     getTOTPURI: vi.fn(),
+    getTotpUri: vi.fn(),
     verifyTotp: vi.fn(),
     generateBackupCodes: vi.fn(),
     viewBackupCodes: vi.fn(),
@@ -102,6 +106,15 @@ vi.stubGlobal('useAuthConfig', () => ({
 
 // Mock useAuthClient
 vi.stubGlobal('useAuthClient', () => mockAuthClient)
+
+// Mock useAuthError (used by new composables but not needed for throw behavior tests)
+vi.stubGlobal('useAuthError', () => ({
+  error: ref(null),
+  clearError: vi.fn(),
+  handleError: vi.fn(),
+  withError: (fn: any) => fn,
+  AUTH_ERROR_CODES: {}
+}))
 
 // Mock useSession as a global (since it's auto-imported in Nuxt)
 vi.stubGlobal('useSession', () => ({
@@ -283,42 +296,6 @@ describe('useAuth', () => {
     })
   })
 
-  describe('loginWithPasskey', () => {
-    it('should call signIn.passkey', async () => {
-      mockAuthClient.signIn.passkey.mockResolvedValue({ data: { user: {} }, error: null })
-
-      const { loginWithPasskey } = useAuth()
-      await loginWithPasskey()
-
-      expect(mockAuthClient.signIn.passkey).toHaveBeenCalled()
-      expect(mockRefresh).toHaveBeenCalled()
-    })
-
-    it('should throw on passkey error', async () => {
-      mockAuthClient.signIn.passkey.mockResolvedValue({
-        data: null,
-        error: { message: 'Passkey failed' }
-      })
-
-      const { loginWithPasskey, error } = useAuth()
-
-      await expect(loginWithPasskey()).rejects.toThrow('Passkey failed')
-      expect(error.value).toBe('Passkey failed')
-    })
-  })
-
-  describe('loginWithPasskeyAutofill', () => {
-    it('should call signIn.passkey with autoFill option', async () => {
-      mockAuthClient.signIn.passkey.mockResolvedValue({ data: { user: {} }, error: null })
-
-      const { loginWithPasskeyAutofill } = useAuth()
-      await loginWithPasskeyAutofill()
-
-      expect(mockAuthClient.signIn.passkey).toHaveBeenCalledWith({ autoFill: true })
-      expect(mockRefresh).toHaveBeenCalled()
-    })
-  })
-
   describe('loginWithMagicLink', () => {
     // TODO: window.location mock complexity
     it.todo('should call signIn.magicLink with email', async () => {
@@ -410,12 +387,324 @@ describe('useAuth', () => {
     })
   })
 
+  describe('refreshSession', () => {
+    it('should call session refresh', async () => {
+      const { refreshSession } = useAuth()
+      await refreshSession()
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+  })
+})
+
+describe('usePasskeys', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSessionUser.value = null
+    mockIsAuthenticated.value = false
+    mockIsPendingValue.value = false
+    mockSessionError.value = null
+  })
+
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
+
+  describe('loginWithPasskey', () => {
+    it('should call signIn.passkey', async () => {
+      mockAuthClient.signIn.passkey.mockResolvedValue({ data: { user: {} }, error: null })
+
+      const { loginWithPasskey } = usePasskeys()
+      await loginWithPasskey()
+
+      expect(mockAuthClient.signIn.passkey).toHaveBeenCalled()
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+
+    it('should throw on passkey error', async () => {
+      mockAuthClient.signIn.passkey.mockResolvedValue({
+        data: null,
+        error: { message: 'Passkey failed' }
+      })
+
+      const { loginWithPasskey, error } = usePasskeys()
+
+      await expect(loginWithPasskey()).rejects.toThrow('Passkey failed')
+      expect(error.value).toBe('Passkey failed')
+    })
+  })
+
+  describe('loginWithPasskeyAutofill', () => {
+    it('should call signIn.passkey with autoFill option', async () => {
+      mockAuthClient.signIn.passkey.mockResolvedValue({ data: { user: {} }, error: null })
+
+      const { loginWithPasskeyAutofill } = usePasskeys()
+      await loginWithPasskeyAutofill()
+
+      expect(mockAuthClient.signIn.passkey).toHaveBeenCalledWith({ autoFill: true })
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+  })
+
+  describe('addPasskey', () => {
+    it('should call passkey.addPasskey', async () => {
+      mockAuthClient.passkey.addPasskey.mockResolvedValue({ data: {}, error: null })
+
+      const { addPasskey } = usePasskeys()
+      await addPasskey({ name: 'My Laptop' })
+
+      expect(mockAuthClient.passkey.addPasskey).toHaveBeenCalledWith({
+        name: 'My Laptop'
+      })
+    })
+
+    it('should throw on add passkey error', async () => {
+      mockAuthClient.passkey.addPasskey.mockResolvedValue({
+        data: null,
+        error: { message: 'Failed to add passkey' }
+      })
+
+      const { addPasskey, error } = usePasskeys()
+
+      await expect(addPasskey()).rejects.toThrow('Failed to add passkey')
+      expect(error.value).toBe('Failed to add passkey')
+    })
+  })
+
+  describe('listPasskeys', () => {
+    it('should return formatted passkey list', async () => {
+      const mockPasskeys = [
+        {
+          id: 'pk-1',
+          name: 'My Laptop',
+          createdAt: '2024-01-01T00:00:00Z',
+          credentialID: 'cred-123'
+        },
+        {
+          id: 'pk-2',
+          createdAt: '2024-01-02T00:00:00Z',
+          credentialID: 'cred-456'
+        }
+      ]
+      mockAuthClient.passkey.listUserPasskeys.mockResolvedValue({
+        data: mockPasskeys,
+        error: null
+      })
+
+      const { listPasskeys } = usePasskeys()
+      const passkeys = await listPasskeys()
+
+      expect(passkeys).toHaveLength(2)
+      expect(passkeys[0]).toMatchObject({
+        id: 'pk-1',
+        name: 'My Laptop',
+        credentialId: 'cred-123'
+      })
+      expect(passkeys[0].createdAt).toBeInstanceOf(Date)
+      expect(passkeys[1].name).toBe('Passkey') // Default name
+    })
+  })
+
+  describe('deletePasskey', () => {
+    it('should call passkey.deletePasskey with id', async () => {
+      mockAuthClient.passkey.deletePasskey.mockResolvedValue({ data: {}, error: null })
+
+      const { deletePasskey } = usePasskeys()
+      await deletePasskey('pk-1')
+
+      expect(mockAuthClient.passkey.deletePasskey).toHaveBeenCalledWith({ id: 'pk-1' })
+    })
+  })
+
+  describe('WebAuthn support helpers', () => {
+    describe('isWebAuthnSupported', () => {
+      // TODO: requires browser WebAuthn API
+      it.todo('should return true when WebAuthn is available', () => {
+        const { isWebAuthnSupported } = usePasskeys()
+        expect(isWebAuthnSupported()).toBe(true)
+      })
+    })
+
+    describe('isConditionalUIAvailable', () => {
+      it.skip('should check conditional mediation availability (requires browser environment)', async () => {
+        const { isConditionalUIAvailable } = usePasskeys()
+        const result = await isConditionalUIAvailable()
+        expect(result).toBe(true)
+      })
+    })
+  })
+})
+
+describe('useTwoFactor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSessionUser.value = null
+    mockIsAuthenticated.value = false
+    mockIsPendingValue.value = false
+    mockSessionError.value = null
+  })
+
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
+
+  describe('enable2FA', () => {
+    it('should return TOTP setup data', async () => {
+      mockAuthClient.twoFactor.enable.mockResolvedValue({
+        data: {
+          totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
+          secret: 'ABC123',
+          backupCodes: ['BACKUP1', 'BACKUP2']
+        },
+        error: null
+      })
+
+      const { enable2FA } = useTwoFactor()
+      const result = await enable2FA('password123')
+
+      expect(mockAuthClient.twoFactor.enable).toHaveBeenCalledWith({ password: 'password123' })
+      expect(result).toMatchObject({
+        totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
+        backupCodes: ['BACKUP1', 'BACKUP2']
+      })
+    })
+
+    it('should throw on enable 2FA error', async () => {
+      mockAuthClient.twoFactor.enable.mockResolvedValue({
+        data: null,
+        error: { message: 'Invalid password' }
+      })
+
+      const { enable2FA, error } = useTwoFactor()
+
+      await expect(enable2FA('wrongpassword')).rejects.toThrow('Invalid password')
+      expect(error.value).toBe('Invalid password')
+    })
+  })
+
+  describe('disable2FA', () => {
+    it('should call twoFactor.disable with password', async () => {
+      mockAuthClient.twoFactor.disable.mockResolvedValue({ data: {}, error: null })
+
+      const { disable2FA } = useTwoFactor()
+      await disable2FA('password123')
+
+      expect(mockAuthClient.twoFactor.disable).toHaveBeenCalledWith({ password: 'password123' })
+    })
+  })
+
+  describe('verifyTotp', () => {
+    it('should verify TOTP code', async () => {
+      mockAuthClient.twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null })
+
+      const { verifyTotp } = useTwoFactor()
+      const result = await verifyTotp({ code: '123456' })
+
+      expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
+        code: '123456',
+        trustDevice: undefined
+      })
+      expect(result).toBe(true)
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+
+    it('should support trust device option', async () => {
+      mockAuthClient.twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null })
+
+      const { verifyTotp } = useTwoFactor()
+      await verifyTotp({ code: '123456', trustDevice: true })
+
+      expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
+        code: '123456',
+        trustDevice: true
+      })
+    })
+  })
+
+  describe('generateBackupCodes', () => {
+    it('should return backup codes', async () => {
+      const mockCodes = ['ABC123', 'DEF456', 'GHI789']
+      mockAuthClient.twoFactor.generateBackupCodes.mockResolvedValue({
+        data: { backupCodes: mockCodes },
+        error: null
+      })
+
+      const { generateBackupCodes } = useTwoFactor()
+      const codes = await generateBackupCodes('password123')
+
+      expect(mockAuthClient.twoFactor.generateBackupCodes).toHaveBeenCalledWith({
+        password: 'password123'
+      })
+      expect(codes).toEqual(mockCodes)
+    })
+  })
+
+  describe('verifyBackupCode', () => {
+    it('should verify backup code', async () => {
+      mockAuthClient.twoFactor.verifyBackupCode.mockResolvedValue({ data: {}, error: null })
+
+      const { verifyBackupCode } = useTwoFactor()
+      const result = await verifyBackupCode('ABC123')
+
+      expect(mockAuthClient.twoFactor.verifyBackupCode).toHaveBeenCalledWith({ code: 'ABC123' })
+      expect(result).toBe(true)
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+  })
+
+  describe('get2FAStatus', () => {
+    it('should return 2FA status from session', async () => {
+      mockSessionUser.value = {
+        id: 'user-1',
+        email: 'test@example.com',
+        name: 'Test',
+        image: null,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      mockAuthClient.getSession.mockResolvedValue({
+        data: {
+          user: { twoFactorEnabled: true }
+        }
+      })
+
+      const { get2FAStatus } = useTwoFactor()
+      const status = await get2FAStatus()
+
+      expect(status.enabled).toBe(true)
+      expect(status.hasTotp).toBe(true)
+      expect(status.hasBackupCodes).toBe(true)
+    })
+
+    it('should return disabled status when no user', async () => {
+      mockSessionUser.value = null
+      mockAuthClient.getSession.mockResolvedValue({ data: null })
+
+      const { get2FAStatus } = useTwoFactor()
+      const status = await get2FAStatus()
+
+      expect(status.enabled).toBe(false)
+      expect(status.hasTotp).toBe(false)
+      expect(status.hasBackupCodes).toBe(false)
+    })
+  })
+})
+
+describe('usePasswordReset', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
+
   describe('forgotPassword', () => {
     // TODO: window.location mock complexity
     it.todo('should call requestPasswordReset with email', async () => {
       mockAuthClient.requestPasswordReset.mockResolvedValue({ data: {}, error: null })
 
-      const { forgotPassword } = useAuth()
+      const { forgotPassword } = usePasswordReset()
       await forgotPassword('test@example.com')
 
       expect(mockAuthClient.requestPasswordReset).toHaveBeenCalledWith({
@@ -431,7 +720,7 @@ describe('useAuth', () => {
         error: { message: 'User not found' }
       })
 
-      const { forgotPassword, error } = useAuth()
+      const { forgotPassword, error } = usePasswordReset()
 
       await expect(forgotPassword('unknown@example.com')).rejects.toThrow('User not found')
       expect(error.value).toBe('User not found')
@@ -442,7 +731,7 @@ describe('useAuth', () => {
     it('should call resetPassword with token and new password', async () => {
       mockAuthClient.resetPassword.mockResolvedValue({ data: {}, error: null })
 
-      const { resetPassword } = useAuth()
+      const { resetPassword } = usePasswordReset()
       await resetPassword('reset-token-123', 'newpassword123')
 
       expect(mockAuthClient.resetPassword).toHaveBeenCalledWith({
@@ -457,258 +746,11 @@ describe('useAuth', () => {
         error: { message: 'Invalid token' }
       })
 
-      const { resetPassword, error } = useAuth()
+      const { resetPassword, error } = usePasswordReset()
 
       await expect(resetPassword('invalid-token', 'newpassword123'))
         .rejects.toThrow('Invalid token')
       expect(error.value).toBe('Invalid token')
-    })
-  })
-
-  describe('passkey management', () => {
-    describe('addPasskey', () => {
-      it('should call passkey.addPasskey', async () => {
-        mockAuthClient.passkey.addPasskey.mockResolvedValue({ data: {}, error: null })
-
-        const { addPasskey } = useAuth()
-        await addPasskey({ name: 'My Laptop' })
-
-        expect(mockAuthClient.passkey.addPasskey).toHaveBeenCalledWith({
-          name: 'My Laptop'
-        })
-      })
-
-      it('should throw on add passkey error', async () => {
-        mockAuthClient.passkey.addPasskey.mockResolvedValue({
-          data: null,
-          error: { message: 'Failed to add passkey' }
-        })
-
-        const { addPasskey, error } = useAuth()
-
-        await expect(addPasskey()).rejects.toThrow('Failed to add passkey')
-        expect(error.value).toBe('Failed to add passkey')
-      })
-    })
-
-    describe('listPasskeys', () => {
-      it('should return formatted passkey list', async () => {
-        const mockPasskeys = [
-          {
-            id: 'pk-1',
-            name: 'My Laptop',
-            createdAt: '2024-01-01T00:00:00Z',
-            credentialID: 'cred-123'
-          },
-          {
-            id: 'pk-2',
-            createdAt: '2024-01-02T00:00:00Z',
-            credentialID: 'cred-456'
-          }
-        ]
-        mockAuthClient.passkey.listUserPasskeys.mockResolvedValue({
-          data: mockPasskeys,
-          error: null
-        })
-
-        const { listPasskeys } = useAuth()
-        const passkeys = await listPasskeys()
-
-        expect(passkeys).toHaveLength(2)
-        expect(passkeys[0]).toMatchObject({
-          id: 'pk-1',
-          name: 'My Laptop',
-          credentialId: 'cred-123'
-        })
-        expect(passkeys[0].createdAt).toBeInstanceOf(Date)
-        expect(passkeys[1].name).toBe('Passkey') // Default name
-      })
-    })
-
-    describe('deletePasskey', () => {
-      it('should call passkey.deletePasskey with id', async () => {
-        mockAuthClient.passkey.deletePasskey.mockResolvedValue({ data: {}, error: null })
-
-        const { deletePasskey } = useAuth()
-        await deletePasskey('pk-1')
-
-        expect(mockAuthClient.passkey.deletePasskey).toHaveBeenCalledWith({ id: 'pk-1' })
-      })
-    })
-  })
-
-  describe('two-factor authentication', () => {
-    describe('enable2FA', () => {
-      it('should return TOTP setup data', async () => {
-        mockAuthClient.twoFactor.enable.mockResolvedValue({
-          data: {
-            totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-            secret: 'ABC123',
-            backupCodes: ['BACKUP1', 'BACKUP2']
-          },
-          error: null
-        })
-
-        const { enable2FA } = useAuth()
-        const result = await enable2FA('password123')
-
-        expect(mockAuthClient.twoFactor.enable).toHaveBeenCalledWith({ password: 'password123' })
-        expect(result).toMatchObject({
-          totpURI: 'otpauth://totp/App:user@example.com?secret=ABC123',
-          backupCodes: ['BACKUP1', 'BACKUP2']
-        })
-      })
-
-      it('should throw on enable 2FA error', async () => {
-        mockAuthClient.twoFactor.enable.mockResolvedValue({
-          data: null,
-          error: { message: 'Invalid password' }
-        })
-
-        const { enable2FA, error } = useAuth()
-
-        await expect(enable2FA('wrongpassword')).rejects.toThrow('Invalid password')
-        expect(error.value).toBe('Invalid password')
-      })
-    })
-
-    describe('disable2FA', () => {
-      it('should call twoFactor.disable with password', async () => {
-        mockAuthClient.twoFactor.disable.mockResolvedValue({ data: {}, error: null })
-
-        const { disable2FA } = useAuth()
-        await disable2FA('password123')
-
-        expect(mockAuthClient.twoFactor.disable).toHaveBeenCalledWith({ password: 'password123' })
-      })
-    })
-
-    describe('verifyTotp', () => {
-      it('should verify TOTP code', async () => {
-        mockAuthClient.twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null })
-
-        const { verifyTotp } = useAuth()
-        const result = await verifyTotp({ code: '123456' })
-
-        expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
-          code: '123456',
-          trustDevice: undefined
-        })
-        expect(result).toBe(true)
-        expect(mockRefresh).toHaveBeenCalled()
-      })
-
-      it('should support trust device option', async () => {
-        mockAuthClient.twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null })
-
-        const { verifyTotp } = useAuth()
-        await verifyTotp({ code: '123456', trustDevice: true })
-
-        expect(mockAuthClient.twoFactor.verifyTotp).toHaveBeenCalledWith({
-          code: '123456',
-          trustDevice: true
-        })
-      })
-    })
-
-    describe('generateBackupCodes', () => {
-      it('should return backup codes', async () => {
-        const mockCodes = ['ABC123', 'DEF456', 'GHI789']
-        mockAuthClient.twoFactor.generateBackupCodes.mockResolvedValue({
-          data: { backupCodes: mockCodes },
-          error: null
-        })
-
-        const { generateBackupCodes } = useAuth()
-        const codes = await generateBackupCodes('password123')
-
-        expect(mockAuthClient.twoFactor.generateBackupCodes).toHaveBeenCalledWith({
-          password: 'password123'
-        })
-        expect(codes).toEqual(mockCodes)
-      })
-    })
-
-    // Note: viewBackupCodes was removed from the composable
-    // Backup codes are now returned as part of enable2FA response
-
-    describe('verifyBackupCode', () => {
-      it('should verify backup code', async () => {
-        mockAuthClient.twoFactor.verifyBackupCode.mockResolvedValue({ data: {}, error: null })
-
-        const { verifyBackupCode } = useAuth()
-        const result = await verifyBackupCode('ABC123')
-
-        expect(mockAuthClient.twoFactor.verifyBackupCode).toHaveBeenCalledWith({ code: 'ABC123' })
-        expect(result).toBe(true)
-        expect(mockRefresh).toHaveBeenCalled()
-      })
-    })
-
-    describe('get2FAStatus', () => {
-      it('should return 2FA status from session', async () => {
-        mockSessionUser.value = {
-          id: 'user-1',
-          email: 'test@example.com',
-          name: 'Test',
-          image: null,
-          emailVerified: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-        mockAuthClient.getSession.mockResolvedValue({
-          data: {
-            user: { twoFactorEnabled: true }
-          }
-        })
-
-        const { get2FAStatus } = useAuth()
-        const status = await get2FAStatus()
-
-        expect(status.enabled).toBe(true)
-        expect(status.hasTotp).toBe(true)
-        expect(status.hasBackupCodes).toBe(true)
-      })
-
-      it('should return disabled status when no user', async () => {
-        mockSessionUser.value = null
-        mockAuthClient.getSession.mockResolvedValue({ data: null })
-
-        const { get2FAStatus } = useAuth()
-        const status = await get2FAStatus()
-
-        expect(status.enabled).toBe(false)
-        expect(status.hasTotp).toBe(false)
-        expect(status.hasBackupCodes).toBe(false)
-      })
-    })
-  })
-
-  describe('WebAuthn support helpers', () => {
-    describe('isWebAuthnSupported', () => {
-      // TODO: requires browser WebAuthn API
-      it.todo('should return true when WebAuthn is available', () => {
-        const { isWebAuthnSupported } = useAuth()
-        expect(isWebAuthnSupported()).toBe(true)
-      })
-    })
-
-    describe('isConditionalUIAvailable', () => {
-      it.skip('should check conditional mediation availability (requires browser environment)', async () => {
-        // This test requires a real browser environment as PublicKeyCredential
-        // mocking is complex due to the async static method nature
-        const { isConditionalUIAvailable } = useAuth()
-        const result = await isConditionalUIAvailable()
-        expect(result).toBe(true)
-      })
-    })
-  })
-
-  describe('refreshSession', () => {
-    it('should call session refresh', async () => {
-      const { refreshSession } = useAuth()
-      await refreshSession()
-      expect(mockRefresh).toHaveBeenCalled()
     })
   })
 })

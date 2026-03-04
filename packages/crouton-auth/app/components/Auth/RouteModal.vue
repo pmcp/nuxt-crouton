@@ -28,17 +28,15 @@ const isOpen = computed({
 const {
   login,
   register,
-  forgotPassword,
   loginWithOAuth,
-  loginWithPasskey,
   loginWithMagicLink,
   hasPassword,
   hasOAuth,
-  hasPasskeys,
   hasMagicLink,
-  oauthProviders,
-  isWebAuthnSupported
+  oauthProviders
 } = useAuth()
+const { forgotPassword } = usePasswordReset()
+const { hasPasskeys, loginWithPasskey, isWebAuthnSupported } = usePasskeys()
 
 // ── Shared state ──────────────────────────────────────────────────────────────
 

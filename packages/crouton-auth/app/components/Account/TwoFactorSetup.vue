@@ -29,7 +29,7 @@ const {
   verifyTotp,
   generateBackupCodes,
   get2FAStatus
-} = useAuth()
+} = useTwoFactor()
 
 // Helper to extract secret from TOTP URI
 function extractSecretFromUri(uri: string): string {

@@ -28,7 +28,7 @@ const {
   listPasskeys,
   deletePasskey,
   isWebAuthnSupported
-} = useAuth()
+} = usePasskeys()
 const notify = useNotify()
 
 // Passkeys list

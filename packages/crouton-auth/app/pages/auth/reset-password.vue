@@ -18,7 +18,7 @@ const route = useRoute()
 const router = useRouter()
 const notify = useNotify()
 
-const { resetPassword } = useAuth()
+const { resetPassword } = usePasswordReset()
 
 // Error state
 const formError = ref<string | null>(null)
