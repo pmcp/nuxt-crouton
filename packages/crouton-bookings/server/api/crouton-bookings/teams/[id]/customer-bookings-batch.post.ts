@@ -324,7 +324,8 @@ export default defineEventHandler(async (event) => {
             team.id,
             user.id,
             undefined, // adminEmail
-            locale
+            locale,
+            event
           )
           return result.success ? 1 : 0
         }

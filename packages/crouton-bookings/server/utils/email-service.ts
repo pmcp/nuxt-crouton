@@ -68,6 +68,8 @@ export interface SendBookingEmailOptions {
   adminEmail?: string
   /** Locale for translations and date formatting (default: 'en') */
   locale?: string
+  /** H3 event — required on Cloudflare Workers for runtimeConfig access */
+  event?: any
 }
 
 /**
@@ -350,14 +352,14 @@ export function registerEmailProvider(provider: CustomEmailProvider): void {
 /**
  * Get the configured email provider (custom or crouton-email)
  */
-async function getEmailProvider(): Promise<CustomEmailProvider | null> {
+async function getEmailProvider(event?: any): Promise<CustomEmailProvider | null> {
   // Check for custom provider first
   if (_customEmailProvider) {
     return _customEmailProvider
   }
 
   // Fall back to crouton-email if available
-  const croutonEmailService = await getBookingEmailService()
+  const croutonEmailService = await getBookingEmailService(event)
   if (croutonEmailService) {
     return {
       async send(options) {
@@ -377,8 +379,8 @@ async function sendSingleEmail(options: {
   subject: string
   html: string
   from?: string
-}): Promise<{ success: boolean; error?: string }> {
-  const provider = await getEmailProvider()
+}, event?: any): Promise<{ success: boolean; error?: string }> {
+  const provider = await getEmailProvider(event)
 
   if (!provider) {
     console.warn('[booking-email] No email provider configured. Either register a custom provider or install @fyit/crouton-email.')
@@ -441,7 +443,7 @@ export async function sendBookingEmails(
     }
   }
 
-  const { booking, triggerType, teamId, userId, adminEmail, locale } = options
+  const { booking, triggerType, teamId, userId, adminEmail, locale, event: h3Event } = options
   const nitroApp = useNitroApp()
 
   // Get templates for this trigger
@@ -503,7 +505,7 @@ export async function sendBookingEmails(
           subject,
           html: body,
           from: template.fromEmail || undefined
-        })
+        }, h3Event)
 
         // Update log
         if (logId) {
@@ -569,7 +571,7 @@ export async function sendBookingEmails(
         subject: `[Admin] ${subject}`,
         html: body,
         from: template.fromEmail || undefined
-      })
+      }, h3Event)
 
       // Update log
       if (logId) {
@@ -626,7 +628,8 @@ export async function triggerBookingCreatedEmail(
   teamId: string,
   userId: string,
   adminEmail?: string,
-  locale?: string
+  locale?: string,
+  event?: any
 ): Promise<SendBookingEmailsResult> {
   return sendBookingEmails({
     booking,
@@ -634,7 +637,8 @@ export async function triggerBookingCreatedEmail(
     teamId,
     userId,
     adminEmail,
-    locale
+    locale,
+    event
   })
 }
 
@@ -648,7 +652,8 @@ export async function triggerBookingCancelledEmail(
   teamId: string,
   userId: string,
   adminEmail?: string,
-  locale?: string
+  locale?: string,
+  event?: any
 ): Promise<SendBookingEmailsResult> {
   return sendBookingEmails({
     booking,
@@ -656,7 +661,8 @@ export async function triggerBookingCancelledEmail(
     teamId,
     userId,
     adminEmail,
-    locale
+    locale,
+    event
   })
 }
 

@@ -200,7 +200,7 @@ export interface BookingEmailService {
  * Get the email service from crouton-email if available
  * Returns null if crouton-email is not installed
  */
-export async function getBookingEmailService(): Promise<BookingEmailService | null> {
+export async function getBookingEmailService(event?: any): Promise<BookingEmailService | null> {
   // Early return if email is not enabled
   if (!isBookingEmailEnabled()) {
     return null
@@ -211,7 +211,7 @@ export async function getBookingEmailService(): Promise<BookingEmailService | nu
     // Using @vite-ignore to prevent build-time resolution when not installed
     const emailPath = '#crouton-email/server/utils/email'
     const { useEmailService } = await import(/* @vite-ignore */ emailPath)
-    const emailService = useEmailService()
+    const emailService = useEmailService(event)
 
     return {
       async sendEmail(options) {

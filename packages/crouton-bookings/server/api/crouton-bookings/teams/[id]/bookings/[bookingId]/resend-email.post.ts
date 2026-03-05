@@ -156,7 +156,8 @@ export default defineEventHandler(async (event) => {
     triggerType: triggerType as BookingEmailTriggerType,
     teamId: team.id,
     userId: user.id,
-    locale
+    locale,
+    event
   })
 
   if (!result.success) {
