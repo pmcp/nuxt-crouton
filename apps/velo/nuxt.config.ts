@@ -62,13 +62,13 @@ export default defineNuxtConfig({
     // Static assets — immutable cache (hashed filenames)
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
 
-    // Public page APIs — SWR 10min
-    '/api/teams/*/pages': { swr: 600 },
-    '/api/teams/*/pages/**': { swr: 600 },
-
     // Booking public APIs — SWR 5min (availability changes frequently)
     '/api/crouton-bookings/teams/*/availability': { swr: 300 },
     '/api/crouton-bookings/teams/*/locations': { swr: 600 },
+
+    // NOTE: Do NOT add '/api/teams/*/pages' SWR rules here — the wildcard
+    // conflicts with radix3's :id parameter routing and breaks ALL
+    // /api/teams/:id/* generated collection routes (bookings-settings, etc.)
 
     // Auth pages — prerender (static, no data) + no caching fallback
     '/auth/login': { prerender: true },
