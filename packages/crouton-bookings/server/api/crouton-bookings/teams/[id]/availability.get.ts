@@ -16,12 +16,27 @@
  * }
  */
 import { eq, and, gte, lte, ne } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { organization } from '@fyit/crouton-auth/server/database/schema/auth'
 import { bookingsBookings } from '~~/layers/bookings/collections/bookings/server/database/schema'
 import { toDateKey } from '@fyit/crouton-core/shared/utils/date'
 
 export default defineEventHandler(async (event) => {
-  await resolveTeamAndCheckMembership(event)
+  // Public endpoint — availability data is not sensitive and must be visible
+  // to non-logged-in visitors on the booking calendar page
+  const teamParam = getRouterParam(event, 'id')
+  if (!teamParam) {
+    throw createError({ status: 400, statusText: 'Team ID is required' })
+  }
+
+  const db = useDB()
+  const team = await db.select({ id: organization.id })
+    .from(organization)
+    .where(eq(organization.id, teamParam))
+    .get()
+
+  if (!team) {
+    throw createError({ status: 404, statusText: 'Team not found' })
+  }
 
   const query = getQuery(event)
   const locationId = query.locationId as string
@@ -52,8 +67,6 @@ export default defineEventHandler(async (event) => {
       statusText: 'Invalid date format'
     })
   }
-
-  const db = useDB()
 
   // Build where conditions
   const conditions = [
