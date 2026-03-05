@@ -667,6 +667,20 @@ export async function triggerBookingCancelledEmail(
 }
 
 /**
+ * D1 has a 100-parameter limit per query. Chunk arrays to stay under the limit.
+ * Reserve 5 params for non-array conditions (e.g. teamId, isActive).
+ */
+const D1_PARAM_CHUNK_SIZE = 95
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
+/**
  * Get email statistics for multiple bookings in a single query
  */
 export async function getBatchBookingEmailStats(
@@ -687,22 +701,29 @@ export async function getBatchBookingEmailStats(
     const bookingsEmaillogs = schema.bookingsEmaillogs
     if (!bookingsEmaillogs) return new Map()
 
-    const logs = await db
-      .select({
-        bookingId: bookingsEmaillogs.bookingId,
-        status: bookingsEmaillogs.status
-      })
-      .from(bookingsEmaillogs)
-      .where(
-        and(
-          inArray(bookingsEmaillogs.bookingId, bookingIds),
-          eq(bookingsEmaillogs.teamId, teamId)
+    // D1 has a 100-parameter limit — chunk the IDs
+    const chunks = chunkArray(bookingIds, D1_PARAM_CHUNK_SIZE)
+    const allLogs: Array<{ bookingId: string; status: string }> = []
+
+    for (const chunk of chunks) {
+      const logs = await db
+        .select({
+          bookingId: bookingsEmaillogs.bookingId,
+          status: bookingsEmaillogs.status
+        })
+        .from(bookingsEmaillogs)
+        .where(
+          and(
+            inArray(bookingsEmaillogs.bookingId, chunk),
+            eq(bookingsEmaillogs.teamId, teamId)
+          )
         )
-      )
+      allLogs.push(...logs)
+    }
 
     // Group by bookingId
     const statsMap = new Map<string, { total: number; sent: number; pending: number; failed: number }>()
-    for (const log of logs) {
+    for (const log of allLogs) {
       const stats = statsMap.get(log.bookingId) ?? { ...defaultStats }
       stats.total++
       if (log.status === 'sent') stats.sent++
@@ -740,22 +761,27 @@ export async function getBatchBookingEmailDetails(
     const bookingsEmailtemplates = schema.bookingsEmailtemplates
     if (!bookingsEmaillogs || !bookingsEmailtemplates) return new Map()
 
-    // Single query for all logs across all bookings
-    const [allLogs, templates] = await Promise.all([
-      db
-        .select({
-          bookingId: bookingsEmaillogs.bookingId,
-          triggerType: bookingsEmaillogs.triggerType,
-          status: bookingsEmaillogs.status,
-          sentAt: bookingsEmaillogs.sentAt,
-        })
-        .from(bookingsEmaillogs)
-        .where(
-          and(
-            inArray(bookingsEmaillogs.bookingId, bookingIds),
-            eq(bookingsEmaillogs.teamId, teamId)
-          )
-        ),
+    // D1 has a 100-parameter limit — chunk the booking IDs
+    const chunks = chunkArray(bookingIds, D1_PARAM_CHUNK_SIZE)
+
+    // Fetch templates in parallel with the first chunk of logs
+    const [firstChunkLogs, templates] = await Promise.all([
+      chunks.length > 0
+        ? db
+            .select({
+              bookingId: bookingsEmaillogs.bookingId,
+              triggerType: bookingsEmaillogs.triggerType,
+              status: bookingsEmaillogs.status,
+              sentAt: bookingsEmaillogs.sentAt,
+            })
+            .from(bookingsEmaillogs)
+            .where(
+              and(
+                inArray(bookingsEmaillogs.bookingId, chunks[0]),
+                eq(bookingsEmaillogs.teamId, teamId)
+              )
+            )
+        : Promise.resolve([]),
       // Single query for templates (shared across all bookings in the team)
       db
         .select({
@@ -770,6 +796,26 @@ export async function getBatchBookingEmailDetails(
           )
         )
     ])
+
+    // Fetch remaining chunks
+    const allLogs = [...firstChunkLogs]
+    for (let i = 1; i < chunks.length; i++) {
+      const logs = await db
+        .select({
+          bookingId: bookingsEmaillogs.bookingId,
+          triggerType: bookingsEmaillogs.triggerType,
+          status: bookingsEmaillogs.status,
+          sentAt: bookingsEmaillogs.sentAt,
+        })
+        .from(bookingsEmaillogs)
+        .where(
+          and(
+            inArray(bookingsEmaillogs.bookingId, chunks[i]),
+            eq(bookingsEmaillogs.teamId, teamId)
+          )
+        )
+      allLogs.push(...logs)
+    }
 
     // Group logs by bookingId
     const logsByBooking = new Map<string, typeof allLogs>()
