@@ -58,6 +58,28 @@ export default defineNuxtConfig({
     }
   },
 
+  routeRules: {
+    // Static assets — immutable cache (hashed filenames)
+    '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+
+    // Public page APIs — SWR 10min
+    '/api/teams/*/pages': { swr: 600 },
+    '/api/teams/*/pages/**': { swr: 600 },
+
+    // Booking public APIs — SWR 5min (availability changes frequently)
+    '/api/crouton-bookings/teams/*/availability': { swr: 300 },
+    '/api/crouton-bookings/teams/*/locations': { swr: 600 },
+
+    // Auth pages — prerender (static, no data) + no caching fallback
+    '/auth/login': { prerender: true },
+    '/auth/register': { prerender: true },
+    '/auth/forgot-password': { prerender: true },
+    '/auth/**': { headers: { 'cache-control': 'no-store' } },
+
+    // Admin — no caching (personalized)
+    '/admin/**': { headers: { 'cache-control': 'no-store' } },
+  },
+
   // Cloudflare Pages deployment
   nitro: {
     alias: {

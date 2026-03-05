@@ -20,7 +20,8 @@ watch(search, (val) => {
   searchTimer.value = setTimeout(() => { debouncedSearch.value = val }, 300)
 })
 
-const { data, status, error, refresh } = await useFetch('/api/admin/users', {
+const { data, status, error, refresh } = useFetch('/api/admin/users', {
+  lazy: true,
   query: computed(() => ({
     pageSize: 50,
     search: debouncedSearch.value || undefined
