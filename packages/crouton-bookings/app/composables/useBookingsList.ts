@@ -25,7 +25,6 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
     {
       key: `crouton-booking-sidebar-${bookingsEndpoint}`,
       default: () => [],
-      watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side
     },
   )
@@ -41,8 +40,8 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
       ? `/api/teams/${currentTeam.value.id}/bookings-settings`
       : null,
     {
+      key: `crouton-booking-list-settings-${scope}`,
       default: () => [],
-      watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side
     },
   )
@@ -58,8 +57,8 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
       ? `/api/crouton-bookings/teams/${currentTeam.value.id}/customer-locations`
       : null,
     {
+      key: `crouton-booking-list-locations-${scope}`,
       default: () => [],
-      watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side
     },
   )
@@ -77,7 +76,6 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
       {
         key: 'crouton-booking-calendar-all',
         default: () => [],
-        watch: [() => currentTeam.value?.id],
         server: false,
       },
     )

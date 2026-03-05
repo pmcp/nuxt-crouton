@@ -22,8 +22,8 @@ export function useBookingOptions() {
   const { data: settingsData, pending, error, refresh } = useFetch(
     () => currentTeam.value?.id ? `/api/teams/${currentTeam.value.id}/bookings-settings` : null,
     {
+      key: 'crouton-booking-options-settings',
       default: () => [],
-      watch: [() => currentTeam.value?.id],
       server: false, // Avoid SSR hydration mismatch - team context is client-side
     }
   )
