@@ -9,19 +9,25 @@ import { organization } from '@fyit/crouton-auth/server/database/schema/auth'
  * NOTE: Named with 'ForTranslations' suffix to avoid conflict with the
  * getTeamBySlug function exported from @crouton/auth
  */
-export async function getTeamBySlugForTranslations(slug: string) {
+export async function getTeamBySlugForTranslations(slugOrId: string) {
   const db = useDB()
 
+  // Try by slug first, then by ID (SSR may pass UUID before middleware resolves slug)
   const team = await db
     .select()
     .from(organization)
-    .where(eq(organization.slug, slug))
+    .where(eq(organization.slug, slugOrId))
     .get()
+    ?? await db
+      .select()
+      .from(organization)
+      .where(eq(organization.id, slugOrId))
+      .get()
 
   if (!team) {
     throw createError({
       status: 404,
-      statusText: `Team not found: ${slug}`
+      statusText: `Team not found: ${slugOrId}`
     })
   }
 
