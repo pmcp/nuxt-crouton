@@ -64,8 +64,9 @@ export function useBookingAvailability(
     return [ALL_DAY_SLOT]
   })
 
-  // Fetch availability for a date range
+  // Fetch availability for a date range (client-only — auth context not available during SSR)
   async function fetchAvailability(startDate: Date, endDate: Date, excludeBookingId?: string) {
+    if (import.meta.server) return
     if (!locationId.value || !currentTeam.value?.id) return
 
     loading.value = true
