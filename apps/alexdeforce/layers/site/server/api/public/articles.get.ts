@@ -1,0 +1,26 @@
+import { useDrizzle } from '#server/utils/drizzle'
+import { contentArticles } from '~~/server/db/schema'
+import { eq, desc, and } from 'drizzle-orm'
+
+export default defineEventHandler(async (event) => {
+  const query = getQuery(event)
+  const db = useDrizzle()
+
+  const conditions = [eq(contentArticles.draft, false)]
+
+  if (query.category) {
+    conditions.push(eq(contentArticles.category, String(query.category)))
+  }
+
+  if (query.featured === 'true') {
+    conditions.push(eq(contentArticles.featured, true))
+  }
+
+  const articles = await db
+    .select()
+    .from(contentArticles)
+    .where(and(...conditions))
+    .orderBy(desc(contentArticles.date))
+
+  return articles
+})

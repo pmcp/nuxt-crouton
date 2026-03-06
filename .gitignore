@@ -73,3 +73,5 @@ _archive/**/.data/
 seed.sql
 apps/velo/seed.sql
 apps/velo/seed_reordered.sql
+
+apps/alexdeforce/.data

@@ -1,0 +1,45 @@
+{
+  "name": "agenda",
+  "label": "Agenda",
+  "icon": "i-lucide-calendar",
+  "description": "Events and performances",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Title",
+      "required": true,
+      "maxLength": 300,
+      "area": "main"
+    },
+    {
+      "name": "date",
+      "type": "date",
+      "label": "Date",
+      "required": true,
+      "area": "sidebar"
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "label": "Details",
+      "area": "main",
+      "component": "CroutonEditorSimple",
+      "description": "Location, description, links"
+    },
+    {
+      "name": "thumbnail",
+      "type": "string",
+      "label": "Thumbnail URL",
+      "maxLength": 500,
+      "area": "sidebar"
+    },
+    {
+      "name": "draft",
+      "type": "boolean",
+      "label": "Draft",
+      "default": false,
+      "area": "sidebar"
+    }
+  ]
+}

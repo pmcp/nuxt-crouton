@@ -1,0 +1,82 @@
+{
+  "name": "articles",
+  "label": "Articles",
+  "icon": "i-lucide-file-text",
+  "description": "Poetry, text, images, radio shows, and news",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Title",
+      "required": true,
+      "maxLength": 300,
+      "area": "main"
+    },
+    {
+      "name": "date",
+      "type": "date",
+      "label": "Date",
+      "required": true,
+      "area": "sidebar"
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "label": "Category",
+      "required": true,
+      "maxLength": 20,
+      "area": "sidebar",
+      "options": [
+        { "value": "poezie", "label": "Poezie" },
+        { "value": "txt", "label": "Txt" },
+        { "value": "img", "label": "Img" },
+        { "value": "radio", "label": "Radio" },
+        { "value": "news", "label": "News" }
+      ]
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "label": "Content",
+      "area": "main",
+      "component": "CroutonEditorSimple",
+      "description": "Article body (markdown/rich text)"
+    },
+    {
+      "name": "embed",
+      "type": "text",
+      "label": "Embed Code",
+      "area": "main",
+      "description": "HTML embed (YouTube, SoundCloud, Bandcamp iframes)"
+    },
+    {
+      "name": "imageUrl",
+      "type": "string",
+      "label": "Image URL",
+      "maxLength": 500,
+      "area": "sidebar",
+      "description": "External image URL or R2 pathname"
+    },
+    {
+      "name": "tags",
+      "type": "json",
+      "label": "Tags",
+      "area": "sidebar",
+      "description": "Tag names as JSON array"
+    },
+    {
+      "name": "featured",
+      "type": "boolean",
+      "label": "Featured",
+      "default": false,
+      "area": "sidebar"
+    },
+    {
+      "name": "draft",
+      "type": "boolean",
+      "label": "Draft",
+      "default": false,
+      "area": "sidebar"
+    }
+  ]
+}

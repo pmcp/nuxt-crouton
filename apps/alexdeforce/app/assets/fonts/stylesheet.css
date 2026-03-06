@@ -1,0 +1,21 @@
+@font-face {
+    font-family: 'main';
+    src: url('FluxischElse-Bold.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'main';
+    src: url('FluxischElse-Light.woff') format('woff');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'main';
+    src: url('FluxischElse-Regular.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+}
+

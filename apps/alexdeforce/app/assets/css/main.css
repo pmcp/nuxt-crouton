@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+@import '../fonts/stylesheet.css';
+
+/* Scan Nuxt Crouton layers for Tailwind classes */
+@source "../../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
+
+@theme {
+  --font-sans: 'main', sans-serif;
+}
+
+/* Grid layout */
+#mainGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 2rem 1fr 2rem;
+  margin: auto;
+}
+
+@media (min-width: 769px) {
+  #mainGrid {
+    grid-template-columns: 4.5em 1fr;
+    grid-template-rows: auto 1fr;
+    grid-auto-flow: dense;
+  }
+
+  #mainGrid header {
+    grid-column: 1 / 3;
+  }
+
+  #mainGrid aside {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  #mainGrid header {
+    grid-row: 1;
+  }
+
+  #mainGrid aside {
+    grid-row: 3;
+  }
+}
+
+/* Rotated sidebar text (desktop) */
+.rotated {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+/* Router active link */
+a.router-link-active {
+  background-color: black;
+  color: white;
+  border-color: transparent;
+}
+
+/* Embed responsive container */
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Content images */
+.prose img {
+  max-height: 80vh;
+}
+
+@media (min-width: 769px) {
+  .prose img {
+    max-width: 50vw;
+  }
+}
