@@ -459,6 +459,39 @@ const dbPullCmd = defineCommand({
   }
 })
 
+// ─── deploy-setup ─────────────────────────────────────────────────
+
+const deploySetupCmd = defineCommand({
+  meta: { name: 'deploy-setup', description: 'Interactive Cloudflare Pages deployment setup (create resources, generate CI workflow)' },
+  args: {
+    dryRun: { type: 'boolean', description: 'Preview without creating resources or writing files' },
+    skipResources: { type: 'boolean', description: 'Skip Cloudflare resource creation (D1, KV, R2)' },
+  },
+  async run({ args }) {
+    const { deploySetup } = await tsImport(join(__dirname, '..', 'lib', 'deploy-setup.ts'))
+    await deploySetup(process.cwd(), {
+      dryRun: args.dryRun,
+      skipResources: args.skipResources,
+    })
+  }
+})
+
+// ─── deploy-check ─────────────────────────────────────────────────
+
+const deployCheckCmd = defineCommand({
+  meta: { name: 'deploy-check', description: 'Validate deployment readiness (wrangler config, CI workflow, bindings)' },
+  args: {
+    dir: { type: 'positional', description: 'App directory to check', required: false },
+  },
+  async run({ args }) {
+    const { deployCheck, printDeployReport } = await tsImport(join(__dirname, '..', 'lib', 'deploy-check.ts'))
+    const appDir = args.dir || process.cwd()
+    const result = await deployCheck(appDir)
+    printDeployReport(result)
+    if (!result.ok) process.exit(1)
+  }
+})
+
 // ─── main ──────────────────────────────────────────────────────────
 
 const main = defineCommand({
@@ -477,6 +510,8 @@ const main = defineCommand({
     'rollback-bulk': rollbackBulkCmd,
     'rollback-interactive': rollbackInteractiveCmd,
     doctor: doctorCmd,
+    'deploy-setup': deploySetupCmd,
+    'deploy-check': deployCheckCmd,
     'scaffold-app': scaffoldAppCmd,
     'seed-translations': seedTranslationsCmd,
     'db-pull': dbPullCmd,
