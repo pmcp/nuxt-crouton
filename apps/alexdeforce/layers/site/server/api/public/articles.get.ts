@@ -1,10 +1,9 @@
-import { useDrizzle } from '#server/utils/drizzle'
 import { contentArticles } from '~~/server/db/schema'
 import { eq, desc, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const db = useDrizzle()
+  const db = useDB()
 
   const conditions = [eq(contentArticles.draft, false)]
 

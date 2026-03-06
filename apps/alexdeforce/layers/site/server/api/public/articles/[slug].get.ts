@@ -1,4 +1,3 @@
-import { useDrizzle } from '#server/utils/drizzle'
 import { contentArticles } from '~~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
 
@@ -8,7 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Missing slug' })
   }
 
-  const db = useDrizzle()
+  const db = useDB()
 
   const [article] = await db
     .select()

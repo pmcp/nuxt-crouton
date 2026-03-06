@@ -1,9 +1,8 @@
-import { useDrizzle } from '#server/utils/drizzle'
 import { contentAgendas } from '~~/server/db/schema'
 import { eq, desc } from 'drizzle-orm'
 
 export default defineEventHandler(async () => {
-  const db = useDrizzle()
+  const db = useDB()
 
   const events = await db
     .select()
