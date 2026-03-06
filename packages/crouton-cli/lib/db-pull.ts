@@ -1,6 +1,6 @@
 // db-pull.ts — Pull production D1 data into local dev
 import { execSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync, rmSync, unlinkSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, unlinkSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import consola from 'consola'
 
@@ -24,6 +24,8 @@ interface DbPullOptions {
 
 const SEED_FILE = '.db-pull-seed.sql'
 const LOCAL_D1_DIR = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'
+const NUXTHUB_DB_DIR = '.data/db'
+const NUXTHUB_DB_FILE = '.data/db/sqlite.db'
 
 /**
  * Detect wrangler config file in cwd or use provided path.
@@ -196,9 +198,12 @@ export async function dbPull(options: DbPullOptions = {}): Promise<void> {
   try {
     execSync(exportCmd, { stdio: 'inherit' })
   } catch {
-    throw new Error(
-      `Failed to export remote database. Make sure you're logged in to Cloudflare (npx wrangler login).`
-    )
+    // wrangler d1 export may exit non-zero even on success — check if file was created
+    if (!existsSync(SEED_FILE)) {
+      throw new Error(
+        `Failed to export remote database. Make sure you're logged in to Cloudflare (npx wrangler login).`
+      )
+    }
   }
 
   if (!existsSync(SEED_FILE)) {
@@ -244,7 +249,19 @@ export async function dbPull(options: DbPullOptions = {}): Promise<void> {
   }
   consola.success('Database imported successfully')
 
-  // Step 5: Clean up
+  // Step 5: Copy to NuxtHub dev location (.data/db/sqlite.db)
+  // NuxtHub reads from .data/db/ in dev, not from the wrangler D1 directory
+  try {
+    const localDb = findLocalDb(resolve(LOCAL_D1_DIR))
+    mkdirSync(resolve(NUXTHUB_DB_DIR), { recursive: true })
+    copyFileSync(localDb, resolve(NUXTHUB_DB_FILE))
+    consola.success(`Copied to NuxtHub dev database: ${NUXTHUB_DB_FILE}`)
+  } catch (err) {
+    consola.warn(`Could not copy to NuxtHub location: ${err}`)
+    consola.info(`You may need to manually copy the DB to ${NUXTHUB_DB_FILE}`)
+  }
+
+  // Step 6: Clean up
   if (!keepSql) {
     unlinkSync(SEED_FILE)
     consola.info(`Cleaned up ${SEED_FILE}`)
