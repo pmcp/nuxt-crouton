@@ -201,12 +201,14 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
 
   // ── 1. Gather info ──────────────────────────────────────────────────
 
+  const defaultUrl = `https://${config.name}.friendlyinter.net`
   const productionUrl = await p.text({
     message: 'Production URL',
-    placeholder: `https://${config.name}.friendlyinter.net`,
-    defaultValue: `https://${config.name}.friendlyinter.net`,
+    placeholder: defaultUrl,
+    defaultValue: defaultUrl,
     validate: (v) => {
-      if (!v.startsWith('https://')) return 'Must start with https://'
+      const val = v || defaultUrl
+      if (!val.startsWith('https://')) return 'Must start with https://'
     },
   })
 
@@ -430,5 +432,5 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
     'Secrets Checklist',
   )
 
-  p.outro('Deploy setup complete! Run `crouton deploy-check` to validate.')
+  p.outro('Deploy setup complete! Run `npx crouton deploy-check` to validate.')
 }

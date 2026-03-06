@@ -119,8 +119,8 @@ function tmplPackageJson(vars: ScaffoldVars): string {
     postinstall: 'nuxt prepare'
   }
   if (vars.cf) {
-    scripts['cf:deploy'] = 'nuxt build && npx wrangler pages deploy dist'
-    scripts['cf:preview'] = 'nuxt build && npx wrangler pages deploy dist --branch preview'
+    scripts['cf:deploy'] = 'NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist'
+    scripts['cf:preview'] = 'NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview'
     scripts['db:generate'] = 'drizzle-kit generate'
     scripts['db:migrate'] = `npx wrangler d1 migrations apply ${vars.name}-db --local`
     scripts['db:migrate:prod'] = `npx wrangler d1 migrations apply ${vars.name}-db --remote`
@@ -572,7 +572,8 @@ export async function scaffoldApp(
   console.log('  4.', 'Update crouton.config.js with collections')
   console.log('  5.', 'crouton generate')
   if (cf) {
-    console.log('  6.', 'Update wrangler.toml with real D1/KV IDs')
+    console.log('  6.', 'npx crouton deploy-setup    (creates CF resources + CI workflow)')
+    console.log('  7.', 'npx crouton deploy-check    (validates deploy readiness)')
   }
   console.log()
 

@@ -62,7 +62,7 @@ function checkWranglerConfig(config: AppConfig): DeployCheck[] {
     checks.push({
       name: 'wrangler-ids',
       status: 'fail',
-      message: `Placeholder IDs found: ${placeholders.join(', ')} — run \`crouton deploy-setup\` or set manually`,
+      message: `Placeholder IDs found: ${placeholders.join(', ')} — run \`npx crouton deploy-setup\` or set manually`,
     })
   } else {
     checks.push({
@@ -315,7 +315,7 @@ export function printDeployReport(result: DeployCheckResult): void {
   if (fails > 0) {
     console.log(`  ${icons.fail} ${fails} blocker(s), ${warns} warning(s), ${passes} passed`)
     console.log()
-    console.log('  Fix blockers before deploying. Run `crouton deploy-setup` to auto-generate missing config.')
+    console.log('  Fix blockers before deploying. Run `npx crouton deploy-setup` to auto-generate missing config.')
   } else if (warns > 0) {
     console.log(`  ${icons.warn} ${warns} warning(s), ${passes} passed — ready to deploy (review warnings)`)
   } else {
