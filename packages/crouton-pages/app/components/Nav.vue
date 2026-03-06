@@ -250,52 +250,57 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
     </div>
 
     <!-- Mobile layout -->
-    <div v-else class="relative flex items-center" :class="showPageNav ? 'justify-center' : 'justify-end'">
-      <!-- Center pill: Hamburger + drawer (hidden when ≤1 page) -->
+    <div v-else class="relative flex items-center" :class="showPageNav ? 'justify-start' : 'justify-end'">
+      <!-- Left pill: Hamburger + popover nav (hidden when ≤1 page) -->
       <div v-if="showPageNav" :class="[pillClass, 'px-2 py-1']">
-        <UDrawer v-model:open="drawerOpen" direction="left" :ui="{ content: 'w-72' }">
+        <UPopover v-model:open="drawerOpen" :content="{ side: 'bottom', align: 'start', sideOffset: 8 }">
           <UButton
-            icon="i-lucide-menu"
+            :icon="drawerOpen ? 'i-lucide-x' : 'i-lucide-menu'"
             color="neutral"
             variant="ghost"
             size="sm"
             aria-label="Open navigation menu"
           />
 
-          <template #header>
-            <span class="text-lg font-semibold">{{ t('pages.nav.menu') }}</span>
-          </template>
+          <template #content>
+            <div class="p-1 min-w-48">
+              <!-- Navigation links -->
+              <NuxtLink
+                v-for="item in menuItems"
+                :key="item.label"
+                :to="item.to"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm text-highlighted hover:bg-elevated transition-colors"
+                :class="item.active && 'bg-elevated font-medium'"
+                @click="closeDrawer"
+              >
+                <UIcon v-if="item.icon" :name="item.icon" class="size-4 text-muted shrink-0" />
+                {{ item.label }}
+              </NuxtLink>
 
-          <template #body>
-            <UNavigationMenu
-              orientation="vertical"
-              :items="menuItems"
-              variant="link"
-              color="neutral"
-              class="w-full"
-            />
-          </template>
+              <USeparator class="my-1" />
 
-          <template #footer>
-            <div class="flex items-center justify-between px-2">
-              <CroutonI18nLanguageSwitcher class="w-auto" />
-              <ClientOnly>
-                <UButton
-                  :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  @click="toggleColorMode"
-                />
-              </ClientOnly>
+              <!-- Footer: language + dark mode -->
+              <div class="flex items-center justify-between px-2 py-1">
+                <CroutonI18nLanguageSwitcher class="w-auto" />
+                <ClientOnly>
+                  <UButton
+                    :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    @click="toggleColorMode"
+                  />
+                </ClientOnly>
+              </div>
             </div>
           </template>
-        </UDrawer>
+        </UPopover>
       </div>
+
       <!-- Right pill: User menu (logged in) or language/dark mode (logged out) -->
       <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
-          <!-- Authenticated: Avatar dropdown (contains language/dark mode inside) -->
+          <!-- Authenticated: Avatar dropdown -->
           <template v-if="user">
             <UDropdownMenu
               :items="userDropdownItems"

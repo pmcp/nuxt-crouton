@@ -178,8 +178,10 @@ export async function dbPull(options: DbPullOptions = {}): Promise<void> {
         '',
         `1. Export remote DB: wrangler d1 export ${db.database_name} --remote --output=${SEED_FILE}${env ? ` --env=${env}` : ''}`,
         `2. Clear local D1: rm -rf ${LOCAL_D1_DIR}/*`,
-        `3. Import: sqlite3 <local-db> < ${SEED_FILE}`,
-        keepSql ? `4. Keep ${SEED_FILE}` : `4. Clean up ${SEED_FILE}`,
+        `3. Import: wrangler d1 execute --local --file=${SEED_FILE}`,
+        `4. Copy to NuxtHub dev DB: ${NUXTHUB_DB_FILE}`,
+        `5. Mark NuxtHub migrations as applied`,
+        keepSql ? `6. Keep ${SEED_FILE}` : `6. Clean up ${SEED_FILE}`,
       ].join('\n')
     )
     return
@@ -261,7 +263,30 @@ export async function dbPull(options: DbPullOptions = {}): Promise<void> {
     consola.info(`You may need to manually copy the DB to ${NUXTHUB_DB_FILE}`)
   }
 
-  // Step 6: Clean up
+  // Step 6: Mark NuxtHub migrations as applied
+  // The pulled DB already has all tables, so we mark all migrations as done
+  // to prevent NuxtHub from re-running them on dev startup
+  const migrationsDir = resolve(NUXTHUB_DB_DIR, 'migrations/sqlite')
+  if (existsSync(migrationsDir)) {
+    const migrations = readdirSync(migrationsDir).filter(f => f.endsWith('.sql'))
+    if (migrations.length > 0) {
+      consola.start('Marking NuxtHub migrations as applied...')
+      try {
+        const insertStatements = migrations
+          .map(name => `INSERT OR IGNORE INTO _hub_migrations (name) VALUES ('${name}');`)
+          .join('\n')
+        const hubDb = resolve(NUXTHUB_DB_FILE)
+        execSync(`sqlite3 "${hubDb}" "CREATE TABLE IF NOT EXISTS _hub_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, applied_at TEXT DEFAULT (datetime('now')));"`, { stdio: 'pipe' })
+        execSync(`sqlite3 "${hubDb}" "${insertStatements}"`, { stdio: 'pipe' })
+        consola.success(`Marked ${migrations.length} migrations as applied`)
+      } catch (err) {
+        consola.warn(`Could not mark migrations: ${err}`)
+        consola.info('You may need to run: npx nuxt db mark-as-migrated <migration-name>')
+      }
+    }
+  }
+
+  // Step 7: Clean up
   if (!keepSql) {
     unlinkSync(SEED_FILE)
     consola.info(`Cleaned up ${SEED_FILE}`)
