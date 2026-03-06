@@ -68,3 +68,8 @@ apps/crouton-playground/.data
 apps/velo/.data
 apps/atelier/.data_archive/**/*.db
 _archive/**/.data/
+
+# Seed data
+seed.sql
+apps/velo/seed.sql
+apps/velo/seed_reordered.sql
