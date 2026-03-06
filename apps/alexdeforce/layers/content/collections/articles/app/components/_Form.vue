@@ -44,7 +44,7 @@
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
-          <CroutonEditorSimple v-model="state.content" />
+          <CroutonEditorSimple v-model="state.content" content-type="json" />
         </UFormField>
         <UFormField label="Embed" name="embed" class="not-last:pb-4">
           <UTextarea v-model="state.embed" class="w-full" size="xl" />
