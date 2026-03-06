@@ -57,7 +57,7 @@ pnpm run cf:deploy          # Deploy to production
 pnpm run cf:preview         # Deploy preview branch
 
 # Quality
-npx nuxt typecheck          # TypeScript check (MANDATORY)
+pnpm typecheck              # TypeScript check (MANDATORY, or nuxt typecheck from app dir)
 pnpm lint                   # Lint code
 ```
 
@@ -226,13 +226,13 @@ Each app may have its own `CLAUDE.md` and `docs/` folder for app-specific contex
 
 1. **Before starting**: Read the app's `CLAUDE.md` if it exists
 2. **Make changes**: Follow Nuxt UI 4 patterns
-3. **Type check**: `npx nuxt typecheck` (MANDATORY)
+3. **Type check**: `pnpm typecheck` (MANDATORY)
 4. **Test locally**: `pnpm dev`
 5. **Deploy**: Follow deployment checklist
 
 ## Key Reminders
 
 - Always use `hub: { db: 'sqlite' }` not `hub: { database: true }`
-- Run `npx nuxt typecheck` after every change
+- Run `pnpm typecheck` after every change
 - Use Composition API with `<script setup lang="ts">`
 - Check the main `CLAUDE.md` at repo root for full conventions

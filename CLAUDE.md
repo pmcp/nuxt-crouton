@@ -46,7 +46,7 @@ Every task in `/docs/PROGRESS_TRACKER.md` follows this 5-step flow:
 ```
 1. Mark Task In Progress → Edit PROGRESS_TRACKER.md ([ ] → 🔄), use TodoWrite
 2. Do The Work          → Follow CLAUDE.md patterns, KISS principle
-3. Run Type Checking    → npx nuxt typecheck, fix errors immediately
+3. Run Type Checking    → pnpm typecheck (runs per-app), fix errors immediately
 4. Update Progress      → PROGRESS_TRACKER.md (🔄 → [x] ✅), update stats & Daily Log
 5. Git Commit           → ALWAYS use /commit skill — NEVER git commit directly
 ```
@@ -70,7 +70,7 @@ When starting or resuming: read `/docs/PROGRESS_TRACKER.md` first. Check git sta
 
 ### Critical Reminders
 - ✅ ALWAYS use `/commit` skill for ALL commits
-- ✅ ALWAYS run `npx nuxt typecheck` after code changes
+- ✅ ALWAYS run `pnpm typecheck` after code changes
 - ✅ ALWAYS update PROGRESS_TRACKER.md before committing
 - ✅ ALWAYS use TodoWrite for 3+ step tasks
 - ❌ NEVER batch multiple tasks in one commit
@@ -126,7 +126,7 @@ const comp = resolveComponent('CroutonAssetsPicker')
 Addon packages must register in `croutonApps` (in `app/app.config.ts`) to be detectable via `hasApp()`.
 
 ## MANDATORY: TypeScript Checking
-**EVERY change requires `npx nuxt typecheck`** — never `pnpm typecheck`. Fix errors immediately. Never skip.
+**EVERY change requires `pnpm typecheck`** (runs per-app via `pnpm -r --filter './apps/*' typecheck`). Never run `npx nuxt typecheck` from root — it has no Nuxt app context and produces thousands of false positives. Fix errors immediately. Never skip.
 
 ## Core Principles
 
@@ -200,7 +200,7 @@ Slideover and Drawer follow the same pattern: `v-model` + `#content="{ close }"`
 
 ```bash
 pnpm dev / pnpm build / pnpm preview
-npx nuxt typecheck    # ALWAYS use this (not pnpm typecheck)
+pnpm typecheck        # Runs per-app typecheck (NEVER npx nuxt typecheck from root)
 npx nuxt db generate  # Database migrations
 pnpm test / pnpm test:unit / pnpm test:e2e
 pnpm lint / pnpm lint:fix
@@ -299,7 +299,7 @@ MCP Servers: CLI MCP (`packages/nuxt-crouton-mcp-server/`), Docs MCP (`apps/docs
 ## Key Reminders
 
 1. **Check Nuxt MCP first** — always, no exceptions
-2. **Run `npx nuxt typecheck`** — after EVERY change
+2. **Run `pnpm typecheck`** — after EVERY change
 3. **Use TodoWrite for complex tasks** — 3+ steps requires it
 4. **Use Composition API** — `<script setup lang="ts">`, never Options API
 5. **Parallel when possible** — don't sequence independent tasks

@@ -2,6 +2,7 @@
 // Creates CF resources, updates wrangler config, generates CI workflow
 // Run from inside the app directory: crouton deploy setup
 
+import { randomBytes } from 'node:crypto'
 import { execSync } from 'node:child_process'
 import { join, relative } from 'node:path'
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises'
@@ -88,6 +89,36 @@ function createR2(name: string, cwd: string): void {
       return
     }
     throw error
+  }
+}
+
+/**
+ * Ensure a Cloudflare Pages project exists
+ */
+function ensurePagesProject(name: string, cwd: string): void {
+  try {
+    wrangler(`pages project create ${name}`, cwd)
+  } catch (error: any) {
+    // Already exists is fine
+    if (error.message.includes('already exists') || error.message.includes('A project with this name already exists')) {
+      return
+    }
+    throw error
+  }
+}
+
+/**
+ * Set a Cloudflare Pages secret via stdin piping
+ */
+function setPageSecret(projectName: string, key: string, value: string, cwd: string): void {
+  try {
+    execSync(`echo "${value}" | npx wrangler pages secret put ${key} --project-name ${projectName}`, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+  } catch (error: any) {
+    throw new Error(`Failed to set secret ${key}: ${error.stderr || error.message}`)
   }
 }
 
@@ -316,7 +347,47 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
     }
   }
 
-  // ── 3. Update or generate wrangler config ───────────────────────────
+  // ── 3. Create Pages project and set secrets ─────────────────────────
+
+  const projectName = pagesProjectName || config.name
+
+  if (!dryRun) {
+    const s = p.spinner()
+
+    // Ensure Pages project exists (required before setting secrets)
+    s.start(`Ensuring Pages project "${projectName}" exists`)
+    try {
+      ensurePagesProject(projectName, appDir)
+      s.stop(`Pages project "${projectName}" ready`)
+    } catch {
+      s.stop(`Could not create Pages project — set secrets manually after first deploy`)
+    }
+
+    // Generate and set BETTER_AUTH_SECRET
+    const authSecret = randomBytes(32).toString('hex')
+    s.start('Setting BETTER_AUTH_SECRET')
+    try {
+      setPageSecret(projectName, 'BETTER_AUTH_SECRET', authSecret, appDir)
+      s.stop('BETTER_AUTH_SECRET set')
+    } catch {
+      s.stop('Could not set BETTER_AUTH_SECRET — set manually')
+    }
+
+    // Set BETTER_AUTH_URL
+    s.start('Setting BETTER_AUTH_URL')
+    try {
+      setPageSecret(projectName, 'BETTER_AUTH_URL', productionUrl as string, appDir)
+      s.stop('BETTER_AUTH_URL set')
+    } catch {
+      s.stop('Could not set BETTER_AUTH_URL — set manually')
+    }
+  } else {
+    consola.info('Would set secrets:')
+    console.log(`  BETTER_AUTH_SECRET = <random 64-char hex>`)
+    console.log(`  BETTER_AUTH_URL = ${productionUrl}`)
+  }
+
+  // ── 4. Update or generate wrangler config ───────────────────────────
 
   if (!dryRun) {
     if (withStaging) {
@@ -346,7 +417,7 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
     }
   }
 
-  // ── 4. Generate CI workflow ─────────────────────────────────────────
+  // ── 5. Generate CI workflow ─────────────────────────────────────────
 
   const packagesNeedingBuild = await getPackagesNeedingBuild(config.extends, monorepoRoot)
   // Also include the main crouton module package
@@ -408,28 +479,23 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
     }
   }
 
-  // ── 5. Print secrets checklist ──────────────────────────────────────
-
-  const projectName = pagesProjectName || config.name
+  // ── 6. Print remaining secrets checklist ─────────────────────────────
 
   p.note(
     [
-      'Set these Cloudflare Pages secrets:',
+      'BETTER_AUTH_SECRET and BETTER_AUTH_URL were set automatically.',
       '',
-      `  npx wrangler pages secret put BETTER_AUTH_SECRET --project-name ${projectName}`,
-      `  npx wrangler pages secret put BETTER_AUTH_URL --project-name ${projectName}`,
-      '',
-      'Set these GitHub repository secrets:',
+      'Ensure these GitHub repository secrets exist:',
       '',
       '  CLOUDFLARE_ACCOUNT_ID    — Your Cloudflare account ID',
       '  CLOUDFLARE_API_TOKEN     — API token with Pages + D1 + R2 permissions',
       '',
-      'Optional secrets (if features are enabled):',
+      'Optional Cloudflare Pages secrets (if features are enabled):',
       '',
       `  npx wrangler pages secret put NUXT_ANTHROPIC_API_KEY --project-name ${projectName}`,
       `  npx wrangler pages secret put NUXT_EMAIL_RESEND_API_KEY --project-name ${projectName}`,
     ].join('\n'),
-    'Secrets Checklist',
+    'Remaining Checklist',
   )
 
   p.outro('Deploy setup complete! Run `npx crouton deploy-check` to validate.')
