@@ -6,6 +6,7 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
     "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
     "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",

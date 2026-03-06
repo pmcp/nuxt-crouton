@@ -9,6 +9,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
     "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
     "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",
