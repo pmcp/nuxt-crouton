@@ -26,6 +26,7 @@ import { ButtonRowBlock } from './button-row-block'
 import { StatsBlock } from './stats-block'
 import { GalleryBlock } from './gallery-block'
 import { ContactBlock } from './contact-block'
+import { MailingBlock } from './mailing-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -51,6 +52,7 @@ export interface PageBlocksOptions {
     stats?: boolean
     gallery?: boolean
     contact?: boolean
+    mailing?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -88,7 +90,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         buttonRow: true,
         stats: true,
         gallery: true,
-        contact: true
+        contact: true,
+        mailing: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -103,7 +106,7 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
       'separatorBlock', 'collectionBlock', 'faqBlock', 'twoColumnBlock',
       'embedBlock', 'imageBlock', 'logoBlock', 'videoBlock',
       'fileBlock', 'buttonRowBlock', 'richTextBlock',
-      'statsBlock', 'galleryBlock', 'contactBlock'
+      'statsBlock', 'galleryBlock', 'contactBlock', 'mailingBlock'
     ]
 
     // Addon block types from config
@@ -176,6 +179,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.contact !== false) {
       extensions.push(ContactBlock)
     }
+    if (blocks?.mailing !== false) {
+      extensions.push(MailingBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -213,6 +219,7 @@ export { ButtonRowBlock } from './button-row-block'
 export { StatsBlock } from './stats-block'
 export { GalleryBlock } from './gallery-block'
 export { ContactBlock } from './contact-block'
+export { MailingBlock } from './mailing-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -234,6 +241,7 @@ export type { ButtonRowBlockOptions } from './button-row-block'
 export type { StatsBlockOptions } from './stats-block'
 export type { GalleryBlockOptions } from './gallery-block'
 export type { ContactBlockOptions } from './contact-block'
+export type { MailingBlockOptions } from './mailing-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks

@@ -30,6 +30,7 @@ export type BlockType =
   | 'statsBlock'
   | 'galleryBlock'
   | 'contactBlock'
+  | 'mailingBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -213,6 +214,7 @@ export type BlockAttrs =
   | StatsBlockAttrs
   | GalleryBlockAttrs
   | ContactBlockAttrs
+  | MailingBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -441,6 +443,31 @@ export interface ContactBlockAttrs {
 
 export interface ContactBlock extends PageBlock<ContactBlockAttrs> {
   type: 'contactBlock'
+}
+
+export type MailingProvider = 'mailchimp' | 'custom'
+
+export interface MailingBlockAttrs {
+  /** The form action URL (e.g., Mailchimp subscribe endpoint) */
+  actionUrl: string
+  /** Provider hint for form structure */
+  provider: MailingProvider
+  /** Email field name attribute (default: 'EMAIL') */
+  emailFieldName: string
+  /** Honeypot field name for bot protection (optional) */
+  honeypotFieldName?: string
+  /** Heading text above the form */
+  title?: string
+  /** Description text below the heading */
+  description?: string
+  /** Submit button label */
+  buttonLabel: string
+  /** Placeholder text for the email input */
+  placeholder: string
+}
+
+export interface MailingBlock extends PageBlock<MailingBlockAttrs> {
+  type: 'mailingBlock'
 }
 
 // ============================================================================

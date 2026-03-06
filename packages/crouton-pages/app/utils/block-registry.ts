@@ -26,6 +26,7 @@ import type {
   StatsBlockAttrs,
   GalleryBlockAttrs,
   ContactBlockAttrs,
+  MailingBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -953,6 +954,77 @@ export const contactBlockDefinition: BlockDefinition<ContactBlockAttrs> = {
   ]
 }
 
+export const mailingBlockDefinition: BlockDefinition<MailingBlockAttrs> = {
+  type: 'mailingBlock',
+  name: 'Mailing List',
+  description: 'Email subscription form (Mailchimp or custom)',
+  icon: 'i-lucide-mail',
+  category: 'cta',
+  defaultAttrs: {
+    actionUrl: '',
+    provider: 'mailchimp',
+    emailFieldName: 'EMAIL',
+    honeypotFieldName: '',
+    title: 'Subscribe',
+    description: '',
+    buttonLabel: 'Subscribe',
+    placeholder: 'Enter your email'
+  },
+  schema: [
+    {
+      name: 'provider',
+      type: 'select',
+      label: 'Provider',
+      options: [
+        { label: 'Mailchimp', value: 'mailchimp' },
+        { label: 'Custom', value: 'custom' }
+      ],
+      defaultValue: 'mailchimp'
+    },
+    {
+      name: 'actionUrl',
+      type: 'text',
+      label: 'Form Action URL',
+      required: true,
+      description: 'The subscribe endpoint URL (e.g., https://xxx.us5.list-manage.com/subscribe/post?u=...&id=...)'
+    },
+    {
+      name: 'emailFieldName',
+      type: 'text',
+      label: 'Email Field Name',
+      description: 'Name attribute for the email input (default: EMAIL for Mailchimp)'
+    },
+    {
+      name: 'honeypotFieldName',
+      type: 'text',
+      label: 'Honeypot Field Name',
+      description: 'Bot protection field name (optional, from your form provider)'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Heading above the form (optional)'
+    },
+    {
+      name: 'description',
+      type: 'text',
+      label: 'Description',
+      description: 'Text below the heading (optional)'
+    },
+    {
+      name: 'buttonLabel',
+      type: 'text',
+      label: 'Button Label'
+    },
+    {
+      name: 'placeholder',
+      type: 'text',
+      label: 'Placeholder Text'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -971,7 +1043,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   buttonRowBlock: buttonRowBlockDefinition,
   statsBlock: statsBlockDefinition,
   galleryBlock: galleryBlockDefinition,
-  contactBlock: contactBlockDefinition
+  contactBlock: contactBlockDefinition,
+  mailingBlock: mailingBlockDefinition
 }
 
 // ============================================================================
