@@ -28,6 +28,13 @@
         {{ t('collection.componentError', { error: componentError }) }}
       </div>
 
+      <!-- Workspace layout: render CroutonWorkspace directly -->
+      <CroutonWorkspace
+        v-else-if="currentLayout === 'workspace'"
+        :collection="collectionName"
+        class="h-full"
+      />
+
       <component
         :is="componentName"
         v-else-if="componentName"
@@ -73,7 +80,8 @@ const allLayoutOptions = [
   { value: 'grid' as const, icon: 'i-lucide-grid-3x3' },
   { value: 'cards' as const, icon: 'i-lucide-layout-grid' },
   { value: 'tree' as const, icon: 'i-lucide-git-branch' },
-  { value: 'kanban' as const, icon: 'i-lucide-columns-3' }
+  { value: 'kanban' as const, icon: 'i-lucide-columns-3' },
+  { value: 'workspace' as const, icon: 'i-lucide-panel-left' }
 ]
 
 // Filter layout options - show tree if hierarchy OR sortable is enabled

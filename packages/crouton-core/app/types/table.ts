@@ -20,7 +20,7 @@ export interface SortableOptions {
 }
 
 // Layout types
-export type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban'
+export type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban' | 'workspace'
 
 // Grid size options (replaces separate grid/cards layouts)
 export type GridSize = 'compact' | 'comfortable' | 'spacious'
