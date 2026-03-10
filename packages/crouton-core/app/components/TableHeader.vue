@@ -34,7 +34,11 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
+
 const { t } = useT()
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
 const { open } = useCrouton()
 const { getConfig } = useCollections()
 
@@ -66,7 +70,11 @@ const getVariant = (base: string) => {
 }
 
 const handleCreate = () => {
-  const container = getConfig(props.collection)?.container ?? 'slideover'
-  open('create', props.collection, [], container)
+  if (itemAction) {
+    itemAction('create')
+  } else {
+    const container = getConfig(props.collection)?.container ?? 'slideover'
+    open('create', props.collection, [], container)
+  }
 }
 </script>

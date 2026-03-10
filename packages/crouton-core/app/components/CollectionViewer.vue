@@ -20,39 +20,74 @@
     </div>
 
     <!-- Content area - fills remaining space -->
-    <div class="flex-1 min-h-0">
+    <div class="flex-1 min-h-0 flex">
+      <!-- Left: collection layout (shrinks when inline editor is open) -->
       <div
-        v-if="componentError"
-        class="text-red-600 p-4 bg-red-50 rounded"
+        :class="showInlineEditor ? 'w-2/5 border-r border-default' : 'w-full'"
+        class="transition-all duration-200 min-h-0 overflow-auto"
       >
-        {{ t('collection.componentError', { error: componentError }) }}
+        <div
+          v-if="componentError"
+          class="text-red-600 p-4 bg-red-50 rounded"
+        >
+          {{ t('collection.componentError', { error: componentError }) }}
+        </div>
+
+        <!-- Workspace layout: render CroutonWorkspace directly -->
+        <CroutonWorkspace
+          v-else-if="currentLayout === 'workspace'"
+          :collection="collectionName"
+          class="h-full"
+        />
+
+        <component
+          :is="componentName"
+          v-else-if="componentName"
+          :layout="currentLayout"
+          class="h-full"
+        />
+
+        <div
+          v-else
+          class="text-gray-500"
+        >
+          {{ t('collection.componentNotFound', { collection: collectionName }) }}
+        </div>
       </div>
 
-      <!-- Workspace layout: render CroutonWorkspace directly -->
-      <CroutonWorkspace
-        v-else-if="currentLayout === 'workspace'"
-        :collection="collectionName"
-        class="h-full"
-      />
+      <!-- Right: inline editor panel -->
+      <div v-if="showInlineEditor" class="flex-1 min-h-0 overflow-auto">
+        <CroutonWorkspaceEditor
+          :key="inlineSessionKey"
+          :collection="collectionName"
+          :item-id="inlineItemId"
+          @save="handleInlineSave"
+          @delete="handleInlineDelete"
+          @cancel="handleInlineCancel"
+        />
+      </div>
 
-      <component
-        :is="componentName"
-        v-else-if="componentName"
-        :layout="currentLayout"
-        class="h-full"
-      />
-
+      <!-- Empty state when inline mode is active but no item selected -->
       <div
-        v-else
-        class="text-gray-500"
+        v-else-if="isInlineMode"
+        class="flex-1 flex items-center justify-center text-muted"
       >
-        {{ t('collection.componentNotFound', { collection: collectionName }) }}
+        <div class="text-center">
+          <UIcon name="i-lucide-mouse-pointer-click" class="size-12 mb-3 opacity-30" />
+          <p class="text-sm">{{ t('collection.selectItem') || 'Select an item to edit' }}</p>
+          <p class="text-xs text-muted mt-1">
+            {{ t('collection.orPressN') || 'or press N to create new' }}
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { CroutonItemAction } from '../types/table'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
+
 interface Props {
   collectionName: string
   defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban' | 'workspace'
@@ -69,9 +104,68 @@ const currentLayout = ref(props.defaultLayout)
 // Use composable for formatting
 const { camelToTitleCase, toPascalCase } = useFormatCollections()
 
-// Get collection config to check hierarchy support
+// Get collection config to check hierarchy support and container type
 const { getConfig } = useCollections()
 const collectionConfig = computed(() => getConfig(props.collectionName))
+
+// Resolve container type from config
+const container = computed(() =>
+  collectionConfig.value?.container ?? 'slideover'
+)
+const isInlineMode = computed(() => container.value === 'inline')
+
+// Inline editor state
+const inlineItemId = ref<string | null>(null)
+const inlineMode = ref<'view' | 'create' | 'edit'>('view')
+const inlineSessionKey = ref(0)
+const showInlineEditor = computed(() =>
+  isInlineMode.value && (inlineMode.value === 'create' || (inlineMode.value === 'edit' && !!inlineItemId.value))
+)
+
+// Provide the item action handler for all child components
+const crouton = useCrouton()
+
+const handleItemAction: CroutonItemAction = (action, ids = [], initialData?) => {
+  if (isInlineMode.value && action !== 'delete') {
+    // Inline mode: show editor panel
+    if (action === 'create') {
+      inlineItemId.value = null
+      inlineMode.value = 'create'
+      inlineSessionKey.value++
+    } else if (action === 'update' || action === 'view') {
+      inlineItemId.value = ids[0] ?? null
+      inlineMode.value = action === 'view' ? 'view' : 'edit'
+      inlineSessionKey.value++
+    }
+  } else {
+    // Modal/slideover/dialog mode (or delete which always uses overlay)
+    const effectiveContainer = action === 'delete' ? 'modal' : container.value === 'inline' ? 'slideover' : container.value
+    crouton.open(action, props.collectionName, ids, effectiveContainer as any, initialData)
+  }
+}
+
+provide(CROUTON_ITEM_ACTION_KEY, handleItemAction)
+
+// Inline editor event handlers
+function handleInlineSave(savedItem: any) {
+  if (savedItem?.id) {
+    inlineItemId.value = savedItem.id
+    inlineMode.value = 'edit'
+  }
+  inlineSessionKey.value++
+}
+
+function handleInlineDelete() {
+  inlineItemId.value = null
+  inlineMode.value = 'view'
+}
+
+function handleInlineCancel() {
+  if (inlineMode.value === 'create') {
+    inlineMode.value = 'view'
+    inlineItemId.value = null
+  }
+}
 
 // All available layout options
 const allLayoutOptions = [

@@ -137,8 +137,9 @@
 </template>
 
 <script lang="ts" setup>
-import { resolveComponent, type Component } from 'vue'
+import { resolveComponent, inject, type Component } from 'vue'
 import type { TableProps, TableSort, PaginationData, SortableOptions, CollabPresenceConfig } from '../types/table'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
 import { useTableData } from '../composables/useTableData'
 import { useTableColumns } from '../composables/useTableColumns'
 import { useSortable } from '@vueuse/integrations/useSortable'
@@ -179,9 +180,14 @@ const props = withDefaults(defineProps<TableProps>(), {
 // Composables
 const { t, tString } = useT()
 
+// Item action: use provided handler (inline-aware) or fall back to crouton.open()
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
+
 // Only use useCrouton when not in stateless mode
 const croutonComposable = props.stateless ? null : useCrouton()
-const openCrouton = croutonComposable?.open
+const openCrouton = itemAction
+  ? (action: string, _collection: string, ids: string[]) => itemAction(action as any, ids)
+  : croutonComposable?.open
 const setPagination = croutonComposable?.setPagination ?? (() => {})
 const getPagination = croutonComposable?.getPagination ?? (() => ({
   currentPage: 1,

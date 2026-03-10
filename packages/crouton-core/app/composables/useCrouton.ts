@@ -20,7 +20,7 @@ export interface CroutonState {
   items: any[]
   loading: LoadingState
   isOpen: boolean
-  containerType: 'slideover' | 'modal' | 'dialog'
+  containerType: 'slideover' | 'modal' | 'dialog' | 'inline'
   isExpanded?: boolean // Track expand state for slideovers
 }
 
@@ -68,7 +68,7 @@ export default function () {
   const items = computed(() => croutonStates.value[croutonStates.value.length - 1]?.items || [])
   const activeItem = computed(() => croutonStates.value[croutonStates.value.length - 1]?.activeItem || {})
 
-  const open = async (actionIn: CroutonAction, collection: string, ids: string[] = [], container: 'slideover' | 'modal' | 'dialog' = 'slideover', initialData?: any): Promise<void> => {
+  const open = async (actionIn: CroutonAction, collection: string, ids: string[] = [], container: 'slideover' | 'modal' | 'dialog' | 'inline' = 'slideover', initialData?: any): Promise<void> => {
     const hasErrors = useCroutonError().foundErrors()
     if (hasErrors) {
       return

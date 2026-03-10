@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import type { GridSize } from '../types/table'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
 
 interface Props {
   item: any
@@ -17,16 +18,25 @@ const props = withDefaults(defineProps<Props>(), {
   stateless: false
 })
 
-// Crouton for actions
+// Item action: use provided handler (inline-aware) or fall back to crouton.open()
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
 const crouton = useCrouton()
 
 // Action handlers
 function handleEdit() {
-  crouton?.open('update', props.collection, [props.item.id])
+  if (itemAction) {
+    itemAction('update', [props.item.id])
+  } else {
+    crouton?.open('update', props.collection, [props.item.id])
+  }
 }
 
 function handleDelete() {
-  crouton?.open('delete', props.collection, [props.item.id])
+  if (itemAction) {
+    itemAction('delete', [props.item.id])
+  } else {
+    crouton?.open('delete', props.collection, [props.item.id])
+  }
 }
 
 const isExpanded = ref(false)

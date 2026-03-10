@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { inject } from 'vue'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
+
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
 const { open } = useCrouton()
 
 const props = defineProps<{
@@ -146,7 +150,7 @@ const badgeValue = computed(() => {
         update
         button-classes="hover:scale-110 hover:color-neutral-800 pb-2"
         container-classes="flex flex-row gap-[2px]"
-        @update="open('update', collection, [id])"
+        @update="itemAction ? itemAction('update', [id]) : open('update', collection, [id])"
       />
     </div>
   </div>

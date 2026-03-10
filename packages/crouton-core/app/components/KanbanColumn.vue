@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted, nextTick, onBeforeUnmount, resolveComponent, type Component } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount, resolveComponent, inject, type Component } from 'vue'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
 import type SortableType from 'sortablejs'
 import type { SortableEvent, MoveEvent } from 'sortablejs'
 import type { CollabPresenceConfig } from '../types/table'
@@ -165,6 +166,7 @@ function getCollabRoomId(item: any): string {
 const { t } = useT()
 
 // Crouton for actions
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
 const crouton = useCrouton()
 </script>
 
@@ -233,8 +235,8 @@ const crouton = useCrouton()
             <CroutonItemButtonsMini
               delete
               update
-              @delete.stop="crouton?.open('delete', collection, [item.id])"
-              @update.stop="crouton?.open('update', collection, [item.id])"
+              @delete.stop="itemAction ? itemAction('delete', [item.id]) : crouton?.open('delete', collection, [item.id])"
+              @update.stop="itemAction ? itemAction('update', [item.id]) : crouton?.open('update', collection, [item.id])"
             />
           </div>
         </UCard>

@@ -1,3 +1,5 @@
+import type { InjectionKey } from 'vue'
+
 // Table component types
 export interface TableColumn {
   id?: string
@@ -18,6 +20,19 @@ export interface SortableOptions {
   /** Temporarily disable drag-and-drop */
   disabled?: boolean
 }
+
+// Container types — how an item opens when clicked
+export type ContainerType = 'slideover' | 'modal' | 'dialog' | 'inline'
+
+/**
+ * Function signature for the provided item action handler.
+ * Injected by CollectionViewer so child components don't call crouton.open() directly.
+ * When container is 'inline', this shows the editor panel instead of opening a modal/slideover.
+ */
+export type CroutonItemAction = (action: 'create' | 'update' | 'delete' | 'view', ids?: string[], initialData?: any) => void
+
+/** Injection key for croutonItemAction */
+export const CROUTON_ITEM_ACTION_KEY: InjectionKey<CroutonItemAction> = Symbol('croutonItemAction')
 
 // Layout types
 export type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban' | 'workspace'

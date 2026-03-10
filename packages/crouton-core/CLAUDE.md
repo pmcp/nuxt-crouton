@@ -139,6 +139,7 @@ export default defineAppConfig({
     products: {
       layer: 'shop',
       apiPath: '/api/teams/{teamId}/products',
+      container: 'slideover', // 'slideover' | 'modal' | 'dialog' | 'inline'
       references: { categoryId: 'categories' }, // Auto-refresh on mutation
       dependentFieldComponents: { slots: 'SlotPicker' },
       display: { title: 'name', subtitle: 'category', image: 'coverImage', badge: 'status' },
@@ -301,11 +302,26 @@ export default defineNuxtConfig({
 
 ```typescript
 // Key types from app/types/table.ts
-type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban'
+type ContainerType = 'slideover' | 'modal' | 'dialog' | 'inline'
+type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban' | 'workspace'
 type GridSize = 'compact' | 'comfortable' | 'spacious'
+type CroutonItemAction = (action: 'create' | 'update' | 'delete' | 'view', ids?: string[], initialData?: any) => void
 interface PaginationData { currentPage, pageSize, totalItems, sortBy, sortDirection }
 interface HierarchyConfig { enabled, parentField?, orderField?, pathField? }
 ```
+
+### Inline Container Mode
+
+When `container: 'inline'` is set in collection config, `CollectionViewer` renders a split-view:
+any layout on the left (shrinks to 40%) + `WorkspaceEditor` on the right.
+
+`CollectionViewer` provides `CROUTON_ITEM_ACTION_KEY` via Vue's provide/inject.
+All child components (Table, DefaultCard, KanbanColumn, Detail, ItemCardMini, TableHeader)
+inject this handler instead of calling `crouton.open()` directly. This allows the container type
+to be changed without modifying any layout component.
+
+Components fall back to `crouton.open()` when used outside CollectionViewer (no inject available).
+Delete actions always use modal overlay regardless of container type.
 
 ## Testing
 

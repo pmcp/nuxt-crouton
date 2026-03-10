@@ -261,7 +261,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, resolveComponent, getCurrentInstance, provide, type Component } from 'vue'
+import { computed, resolveComponent, getCurrentInstance, provide, inject, type Component } from 'vue'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
 import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 import type { ListProps, LayoutType, ResponsiveLayout, layoutPresets, HierarchyConfig, SortableOptions, KanbanConfig, CollabPresenceConfig, GridSize } from '../types/table'
 import { layoutPresets as presets } from '../types/table'
@@ -564,6 +565,9 @@ async function handleKanbanMove(payload: { id: string; newValue: string | null; 
   }
 }
 
+// Item action: use provided handler (inline-aware) or fall back to crouton.open()
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
+
 // Handle kanban card selection
 function handleKanbanSelect(item: any) {
   emit('kanban-select', item)
@@ -572,7 +576,11 @@ function handleKanbanSelect(item: any) {
   if (props.stateless) return
 
   // Open the item in edit mode
-  crouton?.open('update', props.collection, item)
+  if (itemAction) {
+    itemAction('update', Array.isArray(item) ? item : [item.id ?? item])
+  } else {
+    crouton?.open('update', props.collection, item)
+  }
 }
 
 // Crouton actions (skip in stateless mode)
@@ -581,6 +589,8 @@ const crouton = props.stateless ? null : useCrouton()
 function handleCreate() {
   if (props.stateless) {
     emit('create')
+  } else if (itemAction) {
+    itemAction('create')
   } else {
     const container = getConfig(props.collection)?.container ?? 'slideover'
     crouton?.open('create', props.collection, [], container)

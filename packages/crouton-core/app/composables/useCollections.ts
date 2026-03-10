@@ -35,8 +35,10 @@ interface CollectionConfig {
    * doesn't override the package's custom form.
    */
   packageForm?: string
-  /** Container type for create/update forms. Defaults to 'slideover'. */
-  container?: 'slideover' | 'modal' | 'dialog'
+  /** Container type for create/update forms. Defaults to 'slideover'.
+   * 'inline' renders an editor panel beside the collection layout (split-view).
+   */
+  container?: 'slideover' | 'modal' | 'dialog' | 'inline'
   apiPath?: string
   displayName?: string
   defaultPagination?: {

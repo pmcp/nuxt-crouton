@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { inject } from 'vue'
+import { CROUTON_ITEM_ACTION_KEY } from '../types/table'
+
 interface FieldMeta {
   name: string
   type: string
@@ -94,10 +97,15 @@ function isEmpty(value: any): boolean {
   return false
 }
 
-// Edit via crouton
+// Edit: use provided handler (inline-aware) or fall back to crouton.open()
+const itemAction = inject(CROUTON_ITEM_ACTION_KEY, undefined)
 const crouton = useCrouton()
 function handleEdit() {
-  crouton?.open('update', props.collection, [props.item.id])
+  if (itemAction) {
+    itemAction('update', [props.item.id])
+  } else {
+    crouton?.open('update', props.collection, [props.item.id])
+  }
 }
 </script>
 
