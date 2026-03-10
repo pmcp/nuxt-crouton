@@ -18,7 +18,12 @@ const pendingSelection = ref<string | null>(null)
 
 const crouton = useCrouton()
 const { getConfig } = useCollections()
-const collectionName = props.collection || getConfig('croutonAssets')?.apiPath || getConfig('assets')?.apiPath || 'assets'
+// Resolve API path: prefer generated collection configs that have apiPath set
+const collectionName = props.collection
+  || getConfig('croutonAssets')?.apiPath
+  || getConfig('assetsAssets')?.apiPath
+  || getConfig('assets')?.apiPath
+  || 'crouton-assets'
 
 const { data: assets, pending, refresh } = await useFetch(
   () => `/api/teams/${useRoute().params.team}/${collectionName}`
