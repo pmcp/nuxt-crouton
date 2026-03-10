@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     .from(contentArticles)
     .where(and(
       eq(contentArticles.id, slug),
-      eq(contentArticles.draft, false)
+      eq(contentArticles.status, 'published')
     ))
     .limit(1)
 

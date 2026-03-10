@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const db = useDB()
 
-  const conditions = [eq(contentArticles.draft, false)]
+  const conditions = [eq(contentArticles.status, 'published')]
 
   if (query.category) {
     conditions.push(eq(contentArticles.category, String(query.category)))
