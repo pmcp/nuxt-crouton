@@ -781,7 +781,7 @@ A collection viewer component with an integrated layout switcher that dynamicall
 ### Features
 
 - **Dynamic Component Loading**: Automatically resolves and loads the appropriate collection list component
-- **Layout Switcher**: Built-in UI for switching between table, list, grid, and cards layouts
+- **Layout Switcher**: Built-in UI for switching between table, list, grid, cards, tree, kanban, and workspace layouts
 - **Error Handling**: Graceful error handling if component cannot be loaded
 - **Auto-Import Support**: Works with Nuxt's auto-imported components
 
@@ -809,7 +809,7 @@ The viewer converts collection names to component names using PascalCase:
 
 ### Layout Options
 
-The switcher provides four layout modes with corresponding icons:
+The switcher provides seven layout modes with corresponding icons:
 
 | Layout | Icon | Use Case |
 |--------|------|----------|
@@ -817,6 +817,9 @@ The switcher provides four layout modes with corresponding icons:
 | `list` | i-lucide-list | Compact row-by-row display |
 | `grid` | i-lucide-grid-3x3 | Grid of cards, good for images |
 | `cards` | i-lucide-layout-grid | Large cards with rich content |
+| `tree` | i-lucide-git-branch | Hierarchical tree view for parent-child data |
+| `kanban` | i-lucide-columns-3 | Kanban board view with draggable columns |
+| `workspace` | i-lucide-panel-left | Full workspace view with inline editing |
 
 ---
 

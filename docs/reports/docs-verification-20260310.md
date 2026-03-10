@@ -1,243 +1,206 @@
 # Documentation Verification Report
-
-Date: 2026-03-10
-Pages verified: 73 (excluding index pages)
-Scope: All sections
+Date: 2026-03-10 (third pass — post-fix verification)
+Pages verified: 23 (focused re-verification of previously broken pages)
+Scope: All pages flagged as broken in previous audit
 
 ## Summary
 
 | Status | Count |
 |--------|-------|
-| Verified claims | ~350+ |
-| Broken claims | ~95 |
-| Suspicious | ~40 |
-| Missing from docs | ~80+ |
+| Previously broken, now FIXED | ~60 claims |
+| Still broken | ~25 claims |
+| New suspicious | ~12 |
+| Missing from docs | ~15 |
 
-## Systemic Issues (appear across 5+ pages)
+## Fixes Confirmed from Commit 2bc99457
 
-These recurring problems affect many pages and should be fixed globally:
+These issues from the previous audit are now **resolved**:
 
-### 1. Generated File Structure is Wrong (8+ pages)
-**Affected**: usage.md, collections.md, architecture.md, generated-code.md, cli-reference.md, cli-commands.md, customization/index.md, conventions.md
-
-Docs consistently show:
-```
-layers/shop/
-  components/products/List.vue, Form.vue, Table.vue
-  composables/useProducts.ts
-  types/products.ts
-```
-
-Actual generated structure:
-```
-layers/shop/collections/products/
-  app/components/List.vue, _Form.vue     # No Table.vue, Form has underscore
-  app/composables/useShopProducts.ts     # Includes layer prefix
-  server/api/teams/[id]/shop-products/...
-  server/database/schema.ts, queries.ts
-  types.ts                               # At collection root
-  nuxt.config.ts
-```
-
-Key differences:
-- Missing `collections/` and `app/` directory levels
-- Form is `_Form.vue` (underscore prefix), not `Form.vue`
-- No `Table.vue` is generated
-- Composable includes layer prefix (e.g., `useShopProducts`, not `useProducts`)
-- Types at collection root as `types.ts`, not `types/products.ts`
-- Server-side files not shown
-
-### 2. `CroutonButton` Does Not Exist (6+ pages)
-**Affected**: usage.md, forms-modals.md, architecture.md, packages.md, generated-code.md, best-practices.md, troubleshooting.md, migration.md
-
-Docs reference `<CroutonButton :action="action" :loading="loading" />` but this component does not exist. The actual component is `CroutonFormActionButton` (at `packages/crouton-core/app/components/FormActionButton.vue`).
-
-### 3. `CroutonList` Does Not Exist (5+ pages)
-**Affected**: packages.md, generated-code.md, querying.md, bulk-operations.md, best-practices.md
-
-The actual list/display component is `CroutonCollection` (supports table, list, grid, tree, kanban, workspace layouts).
-
-### 4. Non-existent Modal Composables (3+ pages)
-**Affected**: architecture.md, packages.md
-
-`useCroutonModal()`, `useCroutonSlideover()`, `useCroutonDrawer()` DO NOT EXIST. Only `useCrouton()` exists, which handles all container types via a `containerType` parameter.
-
-### 5. `useCroutonToast()` Does Not Exist (2+ pages)
-**Affected**: architecture.md, packages.md
-
-Actual notification composable is `useNotify()`.
-
-### 6. `PUT` vs `PATCH` for Updates (3+ pages)
-**Affected**: conventions.md, glossary.md, generated-code.md
-
-Docs show `PUT /api/[collection]/[id]` for updates. Actual endpoints use `PATCH` (e.g., `[articleId].patch.ts`).
-
-### 7. Column Format Inconsistency (4+ pages)
-**Affected**: tables.md, custom-columns.md, modal-components.md, table-components.md
-
-Some pages use old `{ key, label }` format, others use TanStack-style `{ accessorKey, header }`. Source uses TanStack format.
-
-### 8. `hideDefaultColumns` Missing Fields (4+ pages)
-**Affected**: types.md, layout-components.md, table-components.md, modal-components.md
-
-Docs omit `select` and `presence` fields that exist in source. Some pages use snake_case (`created_at`) instead of camelCase (`createdAt`).
-
-### 9. Schema Format YAML vs JSON (2+ pages)
-**Affected**: conventions.md, glossary.md
-
-Docs reference YAML schema format but actual schemas are JSON files.
-
-### 10. `statusCode` vs `status` (3+ pages)
-**Affected**: troubleshooting.md, best-practices.md
-
-Docs use Nitro v2 `statusCode: 400` pattern but Nuxt 4.3+ uses `status: 400`.
+1. ~~`userId` → `owner` in auto-generated fields~~ → Fixed in troubleshooting.md, conventions.md, faq.md, data-operations.md
+2. ~~`@crouton/auth` → `@fyit/crouton-auth`~~ → Fixed in migration.md (all 10+ occurrences)
+3. ~~`drawer` container type~~ → Removed from architecture.md, glossary.md
+4. ~~`inline` missing from container type lists~~ → Added across 4 API reference pages
+5. ~~`useTableSearch` wrong return values~~ → Now correctly shows `search, isSearching, handleSearch, clearSearch`
+6. ~~`TeamMember` vs `Member`~~ → Consistently uses `Member` now
+7. ~~Non-existent `selectable`/`selected`/`loading` props~~ → Replaced with actual props in modal-components.md
+8. ~~`CollectionConfig` missing fields~~ → ~14 fields added to types.md
+9. ~~`CroutonMutationPayload` missing `correlationId`/`timestamp`~~ → Added
+10. ~~`statusCode` → `status`~~ → Fixed in tables.md
+11. ~~Bookings dep classification~~ → `@fyit/crouton-editor` correctly listed as regular dep
+12. ~~AI schema extension~~ → Fixed `.ts` → `.json`
+13. ~~Rollback CLI command format~~ → Corrected to `crouton rollback`
+14. ~~Packages CLI command format~~ → Corrected to `crouton <subcommand>`
+15. ~~Auto-generated fields lists~~ → Corrected across conventions.md, faq.md, glossary.md
 
 ---
 
-## Pages by Health
+## Remaining Issues
 
-### Needs Rewrite (>50% broken claims or entirely fictional)
+### CRITICAL: Column Format Inconsistency (3 pages)
 
-| Page | Issues |
-|------|--------|
-| `10.guides/7.rollback.md` | **ENTIRELY FICTIONAL** - `crouton-rollback`, `crouton-rollback-bulk`, `crouton-rollback-interactive` commands do not exist anywhere in the codebase |
-| `9.reference/1.conventions.md` | Wrong file structure, wrong endpoint methods, fake field types (`reference`, `longtext`), YAML vs JSON, wrong component names |
-| `9.reference/3.glossary.md` | Non-existent composables (`useCollectionForm`, `useCollectionTable`), wrong methods (PUT vs PATCH), YAML vs JSON, fake field types |
-| `9.reference/2.faq.md` | Non-existent composable (`useCollectionForm`), wrong props (`:data` vs `:rows`), wrong env vars (`DATABASE_URL`, `NUXT_SESSION_SECRET`) |
-| `2.fundamentals/2.architecture.md` | Non-existent composables (useCroutonModal/Slideover/Drawer/Toast), wrong file structure, wrong CLI syntax |
+**Affects:** `4.patterns/3.tables.md`, `4.patterns/5.list-layouts.md`, `5.customization/4.custom-columns.md`
 
-### Needs Significant Fixes (5+ broken claims)
+The `TableColumn` interface uses TanStack Table format (`accessorKey`/`header`/`cell`), but large portions of these pages still use the old `key`/`label`/`render` format:
 
-| Page | Broken | Key Issues |
-|------|--------|------------|
-| `2.fundamentals/7.packages.md` | 6 | Non-existent components/composables, wrong package name |
-| `2.fundamentals/generated-code.md` | 5 | Wrong file structure, non-existent components |
-| `6.features/7.assets.md` | 9 | Wrong component count (2 vs 7), wrong paths, missing props |
-| `6.features/14.admin.md` | 5 | Missing component, wrong route paths |
-| `6.features/12.flow.md` | 5 | Missing props/return values on composables |
-| `3.generation/4.cli-reference.md` | 7 | `init` command completely changed, missing 7+ commands, `_Form.vue` naming |
-| `3.generation/cli-commands.md` | 3 | Wrong file tree, wrong composable naming |
-| `10.guides/1.troubleshooting.md` | 4 | Non-existent CroutonButton, statusCode pattern |
-| `10.guides/3.best-practices.md` | 4 | Non-existent CroutonList/CroutonButton, statusCode |
-| `10.guides/5.asset-management.md` | 4 | Wrong component name, wrong return type, wrong structure |
-| `8.api-reference/3.types.md` | 5 | Wrong LayoutType, required vs optional props |
-| `8.api-reference/5.internal-api.md` | 2 | Wrong hook payload field names |
+- **`render` property does not exist** on `TableColumn` — should be `cell`
+- **`component` property does not exist** on `TableColumn`
+- **`align` property does not exist** on `TableColumn`
+- **`key`/`label`** should be **`accessorKey`/`header`** throughout
 
-### Needs Minor Fixes (1-4 broken claims)
+These three pages need a systematic find-and-replace of the column API.
 
-| Page | Broken | Key Issues |
-|------|--------|------------|
-| `1.getting-started/3.usage.md` | 2 | Wrong file structure, CroutonButton |
-| `2.fundamentals/1.collections.md` | 1 | Wrong layer structure |
-| `2.fundamentals/3.forms-modals.md` | 4 | Wrong loading type, missing action/container types |
-| `2.fundamentals/querying.md` | 1 | CroutonList reference |
-| `3.generation/2.schema-format.md` | 3 | Missing field types (image, file), missing meta properties |
-| `3.generation/3.multi-collection.md` | 2 | MySQL not supported, wrong dialect value ('postgres' vs 'pg') |
-| `4.patterns/1.relations.md` | 1 | Component name missing prefix |
-| `4.patterns/3.tables.md` | 1 | Non-existent `list-item-actions` slot |
-| `4.patterns/5.list-layouts.md` | 1 | Non-existent `list-item-actions` slot |
-| `5.customization/5.layouts.md` | 2 | Wrong component name (CroutonMiniButtons), missing layout type |
-| `6.features/1.internationalization.md` | 2 | Missing many CroutonI18nInput props |
-| `6.features/6.rich-text.md` | 1 | Content prop type incomplete |
-| `6.features/9.events.md` | 3 | Wrong type fields (teamId, timestamp, metadata) |
-| `6.features/10.maps.md` | 1 | Marker animateTransitions default |
-| `6.features/11.devtools.md` | 3 | Incomplete module structure, wrong hook/config |
-| `6.features/13.ai.md` | 4 | Wrong composable/component counts, import path |
-| `6.features/17.email.md` | 1 | Custom template import path |
-| `6.features/18.pages.md` | 3 | Missing block types, misleading Form component, API slug path |
-| `6.features/19.bookings.md` | 1 | Component prefix inconsistency |
-| `6.features/20.sales.md` | 1 | calculateItemPrice import path |
-| `7.advanced/2.team-based-auth.md` | 2 | Package name inconsistency, import path |
-| `7.advanced/4.bulk-operations.md` | 3 | Non-existent CroutonList, wrong method name (remove vs deleteItems) |
-| `7.advanced/6.rate-limiting.md` | 1 | Auth is a layer not a module |
-| `8.api-reference/4.server.md` | 1 | Returns `membership` not `member` |
-| `8.api-reference/components/form-components.md` | 2 | FormActionButton type prop, missing hasValidationErrors |
-| `8.api-reference/components/modal-components.md` | 2 | Column format, snake_case vs camelCase |
-| `8.api-reference/composables/mutation-composables.md` | 2 | Hook payload field names |
-| `8.api-reference/composables/table-composables.md` | 1 | Actions column ordering |
-| `8.api-reference/composables/utility-composables.md` | 1 | useCollectionProxy is not a composable |
-| `10.guides/2.migration.md` | 1 | CroutonButton reference |
-| `10.guides/4.pagination.md` | 1 | refresh-fn prop unverified |
-| `10.guides/8.custom-cardmini.md` | 1 | CroutonMiniButtons wrong name |
-| `10.guides/9.deployment.md` | 1 | Wrong croutonAuth config structure |
+### NEEDS REWRITE: list-layouts.md
 
-### Healthy (0 broken claims)
+Despite a deprecation callout, ~370 lines still use the non-existent `#list-item-actions` slot. The "Current Pattern" section is only 17 lines. All real-world examples (User Management, E-commerce, Contact List) use the deprecated pattern. The troubleshooting section tells users to verify the non-existent slot name. `CroutonList` component reference is invalid.
 
-| Page | Notes |
-|------|-------|
-| `1.getting-started/1.index.md` | Overview page, accurate |
-| `1.getting-started/2.installation.md` | Accurate |
-| `1.getting-started/4.adding-modules.md` | Accurate (missing some packages) |
-| `2.fundamentals/4.data-operations.md` | Accurate |
-| `2.fundamentals/6.caching.md` | Accurate |
-| `4.patterns/2.forms.md` | Mostly accurate |
-| `4.patterns/drizzle.md` | Standard Drizzle patterns |
-| `5.customization/1.index.md` | Minor Form.vue naming |
-| `5.customization/3.custom-components.md` | Accurate |
-| `5.customization/4.custom-columns.md` | Mostly accurate |
-| `6.features/15.export.md` | Clean |
-| `6.features/16.collaboration.md` | Clean |
-| `7.advanced/3.conditional-fields.md` | Accurate |
-| `7.advanced/5.optimistic-updates.md` | Pattern guide, accurate |
-| `10.guides/6.future-roadmap.md` | Future proposals, N/A |
-| `8.api-reference/6.use-collection-item.md` | Accurate |
-| `8.api-reference/components/content-components.md` | Accurate |
-| `8.api-reference/composables/data-composables.md` | Accurate |
-| `8.api-reference/composables/form-composables.md` | Accurate |
-| `8.api-reference/composables/query-composables.md` | Accurate |
+---
+
+## Pages by Health (Updated)
+
+### 🔴 Needs Rewrite
+- `4.patterns/5.list-layouts.md` — Still dominated by non-existent `list-item-actions` slot examples
+
+### 🟡 Needs Significant Fixes
+- `5.customization/4.custom-columns.md` — First example correct, ALL remaining use wrong column format + non-existent `render`/`component`/`align` props
+- `4.patterns/3.tables.md` — Mixed: some examples correct (`accessorKey`/`header`), others still use `key`/`label`/`render`
+
+### 🟡 Needs Minor Fixes
+- `8.api-reference/5.internal-api.md` — Missing `createdBy`/`updatedBy` in useTableColumns hideDefaultColumns
+- `8.api-reference/components/utility-components.md` — CollectionViewer layout table missing `tree`, `kanban`, `workspace`
+- `8.api-reference/3.types.md` — `packageForm` not in actual interface; missing `kind` property; missing `tree-default` preset
+- `9.reference/2.faq.md` — Line 53: invalid CLI command (`config` subcommand doesn't accept collection name positional)
+- `3.generation/4.cli-reference.md` — Missing `db-pull`/`scaffold-app` from overview table; `--no-auto-merge` flag undocumented
+- `3.generation/cli-commands.md` — Minor binary name inconsistency (`crouton` vs `crouton-generate`)
+- `6.features/20.sales.md` — Import path `@fyit/crouton-auth/server` doesn't exist in exports; server utils auto-import not configured
+
+### 🟢 Now Healthy (fixed since last audit)
+- `2.fundamentals/2.architecture.md` — Container types fixed
+- `2.fundamentals/4.data-operations.md` — `userId` references removed
+- `2.fundamentals/7.packages.md` — CLI format and themes fixed
+- `9.reference/1.conventions.md` — Auto-generated fields corrected
+- `10.guides/2.migration.md` — Package names corrected
+- `10.guides/7.rollback.md` — CLI command format corrected
+- `6.features/13.ai.md` — `chat.post.ts` callout added, schema extension fixed
+- `6.features/14.admin.md` — Contradiction resolved (separate but included via meta-package)
+- `6.features/19.bookings.md` — Dep classification fixed; Calendar/PanelMap/ActivityTimeline exist but intentionally omitted from table
+
+---
+
+## Detailed Findings
+
+### Features
+
+#### `6.features/13.ai.md` — NOW HEALTHY ✅
+- All composables (4), components (5), server endpoints (4) verified
+- `chat.post.ts` correctly flagged as non-existent via callout
+- **Suspicious**: Type export path `@fyit/crouton-ai/types` not in package.json exports
+
+#### `6.features/14.admin.md` — NOW HEALTHY ✅
+- All composables (4), components (7+), API endpoints (10+) verified
+- Contradiction resolved: separate package included via meta-package
+- **Suspicious**: `runtimeConfig.public.crouton.admin` config block may be aspirational
+
+#### `6.features/19.bookings.md` — NOW HEALTHY ✅
+- All composables (10), components (15+), API endpoints (10+) verified
+- Calendar/PanelMap/ActivityTimeline exist in source, intentionally omitted from docs table
+
+#### `6.features/20.sales.md` — MINOR FIXES NEEDED 🟡
+- All composables (2), components (14), server utils verified
+- **Still Broken**: Import path `@fyit/crouton-auth/server` doesn't exist in package exports (should be `@fyit/crouton-auth/server/utils/scoped-access`)
+- **Still Broken**: Server utils auto-import claim may be wrong — `nuxt.config.ts` lacks `nitro.imports.dirs`
+- **Suspicious**: `fr.json` locale file exists but not registered in nuxt.config.ts
+
+### Generation & Patterns
+
+#### `3.generation/cli-commands.md` — MOSTLY FIXED 🟢
+- `init` command documentation now accurate
+- **Minor**: Binary name inconsistency (`crouton` vs `crouton-generate`) in rollback section
+
+#### `3.generation/4.cli-reference.md` — MINOR FIXES NEEDED 🟡
+- Package name, version, binaries, generate/init/config/add/rollback all verified
+- **Broken**: Overview table missing `scaffold-app` and `db-pull` commands
+- **Broken**: `--no-auto-merge` flag undocumented
+- **Suspicious**: `add` command feature list is manifest-driven, may differ per install
+
+#### `4.patterns/3.tables.md` — SIGNIFICANT FIXES NEEDED 🟡
+- Basic table, search, pagination, drag-and-drop verified
+- `statusCode` → `status` fix confirmed
+- **Still Broken**: "Displaying Related Data" section (lines ~213-290) uses `key`/`label`/`render` format
+- **Still Broken**: `render` property doesn't exist on `TableColumn` — should be `cell`
+
+#### `4.patterns/5.list-layouts.md` — NEEDS REWRITE 🔴
+- `layout="list"`, responsive breakpoints, `card` prop verified
+- Deprecation callout for `list-item-actions` present
+- **Still Broken**: ~370 lines of examples still use non-existent `#list-item-actions` slot
+- **Still Broken**: Troubleshooting section actively misleading
+- **Still Broken**: `CroutonList` component reference invalid
+- **Still Broken**: Column format uses old `key`/`label` throughout
+
+#### `5.customization/4.custom-columns.md` — SIGNIFICANT FIXES NEEDED 🟡
+- First "Basic Column Definition" example correct (TanStack format)
+- **Still Broken**: ALL remaining examples (~450 lines) revert to `key`/`label`/`render`
+- **Still Broken**: `render`, `component`, `align` properties don't exist on `TableColumn`
+
+### API Reference
+
+#### `8.api-reference/5.internal-api.md` — MINOR FIX NEEDED 🟡
+- `useTableData`, `useTableSearch`, `useExpandableSlideover` all verified ✅
+- `useTableSearch` return values now correct (fixed in 2bc99457)
+- **Broken**: `useTableColumns` `hideDefaultColumns` missing `createdBy`/`updatedBy`
+
+#### `8.api-reference/composables/table-composables.md` — NOW HEALTHY ✅
+- All three composables verified with correct signatures and return values
+- `TableSort` type shape `{ column, direction }` is correct
+
+#### `8.api-reference/components/utility-components.md` — MINOR FIX NEEDED 🟡
+- CroutonLoading, CroutonValidationErrorSummary verified ✅
+- **Broken**: CollectionViewer layout table shows 4 layouts, source has 7 (missing `tree`, `kanban`, `workspace`)
+
+#### `8.api-reference/4.server.md` — NOW HEALTHY ✅
+- All server utilities verified
+- `Member` type name now consistent
+
+#### `8.api-reference/3.types.md` — MINOR FIXES NEEDED 🟡
+- 10+ type definitions verified, most fields correct
+- **Broken**: `packageForm` listed but not in actual `CollectionConfig` interface
+- **Broken**: Missing `kind?: CollectionKind` property (`'data' | 'content' | 'media'`)
+- **Broken**: Missing `tree-default` layout preset
+- **Broken**: `workspace` layout description missing from layout table
+
+### Fundamentals & Reference
+
+#### `2.fundamentals/2.architecture.md` — NOW HEALTHY ✅
+#### `2.fundamentals/4.data-operations.md` — NOW HEALTHY ✅
+#### `2.fundamentals/7.packages.md` — NOW HEALTHY ✅
+#### `9.reference/1.conventions.md` — NOW HEALTHY ✅
+#### `10.guides/2.migration.md` — NOW HEALTHY ✅
+#### `10.guides/7.rollback.md` — NOW HEALTHY ✅
+
+#### `9.reference/2.faq.md` — MINOR FIX NEEDED 🟡
+- Auto-generated fields fixed ✅
+- **Broken**: Line 53 — `npx crouton-generate config crouton.config.js products --force` is invalid (`config` subcommand doesn't accept collection name positional)
 
 ---
 
 ## Recommended Actions
 
-### Delete / Rewrite Completely
-- `10.guides/7.rollback.md` -- The rollback commands exist as subcommands of `crouton-generate`, not as separate binaries. Rewrite to document `crouton-generate rollback`, `rollback-bulk`, `rollback-interactive`.
-- `9.reference/1.conventions.md` -- Nearly every section has errors
-- `9.reference/3.glossary.md` -- Multiple non-existent composables, wrong types
-- `9.reference/2.faq.md` -- Multiple non-existent APIs, wrong env vars
-- `2.fundamentals/2.architecture.md` -- Non-existent composables throughout
+### Priority 1: Column Format Overhaul (3 pages)
+Global replacement needed across these pages:
+- `key:` → `accessorKey:` and `label:` → `header:` in column definitions
+- `render:` → `cell:` in column definitions
+- Remove `component:` and `align:` properties (no equivalent)
+- Pages: `tables.md`, `list-layouts.md`, `custom-columns.md`
 
-### Global Find-Replace
-1. `CroutonButton` -> `CroutonFormActionButton` (all pages)
-2. `CroutonList` -> `CroutonCollection` (all pages)
-3. `useCroutonModal()` -> `useCrouton()` (all pages)
-4. `useCroutonSlideover()` -> `useCrouton()` (all pages)
-5. `useCroutonDrawer()` -> `useCrouton()` (all pages)
-6. `useCroutonToast()` -> `useNotify()` (all pages)
-7. `CroutonMiniButtons` -> `CroutonItemButtonsMini` (all pages)
-8. `Form.vue` -> `_Form.vue` in generated file trees (all pages)
-9. `[id].put.ts` -> `[collectionId].patch.ts` (all pages)
-10. `statusCode:` -> `status:` in API error examples (all pages)
-11. `{ key:` -> `{ accessorKey:` and `label:` -> `header:` in column defs (all pages)
-12. Update all generated file structure diagrams to include `collections/` and `app/` levels
+### Priority 2: Rewrite list-layouts.md
+Replace all `#list-item-actions` slot examples with the current `card` prop pattern. Remove misleading troubleshooting section.
 
-### Fix (specific claims to update)
-- `3.generation/3.multi-collection.md`: Remove `'mysql'` dialect, change `'postgres'` to `'pg'`
-- `3.generation/4.cli-reference.md`: Rewrite `init` command docs, add 7 missing commands
-- `3.generation/2.schema-format.md`: Add `image` and `file` field types, `meta.nullable`, `meta.group`
-- `6.features/7.assets.md`: Update component count to 7, fix source paths, add missing props
-- `6.features/12.flow.md`: Add missing composable return values
-- `6.features/13.ai.md`: Fix component/composable counts
-- `6.features/14.admin.md`: Fix route paths (add `/team/` segment)
-- `8.api-reference/3.types.md`: Fix LayoutType (`workspace` not `cards`), make props optional
-- `8.api-reference/4.server.md`: `member` -> `membership`
-- `8.api-reference/5.internal-api.md`: Fix hook payload field names
-- All `hideDefaultColumns` references: Add `select` and `presence` fields
+### Priority 3: Minor Fixes (one-line changes)
+1. `internal-api.md`: Add `createdBy`/`updatedBy` to hideDefaultColumns list
+2. `utility-components.md`: Add `tree`, `kanban`, `workspace` to layout options table
+3. `types.md`: Remove `packageForm`, add `kind`, add `tree-default` preset
+4. `faq.md`: Fix CLI command on line 53
+5. `cli-reference.md`: Add `scaffold-app`/`db-pull` to overview table
+6. `sales.md`: Fix import path, verify auto-import config
 
 ### Leave (healthy or cosmetic issues only)
-- `1.getting-started/1.index.md`
-- `1.getting-started/2.installation.md`
-- `2.fundamentals/4.data-operations.md`
-- `2.fundamentals/6.caching.md`
-- `4.patterns/drizzle.md`
-- `5.customization/3.custom-components.md`
-- `6.features/15.export.md`
-- `6.features/16.collaboration.md`
-- `7.advanced/3.conditional-fields.md`
-- `7.advanced/5.optimistic-updates.md`
-- `10.guides/6.future-roadmap.md`
-- `8.api-reference/6.use-collection-item.md`
-- `8.api-reference/components/content-components.md`
-- `8.api-reference/composables/data-composables.md`
-- `8.api-reference/composables/form-composables.md`
-- `8.api-reference/composables/query-composables.md`
+All pages listed under "Now Healthy" above, plus ~30 pages that were already healthy in the previous audit.
