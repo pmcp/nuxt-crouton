@@ -65,10 +65,10 @@ async function fetchAndRedirect() {
     } catch (e) {
       // Ignore switch errors, still redirect
     }
-    await navigateTo(`/admin/${firstTeam!.slug}`, { replace: true })
+    await nuxtApp.runWithContext(() => navigateTo(`/admin/${firstTeam!.slug}`, { replace: true }))
   } else {
     // No teams - redirect to create one
-    await navigateTo('/onboarding/create-team', { replace: true })
+    await nuxtApp.runWithContext(() => navigateTo('/onboarding/create-team', { replace: true }))
   }
 }
 
