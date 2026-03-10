@@ -1,6 +1,7 @@
 /**
  * Fetch all pages from a Notion database
  *
+ * GET /api/teams/[id]/notion/database/[databaseId]/pages?accountId=xxx
  * GET /api/teams/[id]/notion/database/[databaseId]/pages?notionToken=secret_xxx
  *
  * Returns simplified page objects with title, url, and key properties.
@@ -59,17 +60,22 @@ function simplifyProperty(prop: any): unknown {
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
 
+  const teamId = getRouterParam(event, 'id')
   const databaseId = getRouterParam(event, 'databaseId')
   const query = getQuery(event)
-  const notionToken = query.notionToken as string
 
+  if (!teamId) {
+    throw createError({ status: 422, statusText: 'Missing team ID' })
+  }
   if (!databaseId) {
     throw createError({ status: 422, statusText: 'Missing databaseId' })
   }
 
-  if (!notionToken) {
-    throw createError({ status: 422, statusText: 'Missing notionToken query parameter' })
-  }
+  const token = await resolveNotionToken({
+    accountId: query.accountId as string | undefined,
+    notionToken: query.notionToken as string | undefined,
+    teamId,
+  })
 
   try {
     const allPages: NotionPage[] = []
@@ -83,7 +89,7 @@ export default defineEventHandler(async (event) => {
       const response = await $fetch<any>(`https://api.notion.com/v1/databases/${databaseId}/query`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${notionToken}`,
+          'Authorization': `Bearer ${token}`,
           'Notion-Version': NOTION_API_VERSION,
           'Content-Type': 'application/json',
         },

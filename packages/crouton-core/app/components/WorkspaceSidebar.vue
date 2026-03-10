@@ -144,7 +144,7 @@ defineExpose({ focusSearch })
 <template>
   <div class="flex flex-col h-full">
     <!-- Search bar -->
-    <div class="flex items-center gap-2 min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
+    <div class="flex items-center gap-2 min-h-14 px-4 py-3 border-b border-default bg-elevated/30">
       <UInput
         ref="searchInputRef"
         v-model="searchQuery"
@@ -202,7 +202,7 @@ defineExpose({ focusSearch })
         <li
           v-for="item in filteredItems"
           :key="item.id"
-          class="px-4 py-2.5 cursor-pointer transition-colors"
+          class="px-4 py-3 cursor-pointer transition-colors"
           :class="[
             selectedId === item.id
               ? 'bg-primary/10 border-l-2 border-primary'
@@ -236,7 +236,7 @@ defineExpose({ focusSearch })
     </div>
 
     <!-- Create button at bottom -->
-    <div class="shrink-0 border-t border-default p-3">
+    <div class="shrink-0 border-t border-default p-4">
       <UButton
         color="primary"
         variant="soft"

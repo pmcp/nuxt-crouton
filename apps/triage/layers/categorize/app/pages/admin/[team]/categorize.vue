@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, markRaw } from 'vue'
+import { ref, computed, watch, nextTick, markRaw } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -15,17 +15,33 @@ definePageMeta({ layout: 'admin' })
 const { teamId } = useTeamContext()
 const toast = useToast()
 
+// ─── Connected accounts ───
+const { accounts, loading: accountsLoading } = useTriageConnectedAccounts(teamId)
+const notionAccounts = computed(() =>
+  accounts.value.filter(a => a.provider === 'notion' && a.status === 'connected'),
+)
+
 // ─── Setup state ───
+const selectedAccountId = ref('')
 const databaseId = ref('')
-const notionToken = ref('')
+const databases = ref<{ id: string; title: string; icon?: string; url: string }[]>([])
+const loadingDatabases = ref(false)
 const categoryProperty = ref('')
 const schema = ref<Record<string, { type: string; options?: { name: string }[] }>>({})
+
+// ─── Manual token fallback ───
+const showManualToken = ref(false)
+const manualToken = ref('')
 
 // ─── Data state ───
 const pages = ref<any[]>([])
 const loading = ref(false)
 const saving = ref(false)
 const loaded = ref(false)
+
+// ─── Card detail slideover ───
+const selectedCard = ref<any>(null)
+const showCardDetail = ref(false)
 
 // ─── Group state ───
 const groups = ref<{ id: string; name: string; color: string }[]>([])
@@ -44,8 +60,19 @@ const nodeTypes = {
 }
 
 // ─── VueFlow ───
-const { onNodeDragStop, getNodes, findNode } = useVueFlow()
+const { onNodeDragStop, onNodeClick } = useVueFlow()
 const nodes = ref<Node[]>([])
+
+// ─── Auth params helper ───
+const authParams = computed(() => {
+  if (selectedAccountId.value) {
+    return { accountId: selectedAccountId.value }
+  }
+  if (manualToken.value) {
+    return { notionToken: manualToken.value }
+  }
+  return null
+})
 
 // ─── All database properties ───
 const allProperties = computed(() => {
@@ -57,36 +84,28 @@ const allProperties = computed(() => {
   }))
 })
 
-// Writable property types for the dropdown
 const writableProperties = computed(() => {
   return allProperties.value.filter(p => !p.disabled)
 })
 
-// Whether we need to create a new property
+// ─── Create property ───
 const newPropertyName = ref('')
 const showCreateProperty = ref(false)
 const creatingProperty = ref(false)
 
 async function createNotionProperty() {
-  if (!newPropertyName.value.trim()) return
+  if (!newPropertyName.value.trim() || !authParams.value) return
   creatingProperty.value = true
 
   try {
-    await $fetch(`https://api.notion.com/v1/databases/${databaseId.value}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${notionToken.value}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
+    await $fetch(`/api/teams/${teamId.value}/notion/database/${databaseId.value}/property`, {
+      method: 'POST',
       body: {
-        properties: {
-          [newPropertyName.value.trim()]: { select: { options: [] } },
-        },
+        ...authParams.value,
+        propertyName: newPropertyName.value.trim(),
       },
     })
 
-    // Add to local schema
     schema.value[newPropertyName.value.trim()] = { type: 'select', options: [] }
     categoryProperty.value = newPropertyName.value.trim()
     showCreateProperty.value = false
@@ -105,23 +124,57 @@ async function createNotionProperty() {
   }
 }
 
+// ─── Fetch databases when account selected ───
+watch(selectedAccountId, async (accountId) => {
+  if (!accountId) {
+    databases.value = []
+    return
+  }
+
+  loadingDatabases.value = true
+  try {
+    const res = await $fetch<any>(`/api/teams/${teamId.value}/notion/databases`, {
+      query: { accountId },
+    })
+    databases.value = res.databases || []
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Failed to load databases',
+      description: error.data?.statusText || error.message,
+      color: 'error',
+    })
+    databases.value = []
+  }
+  finally {
+    loadingDatabases.value = false
+  }
+})
+
+// Database select items
+const databaseItems = computed(() =>
+  databases.value.map(db => ({
+    label: `${db.icon || ''} ${db.title}`.trim(),
+    value: db.id,
+  })),
+)
+
 // ─── Load pages from Notion ───
 async function loadPages() {
-  if (!databaseId.value || !notionToken.value) {
-    toast.add({ title: 'Enter database ID and token', color: 'warning' })
+  if (!databaseId.value || !authParams.value) {
+    toast.add({ title: 'Select an account and database first', color: 'warning' })
     return
   }
 
   loading.value = true
 
   try {
-    // Fetch schema and pages in parallel
     const [schemaRes, pagesRes] = await Promise.all([
       $fetch<any>(`/api/crouton-triage/teams/${teamId.value}/notion/schema/${databaseId.value}`, {
-        query: { notionToken: notionToken.value },
+        query: authParams.value,
       }),
       $fetch<any>(`/api/teams/${teamId.value}/notion/database/${databaseId.value}/pages`, {
-        query: { notionToken: notionToken.value },
+        query: authParams.value,
       }),
     ])
 
@@ -133,8 +186,8 @@ async function loadPages() {
       categoryProperty.value = writableProperties.value[0]!.value
     }
 
-    // Build nodes in a grid layout
-    buildNodes()
+    // Build nodes — auto-group by existing values
+    buildNodesWithAutoGroup()
     loaded.value = true
 
     toast.add({ title: `Loaded ${pages.value.length} cards`, color: 'success' })
@@ -151,32 +204,120 @@ async function loadPages() {
   }
 }
 
-// ─── Build VueFlow nodes from pages ───
-function buildNodes() {
+// ─── Build nodes with auto-grouping by existing property values ───
+function buildNodesWithAutoGroup() {
   const CARD_W = 220
   const CARD_H = 100
   const GAP = 30
-  const cols = Math.ceil(Math.sqrt(pages.value.length))
+  const GROUP_W = 500
+  const GROUP_H = 400
+  const GROUP_GAP = 50
 
-  nodes.value = pages.value.map((page, i) => ({
-    id: page.id,
-    type: 'notionCard',
-    position: {
-      x: (i % cols) * (CARD_W + GAP) + 50,
-      y: Math.floor(i / cols) * (CARD_H + GAP) + 50,
-    },
-    data: {
-      title: page.title,
-      properties: page.properties,
-      url: page.url,
-      grouped: false,
-    },
-  }))
-
-  // Reset groups
+  // Reset
   groups.value = []
   groupCounter = 0
+
+  // Collect existing category values if a property is selected
+  const existingGroups = new Map<string, string[]>() // groupName → [pageId]
+  const ungroupedPages: any[] = []
+
+  if (categoryProperty.value) {
+    for (const page of pages.value) {
+      const val = page.properties[categoryProperty.value]
+      if (val && typeof val === 'string') {
+        if (!existingGroups.has(val)) existingGroups.set(val, [])
+        existingGroups.get(val)!.push(page.id)
+      }
+      else {
+        ungroupedPages.push(page)
+      }
+    }
+  }
+  else {
+    ungroupedPages.push(...pages.value)
+  }
+
+  const allNodes: Node[] = []
+
+  // Create group nodes + position cards inside
+  let groupIndex = 0
+  for (const [groupName, pageIds] of existingGroups) {
+    const id = `group-${++groupCounter}`
+    const color = GROUP_COLORS[groupIndex % GROUP_COLORS.length]!
+    groups.value.push({ id, name: groupName, color })
+
+    const groupX = groupIndex * (GROUP_W + GROUP_GAP)
+    allNodes.push({
+      id,
+      type: 'group',
+      position: { x: groupX, y: 0 },
+      data: { label: groupName },
+      style: {
+        width: `${GROUP_W}px`,
+        height: `${GROUP_H}px`,
+        backgroundColor: color,
+        borderRadius: '12px',
+        border: '2px dashed #9ca3af',
+        opacity: '0.6',
+      },
+    })
+
+    // Place cards inside this group
+    const cols = Math.max(1, Math.floor((GROUP_W - 40) / (CARD_W + 10)))
+    for (let i = 0; i < pageIds.length; i++) {
+      const page = pages.value.find(p => p.id === pageIds[i])
+      if (!page) continue
+      allNodes.push({
+        id: page.id,
+        type: 'notionCard',
+        parentNode: id,
+        position: {
+          x: 15 + (i % cols) * (CARD_W + 10),
+          y: 35 + Math.floor(i / cols) * (CARD_H + 10),
+        },
+        data: {
+          title: page.title,
+          properties: page.properties,
+          url: page.url,
+          grouped: true,
+        },
+      })
+    }
+
+    groupIndex++
+  }
+
+  // Place ungrouped cards in a grid below groups
+  const ungroupedY = existingGroups.size > 0 ? GROUP_H + 80 : 50
+  const cols = Math.max(1, Math.ceil(Math.sqrt(ungroupedPages.length)))
+
+  for (let i = 0; i < ungroupedPages.length; i++) {
+    const page = ungroupedPages[i]!
+    allNodes.push({
+      id: page.id,
+      type: 'notionCard',
+      position: {
+        x: (i % cols) * (CARD_W + GAP) + 50,
+        y: Math.floor(i / cols) * (CARD_H + GAP) + ungroupedY,
+      },
+      data: {
+        title: page.title,
+        properties: page.properties,
+        url: page.url,
+        grouped: false,
+      },
+    })
+  }
+
+  nodes.value = allNodes
 }
+
+// ─── Re-group when category property changes ───
+watch(categoryProperty, () => {
+  if (loaded.value && pages.value.length > 0) {
+    buildNodesWithAutoGroup()
+  }
+})
 
 // ─── Create a group ───
 function createGroup() {
@@ -187,7 +328,6 @@ function createGroup() {
 
   groups.value.push({ id, name: newGroupName.value.trim(), color })
 
-  // Add group node to canvas
   const groupX = groups.value.length * 550 - 500
   nodes.value.push({
     id,
@@ -210,12 +350,10 @@ function createGroup() {
 
 // ─── Remove a group ───
 function removeGroup(groupId: string) {
-  // Unparent any cards in this group
   nodes.value = nodes.value
     .filter(n => n.id !== groupId)
     .map((n) => {
       if (n.parentNode === groupId) {
-        // Convert relative position back to absolute
         const group = nodes.value.find(g => g.id === groupId)
         return {
           ...n,
@@ -234,23 +372,27 @@ function removeGroup(groupId: string) {
   groups.value = groups.value.filter(g => g.id !== groupId)
 }
 
+// ─── Handle node click — show card detail ───
+onNodeClick(({ node }) => {
+  if (node.type !== 'notionCard') return
+  selectedCard.value = node.data
+  showCardDetail.value = true
+})
+
 // ─── Handle node drag stop — detect group overlap ───
 onNodeDragStop((event: NodeDragEvent) => {
   const { node } = event
-  // Only handle card nodes
   if (node.type !== 'notionCard') return
 
   const currentNodes = nodes.value
   const groupNodes = currentNodes.filter(n => n.type === 'group')
   if (groupNodes.length === 0) return
 
-  // Calculate card center (absolute position)
   const cardW = 220
   const cardH = 80
   let cardCenterX = node.position.x + cardW / 2
   let cardCenterY = node.position.y + cardH / 2
 
-  // If card already has a parent, position is relative
   if (node.parentNode) {
     const parentGroup = groupNodes.find(g => g.id === node.parentNode)
     if (parentGroup) {
@@ -259,7 +401,6 @@ onNodeDragStop((event: NodeDragEvent) => {
     }
   }
 
-  // Find overlapping group
   let targetGroup: Node | null = null
   for (const group of groupNodes) {
     const styleObj = group.style as Record<string, string> | undefined
@@ -277,25 +418,21 @@ onNodeDragStop((event: NodeDragEvent) => {
     }
   }
 
-  // Update parentNode
   nextTick(() => {
     nodes.value = nodes.value.map((n) => {
       if (n.id !== node.id) return n
 
       if (targetGroup && targetGroup.id !== node.parentNode) {
-        // Move into group — convert position to relative
         const relX = cardCenterX - targetGroup.position.x - cardW / 2
         const relY = cardCenterY - targetGroup.position.y - cardH / 2
         return {
           ...n,
           parentNode: targetGroup.id,
-          extent: 'parent' as const,
           position: { x: Math.max(10, relX), y: Math.max(30, relY) },
           data: { ...n.data, grouped: true },
         }
       }
       else if (!targetGroup && node.parentNode) {
-        // Moved out of group
         return {
           ...n,
           parentNode: undefined,
@@ -341,13 +478,15 @@ async function saveToNotion() {
     return
   }
 
+  if (!authParams.value) return
+
   saving.value = true
 
   try {
     const result = await $fetch<any>(`/api/teams/${teamId.value}/notion/database/${databaseId.value}/categorize`, {
       method: 'POST',
       body: {
-        notionToken: notionToken.value,
+        ...authParams.value,
         propertyName: categoryProperty.value,
         propertyType: schema.value[categoryProperty.value]?.type || 'select',
         assignments: assignments.value.map(a => ({
@@ -388,7 +527,7 @@ async function saveToNotion() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full w-full overflow-hidden">
     <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
       <div>
@@ -405,7 +544,7 @@ async function saveToNotion() {
           {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining
         </span>
         <UButton
-          icon="i-heroicons-plus"
+          icon="i-lucide-plus"
           size="sm"
           variant="soft"
           @click="showGroupModal = true"
@@ -413,7 +552,7 @@ async function saveToNotion() {
           Add Group
         </UButton>
         <UButton
-          icon="i-heroicons-cloud-arrow-up"
+          icon="i-lucide-cloud-upload"
           size="sm"
           :loading="saving"
           :disabled="assignments.length === 0 || !categoryProperty"
@@ -427,7 +566,53 @@ async function saveToNotion() {
     <!-- Setup form (before loading) -->
     <div v-if="!loaded" class="flex-1 flex items-center justify-center">
       <div class="w-full max-w-lg space-y-4 px-6">
-        <UFormField label="Notion Database ID">
+        <!-- Account picker -->
+        <UFormField label="Notion Account">
+          <USelect
+            v-model="selectedAccountId"
+            :items="notionAccounts.map(a => ({ label: a.label || a.providerAccountId || a.id, value: a.id }))"
+            placeholder="Select a connected account..."
+            :loading="accountsLoading"
+            class="w-full"
+          />
+        </UFormField>
+
+        <div v-if="!selectedAccountId" class="text-center">
+          <UButton
+            size="xs"
+            variant="link"
+            @click="showManualToken = !showManualToken"
+          >
+            {{ showManualToken ? 'Hide manual token' : 'Or paste a token manually' }}
+          </UButton>
+        </div>
+
+        <!-- Manual token fallback -->
+        <UFormField v-if="showManualToken && !selectedAccountId" label="Notion Integration Token">
+          <UInput
+            v-model="manualToken"
+            type="password"
+            placeholder="secret_..."
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- Database picker -->
+        <template v-if="selectedAccountId">
+          <UFormField label="Database">
+            <USelect
+              v-model="databaseId"
+              :items="databaseItems"
+              placeholder="Select a database..."
+              :loading="loadingDatabases"
+              class="w-full"
+              value-key="value"
+            />
+          </UFormField>
+        </template>
+
+        <!-- Manual database ID for manual token -->
+        <UFormField v-else-if="showManualToken && manualToken" label="Database ID">
           <UInput
             v-model="databaseId"
             placeholder="abc123def456..."
@@ -435,19 +620,10 @@ async function saveToNotion() {
           />
         </UFormField>
 
-        <UFormField label="Notion Integration Token">
-          <UInput
-            v-model="notionToken"
-            type="password"
-            placeholder="secret_..."
-            class="w-full"
-          />
-        </UFormField>
-
         <UButton
           block
           :loading="loading"
-          :disabled="!databaseId || !notionToken"
+          :disabled="!databaseId || !authParams"
           @click="loadPages"
         >
           Load Cards
@@ -488,7 +664,7 @@ async function saveToNotion() {
           >
             <span class="font-medium text-gray-700">{{ group.name }}</span>
             <UButton
-              icon="i-heroicons-x-mark"
+              icon="i-lucide-x"
               size="xs"
               variant="ghost"
               color="neutral"
@@ -532,6 +708,63 @@ async function saveToNotion() {
         </ClientOnly>
       </div>
     </template>
+
+    <!-- Card detail slideover -->
+    <USlideover v-model:open="showCardDetail">
+      <template #content>
+        <div v-if="selectedCard" class="p-6 space-y-4">
+          <div class="flex items-start justify-between">
+            <h2 class="text-lg font-semibold">
+              {{ selectedCard.title }}
+            </h2>
+            <UButton
+              icon="i-lucide-external-link"
+              size="xs"
+              variant="ghost"
+              :to="selectedCard.url"
+              target="_blank"
+            />
+          </div>
+
+          <USeparator />
+
+          <div class="space-y-3">
+            <div
+              v-for="(value, key) in selectedCard.properties"
+              :key="key"
+              class="flex flex-col gap-1"
+            >
+              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ key }}</span>
+              <div>
+                <template v-if="Array.isArray(value)">
+                  <div class="flex flex-wrap gap-1">
+                    <UBadge
+                      v-for="(item, i) in value"
+                      :key="i"
+                      variant="subtle"
+                      size="xs"
+                    >
+                      {{ item }}
+                    </UBadge>
+                  </div>
+                </template>
+                <template v-else-if="value === true || value === false">
+                  <UBadge :color="value ? 'success' : 'neutral'" variant="subtle" size="xs">
+                    {{ value ? 'Yes' : 'No' }}
+                  </UBadge>
+                </template>
+                <template v-else-if="value != null && value !== ''">
+                  <span class="text-sm">{{ value }}</span>
+                </template>
+                <template v-else>
+                  <span class="text-sm text-gray-400 italic">Empty</span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </USlideover>
 
     <!-- Create Notion property modal -->
     <UModal v-model:open="showCreateProperty">

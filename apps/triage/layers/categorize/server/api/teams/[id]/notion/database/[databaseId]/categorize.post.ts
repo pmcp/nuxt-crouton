@@ -5,14 +5,16 @@
  *
  * Body:
  * {
- *   notionToken: string,
- *   propertyName: string,       // Notion select property to update
+ *   accountId?: string,          // Connected account ID (preferred)
+ *   notionToken?: string,        // Inline token (fallback)
+ *   propertyName: string,        // Notion property to update
+ *   propertyType?: 'select' | 'status' | 'multi_select',
  *   assignments: [
  *     { pageId: string, category: string }
  *   ]
  * }
  *
- * Updates each page's select property with the assigned category name.
+ * Updates each page's property with the assigned category name.
  * Rate-limited with 200ms delays between requests.
  */
 
@@ -21,7 +23,8 @@ import { z } from 'zod'
 const NOTION_API_VERSION = '2022-06-28'
 
 const requestSchema = z.object({
-  notionToken: z.string().min(1),
+  accountId: z.string().optional(),
+  notionToken: z.string().optional(),
   propertyName: z.string().min(1),
   propertyType: z.enum(['select', 'status', 'multi_select']).default('select'),
   assignments: z.array(z.object({
@@ -32,6 +35,11 @@ const requestSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
+
+  const teamId = getRouterParam(event, 'id')
+  if (!teamId) {
+    throw createError({ status: 422, statusText: 'Missing team ID' })
+  }
 
   const body = await readBody(event)
   const parsed = requestSchema.safeParse(body)
@@ -44,7 +52,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { notionToken, propertyName, propertyType, assignments } = parsed.data
+  const { accountId, notionToken, propertyName, propertyType, assignments } = parsed.data
+
+  const token = await resolveNotionToken({ accountId, notionToken, teamId })
 
   const results: { pageId: string; success: boolean; error?: string }[] = []
 
@@ -55,7 +65,7 @@ export default defineEventHandler(async (event) => {
       await $fetch(`https://api.notion.com/v1/pages/${pageId}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${notionToken}`,
+          'Authorization': `Bearer ${token}`,
           'Notion-Version': NOTION_API_VERSION,
           'Content-Type': 'application/json',
         },

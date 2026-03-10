@@ -3,7 +3,7 @@
  * WorkspaceEditor - Generic inline editor for workspace layout
  *
  * Loads item data and renders CroutonFormDynamicLoader inline.
- * Handles loading, error states, and save/delete/cancel events.
+ * Includes a sticky toolbar with save/delete/close actions.
  */
 
 interface Props {
@@ -23,6 +23,8 @@ const emit = defineEmits<{
 
 const { t } = useT()
 const { getConfig } = useCollections()
+const { collectionWithCapitalSingular } = useFormatCollections()
+const display = useDisplayConfig(props.collection)
 
 // Resolve the form action
 const action = computed<'create' | 'update'>(() =>
@@ -37,6 +39,32 @@ const activeItem = ref<any>(null)
 // Get API path from collection config
 const collectionConfig = getConfig(props.collection)
 const apiPath = collectionConfig?.apiPath
+
+// Resolve display title for the toolbar
+const itemTitle = computed(() => {
+  if (!activeItem.value) return null
+  const titleField = display.title || 'title'
+  return activeItem.value[titleField] || activeItem.value.name || activeItem.value.label || null
+})
+
+// Form ref for programmatic submit
+const formRef = ref<HTMLElement | null>(null)
+
+function triggerSubmit() {
+  // Find the form element and submit it
+  const form = formRef.value?.querySelector('form')
+  if (form) {
+    form.requestSubmit()
+  }
+}
+
+function triggerDelete() {
+  if (props.itemId) {
+    // Open delete confirmation via crouton modal
+    const crouton = useCrouton()
+    crouton.open('delete', props.collection, [props.itemId], 'modal')
+  }
+}
 
 // Load item data when itemId changes
 watch(
@@ -98,6 +126,52 @@ nuxtApp.hook('crouton:mutation', ({ operation, collection, itemId }) => {
 
 <template>
   <div class="h-full flex flex-col">
+    <!-- Toolbar -->
+    <div class="shrink-0 flex items-center justify-between px-6 py-3 border-b border-default bg-elevated/30 min-h-14">
+      <div class="flex items-center gap-3 min-w-0">
+        <UBadge
+          :color="action === 'create' ? 'success' : 'info'"
+          variant="subtle"
+          size="xs"
+        >
+          {{ action === 'create' ? t('common.new') || 'New' : t('common.editing') || 'Editing' }}
+        </UBadge>
+        <span v-if="itemTitle" class="text-sm font-medium truncate">
+          {{ itemTitle }}
+        </span>
+        <span v-else-if="action === 'create'" class="text-sm text-muted">
+          {{ t('collection.newItem', { collection: collectionWithCapitalSingular(collection) }) || `New ${collectionWithCapitalSingular(collection)}` }}
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <UButton
+          v-if="action === 'update' && itemId"
+          color="error"
+          variant="ghost"
+          icon="i-lucide-trash-2"
+          size="sm"
+          @click="triggerDelete"
+        />
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          @click="emit('cancel')"
+        >
+          {{ t('common.cancel') || 'Cancel' }}
+        </UButton>
+        <UButton
+          color="primary"
+          size="sm"
+          icon="i-lucide-save"
+          @click="triggerSubmit"
+        >
+          {{ t('common.save') || 'Save' }}
+        </UButton>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="isLoading" class="flex-1 flex items-center justify-center">
       <div class="text-center">
@@ -124,7 +198,7 @@ nuxtApp.hook('crouton:mutation', ({ operation, collection, itemId }) => {
     </div>
 
     <!-- Form -->
-    <div v-else class="flex-1 min-h-0 overflow-auto">
+    <div v-else ref="formRef" class="flex-1 min-h-0 overflow-auto p-6">
       <CroutonFormDynamicLoader
         :key="`${collection}-${action}-${activeItem?.id || 'new'}`"
         :collection="collection"

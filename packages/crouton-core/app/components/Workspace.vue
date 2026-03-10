@@ -152,8 +152,8 @@ onKeyStroke('/', (e) => {
 <template>
   <div class="flex h-full">
     <!-- Sidebar -->
-    <div class="w-72 lg:w-80 shrink-0 border-r border-default flex flex-col">
-      <div class="flex items-center justify-between px-4 py-2 border-b border-default min-h-12">
+    <div class="w-80 lg:w-96 shrink-0 border-r border-default flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-default min-h-14">
         <h3 class="text-sm font-semibold truncate">{{ camelToTitleCase(collection) }}</h3>
         <UButton
           color="primary"
