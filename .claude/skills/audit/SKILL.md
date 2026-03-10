@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Audit packages for documentation completeness, detect drift between code and docs, and maintain documentation quality across the monorepo. Use when checking package docs, running audits, or reviewing documentation health.
-argument-hint: "[package-name | --all | --docs-health]"
+argument-hint: "[package-name | --all | --docs-health | --docs-verify [section]]"
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -73,6 +73,14 @@ Example: `/audit crouton-editor`
 
 ```bash
 /audit --docs-health
+```
+
+### Docs Verification (verify docs claims against source code)
+
+```bash
+/audit --docs-verify              # Verify all docs sections
+/audit --docs-verify features     # Verify only features section
+/audit --docs-verify api          # Verify only API reference section
 ```
 
 ## Workflow: Single Package
@@ -260,8 +268,207 @@ find packages/<pkg>/app/composables -name "use*.ts" 2>/dev/null
 grep -l "ComponentName" packages/<pkg>/CLAUDE.md
 ```
 
+## Workflow: Docs Verification (`--docs-verify`)
+
+Verifies that claims in `apps/docs/content/` are still accurate by checking them against actual source code. This is the main tool for catching silently outdated documentation.
+
+### Philosophy
+
+- **Docs make claims. Code is truth.** Every component name, prop, composable signature, config key, and API endpoint in a docs page is a testable assertion.
+- **Flag, don't fix.** Produce a report. Let the user decide what to fix, delete, or leave.
+- **False positives are OK.** Better to flag something that's fine than miss something that's wrong. The user filters.
+
+### Sections
+
+Docs are organized under `apps/docs/content/`:
+
+| Section | Path | Approx pages |
+|---------|------|-------------|
+| features | `6.features/*.md` | ~15 |
+| api | `8.api-reference/**/*.md` | ~15 |
+| generation | `3.generation/*.md` | ~5 |
+| patterns | `4.patterns/*.md` | ~5 |
+| customization | `5.customization/*.md` | ~3 |
+| advanced | `7.advanced/*.md` | ~3 |
+| getting-started | `1.getting-started/*.md` | ~3 |
+| fundamentals | `2.fundamentals/*.md` | ~3 |
+| guides | `10.guides/*.md` | ~3 |
+
+### Step 1: Discover docs pages
+
+List all `.md` files in the target section (or all sections if `--docs-verify` with no argument).
+
+Group pages into batches of 2-3 for parallel agent processing.
+
+### Step 2: Launch parallel verification agents
+
+**CRITICAL**: Launch ALL agents in a single message. Each agent gets 2-3 docs pages.
+
+Each agent receives this prompt (adapt file paths):
+
+```
+Verify these documentation pages against the actual source code.
+
+For EACH page, read the docs page first, then verify every claim against source code.
+
+## What to verify
+
+### Component Claims
+For each component mentioned (e.g., `CroutonEditorSimple`):
+1. Search `packages/*/app/components/` — does it exist?
+2. If yes, check: are the documented props still correct? (read the component's `defineProps`)
+3. Are documented events/emits still correct? (check `defineEmits`)
+4. Are documented slots still there?
+
+### Composable Claims
+For each composable mentioned (e.g., `useEntityTranslations()`):
+1. Search `packages/*/app/composables/` — does it exist?
+2. If yes, check: does the signature match? (read the function parameters)
+3. Does the return value match what docs describe?
+
+### API Endpoint Claims
+For each endpoint mentioned (e.g., `POST /api/upload-image`):
+1. Search `packages/*/server/api/` — does the route file exist?
+2. If yes, check: does it accept the documented params/body?
+3. Is the HTTP method correct?
+
+### Config Claims
+For each config option (e.g., `hub: { blob: true }`):
+1. Search for where it's consumed in `nuxt.config.ts` or module setup
+2. Is the key name correct? Are the documented values valid?
+
+### Code Examples
+For each code example in the docs:
+1. Do the imports reference real exports?
+2. Do the component/composable names match what exists?
+3. Are the props/options used in examples still valid?
+
+### Package Claims
+For package names, versions, install commands:
+1. Check `package.json` — is the package name correct?
+2. Is the install command using the right scope (@fyit)?
+
+## Output format (use exactly this structure)
+
+## [Page Title] (`path/to/file.md`)
+
+### Verified ✅
+- Component `CroutonFoo` exists with documented props
+- Composable `useFoo()` signature matches
+- ...
+
+### Broken ❌
+- Component `CroutonBar` — RENAMED to `CroutonBaz` (found at packages/x/app/components/Baz.vue)
+- Prop `toolbar` on CroutonEditor — REMOVED, now called `tools`
+- Endpoint `POST /api/upload-image` — MOVED to `POST /api/teams/[id]/assets`
+- Composable `useFoo()` — parameter `options` removed, now takes 2 positional args
+- ...
+
+### Suspicious ⚠️ (couldn't fully verify)
+- Config key `retentionDays` — couldn't find where it's consumed
+- Code example imports `@fyit/crouton-editor/utils` — path not found but might be auto-imported
+- ...
+
+### Missing from docs (exists in code but not documented)
+- Component `CroutonEditorActions` exists but not mentioned
+- Composable `useEditorState()` exported but not documented
+- ...
+```
+
+### Step 3: Compile verification report
+
+After ALL agents complete, compile into a single report.
+
+Save to: `docs/reports/docs-verification-{YYYYMMDD}.md`
+
+Report structure:
+
+```markdown
+# Documentation Verification Report
+Date: {date}
+Pages verified: X
+Scope: {section or "all"}
+
+## Summary
+
+| Status | Count |
+|--------|-------|
+| ✅ Verified claims | X |
+| ❌ Broken claims | Y |
+| ⚠️ Suspicious | Z |
+| 📝 Missing from docs | W |
+
+## Pages by Health
+
+### 🔴 Needs Rewrite (>50% broken claims)
+- 6.features/7.rich-text.md — 8/15 claims broken
+
+### 🟡 Needs Fixes (1-50% broken)
+- 6.features/9.assets.md — 3/20 claims broken
+
+### 🟢 Healthy (<5% issues)
+- 6.features/1.i18n.md — 1 suspicious, 0 broken
+
+## Detailed Findings
+
+### 6.features/7.rich-text.md
+[full agent output here]
+
+### 6.features/9.assets.md
+[full agent output here]
+...
+
+## Recommended Actions
+
+### Delete (page describes feature that no longer exists)
+- ...
+
+### Rewrite (too many broken claims to patch)
+- ...
+
+### Fix (specific claims to update)
+- 6.features/9.assets.md: update 3 endpoint paths
+- ...
+
+### Leave (healthy or cosmetic issues only)
+- ...
+```
+
+### Step 4: Present to user
+
+Show the summary table and the "Recommended Actions" section inline. Tell the user the full report was saved and offer to fix specific pages.
+
+**Do NOT auto-fix.** This is a verification tool, not a fixer. The user decides what to do with each finding.
+
+### Step 5 (optional): Fix a specific page
+
+If user says "fix X", then:
+1. Read the full findings for that page from the report
+2. Read the source docs page
+3. For each broken claim, find the correct current value from source code
+4. Show a diff of proposed changes
+5. Apply only after user confirms
+
+### Agent Batching Guide
+
+For `--docs-verify` (all sections), group into ~6 agents:
+
+| Agent | Pages |
+|-------|-------|
+| A | `6.features/1.i18n.md`, `6.features/6.rich-text.md`, `6.features/7.assets.md` |
+| B | `6.features/9.events.md`, `6.features/10.maps.md`, `6.features/11.devtools.md` |
+| C | `6.features/12.flow.md`, `6.features/13.ai.md`, `6.features/14.admin.md` |
+| D | `6.features/15.export.md`, `6.features/16.email.md`, `6.features/17.pages.md`, `6.features/18.bookings.md`, `6.features/19.sales.md`, `6.features/20.collaboration.md` |
+| E | `8.api-reference/**` (all API ref pages) |
+| F | `3.generation/*.md`, `4.patterns/*.md`, `5.customization/*.md` |
+
+Adjust based on actual files found. Each agent should handle no more than 5 pages.
+
+For single-section verify (e.g., `--docs-verify features`), use 2-3 agents covering just that section.
+
 ## Related Files
 
 - Plan: `docs/active/PLAN-crouton-ci.md`
 - CLI Package: `packages/crouton-ci/` (when built)
 - Existing sync-check: `.claude/commands/sync-check.md`
+- Sync docs skill: `.claude/skills/sync-docs/SKILL.md`
