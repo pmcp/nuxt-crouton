@@ -69,8 +69,8 @@ const route = useRoute()
 // Get auto-discovered app routes
 const { topLevelApps, getAppAllRoutes } = useCroutonApps()
 
-// Get registered collections for admin navigation
-const { adminCollections } = useCroutonCollectionsNav()
+// Get registered collections for admin navigation (grouped by kind)
+const { collectionsByKind } = useCroutonCollectionsNav()
 
 // Build URL based on context
 const buildAdminUrl = (path: string): string => {
@@ -195,27 +195,26 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
   }
 })
 
-// Collections group - registered crouton collections
-const collectionsItem = computed<NavigationMenuItem | null>(() => {
-  if (props.context === 'super') return null
-  if (adminCollections.value.length === 0) return null
+// Collection groups - registered crouton collections grouped by kind
+const collectionGroups = computed<NavigationMenuItem[]>(() => {
+  if (props.context === 'super') return []
 
   const teamParam = teamSlugRef.value || teamIdRef.value || ''
-  if (!teamParam) return null
+  if (!teamParam) return []
 
   const basePath = `/admin/${teamParam}/crouton`
 
-  return {
-    label: t('navigation.collections') || 'Collections',
-    icon: 'i-lucide-database',
-    defaultOpen: false,
-    children: adminCollections.value.map(col => ({
+  return collectionsByKind.value.map(group => ({
+    label: t(`navigation.${group.kind}`) || group.label,
+    icon: group.icon,
+    defaultOpen: group.kind === 'content',
+    children: group.items.map(col => ({
       label: col.label,
       icon: col.icon,
       to: `${basePath}/${col.name}`,
       active: route.path.includes(`${basePath}/${col.name}`)
     }))
-  }
+  }))
 })
 
 // Super Admin core items (flat, no grouping)
@@ -277,10 +276,8 @@ const navItems = computed<NavigationMenuItem[][]>(() => {
     mainItems.push(teamItem.value)
   }
 
-  // 4. Collections group (registered crouton collections)
-  if (collectionsItem.value) {
-    mainItems.push(collectionsItem.value)
-  }
+  // 4. Collection groups by kind (Content, Media, Collections)
+  mainItems.push(...collectionGroups.value)
 
   // 5. App groups (Bookings, etc.) - each app gets its own group
   mainItems.push(...appGroups.value)

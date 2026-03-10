@@ -404,9 +404,10 @@ export default {
   collections: [
     { name: 'products', fieldsFile: './schemas/products.json', hierarchy: true },
     { name: 'authors', fieldsFile: './schemas/authors.json', seed: true },          // seed with defaults
-    { name: 'posts', fieldsFile: './schemas/posts.json', seed: { count: 50 } },     // seed with custom count
+    { name: 'posts', fieldsFile: './schemas/posts.json', kind: 'content', seed: { count: 50 } },  // content kind
     { name: 'bookings', fieldsFile: './schemas/bookings.json', collab: true },      // enable collab presence
-    { name: 'pages', fieldsFile: './schemas/pages.json', formComponent: 'CroutonPagesForm' }  // use package form
+    { name: 'pages', fieldsFile: './schemas/pages.json', kind: 'content', formComponent: 'CroutonPagesForm' },
+    { name: 'gallery', fieldsFile: './schemas/gallery.json', kind: 'media' }        // media kind
   ],
   dialect: 'sqlite',
   seed: {
@@ -477,6 +478,7 @@ features: {
 | `collab` | boolean | Enable real-time presence indicators |
 | `translatable` | boolean | Mark all string fields as translatable |
 | `formComponent` | string | Use a custom form component instead of generating Form.vue |
+| `kind` | string | Collection kind: `'data'` (default), `'content'`, or `'media'`. Affects admin sidebar grouping |
 | `publishable` | boolean | Auto-register as page type in crouton-pages (requires crouton-pages) |
 
 ### formComponent Option

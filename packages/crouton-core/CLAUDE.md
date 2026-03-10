@@ -138,6 +138,7 @@ export default defineAppConfig({
   croutonCollections: {
     products: {
       layer: 'shop',
+      kind: 'data',           // 'data' (default) | 'content' | 'media' — controls sidebar grouping
       apiPath: '/api/teams/{teamId}/products',
       container: 'slideover', // 'slideover' | 'modal' | 'dialog' | 'inline'
       references: { categoryId: 'categories' }, // Auto-refresh on mutation
