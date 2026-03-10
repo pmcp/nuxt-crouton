@@ -246,12 +246,10 @@ const layoutOptions = computed(() => ({
 
 const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
-// Position mutation (debounced) - only for standalone mode
-const { debouncedUpdate } = useDebouncedPositionUpdate(
-  props.collection,
-  props.positionField,
-  500
-)
+// Position mutation (debounced) - only for standalone collection mode
+const { debouncedUpdate } = props.dataMode !== 'ephemeral'
+  ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
+  : { debouncedUpdate: () => {} }
 
 // Apply layout to standalone nodes (once on initial load)
 const initialLayoutApplied = ref(false)
