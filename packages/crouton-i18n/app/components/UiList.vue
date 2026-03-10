@@ -10,6 +10,13 @@
           System translations with team overrides
         </p>
       </div>
+      <UButton
+        icon="i-lucide-plus"
+        color="primary"
+        @click="openNewModal"
+      >
+        Add Translation
+      </UButton>
     </div>
 
     <!-- Search/Filter -->
@@ -136,39 +143,65 @@
       <template #content>
         <div class="p-6 space-y-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ t('admin.translations.editOverride') }}
+            {{ isNewMode ? 'New Translation' : t('admin.translations.editOverride') }}
           </h3>
 
+          <!-- Key Path: editable for new, read-only for override -->
           <div class="space-y-1">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.keyPath') }}</label>
-            <code class="block text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+            <UInput
+              v-if="isNewMode"
+              v-model="newKeyPath"
+              placeholder="e.g. admin.custom.myLabel"
+            />
+            <code
+              v-else
+              class="block text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"
+            >
               {{ editingItem?.keyPath }}
             </code>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.systemValues') }}</label>
-            <div
-              v-if="editingItem"
-              class="space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
-            >
-              <div
-                v-for="locale in locales"
-                :key="locale"
-                class="flex gap-2"
-              >
-                <span class="w-8 text-xs font-medium text-gray-500 uppercase shrink-0 pt-0.5">{{ locale }}</span>
-                <span class="text-sm text-gray-700 dark:text-gray-300">
-                  {{ editingItem.systemValues?.[locale] || '—' }}
-                </span>
-              </div>
-            </div>
+          <!-- Category: editable for new -->
+          <div
+            v-if="isNewMode"
+            class="space-y-1"
+          >
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+            <UInput
+              v-model="newCategory"
+              placeholder="e.g. admin"
+            />
           </div>
 
-          <USeparator />
+          <!-- System values: only show for override mode -->
+          <template v-if="!isNewMode">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.systemValues') }}</label>
+              <div
+                v-if="editingItem"
+                class="space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
+              >
+                <div
+                  v-for="locale in locales"
+                  :key="locale"
+                  class="flex gap-2"
+                >
+                  <span class="w-8 text-xs font-medium text-gray-500 uppercase shrink-0 pt-0.5">{{ locale }}</span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">
+                    {{ editingItem.systemValues?.[locale] || '—' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <USeparator />
+          </template>
 
           <div class="space-y-3">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.teamOverrideValues') }}</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ isNewMode ? 'Values' : t('admin.translations.teamOverrideValues') }}
+            </label>
             <div
               v-for="locale in locales"
               :key="locale"
@@ -193,9 +226,9 @@
             </UButton>
             <UButton
               color="primary"
-              @click="saveOverride"
+              @click="isNewMode ? createNew() : saveOverride()"
             >
-              {{ editingItem?.hasOverride ? 'Update' : 'Create' }} Override
+              {{ isNewMode ? 'Create' : (editingItem?.hasOverride ? 'Update' : 'Create') + ' Override' }}
             </UButton>
           </div>
         </div>
@@ -268,10 +301,29 @@ const filteredItems = computed(() => {
 
 // Modal state
 const showModal = ref(false)
+const isNewMode = ref(false)
 const editingItem = ref<TranslationWithOverride | null>(null)
 const overrideValues = ref<Record<string, string>>({})
+const newKeyPath = ref('')
+const newCategory = ref('')
+
+// Auto-derive category from key path (first segment)
+watch(newKeyPath, (val) => {
+  const first = val.split('.')[0]
+  if (first) newCategory.value = first
+})
+
+function openNewModal() {
+  isNewMode.value = true
+  editingItem.value = null
+  newKeyPath.value = ''
+  newCategory.value = ''
+  overrideValues.value = {}
+  showModal.value = true
+}
 
 function openOverrideModal(item: TranslationWithOverride) {
+  isNewMode.value = false
   editingItem.value = item
   // Pre-fill with existing team values or empty
   overrideValues.value = { ...(item.teamValues ?? {}) }
@@ -317,6 +369,38 @@ async function saveOverride() {
     await refresh()
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to save override'
+    notify.error(errorMessage)
+  }
+}
+
+async function createNew() {
+  const keyPath = newKeyPath.value.trim()
+  const category = newCategory.value.trim() || keyPath.split('.')[0] || 'custom'
+
+  if (!keyPath) {
+    notify.warning('Key path is required')
+    return
+  }
+
+  const values = Object.fromEntries(
+    Object.entries(overrideValues.value).filter(([, v]) => v && v.trim())
+  )
+
+  if (Object.keys(values).length === 0) {
+    notify.warning('At least one translation value is required')
+    return
+  }
+
+  try {
+    await $fetch(`/api/teams/${teamSlug.value}/translations-ui`, {
+      method: 'POST',
+      body: { keyPath, category, values }
+    })
+    notify.success('Translation created')
+    showModal.value = false
+    await refresh()
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to create translation'
     notify.error(errorMessage)
   }
 }
