@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     include: [
       'app/composables/__tests__/**/*.test.ts',
+      'server/utils/__tests__/**/*.test.ts',
       'tests/**/*.test.ts'
     ],
     exclude: [

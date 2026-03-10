@@ -46,6 +46,7 @@ export default defineNuxtConfig({
 | File | Purpose |
 |------|---------|
 | `server/utils/encryption.ts` | AES-256-GCM encryption for storing third-party secrets at rest |
+| `server/utils/tiptap-renderer.ts` | Server-side TipTap JSON to HTML conversion (auto-imported by Nitro) |
 | `app/composables/useCrouton.ts` | Modal/slideover state management (nested up to 5 levels) |
 | `app/composables/useCollectionQuery.ts` | Async data fetching with query-based caching |
 | `app/composables/useCollectionMutation.ts` | Create/update/delete with auto cache invalidation |
