@@ -3,52 +3,58 @@ definePageMeta({ layout: 'default' })
 
 const { data: events } = await useFetch('/api/public/agenda')
 
-const now = new Date().toISOString().split('T')[0]
+const now = new Date()
+now.setHours(0, 0, 0, 0)
 
 const upcoming = computed(() =>
   (events.value || [])
-    .filter(e => e.date && e.date >= now)
+    .filter(e => e.date && new Date(e.date) >= now)
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
 )
 
 const past = computed(() =>
   (events.value || [])
-    .filter(e => e.date && e.date < now)
+    .filter(e => e.date && new Date(e.date) < now)
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 )
 
-function formatDate(date: string | null) {
+function formatDate(date: string | number | null) {
   if (!date) return ''
-  return date.split('T')[0]
+  const d = new Date(date)
+  return d.toISOString().split('T')[0]
 }
 </script>
 
 <template>
   <div>
-    <section v-if="upcoming.length" class="mb-10">
+    <div>
       <h2 class="text-lg mb-1">Binnenkort</h2>
-      <ul>
+      <ul v-if="upcoming.length">
         <li v-for="event in upcoming" :key="event.id" class="py-1">
-          <span class="text-xs text-gray-400 mr-2">{{ formatDate(event.date) }}</span>
-          <span class="inline-block border-b-2 border-white hover:border-black pt-1 transition-colors">
-            {{ event.title }}
-          </span>
+          <NuxtLink
+            :to="`/agenda/${event.id}`"
+            class="inline-block border-b-2 border-white hover:border-black pt-1"
+          >
+            <span v-if="event.date">{{ formatDate(event.date) }} - </span>{{ event.title }}
+          </NuxtLink>
         </li>
       </ul>
-    </section>
+      <div v-else>No upcoming events</div>
+    </div>
 
-    <section v-if="past.length">
+    <div class="mt-10">
       <h2 class="text-lg mb-1">Afgelopen</h2>
-      <ul>
+      <ul v-if="past.length">
         <li v-for="event in past" :key="event.id" class="py-1">
-          <span class="text-xs text-gray-400 mr-2">{{ formatDate(event.date) }}</span>
-          <span>{{ event.title }}</span>
+          <NuxtLink
+            :to="`/agenda/${event.id}`"
+            class="inline-block border-b-2 border-white hover:border-black pt-1"
+          >
+            <span v-if="event.date">{{ formatDate(event.date) }} - </span>{{ event.title }}
+          </NuxtLink>
         </li>
       </ul>
-    </section>
-
-    <p v-if="!events?.length" class="text-sm text-gray-400">
-      No events yet.
-    </p>
+      <div v-else>No passed events</div>
+    </div>
   </div>
 </template>

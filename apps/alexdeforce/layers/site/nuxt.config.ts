@@ -1,11 +1,12 @@
-import { basename } from 'node:path'
+import { basename, join } from 'node:path'
 
-const layerName = basename(__dirname)
+const currentDir = import.meta.dirname || __dirname
+const layerName = basename(currentDir)
 
 export default defineNuxtConfig({
   components: {
     dirs: [{
-      path: './app/components',
+      path: join(currentDir, 'app/components'),
       prefix: layerName,
       global: true
     }]

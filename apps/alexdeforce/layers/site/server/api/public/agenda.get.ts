@@ -7,7 +7,7 @@ export default defineEventHandler(async () => {
   const events = await db
     .select()
     .from(contentAgendas)
-    .where(eq(contentAgendas.draft, false))
+    .where(eq(contentAgendas.status, 'published'))
     .orderBy(desc(contentAgendas.date))
 
   return events

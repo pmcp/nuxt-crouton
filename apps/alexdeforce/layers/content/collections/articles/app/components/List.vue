@@ -63,8 +63,17 @@
     <template #featured-cell="{ row }">
       <CroutonBoolean :value="row.original.featured" />
     </template>
+    <template #imageUrl-cell="{ row }">
+      <img
+        v-if="row.original.imageUrl"
+        :src="row.original.imageUrl"
+        :alt="row.original.title"
+        class="size-10 rounded object-cover"
+      >
+      <span v-else class="text-gray-400">—</span>
+    </template>
     <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.content" />
+      <CroutonEditorPreview :content="row.original.content" mode="thumbnail" />
     </template>
   </CroutonCollection>
 </template>

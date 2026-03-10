@@ -328,12 +328,11 @@ export default defineEventHandler(async () => {
 
         for (const file of localFiles) {
           const blobPath = `/images/alexdeforce/local/${file}`
-          // Match various local path patterns in imageUrl and content
+          // Match local path patterns (most specific first, stop after first match per file)
           const patterns = [
-            `img/${file}`,
-            `/img/${file}`,
             `./img/${file}`,
-            file, // bare filename
+            `/img/${file}`,
+            `img/${file}`,
           ]
 
           for (const pattern of patterns) {
@@ -344,6 +343,7 @@ export default defineEventHandler(async () => {
             if (newContent && newContent.includes(pattern)) {
               newContent = newContent.replaceAll(pattern, blobPath)
               changed = true
+              break // Don't try less-specific patterns that would double-replace
             }
           }
         }

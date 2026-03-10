@@ -8,7 +8,7 @@ const category = String(route.params.category)
 const { data: article } = await useFetch(`/api/public/articles/${slug}`)
 
 if (!article.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Article not found' })
+  throw createError({ status: 404, statusText: 'Article not found' })
 }
 
 const categoryDisplay: Record<string, string> = {
@@ -24,27 +24,24 @@ useHead({
 </script>
 
 <template>
-  <div v-if="article">
-    <NuxtLink
-      :to="`/archive/${category}`"
-      class="text-xs uppercase border-b-2 border-white hover:border-black transition-colors"
-    >
-      &larr; {{ categoryDisplay[category] || category }}
-    </NuxtLink>
+  <div v-if="article" class="pmcp-article">
+    <div class="mb-4">
+      <NuxtLink
+        :to="`/archive/${category}`"
+        class="inline-block border-b-2 border-white hover:border-black"
+      >
+        Overzicht <span v-if="categoryDisplay[category]">{{ categoryDisplay[category] }}</span>
+        <span v-else>{{ category }}</span>
+      </NuxtLink>
+    </div>
 
-    <p v-if="article.date" class="text-xs text-gray-400 mt-4">
-      {{ article.date }}
-    </p>
-
-    <h1 class="text-2xl mt-2 mb-4">{{ article.title }}</h1>
+    <h1 class="pb-5"><span class="text-2xl">{{ article.title }}</span></h1>
 
     <div
-      v-if="article.content"
+      v-if="article.contentHtml"
       class="text-sm leading-6 prose"
-      v-html="article.content"
+      v-html="article.contentHtml"
     />
-
-    <SiteEmbedBlock v-if="article.embed" :html="article.embed" />
 
     <img
       v-if="article.imageUrl"

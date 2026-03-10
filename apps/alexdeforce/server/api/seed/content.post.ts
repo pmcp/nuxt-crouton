@@ -148,7 +148,7 @@ function link(label: string, href: string): TipTapNode {
 }
 
 function image(src: string, alt?: string): TipTapNode {
-  return { type: 'image', attrs: { src, alt: alt || null } }
+  return { type: 'imageBlock', attrs: { src, alt: alt || '', caption: '', width: 'full' } }
 }
 
 function hardBreak(): TipTapNode {
@@ -191,8 +191,10 @@ function parseInline(raw: string): TipTapNode[] {
     }
 
     if (match[1] !== undefined || match[2] !== undefined) {
-      // Image: ![alt](src)
-      nodes.push(image(match[2]!, match[1] || undefined))
+      // Image: ![alt](src) — inline context can't use block nodes,
+      // so render as a linked image reference. Standalone images
+      // are handled at block level in markdownToTipTap().
+      nodes.push(link(match[1] || match[2]!, match[2]!))
     } else if (match[4] !== undefined) {
       // Link: [label](href)
       nodes.push(link(match[4]!, match[5]!))

@@ -1,6 +1,15 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+useHead({
+  title: 'Alex Deforce',
+  meta: [
+    { name: 'description', content: 'Dichter van weinig woorden' },
+    { property: 'og:description', content: 'Dichter van weinig woorden' },
+    { property: 'og:image', content: 'https://alexdeforce.com/logo.jpeg' }
+  ]
+})
+
 const { data: articles } = await useFetch('/api/public/articles', {
   query: { featured: 'true' }
 })
@@ -8,19 +17,13 @@ const { data: articles } = await useFetch('/api/public/articles', {
 
 <template>
   <div>
-    <div v-for="article in articles" :key="article.id" class="mb-20">
-      <NuxtLink
-        :to="`/archive/${article.category}/${article.id}`"
-        class="block"
-      >
-        <h1 class="text-xl pb-5 pt-1">{{ article.title }}</h1>
-      </NuxtLink>
+    <div v-for="article in articles" :key="article.id" class="pmcp-article mb-20">
+      <h1 class="pb-5 pt-1"><span class="text-xl">{{ article.title }}</span></h1>
       <div
-        v-if="article.content"
+        v-if="article.contentHtml"
         class="text-sm prose"
-        v-html="article.content"
+        v-html="article.contentHtml"
       />
-      <SiteEmbedBlock v-if="article.embed" :html="article.embed" />
     </div>
 
     <p v-if="!articles?.length" class="text-sm text-gray-400">

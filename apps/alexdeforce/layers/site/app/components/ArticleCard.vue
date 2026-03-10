@@ -21,12 +21,12 @@ const link = computed(() => {
   <li class="py-1">
     <NuxtLink
       :to="link"
-      class="inline-block border-b-2 border-white hover:border-black pt-1 transition-colors"
+      class="inline-block border-b-2 border-white hover:border-black pt-1"
     >
       {{ title }}
     </NuxtLink>
-    <span v-if="tags?.length" class="ml-2 text-xs text-gray-400">
-      {{ tags.join(', ') }}
+    <span v-if="tags?.length" class="uppercase text-xs">
+      [<span v-for="(t, i) in tags" :key="t">{{ t }}<span v-if="i !== tags.length - 1">, </span></span>]
     </span>
   </li>
 </template>

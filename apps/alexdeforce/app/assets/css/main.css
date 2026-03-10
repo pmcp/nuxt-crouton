@@ -9,6 +9,21 @@
   --font-sans: 'main', sans-serif;
 }
 
+/* Force light background on html/body — override Nuxt UI dark mode */
+html, body {
+  background-color: white !important;
+  color: black !important;
+}
+
+/* Override Nuxt UI muted text colors for nav links */
+#mainGrid a {
+  color: black;
+}
+
+#mainGrid a:hover {
+  color: black;
+}
+
 /* Grid layout */
 #mainGrid {
   display: grid;
@@ -53,7 +68,7 @@
 a.router-link-active {
   background-color: black;
   color: white;
-  border-color: transparent;
+  border: none;
 }
 
 /* Embed responsive container */
@@ -75,6 +90,14 @@ a.router-link-active {
   height: 100%;
 }
 
+/* Standalone iframes */
+iframe {
+  min-width: 100%;
+  max-width: 100%;
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
 /* Content images */
 .prose img {
   max-height: 80vh;
@@ -84,4 +107,9 @@ a.router-link-active {
   .prose img {
     max-width: 50vw;
   }
+}
+
+/* If image is first element in an article, remove margin-top */
+.pmcp-article div p:first-child img {
+  margin-top: 0;
 }

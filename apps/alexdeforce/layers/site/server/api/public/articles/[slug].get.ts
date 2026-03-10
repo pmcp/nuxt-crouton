@@ -22,5 +22,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Article not found' })
   }
 
-  return article
+  return {
+    ...article,
+    contentHtml: article.content ? renderTipTapToHtml(article.content) : ''
+  }
 })

@@ -55,7 +55,7 @@
       <CroutonBoolean :value="row.original.showInNavigation" />
     </template>
     <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="t(row.original, 'content')" />
+      <CroutonEditorPreview :content="t(row.original, 'content')" mode="thumbnail" />
     </template>
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['title', 'slug', 'content', 'seoTitle', 'seoDescription']" />

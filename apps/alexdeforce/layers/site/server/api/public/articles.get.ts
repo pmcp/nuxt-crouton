@@ -21,5 +21,8 @@ export default defineEventHandler(async (event) => {
     .where(and(...conditions))
     .orderBy(desc(contentArticles.date))
 
-  return articles
+  return articles.map(article => ({
+    ...article,
+    contentHtml: article.content ? renderTipTapToHtml(article.content) : ''
+  }))
 })

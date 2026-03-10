@@ -27,6 +27,11 @@ export default defineNuxtConfig({
 
   ogImage: { enabled: false },
 
+  colorMode: {
+    preference: 'light',
+    fallback: 'light'
+  },
+
   croutonAuth: {
     methods: {
       passkeys: false
