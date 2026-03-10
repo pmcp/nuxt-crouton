@@ -433,6 +433,9 @@
     "admin": "Admin",
     "superAdmin": "Super Admin",
     "team": "Team",
-    "translations": "Translations"
+    "translations": "Translations",
+    "content": "Content",
+    "media": "Media",
+    "data": "Collections"
   }
 }

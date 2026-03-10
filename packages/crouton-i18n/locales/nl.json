@@ -433,6 +433,9 @@
     "admin": "Beheer",
     "superAdmin": "Superbeheerder",
     "team": "Team",
-    "translations": "Vertalingen"
+    "translations": "Vertalingen",
+    "content": "Inhoud",
+    "media": "Media",
+    "data": "Collecties"
   }
 }

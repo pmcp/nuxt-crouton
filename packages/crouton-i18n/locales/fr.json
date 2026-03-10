@@ -432,6 +432,9 @@
     "admin": "Administration",
     "superAdmin": "Super Admin",
     "team": "Équipe",
-    "translations": "Traductions"
+    "translations": "Traductions",
+    "content": "Contenu",
+    "media": "Médias",
+    "data": "Collections"
   }
 }
