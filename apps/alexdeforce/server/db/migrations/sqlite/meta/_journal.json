@@ -43,6 +43,13 @@
       "when": 1773163534262,
       "tag": "0005_minor_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1773178756833,
+      "tag": "0006_mixed_la_nuit",
+      "breakpoints": true
     }
   ]
 }

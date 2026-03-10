@@ -42,7 +42,7 @@ collections/tags/
 | Field | Type | Required |
 |-------|------|----------|
 | id | string (primary key) | Auto |
-| name | string | Yes |
+| title | string | Yes |
 | color | string | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |

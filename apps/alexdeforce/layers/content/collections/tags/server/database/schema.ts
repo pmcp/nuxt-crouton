@@ -28,7 +28,7 @@ export const contentTags = sqliteTable('content_tags', {
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
-  name: text('name').notNull(),
+  title: text('title').notNull(),
   color: text('color'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),

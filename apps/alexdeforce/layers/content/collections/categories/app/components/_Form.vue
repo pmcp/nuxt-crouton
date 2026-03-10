@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/content-categories
   - Zod schema: useContentCategories() composable
-  - Fields: name, icon
+  - Fields: title, icon
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -40,8 +40,8 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Name" name="name" class="not-last:pb-4">
-          <UInput v-model="state.name" class="w-full" size="xl" />
+        <UFormField label="Title" name="title" class="not-last:pb-4">
+          <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
       </div>
       </template>

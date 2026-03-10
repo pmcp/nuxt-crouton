@@ -42,7 +42,7 @@ collections/categories/
 | Field | Type | Required |
 |-------|------|----------|
 | id | string (primary key) | Auto |
-| name | string | Yes |
+| title | string | Yes |
 | icon | string | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |

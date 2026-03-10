@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const dbTimer = timing.start('db')
   const result = await updateContentCategorie(categorieId, team.id, user.id, {
-    name: body.name,
+    title: body.title,
     icon: body.icon
   }, { role: membership.role })
   dbTimer.end()

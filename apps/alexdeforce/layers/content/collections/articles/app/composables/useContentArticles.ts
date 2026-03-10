@@ -116,7 +116,8 @@ const _contentArticlesConfig = {
           "name": "status",
           "type": "string",
           "label": "Status",
-          "area": "sidebar"
+          "area": "sidebar",
+          "displayAs": "optionsSelect"
       },
       {
           "name": "publishedAt",

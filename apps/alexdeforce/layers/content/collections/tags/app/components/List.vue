@@ -9,7 +9,7 @@
   - Collection name: contentTags
   - API endpoint: /api/teams/[id]/content-tags
   - Columns composable: useContentTags()
-  - Column fields: name, color
+  - Column fields: title, color
 
   ## Common Modifications
   - Add column: Update columns array in composable

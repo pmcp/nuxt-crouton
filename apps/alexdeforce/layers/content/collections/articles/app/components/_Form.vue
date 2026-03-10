@@ -78,10 +78,15 @@
           <UCheckbox v-model="state.featured" />
         </UFormField>
         <UFormField label="Status" name="status" class="not-last:pb-4">
-          <UInput v-model="state.status" class="w-full" size="xl" />
+          <USelect
+            v-model="state.status"
+            :items="statusOptions"
+            class="w-full"
+            size="xl"
+          />
         </UFormField>
         <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
-          <CroutonCalendar v-model:date="state.publishedAt" />
+          <CroutonCalendar v-model:date="state.publishedAt" picker />
         </UFormField>
       </div>
       </template>
@@ -107,6 +112,13 @@ const { defaultValue, schema, collection } = useContentArticles()
 
 // Form layout configuration
 const tabs = ref(false)
+
+// Static select options
+const statusOptions = [
+  { label: 'Draft', value: 'draft' },
+  { label: 'Published', value: 'published' },
+  { label: 'Archived', value: 'archived' }
+]
 
 
 

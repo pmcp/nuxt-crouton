@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/content-categories
  * - Form component: ContentCategoriesForm
  * - List component: ContentCategoriesList
- * - Fields: name, icon
+ * - Fields: title, icon
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,12 +27,12 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const contentCategorieSchema = z.object({
-  name: z.string().min(1, 'name is required'),
+  title: z.string().min(1, 'title is required'),
   icon: z.string().optional()
 })
 
 export const contentCategoriesColumns = [
-  { accessorKey: 'name', header: 'Name' },
+  { accessorKey: 'title', header: 'Title' },
   { accessorKey: 'icon', header: 'Icon' }
 ]
 
@@ -43,15 +43,15 @@ const _contentCategoriesConfig = {
   apiPath: 'content-categories',
   componentName: 'ContentCategoriesForm',
   defaultValues: {
-    name: '',
+    title: '',
     icon: ''
   },
   columns: contentCategoriesColumns,
   fields: [
       {
-          "name": "name",
+          "name": "title",
           "type": "string",
-          "label": "Name",
+          "label": "Title",
           "area": "main"
       },
       {

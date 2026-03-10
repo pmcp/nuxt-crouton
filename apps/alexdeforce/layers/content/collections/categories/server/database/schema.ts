@@ -28,7 +28,7 @@ export const contentCategories = sqliteTable('content_categories', {
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
-  name: text('name').notNull(),
+  title: text('title').notNull(),
   icon: text('icon'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),

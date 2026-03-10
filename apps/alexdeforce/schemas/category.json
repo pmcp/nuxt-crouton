@@ -5,9 +5,9 @@
   "description": "Article categories",
   "fields": [
     {
-      "name": "name",
+      "name": "title",
       "type": "string",
-      "label": "Name",
+      "label": "Title",
       "required": true,
       "maxLength": 50,
       "area": "main"

@@ -9,7 +9,7 @@
   - Collection name: contentCategories
   - API endpoint: /api/teams/[id]/content-categories
   - Columns composable: useContentCategories()
-  - Column fields: name, icon
+  - Column fields: title, icon
 
   ## Common Modifications
   - Add column: Update columns array in composable

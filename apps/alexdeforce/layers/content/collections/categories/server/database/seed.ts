@@ -67,7 +67,7 @@ export async function seedContentCategories(options: SeedOptions = {}) {
         updatedBy: f.valuesFromArray({ values: ['seed-script'] }),
 
         // Collection fields
-        name: f.fullName(),
+        title: f.loremIpsum({ sentencesCount: 1 }),
         icon: f.loremIpsum({ sentencesCount: 1 })
       }
     }

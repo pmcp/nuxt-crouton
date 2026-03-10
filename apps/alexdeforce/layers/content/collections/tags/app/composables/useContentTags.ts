@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/content-tags
  * - Form component: ContentTagsForm
  * - List component: ContentTagsList
- * - Fields: name, color
+ * - Fields: title, color
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,12 +27,12 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const contentTagSchema = z.object({
-  name: z.string().min(1, 'name is required'),
+  title: z.string().min(1, 'title is required'),
   color: z.string().optional()
 })
 
 export const contentTagsColumns = [
-  { accessorKey: 'name', header: 'Name' },
+  { accessorKey: 'title', header: 'Title' },
   { accessorKey: 'color', header: 'Color' }
 ]
 
@@ -43,15 +43,15 @@ const _contentTagsConfig = {
   apiPath: 'content-tags',
   componentName: 'ContentTagsForm',
   defaultValues: {
-    name: '',
+    title: '',
     color: ''
   },
   columns: contentTagsColumns,
   fields: [
       {
-          "name": "name",
+          "name": "title",
           "type": "string",
-          "label": "Name",
+          "label": "Title",
           "area": "main"
       },
       {

@@ -1,5 +1,223 @@
 [
   {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:32:10.014Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:29:59.304Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:27:54.955Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:25:44.686Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:23:33.924Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:21:23.044Z",
+    "layer": "content",
+    "gitSha": "cf55e83c"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "title",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:19:41.864Z",
+    "layer": "content",
+    "gitSha": "46f03ee6"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "title",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:18:41.201Z",
+    "layer": "content",
+    "gitSha": "46f03ee6"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:17:40.732Z",
+    "layer": "content",
+    "gitSha": "46f03ee6"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T21:16:40.648Z",
+    "layer": "content",
+    "gitSha": "46f03ee6"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "title",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T20:58:15.730Z",
+    "layer": "content",
+    "gitSha": "f2fcc50a"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "title",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T20:57:15.382Z",
+    "layer": "content",
+    "gitSha": "f2fcc50a"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T20:56:44.986Z",
+    "layer": "content",
+    "gitSha": "f2fcc50a"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T20:56:05.124Z",
+    "layer": "content",
+    "gitSha": "f2fcc50a"
+  },
+  {
     "collection": "pages",
     "fields": [
       "title",

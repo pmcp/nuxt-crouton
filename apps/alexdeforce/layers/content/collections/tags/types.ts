@@ -9,7 +9,7 @@
  * - Form data type: ContentTagFormData
  * - New item type: NewContentTag
  * - Form props: ContentTagFormProps
- * - Fields: name, color
+ * - Fields: title, color
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -27,7 +27,7 @@ export interface ContentTag {
   id: string
   teamId: string
   owner: string
-  name: string
+  title: string
   color?: string
   createdAt: Date
   updatedAt: Date

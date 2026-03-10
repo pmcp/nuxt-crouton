@@ -9,7 +9,7 @@
  * - Form data type: ContentCategorieFormData
  * - New item type: NewContentCategorie
  * - Form props: ContentCategorieFormProps
- * - Fields: name, icon
+ * - Fields: title, icon
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -27,7 +27,7 @@ export interface ContentCategorie {
   id: string
   teamId: string
   owner: string
-  name: string
+  title: string
   icon?: string
   createdAt: Date
   updatedAt: Date

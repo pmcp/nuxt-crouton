@@ -65,6 +65,7 @@
       "default": "draft",
       "maxLength": 20,
       "area": "sidebar",
+      "displayAs": "optionsSelect",
       "options": [
         { "value": "draft", "label": "Draft" },
         { "value": "published", "label": "Published" },
@@ -75,7 +76,8 @@
       "name": "publishedAt",
       "type": "date",
       "label": "Published At",
-      "area": "sidebar"
+      "area": "sidebar",
+      "picker": true
     }
   ]
 }
