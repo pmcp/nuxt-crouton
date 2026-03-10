@@ -4,12 +4,12 @@ export default {
   },
 
   collections: [
-    { name: 'articles', fieldsFile: './schemas/articles.json' },
-    { name: 'tags', fieldsFile: './schemas/tag.json' },
-    { name: 'categories', fieldsFile: './schemas/category.json' },
-    { name: 'agenda', fieldsFile: './schemas/agenda.json' },
-    { name: 'assets', fieldsFile: './schemas/assets.json' },
-    { name: 'pages', fieldsFile: './schemas/pages.json', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
+    { name: 'articles', fieldsFile: './schemas/articles.json', kind: 'content', seed: true },
+    { name: 'tags', fieldsFile: './schemas/tag.json', seed: true },
+    { name: 'categories', fieldsFile: './schemas/category.json', seed: true },
+    { name: 'agenda', fieldsFile: './schemas/agenda.json', kind: 'content', seed: true },
+    { name: 'assets', fieldsFile: './schemas/assets.json', kind: 'media' },
+    { name: 'pages', fieldsFile: './schemas/pages.json', kind: 'content', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
   ],
 
   targets: [

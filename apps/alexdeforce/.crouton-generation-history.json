@@ -18,6 +18,104 @@
       "robots"
     ],
     "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.874Z",
+    "layer": "pages",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "assets",
+    "fields": [
+      "userId",
+      "filename",
+      "pathname",
+      "contentType",
+      "size",
+      "category",
+      "width",
+      "height",
+      "alt",
+      "uploadedAt",
+      "updatedBy"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.847Z",
+    "layer": "crouton",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "name",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.823Z",
+    "layer": "content",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "name",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.798Z",
+    "layer": "content",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.773Z",
+    "layer": "content",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:56:40.747Z",
+    "layer": "content",
+    "gitSha": "70242648"
+  },
+  {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
     "timestamp": "2026-03-10T19:24:53.528Z",
     "layer": "pages",
     "gitSha": "af16464e"

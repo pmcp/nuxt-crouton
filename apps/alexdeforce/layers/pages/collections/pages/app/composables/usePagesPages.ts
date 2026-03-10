@@ -100,6 +100,7 @@ const _pagesPagesConfig = {
     translations: {}
   },
   columns: pagesPagesColumns,
+  kind: 'content',
   hierarchy: {
     enabled: true,
     parentField: 'parentId',

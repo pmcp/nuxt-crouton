@@ -59,6 +59,7 @@ const _contentAgendasConfig = {
     publishedAt: null
   },
   columns: contentAgendasColumns,
+  kind: 'content',
   fields: [
       {
           "name": "title",

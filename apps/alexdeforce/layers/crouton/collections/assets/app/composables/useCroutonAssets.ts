@@ -82,6 +82,7 @@ const _croutonAssetsConfig = {
     translations: {}
   },
   columns: croutonAssetsColumns,
+  kind: 'media',
   fields: [
       {
           "name": "userId",

@@ -68,6 +68,7 @@ const _contentArticlesConfig = {
     publishedAt: null
   },
   columns: contentArticlesColumns,
+  kind: 'content',
   fields: [
       {
           "name": "title",
