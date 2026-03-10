@@ -713,13 +713,23 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   data.detected = computeDetection(fields, collectionConfig, detectors, layerCamelCase)
 
   // Run contribution functions and attach enhancement results to data
-  // Only include contributions from packages the app actually uses (via config.features)
-  // Core packages (core, auth, admin, i18n) are always active; addons need explicit feature flags
+  // Include: core packages, explicitly enabled features, AND packages whose detector matched fields
   const allContributions = await getGeneratorContributions(manifests)
   const enabledFeatures = new Set(Object.keys(config?.features || {}))
   const corePackages = new Set(['crouton-core', 'crouton-auth', 'crouton-admin', 'crouton-i18n', 'crouton-bookings', 'crouton-pages'])
+
+  // Auto-include packages that detected matching fields in this collection's schema
+  const detected = data.detected as DetectionResult
+  const detectedPackages = new Set<string>()
+  if (detected.editorFields?.length) detectedPackages.add('crouton-editor')
+  if (detected.assetFields?.length) detectedPackages.add('crouton-assets')
+  if (detected.hasAddress) detectedPackages.add('crouton-maps')
+  if (detected.collabEnabled) detectedPackages.add('crouton-collab')
+
   const contributions = allContributions.filter(({ packageId }) =>
-    corePackages.has(packageId) || enabledFeatures.has(packageId.replace(/^crouton-/, ''))
+    corePackages.has(packageId)
+    || enabledFeatures.has(packageId.replace(/^crouton-/, ''))
+    || detectedPackages.has(packageId)
   )
   const translatableFieldNames = config?.translations?.collections?.[toCase(collection).plural] || []
   data.formEnhancements = runFormContributions(contributions, data, dialect)

@@ -444,6 +444,8 @@ causes duplicate layer loading and SSR errors (e.g., `$setup.t is not a function
 | `ai` | `false` | AI/LLM integration (see below) |
 | `collab` | `false` | Real-time collaboration |
 
+**Auto-detection:** Generator contributions from addon packages (editor, assets, maps, collab) run automatically when the schema's fields match the package's detector patterns — even without an explicit feature flag. For example, a field with `"component": "CroutonEditorSimple"` triggers `crouton-editor` contributions regardless of whether `editor: true` is set. Feature flags are still needed for framework package syncing (adding to `nuxt.config.ts` extends).
+
 ### AI Feature Configuration
 
 The `ai` feature supports both boolean and object configuration:
