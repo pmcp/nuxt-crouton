@@ -259,16 +259,16 @@ describe('useTableColumns', () => {
 
       const columnIds = allColumns.value.map((c: TableColumn) => c.id)
 
-      // Expected order: drag, select, user columns, defaults (createdAt, updatedAt, createdBy, updatedBy, actions)
+      // Expected order: drag, select, actions, user columns, defaults (createdAt, updatedAt, createdBy, updatedBy)
       expect(columnIds).toEqual([
         'drag',
         'select',
+        'actions',
         'name',
         'createdAt',
         'updatedAt',
         'createdBy',
-        'updatedBy',
-        'actions'
+        'updatedBy'
       ])
     })
 
@@ -284,16 +284,16 @@ describe('useTableColumns', () => {
 
       const columnIds = allColumns.value.map((c: TableColumn) => c.id)
 
-      // Expected order: select, user columns, defaults
+      // Expected order: select, actions, user columns, defaults
       expect(columnIds).toEqual([
         'select',
+        'actions',
         'name',
         'price',
         'createdAt',
         'updatedAt',
         'createdBy',
-        'updatedBy',
-        'actions'
+        'updatedBy'
       ])
     })
   })
