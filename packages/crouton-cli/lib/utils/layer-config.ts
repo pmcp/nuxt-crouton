@@ -57,8 +57,20 @@ export default defineNuxtConfig({
 `
     }
 
-    // Find the extends array
-    const extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
+    // Find the extends array — or inject one if missing (e.g. bare `defineNuxtConfig({})`)
+    let extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
+    if (!extendsMatch) {
+      // Config exists but has no extends array — inject one
+      const insertPoint = config.match(/defineNuxtConfig\(\{/)
+      if (insertPoint) {
+        const idx = config.indexOf(insertPoint[0]) + insertPoint[0].length
+        config = config.slice(0, idx) + '\n  extends: [\n  ],' + config.slice(idx)
+        await fsp.writeFile(configPath, config)
+        console.log(`  ✓ Added extends array to existing ${layer} layer root nuxt.config.ts`)
+        // Re-match after injection
+        extendsMatch = config.match(/extends:\s*\[([\s\S]*?)\]/)
+      }
+    }
     if (extendsMatch) {
       const currentExtends = extendsMatch[1]
       const newCollection = `'./collections/${cases.plural}'`
