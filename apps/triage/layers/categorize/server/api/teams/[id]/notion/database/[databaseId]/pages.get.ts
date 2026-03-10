@@ -10,6 +10,11 @@
 
 const NOTION_API_VERSION = '2022-06-28'
 
+interface NotionUser {
+  name?: string
+  id: string
+}
+
 interface NotionPage {
   id: string
   title: string
@@ -17,6 +22,8 @@ interface NotionPage {
   properties: Record<string, unknown>
   createdTime: string
   lastEditedTime: string
+  createdBy: NotionUser | null
+  lastEditedBy: NotionUser | null
 }
 
 function extractTitle(properties: Record<string, any>): string {
@@ -26,6 +33,11 @@ function extractTitle(properties: Record<string, any>): string {
     }
   }
   return 'Untitled'
+}
+
+function extractUser(user: any): NotionUser | null {
+  if (!user) return null
+  return { name: user.name || undefined, id: user.id }
 }
 
 function simplifyProperty(prop: any): unknown {
@@ -52,6 +64,14 @@ function simplifyProperty(prop: any): unknown {
       return prop.email || null
     case 'people':
       return prop.people?.map((p: any) => p.name || p.id) || []
+    case 'created_by':
+      return prop.created_by?.name || prop.created_by?.id || null
+    case 'last_edited_by':
+      return prop.last_edited_by?.name || prop.last_edited_by?.id || null
+    case 'created_time':
+      return prop.created_time || null
+    case 'last_edited_time':
+      return prop.last_edited_time || null
     default:
       return null
   }
@@ -98,8 +118,14 @@ export default defineEventHandler(async (event) => {
 
       for (const page of response.results || []) {
         const simplifiedProps: Record<string, unknown> = {}
-        for (const [name, prop] of Object.entries(page.properties || {})) {
+        let createdByFromProp: NotionUser | null = null
+        let lastEditedByFromProp: NotionUser | null = null
+
+        for (const [name, prop] of Object.entries(page.properties || {}) as [string, any][]) {
           simplifiedProps[name] = simplifyProperty(prop)
+          // Extract full user objects from property columns (these have names)
+          if (prop.type === 'created_by') createdByFromProp = extractUser(prop.created_by)
+          if (prop.type === 'last_edited_by') lastEditedByFromProp = extractUser(prop.last_edited_by)
         }
 
         allPages.push({
@@ -109,6 +135,8 @@ export default defineEventHandler(async (event) => {
           properties: simplifiedProps,
           createdTime: page.created_time,
           lastEditedTime: page.last_edited_time,
+          createdBy: createdByFromProp || extractUser(page.created_by),
+          lastEditedBy: lastEditedByFromProp || extractUser(page.last_edited_by),
         })
       }
 

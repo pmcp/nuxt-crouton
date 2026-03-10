@@ -5,6 +5,7 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import type { Node, NodeDragEvent } from '@vue-flow/core'
 import NotionCardNode from '../../../components/NotionCardNode.vue'
+import ResizableGroupNode from '../../../components/ResizableGroupNode.vue'
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -132,6 +133,7 @@ const GROUP_COLORS = [
 // ─── Node types ───
 const nodeTypes = {
   notionCard: markRaw(NotionCardNode) as any,
+  resizableGroup: markRaw(ResizableGroupNode) as any,
 }
 
 // ─── VueFlow ───
@@ -279,11 +281,14 @@ async function loadPages() {
 // ─── Build nodes with auto-grouping by existing property values ───
 function buildNodesWithAutoGroup() {
   const CARD_W = 220
-  const CARD_H = 100
+  const CARD_H = 120
   const GAP = 30
-  const GROUP_W = 500
-  const GROUP_H = 400
+  const GROUP_PAD_X = 30
+  const GROUP_PAD_TOP = 45
+  const GROUP_PAD_BOTTOM = 20
   const GROUP_GAP = 50
+  const CARD_GAP_X = 10
+  const CARD_GAP_Y = 10
 
   // Reset
   groups.value = []
@@ -310,6 +315,8 @@ function buildNodesWithAutoGroup() {
   }
 
   const allNodes: Node[] = []
+  let groupXOffset = 0
+  let maxGroupH = 0
 
   // Create group nodes + position cards inside
   let groupIndex = 0
@@ -318,15 +325,23 @@ function buildNodesWithAutoGroup() {
     const color = GROUP_COLORS[groupIndex % GROUP_COLORS.length]!
     groups.value.push({ id, name: groupName, color })
 
-    const groupX = groupIndex * (GROUP_W + GROUP_GAP)
+    // Calculate group size based on card count
+    const cols = Math.max(1, Math.min(3, pageIds.length))
+    const rows = Math.ceil(pageIds.length / cols)
+    const groupW = GROUP_PAD_X + cols * (CARD_W + CARD_GAP_X)
+    const groupH = GROUP_PAD_TOP + rows * (CARD_H + CARD_GAP_Y) + GROUP_PAD_BOTTOM
+
+    const groupX = groupXOffset
+    groupXOffset += groupW + GROUP_GAP
+
     allNodes.push({
       id,
-      type: 'group',
+      type: 'resizableGroup',
       position: { x: groupX, y: 0 },
       data: { label: groupName },
       style: {
-        width: `${GROUP_W}px`,
-        height: `${GROUP_H}px`,
+        width: `${groupW}px`,
+        height: `${groupH}px`,
         backgroundColor: color,
         borderRadius: '12px',
         border: '2px dashed #9ca3af',
@@ -334,8 +349,9 @@ function buildNodesWithAutoGroup() {
       },
     })
 
+    maxGroupH = Math.max(maxGroupH, groupH)
+
     // Place cards inside this group
-    const cols = Math.max(1, Math.floor((GROUP_W - 40) / (CARD_W + 10)))
     for (let i = 0; i < pageIds.length; i++) {
       const page = pages.value.find(p => p.id === pageIds[i])
       if (!page) continue
@@ -344,14 +360,18 @@ function buildNodesWithAutoGroup() {
         type: 'notionCard',
         parentNode: id,
         position: {
-          x: 15 + (i % cols) * (CARD_W + 10),
-          y: 35 + Math.floor(i / cols) * (CARD_H + 10),
+          x: 15 + (i % cols) * (CARD_W + CARD_GAP_X),
+          y: GROUP_PAD_TOP + Math.floor(i / cols) * (CARD_H + CARD_GAP_Y),
         },
         data: {
           title: page.title,
           properties: page.properties,
           url: page.url,
           grouped: true,
+          createdTime: page.createdTime,
+          lastEditedTime: page.lastEditedTime,
+          createdBy: page.createdBy,
+          lastEditedBy: page.lastEditedBy,
         },
       })
     }
@@ -360,8 +380,8 @@ function buildNodesWithAutoGroup() {
   }
 
   // Place ungrouped cards in a grid below groups
-  const ungroupedY = existingGroups.size > 0 ? GROUP_H + 80 : 50
-  const cols = Math.max(1, Math.ceil(Math.sqrt(ungroupedPages.length)))
+  const ungroupedY = existingGroups.size > 0 ? maxGroupH + 80 : 50
+  const ungroupedCols = Math.max(1, Math.ceil(Math.sqrt(ungroupedPages.length)))
 
   for (let i = 0; i < ungroupedPages.length; i++) {
     const page = ungroupedPages[i]!
@@ -369,14 +389,18 @@ function buildNodesWithAutoGroup() {
       id: page.id,
       type: 'notionCard',
       position: {
-        x: (i % cols) * (CARD_W + GAP) + 50,
-        y: Math.floor(i / cols) * (CARD_H + GAP) + ungroupedY,
+        x: (i % ungroupedCols) * (CARD_W + GAP) + 50,
+        y: Math.floor(i / ungroupedCols) * (CARD_H + GAP) + ungroupedY,
       },
       data: {
         title: page.title,
         properties: page.properties,
         url: page.url,
         grouped: false,
+        createdTime: page.createdTime,
+        lastEditedTime: page.lastEditedTime,
+        createdBy: page.createdBy,
+        lastEditedBy: page.lastEditedBy,
       },
     })
   }
@@ -403,7 +427,7 @@ function createGroup() {
   const groupX = groups.value.length * 550 - 500
   nodes.value.push({
     id,
-    type: 'group',
+    type: 'resizableGroup',
     position: { x: groupX, y: -350 },
     data: { label: newGroupName.value.trim() },
     style: {
@@ -487,7 +511,7 @@ onNodeDragStop((event: NodeDragEvent) => {
   if (node.type !== 'notionCard') return
 
   const currentNodes = nodes.value
-  const groupNodes = currentNodes.filter(n => n.type === 'group')
+  const groupNodes = currentNodes.filter(n => n.type === 'resizableGroup')
   if (groupNodes.length === 0) return
 
   const cardW = 220
@@ -1056,7 +1080,7 @@ async function saveToNotion() {
                     v-for="(page, i) in pagesByRice"
                     :key="page.id"
                     class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
-                    @click="selectedCard = { title: page.title, properties: page.properties, url: page.url }; showCardDetail = true"
+                    @click="selectedCard = { title: page.title, properties: page.properties, url: page.url, createdTime: page.createdTime, lastEditedTime: page.lastEditedTime, createdBy: page.createdBy, lastEditedBy: page.lastEditedBy }; showCardDetail = true"
                   >
                     <td class="py-2 pr-4 text-gray-400">{{ i + 1 }}</td>
                     <td class="py-2 pr-4 font-medium max-w-xs truncate">{{ page.title }}</td>
@@ -1162,6 +1186,22 @@ async function saveToNotion() {
                   class="mt-3"
                 />
               </ClientOnly>
+            </div>
+
+            <!-- Created / edited metadata -->
+            <div v-if="selectedCard.createdTime || selectedCard.createdBy" class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-400">
+              <div v-if="selectedCard.createdBy?.name || selectedCard.createdTime" class="flex items-center gap-1.5">
+                <UIcon name="i-lucide-user" class="size-3.5" />
+                <span>
+                  Created<template v-if="selectedCard.createdBy?.name"> by <span class="text-gray-600 dark:text-gray-300 font-medium">{{ selectedCard.createdBy.name }}</span></template><template v-if="selectedCard.createdTime"> on {{ new Date(selectedCard.createdTime).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }}</template>
+                </span>
+              </div>
+              <div v-if="selectedCard.lastEditedBy?.name || selectedCard.lastEditedTime" class="flex items-center gap-1.5">
+                <UIcon name="i-lucide-pencil" class="size-3.5" />
+                <span>
+                  Edited<template v-if="selectedCard.lastEditedBy?.name"> by <span class="text-gray-600 dark:text-gray-300 font-medium">{{ selectedCard.lastEditedBy.name }}</span></template><template v-if="selectedCard.lastEditedTime"> on {{ new Date(selectedCard.lastEditedTime).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }}</template>
+                </span>
+              </div>
             </div>
 
             <!-- Properties (filtered, no empties) -->

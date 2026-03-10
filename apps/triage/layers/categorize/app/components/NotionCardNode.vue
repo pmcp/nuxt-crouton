@@ -33,12 +33,19 @@ const riceScore = computed(() => {
   if (r == null || i == null || c == null || e == null || e === 0) return null
   return Math.round((r * i * c) / e)
 })
+
+const riceColor = computed(() => {
+  if (riceScore.value == null) return ''
+  if (riceScore.value >= 10) return 'rice-high'
+  if (riceScore.value >= 5) return 'rice-med'
+  return 'rice-low'
+})
 </script>
 
 <template>
   <div
     class="notion-card-node"
-    :class="{ selected, grouped: data.grouped }"
+    :class="[{ selected, grouped: data.grouped }, riceColor]"
   >
     <Handle type="target" :position="Position.Top" class="!opacity-0" />
 
@@ -46,18 +53,14 @@ const riceScore = computed(() => {
       {{ data.title }}
     </div>
 
-    <div v-if="statusValue" class="card-status">
-      {{ statusValue }}
-    </div>
+    <div class="card-meta">
+      <span v-if="statusValue" class="card-status">
+        {{ statusValue }}
+      </span>
 
-    <div v-if="tagsValue.length" class="card-tags">
       <span v-for="tag in tagsValue" :key="tag" class="card-tag">
         {{ tag }}
       </span>
-    </div>
-
-    <div v-if="riceScore != null" class="card-rice" :class="riceScore >= 10 ? 'rice-high' : riceScore >= 5 ? 'rice-med' : 'rice-low'">
-      RICE {{ riceScore }}
     </div>
 
     <Handle type="source" :position="Position.Bottom" class="!opacity-0" />
@@ -68,8 +71,9 @@ const riceScore = computed(() => {
 .notion-card-node {
   background: white;
   border: 1px solid #e5e7eb;
+  border-left: 4px solid #e5e7eb;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 10px 12px;
   min-width: 180px;
   max-width: 240px;
   cursor: grab;
@@ -83,39 +87,45 @@ const riceScore = computed(() => {
 
 .notion-card-node.selected {
   border-color: var(--color-primary-500, #3b82f6);
+  border-left-color: var(--color-primary-500, #3b82f6);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .notion-card-node.grouped {
-  border-left: 3px solid var(--color-primary-400, #60a5fa);
+  /* grouped cards keep their rice color if present */
+}
+
+/* RICE color accents — left border */
+.notion-card-node.rice-high {
+  border-left-color: #16a34a;
+}
+.notion-card-node.rice-med {
+  border-left-color: #d97706;
+}
+.notion-card-node.rice-low {
+  border-left-color: #dc2626;
 }
 
 .card-title {
   font-weight: 500;
   color: #1f2937;
   line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+}
+
+.card-meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
 }
 
 .card-status {
-  margin-top: 6px;
   font-size: 11px;
   color: #6b7280;
   background: #f3f4f6;
   padding: 2px 6px;
   border-radius: 4px;
-  display: inline-block;
-}
-
-.card-tags {
-  margin-top: 6px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
 }
 
 .card-tag {
@@ -126,23 +136,21 @@ const riceScore = computed(() => {
   border-radius: 3px;
 }
 
-.card-rice {
-  margin-top: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.rice-high { background: #dcfce7; color: #166534; }
-.rice-med { background: #fef3c7; color: #92400e; }
-.rice-low { background: #fee2e2; color: #991b1b; }
-
 /* Dark mode */
 :root.dark .notion-card-node {
   background: #1f2937;
   border-color: #374151;
+  border-left-color: #374151;
+}
+
+:root.dark .notion-card-node.rice-high {
+  border-left-color: #16a34a;
+}
+:root.dark .notion-card-node.rice-med {
+  border-left-color: #d97706;
+}
+:root.dark .notion-card-node.rice-low {
+  border-left-color: #dc2626;
 }
 
 :root.dark .card-title {
