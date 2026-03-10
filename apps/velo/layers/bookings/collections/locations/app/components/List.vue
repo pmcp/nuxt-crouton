@@ -49,7 +49,7 @@
       {{ t(row.original, 'city') }}
     </template>
     <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="t(row.original, 'content')" />
+      <CroutonEditorPreview :content="t(row.original, 'content')" mode="thumbnail" />
     </template>
     <template #allowedMemberIds-cell="{ row }">
       <div v-if="row.original.allowedMemberIds && row.original.allowedMemberIds.length > 0" class="flex flex-wrap gap-1">
