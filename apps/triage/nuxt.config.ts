@@ -15,7 +15,10 @@ export default defineNuxtConfig({
     '@fyit/crouton-editor',
     '@fyit/crouton-pages',
     '@fyit/crouton-triage',
-    // Local generated layers must come last
+    '@fyit/crouton-charts',
+    // Local layers
+    './layers/categorize',
+    // Generated layers must come last
     './layers/triage',
     './layers/pages'
   ],

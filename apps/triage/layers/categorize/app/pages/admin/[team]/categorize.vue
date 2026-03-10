@@ -16,22 +16,54 @@ const { teamId } = useTeamContext()
 const toast = useToast()
 
 // ─── Connected accounts ───
-const { accounts, loading: accountsLoading } = useTriageConnectedAccounts(teamId)
-const notionAccounts = computed(() =>
-  accounts.value.filter(a => a.provider === 'notion' && a.status === 'connected'),
+const { accounts, createManualAccount, fetchAccounts } = useTriageConnectedAccounts(teamId)
+const notionAccounts = computed(() => accounts.value.filter(a => a.provider === 'notion'))
+const accountItems = computed(() =>
+  notionAccounts.value.map(a => ({ label: `${a.label} (${a.accessTokenHint || '***'})`, value: a.id })),
 )
 
+// ─── Connect modal state ───
+const showConnectModal = ref(false)
+const connectLabel = ref('')
+const connectToken = ref('')
+const connecting = ref(false)
+
+async function connectNotionAccount() {
+  if (!connectLabel.value.trim() || !connectToken.value.trim()) return
+  connecting.value = true
+  try {
+    const result = await createManualAccount({
+      provider: 'notion',
+      label: connectLabel.value.trim(),
+      token: connectToken.value.trim(),
+    })
+    if (result?.account) {
+      selectedAccountId.value = result.account.id
+    }
+    showConnectModal.value = false
+    connectLabel.value = ''
+    connectToken.value = ''
+    toast.add({ title: 'Notion account connected', color: 'success' })
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Failed to connect',
+      description: error.data?.statusText || error.message,
+      color: 'error',
+    })
+  }
+  finally {
+    connecting.value = false
+  }
+}
+
 // ─── Setup state ───
-const selectedAccountId = ref('')
+const selectedAccountId = ref<string | null>(null)
 const databaseId = ref('')
 const databases = ref<{ id: string; title: string; icon?: string; url: string }[]>([])
 const loadingDatabases = ref(false)
 const categoryProperty = ref('')
 const schema = ref<Record<string, { type: string; options?: { name: string }[] }>>({})
-
-// ─── Manual token fallback ───
-const showManualToken = ref(false)
-const manualToken = ref('')
 
 // ─── Data state ───
 const pages = ref<any[]>([])
@@ -42,6 +74,9 @@ const loaded = ref(false)
 // ─── Card detail slideover ───
 const selectedCard = ref<any>(null)
 const showCardDetail = ref(false)
+
+// ─── View tab ───
+const activeTab = ref<'canvas' | 'insights'>('canvas')
 
 // ─── Group state ───
 const groups = ref<{ id: string; name: string; color: string }[]>([])
@@ -67,9 +102,6 @@ const nodes = ref<Node[]>([])
 const authParams = computed(() => {
   if (selectedAccountId.value) {
     return { accountId: selectedAccountId.value }
-  }
-  if (manualToken.value) {
-    return { notionToken: manualToken.value }
   }
   return null
 })
@@ -372,6 +404,36 @@ function removeGroup(groupId: string) {
   groups.value = groups.value.filter(g => g.id !== groupId)
 }
 
+// ─── Rename a group ───
+const editingGroupId = ref<string | null>(null)
+const editingGroupName = ref('')
+
+function startRenameGroup(groupId: string) {
+  const group = groups.value.find(g => g.id === groupId)
+  if (!group) return
+  editingGroupId.value = groupId
+  editingGroupName.value = group.name
+}
+
+function commitRenameGroup() {
+  if (!editingGroupId.value || !editingGroupName.value.trim()) {
+    editingGroupId.value = null
+    return
+  }
+  const newName = editingGroupName.value.trim()
+  const group = groups.value.find(g => g.id === editingGroupId.value)
+  if (group) {
+    group.name = newName
+  }
+  // Update the group node label too
+  nodes.value = nodes.value.map(n =>
+    n.id === editingGroupId.value
+      ? { ...n, data: { ...n.data, label: newName } }
+      : n,
+  )
+  editingGroupId.value = null
+}
+
 // ─── Handle node click — show card detail ───
 onNodeClick(({ node }) => {
   if (node.type !== 'notionCard') return
@@ -466,6 +528,97 @@ const uncategorizedCount = computed(() => {
   return nodes.value.filter(n => n.type === 'notionCard' && !n.parentNode).length
 })
 
+// ─── RICE score helpers ───
+function getRiceField(props: Record<string, unknown>, field: string): number | null {
+  const val = props[field] ?? props[field.toLowerCase()] ?? props[field.charAt(0).toUpperCase() + field.slice(1)]
+  return typeof val === 'number' ? val : null
+}
+
+function computeRice(props: Record<string, unknown>): number | null {
+  const r = getRiceField(props, 'Reach')
+  const i = getRiceField(props, 'Impact')
+  const c = getRiceField(props, 'Confidence')
+  const e = getRiceField(props, 'Effort')
+  if (r == null || i == null || c == null || e == null || e === 0) return null
+  return (r * i * c) / e
+}
+
+const hasRiceScores = computed(() => {
+  return pages.value.some(p => computeRice(p.properties) != null)
+})
+
+// Sorted pages by RICE score (descending)
+const pagesByRice = computed(() => {
+  return pages.value
+    .map(p => ({ ...p, rice: computeRice(p.properties) }))
+    .filter(p => p.rice != null)
+    .sort((a, b) => (b.rice ?? 0) - (a.rice ?? 0))
+})
+
+// Chart data: RICE scores by card (bar chart)
+const riceBarData = computed(() => {
+  return pagesByRice.value.slice(0, 30).map(p => ({
+    name: p.title.length > 25 ? `${p.title.slice(0, 25)}...` : p.title,
+    RICE: Math.round(p.rice ?? 0),
+  }))
+})
+
+const riceBarCategories = computed(() => ({
+  RICE: { name: 'RICE', color: '#3b82f6' },
+}))
+
+// Chart data: RICE components breakdown (stacked bar)
+const riceComponentsData = computed(() => {
+  return pagesByRice.value.slice(0, 20).map(p => ({
+    name: p.title.length > 20 ? `${p.title.slice(0, 20)}...` : p.title,
+    Reach: getRiceField(p.properties, 'Reach') ?? 0,
+    Impact: getRiceField(p.properties, 'Impact') ?? 0,
+    Confidence: getRiceField(p.properties, 'Confidence') ?? 0,
+    Effort: getRiceField(p.properties, 'Effort') ?? 0,
+  }))
+})
+
+const riceComponentCategories = computed(() => ({
+  Reach: { name: 'Reach', color: '#3b82f6' },
+  Impact: { name: 'Impact', color: '#10b981' },
+  Confidence: { name: 'Confidence', color: '#f59e0b' },
+  Effort: { name: 'Effort', color: '#ef4444' },
+}))
+
+// Chart data: RICE by category (donut)
+const riceByCategoryData = computed(() => {
+  const categoryMap = new Map<string, number[]>()
+  for (const node of nodes.value) {
+    if (node.type !== 'notionCard') continue
+    const group = node.parentNode ? groups.value.find(g => g.id === node.parentNode) : null
+    const category = group?.name || 'Uncategorized'
+    const page = pages.value.find(p => p.id === node.id)
+    if (!page) continue
+    const rice = computeRice(page.properties)
+    if (rice == null) continue
+    if (!categoryMap.has(category)) categoryMap.set(category, [])
+    categoryMap.get(category)!.push(rice)
+  }
+  return Array.from(categoryMap.entries()).map(([name, scores]) => ({
+    name,
+    avgRice: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+    totalRice: Math.round(scores.reduce((a, b) => a + b, 0)),
+    count: scores.length,
+  }))
+})
+
+// Summary stats
+const riceStats = computed(() => {
+  const scores = pagesByRice.value.map(p => p.rice ?? 0)
+  if (scores.length === 0) return null
+  return {
+    total: scores.length,
+    avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+    max: Math.round(Math.max(...scores)),
+    min: Math.round(Math.min(...scores)),
+  }
+})
+
 // ─── Save to Notion ───
 async function saveToNotion() {
   if (!categoryProperty.value) {
@@ -540,6 +693,26 @@ async function saveToNotion() {
       </div>
 
       <div v-if="loaded" class="flex items-center gap-3">
+        <!-- View tabs -->
+        <div class="flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
+          <button
+            class="px-3 py-1 text-sm rounded-md transition-colors"
+            :class="activeTab === 'canvas' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
+            @click="activeTab = 'canvas'"
+          >
+            Canvas
+          </button>
+          <button
+            class="px-3 py-1 text-sm rounded-md transition-colors"
+            :class="activeTab === 'insights' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
+            @click="activeTab = 'insights'"
+          >
+            Insights
+          </button>
+        </div>
+
+        <USeparator orientation="vertical" class="h-6" />
+
         <span class="text-sm text-gray-500">
           {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining
         </span>
@@ -568,55 +741,31 @@ async function saveToNotion() {
       <div class="w-full max-w-lg space-y-4 px-6">
         <!-- Account picker -->
         <UFormField label="Notion Account">
-          <USelect
-            v-model="selectedAccountId"
-            :items="notionAccounts.map(a => ({ label: a.label || a.providerAccountId || a.id, value: a.id }))"
-            placeholder="Select a connected account..."
-            :loading="accountsLoading"
-            class="w-full"
-          />
-        </UFormField>
-
-        <div v-if="!selectedAccountId" class="text-center">
-          <UButton
-            size="xs"
-            variant="link"
-            @click="showManualToken = !showManualToken"
-          >
-            {{ showManualToken ? 'Hide manual token' : 'Or paste a token manually' }}
-          </UButton>
-        </div>
-
-        <!-- Manual token fallback -->
-        <UFormField v-if="showManualToken && !selectedAccountId" label="Notion Integration Token">
-          <UInput
-            v-model="manualToken"
-            type="password"
-            placeholder="secret_..."
-            class="w-full"
-          />
+          <div class="flex gap-2">
+            <USelect
+              v-model="selectedAccountId"
+              :items="accountItems"
+              placeholder="Select account..."
+              value-key="value"
+              class="flex-1"
+            />
+            <UButton
+              icon="i-lucide-plus"
+              variant="soft"
+              @click="showConnectModal = true"
+            />
+          </div>
         </UFormField>
 
         <!-- Database picker -->
-        <template v-if="selectedAccountId">
-          <UFormField label="Database">
-            <USelect
-              v-model="databaseId"
-              :items="databaseItems"
-              placeholder="Select a database..."
-              :loading="loadingDatabases"
-              class="w-full"
-              value-key="value"
-            />
-          </UFormField>
-        </template>
-
-        <!-- Manual database ID for manual token -->
-        <UFormField v-else-if="showManualToken && manualToken" label="Database ID">
-          <UInput
+        <UFormField v-if="selectedAccountId" label="Database">
+          <USelect
             v-model="databaseId"
-            placeholder="abc123def456..."
+            :items="databaseItems"
+            placeholder="Select a database..."
+            :loading="loadingDatabases"
             class="w-full"
+            value-key="value"
           />
         </UFormField>
 
@@ -631,8 +780,10 @@ async function saveToNotion() {
       </div>
     </div>
 
-    <!-- Canvas -->
+    <!-- Loaded content -->
     <template v-else>
+      <!-- Canvas tab -->
+      <div v-show="activeTab === 'canvas'" class="flex flex-col flex-1 min-h-0">
       <!-- Property selector + group chips -->
       <div class="flex items-center gap-4 px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <UFormField label="Write to column" class="w-64">
@@ -662,7 +813,21 @@ async function saveToNotion() {
             class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
             :style="{ backgroundColor: group.color }"
           >
-            <span class="font-medium text-gray-700">{{ group.name }}</span>
+            <input
+              v-if="editingGroupId === group.id"
+              v-model="editingGroupName"
+              class="bg-transparent border-none outline-none font-medium text-gray-700 w-24"
+              @blur="commitRenameGroup"
+              @keyup.enter="commitRenameGroup"
+              @keyup.escape="editingGroupId = null"
+              @vue:mounted="({ el }: any) => { el.focus(); el.select() }"
+            >
+            <span
+              v-else
+              class="font-medium text-gray-700 cursor-pointer"
+              title="Double-click to rename"
+              @dblclick="startRenameGroup(group.id)"
+            >{{ group.name }}</span>
             <UButton
               icon="i-lucide-x"
               size="xs"
@@ -706,6 +871,179 @@ async function saveToNotion() {
             <Controls position="bottom-left" />
           </VueFlow>
         </ClientOnly>
+      </div>
+      </div>
+
+      <!-- Insights tab -->
+      <div v-show="activeTab === 'insights'" class="flex-1 overflow-y-auto p-6 space-y-6">
+        <template v-if="hasRiceScores">
+          <!-- Summary stats -->
+          <div v-if="riceStats" class="grid grid-cols-4 gap-4">
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+              <div class="text-2xl font-bold text-primary">
+                {{ riceStats.total }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                Cards with RICE
+              </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+              <div class="text-2xl font-bold text-blue-600">
+                {{ riceStats.avg }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                Average RICE
+              </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+              <div class="text-2xl font-bold text-green-600">
+                {{ riceStats.max }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                Highest RICE
+              </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
+              <div class="text-2xl font-bold text-red-500">
+                {{ riceStats.min }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                Lowest RICE
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts row -->
+          <div class="grid grid-cols-2 gap-6">
+            <!-- RICE Score ranking -->
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="text-sm font-semibold mb-3">
+                RICE Score Ranking
+              </h3>
+              <ClientOnly>
+                <BarChart
+                  v-if="riceBarData.length > 0"
+                  :data="riceBarData"
+                  :y-axis="['RICE']"
+                  :categories="riceBarCategories"
+                  :x-formatter="(_: number, i: number) => String(riceBarData[i]?.name ?? '')"
+                  :height="Math.max(250, riceBarData.length * 28)"
+                />
+              </ClientOnly>
+            </div>
+
+            <!-- RICE components breakdown -->
+            <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="text-sm font-semibold mb-3">
+                RICE Components
+              </h3>
+              <ClientOnly>
+                <BarChart
+                  v-if="riceComponentsData.length > 0"
+                  :data="riceComponentsData"
+                  :y-axis="['Reach', 'Impact', 'Confidence', 'Effort']"
+                  :categories="riceComponentCategories"
+                  :x-formatter="(_: number, i: number) => String(riceComponentsData[i]?.name ?? '')"
+                  :height="Math.max(250, riceComponentsData.length * 28)"
+                  :stacked="true"
+                />
+              </ClientOnly>
+            </div>
+          </div>
+
+          <!-- Category breakdown -->
+          <div v-if="riceByCategoryData.length > 0" class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h3 class="text-sm font-semibold mb-3">
+              Average RICE by Category
+            </h3>
+            <div class="grid grid-cols-2 gap-6">
+              <ClientOnly>
+                <BarChart
+                  :data="riceByCategoryData.map(d => ({ name: d.name, 'Avg RICE': d.avgRice }))"
+                  :y-axis="['Avg RICE']"
+                  :categories="{ 'Avg RICE': { name: 'Avg RICE', color: '#8b5cf6' } }"
+                  :x-formatter="(_: number, i: number) => String(riceByCategoryData[i]?.name ?? '')"
+                  :height="250"
+                />
+              </ClientOnly>
+              <div class="space-y-2">
+                <div
+                  v-for="cat in riceByCategoryData"
+                  :key="cat.name"
+                  class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                >
+                  <div>
+                    <div class="font-medium text-sm">
+                      {{ cat.name }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{ cat.count }} cards
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-bold text-lg">
+                      {{ cat.avgRice }}
+                    </div>
+                    <div class="text-xs text-gray-400">
+                      avg RICE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sorted card table -->
+          <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h3 class="text-sm font-semibold mb-3">
+              All Cards by RICE Score
+            </h3>
+            <div class="overflow-auto max-h-96">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-200 dark:border-gray-700 text-left">
+                    <th class="py-2 pr-4 font-medium text-gray-500">#</th>
+                    <th class="py-2 pr-4 font-medium text-gray-500">Title</th>
+                    <th class="py-2 pr-4 font-medium text-gray-500 text-right">Reach</th>
+                    <th class="py-2 pr-4 font-medium text-gray-500 text-right">Impact</th>
+                    <th class="py-2 pr-4 font-medium text-gray-500 text-right">Confidence</th>
+                    <th class="py-2 pr-4 font-medium text-gray-500 text-right">Effort</th>
+                    <th class="py-2 font-medium text-gray-500 text-right">RICE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(page, i) in pagesByRice"
+                    :key="page.id"
+                    class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                    @click="selectedCard = { title: page.title, properties: page.properties, url: page.url }; showCardDetail = true"
+                  >
+                    <td class="py-2 pr-4 text-gray-400">{{ i + 1 }}</td>
+                    <td class="py-2 pr-4 font-medium max-w-xs truncate">{{ page.title }}</td>
+                    <td class="py-2 pr-4 text-right">{{ getRiceField(page.properties, 'Reach') ?? '-' }}</td>
+                    <td class="py-2 pr-4 text-right">{{ getRiceField(page.properties, 'Impact') ?? '-' }}</td>
+                    <td class="py-2 pr-4 text-right">{{ getRiceField(page.properties, 'Confidence') ?? '-' }}</td>
+                    <td class="py-2 pr-4 text-right">{{ getRiceField(page.properties, 'Effort') ?? '-' }}</td>
+                    <td class="py-2 text-right font-bold" :class="(page.rice ?? 0) >= 10 ? 'text-green-600' : (page.rice ?? 0) >= 5 ? 'text-amber-600' : 'text-red-500'">
+                      {{ Math.round(page.rice ?? 0) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+
+        <!-- No RICE scores -->
+        <div v-else class="flex flex-col items-center justify-center h-full text-center">
+          <UIcon name="i-lucide-chart-bar" class="size-16 mb-4 opacity-20" />
+          <h3 class="text-lg font-semibold mb-1">
+            No RICE scores found
+          </h3>
+          <p class="text-sm text-gray-500 max-w-md">
+            Add Reach, Impact, Confidence, and Effort number fields to your Notion database to see RICE score visualizations.
+          </p>
+        </div>
       </div>
     </template>
 
@@ -834,6 +1172,48 @@ async function saveToNotion() {
             </UButton>
             <UButton :disabled="!newGroupName.trim()" @click="createGroup">
               Create
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Connect Notion Account modal -->
+    <UModal v-model:open="showConnectModal">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            Connect Notion Account
+          </h3>
+          <div class="space-y-4">
+            <UFormField label="Label" required>
+              <UInput
+                v-model="connectLabel"
+                placeholder="e.g., Design Team Notion"
+                autofocus
+              />
+            </UFormField>
+            <UFormField label="API Token" required>
+              <UInput
+                v-model="connectToken"
+                placeholder="secret_... or ntn_..."
+                type="password"
+              />
+              <template #description>
+                Paste your Notion integration token. It will be encrypted at rest.
+              </template>
+            </UFormField>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton color="neutral" variant="ghost" @click="close">
+              Cancel
+            </UButton>
+            <UButton
+              :disabled="!connectLabel.trim() || !connectToken.trim()"
+              :loading="connecting"
+              @click="connectNotionAccount"
+            >
+              Connect
             </UButton>
           </div>
         </div>

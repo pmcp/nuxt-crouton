@@ -23,6 +23,16 @@ const tagsValue = computed(() => {
   const tags = (p.Tags || p.tags || p.Labels || p.labels) as string[] | null
   return tags?.slice(0, 3) || []
 })
+
+const riceScore = computed(() => {
+  const p = props.data.properties
+  const r = (p.Reach ?? p.reach) as number | null
+  const i = (p.Impact ?? p.impact) as number | null
+  const c = (p.Confidence ?? p.confidence) as number | null
+  const e = (p.Effort ?? p.effort) as number | null
+  if (r == null || i == null || c == null || e == null || e === 0) return null
+  return Math.round((r * i * c) / e)
+})
 </script>
 
 <template>
@@ -44,6 +54,10 @@ const tagsValue = computed(() => {
       <span v-for="tag in tagsValue" :key="tag" class="card-tag">
         {{ tag }}
       </span>
+    </div>
+
+    <div v-if="riceScore != null" class="card-rice" :class="riceScore >= 10 ? 'rice-high' : riceScore >= 5 ? 'rice-med' : 'rice-low'">
+      RICE {{ riceScore }}
     </div>
 
     <Handle type="source" :position="Position.Bottom" class="!opacity-0" />
@@ -111,6 +125,19 @@ const tagsValue = computed(() => {
   padding: 1px 5px;
   border-radius: 3px;
 }
+
+.card-rice {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.rice-high { background: #dcfce7; color: #166534; }
+.rice-med { background: #fef3c7; color: #92400e; }
+.rice-low { background: #fee2e2; color: #991b1b; }
 
 /* Dark mode */
 :root.dark .notion-card-node {
