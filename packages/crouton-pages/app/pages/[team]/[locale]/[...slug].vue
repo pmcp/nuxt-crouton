@@ -25,14 +25,20 @@ definePageMeta({
   // Validate route params BEFORE setup runs. This prevents "$setup.t is not a
   // function" SSR errors caused by throwing createError() inside async setup
   // (the rejected promise is detected by Node before Nuxt's Suspense catches it).
-  validate: (route) => {
+  validate: async (route) => {
     const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
     const teamParam = route.params.team as string
     // Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
     if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
     }
-    return true
+    // Verify team actually exists to avoid catching routes meant for other pages
+    try {
+      const { valid } = await $fetch<{ valid: boolean }>(`/api/crouton-pages/validate-team/${teamParam}`)
+      return valid
+    } catch {
+      return false
+    }
   }
 })
 

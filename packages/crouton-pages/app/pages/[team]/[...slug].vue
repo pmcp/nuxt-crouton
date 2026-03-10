@@ -8,6 +8,23 @@
  *
  * The actual page rendering happens in [team]/[locale]/[...slug].vue
  */
+definePageMeta({
+  validate: async (route) => {
+    const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
+    const teamParam = route.params.team as string
+    if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
+      return false
+    }
+    // Verify team actually exists to avoid catching routes meant for other pages
+    try {
+      const { valid } = await $fetch<{ valid: boolean }>(`/api/crouton-pages/validate-team/${teamParam}`)
+      return valid
+    } catch {
+      return false
+    }
+  }
+})
+
 const route = useRoute()
 const { teamId } = useTeamContext()
 
@@ -20,18 +37,6 @@ try {
   if (import.meta.dev) {
     console.warn('[crouton-pages] useI18n() failed in redirect route, using fallback locale')
   }
-}
-
-// Reserved prefixes that should NOT be treated as team slugs
-const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-const teamParam = teamId.value ?? ''
-
-// Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
-if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Page Not Found'
-  })
 }
 
 // Get team and slug from route params
