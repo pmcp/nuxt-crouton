@@ -18,6 +18,202 @@
       "robots"
     ],
     "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.528Z",
+    "layer": "pages",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "assets",
+    "fields": [
+      "userId",
+      "filename",
+      "pathname",
+      "contentType",
+      "size",
+      "category",
+      "width",
+      "height",
+      "alt",
+      "uploadedAt",
+      "updatedBy"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.503Z",
+    "layer": "crouton",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "name",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.480Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "name",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.455Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.431Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:53.405Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.487Z",
+    "layer": "pages",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "assets",
+    "fields": [
+      "userId",
+      "filename",
+      "pathname",
+      "contentType",
+      "size",
+      "category",
+      "width",
+      "height",
+      "alt",
+      "uploadedAt",
+      "updatedBy"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.466Z",
+    "layer": "crouton",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "name",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.444Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "name",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.423Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.397Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:24:08.373Z",
+    "layer": "content",
+    "gitSha": "af16464e"
+  },
+  {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
     "timestamp": "2026-03-10T19:05:12.710Z",
     "layer": "pages",
     "gitSha": "351e6738"

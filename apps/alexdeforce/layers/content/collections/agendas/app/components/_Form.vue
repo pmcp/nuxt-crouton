@@ -2,7 +2,7 @@
   @crouton-generated
   @collection agendas
   @layer content
-  @generated 2026-03-06
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for agendas collection
@@ -44,7 +44,7 @@
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
-          <CroutonEditorSimple v-model="state.content" content-type="json" />
+          <CroutonEditorSimple v-model="state.content" />
         </UFormField>
       </div>
       </template>
@@ -60,17 +60,9 @@
           <UInput v-model="state.thumbnail" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Status" name="status" class="not-last:pb-4">
-          <USelect
-            v-model="state.status"
-            :items="[
-              { value: 'draft', label: 'Draft' },
-              { value: 'published', label: 'Published' },
-              { value: 'archived', label: 'Archived' }
-            ]"
-            class="w-full"
-          />
+          <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Published At" name="publishedAt" class="not-last:pb-4">
+        <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
       </div>

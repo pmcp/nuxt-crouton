@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection agendas
  * @layer content
- * @generated 2026-03-06
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Main interface: ContentAgenda

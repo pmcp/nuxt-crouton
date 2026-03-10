@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection agendas
  * @layer content
- * @generated 2026-03-06
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useContentAgendas
@@ -32,7 +32,7 @@ export const contentAgendaSchema = z.object({
   content: z.string().optional(),
   thumbnail: z.string().optional(),
   status: z.string().min(1, 'status is required'),
-  publishedAt: z.date().optional().nullable()
+  publishedAt: z.date().optional()
 })
 
 export const contentAgendasColumns = [
@@ -41,7 +41,7 @@ export const contentAgendasColumns = [
   { accessorKey: 'content', header: 'Content' },
   { accessorKey: 'thumbnail', header: 'Thumbnail' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'publishedAt', header: 'Published At' }
+  { accessorKey: 'publishedAt', header: 'PublishedAt' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -55,7 +55,7 @@ const _contentAgendasConfig = {
     date: null,
     content: '',
     thumbnail: '',
-    status: 'draft',
+    status: '',
     publishedAt: null
   },
   columns: contentAgendasColumns,
@@ -88,12 +88,7 @@ const _contentAgendasConfig = {
           "name": "status",
           "type": "string",
           "label": "Status",
-          "area": "sidebar",
-          "options": [
-              { "value": "draft", "label": "Draft" },
-              { "value": "published", "label": "Published" },
-              { "value": "archived", "label": "Archived" }
-          ]
+          "area": "sidebar"
       },
       {
           "name": "publishedAt",

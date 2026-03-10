@@ -2,7 +2,7 @@
   @crouton-generated
   @collection pages
   @layer pages
-  @generated 2026-03-06
+  @generated 2026-03-10
 
   ## AI Context
   - List component for pages collection
@@ -42,9 +42,6 @@
     <template #slug-cell="{ row }">
       {{ t(row.original, 'slug') }}
     </template>
-    <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="t(row.original, 'content')" />
-    </template>
     <template #seoTitle-cell="{ row }">
       {{ t(row.original, 'seoTitle') }}
     </template>
@@ -56,6 +53,9 @@
     </template>
     <template #showInNavigation-cell="{ row }">
       <CroutonBoolean :value="row.original.showInNavigation" />
+    </template>
+    <template #content-cell="{ row }">
+      <CroutonEditorPreview :content="t(row.original, 'content')" />
     </template>
     <template #translations-cell="{ row }">
       <CroutonI18nListCards :item="row.original" :fields="['title', 'slug', 'content', 'seoTitle', 'seoDescription']" />

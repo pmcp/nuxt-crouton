@@ -8,11 +8,13 @@ export default {
     { name: 'tags', fieldsFile: './schemas/tag.json' },
     { name: 'categories', fieldsFile: './schemas/category.json' },
     { name: 'agenda', fieldsFile: './schemas/agenda.json' },
-    { name: 'pages', fieldsFile: './schemas/pages.json', formComponent: 'CroutonPagesForm', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
+    { name: 'assets', fieldsFile: './schemas/assets.json' },
+    { name: 'pages', fieldsFile: './schemas/pages.json', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
   ],
 
   targets: [
     { layer: 'content', collections: ['articles', 'agenda', 'tags', 'categories'] },
+    { layer: 'crouton', collections: ['assets'] },
     { layer: 'pages', collections: ['pages'] }
   ],
 

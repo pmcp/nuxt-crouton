@@ -19,6 +19,10 @@ export default defineEventHandler(async (event) => {
   if (dataWithoutId.date) {
     dataWithoutId.date = new Date(dataWithoutId.date)
   }
+  // Convert date string to Date object
+  if (dataWithoutId.publishedAt) {
+    dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
+  }
   const dbTimer = timing.start('db')
   const result = await createContentAgenda({
     ...dataWithoutId,

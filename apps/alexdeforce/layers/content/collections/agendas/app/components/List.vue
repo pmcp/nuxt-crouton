@@ -2,7 +2,7 @@
   @crouton-generated
   @collection agendas
   @layer content
-  @generated 2026-03-06
+  @generated 2026-03-10
 
   ## AI Context
   - List component for agendas collection
@@ -36,24 +36,14 @@
         createButton
       />
     </template>
-    <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.content" />
-    </template>
     <template #date-cell="{ row }">
       <CroutonDate :date="row.original.date"></CroutonDate>
     </template>
-    <template #status-cell="{ row }">
-      <UBadge
-        :color="row.original.status === 'published' ? 'success' : row.original.status === 'archived' ? 'neutral' : 'warning'"
-        variant="subtle"
-        size="sm"
-      >
-        {{ row.original.status }}
-      </UBadge>
-    </template>
     <template #publishedAt-cell="{ row }">
-      <CroutonDate v-if="row.original.publishedAt" :date="row.original.publishedAt" />
-      <span v-else class="text-gray-400">—</span>
+      <CroutonDate :date="row.original.publishedAt"></CroutonDate>
+    </template>
+    <template #content-cell="{ row }">
+      <CroutonEditorPreview :content="row.original.content" />
     </template>
   </CroutonCollection>
 </template>

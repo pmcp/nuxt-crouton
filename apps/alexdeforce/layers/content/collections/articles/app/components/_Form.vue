@@ -61,8 +61,6 @@
             v-model="state.category"
             collection="contentCategories"
             label="Category"
-            label-key="name"
-            :filter-fields="['name']"
           />
         </UFormField>
         <UFormField label="ImageUrl" name="imageUrl" class="not-last:pb-4">
@@ -73,8 +71,6 @@
             v-model="state.tags"
             collection="contentTags"
             label="Tags"
-            label-key="name"
-            :filter-fields="['name']"
             multiple
           />
         </UFormField>
@@ -82,15 +78,7 @@
           <UCheckbox v-model="state.featured" />
         </UFormField>
         <UFormField label="Status" name="status" class="not-last:pb-4">
-          <USelect
-            v-model="state.status"
-            :items="[
-              { value: 'draft', label: 'Draft' },
-              { value: 'published', label: 'Published' },
-              { value: 'archived', label: 'Archived' }
-            ]"
-            class="w-full"
-          />
+          <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.publishedAt" />

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-03-06
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: usePagesPages
