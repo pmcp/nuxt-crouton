@@ -251,13 +251,19 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         </UFormField>`
       }
 
+      // Build optional label-key and filter-fields props when labelField is specified
+      const labelField = field.meta?.labelField
+      const labelKeyAttr = labelField && labelField !== 'title'
+        ? `\n            label-key="${labelField}"\n            :filter-fields="['${labelField}']"`
+        : ''
+
       // Check if this is an array type (multi-select reference)
       if (field.type === 'array') {
         return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
-            label="${fieldName}"
+            label="${fieldName}"${labelKeyAttr}
             multiple
           />
         </UFormField>`
@@ -267,7 +273,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
           <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
-            label="${fieldName}"
+            label="${fieldName}"${labelKeyAttr}
           />
         </UFormField>`
     }
@@ -305,8 +311,9 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
           <UInputNumber v-model="state.${field.name}" class="w-full" />
         </UFormField>`
     } else if (field.type === 'date') {
+      const pickerProp = field.meta?.picker ? ' picker' : ''
       return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
-          <CroutonCalendar v-model:date="state.${field.name}" />
+          <CroutonCalendar v-model:date="state.${field.name}"${pickerProp} />
         </UFormField>`
     } else if (field.type === 'repeater') {
       // Use the field's Input component from the field components folder
