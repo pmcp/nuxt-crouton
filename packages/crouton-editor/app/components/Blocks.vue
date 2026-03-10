@@ -181,14 +181,23 @@ const emptyDoc: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 const content = computed({
   get: () => {
     if (props.modelValue) {
+      // Parse JSON strings — UEditor expects objects for json content-type
+      let val = props.modelValue
+      if (props.contentType === 'json' && typeof val === 'string') {
+        try {
+          val = JSON.parse(val)
+        } catch {
+          return emptyDoc
+        }
+      }
       // Ensure JSON docs have at least one node (TipTap requirement)
-      if (props.contentType === 'json' && typeof props.modelValue === 'object') {
-        const doc = props.modelValue as TipTapDoc
+      if (props.contentType === 'json' && typeof val === 'object') {
+        const doc = val as TipTapDoc
         if (!doc.content || doc.content.length === 0) {
           return emptyDoc
         }
       }
-      return props.modelValue
+      return val
     }
     // Return appropriate empty value for content type
     if (props.contentType === 'json') {
@@ -196,7 +205,13 @@ const content = computed({
     }
     return '' // For html and markdown
   },
-  set: (value) => emit('update:modelValue', value)
+  set: (value) => {
+    if (props.contentType === 'json' && typeof value === 'object') {
+      emit('update:modelValue', JSON.stringify(value))
+    } else {
+      emit('update:modelValue', value)
+    }
+  }
 })
 
 // Editor instance (populated via @create event)

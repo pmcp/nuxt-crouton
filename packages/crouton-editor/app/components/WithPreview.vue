@@ -142,10 +142,25 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-// v-model
+// v-model — parse JSON strings for UEditor (expects object for json content-type)
 const model = computed({
-  get: () => props.modelValue || '',
-  set: value => emit('update:modelValue', value)
+  get: () => {
+    if (props.contentType === 'json' && typeof props.modelValue === 'string' && props.modelValue) {
+      try {
+        return JSON.parse(props.modelValue)
+      } catch {
+        return props.modelValue
+      }
+    }
+    return props.modelValue || ''
+  },
+  set: (value) => {
+    if (props.contentType === 'json' && typeof value === 'object') {
+      emit('update:modelValue', JSON.stringify(value))
+    } else {
+      emit('update:modelValue', value)
+    }
+  }
 })
 
 // Tab state
