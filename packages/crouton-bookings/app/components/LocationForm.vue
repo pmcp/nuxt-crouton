@@ -33,7 +33,7 @@
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-1">{{ t('bookings.locationForm.locationDetails') }}</legend>
             <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.colorHint') }}</p>
             <UFormField :label="t('bookings.locationForm.color')" name="color">
-              <CroutonFormColorPicker v-model="state.color" />
+              <CroutonFormColorPicker v-model="(state.color as any)" />
             </UFormField>
           </fieldset>
 
@@ -68,7 +68,7 @@
                 <template #default="{ map }">
                   <CroutonMapsMarker
                     v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
-                    :map="map"
+                    :map="(map as any)"
                     :position="mapCenter"
                     :color="markerColor"
                     :options="{ draggable: true }"
@@ -91,7 +91,7 @@
             <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.accessControlHint') }}</p>
             <UFormField :label="t('bookings.locationForm.allowedMembers')" name="allowedMemberIds">
               <USelectMenu
-                v-model="state.allowedMemberIds"
+                v-model="(state.allowedMemberIds as any)"
                 :items="memberItems"
                 multiple
                 value-key="value"
@@ -142,7 +142,7 @@
             <p class="text-sm text-gray-500 -mt-1">{{ t('bookings.locationForm.schedulingHint') }}</p>
             <UFormField v-if="!state.inventoryMode" :label="t('bookings.locationForm.slots')" name="slots">
               <CroutonFormRepeater
-                v-model="state.slots"
+                v-model="(state.slots as any)"
                 component-name="BookingsLocationsSlotInput"
                 add-label="Add Time Slot"
                 :sortable="true"
@@ -156,7 +156,7 @@
             </UFormField>
             <UFormField :label="t('bookings.schedule.blockedDates')" name="blockedDates">
               <CroutonFormRepeater
-                v-model="state.blockedDates"
+                v-model="(state.blockedDates as any)"
                 component-name="CroutonBookingsBlockedDateInput"
                 add-label="Add Blocked Period"
                 :sortable="false"
@@ -168,7 +168,7 @@
         <!-- Content -->
         <div v-show="activeSection === 'content'" class="flex flex-col gap-4 p-1">
           <CroutonI18nInput
-            v-model="state.translations"
+            v-model="(state.translations as any)"
             :fields="['title', 'content']"
             :default-values="{
               title: state.title || '',
@@ -410,7 +410,7 @@ const handleSubmit = async () => {
     } else if (props.action === 'update' && state.value.id) {
       await update(state.value.id, state.value)
     } else if (props.action === 'delete') {
-      await deleteItems(props.items)
+      await deleteItems(props.items as any)
     }
     validationErrors.value = []
     close()

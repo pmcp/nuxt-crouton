@@ -403,7 +403,7 @@ describe('useTreeMutation', () => {
   describe('loading states', () => {
     it('moving is true during moveNode', async () => {
       let resolvePromise: () => void
-      mockFetch.mockReturnValue(new Promise(resolve => { resolvePromise = resolve }))
+      mockFetch.mockReturnValue(new Promise<void>(resolve => { resolvePromise = resolve }))
 
       const { moveNode, moving } = useTreeMutation('pages')
 
@@ -423,7 +423,7 @@ describe('useTreeMutation', () => {
 
     it('reordering is true during reorderSiblings', async () => {
       let resolvePromise: () => void
-      mockFetch.mockReturnValue(new Promise(resolve => { resolvePromise = resolve }))
+      mockFetch.mockReturnValue(new Promise<void>(resolve => { resolvePromise = resolve }))
 
       const { reorderSiblings, reordering } = useTreeMutation('pages')
 

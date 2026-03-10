@@ -166,7 +166,7 @@ function onDelete() {
       </button>
       <div v-if="showPreview" class="relative overflow-hidden bg-muted/10" style="height: 200px;">
         <div style="transform: scale(0.33); transform-origin: top center; width: 303%; margin-left: -101.5%; pointer-events: none;">
-          <CroutonPagesBlockContent :content="previewDoc" class="p-4" />
+          <CroutonPagesBlockContent :content="previewDoc as any" class="p-4" />
         </div>
       </div>
     </div>
@@ -178,7 +178,7 @@ function onDelete() {
         <UFormField :label="t('pages.blocks.blockSize')" name="blockSize">
           <USelect
             :model-value="(localAttrs.blockSize as string) || 'default'"
-            :items="blockSizeOptions"
+            :items="blockSizeOptions as any"
             value-key="value"
             class="w-full"
             @update:model-value="onFieldChange('blockSize', $event)"

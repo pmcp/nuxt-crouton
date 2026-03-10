@@ -21,7 +21,7 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
   /** Button color */
-  color?: string
+  color?: any
 
   /** Disable the button */
   disabled?: boolean
@@ -74,7 +74,7 @@ const isSingleFormat = computed(() => props.formats.length === 1)
 
 function handleSingleClick() {
   if (isSingleFormat.value && props.rows?.length) {
-    handleExport(props.formats[0])
+    handleExport(props.formats[0]!)
   }
 }
 </script>
@@ -90,7 +90,7 @@ function handleSingleClick() {
     icon="i-lucide-download"
     @click="handleSingleClick"
   >
-    <slot>{{ tString('common.export') }} {{ formats[0].toUpperCase() }}</slot>
+    <slot>{{ tString('common.export') }} {{ formats[0]?.toUpperCase() }}</slot>
   </UButton>
 
   <!-- Multiple formats: dropdown -->

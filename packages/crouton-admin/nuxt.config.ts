@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup log (deduplicated across layer resolution)
-const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+const _dependencies = (globalThis as unknown as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-admin')) {
   _dependencies.add('crouton-admin')
   console.log('🍞 crouton:admin ✓ Layer loaded')
@@ -46,16 +46,11 @@ export default defineNuxtConfig({
     public: {
       crouton: {
         admin: {
-          // Super admin page route prefix (default: /super-admin)
-          // Note: Super admin routes are at /super-admin/*
-          // Team admin routes are at /admin/[team]/*
           routePrefix: '/super-admin',
-          // Enable impersonation feature
           impersonation: true,
-          // Dashboard stats refresh interval (ms)
           statsRefreshInterval: 30000
         }
-      }
+      } as any
     }
   },
 

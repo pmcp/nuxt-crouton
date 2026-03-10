@@ -64,7 +64,7 @@ export default defineEventHandler(async (event): Promise<SuggestIconsResponse> =
     try {
       const { getTriageFlowEncryptedKey } = await import(
         '~~/layers/triage/collections/flows/server/database/queries'
-      )
+      ) as any
       const encryptedKey = await getTriageFlowEncryptedKey(body.flowId, teamId)
       if (encryptedKey) {
         apiKey = await decryptSecret(encryptedKey)

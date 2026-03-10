@@ -11,13 +11,20 @@
  * The access token is read from private runtimeConfig (never exposed to the client).
  */
 
-import type { MapboxGeocodeResponse } from '~~/shared/types/geocode'
+interface MapboxGeocodeResponse {
+  features: Array<{
+    center: [number, number]
+    place_name: string
+    text: string
+    context?: Array<{ id: string; text: string }>
+  }>
+}
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
 
   // Token comes from private runtimeConfig only
-  const accessToken = (config.mapbox as { accessToken?: string } | undefined)?.accessToken
+  const accessToken = (config as any).mapbox?.accessToken as string | undefined
 
   if (!accessToken) {
     throw createError({
@@ -53,11 +60,12 @@ export default defineEventHandler(async (event) => {
     const url = `${endpoint}?access_token=${accessToken}`
     const response = await $fetch<MapboxGeocodeResponse>(url)
     return response
-  } catch (err: any) {
-    console.error('[crouton-maps] Geocoding failed:', err?.data || err?.message || err)
+  } catch (err: unknown) {
+    const e = err as any
+    console.error('[crouton-maps] Geocoding failed:', e?.data || e?.message || e)
     throw createError({
       status: 502,
-      statusText: `Geocoding request failed: ${err?.data?.message || err?.message || 'unknown error'}`
+      statusText: `Geocoding request failed: ${e?.data?.message || e?.message || 'unknown error'}`
     })
   }
 })

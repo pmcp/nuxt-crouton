@@ -18,12 +18,12 @@ export default defineEventHandler(async (event) => {
       count: count()
     })
     .from(bookingsBookings)
-    .where(eq(bookingsBookings.teamId, team.id))
-    .groupBy(bookingsBookings.status)
+    .where(eq(bookingsBookings.teamId as any, team.id))
+    .groupBy(bookingsBookings.status as any)
     .orderBy(count())
 
   return {
-    items: rows.map(r => ({
+    items: rows.map((r: any) => ({
       status: r.status || 'unknown',
       count: Number(r.count)
     }))

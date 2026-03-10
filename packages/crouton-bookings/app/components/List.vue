@@ -253,7 +253,7 @@ const groupedBookingsWithCreateDate = computed((): MonthGroup[] => {
     let insertIndex = result.length // default to end
 
     for (let i = 0; i < result.length; i++) {
-      const firstDateInMonth = result[i].dateGroups[0]?.date
+      const firstDateInMonth = result[i]!.dateGroups[0]?.date
       if (firstDateInMonth && new Date(firstDateInMonth).getTime() > createTime) {
         insertIndex = i
         break
@@ -264,14 +264,14 @@ const groupedBookingsWithCreateDate = computed((): MonthGroup[] => {
   }
   else {
     // Month exists, insert the date group in the correct position
-    const monthGroup = result[monthIndex]
+    const monthGroup = result[monthIndex]!
     const createTime = createDate.getTime()
 
     // Find correct position within the month (sorted by date)
     let insertIndex = monthGroup.dateGroups.length // default to end
 
     for (let i = 0; i < monthGroup.dateGroups.length; i++) {
-      const dateGroupTime = new Date(monthGroup.dateGroups[i].date).getTime()
+      const dateGroupTime = new Date(monthGroup.dateGroups[i]!.date).getTime()
       if (dateGroupTime > createTime) {
         insertIndex = i
         break
@@ -310,11 +310,11 @@ function findNearestDateKey(targetDate: Date): string | null {
 
   // Find nearest date
   const targetTime = targetDate.getTime()
-  let nearestKey = keys[0]
+  let nearestKey = keys[0]!
   let nearestDiff = Infinity
 
   for (const key of keys) {
-    const [year, month, day] = key.split('-').map(Number)
+    const [year, month, day] = key.split('-').map(Number) as [number, number, number]
     const keyDate = new Date(year, month - 1, day)
     const diff = Math.abs(keyDate.getTime() - targetTime)
 
@@ -357,7 +357,7 @@ function observerCallback(entries: IntersectionObserverEntry[]) {
   if (topEntry) {
     const dateKey = topEntry.target.getAttribute('data-date-key')
     if (dateKey) {
-      const [year, month, day] = dateKey.split('-').map(Number)
+      const [year, month, day] = dateKey.split('-').map(Number) as [number, number, number]
       const date = new Date(year, month - 1, day)
       const weekKey = getWeekKey(date)
 
@@ -420,7 +420,7 @@ watch(
     if (!dates || dates.length === 0) return
 
     // Scroll to the most recently added date (last in array)
-    const latestDate = dates[dates.length - 1]
+    const latestDate = dates[dates.length - 1]!
     const targetKey = formatDateKey(latestDate)
     if (!allDateKeys.value.includes(targetKey)) return
 
@@ -650,8 +650,8 @@ watch(
                 v-else
                 :booking="booking"
                 :highlighted="isHighlighted(booking)"
-                :just-created="lastCreatedBookingIds.includes(booking.id)"
-                :sending-email-type="getSendingEmailType(booking.id)"
+                :just-created="(lastCreatedBookingIds as any).includes(booking.id)"
+                :sending-email-type="getSendingEmailType(booking.id) as any"
                 @date-click="onBookingDateClick"
                 @resend-email="(triggerType) => handleResendEmail(booking, triggerType)"
                 @edit="handleEditClick(booking)"

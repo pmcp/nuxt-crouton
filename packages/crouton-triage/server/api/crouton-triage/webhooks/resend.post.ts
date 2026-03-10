@@ -49,6 +49,7 @@
 /// <reference path="../../../crouton-hooks.d.ts" />
 
 import { useNitroApp } from 'nitropack/runtime'
+import { logger } from '../../../utils/logger'
 import type { ParsedDiscussion } from '../../../../app/types'
 import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
@@ -101,8 +102,8 @@ function validateResendWebhook(payload: ResendWebhookPayload): void {
 
   if (errors.length > 0) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid Resend webhook payload',
+      status: 400,
+      statusText: 'Invalid Resend webhook payload',
       data: { errors },
     })
   }
@@ -138,7 +139,7 @@ async function findFlowInputByRecipient(recipientEmail: string): Promise<{ flowI
     logger.debug('[Resend Webhook] No matching FlowInput found')
     return null
   } catch (error) {
-    logger.error('[Resend Webhook] Error finding FlowInput:', error)
+    logger.error('[Resend Webhook] Error finding FlowInput', error)
     return null
   }
 }
@@ -196,7 +197,7 @@ async function verifyResendWebhookSignature(
     // Import signing key
     const key = await crypto.subtle.importKey(
       'raw',
-      secretBytes,
+      secretBytes as unknown as ArrayBuffer,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign']
@@ -219,7 +220,7 @@ async function verifyResendWebhookSignature(
     logger.warn('[Resend Webhook] Signature mismatch')
     return false
   } catch (error) {
-    logger.error('[Resend Webhook] Signature verification error:', error)
+    logger.error('[Resend Webhook] Signature verification error', error)
     return false
   }
 }
@@ -235,8 +236,8 @@ export default defineEventHandler(async (event) => {
     const rawBody = await readRawBody(event)
     if (!rawBody) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing request body',
+        status: 400,
+        statusText: 'Missing request body',
       })
     }
 
@@ -254,7 +255,7 @@ export default defineEventHandler(async (event) => {
     validateResendWebhook(payload)
 
     // 2. Verify webhook signature (if configured)
-    const config = useRuntimeConfig(event)
+    const config = useRuntimeConfig(event) as any
     const signingSecret = config.resendWebhookSigningSecret as string | undefined
 
     if (signingSecret) {
@@ -263,8 +264,8 @@ export default defineEventHandler(async (event) => {
       if (!isValid) {
         logger.warn('[Resend Webhook] Invalid signature detected')
         throw createError({
-          statusCode: 401,
-          statusMessage: 'Invalid webhook signature',
+          status: 401,
+          statusText: 'Invalid webhook signature',
         })
       }
 
@@ -279,8 +280,8 @@ export default defineEventHandler(async (event) => {
 
     if (!resendApiToken) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'RESEND_API_TOKEN not configured',
+        status: 500,
+        statusText: 'RESEND_API_TOKEN not configured',
       })
     }
 
@@ -293,10 +294,10 @@ export default defineEventHandler(async (event) => {
         hasText: !!resendEmail.text,
       })
     } catch (error) {
-      logger.error('[Resend Webhook] Failed to fetch email content:', error)
+      logger.error('[Resend Webhook] Failed to fetch email content', error)
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Failed to fetch email from Resend API',
+        status: 422,
+        statusText: 'Failed to fetch email from Resend API',
         data: {
           error: (error as Error).message,
         },
@@ -307,8 +308,9 @@ export default defineEventHandler(async (event) => {
     const classification = classifyFigmaEmail({
       subject: resendEmail.subject,
       from: resendEmail.from,
-      html: resendEmail.html,
-      text: resendEmail.text,
+      to: resendEmail.to[0] || '',
+      htmlBody: resendEmail.html ?? undefined,
+      textBody: resendEmail.text ?? undefined,
     })
 
     logger.debug('[Resend Webhook] Email classified', {
@@ -343,7 +345,7 @@ export default defineEventHandler(async (event) => {
       // Store in inbox
       try {
         const inboxMessage = await createTriageMessage({
-          configId,
+          flowInputId: configId,
           messageType: classification.messageType,
           from: resendEmail.from,
           to: recipient,
@@ -355,9 +357,7 @@ export default defineEventHandler(async (event) => {
           resendEmailId: resendEmail.id,
           teamId,
           owner: SYSTEM_USER_ID,
-          createdBy: SYSTEM_USER_ID,
-          updatedBy: SYSTEM_USER_ID,
-        })
+        } as any)
 
         // TODO: Email forwarding can be re-enabled when FlowInputs support
         // a forwardToEmail / enableEmailForwarding field
@@ -382,10 +382,10 @@ export default defineEventHandler(async (event) => {
           },
         }
       } catch (error) {
-        logger.error('[Resend Webhook] Failed to store inbox message:', error)
+        logger.error('[Resend Webhook] Failed to store inbox message', error)
         throw createError({
-          statusCode: 500,
-          statusMessage: 'Failed to store inbox message',
+          status: 500,
+          statusText: 'Failed to store inbox message',
           data: {
             error: (error as Error).message,
           },
@@ -418,10 +418,10 @@ export default defineEventHandler(async (event) => {
         authorHandle: parsed.authorHandle,
       })
     } catch (error) {
-      logger.error('[Resend Webhook] Failed to parse email:', error)
+      logger.error('[Resend Webhook] Failed to parse email', error)
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Failed to parse email',
+        status: 422,
+        statusText: 'Failed to parse email',
         data: {
           error: (error as Error).message,
         },
@@ -434,7 +434,7 @@ export default defineEventHandler(async (event) => {
     useNitroApp().hooks.callHook('crouton:operation', {
       type: 'webhook:received',
       source: 'crouton-triage',
-      correlationId: event.context.correlationId,
+      correlationId: (event.context as any).correlationId,
       metadata: {
         source: 'figma',
         threadId: parsed.sourceThreadId,
@@ -444,7 +444,7 @@ export default defineEventHandler(async (event) => {
 
     // 8. Process the discussion through the pipeline
     try {
-      const result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
+      const result = await processDiscussion(parsed, { correlationId: (event.context as any).correlationId })
 
       const processingTime = Date.now() - startTime
 
@@ -462,7 +462,7 @@ export default defineEventHandler(async (event) => {
         data: {
           discussionId: result.discussionId,
           notionTasks: result.notionTasks.map(task => ({
-            taskId: task.taskId,
+            taskId: task.id,
             url: task.url,
           })),
           isMultiTask: result.isMultiTask,
@@ -470,18 +470,18 @@ export default defineEventHandler(async (event) => {
         },
       }
     } catch (error) {
-      logger.error('[Resend Webhook] Failed to process discussion:', error)
+      logger.error('[Resend Webhook] Failed to process discussion', error)
 
       // Determine if error is retryable (for webhook retry logic)
       const isRetryable = (error as any).retryable === true
 
       // Return 5xx for retryable errors (Resend will retry)
       // Return 4xx for non-retryable errors (Resend won't retry)
-      const statusCode = isRetryable ? 503 : 422
+      const status = isRetryable ? 503 : 422
 
       throw createError({
-        statusCode,
-        statusMessage: 'Failed to process discussion',
+        status,
+        statusText: 'Failed to process discussion',
         data: {
           error: (error as Error).message,
           retryable: isRetryable,
@@ -490,7 +490,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     // Handle all other unexpected errors
-    logger.error('[Resend Webhook] Unexpected error:', error)
+    logger.error('[Resend Webhook] Unexpected error', error)
 
     // If this is already a H3Error from createError(), re-throw it
     if ((error as any).statusCode) {
@@ -499,8 +499,8 @@ export default defineEventHandler(async (event) => {
 
     // Otherwise, wrap in a generic error
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
+      status: 500,
+      statusText: 'Internal server error',
       data: {
         error: (error as Error).message,
       },

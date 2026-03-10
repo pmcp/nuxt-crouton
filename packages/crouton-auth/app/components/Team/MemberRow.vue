@@ -142,7 +142,7 @@ const roleBadgeColor = computed(() => {
     <UUser
       :name="displayName"
       :description="member.user?.email"
-      :avatar="{ src: member.user?.image, text: initials }"
+      :avatar="{ src: member.user?.image ?? undefined, text: initials }"
       size="md"
     >
       <template #name>

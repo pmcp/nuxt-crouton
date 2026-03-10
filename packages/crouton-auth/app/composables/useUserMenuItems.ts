@@ -59,7 +59,7 @@ export function useUserMenuItems(options?: UserMenuItemsOptions) {
       label: `${flags[loc.code] || '🌐'} ${loc.name || loc.code.toUpperCase()}`,
       onSelect: async (e: Event) => {
         e.preventDefault()
-        await setLocale(loc.code)
+        await setLocale(loc.code as any)
       },
       active: locale.value === loc.code
     }))

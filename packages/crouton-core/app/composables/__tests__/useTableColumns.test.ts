@@ -195,7 +195,7 @@ describe('useTableColumns', () => {
     it('adds drag column when sortable is object with enabled true', () => {
       const { allColumns } = useTableColumns({
         columns: [],
-        sortable: { enabled: true }
+        sortable: { enabled: true } as any
       })
 
       const dragColumn = allColumns.value.find((c: TableColumn) => c.id === 'drag')

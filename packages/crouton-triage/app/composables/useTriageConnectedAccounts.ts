@@ -12,6 +12,7 @@
  * ```
  */
 
+// @ts-expect-error - layer types resolved at app level
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
 export function useTriageConnectedAccounts(teamId: string | Ref<string>) {

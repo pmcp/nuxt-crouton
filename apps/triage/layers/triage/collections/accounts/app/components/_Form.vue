@@ -133,24 +133,24 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.tokenExpiresAt) {
-    initialValues.tokenExpiresAt = new Date(initialValues.tokenExpiresAt)
+    initialValues.tokenExpiresAt = new Date(initialValues.tokenExpiresAt as any)
   }
   if (initialValues.lastVerifiedAt) {
-    initialValues.lastVerifiedAt = new Date(initialValues.lastVerifiedAt)
+    initialValues.lastVerifiedAt = new Date(initialValues.lastVerifiedAt as any)
   }
 }
 
-const state = ref<TriageAccountFormData & { id?: string | null }>(initialValues)
+const state = ref<TriageAccountFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.tokenExpiresAt instanceof Date) {
-      serializedData.tokenExpiresAt = serializedData.tokenExpiresAt.toISOString()
+      ;(serializedData as any).tokenExpiresAt = serializedData.tokenExpiresAt.toISOString()
     }
     if (serializedData.lastVerifiedAt instanceof Date) {
-      serializedData.lastVerifiedAt = serializedData.lastVerifiedAt.toISOString()
+      ;(serializedData as any).lastVerifiedAt = serializedData.lastVerifiedAt.toISOString()
     }
 
     if (props.action === 'create') {

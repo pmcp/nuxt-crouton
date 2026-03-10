@@ -42,12 +42,12 @@ export default defineEventHandler(async (event) => {
     const authSchema = await import('@fyit/crouton-auth/server/database/schema/auth')
 
     const team = await database
-      .select({ id: authSchema.organization.id, slug: authSchema.organization.slug })
-      .from(authSchema.organization)
+      .select({ id: authSchema.organization.id as any, slug: authSchema.organization.slug as any })
+      .from(authSchema.organization as any)
       .where(
         or(
-          eq(authSchema.organization.id, teamParam),
-          eq(authSchema.organization.slug, teamParam)
+          eq(authSchema.organization.id as any, teamParam),
+          eq(authSchema.organization.slug as any, teamParam)
         )
       )
       .limit(1)
@@ -70,15 +70,15 @@ export default defineEventHandler(async (event) => {
         // Homepage: fetch first published root page by sort order
         page = await database
           .select()
-          .from(pagesSchema.pagesPages)
+          .from(pagesSchema.pagesPages as any)
           .where(
             and(
-              eq(pagesSchema.pagesPages.teamId, team.id),
-              eq(pagesSchema.pagesPages.status, 'published'),
-              eq(pagesSchema.pagesPages.depth, 0) // Root level only
+              eq(pagesSchema.pagesPages.teamId as any, team.id),
+              eq(pagesSchema.pagesPages.status as any, 'published'),
+              eq(pagesSchema.pagesPages.depth as any, 0) // Root level only
             )
           )
-          .orderBy(asc(pagesSchema.pagesPages.order))
+          .orderBy(asc(pagesSchema.pagesPages.order as any))
           .limit(1)
           .then((rows: any[]) => rows[0])
 
@@ -92,11 +92,11 @@ export default defineEventHandler(async (event) => {
         // Find page by slug (first segment)
         page = await database
           .select()
-          .from(pagesSchema.pagesPages)
+          .from(pagesSchema.pagesPages as any)
           .where(
             and(
-              eq(pagesSchema.pagesPages.teamId, team.id),
-              eq(pagesSchema.pagesPages.slug, slug)
+              eq(pagesSchema.pagesPages.teamId as any, team.id),
+              eq(pagesSchema.pagesPages.slug as any, slug)
             )
           )
           .limit(1)
@@ -107,11 +107,11 @@ export default defineEventHandler(async (event) => {
           const { sql } = await import('drizzle-orm')
           page = await database
             .select()
-            .from(pagesSchema.pagesPages)
+            .from(pagesSchema.pagesPages as any)
             .where(
               and(
-                eq(pagesSchema.pagesPages.teamId, team.id),
-                sql`json_extract(${pagesSchema.pagesPages.translations}, '$.' || ${locale} || '.slug') = ${slug}`
+                eq(pagesSchema.pagesPages.teamId as any, team.id),
+                sql`json_extract(${pagesSchema.pagesPages.translations as any}, '$.' || ${locale} || '.slug') = ${slug}`
               )
             )
             .limit(1)
@@ -160,12 +160,12 @@ export default defineEventHandler(async (event) => {
 
           // Check team membership
           const membership = await database
-            .select({ id: authSchema.member.id })
-            .from(authSchema.member)
+            .select({ id: authSchema.member.id as any })
+            .from(authSchema.member as any)
             .where(
               and(
-                eq(authSchema.member.userId, session.user.id),
-                eq(authSchema.member.organizationId, team.id)
+                eq(authSchema.member.userId as any, session.user.id),
+                eq(authSchema.member.organizationId as any, team.id)
               )
             )
             .limit(1)

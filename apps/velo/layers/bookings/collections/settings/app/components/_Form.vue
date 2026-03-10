@@ -42,7 +42,7 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Statuses" name="statuses" class="not-last:pb-4">
           <CroutonFormRepeater
-            v-model="state.statuses"
+            v-model="state.statuses as any"
             component-name="BookingsSettingsStatuseInput"
             add-label="Add Status"
             :sortable="true"
@@ -50,7 +50,7 @@
         </UFormField>
         <UFormField label="Groups" name="groups" class="not-last:pb-4">
           <CroutonFormRepeater
-            v-model="state.groups"
+            v-model="state.groups as any"
             component-name="BookingsSettingsGroupInput"
             add-label="Add Group"
             :sortable="true"

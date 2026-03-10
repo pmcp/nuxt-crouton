@@ -100,7 +100,7 @@ function percentile(values: number[], p: number): number {
 
   const sorted = [...values].sort((a, b) => a - b)
   const index = Math.ceil((p / 100) * sorted.length) - 1
-  return sorted[Math.max(0, index)]
+  return sorted[Math.max(0, index)] ?? 0
 }
 
 /**
@@ -188,9 +188,9 @@ export const metricsCollector = {
       end(metadata?: { success?: boolean; [key: string]: any }): number {
         const duration = Date.now() - startTime
         const success = metadata?.success !== false // Default to true
-        const { success: _, ...otherMetadata } = metadata || {}
+        const { success: _success, ...otherMetadata } = (metadata || {}) as Record<string, any>
 
-        record(operation, duration, success, otherMetadata)
+        record(operation, duration, success, Object.keys(otherMetadata).length > 0 ? otherMetadata : undefined)
 
         return duration
       },

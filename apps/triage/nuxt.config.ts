@@ -26,7 +26,7 @@ export default defineNuxtConfig({
 
   croutonAuth: {
     methods: {
-      credentials: true,
+      password: true,
       passkeys: false
     }
   },

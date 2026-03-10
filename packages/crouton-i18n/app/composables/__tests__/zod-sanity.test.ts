@@ -62,7 +62,7 @@ describe('zod v4 + vitest compatibility', () => {
      * WORKING: z.record(z.string(), z.string())
      */
     it.skip('BROKEN: z.record(z.string()) - implicit key', () => {
-      const schema = z.object({ values: z.record(z.string()) })
+      const schema = z.object({ values: z.record(z.string(), z.string()) })
       expect(schema.safeParse({ values: { en: 'Hello' } }).success).toBe(true)
     })
 

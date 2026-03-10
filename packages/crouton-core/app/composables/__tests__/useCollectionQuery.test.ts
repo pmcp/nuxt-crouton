@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, computed, reactive } from 'vue'
 
 // Mock route
-let mockRoute = {
+let mockRoute: { path: string; params: Record<string, any> } = {
   path: '/dashboard/test-team/products',
   params: { team: 'test-team' }
 }
@@ -15,7 +15,7 @@ const mockFetchState = {
   refresh: vi.fn() as any
 }
 
-const mockUseFetch = vi.fn(() => {
+const mockUseFetch = vi.fn((_url: any, _opts?: any) => {
   return Promise.resolve({
     data: mockFetchState.data,
     pending: mockFetchState.pending,
@@ -140,7 +140,7 @@ describe('useCollectionQuery', () => {
       )
 
       // Verify the key contains the serialized query
-      const call = mockUseFetch.mock.calls[0]
+      const call = mockUseFetch.mock.calls[0] as any
       expect(call[1].key).toContain('page')
     })
 
@@ -149,12 +149,12 @@ describe('useCollectionQuery', () => {
       const query2 = computed(() => ({ page: 2 }))
 
       await useCollectionQuery('products', { query: query1 })
-      const key1 = mockUseFetch.mock.calls[0][1].key
+      const key1 = (mockUseFetch.mock.calls[0] as any)[1].key
 
       mockUseFetch.mockClear()
 
       await useCollectionQuery('products', { query: query2 })
-      const key2 = mockUseFetch.mock.calls[0][1].key
+      const key2 = (mockUseFetch.mock.calls[0] as any)[1].key
 
       expect(key1).not.toBe(key2)
     })
@@ -163,12 +163,12 @@ describe('useCollectionQuery', () => {
       const query = computed(() => ({ status: 'active' }))
 
       await useCollectionQuery('products', { query })
-      const key1 = mockUseFetch.mock.calls[0][1].key
+      const key1 = (mockUseFetch.mock.calls[0] as any)[1].key
 
       mockUseFetch.mockClear()
 
       await useCollectionQuery('products', { query })
-      const key2 = mockUseFetch.mock.calls[0][1].key
+      const key2 = (mockUseFetch.mock.calls[0] as any)[1].key
 
       expect(key1).toBe(key2)
     })
@@ -176,7 +176,7 @@ describe('useCollectionQuery', () => {
     it('generates key with empty object for no query', async () => {
       await useCollectionQuery('products')
 
-      const call = mockUseFetch.mock.calls[0]
+      const call = mockUseFetch.mock.calls[0] as any
       expect(call[1].key).toBe('collection:products:{}')
     })
   })
@@ -196,7 +196,7 @@ describe('useCollectionQuery', () => {
       )
 
       // The URL function would return the team-scoped path when called
-      const urlFn = mockUseFetch.mock.calls[0][0]
+      const urlFn = (mockUseFetch.mock.calls[0] as any)[0]
       expect(typeof urlFn).toBe('function')
     })
 
@@ -404,7 +404,7 @@ describe('useCollectionQuery', () => {
         })
       )
       // When watch is disabled, query is not in the watch array
-      const call = mockUseFetch.mock.calls[0]
+      const call = mockUseFetch.mock.calls[0] as any
       expect(call[1].watch).not.toContain(query)
     })
 

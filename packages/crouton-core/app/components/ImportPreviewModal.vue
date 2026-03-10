@@ -70,7 +70,7 @@ const previewRows = computed(() => {
     _status: result.valid ? 'valid' : 'invalid',
     _errors: result.errors,
     _rowIndex: result.rowIndex
-  }))
+  } as Record<string, any>))
 })
 
 // Parse file on open
@@ -90,7 +90,7 @@ watch(() => props.file, async (file) => {
 
 function updateMapping(index: number, fieldKey: string) {
   mappings.value[index] = {
-    ...mappings.value[index],
+    ...mappings.value[index]!,
     fieldKey: fieldKey || null
   }
 }
@@ -134,7 +134,7 @@ function close() {
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" :ui="{ width: 'max-w-4xl' }">
+  <UModal v-model:open="isOpen" :ui="{ content: 'max-w-4xl' }">
     <template #content>
       <div class="p-6">
         <!-- Header -->

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Development startup deduplication guard
-const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+const _dependencies = (globalThis as unknown as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-pages')) {
   _dependencies.add('crouton-pages')
 }

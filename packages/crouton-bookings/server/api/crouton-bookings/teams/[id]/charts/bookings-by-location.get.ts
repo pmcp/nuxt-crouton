@@ -20,13 +20,13 @@ export default defineEventHandler(async (event) => {
       count: count()
     })
     .from(bookingsBookings)
-    .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
-    .where(eq(bookingsBookings.teamId, team.id))
-    .groupBy(bookingsBookings.location)
+    .leftJoin(bookingsLocations as any, eq(bookingsBookings.location as any, bookingsLocations.id))
+    .where(eq(bookingsBookings.teamId as any, team.id))
+    .groupBy(bookingsBookings.location as any)
     .orderBy(count())
 
   return {
-    items: rows.map(r => ({
+    items: rows.map((r: any) => ({
       location: r.location || 'Unknown',
       count: Number(r.count)
     }))

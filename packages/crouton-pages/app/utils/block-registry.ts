@@ -1080,7 +1080,7 @@ export function getBlocksByCategory(): Record<string, BlockMenuItem[]> {
     if (!acc[item.category]) {
       acc[item.category] = []
     }
-    acc[item.category].push(item)
+    acc[item.category]!.push(item)
     return acc
   }, {} as Record<string, BlockMenuItem[]>)
 }
@@ -1092,6 +1092,6 @@ export function createBlock<T extends BlockType>(
   const defaultAttrs = getBlockDefaultAttrs(type)
   return {
     type,
-    attrs: { ...defaultAttrs, ...attrs }
+    attrs: { ...defaultAttrs, ...attrs } as any
   }
 }

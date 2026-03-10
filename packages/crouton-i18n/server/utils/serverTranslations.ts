@@ -22,7 +22,7 @@ export async function getTranslation(
       const settings = await db
         .select()
         .from(teamSettings)
-        .where(eq(teamSettings.teamId, teamId))
+        .where(eq(teamSettings.teamId as any, teamId))
         .get()
 
       const override = settings?.translations?.[locale]?.[key]
@@ -73,7 +73,7 @@ export async function getTranslations(
       const settings = await db
         .select()
         .from(teamSettings)
-        .where(eq(teamSettings.teamId, teamId))
+        .where(eq(teamSettings.teamId as any, teamId))
         .get()
       teamTranslations = settings?.translations?.[locale]
     } catch (error) {

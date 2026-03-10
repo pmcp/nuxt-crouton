@@ -132,7 +132,7 @@ export const VideoBlock = Node.create<VideoBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(VideoBlockView)
+    return VueNodeViewRenderer(VideoBlockView as any)
   },
 
   addProseMirrorPlugins() {

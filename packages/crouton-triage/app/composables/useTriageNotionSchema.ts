@@ -81,7 +81,7 @@ export function useTriageNotionSchema() {
   async function fetchNotionSchema(options: FetchSchemaOptions): Promise<NotionSchema | null> {
     fetchParams.value = options
     await execute()
-    return schema.value
+    return schema.value ?? null
   }
 
   /**

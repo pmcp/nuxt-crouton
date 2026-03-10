@@ -170,7 +170,7 @@ function fitBounds(map: any) {
   if (!map || markers.value.length === 0) return
 
   if (markers.value.length === 1) {
-    map.flyTo({ center: markers.value[0].position, zoom: zoom.value })
+    map.flyTo({ center: markers.value[0]!.position, zoom: zoom.value })
     return
   }
 
@@ -249,7 +249,7 @@ watch(markers, () => {
     <!-- Render map with markers -->
     <CroutonMapsMap
       v-else
-      :center="markers.length === 1 ? markers[0].position : defaultCenter"
+      :center="(markers.length === 1 ? markers[0]!.position : defaultCenter) as any"
       :zoom="zoom"
       :style="styleUrl"
       :height="`${height}px`"
@@ -260,7 +260,7 @@ watch(markers, () => {
           <CroutonMapsMarker
             v-for="marker in markers"
             :key="marker.id"
-            :map="map"
+            :map="map as any"
             :position="marker.position"
             :popup-text="marker.label || undefined"
           />

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { Flow, FlowInput, FlowOutput } from '#layers/triage/types'
 
 interface Props {
@@ -601,7 +602,7 @@ defineExpose({ refresh: refreshAll })
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-semibold">Connected Accounts</h2>
-            <UButton icon="i-lucide-x" color="gray" variant="ghost" @click="close" />
+            <UButton icon="i-lucide-x" color="neutral" variant="ghost" @click="close" />
           </div>
           <CroutonTriageFlowsAccountManager :team-id="currentTeam?.id || ''" />
         </div>

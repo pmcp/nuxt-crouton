@@ -44,7 +44,7 @@ const handleTabClick = (tabValue: string) => {
     v-if="errorTabs.length > 0"
     color="error"
     icon="i-lucide-triangle-alert"
-    :title="t('validation.fixErrors', { count: totalErrors }, totalErrors)"
+    :title="t('validation.fixErrors', { count: totalErrors })"
     class="mb-4"
   >
     <template #description>
@@ -64,7 +64,7 @@ const handleTabClick = (tabValue: string) => {
             {{ errorTab.tabLabel }}
           </UButton>
           <span class="text-xs text-red-600 dark:text-red-400">
-            ({{ t('validation.errorCount', { count: errorTab.count }, errorTab.count) }})
+            ({{ t('validation.errorCount', { count: errorTab.count }) }})
           </span>
         </div>
       </div>

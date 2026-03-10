@@ -116,11 +116,11 @@ export function useAdminUsers() {
       const index = users.value.findIndex(u => u.id === userId)
       if (index !== -1) {
         users.value[index] = {
-          ...users.value[index],
+          ...users.value[index]!,
           banned: response.banned,
           bannedReason: response.bannedReason,
           bannedUntil: response.bannedUntil
-        }
+        } as any
       }
 
       return response
@@ -141,11 +141,11 @@ export function useAdminUsers() {
       const index = users.value.findIndex(u => u.id === userId)
       if (index !== -1) {
         users.value[index] = {
-          ...users.value[index],
+          ...users.value[index]!,
           banned: response.banned,
           bannedReason: response.bannedReason,
           bannedUntil: response.bannedUntil
-        }
+        } as any
       }
 
       return response

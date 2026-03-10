@@ -287,7 +287,7 @@ async function doTranslation() {
     <UTooltip :text="tooltipText">
       <UButton
         icon="i-lucide-sparkles"
-        :size="size || 'xs'"
+        :size="(size || 'xs') as any"
         variant="ghost"
         color="neutral"
         class="opacity-40 hover:opacity-100 transition-opacity"
@@ -307,7 +307,7 @@ async function doTranslation() {
       <UTooltip text="Select context languages">
         <UButton
           icon="i-lucide-settings-2"
-          :size="size || 'xs'"
+          :size="(size || 'xs') as any"
           variant="ghost"
           color="neutral"
           :disabled="!canTranslate"

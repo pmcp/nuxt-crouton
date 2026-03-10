@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   // Filter locations by access control:
   // - Empty/null allowedMemberIds = open for everyone
   // - Has members in list = restricted to those members only
-  const allowedLocations = allLocations.filter((location) => {
+  const allowedLocations = allLocations.filter((location: any) => {
     // No restriction set = open for everyone
     if (!location.allowedMemberIds) {
       return true

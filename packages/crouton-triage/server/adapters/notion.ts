@@ -117,10 +117,12 @@ interface NotionWebhookPayload {
     id: string
     parent: {
       type: 'page_id' | 'block_id'
+      id?: string
       page_id?: string
       block_id?: string
     }
     discussion_id: string
+    page_id?: string
   }
   entity: {
     id: string
@@ -128,6 +130,7 @@ interface NotionWebhookPayload {
   }
   timestamp: string
   workspace_id?: string
+  integration_id?: string
 }
 
 /**
@@ -283,7 +286,7 @@ async function postComment(
     )
     return response
   } catch (error) {
-    logger.error('Failed to post Notion comment:', error)
+    logger.error('Failed to post Notion comment', error)
     return null
   }
 }
@@ -355,7 +358,7 @@ async function fetchPageContent(
 
     return content.trim()
   } catch (error) {
-    logger.warn('Failed to fetch page content for AI context:', { blockId, error })
+    logger.warn('Failed to fetch page content for AI context', { blockId, error: (error as Error).message })
     return '' // Graceful fallback - AI will work without context
   }
 }
@@ -525,11 +528,6 @@ export class NotionAdapter implements DiscussionSourceAdapter {
           {
             sourceType: this.sourceType,
             retryable: false,
-            context: {
-              hasEntityId: !!webhookPayload.entity?.id,
-              hasDataId: !!webhookPayload.data?.id,
-              hasParentId: !!webhookPayload.data?.parent?.id,
-            },
           }
         )
       }
@@ -637,7 +635,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
       const comments = await fetchCommentThread(
         pageId,
         discussionId,
-        config.apiToken
+        config.apiToken!
       )
 
       if (comments.length === 0) {
@@ -650,7 +648,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
       }
 
       // First comment is the root (oldest)
-      const rootComment = comments[0]
+      const rootComment = comments[0]!
       const replies = comments.slice(1)
 
       // Extract participants
@@ -663,7 +661,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
       // Fetch page content for AI context (non-blocking, graceful failure)
       let pageContent = ''
       if (config.apiToken) {
-        pageContent = await fetchPageContent(pageId, config.apiToken)
+        pageContent = await fetchPageContent(pageId, config.apiToken!)
         if (pageContent) {
           logger.debug('Fetched page content for AI context', {
             pageId,
@@ -729,10 +727,10 @@ export class NotionAdapter implements DiscussionSourceAdapter {
         return false
       }
 
-      const comment = await postComment(discussionId, message, config.apiToken)
+      const comment = await postComment(discussionId, message, config.apiToken!)
       return comment !== null
     } catch (error) {
-      logger.error('Failed to post Notion reply:', error)
+      logger.error('Failed to post Notion reply', error)
       return false
     }
   }
@@ -768,7 +766,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
     // Check API token
     // Note: For Notion input, we use notionToken (the integration token)
     // since apiToken might be used for the output Notion database
-    const token = config.apiToken || config.notionToken
+    const token = config.apiToken || (config as any).notionToken
 
     if (!token || token.trim() === '') {
       errors.push('Notion API token is required')
@@ -799,7 +797,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
    */
   async testConnection(config: AdapterConfig): Promise<boolean> {
     try {
-      const token = config.apiToken || config.notionToken
+      const token = config.apiToken || (config as any).notionToken
 
       if (!token) {
         return false
@@ -818,7 +816,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
       // If we get a user object back, the connection is successful
       return response.object === 'user'
     } catch (error) {
-      logger.error('Failed to test Notion connection:', error)
+      logger.error('Failed to test Notion connection', error)
       return false
     }
   }
@@ -837,7 +835,7 @@ export class NotionAdapter implements DiscussionSourceAdapter {
     }
 
     // Get first line
-    const firstLine = text.split('\n')[0].trim()
+    const firstLine = (text.split('\n')[0] ?? '').trim()
 
     // Truncate to 50 chars if needed
     if (firstLine.length > 50) {

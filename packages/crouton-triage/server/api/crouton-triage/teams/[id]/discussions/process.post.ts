@@ -252,7 +252,7 @@ export default defineEventHandler(async (event) => {
           isMultiTask: result.aiAnalysis.taskDetection.isMultiTask,
           cached: result.aiAnalysis.cached,
         },
-        notionTasks: result.notionTasks.map(task => ({
+        notionTasks: result.notionTasks.map((task: any) => ({
           taskId: task.taskId,
           url: task.url,
         })),

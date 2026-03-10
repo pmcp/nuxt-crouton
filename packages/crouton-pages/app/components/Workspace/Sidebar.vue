@@ -55,7 +55,7 @@ watch(ghostPage, (ghost) => {
 })
 
 // Fetch pages data
-const { items: pages, pending, refresh } = await useCollectionQuery<any>('pagesPages')
+const { items: pages, pending, refresh } = await useCollectionQuery('pagesPages') as any
 
 // Tree mutation for reordering
 const { moveNode } = useTreeMutation('pagesPages')
@@ -260,7 +260,7 @@ function handleTreeCreateSibling(siblingId: string) {
 
 // Focus search input (exposed for keyboard shortcuts)
 function focusSearch() {
-  searchInputRef.value?.inputRef?.el?.focus()
+  (searchInputRef.value as any)?.inputRef?.el?.focus()
 }
 
 // Expose methods for parent component
@@ -362,7 +362,7 @@ defineExpose({
         class="shrink-0 border-t border-default bg-elevated/80 backdrop-blur px-4 py-2 flex items-center gap-2"
       >
         <span class="text-sm text-muted flex-1">
-          {{ t('pages.sidebar.changes', { count: reorderMode.changeCount.value }, reorderMode.changeCount.value) }}
+          {{ (t as any)('pages.sidebar.changes', { count: reorderMode.changeCount.value }, reorderMode.changeCount.value) }}
         </span>
         <UButton
           size="xs"

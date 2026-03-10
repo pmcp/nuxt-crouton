@@ -19,7 +19,7 @@ if (model.value && !model.value.id) {
   <div class="flex items-center gap-2 w-full">
       <UFormField class="flex-1">
         <UInput
-          v-model="model.label"
+          v-model="model!.label"
           class="w-full"
           size="xl"
           placeholder="Enter label"

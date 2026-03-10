@@ -107,9 +107,9 @@ export async function getActiveTemplatesForTrigger(
 
     // Build conditions
     const conditions = [
-      eq(bookingsEmailtemplates.teamId, teamId),
-      eq(bookingsEmailtemplates.triggerType, triggerType),
-      eq(bookingsEmailtemplates.isActive, true)
+      eq(bookingsEmailtemplates.teamId as any, teamId),
+      eq(bookingsEmailtemplates.triggerType as any, triggerType),
+      eq(bookingsEmailtemplates.isActive as any, true)
     ]
 
     const templates = await db
@@ -120,7 +120,7 @@ export async function getActiveTemplatesForTrigger(
     // Filter by location: return templates that match the location OR have no location set
     if (locationId) {
       return templates.filter(
-        t => !t.locationId || t.locationId === locationId
+        (t: any) => !t.locationId || t.locationId === locationId
       )
     }
 
@@ -274,7 +274,7 @@ export async function updateEmailLogStatus(
         sentAt: status === 'sent' ? new Date().toISOString() : null,
         error: error || null
       })
-      .where(eq(bookingsEmaillogs.id, logId))
+      .where(eq(bookingsEmaillogs.id as any, logId))
   }
   catch (error) {
     console.error('[booking-email] Failed to update email log:', error)
@@ -715,7 +715,7 @@ export async function getBatchBookingEmailStats(
         .where(
           and(
             inArray(bookingsEmaillogs.bookingId, chunk),
-            eq(bookingsEmaillogs.teamId, teamId)
+            eq(bookingsEmaillogs.teamId as any, teamId)
           )
         )
       allLogs.push(...logs)
@@ -777,8 +777,8 @@ export async function getBatchBookingEmailDetails(
             .from(bookingsEmaillogs)
             .where(
               and(
-                inArray(bookingsEmaillogs.bookingId, chunks[0]),
-                eq(bookingsEmaillogs.teamId, teamId)
+                inArray(bookingsEmaillogs.bookingId as any, chunks[0]!),
+                eq(bookingsEmaillogs.teamId as any, teamId)
               )
             )
         : Promise.resolve([]),
@@ -791,8 +791,8 @@ export async function getBatchBookingEmailDetails(
         .from(bookingsEmailtemplates)
         .where(
           and(
-            eq(bookingsEmailtemplates.teamId, teamId),
-            eq(bookingsEmailtemplates.isActive, true)
+            eq(bookingsEmailtemplates.teamId as any, teamId),
+            eq(bookingsEmailtemplates.isActive as any, true)
           )
         )
     ])
@@ -810,8 +810,8 @@ export async function getBatchBookingEmailDetails(
         .from(bookingsEmaillogs)
         .where(
           and(
-            inArray(bookingsEmaillogs.bookingId, chunks[i]),
-            eq(bookingsEmaillogs.teamId, teamId)
+            inArray(bookingsEmaillogs.bookingId as any, chunks[i]!),
+            eq(bookingsEmaillogs.teamId as any, teamId)
           )
         )
       allLogs.push(...logs)
@@ -826,10 +826,10 @@ export async function getBatchBookingEmailDetails(
     }
 
     // Template flags (shared for all bookings)
-    const hasConfirmationTemplate = templates.some(t => t.triggerType === 'booking_created')
-    const reminderTemplate = templates.find(t => t.triggerType === 'reminder_before')
-    const hasCancelTemplate = templates.some(t => t.triggerType === 'booking_cancelled')
-    const followUpTemplate = templates.find(t => t.triggerType === 'follow_up_after')
+    const hasConfirmationTemplate = templates.some((t: any) => t.triggerType === 'booking_created')
+    const reminderTemplate = templates.find((t: any) => t.triggerType === 'reminder_before')
+    const hasCancelTemplate = templates.some((t: any) => t.triggerType === 'booking_cancelled')
+    const followUpTemplate = templates.find((t: any) => t.triggerType === 'follow_up_after')
 
     // Build results per booking
     const detailsMap = new Map<string, EmailTriggerStatusResult[]>()
@@ -941,16 +941,16 @@ export async function getBookingEmailStats(
       .from(bookingsEmaillogs)
       .where(
         and(
-          eq(bookingsEmaillogs.bookingId, bookingId),
-          eq(bookingsEmaillogs.teamId, teamId)
+          eq(bookingsEmaillogs.bookingId as any, bookingId),
+          eq(bookingsEmaillogs.teamId as any, teamId)
         )
       )
 
     return {
       total: logs.length,
-      sent: logs.filter(l => l.status === 'sent').length,
-      pending: logs.filter(l => l.status === 'pending').length,
-      failed: logs.filter(l => l.status === 'failed').length
+      sent: logs.filter((l: any) => l.status === 'sent').length,
+      pending: logs.filter((l: any) => l.status === 'pending').length,
+      failed: logs.filter((l: any) => l.status === 'failed').length
     }
   }
   catch (error) {
@@ -1005,8 +1005,8 @@ export async function getBookingEmailDetails(
       .from(bookingsEmaillogs)
       .where(
         and(
-          eq(bookingsEmaillogs.bookingId, bookingId),
-          eq(bookingsEmaillogs.teamId, teamId)
+          eq(bookingsEmaillogs.bookingId as any, bookingId),
+          eq(bookingsEmaillogs.teamId as any, teamId)
         )
       )
 
@@ -1019,16 +1019,16 @@ export async function getBookingEmailDetails(
       .from(bookingsEmailtemplates)
       .where(
         and(
-          eq(bookingsEmailtemplates.teamId, teamId),
-          eq(bookingsEmailtemplates.isActive, true)
+          eq(bookingsEmailtemplates.teamId as any, teamId),
+          eq(bookingsEmailtemplates.isActive as any, true)
         )
       )
 
     const booking = new Date(bookingDate)
-    const hasConfirmationTemplate = templates.some(t => t.triggerType === 'booking_created')
+    const hasConfirmationTemplate = templates.some((t: any) => t.triggerType === 'booking_created')
 
     // Process confirmation (booking_created) - sent immediately when booked
-    const confirmationLog = logs.find(l => l.triggerType === 'booking_created')
+    const confirmationLog = logs.find((l: any) => l.triggerType === 'booking_created')
     if (confirmationLog) {
       results.push({
         triggerType: 'booking_created',
@@ -1046,8 +1046,8 @@ export async function getBookingEmailDetails(
     // No template and no log → don't include (button won't show)
 
     // Process reminder (reminder_before) - sent X days before event
-    const reminderLog = logs.find(l => l.triggerType === 'reminder_before')
-    const reminderTemplate = templates.find(t => t.triggerType === 'reminder_before')
+    const reminderLog = logs.find((l: any) => l.triggerType === 'reminder_before')
+    const reminderTemplate = templates.find((t: any) => t.triggerType === 'reminder_before')
 
     if (reminderLog) {
       results.push({
@@ -1070,8 +1070,8 @@ export async function getBookingEmailDetails(
     // No template and no log → don't include
 
     // Process cancellation (booking_cancelled) - only if log exists or template exists
-    const cancelLog = logs.find(l => l.triggerType === 'booking_cancelled')
-    const hasCancelTemplate = templates.some(t => t.triggerType === 'booking_cancelled')
+    const cancelLog = logs.find((l: any) => l.triggerType === 'booking_cancelled')
+    const hasCancelTemplate = templates.some((t: any) => t.triggerType === 'booking_cancelled')
     if (cancelLog || hasCancelTemplate) {
       results.push({
         triggerType: 'booking_cancelled',
@@ -1081,8 +1081,8 @@ export async function getBookingEmailDetails(
     }
 
     // Process follow-up (follow_up_after) - sent X days after event
-    const followUpLog = logs.find(l => l.triggerType === 'follow_up_after')
-    const followUpTemplate = templates.find(t => t.triggerType === 'follow_up_after')
+    const followUpLog = logs.find((l: any) => l.triggerType === 'follow_up_after')
+    const followUpTemplate = templates.find((t: any) => t.triggerType === 'follow_up_after')
 
     if (followUpLog) {
       results.push({

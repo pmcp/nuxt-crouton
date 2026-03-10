@@ -123,7 +123,7 @@ export const ImageBlock = Node.create<ImageBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(ImageBlockView)
+    return VueNodeViewRenderer(ImageBlockView as any)
   },
 
   addProseMirrorPlugins() {

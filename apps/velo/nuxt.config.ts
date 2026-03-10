@@ -44,7 +44,7 @@ export default defineNuxtConfig({
             url: '' // Set NUXT_PUBLIC_CROUTON_EMAIL_BRAND_URL in production
           }
         }
-      },
+      } as any,
       croutonBookings: {
         email: { enabled: true }
       }

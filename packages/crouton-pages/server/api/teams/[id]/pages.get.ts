@@ -38,12 +38,12 @@ export default defineCachedEventHandler(async (event) => {
     const authSchema = await import('@fyit/crouton-auth/server/database/schema/auth')
 
     const team = await database
-      .select({ id: authSchema.organization.id })
-      .from(authSchema.organization)
+      .select({ id: authSchema.organization.id as any })
+      .from(authSchema.organization as any)
       .where(
         or(
-          eq(authSchema.organization.id, teamParam),
-          eq(authSchema.organization.slug, teamParam)
+          eq(authSchema.organization.id as any, teamParam),
+          eq(authSchema.organization.slug as any, teamParam)
         )
       )
       .limit(1)
@@ -65,12 +65,12 @@ export default defineCachedEventHandler(async (event) => {
       if (session?.user) {
         // Check team membership
         const membership = await database
-          .select({ id: authSchema.member.id })
-          .from(authSchema.member)
+          .select({ id: authSchema.member.id as any })
+          .from(authSchema.member as any)
           .where(
             and(
-              eq(authSchema.member.userId, session.user.id),
-              eq(authSchema.member.organizationId, team.id)
+              eq(authSchema.member.userId as any, session.user.id),
+              eq(authSchema.member.organizationId as any, team.id)
             )
           )
           .limit(1)
@@ -91,24 +91,24 @@ export default defineCachedEventHandler(async (event) => {
 
       // Build query conditions
       const conditions = [
-        eq(pagesSchema.pagesPages.teamId, team.id),
-        eq(pagesSchema.pagesPages.status, 'published')
+        eq(pagesSchema.pagesPages.teamId as any, team.id),
+        eq(pagesSchema.pagesPages.status as any, 'published')
       ]
 
       // Add navigation filter
       if (navigationOnly) {
-        conditions.push(eq(pagesSchema.pagesPages.showInNavigation, true))
+        conditions.push(eq(pagesSchema.pagesPages.showInNavigation as any, true))
       }
 
       // Add visibility filter based on auth status
       if (visibilityFilter) {
-        conditions.push(eq(pagesSchema.pagesPages.visibility, visibilityFilter))
+        conditions.push(eq(pagesSchema.pagesPages.visibility as any, visibilityFilter))
       } else if (isMember) {
         // Authenticated members see public + members pages
-        conditions.push(inArray(pagesSchema.pagesPages.visibility, ['public', 'members']))
+        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members']))
       } else {
         // Default: only show public pages
-        conditions.push(eq(pagesSchema.pagesPages.visibility, 'public'))
+        conditions.push(eq(pagesSchema.pagesPages.visibility as any, 'public'))
       }
 
       // Build select fields — translations/config columns are optional (depends on generated schema)
@@ -136,12 +136,12 @@ export default defineCachedEventHandler(async (event) => {
 
       const rawPages = await database
         .select(selectFields)
-        .from(pagesSchema.pagesPages)
+        .from(pagesSchema.pagesPages as any)
         .where(and(...conditions))
         .orderBy(
-          asc(pagesSchema.pagesPages.depth),
-          asc(pagesSchema.pagesPages.order),
-          asc(pagesSchema.pagesPages.id)
+          asc(pagesSchema.pagesPages.depth as any),
+          asc(pagesSchema.pagesPages.order as any),
+          asc(pagesSchema.pagesPages.id as any)
         )
 
       // Resolve translated values if locale is provided and translations column exists

@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Invitation ID is required' })
   }
 
-  const result = await db
+  const result = await (db as any)
     .select({
       id: invitation.id,
       email: invitation.email,
@@ -27,9 +27,9 @@ export default defineEventHandler(async (event) => {
       inviterName: user.name,
     })
     .from(invitation)
-    .innerJoin(organization, eq(invitation.organizationId, organization.id))
-    .innerJoin(user, eq(invitation.inviterId, user.id))
-    .where(eq(invitation.id, id))
+    .innerJoin(organization, eq(invitation.organizationId as any, organization.id))
+    .innerJoin(user, eq(invitation.inviterId as any, user.id))
+    .where(eq(invitation.id as any, id))
     .get()
 
   if (!result) {

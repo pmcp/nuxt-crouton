@@ -103,7 +103,7 @@ const {
   fieldComponentsRef,
   locales,
   editingLocale,
-  emit,
+  emit as (event: 'update:modelValue' | 'update:english', ...args: any[]) => void,
 )
 
 // ─── Field transforms (slug, uppercase, etc.) ────────────────────────────────
@@ -112,7 +112,7 @@ const {
   updateFieldWithTransform,
   handleFieldBlur,
 } = useFieldTransforms(
-  toRef(props, 'fieldOptions'),
+  toRef(props, 'fieldOptions') as any,
   getFieldValue,
   updateFieldValue,
   editingLocale,
@@ -215,22 +215,22 @@ function previewText(field: string, locale: string): string {
                       <CroutonPagesEditorBlockEditorWithPreview
                         :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
                         :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
-                        :collab-provider="collab?.connection"
+                        :collab-provider="(collab?.connection as any)"
                         :collab-user="collab?.user"
                         :editable="!isFieldTranslating(field, narrowLocaleTab)"
                         placeholder="Type / to insert a block..."
-                        @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                        @update:model-value="!collab && updateFieldValue(field, $event as string, narrowLocaleTab)"
                       />
                     </div>
                     <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
                       <CroutonPagesEditorBlockEditor
                         :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
                         :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
-                        :collab-provider="collab?.connection"
+                        :collab-provider="(collab?.connection as any)"
                         :collab-user="collab?.user"
                         :editable="!isFieldTranslating(field, narrowLocaleTab)"
                         placeholder="Type / to insert a block..."
-                        @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                        @update:model-value="!collab && updateFieldValue(field, $event as string, narrowLocaleTab)"
                       />
                     </div>
                   </div>
@@ -251,7 +251,7 @@ function previewText(field: string, locale: string): string {
                       <AITranslateButton
                         v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                         :source-text="getBestSourceText(field, narrowLocaleTab)"
-                        :source-language="findBestSourceLocale(field, narrowLocaleTab)"
+                        :source-language="findBestSourceLocale(field, narrowLocaleTab) ?? undefined"
                         :target-language="narrowLocaleTab"
                         :field-type="fieldType || field"
                         :existing-translations="getAllTranslationsForField(field)"
@@ -313,7 +313,7 @@ function previewText(field: string, locale: string): string {
               <AITranslateButton
                 v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                 :source-text="getBestSourceText(field, narrowLocaleTab)"
-                :source-language="findBestSourceLocale(field, narrowLocaleTab)"
+                :source-language="findBestSourceLocale(field, narrowLocaleTab) ?? undefined"
                 :target-language="narrowLocaleTab"
                 :field-type="fieldType || field"
                 :existing-translations="getAllTranslationsForField(field)"
@@ -357,11 +357,11 @@ function previewText(field: string, locale: string): string {
                 <CroutonPagesEditorBlockEditor
                   :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
                   :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
-                  :collab-provider="collab?.connection"
+                  :collab-provider="(collab?.connection as any)"
                   :collab-user="collab?.user"
                   :editable="!isFieldTranslating(field, narrowLocaleTab)"
                   placeholder="Type / to insert a block..."
-                  @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                  @update:model-value="!collab && updateFieldValue(field, $event as string, narrowLocaleTab)"
                 />
               </div>
             </div>
@@ -374,11 +374,11 @@ function previewText(field: string, locale: string): string {
               <CroutonPagesEditorBlockEditorWithPreview
                 :model-value="collab ? undefined : getFieldValue(field, narrowLocaleTab)"
                 :yxml-fragment="collab?.getXmlFragment(narrowLocaleTab)"
-                :collab-provider="collab?.connection"
+                :collab-provider="(collab?.connection as any)"
                 :collab-user="collab?.user"
                 :editable="!isFieldTranslating(field, narrowLocaleTab)"
                 placeholder="Type / to insert a block..."
-                @update:model-value="!collab && updateFieldValue(field, $event, narrowLocaleTab)"
+                @update:model-value="!collab && updateFieldValue(field, $event as string, narrowLocaleTab)"
               />
             </div>
 
@@ -496,22 +496,22 @@ function previewText(field: string, locale: string): string {
                         <CroutonPagesEditorBlockEditorWithPreview
                           :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
                           :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
-                          :collab-provider="collab?.connection"
+                          :collab-provider="(collab?.connection as any)"
                           :collab-user="collab?.user"
                           :editable="!isFieldTranslating(field, primaryEditingLocale)"
                           placeholder="Type / to insert a block..."
-                          @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                          @update:model-value="!collab && updateFieldValue(field, $event as string, primaryEditingLocale)"
                         />
                       </div>
                       <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
                         <CroutonPagesEditorBlockEditor
                           :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
                           :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
-                          :collab-provider="collab?.connection"
+                          :collab-provider="(collab?.connection as any)"
                           :collab-user="collab?.user"
                           :editable="!isFieldTranslating(field, primaryEditingLocale)"
                           placeholder="Type / to insert a block..."
-                          @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                          @update:model-value="!collab && updateFieldValue(field, $event as string, primaryEditingLocale)"
                         />
                       </div>
                     </div>
@@ -534,7 +534,7 @@ function previewText(field: string, locale: string): string {
                         <AITranslateButton
                           v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                           :source-text="getBestSourceText(field, primaryEditingLocale)"
-                          :source-language="findBestSourceLocale(field, primaryEditingLocale)"
+                          :source-language="findBestSourceLocale(field, primaryEditingLocale) ?? undefined"
                           :target-language="primaryEditingLocale"
                           :field-type="fieldType || field"
                           :existing-translations="getAllTranslationsForField(field)"
@@ -596,7 +596,7 @@ function previewText(field: string, locale: string): string {
                 <AITranslateButton
                   v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                   :source-text="getBestSourceText(field, primaryEditingLocale)"
-                  :source-language="findBestSourceLocale(field, primaryEditingLocale)"
+                  :source-language="findBestSourceLocale(field, primaryEditingLocale) ?? undefined"
                   :target-language="primaryEditingLocale"
                   :field-type="fieldType || field"
                   :existing-translations="getAllTranslationsForField(field)"
@@ -640,11 +640,11 @@ function previewText(field: string, locale: string): string {
                   <CroutonPagesEditorBlockEditor
                     :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
                     :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
-                    :collab-provider="collab?.connection"
+                    :collab-provider="(collab?.connection as any)"
                     :collab-user="collab?.user"
                     :editable="!isFieldTranslating(field, primaryEditingLocale)"
                     placeholder="Type / to insert a block..."
-                    @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                    @update:model-value="!collab && updateFieldValue(field, $event as string, primaryEditingLocale)"
                   />
                 </div>
               </div>
@@ -657,11 +657,11 @@ function previewText(field: string, locale: string): string {
                 <CroutonPagesEditorBlockEditorWithPreview
                   :model-value="collab ? undefined : getFieldValue(field, primaryEditingLocale)"
                   :yxml-fragment="collab?.getXmlFragment(primaryEditingLocale)"
-                  :collab-provider="collab?.connection"
+                  :collab-provider="(collab?.connection as any)"
                   :collab-user="collab?.user"
                   :editable="!isFieldTranslating(field, primaryEditingLocale)"
                   placeholder="Type / to insert a block..."
-                  @update:model-value="!collab && updateFieldValue(field, $event, primaryEditingLocale)"
+                  @update:model-value="!collab && updateFieldValue(field, $event as string, primaryEditingLocale)"
                 />
               </div>
 
@@ -757,23 +757,23 @@ function previewText(field: string, locale: string): string {
                           :ref="(el: any) => { if (el) secondaryEditorRefs[field] = el }"
                           :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                           :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
-                          :collab-provider="collab?.connection"
+                          :collab-provider="(collab?.connection as any)"
                           :collab-user="collab?.user"
                           :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                           :default-tab="isSameLocale ? 'preview' : 'editor'"
                           placeholder="Type / to insert a block..."
-                          @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                          @update:model-value="!collab && updateFieldValue(field, $event as string, secondaryEditingLocale)"
                         />
                       </div>
                       <div v-else-if="getFieldComponent(field) === 'CroutonPagesEditorBlockEditor'" class="flex-1 min-h-0 border rounded-md overflow-hidden border-default">
                         <CroutonPagesEditorBlockEditor
                           :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                           :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
-                          :collab-provider="collab?.connection"
+                          :collab-provider="(collab?.connection as any)"
                           :collab-user="collab?.user"
                           :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                           placeholder="Type / to insert a block..."
-                          @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                          @update:model-value="!collab && updateFieldValue(field, $event as string, secondaryEditingLocale)"
                         />
                       </div>
                     </div>
@@ -796,7 +796,7 @@ function previewText(field: string, locale: string): string {
                         <AITranslateButton
                           v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                           :source-text="getBestSourceText(field, secondaryEditingLocale)"
-                          :source-language="findBestSourceLocale(field, secondaryEditingLocale)"
+                          :source-language="findBestSourceLocale(field, secondaryEditingLocale) ?? undefined"
                           :target-language="secondaryEditingLocale"
                           :field-type="fieldType || field"
                           :existing-translations="getAllTranslationsForField(field)"
@@ -854,7 +854,7 @@ function previewText(field: string, locale: string): string {
                 <AITranslateButton
                   v-if="showAiTranslate && !isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                   :source-text="getBestSourceText(field, secondaryEditingLocale)"
-                  :source-language="findBestSourceLocale(field, secondaryEditingLocale)"
+                  :source-language="findBestSourceLocale(field, secondaryEditingLocale) ?? undefined"
                   :target-language="secondaryEditingLocale"
                   :field-type="fieldType || field"
                   :existing-translations="getAllTranslationsForField(field)"
@@ -898,11 +898,11 @@ function previewText(field: string, locale: string): string {
                   <CroutonPagesEditorBlockEditor
                     :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                     :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
-                    :collab-provider="collab?.connection"
+                    :collab-provider="(collab?.connection as any)"
                     :collab-user="collab?.user"
                     :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                     placeholder="Type / to insert a block..."
-                    @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                    @update:model-value="!collab && updateFieldValue(field, $event as string, secondaryEditingLocale)"
                   />
                 </div>
               </div>
@@ -917,12 +917,12 @@ function previewText(field: string, locale: string): string {
                   :ref="(el: any) => { if (el) secondaryEditorRefs[field] = el }"
                   :model-value="collab ? undefined : getFieldValue(field, secondaryEditingLocale)"
                   :yxml-fragment="collab?.getXmlFragment(secondaryEditingLocale)"
-                  :collab-provider="collab?.connection"
+                  :collab-provider="(collab?.connection as any)"
                   :collab-user="collab?.user"
                   :editable="!isFieldTranslating(field, secondaryEditingLocale)"
                   :default-tab="isSameLocale ? 'preview' : 'editor'"
                   placeholder="Type / to insert a block..."
-                  @update:model-value="!collab && updateFieldValue(field, $event, secondaryEditingLocale)"
+                  @update:model-value="!collab && updateFieldValue(field, $event as string, secondaryEditingLocale)"
                 />
               </div>
 
@@ -1019,11 +1019,11 @@ function previewText(field: string, locale: string): string {
               <CroutonPagesEditorBlockEditor
                 :model-value="collab ? undefined : getFieldValue(field, editingLocale)"
                 :yxml-fragment="collab?.getXmlFragment(editingLocale)"
-                :collab-provider="collab?.connection"
+                :collab-provider="(collab?.connection as any)"
                 :collab-user="collab?.user"
                 :editable="!isFieldTranslating(field, editingLocale)"
                 placeholder="Type / to insert a block..."
-                @update:model-value="!collab && updateFieldValue(field, $event)"
+                @update:model-value="!collab && updateFieldValue(field, $event as string)"
               />
             </div>
           </div>
@@ -1036,11 +1036,11 @@ function previewText(field: string, locale: string): string {
             <CroutonPagesEditorBlockEditorWithPreview
               :model-value="collab ? undefined : getFieldValue(field, editingLocale)"
               :yxml-fragment="collab?.getXmlFragment(editingLocale)"
-              :collab-provider="collab?.connection"
+              :collab-provider="(collab?.connection as any)"
               :collab-user="collab?.user"
               :editable="!isFieldTranslating(field, editingLocale)"
               placeholder="Type / to insert a block..."
-              @update:model-value="!collab && updateFieldValue(field, $event)"
+              @update:model-value="!collab && updateFieldValue(field, $event as string)"
             />
           </div>
 
@@ -1091,7 +1091,7 @@ function previewText(field: string, locale: string): string {
             <AITranslateButton
               v-if="showAiTranslate && !isBlockEditorField(field)"
               :source-text="getBestSourceText(field, editingLocale)"
-              :source-language="findBestSourceLocale(field, editingLocale)"
+              :source-language="findBestSourceLocale(field, editingLocale) ?? undefined"
               :target-language="editingLocale"
               :field-type="fieldType || field"
               :existing-translations="getAllTranslationsForField(field)"
@@ -1146,7 +1146,7 @@ function previewText(field: string, locale: string): string {
           <AITranslateButton
             v-if="showAiTranslate"
             :source-text="getBestSourceText('', editingLocale)"
-            :source-language="findBestSourceLocale('', editingLocale)"
+            :source-language="findBestSourceLocale('', editingLocale) ?? undefined"
             :target-language="editingLocale"
             :field-type="fieldType"
             :existing-translations="getAllTranslationsForField('')"

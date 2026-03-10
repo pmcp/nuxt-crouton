@@ -27,7 +27,6 @@ export interface CroutonAsset {
   id: string
   teamId: string
   owner: string
-  teamId: string
   userId: string
   filename: string
   pathname: string
@@ -38,7 +37,6 @@ export interface CroutonAsset {
   height?: number
   alt?: string
   uploadedAt?: Date | null
-  updatedBy?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string

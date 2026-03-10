@@ -67,17 +67,17 @@ onMounted(() => {
         const parent = event.from
         const movedEl = event.item
         if (oldIndex < newIndex) {
-          parent.insertBefore(movedEl, parent.children[oldIndex])
+          parent.insertBefore(movedEl, parent.children[oldIndex] ?? null)
         }
         else {
-          parent.insertBefore(movedEl, parent.children[oldIndex + 1])
+          parent.insertBefore(movedEl, parent.children[oldIndex + 1] ?? null)
         }
 
         // Now reorder the reactive array
         isReordering.value = true
         const reordered = [...items.value]
         const [moved] = reordered.splice(oldIndex, 1)
-        reordered.splice(newIndex, 0, moved)
+        reordered.splice(newIndex, 0, moved!)
         items.value = reordered
         emit('update:modelValue', reordered.map(stripId))
         nextTick(() => { isReordering.value = false })
@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
   sortableInstance?.destroy()
 })
 
-watch(() => props.modelValue, (newVal) => {
+watch(() => props.modelValue, (newVal: LogoItem[]) => {
   if (isReordering.value) return
   items.value = newVal.map(assignId)
 }, { deep: true })
@@ -118,7 +118,7 @@ function addImageItem() {
 }
 
 function removeItem(index: number) {
-  const id = items.value[index]._id
+  const id = items.value[index]!._id
   items.value.splice(index, 1)
   delete imageMode.value[id]
   delete savedValues.value[id]
@@ -126,23 +126,24 @@ function removeItem(index: number) {
 }
 
 function updateItem(index: number, field: keyof LogoItem, value: string) {
-  items.value[index] = { ...items.value[index], [field]: value }
+  const item = items.value[index]!
+  items.value[index] = { ...item, [field]: value } as InternalLogoItem
   emitChange()
 }
 
 function switchItemType(index: number, newType: LogoItemType) {
-  const current = items.value[index]
+  const current = items.value[index]!
   const id = current._id
   const currentType = resolveType(current)
 
   // Save current value before switching
   if (!savedValues.value[id]) savedValues.value[id] = {}
   if (currentType === 'icon' && current.value) {
-    savedValues.value[id].icon = current.value
+    savedValues.value[id]!.icon = current.value
   }
   else if (currentType === 'image' && current.value) {
-    savedValues.value[id].image = current.value
-    savedValues.value[id].imageAlt = current.alt
+    savedValues.value[id]!.image = current.value
+    savedValues.value[id]!.imageAlt = current.alt
   }
 
   // Restore saved value for the new type, or start empty
@@ -150,7 +151,7 @@ function switchItemType(index: number, newType: LogoItemType) {
   if (newType === 'icon') {
     items.value[index] = {
       ...current,
-      type: 'icon',
+      type: 'icon' as const,
       value: saved?.icon || '',
       alt: ''
     }
@@ -160,7 +161,7 @@ function switchItemType(index: number, newType: LogoItemType) {
     const restoredValue = saved?.image || ''
     items.value[index] = {
       ...current,
-      type: 'image',
+      type: 'image' as const,
       value: restoredValue,
       alt: saved?.imageAlt || ''
     }
@@ -176,45 +177,49 @@ function isIcon(item: LogoItem): boolean {
 // Image handling (mirrors ImageEditor.vue patterns)
 function handleFileSelected(index: number, file: File | null) {
   if (!file) return
-  const id = items.value[index]._id
+  const item = items.value[index]!
+  const id = item._id
   const formData = new FormData()
   formData.append('file', file)
 
-  $fetch<{ pathname: string }>('/api/upload-image', {
+  $fetch<any>('/api/upload-image', {
     method: 'POST',
     body: formData
-  }).then((result) => {
+  }).then((result: { pathname: string }) => {
     const imageUrl = `/images/${result.pathname}`
-    items.value[index] = { ...items.value[index], value: imageUrl }
+    items.value[index] = { ...item, value: imageUrl }
     imageMode.value[id] = 'preview'
     emitChange()
-  }).catch((err) => {
+  }).catch((err: unknown) => {
     console.error('Image upload failed:', err)
   })
 }
 
 function handleAssetSelected(index: number, asset: Record<string, any>) {
-  const id = items.value[index]._id
+  const item = items.value[index]!
+  const id = item._id
   const url = `/images/${asset.pathname}`
   items.value[index] = {
-    ...items.value[index],
+    ...item,
     value: url,
-    alt: asset.alt || items.value[index].alt || ''
+    alt: (asset.alt as string) || item.alt || ''
   }
   imageMode.value[id] = 'preview'
   emitChange()
 }
 
 function applyUrl(index: number, url: string) {
-  const id = items.value[index]._id
-  items.value[index] = { ...items.value[index], value: url }
+  const item = items.value[index]!
+  const id = item._id
+  items.value[index] = { ...item, value: url }
   imageMode.value[id] = 'preview'
   emitChange()
 }
 
 function removeImage(index: number) {
-  const id = items.value[index]._id
-  items.value[index] = { ...items.value[index], value: '' }
+  const item = items.value[index]!
+  const id = item._id
+  items.value[index] = { ...item, value: '' }
   imageMode.value[id] = hasAssetsPicker ? 'browse' : 'upload'
   emitChange()
 }
@@ -422,7 +427,7 @@ function getImageMode(index: number): string {
     <div class="flex gap-2">
       <UButton
         color="neutral"
-        variant="dashed"
+        variant="outline"
         icon="i-lucide-at-sign"
         size="sm"
         class="flex-1"
@@ -432,7 +437,7 @@ function getImageMode(index: number): string {
       </UButton>
       <UButton
         color="neutral"
-        variant="dashed"
+        variant="outline"
         icon="i-lucide-image"
         size="sm"
         class="flex-1"

@@ -115,8 +115,8 @@ onMounted(() => {
           class="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <UAvatar
-            :src="row.original.logo"
-            :alt="row.original.name"
+            :src="(row.original as any).logo"
+            :alt="(row.original as any).name"
             size="sm"
           />
           <div>
@@ -172,7 +172,7 @@ onMounted(() => {
 
       <template #type-cell="{ row }">
         <UBadge
-          :color="row.original.personal ? 'gray' : 'primary'"
+          :color="row.original.personal ? 'neutral' : 'primary'"
           variant="soft"
         >
           {{ row.original.personal ? t('superAdmin.teams.typePersonal') : t('superAdmin.teams.typeTeam') }}
@@ -181,7 +181,7 @@ onMounted(() => {
 
       <template #createdAt-cell="{ row }">
         <span class="text-gray-600 dark:text-gray-400">
-          {{ formatDate(row.original.createdAt) }}
+          {{ formatDate(row.original.createdAt as any) }}
         </span>
       </template>
     </UTable>

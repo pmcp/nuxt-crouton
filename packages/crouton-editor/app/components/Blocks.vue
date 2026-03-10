@@ -526,7 +526,7 @@ defineExpose({
     <!-- Toolbar using captured editor instance -->
     <UEditorToolbar
       v-if="editorInstance && showToolbar"
-      :editor="editorInstance"
+      :editor="(editorInstance as any)"
       :items="toolbarItems"
       class="border-b border-default px-2 py-1.5 flex-shrink-0"
     />
@@ -537,21 +537,21 @@ defineExpose({
     <UEditor
       v-slot="{ editor, handlers }"
       :key="editorKey"
-      v-model="content"
+      v-model="(content as any)"
       :content-type="contentType"
       :placeholder="placeholder"
       :editable="editable"
       :autofocus="autofocus"
-      :starter-kit="starterKitOptions"
+      :starter-kit="(starterKitOptions as any)"
       :extensions="allExtensions"
-      :handlers="blockHandlers"
+      :handlers="(blockHandlers as any)"
       class="flex-1 min-h-0"
       :ui="{
         root: 'h-full flex flex-col',
         content: 'flex-1 min-h-0 p-4 pl-10 prose prose-sm dark:prose-invert max-w-none overflow-auto'
       }"
-      @create="handleEditorCreate"
-      @update="handleEditorUpdate"
+      @create="handleEditorCreate as any"
+      @update="handleEditorUpdate as any"
     >
       <!-- Global drag handle for all blocks -->
       <UEditorDragHandle

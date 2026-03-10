@@ -166,7 +166,7 @@ export function useSession() {
 
       if (orgs && orgs.length > 0) {
         // Set the first org as active
-        const firstOrg = orgs[0]
+        const firstOrg = orgs[0]!
         await authClient.organization.setActive({
           organizationId: firstOrg.id
         })
@@ -204,7 +204,7 @@ export function useSession() {
       if (import.meta.client && profile && (profile as Record<string, unknown>).locale) {
         try {
           const { setLocale } = useI18n()
-          setLocale((profile as Record<string, unknown>).locale as string)
+          setLocale((profile as Record<string, unknown>).locale as any)
         } catch {
           // i18n not available — skip
         }

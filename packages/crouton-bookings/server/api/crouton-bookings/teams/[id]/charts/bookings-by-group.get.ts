@@ -20,15 +20,15 @@ export default defineEventHandler(async (event) => {
     })
     .from(bookingsBookings)
     .where(and(
-      eq(bookingsBookings.teamId, team.id),
-      isNotNull(bookingsBookings.group),
-      ne(bookingsBookings.group, '')
+      eq(bookingsBookings.teamId as any, team.id),
+      isNotNull(bookingsBookings.group as any),
+      ne(bookingsBookings.group as any, '')
     ))
-    .groupBy(bookingsBookings.group)
+    .groupBy(bookingsBookings.group as any)
     .orderBy(count())
 
   return {
-    items: rows.map(r => ({
+    items: rows.map((r: any) => ({
       group: r.group!,
       count: Number(r.count)
     }))

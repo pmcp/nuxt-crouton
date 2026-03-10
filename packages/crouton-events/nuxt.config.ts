@@ -2,7 +2,7 @@
 // https://nuxt.com/docs/api/nuxt-config
 
 // Development startup log (deduplicated across layer resolution)
-const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+const _dependencies = (globalThis as unknown as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-events')) {
   _dependencies.add('crouton-events')
   console.log('🍞 crouton:events ✓ Layer loaded')

@@ -135,7 +135,7 @@ function setFieldValue(field: 'name' | 'subject' | 'body', value: string) {
     if (!formState.value.translations[activeLocale.value]) {
       formState.value.translations[activeLocale.value] = {}
     }
-    formState.value.translations[activeLocale.value][field] = value
+    formState.value.translations[activeLocale.value]![field] = value
   }
 }
 

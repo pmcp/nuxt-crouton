@@ -73,7 +73,7 @@ if (!isValidLocale.value) {
 
 // Sync URL locale with i18n locale
 if (urlLocale.value !== i18nLocale.value) {
-  setLocale(urlLocale.value)
+  setLocale(urlLocale.value as any)
 }
 
 // Build API URL - slug might be empty for homepage
@@ -108,8 +108,8 @@ const desiredLayout = computed(() => {
 
   if (p?.layout && p.layout !== 'default') {
     return p.layout as 'default' | 'full-height' | 'full-screen'
-  } else if (pt?.preferredLayout) {
-    return pt.preferredLayout as 'default' | 'full-height' | 'full-screen'
+  } else if ((pt as any)?.preferredLayout) {
+    return (pt as any).preferredLayout as 'default' | 'full-height' | 'full-screen'
   }
   return 'default'
 })
@@ -134,7 +134,7 @@ const { user } = useSession()
 
 // Redirect if auth required but user not logged in
 watchEffect(() => {
-  if (pageType.value?.requiresAuth && !user.value) {
+  if ((pageType.value as any)?.requiresAuth && !user.value) {
     navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
   }
 })

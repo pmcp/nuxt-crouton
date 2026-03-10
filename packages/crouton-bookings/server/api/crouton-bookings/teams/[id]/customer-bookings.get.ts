@@ -29,16 +29,16 @@ export default defineEventHandler(async (event) => {
 
   // Build where conditions
   const conditions = [
-    eq(bookingsBookings.teamId, team.id),
-    eq(bookingsBookings.createdBy, user.id),
+    eq(bookingsBookings.teamId as any, team.id),
+    eq(bookingsBookings.createdBy as any, user.id),
   ]
 
   // Add date range conditions if provided
   if (startDate && !isNaN(startDate.getTime())) {
-    conditions.push(gte(bookingsBookings.date, startDate))
+    conditions.push(gte(bookingsBookings.date as any, startDate))
   }
   if (endDate && !isNaN(endDate.getTime())) {
-    conditions.push(lte(bookingsBookings.date, endDate))
+    conditions.push(lte(bookingsBookings.date as any, endDate))
   }
 
   // Get bookings created by this user
@@ -78,10 +78,10 @@ export default defineEventHandler(async (event) => {
       },
     })
     .from(bookingsBookings)
-    .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
-    .leftJoin(userTable, eq(bookingsBookings.createdBy, userTable.id))
+    .leftJoin(bookingsLocations as any, eq(bookingsBookings.location as any, (bookingsLocations as any).id))
+    .leftJoin(userTable as any, eq(bookingsBookings.createdBy as any, (userTable as any).id))
     .where(and(...conditions))
-    .orderBy(asc(bookingsBookings.date))
+    .orderBy(asc(bookingsBookings.date as any))
 
   // Build available email actions based on booking status
   function getEmailActionsForBooking(booking: { status: string }) {
@@ -111,15 +111,15 @@ export default defineEventHandler(async (event) => {
   // Add email data when email is enabled (batch queries: 2 queries instead of 3N)
   let enrichedBookings = bookings
   if (emailEnabled && bookings.length > 0) {
-    const bookingIds = bookings.map(b => b.id)
+    const bookingIds = bookings.map((b: any) => b.id)
     const [statsMap, detailsMap] = await Promise.all([
       getBatchBookingEmailStats(bookingIds, team.id),
       getBatchBookingEmailDetails(
-        bookings.map(b => ({ id: b.id, date: b.date, createdAt: b.createdAt })),
+        bookings.map((b: any) => ({ id: b.id, date: b.date, createdAt: b.createdAt })),
         team.id
       )
     ])
-    enrichedBookings = bookings.map(booking => ({
+    enrichedBookings = bookings.map((booking: any) => ({
       ...booking,
       emailStats: statsMap.get(booking.id) ?? { total: 0, sent: 0, pending: 0, failed: 0 },
       emailDetails: detailsMap.get(booking.id) ?? [],

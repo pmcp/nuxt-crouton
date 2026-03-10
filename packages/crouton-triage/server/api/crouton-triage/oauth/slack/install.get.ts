@@ -134,7 +134,7 @@ export default defineEventHandler(async (event) => {
     // If a workspace name is provided, use it as subdomain to pre-select that workspace
     const slackHost = parseSlackWorkspace(slackTeam)
     const slackAuthUrl = new URL(`https://${slackHost}/oauth/v2/authorize`)
-    slackAuthUrl.searchParams.set('client_id', clientId)
+    slackAuthUrl.searchParams.set('client_id', clientId as any)
     slackAuthUrl.searchParams.set('scope', SLACK_SCOPES)
     slackAuthUrl.searchParams.set('state', state)
     slackAuthUrl.searchParams.set('redirect_uri', redirectUri)

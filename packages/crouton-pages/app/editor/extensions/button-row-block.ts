@@ -102,7 +102,7 @@ export const ButtonRowBlock = Node.create<ButtonRowBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(ButtonRowBlockView)
+    return VueNodeViewRenderer(ButtonRowBlockView as any)
   }
 })
 

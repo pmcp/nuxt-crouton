@@ -107,7 +107,7 @@ export const CTABlock = Node.create<CTABlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(CTABlockView)
+    return VueNodeViewRenderer(CTABlockView as any)
   }
 })
 

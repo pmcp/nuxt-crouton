@@ -99,11 +99,11 @@ export default defineEventHandler(async (event) => {
         .from(bookingsLocations)
         .where(
           and(
-            eq(bookingsLocations.teamId, team.id),
+            eq(bookingsLocations.teamId as any, team.id),
           ),
         )
     : []
-  const dbLocationMap = new Map(allLocations.map(l => [l.id, l]))
+  const dbLocationMap = new Map(allLocations.map((l: any) => [l.id, l]))
 
   // Check limits for each location
   if (locationIds.length > 0) {
@@ -111,24 +111,24 @@ export default defineEventHandler(async (event) => {
 
     for (const [locationId, months] of locationMonthPairs) {
       const location = locationMap.get(locationId)
-      if (!location?.maxBookingsPerMonth) continue
+      if (!(location as any)?.maxBookingsPerMonth) continue
 
-      const limit = location.maxBookingsPerMonth
+      const limit = (location as any).maxBookingsPerMonth
 
       for (const monthKey of months) {
         const { monthStart, monthEnd } = monthBounds(monthKey)
 
         // Sum existing active booking quantities for this user/location/month
         const existingResult = await db
-          .select({ total: sum(bookingsBookings.quantity) })
+          .select({ total: sum(bookingsBookings.quantity as any) })
           .from(bookingsBookings)
           .where(
             and(
-              eq(bookingsBookings.location, locationId),
-              eq(bookingsBookings.createdBy, user.id),
-              eq(bookingsBookings.status, 'active'),
-              gte(bookingsBookings.date, monthStart),
-              lte(bookingsBookings.date, monthEnd),
+              eq(bookingsBookings.location as any, locationId),
+              eq(bookingsBookings.createdBy as any, user.id),
+              eq(bookingsBookings.status as any, 'active'),
+              gte(bookingsBookings.date as any, monthStart),
+              lte(bookingsBookings.date as any, monthEnd),
             ),
           )
 
@@ -161,7 +161,7 @@ export default defineEventHandler(async (event) => {
           }).catch(() => {})
           throw createError({
             status: 400,
-            statusText: `Monthly booking limit reached for "${location.title}". Limit: ${limit} per month, existing: ${existingCount}, trying to add: ${newCount}. You can add ${remaining} more.`,
+            statusText: `Monthly booking limit reached for "${(location as any).title}". Limit: ${limit} per month, existing: ${existingCount}, trying to add: ${newCount}. You can add ${remaining} more.`,
           })
         }
       }
@@ -194,10 +194,10 @@ export default defineEventHandler(async (event) => {
         .from(bookingsBookings)
         .where(
           and(
-            eq(bookingsBookings.location, item.locationId),
-            eq(bookingsBookings.status, 'active'),
-            eq(bookingsBookings.date, new Date(item.date)),
-            eq(bookingsBookings.group, item.groupId!),
+            eq(bookingsBookings.location as any, item.locationId),
+            eq(bookingsBookings.status as any, 'active'),
+            eq(bookingsBookings.date as any, new Date(item.date)),
+            eq(bookingsBookings.group as any, item.groupId!),
           ),
         )
 
@@ -245,13 +245,13 @@ export default defineEventHandler(async (event) => {
     // Insert all bookings in a single transaction
     const created = await db
       .insert(bookingsBookings)
-      .values(bookingsToInsert)
+      .values(bookingsToInsert as any)
       .returning()
 
     const nitroApp = useNitroApp()
 
     // Collect unique location IDs from the created bookings for the summary
-    const uniqueLocationIds = [...new Set(created.map(b => b.location))]
+    const uniqueLocationIds = [...new Set(created.map((b: any) => b.location))]
 
     // Emit batch-created operation event (one summary, not one per booking)
     nitroApp.hooks.callHook('crouton:operation', {
@@ -277,11 +277,11 @@ export default defineEventHandler(async (event) => {
       const teamMetadata = (team.metadata || {}) as Record<string, string>
 
       // Send emails in background - don't block checkout
-      const emailPromises = created.map(async (booking) => {
+      const emailPromises = created.map(async (booking: any) => {
         const cartItem = locationMap.get(booking.location)
 
         // Build booking context with DB location data — resolve translations
-        const dbLocation = dbLocationMap.get(booking.location)
+        const dbLocation = dbLocationMap.get(booking.location) as any
         const tr = dbLocation?.translations as Record<string, Record<string, string>> | null
         const locationTitle = resolveTranslatedField(dbLocation?.title, tr, 'title', locale) || cartItem?.locationTitle || 'Location'
         const locationStreet = resolveTranslatedField(dbLocation?.street, tr, 'street', locale)

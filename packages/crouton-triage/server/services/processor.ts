@@ -158,7 +158,7 @@ async function storeDiscoveredUsers(
     return 0
   }
 
-  const { createTriageUserMapping } = await import(
+  const { createTriageUser: createTriageUserMapping } = await import(
     '~~/layers/triage/collections/users/server/database/queries'
   )
 
@@ -171,7 +171,7 @@ async function storeDiscoveredUsers(
   // Debug: log what we got
   logger.debug('Existing mappings for duplicate check', {
     count: existingMappings.length,
-    mappings: existingMappings.map((m) => ({
+    mappings: existingMappings.map((m: any) => ({
       sourceType: m.sourceType,
       sourceWorkspaceId: m.sourceWorkspaceId,
       sourceUserId: m.sourceUserId,
@@ -180,8 +180,8 @@ async function storeDiscoveredUsers(
 
   const existingSourceUserIds = new Set(
     existingMappings
-      .filter((m) => m.sourceType === sourceType && m.sourceWorkspaceId === sourceWorkspaceId)
-      .map((m) => m.sourceUserId),
+      .filter((m: any) => m.sourceType === sourceType && m.sourceWorkspaceId === sourceWorkspaceId)
+      .map((m: any) => m.sourceUserId),
   )
 
   logger.debug('Existing source user IDs for this workspace', {
@@ -211,7 +211,7 @@ async function storeDiscoveredUsers(
         sourceUserId: user.userId,
         sourceUserName: user.displayName,
         sourceUserEmail: undefined, // Unknown from @mention
-        notionUserId: null, // Pending - to be mapped by user
+        notionUserId: null as any, // Pending - to be mapped by user
         notionUserName: undefined,
         notionUserEmail: undefined,
         mappingType: 'discovered',
@@ -398,7 +398,7 @@ async function loadFlow(
   let flow: any
 
   // Filter inputs by source identifier
-  const candidateInputs = inputs.filter(input => {
+  const candidateInputs = inputs.filter((input: any) => {
     if (sourceType === 'slack') {
       return input.sourceMetadata?.slackTeamId === identifier
     } else if (sourceType === 'figma') {
@@ -1514,8 +1514,8 @@ export async function processDiscussion(
     }
     else {
       // Get AI settings from flow or config
-      const customSummaryPrompt = flowData?.flow.aiSummaryPrompt || config?.aiSummaryPrompt || undefined
-      const customTaskPrompt = flowData?.flow.aiTaskPrompt || config?.aiTaskPrompt || undefined
+      const customSummaryPrompt = flowData?.flow.aiSummaryPrompt || (config as any)?.aiSummaryPrompt || undefined
+      const customTaskPrompt = flowData?.flow.aiTaskPrompt || (config as any)?.aiTaskPrompt || undefined
       const availableDomains = flowData?.flow.availableDomains || undefined
 
       logger.debug('Using AI settings', {
@@ -1650,7 +1650,7 @@ export async function processDiscussion(
         const encryptedBootstrapKey = flowData?.flow.anthropicApiKey
         const anthropicApiKey = encryptedBootstrapKey
           ? await decryptSecret(encryptedBootstrapKey)
-          : config?.anthropicApiKey
+          : (config as any)?.anthropicApiKey
         const personalityIcon = flowData?.flow.personalityIcon || undefined
         const bootstrapMessage = await generateBootstrapMessage(userCount, replyPersonality, anthropicApiKey, personalityIcon)
 
@@ -1700,7 +1700,7 @@ export async function processDiscussion(
       }
     }
 
-    const aiEnabled = flowData?.flow.aiEnabled ?? config?.aiEnabled ?? false
+    const aiEnabled = flowData?.flow.aiEnabled ?? (config as any)?.aiEnabled ?? false
 
     if (!options.skipNotion && aiEnabled) {
       // Use user mappings from Stage 2.5 (already loaded once)
@@ -1849,13 +1849,13 @@ export async function processDiscussion(
         // LEGACY CONFIG: Single output (backward compatibility)
         // ============================================================================
         const notionConfig: NotionTaskConfig = {
-          databaseId: config.notionDatabaseId,
-          apiKey: config.notionToken,
+          databaseId: (config as any).notionDatabaseId,
+          apiKey: (config as any).notionToken,
           sourceType: parsed.sourceType,
           sourceUrl: parsed.sourceUrl,
         }
 
-        const fieldMapping = config.notionFieldMapping || {}
+        const fieldMapping = (config as any).notionFieldMapping || {}
 
         if (tasks.length === 1) {
           // Single task
@@ -1968,7 +1968,7 @@ export async function processDiscussion(
       const encryptedConfirmKey = flowData?.flow.anthropicApiKey
       const anthropicApiKey = encryptedConfirmKey
         ? await decryptSecret(encryptedConfirmKey)
-        : config?.anthropicApiKey
+        : (config as any)?.anthropicApiKey
       const personalityIcon = flowData?.flow.personalityIcon || undefined
       const confirmationMessage = await generateReplyMessage(notionTasks, replyPersonality, anthropicApiKey, personalityIcon)
 

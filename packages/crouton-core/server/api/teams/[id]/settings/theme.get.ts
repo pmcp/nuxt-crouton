@@ -22,13 +22,13 @@ export default defineEventHandler(async (event) => {
     .from(organization)
     .where(eq(organization.slug, teamParam))
     .limit(1)
-    .then(rows => rows[0])
+    .then((rows: any[]) => rows[0])
     || await db
       .select({ id: organization.id })
       .from(organization)
       .where(eq(organization.id, teamParam))
       .limit(1)
-      .then(rows => rows[0])
+      .then((rows: any[]) => rows[0])
 
   if (!team) {
     throw createError({ status: 404, statusText: 'Team not found' })

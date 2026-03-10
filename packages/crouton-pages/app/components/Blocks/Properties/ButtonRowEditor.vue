@@ -62,12 +62,12 @@ function removeButton(index: number) {
 }
 
 function updateButton(index: number, field: keyof ButtonRowItem, value: any) {
-  buttons.value[index] = { ...buttons.value[index], [field]: value }
+  buttons.value[index] = { ...buttons.value[index], [field]: value } as ButtonRowItem
   emitChange()
 }
 
 function toggleDownloadMode(index: number, isDownload: boolean) {
-  const btn = { ...buttons.value[index], download: isDownload }
+  const btn = { ...buttons.value[index]!, download: isDownload } as ButtonRowItem
   if (isDownload) {
     // Switching to download mode — clear link fields
     btn.to = undefined
@@ -86,8 +86,8 @@ function moveButton(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= buttons.value.length) return
 
-  const temp = buttons.value[index]
-  buttons.value[index] = buttons.value[newIndex]
+  const temp = buttons.value[index]!
+  buttons.value[index] = buttons.value[newIndex]!
   buttons.value[newIndex] = temp
   emitChange()
 }
@@ -111,7 +111,7 @@ async function handleFileUpload(event: Event, index: number) {
     })
 
     const fileUrl = `/images/${result.pathname}`
-    const btn = { ...buttons.value[index], file: fileUrl, fileName: file.name }
+    const btn = { ...buttons.value[index]!, file: fileUrl, fileName: file.name } as ButtonRowItem
     buttons.value[index] = btn
     emitChange()
   }
@@ -125,7 +125,7 @@ async function handleFileUpload(event: Event, index: number) {
 }
 
 function removeFile(index: number) {
-  const btn = { ...buttons.value[index], file: undefined, fileName: undefined }
+  const btn = { ...buttons.value[index]!, file: undefined, fileName: undefined } as ButtonRowItem
   buttons.value[index] = btn
   emitChange()
 }
@@ -141,7 +141,7 @@ function removeFile(index: number) {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 }) }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 } as any) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -290,7 +290,7 @@ function removeFile(index: number) {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Flow, FlowInput, FlowOutput } from '#layers/triage/types'
+import type { Flow, FlowInput, FlowOutput } from '../types'
 
 interface Props {
   flow: Flow | null
@@ -184,7 +184,7 @@ function getPresetKey(): string {
   return 'custom'
 }
 
-const presetInfo = computed(() => presetMap[getPresetKey()] || presetMap.default)
+const presetInfo = computed(() => presetMap[getPresetKey()] ?? presetMap.default!)
 
 // Personality info (label, icon, description)
 const personalityMap: Record<string, { label: string, icon: string, description: string }> = {
@@ -195,9 +195,9 @@ const personalityMap: Record<string, { label: string, icon: string, description:
 
 const personalityInfo = computed(() => {
   const p = props.flow?.replyPersonality
-  if (!p) return personalityMap.professional
+  if (!p) return personalityMap.professional!
   if (p.startsWith('custom:')) return { label: 'Custom', icon: '✏️', description: p.replace(/^custom:/, '').slice(0, 60) + (p.length > 67 ? '...' : '') }
-  return personalityMap[p] || { label: p, icon: '🤖', description: '' }
+  return personalityMap[p] ?? { label: p, icon: '🤖', description: '' }
 })
 
 // Missing items helpers

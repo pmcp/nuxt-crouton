@@ -14,7 +14,7 @@ const mockFetch = vi.fn()
 const mockFoundErrors = vi.fn(() => false)
 
 // Mock route
-let mockRoute = {
+let mockRoute: { path: string; params: Record<string, any> } = {
   path: '/dashboard/test-team/products',
   params: { team: 'test-team' }
 }
@@ -153,9 +153,9 @@ describe('useCrouton', () => {
       await open('create', 'products')
 
       expect(croutonStates.value).toHaveLength(1)
-      expect(croutonStates.value[0].action).toBe('create')
-      expect(croutonStates.value[0].collection).toBe('products')
-      expect(croutonStates.value[0].isOpen).toBe(true)
+      expect(croutonStates.value[0]!.action).toBe('create')
+      expect(croutonStates.value[0]!.collection).toBe('products')
+      expect(croutonStates.value[0]!.isOpen).toBe(true)
       expect(showCrouton.value).toBe(true)
     })
 
@@ -164,7 +164,7 @@ describe('useCrouton', () => {
 
       await open('create', 'products')
 
-      expect(croutonStates.value[0].id).toMatch(/^crouton-\d+-\d+/)
+      expect(croutonStates.value[0]!.id).toMatch(/^crouton-\d+-\d+/)
     })
 
     it('sets containerType to slideover by default', async () => {
@@ -172,7 +172,7 @@ describe('useCrouton', () => {
 
       await open('create', 'products')
 
-      expect(croutonStates.value[0].containerType).toBe('slideover')
+      expect(croutonStates.value[0]!.containerType).toBe('slideover')
     })
 
     it('respects custom container type', async () => {
@@ -180,7 +180,7 @@ describe('useCrouton', () => {
 
       await open('create', 'products', [], 'modal')
 
-      expect(croutonStates.value[0].containerType).toBe('modal')
+      expect(croutonStates.value[0]!.containerType).toBe('modal')
     })
 
     it('sets initialData for create action', async () => {
@@ -189,7 +189,7 @@ describe('useCrouton', () => {
 
       await open('create', 'products', [], 'slideover', initialData)
 
-      expect(croutonStates.value[0].activeItem).toEqual(initialData)
+      expect(croutonStates.value[0]!.activeItem).toEqual(initialData)
     })
 
     it('sets items for delete action', async () => {
@@ -198,7 +198,7 @@ describe('useCrouton', () => {
 
       await open('delete', 'products', ids)
 
-      expect(croutonStates.value[0].items).toEqual(ids)
+      expect(croutonStates.value[0]!.items).toEqual(ids)
     })
 
     it('blocks open when errors exist', async () => {
@@ -247,7 +247,7 @@ describe('useCrouton', () => {
           query: { ids: 'prod-1' }
         })
       )
-      expect(croutonStates.value[0].activeItem).toEqual(mockItem)
+      expect(croutonStates.value[0]!.activeItem).toEqual(mockItem)
     })
 
     it('handles multiple IDs in query format', async () => {
@@ -273,7 +273,7 @@ describe('useCrouton', () => {
       )
 
       // For update action, activeItem is set to first item from response
-      expect(croutonStates.value[0].activeItem).toEqual(mockItems[0])
+      expect(croutonStates.value[0]!.activeItem).toEqual(mockItems[0])
     })
 
     it('stores IDs in items array for delete action', async () => {
@@ -283,9 +283,9 @@ describe('useCrouton', () => {
       await open('delete', 'products', ['prod-1', 'prod-2', 'prod-3'])
 
       // Items array should contain all passed IDs for delete
-      expect(croutonStates.value[0].items).toEqual(['prod-1', 'prod-2', 'prod-3'])
+      expect(croutonStates.value[0]!.items).toEqual(['prod-1', 'prod-2', 'prod-3'])
       // No activeItem for delete action
-      expect(croutonStates.value[0].activeItem).toEqual({})
+      expect(croutonStates.value[0]!.activeItem).toEqual({})
     })
 
     it('uses RESTful path for restful fetchStrategy', async () => {
@@ -334,7 +334,7 @@ describe('useCrouton', () => {
 
       await open('update', 'products', ['prod-1'])
 
-      expect(croutonStates.value[0].activeItem).toEqual({ id: 'prod-1', name: 'Product 1' })
+      expect(croutonStates.value[0]!.activeItem).toEqual({ id: 'prod-1', name: 'Product 1' })
     })
 
     it('shows toast on fetch error', async () => {
@@ -374,10 +374,10 @@ describe('useCrouton', () => {
       await open('create', 'products')
       await open('update', 'posts', ['post-1'])
 
-      expect(croutonStates.value[0].action).toBe('create')
-      expect(croutonStates.value[0].collection).toBe('products')
-      expect(croutonStates.value[1].action).toBe('update')
-      expect(croutonStates.value[1].collection).toBe('posts')
+      expect(croutonStates.value[0]!.action).toBe('create')
+      expect(croutonStates.value[0]!.collection).toBe('products')
+      expect(croutonStates.value[1]!.action).toBe('update')
+      expect(croutonStates.value[1]!.collection).toBe('posts')
     })
   })
 
@@ -386,10 +386,10 @@ describe('useCrouton', () => {
       const { open, close, croutonStates } = useCrouton()
 
       await open('create', 'products')
-      expect(croutonStates.value[0].isOpen).toBe(true)
+      expect(croutonStates.value[0]!.isOpen).toBe(true)
 
       close()
-      expect(croutonStates.value[0].isOpen).toBe(false)
+      expect(croutonStates.value[0]!.isOpen).toBe(false)
     })
 
     it('closes specific state by id', async () => {
@@ -398,12 +398,12 @@ describe('useCrouton', () => {
       await open('create', 'products')
       await open('create', 'posts')
 
-      const firstStateId = croutonStates.value[0].id
+      const firstStateId = croutonStates.value[0]!.id
 
       close(firstStateId)
 
-      expect(croutonStates.value[0].isOpen).toBe(false)
-      expect(croutonStates.value[1].isOpen).toBe(true)
+      expect(croutonStates.value[0]!.isOpen).toBe(false)
+      expect(croutonStates.value[1]!.isOpen).toBe(true)
     })
   })
 
@@ -414,11 +414,11 @@ describe('useCrouton', () => {
       await open('create', 'products')
       await open('create', 'posts')
 
-      const firstStateId = croutonStates.value[0].id
+      const firstStateId = croutonStates.value[0]!.id
       removeState(firstStateId)
 
       expect(croutonStates.value).toHaveLength(1)
-      expect(croutonStates.value[0].collection).toBe('posts')
+      expect(croutonStates.value[0]!.collection).toBe('posts')
     })
   })
 
@@ -433,8 +433,8 @@ describe('useCrouton', () => {
 
       closeAll()
 
-      expect(croutonStates.value[0].isOpen).toBe(false)
-      expect(croutonStates.value[1].isOpen).toBe(false)
+      expect(croutonStates.value[0]!.isOpen).toBe(false)
+      expect(croutonStates.value[1]!.isOpen).toBe(false)
 
       // After timeout, clears all states
       vi.advanceTimersByTime(300)
@@ -520,7 +520,7 @@ describe('useCrouton', () => {
       expect(loading.value).toBe('notLoading')
 
       // Manually set loading state to test computed
-      croutonStates.value[0].loading = 'create_send'
+      croutonStates.value[0]!.loading = 'create_send'
       expect(loading.value).toBe('create_send')
     })
 

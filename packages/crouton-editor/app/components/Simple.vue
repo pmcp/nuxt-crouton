@@ -84,8 +84,8 @@ async function triggerTranslation() {
   if (!editorInstance.value || !props.translationContext) return
 
   // Check if editor has TranslationAI extension
-  if (editorInstance.value.commands.triggerTranslationSuggestion) {
-    editorInstance.value.commands.triggerTranslationSuggestion()
+  if ((editorInstance.value.commands as any).triggerTranslationSuggestion) {
+    (editorInstance.value.commands as any).triggerTranslationSuggestion()
   } else {
     // Fallback: Call API directly for editors without the extension
     await translateSelectedText()
@@ -380,8 +380,8 @@ const bubbleToolbarItems: EditorToolbarItem[][] = [
       root: 'h-full flex flex-col',
       content: 'flex-1 overflow-auto prose prose-sm dark:prose-invert max-w-none p-4'
     }"
-    @create="handleEditorCreate"
-    @update="$emit('update', $event)"
+    @create="handleEditorCreate as any"
+    @update="($emit as any)('update', $event)"
   >
     <!-- Fixed toolbar at top -->
     <UEditorToolbar

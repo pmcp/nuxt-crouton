@@ -23,11 +23,12 @@ import { getAdapter } from '../../../adapters'
 import { processDiscussion } from '../../../services/processor'
 import type { ProcessingResult } from '../../../services/processor'
 import { verifySlackSignature } from '../../../utils/webhookSecurity'
+import { logger } from '../../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   logger.debug('[Slack Webhook] ===== REQUEST RECEIVED =====')
-  logger.debug('[Slack Webhook] Method:', event.method)
-  logger.debug('[Slack Webhook] Path:', event.path)
+  logger.debug('[Slack Webhook] Method', { method: event.method })
+  logger.debug('[Slack Webhook] Path', { path: event.path })
 
   try {
     // Read raw body first for signature verification
@@ -41,14 +42,14 @@ export default defineEventHandler(async (event) => {
       const headers = getHeaders(event)
       if (!verifySlackSignature(rawBody, headers, signingSecret)) {
         logger.warn('[Slack Webhook] Invalid signature — request rejected')
-        throw createError({ statusCode: 401, statusMessage: 'Invalid Slack signature' })
+        throw createError({ status: 401, statusText: 'Invalid Slack signature' })
       }
       logger.debug('[Slack Webhook] Signature verified')
     }
     else {
       logger.warn('[Slack Webhook] SLACK_SIGNING_SECRET not configured — skipping signature verification')
     }
-    logger.debug('[Slack Webhook] Payload type:', body?.type)
+    logger.debug('[Slack Webhook] Payload type', { type: body?.type })
 
     // ============================================================================
     // HANDLE URL VERIFICATION CHALLENGE
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
     // VALIDATE EVENT PAYLOAD
     // ============================================================================
     if (!body || body.type !== 'event_callback') {
-      logger.debug('[Slack Webhook] Ignoring non-event payload:', body?.type)
+      logger.debug('[Slack Webhook] Ignoring non-event payload', { type: body?.type })
       return {
         success: true,
         message: 'Non-event payload ignored',
@@ -71,13 +72,13 @@ export default defineEventHandler(async (event) => {
 
     if (!body.event) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing event in payload',
+        status: 400,
+        statusText: 'Missing event in payload',
       })
     }
 
-    logger.debug('[Slack Webhook] Event type:', body.event.type)
-    logger.debug('[Slack Webhook] Event details:', {
+    logger.debug('[Slack Webhook] Event type', { eventType: body.event.type })
+    logger.debug('[Slack Webhook] Event details', {
       channel: body.event.channel,
       user: body.event.user,
       text: body.event.text?.substring(0, 100),
@@ -93,7 +94,7 @@ export default defineEventHandler(async (event) => {
 
     try {
       parsed = await adapter.parseIncoming(body)
-      logger.debug('[Slack Webhook] Successfully parsed event:', {
+      logger.debug('[Slack Webhook] Successfully parsed event', {
         sourceThreadId: parsed.sourceThreadId,
         teamId: parsed.teamId,
         title: parsed.title,
@@ -102,7 +103,7 @@ export default defineEventHandler(async (event) => {
     } catch (parseError: any) {
       // If it's an unsupported event type (not app_mention), just acknowledge it
       if (parseError.message?.includes('Unsupported event type')) {
-        logger.debug('[Slack Webhook] Ignoring unsupported event type:', body.event.type)
+        logger.debug('[Slack Webhook] Ignoring unsupported event type', { eventType: body.event.type })
         return {
           success: true,
           message: 'Event type not supported',
@@ -111,10 +112,10 @@ export default defineEventHandler(async (event) => {
       }
 
       // Otherwise, it's a real error
-      logger.error('[Slack Webhook] Failed to parse event:', parseError)
+      logger.error('[Slack Webhook] Failed to parse event', parseError)
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Failed to parse event',
+        status: 400,
+        statusText: 'Failed to parse event',
         data: { error: parseError.message },
       })
     }
@@ -122,7 +123,7 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     // EMIT WEBHOOK:RECEIVED TELEMETRY
     // ============================================================================
-    const correlationId = event.context.correlationId
+    const correlationId = (event.context as any).correlationId
     const contentHashRaw = rawBody.length.toString(16) + '-' + (rawBody.charCodeAt(0) || 0).toString(16)
     useNitroApp().hooks.callHook('crouton:operation', {
       type: 'webhook:received',
@@ -142,7 +143,7 @@ export default defineEventHandler(async (event) => {
 
     // Use Cloudflare Workers waitUntil to process in background
     // This allows the webhook to return immediately while processing continues
-    const cfCtx = event.context.cloudflare?.context
+    const cfCtx = (event.context as any).cloudflare?.context
 
     // In dev mode, NuxtHub provides a mock cfCtx that doesn't properly handle errors.
     // Force synchronous processing in dev to see errors properly.
@@ -156,7 +157,7 @@ export default defineEventHandler(async (event) => {
       cfCtx.waitUntil(
         processDiscussion(parsed, { correlationId })
           .then((result) => {
-            logger.debug('[Slack Webhook] Background processing completed:', {
+            logger.debug('[Slack Webhook] Background processing completed', {
               discussionId: result.discussionId,
               taskCount: result.notionTasks.length,
               processingTime: `${result.processingTime}ms`,
@@ -164,7 +165,7 @@ export default defineEventHandler(async (event) => {
             })
           })
           .catch((error) => {
-            logger.error('[Slack Webhook] Background processing failed:', error)
+            logger.error('[Slack Webhook] Background processing failed', error)
             // Error is already logged in processor, job status updated to failed
           })
       )
@@ -182,24 +183,24 @@ export default defineEventHandler(async (event) => {
       let result: ProcessingResult
 
       try {
-        result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
+        result = await processDiscussion(parsed, { correlationId: (event.context as any).correlationId })
 
-        logger.debug('[Slack Webhook] Discussion processed successfully:', {
+        logger.debug('[Slack Webhook] Discussion processed successfully', {
           discussionId: result.discussionId,
           taskCount: result.notionTasks.length,
           processingTime: `${result.processingTime}ms`,
           isMultiTask: result.isMultiTask,
         })
       } catch (processingError: any) {
-        logger.error('[Slack Webhook] Processing failed:', processingError)
+        logger.error('[Slack Webhook] Processing failed', processingError)
 
         // Check if error is retryable
         const isRetryable = processingError.retryable === true
-        const statusCode = isRetryable ? 503 : 422
+        const errorStatus = isRetryable ? 503 : 422
 
         throw createError({
-          statusCode,
-          statusMessage: 'Processing failed',
+          status: errorStatus,
+          statusText: 'Processing failed',
           data: {
             error: processingError.message,
             stage: processingError.stage,
@@ -231,12 +232,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Otherwise, wrap it in a generic 500 error
-    logger.error('[Slack Webhook] Unexpected error:', error)
-    logger.error('[Slack Webhook] Stack:', (error as Error).stack)
+    logger.error('[Slack Webhook] Unexpected error', error, { stack: (error as Error).stack })
 
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
+      status: 500,
+      statusText: 'Internal server error',
       data: { error: (error as Error).message },
     })
   }

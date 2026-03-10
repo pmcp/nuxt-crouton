@@ -21,7 +21,7 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
   } = useFetch<Booking[]>(
     () => currentTeam.value?.id
       ? `/api/crouton-bookings/teams/${currentTeam.value.id}/${bookingsEndpoint}`
-      : null,
+      : null as any,
     {
       key: `crouton-booking-sidebar-${bookingsEndpoint}`,
       default: () => [],
@@ -38,7 +38,7 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
   } = useFetch<SettingsData[]>(
     () => currentTeam.value?.id
       ? `/api/teams/${currentTeam.value.id}/bookings-settings`
-      : null,
+      : null as any,
     {
       key: `crouton-booking-list-settings-${scope}`,
       default: () => [],
@@ -55,7 +55,7 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
   } = useFetch<LocationData[]>(
     () => currentTeam.value?.id
       ? `/api/crouton-bookings/teams/${currentTeam.value.id}/customer-locations`
-      : null,
+      : null as any,
     {
       key: `crouton-booking-list-locations-${scope}`,
       default: () => [],
@@ -72,14 +72,14 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
     const { data, refresh: refreshAll } = useFetch<Booking[]>(
       () => currentTeam.value?.id
         ? `/api/crouton-bookings/teams/${currentTeam.value.id}/admin-bookings`
-        : null,
+        : null as any,
       {
         key: 'crouton-booking-calendar-all',
         default: () => [],
         server: false,
       },
     )
-    calendarBookingsData = data
+    calendarBookingsData = data as any
     refreshCalendarBookings = refreshAll
   }
 
@@ -91,18 +91,18 @@ export function useBookingsList(options?: { scope?: 'personal' | 'team' }) {
 
   // Get first settings record (there should only be one per team)
   const settings = computed<SettingsData | null>(() => {
-    return settingsData.value?.[0] || null
+    return (settingsData.value as any)?.[0] || null
   })
 
   // Locations list
   const locations = computed<LocationData[]>(() => {
-    return locationsData.value || []
+    return (locationsData.value as LocationData[]) || []
   })
 
   // Sort bookings by date (ascending)
   const bookings = computed<Booking[]>(() => {
     if (!bookingsData.value) return []
-    return [...bookingsData.value].sort((a, b) => {
+    return [...(bookingsData.value as Booking[])].sort((a, b) => {
       const dateA = new Date(a.date).getTime()
       const dateB = new Date(b.date).getTime()
       return dateA - dateB

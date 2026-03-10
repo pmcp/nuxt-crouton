@@ -1,4 +1,4 @@
-import type { CroutonPageType } from '@fyit/crouton/app/types/app'
+import type { CroutonPageType } from '@fyit/crouton-core/app/types/app'
 
 /**
  * Aggregated page type with app context.

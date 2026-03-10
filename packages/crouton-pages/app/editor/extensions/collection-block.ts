@@ -120,7 +120,7 @@ export const CollectionBlock = Node.create<CollectionBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(CollectionBlockView)
+    return VueNodeViewRenderer(CollectionBlockView as any)
   }
 })
 

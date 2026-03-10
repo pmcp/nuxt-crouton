@@ -25,7 +25,14 @@ onMounted(async () => {
 })
 
 // Build select items from members
-const memberItems = computed(() => {
+interface MemberSelectItem {
+  label: string
+  value: string
+  avatar?: string
+  email: string
+}
+
+const memberItems = computed<MemberSelectItem[]>(() => {
   return members.value
     .filter(m => 'user' in m && m.user)
     .map((m) => {
@@ -65,7 +72,7 @@ function onMemberSelected(userId: string) {
   <div class="space-y-2">
     <USelectMenu
       :model-value="modelValue"
-      :items="memberItems"
+      :items="(memberItems as any[])"
       value-key="value"
       :loading="loading"
       placeholder="Select a team member..."
@@ -85,16 +92,16 @@ function onMemberSelected(userId: string) {
           class="size-4 text-muted"
         />
       </template>
-      <template #item="{ item }">
+      <template #item="{ item: rawItem }">
         <div class="flex items-center gap-2">
           <UAvatar
-            :src="item.avatar"
-            :text="(item.label || '?').slice(0, 2).toUpperCase()"
+            :src="(rawItem as any)?.avatar"
+            :text="((rawItem as any)?.label || '?').slice(0, 2).toUpperCase()"
             size="2xs"
           />
           <div class="min-w-0">
-            <p class="text-sm font-medium truncate">{{ item.label }}</p>
-            <p v-if="item.email !== item.label" class="text-xs text-muted truncate">{{ item.email }}</p>
+            <p class="text-sm font-medium truncate">{{ (rawItem as any)?.label }}</p>
+            <p v-if="(rawItem as any)?.email !== (rawItem as any)?.label" class="text-xs text-muted truncate">{{ (rawItem as any)?.email }}</p>
           </div>
         </div>
       </template>

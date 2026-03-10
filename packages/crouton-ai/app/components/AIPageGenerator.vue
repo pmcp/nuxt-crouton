@@ -167,7 +167,7 @@ const generateLabel = computed(() => {
             @keydown="handleKeydown"
           />
           <p class="text-xs text-muted">
-            <UKbd size="xs">⌘ Enter</UKbd> to generate
+            <UKbd :size="('xs' as any)">⌘ Enter</UKbd> to generate
           </p>
         </div>
 

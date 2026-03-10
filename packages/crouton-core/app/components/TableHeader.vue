@@ -57,6 +57,7 @@ const props = withDefaults(defineProps<{
 // Theme variant support
 const getVariant = (base: string) => {
   try {
+    // @ts-expect-error useThemeSwitcher is from optional crouton-themes package
     const switcher = useThemeSwitcher?.()
     return switcher?.getVariant?.(base) ?? base
   } catch {

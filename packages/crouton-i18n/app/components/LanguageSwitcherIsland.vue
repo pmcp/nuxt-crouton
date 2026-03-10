@@ -32,7 +32,7 @@ const currentLocaleCode = computed(() => {
 })
 
 const handleLocaleChange = async (code: string) => {
-  await setLocale(code)
+  await setLocale(code as any)
   // Persist to database if user is authenticated
   if (user.value) {
     updateUserLocale(code)

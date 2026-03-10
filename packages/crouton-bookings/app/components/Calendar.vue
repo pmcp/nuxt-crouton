@@ -519,7 +519,7 @@ const monthCellHeight = computed(() => {
                 </div>
 
                 <!-- Slot mode: per-slot breakdown -->
-                <div v-else-if="indicator.slotStatuses.length > 1 || indicator.slotStatuses[0]?.capacity > 1" class="mt-2 flex flex-col gap-0.5">
+                <div v-else-if="indicator.slotStatuses.length > 1 || (indicator.slotStatuses[0]?.capacity ?? 0) > 1" class="mt-2 flex flex-col gap-0.5">
                   <div
                     v-for="slot in indicator.slotStatuses"
                     :key="slot.id"
@@ -534,7 +534,7 @@ const monthCellHeight = computed(() => {
 
                 <!-- Simple count for single all-day slot with capacity 1 -->
                 <p v-else class="text-xs text-dimmed mt-1">
-                  {{ indicator.bookings.length > 0 ? t('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
+                  {{ indicator.bookings.length > 0 ? (t as any)('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
                 </p>
               </div>
             </template>
@@ -546,7 +546,7 @@ const monthCellHeight = computed(() => {
     <!-- Month View -->
     <div v-else class="w-full">
       <UCalendar
-        v-model="monthFocusDate"
+        v-model="(monthFocusDate as any)"
         size="sm"
         :week-starts-on="1"
         :ui="{
@@ -635,7 +635,7 @@ const monthCellHeight = computed(() => {
                     </div>
 
                     <!-- Slot mode: per-slot breakdown -->
-                    <div v-else-if="indicator.slotStatuses.length > 1 || indicator.slotStatuses[0]?.capacity > 1" class="mt-2 flex flex-col gap-0.5">
+                    <div v-else-if="indicator.slotStatuses.length > 1 || (indicator.slotStatuses[0]?.capacity ?? 0) > 1" class="mt-2 flex flex-col gap-0.5">
                       <div
                         v-for="slot in indicator.slotStatuses"
                         :key="slot.id"
@@ -650,7 +650,7 @@ const monthCellHeight = computed(() => {
 
                     <!-- Simple count for single all-day slot with capacity 1 -->
                     <p v-else class="text-xs text-dimmed mt-1">
-                      {{ indicator.bookings.length > 0 ? t('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
+                      {{ indicator.bookings.length > 0 ? (t as any)('bookings.calendar.bookingCount', { count: indicator.bookings.length }, indicator.bookings.length) : t('bookings.calendar.noBookings') }}
                     </p>
                   </div>
                 </template>

@@ -16,12 +16,12 @@ export async function getTeamBySlugForTranslations(slugOrId: string) {
   const team = await db
     .select()
     .from(organization)
-    .where(eq(organization.slug, slugOrId))
+    .where(eq(organization.slug as any, slugOrId))
     .get()
     ?? await db
       .select()
       .from(organization)
-      .where(eq(organization.id, slugOrId))
+      .where(eq(organization.id as any, slugOrId))
       .get()
 
   if (!team) {
@@ -85,7 +85,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
   }
 
   // Combine system translations with team overrides
-  const enhancedTranslations = systemTranslations.map((systemTranslation) => {
+  const enhancedTranslations = systemTranslations.map((systemTranslation: any) => {
     const key = `${systemTranslation.keyPath}:${systemTranslation.namespace}`
     const override = overrideMap.get(key)
 
@@ -106,7 +106,7 @@ export async function getSystemTranslationsWithTeamOverrides(teamId: string, loc
 
   // Filter by locale if provided
   if (locale) {
-    return enhancedTranslations.filter(t =>
+    return enhancedTranslations.filter((t: any) =>
       t.systemValues && typeof t.systemValues === 'object' && t.systemValues !== null && locale in t.systemValues
     )
   }

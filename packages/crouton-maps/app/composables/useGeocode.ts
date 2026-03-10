@@ -15,6 +15,17 @@
  * const result = await reverseGeocode([-122.0840575, 37.4220656])
  */
 
+interface MapboxFeature {
+  center: [number, number]
+  place_name: string
+  text: string
+  context?: Array<{ id: string; text: string }>
+}
+
+interface MapboxGeocodeResponse {
+  features: MapboxFeature[]
+}
+
 export interface GeocodeResult {
   coordinates: [number, number]
   address: string
@@ -53,7 +64,7 @@ export function useGeocode() {
         return null
       }
 
-      const feature = response.features[0]
+      const feature = response.features[0]!
       const [lng, lat] = feature.center
 
       return {
@@ -95,7 +106,7 @@ export function useGeocode() {
         return null
       }
 
-      const feature = response.features[0]
+      const feature = response.features[0]!
 
       return {
         coordinates,

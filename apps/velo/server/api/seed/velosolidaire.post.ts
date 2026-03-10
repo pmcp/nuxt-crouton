@@ -278,7 +278,7 @@ export default defineEventHandler(async (event) => {
     const orgSlug = 'velo-solidaire'
 
     // Check if org already exists
-    const existingOrg = await (db as any).select().from(organization).where(eq(organization.slug, orgSlug)).limit(1)
+    const existingOrg = await (db as any).select().from(organization).where(eq(organization.slug as any, orgSlug)).limit(1)
     if (existingOrg.length > 0) {
       throw createError({ status: 409, statusText: 'Organization velo-solidaire already exists. Clear it first or use a different slug.' })
     }
@@ -325,7 +325,7 @@ export default defineEventHandler(async (event) => {
       const role = row.role?.trim().toLowerCase() || 'user'
 
       // Check if user already exists in DB
-      const existingUser = await (db as any).select().from(user).where(eq(user.email, email)).limit(1)
+      const existingUser = await (db as any).select().from(user).where(eq(user.email as any, email)).limit(1)
 
       let userId: string
       if (existingUser.length > 0) {
@@ -372,7 +372,7 @@ export default defineEventHandler(async (event) => {
       const needsMembership = role === 'admin' || email === 'hi@maartenlauwaert.eu' || bookingEmails.has(email)
       if (needsMembership) {
         const existingMember = await (db as any).select().from(member)
-          .where(eq(member.userId, userId))
+          .where(eq(member.userId as any, userId))
           .limit(100)
         const alreadyMember = existingMember.some((m: any) => m.organizationId === orgId)
 

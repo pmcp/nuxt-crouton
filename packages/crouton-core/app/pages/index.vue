@@ -3,7 +3,7 @@
 const auth = tryUseAuth()
 const loggedIn = computed(() => auth?.loggedIn?.value ?? false)
 const user = computed(() => auth?.user?.value ?? null)
-const isSuperAdmin = computed(() => user.value?.superAdmin === true)
+const isSuperAdmin = computed(() => (user.value as any)?.superAdmin === true)
 
 function tryUseAuth() {
   try {

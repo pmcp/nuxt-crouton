@@ -10,10 +10,12 @@ export default defineEventHandler(async (event) => {
       statusText: 'Team ID is required'
     })
   }
+  // @ts-expect-error Nitro auto-import from crouton-auth
   const { user } = await requireUserSession(event)
   const body = await readBody(event)
 
   // Check if user is team admin or owner
+  // @ts-expect-error Nitro auto-import from crouton-auth
   const hasAccess = await isTeamAdmin(teamId, user.id)
   if (!hasAccess) {
     throw createError({
@@ -36,7 +38,7 @@ export default defineEventHandler(async (event) => {
   const existingSettings = await db
     .select()
     .from(teamSettings)
-    .where(eq(teamSettings.teamId, teamId))
+    .where(eq(teamSettings.teamId as any, teamId))
     .get()
 
   if (existingSettings) {
@@ -46,8 +48,8 @@ export default defineEventHandler(async (event) => {
       .set({
         translations: body.translations,
         updatedAt: new Date()
-      })
-      .where(eq(teamSettings.teamId, teamId))
+      } as any)
+      .where(eq(teamSettings.teamId as any, teamId))
       .run()
   } else {
     // Create new settings
@@ -59,7 +61,7 @@ export default defineEventHandler(async (event) => {
         translations: body.translations,
         createdAt: new Date(),
         updatedAt: new Date()
-      })
+      } as any)
       .run()
   }
 

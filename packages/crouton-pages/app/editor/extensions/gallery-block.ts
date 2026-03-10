@@ -104,7 +104,7 @@ export const GalleryBlock = Node.create<GalleryBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(GalleryBlockView)
+    return VueNodeViewRenderer(GalleryBlockView as any)
   }
 })
 

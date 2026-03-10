@@ -97,8 +97,11 @@
         name="values"
         required
       >
+        <!-- @ts-expect-error dynamic props -->
         <CroutonI18nInput
-          v-model="state.values"
+          :model-value="state.values as any"
+          :fields="Object.keys((state.values as any) || {})"
+          @update:model-value="(v: any) => state.values = v"
         />
       </UFormField>
 
@@ -148,7 +151,8 @@ const props = defineProps<{
   collection: string
 }>()
 
-const { send, close } = useCrouton()
+const { close, ...crouton } = useCrouton()
+const send = (crouton as any).send
 
 // Form state
 const state = ref({

@@ -33,7 +33,6 @@ export function useCompletion(options: AICompletionOptions = {}) {
   // Try to get team context if nuxt-crouton is installed (provides useTeamContext)
   let teamId: string | undefined
   try {
-    // @ts-expect-error - useTeamContext may not be available if nuxt-crouton isn't installed
     const { getTeamId } = useTeamContext()
     teamId = getTeamId()
   } catch {

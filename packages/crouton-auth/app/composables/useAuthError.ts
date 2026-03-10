@@ -74,8 +74,7 @@ export function useAuthError(options: UseAuthErrorOptions = {}) {
       notify.error('Error', {
         description: authError.toUserMessage(),
         icon: 'i-lucide-circle-alert',
-        duration: toastOptions?.duration ?? toastDuration
-      })
+      } as any)
     }
 
     // Call custom error handler

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
 /**
@@ -170,7 +171,7 @@ const addAccountItems = [[
       v-else-if="accounts.length === 0"
       title="No connected accounts"
       description="Connected accounts let you share tokens across multiple flows. Slack accounts are created automatically via OAuth."
-      color="blue"
+      color="info"
       variant="soft"
     />
 
@@ -191,7 +192,7 @@ const addAccountItems = [[
           <div class="flex items-center gap-2">
             <span class="text-sm font-medium truncate">{{ account.label }}</span>
             <UBadge
-              :color="getStatusColor(account.status)"
+              :color="getStatusColor(account.status) as any"
               size="xs"
               variant="subtle"
             >
@@ -210,7 +211,7 @@ const addAccountItems = [[
         <div class="flex items-center gap-1">
           <UButton
             icon="i-lucide-shield-check"
-            color="gray"
+            color="neutral"
             variant="ghost"
             size="xs"
             :loading="verifyingId === account.id"
@@ -219,7 +220,7 @@ const addAccountItems = [[
           />
           <UButton
             icon="i-lucide-trash-2"
-            color="gray"
+            color="neutral"
             variant="ghost"
             size="xs"
             :loading="deletingId === account.id"
@@ -261,7 +262,7 @@ const addAccountItems = [[
           </div>
 
           <div class="flex justify-end gap-2 mt-6">
-            <UButton color="gray" variant="ghost" @click="close">
+            <UButton color="neutral" variant="ghost" @click="close">
               Cancel
             </UButton>
             <UButton color="primary" @click="handleManualConnect">

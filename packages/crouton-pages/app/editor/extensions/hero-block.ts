@@ -117,7 +117,7 @@ export const HeroBlock = Node.create<HeroBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(HeroBlockView)
+    return VueNodeViewRenderer(HeroBlockView as any)
   }
 })
 

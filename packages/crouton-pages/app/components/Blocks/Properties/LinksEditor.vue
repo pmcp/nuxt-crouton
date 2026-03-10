@@ -69,7 +69,7 @@ function removeLink(index: number) {
 
 // Update a link
 function updateLink(index: number, field: keyof BlockLink, value: any) {
-  links.value[index] = { ...links.value[index], [field]: value }
+  links.value[index] = { ...links.value[index], [field]: value } as BlockLink
   emitChange()
 }
 
@@ -78,8 +78,8 @@ function moveLink(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= links.value.length) return
 
-  const temp = links.value[index]
-  links.value[index] = links.value[newIndex]
+  const temp = links.value[index]!
+  links.value[index] = links.value[newIndex]!
   links.value[newIndex] = temp
   emitChange()
 }
@@ -95,7 +95,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 }) }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.links.buttonN', { n: index + 1 } as any) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -173,7 +173,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

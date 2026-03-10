@@ -118,12 +118,10 @@ const action = computed<'create' | 'update'>(() =>
 // Get current user for collab
 const getCurrentUser = () => {
   try {
-    // @ts-expect-error - useSession may not exist if auth package not installed
     if (typeof useSession === 'function') {
-      // @ts-expect-error - conditional call
       const { user: sessionUser } = useSession()
       if (sessionUser?.value) {
-        const u = sessionUser.value as Record<string, unknown>
+        const u = sessionUser.value as unknown as Record<string, unknown>
         return {
           name: String(u.name || u.email || 'Anonymous'),
           color: undefined
@@ -193,7 +191,7 @@ const defaultValue = {
 }
 
 // Form state
-const state = ref<typeof defaultValue & { id?: string | null }>({ ...defaultValue })
+const state = ref<Record<string, any> & { id?: string | null }>({ ...defaultValue })
 
 // Sync title/slug to ghost page in sidebar during creation
 const { updateGhost } = useGhostPage()
@@ -345,7 +343,7 @@ watch(
 )
 
 // Computed values
-const selectedPageType = computed(() => getPageType(state.value.pageType))
+const selectedPageType = computed(() => getPageType(state.value.pageType) as any)
 const isRegularPage = computed(() => {
   const pt = state.value.pageType
   return !pt || pt === 'regular' || pt === 'core:regular' || pt === 'pages:regular' || pt.endsWith(':regular')
@@ -360,8 +358,8 @@ const isBinderPage = computed(() => selectedPageType.value?.fullId === 'pages:co
 
 // Which collection the binder wraps (stored in config.collection)
 const binderCollection = computed({
-  get: () => (state.value.config as any)?.collection as string | null || null,
-  set: (val: string | null) => {
+  get: () => (state.value.config as any)?.collection as string | undefined ?? undefined,
+  set: (val: string | undefined) => {
     state.value.config = { ...state.value.config, collection: val }
   }
 })
@@ -488,7 +486,7 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
 
 // Page type options
 const pageTypeDropdownItems = computed(() => [
-  pageTypes.value.map(type => ({
+  pageTypes.value.map((type: any) => ({
     label: type.name,
     icon: type.icon,
     onSelect: () => { state.value.pageType = type.fullId }
@@ -551,7 +549,7 @@ const parentOptions = computed(() => {
     const descendants = new Set<string>()
     const findDescendants = (parentId: string) => {
       for (const page of pages) {
-        if (page.parentId === parentId) {
+        if ((page as any).parentId === parentId) {
           descendants.add(page.id)
           findDescendants(page.id)
         }
@@ -588,7 +586,7 @@ const layoutManuallyChanged = ref(false)
 // Auto-set layout based on pageType
 watch(() => state.value.pageType, (newPageType) => {
   if (action.value === 'create' && !layoutManuallyChanged.value) {
-    const pageType = getPageType(newPageType)
+    const pageType = getPageType(newPageType) as any
     state.value.layout = pageType?.preferredLayout || 'default'
   }
 }, { immediate: true })
@@ -652,12 +650,12 @@ async function handleSubmit() {
       ...state.value,
       title: primary.title || state.value.title,
       slug: primary.slug || state.value.slug,
-      seoTitle: primary.seoTitle || '',
-      seoDescription: primary.seoDescription || '',
+      seoTitle: (primary as any).seoTitle || '',
+      seoDescription: (primary as any).seoDescription || '',
       content: rawContent && typeof rawContent === 'object' ? JSON.stringify(rawContent) : rawContent,
       translations,
       config: !isRegularPage.value ? state.value.config : null
-    }
+    } as any
 
     let savedPage: any
 
@@ -701,7 +699,7 @@ const translatableFields = computed(() => {
 })
 
 // Field components
-const fieldComponents = computed(() => {
+const fieldComponents = computed((): Record<string, string> => {
   if (isRegularPage.value) {
     return { content: 'CroutonPagesEditorBlockEditorWithPreview' }
   }
@@ -739,7 +737,7 @@ function handleAssetSelect(asset: Record<string, any>) {
 }
 
 // Preview locale (for language selector in preview panel)
-const previewLocale = ref(locale.value)
+const previewLocale = ref<string>(locale.value)
 
 // Reset preview locale to current editor locale when preview opens
 watch(showPreview, (open) => {

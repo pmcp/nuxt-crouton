@@ -47,7 +47,7 @@ const mode = ref<'view' | 'create' | 'edit'>('view')
 const editorSessionKey = ref(0)
 
 // Data fetching
-const { items, pending, refresh } = await useCollectionQuery<any>(props.collection)
+const { items, pending, refresh } = await useCollectionQuery(props.collection) as any
 
 // Initialize from URL query
 onMounted(() => {

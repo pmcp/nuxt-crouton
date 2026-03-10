@@ -15,7 +15,7 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
   /** Button color */
-  color?: string
+  color?: 'error' | 'info' | 'success' | 'warning' | 'primary' | 'secondary' | 'neutral'
 
   /** Disable the button */
   disabled?: boolean
@@ -98,9 +98,9 @@ const isSingleFormat = computed(() => props.formats.length === 1)
     :color="color"
     :disabled="disabled"
     icon="i-lucide-upload"
-    @click="triggerFileSelect(formats[0])"
+    @click="triggerFileSelect(formats[0]!)"
   >
-    <slot>{{ tString('common.import') || 'Import' }} {{ formats[0].toUpperCase() }}</slot>
+    <slot>{{ tString('common.import') || 'Import' }} {{ formats[0]!.toUpperCase() }}</slot>
   </UButton>
 
   <!-- Multiple formats: dropdown -->

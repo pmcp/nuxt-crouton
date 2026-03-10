@@ -43,7 +43,7 @@ function removeStat(index: number) {
 
 function updateStat(index: number, field: keyof StatItem, value: any) {
   const parsed = field === 'value' ? Number(value) || 0 : value
-  stats.value[index] = { ...stats.value[index], [field]: parsed }
+  stats.value[index] = { ...stats.value[index], [field]: parsed } as StatItem
   emitChange()
 }
 
@@ -51,8 +51,8 @@ function moveStat(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= stats.value.length) return
 
-  const temp = stats.value[index]
-  stats.value[index] = stats.value[newIndex]
+  const temp = stats.value[index]!
+  stats.value[index] = stats.value[newIndex]!
   stats.value[newIndex] = temp
   emitChange()
 }
@@ -140,7 +140,7 @@ function moveStat(index: number, direction: 'up' | 'down') {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

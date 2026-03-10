@@ -11,7 +11,7 @@ import type { BlockMenuItem } from '../../types/blocks'
 import { getBlockMenuItems, getBlocksByCategory } from '../../utils/block-registry'
 
 export interface BlockCommandsOptions {
-  suggestion: Partial<typeof Suggestion['options']>
+  suggestion: Record<string, any>
 }
 
 export interface BlockCommandItem extends BlockMenuItem {
@@ -62,7 +62,7 @@ export function getBlockCommandsByCategory(query: string): Record<string, BlockC
     if (!acc[item.category]) {
       acc[item.category] = []
     }
-    acc[item.category].push(item)
+    acc[item.category]!.push(item)
     return acc
   }, {} as Record<string, BlockCommandItem[]>)
 }
@@ -76,8 +76,8 @@ export const BlockCommands = Extension.create<BlockCommandsOptions>({
         char: '/',
         allowSpaces: false,
         startOfLine: true,
-        items: ({ query }) => getBlockCommandItems(query),
-        command: ({ editor, range, props }) => {
+        items: ({ query }: { query: string }) => getBlockCommandItems(query),
+        command: ({ editor, range, props }: { editor: any; range: any; props: any }) => {
           props.command({ editor, range })
         }
       }
@@ -89,7 +89,7 @@ export const BlockCommands = Extension.create<BlockCommandsOptions>({
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion
-      })
+      } as any)
     ]
   }
 })

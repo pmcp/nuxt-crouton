@@ -88,7 +88,7 @@ function verifyNotionSignature(
     )
   }
   catch (error) {
-    logger.error('[Notion Webhook] Error verifying signature:', error)
+    logger.error('[Notion Webhook] Error verifying signature', error)
     return false
   }
 }
@@ -160,16 +160,14 @@ function checkRateLimit(workspaceId: string): boolean {
   return true
 }
 
-export default defineEventHandler(async (event) => {
-  logger.debug('[Notion Webhook] ===== REQUEST RECEIVED =====')
-  logger.debug('[Notion Webhook] Method:', event.method)
-  logger.debug('[Notion Webhook] Path:', event.path)
+export default defineEventHandler(async (event: any) => {
+  logger.debug('[Notion Webhook] REQUEST RECEIVED', { method: event.method, path: event.path })
 
   try {
     // ============================================================================
     // READ RAW BODY FOR SIGNATURE VERIFICATION
     // ============================================================================
-    const rawBody = await readRawBody(event)
+    const rawBody = await readRawBody(event) as string | undefined
 
     if (!rawBody) {
       logger.warn('[Notion Webhook] Empty request body')
@@ -193,10 +191,12 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    logger.info('[Notion Webhook] Payload type:', body?.type)
-    logger.info('[Notion Webhook] Payload keys:', Object.keys(body || {}))
-    logger.info('[Notion Webhook] body.entity:', JSON.stringify(body?.entity, null, 2))
-    logger.info('[Notion Webhook] body.data:', JSON.stringify(body?.data, null, 2))
+    logger.info('[Notion Webhook] Payload received', {
+      type: body?.type,
+      keys: Object.keys(body || {}),
+      entity: body?.entity,
+      data: body?.data,
+    })
 
     // ============================================================================
     // HANDLE URL VERIFICATION CHALLENGE
@@ -204,8 +204,7 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     if (body && body.verification_token && !body.type) {
       logger.info('[Notion Webhook] URL verification challenge received')
-      logger.info('[Notion Webhook] ✅ VERIFICATION TOKEN:', body.verification_token)
-      logger.info('[Notion Webhook] Copy this token and paste it into Notion\'s verification form')
+      logger.info('[Notion Webhook] VERIFICATION TOKEN received', { token: body.verification_token })
 
       // Echo back the verification token
       return {
@@ -215,8 +214,7 @@ export default defineEventHandler(async (event) => {
 
     // Also handle if Notion adds a type field in the future
     if (body && body.type === 'url_verification' && body.verification_token) {
-      logger.info('[Notion Webhook] URL verification challenge received (with type)')
-      logger.info('[Notion Webhook] ✅ VERIFICATION TOKEN:', body.verification_token)
+      logger.info('[Notion Webhook] URL verification challenge received (with type)', { token: body.verification_token })
 
       return {
         verification_token: body.verification_token,
@@ -226,13 +224,13 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     // VERIFY WEBHOOK SIGNATURE
     // ============================================================================
-    const config = useRuntimeConfig(event)
+    const config = useRuntimeConfig(event) as any
     const signingSecret = config.notionWebhookSecret as string | undefined
 
     // Only verify signature if signing secret is configured
     if (signingSecret) {
-      const signature = getHeader(event, 'x-notion-signature')
-        || getHeader(event, 'X-Notion-Signature')
+      const signature = getHeader(event, 'x-notion-signature') as string | undefined
+        || getHeader(event, 'X-Notion-Signature') as string | undefined
 
       if (!signature) {
         logger.warn('[Notion Webhook] Missing X-Notion-Signature header')
@@ -284,7 +282,7 @@ export default defineEventHandler(async (event) => {
     // VALIDATE EVENT TYPE
     // ============================================================================
     if (body.type !== 'comment.created') {
-      logger.debug('[Notion Webhook] Ignoring non-comment event:', body.type)
+      logger.debug('[Notion Webhook] Ignoring non-comment event', { type: body.type })
       return {
         success: true,
         message: `Event type '${body.type}' ignored (only 'comment.created' is processed)`,
@@ -320,7 +318,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const integrationId = body.integration_id
-    logger.info('[Notion Webhook] Comment event details:', {
+    logger.info('[Notion Webhook] Comment event details', {
       commentId,
       parentId,
       parentType,
@@ -413,8 +411,8 @@ export default defineEventHandler(async (event) => {
 
       if (inputsWithTokens.length === 1) {
         // Unambiguous - only one option
-        matchedInput = inputsWithTokens[0].input
-        matchedFlow = inputsWithTokens[0].flow
+        matchedInput = inputsWithTokens[0]!.input
+        matchedFlow = inputsWithTokens[0]!.flow
         logger.info('[Notion Webhook] Matched input by unambiguous fallback (single input with token)', {
           inputId: matchedInput.id,
           inputSourceType: matchedInput.sourceType,
@@ -440,10 +438,10 @@ export default defineEventHandler(async (event) => {
             integrationId,
             inputCount: inputsWithTokens.length,
             inputIds: inputsWithTokens.map(i => i.input.id),
-            selectedInput: inputsWithTokens[0].input.id,
+            selectedInput: inputsWithTokens[0]!.input.id,
           })
-          matchedInput = inputsWithTokens[0].input
-          matchedFlow = inputsWithTokens[0].flow
+          matchedInput = inputsWithTokens[0]!.input
+          matchedFlow = inputsWithTokens[0]!.flow
         }
       }
     }
@@ -534,7 +532,7 @@ export default defineEventHandler(async (event) => {
     const triggerKeyword = matchedInput.sourceMetadata?.triggerKeyword || DEFAULT_TRIGGER_KEYWORD
     logger.info('[Notion Webhook] Checking for trigger keyword', {
       triggerKeyword,
-      commentTextPreview: comment.rich_text?.map(r => r.plain_text).join('').substring(0, 100),
+      commentTextPreview: comment.rich_text?.map((r: any) => r.plain_text).join('').substring(0, 100),
     })
     const hasTrigger = checkForTrigger(comment.rich_text, triggerKeyword)
 
@@ -570,7 +568,7 @@ export default defineEventHandler(async (event) => {
 
     let parsed
     try {
-      parsed = await adapter.parseIncoming(body, sourceConfig)
+      parsed = await (adapter as any).parseIncoming(body, sourceConfig)
 
       // Override teamId with the actual team from the matched flow
       // (the adapter returns workspace_id which is not the correct team ID)
@@ -582,7 +580,7 @@ export default defineEventHandler(async (event) => {
         notionWorkspaceId: workspaceId,
       }
 
-      logger.info('[Notion Webhook] Successfully parsed event:', {
+      logger.info('[Notion Webhook] Successfully parsed event', {
         sourceThreadId: parsed.sourceThreadId,
         teamId: parsed.teamId,
         title: parsed.title,
@@ -590,7 +588,7 @@ export default defineEventHandler(async (event) => {
       })
     }
     catch (parseError: any) {
-      logger.error('[Notion Webhook] Failed to parse event:', parseError)
+      logger.error('[Notion Webhook] Failed to parse event', parseError)
       return {
         success: false,
         message: 'Failed to parse event',
@@ -601,7 +599,7 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     // EMIT WEBHOOK:RECEIVED TELEMETRY
     // ============================================================================
-    const notionCorrelationId = event.context.correlationId
+    const notionCorrelationId = (event.context as any).correlationId
     const notionContentHash = rawBody.length.toString(16) + '-' + (rawBody.charCodeAt(0) || 0).toString(16)
     useNitroApp().hooks.callHook('crouton:operation', {
       type: 'webhook:received',
@@ -620,7 +618,7 @@ export default defineEventHandler(async (event) => {
     logger.debug('[Notion Webhook] Starting discussion processing...')
 
     // Use Cloudflare Workers waitUntil to process in background
-    const cfCtx = event.context.cloudflare?.context
+    const cfCtx = (event.context as any).cloudflare?.context
     const isDevMode = import.meta.dev
 
     if (cfCtx && !isDevMode) {
@@ -630,7 +628,7 @@ export default defineEventHandler(async (event) => {
       cfCtx.waitUntil(
         processDiscussion(parsed, { correlationId: notionCorrelationId })
           .then((result) => {
-            logger.debug('[Notion Webhook] Background processing completed:', {
+            logger.debug('[Notion Webhook] Background processing completed', {
               discussionId: result.discussionId,
               taskCount: result.notionTasks.length,
               processingTime: `${result.processingTime}ms`,
@@ -638,7 +636,7 @@ export default defineEventHandler(async (event) => {
             })
           })
           .catch((error) => {
-            logger.error('[Notion Webhook] Background processing failed:', error)
+            logger.error('[Notion Webhook] Background processing failed', error)
           }),
       )
 
@@ -659,9 +657,9 @@ export default defineEventHandler(async (event) => {
       let result: ProcessingResult
 
       try {
-        result = await processDiscussion(parsed, { correlationId: event.context.correlationId })
+        result = await processDiscussion(parsed, { correlationId: (event.context as any).correlationId })
 
-        logger.debug('[Notion Webhook] Discussion processed successfully:', {
+        logger.debug('[Notion Webhook] Discussion processed successfully', {
           discussionId: result.discussionId,
           taskCount: result.notionTasks.length,
           processingTime: `${result.processingTime}ms`,
@@ -669,7 +667,7 @@ export default defineEventHandler(async (event) => {
         })
       }
       catch (processingError: any) {
-        logger.error('[Notion Webhook] Processing failed:', processingError)
+        logger.error('[Notion Webhook] Processing failed', processingError)
 
         // Return 200 even on errors to prevent Notion retries
         // The error is logged for debugging
@@ -699,8 +697,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     // Log the error but return 200 to prevent Notion retries
-    logger.error('[Notion Webhook] Unexpected error:', error)
-    logger.error('[Notion Webhook] Stack:', (error as Error).stack)
+    logger.error('[Notion Webhook] Unexpected error', error, { stack: (error as Error).stack })
 
     return {
       success: false,

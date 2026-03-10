@@ -86,7 +86,7 @@ async function handleImpersonate(userId: string) {
     >
       <template #name-cell="{ row }">
         <div class="flex items-center gap-3">
-          <UAvatar :src="row.original.image" :alt="row.original.name" size="sm" />
+          <UAvatar :src="row.original.image ?? undefined" :alt="row.original.name" size="sm" />
           <div>
             <p class="font-medium">{{ row.original.name }}</p>
             <p class="text-xs text-muted">{{ row.original.email }}</p>

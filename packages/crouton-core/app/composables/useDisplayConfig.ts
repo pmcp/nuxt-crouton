@@ -102,7 +102,7 @@ function firstFieldWithDisplayAs(
 }
 
 /** Remove undefined values from an object */
-function stripUndefined(obj: Record<string, string | undefined>): Record<string, string> {
+function stripUndefined(obj: Record<string, any>): Record<string, string> {
   const result: Record<string, string> = {}
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined) result[key] = value

@@ -55,7 +55,7 @@ function formatDate(date: string | Date) {
           :to="`/admin/${row.original.slug}`"
           class="flex items-center gap-3 group"
         >
-          <UAvatar :src="row.original.logo" :alt="row.original.name" size="sm" />
+          <UAvatar :src="row.original.logo ?? undefined" :alt="row.original.name" size="sm" />
           <div>
             <p class="font-medium group-hover:text-primary">
               {{ row.original.name }}

@@ -64,8 +64,8 @@ export function generateAutoMapping(
       // Generate value mapping for select/status fields
       if (match.propertyType === 'select' || match.propertyType === 'status') {
         const propInfo = schema.properties[match.propertyName]
-        if (propInfo.options) {
-          mapping[aiField].valueMap = generateValueMapping(aiField, propInfo.options)
+        if (propInfo!.options) {
+          mapping[aiField].valueMap = generateValueMapping(aiField, propInfo!.options)
         }
       }
     }

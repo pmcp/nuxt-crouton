@@ -2,8 +2,8 @@
   <!-- For delete action, show delete confirmation -->
   <CroutonFormDeleteConfirm
     v-if="action === 'delete'"
-    :collection="collection"
-    :items="items"
+    :collection="collection!"
+    :items="(items as string[])"
     class="w-full h-full"
   />
   <!-- For other actions, load the form component -->
@@ -122,7 +122,7 @@ const componentProps = computed(() => {
 
   // Add mode prop for translationsUi collection
   if (mode.value !== undefined) {
-    baseProps.mode = mode.value
+    ;(baseProps as any).mode = mode.value
   }
 
   return baseProps

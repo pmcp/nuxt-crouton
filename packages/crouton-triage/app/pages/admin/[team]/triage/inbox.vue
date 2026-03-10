@@ -181,7 +181,7 @@
 
               <div class="flex items-center gap-2 text-xs text-muted-foreground">
                 <UIcon name="i-lucide-clock" class="w-3 h-3" />
-                <span>{{ formatRelativeTime(message.receivedAt) }}</span>
+                <span>{{ formatRelativeTime(String(message.receivedAt ?? '')) }}</span>
                 <span v-if="message.forwardedTo">
                   • <UIcon name="i-lucide-forward" class="w-3 h-3 inline" /> Forwarded
                 </span>
@@ -347,9 +347,9 @@ const extractedLinks = computed(() => {
     const links: Array<{ url: string; text: string }> = []
     let match
 
-    while ((match = linkRegex.exec(selectedMessage.value.htmlBody)) !== null) {
+    while ((match = linkRegex.exec(selectedMessage.value!.htmlBody)) !== null) {
       const url = match[1]
-      const text = match[2].trim()
+      const text = match[2]!.trim()
 
       if (url && url.startsWith('http')) {
         const textLower = text.toLowerCase()

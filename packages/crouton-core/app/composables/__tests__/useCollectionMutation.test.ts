@@ -281,7 +281,7 @@ describe('useCollectionMutation', () => {
     it('uses super-admin path for admin routes', async () => {
       mockRoute = {
         path: '/super-admin/products',
-        params: {}
+        params: {} as any
       }
 
       const { create } = useCollectionMutation('products')
@@ -607,7 +607,7 @@ describe('useCollectionMutation', () => {
     it('throws when team context required but not available', async () => {
       mockRoute = {
         path: '/dashboard/products',
-        params: {} // No team param
+        params: {} as any // No team param
       }
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 

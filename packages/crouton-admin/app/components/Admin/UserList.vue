@@ -221,8 +221,8 @@ async function handleCreateUser(payload: CreateUserPayload) {
       <template #name-cell="{ row }">
         <div class="flex items-center gap-2">
           <UAvatar
-            :src="row.original.image"
-            :alt="row.original.name"
+            :src="(row.original as any).image"
+            :alt="(row.original as any).name"
             size="sm"
           />
           <div>
@@ -271,7 +271,7 @@ async function handleCreateUser(payload: CreateUserPayload) {
 
       <template #createdAt-cell="{ row }">
         <span class="text-gray-600 dark:text-gray-400">
-          {{ formatDate(row.original.createdAt) }}
+          {{ formatDate(row.original.createdAt as any) }}
         </span>
       </template>
 

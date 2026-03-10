@@ -9,10 +9,13 @@
  * Edge-compatible version using fetch instead of @notionhq/client SDK.
  */
 
+import { logger } from '../../../../../utils/logger'
+
 const NOTION_API_VERSION = '2022-06-28'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<any> => {
   await requireAuth(event)
+
 
   try {
     // Get parameters from query
@@ -23,14 +26,14 @@ export default defineEventHandler(async (event) => {
 
     if (!teamId) {
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Missing required parameter: teamId'
+        status: 422,
+        statusText: 'Missing required parameter: teamId'
       })
     }
 
     // Resolve token from account if accountId provided
     if (accountId && !notionToken) {
-      const routeTeamId = getRouterParam(event, 'id') || teamId
+      const routeTeamId = (getRouterParam(event, 'id') || teamId) as string
       const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
       notionToken = await resolveAccountToken(accountId, routeTeamId)
     }
@@ -38,16 +41,16 @@ export default defineEventHandler(async (event) => {
     // Validate required parameters
     if (!notionToken) {
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Missing required parameter: notionToken or accountId'
+        status: 422,
+        statusText: 'Missing required parameter: notionToken or accountId'
       })
     }
 
     // Validate token format (Notion tokens can be internal 'secret_*' or public 'ntn_*')
     if (!notionToken.startsWith('secret_') && !notionToken.startsWith('ntn_')) {
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Invalid Notion token format. Token must start with "secret_" (internal) or "ntn_" (public)'
+        status: 422,
+        statusText: 'Invalid Notion token format. Token must start with "secret_" (internal) or "ntn_" (public)'
       })
     }
 
@@ -61,9 +64,8 @@ export default defineEventHandler(async (event) => {
     })
 
     // Debug: Log full response
-    logger.debug('[Notion Users] Raw API Response:', JSON.stringify(response, null, 2))
-    logger.debug('[Notion Users] Total results from API:', response.results?.length || 0)
-    logger.debug('[Notion Users] Has next cursor:', !!response.next_cursor)
+    logger.debug('[Notion Users] Raw API Response', { response })
+    logger.debug('[Notion Users] API results info', { totalResults: response.results?.length || 0, hasNextCursor: !!response.next_cursor })
 
     // Transform to simpler format for frontend
     const users = response.results.map((user: any) => ({
@@ -77,8 +79,8 @@ export default defineEventHandler(async (event) => {
     // Debug: Log user types breakdown
     const personCount = users.filter((u: any) => u.type === 'person').length
     const botCount = users.filter((u: any) => u.type === 'bot').length
-    logger.debug(`[Notion Users] User type breakdown - Persons: ${personCount}, Bots: ${botCount}`)
-    logger.debug('[Notion Users] All users:', users.map((u: any) => ({ name: u.name, type: u.type, email: u.email })))
+    logger.debug('[Notion Users] User type breakdown', { personCount, botCount })
+    logger.debug('[Notion Users] All users', { users: users.map((u: any) => ({ name: u.name, type: u.type, email: u.email })) })
 
     // Filter out bots if requested
     const includeBots = query.includeBots === 'true'
@@ -86,7 +88,7 @@ export default defineEventHandler(async (event) => {
       ? users
       : users.filter((u: any) => u.type === 'person')
 
-    logger.debug(`[Notion Users] After filtering - Returning ${filteredUsers.length} users for team ${teamId} (includeBots: ${includeBots})`)
+    logger.debug('[Notion Users] After filtering', { returning: filteredUsers.length, teamId, includeBots })
 
     return {
       success: true,
@@ -94,20 +96,20 @@ export default defineEventHandler(async (event) => {
       total: filteredUsers.length
     }
   } catch (error: any) {
-    logger.error('[Notion Users] Error:', error)
+    logger.error('[Notion Users] Error', error)
 
     // Handle Notion API errors
     if (error.code === 'unauthorized') {
       throw createError({
-        statusCode: 401,
-        statusMessage: 'Invalid Notion token or insufficient permissions'
+        status: 401,
+        statusText: 'Invalid Notion token or insufficient permissions'
       })
     }
 
     if (error.code === 'rate_limited') {
       throw createError({
-        statusCode: 429,
-        statusMessage: 'Notion API rate limit exceeded. Please try again later.'
+        status: 429,
+        statusText: 'Notion API rate limit exceeded. Please try again later.'
       })
     }
 
@@ -118,8 +120,8 @@ export default defineEventHandler(async (event) => {
 
     // Generic error
     throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'Failed to fetch Notion users'
+      status: 500,
+      statusText: error.message || 'Failed to fetch Notion users'
     })
   }
 })

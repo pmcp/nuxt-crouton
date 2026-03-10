@@ -57,6 +57,7 @@ const createPopup = async () => {
       .addTo(props.map)
 
     // Event listeners
+    // @ts-expect-error Type instantiation too deep
     popupInstance.value.on('open', () => emit('open'))
     popupInstance.value.on('close', () => emit('close'))
   } catch (error) {

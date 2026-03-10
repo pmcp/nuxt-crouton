@@ -19,7 +19,7 @@ if (model.value && !model.value.id) {
   <div class="flex items-center gap-2 w-full">
       <UFormField class="flex-1">
         <UInput
-          v-model="model.label"
+          v-model="model!.label"
           class="w-full"
           size="xl"
           placeholder="Enter slot name"
@@ -27,7 +27,7 @@ if (model.value && !model.value.id) {
       </UFormField>
       <UFormField class="w-24">
         <UInputNumber
-          v-model="model.capacity"
+          v-model="model!.capacity"
           size="xl" placeholder="1"
         />
       </UFormField>

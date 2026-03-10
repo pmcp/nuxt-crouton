@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { FlowOutput, NotionOutputConfig } from '~/layers/triage/types'
+import type { FlowOutput, NotionOutputConfig } from '../../types'
 
 /**
  * OutputManager Component
@@ -216,10 +216,10 @@ function updateFieldMapping(aiField: string, propertyName: string | null) {
 /**
  * Get the currently mapped Notion property name for an AI field
  */
-function getMappedProperty(aiField: string): string | null {
+function getMappedProperty(aiField: string): string | undefined {
   const mapping = outputFormState.value.fieldMapping[aiField]
-  if (!mapping) return null
-  return typeof mapping === 'string' ? mapping : mapping.notionProperty || null
+  if (!mapping) return undefined
+  return typeof mapping === 'string' ? mapping : mapping.notionProperty || undefined
 }
 
 /**
@@ -535,11 +535,11 @@ async function updateOutput() {
     }
 
     // Check if we need to unset other defaults
-    let updatedOutputs = outputs.value.map(o =>
+    let updatedOutputs = outputs.value.map((o: FlowOutput) =>
       o.id === editingOutput.value!.id ? updatedOutput : o
     )
     if (updatedOutput.isDefault) {
-      updatedOutputs = updatedOutputs.map(o =>
+      updatedOutputs = updatedOutputs.map((o: FlowOutput) =>
         o.id === updatedOutput.id ? o : { ...o, isDefault: false }
       )
     }
@@ -571,7 +571,7 @@ async function updateOutput() {
       })
 
       // Update local array
-      outputs.value = updatedOutputs.map(o =>
+      outputs.value = updatedOutputs.map((o: FlowOutput) =>
         o.id === editingOutput.value!.id ? (response as FlowOutput) : o
       )
 
@@ -624,7 +624,7 @@ async function deleteOutput() {
     }
 
     // Remove from local array
-    outputs.value = outputs.value.filter(o => o.id !== deletingOutput.value!.id)
+    outputs.value = outputs.value.filter((o: FlowOutput) => o.id !== deletingOutput.value!.id)
 
     // Emit changes
     emit('update:modelValue', outputs.value)
@@ -655,7 +655,7 @@ async function toggleActive(output: FlowOutput) {
     }
 
     // Update local array
-    const index = outputs.value.findIndex(o => o.id === output.id)
+    const index = outputs.value.findIndex((o: FlowOutput) => o.id === output.id)
     if (index !== -1) {
       outputs.value[index] = updatedOutput
     }
@@ -692,16 +692,18 @@ function getOutputTypeIcon(type: string): string {
 /**
  * Get color for output type
  */
-function getOutputTypeColor(type: string): string {
+type BadgeColor = 'error' | 'info' | 'success' | 'warning' | 'primary' | 'secondary' | 'neutral'
+
+function getOutputTypeColor(type: string): BadgeColor {
   switch (type) {
   case 'notion':
-      return 'gray'
+      return 'neutral'
     case 'github':
-      return 'gray'
+      return 'neutral'
     case 'linear':
-      return 'blue'
+      return 'info'
     default:
-      return 'gray'
+      return 'neutral'
   }
 }
 
@@ -808,7 +810,7 @@ watch(isEditModalOpen, (open) => {
 
               <UBadge
                 v-if="!output.active"
-                color="gray"
+                color="neutral"
                 variant="subtle"
               >
                 Inactive
@@ -841,7 +843,7 @@ watch(isEditModalOpen, (open) => {
 
             <UButton
               icon="i-lucide-pencil"
-              color="gray"
+              color="neutral"
               variant="ghost"
               size="sm"
               @click="openEditModal(output)"
@@ -849,7 +851,7 @@ watch(isEditModalOpen, (open) => {
 
             <UButton
               icon="i-lucide-trash-2"
-              color="red"
+              color="error"
               variant="ghost"
               size="sm"
               @click="openDeleteDialog(output)"
@@ -861,7 +863,7 @@ watch(isEditModalOpen, (open) => {
 
     <!-- Validation Warning -->
     <UAlert
-      v-if="outputs.length > 0 && !outputs.some(o => o.isDefault)"
+      v-if="outputs.length > 0 && !outputs.some((o: FlowOutput) => o.isDefault)"
       color="warning"
       icon="i-lucide-triangle-alert"
       title="No Default Output"
@@ -964,7 +966,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -988,7 +990,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -1012,7 +1014,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -1025,7 +1027,7 @@ watch(isEditModalOpen, (open) => {
 
                 <UAlert
                   icon="i-lucide-info"
-                  color="blue"
+                  color="info"
                   title="User Mapping"
                   description="For people properties, configure user mappings to map Slack/Figma users to Notion users."
                 />
@@ -1056,7 +1058,7 @@ watch(isEditModalOpen, (open) => {
           <!-- Actions -->
           <div class="flex justify-end gap-2 mt-6">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="close"
             >
@@ -1178,7 +1180,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -1202,7 +1204,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -1226,7 +1228,7 @@ watch(isEditModalOpen, (open) => {
                       <div class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
-                          :color="getPropertyTypeColor(notionSchema.properties[item]?.type)"
+                          :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
                           size="xs"
                           variant="subtle"
                         >
@@ -1239,7 +1241,7 @@ watch(isEditModalOpen, (open) => {
 
                 <UAlert
                   icon="i-lucide-info"
-                  color="blue"
+                  color="info"
                   title="User Mapping"
                   description="For people properties, configure user mappings to map Slack/Figma users to Notion users."
                 />
@@ -1250,7 +1252,7 @@ watch(isEditModalOpen, (open) => {
           <!-- Actions -->
           <div class="flex justify-end gap-2 mt-6">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="close"
             >
@@ -1298,7 +1300,7 @@ watch(isEditModalOpen, (open) => {
           </div>
 
           <div class="flex justify-end gap-2 mt-6">
-            <UButton color="gray" variant="ghost" @click="close">
+            <UButton color="neutral" variant="ghost" @click="close">
               Cancel
             </UButton>
             <UButton
@@ -1330,14 +1332,14 @@ watch(isEditModalOpen, (open) => {
 
           <div class="flex justify-end gap-2">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="close"
             >
               Cancel
             </UButton>
             <UButton
-              color="red"
+              color="error"
               @click="deleteOutput"
             >
               Delete Output

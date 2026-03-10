@@ -48,7 +48,7 @@ describe('useDependentFieldResolver', () => {
     })
 
     it('calls useCollectionItem with correct parameters', async () => {
-      const mockUseCollectionItem = vi.mocked(global.useCollectionItem as any)
+      const mockUseCollectionItem = vi.mocked((globalThis as any).useCollectionItem)
 
       await useDependentFieldResolver({
         valueId: 'slot-1',
@@ -255,7 +255,7 @@ describe('useDependentFieldResolver', () => {
     })
 
     it('propagates error state from useCollectionItem', async () => {
-      mockError.value = new Error('Fetch failed')
+      mockError.value = new Error('Fetch failed') as any
 
       const { error } = await useDependentFieldResolver({
         valueId: 'slot-1',

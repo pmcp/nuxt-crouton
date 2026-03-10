@@ -55,7 +55,7 @@
 <script setup lang="ts">
 interface Props {
   collectionName: string
-  defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban'
+  defaultLayout?: 'table' | 'list' | 'grid' | 'cards' | 'tree' | 'kanban' | 'workspace'
 }
 
 const props = withDefaults(defineProps<Props>(), {

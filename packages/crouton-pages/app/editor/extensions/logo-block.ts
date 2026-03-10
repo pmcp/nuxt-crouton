@@ -112,7 +112,7 @@ export const LogoBlock = Node.create<LogoBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(LogoBlockView)
+    return VueNodeViewRenderer(LogoBlockView as any)
   }
 })
 

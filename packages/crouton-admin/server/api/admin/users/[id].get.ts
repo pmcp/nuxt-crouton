@@ -101,13 +101,13 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
     banned: userData.banned,
     bannedReason: userData.bannedReason,
     bannedUntil: userData.bannedUntil,
-    memberships: memberships.map(m => ({
+    memberships: memberships.map((m: any) => ({
       id: m.id,
       role: m.role,
       createdAt: m.createdAt,
       organization: m.organization
     })),
-    sessions: sessions.map(s => ({
+    sessions: sessions.map((s: any) => ({
       id: s.id,
       ipAddress: s.ipAddress,
       userAgent: s.userAgent,
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminUserDetai
       expiresAt: s.expiresAt,
       impersonatingFrom: s.impersonatingFrom
     })),
-    accounts: accounts.map(a => ({
+    accounts: accounts.map((a: any) => ({
       id: a.id,
       providerId: a.providerId,
       createdAt: a.createdAt

@@ -74,13 +74,13 @@ const hasLocation = computed(() => lat.value !== 0 || lng.value !== 0)
       <template #default="{ map }">
         <CroutonMapsMarker
           v-if="map && attrs.markerLabel"
-          :map="map"
+          :map="map as any"
           :position="center"
           :popup-text="attrs.markerLabel"
         />
         <CroutonMapsMarker
           v-else-if="map"
-          :map="map"
+          :map="map as any"
           :position="center"
         />
       </template>

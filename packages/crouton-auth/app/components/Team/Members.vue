@@ -309,17 +309,17 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
         <!-- Member info centered -->
         <div class="flex flex-col items-center text-center pt-2 pb-4">
           <UAvatar
-            :src="member.user?.image"
-            :text="(member.user?.name || member.user?.email || '?').slice(0, 2).toUpperCase()"
+            :src="(member as any).user?.image"
+            :text="((member as any).user?.name || (member as any).user?.email || '?').slice(0, 2).toUpperCase()"
             size="xl"
             class="mb-3"
           />
           <div class="font-medium truncate max-w-full">
-            {{ member.user?.name || member.user?.email || 'Unknown' }}
+            {{ (member as any).user?.name || (member as any).user?.email || 'Unknown' }}
             <span v-if="member.userId === user?.id" class="text-xs text-muted">({{ t('teams.you') }})</span>
           </div>
           <div class="text-sm text-muted truncate max-w-full">
-            {{ member.user?.email }}
+            {{ (member as any).user?.email }}
           </div>
         </div>
 

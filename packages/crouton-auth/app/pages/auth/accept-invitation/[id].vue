@@ -28,8 +28,17 @@ const authModal = useAuthModal()
 const invitationId = computed(() => route.params.id as string)
 const returnUrl = computed(() => route.fullPath)
 
+interface InvitationData {
+  status: string
+  organizationName: string
+  organizationLogo?: string
+  inviterName: string
+  email: string
+  role: string
+}
+
 // Fetch invitation details (public endpoint, no auth needed)
-const { data: invite, error: fetchError, status } = await useFetch(
+const { data: invite, error: fetchError, status } = await useFetch<InvitationData>(
   () => `/api/auth/invitations/${invitationId.value}`
 )
 

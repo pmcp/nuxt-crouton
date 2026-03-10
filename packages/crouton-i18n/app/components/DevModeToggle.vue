@@ -5,7 +5,7 @@
   >
     <UButton
       size="sm"
-      color="gray"
+      color="neutral"
       variant="soft"
       icon="i-lucide-languages"
       :class="{ active: enabled }"
@@ -46,7 +46,7 @@
 
           <div class="flex justify-end gap-2 mt-6">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="close"
             >

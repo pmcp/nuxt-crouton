@@ -75,7 +75,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminTeamDetai
     isDefault: orgData.isDefault,
     ownerId: orgData.ownerId,
     createdAt: orgData.createdAt,
-    members: members.map(m => ({
+    members: members.map((m: any) => ({
       id: m.id,
       userId: m.userId,
       role: m.role,

@@ -281,7 +281,7 @@ export default defineEventHandler(async (event) => {
     const orgSlug = 'school-velotek'
 
     // Check if org already exists
-    const existingOrg = await (db as any).select().from(organization).where(eq(organization.slug, orgSlug)).limit(1)
+    const existingOrg = await (db as any).select().from(organization).where(eq(organization.slug as any, orgSlug)).limit(1)
     if (existingOrg.length > 0) {
       throw createError({ status: 409, statusText: 'Organization school-velotek already exists. Clear the database first.' })
     }

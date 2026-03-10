@@ -44,8 +44,8 @@ export default defineEventHandler(async (event) => {
     .from(bookingsBookings)
     .where(
       and(
-        eq(bookingsBookings.id, bookingId),
-        eq(bookingsBookings.teamId, team.id),
+        eq(bookingsBookings.id as any, bookingId),
+        eq(bookingsBookings.teamId as any, team.id),
       ),
     )
 
@@ -81,8 +81,8 @@ export default defineEventHandler(async (event) => {
   // Update the booking
   const [updated] = await db
     .update(bookingsBookings)
-    .set(updateData)
-    .where(eq(bookingsBookings.id, bookingId))
+    .set(updateData as any)
+    .where(eq(bookingsBookings.id as any, bookingId))
     .returning()
 
   return updated

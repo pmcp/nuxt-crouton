@@ -106,7 +106,7 @@ export const EmbedBlock = Node.create<EmbedBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(EmbedBlockView)
+    return VueNodeViewRenderer(EmbedBlockView as any)
   }
 })
 

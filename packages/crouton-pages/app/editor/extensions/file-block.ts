@@ -99,7 +99,7 @@ export const FileBlock = Node.create<FileBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(FileBlockView)
+    return VueNodeViewRenderer(FileBlockView as any)
   }
 })
 

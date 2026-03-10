@@ -104,7 +104,7 @@ export const MailingBlock = Node.create<MailingBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(MailingBlockView)
+    return VueNodeViewRenderer(MailingBlockView as any)
   }
 })
 

@@ -27,7 +27,7 @@ export function useBookingCart() {
   const { data: myBookings, status: myBookingsStatus, refresh: refreshMyBookings } = useFetch<BookingData[]>(
     () => teamId.value
       ? `/api/crouton-bookings/teams/${teamId.value}/customer-bookings`
-      : null,
+      : null as any,
     {
       key: 'crouton-booking-sidebar-customer-bookings',
       server: false,
@@ -39,7 +39,7 @@ export function useBookingCart() {
     if (!myBookings.value) return 0
     const now = new Date()
     now.setHours(0, 0, 0, 0)
-    return myBookings.value.filter((b) => {
+    return (myBookings.value as BookingData[]).filter((b: any) => {
       const bookingDate = new Date(b.date)
       return bookingDate >= now
     }).length
@@ -64,7 +64,7 @@ export function useBookingCart() {
   const { data: settingsData } = useFetch<SettingsData[]>(
     () => teamId.value
       ? `/api/teams/${teamId.value}/bookings-settings`
-      : null,
+      : null as any,
     {
       key: 'crouton-booking-cart-settings',
       server: false,
@@ -72,7 +72,7 @@ export function useBookingCart() {
   )
 
   // Settings computed values
-  const groupOptions = computed(() => settingsData.value?.[0]?.groups ?? [])
+  const groupOptions = computed(() => (settingsData.value as any)?.[0]?.groups ?? [])
   // Enable groups if there are any group options defined
   const enableGroups = computed(() => groupOptions.value.length > 0)
 
@@ -113,7 +113,7 @@ export function useBookingCart() {
   const { data: locations, status: locationsStatus, refresh: refreshLocations } = useFetch<LocationData[]>(
     () => teamId.value
       ? `/api/crouton-bookings/teams/${teamId.value}/customer-locations`
-      : null,
+      : null as any,
     {
       key: 'crouton-booking-cart-locations',
       server: false,
@@ -124,7 +124,7 @@ export function useBookingCart() {
   // Selected location object
   const selectedLocation = computed(() => {
     if (!formState.locationId || !locations.value) return null
-    return locations.value.find(l => l.id === formState.locationId) || null
+    return (locations.value as LocationData[]).find((l: any) => l.id === formState.locationId) || null
   })
 
   // --- Availability sub-composable (replaces inline availability logic) ---
@@ -447,7 +447,7 @@ export function useBookingCart() {
   // Get group label by ID
   function getGroupLabel(groupId: string | null): string | null {
     if (!groupId) return null
-    const group = groupOptions.value.find(g => g.id === groupId)
+    const group = groupOptions.value.find((g: any) => g.id === groupId)
     return group?.label || groupId
   }
 
@@ -503,7 +503,7 @@ export function useBookingCart() {
 
     // Add slot-specific info for slot mode (use first selected slot for position)
     if (!isInventoryMode.value && formState.slotIds.length > 0) {
-      const positionInfo = getSlotPositionInfo(formState.slotIds[0])
+      const positionInfo = getSlotPositionInfo(formState.slotIds[0]!)
       if (positionInfo) {
         item.slotColor = positionInfo.color
         item.totalSlots = positionInfo.totalSlots

@@ -320,7 +320,7 @@ async function retryJob(job: any) {
           <!-- Time Info -->
           <div class="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
             <span v-if="job.processingTime" class="hidden sm:inline">{{ formatDuration(job.processingTime) }}</span>
-            <span>{{ formatRelativeTime(job.completedAt || job.startedAt) }}</span>
+            <span>{{ formatRelativeTime((job.completedAt || job.startedAt) as string | Date) }}</span>
           </div>
 
           <!-- Retry or Chevron -->

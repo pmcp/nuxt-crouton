@@ -107,7 +107,7 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
 
     // Single-item apps appear flat (no group header)
     if (routeItems.length === 1) {
-      groups.push(routeItems[0])
+      groups.push(routeItems[0]!)
     } else {
       // Multi-item apps get a group header
       groups.push({

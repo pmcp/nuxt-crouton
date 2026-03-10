@@ -13,6 +13,14 @@ interface CollectionMutationReturn<K extends CollectionName> {
   isReady: ComputedRef<boolean>
 }
 
+interface CollectionMutationReturnUntyped {
+  create: (data: any) => Promise<any>
+  update: (id: string, updates: any) => Promise<any>
+  deleteItems: (ids: string[]) => Promise<void>
+  delete: (ids: string[]) => Promise<void>
+  isReady: ComputedRef<boolean>
+}
+
 /**
  * Collection mutation composable for Create, Update, Delete operations
  * Replaces the data-fetching parts of useCrouton with a focused mutation API
@@ -41,9 +49,9 @@ interface CollectionMutationReturn<K extends CollectionName> {
  * await update('role-id', { name: 'Updated Name' })
  * await deleteItems(['id1', 'id2'])
  */
-export function useCollectionMutation<K extends CollectionName>(
-  collection: K
-): CollectionMutationReturn<K> {
+export function useCollectionMutation<K extends CollectionName>(collection: K): CollectionMutationReturn<K>
+export function useCollectionMutation(collection: string): CollectionMutationReturnUntyped
+export function useCollectionMutation(collection: string): CollectionMutationReturnUntyped {
   const route = useRoute()
   const notify = useNotify()
   const { t } = useT()

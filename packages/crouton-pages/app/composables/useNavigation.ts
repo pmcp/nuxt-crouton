@@ -65,7 +65,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
 
   // Fetch published pages for the team with locale for translated titles/slugs
   const { data: pages, pending: isLoading, refresh } = useFetch(() => {
-    if (!team.value || RESERVED_PREFIXES.includes(team.value)) return null
+    if (!team.value || RESERVED_PREFIXES.includes(team.value)) return null as any
     return `/api/teams/${team.value}/pages`
   }, {
     params: { locale },

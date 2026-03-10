@@ -46,7 +46,7 @@
               :editable="editable"
               :extensions="extensions"
               class="min-h-48"
-              @create="handleEditorCreate"
+              @create="handleEditorCreate as any"
             >
               <template #default="{ editor }">
                 <!-- Toolbar for formatting -->

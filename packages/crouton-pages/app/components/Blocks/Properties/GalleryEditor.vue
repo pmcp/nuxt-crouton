@@ -41,7 +41,7 @@ function removeImage(index: number) {
 }
 
 function updateImage(index: number, field: keyof GalleryItem, value: string) {
-  images.value[index] = { ...images.value[index], [field]: value }
+  images.value[index] = { ...images.value[index], [field]: value } as GalleryItem
   emitChange()
 }
 
@@ -49,8 +49,8 @@ function moveImage(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= images.value.length) return
 
-  const temp = images.value[index]
-  images.value[index] = images.value[newIndex]
+  const temp = images.value[index]!
+  images.value[index] = images.value[newIndex]!
   images.value[newIndex] = temp
   emitChange()
 }
@@ -112,7 +112,7 @@ function moveImage(index: number, direction: 'up' | 'down') {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

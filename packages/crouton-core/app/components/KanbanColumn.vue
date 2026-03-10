@@ -183,7 +183,7 @@ const crouton = useCrouton()
       <span class="font-medium text-sm truncate flex-1">{{ label }}</span>
       <UBadge
         v-if="showCount"
-        :color="badgeColor"
+        :color="(badgeColor as any)"
         variant="subtle"
         size="xs"
       >

@@ -89,7 +89,7 @@ export const SeparatorBlock = Node.create<SeparatorBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(SeparatorBlockView)
+    return VueNodeViewRenderer(SeparatorBlockView as any)
   }
 })
 

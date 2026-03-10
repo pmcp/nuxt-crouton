@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { PromptPreview } from '#layers/triage/app/composables/useTriagePromptPreview'
 
 interface Props {

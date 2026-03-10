@@ -126,7 +126,7 @@ const activeValue = computed(() => {
   const now = new Date()
   let lastIndex = 0
   for (let i = 0; i < activityItems.value.length; i++) {
-    if (activityItems.value[i].date <= now) {
+    if (activityItems.value[i]!.date <= now) {
       lastIndex = i
     }
   }
@@ -137,7 +137,7 @@ const activeValue = computed(() => {
 <template>
   <div v-if="timelineItems.length > 0" class="w-full">
     <UTimeline
-      :items="timelineItems"
+      :items="(timelineItems as any)"
       :model-value="activeValue"
       size="xs"
       color="neutral"
@@ -154,7 +154,7 @@ const activeValue = computed(() => {
       </template>
 
       <template #date="{ item }">
-        <span class="text-xs text-dimmed">{{ useTimeAgo(item.date).value }}</span>
+        <span class="text-xs text-dimmed">{{ useTimeAgo(item.date as any).value }}</span>
       </template>
     </UTimeline>
   </div>

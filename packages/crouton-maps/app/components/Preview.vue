@@ -14,7 +14,7 @@
         <template #default="{ map }">
           <CroutonMapsMarker
             v-if="map"
-            :map="map"
+            :map="map as any"
             :position="coordinates"
             :color="markerColor"
           />
@@ -48,7 +48,7 @@
             <template #default="{ map }">
               <CroutonMapsMarker
                 v-if="map"
-                :map="map"
+                :map="map as any"
                 :position="coordinates"
                 :color="markerColor"
                 :popup-text="`${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`"

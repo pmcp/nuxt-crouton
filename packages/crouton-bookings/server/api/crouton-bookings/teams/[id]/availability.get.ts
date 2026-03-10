@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
   const team = await db.select({ id: organization.id })
-    .from(organization)
-    .where(eq(organization.id, teamParam))
+    .from(organization as any)
+    .where(eq(organization.id as any, teamParam))
     .get()
 
   if (!team) {
@@ -70,15 +70,15 @@ export default defineEventHandler(async (event) => {
 
   // Build where conditions
   const conditions = [
-    eq(bookingsBookings.location, locationId),
-    ne(bookingsBookings.status, 'cancelled'),
-    gte(bookingsBookings.date, startDate),
-    lte(bookingsBookings.date, endDate),
+    eq(bookingsBookings.location as any, locationId),
+    ne(bookingsBookings.status as any, 'cancelled'),
+    gte(bookingsBookings.date as any, startDate),
+    lte(bookingsBookings.date as any, endDate),
   ]
 
   // Exclude a specific booking (for editing mode)
   if (excludeBookingId) {
-    conditions.push(ne(bookingsBookings.id, excludeBookingId))
+    conditions.push(ne(bookingsBookings.id as any, excludeBookingId))
   }
 
   // Get all bookings for the location in the date range

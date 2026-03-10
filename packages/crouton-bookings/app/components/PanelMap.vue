@@ -117,7 +117,7 @@ defineExpose({ flyToLocation })
         <CroutonMapsMarker
           v-for="location in locationsWithCoordinates"
           :key="location.id"
-          :map="map"
+          :map="(map as any)"
           :position="location.coordinates"
           :color="location.color || '#3b82f6'"
           :active="selectedLocations.length > 0 ? isLocationSelected(location.id) : undefined"

@@ -160,7 +160,7 @@ onKeyStroke('/', (e) => {
           variant="ghost"
           icon="i-lucide-plus"
           size="sm"
-          @click="handleCreate"
+          @click="() => handleCreate()"
         />
       </template>
     </UDashboardNavbar>

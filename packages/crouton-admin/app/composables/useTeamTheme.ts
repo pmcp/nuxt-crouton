@@ -96,7 +96,8 @@ export const DEFAULT_THEME: Required<TeamThemeSettings> = {
   preset: 'custom',
   primary: 'emerald',
   neutral: 'slate',
-  radius: 0.25
+  radius: 0.25,
+  allowUserThemes: false
 }
 
 /**

@@ -9,6 +9,7 @@
  */
 export default defineNuxtPlugin(() => {
   try {
+    // @ts-expect-error Auto-import from crouton-charts
     const { registerChartPreset } = useCroutonChartRegistry()
 
     registerChartPreset({

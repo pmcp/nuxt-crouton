@@ -76,14 +76,14 @@ const pageType = computed(() => {
  * Component to render based on page type
  */
 const componentName = computed(() => {
-  return pageType.value?.component || 'CroutonPagesRegularContent'
+  return (pageType.value as any)?.component || 'CroutonPagesRegularContent'
 })
 
 /**
  * Props to pass to the component
  */
 const componentProps = computed(() => {
-  const defaultProps = pageType.value?.defaultProps || {}
+  const defaultProps = (pageType.value as any)?.defaultProps || {}
   const pageConfig = props.page.config || {}
 
   return {

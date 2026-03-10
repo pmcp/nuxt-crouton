@@ -122,7 +122,7 @@ export const SectionBlock = Node.create<SectionBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(SectionBlockView)
+    return VueNodeViewRenderer(SectionBlockView as any)
   }
 })
 

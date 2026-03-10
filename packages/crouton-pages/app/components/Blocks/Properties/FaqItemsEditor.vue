@@ -38,15 +38,15 @@ function removeItem(index: number) {
 }
 
 function updateItem(index: number, field: keyof FaqItem, value: string) {
-  items.value[index] = { ...items.value[index], [field]: value }
+  items.value[index] = { ...items.value[index], [field]: value } as FaqItem
   emitChange()
 }
 
 function moveItem(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= items.value.length) return
-  const temp = items.value[index]
-  items.value[index] = items.value[newIndex]
+  const temp = items.value[index]!
+  items.value[index] = items.value[newIndex]!
   items.value[newIndex] = temp
   emitChange()
 }
@@ -106,7 +106,7 @@ function moveItem(index: number, direction: 'up' | 'down') {
 
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

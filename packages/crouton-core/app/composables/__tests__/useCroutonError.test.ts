@@ -11,7 +11,7 @@ const mockToastAdd = vi.fn()
 let mockIsOnline = ref(true)
 
 // Mock user session
-let mockUserValue = ref({ id: '1', email: 'test@example.com' })
+let mockUserValue: any = ref({ id: '1', email: 'test@example.com' })
 
 // Set up global mocks
 vi.stubGlobal('ref', ref)

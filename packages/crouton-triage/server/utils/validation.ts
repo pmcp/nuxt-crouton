@@ -32,7 +32,7 @@ export const teamIdSchema = z.string()
 
 // Source type validation
 export const sourceTypeSchema = z.enum(['figma', 'slack'], {
-  errorMap: () => ({ message: 'Source type must be "figma" or "slack"' }),
+  error: () => ({ message: 'Source type must be "figma" or "slack"' }),
 })
 
 /**
@@ -92,7 +92,7 @@ export async function validateRequestBody<T extends z.ZodType>(
         statusCode: 400,
         statusMessage: 'Validation Error',
         data: {
-          errors: error.errors.map(err => ({
+          errors: error.issues.map((err: any) => ({
             path: err.path.join('.'),
             message: err.message,
           })),
@@ -132,7 +132,7 @@ export function validateQuery<T extends z.ZodType>(
         statusCode: 400,
         statusMessage: 'Validation Error',
         data: {
-          errors: error.errors.map(err => ({
+          errors: error.issues.map((err: any) => ({
             path: err.path.join('.'),
             message: err.message,
           })),

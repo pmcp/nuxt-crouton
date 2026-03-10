@@ -161,19 +161,19 @@ const { t } = useT()
         <template #draft="{ item }">
           <span class="flex items-center gap-2">
             <span class="block size-2.5 rounded-full bg-warning" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
         <template #published="{ item }">
           <span class="flex items-center gap-2">
             <span class="block size-2.5 rounded-full bg-success" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
         <template #archived="{ item }">
           <span class="flex items-center gap-2">
             <span class="block size-2.5 rounded-full bg-error" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
       </UDropdownMenu>
@@ -233,19 +233,19 @@ const { t } = useT()
         <template #public="{ item }">
           <span class="flex items-center gap-2">
             <UIcon name="i-lucide-globe" class="size-4 text-muted" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
         <template #members="{ item }">
           <span class="flex items-center gap-2">
             <UIcon name="i-lucide-users" class="size-4 text-muted" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
         <template #hidden="{ item }">
           <span class="flex items-center gap-2">
             <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
-            {{ item.label }}
+            {{ (item as any).label }}
           </span>
         </template>
       </UDropdownMenu>
@@ -291,7 +291,7 @@ const { t } = useT()
                   value-key="value"
                   size="sm"
                   class="w-full"
-                  @update:model-value="(val: string) => { emit('update:layout', val); emit('layout-change') }"
+                  @update:model-value="(val: any) => { emit('update:layout', val); emit('layout-change') }"
                 />
               </UFormField>
 

@@ -213,24 +213,24 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.startedAt) {
-    initialValues.startedAt = new Date(initialValues.startedAt)
+    initialValues.startedAt = new Date(initialValues.startedAt as any)
   }
   if (initialValues.completedAt) {
-    initialValues.completedAt = new Date(initialValues.completedAt)
+    initialValues.completedAt = new Date(initialValues.completedAt as any)
   }
 }
 
-const state = ref<TriageJobFormData & { id?: string | null }>(initialValues)
+const state = ref<TriageJobFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.startedAt instanceof Date) {
-      serializedData.startedAt = serializedData.startedAt.toISOString()
+      ;(serializedData as any).startedAt = serializedData.startedAt.toISOString()
     }
     if (serializedData.completedAt instanceof Date) {
-      serializedData.completedAt = serializedData.completedAt.toISOString()
+      ;(serializedData as any).completedAt = serializedData.completedAt.toISOString()
     }
 
     if (props.action === 'create') {

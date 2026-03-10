@@ -46,6 +46,7 @@ export async function forwardEmailToConfigOwner(
     })
 
     // 2. Update inbox message with forwarding info
+    // @ts-expect-error Nitro auto-import from consumer's generated collections
     await updateTriageInboxMessage(params.teamId, params.inboxMessageId, {
       forwardedTo: params.forwardTo,
       forwardedAt: new Date(),
@@ -57,7 +58,7 @@ export async function forwardEmailToConfigOwner(
     }
   }
   catch (error) {
-    logger.error('[Email Forwarding] Failed to forward email:', error)
+    logger.error('[Email Forwarding] Failed to forward email', error)
     return {
       forwarded: false,
       error: (error as Error).message,
@@ -176,5 +177,5 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#039;',
   }
-  return text.replace(/[&<>"']/g, m => map[m])
+  return text.replace(/[&<>"']/g, m => map[m] ?? m)
 }

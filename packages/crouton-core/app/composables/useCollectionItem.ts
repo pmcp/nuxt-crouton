@@ -80,7 +80,7 @@ export async function useCollectionItem<T = any>(
       const currentTeamId = getTeamId()
       if (!currentTeamId && !isSuperAdmin) return Promise.resolve(null)
 
-      return $fetch(buildApiPath(currentTeamId))
+      return $fetch<any>(buildApiPath(currentTeamId))
     },
     {
       server: canFetchOnServer,

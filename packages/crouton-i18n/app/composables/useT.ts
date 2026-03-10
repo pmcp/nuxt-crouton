@@ -4,6 +4,7 @@ interface TranslationOptions {
   category?: string
   mode?: 'system' | 'team'
   placeholder?: string // What to show when translation is missing
+  [key: string]: any // Allow named params as shorthand
 }
 
 /**
@@ -19,7 +20,7 @@ export function useT() {
   // Safely get i18n - it may not be available during SSR on some routes
   let i18n: ReturnType<typeof useI18n> | null = null
   try {
-    i18n = useI18n()
+    i18n = useI18n() as any
   } catch (error) {
     // i18n not available, will use fallback behavior
     if (import.meta.dev) {
@@ -109,7 +110,10 @@ export function useT() {
    * @param options - Translation options
    * @returns Translated string
    */
-  const translate = (key: string, options: TranslationOptions = {}): string => {
+  const translate = (key: string, options: TranslationOptions | string = {}): string => {
+    if (typeof options === 'string') {
+      options = { fallback: options }
+    }
     const { params, fallback, category = 'ui', mode = 'team', placeholder } = options
 
     // Get the translated value

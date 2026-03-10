@@ -74,7 +74,7 @@ export function useBookingCartStorage(
       // Clear cart on success
       clearCart()
 
-      notify.success(t('bookings.notifications.bookingsConfirmed'), { description: t('bookings.notifications.bookingsConfirmedDescription', { count: result.count }, result.count) })
+      notify.success(t('bookings.notifications.bookingsConfirmed'), { description: t('bookings.notifications.bookingsConfirmedDescription', { params: { count: result.count } }) })
 
       // Close cart drawer and switch to my bookings tab
       isCartOpen.value = false

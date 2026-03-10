@@ -18,12 +18,12 @@ export default defineEventHandler(async (event) => {
       count: count()
     })
     .from(bookingsBookings)
-    .where(eq(bookingsBookings.teamId, team.id))
-    .groupBy(bookingsBookings.date)
+    .where(eq(bookingsBookings.teamId as any, team.id))
+    .groupBy(bookingsBookings.date as any)
     .orderBy(bookingsBookings.date)
 
   return {
-    items: rows.map(r => ({
+    items: rows.map((r: any) => ({
       date: r.date instanceof Date ? r.date.toISOString().slice(0, 10) : String(r.date),
       count: Number(r.count)
     }))

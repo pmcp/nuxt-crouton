@@ -41,7 +41,7 @@ export function useEditorVariables() {
     let match
 
     while ((match = regex.exec(content)) !== null) {
-      variables.add(match[1])
+      variables.add(match[1]!)
     }
 
     return Array.from(variables)

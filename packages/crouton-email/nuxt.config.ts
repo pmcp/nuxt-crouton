@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 
 // Development startup log (deduplicated across layer resolution)
-const _dependencies = (globalThis as Record<string, Set<string>>).__croutonLayers ??= new Set()
+const _dependencies = (globalThis as unknown as Record<string, Set<string>>).__croutonLayers ??= new Set()
 if (process.env.NODE_ENV !== 'production' && !_dependencies.has('crouton-email')) {
   _dependencies.add('crouton-email')
   console.log('🍞 crouton:email ✓ Layer loaded')
@@ -58,7 +58,7 @@ export default defineNuxtConfig({
             resendCooldown: 60 // seconds
           }
         }
-      }
+      } as any
     }
   },
 
@@ -79,7 +79,7 @@ export default defineNuxtConfig({
     // Required for vue-email: enables Vue SFC compilation in server context
     // See: https://vuemail.net/getting-started/nuxt-nitro
     rollupConfig: {
-      plugins: [vue()]
+      plugins: [vue() as any]
     }
   }
 })

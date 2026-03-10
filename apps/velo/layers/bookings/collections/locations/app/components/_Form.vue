@@ -43,7 +43,7 @@
       <div v-show="!tabs || activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
         <UFormField label="Slots" name="slots" class="not-last:pb-4">
           <CroutonFormRepeater
-            v-model="state.slots"
+            v-model="state.slots as any"
             component-name="BookingsLocationsSlotInput"
             add-label="Add Time Slot"
             :sortable="true"
@@ -57,7 +57,7 @@
         </UFormField>
         <UFormField label="BlockedDates" name="blockedDates" class="not-last:pb-4">
           <CroutonFormRepeater
-            v-model="state.blockedDates"
+            v-model="state.blockedDates as any"
             component-name="BookingsLocationsBlockedDateInput"
             add-label="Add Blocked Period"
             :sortable="false"
@@ -80,7 +80,7 @@
           <template #default="{ map }">
             <CroutonMapsMarker
               v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
-              :map="map"
+              :map="map as any"
               :position="mapCenter"
               :color="markerColor"
               :options="{ draggable: true }"
@@ -238,7 +238,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<BookingsLocationFormData & { id?: string | null }>(initialValues)
+const state = ref<BookingsLocationFormData & { id?: string | null }>(initialValues as any)
 // Map & Geocoding functionality
 const { geocode, loading: geocoding } = useGeocode()
 

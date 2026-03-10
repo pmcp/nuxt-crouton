@@ -21,13 +21,13 @@ const props = defineProps<Props>()
 function extractYouTubeId(url: string): string | null {
   // Handle youtu.be/ID
   const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
-  if (shortMatch) return shortMatch[1]
+  if (shortMatch) return shortMatch[1] ?? null
   // Handle youtube.com/watch?v=ID
   const longMatch = url.match(/[?&]v=([^&]+)/)
-  if (longMatch) return longMatch[1]
+  if (longMatch) return longMatch[1] ?? null
   // Handle youtube.com/embed/ID
   const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/)
-  if (embedMatch) return embedMatch[1]
+  if (embedMatch) return embedMatch[1] ?? null
   return null
 }
 

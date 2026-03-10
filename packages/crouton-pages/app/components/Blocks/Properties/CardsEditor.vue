@@ -57,7 +57,7 @@ function removeCard(index: number) {
 
 // Update a card
 function updateCard(index: number, field: keyof BlockCard, value: any) {
-  cards.value[index] = { ...cards.value[index], [field]: value }
+  cards.value[index] = { ...cards.value[index], [field]: value } as BlockCard
   emitChange()
 }
 
@@ -68,8 +68,8 @@ function moveCard(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= cards.value.length) return
 
-  const temp = cards.value[index]
-  cards.value[index] = cards.value[newIndex]
+  const temp = cards.value[index]!
+  cards.value[index] = cards.value[newIndex]!
   cards.value[newIndex] = temp
   emitChange()
 }
@@ -85,7 +85,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">{{ t('pages.blocks.cards.cardN', { n: index + 1 }) }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.cards.cardN', { n: index + 1 } as any) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -174,7 +174,7 @@ function moveCard(index: number, direction: 'up' | 'down') {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

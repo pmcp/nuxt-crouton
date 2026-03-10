@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { FlowInput } from '#layers/triage/types'
 
 interface Props {

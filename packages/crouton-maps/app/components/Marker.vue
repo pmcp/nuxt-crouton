@@ -136,10 +136,10 @@ watch(() => props.position, (newPosition, oldPosition) => {
   // Convert positions to array format [lng, lat]
   const startPos = Array.isArray(oldPosition)
     ? [oldPosition[0], oldPosition[1]]
-    : [oldPosition.lng, oldPosition.lat]
+    : [(oldPosition as any).lng, (oldPosition as any).lat]
   const targetPos = Array.isArray(newPosition)
     ? [newPosition[0], newPosition[1]]
-    : [newPosition.lng, newPosition.lat]
+    : [(newPosition as any).lng, (newPosition as any).lat]
 
   // Get animation settings
   const duration = props.animationDuration ?? 800

@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
       }
     }) as any
 
-    logger.debug(`[Notion Schema] Database metadata:`, JSON.stringify(database, null, 2))
+    logger.debug(`[Notion Schema] Database metadata:`, JSON.stringify(database, null, 2) as any)
 
     // Handle both old format (properties directly on database) and new format (data_sources)
     let dataSourceProperties: Record<string, any>

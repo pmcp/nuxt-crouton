@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   // Get upload constraints from runtime config
   const config = useRuntimeConfig(event)
-  const uploadConfig = config.public?.croutonUpload || {}
+  const uploadConfig = (config.public as any)?.croutonUpload || {} as Record<string, any>
   const maxSize = uploadConfig.maxSize || '10MB'
   const allowedTypes = uploadConfig.allowedTypes || [
     // Images

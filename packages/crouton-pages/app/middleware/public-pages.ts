@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware((to) => {
     return // Root path, not relevant
   }
 
-  const firstSegment = pathSegments[0]
+  const firstSegment = pathSegments[0]!
 
   if (RESERVED_PREFIXES.includes(firstSegment)) {
     // For reserved prefixes, abort with 404

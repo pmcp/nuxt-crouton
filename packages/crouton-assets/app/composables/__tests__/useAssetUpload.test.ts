@@ -352,7 +352,7 @@ describe('useAssetUpload', () => {
         .mockResolvedValueOnce(mockAssetResponses[0])
 
       const { uploadAssets } = useAssetUpload()
-      await uploadAssets([mockFiles[0]], {}, 'documents')
+      await uploadAssets([mockFiles[0]!], {}, 'documents')
 
       expect(mockFetch).toHaveBeenCalledWith('/api/teams/test-team/documents', expect.any(Object))
     })

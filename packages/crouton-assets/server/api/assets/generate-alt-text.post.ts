@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Image data is required' })
   }
 
+  // @ts-expect-error Nitro auto-import from crouton-ai
   const ai = createAIProvider(event)
   const modelId = ai.getDefaultModel()
 

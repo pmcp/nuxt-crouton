@@ -54,8 +54,8 @@ export default defineEventHandler(async (event) => {
     .from(bookingsLocations)
     .where(
       and(
-        eq(bookingsLocations.id, locationId),
-        eq(bookingsLocations.teamId, team.id),
+        eq(bookingsLocations.id as any, locationId),
+        eq(bookingsLocations.teamId as any, team.id),
       ),
     )
 
@@ -67,11 +67,11 @@ export default defineEventHandler(async (event) => {
     .from(bookingsBookings)
     .where(
       and(
-        eq(bookingsBookings.location, locationId),
-        eq(bookingsBookings.createdBy, user.id),
-        eq(bookingsBookings.status, 'active'),
-        gte(bookingsBookings.date, monthStart),
-        lte(bookingsBookings.date, monthEnd),
+        eq(bookingsBookings.location as any, locationId),
+        eq(bookingsBookings.createdBy as any, user.id),
+        eq(bookingsBookings.status as any, 'active'),
+        gte(bookingsBookings.date as any, monthStart),
+        lte(bookingsBookings.date as any, monthEnd),
       ),
     )
 

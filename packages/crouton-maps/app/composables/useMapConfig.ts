@@ -14,7 +14,7 @@ export function useMapConfig(): MapConfig & { isConfigured: boolean } {
   let mapboxConfig: {
     accessToken?: string
     style?: string
-    center?: [number, number]
+    center?: any
     zoom?: number
   } | undefined
 

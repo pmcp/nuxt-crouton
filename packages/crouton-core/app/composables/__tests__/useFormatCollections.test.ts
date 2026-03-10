@@ -248,7 +248,7 @@ describe('useFormatCollections', () => {
 describe('useFormatCollections with empty config', () => {
   beforeEach(() => {
     // Reset mock to empty config
-    mockAppConfig.croutonCollections = {}
+    mockAppConfig.croutonCollections = {} as any
   })
 
   it('returns original value when no layers configured', () => {

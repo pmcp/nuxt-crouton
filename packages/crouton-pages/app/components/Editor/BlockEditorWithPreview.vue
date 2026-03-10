@@ -296,7 +296,7 @@ defineExpose({
         <div class="flex-1 overflow-auto">
           <div :style="previewZoomStyle">
             <CroutonPagesBlockContent
-              :content="previewContent"
+              :content="previewContent as any"
               class="p-4"
             />
           </div>

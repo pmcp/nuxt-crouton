@@ -47,7 +47,7 @@ const { getTeamId } = useTeamContext()
 
 // Resolve collection name from page type
 const pageType = computed(() => getPageType(props.page.pageType))
-const collectionName = computed(() => pageType.value?.collection)
+const collectionName = computed(() => (pageType.value as any)?.collection)
 
 // Item ID stored in page config
 const itemId = computed(() => props.page.config?.itemId as string | undefined)

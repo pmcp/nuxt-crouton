@@ -101,7 +101,7 @@ export default defineEventHandler(async (event) => {
     providerAccountId,
     accessToken: encryptedToken,
     accessTokenHint: tokenHint,
-    refreshToken: null,
+    refreshToken: undefined,
     tokenExpiresAt: null,
     scopes: '',
     providerMetadata: body.providerMetadata || {},
@@ -109,9 +109,7 @@ export default defineEventHandler(async (event) => {
     lastVerifiedAt: new Date(),
     teamId,
     owner: SYSTEM_USER_ID,
-    createdBy: SYSTEM_USER_ID,
-    updatedBy: SYSTEM_USER_ID,
-  })
+  } as any)
 
   return {
     success: true,

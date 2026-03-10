@@ -14,7 +14,6 @@
  */
 
 import type {
-  DiscussionSourceAdapter,
   ParsedDiscussion,
   DiscussionThread,
   DiscussionStatus,
@@ -22,7 +21,7 @@ import type {
   ValidationResult,
   ThreadMessage,
 } from '../../app/types'
-import { AdapterError } from './base'
+import { AdapterError, type DiscussionSourceAdapter } from './base'
 import { logger } from '../utils/logger'
 
 /**
@@ -283,7 +282,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
 
       const response = await fetch(`${url}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
       })
@@ -317,7 +316,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       }
 
       // First message is the root (parent)
-      const rootMessage = data.messages[0]
+      const rootMessage = data.messages[0]!
       const replies = data.messages.slice(1)
 
       // Extract participants
@@ -379,7 +378,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -403,7 +402,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
 
       return true
     } catch (error) {
-      logger.error('Failed to post Slack reply:', error)
+      logger.error('Failed to post Slack reply', error)
       return false
     }
   }
@@ -434,7 +433,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -461,7 +460,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
 
       return true
     } catch (error) {
-      logger.error('Failed to remove Slack reaction:', error)
+      logger.error('Failed to remove Slack reaction', error)
       return false
     }
   }
@@ -508,7 +507,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -535,7 +534,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
 
       return true
     } catch (error) {
-      logger.error('Failed to update Slack status:', error)
+      logger.error('Failed to update Slack status', error)
       return false
     }
   }
@@ -590,7 +589,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
       })
@@ -602,7 +601,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
       const data = await response.json() as SlackAuthTestResponse
       return data.ok
     } catch (error) {
-      logger.error('Failed to test Slack connection:', error)
+      logger.error('Failed to test Slack connection', error)
       return false
     }
   }
@@ -621,7 +620,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
     }
 
     // Get first line
-    const firstLine = text.split('\n')[0].trim()
+    const firstLine = (text.split('\n')[0] ?? '').trim()
 
     // Truncate to 50 chars if needed
     if (firstLine.length > 50) {
@@ -670,7 +669,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
 
       const response = await fetch(`${url}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${config.apiToken}`,
+          'Authorization': `Bearer ${config.apiToken!}`,
           'Content-Type': 'application/json',
         },
       })
@@ -697,7 +696,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
         avatar: user.profile?.image_72,
       }
     } catch (error) {
-      logger.error('Failed to fetch Slack user info:', error)
+      logger.error('Failed to fetch Slack user info', error)
       return null
     }
   }
@@ -722,7 +721,7 @@ export class SlackAdapter implements DiscussionSourceAdapter {
     let match
 
     while ((match = mentionRegex.exec(text)) !== null) {
-      mentions.push(match[1])
+      if (match[1]) mentions.push(match[1])
     }
 
     // Return unique user IDs

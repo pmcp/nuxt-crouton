@@ -149,7 +149,8 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="SyncJobId" name="syncJobId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
-            v-model="state.syncJobId"
+            :model-value="(state.syncJobId ?? null) as any"
+            @update:model-value="state.syncJobId = $event as any"
             collection="triageJobs"
             label="SyncJobId"
           />
@@ -281,18 +282,18 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.processedAt) {
-    initialValues.processedAt = new Date(initialValues.processedAt)
+    initialValues.processedAt = new Date(initialValues.processedAt as any)
   }
 }
 
-const state = ref<TriageDiscussionFormData & { id?: string | null }>(initialValues)
+const state = ref<TriageDiscussionFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.processedAt instanceof Date) {
-      serializedData.processedAt = serializedData.processedAt.toISOString()
+      ;(serializedData as any).processedAt = serializedData.processedAt.toISOString()
     }
 
     if (props.action === 'create') {

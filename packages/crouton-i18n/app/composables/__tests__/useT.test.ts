@@ -481,7 +481,7 @@ describe('useT', () => {
   describe('getAvailableLocales()', () => {
     it('returns array of available locales', () => {
       const { getAvailableLocales } = useT()
-      const locales = getAvailableLocales('common.save')
+      const locales = getAvailableLocales()
 
       expect(Array.isArray(locales)).toBe(true)
       expect(locales).toContain('en')

@@ -83,11 +83,11 @@ export default defineEventHandler(async (event) => {
         }
       })
       .from(bookingsBookings)
-      .leftJoin(bookingsLocations, eq(bookingsBookings.location, bookingsLocations.id))
+      .leftJoin(bookingsLocations as any, eq(bookingsBookings.location as any, bookingsLocations.id))
       .where(
         and(
-          eq(bookingsBookings.id, bookingId),
-          eq(bookingsBookings.teamId, team.id)
+          eq(bookingsBookings.id as any, bookingId),
+          eq(bookingsBookings.teamId as any, team.id)
         )
       )
       .limit(1)

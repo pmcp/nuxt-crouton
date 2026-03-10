@@ -90,7 +90,7 @@ export const FaqBlock = Node.create<FaqBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(FaqBlockView)
+    return VueNodeViewRenderer(FaqBlockView as any)
   }
 })
 

@@ -35,6 +35,8 @@ export interface ParsedEmail {
 export interface FigmaEmailMetadata {
   /** Figma file URL */
   fileUrl?: string
+  /** Figma file key */
+  fileKey?: string
   /** Comment ID (if determinable) */
   commentId?: string
   /** File name */
@@ -127,7 +129,7 @@ export function extractFileKeyFromUrl(url: string): string | null {
 
   for (const pattern of patterns) {
     const match = url.match(pattern)
-    if (match) {
+    if (match?.[1]) {
       return match[1]
     }
   }
@@ -176,7 +178,7 @@ function extractTableCellMentions(html: string): { text: string; mention: string
   const tdMatches = Array.from(html.matchAll(tdPattern))
 
   for (const tdMatch of tdMatches) {
-    const cellContent = tdMatch[1]
+    const cellContent = (tdMatch[1] ?? '')
       .replace(/&[a-z]+;/gi, ' ') // Remove HTML entities
       .replace(/\s+/g, ' ')         // Normalize whitespace
       .trim()
@@ -193,7 +195,7 @@ function extractTableCellMentions(html: string): { text: string; mention: string
     ) {
       // Extract the mention from the cell content
       const cellMentionMatch = cellContent.match(/@[A-Za-z0-9_]+/)
-      if (cellMentionMatch) {
+      if (cellMentionMatch?.[0]) {
         return {
           text: cellContent,
           mention: cellMentionMatch[0].replace('@', '').trim()
@@ -217,7 +219,7 @@ function extractMentionWithContext(html: string, mention: string): string | null
 
   if (contextMatch) {
     // Clean up the extracted text
-    const fullText = (contextMatch[1] + contextMatch[2] + contextMatch[3])
+    const fullText = ((contextMatch[1] ?? '') + (contextMatch[2] ?? '') + (contextMatch[3] ?? ''))
       .replace(/<[^>]*>/g, ' ')    // Remove HTML tags
       .replace(/&[a-z]+;/gi, ' ')  // Remove HTML entities
       .replace(/\s+/g, ' ')         // Normalize whitespace
@@ -270,8 +272,8 @@ export function extractTextFromHtml(html: string): string {
 
     // If we only found bare "@Figbot" mentions, use the first one
     if (figbotMentions.length > 0) {
-      logger.debug('Found bare @Figbot mention', { mention: figbotMentions[0].trim() })
-      return figbotMentions[0].trim()
+      logger.debug('Found bare @Figbot mention', { mention: figbotMentions[0]!.trim() })
+      return figbotMentions[0]!.trim()
     }
   }
 
@@ -284,10 +286,10 @@ export function extractTextFromHtml(html: string): string {
 
   // Priority 3: Look for other @mentions with context
   const mentionPattern = /@[A-Za-z0-9_]+(?:\s+[^<>@]*)?/gi
-  let allMentions = html.match(mentionPattern) || []
+  const rawMentions = html.match(mentionPattern) || []
 
   // Filter out CSS rules and email addresses
-  allMentions = filterCSSRules(allMentions)
+  const allMentions = filterCSSRules(rawMentions)
 
   if (allMentions.length > 0) {
     logger.debug('Found non-CSS mentions', { count: allMentions.length })
@@ -356,7 +358,7 @@ export function extractTextFromHtml(html: string): string {
 
   if (substantialLines.length > 0) {
     // Return the first substantial line (likely the comment text)
-    const commentText = substantialLines[0]
+    const commentText = substantialLines[0]!
     logger.debug('Found comment text from substantial lines')
     return commentText
   }
@@ -377,7 +379,7 @@ export function extractLinksFromHtml(html: string): string[] {
   const priorityLinks: string[] = []
 
   // Extract from <a href="...">
-  $('a[href]').each((_, element) => {
+  $('a[href]').each((_: number, element: any) => {
     const href = $(element).attr('href')
     if (href && href.startsWith('http')) {
       links.push(href)
@@ -386,7 +388,7 @@ export function extractLinksFromHtml(html: string): string[] {
 
   // Extract from <img src="..."> (Figma CDN URLs contain file IDs)
   // Prioritize images with comment coordinates (commentx, commenty parameters)
-  $('img[src]').each((_, element) => {
+  $('img[src]').each((_: number, element: any) => {
     const src = $(element).attr('src')
     if (src && src.startsWith('http') && src.includes('figma.com')) {
       // Images with commentx/commenty are the actual comment location images
@@ -399,7 +401,7 @@ export function extractLinksFromHtml(html: string): string[] {
   })
 
   // Return priority links first, then regular links
-  return [...new Set([...priorityLinks, ...links])] // Remove duplicates, priority first
+  return Array.from(new Set([...priorityLinks, ...links])) // Remove duplicates, priority first
 }
 
 /**
@@ -429,7 +431,7 @@ export function extractFigmaLink(html: string): string | null {
 
   // Priority 2: Look for links with text "View in Figma"
   let viewInFigmaLink: string | null = null
-  $('a[href]').each((_, element) => {
+  $('a[href]').each((_: number, element: any) => {
     const text = $(element).text().trim()
     const href = $(element).attr('href')
 
@@ -451,7 +453,7 @@ export function extractFigmaLink(html: string): string | null {
 
   // Priority 3: Look for click.figma.com or direct figma.com links
   let figmaComLink: string | null = null
-  $('a[href]').each((_, element) => {
+  $('a[href]').each((_: number, element: any) => {
     const href = $(element).attr('href')
 
     if (href && href.startsWith('http')) {
@@ -520,7 +522,7 @@ export function extractFigmaMetadata(parsed: ParsedEmail): FigmaEmailMetadata {
       link.includes('/proto/')
   )
 
-  const fileKey = fileUrl ? extractFileKeyFromUrl(fileUrl) : parsed.fileKey
+  const fileKey = (fileUrl ? extractFileKeyFromUrl(fileUrl) : parsed.fileKey) ?? undefined
 
   const emailType = parsed.subject
     ? determineEmailType(parsed.subject, parsed.html || '')
@@ -528,7 +530,7 @@ export function extractFigmaMetadata(parsed: ParsedEmail): FigmaEmailMetadata {
 
   return {
     fileUrl,
-    fileKey: fileKey || undefined,
+    fileKey,
     emailType,
   }
 }
@@ -657,25 +659,25 @@ function levenshteinDistance(str1: string, str2: string): number {
   }
 
   for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j
+    matrix[0]![j] = j
   }
 
   // Fill matrix
   for (let i = 1; i <= str2.length; i++) {
     for (let j = 1; j <= str1.length; j++) {
       if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1]
+        matrix[i]![j] = matrix[i - 1]![j - 1]!
       } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
+        matrix[i]![j] = Math.min(
+          matrix[i - 1]![j - 1]! + 1, // substitution
+          matrix[i]![j - 1]! + 1,     // insertion
+          matrix[i - 1]![j]! + 1      // deletion
         )
       }
     }
   }
 
-  return matrix[str2.length][str1.length]
+  return matrix[str2.length]![str1.length]!
 }
 
 // ============================================================================
@@ -705,7 +707,7 @@ function prepareEmailContext(emailData: RawEmailData): EmailContext {
   const html = emailData['body-html'] || ''
   const plainText = emailData['stripped-text'] || emailData['body-plain'] || ''
 
-  const trimmedPlainText = plainText?.trim() || ''
+  const trimmedPlainText = plainText.trim() || ''
   const text = trimmedPlainText || (html ? extractTextFromHtml(html) : '')
   const links = html ? extractLinksFromHtml(html) : []
 
@@ -733,7 +735,7 @@ function extractFileKey(
   // Format: comments-[FILEKEY]@email.figma.com
   if (emailData.from) {
     const emailKeyMatch = emailData.from.match(/comments-([a-zA-Z0-9]+)@/i)
-    if (emailKeyMatch) {
+    if (emailKeyMatch?.[1]) {
       logger.debug('Priority 1: Extracted file key from sender email', { fileKey: emailKeyMatch[1] })
       return emailKeyMatch[1]
     }
@@ -763,7 +765,7 @@ function extractFileKey(
       const uploadHash = match[1]
       if (uploadHash && uploadHash.length >= 40) {
         const potentialKey = uploadHash.match(/^[a-zA-Z0-9]{22,40}/)
-        if (potentialKey) {
+        if (potentialKey?.[0]) {
           logger.debug('Priority 4: Extracted file key from upload URL', { fileKey: potentialKey[0] })
           return potentialKey[0]
         }
@@ -774,7 +776,7 @@ function extractFileKey(
   // Priority 5: 40-char hex hash fallback
   if (ctx.html) {
     const keyMatches = ctx.html.match(/[a-f0-9]{40}/gi)
-    if (keyMatches && keyMatches.length > 0) {
+    if (keyMatches && keyMatches.length > 0 && keyMatches[0]) {
       logger.debug('Priority 5: Found potential file key from 40-char hash', { fileKey: keyMatches[0] })
       return keyMatches[0]
     }
@@ -828,7 +830,7 @@ async function resolveClickFigmaKeyAsync(html: string): Promise<string | undefin
 
 /** Build the final ParsedEmail result from context and file key */
 function buildParsedEmail(emailData: RawEmailData, ctx: EmailContext, fileKey?: string): ParsedEmail {
-  const figmaLink = ctx.html ? extractFigmaLink(ctx.html) : undefined
+  const figmaLink = ctx.html ? extractFigmaLink(ctx.html) : null
   const timestamp = emailData.timestamp
     ? new Date(emailData.timestamp * 1000)
     : undefined

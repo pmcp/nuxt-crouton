@@ -20,7 +20,7 @@ export function useBookingOptions() {
 
   // Fetch settings collection using team-scoped endpoint
   const { data: settingsData, pending, error, refresh } = useFetch(
-    () => currentTeam.value?.id ? `/api/teams/${currentTeam.value.id}/bookings-settings` : null,
+    () => currentTeam.value?.id ? `/api/teams/${currentTeam.value.id}/bookings-settings` : null as any,
     {
       key: 'crouton-booking-options-settings',
       default: () => [],
@@ -30,13 +30,13 @@ export function useBookingOptions() {
 
   // Extract statuses from settings (already parsed by jsonColumn in schema)
   const statuses = computed<OptionItem[]>(() => {
-    const settings = settingsData.value?.[0]
+    const settings = (settingsData.value as any)?.[0]
     return Array.isArray(settings?.statuses) ? settings.statuses : []
   })
 
   // Extract groups from settings (already parsed by jsonColumn in schema)
   const groups = computed<OptionItem[]>(() => {
-    const settings = settingsData.value?.[0]
+    const settings = (settingsData.value as any)?.[0]
     return Array.isArray(settings?.groups) ? settings.groups : []
   })
 

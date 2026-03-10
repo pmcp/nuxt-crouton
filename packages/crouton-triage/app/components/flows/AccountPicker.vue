@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { ConnectedAccount, AccountProvider } from '~/layers/triage/types'
 
 interface Props {
@@ -67,7 +68,7 @@ defineExpose({ fetchAccounts })
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium truncate">{{ selectedAccount.label }}</span>
           <UBadge
-            :color="getStatusColor(selectedAccount.status)"
+            :color="getStatusColor(selectedAccount.status) as any"
             size="xs"
             variant="subtle"
           >

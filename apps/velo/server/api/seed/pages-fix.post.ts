@@ -708,14 +708,14 @@ export default defineEventHandler(async () => {
   const log: string[] = []
 
   // Find org
-  const orgs = await (db as any).select().from(organization).where(eq(organization.slug, 'velo-solidaire')).limit(1)
+  const orgs = await (db as any).select().from(organization).where(eq(organization.slug as any, 'velo-solidaire')).limit(1)
   if (orgs.length === 0) {
     throw createError({ status: 404, statusText: 'Organization velo-solidaire not found' })
   }
   const orgId = orgs[0].id
 
   // Get all pages
-  const pages = await (db as any).select().from(pagesPages).where(eq(pagesPages.teamId, orgId))
+  const pages = await (db as any).select().from(pagesPages).where(eq(pagesPages.teamId as any, orgId))
 
   const pageUpdates: Record<string, { fr: string; nl: string; en: string; title_fr: string; title_nl: string; title_en: string }> = {
     'homepage': {
@@ -766,7 +766,7 @@ export default defineEventHandler(async () => {
         },
         updatedAt: new Date()
       })
-      .where(eq(pagesPages.id, page.id))
+      .where(eq(pagesPages.id as any, page.id))
 
     log.push(`UPDATED: ${page.slug} — fr/nl/en content set (TipTap JSON)`)
   }

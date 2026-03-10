@@ -133,18 +133,18 @@ if (props.action === 'update' && props.activeItem?.id) {
   }
 }
 
-const state = ref<BookingsBookingFormData & { id?: string | null }>(initialValues)
+const state = ref<BookingsBookingFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.date instanceof Date) {
-      serializedData.date = serializedData.date.toISOString()
+      (serializedData as any).date = serializedData.date.toISOString()
     }
 
     if (props.action === 'create') {
-      await create(serializedData)
+      await create(serializedData as any)
     } else if (props.action === 'update' && state.value.id) {
       await update(state.value.id, serializedData)
     } else if (props.action === 'delete') {

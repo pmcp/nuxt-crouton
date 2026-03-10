@@ -94,7 +94,8 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="AccountId" name="accountId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
-            v-model="state.accountId"
+            :model-value="(state.accountId ?? null) as any"
+            @update:model-value="state.accountId = $event as any"
             collection="triageAccounts"
             label="AccountId"
           />
@@ -190,7 +191,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<TriageOutputFormData & { id?: string | null }>(initialValues)
+const state = ref<TriageOutputFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {

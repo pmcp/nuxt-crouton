@@ -104,7 +104,7 @@ export const CardGridBlock = Node.create<CardGridBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(CardGridBlockView)
+    return VueNodeViewRenderer(CardGridBlockView as any)
   }
 })
 

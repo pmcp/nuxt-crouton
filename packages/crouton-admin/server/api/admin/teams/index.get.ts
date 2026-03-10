@@ -88,7 +88,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     .offset((page - 1) * pageSize)
 
   // Get member counts for each team
-  const teamIds = teams.map(t => t.id)
+  const teamIds = teams.map((t: any) => t.id)
   const memberCounts = teamIds.length > 0
     ? await db
         .select({
@@ -96,15 +96,15 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
           count: count()
         })
         .from(member)
-        .where(sql`${member.organizationId} IN (${sql.join(teamIds.map(id => sql`${id}`), sql`, `)})`)
+        .where(sql`${member.organizationId} IN (${sql.join(teamIds.map((id: any) => sql`${id}`), sql`, `)})`)
         .groupBy(member.organizationId)
     : []
 
   // Create a map of team ID to member count
-  const countMap = new Map(memberCounts.map(mc => [mc.organizationId, mc.count]))
+  const countMap = new Map(memberCounts.map((mc: any) => [mc.organizationId, mc.count]))
 
   // Get owner info for teams
-  const ownerIds = teams.map(t => t.ownerId).filter((id): id is string => id !== null)
+  const ownerIds = teams.map((t: any) => t.ownerId).filter((id: any): id is string => id !== null)
   const owners = ownerIds.length > 0
     ? await db
         .select({
@@ -113,15 +113,15 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
           email: user.email
         })
         .from(user)
-        .where(sql`${user.id} IN (${sql.join(ownerIds.map(id => sql`${id}`), sql`, `)})`)
+        .where(sql`${user.id} IN (${sql.join(ownerIds.map((id: any) => sql`${id}`), sql`, `)})`)
     : []
 
   // Create a map of owner ID to owner info
-  const ownerMap = new Map(owners.map(o => [o.id, o]))
+  const ownerMap = new Map(owners.map((o: any) => [o.id, o]))
 
   // Map to response type
-  const items: AdminTeamListItem[] = teams.map((t) => {
-    const owner = t.ownerId ? ownerMap.get(t.ownerId) : null
+  const items: AdminTeamListItem[] = teams.map((t: any) => {
+    const owner: any = t.ownerId ? ownerMap.get(t.ownerId) : null
     return {
       id: t.id,
       name: t.name,

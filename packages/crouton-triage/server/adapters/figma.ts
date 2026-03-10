@@ -206,7 +206,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       const url = `${FIGMA_API_BASE}/files/${fileKey}/comments`
       const response = await fetch(url, {
         headers: {
-          'X-Figma-Token': config.apiToken,
+          'X-Figma-Token': config.apiToken!,
         },
       })
 
@@ -330,7 +330,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'X-Figma-Token': config.apiToken,
+          'X-Figma-Token': config.apiToken!,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -395,7 +395,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'X-Figma-Token': config.apiToken,
+          'X-Figma-Token': config.apiToken!,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ emoji }),
@@ -453,7 +453,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          'X-Figma-Token': config.apiToken,
+          'X-Figma-Token': config.apiToken!,
         },
       })
 
@@ -496,11 +496,13 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
     }
 
     // Check Notion configuration
-    if (!config.notionToken || config.notionToken.trim() === '') {
+    const notionToken = (config as any).notionToken
+    if (!notionToken || notionToken.trim() === '') {
       errors.push('Notion API token is required')
     }
 
-    if (!config.notionDatabaseId || config.notionDatabaseId.trim() === '') {
+    const notionDatabaseId = (config as any).notionDatabaseId
+    if (!notionDatabaseId || notionDatabaseId.trim() === '') {
       errors.push('Notion database ID is required')
     }
 
@@ -527,7 +529,7 @@ export class FigmaAdapter implements DiscussionSourceAdapter {
       const url = `${FIGMA_API_BASE}/me`
       const response = await fetch(url, {
         headers: {
-          'X-Figma-Token': config.apiToken,
+          'X-Figma-Token': config.apiToken!,
         },
       })
 

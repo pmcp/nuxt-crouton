@@ -45,10 +45,12 @@ interface CollectionQueryReturn<T> {
  *   query: computed(() => ({ locale: locale.value }))
  * })
  */
-export async function useCollectionQuery<K extends CollectionName>(
-  collection: K,
+export async function useCollectionQuery<K extends CollectionName>(collection: K, options?: CollectionQueryOptions): Promise<CollectionQueryReturn<CollectionItem<K>>>
+export async function useCollectionQuery(collection: string, options?: CollectionQueryOptions): Promise<CollectionQueryReturn<any>>
+export async function useCollectionQuery(
+  collection: string,
   options: CollectionQueryOptions = {}
-): Promise<CollectionQueryReturn<CollectionItem<K>>> {
+): Promise<CollectionQueryReturn<any>> {
   const route = useRoute()
   const collections = useCollections()
   const config = collections.getConfig(collection)
@@ -142,7 +144,7 @@ export async function useCollectionQuery<K extends CollectionName>(
     }
 
     // Apply proxy transform if configured
-    return applyProxyTransform(rawItems, config) as CollectionItem<K>[]
+    return applyProxyTransform(rawItems, config)
   })
 
   return {

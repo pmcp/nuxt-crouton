@@ -97,21 +97,21 @@ function extractPageContent(html: string): string {
   const lines: string[] = []
 
   const titleMatch = clean.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-  if (titleMatch) lines.push(`Title: ${titleMatch[1].trim()}`)
+  if (titleMatch) lines.push(`Title: ${titleMatch[1]!.trim()}`)
 
   const metaMatch = clean.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
     || clean.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)
-  if (metaMatch) lines.push(`Meta description: ${metaMatch[1].trim()}`)
+  if (metaMatch) lines.push(`Meta description: ${metaMatch[1]!.trim()}`)
 
   const headingMatches = clean.matchAll(/<h([1-4])[^>]*>([\s\S]*?)<\/h\1>/gi)
   for (const match of headingMatches) {
-    const text = match[2].replace(/<[^>]+>/g, '').trim()
+    const text = match[2]!.replace(/<[^>]+>/g, '').trim()
     if (text) lines.push(`H${match[1]}: ${text}`)
   }
 
   const paraMatches = [...clean.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].slice(0, 10)
   for (const match of paraMatches) {
-    const text = match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    const text = match[1]!.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
     if (text.length > 20) lines.push(text)
   }
 

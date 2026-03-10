@@ -103,7 +103,7 @@ export const TwoColumnBlock = Node.create<TwoColumnBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(TwoColumnBlockView)
+    return VueNodeViewRenderer(TwoColumnBlockView as any)
   }
 })
 

@@ -187,7 +187,7 @@ function handleEdit() {
                   <CroutonItemCardMini
                     v-else-if="field.type === 'reference' && item[field.name] && references[field.name]"
                     :id="String(item[field.name])"
-                    :collection="references[field.name]"
+                    :collection="references[field.name]!"
                   />
 
                   <!-- Multi-reference -->
@@ -199,7 +199,7 @@ function handleEdit() {
                       v-for="refId in item[field.name]"
                       :key="refId"
                       :id="String(refId)"
-                      :collection="references[field.name]"
+                      :collection="references[field.name]!"
                     />
                   </div>
 
@@ -301,7 +301,7 @@ function handleEdit() {
                   <CroutonItemCardMini
                     v-else-if="field.type === 'reference' && item[field.name] && references[field.name]"
                     :id="String(item[field.name])"
-                    :collection="references[field.name]"
+                    :collection="references[field.name]!"
                   />
 
                   <!-- Options / badge display -->

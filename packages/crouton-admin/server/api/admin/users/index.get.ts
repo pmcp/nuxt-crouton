@@ -103,7 +103,7 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
     .offset((page - 1) * pageSize)
 
   // Get membership counts for each user
-  const userIds = users.map(u => u.id)
+  const userIds = users.map((u: any) => u.id)
   const membershipCounts = userIds.length > 0
     ? await db
         .select({
@@ -111,15 +111,15 @@ export default defineEventHandler(async (event: H3Event): Promise<PaginatedRespo
           count: count()
         })
         .from(member)
-        .where(sql`${member.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
+        .where(sql`${member.userId} IN (${sql.join(userIds.map((id: any) => sql`${id}`), sql`, `)})`)
         .groupBy(member.userId)
     : []
 
   // Create a map of user ID to membership count
-  const countMap = new Map(membershipCounts.map(mc => [mc.userId, mc.count]))
+  const countMap = new Map(membershipCounts.map((mc: any) => [mc.userId, mc.count]))
 
   // Map to response type
-  const items: AdminUserListItem[] = users.map(u => ({
+  const items: AdminUserListItem[] = users.map((u: any) => ({
     id: u.id,
     name: u.name,
     email: u.email,

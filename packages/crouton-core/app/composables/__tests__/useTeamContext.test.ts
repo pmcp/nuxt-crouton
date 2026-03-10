@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { computed } from 'vue'
 
 // Mock route
-let mockRoute = {
+let mockRoute: { path: string; params: Record<string, any> } = {
   path: '/dashboard/test-team/products',
   params: { team: 'test-team' }
 }
 
 // Mock runtime config (mode removed - always use [team] in URLs)
-let mockRuntimeConfig = {
+let mockRuntimeConfig: { public: { crouton: Record<string, any> } } = {
   public: {
     crouton: { auth: {} }
   }
@@ -43,7 +43,7 @@ describe('useTeamContext', () => {
     }
     mockRuntimeConfig = {
       public: {
-        crouton: { auth: {} }
+        crouton: { auth: {} } as Record<string, any>
       }
     }
     mockUseTeam = null

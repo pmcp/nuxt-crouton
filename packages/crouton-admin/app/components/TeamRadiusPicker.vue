@@ -9,7 +9,7 @@
  * <TeamRadiusPicker v-model="radius" />
  * ```
  */
-import type { ThemeRadius } from '../../composables/useTeamTheme'
+import type { ThemeRadius } from '../composables/useTeamTheme'
 
 interface Props {
   /** Selected radius value */

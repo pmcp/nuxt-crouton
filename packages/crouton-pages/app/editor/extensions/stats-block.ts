@@ -104,7 +104,7 @@ export const StatsBlock = Node.create<StatsBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(StatsBlockView)
+    return VueNodeViewRenderer(StatsBlockView as any)
   }
 })
 

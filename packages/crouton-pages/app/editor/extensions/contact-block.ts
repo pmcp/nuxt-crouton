@@ -116,7 +116,7 @@ export const ContactBlock = Node.create<ContactBlockOptions>({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(ContactBlockView)
+    return VueNodeViewRenderer(ContactBlockView as any)
   }
 })
 

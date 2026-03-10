@@ -61,11 +61,11 @@ async function fetchAndRedirect() {
     const firstTeam = userTeams[0]
     // Switch active team if needed
     try {
-      await switchTeamBySlug(firstTeam.slug)
+      await switchTeamBySlug(firstTeam!.slug)
     } catch (e) {
       // Ignore switch errors, still redirect
     }
-    await navigateTo(`/admin/${firstTeam.slug}`, { replace: true })
+    await navigateTo(`/admin/${firstTeam!.slug}`, { replace: true })
   } else {
     // No teams - redirect to create one
     await navigateTo('/onboarding/create-team', { replace: true })

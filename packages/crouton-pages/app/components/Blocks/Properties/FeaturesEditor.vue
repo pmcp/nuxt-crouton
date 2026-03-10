@@ -49,7 +49,7 @@ function removeFeature(index: number) {
 
 // Update a feature
 function updateFeature(index: number, field: keyof BlockFeature, value: any) {
-  features.value[index] = { ...features.value[index], [field]: value }
+  features.value[index] = { ...features.value[index], [field]: value } as BlockFeature
   emitChange()
 }
 
@@ -58,8 +58,8 @@ function moveFeature(index: number, direction: 'up' | 'down') {
   const newIndex = direction === 'up' ? index - 1 : index + 1
   if (newIndex < 0 || newIndex >= features.value.length) return
 
-  const temp = features.value[index]
-  features.value[index] = features.value[newIndex]
+  const temp = features.value[index]!
+  features.value[index] = features.value[newIndex]!
   features.value[newIndex] = temp
   emitChange()
 }
@@ -75,7 +75,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
     >
       <!-- Header with move/delete -->
       <div class="flex items-center justify-between">
-        <span class="text-sm font-medium">{{ t('pages.blocks.features.featureN', { n: index + 1 }) }}</span>
+        <span class="text-sm font-medium">{{ t('pages.blocks.features.featureN', { n: index + 1 } as any) }}</span>
         <div class="flex items-center gap-1">
           <UButton
             color="neutral"
@@ -131,7 +131,7 @@ function moveFeature(index: number, direction: 'up' | 'down') {
     <!-- Add Button -->
     <UButton
       color="neutral"
-      variant="dashed"
+      variant="outline"
       icon="i-lucide-plus"
       size="sm"
       block

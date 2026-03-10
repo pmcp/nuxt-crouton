@@ -42,14 +42,14 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="BookingId" name="bookingId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
-            v-model="state.bookingId"
+            v-model="state.bookingId as any"
             collection="bookingsBookings"
             label="BookingId"
           />
         </UFormField>
         <UFormField label="TemplateId" name="templateId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
-            v-model="state.templateId"
+            v-model="state.templateId as any"
             collection="bookingsEmailtemplates"
             label="TemplateId"
           />

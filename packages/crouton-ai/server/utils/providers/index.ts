@@ -18,7 +18,7 @@
 import { OPENAI_PROVIDER, OPENAI_MODELS } from './openai'
 import { ANTHROPIC_PROVIDER, ANTHROPIC_MODELS } from './anthropic'
 import type { AIProviderInfo, AIModelInfo, AIRuntimeConfig } from './types'
-import type { AIProviderId } from '../../shared/utils/ai-providers'
+type AIProviderId = 'openai' | 'anthropic'
 
 // Note: Types are auto-imported from types.ts - no re-export needed
 // detectProviderFromModel is auto-imported from shared/utils/ai-providers.ts
@@ -78,7 +78,7 @@ export function getAvailableModels(config: AIRuntimeConfig): AIModelInfo[] {
  * @returns Provider info or undefined
  */
 export function getProviderById(providerId: string): AIProviderInfo | undefined {
-  return AI_PROVIDERS[providerId as AIProviderId]
+  return (AI_PROVIDERS as Record<string, AIProviderInfo>)[providerId]
 }
 
 /**

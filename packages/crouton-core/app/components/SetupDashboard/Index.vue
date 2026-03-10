@@ -17,7 +17,7 @@ interface StatsResponse {
 // Get collections from app config
 const appConfig = useAppConfig()
 const croutonCollections = computed(() => {
-  return (appConfig.croutonCollections || {}) as Record<string, CollectionConfig>
+  return (appConfig.croutonCollections || {}) as unknown as Record<string, CollectionConfig>
 })
 
 const collectionNames = computed(() => Object.keys(croutonCollections.value))

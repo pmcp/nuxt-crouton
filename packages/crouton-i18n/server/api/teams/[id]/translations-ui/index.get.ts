@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   // Filter by locale if provided
   if (locale) {
-    return translations.filter(t =>
+    return translations.filter((t: any) =>
       t.values && typeof t.values === 'object' && t.values !== null && locale in t.values
     )
   }

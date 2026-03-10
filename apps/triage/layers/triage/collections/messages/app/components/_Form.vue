@@ -192,24 +192,24 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.receivedAt) {
-    initialValues.receivedAt = new Date(initialValues.receivedAt)
+    initialValues.receivedAt = new Date(initialValues.receivedAt as any)
   }
   if (initialValues.forwardedAt) {
-    initialValues.forwardedAt = new Date(initialValues.forwardedAt)
+    initialValues.forwardedAt = new Date(initialValues.forwardedAt as any)
   }
 }
 
-const state = ref<TriageMessageFormData & { id?: string | null }>(initialValues)
+const state = ref<TriageMessageFormData & { id?: string | null }>(initialValues as any)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.receivedAt instanceof Date) {
-      serializedData.receivedAt = serializedData.receivedAt.toISOString()
+      ;(serializedData as any).receivedAt = serializedData.receivedAt.toISOString()
     }
     if (serializedData.forwardedAt instanceof Date) {
-      serializedData.forwardedAt = serializedData.forwardedAt.toISOString()
+      ;(serializedData as any).forwardedAt = serializedData.forwardedAt.toISOString()
     }
 
     if (props.action === 'create') {

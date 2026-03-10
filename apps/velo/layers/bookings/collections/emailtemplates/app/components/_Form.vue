@@ -90,7 +90,7 @@
         </UFormField>
         <UFormField label="LocationId" name="locationId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
-            v-model="state.locationId"
+            v-model="state.locationId as any"
             collection="bookingsLocations"
             label="LocationId"
           />

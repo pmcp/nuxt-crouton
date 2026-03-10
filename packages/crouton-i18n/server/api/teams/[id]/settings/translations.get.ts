@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       statusText: 'Team ID is required'
     })
   }
+  // @ts-expect-error Nitro auto-import from crouton-auth
   const { user } = await requireUserSession(event)
 
   // Check if user has access to this team
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   const settings = await useDB()
     .select()
     .from(teamSettings)
-    .where(eq(teamSettings.teamId, teamId))
+    .where(eq(teamSettings.teamId as any, teamId))
     .get()
 
   return {

@@ -178,7 +178,7 @@ export default defineEventHandler(async (event) => {
         success: true,
         data: {
           discussionId: result.discussionId,
-          notionTasks: result.notionTasks.map(task => ({
+          notionTasks: result.notionTasks.map((task: any) => ({
             taskId: task.taskId,
             url: task.url,
           })),

@@ -41,7 +41,7 @@ const { getSlugForLocale } = useLocalizedSlug()
 // Get page type info for icon
 const pageTypeInfo = computed(() => {
   if (!props.item.pageType) return null
-  return getPageType(props.item.pageType)
+  return getPageType(props.item.pageType) as { name: string; icon?: string; [key: string]: any } | undefined
 })
 
 // Get localized title with fallbacks
@@ -57,7 +57,7 @@ const localizedTitle = computed(() => {
 const localizedSlug = computed(() => getSlugForLocale(props.item, locale.value))
 
 // Relative time ago
-const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt)
+const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt || new Date())
 
 // Status config - colored dots (matches Form.vue)
 const statusConfig: Record<string, { dotColor: string; label: string }> = {
@@ -73,8 +73,8 @@ const visibilityConfig: Record<string, { icon: string; label: string }> = {
   hidden: { icon: 'i-lucide-eye-off', label: 'Hidden' }
 }
 
-const statusStyle = computed(() => statusConfig[props.item.status || ''] || statusConfig.draft)
-const visibilityStyle = computed(() => visibilityConfig[props.item.visibility || ''] || visibilityConfig.public)
+const statusStyle = computed(() => statusConfig[props.item.status || ''] || statusConfig.draft!)
+const visibilityStyle = computed(() => visibilityConfig[props.item.visibility || ''] || visibilityConfig.public!)
 
 // Show in navigation indicator
 const showInMenuLabel = computed(() =>

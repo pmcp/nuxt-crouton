@@ -22,7 +22,7 @@ const localeItems = computed(() =>
 )
 
 const handleLocaleChange = async (newLocale: string) => {
-  await setLocale(newLocale)
+  await setLocale(newLocale as any)
   // Persist to database if user is authenticated
   if (user.value) {
     updateUserLocale(newLocale)

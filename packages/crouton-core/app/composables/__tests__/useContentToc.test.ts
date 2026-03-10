@@ -43,7 +43,7 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       expect(tocLinks.value).toHaveLength(1)
-      expect(tocLinks.value[0]).toEqual({
+      expect(tocLinks.value[0]!).toEqual({
         id: 'introduction',
         text: 'Introduction',
         depth: 2
@@ -55,7 +55,7 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       expect(tocLinks.value).toHaveLength(1)
-      expect(tocLinks.value[0]).toEqual({
+      expect(tocLinks.value[0]!).toEqual({
         id: 'getting-started',
         text: 'Getting Started',
         depth: 3
@@ -67,7 +67,7 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       expect(tocLinks.value).toHaveLength(1)
-      expect(tocLinks.value[0]).toEqual({
+      expect(tocLinks.value[0]!).toEqual({
         id: 'advanced-topics',
         text: 'Advanced Topics',
         depth: 4
@@ -98,10 +98,10 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       expect(tocLinks.value).toHaveLength(4)
-      expect(tocLinks.value[0]).toEqual({ id: 'chapter-1', text: 'Chapter 1', depth: 2 })
-      expect(tocLinks.value[1]).toEqual({ id: 'section-a', text: 'Section A', depth: 3 })
-      expect(tocLinks.value[2]).toEqual({ id: 'section-b', text: 'Section B', depth: 3 })
-      expect(tocLinks.value[3]).toEqual({ id: 'chapter-2', text: 'Chapter 2', depth: 2 })
+      expect(tocLinks.value[0]!).toEqual({ id: 'chapter-1', text: 'Chapter 1', depth: 2 })
+      expect(tocLinks.value[1]!).toEqual({ id: 'section-a', text: 'Section A', depth: 3 })
+      expect(tocLinks.value[2]!).toEqual({ id: 'section-b', text: 'Section B', depth: 3 })
+      expect(tocLinks.value[3]!).toEqual({ id: 'chapter-2', text: 'Chapter 2', depth: 2 })
     })
   })
 
@@ -114,28 +114,28 @@ describe('useContentToc', () => {
       const html = '<h2>My Heading</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].id).toBe('my-heading')
+      expect(tocLinks.value[0]!.id).toBe('my-heading')
     })
 
     it('converts spaces to hyphens', () => {
       const html = '<h2>Multiple Word Heading</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].id).toBe('multiple-word-heading')
+      expect(tocLinks.value[0]!.id).toBe('multiple-word-heading')
     })
 
     it('removes special characters from generated id', () => {
       const html = '<h2>Hello! World? Test.</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].id).toBe('hello-world-test')
+      expect(tocLinks.value[0]!.id).toBe('hello-world-test')
     })
 
     it('handles headings with numbers', () => {
       const html = '<h2>Step 1</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].id).toBe('step-1')
+      expect(tocLinks.value[0]!.id).toBe('step-1')
     })
 
     it('generates id even when html id attribute exists', () => {
@@ -144,7 +144,7 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       // ID is generated from text, not from attribute
-      expect(tocLinks.value[0].id).toBe('custom-heading')
+      expect(tocLinks.value[0]!.id).toBe('custom-heading')
     })
   })
 
@@ -153,7 +153,7 @@ describe('useContentToc', () => {
       const html = '<h2>  Padded Heading  </h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].text).toBe('Padded Heading')
+      expect(tocLinks.value[0]!.text).toBe('Padded Heading')
     })
 
     it('skips headings with empty text after trim', () => {
@@ -167,7 +167,7 @@ describe('useContentToc', () => {
       const html = '<h2>CamelCase Heading</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].text).toBe('CamelCase Heading')
+      expect(tocLinks.value[0]!.text).toBe('CamelCase Heading')
     })
   })
 
@@ -176,9 +176,9 @@ describe('useContentToc', () => {
       const html = '<h2 class="title">Styled Heading</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].text).toBe('Styled Heading')
+      expect(tocLinks.value[0]!.text).toBe('Styled Heading')
       // ID is generated from text regardless of attributes
-      expect(tocLinks.value[0].id).toBe('styled-heading')
+      expect(tocLinks.value[0]!.id).toBe('styled-heading')
     })
 
     it('handles headings with multiple attributes', () => {
@@ -186,8 +186,8 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       // ID is generated from text, not from id attribute
-      expect(tocLinks.value[0].id).toBe('introduction')
-      expect(tocLinks.value[0].text).toBe('Introduction')
+      expect(tocLinks.value[0]!.id).toBe('introduction')
+      expect(tocLinks.value[0]!.text).toBe('Introduction')
     })
 
     it('ignores id attribute in any position', () => {
@@ -195,7 +195,7 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       // ID is generated from text, not from id attribute
-      expect(tocLinks.value[0].id).toBe('heading')
+      expect(tocLinks.value[0]!.id).toBe('heading')
     })
   })
 
@@ -204,10 +204,10 @@ describe('useContentToc', () => {
       const contentRef = ref('<h2>Initial</h2>')
       const { tocLinks } = useContentToc(contentRef)
 
-      expect(tocLinks.value[0].text).toBe('Initial')
+      expect(tocLinks.value[0]!.text).toBe('Initial')
 
       contentRef.value = '<h2>Updated</h2>'
-      expect(tocLinks.value[0].text).toBe('Updated')
+      expect(tocLinks.value[0]!.text).toBe('Updated')
     })
 
     it('handles content ref changing to null', () => {
@@ -236,21 +236,21 @@ describe('useContentToc', () => {
       const html = '<h2>Heading</h2>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].depth).toBe(2)
+      expect(tocLinks.value[0]!.depth).toBe(2)
     })
 
     it('assigns correct depth to h3', () => {
       const html = '<h3>Heading</h3>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].depth).toBe(3)
+      expect(tocLinks.value[0]!.depth).toBe(3)
     })
 
     it('assigns correct depth to h4', () => {
       const html = '<h4>Heading</h4>'
       const { tocLinks } = useContentToc(html)
 
-      expect(tocLinks.value[0].depth).toBe(4)
+      expect(tocLinks.value[0]!.depth).toBe(4)
     })
   })
 
@@ -266,8 +266,8 @@ describe('useContentToc', () => {
       const { tocLinks } = useContentToc(html)
 
       expect(tocLinks.value).toHaveLength(2)
-      expect(tocLinks.value[0].text).toBe('First Section')
-      expect(tocLinks.value[1].text).toBe('Subsection')
+      expect(tocLinks.value[0]!.text).toBe('First Section')
+      expect(tocLinks.value[1]!.text).toBe('Subsection')
     })
 
     it('handles nested HTML structure', () => {

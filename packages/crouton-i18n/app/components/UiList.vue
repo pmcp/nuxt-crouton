@@ -42,10 +42,10 @@
     <!-- Error state -->
     <UAlert
       v-else-if="error"
-      color="red"
+      color="error"
       icon="i-lucide-alert-circle"
       :title="t('admin.translations.loadFailed')"
-      :description="error.message"
+      :description="error?.message"
     />
 
     <!-- Translations table -->
@@ -101,7 +101,7 @@
       <!-- Status -->
       <template #status-cell="{ row }">
         <UBadge
-          :color="row.original.hasOverride ? 'green' : 'blue'"
+          :color="row.original.hasOverride ? 'success' : 'info'"
           variant="subtle"
           size="sm"
         >
@@ -123,7 +123,7 @@
             v-if="row.original.hasOverride"
             icon="i-lucide-trash-2"
             size="xs"
-            color="red"
+            color="error"
             variant="ghost"
             @click="deleteOverride(row.original)"
           />
@@ -274,7 +274,7 @@ const overrideValues = ref<Record<string, string>>({})
 function openOverrideModal(item: TranslationWithOverride) {
   editingItem.value = item
   // Pre-fill with existing team values or empty
-  overrideValues.value = { ...item.teamValues } || {}
+  overrideValues.value = { ...(item.teamValues ?? {}) }
   showModal.value = true
 }
 

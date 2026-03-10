@@ -113,11 +113,11 @@ async function verifyDomain(domainId: string) {
 
     if (result.verified) {
       const idx = domains.value.findIndex(d => d.id === domainId)
-      if (idx !== -1) domains.value[idx].status = 'verified'
+      if (idx !== -1) domains.value[idx]!.status = 'verified'
       notify.success(t('teams.domains.domainVerified') || 'Domain verified!')
     } else {
       const idx = domains.value.findIndex(d => d.id === domainId)
-      if (idx !== -1) domains.value[idx].status = 'failed'
+      if (idx !== -1) domains.value[idx]!.status = 'failed'
       notify.error(t('teams.domains.verificationFailed') || 'Verification failed', {
         description: result.message
       })

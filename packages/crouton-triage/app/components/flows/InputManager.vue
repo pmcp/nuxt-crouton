@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { FlowInput } from '~/layers/triage/types'
+import type { FlowInput } from '../../types'
 
 /**
  * InputManager Component
@@ -318,7 +318,7 @@ async function updateInput() {
       })
 
       // Find and replace in array
-      const index = inputs.value.findIndex(i => i.id === editingInput.value!.id)
+      const index = inputs.value.findIndex((i: FlowInput) => i.id === editingInput.value!.id)
       if (index !== -1) {
         inputs.value[index] = response as FlowInput
       }
@@ -326,7 +326,7 @@ async function updateInput() {
       notify.success('Input Updated', { description: `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} input has been updated successfully.` })
     } else {
       // In wizard mode, just update local array
-      const index = inputs.value.findIndex(i => i.id === editingInput.value!.id)
+      const index = inputs.value.findIndex((i: FlowInput) => i.id === editingInput.value!.id)
       if (index !== -1) {
         inputs.value[index] = updatedInput
       }
@@ -369,7 +369,7 @@ async function deleteInput() {
     }
 
     // Remove from local array
-    inputs.value = inputs.value.filter(i => i.id !== deletingInput.value!.id)
+    inputs.value = inputs.value.filter((i: FlowInput) => i.id !== deletingInput.value!.id)
 
     // Emit changes
     emit('update:modelValue', inputs.value)
@@ -419,19 +419,19 @@ async function copyWebhookUrl(input: FlowInput) {
 /**
  * Get input status badge
  */
-function getInputStatus(input: FlowInput): { label: string; color: string } {
+function getInputStatus(input: FlowInput): { label: string; color: 'error' | 'info' | 'success' | 'warning' | 'primary' | 'secondary' | 'neutral' } {
   if (!input.active) {
-    return { label: 'Inactive', color: 'gray' }
+    return { label: 'Inactive', color: 'neutral' }
   }
 
   if (input.sourceType === 'slack') {
     const hasConnection = (!!input.apiToken || !!input.accountId) && !!input.sourceMetadata?.slackTeamId
     return hasConnection
-      ? { label: input.accountId ? 'Account Connected' : 'OAuth Connected', color: 'green' }
-      : { label: 'Not Connected', color: 'orange' }
+      ? { label: input.accountId ? 'Account Connected' : 'OAuth Connected', color: 'success' }
+      : { label: 'Not Connected', color: 'warning' }
   }
 
-  return { label: 'Active', color: 'blue' }
+  return { label: 'Active', color: 'info' }
 }
 
 /**
@@ -525,7 +525,7 @@ watch(isEditModalOpen, (open) => {
       v-if="inputs.length === 0"
       title="No inputs yet"
       description="Add an input source to start receiving discussions from Slack, Figma, or email."
-      color="blue"
+      color="info"
       variant="soft"
     />
 
@@ -553,14 +553,14 @@ watch(isEditModalOpen, (open) => {
             <div class="flex items-center gap-1">
               <UButton
                 icon="i-lucide-pencil"
-                color="gray"
+                color="neutral"
                 variant="ghost"
                 size="sm"
                 @click="openEditModal(input)"
               />
               <UButton
                 icon="i-lucide-trash-2"
-                color="gray"
+                color="neutral"
                 variant="ghost"
                 size="sm"
                 @click="openDeleteDialog(input)"
@@ -599,7 +599,7 @@ watch(isEditModalOpen, (open) => {
               />
               <UButton
                 icon="i-lucide-clipboard-copy"
-                color="gray"
+                color="neutral"
                 variant="ghost"
                 size="sm"
                 @click="copyWebhookUrl(input)"
@@ -663,7 +663,7 @@ watch(isEditModalOpen, (open) => {
                     <UAlert
                       v-if="inputFormState.sourceMetadata.slackWorkspaceName"
                       :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
-                      color="green"
+                      color="success"
                       variant="soft"
                     />
 
@@ -671,7 +671,7 @@ watch(isEditModalOpen, (open) => {
                       v-else
                       title="OAuth Required"
                       description="Click the button above to connect your Slack workspace, or select an existing account."
-                      color="blue"
+                      color="info"
                       variant="soft"
                     />
                   </div>
@@ -705,7 +705,7 @@ watch(isEditModalOpen, (open) => {
             <div class="flex justify-end gap-2 mt-6">
               <UButton
                 label="Cancel"
-                color="gray"
+                color="neutral"
                 variant="ghost"
                 @click="close"
               />
@@ -773,7 +773,7 @@ watch(isEditModalOpen, (open) => {
                     <UAlert
                       v-if="inputFormState.sourceMetadata.slackWorkspaceName"
                       :title="`Connected to ${inputFormState.sourceMetadata.slackWorkspaceName}`"
-                      color="green"
+                      color="success"
                       variant="soft"
                     />
                   </div>
@@ -813,7 +813,7 @@ watch(isEditModalOpen, (open) => {
             <div class="flex justify-end gap-2 mt-6">
               <UButton
                 label="Cancel"
-                color="gray"
+                color="neutral"
                 variant="ghost"
                 @click="close"
               />
@@ -841,13 +841,13 @@ watch(isEditModalOpen, (open) => {
           <div class="flex justify-end gap-2">
             <UButton
               label="Cancel"
-              color="gray"
+              color="neutral"
               variant="ghost"
               @click="close"
             />
             <UButton
               label="Delete"
-              color="red"
+              color="error"
               @click="deleteInput"
             />
           </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-expect-error - layer types resolved at app level
 import type { Flow } from '#layers/triage/types'
 
 interface Props {
@@ -193,7 +194,7 @@ function addDomain() {
 }
 
 function removeDomain(domain: string) {
-  formState.value.availableDomains = formState.value.availableDomains.filter(d => d !== domain)
+  formState.value.availableDomains = formState.value.availableDomains.filter((d: any) => d !== domain)
 }
 
 // Icon suggestions

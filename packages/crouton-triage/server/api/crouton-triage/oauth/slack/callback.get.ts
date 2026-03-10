@@ -23,6 +23,7 @@
  */
 
 import { kv } from 'hub:kv'
+import { logger } from '../../../../utils/logger'
 
 /**
  * Return an HTML page that sends OAuth result back to the opener via postMessage,
@@ -97,36 +98,36 @@ export default defineEventHandler(async (event) => {
 
     // Handle authorization denial
     if (error) {
-      logger.error('[OAuth] User denied authorization:', error)
+      logger.error('[OAuth] User denied authorization', null, { error })
       throw createError({
-        statusCode: 403,
-        statusMessage: `Slack authorization denied: ${error}`,
+        status: 403,
+        statusText: `Slack authorization denied: ${error}`,
       })
     }
 
     // Validate required parameters
     if (!code) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing authorization code',
+        status: 400,
+        statusText: 'Missing authorization code',
       })
     }
 
     if (!state) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing state parameter',
+        status: 400,
+        statusText: 'Missing state parameter',
       })
     }
 
     // Verify state token (CSRF protection) using NuxtHub KV
-    const stateData = await kv.get<{ teamId: string; flowId?: string; openerOrigin?: string; createdAt: number }>(`oauth:state:${state}`)
+    const stateData = await (kv as any).get(`oauth:state:${state}`) as { teamId: string; flowId?: string; openerOrigin?: string; createdAt: number } | null
 
     if (!stateData) {
       logger.error('[OAuth] Invalid or expired state token')
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Invalid or expired authorization request',
+        status: 403,
+        statusText: 'Invalid or expired authorization request',
       })
     }
 
@@ -134,19 +135,19 @@ export default defineEventHandler(async (event) => {
     const { teamId, flowId: requestedFlowId, openerOrigin } = stateData
 
     // Delete state token (single use) from KV
-    await kv.del(`oauth:state:${state}`)
+    await (kv as any).del(`oauth:state:${state}`)
 
     // Get environment variables
-    const config = useRuntimeConfig(event)
+    const config = useRuntimeConfig(event) as any
     const clientId = config.slackClientId || process.env.SLACK_CLIENT_ID
     const clientSecret = config.slackClientSecret || process.env.SLACK_CLIENT_SECRET
-    const baseUrl = config.public.baseUrl || process.env.BASE_URL || 'http://localhost:3000'
+    const baseUrl = config.public?.baseUrl || process.env.BASE_URL || 'http://localhost:3000'
 
     // Validate required configuration
     if (!clientId || !clientSecret) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Slack OAuth not configured: Missing client credentials',
+        status: 500,
+        statusText: 'Slack OAuth not configured: Missing client credentials',
       })
     }
 
@@ -175,20 +176,20 @@ export default defineEventHandler(async (event) => {
     })
 
     if (!tokenResponse.ok) {
-      logger.error('[OAuth] Token exchange failed:', tokenResponse.status, tokenResponse.statusText)
+      logger.error('[OAuth] Token exchange failed', null, { status: tokenResponse.status, statusText: tokenResponse.statusText })
       throw createError({
-        statusCode: 502,
-        statusMessage: 'Failed to exchange authorization code',
+        status: 502,
+        statusText: 'Failed to exchange authorization code',
       })
     }
 
     const tokenData = await tokenResponse.json() as SlackOAuthResponse
 
     if (!tokenData.ok || !tokenData.access_token) {
-      logger.error('[OAuth] Token exchange error:', tokenData.error)
+      logger.error('[OAuth] Token exchange error', null, { error: tokenData.error })
       throw createError({
-        statusCode: 502,
-        statusMessage: `Slack OAuth error: ${tokenData.error || 'Unknown error'}`,
+        status: 502,
+        statusText: `Slack OAuth error: ${tokenData.error || 'Unknown error'}`,
       })
     }
 
@@ -205,26 +206,26 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     const slackTeamId = tokenData.team?.id || ''
     const slackTeamName = tokenData.team?.name || 'Slack Workspace'
-    const accessToken = tokenData.access_token
+    const accessToken = tokenData.access_token!
 
     // Import database and queries
-    const { getAllTriageFlows, createTriageFlow, getTriageFlowById } = await import(
+    const { getAllTriageFlows, createTriageFlow } = await import(
       '~~/layers/triage/collections/flows/server/database/queries'
-    )
+    ) as any
     const { getAllTriageInputs, createTriageInput, updateTriageInput } = await import(
       '~~/layers/triage/collections/inputs/server/database/queries'
-    )
+    ) as any
     const { getAllTriageAccounts, createTriageAccount, updateTriageAccount } = await import(
       '~~/layers/triage/collections/accounts/server/database/queries'
-    )
-    const { SYSTEM_USER_ID } = await import('../../../../utils/constants')
+    ) as any
+    const { SYSTEM_USER_ID } = await import('../../../../utils/constants') as any
 
     // ============================================================================
     // CREATE OR UPDATE CONNECTED ACCOUNT
     // ============================================================================
     // Check if an account already exists for this Slack workspace + team
     const allAccounts = await getAllTriageAccounts(teamId)
-    const existingAccount = allAccounts?.find(
+    const existingAccount: any = (allAccounts as any[])?.find(
       (a: any) => a.provider === 'slack' && a.providerAccountId === slackTeamId
     )
 
@@ -242,7 +243,7 @@ export default defineEventHandler(async (event) => {
         status: 'connected',
         lastVerifiedAt: new Date(),
         providerMetadata: {
-          ...(existingAccount.providerMetadata || {}),
+          ...((existingAccount.providerMetadata as Record<string, any>) || {}),
           slackTeamName,
           botUserId: tokenData.bot_user_id || '',
         },
@@ -276,7 +277,7 @@ export default defineEventHandler(async (event) => {
         updatedBy: SYSTEM_USER_ID,
       })
 
-      accountId = newAccount.id
+      accountId = (newAccount as any).id
       logger.info('[OAuth] Created new account', { accountId, slackTeamId })
     }
 
@@ -287,16 +288,23 @@ export default defineEventHandler(async (event) => {
     if (requestedFlowId) {
       // If specific flowId was provided, try to use that one
       try {
-        const requestedFlow = await getTriageFlowById(requestedFlowId, teamId)
-        flowId = requestedFlowId
-        logger.debug('[OAuth] Using requested flow', { flowId, flowName: requestedFlow.name })
+        // Look up the requested flow from existing flows
+        const allFlows = await getAllTriageFlows(teamId) as any[]
+        const requestedFlow: any = allFlows?.find((f: any) => f.id === requestedFlowId)
+
+        if (requestedFlow) {
+          flowId = requestedFlowId
+          logger.debug('[OAuth] Using requested flow', { flowId, flowName: requestedFlow.name })
+        } else {
+          throw new Error('Flow not found')
+        }
       } catch {
         // Requested flow doesn't exist, fall back to first flow or create new
         logger.warn('[OAuth] Requested flow not found, falling back', { requestedFlowId })
-        const existingFlows = await getAllTriageFlows(teamId)
+        const existingFlows = await getAllTriageFlows(teamId) as any[]
         if (existingFlows && existingFlows.length > 0) {
-          flowId = existingFlows[0].id
-          logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0].name })
+          flowId = existingFlows[0]!.id
+          logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0]!.name })
         } else {
           // Create new flow
           const newFlow = await createTriageFlow({
@@ -314,17 +322,17 @@ export default defineEventHandler(async (event) => {
             createdBy: SYSTEM_USER_ID,
             updatedBy: SYSTEM_USER_ID,
           })
-          flowId = newFlow.id
+          flowId = (newFlow as any).id
           isNewFlow = true
-          logger.info('[OAuth] Created new flow', { flowId, flowName: newFlow.name })
+          logger.info('[OAuth] Created new flow', { flowId, flowName: (newFlow as any).name })
         }
       }
     } else {
       // No specific flow requested - use first existing or create new (backward compatible)
-      const existingFlows = await getAllTriageFlows(teamId)
+      const existingFlows = await getAllTriageFlows(teamId) as any[]
       if (existingFlows && existingFlows.length > 0) {
-        flowId = existingFlows[0].id
-        logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0].name })
+        flowId = existingFlows[0]!.id
+        logger.debug('[OAuth] Using first existing flow', { flowId, flowName: existingFlows[0]!.name })
       } else {
         // Create new flow with default settings
         const newFlow = await createTriageFlow({
@@ -342,16 +350,16 @@ export default defineEventHandler(async (event) => {
           createdBy: SYSTEM_USER_ID,
           updatedBy: SYSTEM_USER_ID,
         })
-        flowId = newFlow.id
+        flowId = (newFlow as any).id
         isNewFlow = true
-        logger.info('[OAuth] Created new flow', { flowId, flowName: newFlow.name })
+        logger.info('[OAuth] Created new flow', { flowId, flowName: (newFlow as any).name })
       }
     }
 
     // Check if this Slack workspace is already connected (by slackTeamId)
-    const allInputs = await getAllTriageInputs(teamId)
-    const existingInputs = allInputs?.filter(input => input.flowId === flowId) || []
-    const duplicateInput = existingInputs.find(input =>
+    const allInputs = await getAllTriageInputs(teamId) as any[]
+    const existingInputs = allInputs?.filter((input: any) => input.flowId === flowId) || []
+    const duplicateInput = existingInputs.find((input: any) =>
       input.sourceType === 'slack' &&
       input.sourceMetadata?.slackTeamId === slackTeamId
     )
@@ -411,7 +419,7 @@ export default defineEventHandler(async (event) => {
 
     logger.info('[OAuth] Created Slack input', {
       flowId,
-      inputId: newInput.id,
+      inputId: (newInput as any).id,
       slackTeamId,
       isNewFlow,
     })
@@ -420,25 +428,25 @@ export default defineEventHandler(async (event) => {
     setResponseHeader(event, 'content-type', 'text/html')
     return oauthResultHtml({
       type: 'oauth-success',
-      credentials: { accountId, flowId, inputId: newInput.id },
+      credentials: { accountId, flowId, inputId: (newInput as any).id },
       openerOrigin,
       provider: 'slack',
       status: 'success',
       teamName: slackTeamName,
     })
   }
-  catch (error) {
-    logger.error('[OAuth] Callback handler failed:', error)
+  catch (err) {
+    logger.error('[OAuth] Callback handler failed', err as any)
 
     // If it's already a createError, rethrow it
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      throw error
+    if (err && typeof err === 'object' && 'statusCode' in err) {
+      throw err
     }
 
     // Otherwise, return generic error
     throw createError({
-      statusCode: 500,
-      statusMessage: 'OAuth callback failed',
+      status: 500,
+      statusText: 'OAuth callback failed',
     })
   }
 })
