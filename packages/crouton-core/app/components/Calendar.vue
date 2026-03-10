@@ -24,6 +24,8 @@ interface Props {
   year?: boolean | number // Enable year grid mode (12 months). Pass number for specific year.
   isDateDisabled?: (date: Date) => boolean // Function to disable specific dates (uses JS Date)
   ui?: Record<string, unknown> // Passthrough UI customization to UCalendar
+  picker?: boolean // Wrap calendar in a popover with a date button (compact mode)
+  placeholder?: string // Placeholder text for picker button when no date selected
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -40,7 +42,9 @@ const props = withDefaults(defineProps<Props>(), {
   monthControls: true,
   yearControls: true,
   numberOfMonths: undefined,
-  year: undefined
+  year: undefined,
+  picker: false,
+  placeholder: 'Select a date'
 })
 
 const emit = defineEmits<{
@@ -135,12 +139,58 @@ function internalIsDateDisabled(dateValue: DateValue): boolean {
 // Check if we have a day slot
 const slots = useSlots()
 const hasDaySlot = computed(() => !!slots.day)
+
+// Picker mode: formatted date display
+const formattedDate = computed(() => {
+  if (!props.date) return ''
+  const d = props.date instanceof Date ? props.date : new Date(props.date)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+})
 </script>
 
 <template>
+  <!-- Picker mode: calendar inside a popover -->
+  <UPopover v-if="picker && !range && !isYearMode">
+    <UButton
+      icon="i-lucide-calendar"
+      :label="formattedDate || placeholder"
+      :color="formattedDate ? 'neutral' : 'neutral'"
+      variant="outline"
+      :disabled="disabled"
+      class="w-full justify-start"
+      :size="size"
+    />
+
+    <template #content>
+      <UCalendar
+        v-model="internalDate"
+        :color="color"
+        :variant="variant"
+        :size="size"
+        :min-value="minCalendarDate"
+        :max-value="maxCalendarDate"
+        :month-controls="monthControls"
+        :year-controls="yearControls"
+        :is-date-disabled="isDateDisabled ? internalIsDateDisabled : undefined"
+        :ui="ui"
+      >
+        <template
+          v-if="hasDaySlot"
+          #day="{ day }"
+        >
+          <slot
+            name="day"
+            :day="day"
+            :date="calendarDateToDate(day)"
+          />
+        </template>
+      </UCalendar>
+    </template>
+  </UPopover>
+
   <!-- Year grid mode (12 months) -->
   <div
-    v-if="isYearMode"
+    v-else-if="isYearMode"
     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
   >
     <div
