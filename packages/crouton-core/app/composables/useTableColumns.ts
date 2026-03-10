@@ -107,7 +107,18 @@ export function useTableColumns(options: UseTableColumnsOptions) {
       })
     }
 
-    // Add user-defined columns after select
+    // Actions column right after select (first actionable column)
+    if (!options.hideDefaultColumns?.actions) {
+      columns.push({
+        accessorKey: 'actions',
+        id: 'actions',
+        header: tString('table.actions'),
+        enableSorting: false,
+        enableHiding: false
+      })
+    }
+
+    // Add user-defined columns after actions
     columns.push(...options.columns.map(col => ({
       ...col,
       id: col.id ?? col.accessorKey
@@ -147,17 +158,6 @@ export function useTableColumns(options: UseTableColumnsOptions) {
         id: 'updatedBy',
         header: tString('table.updatedBy'),
         sortable: true
-      })
-    }
-
-    // Actions column at the end
-    if (!options.hideDefaultColumns?.actions) {
-      columns.push({
-        accessorKey: 'actions',
-        id: 'actions',
-        header: tString('table.actions'),
-        enableSorting: false,
-        enableHiding: false
       })
     }
 
