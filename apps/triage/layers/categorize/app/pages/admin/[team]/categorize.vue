@@ -78,6 +78,46 @@ const showCardDetail = ref(false)
 // ─── View tab ───
 const activeTab = ref<'canvas' | 'insights'>('canvas')
 
+// ─── Card detail computeds ───
+const CARD_SKIP_KEYS = ['Status', 'status', 'Type', 'type', 'Category', 'category', 'Reach', 'reach', 'Impact', 'impact', 'Confidence', 'confidence', 'Effort', 'effort']
+
+const cardFilteredProperties = computed(() => {
+  if (!selectedCard.value) return {}
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(selectedCard.value.properties)) {
+    if (CARD_SKIP_KEYS.includes(key)) continue
+    if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) continue
+    result[key] = value
+  }
+  return result
+})
+
+const cardRice = computed(() => {
+  if (!selectedCard.value) return null
+  const p = selectedCard.value.properties
+  const r = getRiceField(p, 'Reach')
+  const i = getRiceField(p, 'Impact')
+  const c = getRiceField(p, 'Confidence')
+  const e = getRiceField(p, 'Effort')
+  const score = computeRice(p)
+  if (score == null) return null
+  return {
+    score: Math.round(score),
+    components: [
+      { label: 'Reach', value: r, max: 10, color: 'bg-blue-500' },
+      { label: 'Impact', value: i, max: 5, color: 'bg-emerald-500' },
+      { label: 'Confidence', value: c, max: 5, color: 'bg-amber-500' },
+      { label: 'Effort', value: e, max: 10, color: 'bg-red-500' },
+    ],
+    chartData: [
+      { name: 'Reach', Value: r ?? 0 },
+      { name: 'Impact', Value: i ?? 0 },
+      { name: 'Confidence', Value: c ?? 0 },
+      { name: 'Effort', Value: e ?? 0 },
+    ],
+  }
+})
+
 // ─── Group state ───
 const groups = ref<{ id: string; name: string; color: string }[]>([])
 const showGroupModal = ref(false)
@@ -1050,54 +1090,112 @@ async function saveToNotion() {
     <!-- Card detail slideover -->
     <USlideover v-model:open="showCardDetail">
       <template #content>
-        <div v-if="selectedCard" class="p-6 space-y-4">
-          <div class="flex items-start justify-between">
-            <h2 class="text-lg font-semibold">
-              {{ selectedCard.title }}
-            </h2>
-            <UButton
-              icon="i-lucide-external-link"
-              size="xs"
-              variant="ghost"
-              :to="selectedCard.url"
-              target="_blank"
-            />
+        <div v-if="selectedCard" class="h-full flex flex-col overflow-hidden">
+          <!-- Fixed header -->
+          <div class="p-6 pb-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+            <div class="flex items-start justify-between gap-3">
+              <h2 class="text-lg font-semibold leading-snug">
+                {{ selectedCard.title }}
+              </h2>
+              <UButton
+                icon="i-lucide-external-link"
+                size="xs"
+                variant="ghost"
+                :to="selectedCard.url"
+                target="_blank"
+              />
+            </div>
+
+            <!-- Status + Type badges -->
+            <div class="flex flex-wrap gap-2 mt-3">
+              <UBadge v-if="selectedCard.properties.Status || selectedCard.properties.status" color="primary" variant="subtle" size="sm">
+                {{ selectedCard.properties.Status || selectedCard.properties.status }}
+              </UBadge>
+              <UBadge v-if="selectedCard.properties.Type || selectedCard.properties.type" color="neutral" variant="subtle" size="sm">
+                {{ selectedCard.properties.Type || selectedCard.properties.type }}
+              </UBadge>
+              <UBadge v-if="selectedCard.properties.Category || selectedCard.properties.category" color="info" variant="subtle" size="sm">
+                {{ selectedCard.properties.Category || selectedCard.properties.category }}
+              </UBadge>
+            </div>
           </div>
 
-          <USeparator />
-
-          <div class="space-y-3">
-            <div
-              v-for="(value, key) in selectedCard.properties"
-              :key="key"
-              class="flex flex-col gap-1"
-            >
-              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ key }}</span>
-              <div>
-                <template v-if="Array.isArray(value)">
-                  <div class="flex flex-wrap gap-1">
-                    <UBadge
-                      v-for="(item, i) in value"
-                      :key="i"
-                      variant="subtle"
-                      size="xs"
-                    >
-                      {{ item }}
-                    </UBadge>
-                  </div>
-                </template>
-                <template v-else-if="value === true || value === false">
-                  <UBadge :color="value ? 'success' : 'neutral'" variant="subtle" size="xs">
-                    {{ value ? 'Yes' : 'No' }}
-                  </UBadge>
-                </template>
-                <template v-else-if="value != null && value !== ''">
-                  <span class="text-sm">{{ value }}</span>
-                </template>
-                <template v-else>
-                  <span class="text-sm text-gray-400 italic">Empty</span>
-                </template>
+          <!-- Scrollable body -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <!-- RICE score card -->
+            <div v-if="cardRice" class="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-semibold">RICE Score</span>
+                <span
+                  class="text-2xl font-bold"
+                  :class="cardRice.score >= 10 ? 'text-green-600' : cardRice.score >= 5 ? 'text-amber-600' : 'text-red-500'"
+                >
+                  {{ cardRice.score }}
+                </span>
               </div>
+              <div class="grid grid-cols-4 gap-3">
+                <div v-for="comp in cardRice.components" :key="comp.label" class="text-center">
+                  <div class="text-lg font-semibold">
+                    {{ comp.value ?? '-' }}
+                  </div>
+                  <div class="text-[10px] text-gray-500 uppercase tracking-wider">
+                    {{ comp.label }}
+                  </div>
+                  <div class="mt-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div
+                      class="h-full rounded-full transition-all"
+                      :class="comp.color"
+                      :style="{ width: `${Math.min(100, ((comp.value ?? 0) / comp.max) * 100)}%` }"
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- Mini bar chart for RICE components -->
+              <ClientOnly>
+                <BarChart
+                  v-if="cardRice.chartData.length > 0"
+                  :data="cardRice.chartData"
+                  :y-axis="['Value']"
+                  :categories="{ Value: { name: 'Value', color: '#6366f1' } }"
+                  :x-formatter="(_: number, i: number) => String(cardRice.chartData[i]?.name ?? '')"
+                  :height="120"
+                  class="mt-3"
+                />
+              </ClientOnly>
+            </div>
+
+            <!-- Properties (filtered, no empties) -->
+            <div class="space-y-2">
+              <template v-for="(value, key) in cardFilteredProperties" :key="key">
+                <div class="flex items-start gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                  <span class="text-xs font-medium text-gray-400 uppercase tracking-wide w-28 shrink-0 pt-0.5">{{ key }}</span>
+                  <div class="flex-1 min-w-0">
+                    <template v-if="Array.isArray(value) && value.length > 0">
+                      <div class="flex flex-wrap gap-1">
+                        <UBadge
+                          v-for="(item, i) in value"
+                          :key="i"
+                          variant="subtle"
+                          size="xs"
+                        >
+                          {{ item }}
+                        </UBadge>
+                      </div>
+                    </template>
+                    <template v-else-if="value === true || value === false">
+                      <UBadge :color="value ? 'success' : 'neutral'" variant="subtle" size="xs">
+                        {{ value ? 'Yes' : 'No' }}
+                      </UBadge>
+                    </template>
+                    <template v-else-if="typeof value === 'number'">
+                      <span class="text-sm font-medium">{{ value }}</span>
+                    </template>
+                    <template v-else>
+                      <span class="text-sm">{{ value }}</span>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
