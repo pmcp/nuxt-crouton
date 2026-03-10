@@ -2,7 +2,7 @@
   @crouton-generated
   @collection articles
   @layer content
-  @generated 2026-03-06
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for articles collection
@@ -44,7 +44,7 @@
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
-          <CroutonEditorSimple v-model="state.content" content-type="json" />
+          <CroutonEditorSimple v-model="state.content" />
         </UFormField>
         <UFormField label="Embed" name="embed" class="not-last:pb-4">
           <UTextarea v-model="state.embed" class="w-full" size="xl" />
@@ -66,12 +66,11 @@
           <UInput v-model="state.imageUrl" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Tags" name="tags" class="not-last:pb-4">
-          <UTextarea
-            :model-value="typeof state.tags === 'string' ? state.tags : JSON.stringify(state.tags, null, 2)"
-            @update:model-value="(val) => { try { state.tags = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
-            class="w-full font-mono text-sm"
-            :rows="8"
-            placeholder="Enter JSON object"
+          <CroutonFormReferenceSelect
+            v-model="state.tags"
+            collection="contentTags"
+            label="Tags"
+            multiple
           />
         </UFormField>
         <UFormField label="Featured" name="featured" class="not-last:pb-4">

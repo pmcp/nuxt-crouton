@@ -4,6 +4,7 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ContentArticle, NewContentArticle } from '../../types'
 import { user } from '~~/server/db/schema'
+import * as tagsSchema from '../../../tags/server/database/schema'
 
 export async function getAllContentArticles(teamId: string) {
   const db = useDB()
@@ -41,21 +42,49 @@ export async function getAllContentArticles(teamId: string) {
     .where(eq(tables.contentArticles.teamId, teamId))
     .orderBy(desc(tables.contentArticles.createdAt))
 
-  // Post-query processing for JSON fields (repeater/json types)
-  articles.forEach((item: any) => {
-      // Parse tags from JSON string
-      if (typeof item.tags === 'string') {
-        try {
-          item.tags = JSON.parse(item.tags)
-        } catch (e) {
-          console.error('Error parsing tags:', e)
-          item.tags = null
+  // Post-query processing for array references
+  if (articles.length > 0) {
+    // Post-process array references to tags
+    const allTagsIds = new Set()
+    articles.forEach(item => {
+        if (item.tags) {
+          try {
+            const ids = typeof item.tags === 'string'
+              ? JSON.parse(item.tags)
+              : item.tags
+            if (Array.isArray(ids)) {
+              ids.forEach(id => allTagsIds.add(id))
+            }
+          } catch (e) {
+            // Handle parsing errors gracefully
+            console.error('Error parsing tags:', e)
+          }
         }
-      }
-      if (item.tags === null || item.tags === undefined) {
-        item.tags = null
-      }
-  })
+      })
+
+    if (allTagsIds.size > 0) {
+      const relatedTags = await db
+        .select()
+        .from(tagsSchema.contentTags)
+        .where(inArray(tagsSchema.contentTags.id, Array.from(allTagsIds)))
+
+      articles.forEach(item => {
+        item.tagsData = []
+        if (item.tags) {
+          try {
+            const ids = typeof item.tags === 'string'
+              ? JSON.parse(item.tags)
+              : item.tags
+            if (Array.isArray(ids)) {
+              item.tagsData = relatedTags.filter(r => ids.includes(r.id))
+            }
+          } catch (e) {
+            console.error('Error mapping tags:', e)
+          }
+        }
+      })
+    }
+  }
 
   return articles
 }
@@ -101,21 +130,49 @@ export async function getContentArticlesByIds(teamId: string, articleIds: string
     )
     .orderBy(desc(tables.contentArticles.createdAt))
 
-  // Post-query processing for JSON fields (repeater/json types)
-  articles.forEach((item: any) => {
-      // Parse tags from JSON string
-      if (typeof item.tags === 'string') {
-        try {
-          item.tags = JSON.parse(item.tags)
-        } catch (e) {
-          console.error('Error parsing tags:', e)
-          item.tags = null
+  // Post-query processing for array references
+  if (articles.length > 0) {
+    // Post-process array references to tags
+    const allTagsIds = new Set()
+    articles.forEach(item => {
+        if (item.tags) {
+          try {
+            const ids = typeof item.tags === 'string'
+              ? JSON.parse(item.tags)
+              : item.tags
+            if (Array.isArray(ids)) {
+              ids.forEach(id => allTagsIds.add(id))
+            }
+          } catch (e) {
+            // Handle parsing errors gracefully
+            console.error('Error parsing tags:', e)
+          }
         }
-      }
-      if (item.tags === null || item.tags === undefined) {
-        item.tags = null
-      }
-  })
+      })
+
+    if (allTagsIds.size > 0) {
+      const relatedTags = await db
+        .select()
+        .from(tagsSchema.contentTags)
+        .where(inArray(tagsSchema.contentTags.id, Array.from(allTagsIds)))
+
+      articles.forEach(item => {
+        item.tagsData = []
+        if (item.tags) {
+          try {
+            const ids = typeof item.tags === 'string'
+              ? JSON.parse(item.tags)
+              : item.tags
+            if (Array.isArray(ids)) {
+              item.tagsData = relatedTags.filter(r => ids.includes(r.id))
+            }
+          } catch (e) {
+            console.error('Error mapping tags:', e)
+          }
+        }
+      })
+    }
+  }
 
   return articles
 }

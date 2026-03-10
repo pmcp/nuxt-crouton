@@ -25,6 +25,7 @@ import { resolve } from 'node:path'
 import { organization, member } from '~~/server/db/schema'
 import { contentArticles } from '~~/layers/content/collections/articles/server/database/schema'
 import { contentAgendas } from '~~/layers/content/collections/agendas/server/database/schema'
+import { contentTags } from '~~/layers/content/collections/tags/server/database/schema'
 
 // ---------------------------------------------------------------------------
 // Source paths
@@ -347,6 +348,47 @@ export default defineEventHandler(async () => {
 
     log.push(`Using organization: ${orgs[0].name} (${orgId})`)
 
+    // Clear existing seeded data for this org before re-seeding
+    await (db as any).delete(contentArticles).where(eq(contentArticles.teamId, orgId))
+    await (db as any).delete(contentAgendas).where(eq(contentAgendas.teamId, orgId))
+    await (db as any).delete(contentTags).where(eq(contentTags.teamId, orgId))
+    log.push('Cleared existing content for this organization')
+
+    // -------------------------------------------------------------------
+    // 0. Pre-scan articles to collect unique tags and create tag records
+    // -------------------------------------------------------------------
+    const tagNameToId = new Map<string, string>()
+    const articleFilesPre = readdirSync(ARTICLES_DIR).filter(f => f.endsWith('.md')).sort()
+    for (const file of articleFilesPre) {
+      const raw = readFileSync(resolve(ARTICLES_DIR, file), 'utf-8')
+      const { data } = parseFrontmatter(raw)
+      const fileTags = Array.isArray(data.tags) ? data.tags : []
+      for (const t of fileTags) {
+        if (typeof t === 'string' && t.trim()) {
+          tagNameToId.set(t.trim().toLowerCase(), '')
+        }
+      }
+    }
+
+    let tagOrder = 0
+    for (const tagName of tagNameToId.keys()) {
+      const tagId = nanoid()
+      await (db as any).insert(contentTags).values({
+        id: tagId,
+        teamId: orgId,
+        owner: ownerId,
+        order: tagOrder++,
+        name: tagName,
+        color: null,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: ownerId,
+        updatedBy: ownerId,
+      })
+      tagNameToId.set(tagName, tagId)
+    }
+    log.push(`Created ${tagNameToId.size} tag records`)
+
     // -------------------------------------------------------------------
     // 1. Migrate Articles
     // -------------------------------------------------------------------
@@ -376,8 +418,11 @@ export default defineEventHandler(async () => {
         imageUrl = data.image
       }
 
-      // Parse tags: already an array from YAML parser
-      const tags = Array.isArray(data.tags) ? data.tags : []
+      // Convert tag names to tag IDs via the pre-built map
+      const rawTags = Array.isArray(data.tags) ? data.tags : []
+      const tags = rawTags
+        .map((t: string) => tagNameToId.get(typeof t === 'string' ? t.trim().toLowerCase() : ''))
+        .filter(Boolean)
 
       // Convert markdown body to TipTap JSON, extracting iframes
       const { content: tipTapContent, embeds: bodyEmbeds } = markdownToTipTap(content)

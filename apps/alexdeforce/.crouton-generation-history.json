@@ -1,5 +1,109 @@
 [
   {
+    "collection": "assets",
+    "fields": [
+      "userId",
+      "filename",
+      "pathname",
+      "contentType",
+      "size",
+      "category",
+      "width",
+      "height",
+      "alt",
+      "uploadedAt",
+      "updatedBy"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T16:26:14.845Z",
+    "layer": "crouton",
+    "gitSha": "56659932"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "embed",
+      "imageUrl",
+      "tags",
+      "featured",
+      "draft"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T16:25:26.024Z",
+    "layer": "content",
+    "gitSha": "56659932"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "name",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T16:22:53.181Z",
+    "layer": "content",
+    "gitSha": "0bea6765"
+  },
+  {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-06T20:49:00.809Z",
+    "layer": "pages",
+    "gitSha": "c3e7efbb"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "draft"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-06T20:49:00.781Z",
+    "layer": "content",
+    "gitSha": "c3e7efbb"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "embed",
+      "imageUrl",
+      "tags",
+      "featured",
+      "draft"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-06T20:49:00.754Z",
+    "layer": "content",
+    "gitSha": "c3e7efbb"
+  },
+  {
     "collection": "pages",
     "fields": [
       "title",

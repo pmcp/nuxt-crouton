@@ -2,7 +2,7 @@
   @crouton-generated
   @collection articles
   @layer content
-  @generated 2026-03-06
+  @generated 2026-03-10
 
   ## AI Context
   - List component for articles collection
@@ -36,8 +36,16 @@
         createButton
       />
     </template>
-    <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.content" />
+    <template #tags-cell="{ row }">
+      <div v-if="row.original.tags && row.original.tags.length > 0" class="flex flex-wrap gap-1">
+        <CroutonItemCardMini
+          v-for="itemId in row.original.tags"
+          :key="itemId"
+          :id="itemId"
+          collection="contentTags"
+        />
+      </div>
+      <span v-else class="text-gray-400">—</span>
     </template>
     <template #date-cell="{ row }">
       <CroutonDate :date="row.original.date"></CroutonDate>

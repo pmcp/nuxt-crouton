@@ -59,10 +59,10 @@
     },
     {
       "name": "tags",
-      "type": "json",
+      "type": "array",
       "label": "Tags",
       "area": "sidebar",
-      "description": "Tag names as JSON array"
+      "refTarget": "tags"
     },
     {
       "name": "featured",

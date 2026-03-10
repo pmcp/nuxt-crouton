@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection articles
  * @layer content
- * @generated 2026-03-06
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useContentArticles
@@ -33,7 +33,7 @@ export const contentArticleSchema = z.object({
   content: z.string().optional(),
   embed: z.string().optional(),
   imageUrl: z.string().optional(),
-  tags: z.record(z.string(), z.any()).optional(),
+  tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
   draft: z.boolean().optional()
 })
@@ -63,7 +63,7 @@ const _contentArticlesConfig = {
     content: '',
     embed: '',
     imageUrl: '',
-    tags: {},
+    tags: [],
     featured: false,
     draft: false
   },
@@ -107,7 +107,7 @@ const _contentArticlesConfig = {
       },
       {
           "name": "tags",
-          "type": "json",
+          "type": "array",
           "label": "Tags",
           "area": "sidebar"
       },

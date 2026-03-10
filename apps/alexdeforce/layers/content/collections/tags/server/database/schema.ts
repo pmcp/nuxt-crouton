@@ -21,22 +21,15 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const contentArticles = sqliteTable('content_articles', {
+export const contentTags = sqliteTable('content_tags', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
-  title: text('title').notNull(),
-  date: integer('date', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  category: text('category').notNull(),
-  content: text('content'),
-  embed: text('embed'),
-  imageUrl: text('imageUrl'),
-  tags: jsonColumn('tags').$default(() => (null)),
-  featured: integer('featured', { mode: 'boolean' }).$default(() => false),
-  draft: integer('draft', { mode: 'boolean' }).$default(() => false),
+  name: text('name').notNull(),
+  color: text('color'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

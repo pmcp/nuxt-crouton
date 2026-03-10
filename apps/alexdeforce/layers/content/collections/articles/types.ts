@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection articles
  * @layer content
- * @generated 2026-03-06
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Main interface: ContentArticle
@@ -33,7 +33,7 @@ export interface ContentArticle {
   content?: string
   embed?: string
   imageUrl?: string
-  tags?: Record<string, any>
+  tags?: string[]
   featured?: boolean
   draft?: boolean
   createdAt: Date
