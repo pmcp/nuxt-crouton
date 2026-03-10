@@ -67,7 +67,7 @@ const { teamSlug: teamSlugRef, teamId: teamIdRef, hasTeamContext } = useTeamCont
 const route = useRoute()
 
 // Get auto-discovered app routes
-const { appsList, getAppAllRoutes } = useCroutonApps()
+const { topLevelApps, getAppAllRoutes } = useCroutonApps()
 
 // Get registered collections for admin navigation
 const { adminCollections } = useCroutonCollectionsNav()
@@ -87,7 +87,7 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
 
   const groups: NavigationMenuItem[] = []
 
-  for (const app of appsList.value) {
+  for (const app of topLevelApps.value) {
     const allRoutes = getAppAllRoutes(app.id)
     if (allRoutes.length === 0) continue
 

@@ -251,6 +251,14 @@ export interface CroutonAppConfig {
   settingsRoutes?: CroutonAppRoute[]
 
   /**
+   * Optional parent app ID. When set, this app's routes are merged
+   * into the parent app's sidebar section instead of appearing standalone.
+   * Useful for layers/packages that extend an existing app.
+   * @example 'triage' — routes appear under the Triage sidebar group
+   */
+  parentApp?: string
+
+  /**
    * API route prefixes provided by this app.
    * Used by crouton-devtools to extend operation tracking beyond the
    * standard `/api/crouton-collection/` prefix. Each entry is a path

@@ -233,6 +233,32 @@ const hasFoo = hasApp('foo')  // true when crouton-foo is installed
 
 **Never use** `resolveComponent()` or `vueApp._context.components` for optional detection.
 
+### Add routes to an existing app's sidebar section
+
+Use `parentApp` to group your layer's routes under an existing app:
+
+```typescript
+// layers/my-feature/app/app.config.ts
+export default defineAppConfig({
+  croutonApps: {
+    myFeature: {
+      id: 'myFeature',
+      parentApp: 'triage',  // Groups under Triage sidebar section
+      name: 'My Feature',
+      icon: 'i-lucide-star',
+      adminRoutes: [
+        { path: '/my-feature', label: 'My Feature', icon: 'i-lucide-star' }
+      ],
+      dashboardRoutes: [],
+      settingsRoutes: [],
+    }
+  }
+})
+```
+
+This avoids defu array merge conflicts — each layer has its own unique key.
+Routes from child apps are automatically included in the parent's sidebar group.
+
 ### Add a new composable
 1. Create file in `app/composables/use{Name}.ts`
 2. Export function with `use` prefix

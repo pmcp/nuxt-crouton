@@ -154,7 +154,16 @@ export function useCroutonApps() {
   }
 
   /**
-   * Get all routes for an app combined (admin + settings).
+   * Top-level apps only (excludes child apps that have a parentApp).
+   * Use this for sidebar iteration to avoid duplicate entries.
+   */
+  const topLevelApps = computed<CroutonAppConfig[]>(() => {
+    return appsList.value.filter(app => !app.parentApp)
+  })
+
+  /**
+   * Get all routes for an app combined (admin + settings),
+   * including routes from child apps (apps with parentApp === appId).
    * Settings routes are automatically prefixed with /settings.
    * Useful for building navigation groups by app.
    *
@@ -165,21 +174,37 @@ export function useCroutonApps() {
     const app = getApp(appId)
     if (!app) return []
 
-    const adminRoutes = (app.adminRoutes || []).filter((r: CroutonAppRoute) => !r.hidden)
-    const settingsRoutes = (app.settingsRoutes || [])
+    const allAdminRoutes = (app.adminRoutes || []).filter((r: CroutonAppRoute) => !r.hidden)
+    const allSettingsRoutes = (app.settingsRoutes || [])
       .filter((r: CroutonAppRoute) => !r.hidden)
       .map((r: CroutonAppRoute) => ({
         ...r,
-        path: `/settings${r.path}` // Prepend settings path
+        path: `/settings${r.path}`
       }))
 
-    return [...adminRoutes, ...settingsRoutes]
+    // Include routes from child apps (apps with parentApp === appId)
+    for (const childApp of appsList.value) {
+      if (childApp.parentApp === appId) {
+        allAdminRoutes.push(...(childApp.adminRoutes || []).filter((r: CroutonAppRoute) => !r.hidden))
+        allSettingsRoutes.push(
+          ...(childApp.settingsRoutes || [])
+            .filter((r: CroutonAppRoute) => !r.hidden)
+            .map((r: CroutonAppRoute) => ({
+              ...r,
+              path: `/settings${r.path}`
+            }))
+        )
+      }
+    }
+
+    return [...allAdminRoutes, ...allSettingsRoutes]
   }
 
   return {
     // Reactive state
     apps,
     appsList,
+    topLevelApps,
     dashboardRoutes,
     adminRoutes,
     settingsRoutes,
