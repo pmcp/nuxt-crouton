@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/content-agendas
  * - Form component: ContentAgendasForm
  * - List component: ContentAgendasList
- * - Fields: title, date, content, thumbnail, draft
+ * - Fields: title, date, content, thumbnail, status, publishedAt
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -31,7 +31,8 @@ export const contentAgendaSchema = z.object({
   date: z.date({ required_error: 'date is required' }),
   content: z.string().optional(),
   thumbnail: z.string().optional(),
-  draft: z.boolean().optional()
+  status: z.string().min(1, 'status is required'),
+  publishedAt: z.date().optional().nullable()
 })
 
 export const contentAgendasColumns = [
@@ -39,7 +40,8 @@ export const contentAgendasColumns = [
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'content', header: 'Content' },
   { accessorKey: 'thumbnail', header: 'Thumbnail' },
-  { accessorKey: 'draft', header: 'Draft' }
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'publishedAt', header: 'Published At' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -53,7 +55,8 @@ const _contentAgendasConfig = {
     date: null,
     content: '',
     thumbnail: '',
-    draft: false
+    status: 'draft',
+    publishedAt: null
   },
   columns: contentAgendasColumns,
   fields: [
@@ -82,9 +85,20 @@ const _contentAgendasConfig = {
           "area": "sidebar"
       },
       {
-          "name": "draft",
-          "type": "boolean",
-          "label": "Draft",
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "sidebar",
+          "options": [
+              { "value": "draft", "label": "Draft" },
+              { "value": "published", "label": "Published" },
+              { "value": "archived", "label": "Archived" }
+          ]
+      },
+      {
+          "name": "publishedAt",
+          "type": "date",
+          "label": "Published At",
           "area": "sidebar"
       }
   ],

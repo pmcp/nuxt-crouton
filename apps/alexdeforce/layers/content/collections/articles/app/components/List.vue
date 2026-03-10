@@ -9,7 +9,7 @@
   - Collection name: contentArticles
   - API endpoint: /api/teams/[id]/content-articles
   - Columns composable: useContentArticles()
-  - Column fields: title, date, category, content, embed, imageUrl, tags, featured, draft
+  - Column fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -36,6 +36,9 @@
         createButton
       />
     </template>
+    <template #content-cell="{ row }">
+      <CroutonEditorPreview :content="row.original.content" />
+    </template>
     <template #tags-cell="{ row }">
       <div v-if="row.original.tags && row.original.tags.length > 0" class="flex flex-wrap gap-1">
         <CroutonItemCardMini
@@ -53,8 +56,18 @@
     <template #featured-cell="{ row }">
       <CroutonBoolean :value="row.original.featured" />
     </template>
-    <template #draft-cell="{ row }">
-      <CroutonBoolean :value="row.original.draft" />
+    <template #status-cell="{ row }">
+      <UBadge
+        :color="row.original.status === 'published' ? 'success' : row.original.status === 'archived' ? 'neutral' : 'warning'"
+        variant="subtle"
+        size="sm"
+      >
+        {{ row.original.status }}
+      </UBadge>
+    </template>
+    <template #publishedAt-cell="{ row }">
+      <CroutonDate v-if="row.original.publishedAt" :date="row.original.publishedAt" />
+      <span v-else class="text-gray-400">—</span>
     </template>
   </CroutonCollection>
 </template>

@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/content-agendas
   - Zod schema: useContentAgendas() composable
-  - Fields: title, date, content, thumbnail, draft
+  - Fields: title, date, content, thumbnail, status, publishedAt
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -59,8 +59,19 @@
         <UFormField label="Thumbnail" name="thumbnail" class="not-last:pb-4">
           <UInput v-model="state.thumbnail" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Draft" name="draft" class="not-last:pb-4">
-          <UCheckbox v-model="state.draft" />
+        <UFormField label="Status" name="status" class="not-last:pb-4">
+          <USelect
+            v-model="state.status"
+            :items="[
+              { value: 'draft', label: 'Draft' },
+              { value: 'published', label: 'Published' },
+              { value: 'archived', label: 'Archived' }
+            ]"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField label="Published At" name="publishedAt" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
       </div>
       </template>
@@ -105,6 +116,9 @@ if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.date) {
     initialValues.date = new Date(initialValues.date)
   }
+  if (initialValues.publishedAt) {
+    initialValues.publishedAt = new Date(initialValues.publishedAt)
+  }
 }
 
 const state = ref<ContentAgendaFormData & { id?: string | null }>(initialValues)
@@ -115,6 +129,9 @@ const handleSubmit = async () => {
     const serializedData = { ...state.value }
     if (serializedData.date instanceof Date) {
       serializedData.date = serializedData.date.toISOString()
+    }
+    if (serializedData.publishedAt instanceof Date) {
+      serializedData.publishedAt = serializedData.publishedAt.toISOString()
     }
 
     if (props.action === 'create') {

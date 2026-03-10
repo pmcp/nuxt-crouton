@@ -22,6 +22,20 @@
       "when": 1773159974778,
       "tag": "0002_sour_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1741612800000,
+      "tag": "0003_draft_to_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1773161627891,
+      "tag": "0004_misty_pandemic",
+      "breakpoints": true
     }
   ]
 }

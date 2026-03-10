@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/content-articles
   - Zod schema: useContentArticles() composable
-  - Fields: title, date, category, content, embed, imageUrl, tags, featured, draft
+  - Fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -70,14 +70,27 @@
             v-model="state.tags"
             collection="contentTags"
             label="Tags"
+            label-key="name"
+            :filter-fields="['name']"
             multiple
           />
         </UFormField>
         <UFormField label="Featured" name="featured" class="not-last:pb-4">
           <UCheckbox v-model="state.featured" />
         </UFormField>
-        <UFormField label="Draft" name="draft" class="not-last:pb-4">
-          <UCheckbox v-model="state.draft" />
+        <UFormField label="Status" name="status" class="not-last:pb-4">
+          <USelect
+            v-model="state.status"
+            :items="[
+              { value: 'draft', label: 'Draft' },
+              { value: 'published', label: 'Published' },
+              { value: 'archived', label: 'Archived' }
+            ]"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField label="Published At" name="publishedAt" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
       </div>
       </template>
@@ -122,6 +135,9 @@ if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.date) {
     initialValues.date = new Date(initialValues.date)
   }
+  if (initialValues.publishedAt) {
+    initialValues.publishedAt = new Date(initialValues.publishedAt)
+  }
 }
 
 const state = ref<ContentArticleFormData & { id?: string | null }>(initialValues)
@@ -132,6 +148,9 @@ const handleSubmit = async () => {
     const serializedData = { ...state.value }
     if (serializedData.date instanceof Date) {
       serializedData.date = serializedData.date.toISOString()
+    }
+    if (serializedData.publishedAt instanceof Date) {
+      serializedData.publishedAt = serializedData.publishedAt.toISOString()
     }
 
     if (props.action === 'create') {

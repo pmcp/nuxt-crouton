@@ -35,10 +35,23 @@
       "area": "sidebar"
     },
     {
-      "name": "draft",
-      "type": "boolean",
-      "label": "Draft",
-      "default": false,
+      "name": "status",
+      "type": "string",
+      "label": "Status",
+      "required": true,
+      "default": "draft",
+      "maxLength": 20,
+      "area": "sidebar",
+      "options": [
+        { "value": "draft", "label": "Draft" },
+        { "value": "published", "label": "Published" },
+        { "value": "archived", "label": "Archived" }
+      ]
+    },
+    {
+      "name": "publishedAt",
+      "type": "date",
+      "label": "Published At",
       "area": "sidebar"
     }
   ]

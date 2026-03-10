@@ -9,7 +9,7 @@
   - Collection name: contentAgendas
   - API endpoint: /api/teams/[id]/content-agendas
   - Columns composable: useContentAgendas()
-  - Column fields: title, date, content, thumbnail, draft
+  - Column fields: title, date, content, thumbnail, status, publishedAt
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -42,8 +42,18 @@
     <template #date-cell="{ row }">
       <CroutonDate :date="row.original.date"></CroutonDate>
     </template>
-    <template #draft-cell="{ row }">
-      <CroutonBoolean :value="row.original.draft" />
+    <template #status-cell="{ row }">
+      <UBadge
+        :color="row.original.status === 'published' ? 'success' : row.original.status === 'archived' ? 'neutral' : 'warning'"
+        variant="subtle"
+        size="sm"
+      >
+        {{ row.original.status }}
+      </UBadge>
+    </template>
+    <template #publishedAt-cell="{ row }">
+      <CroutonDate v-if="row.original.publishedAt" :date="row.original.publishedAt" />
+      <span v-else class="text-gray-400">—</span>
     </template>
   </CroutonCollection>
 </template>

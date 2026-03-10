@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/content-articles
  * - Form component: ContentArticlesForm
  * - List component: ContentArticlesList
- * - Fields: title, date, category, content, embed, imageUrl, tags, featured, draft
+ * - Fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -35,7 +35,8 @@ export const contentArticleSchema = z.object({
   imageUrl: z.string().optional(),
   tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
-  draft: z.boolean().optional()
+  status: z.string().min(1, 'status is required'),
+  publishedAt: z.date().optional().nullable()
 })
 
 export const contentArticlesColumns = [
@@ -47,7 +48,8 @@ export const contentArticlesColumns = [
   { accessorKey: 'imageUrl', header: 'ImageUrl' },
   { accessorKey: 'tags', header: 'Tags' },
   { accessorKey: 'featured', header: 'Featured' },
-  { accessorKey: 'draft', header: 'Draft' }
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'publishedAt', header: 'Published At' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -65,7 +67,8 @@ const _contentArticlesConfig = {
     imageUrl: '',
     tags: [],
     featured: false,
-    draft: false
+    status: 'draft',
+    publishedAt: null
   },
   columns: contentArticlesColumns,
   fields: [
@@ -118,9 +121,20 @@ const _contentArticlesConfig = {
           "area": "sidebar"
       },
       {
-          "name": "draft",
-          "type": "boolean",
-          "label": "Draft",
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "sidebar",
+          "options": [
+              { "value": "draft", "label": "Draft" },
+              { "value": "published", "label": "Published" },
+              { "value": "archived", "label": "Archived" }
+          ]
+      },
+      {
+          "name": "publishedAt",
+          "type": "date",
+          "label": "Published At",
           "area": "sidebar"
       }
   ],

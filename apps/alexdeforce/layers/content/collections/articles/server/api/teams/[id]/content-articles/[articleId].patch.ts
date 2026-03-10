@@ -28,7 +28,8 @@ export default defineEventHandler(async (event) => {
     imageUrl: body.imageUrl,
     tags: body.tags,
     featured: body.featured,
-    draft: body.draft
+    status: body.status,
+    publishedAt: body.publishedAt ? new Date(body.publishedAt) : body.publishedAt
   }, { role: membership.role })
   dbTimer.end()
   return result

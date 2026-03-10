@@ -32,7 +32,8 @@ export const contentAgendas = sqliteTable('content_agendas', {
   date: integer('date', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   content: text('content'),
   thumbnail: text('thumbnail'),
-  draft: integer('draft', { mode: 'boolean' }).$default(() => false),
+  status: text('status').notNull().$default(() => 'draft'),
+  publishedAt: integer('publishedAt', { mode: 'timestamp' }),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

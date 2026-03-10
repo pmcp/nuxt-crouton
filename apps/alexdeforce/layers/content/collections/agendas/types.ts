@@ -9,7 +9,7 @@
  * - Form data type: ContentAgendaFormData
  * - New item type: NewContentAgenda
  * - Form props: ContentAgendaFormProps
- * - Fields: title, date, content, thumbnail, draft
+ * - Fields: title, date, content, thumbnail, status, publishedAt
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -31,7 +31,8 @@ export interface ContentAgenda {
   date: Date | null
   content?: string
   thumbnail?: string
-  draft?: boolean
+  status: string
+  publishedAt?: Date | null
   createdAt: Date
   updatedAt: Date
   createdBy: string

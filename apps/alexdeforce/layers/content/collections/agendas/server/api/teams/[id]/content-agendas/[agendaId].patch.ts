@@ -24,7 +24,8 @@ export default defineEventHandler(async (event) => {
     date: body.date ? new Date(body.date) : body.date,
     content: body.content,
     thumbnail: body.thumbnail,
-    draft: body.draft
+    status: body.status,
+    publishedAt: body.publishedAt ? new Date(body.publishedAt) : body.publishedAt
   }, { role: membership.role })
   dbTimer.end()
   return result
