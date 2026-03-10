@@ -422,7 +422,7 @@ const {
 
 **DO:**
 - ✅ Keep nesting to 2-3 levels for UX
-- ✅ Use slideoverslideoverslideoverslideoverstates for nested workflows
+- ✅ Use slideovers for nested workflows
 - ✅ Use modals for simple, focused edits
 - ✅ Use dialogs for destructive confirmations
 - ✅ Let animations complete before operations

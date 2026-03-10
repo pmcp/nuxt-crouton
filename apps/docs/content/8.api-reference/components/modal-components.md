@@ -140,30 +140,39 @@ interface CroutonCollectionProps {
   // Data
   rows?: any[]                   // Array of items to display
   columns?: Column[]             // Column definitions
-  collection?: string            // Collection name for actions
+  collection: string             // Collection name for actions
 
   // Layout
   layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
-  // Layout options: 'table' | 'list' | 'responsive' | 'mobile-friendly' | 'compact'
+  // Layout options: 'table' | 'list' | 'grid' | 'tree' | 'kanban'
 
   // Pagination
   serverPagination?: boolean                 // Enable server-side pagination
   paginationData?: PaginationData | null    // Server pagination metadata
   refreshFn?: () => Promise<void>           // Custom refresh function
 
+  // Features
+  create?: boolean                           // Show create button
+  sortable?: boolean | SortableOptions       // Enable drag-and-drop reordering
+  hierarchy?: HierarchyConfig                // Tree layout hierarchy config
+  stateless?: boolean                        // No config lookup or mutations, just renders data
+  showCollabPresence?: boolean | CollabPresenceConfig  // Show collab presence badges per row
+
+  // Cards
+  card?: string                              // Card variant name (e.g. 'Card', 'CardMini')
+  cardComponent?: any                        // Direct card component (skips name resolution)
+  gridSize?: 'compact' | 'comfortable' | 'spacious'  // Grid layout size (default: 'comfortable')
+
   // Customization
   hideDefaultColumns?: {
+    select?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
-    select?: boolean
     presence?: boolean
     actions?: boolean
   }
-
-  // Note: selectable, selected, and loading props are not yet implemented
-  // in the CollectionProps interface. These are planned for a future release.
 }
 ```
 

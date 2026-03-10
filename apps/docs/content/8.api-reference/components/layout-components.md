@@ -1453,7 +1453,7 @@ If content area doesn't scroll:
 Nuxt Crouton provides a sophisticated form system that handles CRUD operations with multiple container types, dynamic component loading, validation, and complex field types.
 
 ::callout{icon="i-lucide-info" color="blue"}
-**Form Architecture**: Forms in Nuxt Crouton are managed globally via `useCrouton()` and rendered automatically in modals, slideoverslideoverslideoverstates, or dialogs. You don't manually place Form components in your templates.
+**Form Architecture**: Forms in Nuxt Crouton are managed globally via `useCrouton()` and rendered automatically in modals, slideovers, or dialogs. You don't manually place Form components in your templates.
 ::
 
 

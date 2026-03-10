@@ -358,7 +358,7 @@ function useCrouton(): {
   croutonStates: Ref<CroutonState[]>
 
   // Modal actions
-  open: (action: CroutonAction, collection: string, ids?: string[], container?: 'slideover' | 'modal' | 'dialog', initialData?: any) => Promise<void>
+  open: (action: CroutonAction, collection: string, ids?: string[], container?: 'slideover' | 'modal' | 'dialog' | 'inline', initialData?: any) => Promise<void>
   close: (stateId?: string) => void
   closeAll: () => void
   removeState: (stateId: string) => void
@@ -3204,7 +3204,7 @@ const { isExpanded, slideoverUi } = useExpandableSlideover()
 </template>
 ```
 
-### Nested Slideoverslideoverslideoverslideoverslideoverslideoverslideoverstates
+### Nested Slideovers
 
 Works with multiple slideover instances:
 
@@ -3290,7 +3290,7 @@ const slideover = useExpandableSlideover({
 - ❌ Nest more than 2 levels deep (gets confusing)
 - ❌ Auto-expand on small screens (sidebar better for mobile)
 - ❌ Force fullscreen if not needed (sidebar is usually fine)
-- ❌ Mix with modal overlays (stick to slideoverslideoverslideoverslideoverslideoverslideoverslideoverstates)
+- ❌ Mix with modal overlays (stick to slideovers)
 
 ### Troubleshooting
 

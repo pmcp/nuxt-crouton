@@ -6,7 +6,7 @@ icon: i-lucide-file-text
 
 ## CroutonForm
 
-The main orchestrator component that manages form instances in different container types (modals, dialogs, slideoverslideoverslideoverstates). This component is automatically registered globally and renders based on state managed by `useCrouton()`.
+The main orchestrator component that manages form instances in different container types (modals, dialogs, slideovers). This component is automatically registered globally and renders based on state managed by `useCrouton()`.
 
 ### Container Types
 
@@ -54,7 +54,7 @@ const handleView = (id: string) => {
 
 ### Slideover Nesting & Expansion
 
-Slideoverslideoverslideoverstates support up to **5 levels of nesting** for complex workflows like editing a product → adding a category → adding a tag.
+Slideovers support up to **5 levels of nesting** for complex workflows like editing a product → adding a category → adding a tag.
 
 #### Nesting Example
 
@@ -80,11 +80,11 @@ open('create', 'categories', [])
 - Level 2: Offset right
 - Level 3: Offset more, etc.
 
-**Breadcrumb Navigation**: Nested slideoverslideoverslideoverstates show breadcrumbs indicating the parent context.
+**Breadcrumb Navigation**: Nested slideovers show breadcrumbs indicating the parent context.
 
 #### Expand/Collapse
 
-Slideoverslideoverslideoverstates can toggle between sidebar mode (max-w-2xl) and fullscreen:
+Slideovers can toggle between sidebar mode (max-w-2xl) and fullscreen:
 
 ```vue
 <!-- Expand button appears in slideover header -->
@@ -108,7 +108,7 @@ interface CroutonState {
   items: any[]                        // Items for batch delete
   loading: LoadingState              // Loading state per action
   isOpen: boolean                     // Container open state
-  containerType: 'slideover' | 'modal' | 'dialog'
+  containerType: 'slideover' | 'modal' | 'dialog' | 'inline'
   isExpanded?: boolean               // Slideover expand state
 }
 ```
@@ -165,7 +165,7 @@ const cancelForm = () => {
 2. **Check component exists**: Run generator to create form component
 3. **Check console**: Look for resolution errors
 
-#### Nested slideoverslideoverslideoverstates feel confusing
+#### Nested slideovers feel confusing
 
 1. **Limit nesting**: Consider alternative UX for >3 levels
 2. **Use breadcrumbs**: Shows context path
@@ -175,7 +175,7 @@ const cancelForm = () => {
 
 This is expected! You can have:
 - 1 modal + 1 slideover
-- 5 nested slideoverslideoverslideoverstates (max depth)
+- 5 nested slideovers (max depth)
 - Multiple dialogs (avoid this)
 
 Each has independent state managed by `useCrouton()`.
