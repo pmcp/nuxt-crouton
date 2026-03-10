@@ -20,7 +20,7 @@ export function useTriageConnectedAccounts(teamId: string | Ref<string>) {
 
   const { data: accounts, status, error: fetchError, refresh } = useFetch<ConnectedAccount[]>(
     () => `/api/teams/${resolvedTeamId.value}/triage-accounts`,
-    { default: () => [] as ConnectedAccount[] },
+    { default: () => [] as ConnectedAccount[], server: false },
   )
 
   const loading = computed(() => status.value === 'pending')
