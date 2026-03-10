@@ -29,6 +29,12 @@ export default defineNuxtConfig({
   croutonAuth: {
     methods: {
       passkeys: false
+    },
+    teams: {
+      defaultTeamSlug: 'alexdeforce',
+      allowCreate: false,
+      showSwitcher: false,
+      showManagement: false
     }
   },
 
@@ -36,8 +42,9 @@ export default defineNuxtConfig({
     // Static assets — immutable cache
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
 
-    // Public pages — SWR 1 hour (low-traffic content site)
-    '/api/teams/*/pages-pages/**': { swr: 3600 },
+    // NOTE: Do NOT add '/api/teams/*/...' SWR rules here — the wildcard
+    // conflicts with radix3's :id parameter routing and breaks ALL
+    // /api/teams/:id/* generated collection routes.
 
     // Auth — no caching
     '/auth/**': { headers: { 'cache-control': 'no-store' } },
