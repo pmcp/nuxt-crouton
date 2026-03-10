@@ -36,6 +36,9 @@
         createButton
       />
     </template>
+    <template #content-cell="{ row }">
+      <CroutonEditorPreview :content="row.original.content" />
+    </template>
     <template #date-cell="{ row }">
       <CroutonDate :date="row.original.date"></CroutonDate>
     </template>

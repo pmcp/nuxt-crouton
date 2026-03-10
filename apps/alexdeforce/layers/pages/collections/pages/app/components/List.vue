@@ -43,7 +43,7 @@
       {{ t(row.original, 'slug') }}
     </template>
     <template #content-cell="{ row }">
-      {{ t(row.original, 'content') }}
+      <CroutonEditorPreview :content="t(row.original, 'content')" />
     </template>
     <template #seoTitle-cell="{ row }">
       {{ t(row.original, 'seoTitle') }}
