@@ -189,7 +189,7 @@ const rows = ref([
   { id: 2, name: 'Item 2', status: 'inactive' }
 ])
 const search = ref('')
-const sort = ref({ id: 'name', desc: false })
+const sort = ref({ column: 'name', direction: 'asc' })
 const page = ref(1)
 const pageCount = ref(10)
 
@@ -335,7 +335,7 @@ const rows = ref([
 ])
 
 const search = ref('')
-const sort = ref({ id: 'name', desc: false })
+const sort = ref({ column: 'name', direction: 'asc' })
 const page = ref(1)
 const pageCount = ref(10)
 
@@ -367,7 +367,7 @@ import { ref } from 'vue'
 
 const rows = ref([])
 const search = ref('')
-const sort = ref({ id: 'name', desc: false })
+const sort = ref({ column: 'name', direction: 'asc' })
 const page = ref(1)
 const pageCount = ref(10)
 const paginationData = ref({ totalItems: 0 })
@@ -379,8 +379,8 @@ const fetchData = async () => {
       page: page.value,
       pageSize: pageCount.value,
       search: search.value,
-      sortBy: sort.value.id,
-      sortDesc: sort.value.desc
+      sortBy: sort.value.column,
+      sortDirection: sort.value.direction
     }
   })
   rows.value = data.items
@@ -416,7 +416,7 @@ const pageCount = ref(10)
 const { slicedRows, searchedRows, pageTotalToShow } = useTableData({
   rows,
   search,
-  sort: ref({ id: 'name', desc: false }),
+  sort: ref({ column: 'name', direction: 'asc' }),
   page,
   pageCount,
   serverPagination: false
@@ -445,7 +445,7 @@ Display pagination controls:
 <script setup lang="ts">
 const rows = ref([...myData])
 const search = ref('')
-const sort = ref({ id: 'name', desc: false })
+const sort = ref({ column: 'name', direction: 'asc' })
 const page = ref(1)
 const pageCount = ref(10)
 

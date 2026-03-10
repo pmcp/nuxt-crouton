@@ -93,11 +93,15 @@ Automatically adds timestamp fields to track record creation and updates. When s
 **Database schema changes:**
 - Automatically adds `createdAt` timestamp field (auto-populated on record creation)
 - Automatically adds `updatedAt` timestamp field (auto-updated on record modification)
+- Automatically adds `createdBy` user ID field (auto-populated on record creation)
+- Automatically adds `updatedBy` user ID field (auto-updated on record modification)
 
 **Database behavior:**
 - `createdAt` is set automatically when a record is created
 - `updatedAt` is set automatically whenever a record is modified
-- Both fields use the database's native timestamp type
+- `createdBy` is set to the creating user's ID on record creation
+- `updatedBy` is set to the modifying user's ID on every update
+- Timestamp fields use the database's native timestamp type
 
 **When to disable (`false`):**
 - You want to implement custom timestamp tracking
@@ -105,7 +109,7 @@ Automatically adds timestamp fields to track record creation and updates. When s
 - You need different timestamp field names or behavior
 
 ::callout{icon="i-lucide-triangle-alert" color="amber"}
-**Important:** Do NOT define `createdAt` or `updatedAt` in your schema JSON files when this flag is enabled. The generator adds them automatically, and manual definitions will cause duplicate key errors.
+**Important:** Do NOT define `createdAt`, `updatedAt`, `createdBy`, or `updatedBy` in your schema JSON files when this flag is enabled. The generator adds them automatically, and manual definitions will cause duplicate key errors.
 ::
 
 ### Example: Generate Multiple Collections
@@ -135,52 +139,28 @@ npx crouton-generate config ./crouton.config.js
 
 ## Helper Commands
 
-### Initialize Example Schema
+### Initialize a New App
 
-Create an example schema file to get started:
+Scaffold a full Crouton app end-to-end. The `init` command runs a complete pipeline: it creates the app skeleton (`scaffold-app`), generates collections from config, runs `doctor` validation, and prints a summary with next steps.
 
 ```bash
-crouton-generate init
+crouton-generate init <name>
 
-# Output: Creates crouton-schema.json with example fields
+# Example: Create a new app called "my-shop"
+crouton-generate init my-shop
 ```
 
-**Custom output path**:
+**With features and theme**:
 ```bash
-crouton-generate init --output=./schemas/product-schema.json
+crouton-generate init my-shop --features bookings,pages,editor --theme ko
 ```
 
-**Generated Schema**:
-```json
-{
-  "id": {
-    "type": "string",
-    "meta": { "primaryKey": true }
-  },
-  "name": {
-    "type": "string",
-    "meta": { "required": true, "maxLength": 255 }
-  },
-  "description": {
-    "type": "text"
-  },
-  "price": {
-    "type": "decimal",
-    "meta": { "precision": 10, "scale": 2 }
-  },
-  "inStock": {
-    "type": "boolean"
-  },
-  "createdAt": {
-    "type": "date"
-  }
-}
-```
-
-After creation, you can generate a collection:
+**Preview without writing files**:
 ```bash
-crouton-generate shop products --fields-file=crouton-schema.json
+crouton-generate init my-shop --dry-run
 ```
+
+After initialization, you can customize the generated `crouton.config.js` and schemas, then re-run `crouton-generate config` to regenerate collections.
 
 ### Install Required Modules
 
@@ -206,6 +186,10 @@ export default defineNuxtConfig({
   extends: ['@fyit/crouton']
 })
 ```
+
+::callout{icon="i-lucide-info" color="blue"}
+**Additional Commands:** The CLI also provides `add`, `doctor`, `scaffold-app`, `seed-translations`, `db-pull`, `deploy-setup`, and `deploy-check` commands. See the [CLI Reference](/generation/cli-reference) for complete documentation of all available commands.
+::
 
 ## Rollback Commands
 
@@ -353,7 +337,7 @@ When using `--config` or `config` command, flags are set in the config file:
 export default {
   dialect: 'sqlite',
   flags: {
-    useMetadata: true,        // Timestamp fields (createdAt/updatedAt)
+    useMetadata: true,        // Metadata fields (createdAt/updatedAt/createdBy/updatedBy)
     force: false,
     noTranslations: false,
     noDb: false,

@@ -776,7 +776,7 @@ A collection viewer component with an integrated layout switcher that dynamicall
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `collectionName` | `string` | *required* | Name of the collection to display |
-| `defaultLayout` | `'table' \| 'list' \| 'grid' \| 'tree' \| 'kanban' \| 'workspace'` | `'table'` | Initial layout mode |
+| `defaultLayout` | `'table' \| 'list' \| 'grid' \| 'cards' \| 'tree' \| 'kanban' \| 'workspace'` | `'table'` | Initial layout mode |
 
 ### Features
 

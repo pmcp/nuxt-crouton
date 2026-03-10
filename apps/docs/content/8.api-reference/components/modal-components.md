@@ -162,12 +162,8 @@ interface CroutonCollectionProps {
     actions?: boolean
   }
 
-  // Selection
-  selectable?: boolean           // Enable row selection
-  selected?: string[]            // v-model for selected row IDs
-
-  // State
-  loading?: boolean              // Loading state
+  // Note: selectable, selected, and loading props are not yet implemented
+  // in the CollectionProps interface. These are planned for a future release.
 }
 ```
 

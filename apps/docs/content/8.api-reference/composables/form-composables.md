@@ -21,7 +21,7 @@ function useCrouton(): {
     action: 'create' | 'update' | 'delete',
     collection: string,
     ids?: string[],
-    container?: 'slideover' | 'modal' | 'dialog',
+    container?: 'slideover' | 'modal' | 'dialog' | 'inline',
 ---
 
 
@@ -70,7 +70,7 @@ function useCrouton(): {
     action: CroutonAction,
     collection: string,
     ids?: string[],
-    containerType?: 'slideover' | 'modal' | 'dialog',
+    containerType?: 'slideover' | 'modal' | 'dialog' | 'inline',
     initialData?: any
   ): Promise<void>
   close(stateId?: string): void
@@ -90,7 +90,7 @@ function useCrouton(): {
 | `action` | `CroutonAction` | Yes | Operation type: 'create', 'update', 'delete', or 'view' |
 | `collection` | `string` | Yes | Collection name (e.g., 'users', 'bookings') |
 | `ids` | `string[]` | No | Item IDs for update/delete operations |
-| `containerType` | `'slideover' \| 'modal' \| 'dialog'` | No | Container type (default: 'slideover') |
+| `containerType` | `'slideover' \| 'modal' \| 'dialog' \| 'inline'` | No | Container type (default: 'slideover') |
 | `initialData` | `any` | No | Pre-populated data for create forms |
 
 ### Returns
