@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-pages',
     '@fyit/crouton-triage',
     '@fyit/crouton-charts',
+    '@fyit/crouton-flow',
     // Local layers
     './layers/categorize',
     // Generated layers must come last

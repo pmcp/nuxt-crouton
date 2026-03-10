@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, markRaw } from 'vue'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
-import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
-import type { Node, NodeDragEvent } from '@vue-flow/core'
+import { ref, computed, watch, markRaw } from 'vue'
+import type { Node } from '@vue-flow/core'
 import NotionCardNode from '../../../components/NotionCardNode.vue'
 import ResizableGroupNode from '../../../components/ResizableGroupNode.vue'
 
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/core/dist/theme-default.css'
-import '@vue-flow/controls/dist/style.css'
+interface ContainerChangeEvent {
+  nodeId: string
+  fromContainerId: string | null
+  toContainerId: string | null
+  position: { x: number, y: number }
+}
 
 definePageMeta({ layout: 'admin' })
 
@@ -18,6 +18,7 @@ const toast = useToast()
 
 // ─── Connected accounts ───
 const { accounts, createManualAccount, fetchAccounts } = useTriageConnectedAccounts(teamId)
+
 const notionAccounts = computed(() => accounts.value.filter(a => a.provider === 'notion'))
 const accountItems = computed(() =>
   notionAccounts.value.map(a => ({ label: `${a.label} (${a.accessTokenHint || '***'})`, value: a.id })),
@@ -72,12 +73,109 @@ const loading = ref(false)
 const saving = ref(false)
 const loaded = ref(false)
 
+// ─── Layout persistence ───
+const existingLayoutId = ref<string | null>(null)
+
 // ─── Card detail slideover ───
 const selectedCard = ref<any>(null)
 const showCardDetail = ref(false)
 
 // ─── View tab ───
 const activeTab = ref<'canvas' | 'insights'>('canvas')
+
+// ─── Filters ───
+const showFilterPopover = ref(false)
+const activeFilterProperty = ref<string | undefined>(undefined)
+const hiddenValues = ref<Map<string, Set<string>>>(new Map())
+
+// All filterable properties (select, status, multi_select, checkbox)
+const filterableProperties = computed(() => {
+  return Object.entries(schema.value)
+    .filter(([_, prop]) => ['select', 'status', 'multi_select', 'checkbox'].includes(prop.type))
+    .map(([name, prop]) => ({ name, type: prop.type, options: prop.options || [] }))
+})
+
+// Distinct values for the active filter property (extracted from loaded pages)
+const activeFilterValues = computed(() => {
+  if (!activeFilterProperty.value) return []
+  const propName = activeFilterProperty.value
+  const valueSet = new Set<string>()
+  for (const page of pages.value) {
+    const val = page.properties[propName]
+    if (val == null || val === '') continue
+    if (Array.isArray(val)) {
+      val.forEach((v: string) => valueSet.add(String(v)))
+    }
+    else {
+      valueSet.add(String(val))
+    }
+  }
+  return Array.from(valueSet).sort()
+})
+
+function isValueHidden(property: string, value: string): boolean {
+  return hiddenValues.value.get(property)?.has(value) ?? false
+}
+
+function toggleFilterValue(property: string, value: string) {
+  const map = new Map(hiddenValues.value)
+  if (!map.has(property)) map.set(property, new Set())
+  const set = new Set(map.get(property)!)
+  if (set.has(value)) {
+    set.delete(value)
+  }
+  else {
+    set.add(value)
+  }
+  if (set.size === 0) {
+    map.delete(property)
+  }
+  else {
+    map.set(property, set)
+  }
+  hiddenValues.value = map
+}
+
+function clearAllFilters() {
+  hiddenValues.value = new Map()
+}
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  for (const set of hiddenValues.value.values()) {
+    count += set.size
+  }
+  return count
+})
+
+// Flat list for template display
+const hiddenValuesList = computed(() => {
+  const list: { property: string; value: string }[] = []
+  for (const [prop, vals] of hiddenValues.value) {
+    for (const val of vals) {
+      list.push({ property: prop, value: val })
+    }
+  }
+  return list
+})
+
+// Filtered pages based on hidden values
+const filteredPages = computed(() => {
+  if (hiddenValues.value.size === 0) return pages.value
+  return pages.value.filter((page) => {
+    for (const [propName, hiddenSet] of hiddenValues.value) {
+      const val = page.properties[propName]
+      if (val == null || val === '') continue
+      if (Array.isArray(val)) {
+        if (val.some((v: string) => hiddenSet.has(String(v)))) return false
+      }
+      else {
+        if (hiddenSet.has(String(val))) return false
+      }
+    }
+    return true
+  })
+})
 
 // ─── Card detail computeds ───
 const CARD_SKIP_KEYS = ['Status', 'status', 'Type', 'type', 'Category', 'category', 'Reach', 'reach', 'Impact', 'impact', 'Confidence', 'confidence', 'Effort', 'effort']
@@ -119,25 +217,21 @@ const cardRice = computed(() => {
   }
 })
 
-// ─── Group state ───
-const groups = ref<{ id: string; name: string; color: string }[]>([])
+// ─── Group manager ───
+const groupManager = useFlowGroupManager({
+  groupNodeType: 'resizableGroup',
+})
+const groups = groupManager.groups
 const showGroupModal = ref(false)
 const newGroupName = ref('')
-let groupCounter = 0
 
-const GROUP_COLORS = [
-  '#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#e0e7ff',
-  '#ccfbf1', '#fee2e2', '#f3e8ff', '#cffafe', '#fef9c3',
-]
-
-// ─── Node types ───
-const nodeTypes = {
-  notionCard: markRaw(NotionCardNode) as any,
-  resizableGroup: markRaw(ResizableGroupNode) as any,
+// ─── Node type components for CroutonFlow ───
+const nodeTypeComponents = {
+  notionCard: { component: markRaw(NotionCardNode) },
+  resizableGroup: { component: markRaw(ResizableGroupNode), isContainer: true },
 }
 
-// ─── VueFlow ───
-const { onNodeDragStop, onNodeClick } = useVueFlow()
+// ─── Canvas nodes ───
 const nodes = ref<Node[]>([])
 
 // ─── Auth params helper ───
@@ -260,6 +354,26 @@ async function loadPages() {
       categoryProperty.value = writableProperties.value[0]!.value
     }
 
+    // Check for a saved layout
+    try {
+      const savedLayout = await $fetch<any>(`/api/teams/${teamId.value}/categorize-categorize-layouts`, {
+        query: { databaseId: databaseId.value, accountId: selectedAccountId.value },
+      })
+      if (savedLayout?.id) {
+        existingLayoutId.value = savedLayout.id
+        if (savedLayout.categoryProperty) {
+          categoryProperty.value = savedLayout.categoryProperty
+        }
+        restoreFromLayout(savedLayout.layout)
+        loaded.value = true
+        toast.add({ title: `Loaded ${pages.value.length} cards (layout restored)`, color: 'success' })
+        return
+      }
+    }
+    catch {
+      // No saved layout found, continue with auto-group
+    }
+
     // Build nodes — auto-group by existing values
     buildNodesWithAutoGroup()
     loaded.value = true
@@ -279,166 +393,180 @@ async function loadPages() {
 }
 
 // ─── Build nodes with auto-grouping by existing property values ───
+function buildCardNode(page: any): Omit<Node, 'position'> {
+  return {
+    id: page.id,
+    type: 'notionCard',
+    data: {
+      title: page.title,
+      properties: page.properties,
+      url: page.url,
+      grouped: false,
+      createdTime: page.createdTime,
+      lastEditedTime: page.lastEditedTime,
+      createdBy: page.createdBy,
+      lastEditedBy: page.lastEditedBy,
+    },
+  }
+}
+
 function buildNodesWithAutoGroup() {
+  const visiblePages = filteredPages.value
+
+  if (categoryProperty.value) {
+    nodes.value = groupManager.autoGroupByProperty(
+      visiblePages,
+      categoryProperty.value,
+      (page) => {
+        const val = page.properties[categoryProperty.value]
+        return val && typeof val === 'string' ? val : null
+      },
+      buildCardNode,
+    )
+  }
+  else {
+    // No category property — place all cards in a grid
+    const GAP = 30
+    const CARD_W = 220
+    const CARD_H = 120
+    const cols = Math.max(1, Math.ceil(Math.sqrt(visiblePages.length)))
+
+    nodes.value = visiblePages.map((page, i) => ({
+      ...buildCardNode(page),
+      position: {
+        x: (i % cols) * (CARD_W + GAP) + 50,
+        y: Math.floor(i / cols) * (CARD_H + GAP) + 50,
+      },
+    } as Node))
+  }
+}
+
+// ─── Build a snapshot of current canvas layout for persistence ───
+function buildLayoutSnapshot() {
+  const groupSnapshots = groups.value.map((g) => {
+    const groupNode = nodes.value.find(n => n.id === g.id)
+    const styleObj = groupNode?.style as Record<string, string> | undefined
+    return {
+      id: g.id,
+      name: g.name,
+      color: g.color,
+      position: groupNode?.position || { x: 0, y: 0 },
+      width: parseInt(styleObj?.width || '500'),
+      height: parseInt(styleObj?.height || '400'),
+    }
+  })
+
+  const cardSnapshots = nodes.value
+    .filter(n => n.type === 'notionCard')
+    .map((n, index) => ({
+      pageId: n.id,
+      groupId: n.parentNode || null,
+      position: n.position,
+      sortOrder: index,
+    }))
+
+  return { groups: groupSnapshots, cards: cardSnapshots }
+}
+
+// ─── Restore canvas from a saved layout ───
+function restoreFromLayout(layout: { groups: any[]; cards: any[] }) {
   const CARD_W = 220
   const CARD_H = 120
   const GAP = 30
-  const GROUP_PAD_X = 30
-  const GROUP_PAD_TOP = 45
-  const GROUP_PAD_BOTTOM = 20
-  const GROUP_GAP = 50
-  const CARD_GAP_X = 10
-  const CARD_GAP_Y = 10
 
-  // Reset
-  groups.value = []
-  groupCounter = 0
-
-  // Collect existing category values if a property is selected
-  const existingGroups = new Map<string, string[]>() // groupName → [pageId]
-  const ungroupedPages: any[] = []
-
-  if (categoryProperty.value) {
-    for (const page of pages.value) {
-      const val = page.properties[categoryProperty.value]
-      if (val && typeof val === 'string') {
-        if (!existingGroups.has(val)) existingGroups.set(val, [])
-        existingGroups.get(val)!.push(page.id)
-      }
-      else {
-        ungroupedPages.push(page)
-      }
-    }
-  }
-  else {
-    ungroupedPages.push(...pages.value)
-  }
+  // Restore groups via group manager
+  groupManager.restoreGroups(layout.groups)
 
   const allNodes: Node[] = []
-  let groupXOffset = 0
-  let maxGroupH = 0
+  const restoredPageIds = new Set<string>()
+  const visiblePages = filteredPages.value
+  const visiblePageIds = new Set(visiblePages.map(p => p.id))
 
-  // Create group nodes + position cards inside
-  let groupIndex = 0
-  for (const [groupName, pageIds] of existingGroups) {
-    const id = `group-${++groupCounter}`
-    const color = GROUP_COLORS[groupIndex % GROUP_COLORS.length]!
-    groups.value.push({ id, name: groupName, color })
-
-    // Calculate group size based on card count
-    const cols = Math.max(1, Math.min(3, pageIds.length))
-    const rows = Math.ceil(pageIds.length / cols)
-    const groupW = GROUP_PAD_X + cols * (CARD_W + CARD_GAP_X)
-    const groupH = GROUP_PAD_TOP + rows * (CARD_H + CARD_GAP_Y) + GROUP_PAD_BOTTOM
-
-    const groupX = groupXOffset
-    groupXOffset += groupW + GROUP_GAP
-
+  // Restore group nodes
+  for (const g of layout.groups) {
     allNodes.push({
-      id,
+      id: g.id,
       type: 'resizableGroup',
-      position: { x: groupX, y: 0 },
-      data: { label: groupName },
+      position: g.position,
+      data: { label: g.name },
       style: {
-        width: `${groupW}px`,
-        height: `${groupH}px`,
-        backgroundColor: color,
+        width: `${g.width}px`,
+        height: `${g.height}px`,
+        backgroundColor: g.color,
         borderRadius: '12px',
         border: '2px dashed #9ca3af',
         opacity: '0.6',
       },
     })
-
-    maxGroupH = Math.max(maxGroupH, groupH)
-
-    // Place cards inside this group
-    for (let i = 0; i < pageIds.length; i++) {
-      const page = pages.value.find(p => p.id === pageIds[i])
-      if (!page) continue
-      allNodes.push({
-        id: page.id,
-        type: 'notionCard',
-        parentNode: id,
-        position: {
-          x: 15 + (i % cols) * (CARD_W + CARD_GAP_X),
-          y: GROUP_PAD_TOP + Math.floor(i / cols) * (CARD_H + CARD_GAP_Y),
-        },
-        data: {
-          title: page.title,
-          properties: page.properties,
-          url: page.url,
-          grouped: true,
-          createdTime: page.createdTime,
-          lastEditedTime: page.lastEditedTime,
-          createdBy: page.createdBy,
-          lastEditedBy: page.lastEditedBy,
-        },
-      })
-    }
-
-    groupIndex++
   }
 
-  // Place ungrouped cards in a grid below groups
-  const ungroupedY = existingGroups.size > 0 ? maxGroupH + 80 : 50
-  const ungroupedCols = Math.max(1, Math.ceil(Math.sqrt(ungroupedPages.length)))
+  // Restore cards — only for pages that still exist
+  const sortedCards = [...layout.cards].sort((a, b) => a.sortOrder - b.sortOrder)
+  for (const card of sortedCards) {
+    if (!visiblePageIds.has(card.pageId)) continue
+    const page = visiblePages.find(p => p.id === card.pageId)
+    if (!page) continue
 
-  for (let i = 0; i < ungroupedPages.length; i++) {
-    const page = ungroupedPages[i]!
-    allNodes.push({
-      id: page.id,
-      type: 'notionCard',
-      position: {
-        x: (i % ungroupedCols) * (CARD_W + GAP) + 50,
-        y: Math.floor(i / ungroupedCols) * (CARD_H + GAP) + ungroupedY,
-      },
-      data: {
-        title: page.title,
-        properties: page.properties,
-        url: page.url,
-        grouped: false,
-        createdTime: page.createdTime,
-        lastEditedTime: page.lastEditedTime,
-        createdBy: page.createdBy,
-        lastEditedBy: page.lastEditedBy,
-      },
-    })
+    restoredPageIds.add(card.pageId)
+
+    const nodeData: Node = {
+      ...buildCardNode(page),
+      position: card.position,
+      data: { ...buildCardNode(page).data, grouped: !!card.groupId },
+    }
+    if (card.groupId) {
+      nodeData.parentNode = card.groupId
+    }
+    allNodes.push(nodeData)
+  }
+
+  // Place new pages (not in saved layout) in an ungrouped grid below
+  const newPages = visiblePages.filter(p => !restoredPageIds.has(p.id))
+  if (newPages.length > 0) {
+    let maxY = 0
+    for (const n of allNodes) {
+      const styleObj = n.style as Record<string, string> | undefined
+      const h = parseInt(styleObj?.height || '120')
+      maxY = Math.max(maxY, n.position.y + h)
+    }
+
+    const ungroupedY = maxY + 80
+    const ungroupedCols = Math.max(1, Math.ceil(Math.sqrt(newPages.length)))
+
+    for (let i = 0; i < newPages.length; i++) {
+      const page = newPages[i]!
+      allNodes.push({
+        ...buildCardNode(page),
+        position: {
+          x: (i % ungroupedCols) * (CARD_W + GAP) + 50,
+          y: Math.floor(i / ungroupedCols) * (CARD_H + GAP) + ungroupedY,
+        },
+      } as Node)
+    }
   }
 
   nodes.value = allNodes
 }
 
-// ─── Re-group when category property changes ───
+// ─── Re-group when category property or filters change ───
 watch(categoryProperty, () => {
   if (loaded.value && pages.value.length > 0) {
     buildNodesWithAutoGroup()
   }
 })
 
+watch(hiddenValues, () => {
+  if (loaded.value && pages.value.length > 0) {
+    buildNodesWithAutoGroup()
+  }
+}, { deep: true })
+
 // ─── Create a group ───
 function createGroup() {
   if (!newGroupName.value.trim()) return
 
-  const id = `group-${++groupCounter}`
-  const color = GROUP_COLORS[groups.value.length % GROUP_COLORS.length]!
-
-  groups.value.push({ id, name: newGroupName.value.trim(), color })
-
-  const groupX = groups.value.length * 550 - 500
-  nodes.value.push({
-    id,
-    type: 'resizableGroup',
-    position: { x: groupX, y: -350 },
-    data: { label: newGroupName.value.trim() },
-    style: {
-      width: '500px',
-      height: '400px',
-      backgroundColor: color,
-      borderRadius: '12px',
-      border: '2px dashed #9ca3af',
-      opacity: '0.6',
-    },
-  })
+  const groupNode = groupManager.createGroup(newGroupName.value.trim())
+  nodes.value.push(groupNode)
 
   newGroupName.value = ''
   showGroupModal.value = false
@@ -446,26 +574,7 @@ function createGroup() {
 
 // ─── Remove a group ───
 function removeGroup(groupId: string) {
-  nodes.value = nodes.value
-    .filter(n => n.id !== groupId)
-    .map((n) => {
-      if (n.parentNode === groupId) {
-        const group = nodes.value.find(g => g.id === groupId)
-        return {
-          ...n,
-          parentNode: undefined,
-          extent: undefined,
-          position: {
-            x: n.position.x + (group?.position.x || 0),
-            y: n.position.y + (group?.position.y || 0),
-          },
-          data: { ...n.data, grouped: false },
-        }
-      }
-      return n
-    })
-
-  groups.value = groups.value.filter(g => g.id !== groupId)
+  nodes.value = groupManager.removeGroup(nodes.value, groupId)
 }
 
 // ─── Rename a group ───
@@ -484,94 +593,42 @@ function commitRenameGroup() {
     editingGroupId.value = null
     return
   }
-  const newName = editingGroupName.value.trim()
-  const group = groups.value.find(g => g.id === editingGroupId.value)
-  if (group) {
-    group.name = newName
-  }
-  // Update the group node label too
-  nodes.value = nodes.value.map(n =>
-    n.id === editingGroupId.value
-      ? { ...n, data: { ...n.data, label: newName } }
-      : n,
-  )
+  nodes.value = groupManager.renameGroup(nodes.value, editingGroupId.value, editingGroupName.value.trim())
   editingGroupId.value = null
 }
 
 // ─── Handle node click — show card detail ───
-onNodeClick(({ node }) => {
-  if (node.type !== 'notionCard') return
-  selectedCard.value = node.data
+function handleNodeClick(nodeId: string, data: Record<string, unknown>) {
+  // Only show detail for card nodes, not group nodes
+  if (groups.value.some(g => g.id === nodeId)) return
+  selectedCard.value = data
   showCardDetail.value = true
-})
+}
 
-// ─── Handle node drag stop — detect group overlap ───
-onNodeDragStop((event: NodeDragEvent) => {
-  const { node } = event
-  if (node.type !== 'notionCard') return
+// ─── Handle container change (card dragged into/out of group) ───
+function handleContainerChange(event: ContainerChangeEvent) {
+  nodes.value = nodes.value.map((n) => {
+    if (n.id !== event.nodeId) return n
 
-  const currentNodes = nodes.value
-  const groupNodes = currentNodes.filter(n => n.type === 'resizableGroup')
-  if (groupNodes.length === 0) return
-
-  const cardW = 220
-  const cardH = 80
-  let cardCenterX = node.position.x + cardW / 2
-  let cardCenterY = node.position.y + cardH / 2
-
-  if (node.parentNode) {
-    const parentGroup = groupNodes.find(g => g.id === node.parentNode)
-    if (parentGroup) {
-      cardCenterX += parentGroup.position.x
-      cardCenterY += parentGroup.position.y
-    }
-  }
-
-  let targetGroup: Node | null = null
-  for (const group of groupNodes) {
-    const styleObj = group.style as Record<string, string> | undefined
-    const gw = parseInt(styleObj?.width || '500')
-    const gh = parseInt(styleObj?.height || '400')
-
-    if (
-      cardCenterX >= group.position.x
-      && cardCenterX <= group.position.x + gw
-      && cardCenterY >= group.position.y
-      && cardCenterY <= group.position.y + gh
-    ) {
-      targetGroup = group
-      break
-    }
-  }
-
-  nextTick(() => {
-    nodes.value = nodes.value.map((n) => {
-      if (n.id !== node.id) return n
-
-      if (targetGroup && targetGroup.id !== node.parentNode) {
-        const relX = cardCenterX - targetGroup.position.x - cardW / 2
-        const relY = cardCenterY - targetGroup.position.y - cardH / 2
-        return {
-          ...n,
-          parentNode: targetGroup.id,
-          position: { x: Math.max(10, relX), y: Math.max(30, relY) },
-          data: { ...n.data, grouped: true },
-        }
+    if (event.toContainerId) {
+      return {
+        ...n,
+        parentNode: event.toContainerId,
+        position: event.position,
+        data: { ...n.data, grouped: true },
       }
-      else if (!targetGroup && node.parentNode) {
-        return {
-          ...n,
-          parentNode: undefined,
-          extent: undefined,
-          position: { x: cardCenterX - cardW / 2, y: cardCenterY - cardH / 2 },
-          data: { ...n.data, grouped: false },
-        }
+    }
+    else {
+      return {
+        ...n,
+        parentNode: undefined,
+        extent: undefined,
+        position: event.position,
+        data: { ...n.data, grouped: false },
       }
-
-      return n
-    })
+    }
   })
-})
+}
 
 // ─── Get category assignments ───
 const assignments = computed(() => {
@@ -729,6 +786,42 @@ async function saveToNotion() {
         color: 'success',
       })
     }
+
+    // Persist canvas layout
+    try {
+      const layoutData = {
+        name: databaseId.value,
+        databaseId: databaseId.value,
+        accountId: selectedAccountId.value,
+        categoryProperty: categoryProperty.value,
+        layout: buildLayoutSnapshot(),
+      }
+
+      if (existingLayoutId.value) {
+        await $fetch(`/api/teams/${teamId.value}/categorize-categorize-layouts/${existingLayoutId.value}`, {
+          method: 'PATCH',
+          body: layoutData,
+        })
+      }
+      else {
+        const created = await $fetch<any>(`/api/teams/${teamId.value}/categorize-categorize-layouts`, {
+          method: 'POST',
+          body: layoutData,
+        })
+        if (created?.id) {
+          existingLayoutId.value = created.id
+        }
+      }
+      toast.add({ title: 'Canvas layout saved', color: 'success' })
+    }
+    catch (layoutError: any) {
+      console.warn('[categorize] Failed to save layout:', layoutError)
+      toast.add({
+        title: 'Layout save failed',
+        description: layoutError.data?.statusText || layoutError.message,
+        color: 'warning',
+      })
+    }
   }
   catch (error: any) {
     toast.add({
@@ -778,7 +871,7 @@ async function saveToNotion() {
         <USeparator orientation="vertical" class="h-6" />
 
         <span class="text-sm text-gray-500">
-          {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining
+          {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining<template v-if="activeFilterCount > 0"> ({{ pages.length - filteredPages.length }} hidden)</template>
         </span>
         <UButton
           icon="i-lucide-plus"
@@ -869,6 +962,90 @@ async function saveToNotion() {
 
         <USeparator orientation="vertical" class="h-8" />
 
+        <!-- Filter popover -->
+        <UPopover v-model:open="showFilterPopover">
+          <UButton
+            icon="i-lucide-filter"
+            size="xs"
+            :variant="activeFilterCount > 0 ? 'solid' : 'soft'"
+            :color="activeFilterCount > 0 ? 'primary' : 'neutral'"
+          >
+            Filter{{ activeFilterCount > 0 ? ` (${activeFilterCount})` : '' }}
+          </UButton>
+
+          <template #content>
+            <div class="p-4 w-72">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-semibold">Filter by column</span>
+                <UButton
+                  v-if="activeFilterCount > 0"
+                  size="xs"
+                  variant="link"
+                  @click="clearAllFilters"
+                >
+                  Clear all
+                </UButton>
+              </div>
+
+              <!-- Column picker -->
+              <USelect
+                v-model="activeFilterProperty"
+                :items="filterableProperties.map(p => ({ label: `${p.name} (${p.type})`, value: p.name }))"
+                placeholder="Select column..."
+                value-key="value"
+                class="mb-3"
+              />
+
+              <!-- Value checkboxes -->
+              <div v-if="activeFilterProperty && activeFilterValues.length > 0" class="space-y-1 max-h-48 overflow-y-auto">
+                <p class="text-xs text-gray-400 mb-2">Uncheck to hide cards with that value:</p>
+                <label
+                  v-for="val in activeFilterValues"
+                  :key="val"
+                  class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="!isValueHidden(activeFilterProperty!, val)"
+                    class="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                    @change="toggleFilterValue(activeFilterProperty!, val)"
+                  >
+                  <span class="truncate">{{ val }}</span>
+                  <span class="ml-auto text-xs text-gray-400">
+                    {{ pages.filter(p => {
+                      const v = p.properties[activeFilterProperty!]
+                      return Array.isArray(v) ? v.includes(val) : String(v) === val
+                    }).length }}
+                  </span>
+                </label>
+              </div>
+              <p v-else-if="activeFilterProperty" class="text-xs text-gray-400 py-2">
+                No values found for this column.
+              </p>
+
+              <!-- Active filters summary -->
+              <div v-if="activeFilterCount > 0" class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <p class="text-xs text-gray-400 mb-2">Hidden values (click to remove):</p>
+                <div class="flex flex-wrap gap-1">
+                  <UBadge
+                    v-for="item in hiddenValuesList"
+                    :key="`${item.property}-${item.value}`"
+                    color="error"
+                    variant="subtle"
+                    size="xs"
+                    class="cursor-pointer"
+                    @click="toggleFilterValue(item.property, item.value)"
+                  >
+                    {{ item.property }}: {{ item.value }} &times;
+                  </UBadge>
+                </div>
+              </div>
+            </div>
+          </template>
+        </UPopover>
+
+        <USeparator orientation="vertical" class="h-8" />
+
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-gray-500 uppercase tracking-wide">Groups:</span>
           <div
@@ -911,29 +1088,21 @@ async function saveToNotion() {
         </div>
       </div>
 
-      <!-- VueFlow canvas -->
+      <!-- CroutonFlow canvas -->
       <div class="flex-1 min-h-0">
         <ClientOnly>
-          <VueFlow
-            v-model:nodes="nodes"
-            :node-types="nodeTypes"
-            :min-zoom="0.1"
-            :max-zoom="3"
-            :fit-view-on-init="true"
-            :snap-to-grid="true"
-            :snap-grid="[10, 10]"
-            class="w-full h-full"
-          >
-            <!-- Group node template -->
-            <template #node-group="{ data }">
-              <div class="group-node-label">
-                {{ data.label }}
-              </div>
-            </template>
-
-            <Background :gap="20" pattern-color="#ddd" />
-            <Controls position="bottom-left" />
-          </VueFlow>
+          <CroutonFlow
+            :rows="nodes"
+            collection="categorize"
+            data-mode="ephemeral"
+            :node-type-components="nodeTypeComponents"
+            :container-options="{ enabled: true }"
+            :controls="true"
+            :minimap="false"
+            :fit-view-on-mount="true"
+            @node-click="handleNodeClick"
+            @node-container-change="handleContainerChange"
+          />
         </ClientOnly>
       </div>
       </div>
