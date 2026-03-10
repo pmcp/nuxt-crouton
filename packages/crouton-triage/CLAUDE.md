@@ -223,6 +223,31 @@ triage.
 └── admin.*  - Admin sidebar labels
 ```
 
+## Extending the Triage Sidebar
+
+Consuming apps can add routes to the Triage sidebar section using the `parentApp` pattern. Register your layer's app config with `parentApp: 'triage'` and your routes will appear alongside the built-in Triage routes (Overview, Discussions, Tasks, Jobs, Inbox).
+
+```typescript
+// layers/my-triage-feature/app/app.config.ts
+export default defineAppConfig({
+  croutonApps: {
+    myTriageFeature: {
+      id: 'myTriageFeature',
+      parentApp: 'triage',
+      name: 'My Feature',
+      icon: 'i-lucide-star',
+      adminRoutes: [
+        { path: '/my-feature', label: 'My Feature', icon: 'i-lucide-star' }
+      ],
+      dashboardRoutes: [],
+      settingsRoutes: [],
+    }
+  }
+})
+```
+
+See `packages/crouton-core/CLAUDE.md` for the full `parentApp` pattern documentation.
+
 ## Naming Conventions
 
 ```
