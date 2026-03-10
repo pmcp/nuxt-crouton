@@ -146,13 +146,16 @@
             {{ isNewMode ? 'New Translation' : t('admin.translations.editOverride') }}
           </h3>
 
-          <!-- Key Path: editable for new, read-only for override -->
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.translations.keyPath') }}</label>
-            <UInput
+          <!-- Key Path: searchable select for new, read-only for override -->
+          <UFormField :label="t('admin.translations.keyPath')">
+            <UInputMenu
               v-if="isNewMode"
               v-model="newKeyPath"
-              placeholder="e.g. admin.custom.myLabel"
+              :items="availableKeyItems"
+              value-key="value"
+              placeholder="Search translation keys..."
+              icon="i-lucide-search"
+              class="w-full"
             />
             <code
               v-else
@@ -160,18 +163,24 @@
             >
               {{ editingItem?.keyPath }}
             </code>
-          </div>
+          </UFormField>
 
-          <!-- Category: editable for new -->
+          <!-- Show current system value when a key is selected in new mode -->
           <div
-            v-if="isNewMode"
-            class="space-y-1"
+            v-if="isNewMode && newKeyPath && selectedKeySystemValues"
+            class="space-y-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3"
           >
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-            <UInput
-              v-model="newCategory"
-              placeholder="e.g. admin"
-            />
+            <label class="text-xs font-medium text-gray-500">Current value</label>
+            <div
+              v-for="locale in locales"
+              :key="locale"
+              class="flex gap-2"
+            >
+              <span class="w-8 text-xs font-medium text-gray-500 uppercase shrink-0 pt-0.5">{{ locale }}</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">
+                {{ selectedKeySystemValues[locale] || '—' }}
+              </span>
+            </div>
           </div>
 
           <!-- System values: only show for override mode -->
@@ -198,23 +207,22 @@
             <USeparator />
           </template>
 
-          <div class="space-y-3">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {{ isNewMode ? 'Values' : t('admin.translations.teamOverrideValues') }}
-            </label>
-            <div
-              v-for="locale in locales"
-              :key="locale"
-              class="flex items-center gap-2"
-            >
-              <span class="w-8 text-xs font-medium text-gray-500 uppercase">{{ locale }}</span>
-              <UInput
-                v-model="overrideValues[locale]"
-                :placeholder="editingItem?.systemValues?.[locale] || ''"
-                class="flex-1"
-              />
+          <UFormField :label="isNewMode ? 'Values' : t('admin.translations.teamOverrideValues')">
+            <div class="w-full space-y-2">
+              <div
+                v-for="locale in locales"
+                :key="locale"
+                class="flex items-center gap-2"
+              >
+                <span class="w-8 text-xs font-medium text-gray-500 uppercase shrink-0">{{ locale }}</span>
+                <UInput
+                  v-model="overrideValues[locale]"
+                  :placeholder="editingItem?.systemValues?.[locale] || ''"
+                  class="flex-1"
+                />
+              </div>
             </div>
-          </div>
+          </UFormField>
 
           <div class="flex justify-end gap-2 pt-4">
             <UButton
@@ -257,11 +265,50 @@ interface TranslationWithOverride {
 const { teamSlug } = useTeamContext()
 const notify = useNotify()
 
-// Fetch system translations with team overrides
-const { data: items, pending, error, refresh } = await useFetch<TranslationWithOverride[]>(
+// Fetch team overrides from DB
+const { data: dbItems, pending, error, refresh } = await useFetch<TranslationWithOverride[]>(
   () => `/api/teams/${teamSlug.value}/translations-ui/with-system`,
   { watch: [teamSlug] }
 )
+
+// Merge locale file keys with DB overrides for a complete view
+const items = computed(() => {
+  const dbMap = new Map((dbItems.value || []).map(i => [i.keyPath, i]))
+  const result: TranslationWithOverride[] = []
+
+  for (const { key } of flatKeys.value) {
+    const dbItem = dbMap.get(key)
+    if (dbItem) {
+      result.push(dbItem)
+      dbMap.delete(key)
+    } else {
+      // Build from locale files
+      const systemValues: Record<string, string> = {}
+      for (const locale of locales.value) {
+        const messages = getLocaleMessage(locale) as Record<string, any>
+        let current: any = messages
+        for (const part of key.split('.')) current = current?.[part]
+        if (typeof current === 'string') systemValues[locale] = current
+      }
+      result.push({
+        keyPath: key,
+        category: key.split('.')[0] || 'custom',
+        namespace: 'ui',
+        systemValues,
+        systemId: '',
+        isOverrideable: true,
+        teamValues: null,
+        hasOverride: false,
+        overrideId: null,
+        overrideDescription: null,
+        overrideUpdatedAt: null
+      })
+    }
+  }
+  // Include any DB-only items not in locale files
+  for (const item of dbMap.values()) result.push(item)
+  return result
+})
 
 // Table columns
 const columns = [
@@ -274,10 +321,52 @@ const columns = [
 ]
 
 // Locales for override form (derived from i18n config)
-const { locales: i18nLocales } = useI18n()
+const { locales: i18nLocales, getLocaleMessage } = useI18n()
 const locales = computed(() =>
   i18nLocales.value.map((l: any) => typeof l === 'string' ? l : l.code)
 )
+
+// Build flattened key list from i18n locale messages
+function flattenMessages(obj: Record<string, any>, prefix = ''): { key: string, value: string }[] {
+  const result: { key: string, value: string }[] = []
+  for (const [k, v] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${k}` : k
+    if (typeof v === 'object' && v !== null) {
+      result.push(...flattenMessages(v, path))
+    } else {
+      result.push({ key: path, value: String(v) })
+    }
+  }
+  return result
+}
+
+const flatKeys = computed(() => {
+  const messages = getLocaleMessage('en') as Record<string, any>
+  return flattenMessages(messages)
+})
+
+const availableKeyItems = computed(() =>
+  flatKeys.value.map(({ key, value }) => ({
+    label: `${key} — ${value.length > 40 ? value.slice(0, 40) + '…' : value}`,
+    value: key
+  }))
+)
+
+// Get system values for selected key across all locales
+const selectedKeySystemValues = computed(() => {
+  if (!newKeyPath.value) return null
+  const values: Record<string, string> = {}
+  for (const locale of locales.value) {
+    const messages = getLocaleMessage(locale) as Record<string, any>
+    const parts = newKeyPath.value.split('.')
+    let current: any = messages
+    for (const part of parts) {
+      current = current?.[part]
+    }
+    if (typeof current === 'string') values[locale] = current
+  }
+  return Object.keys(values).length > 0 ? values : null
+})
 
 // Search and filter
 const search = ref('')
@@ -305,19 +394,11 @@ const isNewMode = ref(false)
 const editingItem = ref<TranslationWithOverride | null>(null)
 const overrideValues = ref<Record<string, string>>({})
 const newKeyPath = ref('')
-const newCategory = ref('')
-
-// Auto-derive category from key path (first segment)
-watch(newKeyPath, (val) => {
-  const first = val.split('.')[0]
-  if (first) newCategory.value = first
-})
 
 function openNewModal() {
   isNewMode.value = true
   editingItem.value = null
   newKeyPath.value = ''
-  newCategory.value = ''
   overrideValues.value = {}
   showModal.value = true
 }
@@ -375,7 +456,7 @@ async function saveOverride() {
 
 async function createNew() {
   const keyPath = newKeyPath.value.trim()
-  const category = newCategory.value.trim() || keyPath.split('.')[0] || 'custom'
+  const category = keyPath.split('.')[0] || 'custom'
 
   if (!keyPath) {
     notify.warning('Key path is required')
