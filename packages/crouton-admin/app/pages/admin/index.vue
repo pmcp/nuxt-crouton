@@ -18,7 +18,7 @@ const hasRedirected = ref(false)
 
 async function fetchAndRedirect() {
   // Prevent multiple redirects and only redirect from exact /admin path
-  if (hasRedirected.value || route.path !== '/admin') {
+  if (hasRedirected.value || (route.path !== '/admin' && route.path !== '/admin/')) {
     return
   }
   hasRedirected.value = true
