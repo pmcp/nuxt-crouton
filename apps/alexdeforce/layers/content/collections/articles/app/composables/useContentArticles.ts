@@ -35,7 +35,7 @@ export const contentArticleSchema = z.object({
   tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
   status: z.string().min(1, 'status is required'),
-  publishedAt: z.date().optional().nullable()
+  publishedAt: z.date().optional()
 })
 
 export const contentArticlesColumns = [
@@ -47,7 +47,7 @@ export const contentArticlesColumns = [
   { accessorKey: 'tags', header: 'Tags' },
   { accessorKey: 'featured', header: 'Featured' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'publishedAt', header: 'Published At' }
+  { accessorKey: 'publishedAt', header: 'PublishedAt' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -64,7 +64,7 @@ const _contentArticlesConfig = {
     imageUrl: '',
     tags: [],
     featured: false,
-    status: 'draft',
+    status: '',
     publishedAt: null
   },
   columns: contentArticlesColumns,
@@ -115,12 +115,7 @@ const _contentArticlesConfig = {
           "name": "status",
           "type": "string",
           "label": "Status",
-          "area": "sidebar",
-          "options": [
-              { "value": "draft", "label": "Draft" },
-              { "value": "published", "label": "Published" },
-              { "value": "archived", "label": "Archived" }
-          ]
+          "area": "sidebar"
       },
       {
           "name": "publishedAt",

@@ -57,7 +57,13 @@
           <CroutonCalendar v-model:date="state.date" />
         </UFormField>
         <UFormField label="Category" name="category" class="not-last:pb-4">
-          <UInput v-model="state.category" class="w-full" size="xl" />
+          <CroutonFormReferenceSelect
+            v-model="state.category"
+            collection="contentCategories"
+            label="Category"
+            label-key="name"
+            :filter-fields="['name']"
+          />
         </UFormField>
         <UFormField label="ImageUrl" name="imageUrl" class="not-last:pb-4">
           <UInput v-model="state.imageUrl" class="w-full" size="xl" />
@@ -86,7 +92,7 @@
             class="w-full"
           />
         </UFormField>
-        <UFormField label="Published At" name="publishedAt" class="not-last:pb-4">
+        <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
       </div>

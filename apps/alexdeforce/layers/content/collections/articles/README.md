@@ -15,7 +15,7 @@
 
 ## Features
 
-- References: tags → tags
+- References: category → categories, tags → tags
 
 ## File Structure
 
@@ -48,13 +48,13 @@ collections/articles/
 | id | string (primary key) | Auto |
 | title | string | Yes |
 | date | date | Yes |
-| category | string | Yes |
+| category | string (→ categories) | Yes |
 | content | text | No |
-| embed | text | No |
 | imageUrl | string | No |
 | tags | array (→ tags) | No |
 | featured | boolean | No |
-| draft | boolean | No |
+| status | string | Yes |
+| publishedAt | date | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |
 | createdBy | string | Auto |

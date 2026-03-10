@@ -26,6 +26,7 @@ import { organization, member } from '~~/server/db/schema'
 import { contentArticles } from '~~/layers/content/collections/articles/server/database/schema'
 import { contentAgendas } from '~~/layers/content/collections/agendas/server/database/schema'
 import { contentTags } from '~~/layers/content/collections/tags/server/database/schema'
+import { contentCategories } from '~~/layers/content/collections/categories/server/database/schema'
 
 // ---------------------------------------------------------------------------
 // Source paths
@@ -387,6 +388,7 @@ export default defineEventHandler(async () => {
     await (db as any).delete(contentArticles).where(eq(contentArticles.teamId, orgId))
     await (db as any).delete(contentAgendas).where(eq(contentAgendas.teamId, orgId))
     await (db as any).delete(contentTags).where(eq(contentTags.teamId, orgId))
+    await (db as any).delete(contentCategories).where(eq(contentCategories.teamId, orgId))
     log.push('Cleared existing content for this organization')
 
     // -------------------------------------------------------------------
@@ -423,6 +425,30 @@ export default defineEventHandler(async () => {
       tagNameToId.set(tagName, tagId)
     }
     log.push(`Created ${tagNameToId.size} tag records`)
+
+    // -------------------------------------------------------------------
+    // 0b. Create category records from known categories
+    // -------------------------------------------------------------------
+    const categoryNames = ['poezie', 'txt', 'img', 'radio', 'news']
+    const categoryNameToId = new Map<string, string>()
+    let catOrder = 0
+    for (const catName of categoryNames) {
+      const catId = nanoid()
+      await (db as any).insert(contentCategories).values({
+        id: catId,
+        teamId: orgId,
+        owner: ownerId,
+        order: catOrder++,
+        name: catName,
+        icon: null,
+        createdAt: now,
+        updatedAt: now,
+        createdBy: ownerId,
+        updatedBy: ownerId,
+      })
+      categoryNameToId.set(catName, catId)
+    }
+    log.push(`Created ${categoryNameToId.size} category records`)
 
     // -------------------------------------------------------------------
     // 1. Migrate Articles
@@ -481,7 +507,7 @@ export default defineEventHandler(async () => {
         order: articleCount,
         title: data.title,
         date,
-        category: data.category || 'txt',
+        category: categoryNameToId.get(data.category || 'txt') || categoryNameToId.get('txt')!,
         content: finalContent,
         imageUrl,
         tags,

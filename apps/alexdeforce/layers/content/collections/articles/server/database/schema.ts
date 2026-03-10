@@ -35,8 +35,8 @@ export const contentArticles = sqliteTable('content_articles', {
   imageUrl: text('imageUrl'),
   tags: jsonColumn('tags').$default(() => (null)),
   featured: integer('featured', { mode: 'boolean' }).$default(() => false),
-  status: text('status').notNull().$default(() => 'draft'),
-  publishedAt: integer('publishedAt', { mode: 'timestamp' }),
+  status: text('status').notNull(),
+  publishedAt: integer('publishedAt', { mode: 'timestamp' }).$default(() => new Date()),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
