@@ -7,6 +7,7 @@ on:
     paths:
       - 'apps/triage/**'
       - 'packages/crouton-core/**'
+      - 'packages/crouton-auth/**'
       - 'packages/crouton-ai/**'
       - 'packages/crouton-editor/**'
       - 'packages/crouton-pages/**'
@@ -53,15 +54,18 @@ jobs:
         with:
           path: |
             packages/crouton-core/dist
+            packages/crouton-auth/dist
             packages/crouton-ai/dist
+            packages/crouton-pages/dist
             packages/crouton-triage/dist
             packages/crouton/dist
-          key: layer-builds-${{ hashFiles('packages/crouton-core/**/*.ts', 'packages/crouton-ai/**/*.ts', 'packages/crouton-triage/**/*.ts', 'packages/crouton/**/*.ts') }}
+          key: layer-builds-${{ hashFiles('packages/crouton-core/**/*.ts', 'packages/crouton-auth/**/*.ts', 'packages/crouton-ai/**/*.ts', 'packages/crouton-pages/**/*.ts', 'packages/crouton-triage/**/*.ts', 'packages/crouton/**/*.ts') }}
 
       - name: Build layer packages
         if: steps.layer-cache.outputs.cache-hit != 'true'
         run: |
           pnpm --filter '@fyit/crouton-core' build
+          pnpm --filter '@fyit/crouton-auth' build
           pnpm --filter '@fyit/crouton-ai' build
           pnpm --filter '@fyit/crouton-triage' build
           pnpm --filter '@fyit/crouton' build

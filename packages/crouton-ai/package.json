@@ -48,7 +48,8 @@
     "ai": "^4.0.0",
     "@ai-sdk/vue": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
-    "@ai-sdk/anthropic": "^1.0.0"
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/ui-utils": "^1.0.0"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
