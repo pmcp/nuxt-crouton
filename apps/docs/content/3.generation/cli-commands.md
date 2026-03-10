@@ -26,15 +26,15 @@ The generator creates several files in your project:
 
 ```
 layers/[layer]/
-  ├── components/
-  │   └── [collection]/
-  │       ├── List.vue       # Table/list view
-  │       ├── Form.vue       # Create/edit form
-  │       └── Table.vue      # Table component
-  ├── composables/
-  │   └── use[Collection].ts # Validation, columns, defaults
-  └── types/
-      └── [collection].ts    # TypeScript types
+  └── collections/
+      └── [collection]/
+          ├── app/
+          │   ├── components/
+          │   │   ├── List.vue           # Table/list view
+          │   │   └── Form.vue           # Create/edit form
+          │   └── composables/
+          │       └── use[Collection].ts # Validation, columns, defaults
+          └── types.ts                   # TypeScript types
 ```
 
 ## Multi-Collection Configuration
@@ -46,7 +46,7 @@ For larger projects with multiple collections, create a configuration file and g
 npx crouton-generate config ./crouton.config.js
 
 # With options
-npx crouton-generate config ./crouton.config.js --force --preview
+npx crouton-generate config ./crouton.config.js --force --dry-run
 ```
 
 ### Config File Format
@@ -77,11 +77,11 @@ export default {
 ### Configuration Flags
 
 ::callout{icon="i-lucide-info" color="blue"}
-**Team-Scoped by Default:** All generated collections include team-based authentication. The generator automatically adds `teamId` and `userId` fields and uses `@crouton/auth/server` for authentication.
+**Team-Scoped by Default:** All generated collections include team-based authentication. The generator automatically adds `teamId` and `owner` fields and uses `@fyit/crouton-auth/server` for authentication.
 ::
 
 ::callout{icon="i-lucide-triangle-alert" color="amber"}
-**Important:** Do NOT define `teamId` or `userId` in your schema JSON files. The generator adds them automatically, and manual definitions will cause duplicate key errors.
+**Important:** Do NOT define `teamId` or `owner` in your schema JSON files. The generator adds them automatically, and manual definitions will cause duplicate key errors.
 ::
 
 See [Team-Based Authentication](/advanced/team-based-auth) for usage examples.
@@ -214,13 +214,13 @@ See [Rollback & Undo Guide](/guides/rollback) for complete documentation on remo
 **Quick reference**:
 ```bash
 # Remove single collection
-crouton-rollback <layer> <collection>
+crouton rollback <layer> <collection>
 
 # Remove entire layer
-crouton-rollback-bulk --layer=<name>
+crouton rollback-bulk --layer=<name>
 
 # Interactive removal
-crouton-rollback-interactive
+crouton rollback-interactive
 ```
 
 ## Complete CLI Flags Reference

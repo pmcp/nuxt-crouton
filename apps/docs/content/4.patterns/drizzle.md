@@ -12,11 +12,11 @@ Add the foreign key field to your JSON schema:
 
 ```json
 // schemas/product-schema.json
-[
-  { "name": "name", "type": "string" },
-  { "name": "price", "type": "number" },
-  { "name": "categoryId", "type": "string" }
-]
+{
+  "name": { "type": "string" },
+  "price": { "type": "number" },
+  "categoryId": { "type": "string" }
+}
 ```
 
 ## Step 2: Define Relations in Schema Files

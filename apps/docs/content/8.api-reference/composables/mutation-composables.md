@@ -15,6 +15,8 @@ function useCollectionMutation(collection: string): {
   create: (data: any) => Promise<any>
   update: (id: string, data: any) => Promise<any>
   deleteItems: (ids: string[]) => Promise<void>
+  delete: (ids: string[]) => Promise<void>  // Alias for deleteItems
+  isReady: ComputedRef<boolean>
 }
 ```
 
@@ -27,6 +29,8 @@ function useCollectionMutation(collection: string): {
 - **create** - Create new item
 - **update** - Update existing item
 - **deleteItems** - Delete one or more items
+- **delete** - Alias for `deleteItems`
+- **isReady** - Whether the mutation handler is ready (team context resolved)
 
 ### Usage
 

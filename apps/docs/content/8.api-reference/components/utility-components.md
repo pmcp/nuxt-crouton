@@ -51,7 +51,7 @@ Simply add the component to your template:
 ```vue
 <template>
   <div>
-    <Loading />
+    <CroutonLoading />
     <!-- Your other content -->
   </div>
 </template>
@@ -62,7 +62,7 @@ Simply add the component to your template:
 ```vue
 <template>
   <div class="space-y-6">
-    <Loading />
+    <CroutonLoading />
     
     <UForm v-if="!loading" :state="formState" @submit="handleSubmit">
       <!-- Form fields -->
@@ -84,7 +84,7 @@ const { loading } = useCrouton()
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">Edit Item</h3>
         
-        <Loading />
+        <CroutonLoading />
         
         <UForm v-if="!loading" :state="state" @submit="onSubmit">
           <!-- Form fields -->
@@ -150,7 +150,7 @@ The Loading component works seamlessly with generated Crouton forms:
 <template>
   <div>
     <!-- Automatically shows loading state during form operations -->
-    <Loading />
+    <CroutonLoading />
     
     <CroutonForm
       :schema="schema"
@@ -282,7 +282,7 @@ The component:
 <template>
   <div>
     <!-- Error summary at top -->
-    <ValidationErrorSummary
+    <CroutonValidationErrorSummary
       :tab-errors="tabErrors"
       :navigation-items="navigationItems"
       @switch-tab="handleSwitchTab"
@@ -408,7 +408,7 @@ const tabErrors = computed(() => {
 </script>
 
 <template>
-  <ValidationErrorSummary
+  <CroutonValidationErrorSummary
     :tab-errors="tabErrors"
     :navigation-items="tabs"
     @switch-tab="activeTab = $event"
@@ -456,7 +456,7 @@ const stepErrors = computed(() => ({
 
 <template>
   <div>
-    <ValidationErrorSummary
+    <CroutonValidationErrorSummary
       :tab-errors="stepErrors"
       :navigation-items="steps"
       @switch-tab="currentStep = $event"
@@ -549,7 +549,7 @@ Using ValidationErrorSummary with generated Crouton forms:
 <template>
   <div>
     <!-- Show validation errors at top -->
-    <ValidationErrorSummary
+    <CroutonValidationErrorSummary
       v-if="showTabs"
       :tab-errors="tabErrors"
       :navigation-items="tabNavigation"
@@ -653,7 +653,7 @@ export default defineNuxtConfig({
 - **Problem**: Click on error link does nothing
 - **Solution**: Ensure you're listening to the `@switch-tab` event and updating your active tab:
   ```vue
-  <ValidationErrorSummary
+  <CroutonValidationErrorSummary
     @switch-tab="activeTab = $event"
   />
   ```
@@ -776,7 +776,7 @@ A collection viewer component with an integrated layout switcher that dynamicall
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `collectionName` | `string` | *required* | Name of the collection to display |
-| `defaultLayout` | `'table' \| 'list' \| 'grid' \| 'cards'` | `'table'` | Initial layout mode |
+| `defaultLayout` | `'table' \| 'list' \| 'grid' \| 'tree' \| 'kanban' \| 'workspace'` | `'table'` | Initial layout mode |
 
 ### Features
 

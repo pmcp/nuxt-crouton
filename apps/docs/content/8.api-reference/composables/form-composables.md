@@ -36,13 +36,13 @@ Global modal and form state management for handling CRUD operations with support
 ```typescript
 interface CroutonState {
   id: string
-  action: 'create' | 'update' | 'delete' | 'view' | null
+  action: 'create' | 'update' | 'delete' | 'view' | undefined
   collection: string | null
   activeItem: any
   items: any[]
   loading: 'notLoading' | 'create_send' | 'update_send' | 'delete_send' | 'view_send' | 'create_open' | 'update_open' | 'delete_open' | 'view_open'
   isOpen: boolean
-  containerType: 'slideover' | 'modal' | 'dialog'
+  containerType: 'slideover' | 'modal' | 'dialog' | 'inline'
 }
 
 interface PaginationState {

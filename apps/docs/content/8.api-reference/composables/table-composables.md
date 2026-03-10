@@ -22,6 +22,8 @@ interface UseTableColumnsOptions {
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
+    select?: boolean
+    presence?: boolean
     actions?: boolean
   }
 }
@@ -41,6 +43,8 @@ function useTableColumns(options: UseTableColumnsOptions): {
 | `hideDefaultColumns.updatedAt` | `boolean` | No | Hide 'updatedAt' column (default: false) |
 | `hideDefaultColumns.createdBy` | `boolean` | No | Hide 'createdBy' column (default: false) |
 | `hideDefaultColumns.updatedBy` | `boolean` | No | Hide 'updatedBy' column (default: false) |
+| `hideDefaultColumns.select` | `boolean` | No | Hide 'select' checkbox column (default: false) |
+| `hideDefaultColumns.presence` | `boolean` | No | Hide 'presence' collab column (default: false) |
 | `hideDefaultColumns.actions` | `boolean` | No | Hide 'actions' column (default: false) |
 
 ### Returns

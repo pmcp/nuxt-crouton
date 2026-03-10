@@ -8,151 +8,11 @@ icon: i-lucide-database
 **Query Examples**: For complete `useCollectionQuery` patterns (basic, filtering, pagination, sorting, relations), see [Querying Data](/fundamentals/querying).
 ::
 
-## useCollection
+## ~~useCollection~~ (Removed)
 
-**Legacy Pattern** - Simplified collection fetching for admin panels without SSR complexity.
-
-::callout{icon="i-lucide-alert-triangle" color="amber"}
-**Deprecated Pattern**: This composable uses the legacy global state pattern. For new code, use `useCollectionQuery()` instead, which provides query-based caching and better SSR support.
+::callout{icon="i-lucide-triangle-alert" color="red"}
+**Removed**: `useCollection()` has been removed. Use `useCollectionQuery()` for data fetching or `useCollections()` for collection configuration.
 ::
-
-### Type Signature
-
-```typescript
-function useCollection(collectionName: string): {
-  items: ComputedRef<any[]>
-  pagination: ComputedRef<any>
-  pending: Readonly<Ref<boolean>>
-  error: Readonly<Ref<any>>
-  refresh: () => Promise<void>
-  collectionStore: Ref<any[]> | undefined
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `collectionName` | `string` | Yes | The collection name (e.g., 'shopProducts') |
-
-### Returns
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `items` | `ComputedRef<any[]>` | Array of collection items from global store |
-| `pagination` | `ComputedRef<any>` | Pagination state for this collection |
-| `pending` | `Readonly<Ref<boolean>>` | Loading state |
-| `error` | `Readonly<Ref<any>>` | Error state if fetch fails |
-| `refresh` | `() => Promise<void>` | Manual refetch function |
-| `collectionStore` | `Ref<any[]>` | Direct reference to collection store |
-
-### How It Works
-
-1. **Global State**: Stores collection data in a global reactive store (`useCollections()`)
-2. **Auto-fetch**: Automatically fetches data on component mount
-3. **Pagination**: Manages pagination state per collection
-4. **No Cache Keys**: Uses shared global state (no query-based isolation)
-
-### Basic Usage
-
-```vue
-<script setup lang="ts">
-const { items, pending, error, refresh } = useCollection('shopProducts')
-</script>
-
-<template>
-  <div v-if="pending">Loading...</div>
-  <div v-else-if="error">Error: {{ error }}</div>
-  <div v-else>
-    <div v-for="product in items" :key="product.id">
-      {{ product.name }}
-    </div>
-  </div>
-</template>
-```
-
-### With Manual Refresh
-
-```vue
-<script setup lang="ts">
-const { items, pending, refresh } = useCollection('shopProducts')
-
-const handleRefresh = async () => {
-  await refresh()
-}
-</script>
-
-<template>
-  <UButton @click="handleRefresh" :loading="pending">
-    Refresh Products
-  </UButton>
-  
-  <div v-for="product in items" :key="product.id">
-    {{ product.name }}
-  </div>
-</template>
-```
-
-### With Pagination
-
-```vue
-<script setup lang="ts">
-const { items, pagination, refresh } = useCollection('shopProducts')
-
-// Pagination state is automatically managed
-// Components should handle pagination UI themselves
-</script>
-
-<template>
-  <div>
-    <div v-for="product in items" :key="product.id">
-      {{ product.name }}
-    </div>
-    
-    <div class="pagination-info">
-      Page {{ pagination.currentPage }} of {{ pagination.totalPages }}
-    </div>
-  </div>
-</template>
-```
-
-### Limitations
-
-::callout{icon="i-lucide-info" color="blue"}
-**Why useCollectionQuery() is Better**:
-- ❌ **No query isolation**: All views share the same data (filters conflict)
-- ❌ **No SSR support**: Client-only with `onMounted` fetch
-- ❌ **No cache keys**: Can't have multiple filtered views
-- ✅ **useCollectionQuery()** solves all these issues with query-based caching
-::
-
-### Migration Path
-
-**From `useCollection()`:**
-```vue
-<script setup lang="ts">
-const { items, pending } = useCollection('shopProducts')
-</script>
-```
-
-**To `useCollectionQuery()`:**
-```vue
-<script setup lang="ts">
-const { items, pending } = await useCollectionQuery('shopProducts')
-</script>
-```
-
-### When to Use
-
-| Use Case | Recommended Composable |
-|----------|----------------------|
-| New features | ✅ `useCollectionQuery()` |
-| Legacy code (already using it) | ⚠️ `useCollection()` (migrate when convenient) |
-| Simple admin panels | ✅ `useCollectionQuery()` (better caching) |
-| Multiple filtered views | ✅ `useCollectionQuery()` (required) |
-
----
-
 
 ---
 
@@ -593,9 +453,9 @@ if (!componentMap['shopProducts']) {
 
 ---
 
-## useCollectionProxy
+## Collection Proxy Utilities
 
-Handle external collection proxying with client-side data transformation.
+Standalone utility functions for external collection proxying with client-side data transformation. These are **not** a composable — they are exported as standalone functions.
 
 ### Type Signature
 
@@ -606,15 +466,13 @@ interface ProxyConfig {
   transform: (item: any) => { id: string; title: string; [key: string]: any }
 }
 
-function useCollectionProxy(): {
-  applyTransform: (data: any, config: any) => any
-  getProxiedEndpoint: (config: any, apiPath: string) => string
-}
+function applyProxyTransform(data: any, config: any): any
+function getProxiedEndpoint(config: any, apiPath: string): string
 ```
 
-### Returns
+### Functions
 
-- **applyTransform** - Transform external data to Crouton format
+- **applyProxyTransform** - Transform external data to Crouton format
 - **getProxiedEndpoint** - Get the correct endpoint (proxied or standard)
 
 ### Basic Proxy Setup

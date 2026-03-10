@@ -13,7 +13,7 @@ icon: i-lucide-layout-grid
 The unified collection display component that supports multiple layout modes (table, list, grid, cards) with responsive breakpoint support. This is the recommended component for displaying collection data.
 
 ::callout{icon="i-lucide-info" color="blue"}
-**New in v1.5.3**: CroutonCollection replaces CroutonList as the primary component for rendering collections, with enhanced features including responsive layouts, custom card components, and improved grid/cards support.
+**New in v1.5.3**: CroutonCollection replaces CroutonCollection as the primary component for rendering collections, with enhanced features including responsive layouts, custom card components, and improved grid/cards support.
 ::
 
 ### Props
@@ -45,7 +45,7 @@ interface CollectionProps {
 }
 
 // Layout Types
-type LayoutType = 'table' | 'list' | 'grid' | 'cards'
+type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban' | 'workspace'
 
 interface ResponsiveLayout {
   base: LayoutType
@@ -262,7 +262,7 @@ layers/{layer}/collections/{collection}/app/components/Card.vue
 <script setup lang="ts">
 interface Props {
   item: any
-  layout: 'list' | 'grid' | 'cards'
+  layout: 'list' | 'grid' | 'kanban'
   collection: string
 }
 
@@ -288,7 +288,7 @@ const props = defineProps<Props>()
   </UCard>
 
   <!-- Cards Layout (large cards) -->
-  <UCard v-else-if="layout === 'cards'">
+  <UCard v-else-if="layout === 'kanban'">
     <div class="space-y-3">
       <UAvatar :src="item.avatar" :alt="item.name" size="lg" />
       <h3 class="text-lg font-bold">{{ item.name }}</h3>
@@ -1457,18 +1457,18 @@ Nuxt Crouton provides a sophisticated form system that handles CRUD operations w
 
 ---
 
-## CroutonList
+## CroutonCollection
 
 Display collection items in table or list layouts. Grid and cards layouts are planned for future releases.
 
 ### Props
 
 ```typescript
-interface CroutonListProps {
+interface CroutonCollectionProps {
   rows: any[]                    // Array of items to display
   columns: Column[]              // Column definitions
   loading?: boolean              // Loading state
-  layout?: 'table' | 'grid' | 'list' | 'cards'  // Display layout
+  layout?: 'table' | 'grid' | 'list' | 'kanban'  // Display layout
   collection?: string            // Collection name (for actions)
   selectable?: boolean           // Enable row selection
   selected?: string[]            // Selected row IDs (v-model)
@@ -1491,7 +1491,7 @@ interface Column {
 
 ```vue
 <template>
-  <CroutonList
+  <CroutonCollection
     :rows="items"
     :columns="columns"
     :loading="pending"
@@ -1522,7 +1522,7 @@ The table layout is ideal for data-dense views with full sorting, filtering, and
 
 ```vue
 <template>
-  <CroutonList
+  <CroutonCollection
     :rows="products"
     :columns="columns"
     layout="table"
@@ -1557,7 +1557,7 @@ const users = [
 
 <template>
   <!-- Zero configuration needed -->
-  <CroutonList
+  <CroutonCollection
     :rows="users"
     layout="list"
   />
@@ -1622,7 +1622,7 @@ Enable row selection for bulk operations:
 ```vue
 <template>
   <div>
-    <CroutonList
+    <CroutonCollection
       v-model:selected="selectedIds"
       :rows="products"
       :columns="columns"
@@ -1674,7 +1674,7 @@ const columns = [
 </script>
 
 <template>
-  <CroutonList :rows="products" :columns="columns" />
+  <CroutonCollection :rows="products" :columns="columns" />
 </template>
 ```
 
@@ -1723,7 +1723,7 @@ The generator automatically creates CardMini slots for reference fields:
 
 ```vue
 <template>
-  <CroutonList
+  <CroutonCollection
     :rows="posts"
     :columns="columns"
     collection="blogPosts"
@@ -1744,7 +1744,7 @@ The generator automatically creates CardMini slots for reference fields:
         collection="categories"
       />
     </template>
-  </CroutonList>
+  </CroutonCollection>
 </template>
 ```
 

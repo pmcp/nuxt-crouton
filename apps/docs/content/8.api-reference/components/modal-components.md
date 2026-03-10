@@ -4,14 +4,14 @@ description: Modal, slideover, and dialog components for overlay interfaces
 icon: i-lucide-app-window
 ---
 
-## CroutonButton
+## CroutonFormActionButton
 
 Submit button for CRUD forms with built-in loading states and labels.
 
 ### Props
 
 ```typescript
-interface CroutonButtonProps {
+interface CroutonFormActionButtonProps {
   action: 'create' | 'update' | 'delete'  // Action type
   collection: string                       // Collection name
   loading?: string                         // Loading state
@@ -26,7 +26,7 @@ interface CroutonButtonProps {
   <UForm @submit="handleSubmit">
     <!-- Form fields -->
 
-    <CroutonButton
+    <CroutonFormActionButton
       :action="action"
       :collection="collection"
       :loading="loading"
@@ -52,7 +52,7 @@ The button is automatically included in generated forms:
     </UFormField>
 
     <!-- Button automatically shows correct label and loading state -->
-    <CroutonButton
+    <CroutonFormActionButton
       :action="action"
       :collection="collection"
       :loading="loading"
@@ -103,7 +103,7 @@ const { loading } = useCrouton()
 </script>
 
 <template>
-  <CroutonButton
+  <CroutonFormActionButton
     action="create"
     collection="shopProducts"
     :loading="loading"
@@ -118,7 +118,7 @@ Override default styles using [Nuxt UI](https://ui.nuxt.com)'s class props:
 
 ```vue
 <template>
-  <CroutonButton
+  <CroutonFormActionButton
     :action="action"
     :collection="collection"
     color="primary"
@@ -135,10 +135,10 @@ Override default styles using [Nuxt UI](https://ui.nuxt.com)'s class props:
 
 ## Advanced Props
 
-### CroutonList Complete API
+### CroutonCollection Complete API
 
 ```typescript
-interface CroutonListProps {
+interface CroutonCollectionProps {
   // Data
   rows: any[]                    // Array of items to display
   columns: Column[]              // Column definitions
@@ -197,7 +197,7 @@ interface PaginationData {
 ### Responsive Layout
 
 ```typescript
-type LayoutType = 'table' | 'list' | 'grid' | 'cards'
+type LayoutType = 'table' | 'list' | 'grid' | 'tree' | 'kanban' | 'workspace'
 
 interface ResponsiveLayout {
   base: LayoutType               // Default/mobile layout
@@ -212,10 +212,10 @@ interface ResponsiveLayout {
 type LayoutPreset = 'responsive' | 'mobile-friendly' | 'compact'
 ```
 
-### CroutonButton Complete API
+### CroutonFormActionButton Complete API
 
 ```typescript
-interface CroutonButtonProps {
+interface CroutonFormActionButtonProps {
   action: 'create' | 'update' | 'delete'  // Action type
   collection: string                       // Collection name
   loading?: string                         // Loading state identifier
@@ -229,7 +229,7 @@ interface CroutonButtonProps {
 
 ## Component Events
 
-### CroutonList Events
+### CroutonCollection Events
 
 ```typescript
 // Row selection
@@ -243,7 +243,7 @@ interface CroutonButtonProps {
 @update:page-size="handleSizeChange" // Emits: number
 ```
 
-### CroutonButton Events
+### CroutonFormActionButton Events
 
 No custom events - uses native form submission.
 
@@ -252,11 +252,11 @@ No custom events - uses native form submission.
 
 ## Component Slots
 
-### CroutonList Slots
+### CroutonCollection Slots
 
 ```vue
 <template>
-  <CroutonList :rows="items" :columns="columns">
+  <CroutonCollection :rows="items" :columns="columns">
     <!-- Header slot -->
     <template #header>
       <h2>Custom Header</h2>
@@ -284,7 +284,7 @@ No custom events - uses native form submission.
         @click="handleDelete(row.id)"
       />
     </template>
-  </CroutonList>
+  </CroutonCollection>
 </template>
 ```
 
