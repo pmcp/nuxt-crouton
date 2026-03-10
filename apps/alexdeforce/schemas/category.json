@@ -1,0 +1,23 @@
+{
+  "name": "categories",
+  "label": "Categories",
+  "icon": "i-lucide-folder",
+  "description": "Article categories",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "label": "Name",
+      "required": true,
+      "maxLength": 50,
+      "area": "main"
+    },
+    {
+      "name": "icon",
+      "type": "string",
+      "label": "Icon",
+      "maxLength": 50,
+      "area": "sidebar"
+    }
+  ]
+}

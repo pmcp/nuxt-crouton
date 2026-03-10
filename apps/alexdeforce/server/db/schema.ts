@@ -9,3 +9,4 @@ export { pagesPages } from '../../layers/pages/collections/pages/server/database
 export * from './translations-ui'
 export { contentTags } from '../../layers/content/collections/tags/server/database/schema'
 export { croutonAssets } from '../../layers/crouton/collections/assets/server/database/schema'
+export { contentCategories } from '../../layers/content/collections/categories/server/database/schema'

@@ -10,6 +10,8 @@ import {contentTagsConfig} from '../layers/content/collections/tags/app/composab
 
 import {croutonAssetsConfig} from '../layers/crouton/collections/assets/app/composables/useCroutonAssets';
 
+import {contentCategoriesConfig} from '../layers/content/collections/categories/app/composables/useContentCategories';
+
 export default defineAppConfig({
   croutonCollections: {
     contentArticles: contentArticlesConfig,
@@ -17,6 +19,7 @@ export default defineAppConfig({
     pagesPages: pagesPagesConfig,
     translationsUi: translationsUiConfig,
     contentTags: contentTagsConfig,
-    croutonAssets: croutonAssetsConfig
+    croutonAssets: croutonAssetsConfig,
+    contentCategories: contentCategoriesConfig
   }
 })

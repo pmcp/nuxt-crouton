@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { createContentArticle } from '../../../../database/queries'
+import { createContentCategorie } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
@@ -15,16 +15,8 @@ export default defineEventHandler(async (event) => {
   // Exclude id field to let the database generate it
   const { id, ...dataWithoutId } = body
 
-  // Convert date string to Date object
-  if (dataWithoutId.date) {
-    dataWithoutId.date = new Date(dataWithoutId.date)
-  }
-  // Convert date string to Date object
-  if (dataWithoutId.publishedAt) {
-    dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
-  }
   const dbTimer = timing.start('db')
-  const result = await createContentArticle({
+  const result = await createContentCategorie({
     ...dataWithoutId,
     teamId: team.id,
     owner: user.id,

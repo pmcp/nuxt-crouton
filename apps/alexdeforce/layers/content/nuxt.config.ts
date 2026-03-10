@@ -2,6 +2,7 @@ export default defineNuxtConfig({
   extends: [
     './collections/articles',
     './collections/agendas',
-    './collections/tags'
+    './collections/tags',
+    './collections/categories'
   ]
 })

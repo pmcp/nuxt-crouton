@@ -1,5 +1,34 @@
 [
   {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T17:26:06.966Z",
+    "layer": "content",
+    "gitSha": "c2d0c24d"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "name",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T17:25:26.818Z",
+    "layer": "content",
+    "gitSha": "c2d0c24d"
+  },
+  {
     "collection": "assets",
     "fields": [
       "userId",

@@ -3,6 +3,7 @@ import { eq, and, desc, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ContentArticle, NewContentArticle } from '../../types'
+import * as categoriesSchema from '../../../categories/server/database/schema'
 import { user } from '~~/server/db/schema'
 import * as tagsSchema from '../../../tags/server/database/schema'
 
@@ -16,6 +17,7 @@ export async function getAllContentArticles(teamId: string) {
   const articles = await (db as any)
     .select({
       ...tables.contentArticles,
+      categoryData: categoriesSchema.contentCategories,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -36,6 +38,7 @@ export async function getAllContentArticles(teamId: string) {
       }
     } as any)
     .from(tables.contentArticles)
+    .leftJoin(categoriesSchema.contentCategories, eq(tables.contentArticles.category, categoriesSchema.contentCategories.id))
     .leftJoin(ownerUser, eq(tables.contentArticles.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.contentArticles.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.contentArticles.updatedBy, updatedByUser.id))
@@ -99,6 +102,7 @@ export async function getContentArticlesByIds(teamId: string, articleIds: string
   const articles = await (db as any)
     .select({
       ...tables.contentArticles,
+      categoryData: categoriesSchema.contentCategories,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -119,6 +123,7 @@ export async function getContentArticlesByIds(teamId: string, articleIds: string
       }
     } as any)
     .from(tables.contentArticles)
+    .leftJoin(categoriesSchema.contentCategories, eq(tables.contentArticles.category, categoriesSchema.contentCategories.id))
     .leftJoin(ownerUser, eq(tables.contentArticles.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.contentArticles.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.contentArticles.updatedBy, updatedByUser.id))
