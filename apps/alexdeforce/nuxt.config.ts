@@ -17,7 +17,8 @@ export default defineNuxtConfig({
     './layers/content',
     './layers/pages',
     './layers/crouton',
-    './layers/site'
+    './layers/site',
+    '@fyit/crouton-editor'
   ],
   hub: {
     blob: true,

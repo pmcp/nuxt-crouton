@@ -15,11 +15,14 @@
  *
  * Skips: Mixcloud/Bandcamp thumbnails (external platform images)
  */
+import { nanoid } from 'nanoid'
 import { eq } from 'drizzle-orm'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { resolve, extname } from 'node:path'
 import { contentArticles } from '~~/layers/content/collections/articles/server/database/schema'
 import { contentAgendas } from '~~/layers/content/collections/agendas/server/database/schema'
+import { croutonAssets } from '~~/layers/crouton/collections/assets/server/database/schema'
+import { organization, member } from '~~/server/db/schema'
 
 // ---------------------------------------------------------------------------
 // Config
@@ -105,6 +108,19 @@ export default defineEventHandler(async () => {
   const log: string[] = []
 
   try {
+    // Find the organization and user for asset ownership
+    const orgs = await (db as any).select().from(organization).limit(1)
+    if (orgs.length === 0) {
+      throw createError({ status: 404, statusText: 'No organization found.' })
+    }
+    const orgId = orgs[0].id
+    const members = await (db as any).select().from(member).where(eq(member.organizationId, orgId)).limit(1)
+    const ownerId = members?.[0]?.userId || orgId
+
+    // Clear existing asset records before re-seeding
+    await (db as any).delete(croutonAssets).where(eq(croutonAssets.teamId, orgId))
+    log.push('Cleared existing asset records')
+
     // Get all articles
     const articles = await (db as any).select().from(contentArticles)
     const agendas = await (db as any).select().from(contentAgendas)
@@ -173,6 +189,24 @@ export default defineEventHandler(async () => {
           contentType: result.contentType
         })
         uploadedPaths.set(url, `/images/${pathname}`)
+
+        // Create asset record in DB
+        const filename = pathname.split('/').pop() || 'image.jpg'
+        await (db as any).insert(croutonAssets).values({
+          id: nanoid(),
+          teamId: orgId,
+          owner: ownerId,
+          userId: ownerId,
+          filename,
+          pathname,
+          contentType: result.contentType,
+          size: result.buffer.length,
+          category: 'image',
+          uploadedAt: new Date(),
+          createdBy: ownerId,
+          updatedBy: ownerId
+        })
+
         uploaded++
       } catch (err: any) {
         log.push(`FAILED to upload ${pathname}: ${err.message}`)
@@ -254,9 +288,25 @@ export default defineEventHandler(async () => {
         const pathname = `alexdeforce/local/${file}`
 
         try {
-          await blob.put(pathname, buffer, {
-            contentType: getContentTypeFromFile(file)
+          const contentType = getContentTypeFromFile(file)
+          await blob.put(pathname, buffer, { contentType })
+
+          // Create asset record in DB
+          await (db as any).insert(croutonAssets).values({
+            id: nanoid(),
+            teamId: orgId,
+            owner: ownerId,
+            userId: ownerId,
+            filename: file,
+            pathname,
+            contentType,
+            size: buffer.length,
+            category: 'image',
+            uploadedAt: new Date(),
+            createdBy: ownerId,
+            updatedBy: ownerId
           })
+
           localUploaded++
         } catch (err: any) {
           log.push(`FAILED local file ${file}: ${err.message}`)
@@ -267,6 +317,9 @@ export default defineEventHandler(async () => {
     } else {
       log.push('No local img directory found, skipping')
     }
+
+    const totalAssets = uploaded + localUploaded
+    log.push(`Created ${totalAssets} asset records in media library`)
 
     // -------------------------------------------------------------------
     // Summary
