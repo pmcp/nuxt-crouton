@@ -9,10 +9,13 @@
   --font-sans: 'main', sans-serif;
 }
 
-/* Force light background on html/body — override Nuxt UI dark mode */
-html, body {
+/* Force light mode — override Nuxt UI / Tailwind dark mode completely */
+html, body,
+html.dark, html.dark body,
+.dark {
   background-color: white !important;
   color: black !important;
+  color-scheme: light !important;
 }
 
 /* Override Nuxt UI muted text colors for nav links */

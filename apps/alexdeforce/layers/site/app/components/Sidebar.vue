@@ -5,7 +5,7 @@
 const links = [
   { to: '/about', label: 'About', external: false },
   { to: '/mailinglist', label: 'Mailinglist', external: false },
-  { to: '/shop', label: 'Shop', external: false },
+  { to: 'https://7da247-4.myshopify.com/', label: 'Shop', external: true },
   { to: '/totnutoe', label: 'Tot nu toe', external: false }
 ]
 </script>

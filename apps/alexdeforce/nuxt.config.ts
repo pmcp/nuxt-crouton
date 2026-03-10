@@ -29,7 +29,9 @@ export default defineNuxtConfig({
 
   colorMode: {
     preference: 'light',
-    fallback: 'light'
+    fallback: 'light',
+    storageKey: 'alexdeforce-color-mode',
+    dataValue: 'light'
   },
 
   croutonAuth: {
