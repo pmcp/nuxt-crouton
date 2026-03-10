@@ -1,5 +1,103 @@
 [
   {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.710Z",
+    "layer": "pages",
+    "gitSha": "351e6738"
+  },
+  {
+    "collection": "assets",
+    "fields": [
+      "userId",
+      "filename",
+      "pathname",
+      "contentType",
+      "size",
+      "category",
+      "width",
+      "height",
+      "alt",
+      "uploadedAt",
+      "updatedBy"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.685Z",
+    "layer": "crouton",
+    "gitSha": "351e6738"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "name",
+      "icon"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.661Z",
+    "layer": "content",
+    "gitSha": "351e6738"
+  },
+  {
+    "collection": "tags",
+    "fields": [
+      "name",
+      "color"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.638Z",
+    "layer": "content",
+    "gitSha": "351e6738"
+  },
+  {
+    "collection": "agendas",
+    "fields": [
+      "title",
+      "date",
+      "content",
+      "thumbnail",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.612Z",
+    "layer": "content",
+    "gitSha": "351e6738"
+  },
+  {
+    "collection": "articles",
+    "fields": [
+      "title",
+      "date",
+      "category",
+      "content",
+      "imageUrl",
+      "tags",
+      "featured",
+      "status",
+      "publishedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-10T19:05:12.586Z",
+    "layer": "content",
+    "gitSha": "351e6738"
+  },
+  {
     "collection": "articles",
     "fields": [
       "title",
