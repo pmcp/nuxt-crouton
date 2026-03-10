@@ -163,6 +163,56 @@ provides: {
 | `packages/crouton-pages/app/components/Editor/BlockPropertyPanel.vue` | **Modify** |
 | `packages/crouton-pages/app/editor/extensions/block-commands.ts` | **Modify** |
 
+## Server-Side Rendering of Addon Blocks
+
+The shared server-side renderer (`packages/crouton-core/server/utils/tiptap-renderer.ts`) converts TipTap JSON to HTML for API responses, RSS feeds, emails, and SEO. It handles core nodes (paragraph, heading, lists, etc.) and built-in custom blocks (`imageBlock`, `embedBlock`). Unknown block types gracefully render their children.
+
+When addon packages register new editor blocks via manifests, they also need server-side rendering. This follows the same manifest-driven pattern:
+
+### Architecture
+
+```
+crouton.manifest.ts          →  server/utils/renderer.ts     →  renderTipTapToHtml()
+provides.editorBlocks              exports serverRenderer()        calls customRenderers
+                                   (pure function, no DOM)         for addon block types
+```
+
+### How it works
+
+1. **`CroutonBlockDefinition` gains a `serverRenderer` field** — a function path or inline renderer:
+   ```typescript
+   // In CroutonBlockDefinition (block-definition.ts)
+   serverRenderer?: (node: TipTapNode, renderChildren: (node: TipTapNode) => string) => string
+   ```
+
+2. **`renderTipTapToHtml` accepts an optional `customRenderers` map:**
+   ```typescript
+   renderTipTapToHtml(content, {
+     customRenderers: {
+       chartBlock: (node) => `<figure class="chart"><img src="${escapeAttr(node.attrs?.imageUrl)}" alt="Chart" /></figure>`,
+       mapBlock: (node) => `<div class="static-map"><img src="https://maps.googleapis.com/..." /></div>`
+     }
+   })
+   ```
+
+3. **Apps wire it up in server middleware or per-endpoint** by collecting renderers from installed packages. The manifest loader could auto-collect these, or apps can pass them explicitly.
+
+### Why not now
+
+The current renderer handles all existing block types. This extension point should be built when the first addon package (likely `crouton-charts` or `crouton-maps`) needs server-side HTML output for its blocks. Until then, unknown blocks render their children — a safe no-op.
+
+### Tiered rendering strategy
+
+For blocks that need rich interactivity or server-side data fetching, consider a tiered approach:
+
+| Tier | Strategy | Use case |
+|------|----------|----------|
+| **Static HTML** | `renderTipTapToHtml()` with `customRenderers` | API responses, RSS, emails, SEO meta |
+| **Server component** | `.server.vue` island component | Blocks needing server-side data fetching (e.g., resolve image URLs from blob storage) |
+| **Full hydration** | Standard Vue component | Blocks with client-side interactivity (e.g., interactive charts, live maps) |
+
+The renderer handles tier 1. Tiers 2-3 are handled by the existing `BlockContent.vue` component system on the client side.
+
 ## Backward Compatibility
 
 - TipTap node names unchanged (`chartBlock`, `mapBlock`, `collectionMapBlock`) — saved content works

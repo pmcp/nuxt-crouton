@@ -1,10 +1,12 @@
 # Atelier Plan
 
-## Overview
+> **SUPERSEDED by the skill-chain approach.** See `atelier-strategy.md` → "The Generation Pipeline: Skills, Not UI". The creation flow moves from a visual builder to Claude Code skills (`/discover` → `/architect` → `/generate` → `/compose` → `/brand`). This document is kept as reference for what the skills need to accomplish — the block types, templates, composition model, and scaffold flow remain useful as skill input data.
+
+## Overview (Original)
 
 Build a visual app builder ("Atelier") as a standalone package + app. Users compose apps from pre-defined blocks instead of chatting with AI. The designer package is throwaway — Atelier replaces it as the primary app creation tool.
 
-**Current status:** Phase A mostly complete. Block registry, templates, kanban canvas, Yjs collab, scaffold endpoint, and all 10 components are built. The generation pipeline (AI roles) is designed but not implemented.
+**Current status:** Phase A mostly complete. Block registry, templates, kanban canvas, Yjs collab, scaffold endpoint, and all 10 components are built. The generation pipeline (AI roles) is designed but not implemented. **Direction changed:** the UI phases are superseded by the skill chain; the pipeline design informs the skills.
 
 ## Architecture Decision
 

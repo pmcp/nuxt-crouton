@@ -57,25 +57,50 @@ Use these to evaluate every feature, design decision, and priority call. If some
 - **Can I remove this package and the app still works?** If not, the dependency is too hard.
 - **Does the generated file look like something a developer would write?** If the output needs immediate editing to be useful, the generator isn't good enough yet.
 
-## The Generation Pipeline
+## The Generation Pipeline: Skills, Not UI
 
-> **Status: DESIGNED, NOT BUILT.** The pipeline is described here as the target architecture. None of the AI roles run as code yet. The Atelier UI (Phase A) works with static block data and a scaffold endpoint that calls CLI directly. The pipeline described below is Phase C work.
+> **Status: PIVOTING.** The original plan called for a visual builder app (Atelier) with kanban canvas, drag-drop blocks, and a scaffold endpoint. That approach is superseded by a **skill chain** — Claude Code skills that do the same work through conversation instead of a custom UI. The Atelier UI phases (A-D in `atelier-plan.md`) are archived, not deleted, as reference for what the skills need to accomplish.
 
-Three AI roles and one deterministic step turn a conversation into a deployed application:
+### Why skills instead of a builder app
 
-**Architect** — talks to the user, understands the domain, designs the data model. Outputs JSON schemas and seed data. Has full project context: what collections exist, what packages are installed, what relationships are in play.
+The Atelier builder was a UI wrapper around the generation pipeline. Building it meant: kanban drag-drop, Yjs collab, block palette, template selector, scaffold panel, preview renderers — all custom UI for a flow that happens once per app. That's months of work for a tool used occasionally.
 
-**Designer** — reads the schemas and decides how each collection should present itself. Component-level decisions. Two modes: adds simple layout hints (`$list`, `$form`, `$card`) for the CLI to interpret, or writes custom Vue components when the domain demands it (calendars, embedded flows, domain-specific interactions).
+Skills accomplish the same thing:
+- **Cheaper** — no UI, no state management, no components to maintain
+- **More flexible** — natural language handles edge cases a kanban board can't
+- **Already proven** — `/crouton` already generates collections from conversation
+- **Iterative** — "make the schedule page public" is a follow-up prompt, not a UI redesign
+- **Composable** — skills chain naturally, each one's output feeds the next
 
-**Visualization presets** — a deterministic function (not an AI role) that reads collection schemas and available visualization packages (charts, maps), then generates pre-configured editor blocks using field-shape heuristics: date + count → time series, status field → donut, address fields → collection map. These become available as editor blocks for the page editor and the Editor AI. Graduates to an AI role only when the heuristics prove insufficient.
+The user's interface is the conversation. The framework is still the product.
 
-**Editor** — composes pages from the available components. Page-level decisions. Knows what editor blocks are available (from package manifests + visualization presets), what collection view styles exist (from Designer hints + CLI output), and what visibility context each page serves (public landing vs. member dashboard vs. admin panel). Outputs TipTap JSON — the actual page content that `crouton-pages` renders and the user can later edit.
+### The skill chain
 
-**CLI** — reads the schemas (with hints) and generates everything the Designer didn't touch: composables, types, API routes, database schema, standard components.
+Five skills turn a conversation into a deployed application:
 
-The pipeline is sequential: Architect → Designer → CLI → Visualization presets → Editor. One script orchestrating AI calls and CLI commands.
+```
+/discover  → /architect  → /generate  → /compose  → /brand
+```
 
-See `atelier-plan.md` for the implementation phases.
+**`/discover`** — Interviews the user about their organisation. What do you do? Who are your members? What do they need to do online? Outputs a structured brief: domain description, user roles, key workflows, package recommendations. The brief is a markdown file in `docs/briefings/`.
+
+**`/architect`** — Takes the brief, designs the data model. Outputs JSON schemas, seed data, package selection, collection relationships. Understands what packages exist, what they provide, how they connect. Validates schemas against field types. Writes `crouton.config.js` and schema files.
+
+**`/generate`** — Runs the CLI. Creates layers, collections, API routes, composables, types, database schema. Runs migrations. Seeds data. Verifies with typecheck. This skill already exists as `/crouton` — it just needs to accept architect output as input.
+
+**`/compose`** — Builds pages from available components. Decides layout per page type: public landing → hero first, member dashboard → personal data first, admin → tables and charts. Outputs TipTap JSON for `crouton-pages`. Configures visibility rules (public/auth/admin). Uses visualization heuristics: date + count → time series, status → donut, address → map.
+
+**`/brand`** — Applies identity: colors, logo, typography, tone of voice, language. Generates theme config, OG images, email templates. The least critical skill — can be manual initially.
+
+### Visualization presets (deterministic, not a skill)
+
+A function — not an AI role — that reads collection schemas and available packages (charts, maps), then generates pre-configured editor blocks using field-shape heuristics. Called by `/compose` as a subroutine, not a separate skill. Graduates to AI only when heuristics prove insufficient.
+
+### What the Atelier package becomes
+
+The `crouton-atelier` package still has value as a **project dashboard** — showing what's installed, what collections exist, what pages are live. But the *creation* flow moves to skills. The kanban canvas, block palette, and scaffold endpoint become unnecessary.
+
+Existing Atelier work (block types, templates, composition types) becomes reference data for the `/discover` and `/architect` skills — they know what blocks are available and what templates have worked before.
 
 ## Architecture Decisions
 
@@ -149,7 +174,7 @@ Most collections work fine with standard table + form + detail. The Designer onl
 
 | What | Why |
 |---|---|
-| **Atelier builder** | Visual app composer. Phase A mostly complete. See `atelier-plan.md`. |
+| **Skill chain** | `/discover` → `/architect` → `/generate` → `/compose` → `/brand`. The generation pipeline as Claude Code skills. |
 | **Invoicing** | Recurring billing, membership payments. References members. Second most common need after bookings. |
 
 ## The Broader Vision: Friendly Tools
@@ -158,10 +183,36 @@ Atelier serves a network of small organisations. One organisation's investment i
 
 Each organisation owns their code, their data, their deployment. They benefit from the network through better CLI defaults, proven patterns, and an expanding package ecosystem.
 
+## Strategy Docs Become AI Skills
+
+Every strategy document follows the same shape: context, architecture, step-by-step file changes, verification. That's a skill definition. The convergence is intentional.
+
+The manifest-driven block system illustrates this. The strategy doc (`atelier-editor-blocks-plan.md`) describes exactly what files to create, modify, and delete, in what order, with what content. Reformatting that into `.claude/skills/block.md` is mostly mechanical. The same applies to the generation pipeline, the server-side renderer, and future package scaffolding.
+
+The loop:
+
+```
+Strategy doc (human designs the system)
+    ↓
+Skill definition (AI learns to operate the system)
+    ↓
+CLI default (the system operates itself)
+```
+
+Each cycle removes a manual step. Strategy docs capture the "how" once. Skills let AI execute the "how" repeatedly. CLI defaults eliminate the "how" entirely — the system just does it.
+
+This means strategy docs should be written with skill conversion in mind:
+- **Explicit file paths** — not "update the config" but "modify `packages/crouton-core/nuxt.config.ts`"
+- **Declarative inputs/outputs** — what goes in, what comes out, what gets generated
+- **Verification steps** — how to confirm it worked (typecheck, test, dev server check)
+- **Decision boundaries** — when the AI should ask vs. proceed
+
+The framework is the product. The strategy docs are the blueprint. The skills are the labour force.
+
 ## Priorities
 
-1. **CLI + hint system** — `$list`, `$card`, `$form` hints. The bridge between the builder and generation.
-2. **Atelier Phase A completion** — typecheck passing, remaining checklist items.
-3. **Run the generation pipeline once end-to-end** — validate Architect → Designer → CLI → Editor before building UI around it.
+1. **`/discover` + `/architect` skills** — The first two skills in the chain. `/discover` interviews, `/architect` designs schemas. These validate the approach end-to-end with a real app before investing in downstream skills.
+2. **CLI + hint system** — `$list`, `$card`, `$form` hints. `/generate` (existing `/crouton` skill) needs these to produce better default layouts.
+3. **`/compose` skill** — Page composition with visibility rules and visualization presets. Depends on `crouton-pages` being stable.
 4. **Docs cleanup** — scope migration, document all packages. The site is the first thing developers see.
 5. **Invoicing** — recurring billing with member references.

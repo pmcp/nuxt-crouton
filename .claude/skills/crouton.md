@@ -392,6 +392,10 @@ export default {
 }
 ```
 
+## Post-Generation: TipTap Renderer
+
+If a collection uses a block editor (`"meta": { "component": "EditorBlocks" }`) with **custom TipTap node types**, update the server-side renderer at `packages/crouton-core/server/utils/tiptap-renderer.ts` to handle them. The renderer already handles standard nodes (paragraph, heading, lists, etc.) and built-in custom blocks (`imageBlock`, `embedBlock`). Unknown node types gracefully render their children, so nothing breaks — but custom rendering (e.g., a gallery block rendering a grid of images) requires adding a case to `renderNode()`.
+
 ## Common Issues
 
 ### "Collection not registered"
