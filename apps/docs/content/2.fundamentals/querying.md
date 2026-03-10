@@ -61,7 +61,7 @@ const { items, pending } = await useCollectionQuery('shopProducts', {
   <div>
     <UInput v-model="searchQuery" placeholder="Search products..." />
     <USelectMenu v-model="category" :options="categories" />
-    <CroutonList :rows="items" :loading="pending" />
+    <CroutonCollection :rows="items" :loading="pending" />
   </div>
 </template>
 ```
@@ -92,7 +92,7 @@ const prevPage = () => page.value--
 
 <template>
   <div>
-    <CroutonList :rows="items" :loading="pending" />
+    <CroutonCollection :rows="items" :loading="pending" />
 
     <div class="flex gap-2">
       <UButton @click="prevPage" :disabled="page === 1">
@@ -144,7 +144,7 @@ const toggleSort = () => {
     </UButton>
   </div>
 
-  <CroutonList :rows="items" />
+  <CroutonCollection :rows="items" />
 </template>
 ```
 
@@ -209,7 +209,7 @@ const filteredProducts = computed(() =>
 
 <template>
   <UInput v-model="searchQuery" placeholder="Search..." />
-  <CroutonList :rows="filteredProducts" :loading="pending" />
+  <CroutonCollection :rows="filteredProducts" :loading="pending" />
 </template>
 ```
 
@@ -237,7 +237,7 @@ const { items, pending, error } = await useCollectionQuery('shopProducts')
     <div v-else-if="items.length === 0" class="text-center p-8">
       No products found
     </div>
-    <CroutonList v-else :rows="items" />
+    <CroutonCollection v-else :rows="items" />
   </div>
 </template>
 ```

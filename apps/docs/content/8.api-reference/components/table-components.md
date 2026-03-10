@@ -16,9 +16,9 @@ A powerful data table component with sorting, filtering, pagination, and row sel
 
 ```typescript
 interface TableProps {
-  // Required props
-  columns: TableColumn[]                     // Column definitions
-  rows: any[]                               // Data rows to display
+  // Data props
+  columns?: TableColumn[]                    // Column definitions (default: [])
+  rows?: any[]                              // Data rows to display (default: [])
   collection: string                        // Collection name for CRUD operations
 
   // Optional props
@@ -31,6 +31,8 @@ interface TableProps {
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
+    select?: boolean
+    presence?: boolean
     actions?: boolean
   }
 }

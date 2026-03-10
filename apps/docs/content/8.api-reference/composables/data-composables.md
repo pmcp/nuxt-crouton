@@ -512,7 +512,7 @@ export default defineAppConfig({
 
 ```vue
 <script setup lang="ts">
-const { applyTransform } = useCollectionProxy()
+const { applyProxyTransform } = await import('@fyit/crouton')
 
 // External API response
 const externalData = [
@@ -534,7 +534,7 @@ const config = {
 }
 
 // Apply transformation
-const transformed = applyTransform(externalData, config)
+const transformed = applyProxyTransform(externalData, config)
 // Result:
 // [
 //   { id: '1', title: 'Alice Smith', email: 'alice@example.com' },
@@ -547,7 +547,7 @@ const transformed = applyTransform(externalData, config)
 
 ```vue
 <script setup lang="ts">
-const { applyTransform } = useCollectionProxy()
+const { applyProxyTransform } = await import('@fyit/crouton')
 
 // Single item from external API
 const externalItem = {
@@ -567,7 +567,7 @@ const config = {
   }
 }
 
-const transformed = applyTransform(externalItem, config)
+const transformed = applyProxyTransform(externalItem, config)
 // Result: { id: '1', title: 'Alice Smith (Engineering)' }
 </script>
 ```
@@ -576,7 +576,7 @@ const transformed = applyTransform(externalItem, config)
 
 ```vue
 <script setup lang="ts">
-const { getProxiedEndpoint } = useCollectionProxy()
+const { getProxiedEndpoint } = await import('@fyit/crouton')
 
 // Without proxy
 const config1 = {
@@ -604,7 +604,7 @@ const endpoint2 = getProxiedEndpoint(config2, 'users')
 <script setup lang="ts">
 // This is how useCollectionQuery uses the proxy internally
 const { getConfig } = useCollections()
-const { applyTransform, getProxiedEndpoint } = useCollectionProxy()
+const { applyProxyTransform, getProxiedEndpoint } = await import('@fyit/crouton')
 
 const collection = 'users'
 const config = getConfig(collection)
@@ -616,7 +616,7 @@ const apiPath = getProxiedEndpoint(config, config.apiPath || collection)
 const { data } = await $fetch(`/api/teams/123/${apiPath}`)
 
 // Transform the response
-const transformedData = applyTransform(data, config)
+const transformedData = applyProxyTransform(data, config)
 
 // Now transformedData has Crouton format: { id, title, ... }
 </script>
@@ -676,7 +676,7 @@ The proxy automatically handles transform errors:
 
 ```vue
 <script setup lang="ts">
-const { applyTransform } = useCollectionProxy()
+const { applyProxyTransform } = await import('@fyit/crouton')
 
 // Malformed data
 const badData = [
@@ -697,8 +697,8 @@ const config = {
 }
 
 // Transform with error handling
-const result = applyTransform(badData, config)
-// Logs error: "[useCollectionProxy] Transform failed for item: ..."
+const result = applyProxyTransform(badData, config)
+// Logs error: "[applyProxyTransform] Transform failed for item: ..."
 // Returns partially transformed data (failed items remain unchanged)
 </script>
 ```

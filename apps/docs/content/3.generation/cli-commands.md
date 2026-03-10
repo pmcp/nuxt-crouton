@@ -31,9 +31,9 @@ layers/[layer]/
           ├── app/
           │   ├── components/
           │   │   ├── List.vue           # Table/list view
-          │   │   └── Form.vue           # Create/edit form
+          │   │   └── _Form.vue          # Create/edit form
           │   └── composables/
-          │       └── use[Collection].ts # Validation, columns, defaults
+          │       └── use[Layer][Collection].ts # Validation, columns, defaults (e.g., useShopProducts.ts)
           └── types.ts                   # TypeScript types
 ```
 
@@ -248,15 +248,14 @@ crouton-generate shop products --fields-file=product-schema.json --dry-run
 # Output:
 📋 Preview: Would generate the following files:
 
-layers/shop/
-  ├── components/products/
-  │   ├── List.vue (new)
-  │   ├── _Form.vue (new)
-  │   └── Table.vue (new)
-  ├── composables/
-  │   └── useProducts.ts (new)
-  └── types/
-      └── products.ts (new)
+layers/shop/collections/products/
+  ├── app/
+  │   ├── components/
+  │   │   ├── List.vue (new)
+  │   │   └── _Form.vue (new)
+  │   └── composables/
+  │       └── useShopProducts.ts (new)
+  └── types.ts (new)
 
 Total: 5 files (5 new)
 

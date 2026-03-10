@@ -24,8 +24,8 @@ interface CollectionProps {
   layout?: LayoutType | ResponsiveLayout | keyof typeof layoutPresets
 
   // Data
-  rows: any[]
-  columns: TableColumn[]
+  rows?: any[]
+  columns?: TableColumn[]
   collection: string
 
   // Pagination
@@ -40,6 +40,8 @@ interface CollectionProps {
     updatedAt?: boolean
     createdBy?: boolean
     updatedBy?: boolean
+    select?: boolean
+    presence?: boolean
     actions?: boolean
   }
 }
@@ -69,8 +71,8 @@ const layoutPresets = {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `layout` | `LayoutType \| ResponsiveLayout \| string` | `'table'` | Layout mode, responsive object, or preset name |
-| `rows` | `any[]` | *required* | Data rows to display |
-| `columns` | `TableColumn[]` | *required* | Column definitions |
+| `rows` | `any[]` | `[]` | Data rows to display |
+| `columns` | `TableColumn[]` | `[]` | Column definitions |
 | `collection` | `string` | *required* | Collection name for card resolution and actions |
 | `serverPagination` | `boolean` | `false` | Enable server-side pagination |
 | `paginationData` | `PaginationData \| null` | `null` | Pagination metadata |

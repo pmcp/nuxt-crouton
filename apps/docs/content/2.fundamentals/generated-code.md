@@ -22,27 +22,27 @@ The most important thing to understand is that generated code is your code—edi
 
 ```
 layers/[layer]/
-  ├── components/
-  │   └── [collection]/
-  │       ├── List.vue       # Generated
-  │       ├── Form.vue       # Generated
-  │       └── Table.vue      # Generated
-  │
-  ├── composables/
-  │   └── use[Collection].ts # Generated
-  │
-  ├── server/
-  │   ├── api/teams/[id]/    # Generated API endpoints
-  │   │   ├── index.get.ts   # GET all / by IDs
-  │   │   ├── index.post.ts  # CREATE
-  │   │   ├── [id].patch.ts  # UPDATE
-  │   │   └── [id].delete.ts # DELETE
-  │   └── database/
-  │       ├── schema.ts      # Drizzle schema
-  │       └── queries.ts     # Database query functions
-  │
-  └── types/
-      └── [collection].ts    # Generated
+  └── collections/
+      └── [collection]/
+          ├── app/
+          │   ├── components/
+          │   │   ├── List.vue                    # Generated
+          │   │   └── _Form.vue                   # Generated
+          │   └── composables/
+          │       └── use[Layer][Collection].ts    # Generated
+          │
+          ├── server/
+          │   ├── api/teams/[id]/
+          │   │   └── [layer]-[collection]/
+          │   │       ├── index.get.ts             # GET all / by IDs
+          │   │       ├── index.post.ts            # CREATE
+          │   │       ├── [collectionId].patch.ts  # UPDATE
+          │   │       └── [collectionId].delete.ts # DELETE
+          │   └── database/
+          │       ├── schema.ts                    # Drizzle schema
+          │       └── queries.ts                   # Database query functions
+          │
+          └── types.ts                             # Generated
 ```
 
 ## What Generated APIs Provide
@@ -53,8 +53,8 @@ The generated API endpoints provide a working CRUD implementation:
 |----------|--------------|
 | `GET index.get.ts` | Fetch all items, or by IDs with `?ids=` |
 | `POST index.post.ts` | Create new item |
-| `PATCH [id].patch.ts` | Update item by ID |
-| `DELETE [id].delete.ts` | Delete item by ID |
+| `PATCH [collectionId].patch.ts` | Update item by ID |
+| `DELETE [collectionId].delete.ts` | Delete item by ID |
 
 ### Common Customizations
 
@@ -72,8 +72,8 @@ The core library provides:
 - `useCrouton()` - Modal management
 - `useCollectionQuery()` - Data fetching
 - `useCollectionMutation()` - Data mutations
-- `CroutonList` - List component
-- `CroutonButton` - Submit button
+- `CroutonCollection` - Collection component
+- `CroutonFormActionButton` - Submit button
 - Toast notifications
 - Cache invalidation
 

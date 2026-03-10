@@ -57,8 +57,9 @@ function useTableColumns(options: UseTableColumnsOptions): {
 
 **allColumns**: A computed reactive reference containing:
 - **Selection column** (first): CroutonTableCheckbox for row selection with "select all" header
+- **Actions column** (second): Placed after the select column but before user columns
 - **Custom columns**: Your provided columns in the order specified
-- **Default columns** (appended): createdAt, updatedAt, createdBy, updatedBy, actions (unless hidden)
+- **Default columns** (appended): createdAt, updatedAt, createdBy, updatedBy (unless hidden)
 
 ### Basic Usage
 

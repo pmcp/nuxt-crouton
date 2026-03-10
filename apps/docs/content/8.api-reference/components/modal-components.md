@@ -15,7 +15,7 @@ interface CroutonFormActionButtonProps {
   action: 'create' | 'update' | 'delete'  // Action type
   collection: string                       // Collection name
   loading?: string                         // Loading state
-  type?: 'submit' | 'button'              // Button type
+  hasValidationErrors?: boolean            // Disable button when form has validation errors
 }
 ```
 
@@ -30,7 +30,6 @@ interface CroutonFormActionButtonProps {
       :action="action"
       :collection="collection"
       :loading="loading"
-      type="submit"
     />
   </UForm>
 </template>
@@ -56,7 +55,6 @@ The button is automatically included in generated forms:
       :action="action"
       :collection="collection"
       :loading="loading"
-      type="submit"
     />
   </UForm>
 </template>
@@ -140,8 +138,8 @@ Override default styles using [Nuxt UI](https://ui.nuxt.com)'s class props:
 ```typescript
 interface CroutonCollectionProps {
   // Data
-  rows: any[]                    // Array of items to display
-  columns: Column[]              // Column definitions
+  rows?: any[]                   // Array of items to display
+  columns?: Column[]             // Column definitions
   collection?: string            // Collection name for actions
 
   // Layout
@@ -155,8 +153,12 @@ interface CroutonCollectionProps {
 
   // Customization
   hideDefaultColumns?: {
-    created_at?: boolean
-    updated_at?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    createdBy?: boolean
+    updatedBy?: boolean
+    select?: boolean
+    presence?: boolean
     actions?: boolean
   }
 
@@ -173,11 +175,12 @@ interface CroutonCollectionProps {
 
 ```typescript
 interface Column {
-  key: string                    // Property key or unique identifier
-  label: string                  // Display label
-  sortable?: boolean             // Enable sorting (default: false)
-  render?: (row: any) => string  // Custom render function
-  component?: string             // Custom component name for cell
+  accessorKey: string              // Property key or unique identifier
+  header: string                   // Display label
+  sortable?: boolean               // Enable sorting (default: false)
+  cell?: (props: any) => any       // Custom cell renderer
+  enableSorting?: boolean          // TanStack Table sorting flag
+  enableHiding?: boolean           // Allow hiding column
 }
 ```
 
@@ -219,7 +222,7 @@ interface CroutonFormActionButtonProps {
   action: 'create' | 'update' | 'delete'  // Action type
   collection: string                       // Collection name
   loading?: string                         // Loading state identifier
-  type?: 'submit' | 'button'              // HTML button type
+  hasValidationErrors?: boolean            // Disable button when form has validation errors
   items?: any[]                           // Items for bulk operations
 }
 ```
