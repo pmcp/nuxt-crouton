@@ -6,7 +6,7 @@
  * and inserts into the local D1 database.
  *
  * Content is stored as TipTap JSON (same format as crouton-pages).
- * Iframes (YouTube, Bandcamp, etc.) are extracted into the `embed` field.
+ * Iframes (YouTube, Bandcamp, etc.) are converted to embedBlock nodes inline.
  *
  * Trigger via POST /api/seed/content
  *
@@ -214,25 +214,51 @@ function parseInline(raw: string): TipTapNode[] {
   return nodes.length > 0 ? nodes : [text(raw)]
 }
 
+/** Extract iframe src URL from HTML string */
+function extractIframeSrc(html: string): string | null {
+  const match = html.match(/src=["']([^"']+)["']/)
+  return match ? match[1]! : null
+}
+
+/** Create an embedBlock TipTap node from an iframe URL */
+function embedBlockNode(url: string, height: number = 300): TipTapNode {
+  return {
+    type: 'embedBlock',
+    attrs: {
+      blockId: `embed-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      url,
+      provider: 'custom',
+      height,
+      caption: ''
+    }
+  }
+}
+
 /**
- * Convert markdown body to TipTap JSON and extract iframes.
- * Returns { content: TipTap JSON string, embeds: extracted iframe HTML[] }
+ * Convert markdown body to TipTap JSON with inline embed blocks.
+ * Iframes are converted to embedBlock nodes directly in the content.
  */
-function markdownToTipTap(md: string): { content: string; embeds: string[] } {
+function markdownToTipTap(md: string): { content: string } {
   if (!md || !md.trim()) {
-    return { content: doc(), embeds: [] }
+    return { content: doc() }
   }
 
   const rawBlocks = md.split(/\n\n+/).filter(b => b.trim())
   const docNodes: TipTapNode[] = []
-  const embeds: string[] = []
 
   for (const block of rawBlocks) {
     const trimmed = block.trim()
 
-    // Extract iframes and raw HTML embeds → embed field
+    // Convert iframes to embedBlock nodes inline
     if (trimmed.startsWith('<iframe') || (trimmed.startsWith('<div') && trimmed.includes('<iframe'))) {
-      embeds.push(trimmed)
+      const src = extractIframeSrc(trimmed)
+      if (src) {
+        const height = trimmed.includes('height="120"') ? 120
+          : trimmed.includes('height="300"') ? 300
+          : trimmed.includes('height="400"') ? 400
+          : 300
+        docNodes.push(embedBlockNode(src, height))
+      }
       continue
     }
 
@@ -298,7 +324,17 @@ function markdownToTipTap(md: string): { content: string; embeds: string[] } {
 
       // Check if line starts with an iframe (inline with text, e.g. bandcamp + credits)
       if (line.startsWith('<iframe')) {
-        embeds.push(line)
+        const src = extractIframeSrc(line)
+        if (src) {
+          if (paraNodes.length > 0) {
+            docNodes.push(paragraph(...paraNodes.splice(0)))
+          }
+          const height = line.includes('height="120"') ? 120
+            : line.includes('height="300"') ? 300
+            : line.includes('height="400"') ? 400
+            : 300
+          docNodes.push(embedBlockNode(src, height))
+        }
         continue
       }
 
@@ -313,8 +349,7 @@ function markdownToTipTap(md: string): { content: string; embeds: string[] } {
   }
 
   return {
-    content: doc(...docNodes),
-    embeds
+    content: doc(...docNodes)
   }
 }
 
@@ -424,16 +459,19 @@ export default defineEventHandler(async () => {
         .map((t: string) => tagNameToId.get(typeof t === 'string' ? t.trim().toLowerCase() : ''))
         .filter(Boolean)
 
-      // Convert markdown body to TipTap JSON, extracting iframes
-      const { content: tipTapContent, embeds: bodyEmbeds } = markdownToTipTap(content)
+      // Convert markdown body to TipTap JSON with inline embed blocks
+      const { content: tipTapContent } = markdownToTipTap(content)
 
-      // Merge frontmatter embed + body iframes into single embed field
-      const allEmbeds: string[] = []
+      // If frontmatter has an embed field, parse it and append as embed blocks
+      let finalContent = tipTapContent
       if (typeof data.embed === 'string' && data.embed && data.embed !== '""') {
-        allEmbeds.push(data.embed)
+        const src = extractIframeSrc(data.embed)
+        if (src) {
+          const parsed = JSON.parse(tipTapContent)
+          parsed.content.push(embedBlockNode(src, 300))
+          finalContent = JSON.stringify(parsed)
+        }
       }
-      allEmbeds.push(...bodyEmbeds)
-      const embed = allEmbeds.length > 0 ? allEmbeds.join('\n') : null
 
       const articleId = nanoid()
       await (db as any).insert(contentArticles).values({
@@ -444,8 +482,7 @@ export default defineEventHandler(async () => {
         title: data.title,
         date,
         category: data.category || 'txt',
-        content: tipTapContent,
-        embed,
+        content: finalContent,
         imageUrl,
         tags,
         featured: data.featured === true,

@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/content-articles
   - Zod schema: useContentArticles() composable
-  - Fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
+  - Fields: title, date, category, content, imageUrl, tags, featured, status, publishedAt
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -44,10 +44,7 @@
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
-          <CroutonEditorSimple v-model="state.content" />
-        </UFormField>
-        <UFormField label="Embed" name="embed" class="not-last:pb-4">
-          <UTextarea v-model="state.embed" class="w-full" size="xl" />
+          <CroutonPagesEditorBlockEditor v-model="state.content" />
         </UFormField>
       </div>
       </template>

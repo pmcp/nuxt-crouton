@@ -39,15 +39,8 @@
       "type": "text",
       "label": "Content",
       "area": "main",
-      "component": "CroutonEditorSimple",
-      "description": "Article body (markdown/rich text)"
-    },
-    {
-      "name": "embed",
-      "type": "text",
-      "label": "Embed Code",
-      "area": "main",
-      "description": "HTML embed (YouTube, SoundCloud, Bandcamp iframes)"
+      "component": "CroutonPagesEditorBlockEditor",
+      "description": "Article body with embed blocks (TipTap JSON)"
     },
     {
       "name": "imageUrl",

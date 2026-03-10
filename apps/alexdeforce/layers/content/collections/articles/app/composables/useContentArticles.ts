@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/content-articles
  * - Form component: ContentArticlesForm
  * - List component: ContentArticlesList
- * - Fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
+ * - Fields: title, date, category, content, imageUrl, tags, featured, status, publishedAt
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -31,7 +31,6 @@ export const contentArticleSchema = z.object({
   date: z.date({ required_error: 'date is required' }),
   category: z.string().min(1, 'category is required'),
   content: z.string().optional(),
-  embed: z.string().optional(),
   imageUrl: z.string().optional(),
   tags: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
@@ -44,7 +43,6 @@ export const contentArticlesColumns = [
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'category', header: 'Category' },
   { accessorKey: 'content', header: 'Content' },
-  { accessorKey: 'embed', header: 'Embed' },
   { accessorKey: 'imageUrl', header: 'ImageUrl' },
   { accessorKey: 'tags', header: 'Tags' },
   { accessorKey: 'featured', header: 'Featured' },
@@ -63,7 +61,6 @@ const _contentArticlesConfig = {
     date: null,
     category: '',
     content: '',
-    embed: '',
     imageUrl: '',
     tags: [],
     featured: false,
@@ -94,12 +91,6 @@ const _contentArticlesConfig = {
           "name": "content",
           "type": "text",
           "label": "Content",
-          "area": "main"
-      },
-      {
-          "name": "embed",
-          "type": "text",
-          "label": "Embed Code",
           "area": "main"
       },
       {

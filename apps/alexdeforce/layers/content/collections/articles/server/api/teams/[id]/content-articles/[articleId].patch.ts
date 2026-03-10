@@ -24,7 +24,6 @@ export default defineEventHandler(async (event) => {
     date: body.date ? new Date(body.date) : body.date,
     category: body.category,
     content: body.content,
-    embed: body.embed,
     imageUrl: body.imageUrl,
     tags: body.tags,
     featured: body.featured,

@@ -9,7 +9,7 @@
  * - Form data type: ContentArticleFormData
  * - New item type: NewContentArticle
  * - Form props: ContentArticleFormProps
- * - Fields: title, date, category, content, embed, imageUrl, tags, featured, status, publishedAt
+ * - Fields: title, date, category, content, imageUrl, tags, featured, status, publishedAt
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -31,7 +31,6 @@ export interface ContentArticle {
   date: Date | null
   category: string
   content?: string
-  embed?: string
   imageUrl?: string
   tags?: string[]
   featured?: boolean

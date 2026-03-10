@@ -32,7 +32,6 @@ export const contentArticles = sqliteTable('content_articles', {
   date: integer('date', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   category: text('category').notNull(),
   content: text('content'),
-  embed: text('embed'),
   imageUrl: text('imageUrl'),
   tags: jsonColumn('tags').$default(() => (null)),
   featured: integer('featured', { mode: 'boolean' }).$default(() => false),
