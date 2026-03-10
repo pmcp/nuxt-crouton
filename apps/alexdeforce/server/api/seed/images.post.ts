@@ -314,6 +314,53 @@ export default defineEventHandler(async () => {
       }
 
       log.push(`Uploaded ${localUploaded} local files from public/img/`)
+
+      // Update article references for local files
+      // Local files in content appear as relative paths like "img/filename.jpg"
+      // or "/img/filename.jpg" — replace with "/images/alexdeforce/local/filename"
+      let localArticlesUpdated = 0
+      const freshArticles = await (db as any).select().from(contentArticles).where(eq(contentArticles.teamId, orgId))
+
+      for (const article of freshArticles) {
+        let newImageUrl = article.imageUrl
+        let newContent = article.content
+        let changed = false
+
+        for (const file of localFiles) {
+          const blobPath = `/images/alexdeforce/local/${file}`
+          // Match various local path patterns in imageUrl and content
+          const patterns = [
+            `img/${file}`,
+            `/img/${file}`,
+            `./img/${file}`,
+            file, // bare filename
+          ]
+
+          for (const pattern of patterns) {
+            if (newImageUrl && newImageUrl.includes(pattern) && !newImageUrl.startsWith('/images/')) {
+              newImageUrl = blobPath
+              changed = true
+            }
+            if (newContent && newContent.includes(pattern)) {
+              newContent = newContent.replaceAll(pattern, blobPath)
+              changed = true
+            }
+          }
+        }
+
+        if (changed) {
+          await (db as any).update(contentArticles)
+            .set({
+              imageUrl: newImageUrl,
+              content: newContent,
+              updatedAt: new Date()
+            })
+            .where(eq(contentArticles.id, article.id))
+          localArticlesUpdated++
+        }
+      }
+
+      log.push(`Updated ${localArticlesUpdated} articles with local file paths`)
     } else {
       log.push('No local img directory found, skipping')
     }
