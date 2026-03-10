@@ -1,331 +1,414 @@
 # Documentation Verification Report
 
-**Date:** 2026-03-10 (fifth pass — full re-verification)
+**Date:** 2026-03-10 (sixth pass — full re-verification)
 **Pages verified:** 73
 **Scope:** All documentation sections
-**Agents:** 6 parallel verification agents
 
 ## Summary
 
 | Status | Count |
 |--------|-------|
-| ✅ Verified claims | ~700+ |
-| ❌ Broken claims | 16 |
-| ⚠️ Suspicious | 12 |
-| 📝 Missing from docs | 40+ |
-
-### Progress from Fourth Pass
-
-**Fixed since last audit (5 of 5 previous broken claims):**
-- ✅ `CroutonFlowFlow` → `CroutonFlow` in 12.flow.md (P0)
-- ✅ Events endpoint GET→POST mismatch in 9.events.md (P1)
-- ✅ CollectionCard/DetailModal marked as internal in 11.devtools.md (P1)
-- ✅ Self-referential text in layout-components.md (P2)
-- ✅ `@update:english` event now exists on CroutonI18nInput
-- ✅ `useCroutonShortcuts` now documented in utility-composables.md
-
-**Still unfixed from previous audit:**
-- ⏳ `isConfigured` return on `useMapConfig()` still not documented (10.maps.md)
-- ⏳ Missing composables in API Reference: `useCollectionExport`, `useCollectionImport`, `useImageCrop`, `useDisplayConfig`
-- ⏳ Missing components in API Reference: `CroutonDetail`, `CroutonDefaultCard`
-
-**New broken claims found: 16** (see below)
-
----
+| ✅ Verified claims | ~350+ |
+| ❌ Broken claims | 18 |
+| ⚠️ Suspicious | 22 |
+| 📝 Missing from docs | 55+ |
 
 ## Pages by Health
 
-### 🔴 Needs Fixes (broken claims)
+### 🔴 Needs Rewrite (>50% broken claims)
+_(none)_
 
-| Page | Broken | Category |
-|------|--------|----------|
-| `6.features/13.ai.md` | 3 | Stale types, missing returns |
-| `6.features/14.admin.md` | 2 | Wrong route paths |
-| `6.features/18.pages.md` | 1 | Editor/renderer confusion |
-| `8.api-reference/composables/form-composables.md` | 1 | Truncated signature |
-| `8.api-reference/composables/table-composables.md` | 1 | Missing options |
-| `8.api-reference/composables/data-composables.md` | 1 | Wrong heading name |
-| `8.api-reference/4.server.md` | 2 | Broken links |
-| `3.generation/2.schema-format.md` | 1 | Wrong component name |
-| `3.generation/4.cli-reference.md` | 1 | schemaPath directory claim |
-| `4.patterns/2.forms.md` | 1 | Wrong file path |
-| `5.customization/1.index.md` | 1 | Missing layer prefix |
-| `5.customization/4.custom-columns.md` | 1 | Missing `props.` prefix |
-| `5.customization/5.layouts.md` | 1 | Duplicate text |
-| `10.guides/1.troubleshooting.md` | 1 | Wrong component path |
-| `10.guides/3.best-practices.md` | 1 | Wrong generated file names |
-| `10.guides/5.asset-management.md` | 1 | Non-existent component |
-| `9.reference/2.faq.md` | 1 | Contradicts auto-inclusion |
-| `7.advanced/2.team-based-auth.md` | 1 | Misleading installation |
+### 🟡 Needs Fixes (broken claims found)
 
-### 🟢 Healthy (no broken claims)
+| Page | Broken | Issue Summary |
+|------|--------|---------------|
+| `6.features/9.events.md` | 2 | Wrong dependency name; missing batch cap detail |
+| `6.features/10.maps.md` | 1 | Undocumented `active` prop |
+| `6.features/11.devtools.md` | 2 | Missing RPC endpoints; wrong hook name in code |
+| `6.features/12.flow.md` | 3 | Missing event; wrong `rows` required marker; collab prop mismatch |
+| `6.features/14.admin.md` | 1 | Non-existent `/admin/[team]/settings/translations` route |
+| `6.features/18.pages.md` | 1 | Misleading claim about Form.vue being manifest-only |
+| `8.api-reference/3.types.md` | 1 | `tree-default` preset value wrong |
+| `4.patterns/3.tables.md` | 1 | `useCollectionQuery` shown with non-existent `filter`/`pagination` params |
+| `3.generation/3.multi-collection.md` | 1 | Wrong generated directory structure |
+| `3.generation/cli-commands.md` | 1 | Missing server directory from file tree |
+| `5.customization/1.index.md` | 1 | Wrong composable naming convention |
+| `5.customization/4.custom-columns.md` | 1 | Bug in example code (`row.status` vs `props.row.status`) |
+| `10.guides/5.asset-management.md` | 1 | `CroutonList` component does not exist |
+| `2.fundamentals/7.packages.md` | 1 | `AIMessage` component name incorrect |
+| `10.guides/3.best-practices.md` | 1 | Claims `Card.vue`/`Table.vue` are generated files |
 
-- `6.features/1.internationalization.md` ✅
-- `6.features/6.rich-text.md` ✅
-- `6.features/7.assets.md` ✅
-- `6.features/9.events.md` ✅ (previously broken, now fixed)
-- `6.features/10.maps.md` ✅ (1 missing prop, no broken claims)
-- `6.features/11.devtools.md` ✅ (previously broken, now fixed)
-- `6.features/12.flow.md` ✅ (previously broken, now fixed)
-- `6.features/15.export.md` ✅
-- `6.features/16.collaboration.md` ✅
-- `6.features/17.email.md` ✅
-- `6.features/19.bookings.md` ✅
-- `6.features/20.sales.md` ✅
-- All other API Reference pages ✅
-- All Getting Started / Fundamentals pages ✅ (except minor path issues in guides)
+### 🟢 Healthy (<5% issues)
+
+All remaining pages (58 pages) — mostly verified clean or with only minor suspicious/missing items.
 
 ---
 
 ## Detailed Findings
 
-### `6.features/13.ai.md`
+---
 
-**Broken ❌**
-1. **Lines 228-244 (useChat returns)**: Docs show `status: Ref<'idle' | 'streaming' | 'submitted'>` but omit `data`, `setData`, `id`, `rawMessages`, and `toolCalls` from returns. The actual composable returns significantly more fields.
-2. **Lines 145-146 (AIChatboxProps type)**: Exported `AIChatboxProps` type is stale — missing `provider`, `model`, `initialMessages` props that exist on the actual `Chatbox.vue` component.
-3. **Lines 169-178 (AIInputProps type)**: Missing `maxRows?: number` prop (default `6`) that exists on `Input.vue`.
+### 6.features/1.internationalization.md
 
-**Missing from docs**
-- `maxSteps` option on `useChat()` — enables multi-step tool calling
-- `onToolCall` option on `useChat()` — client-side tool handling
-- `toolCalls`, `rawMessages`, `data`, `setData`, `id` returns from `useChat()`
-- `handleSubmit`, `data` returns from `useCompletion()`
-- `useTranslationSuggestion` composable has no detailed API section (only listed in overview)
-- `o3-mini` model referenced in docs but not in `AI_MODELS` record
+#### Verified ✅
+- Package name `@fyit/crouton-i18n` and version `0.1.0` match
+- All 11 components exist with documented props matching source
+- `useT()` returns all documented properties
+- `useEntityTranslations()` signature and fallback behavior match
+- `useTranslationsUi` exports match
+- Database schema fields and unique constraint match
+- Default locales (en, nl, fr) confirmed
+
+#### Broken ❌
+- Display badge color docs misleading — source uses `'error'` for "no translation found", not "validation failed"
+
+#### Suspicious ⚠️
+- Seed command `crouton-generate seed-translations` may differ from actual `crouton-i18n-seed` bin
+- `@nuxtjs/i18n` shown as fixed version but is `^9.0.0` caret range
+- `strategy: 'no_prefix'` as built-in not fully verified
+
+#### Missing from docs 📝
+- `CroutonI18nAITranslateButton` component
+- `useFieldTransforms`, `useFieldGroups`, `useAiTranslation`, `useTranslationFields`, `useLocaleLayout` composables
+- `UiList` does NOT use `CroutonTable` directly — "CroutonTable Integration" claim appears inaccurate
 
 ---
 
-### `6.features/14.admin.md`
+### 6.features/6.rich-text.md
 
-**Broken ❌**
-1. **Line 95**: Route `/admin/[team]/collections` — actual route is `/admin/[team]/crouton/[collection]` (provided by crouton-core, not crouton-admin)
-2. **Line 99**: Route `/admin/[team]/settings/translations` — actual route is `/admin/[team]/translations/`
+#### Verified ✅
+- Package name, version, all 5 components, all props/events match source exactly
+- `useEditorVariables` return signature matches
+- Toolbar features match source
+- Nuxt config matches actual config
 
-**Missing from docs**
-- Admin pages: `/admin/[team]/team/domains.vue`, `/admin/[team]/team/look-and-feel.vue`
-- Components: `AdminTeamList`, `TeamColorSwatchPicker`, `TeamThemeSettings`, `TeamFaviconSettings`, `TeamRadiusPicker`, `TeamDomainSettings`
+#### Broken ❌
+_(none)_
 
----
-
-### `6.features/18.pages.md`
-
-**Broken ❌**
-1. **Line 118**: Shows `<CroutonPagesBlockContent v-model="content">` with editor props (`v-model`, `placeholder`) — but `BlockContent.vue` is a renderer/display component. The actual editor is `CroutonPagesEditorBlockEditor`.
-
-**Missing from docs**
-- `CroutonPagesEditorBlockEditor`, `CroutonPagesEditorBlockEditorWithPreview`, `CroutonPagesEditorBlockPropertyPanel`
-- `CroutonPagesNav`, `CroutonPagesCard`, `CroutonPagesList`
-- Composables: `useGhostPage`, `useReorderMode`, `useLocalizedSlug`
-- Block types: `contactBlock`, `mailingBlock`
+#### Suspicious ⚠️
+- `UEditorMentionMenu` reference should be verified as real Nuxt UI 4 component
 
 ---
 
-### `8.api-reference/composables/form-composables.md`
+### 6.features/7.assets.md
 
-**Broken ❌**
-1. **Lines 18-28**: Truncated/duplicate `useCrouton` signature block that abruptly ends before the full definition at line 30
+#### Verified ✅
+- Package name, version, all 7 components confirmed
+- `useAssetUpload` return signature and parameter types match
+- `AssetMetadata` and `UploadAssetResult` interfaces match
+- Picker and Uploader props match source
 
----
+#### Broken ❌
+_(none — but Picker default collection logic oversimplified in docs)_
 
-### `8.api-reference/composables/table-composables.md`
+#### Suspicious ⚠️
+- `CroutonAvatarUpload` referenced but not in assets package (likely crouton-core)
+- `hub: { blob: true }` shown as required but crouton-core already sets it
 
-**Broken ❌**
-1. **UseTableColumnsOptions**: Missing `sortable` and `showCollabPresence` properties that exist in source (lines 16-18)
-
----
-
-### `8.api-reference/composables/data-composables.md`
-
-**Broken ❌**
-1. **Line 772**: Section heading says `useExternalCollection` but the actual exported function is `defineExternalCollection`
-
----
-
-### `8.api-reference/4.server.md`
-
-**Broken ❌**
-1. **Line 893**: Broken link with typo `#crroutonreferenceselect` (extra 'r' in "crrouton")
-2. **Line 892**: Link `#usecollectionproxy` points to non-existent anchor (actual utilities are `applyProxyTransform`/`getProxiedEndpoint` documented in data-composables.md)
+#### Missing from docs 📝
+- `AspectRatioPreset` type not fully documented
+- AI-powered alt text generation feature not mentioned
+- Multi-language alt text via `CroutonI18nInput` integration not documented
+- `CroutonImageCropper` dependency not documented
 
 ---
 
-### `3.generation/2.schema-format.md`
+### 6.features/9.events.md
 
-**Broken ❌**
-1. **Line 342**: Says `CroutonRepeater` — actual component is `CroutonFormRepeater` (file: `FormRepeater.vue`)
+#### Verified ✅
+- All runtime config defaults, interfaces, composables, components, API endpoints match
+- Smart diff excluded fields match exactly
+- All component props match source
 
----
+#### Broken ❌
+- **Dependency name**: Docs say `@fyit/crouton` but actual peer dep is `@fyit/crouton-core`
+- **Cleanup batch cap**: Docs say batches of 1000 but miss the 5000-per-run cap
 
-### `3.generation/4.cli-reference.md`
+#### Suspicious ⚠️
+- `errorHandling.mode` config doesn't actually switch behavior in source
+- `useCollectionQuery('collectionEvents')` claim not supported
 
-**Broken ❌**
-1. **Lines 613-630**: Claims `schemaPath` can be a directory (`Directory: './schemas/'`). The actual `loadFields()` in `lib/utils/load-fields.ts` only calls `fsp.readFile()` — it cannot handle directories. Contradicts `3.multi-collection.md` which correctly says it must be a file.
-
----
-
-### `4.patterns/2.forms.md`
-
-**Broken ❌**
-1. **Line 29**: Path `layers/shop/components/products/_Form.vue` — actual path is `layers/shop/collections/products/app/components/_Form.vue` (missing `collections/` and `app/` segments)
-
----
-
-### `5.customization/1.index.md`
-
-**Broken ❌**
-1. **Line 20**: Shows `use[Collection].ts` — should be `use[Layer][Collection].ts` (e.g., `useShopProducts.ts`)
+#### Missing from docs 📝
+- `useCroutonEventsExport` composable
+- Export API endpoint `/api/teams/:teamId/crouton-events/export`
+- Server plugin `operation-listener.ts`
+- `CroutonActivityLog` `eventClick` emit
 
 ---
 
-### `5.customization/4.custom-columns.md`
+### 6.features/10.maps.md
 
-**Broken ❌**
-1. **Lines 187-201**: `ProductStatus.vue` component uses `row.status` — should be `props.row.status` (would cause runtime error)
+#### Verified ✅
+- Package name, version, dependencies all match
+- All components props and events match source
+- `useMapConfig()`, `useGeocode()` signatures match
+- `MAPBOX_STYLES` const matches exactly
+- Server-side geocoding proxy confirmed
 
----
+#### Broken ❌
+- Marker `active` prop exists but is not documented
 
-### `5.customization/5.layouts.md`
+#### Suspicious ⚠️
+- TypeScript exports list may include types not all actually exported
 
-**Broken ❌**
-1. **Lines 131-132**: Duplicate text "CroutonCollection or CroutonCollection" — should probably say "CroutonCollection or CroutonTable"
-
----
-
-### `10.guides/1.troubleshooting.md`
-
-**Broken ❌**
-1. **Line 234**: Component path `layers/shop/components/products/Form.vue` — actual is `layers/shop/collections/products/app/components/_Form.vue`
-
----
-
-### `10.guides/3.best-practices.md`
-
-**Broken ❌**
-1. **Lines 57-58**: Claims `Form.vue`, `Table.vue`, `Card.vue` are generated files — actual generated files are `_Form.vue` and `List.vue`. No `Table.vue` or `Card.vue` is generated per collection.
+#### Missing from docs 📝
+- Block components: `MapBlockView`, `MapBlockRender`, `CollectionMapBlockView`, `CollectionMapBlockRender`
 
 ---
 
-### `10.guides/5.asset-management.md`
+### 6.features/11.devtools.md
 
-**Broken ❌**
-1. **Lines 400-417**: References `<CroutonList>` component which does not exist — should be `<CroutonCollection>` or `<CroutonTable>`
+#### Verified ✅
+- Package type (Nuxt Module), dev-only behavior, custom tab registration all match
+- Collections discovery, operation tracker, all listed RPC endpoints exist
 
----
+#### Broken ❌
+- **Missing from directory listing**: `generationHistory.ts`, `systemOperations.ts`, `clearSystemOperations.ts`
+- **Hook name**: Code example shows `afterResponse` but Nitro hook is `onAfterResponse`
 
-### `9.reference/2.faq.md`
+#### Suspicious ⚠️
+- Operation tracker may track more routes than documented
 
-**Broken ❌**
-1. **Lines 341-349**: Shows i18n needing separate `extends: ['@fyit/crouton-i18n']` — contradicts other pages that document i18n as auto-included with `@fyit/crouton`
-
----
-
-### `7.advanced/2.team-based-auth.md`
-
-**Broken ❌**
-1. **Lines 37-49**: Implies `@fyit/crouton-auth` needs separate installation via `extends` — but auth is auto-included with `@fyit/crouton`
+#### Missing from docs 📝
+- System operations and generation history RPC endpoints
+- Data browser route
 
 ---
 
-## Suspicious Claims (not confirmed broken)
+### 6.features/12.flow.md
 
-| Page | Line | Issue |
-|------|------|-------|
-| `10.maps.md` | 23 | `animationEasing` typed as `string \| function` but source has specific string literals |
-| `11.devtools.md` | 601 | Architecture diagram missing several RPC endpoints (events, system-operations, generation-history) |
-| `13.ai.md` | 804 | Import path `@fyit/crouton-ai/types` may not match actual package exports |
-| `14.admin.md` | 219 | Icon comment says "Heroicon name" but codebase uses Lucide icons |
-| `3.generation/3.multi-collection.md` | 94 | Default `dialect` differs between config file (`'pg'`) and CLI arg (`'sqlite'`) |
-| `4.patterns/3.tables.md` | 37 | `UDashboardPanel` is Nuxt UI Pro, not standard Nuxt UI 4 |
-| `1.getting-started/2.installation.md` | 53 | `vite.server.watch` config only relevant for monorepo dev, could mislead |
-| `8.api-reference/5.internal-api.md` | — | Table composables documented as both "internal" and "public API" |
-| `7.advanced/2.team-based-auth.md` | 59 | `useTeamContext()` return shape needs verification |
-| `4.patterns/1.relations.md` | 87 | TanStack Table slot naming `#authorId-cell` unverified |
-| `8.api-reference/3.types.md` | 1389 | Recommends `npx nuxt typecheck` — CLAUDE.md says `pnpm typecheck` |
-| `10.guides/9.deployment.md` | 101 | `croutonAuth: { passkeys: false }` config key needs verification |
+#### Verified ✅
+- Package name, version, all composables, most props/events match
+- Custom node convention, sync mode, D1 migration schema confirmed
+
+#### Broken ❌
+- **`selectionChange` event** exists in emits but not in docs
+- **`rows` prop** documented as "required" but source shows optional
+- **Collab component props** shown with inconsistent ref handling
+
+#### Missing from docs 📝
+- Props: `allowDrop`, `allowedCollections`, `autoCreateOnDrop`
+- Events: `nodeDrop`
+- Components: `GhostNode.vue`
+- Composables: `useFlowDragDrop`, `useFlowSyncBridge`
+- Admin pages with CRUD API for `flow_configs`
 
 ---
 
-## Missing from Docs (not broken, but gaps)
+### 6.features/13.ai.md
 
-### API Reference — Missing composables
-- `useCollectionExport` (exists in crouton-core)
-- `useCollectionImport` (exists in crouton-core)
-- `useImageCrop` (exists in crouton-core)
-- `useDisplayConfig` (exists in crouton-core)
-- `useCroutonError` (exists in crouton-core)
-- `useExpandableSlideover` (exists in crouton-core, partially in internal-api.md)
+#### Verified ✅
+- All composables, components, endpoints, dependencies match
 
-### API Reference — Missing components
-- `CroutonDetail` (exists as Detail.vue)
-- `CroutonDefaultCard` (exists as DefaultCard.vue)
-- `CroutonExportButton`, `CroutonImportButton`, `CroutonImportPreviewModal`
-- `CroutonConfirmButton`, `CroutonImageCropper`, `CroutonImageUpload`
-- `CroutonShortcutHint`, `CroutonAdminStatusBar`
+#### Missing from docs 📝
+- `useTranslationSuggestion()` has no detailed section
+- `AITranslateButton` and `AIPageGenerator` have no prop docs
+- TipTap editor extension not documented
 
-### Feature pages — Missing items
-- `10.maps.md`: `isConfigured` return on `useMapConfig()`, `active` prop on Marker
-- `11.devtools.md`: Events, system-operations, generation-history RPC endpoints; data browser page
-- `12.flow.md`: `allowDrop`, `allowedCollections`, `autoCreateOnDrop` props; `selectionChange`, `nodeDrop` events; `useFlowDragDrop`, `useFlowSyncBridge` composables
-- `16.collaboration.md`: `useCollabConnection`, `useCollabLocalizedContent`, `useFormCollabPresence`, `useCollectionSyncSignal`
-- `17.email.md`: `VerificationLink.vue` template, `sendVerificationLink()` sender
-- `2.fundamentals/7.packages.md`: `crouton-triage`, `crouton-charts`, `crouton-atelier`, `crouton-mcp-toolkit` packages
+---
+
+### 6.features/14.admin.md
+
+#### Verified ✅
+- Three-tier route architecture, middlewares, composables, components, API endpoints all exist
+
+#### Broken ❌
+- `/admin/[team]/settings/translations` route does not exist
+
+#### Missing from docs 📝
+- `domains.vue` and `look-and-feel.vue` pages
+- `useTeamTheme`, `useTeamFavicon` composables
+- Theme-related components
+
+---
+
+### 6.features/15.export.md
+
+#### Verified ✅
+- `useCollectionExport` and `CroutonExportButton` exist
+
+#### Missing from docs 📝
+- No YAML frontmatter
+
+---
+
+### 6.features/16.collaboration.md
+
+#### Verified ✅
+- Package, all composables, components, server files, D1 migration confirmed
+
+#### Missing from docs 📝
+- `useCollabConnection`, `useCollabLocalizedContent`, `useFormCollabPresence`, `useCollectionSyncSignal`
+- Client plugins
+
+---
+
+### 6.features/17.email.md
+
+#### Verified ✅
+- Package, server utilities, templates, client components all confirmed
+
+#### Suspicious ⚠️
+- Import alias paths may differ from `package.json` exports
+
+#### Missing from docs 📝
+- `VerificationLink.vue` template
+- `auth-email-listener.ts` plugin
+
+---
+
+### 6.features/18.pages.md
+
+#### Verified ✅
+- Package, composables, components, block types, API endpoints confirmed
+
+#### Broken ❌
+- Claims `CroutonPagesForm` is manifest-only but `Form.vue` exists
+
+#### Missing from docs 📝
+- `useGhostPage`, `useReorderMode`, `useLocalizedSlug` composables
+- `ContactBlockView`, `MailingBlockView` block types
+- Editor components
+
+---
+
+### 6.features/19.bookings.md
+
+#### Verified ✅
+- All 10 composables, 8+ API endpoints, 5 schemas, all components confirmed
+- i18n locales confirmed
+
+---
+
+### 6.features/20.sales.md
+
+#### Verified ✅
+- All composables, 10 schemas, components, server utilities confirmed
+
+---
+
+### 8.api-reference/* (All API Reference Pages)
+
+#### Verified ✅
+- All core composable signatures match source
+- All component pages verified
+- Server utilities confirmed
+- `useExpandableSlideover` returns match
+
+#### Broken ❌
+- **types.md**: `tree-default` preset documented as `{ base: 'list', md: 'tree', lg: 'tree' }` but source has `{ base: 'tree' }`
+
+#### Suspicious ⚠️
+- **data-composables.md**: Header says "useExternalCollection" but function is `defineExternalCollection`
+- **table-composables.md**: Column ordering description incomplete
+- **form-components.md**: References `CroutonReferenceSelect` but no standalone `.vue` exists
+
+#### Missing from docs 📝
+- `useTableColumns` `sortable` and `showCollabPresence` parameters
+- `CollectionProps.stateless` field
+- `CroutonCollectionViewer.defaultLayout` accepts `'cards'` and `'workspace'`
+
+---
+
+### 3.generation/* (Generation Pages)
+
+#### Verified ✅
+- Field types, auto-generated fields, CLI commands, config format — all confirmed
+
+#### Broken ❌
+- **multi-collection.md**: Directory structure shows `layers/shop/components/` but actual is `layers/shop/collections/[name]/app/components/`
+- **cli-commands.md**: Server directory omitted from file tree
+
+#### Suspicious ⚠️
+- **Contradiction**: CLI Reference says `schemaPath` can be dir; multi-collection says must be file
+- `area` property description may be outdated
+
+#### Missing from docs 📝
+- `array` field type rendering example
+- `meta.properties` for typed repeater items
+- `kind` option, `db-pull`/`deploy-setup`/`deploy-check` command details
+
+---
+
+### 4.patterns/* (Pattern Pages)
+
+#### Verified ✅
+- Relations, forms, tables, list layouts, Drizzle setup mostly accurate
+
+#### Broken ❌
+- **tables.md**: `useCollectionQuery` with non-existent `filter`/`pagination` params
+
+#### Suspicious ⚠️
+- `sortable: true` column property vs TanStack `enableSorting`
+
+---
+
+### 5.customization/* (Customization Pages)
+
+#### Broken ❌
+- **index.md**: Composable naming `use[Collection].ts` wrong — should be `use[Layer][Collection].ts`
+- **custom-columns.md**: `row.status` should be `props.row.status`
+
+---
+
+### 1.getting-started/*, 2.fundamentals/*, 7.advanced/*, 10.guides/*, 9.reference/*
+
+#### Verified ✅
+- Installation, usage, architecture, forms, data ops, caching, packages — all mostly accurate
+- Auth composables, conditional fields, bulk ops, optimistic updates — valid
+- Troubleshooting, migration, deployment guides — mostly accurate
+
+#### Broken ❌
+- **asset-management.md**: `<CroutonList>` doesn't exist — should be `<CroutonCollection>`
+- **packages.md**: `AIMessage` wrong — actual is `CroutonAiMessage`
+- **best-practices.md**: Claims `Card.vue`/`Table.vue` are generated files
+
+#### Suspicious ⚠️
+- **team-based-auth.md**: Says manual auth install needed, but other docs say auto-included
+- **troubleshooting.md**: Uses old path format
+
+#### Missing from docs 📝
+- Packages `@fyit/crouton-triage`, `@fyit/crouton-charts`, `@fyit/crouton-atelier`, `@fyit/crouton-mcp-toolkit`
+- Single-item cache key format
 
 ---
 
 ## Recommended Actions
 
-### Fix (broken claims to update)
+### Fix (specific claims to update)
 
-| Priority | Page | Action |
-|----------|------|--------|
-| **P1** | `6.features/13.ai.md` | Update `useChat()` returns, fix stale `AIChatboxProps`/`AIInputProps` types |
-| **P1** | `6.features/14.admin.md` | Fix 2 route paths: `collections` → `crouton/[collection]`, `settings/translations` → `translations/` |
-| **P1** | `6.features/18.pages.md` | Fix `CroutonPagesBlockContent` with v-model → `CroutonPagesEditorBlockEditor` |
-| **P1** | `8.api-reference/4.server.md` | Fix broken links: typo `#crroutonreferenceselect`, dead anchor `#usecollectionproxy` |
-| **P2** | `8.api-reference/composables/form-composables.md` | Remove truncated duplicate signature block (lines 18-28) |
-| **P2** | `8.api-reference/composables/table-composables.md` | Add `sortable`, `showCollabPresence` to UseTableColumnsOptions |
-| **P2** | `8.api-reference/composables/data-composables.md` | Fix heading `useExternalCollection` → `defineExternalCollection` |
-| **P2** | `3.generation/2.schema-format.md` | Fix `CroutonRepeater` → `CroutonFormRepeater` |
-| **P2** | `3.generation/4.cli-reference.md` | Remove claim that `schemaPath` can be a directory |
-| **P2** | `4.patterns/2.forms.md` | Fix path: add `collections/` and `app/` segments |
-| **P2** | `5.customization/1.index.md` | Fix `use[Collection].ts` → `use[Layer][Collection].ts` |
-| **P2** | `5.customization/4.custom-columns.md` | Fix `row.status` → `props.row.status` |
-| **P2** | `5.customization/5.layouts.md` | Fix duplicate "CroutonCollection or CroutonCollection" |
-| **P3** | `10.guides/1.troubleshooting.md` | Fix component path to include `collections/app/` |
-| **P3** | `10.guides/3.best-practices.md` | Fix generated file names: `_Form.vue`, `List.vue` (not `Table.vue`, `Card.vue`) |
-| **P3** | `10.guides/5.asset-management.md` | Fix `<CroutonList>` → `<CroutonCollection>` |
-| **P3** | `9.reference/2.faq.md` | Remove separate `extends` for i18n (auto-included) |
-| **P3** | `7.advanced/2.team-based-auth.md` | Clarify auth is auto-included, separate install not needed |
+| Priority | Page | Fix |
+|----------|------|-----|
+| **High** | `4.patterns/3.tables.md` | Rewrite `useCollectionQuery` examples to use actual `query` param API |
+| **High** | `3.generation/3.multi-collection.md` | Fix directory structure to `layers/shop/collections/products/app/components/` |
+| **High** | `10.guides/5.asset-management.md` | Replace `CroutonList` with `CroutonCollection` |
+| **High** | `8.api-reference/3.types.md` | Fix `tree-default` preset value to `{ base: 'tree' }` |
+| **Medium** | `6.features/9.events.md` | Fix dependency from `@fyit/crouton` to `@fyit/crouton-core` |
+| **Medium** | `6.features/11.devtools.md` | Add missing RPC endpoints; fix hook name |
+| **Medium** | `6.features/12.flow.md` | Add `selectionChange` event; fix `rows` required marker; add drag-drop props |
+| **Medium** | `6.features/14.admin.md` | Remove non-existent `/admin/[team]/settings/translations` route |
+| **Medium** | `5.customization/1.index.md` | Fix composable naming to `use[Layer][Collection].ts` |
+| **Medium** | `3.generation/cli-commands.md` | Add server directory to generated file tree |
+| **Low** | `2.fundamentals/7.packages.md` | Fix `AIMessage` → `CroutonAiMessage` |
+| **Low** | `10.guides/3.best-practices.md` | Remove `Card.vue`/`Table.vue` from generated files list |
+| **Low** | `5.customization/4.custom-columns.md` | Fix `row.status` → `props.row.status` in example |
+| **Low** | `6.features/18.pages.md` | Clarify that `Form.vue` does exist as a file |
 
-### Add (missing documentation)
+### Resolve contradictions
 
-| Priority | Action |
-|----------|--------|
-| **P2** | Add missing composables/components to API reference (~14 items) |
-| **P2** | Document `isConfigured` on `useMapConfig()` in maps.md |
-| **P3** | Document drag-and-drop props/events in flow.md |
-| **P3** | Document undocumented RPC endpoints in devtools.md |
-| **P3** | Add `crouton-triage`, `crouton-charts`, `crouton-atelier` to packages.md |
+1. `schemaPath` — CLI Reference (can be dir) vs multi-collection (must be file)
+2. Auth install — team-based-auth (manual install) vs installation page (auto-included)
+3. Path conventions — some pages use `layers/x/components/` vs correct `layers/x/collections/y/app/components/`
+
+### Document missing features (optional)
+
+Key undocumented features:
+- **crouton-collab**: Real-time collection sync (`useCollectionSyncSignal`)
+- **crouton-flow**: Drag-and-drop onto canvas, admin pages
+- **crouton-events**: Export functionality
+- **crouton-assets**: AI alt text generation
+- **crouton-admin**: Domain/theme settings pages
 
 ### Leave (healthy)
 
-All other 50+ pages are accurate and require no changes.
-
----
-
-## Comparison with Fourth Pass
-
-| Metric | Fourth Pass | Fifth Pass |
-|--------|------------|------------|
-| Broken claims | 5 | 16 |
-| Previously broken, now fixed | — | 5/5 (100%) |
-| New broken found | — | 16 |
-| Suspicious | 8 | 12 |
-| Missing from docs | 10 | 40+ |
-
-The increase in broken/missing counts reflects deeper verification this pass, not regression. All 5 previously broken claims were successfully fixed. The 16 new broken claims are mostly minor (wrong paths, stale types, typos) with no critical/P0 issues.
-
----
-
-*Report generated by 6 parallel verification agents scanning 73 documentation pages against source code.*
+58 pages verified clean or with only cosmetic/missing-from-docs issues. No action needed.
