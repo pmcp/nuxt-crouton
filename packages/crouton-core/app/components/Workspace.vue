@@ -2,11 +2,11 @@
 /**
  * CroutonWorkspace - Split-view workspace for collection editing
  *
- * A Finder-style split-view: resizable sidebar with item list + inline editor.
+ * A Finder-style split-view: sidebar with item list + inline editor.
  * Works as a layout option in CollectionViewer alongside table/list/grid/tree/kanban.
  *
  * Features:
- * - Resizable sidebar panel + editor panel
+ * - Sidebar + editor split layout
  * - URL state sync via query param (?item=<id>)
  * - Selection state machine (view → create → edit)
  * - Keyboard shortcuts (N to create, / to search, Esc to close)
@@ -150,19 +150,11 @@ onKeyStroke('/', (e) => {
 </script>
 
 <template>
-  <!-- Panel 1: Resizable sidebar -->
-  <UDashboardPanel
-    :id="`${collection}-sidebar`"
-    :default-size="25"
-    :min-size="15"
-    :max-size="40"
-    resizable
-  >
-    <UDashboardNavbar :title="camelToTitleCase(collection)">
-      <template #leading>
-        <UDashboardSidebarCollapse />
-      </template>
-      <template #right>
+  <div class="flex h-full">
+    <!-- Sidebar -->
+    <div class="w-72 lg:w-80 shrink-0 border-r border-default flex flex-col">
+      <div class="flex items-center justify-between px-4 py-2 border-b border-default min-h-12">
+        <h3 class="text-sm font-semibold truncate">{{ camelToTitleCase(collection) }}</h3>
         <UButton
           color="primary"
           variant="ghost"
@@ -170,71 +162,32 @@ onKeyStroke('/', (e) => {
           size="sm"
           @click="handleCreate"
         />
-      </template>
-    </UDashboardNavbar>
+      </div>
 
-    <slot
-      name="sidebar"
-      :items="items"
-      :pending="pending"
-      :selected-id="selectedItemId"
-      :on-select="handleSelect"
-      :on-create="handleCreate"
-    >
-      <CroutonWorkspaceSidebar
-        ref="sidebarRef"
-        :collection="collection"
-        :selected-id="selectedItemId"
+      <slot
+        name="sidebar"
         :items="items"
         :pending="pending"
-        @select="handleSelect"
-        @create="handleCreate"
-      />
-    </slot>
-  </UDashboardPanel>
-
-  <!-- Panel 2: Editor (desktop) -->
-  <UDashboardPanel :id="`${collection}-editor`" class="hidden lg:flex">
-    <template v-if="showEditor">
-      <slot
-        name="editor"
         :selected-id="selectedItemId"
-        :mode="mode"
-        :session-key="editorSessionKey"
-        :on-save="handleSave"
-        :on-delete="handleDelete"
-        :on-cancel="handleCancel"
+        :on-select="handleSelect"
+        :on-create="handleCreate"
       >
-        <CroutonWorkspaceEditor
-          :key="editorSessionKey"
+        <CroutonWorkspaceSidebar
+          ref="sidebarRef"
           :collection="collection"
-          :item-id="selectedItemId"
-          @save="handleSave"
-          @delete="handleDelete"
-          @cancel="handleCancel"
+          :selected-id="selectedItemId"
+          :items="items"
+          :pending="pending"
+          @select="handleSelect"
+          @create="handleCreate"
         />
       </slot>
-    </template>
+    </div>
 
-    <slot v-else name="empty">
-      <div class="flex-1 flex items-center justify-center text-muted">
-        <div class="text-center">
-          <UIcon name="i-lucide-mouse-pointer-click" class="size-12 mb-3 opacity-30" />
-          <p class="text-sm">{{ t('collection.selectItem') || 'Select an item to edit' }}</p>
-          <p class="text-xs text-muted mt-1">
-            {{ t('collection.orPressN') || 'or press N to create new' }}
-          </p>
-        </div>
-      </div>
-    </slot>
-  </UDashboardPanel>
-
-  <!-- Mobile: Slideover for editor -->
-  <ClientOnly>
-    <USlideover v-if="isMobile" v-model:open="isEditorPanelOpen" side="right">
-      <template #content>
+    <!-- Editor (desktop) -->
+    <div class="flex-1 min-w-0 hidden lg:flex flex-col">
+      <template v-if="showEditor">
         <slot
-          v-if="showEditor"
           name="editor"
           :selected-id="selectedItemId"
           :mode="mode"
@@ -253,6 +206,43 @@ onKeyStroke('/', (e) => {
           />
         </slot>
       </template>
-    </USlideover>
-  </ClientOnly>
+
+      <div v-else class="flex-1 flex items-center justify-center text-muted">
+        <div class="text-center">
+          <UIcon name="i-lucide-mouse-pointer-click" class="size-12 mb-3 opacity-30" />
+          <p class="text-sm">{{ t('collection.selectItem') || 'Select an item to edit' }}</p>
+          <p class="text-xs text-muted mt-1">
+            {{ t('collection.orPressN') || 'or press N to create new' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile: Slideover for editor -->
+    <ClientOnly>
+      <USlideover v-if="isMobile" v-model:open="isEditorPanelOpen" side="right">
+        <template #content>
+          <slot
+            v-if="showEditor"
+            name="editor"
+            :selected-id="selectedItemId"
+            :mode="mode"
+            :session-key="editorSessionKey"
+            :on-save="handleSave"
+            :on-delete="handleDelete"
+            :on-cancel="handleCancel"
+          >
+            <CroutonWorkspaceEditor
+              :key="editorSessionKey"
+              :collection="collection"
+              :item-id="selectedItemId"
+              @save="handleSave"
+              @delete="handleDelete"
+              @cancel="handleCancel"
+            />
+          </slot>
+        </template>
+      </USlideover>
+    </ClientOnly>
+  </div>
 </template>
