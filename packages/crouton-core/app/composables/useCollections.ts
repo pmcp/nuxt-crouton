@@ -24,17 +24,22 @@ interface RuntimeFieldMeta {
   displayAs?: string
 }
 
+/** Collection kind determines how it appears in the admin UI and what default behaviors apply. */
+type CollectionKind = 'data' | 'content' | 'media'
+
 // Type for config map entries supplied via app.config.ts
 interface CollectionConfig {
   name?: string
   layer?: string
-  componentName?: string
   /**
-   * Package-provided form component name. Takes priority over the generated `componentName`.
-   * Set by addon packages (e.g. crouton-assets) so the app's generated componentName
-   * doesn't override the package's custom form.
+   * The kind of collection. Determines UI grouping in admin sidebar
+   * and default behaviors.
+   * - 'data': Generic structured data (default) — shown under "Collections"
+   * - 'content': Pages, posts, articles — shown under "Content"
+   * - 'media': Images, videos, files — shown under "Media"
    */
-  packageForm?: string
+  kind?: CollectionKind
+  componentName?: string
   /** Container type for create/update forms. Defaults to 'slideover'.
    * 'inline' renders an editor panel beside the collection layout (split-view).
    */

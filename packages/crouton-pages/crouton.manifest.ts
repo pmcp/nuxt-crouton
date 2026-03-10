@@ -1,4 +1,4 @@
-import { defineCroutonManifest } from '@fyit/crouton-core/shared/manifest'
+import { defineCroutonManifest, defineGeneratorContribution } from '@fyit/crouton-core/shared/manifest'
 
 export default defineCroutonManifest({
   id: 'crouton-pages',
@@ -48,5 +48,12 @@ export default defineCroutonManifest({
       '/api/teams/[id]/pages',
       '/api/teams/[id]/pages/[slug]',
     ],
+  },
+})
+
+export const generatorContribution = defineGeneratorContribution({
+  getFormComponent(ctx) {
+    if (ctx.collectionName === 'pages') return 'CroutonPagesForm'
+    return null
   },
 })

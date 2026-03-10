@@ -47,6 +47,12 @@ export default defineCroutonManifest({
 // ---------------------------------------------------------------------------
 
 export const generatorContribution = defineGeneratorContribution({
+  getFormComponent(ctx) {
+    // When generating the assets collection itself, use the package's custom form
+    if (ctx.collectionName === 'assets') return 'CroutonAssetsForm'
+    return null
+  },
+
   enhanceForm(ctx) {
     const { detected } = ctx
     const { assetFields } = detected

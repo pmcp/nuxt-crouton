@@ -571,7 +571,8 @@ ${translationsFieldSchema}
     collab,
     collectionConfig,
     display: collectionConfig?.display || null,
-    publishable: collectionConfig?.publishable || false
+    publishable: collectionConfig?.publishable || false,
+    kind: collectionConfig?.kind || 'data'
   }
 }
 
@@ -731,6 +732,20 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     || enabledFeatures.has(packageId.replace(/^crouton-/, ''))
     || detectedPackages.has(packageId)
   )
+  // Auto-detect formComponent from package contributions (when not explicitly configured)
+  if (!collectionConfig?.formComponent) {
+    const formComponentCtx = { collectionName: collection, fields, detected }
+    for (const { contribution } of allContributions) {
+      const result = contribution.getFormComponent?.(formComponentCtx)
+      if (result) {
+        collectionConfig = { ...collectionConfig, formComponent: result }
+        data.collectionConfig = collectionConfig
+        console.log(`✓ Auto-detected form component: ${result}`)
+        break
+      }
+    }
+  }
+
   const translatableFieldNames = config?.translations?.collections?.[toCase(collection).plural] || []
   data.formEnhancements = runFormContributions(contributions, data, dialect)
   data.listEnhancements = runListContributions(contributions, data, translatableFieldNames)

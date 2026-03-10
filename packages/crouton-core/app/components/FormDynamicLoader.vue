@@ -38,9 +38,8 @@ const props = defineProps({
 // Get component mapping from test composable
 const { componentMap, getConfig } = useCollections()
 
-// packageForm takes priority: package layers set this so app-generated componentName can't override it
 const getEffectiveFormName = (collection: string) => {
-  return getConfig(collection)?.packageForm || componentMap[collection]
+  return componentMap[collection]
 }
 
 // Track whether the resolved component is the generic CroutonDetail

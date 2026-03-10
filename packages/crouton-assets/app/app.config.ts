@@ -1,9 +1,7 @@
 export default defineAppConfig({
-  // Register the assets collection form component.
-  // Apps that use the canonical 'assets' key in croutonCollections will pick this up.
+  // Container config for assets collection (form component is auto-detected via manifest)
   croutonCollections: {
-    assets: {
-      packageForm: 'CroutonAssetsForm',
+    croutonAssets: {
       container: 'modal'
     }
   },
