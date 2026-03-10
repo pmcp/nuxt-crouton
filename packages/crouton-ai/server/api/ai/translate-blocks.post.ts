@@ -14,9 +14,6 @@
  */
 import { z } from 'zod'
 import { generateText } from 'ai'
-import { defineEventHandler, readBody, createError } from 'h3'
-import { useNitroApp } from 'nitropack/runtime'
-import { createAIProvider } from '../../utils/ai'
 
 const translateBlocksSchema = z.object({
   content: z.any(), // Block content JSON
