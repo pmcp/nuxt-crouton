@@ -19,6 +19,22 @@ Smart, auto-committing workflow following this project's conventions. **Does not
 
 ## Workflow
 
+### Step 0: Sync documentation (MANDATORY)
+
+**Before committing, run `/sync-docs` to check if any documentation needs updating.**
+
+This step:
+1. Analyzes the changed files for public API impact
+2. Updates relevant CLAUDE.md files, docs pages, or skills
+3. Reports what was updated (or confirms nothing needed)
+
+Any doc files updated by sync-docs become part of this commit (grouped with the code they document, or as a separate `docs()` commit if the code commit is already large).
+
+**Skip sync-docs only if:**
+- The changes are purely internal (no public API impact)
+- The changes are docs-only (they ARE the doc update)
+- User explicitly says to skip
+
 ### Step 1: Analyze the working tree
 
 Run these in parallel:
@@ -50,7 +66,7 @@ Categorize the **relevant** files into logical groups. Each group = one commit.
 **Grouping rules:**
 - Files that serve the same purpose go together (e.g., a component + its composable + its types)
 - Config changes are separate from feature changes
-- Documentation updates are separate from code changes
+- Documentation updates from `/sync-docs` go WITH the code they document (same commit) when they're small (1-2 files). Separate `docs()` commit only for larger doc-only changes.
 - Test files go with the code they test, not in a separate commit
 - Migration files go with their schema changes
 

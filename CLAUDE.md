@@ -277,6 +277,7 @@ docs/
 | Type | File | Purpose |
 |------|------|---------|
 | Skill | `.claude/skills/crouton.md` | Collection generation workflow |
+| Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
