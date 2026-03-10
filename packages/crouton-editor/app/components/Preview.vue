@@ -88,9 +88,32 @@ function sanitizeHtml(html: string): string {
   return div.innerHTML
 }
 
+// Extract plain text from TipTap JSON document structure
+function extractTextFromTipTap(node: any): string {
+  if (!node) return ''
+  if (typeof node === 'string') return node
+  if (node.type === 'text') return node.text || ''
+  if (Array.isArray(node.content)) {
+    return node.content.map(extractTextFromTipTap).join(node.type === 'doc' ? '\n' : '')
+  }
+  return ''
+}
+
+// Detect if content is TipTap JSON (object or JSON string with {"type":"doc"})
+function parseTipTapJson(content: string | Record<string, any>): Record<string, any> | null {
+  if (typeof content === 'object' && content?.type === 'doc') return content
+  if (typeof content === 'string' && content.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(content)
+      if (parsed?.type === 'doc') return parsed
+    } catch { /* not JSON */ }
+  }
+  return null
+}
+
 interface Props {
-  /** Raw content with {{variables}} */
-  content?: string
+  /** Raw content with {{variables}} — accepts HTML string or TipTap JSON */
+  content?: string | Record<string, any>
   /** Title for the preview panel/modal */
   title?: string
   /** Values for variable interpolation */
@@ -154,8 +177,16 @@ function decodeEntities(content: string): string {
 const renderedContent = computed(() => {
   if (!props.content) return ''
 
+  // Handle TipTap JSON content — extract text and convert to simple HTML
+  const tiptapDoc = parseTipTapJson(props.content)
+  if (tiptapDoc) {
+    const text = extractTextFromTipTap(tiptapDoc).trim()
+    // Wrap paragraphs in <p> tags for proper prose rendering
+    return text.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')
+  }
+
   // Decode HTML entities first
-  let result = decodeEntities(props.content)
+  let result = decodeEntities(props.content as string)
 
   // Replace variables with values or styled placeholders
   // Match {{variable_name}} with optional whitespace
@@ -185,7 +216,7 @@ const renderedContent = computed(() => {
  * Count variables in content
  */
 const variableCount = computed(() => {
-  if (!props.content) return 0
+  if (!props.content || typeof props.content !== 'string') return 0
 
   const decoded = decodeEntities(props.content)
   const matches = decoded.match(/\{\{\s*\w+\s*\}\}/g)

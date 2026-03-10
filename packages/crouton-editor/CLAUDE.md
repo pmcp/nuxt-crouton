@@ -223,7 +223,7 @@ Live preview component with variable interpolation.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `content` | `string` | - | Raw content with `{{variables}}` |
+| `content` | `string \| Record<string, any>` | - | Raw HTML content with `{{variables}}`, or TipTap JSON document |
 | `title` | `string` | `'Preview'` | Panel title |
 | `values` | `Record<string, string>` | - | Values for interpolation |
 | `variables` | `EditorVariable[]` | - | Variable definitions (for samples) |
