@@ -2,6 +2,14 @@
 export type { CollabUser, CollabAwarenessState, CollabConnectionState } from '@fyit/crouton-collab/types'
 
 /**
+ * Node dimensions for resizable nodes
+ */
+export interface NodeDimensions {
+  width: number
+  height: number
+}
+
+/**
  * Node data stored in Yjs Y.Map
  */
 export interface YjsFlowNode {
@@ -12,6 +20,14 @@ export interface YjsFlowNode {
   data: Record<string, unknown> // Additional collection fields
   createdAt: number
   updatedAt: number
+  /** Visual node type — 'group', 'card', 'default', etc. */
+  nodeType?: string
+  /** Spatial parent (Vue Flow parentNode), separate from parentId (edge parent) */
+  containerId?: string | null
+  /** Dimensions for resizable nodes */
+  dimensions?: NodeDimensions
+  /** Inline styles (background color, border, etc.) */
+  style?: Record<string, string>
 }
 
 /**

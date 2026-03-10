@@ -15,7 +15,11 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 | `app/composables/useFlowSyncBridge.ts` | Yjs ↔ Vue Flow data bridge |
 | `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
+| `app/composables/useFlowEphemeralData.ts` | Convert non-collection items to Vue Flow nodes |
+| `app/composables/useFlowContainerDetection.ts` | Card-over-group overlap detection on drag stop |
+| `app/composables/useFlowGroupManager.ts` | Group CRUD, assignments, auto-grouping |
 | `app/types/yjs.ts` | Flow node types (uses collab types) |
+| `app/types/flow.ts` | Flow config, data mode, container options types |
 | `app/app.config.ts` | App registration (croutonApps) |
 | `server/database/schema.ts` | Drizzle schema for flow_configs table |
 | `server/database/migrations/0002_flow_configs.sql` | SQL migration for flow_configs |
@@ -122,6 +126,9 @@ When `sync` is enabled:
 | `controls` | `boolean` | `true` | Show zoom controls |
 | `minimap` | `boolean` | `false` | Show minimap |
 | `draggable` | `boolean` | `true` | Enable node dragging |
+| `nodeTypeComponents` | `Record<string, NodeTypeRegistration>` | - | Custom node type components (key = type, value = { component, isContainer? }) |
+| `containerOptions` | `{ enabled: boolean }` | - | Enable container detection on drag stop |
+| `dataMode` | `'collection' \| 'ephemeral'` | `'collection'` | Data mode — 'ephemeral' skips collection mutations |
 
 ## Events
 
@@ -131,6 +138,7 @@ When `sync` is enabled:
 | `nodeDblClick` | `(nodeId, data)` | Node double-clicked |
 | `nodeMove` | `(nodeId, position)` | Node moved |
 | `edgeClick` | `(edgeId)` | Edge clicked |
+| `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
 
 ## Composables
 
@@ -140,7 +148,7 @@ When `sync` is enabled:
 // Provides flow-specific operations on top of collab sync
 const {
   nodes, connected, synced, error, users,
-  createNode, updateNode, updatePosition, deleteNode,
+  createNode, updateNode, updatePosition, updateContainer, updateDimensions, deleteNode,
   selectNode, updateCursor,
   updateGhostNode, clearGhostNode
 } = useFlowSync({ flowId: 'my-flow', collection: 'decisions' })
@@ -153,6 +161,39 @@ const {
 const { otherUsers, getUsersSelectingNode, getNodePresenceStyle, getUserColor } = useFlowPresence({
   users: computed(() => syncState.users),
   currentUserId: currentUser.id
+})
+```
+
+### useFlowEphemeralData
+
+Converts non-collection items (e.g. Notion pages) to Vue Flow nodes via resolver functions:
+
+```typescript
+const { nodes, edges, getNode, getItem } = useFlowEphemeralData(items, {
+  resolveNodeType: (item) => 'notionCard',
+  resolveLabel: (item) => item.title as string,
+  resolveContainerId: (item) => item.groupId as string | null,
+  resolvePosition: (item) => item.position as { x: number, y: number },
+})
+```
+
+### useFlowContainerDetection
+
+Detects card-over-group overlap on drag stop:
+
+```typescript
+const { handleDragStop, detectContainer } = useFlowContainerDetection({
+  nodeTypeComponents: { resizableGroup: { component: GroupNode, isContainer: true } },
+})
+```
+
+### useFlowGroupManager
+
+Group CRUD, assignments, and auto-grouping:
+
+```typescript
+const { groups, createGroup, removeGroup, renameGroup, getAssignments, autoGroupByProperty } = useFlowGroupManager({
+  groupNodeType: 'resizableGroup',
 })
 ```
 

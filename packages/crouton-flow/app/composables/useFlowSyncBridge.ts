@@ -135,18 +135,38 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
   const syncNodes = computed<Node[]>(() => {
     if (!syncState) return []
 
-    return syncState.nodes.value.map((node: YjsFlowNode) => ({
-      id: node.id,
-      type: 'default',
-      position: node.position,
-      data: {
-        ...node.data,
+    return syncState.nodes.value.map((node: YjsFlowNode) => {
+      const vfNode: Node = {
         id: node.id,
-        title: node.title,
-        parentId: node.parentId
-      },
-      label: node.title
-    }))
+        type: node.nodeType || 'default',
+        position: node.position,
+        data: {
+          ...node.data,
+          id: node.id,
+          title: node.title,
+          parentId: node.parentId
+        },
+        label: node.title
+      }
+
+      // Map containerId to Vue Flow's parentNode
+      if (node.containerId) {
+        vfNode.parentNode = node.containerId
+      }
+
+      // Map dimensions to style
+      if (node.dimensions) {
+        vfNode.style = {
+          ...(node.style || {}),
+          width: `${node.dimensions.width}px`,
+          height: `${node.dimensions.height}px`,
+        }
+      } else if (node.style) {
+        vfNode.style = { ...node.style }
+      }
+
+      return vfNode
+    })
   })
 
   // Clear ghost when a real node appears near ghost position

@@ -106,7 +106,11 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       parentId: data.parentId || null,
       data: data.data || {},
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...(data.nodeType && { nodeType: data.nodeType }),
+      ...(data.containerId !== undefined && { containerId: data.containerId }),
+      ...(data.dimensions && { dimensions: data.dimensions }),
+      ...(data.style && { style: data.style }),
     }
 
     nodesMap.set(id, node)
@@ -136,6 +140,21 @@ export function useFlowSync(options: UseFlowSyncOptions) {
         y: Math.round(position.y)
       }
     })
+  }
+
+  const updateContainer = (id: string, containerId: string | null, position?: { x: number, y: number }): void => {
+    const updates: Partial<YjsFlowNode> = { containerId }
+    if (position) {
+      updates.position = {
+        x: Math.round(position.x),
+        y: Math.round(position.y)
+      }
+    }
+    updateNode(id, updates)
+  }
+
+  const updateDimensions = (id: string, dimensions: { width: number, height: number }): void => {
+    updateNode(id, { dimensions })
   }
 
   const deleteNode = (id: string): void => {
@@ -192,6 +211,8 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     createNode,
     updateNode,
     updatePosition,
+    updateContainer,
+    updateDimensions,
     deleteNode,
     getNode,
 

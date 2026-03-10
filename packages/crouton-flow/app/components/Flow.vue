@@ -6,13 +6,14 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import type { Node, NodeDragEvent } from '@vue-flow/core'
-import type { FlowConfig, FlowPosition } from '../types/flow'
+import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
 import { useFlowSync } from '../composables/useFlowSync'
 import { useFlowDragDrop } from '../composables/useFlowDragDrop'
 import { useFlowSyncBridge } from '../composables/useFlowSyncBridge'
+import { useFlowContainerDetection, type ContainerChangeEvent } from '../composables/useFlowContainerDetection'
 import CroutonFlowNode from './Node.vue'
 import CroutonFlowGhostNode from './GhostNode.vue'
 
@@ -22,10 +23,7 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 
-// Register custom node types for VueFlow
-const nodeTypes = {
-  ghost: markRaw(CroutonFlowGhostNode)
-}
+// Note: nodeTypes is built dynamically below after props are defined
 
 /**
  * CroutonFlow - Main Vue Flow wrapper component
@@ -91,6 +89,12 @@ interface Props {
   allowedCollections?: string[]
   /** Whether to auto-create nodes when items are dropped (default: true in sync mode) */
   autoCreateOnDrop?: boolean
+  /** Custom node type components (key = node type string, value = component + isContainer flag) */
+  nodeTypeComponents?: Record<string, NodeTypeRegistration>
+  /** Container detection options — enable card-over-group overlap detection on drag stop */
+  containerOptions?: FlowContainerOptions
+  /** Data mode: 'collection' (default) or 'ephemeral' (skip collection mutations) */
+  dataMode?: FlowDataMode
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -106,7 +110,8 @@ const props = withDefaults(defineProps<Props>(), {
   sync: false,
   allowDrop: false,
   allowedCollections: () => [],
-  autoCreateOnDrop: true
+  autoCreateOnDrop: true,
+  dataMode: 'collection',
 })
 
 const emit = defineEmits<{
@@ -122,6 +127,8 @@ const emit = defineEmits<{
   selectionChange: [selectedNodeIds: string[]]
   /** Emitted when an item is dropped onto the flow */
   nodeDrop: [item: Record<string, unknown>, position: FlowPosition, collection: string]
+  /** Emitted when a node's container assignment changes (drag into/out of group) */
+  nodeContainerChange: [event: ContainerChangeEvent]
 }>()
 
 // Validate props
@@ -144,6 +151,29 @@ const syncState = props.sync && props.flowId
       flowId: props.flowId,
       collection: props.collection
     })
+  : null
+
+// ============================================
+// DYNAMIC NODE TYPES
+// ============================================
+// Merge built-in ghost type with user-provided node type components
+const nodeTypes = computed(() => {
+  const types: Record<string, any> = {
+    ghost: markRaw(CroutonFlowGhostNode),
+  }
+  if (props.nodeTypeComponents) {
+    for (const [typeName, reg] of Object.entries(props.nodeTypeComponents)) {
+      types[typeName] = markRaw(reg.component)
+    }
+  }
+  return types
+})
+
+// ============================================
+// CONTAINER DETECTION
+// ============================================
+const containerDetection = props.containerOptions?.enabled && props.nodeTypeComponents
+  ? useFlowContainerDetection({ nodeTypeComponents: props.nodeTypeComponents })
   : null
 
 // ============================================
@@ -247,7 +277,10 @@ const layoutAppliedToYjs = ref(false)
 const finalNodes = computed(() => {
   let baseNodes: Node[]
 
-  if (props.sync && syncState) {
+  if (props.dataMode === 'ephemeral') {
+    // Ephemeral mode: rows are pre-built Vue Flow nodes, pass through directly
+    baseNodes = (props.rows || []) as unknown as Node[]
+  } else if (props.sync && syncState) {
     const nodes = syncNodes.value
     const edges = syncEdges.value
     const needsLayoutResult = needsLayout(nodes)
@@ -282,6 +315,10 @@ const finalNodes = computed(() => {
 })
 
 const finalEdges = computed(() => {
+  if (props.dataMode === 'ephemeral') {
+    // Ephemeral mode has no edges (container relationships via parentNode, not edges)
+    return []
+  }
   if (props.sync && syncState) {
     return syncEdges.value
   }
@@ -307,7 +344,7 @@ const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
 
 onNodeDrag(syncDragPosition)
 
-// Handle node drag end - final position sync
+// Handle node drag end - final position sync + container detection
 onNodeDragStop((event: NodeDragEvent) => {
   if (!props.draggable) return
 
@@ -317,9 +354,19 @@ onNodeDragStop((event: NodeDragEvent) => {
     y: Math.round(node.position.y)
   }
 
+  // Container detection (if enabled)
+  if (containerDetection) {
+    const result = containerDetection.handleDragStop(finalNodes.value, event)
+    if (result) {
+      emit('nodeContainerChange', result.change)
+      // In ephemeral mode, the parent manages nodes; don't persist to collection
+      // The event handler is responsible for updating the nodes array
+    }
+  }
+
   if (props.sync && syncState) {
     syncState.updatePosition(node.id, position)
-  } else {
+  } else if (props.dataMode !== 'ephemeral') {
     debouncedUpdate(node.id, position)
   }
 
@@ -328,7 +375,9 @@ onNodeDragStop((event: NodeDragEvent) => {
 
 // Handle node click
 onNodeClick(({ node }) => {
-  if (props.sync && syncState) {
+  if (props.dataMode === 'ephemeral') {
+    emit('nodeClick', node.id, node.data as Record<string, unknown>)
+  } else if (props.sync && syncState) {
     const syncNode = syncState.getNode(node.id)
     if (syncNode) {
       syncState.selectNode(node.id)
@@ -386,9 +435,10 @@ const customNodeComponent = computed(() => {
   return null
 })
 
-// Expose sync state for external access
+// Expose sync state and container detection for external access
 defineExpose({
-  syncState
+  syncState,
+  containerDetection,
 })
 </script>
 
