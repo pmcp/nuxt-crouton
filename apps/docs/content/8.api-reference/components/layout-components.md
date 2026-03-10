@@ -13,7 +13,7 @@ icon: i-lucide-layout-grid
 The unified collection display component that supports multiple layout modes (table, list, grid, cards) with responsive breakpoint support. This is the recommended component for displaying collection data.
 
 ::callout{icon="i-lucide-info" color="blue"}
-**New in v1.5.3**: CroutonCollection replaces CroutonCollection as the primary component for rendering collections, with enhanced features including responsive layouts, custom card components, and improved grid/cards support.
+**CroutonCollection** is the primary component for rendering collections, with responsive layouts, custom card components, and grid/cards support.
 ::
 
 ### Props
