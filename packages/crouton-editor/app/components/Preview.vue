@@ -25,6 +25,31 @@
       </UModal>
     </div>
 
+    <!-- Thumbnail preview (zoomed-out webpage) -->
+    <div
+      v-else-if="mode === 'thumbnail'"
+      class="relative border border-default rounded-lg overflow-hidden bg-default cursor-pointer group"
+      :style="{ width: thumbnailWidth + 'px', height: thumbnailHeight + 'px' }"
+    >
+      <div
+        class="absolute top-0 left-0 origin-top-left prose prose-sm max-w-none dark:prose-invert p-4"
+        :style="{ width: thumbnailInnerWidth + 'px', transform: `scale(${thumbnailScale})` }"
+        v-html="renderedContent"
+      />
+      <div class="absolute inset-0 bg-transparent group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors" />
+      <UModal v-if="expandable" :title="title || 'Content preview'">
+        <template #default="{ open }">
+          <div class="absolute inset-0" @click="open" />
+        </template>
+        <template #body>
+          <div
+            class="prose prose-sm max-w-none dark:prose-invert"
+            v-html="renderedContent"
+          />
+        </template>
+      </UModal>
+    </div>
+
     <!-- Panel preview (full) -->
     <div
       v-else
@@ -88,15 +113,63 @@ function sanitizeHtml(html: string): string {
   return div.innerHTML
 }
 
-// Extract plain text from TipTap JSON document structure
-function extractTextFromTipTap(node: any): string {
+// Render TipTap JSON document to simple HTML for preview
+function renderTipTapToHtml(node: any): string {
   if (!node) return ''
   if (typeof node === 'string') return node
-  if (node.type === 'text') return node.text || ''
-  if (Array.isArray(node.content)) {
-    return node.content.map(extractTextFromTipTap).join(node.type === 'doc' ? '\n' : '')
+
+  // Text node — apply marks
+  if (node.type === 'text') {
+    let html = escapeHtml(node.text || '')
+    if (node.marks) {
+      for (const mark of node.marks) {
+        if (mark.type === 'bold') html = `<strong>${html}</strong>`
+        else if (mark.type === 'italic') html = `<em>${html}</em>`
+        else if (mark.type === 'link') html = `<a href="${escapeHtml(mark.attrs?.href || '#')}">${html}</a>`
+        else if (mark.type === 'underline') html = `<u>${html}</u>`
+        else if (mark.type === 'strike') html = `<s>${html}</s>`
+        else if (mark.type === 'code') html = `<code>${html}</code>`
+      }
+    }
+    return html
   }
-  return ''
+
+  // Block nodes
+  if (node.type === 'imageBlock' || node.type === 'image') {
+    const src = node.attrs?.src || ''
+    const alt = escapeHtml(node.attrs?.alt || '')
+    const caption = node.attrs?.caption
+    let html = `<img src="${escapeHtml(src)}" alt="${alt}" style="max-width:100%;border-radius:0.375rem;" />`
+    if (caption) html += `<p style="font-size:0.75rem;color:var(--ui-text-muted);margin-top:0.25rem;">${escapeHtml(caption)}</p>`
+    return html
+  }
+  if (node.type === 'embedBlock') {
+    const src = node.attrs?.src || ''
+    const height = node.attrs?.height || 300
+    return `<iframe src="${escapeHtml(src)}" style="width:100%;height:${height}px;border:0;border-radius:0.375rem;" allowfullscreen></iframe>`
+  }
+  if (node.type === 'hardBreak') return '<br>'
+
+  // Recurse into children
+  const children = Array.isArray(node.content) ? node.content.map(renderTipTapToHtml).join('') : ''
+
+  // Wrap in appropriate HTML tags
+  switch (node.type) {
+    case 'paragraph': return `<p>${children || '&nbsp;'}</p>`
+    case 'heading': return `<h${node.attrs?.level || 2}>${children}</h${node.attrs?.level || 2}>`
+    case 'blockquote': return `<blockquote>${children}</blockquote>`
+    case 'bulletList': return `<ul>${children}</ul>`
+    case 'orderedList': return `<ol>${children}</ol>`
+    case 'listItem': return `<li>${children}</li>`
+    case 'codeBlock': return `<pre><code>${children}</code></pre>`
+    case 'horizontalRule': return '<hr>'
+    case 'doc': return children
+    default: return children
+  }
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 // Detect if content is TipTap JSON (object or JSON string with {"type":"doc"})
@@ -120,8 +193,14 @@ interface Props {
   values?: Record<string, string>
   /** Variable definitions (for getting sample values) */
   variables?: EditorVariable[]
-  /** Display mode: inline (compact) or panel (full) */
-  mode?: 'inline' | 'panel'
+  /** Display mode: inline (compact), panel (full), or thumbnail (zoomed-out webpage) */
+  mode?: 'inline' | 'panel' | 'thumbnail'
+  /** Thumbnail scale factor (default 0.25 = 25%) */
+  thumbnailScale?: number
+  /** Thumbnail container width in px (default 280) */
+  thumbnailWidth?: number
+  /** Thumbnail container height in px (default 180) */
+  thumbnailHeight?: number
   /** Allow expanding to modal */
   expandable?: boolean
   /** Show variable count in header */
@@ -135,8 +214,16 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   mode: 'panel',
   expandable: true,
-  showVariableCount: true
+  showVariableCount: true,
+  thumbnailScale: 0.25,
+  thumbnailWidth: 280,
+  thumbnailHeight: 180
 })
+
+/**
+ * Computed inner width for thumbnail mode (inverse of scale to fill container)
+ */
+const thumbnailInnerWidth = computed(() => props.thumbnailWidth / props.thumbnailScale)
 
 /**
  * Get sample values from variable definitions
@@ -177,12 +264,10 @@ function decodeEntities(content: string): string {
 const renderedContent = computed(() => {
   if (!props.content) return ''
 
-  // Handle TipTap JSON content — extract text and convert to simple HTML
+  // Handle TipTap JSON content — render to HTML preserving images/embeds
   const tiptapDoc = parseTipTapJson(props.content)
   if (tiptapDoc) {
-    const text = extractTextFromTipTap(tiptapDoc).trim()
-    // Wrap paragraphs in <p> tags for proper prose rendering
-    return text.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')
+    return sanitizeHtml(renderTipTapToHtml(tiptapDoc))
   }
 
   // Decode HTML entities first

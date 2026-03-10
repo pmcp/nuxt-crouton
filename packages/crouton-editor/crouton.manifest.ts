@@ -50,7 +50,7 @@ export const generatorContribution = defineGeneratorContribution({
 
       cellTemplates[field.name] = `
     <template #${field.name}-cell="{ row }">
-      <CroutonEditorPreview :content="${contentAccess}" />
+      <CroutonEditorPreview :content="${contentAccess}" mode="thumbnail" />
     </template>`
     }
 
