@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-flow',
+    '@fyit/crouton-ai',
     // Generated layer must come last
     './layers/thinkgraph'
   ],
