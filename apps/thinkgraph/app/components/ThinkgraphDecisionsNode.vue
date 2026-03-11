@@ -19,6 +19,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const expandFn = inject<(id: string) => void>('thinkgraph:expand', () => {})
 const expandingId = inject<Ref<string | null>>('thinkgraph:expanding', ref(null))
+const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('thinkgraph:copyContext', async () => {})
+const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -70,9 +72,7 @@ function handleEdit(event: Event) {
 function handleAddChild(event: Event) {
   event.stopPropagation()
   if (props.collection && decision.value.id) {
-    open('create', props.collection, [], {
-      defaults: { parentId: decision.value.id }
-    })
+    open('create', props.collection, [], undefined, { parentId: decision.value.id })
   }
 }
 
@@ -80,6 +80,20 @@ function handleExpand(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
     expandFn(decision.value.id)
+  }
+}
+
+function handleCopyContext(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    copyContextFn(decision.value.id)
+  }
+}
+
+function handlePasteChildren(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    openQuickAddFn(decision.value.id)
   }
 }
 
@@ -172,6 +186,20 @@ function toggleStar(event: Event) {
       </button>
       <button
         class="decision-node__action"
+        title="Copy context"
+        @click="handleCopyContext"
+      >
+        <UIcon name="i-lucide-copy" class="size-3.5" />
+      </button>
+      <button
+        class="decision-node__action"
+        title="Paste children"
+        @click="handlePasteChildren"
+      >
+        <UIcon name="i-lucide-clipboard-paste" class="size-3.5" />
+      </button>
+      <button
+        class="decision-node__action"
         title="Add child"
         @click="handleAddChild"
       >
@@ -235,7 +263,8 @@ function toggleStar(event: Event) {
   @apply w-6 h-6 rounded-full flex items-center justify-center;
   @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
   @apply shadow-sm cursor-pointer transition-all duration-150;
-  @apply text-neutral-500 hover:text-primary-500 hover:scale-110;
+  @apply text-neutral-500 hover:scale-110;
+  &:hover { color: var(--color-primary-500); }
 }
 
 .decision-node__action--ai {
