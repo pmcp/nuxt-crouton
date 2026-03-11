@@ -90,6 +90,26 @@ function renderNode(node: TipTapNode): string {
     return `<div class="embed-container"><iframe src="${escapeAttr(src)}" height="${height}" frameborder="0" allowfullscreen></iframe></div>`
   }
 
+  // Mailing list block (Mailchimp form)
+  if (node.type === 'mailingListBlock') {
+    const action = node.attrs?.action || ''
+    const honeypotName = node.attrs?.honeypotName || ''
+    if (!action) return ''
+    return `<div class="mailing-list-block">
+      <form action="${escapeAttr(action)}" method="post" target="_blank">
+        <h2>Subscribe</h2>
+        <div style="display:flex;align-items:end;gap:0.5rem">
+          <div style="flex-grow:1">
+            <label for="mce-EMAIL">Email Address *</label>
+            <input id="mce-EMAIL" type="email" name="EMAIL" required style="width:100%;height:2.5rem;border:1px solid black;padding:0.5rem" />
+          </div>
+          <input type="submit" value="Subscribe" style="height:2.5rem;background:black;color:white;padding:0 1rem;cursor:pointer;border:none" />
+        </div>
+        ${honeypotName ? `<div aria-hidden="true" style="position:absolute;left:-5000px"><input type="text" name="${escapeAttr(honeypotName)}" tabindex="-1" value="" /></div>` : ''}
+      </form>
+    </div>`
+  }
+
   // Recurse into children
   const children = Array.isArray(node.content)
     ? node.content.map(renderNode).join('')
