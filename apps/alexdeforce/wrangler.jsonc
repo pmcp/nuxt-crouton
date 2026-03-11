@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "alexdeforce-db",
-      "database_id": "TODO",
+      "database_id": "46986e9f-5ece-4d51-8203-d8f47214337d",
       "migrations_dir": "server/db/migrations/sqlite"
     }
   ],
