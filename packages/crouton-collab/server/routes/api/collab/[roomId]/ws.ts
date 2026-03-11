@@ -40,15 +40,18 @@ function emitCollabOperation(
  * Only `headers` and basic node shim are needed for auth session/membership checks.
  */
 function createMinimalEvent(request: Request): H3Event {
+  const url = new URL(request.url || '', 'http://localhost')
   return {
     __is_event__: true,
+    path: url.pathname,
     headers: request.headers,
     context: {},
     node: {
       req: {
         headers: Object.fromEntries(request.headers.entries()),
         method: request.method,
-        url: request.url
+        url: request.url,
+        originalUrl: url.pathname + url.search,
       },
       res: {}
     }
