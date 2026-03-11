@@ -8,7 +8,9 @@ export default defineEventHandler(async () => {
     .select({
       id: pagesPages.id,
       title: pagesPages.title,
-      slug: pagesPages.slug
+      slug: pagesPages.slug,
+      pageType: pagesPages.pageType,
+      config: pagesPages.config
     })
     .from(pagesPages)
     .where(and(

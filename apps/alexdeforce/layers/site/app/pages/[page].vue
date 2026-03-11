@@ -10,6 +10,11 @@ if (error.value) {
   throw createError({ status: 404, statusText: 'Page not found' })
 }
 
+// Redirect external link pages
+if (page.value?.pageType === 'core:link' && page.value?.config?.url) {
+  await navigateTo(page.value.config.url, { external: true })
+}
+
 useHead({
   title: page.value?.title ? `${page.value.title} — Alex Deforce` : 'Alex Deforce'
 })
