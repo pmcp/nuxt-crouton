@@ -24,8 +24,8 @@ const categoryLabels: Record<string, string> = {
         :key="article.id"
         :title="article.title"
         :slug="article.id"
-        :category="article.category"
-        :tags="article.tags ? JSON.parse(article.tags) : undefined"
+        :category="article.categorySlug || category"
+        :tags="article.tags"
       />
     </ul>
 
