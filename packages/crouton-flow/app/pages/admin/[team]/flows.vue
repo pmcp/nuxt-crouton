@@ -109,7 +109,15 @@ async function handleCreate() {
   try {
     const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
       method: 'POST',
-      body: { ...createForm },
+      body: {
+        name: createForm.name,
+        description: createForm.description,
+        collection: createForm.collection,
+        labelField: createForm.labelField,
+        parentField: createForm.parentField,
+        positionField: createForm.positionField,
+        syncEnabled: createForm.syncEnabled,
+      },
     })
     isCreateOpen.value = false
     Object.assign(createForm, {
@@ -122,7 +130,9 @@ async function handleCreate() {
       syncEnabled: false,
     })
     // Refresh sidebar list and select the new flow
-    await sidebarRef.value?.refresh()
+    if (typeof sidebarRef.value?.refresh === 'function') {
+      await sidebarRef.value.refresh()
+    }
     if (created?.id) {
       layoutRef.value?.select(created)
     }
@@ -165,10 +175,20 @@ async function handleEdit() {
   try {
     await $fetch(`/api/crouton-flow/teams/${teamId.value}/flows/${selectedFlowId.value}`, {
       method: 'PATCH',
-      body: { ...editForm },
+      body: {
+        name: editForm.name,
+        description: editForm.description,
+        collection: editForm.collection,
+        labelField: editForm.labelField,
+        parentField: editForm.parentField,
+        positionField: editForm.positionField,
+        syncEnabled: editForm.syncEnabled,
+      },
     })
     await refreshFlow()
-    await sidebarRef.value?.refresh()
+    if (typeof sidebarRef.value?.refresh === 'function') {
+      await sidebarRef.value.refresh()
+    }
     isEditOpen.value = false
   } finally {
     editPending.value = false
