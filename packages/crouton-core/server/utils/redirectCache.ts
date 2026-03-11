@@ -53,8 +53,11 @@ async function loadRedirects(): Promise<Map<string, CachedRedirect>> {
       }
     }
   } catch (error) {
-    // DB might not be available yet (e.g., no migrations run) — return empty map
-    console.warn('[crouton:redirects] Could not load redirects:', (error as Error).message)
+    const msg = (error as Error).message || ''
+    // Silently ignore "table not found" — normal for apps that haven't added the migration yet
+    if (!msg.includes('no such table') && !msg.includes('crouton_redirects')) {
+      console.warn('[crouton:redirects] Could not load redirects:', msg)
+    }
   }
 
   return map

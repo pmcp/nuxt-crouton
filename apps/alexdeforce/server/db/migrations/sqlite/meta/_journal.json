@@ -57,6 +57,13 @@
       "when": 1773238231871,
       "tag": "0007_careful_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1741694400000,
+      "tag": "0008_add_crouton_redirects",
+      "breakpoints": true
     }
   ]
 }

@@ -60,12 +60,13 @@ export default defineNuxtConfig({
     // Admin — no caching
     '/admin/**': { headers: { 'cache-control': 'no-store' } },
 
-    // Legacy redirects
-    '/led002': { redirect: '/archive/poezie/tussenbruggen' },
-    '/led001': { redirect: '/archive/poezie/hoek_van_de_laatste_zon' },
-    '/tussenbruggen': { redirect: '/archive/poezie/tussenbruggen' },
-    '/spiritjuweel1': { redirect: '/archive/poezie/spiritjuweel-i-kwart-voor-straks' },
-    '/archief': { redirect: '/archive' }
+    // Legacy redirects — now managed via croutonRedirects collection in admin panel
+    // Seed these via the admin UI or API:
+    // /led002 → /archive/poezie/tussenbruggen
+    // /led001 → /archive/poezie/hoek_van_de_laatste_zon
+    // /tussenbruggen → /archive/poezie/tussenbruggen
+    // /spiritjuweel1 → /archive/poezie/spiritjuweel-i-kwart-voor-straks
+    // /archief → /archive
   },
 
   nitro: {
