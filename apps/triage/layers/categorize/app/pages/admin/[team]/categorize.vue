@@ -1335,8 +1335,8 @@ async function saveToNotion() {
             v-model:rows="nodes"
             collection="categorize"
             data-mode="ephemeral"
+            sync
             :flow-id="canvasFlowId"
-            :saved-positions="canvasSavedPositions"
             :node-type-components="nodeTypeComponents"
             :container-options="{ enabled: true }"
             :controls="true"
@@ -1802,7 +1802,6 @@ async function saveToNotion() {
         </div>
       </template>
     </UModal>
-  </div>
 </template>
 
 <style scoped>
