@@ -128,6 +128,9 @@
         "sortField": "Sort Field",
         "sortFieldHelp": "e.g. title, order",
         "sortOrder": "Sort Order",
+        "groupBy": "Group By",
+        "groupByHelp": "Group items by a reference field (e.g. category). Items are grouped by the referenced record's title.",
+        "groupByPlaceholder": "e.g. category",
         "selectCollection": "Select a collection..."
       }
     },

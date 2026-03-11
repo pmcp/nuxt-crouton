@@ -379,6 +379,14 @@ const binderSortOrder = computed({
   }
 })
 
+// Binder groupBy config
+const binderGroupBy = computed({
+  get: () => (state.value.config as any)?.groupBy as string || '',
+  set: (val: string) => {
+    state.value.config = { ...state.value.config, groupBy: val || null }
+  }
+})
+
 // Available collections for the binder picker
 const collectionOptions = computed(() =>
   Object.keys(collections.configs).map(name => {
@@ -928,6 +936,14 @@ defineExpose({ state })
             />
           </UFormField>
         </div>
+        <UFormField :label="t('pages.editor.binder.groupBy')" name="config.groupBy" :help="t('pages.editor.binder.groupByHelp')">
+          <UInput
+            v-model="binderGroupBy"
+            :placeholder="t('pages.editor.binder.groupByPlaceholder')"
+            size="sm"
+            class="w-full"
+          />
+        </UFormField>
       </div>
 
       <!-- Content -->

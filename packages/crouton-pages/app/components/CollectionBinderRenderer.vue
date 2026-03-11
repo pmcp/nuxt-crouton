@@ -72,6 +72,7 @@ const binderBasePath = computed(() => {
 
 const sortField = computed(() => props.page.config?.sortField as string || null)
 const sortOrder = computed(() => props.page.config?.sortOrder as string || 'asc')
+const groupByField = computed(() => props.page.config?.groupBy as string || null)
 
 const { data: listResponse, status: listStatus } = await useFetch<any>(() => {
   if (isItemView.value || !teamId || !apiPath.value) return null as any
@@ -109,6 +110,77 @@ function getItemValue(item: Record<string, any>, field: string): string | null {
   if (enVal) return String(enVal)
   return null
 }
+
+// ── GROUPBY SUPPORT ──────────────────────────────────────────────────────
+
+// Resolve the referenced collection for groupBy (e.g. "category" → collection config for categories)
+const groupByRefCollection = computed(() => {
+  if (!groupByField.value || !collectionName.value) return null
+  const config = colConfig.value
+  if (!config?.references) return null
+  return config.references[groupByField.value] || null
+})
+
+// Fetch group reference records when groupBy is active
+const groupByRefApiPath = computed(() => {
+  if (!groupByRefCollection.value) return null
+  const refConfig = collections.getConfig(groupByRefCollection.value)
+  return refConfig?.apiPath || null
+})
+
+const { data: groupRefData } = await useFetch<any>(() => {
+  if (!groupByRefApiPath.value || !teamId) return null as any
+  return `/api/teams/${teamId}/${groupByRefApiPath.value}`
+}, {
+  watch: [groupByRefApiPath]
+})
+
+// Build a map of reference ID → display label
+const groupLabels = computed<Map<string, { label: string; order: number }>>(
+  () => {
+    const map = new Map<string, { label: string; order: number }>()
+    if (!groupRefData.value) return map
+    const items = groupRefData.value?.items || groupRefData.value
+    if (!Array.isArray(items)) return map
+    for (const item of items) {
+      const label = getItemValue(item, 'title') || getItemValue(item, 'name') || item.id
+      map.set(item.id, { label, order: item.order ?? 0 })
+    }
+    return map
+  }
+)
+
+// Group items by the groupBy field value
+interface GroupedSection {
+  key: string
+  label: string
+  order: number
+  items: Record<string, any>[]
+}
+
+const groupedItems = computed<GroupedSection[]>(() => {
+  if (!groupByField.value || listItems.value.length === 0) return []
+
+  const groups = new Map<string, GroupedSection>()
+
+  for (const item of listItems.value) {
+    const groupKey = item[groupByField.value] as string || '_ungrouped'
+    if (!groups.has(groupKey)) {
+      const ref = groupLabels.value.get(groupKey)
+      groups.set(groupKey, {
+        key: groupKey,
+        label: ref?.label || groupKey,
+        order: ref?.order ?? 999,
+        items: []
+      })
+    }
+    groups.get(groupKey)!.items.push(item)
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.order - b.order)
+})
+
+const hasGroups = computed(() => groupByField.value && groupedItems.value.length > 0)
 
 // ── ITEM DETAIL MODE ───────────────────────────────────────────────────────
 
@@ -235,7 +307,44 @@ const { t } = useT()
           <p class="text-muted">No items found in this collection.</p>
         </div>
 
-        <!-- Item grid -->
+        <!-- Grouped item grid -->
+        <template v-else-if="hasGroups">
+          <div v-for="group in groupedItems" :key="group.key" class="mb-10 last:mb-0">
+            <h2 class="text-2xl font-bold mb-5">{{ group.label }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <NuxtLink
+                v-for="item in group.items"
+                :key="item.id"
+                :to="`${binderBasePath}/${item.id}`"
+                class="group block rounded-xl border border-default bg-background hover:bg-elevated transition-colors overflow-hidden"
+              >
+                <div
+                  v-if="imageField && item[imageField]"
+                  class="aspect-[16/9] overflow-hidden bg-muted"
+                >
+                  <img
+                    :src="item[imageField]"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    alt=""
+                  />
+                </div>
+                <div class="p-4">
+                  <UBadge v-if="badgeField && item[badgeField]" variant="subtle" size="xs" class="mb-2">
+                    {{ item[badgeField] }}
+                  </UBadge>
+                  <h3 class="font-semibold text-default group-hover:text-primary transition-colors">
+                    {{ getItemValue(item, titleField) || 'Untitled' }}
+                  </h3>
+                  <p v-if="subtitleField" class="text-sm text-muted mt-1 line-clamp-2">
+                    {{ getItemValue(item, subtitleField) }}
+                  </p>
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </template>
+
+        <!-- Ungrouped item grid -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <NuxtLink
             v-for="item in listItems"
