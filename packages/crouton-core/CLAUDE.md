@@ -64,6 +64,7 @@ export default defineNuxtConfig({
 | `app/components/ExportButton.vue` | Ready-to-use export dropdown button |
 | `app/components/ImportButton.vue` | Ready-to-use import button with file picker |
 | `app/components/ImportPreviewModal.vue` | Multi-step import preview with mapping, validation, and progress |
+| `app/components/WorkspaceLayout.vue` | `CroutonWorkspaceLayout` — Reusable split-panel workspace shell (resizable sidebar + content, state machine, URL sync, mobile slideover, keyboard shortcuts). Used by crouton-pages and crouton-flow. |
 | `app/composables/useTeamContext.ts` | Team context access (teamId, teamSlug from route or auth) |
 | `app/composables/useImageCrop.ts` | Cropperjs v2 composable for image cropping |
 | `app/components/ImageCropper.vue` | Reusable image crop modal with rotate/zoom/aspect ratio |

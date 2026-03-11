@@ -26,9 +26,8 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 | `server/database/migrations/0002_flow_configs.sql` | SQL migration for flow_configs |
 | `server/database/migrations/0003_flow_node_positions.sql` | Add node_positions column |
 | `server/api/crouton-flow/teams/[id]/flows/` | CRUD API for flow configs |
-| `app/pages/admin/[team]/flows.vue` | Admin section parent layout |
-| `app/pages/admin/[team]/flows/index.vue` | Flow list with create modal |
-| `app/pages/admin/[team]/flows/[flowId].vue` | Full-screen canvas view |
+| `app/pages/admin/[team]/flows.vue` | Flows workspace — split-panel layout using CroutonWorkspaceLayout (sidebar list + canvas) |
+| `app/components/Workspace/Sidebar.vue` | `CroutonFlowWorkspaceSidebar` — searchable flow list with badges and context menus |
 | `server/durable-objects/FlowRoom.ts` | **DEPRECATED** - Use CollabRoom |
 | `server/routes/api/flow/[flowId]/ws.ts` | **DEPRECATED** - Use collab endpoint |
 
