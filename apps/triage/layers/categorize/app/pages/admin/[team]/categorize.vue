@@ -4,7 +4,6 @@ import type { Node } from '@vue-flow/core'
 import { LAYOUT_ACTION_KEY } from '../../../utils/layoutAction'
 import NotionCardNode from '../../../components/NotionCardNode.vue'
 import ResizableGroupNode from '../../../components/ResizableGroupNode.vue'
-import LayoutCardRaw from '../../../components/CategorizeCategorizeLayoutsCard.vue'
 
 interface ContainerChangeEvent {
   nodeId: string
@@ -15,8 +14,11 @@ interface ContainerChangeEvent {
 
 definePageMeta({ layout: 'admin' })
 
-const LayoutCard = markRaw(LayoutCardRaw)
 const { teamId } = useTeamContext()
+
+// Workspace layout ref
+const layoutRef = ref<{ select: (item: any) => void; create: () => void; focusSearch: () => void } | null>(null)
+const selectedLayoutId = ref<string | null>(null)
 const toast = useToast()
 
 // ─── Connected accounts ───
@@ -70,17 +72,10 @@ const loadingDatabases = ref(false)
 const categoryProperty = ref('')
 const schema = ref<Record<string, { type: string; options?: { name: string }[] }>>({})
 
-// ─── View mode ───
-type ViewMode = 'list' | 'setup' | 'canvas'
-const viewMode = ref<ViewMode>('list')
-
-// ─── Layout action handler (provided to card components) ───
-const layoutActionHandler = ref<((action: 'view' | 'delete', ids?: string[]) => void) | null>(null)
-
-// Provide before any await (Vue requirement)
-provide(LAYOUT_ACTION_KEY, (action: 'view' | 'delete', ids?: string[]) => {
-  layoutActionHandler.value?.(action, ids)
-})
+// ─── View mode (driven by workspace layout) ───
+// 'view' = nothing selected, 'create' = setup form, 'edit' = canvas loaded
+// We track canvas-loaded state separately since workspace 'edit' means a layout is selected
+const canvasLoaded = ref(false)
 
 // ─── Saved layouts (via collection query) ───
 const { items: savedLayouts, pending: loadingLayouts, refresh: refreshLayouts } = await useCollectionQuery('categorizeCategorizeLayouts')
@@ -94,6 +89,9 @@ async function loadFromSavedLayout(layout: any) {
 
   loading.value = true
   try {
+    // Ensure flow config for position persistence
+    await ensureFlowConfig(`categorize:${layout.databaseId}`)
+
     const [schemaRes, pagesRes] = await Promise.all([
       $fetch<any>(`/api/crouton-triage/teams/${teamId.value}/notion/schema/${layout.databaseId}`, {
         query: { accountId: layout.accountId },
@@ -113,7 +111,7 @@ async function loadFromSavedLayout(layout: any) {
       buildNodesWithAutoGroup()
     }
 
-    viewMode.value = 'canvas'
+    canvasLoaded.value = true
     toast.add({ title: `Loaded ${pages.value.length} cards`, color: 'success' })
   }
   catch (error: any) {
@@ -141,15 +139,22 @@ async function deleteSavedLayout(layoutId: string) {
   }
 }
 
-// Wire up the layout action handler (after async setup)
-layoutActionHandler.value = (action, ids) => {
-  if (action === 'view' && ids?.[0]) {
-    const layout = savedLayouts.value.find((l: any) => l.id === ids[0])
-    if (layout) loadFromSavedLayout(layout)
-  }
-  else if (action === 'delete' && ids?.[0]) {
-    deleteSavedLayout(ids[0])
-  }
+// ─── Workspace helpers ───
+function handleSelectLayout(layout: any) {
+  selectedLayoutId.value = layout.id
+  layoutRef.value?.select(layout)
+  loadFromSavedLayout(layout)
+}
+
+function handleCreateLayout() {
+  canvasLoaded.value = false
+  selectedAccountId.value = null
+  databaseId.value = ''
+  categoryProperty.value = ''
+  existingLayoutId.value = null
+  pages.value = []
+  nodes.value = []
+  layoutRef.value?.create()
 }
 
 // ─── Data state ───
@@ -159,6 +164,43 @@ const saving = ref(false)
 
 // ─── Layout persistence ───
 const existingLayoutId = ref<string | null>(null)
+
+// ─── Flow position persistence ───
+const canvasFlowId = ref<string | null>(null)
+const canvasSavedPositions = ref<Record<string, { x: number; y: number }> | null>(null)
+
+async function ensureFlowConfig(name: string) {
+  const teamIdVal = teamId.value
+  if (!teamIdVal) return
+
+  // Try to find existing flow config for this categorize canvas
+  try {
+    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamIdVal}/flows`, {
+      query: { collection: 'categorize', name },
+    })
+    const existing = flows?.find((f: any) => f.name === name && f.collection === 'categorize')
+    if (existing) {
+      canvasFlowId.value = existing.id
+      canvasSavedPositions.value = existing.nodePositions || null
+      return
+    }
+  }
+  catch { /* no existing flow config */ }
+
+  // Create one
+  try {
+    const created = await $fetch<any>(`/api/crouton-flow/teams/${teamIdVal}/flows`, {
+      method: 'POST',
+      body: { name, collection: 'categorize', labelField: 'title', parentField: 'parentId', positionField: 'position' },
+    })
+    if (created?.id) {
+      canvasFlowId.value = created.id
+    }
+  }
+  catch (e) {
+    console.warn('[categorize] Failed to create flow config for position persistence:', e)
+  }
+}
 
 // ─── Card detail slideover ───
 const selectedCard = ref<any>(null)
@@ -438,6 +480,9 @@ async function loadPages() {
       categoryProperty.value = writableProperties.value[0]!.value
     }
 
+    // Ensure flow config exists for position persistence
+    await ensureFlowConfig(`categorize:${databaseId.value}`)
+
     // Check for a saved layout
     try {
       const savedLayout = await $fetch<any>(`/api/teams/${teamId.value}/categorize-categorize-layouts`, {
@@ -449,7 +494,7 @@ async function loadPages() {
           categoryProperty.value = savedLayout.categoryProperty
         }
         restoreFromLayout(savedLayout.layout)
-        viewMode.value = 'canvas'
+        canvasLoaded.value = true
         toast.add({ title: `Loaded ${pages.value.length} cards (layout restored)`, color: 'success' })
         return
       }
@@ -460,7 +505,7 @@ async function loadPages() {
 
     // Build nodes — auto-group by existing values
     buildNodesWithAutoGroup()
-    viewMode.value = 'canvas'
+    canvasLoaded.value = true
 
     toast.add({ title: `Loaded ${pages.value.length} cards`, color: 'success' })
   }
@@ -634,13 +679,13 @@ function restoreFromLayout(layout: { groups: any[]; cards: any[] }) {
 
 // ─── Re-group when category property or filters change ───
 watch(categoryProperty, () => {
-  if (viewMode.value === 'canvas' && pages.value.length > 0) {
+  if (canvasLoaded.value && pages.value.length > 0) {
     buildNodesWithAutoGroup()
   }
 })
 
 watch(hiddenValues, () => {
-  if (viewMode.value === 'canvas' && pages.value.length > 0) {
+  if (canvasLoaded.value && pages.value.length > 0) {
     buildNodesWithAutoGroup()
   }
 }, { deep: true })
@@ -922,138 +967,129 @@ async function saveToNotion() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full overflow-hidden">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-3">
-        <UButton
-          v-if="viewMode === 'canvas'"
-          icon="i-lucide-arrow-left"
-          size="sm"
-          variant="ghost"
-          @click="viewMode = 'list'"
-        />
-        <div>
-          <h1 class="text-xl font-semibold">
-            Notion Categorizer
-          </h1>
-          <p class="text-sm text-gray-500 mt-0.5">
-            Pull cards from Notion, group them visually, push categories back
-          </p>
-        </div>
-      </div>
+  <CroutonWorkspaceLayout
+    ref="layoutRef"
+    v-model="selectedLayoutId"
+    query-param="layout"
+    title="Categorize"
+    sidebar-id="categorize-sidebar"
+    :create-shortcut="false"
+  >
+    <!-- Sidebar actions -->
+    <template #sidebar-actions>
+      <UButton
+        color="primary"
+        variant="ghost"
+        icon="i-lucide-plus"
+        size="sm"
+        @click="handleCreateLayout"
+      />
+    </template>
 
-      <div v-if="viewMode === 'canvas'" class="flex items-center gap-3">
-        <!-- View tabs -->
-        <div class="flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
-          <button
-            class="px-3 py-1 text-sm rounded-md transition-colors"
-            :class="activeTab === 'canvas' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
-            @click="activeTab = 'canvas'"
-          >
-            Canvas
-          </button>
-          <button
-            class="px-3 py-1 text-sm rounded-md transition-colors"
-            :class="activeTab === 'insights' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
-            @click="activeTab = 'insights'"
-          >
-            Insights
-          </button>
+    <!-- Sidebar: saved layouts list -->
+    <template #sidebar="{ selectedId }">
+      <div class="flex flex-col h-full">
+        <!-- Loading -->
+        <div v-if="loadingLayouts" class="p-3 space-y-2">
+          <USkeleton class="h-16 w-full" />
+          <USkeleton class="h-16 w-full" />
+          <USkeleton class="h-16 w-full" />
         </div>
 
-        <USeparator orientation="vertical" class="h-6" />
-
-        <span class="text-sm text-gray-500">
-          {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining<template v-if="activeFilterCount > 0"> ({{ pages.length - filteredPages.length }} hidden)</template>
-        </span>
-        <UButton
-          icon="i-lucide-plus"
-          size="sm"
-          variant="soft"
-          @click="showGroupModal = true"
+        <!-- Empty -->
+        <div
+          v-else-if="!savedLayouts.length"
+          class="p-6 text-center text-muted flex-1"
         >
-          Add Group
-        </UButton>
-        <UButton
-          icon="i-lucide-cloud-upload"
-          size="sm"
-          :loading="saving"
-          :disabled="assignments.length === 0 || !categoryProperty"
-          @click="saveToNotion"
-        >
-          Save to Notion
-        </UButton>
-      </div>
-    </div>
-
-    <!-- Saved layouts list -->
-    <div v-if="viewMode === 'list'" class="flex-1 overflow-auto">
-      <CroutonCollection
-        layout="grid"
-        collection="categorizeCategorizeLayouts"
-        :rows="savedLayouts"
-        :loading="loadingLayouts"
-        :card-component="LayoutCard"
-      >
-        <template #header>
-          <div class="flex items-center justify-between px-4 py-3 border-b border-default">
-            <span class="text-sm text-muted">
-              {{ savedLayouts.length }} saved {{ savedLayouts.length === 1 ? 'layout' : 'layouts' }}
-            </span>
-            <UButton
-              icon="i-lucide-plus"
-              size="sm"
-              @click="viewMode = 'setup'"
-            >
-              New
-            </UButton>
-          </div>
-        </template>
-      </CroutonCollection>
-
-      <!-- Empty state when no saved layouts -->
-      <div v-if="!loadingLayouts && savedLayouts.length === 0" class="flex flex-col items-center justify-center py-16 px-6">
-        <UIcon name="i-lucide-layout-grid" class="size-12 text-muted/40 mb-4" />
-        <h3 class="text-lg font-medium text-default mb-1">
-          No saved layouts yet
-        </h3>
-        <p class="text-sm text-muted mb-4">
-          Connect a Notion database and start categorizing cards
-        </p>
-        <UButton
-          icon="i-lucide-plus"
-          @click="viewMode = 'setup'"
-        >
-          New Layout
-        </UButton>
-      </div>
-    </div>
-
-    <!-- Setup form (new layout) -->
-    <div v-else-if="viewMode === 'setup'" class="flex-1 flex items-center justify-center">
-      <div class="w-full max-w-lg space-y-4 px-6">
-        <div class="flex items-center gap-2 mb-2">
+          <UIcon name="i-lucide-layout-grid" class="size-8 mb-2 opacity-50" />
+          <p class="text-sm">No saved layouts yet</p>
           <UButton
-            icon="i-lucide-arrow-left"
             size="sm"
-            variant="ghost"
-            @click="viewMode = 'list'"
-          />
-          <span class="text-sm font-medium">New Layout</span>
+            color="primary"
+            variant="soft"
+            class="mt-3"
+            @click="handleCreateLayout"
+          >
+            New Layout
+          </UButton>
         </div>
 
-        <!-- Account picker -->
-        <UFormField label="Notion Account">
-          <div class="flex gap-2">
-            <USelect
-              v-model="selectedAccountId"
-              :items="accountItems"
-              placeholder="Select account..."
-              value-key="value"
-              class="flex-1"
-            />
-            <UButton
+        <!-- Layout list -->
+        <div v-else class="flex-1 overflow-auto">
+          <ul role="list" class="divide-y divide-default">
+            <li
+              v-for="layout in savedLayouts"
+              :key="layout.id"
+              class="group px-4 py-3 cursor-pointer transition-colors"
+              :class="[
+                selectedId === layout.id
+                  ? 'bg-primary/10 border-l-2 border-primary'
+                  : 'hover:bg-muted/50 border-l-2 border-transparent'
+              ]"
+              @click="handleSelectLayout(layout)"
+            >
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-default truncate">
+                    {{ layout.name || 'Untitled Layout' }}
+                  </p>
+                  <div class="flex items-center gap-2 mt-0.5 text-xs text-muted">
+                    <span>{{ layout.layout?.groups?.length || 0 }} groups</span>
+                    <span>{{ layout.layout?.cards?.length || 0 }} cards</span>
+                  </div>
+                </div>
+                <UButton
+                  icon="i-lucide-trash-2"
+                  size="xs"
+                  variant="ghost"
+                  color="error"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  @click.stop="deleteSavedLayout(layout.id)"
+                />
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Create button at bottom -->
+        <div class="shrink-0 border-t border-default p-4">
+          <UButton
+            color="primary"
+            variant="soft"
+            size="sm"
+            icon="i-lucide-plus"
+            block
+            @click="handleCreateLayout"
+          >
+            New Layout
+          </UButton>
+        </div>
+      </div>
+    </template>
+
+    <!-- Content panel -->
+    <template #content="{ mode }">
+      <div class="flex flex-col h-full w-full overflow-hidden">
+        <!-- Setup form (create mode — before canvas is loaded) -->
+        <template v-if="mode === 'create' || (mode === 'edit' && !canvasLoaded && !loading)">
+          <div class="flex-1 flex items-center justify-center">
+            <div class="w-full max-w-lg space-y-4 px-6">
+              <div class="mb-2">
+                <span class="text-sm font-medium">New Layout</span>
+                <p class="text-xs text-muted mt-0.5">Connect a Notion database and load cards</p>
+              </div>
+
+              <!-- Account picker -->
+              <UFormField label="Notion Account">
+                <div class="flex gap-2">
+                  <USelect
+                    v-model="selectedAccountId"
+                    :items="accountItems"
+                    placeholder="Select account..."
+                    value-key="value"
+                    class="flex-1"
+                  />
+                  <UButton
               icon="i-lucide-plus"
               variant="soft"
               @click="showConnectModal = true"
@@ -1073,20 +1109,75 @@ async function saveToNotion() {
           />
         </UFormField>
 
-        <UButton
-          block
-          :loading="loading"
-          :disabled="!databaseId || !authParams"
-          @click="loadPages"
-        >
-          Load Cards
-        </UButton>
-      </div>
-    </div>
+              <UButton
+                block
+                :loading="loading"
+                :disabled="!databaseId || !authParams"
+                @click="loadPages"
+              >
+                Load Cards
+              </UButton>
+            </div>
+          </div>
+        </template>
 
-    <!-- Canvas content -->
-    <template v-else>
-      <!-- Canvas tab -->
+        <!-- Loading state -->
+        <div v-else-if="loading" class="flex-1 flex items-center justify-center">
+          <UIcon name="i-lucide-loader-2" class="size-6 text-muted animate-spin" />
+        </div>
+
+        <!-- Canvas content (loaded) -->
+        <template v-else>
+          <!-- Canvas header toolbar -->
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-default bg-default shrink-0">
+            <div class="flex items-center gap-3">
+              <!-- View tabs -->
+              <div class="flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
+                <button
+                  class="px-3 py-1 text-sm rounded-md transition-colors"
+                  :class="activeTab === 'canvas' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
+                  @click="activeTab = 'canvas'"
+                >
+                  Canvas
+                </button>
+                <button
+                  class="px-3 py-1 text-sm rounded-md transition-colors"
+                  :class="activeTab === 'insights' ? 'bg-white dark:bg-gray-700 shadow-sm font-medium' : 'text-gray-500 hover:text-gray-700'"
+                  @click="activeTab = 'insights'"
+                >
+                  Insights
+                </button>
+              </div>
+
+              <USeparator orientation="vertical" class="h-4" />
+
+              <span class="text-sm text-muted">
+                {{ assignments.length }} categorized / {{ uncategorizedCount }} remaining<template v-if="activeFilterCount > 0"> ({{ pages.length - filteredPages.length }} hidden)</template>
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-plus"
+                size="sm"
+                variant="soft"
+                @click="showGroupModal = true"
+              >
+                Add Group
+              </UButton>
+              <UButton
+                icon="i-lucide-cloud-upload"
+                size="sm"
+                :loading="saving"
+                :disabled="assignments.length === 0 || !categoryProperty"
+                @click="saveToNotion"
+              >
+                Save to Notion
+              </UButton>
+            </div>
+          </div>
+
+          <!-- Canvas tab -->
       <div v-show="activeTab === 'canvas'" class="flex flex-col flex-1 min-h-0">
       <!-- Property selector + group chips -->
       <div class="flex items-center gap-4 px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
@@ -1239,6 +1330,23 @@ async function saveToNotion() {
       <div class="flex-1 min-h-0">
         <ClientOnly>
           <CroutonFlow
+            v-if="canvasFlowId"
+            :key="canvasFlowId"
+            v-model:rows="nodes"
+            collection="categorize"
+            data-mode="ephemeral"
+            :flow-id="canvasFlowId"
+            :saved-positions="canvasSavedPositions"
+            :node-type-components="nodeTypeComponents"
+            :container-options="{ enabled: true }"
+            :controls="true"
+            :minimap="false"
+            :fit-view-on-mount="true"
+            @node-click="handleNodeClick"
+            @node-container-change="handleContainerChange"
+          />
+          <CroutonFlow
+            v-else
             v-model:rows="nodes"
             collection="categorize"
             data-mode="ephemeral"
@@ -1425,7 +1533,28 @@ async function saveToNotion() {
           </p>
         </div>
       </div>
+        </template>
+      </div>
     </template>
+
+    <!-- Empty state -->
+    <template #empty>
+      <div class="flex-1 flex items-center justify-center text-muted">
+        <div class="text-center max-w-md px-6">
+          <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-lucide-layout-grid" class="size-8 text-muted" />
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Notion Categorizer</h3>
+          <p class="text-sm text-muted mb-6">
+            Select a saved layout from the sidebar, or create a new one to pull cards from Notion and group them visually.
+          </p>
+          <UButton color="primary" icon="i-lucide-plus" @click="handleCreateLayout">
+            New Layout
+          </UButton>
+        </div>
+      </div>
+    </template>
+  </CroutonWorkspaceLayout>
 
     <!-- Card detail slideover -->
     <USlideover v-model:open="showCardDetail">
