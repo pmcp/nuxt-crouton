@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch, markRaw } from 'vue'
+import { ref, computed, watch, markRaw, provide } from 'vue'
 import type { Node } from '@vue-flow/core'
+import { LAYOUT_ACTION_KEY } from '../../../utils/layoutAction'
 import NotionCardNode from '../../../components/NotionCardNode.vue'
 import ResizableGroupNode from '../../../components/ResizableGroupNode.vue'
+import LayoutCardRaw from '../../../components/CategorizeCategorizeLayoutsCard.vue'
 
 interface ContainerChangeEvent {
   nodeId: string
@@ -13,6 +15,7 @@ interface ContainerChangeEvent {
 
 definePageMeta({ layout: 'admin' })
 
+const LayoutCard = markRaw(LayoutCardRaw)
 const { teamId } = useTeamContext()
 const toast = useToast()
 
@@ -67,11 +70,92 @@ const loadingDatabases = ref(false)
 const categoryProperty = ref('')
 const schema = ref<Record<string, { type: string; options?: { name: string }[] }>>({})
 
+// ─── View mode ───
+type ViewMode = 'list' | 'setup' | 'canvas'
+const viewMode = ref<ViewMode>('list')
+
+// ─── Layout action handler (provided to card components) ───
+const layoutActionHandler = ref<((action: 'view' | 'delete', ids?: string[]) => void) | null>(null)
+
+// Provide before any await (Vue requirement)
+provide(LAYOUT_ACTION_KEY, (action: 'view' | 'delete', ids?: string[]) => {
+  layoutActionHandler.value?.(action, ids)
+})
+
+// ─── Saved layouts (via collection query) ───
+const { items: savedLayouts, pending: loadingLayouts, refresh: refreshLayouts } = await useCollectionQuery('categorizeCategorizeLayouts')
+
+
+async function loadFromSavedLayout(layout: any) {
+  selectedAccountId.value = layout.accountId
+  databaseId.value = layout.databaseId
+  categoryProperty.value = layout.categoryProperty || ''
+  existingLayoutId.value = layout.id
+
+  loading.value = true
+  try {
+    const [schemaRes, pagesRes] = await Promise.all([
+      $fetch<any>(`/api/crouton-triage/teams/${teamId.value}/notion/schema/${layout.databaseId}`, {
+        query: { accountId: layout.accountId },
+      }),
+      $fetch<any>(`/api/teams/${teamId.value}/notion/database/${layout.databaseId}/pages`, {
+        query: { accountId: layout.accountId },
+      }),
+    ])
+
+    schema.value = schemaRes.properties || {}
+    pages.value = pagesRes.pages || []
+
+    if (layout.layout) {
+      restoreFromLayout(layout.layout)
+    }
+    else {
+      buildNodesWithAutoGroup()
+    }
+
+    viewMode.value = 'canvas'
+    toast.add({ title: `Loaded ${pages.value.length} cards`, color: 'success' })
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Failed to load',
+      description: error.data?.statusText || error.message,
+      color: 'error',
+    })
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+async function deleteSavedLayout(layoutId: string) {
+  try {
+    await $fetch(`/api/teams/${teamId.value}/categorize-categorize-layouts/${layoutId}`, {
+      method: 'DELETE',
+    })
+    await refreshLayouts()
+    toast.add({ title: 'Layout deleted', color: 'success' })
+  }
+  catch (error: any) {
+    toast.add({ title: 'Failed to delete', description: error.data?.statusText || error.message, color: 'error' })
+  }
+}
+
+// Wire up the layout action handler (after async setup)
+layoutActionHandler.value = (action, ids) => {
+  if (action === 'view' && ids?.[0]) {
+    const layout = savedLayouts.value.find((l: any) => l.id === ids[0])
+    if (layout) loadFromSavedLayout(layout)
+  }
+  else if (action === 'delete' && ids?.[0]) {
+    deleteSavedLayout(ids[0])
+  }
+}
+
 // ─── Data state ───
 const pages = ref<any[]>([])
 const loading = ref(false)
 const saving = ref(false)
-const loaded = ref(false)
 
 // ─── Layout persistence ───
 const existingLayoutId = ref<string | null>(null)
@@ -365,7 +449,7 @@ async function loadPages() {
           categoryProperty.value = savedLayout.categoryProperty
         }
         restoreFromLayout(savedLayout.layout)
-        loaded.value = true
+        viewMode.value = 'canvas'
         toast.add({ title: `Loaded ${pages.value.length} cards (layout restored)`, color: 'success' })
         return
       }
@@ -376,7 +460,7 @@ async function loadPages() {
 
     // Build nodes — auto-group by existing values
     buildNodesWithAutoGroup()
-    loaded.value = true
+    viewMode.value = 'canvas'
 
     toast.add({ title: `Loaded ${pages.value.length} cards`, color: 'success' })
   }
@@ -550,13 +634,13 @@ function restoreFromLayout(layout: { groups: any[]; cards: any[] }) {
 
 // ─── Re-group when category property or filters change ───
 watch(categoryProperty, () => {
-  if (loaded.value && pages.value.length > 0) {
+  if (viewMode.value === 'canvas' && pages.value.length > 0) {
     buildNodesWithAutoGroup()
   }
 })
 
 watch(hiddenValues, () => {
-  if (loaded.value && pages.value.length > 0) {
+  if (viewMode.value === 'canvas' && pages.value.length > 0) {
     buildNodesWithAutoGroup()
   }
 }, { deep: true })
@@ -813,6 +897,7 @@ async function saveToNotion() {
         }
       }
       toast.add({ title: 'Canvas layout saved', color: 'success' })
+      refreshLayouts()
     }
     catch (layoutError: any) {
       console.warn('[categorize] Failed to save layout:', layoutError)
@@ -840,16 +925,25 @@ async function saveToNotion() {
   <div class="flex flex-col h-full w-full overflow-hidden">
     <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-      <div>
-        <h1 class="text-xl font-semibold">
-          Notion Categorizer
-        </h1>
-        <p class="text-sm text-gray-500 mt-0.5">
-          Pull cards from Notion, group them visually, push categories back
-        </p>
+      <div class="flex items-center gap-3">
+        <UButton
+          v-if="viewMode === 'canvas'"
+          icon="i-lucide-arrow-left"
+          size="sm"
+          variant="ghost"
+          @click="viewMode = 'list'"
+        />
+        <div>
+          <h1 class="text-xl font-semibold">
+            Notion Categorizer
+          </h1>
+          <p class="text-sm text-gray-500 mt-0.5">
+            Pull cards from Notion, group them visually, push categories back
+          </p>
+        </div>
       </div>
 
-      <div v-if="loaded" class="flex items-center gap-3">
+      <div v-if="viewMode === 'canvas'" class="flex items-center gap-3">
         <!-- View tabs -->
         <div class="flex items-center rounded-lg bg-gray-100 dark:bg-gray-800 p-0.5">
           <button
@@ -893,9 +987,62 @@ async function saveToNotion() {
       </div>
     </div>
 
-    <!-- Setup form (before loading) -->
-    <div v-if="!loaded" class="flex-1 flex items-center justify-center">
+    <!-- Saved layouts list -->
+    <div v-if="viewMode === 'list'" class="flex-1 overflow-auto">
+      <CroutonCollection
+        layout="grid"
+        collection="categorizeCategorizeLayouts"
+        :rows="savedLayouts"
+        :loading="loadingLayouts"
+        :card-component="LayoutCard"
+      >
+        <template #header>
+          <div class="flex items-center justify-between px-4 py-3 border-b border-default">
+            <span class="text-sm text-muted">
+              {{ savedLayouts.length }} saved {{ savedLayouts.length === 1 ? 'layout' : 'layouts' }}
+            </span>
+            <UButton
+              icon="i-lucide-plus"
+              size="sm"
+              @click="viewMode = 'setup'"
+            >
+              New
+            </UButton>
+          </div>
+        </template>
+      </CroutonCollection>
+
+      <!-- Empty state when no saved layouts -->
+      <div v-if="!loadingLayouts && savedLayouts.length === 0" class="flex flex-col items-center justify-center py-16 px-6">
+        <UIcon name="i-lucide-layout-grid" class="size-12 text-muted/40 mb-4" />
+        <h3 class="text-lg font-medium text-default mb-1">
+          No saved layouts yet
+        </h3>
+        <p class="text-sm text-muted mb-4">
+          Connect a Notion database and start categorizing cards
+        </p>
+        <UButton
+          icon="i-lucide-plus"
+          @click="viewMode = 'setup'"
+        >
+          New Layout
+        </UButton>
+      </div>
+    </div>
+
+    <!-- Setup form (new layout) -->
+    <div v-else-if="viewMode === 'setup'" class="flex-1 flex items-center justify-center">
       <div class="w-full max-w-lg space-y-4 px-6">
+        <div class="flex items-center gap-2 mb-2">
+          <UButton
+            icon="i-lucide-arrow-left"
+            size="sm"
+            variant="ghost"
+            @click="viewMode = 'list'"
+          />
+          <span class="text-sm font-medium">New Layout</span>
+        </div>
+
         <!-- Account picker -->
         <UFormField label="Notion Account">
           <div class="flex gap-2">
@@ -937,7 +1084,7 @@ async function saveToNotion() {
       </div>
     </div>
 
-    <!-- Loaded content -->
+    <!-- Canvas content -->
     <template v-else>
       <!-- Canvas tab -->
       <div v-show="activeTab === 'canvas'" class="flex flex-col flex-1 min-h-0">
@@ -1092,7 +1239,7 @@ async function saveToNotion() {
       <div class="flex-1 min-h-0">
         <ClientOnly>
           <CroutonFlow
-            :rows="nodes"
+            v-model:rows="nodes"
             collection="categorize"
             data-mode="ephemeral"
             :node-type-components="nodeTypeComponents"
