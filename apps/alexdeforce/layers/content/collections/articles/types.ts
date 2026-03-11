@@ -28,6 +28,7 @@ export interface ContentArticle {
   teamId: string
   owner: string
   title: string
+  slug: string
   date: Date | null
   category: string
   content?: string

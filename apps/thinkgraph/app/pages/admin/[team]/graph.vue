@@ -16,6 +16,10 @@ const expanding = ref<string | null>(null)
 const showQuickAdd = ref(false)
 const quickAddParentId = ref<string | undefined>()
 
+// Layout key — only increment when we want a full dagre re-layout
+// (e.g. after AI expand adds multiple nodes at once)
+const layoutKey = ref(0)
+
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
 function addRootDecision() {
@@ -35,6 +39,8 @@ async function expandWithAI(decisionId: string) {
       method: 'POST'
     })
     await refresh()
+    // Force re-layout after AI adds multiple nodes
+    layoutKey.value++
   } catch (error) {
     console.error('AI expand failed:', error)
   } finally {
@@ -50,6 +56,8 @@ function openQuickAdd(parentId?: string) {
 async function onQuickAddDone() {
   showQuickAdd.value = false
   await refresh()
+  // Force re-layout after bulk paste
+  layoutKey.value++
 }
 
 // Provide functions to child nodes
@@ -89,7 +97,7 @@ provide('thinkgraph:openQuickAdd', openQuickAdd)
     <div class="flex-1">
       <CroutonFlow
         v-if="decisions?.length"
-        :key="decisions.length"
+        :key="layoutKey"
         :rows="decisions"
         collection="thinkgraphDecisions"
         parent-field="parentId"
