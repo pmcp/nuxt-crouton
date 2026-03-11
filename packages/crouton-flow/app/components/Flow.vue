@@ -256,7 +256,7 @@ const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 // 2. collection mode without flowId → PATCH collection row's position field
 // 3. ephemeral without flowId → no persistence
 const { debouncedUpdate } = (props.flowId && !props.sync)
-  ? useFlowPositionStore(props.flowId)
+  ? useFlowPositionStore(props.flowId!)
   : (props.dataMode !== 'ephemeral')
     ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
     : { debouncedUpdate: () => {} }
@@ -293,13 +293,28 @@ const layoutedNodes = computed(() => {
 // ============================================
 
 const layoutAppliedToYjs = ref(false)
+const ephemeralPositionsApplied = ref(false)
 
 const finalNodes = computed(() => {
   let baseNodes: Node[]
 
   if (props.dataMode === 'ephemeral') {
-    // Ephemeral mode: rows are pre-built Vue Flow nodes, pass through directly
-    baseNodes = (props.rows || []) as unknown as Node[]
+    // Ephemeral mode: rows are pre-built Vue Flow nodes
+    // Apply saved positions only on initial load (before any drag interaction)
+    let ephemeralNodes = (props.rows || []) as unknown as Node[]
+    if (props.savedPositions && !ephemeralPositionsApplied.value) {
+      ephemeralNodes = ephemeralNodes.map((node) => {
+        const saved = props.savedPositions![node.id]
+        if (saved) {
+          return { ...node, position: saved }
+        }
+        return node
+      })
+      if (ephemeralNodes.length > 0) {
+        ephemeralPositionsApplied.value = true
+      }
+    }
+    baseNodes = ephemeralNodes
   } else if (props.sync && syncState) {
     const nodes = syncNodes.value
     const edges = syncEdges.value
