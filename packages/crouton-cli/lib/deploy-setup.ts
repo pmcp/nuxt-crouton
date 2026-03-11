@@ -50,12 +50,31 @@ function createD1(name: string, cwd: string): string | null {
       || output.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/)
     return idMatch?.[1] || null
   } catch (error: any) {
-    // Database might already exist
+    // Database might already exist — look up its ID
     if (error.message.includes('already exists')) {
-      consola.warn(`D1 database "${name}" already exists — skipping creation`)
-      return null
+      consola.warn(`D1 database "${name}" already exists — looking up ID`)
+      return lookupD1Id(name, cwd)
     }
     throw error
+  }
+}
+
+/**
+ * Look up a D1 database ID by name from `wrangler d1 list`
+ */
+function lookupD1Id(name: string, cwd: string): string | null {
+  try {
+    const output = wrangler('d1 list', cwd)
+    // Match the line containing the database name and extract the UUID before it
+    for (const line of output.split('\n')) {
+      if (line.includes(name)) {
+        const idMatch = line.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/)
+        if (idMatch) return idMatch[1]
+      }
+    }
+    return null
+  } catch {
+    return null
   }
 }
 
@@ -123,28 +142,48 @@ function setPageSecret(projectName: string, key: string, value: string, cwd: str
 }
 
 /**
- * Update wrangler.toml with real resource IDs
+ * Update wrangler config with real resource IDs (supports .toml, .jsonc, .json)
  */
-async function updateWranglerToml(
+async function updateWranglerConfig(
   appDir: string,
-  updates: { d1Id?: string; kvId?: string; stagingD1Id?: string; stagingKvId?: string; withStaging: boolean },
+  updates: { d1Id?: string; kvId?: string },
 ): Promise<void> {
-  const filePath = join(appDir, 'wrangler.toml')
-  if (!await pathExists(filePath)) return
+  // Try each format in order of preference
+  for (const ext of ['jsonc', 'json', 'toml'] as const) {
+    const filePath = join(appDir, `wrangler.${ext}`)
+    if (!await pathExists(filePath)) continue
 
-  let content = await readFile(filePath, 'utf-8')
+    let content = await readFile(filePath, 'utf-8')
 
-  // Replace first placeholder ID with production D1
-  if (updates.d1Id) {
-    content = content.replace(/database_id\s*=\s*"TODO_REPLACE_WITH_REAL_ID"/, `database_id = "${updates.d1Id}"`)
+    if (updates.d1Id) {
+      // Replace placeholder D1 IDs (TODO, TODO_REPLACE_WITH_REAL_ID, empty)
+      content = content.replace(
+        /"database_id"\s*:\s*"(TODO[^"]*|)"/,
+        `"database_id": "${updates.d1Id}"`,
+      )
+      // Also handle TOML format
+      content = content.replace(
+        /database_id\s*=\s*"(TODO[^"]*|)"/,
+        `database_id = "${updates.d1Id}"`,
+      )
+    }
+
+    if (updates.kvId) {
+      // Replace KV placeholder IDs
+      content = content.replace(
+        /"id"\s*:\s*"(TODO[^"]*|)"/,
+        `"id": "${updates.kvId}"`,
+      )
+      content = content.replace(
+        /id\s*=\s*"(TODO[^"]*|)"/,
+        `id = "${updates.kvId}"`,
+      )
+    }
+
+    await writeFile(filePath, content, 'utf-8')
+    consola.success(`Updated ${ext} config with resource IDs`)
+    return
   }
-
-  // Replace KV placeholder
-  if (updates.kvId) {
-    content = content.replace(/id\s*=\s*"TODO_REPLACE_WITH_REAL_ID"/, `id = "${updates.kvId}"`)
-  }
-
-  await writeFile(filePath, content, 'utf-8')
 }
 
 /**
@@ -350,6 +389,8 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
   // ── 3. Create Pages project and set secrets ─────────────────────────
 
   const projectName = pagesProjectName || config.name
+  let pagesProjectReady = false
+  let secretsSet = false
 
   if (!dryRun) {
     const s = p.spinner()
@@ -359,27 +400,36 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
     try {
       ensurePagesProject(projectName, appDir)
       s.stop(`Pages project "${projectName}" ready`)
-    } catch {
-      s.stop(`Could not create Pages project — set secrets manually after first deploy`)
+      pagesProjectReady = true
+    } catch (error: any) {
+      s.stop(`Could not create Pages project`)
+      consola.warn(`Reason: ${error.message}`)
+      consola.info('The project will be created on first deploy. Set secrets after:')
+      console.log(`  npx wrangler pages secret put BETTER_AUTH_SECRET --project-name ${projectName}`)
+      console.log(`  npx wrangler pages secret put BETTER_AUTH_URL --project-name ${projectName}`)
     }
 
-    // Generate and set BETTER_AUTH_SECRET
-    const authSecret = randomBytes(32).toString('hex')
-    s.start('Setting BETTER_AUTH_SECRET')
-    try {
-      setPageSecret(projectName, 'BETTER_AUTH_SECRET', authSecret, appDir)
-      s.stop('BETTER_AUTH_SECRET set')
-    } catch {
-      s.stop('Could not set BETTER_AUTH_SECRET — set manually')
-    }
+    // Only set secrets if the Pages project exists
+    if (pagesProjectReady) {
+      const authSecret = randomBytes(32).toString('hex')
+      s.start('Setting BETTER_AUTH_SECRET')
+      try {
+        setPageSecret(projectName, 'BETTER_AUTH_SECRET', authSecret, appDir)
+        s.stop('BETTER_AUTH_SECRET set')
+      } catch (error: any) {
+        s.stop('Could not set BETTER_AUTH_SECRET')
+        consola.warn(`Reason: ${error.message}`)
+      }
 
-    // Set BETTER_AUTH_URL
-    s.start('Setting BETTER_AUTH_URL')
-    try {
-      setPageSecret(projectName, 'BETTER_AUTH_URL', productionUrl as string, appDir)
-      s.stop('BETTER_AUTH_URL set')
-    } catch {
-      s.stop('Could not set BETTER_AUTH_URL — set manually')
+      s.start('Setting BETTER_AUTH_URL')
+      try {
+        setPageSecret(projectName, 'BETTER_AUTH_URL', productionUrl as string, appDir)
+        s.stop('BETTER_AUTH_URL set')
+        secretsSet = true
+      } catch (error: any) {
+        s.stop('Could not set BETTER_AUTH_URL')
+        consola.warn(`Reason: ${error.message}`)
+      }
     }
   } else {
     consola.info('Would set secrets:')
@@ -412,8 +462,8 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
         true,
       )
     } else if (d1Id || kvId) {
-      // Just update existing wrangler.toml with new IDs
-      await updateWranglerToml(appDir, { d1Id: d1Id || undefined, kvId: kvId || undefined, withStaging: false })
+      // Update existing wrangler config with new IDs (any format)
+      await updateWranglerConfig(appDir, { d1Id: d1Id || undefined, kvId: kvId || undefined })
     }
   }
 
@@ -481,22 +531,40 @@ export async function deploySetup(appDir: string, options: DeploySetupOptions = 
 
   // ── 6. Print remaining secrets checklist ─────────────────────────────
 
-  p.note(
-    [
-      'BETTER_AUTH_SECRET and BETTER_AUTH_URL were set automatically.',
+  const checklist = []
+
+  if (secretsSet) {
+    checklist.push('✓ BETTER_AUTH_SECRET and BETTER_AUTH_URL were set automatically.')
+  } else if (!pagesProjectReady) {
+    checklist.push(
+      '⚠ Pages project not yet created — secrets must be set after first deploy:',
       '',
-      'Ensure these GitHub repository secrets exist:',
+      `  npx wrangler pages secret put BETTER_AUTH_SECRET --project-name ${projectName}`,
+      `  npx wrangler pages secret put BETTER_AUTH_URL --project-name ${projectName}`,
+    )
+  } else {
+    checklist.push(
+      '⚠ Secrets could not be set. Set them manually:',
       '',
-      '  CLOUDFLARE_ACCOUNT_ID    — Your Cloudflare account ID',
-      '  CLOUDFLARE_API_TOKEN     — API token with Pages + D1 + R2 permissions',
-      '',
-      'Optional Cloudflare Pages secrets (if features are enabled):',
-      '',
-      `  npx wrangler pages secret put NUXT_ANTHROPIC_API_KEY --project-name ${projectName}`,
-      `  npx wrangler pages secret put NUXT_EMAIL_RESEND_API_KEY --project-name ${projectName}`,
-    ].join('\n'),
-    'Remaining Checklist',
+      `  npx wrangler pages secret put BETTER_AUTH_SECRET --project-name ${projectName}`,
+      `  npx wrangler pages secret put BETTER_AUTH_URL --project-name ${projectName}`,
+    )
+  }
+
+  checklist.push(
+    '',
+    'Ensure these GitHub repository secrets exist:',
+    '',
+    '  CLOUDFLARE_ACCOUNT_ID    — Your Cloudflare account ID',
+    '  CLOUDFLARE_API_TOKEN     — API token with Pages + D1 + R2 permissions',
+    '',
+    'Optional Cloudflare Pages secrets (if features are enabled):',
+    '',
+    `  npx wrangler pages secret put NUXT_ANTHROPIC_API_KEY --project-name ${projectName}`,
+    `  npx wrangler pages secret put NUXT_EMAIL_RESEND_API_KEY --project-name ${projectName}`,
   )
+
+  p.note(checklist.join('\n'), 'Remaining Checklist')
 
   p.outro('Deploy setup complete! Run `npx crouton deploy-check` to validate.')
 }
