@@ -5,7 +5,7 @@ const links = [
   { to: '/', label: 'nu', match: (path: string) => path === '/' },
   { to: '/agenda', label: 'Agenda', match: (path: string) => path.includes('/agenda') },
   { to: '/totnutoe', label: 'Tot Nu Toe', match: (path: string) => path.includes('/totnutoe') },
-  { to: '/archive', label: 'Archief', match: (path: string) => path.includes('/archive') }
+  { to: '/archive/poezie', label: 'Archief', match: (path: string) => path.includes('/archive') }
 ]
 </script>
 

@@ -67,10 +67,11 @@ html.dark, html.dark body,
   transform: rotate(180deg);
 }
 
-/* Router active link */
+/* Router active link — #mainGrid specificity needed to override nav color */
+#mainGrid a.router-link-active,
 a.router-link-active {
   background-color: black;
-  color: white;
+  color: white !important;
   border: none;
 }
 
