@@ -1,0 +1,68 @@
+/**
+ * In-memory redirect cache for fast path matching.
+ *
+ * Loads all active redirects from the database into a Map<fromPath, { toPath, statusCode }>.
+ * Invalidated when redirects are created, updated, or deleted via the API.
+ */
+
+interface CachedRedirect {
+  toPath: string
+  statusCode: string
+}
+
+let redirectMap: Map<string, CachedRedirect> | null = null
+let loading: Promise<Map<string, CachedRedirect>> | null = null
+
+/**
+ * Get the redirect map, loading from DB if not cached.
+ * Uses a loading promise to prevent thundering herd on concurrent requests.
+ */
+export async function getRedirectMap(): Promise<Map<string, CachedRedirect>> {
+  if (redirectMap) {
+    return redirectMap
+  }
+
+  // Prevent concurrent loads
+  if (loading) {
+    return loading
+  }
+
+  loading = loadRedirects()
+  try {
+    redirectMap = await loading
+    return redirectMap
+  } finally {
+    loading = null
+  }
+}
+
+async function loadRedirects(): Promise<Map<string, CachedRedirect>> {
+  const map = new Map<string, CachedRedirect>()
+
+  try {
+    const { getActiveCroutonRedirects } = await import('../database/queries/redirects')
+    const rows = await getActiveCroutonRedirects()
+
+    for (const row of rows) {
+      // First redirect for a path wins (shouldn't have duplicates due to unique index)
+      if (!map.has(row.fromPath)) {
+        map.set(row.fromPath, {
+          toPath: row.toPath,
+          statusCode: row.statusCode
+        })
+      }
+    }
+  } catch (error) {
+    // DB might not be available yet (e.g., no migrations run) — return empty map
+    console.warn('[crouton:redirects] Could not load redirects:', (error as Error).message)
+  }
+
+  return map
+}
+
+/**
+ * Invalidate the redirect cache. Called after create/update/delete operations.
+ */
+export function invalidateRedirectCache(): void {
+  redirectMap = null
+}

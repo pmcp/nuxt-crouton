@@ -76,6 +76,15 @@ export default defineNuxtConfig({
 | `server/routes/images/[pathname].get.ts` | Image serving with cache headers |
 | `app/components/stubs/` | No-op stubs (`priority: -1`) for optional package components |
 | `app/composables/useCroutonApps.ts` | App registry — `hasApp('assets')` for optional package detection |
+| `app/composables/useCroutonRedirects.ts` | Built-in redirects collection config, Zod schema, columns |
+| `app/components/RedirectsList.vue` | `CroutonRedirectsList` — Admin list with path display and status badge |
+| `app/components/RedirectsForm.vue` | `CroutonRedirectsForm` — Create/edit form for redirects |
+| `server/middleware/redirects.ts` | Server middleware — matches incoming paths against active redirects |
+| `server/utils/redirectCache.ts` | In-memory redirect cache with thundering herd protection |
+| `server/database/schema/redirects.ts` | Drizzle schema for `crouton_redirects` table |
+| `server/database/queries/redirects.ts` | CRUD queries + `getActiveCroutonRedirects()` for cache |
+| `server/api/teams/[id]/crouton-redirects/` | Team-scoped CRUD API for managing redirects |
+| `types/redirects.ts` | `CroutonRedirect`, `CroutonRedirectFormData`, `NewCroutonRedirect` types |
 
 ## Architecture
 
@@ -206,6 +215,22 @@ const { formatShortcut } = useCroutonShortcuts({
 // Display shortcut hints
 <UButton>New <CroutonShortcutHint :shortcut="formatShortcut('create')" subtle /></UButton>
 ```
+
+## Built-in Redirects Collection
+
+Core includes a built-in `croutonRedirects` collection for managing URL redirects from the admin panel. Auto-registered via `app/app.config.ts`.
+
+**Fields:** `fromPath`, `toPath`, `statusCode` (301/302), `isActive` (boolean)
+
+**Server middleware** (`server/middleware/redirects.ts`) runs on every request, skips `/api/`, `/admin/`, `/_nuxt/`, `/auth/` paths, and performs exact path matching against cached active redirects.
+
+**Cache** (`server/utils/redirectCache.ts`) loads all active redirects into memory on first request. Invalidated automatically on create/update/delete via the API.
+
+**App setup:** Apps must export the schema in their `server/db/schema.ts`:
+```typescript
+export { croutonRedirects } from '@fyit/crouton-core/server/database/schema/redirects'
+```
+Then run `db:generate` and `db:migrate`.
 
 ## Common Tasks
 
