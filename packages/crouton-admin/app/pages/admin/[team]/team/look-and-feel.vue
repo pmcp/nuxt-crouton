@@ -38,6 +38,8 @@ const { isAdmin } = useTeam()
       <TeamThemeSettings />
       <USeparator />
       <TeamFaviconSettings />
+      <USeparator />
+      <TeamSiteInfoSettings />
     </div>
   </div>
 </template>

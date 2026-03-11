@@ -528,6 +528,23 @@ export interface TeamSiteSettings {
   publicSiteEnabled?: boolean
   /** Blob pathname for custom team favicon (e.g. "team-123/favicon.png") */
   favicon?: string
+  /** Contact email address */
+  contactEmail?: string
+  /** Newsletter signup URL */
+  newsletterUrl?: string
+  /** Calendar/schedule URL (e.g. iCal, Google Calendar) */
+  calendarUrl?: string
+  /** Registration/enrollment URL */
+  registrationUrl?: string
+  /** Social media links */
+  socialLinks?: {
+    facebook?: string
+    instagram?: string
+    youtube?: string
+    linkedin?: string
+    twitter?: string
+    tiktok?: string
+  }
 }
 
 /**

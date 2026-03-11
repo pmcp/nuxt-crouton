@@ -12,7 +12,19 @@ import { teamSettings, type TeamSiteSettings } from '@fyit/crouton-auth/server/d
 // Validation schema for site settings
 const siteSettingsSchema = z.object({
   publicSiteEnabled: z.boolean().optional(),
-  favicon: z.string().optional()
+  favicon: z.string().optional(),
+  contactEmail: z.string().email().optional().or(z.literal('')),
+  newsletterUrl: z.string().url().optional().or(z.literal('')),
+  calendarUrl: z.string().url().optional().or(z.literal('')),
+  registrationUrl: z.string().url().optional().or(z.literal('')),
+  socialLinks: z.object({
+    facebook: z.string().optional(),
+    instagram: z.string().optional(),
+    youtube: z.string().optional(),
+    linkedin: z.string().optional(),
+    twitter: z.string().optional(),
+    tiktok: z.string().optional()
+  }).optional()
 })
 
 export default defineEventHandler(async (event) => {
