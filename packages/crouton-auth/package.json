@@ -23,9 +23,8 @@
       "types": "./server/utils/team-auth.ts"
     },
     "./server/database/schema/auth": {
-      "types": "./dist/schema/auth.d.ts",
-      "import": "./dist/schema/auth.mjs",
-      "require": "./dist/schema/auth.cjs"
+      "import": "./server/database/schema/auth.ts",
+      "types": "./server/database/schema/auth.ts"
     },
     "./server/utils/useServerAuth": {
       "import": "./server/utils/useServerAuth.ts",
