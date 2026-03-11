@@ -1,0 +1,43 @@
+{
+  "name": "@fyit/crouton-audio",
+  "version": "0.1.0",
+  "description": "Audio player layer for Crouton with waveform visualization (wraps WaveSurfer.js)",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "app",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "audio",
+    "wavesurfer",
+    "waveform",
+    "player"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-audio"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "wavesurfer.js": "^7.12.2"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-core": "workspace:*",
+    "@nuxt/icon": "^1.0.0",
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^4.0.0"
+  }
+}
