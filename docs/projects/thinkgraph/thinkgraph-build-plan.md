@@ -1,4 +1,4 @@
-# ThinkGraph — Build Plan
+# ThinkGraph — Build Plan (Revised)
 
 ## One-liner
 
@@ -10,15 +10,11 @@ Your thinking belongs to you. Branch, explore, and merge ideas across any AI.
 
 When working with AI on complex problems:
 
-1. **Context pollution** — Conversations get messy. You go too far down one path and can't get back cleanly. You'd want to "save your place" and try another direction without losing the original.
-
-2. **Ideas get lost** — You say "not now" to a v2 idea and it disappears forever. There's no structured way to park future ideas while staying focused on v1.
-
-3. **Thinking is trapped** — Your insights are locked in ChatGPT's history, or Claude's, or scattered across both. No portability.
-
-4. **Starting over** — When you revisit an old project, you start from zero. The reasoning that led to decisions is gone.
-
-5. **No cross-AI workflow** — You might want Claude for deep analysis, Gemini for creative divergence, Cursor for prototyping. But they don't share context.
+1. **Context pollution** — Conversations get messy. You go too far down one path and can't get back cleanly.
+2. **Ideas get lost** — You say "not now" to a v2 idea and it disappears forever.
+3. **Thinking is trapped** — Your insights are locked in ChatGPT's history, or Claude's, or scattered across both.
+4. **Starting over** — When you revisit an old project, the reasoning that led to decisions is gone.
+5. **No cross-AI workflow** — You want Claude for analysis, Gemini for divergence, Cursor for prototyping. They don't share context.
 
 ---
 
@@ -37,656 +33,506 @@ A **visual thinking graph** where:
 
 ---
 
-## Key Resources
+## What Crouton Already Provides
 
-### nuxt-crouton (the framework we're building on)
+This plan was originally written when crouton was minimal. Now the framework provides most of the infrastructure out of the box:
 
-- **GitHub**: https://github.com/pmcp/nuxt-crouton
-- **Docs**: https://github.com/pmcp/crouton-docs (or https://crouton-docs.vercel.app)
-- **What it is**: Nuxt 3 layers for instant CRUD functionality
-- **Key packages**:
-  - `@fyit/crouton` — base CRUD layer
-  - `@fyit/crouton-collection-generator` — CLI to scaffold collections
+| Capability | Package | What you get |
+|---|---|---|
+| CRUD APIs + validation | **crouton-core** | `useCollectionQuery/Mutation`, team-scoped endpoints |
+| Graph visualization | **crouton-flow** | `<CroutonFlow />` with Vue Flow, dagre auto-layout, controls, minimap |
+| Real-time sync | **crouton-collab** (via crouton-flow) | Yjs CRDTs, WebSocket rooms, conflict resolution |
+| Presence & cursors | **crouton-collab** | `<CollabPresence />`, `<CollabCursors />`, `<CollabStatus />` |
+| Auth + teams | **crouton-auth** | Better Auth, team context, sessions |
+| AI integration | **crouton-ai** | `useChat()`, multi-provider (Claude, GPT, Gemini) |
+| Rich text editing | **crouton-editor** | TipTap with blocks, slash commands, variables |
+| Collection scaffolding | **crouton-cli** | Full CRUD generation from JSON schema |
+| Position persistence | **crouton-flow** | `useFlowPositionStore()` + `flow_configs` table |
+| Drag-and-drop | **crouton-flow** | `useFlowDragDrop()` for external items onto canvas |
+| Custom nodes | **crouton-flow** | Auto-resolves `[Collection]Node.vue` components |
+| Container grouping | **crouton-flow** | `useFlowGroupManager()`, `useFlowContainerDetection()` |
 
-### llm CLI (Simon Willison's tool)
-
-- **GitHub**: https://github.com/simonw/llm
-- **Docs**: https://llm.datasette.io/en/stable/
-- **What it is**: CLI tool to talk to any LLM (Claude, GPT, Gemini, local models)
-- **Why it matters**:
-  - Auto-logs all prompts/responses to SQLite
-  - Plugin system for different AI providers
-  - Tool/function support — AI can call your code
-  - Conversation continuity with `llm -c`
-- **Install**: `pip install llm` or `brew install llm`
-- **Example**:
-  ```bash
-  llm keys set anthropic  # paste API key
-  llm -m claude-4-opus "Explore auth patterns"
-  llm -c "Go deeper on OAuth"  # continues conversation
-  ```
-
-### Vue-flow (graph visualization)
-
-- **Docs**: https://vueflow.dev/
-- **What it is**: Vue 3 component for node-based graph UIs
-- **Install**: `npm install @vue-flow/core`
-
-### Yjs (real-time sync)
-
-- **Docs**: https://docs.yjs.dev/
-- **What it is**: CRDT-based real-time collaboration
-- **Why it matters**: Multiple agents/tabs can update the graph simultaneously
-
-### Dagre (graph layout)
-
-- **What it is**: Automatic tree/DAG layout algorithm
-- **Use with Vue-flow**: `@vue-flow/layout` package
-
----
-
-## Inspiration
-
-### Simon Willison's approach
-
-From https://simonw.substack.com/p/building-a-tool-to-copy-paste-share:
-
-- **Single HTML file tools** — No build step, just works
-- **Combine existing pieces** — Reference existing code, let AI figure out the integration
-- **Reduce friction incrementally** — Don't build perfect, build useful
-- **GitHub Gists as storage** — Free, authenticated, shareable
-- **Unix philosophy** — Small tools that pipe together
-
-### ChatGPT branching (what exists)
-
-ChatGPT added "branch conversations" in Sept 2025. But:
-- Locked to ChatGPT only
-- No merging across branches
-- Can't select pieces from different branches
-- No portable context
-
-ThinkGraph goes further: cross-AI, mergeable, portable.
-
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         ThinkGraph                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │   llm CLI    │    │  Paste Input │    │  MCP Server  │      │
-│  │ (auto-logs)  │    │  (fallback)  │    │ (Cursor etc) │      │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘      │
-│         │                   │                   │               │
-│         └───────────────────┼───────────────────┘               │
-│                             ▼                                   │
-│                   ┌──────────────────┐                          │
-│                   │  Decision Parser │                          │
-│                   └────────┬─────────┘                          │
-│                            ▼                                    │
-│                   ┌──────────────────┐                          │
-│                   │   Yjs Document   │ ← real-time sync         │
-│                   │  (shared graph)  │                          │
-│                   └────────┬─────────┘                          │
-│                            ▼                                    │
-│                   ┌──────────────────┐                          │
-│                   │    SQLite DB     │ ← persistence            │
-│                   │  (nuxt-crouton)  │                          │
-│                   └────────┬─────────┘                          │
-│                            ▼                                    │
-│                   ┌──────────────────┐                          │
-│                   │   Vue-flow UI    │                          │
-│                   │  (graph view)    │                          │
-│                   └──────────────────┘                          │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Input Methods (Auto + Fallback)
-
-| Method | When it works | How |
-|--------|---------------|-----|
-| **llm CLI** | Terminal workflows | Auto-logs to SQLite, extract decisions |
-| **llm tool** | llm with `--functions` | AI calls `log_decision()` directly |
-| **MCP Server** | Cursor, Claude Code | Tool integration |
-| **Paste input** | claude.ai, ChatGPT, Gemini web | Manual fallback, parses `DECISION:` blocks |
-| **Claude Code logs** | After sessions | Import from `~/.claude/projects/*.jsonl` |
-
-**Principle:** Automatic where possible, paste fallback where not. Same destination, different entry points.
+**Bottom line:** The infrastructure is done. The work is building ThinkGraph-specific UX on top.
 
 ---
 
 ## Stack
 
 | Layer | Technology | Notes |
-|-------|------------|-------|
-| Framework | Nuxt 3 + nuxt-crouton | Crouton provides instant CRUD |
-| Database | SQLite | Via nuxt-crouton, file-based |
-| Real-time sync | Yjs | For multi-agent/multi-tab |
-| Graph UI | Vue-flow + dagre | Node-based visualization |
-| AI interface | `llm` CLI | Simon Willison's tool |
-
-### nuxt-crouton setup
-
-```bash
-# Install the layers
-pnpm add @fyit/crouton
-
-# For collection generator CLI
-pnpm add -D @fyit/crouton-collection-generator
-```
-
-**nuxt.config.ts:**
-```typescript
-export default defineNuxtConfig({
-  extends: [
-    '@fyit/crouton'
-  ]
-})
-```
-
-**Generate collections:**
-```bash
-# Use the generator CLI to scaffold CRUD for decisions
-pnpm crouton generate decisions
-
-# This creates:
-# - components/decisions/...
-# - pages/decisions/...
-# - server/api/decisions/...
-# - database schema
-```
-
-Check the nuxt-crouton docs for the exact collection schema format the generator expects.
+|---|---|---|
+| Framework | Nuxt + crouton ecosystem | Extends crouton, crouton-flow, crouton-ai |
+| Database | SQLite (local) / D1 (Cloudflare) | Via NuxtHub, team-scoped |
+| Graph UI | crouton-flow (Vue Flow + dagre) | `<CroutonFlow />` with custom node |
+| Real-time | crouton-collab (Yjs) | Comes free with crouton-flow |
+| AI interface | crouton-ai + `llm` CLI | Multi-provider chat + CLI log import |
+| Hosting | Cloudflare Pages | GitHub CI + Wrangler |
 
 ---
 
 ## Data Model
 
-### decisions
+### decisions (crouton collection schema)
 
-```sql
-CREATE TABLE decisions (
-  id TEXT PRIMARY KEY,
-  content TEXT NOT NULL,
-  type TEXT DEFAULT 'insight',      -- idea, insight, decision, question
-  path_type TEXT,                   -- diverge, deep_dive, prototype, converge, validate, park
-  starred INTEGER DEFAULT 0,
-  branch_name TEXT DEFAULT 'main',
-  version_tag TEXT DEFAULT 'v1',    -- v1, v2, v3, extra
-  parent_id TEXT,                   -- tree structure
-  source TEXT,                      -- 'llm', 'paste', 'mcp', 'import'
-  model TEXT,                       -- which AI model created this
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (parent_id) REFERENCES decisions(id)
-);
+```json
+{
+  "content": {
+    "type": "text",
+    "meta": {
+      "required": true,
+      "label": "Content",
+      "description": "The decision or insight text",
+      "area": "main",
+      "group": "details"
+    }
+  },
+  "nodeType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "insight",
+      "label": "Type",
+      "description": "idea, insight, decision, question",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "pathType": {
+    "type": "string",
+    "meta": {
+      "label": "Path Type",
+      "description": "diverge, deep_dive, prototype, converge, validate, park",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "starred": {
+    "type": "boolean",
+    "meta": {
+      "default": false,
+      "label": "Starred",
+      "description": "Marked as valuable insight",
+      "area": "sidebar",
+      "group": "classification"
+    }
+  },
+  "branchName": {
+    "type": "string",
+    "meta": {
+      "default": "main",
+      "label": "Branch",
+      "description": "Exploration branch name",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "versionTag": {
+    "type": "string",
+    "meta": {
+      "default": "v1",
+      "label": "Version",
+      "description": "v1, v2, v3, parked",
+      "area": "sidebar",
+      "group": "structure",
+      "displayAs": "badge"
+    }
+  },
+  "parentId": {
+    "type": "string",
+    "meta": {
+      "label": "Parent Decision",
+      "description": "Parent node for tree structure",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "source": {
+    "type": "string",
+    "meta": {
+      "label": "Source",
+      "description": "llm, paste, mcp, import, manual",
+      "area": "sidebar",
+      "group": "provenance"
+    }
+  },
+  "model": {
+    "type": "string",
+    "meta": {
+      "label": "AI Model",
+      "description": "Which AI model generated this",
+      "area": "sidebar",
+      "group": "provenance"
+    }
+  }
+}
 ```
 
-### decision_sources (for merges)
+### decision-sources (for merges)
 
-```sql
-CREATE TABLE decision_sources (
-  decision_id TEXT,
-  source_id TEXT,
-  PRIMARY KEY (decision_id, source_id),
-  FOREIGN KEY (decision_id) REFERENCES decisions(id),
-  FOREIGN KEY (source_id) REFERENCES decisions(id)
-);
-```
-
-### Indexes
-
-```sql
-CREATE INDEX idx_decisions_branch ON decisions(branch_name);
-CREATE INDEX idx_decisions_starred ON decisions(starred);
-CREATE INDEX idx_decisions_parent ON decisions(parent_id);
-CREATE INDEX idx_decisions_version ON decisions(version_tag);
+```json
+{
+  "decisionId": {
+    "type": "string",
+    "refTarget": "decisions",
+    "meta": {
+      "required": true,
+      "label": "Decision",
+      "area": "main",
+      "group": "details"
+    }
+  },
+  "sourceId": {
+    "type": "string",
+    "refTarget": "decisions",
+    "meta": {
+      "required": true,
+      "label": "Source Decision",
+      "area": "main",
+      "group": "details"
+    }
+  }
+}
 ```
 
 ---
 
 ## Path Types
 
-These emerged from analyzing how thinking actually works when exploring with AI:
-
-| Type | Icon | Purpose | When to use | Suggested AI |
-|------|------|---------|-------------|--------------|
-| **Diverge** | 🌱 | Generate many options | Starting exploration, brainstorming | Gemini, Claude |
-| **Deep dive** | 🔬 | Explore one idea fully | Found something interesting, go deeper | Claude, Perplexity |
-| **Prototype** | 🔨 | Make it real | Validated idea, ready to build | Cursor, Lovable, v0 |
-| **Converge** | 🔀 | Merge insights from branches | Multiple good paths, need to synthesize | Claude |
-| **Validate** | ❓ | Stress-test, poke holes | Before committing, challenge assumptions | Claude, ChatGPT |
-| **Park** | 📦 | Save for later | Good idea but not now (v2/v3) | — |
-
-**The thinking pattern:**
-```
-Diverge (generate options)
-    ↓
-Deep dive (explore promising ones)
-    ↓
-Validate (stress-test)
-    ↓
-Converge (synthesize best parts)
-    ↓
-Prototype (build it)
-
-At any point: Park ideas for later
-```
+| Type | Icon | Purpose | When to use |
+|---|---|---|---|
+| **Diverge** | `i-lucide-git-branch-plus` | Generate many options | Starting exploration, brainstorming |
+| **Deep dive** | `i-lucide-microscope` | Explore one idea fully | Found something interesting |
+| **Prototype** | `i-lucide-hammer` | Make it real | Validated, ready to build |
+| **Converge** | `i-lucide-git-merge` | Merge insights | Multiple paths, need synthesis |
+| **Validate** | `i-lucide-shield-question` | Stress-test | Challenge assumptions |
+| **Park** | `i-lucide-archive` | Save for later | Good idea but not now |
 
 ---
 
-## Conceptual Background
-
-### "Breeding" model for ideas
-
-Not git-style branching (linear). More like **genetic algorithms**:
-
-1. **Diverge** — Generate many options (like a population)
-2. **Explore** — Let each path develop independently
-3. **Select** — Human stars the good "genes" (insights)
-4. **Recombine** — Merge selected pieces into new combinations
-5. **Repeat**
-
-Example:
-```
-"Give me 10 music app ideas"
-    ├── Branch 1: Social listening → explored → found "Discord integration"
-    ├── Branch 2: AI DJ → explored → found "crowd feedback loop"  
-    └── Branch 3: Mood-based → explored → found "biometrics angle"
-
-Recombine: Discord + crowd feedback + biometrics = new idea
-```
-
-### Decisions as portable context
-
-A decision node isn't just text. It's **compressed context** that any agent can read:
+## App Structure
 
 ```
-Full conversation: 50 messages, 10k tokens
-Decision chain: 5 nodes, 500 tokens
-
-Any AI reads the 5 decisions → instantly "caught up"
+apps/thinkgraph/
+├── nuxt.config.ts
+├── app.config.ts
+├── crouton.config.js
+├── package.json
+├── wrangler.toml
+├── schemas/
+│   ├── decision.json
+│   └── decision-source.json
+├── app/
+│   ├── pages/
+│   │   ├── index.vue                    # Landing / project selector
+│   │   └── admin/[team]/
+│   │       └── graph.vue                # Main graph workspace
+│   ├── components/
+│   │   ├── DecisionsNode.vue            # Custom Vue Flow node (auto-resolved)
+│   │   ├── ParkedNode.vue               # Dotted-border parked node variant
+│   │   ├── PathTypeModal.vue            # Path type selector
+│   │   ├── QuickAdd.vue                 # Paste input + parser
+│   │   ├── SelectionBar.vue             # Multi-select actions
+│   │   └── ContextGenerator.vue         # Brief/context generation
+│   └── composables/
+│       ├── useDecisionGraph.ts          # Graph-specific logic (filtering, context chains)
+│       ├── useDecisionParser.ts         # Parse DECISION: blocks from pasted text
+│       └── useContextGenerator.ts       # Build portable context from node paths
+├── server/
+│   └── api/teams/[id]/
+│       ├── decisions/
+│       │   ├── tree.get.ts              # Returns nodes + edges for graph
+│       │   └── context/[decisionId].get.ts  # Portable context for a decision chain
+│       ├── briefs/
+│       │   └── generate.post.ts         # Generate brief from selected node IDs
+│       └── llm/
+│           └── import.get.ts            # Scan llm CLI logs, return candidates
+└── layers/thinkgraph/
+    └── collections/
+        ├── decisions/                   # Generated by crouton-cli
+        │   ├── types.ts
+        │   ├── app/components/
+        │   │   ├── _Form.vue
+        │   │   └── List.vue
+        │   ├── app/composables/
+        │   │   └── useThinkgraphDecisions.ts
+        │   └── server/
+        │       ├── api/teams/[id]/thinkgraph-decisions/
+        │       └── database/
+        └── decision-sources/            # Generated by crouton-cli
 ```
 
-This enables:
-- Handoff between AIs
-- Parallel exploration by different agents
-- Coming back weeks later and understanding the journey
+### nuxt.config.ts
 
----
+```typescript
+export default defineNuxtConfig({
+  extends: [
+    '@fyit/crouton',
+    '@fyit/crouton-flow',   // includes crouton-collab
+    '@fyit/crouton-ai',     // for context generation
+    './layers/thinkgraph'
+  ],
 
-## Core Flows
-
-### Flow 1: Start path from node
-
-```
-Click decision node
-       ↓
-Pick path type (diverge/deep dive/prototype/etc.)
-       ↓
-Pick method:
-  - "Open in llm CLI" → copies command to clipboard
-  - "Open claude.ai" → generates context, opens tab
-  - "Copy context" → portable context to clipboard
-       ↓
-Explore with chosen AI
-       ↓
-Decisions flow back via:
-  - llm auto-logging (if using llm)
-  - Paste input (if using web AI)
+  hub: {
+    db: 'sqlite'
+  }
+})
 ```
 
-### Flow 2: llm CLI workflow (recommended)
+### crouton.config.js
 
-The `llm` CLI auto-logs everything to SQLite. ThinkGraph can read those logs.
+```javascript
+export default {
+  collections: [
+    {
+      name: 'decisions',
+      fieldsFile: './schemas/decision.json',
+      hierarchy: {
+        enabled: true,
+        parentField: 'parentId'
+      }
+    },
+    {
+      name: 'decision-sources',
+      fieldsFile: './schemas/decision-source.json'
+    }
+  ],
 
-**Basic usage:**
-```bash
-# Install
-pip install llm
-# or: brew install llm
+  targets: [
+    {
+      layer: 'thinkgraph',
+      collections: ['decisions', 'decision-sources']
+    }
+  ],
 
-# Set up API keys
-llm keys set anthropic    # paste Claude API key
-llm keys set openai       # paste OpenAI key
+  dialect: 'sqlite',
 
-# Run prompts (auto-logged to ~/.llm/logs.db)
-llm -m claude-4-opus "Explore auth patterns for ThinkGraph"
-
-# Continue conversation (same context)
-llm -c "What about OAuth specifically?"
-llm -c "Compare with API keys"
-
-# Switch models mid-conversation
-llm -c "Summarize what we found" -m gpt-4o
-```
-
-**With decision logging tool:**
-```bash
-# Define a tool inline that logs to ThinkGraph
-llm --functions '
-def log_decision(content, branch="main", decision_type="insight"):
-    """Log a key decision or insight to ThinkGraph"""
-    import httpx
-    response = httpx.post("http://localhost:3000/api/decisions", json={
-        "content": content,
-        "branch_name": branch,
-        "type": decision_type,
-        "source": "llm"
-    })
-    return {"logged": True, "id": response.json().get("id")}
-' -m claude-4-opus "Explore auth patterns. When you find key insights, log them."
-```
-
-**Where llm stores logs:**
-```bash
-# Find the database
-llm logs path
-# Usually: ~/.llm/logs.db
-
-# Browse with Datasette
-pip install datasette
-datasette "$(llm logs path)"
-# Opens web UI at http://127.0.0.1:8001
-
-# Or query directly
-sqlite3 "$(llm logs path)" "SELECT * FROM responses ORDER BY id DESC LIMIT 5"
-```
-
-**ThinkGraph imports from llm logs:**
-```bash
-# Future CLI command
-thinkgraph import --from-llm --since "2024-01-01"
-
-# Or via API
-GET /api/llm/import?since=2024-01-01
-# Returns candidate decisions extracted from llm logs
-```
-
-### Flow 3: Paste fallback
-
-```
-1. Explore in claude.ai / ChatGPT / Gemini
-2. AI outputs structured format:
-   
-   DECISION: {"content": "OAuth better for teams", "type": "insight", "branch": "auth"}
-   DECISION: {"content": "Need refresh token flow", "type": "decision", "branch": "auth"}
-
-3. Copy output
-4. Paste into ThinkGraph "Quick Add" input
-5. Parser extracts decisions
-6. Review and confirm → added to graph
-```
-
-### Flow 4: Multi-select → Generate brief
-
-```
-Shift+click nodes across branches: D3, D6, B2, C1
-       ↓
-Click "Generate brief"
-       ↓
-Pick format:
-  - Markdown summary
-  - AI context (prompt-ready)
-  - Lovable/Cursor brief
-  - Custom template
-       ↓
-Output ready to use
-```
-
-### Flow 5: Import from llm logs
-
-```bash
-# ThinkGraph reads llm's SQLite logs
-# Extracts decisions from responses
-# User reviews and imports
-
-thinkgraph import --from-llm --since "2024-01-01"
-```
-
----
-
-## UI Components
-
-### 1. GraphView (main page)
-
-- Vue-flow canvas
-- Dagre auto-layout (tree structure)
-- Pan/zoom
-- Click node → action menu
-
-### 2. DecisionNode
-
-```
-┌─────────────────────────────────────┐
-│ ⭐ 🔬                        schema │
-│                                     │
-│ SQLite: decisions, edges,           │
-│ sources tables                      │
-│                                     │
-│ [Start path ▼]                      │
-└─────────────────────────────────────┘
-```
-
-- Star icon (toggle)
-- Path type icon
-- Branch tag
-- Content preview
-- "Start path" button
-
-### 3. Parked node (v2/v3)
-
-```
-┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
-  ☆ 📦                           v2   
-│                                     │
-  Team collaboration features         
-│                                     │
-  [Pull into main] [Explore more]     
-└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
-```
-
-Dotted border, dimmed — clearly "not now"
-
-### 4. PathTypeModal
-
-```
-┌─────────────────────────────────────┐
-│  What kind of path?                 │
-├─────────────────────────────────────┤
-│  🌱 Diverge                         │
-│  🔬 Deep dive                       │
-│  🔨 Prototype                       │
-│  🔀 Converge                        │
-│  ❓ Validate                        │
-│  📦 Park for later                  │
-├─────────────────────────────────────┤
-│  How?                               │
-├─────────────────────────────────────┤
-│  💻 llm CLI (copy command)          │
-│  🟢 Claude.ai                       │
-│  🔵 ChatGPT                         │
-│  🟣 Gemini                          │
-│  📋 Copy context only               │
-└─────────────────────────────────────┘
-```
-
-### 5. QuickAdd (paste input)
-
-```
-┌─────────────────────────────────────┐
-│  Quick Add                          │
-├─────────────────────────────────────┤
-│                                     │
-│  Paste AI output here...            │
-│                                     │
-├─────────────────────────────────────┤
-│  Parsed:                            │
-│  ┌─────────────────────────────┐    │
-│  │ "OAuth better for teams"    │    │
-│  │ branch: auth | type: insight│    │
-│  │ [Add] [Edit] [Skip]         │    │
-│  └─────────────────────────────┘    │
-└─────────────────────────────────────┘
-```
-
-### 6. SelectionBar
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 5 selected: D3, D6, B2, C1, D18                    [Clear all]  │
-│                                                                 │
-│ [Generate brief ▼]  [Start converge]  [Copy context]           │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 7. Sidebar
-
-- Branch filter (checkboxes + colors)
-- Version filter (v1 / v2 / v3 / parked)
-- Starred filter
-- Search
-
----
-
-## API Endpoints
-
-### Standard CRUD (via nuxt-crouton)
-
-```
-GET    /api/decisions
-POST   /api/decisions
-GET    /api/decisions/:id
-PATCH  /api/decisions/:id
-DELETE /api/decisions/:id
-```
-
-### Custom endpoints
-
-```
-GET  /api/decisions/tree
-     → Returns { nodes, edges } for vue-flow
-
-GET  /api/decisions/context/:id
-     → Returns { path, starred, contextText }
-
-POST /api/decisions/:id/pull
-     → Move parked node to main branch
-
-POST /api/briefs/generate
-     → Generate brief from { ids: [...] }
-
-POST /api/decisions/parse
-     → Parse pasted text, extract DECISION: blocks
-
-GET  /api/llm/import
-     → Scan llm logs, return candidate decisions
-```
-
----
-
-## Context Generation
-
-When starting a path, generate:
-
-```
-You are continuing an exploration.
-
-## Path so far
-D1: Version control for AI reasoning
-D2: Context pollution is the real pain  
-D3: Decisions = compressed portable context
-[...path to selected node...]
-
-## Starred insights from other branches
-B2: Genetic algorithms for ideas (branch: breeding)
-C1: SQLite schema defined (branch: schema)
-
-## Your task
-[Based on path_type - e.g., "Generate 5-10 different approaches to..."]
-
-## Output format
-When you reach a key insight or decision, format it as:
-DECISION: {"content": "your insight", "type": "insight", "branch": "current_branch"}
-
-This allows automatic capture back into ThinkGraph.
+  flags: {
+    useTeamUtility: true,
+    useMetadata: false,
+    autoRelations: true,
+    noTranslations: true
+  }
+}
 ```
 
 ---
 
 ## Build Phases
 
-### Phase 1: Core (v1)
+### Phase 1: Scaffold & Graph (core)
 
-1. **nuxt-crouton setup**
-   - Generate `decisions` collection
-   - Generate `decision_sources` collection
-   - Basic CRUD working
+**Goal:** Decisions as nodes on an interactive graph.
 
-2. **Graph UI**
-   - Vue-flow integration
-   - Dagre layout
-   - DecisionNode component
-   - Basic interactions (click, star)
+1. **Create app scaffold**
+   ```bash
+   # Copy from playground template
+   cp -r apps/playground apps/thinkgraph
+   # Update package.json, nuxt.config.ts, wrangler.toml
+   ```
 
-3. **Paste input**
-   - QuickAdd component
-   - Decision parser (`DECISION: {...}`)
-   - Review and confirm flow
+2. **Generate collections**
+   ```bash
+   cd apps/thinkgraph
+   pnpm crouton config    # generates from crouton.config.js
+   pnpm run db:generate   # creates migration
+   ```
 
-4. **Context generation**
-   - `/api/decisions/context/:id`
-   - Path type templates
-   - Copy to clipboard
+3. **Build `DecisionsNode.vue`** — Custom Vue Flow node
+   - Star toggle (top-left)
+   - Path type icon + color
+   - Content preview (truncated)
+   - Branch tag
+   - Version badge (v1/v2/parked)
+   - Parked nodes: dotted border, dimmed opacity
 
-5. **Path launching**
-   - PathTypeModal
-   - Generate llm command
-   - Open AI web interfaces
+4. **Build graph workspace page** (`admin/[team]/graph.vue`)
+   ```vue
+   <CroutonFlow
+     :rows="decisions"
+     collection="decisions"
+     parent-field="parentId"
+     label-field="content"
+     :flow-id="activeFlowId"
+     :saved-positions="positions"
+     minimap
+     @node-click="onNodeClick"
+     @node-dbl-click="openDetail"
+   />
+   ```
 
-### Phase 2: Integration
+5. **Build sidebar** — Branch filter, version filter, starred filter, search
 
-6. **llm integration**
-   - Read llm SQLite logs
-   - Import interface
-   - `log_decision` tool definition
+---
 
-7. **Multi-select & briefs**
-   - Selection mode
-   - SelectionBar
-   - Brief generation
+### Phase 2: Input & Context (what makes it ThinkGraph)
 
-8. **Yjs sync**
-   - Real-time updates
-   - Multiple tabs/agents
+**Goal:** Get decisions in, get context out.
 
-### Phase 3: Polish
+6. **`useDecisionParser.ts`** — Parse `DECISION: {...}` blocks from pasted text
+   - Accepts raw AI output
+   - Extracts structured decision objects
+   - Returns array for review
 
-9. **Parked nodes**
-   - v2/v3 version tags
-   - Visual distinction
-   - Pull into main
+7. **`QuickAdd.vue`** — Paste input component
+   - Textarea for pasting AI output
+   - Live preview of parsed decisions
+   - Add/edit/skip per decision
+   - Assigns to current branch
 
-10. **Search & filter**
-    - Full-text search
-    - Branch/version filters
+8. **`PathTypeModal.vue`** — "What kind of path?"
+   - Select path type (diverge, deep dive, prototype, converge, validate, park)
+   - Select method (llm CLI, Claude, ChatGPT, Gemini, copy context)
+   - Generates appropriate context/command
+
+9. **`useContextGenerator.ts`** — Build portable context
+   - Walk the decision chain from root to selected node
+   - Include starred insights from other branches
+   - Format as prompt-ready markdown
+   - Template per path type (diverge → "Generate 5-10 approaches...", etc.)
+
+10. **`/api/teams/[id]/decisions/context/[decisionId].get.ts`** — Server-side context generation
+
+---
+
+### Phase 3: Multi-select & Briefs
+
+**Goal:** Select across branches, generate actionable output.
+
+11. **Selection mode** — Shift+click to multi-select nodes across branches
+
+12. **`SelectionBar.vue`** — Floating bar showing selection
+    - Count + node labels
+    - "Generate brief" dropdown (Markdown, AI prompt, Lovable/Cursor brief, custom)
+    - "Start converge" — create a new convergence node from selection
+    - "Copy context" — portable context to clipboard
+
+13. **`/api/teams/[id]/briefs/generate.post.ts`** — Brief generation endpoint
+    - Accepts `{ ids: string[], format: string }`
+    - Builds context from selected decisions
+    - Returns formatted brief
+
+---
+
+### Phase 4: Integrations
+
+**Goal:** Automatic capture from external tools.
+
+14. **llm CLI integration**
+    - `/api/teams/[id]/llm/import.get.ts` — Read `~/.llm/logs.db`, extract candidates
+    - Import UI: review, tag, assign to branch
+    - `log_decision` tool definition for `llm --functions`
+
+15. **Real-time sync** (already built into crouton-flow)
+    - Enable `sync` prop on `<CroutonFlow />`
+    - Configure CollabRoom Durable Object in wrangler.toml
+    - Multiple tabs/users editing the graph simultaneously
+
+16. **AI-assisted features** (via crouton-ai)
+    - Auto-summarize a branch into a brief
+    - Suggest path type based on conversation context
+    - "What's missing?" analysis across branches
+
+---
+
+### Phase 5: Polish
+
+17. **Visual refinement**
+    - Branch colors (consistent per branch name)
+    - Animated edges for active paths
+    - Transition when nodes are starred/parked
+    - Dark mode tuning
+
+18. **Keyboard shortcuts**
+    - `s` — star selected node
+    - `p` — park selected node
+    - `n` — new child node
+    - `q` — quick add (paste)
+    - `/` — search
+    - `Esc` — clear selection
+
+19. **Search & filter**
+    - Full-text search across content
+    - Filter by branch, version, path type, starred
+    - Highlight matching nodes on graph
+
+---
+
+## Input Methods
+
+| Method | Friction | How it works |
+|---|---|---|
+| **Manual add** | Low | Click "+" on a node, type content |
+| **Paste (QuickAdd)** | Low | Paste AI output, parser extracts `DECISION:` blocks |
+| **llm CLI** | Auto | `llm` auto-logs to SQLite, ThinkGraph imports |
+| **llm tool** | Auto | AI calls `log_decision()` via `llm --functions` |
+| **MCP Server** | Auto | Cursor/Claude Code tool integration (v2) |
+
+---
+
+## Context Generation Templates
+
+When starting a path from a node, generate a prompt like:
+
+```markdown
+You are continuing an exploration.
+
+## Path so far
+D1: Version control for AI reasoning
+D2: Context pollution is the real pain
+D3: Decisions = compressed portable context
+
+## Starred insights from other branches
+B2: Genetic algorithms for ideas (branch: breeding)
+C1: SQLite schema defined (branch: schema)
+
+## Your task
+[Template varies by path type]
+
+## Output format
+When you reach a key insight or decision, format it as:
+DECISION: {"content": "your insight", "type": "insight", "branch": "current_branch"}
+```
+
+### Templates by path type
+
+| Path type | Task prompt |
+|---|---|
+| Diverge | "Generate 5-10 different approaches to: [node content]" |
+| Deep dive | "Go deep on: [node content]. Explore implications, edge cases, trade-offs." |
+| Prototype | "Create a working prototype for: [node content]. Be specific and practical." |
+| Converge | "Synthesize these insights into a unified approach: [selected nodes]" |
+| Validate | "Challenge and stress-test this decision: [node content]. Find holes." |
+| Park | (no AI prompt — just tags the node as parked) |
 
 ---
 
 ## V2 Features (Parked)
 
 | Feature | Description |
-|---------|-------------|
-| AI recommendations | Track model performance per path type, suggest optimal matches |
+|---|---|
+| MCP Server | Tool integration for Cursor, Claude Code |
+| AI recommendations | Track model performance per path type |
 | Team collaboration | Shared graphs, permissions, notifications |
-| llm-thinkgraph plugin | Native llm integration as a plugin |
+| llm-thinkgraph plugin | Native `llm` plugin |
 | Browser extension | Auto-capture from any AI web interface |
 | Export | Decision tree as documentation |
+| Templates | Reusable graph structures for common explorations |
+
+---
+
+## Key Differences from Original Plan
+
+| Original plan | Revised |
+|---|---|
+| Build Vue Flow integration from scratch | Use `<CroutonFlow />` — already done |
+| Build Yjs sync (Phase 2) | Free — crouton-flow extends crouton-collab |
+| Manual CRUD endpoints | Generated by crouton-cli |
+| Raw SQL schema | crouton JSON schema format |
+| `/api/decisions` endpoints | `/api/teams/[id]/thinkgraph-decisions/` (team-scoped) |
+| Custom state management | `useCollectionQuery/Mutation` |
+| Auth is implicit | crouton-auth with team context |
+| 10 build phases | 5 focused phases |
 
 ---
 
@@ -703,53 +549,7 @@ This allows automatic capture back into ThinkGraph.
 ## Key Principles
 
 1. **Auto where possible, paste where not** — Multiple entry points, same destination
-2. **Unix philosophy** — Small tools that compose (inspired by Simon Willison)
+2. **Unix philosophy** — Small tools that compose
 3. **Your thinking belongs to you** — Not trapped in any AI provider
 4. **Structured parking** — v2/v3 ideas are parked, not forgotten
 5. **Reduce friction incrementally** — Don't build perfect, build useful
-
----
-
-*This plan was created using ThinkGraph methodology — decisions captured, branches explored, insights merged.*
-
----
-
-## For the Agent Receiving This
-
-**Before building, you should:**
-
-1. **Read nuxt-crouton docs** at https://github.com/pmcp/crouton-docs to understand the collection schema format
-2. **Try llm CLI** — `pip install llm` and run a few prompts to see how logging works
-3. **Check Vue-flow docs** at https://vueflow.dev/ for the node/edge API
-4. **Ask the user** about their nuxt-crouton project structure
-
-**Start with Phase 1:**
-1. Generate the `decisions` collection with nuxt-crouton
-2. Get basic CRUD working
-3. Add Vue-flow graph view
-4. Build the paste input + parser
-
-The llm integration and Yjs sync can come later.
-
-**Key files you'll likely create:**
-```
-pages/
-  index.vue              # GraphView (main UI)
-  
-components/
-  DecisionNode.vue       # Custom vue-flow node
-  PathTypeModal.vue      # Path selection dialog
-  QuickAdd.vue           # Paste input
-  SelectionBar.vue       # Multi-select actions
-
-server/api/
-  decisions/
-    tree.get.ts          # Returns nodes + edges for vue-flow
-    context/[id].get.ts  # Returns portable context
-    parse.post.ts        # Parses pasted DECISION: blocks
-  briefs/
-    generate.post.ts     # Generates brief from selection
-
-composables/
-  useDecisionGraph.ts    # Graph state management
-```

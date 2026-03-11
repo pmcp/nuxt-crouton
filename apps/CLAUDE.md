@@ -164,26 +164,55 @@ croutonAuth: {
 
 ## Creating a New App
 
-1. **Copy from template**
-   ```bash
-   cp -r apps/playground apps/my-app
-   ```
+### Required Dependencies
 
-2. **Update package.json**
-   ```json
-   {
-     "name": "my-app",
-     "private": true
-   }
-   ```
+Every crouton app with `hub: { db: 'sqlite' }` needs these in `package.json`:
 
-3. **Generate collections**
+```json
+{
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@libsql/client": "^0.17.0",
+    "drizzle-orm": "^0.45.0",
+    "nuxt": "^4.3.1"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "^0.31.0",
+    "wrangler": "^4.64.0"
+  }
+}
+```
+
+**`@libsql/client` is required** — NuxtHub's SQLite driver depends on it. Without it you get: `Please run npx nypm i @libsql/client to use SQLite as database.`
+
+If using crouton-flow, also add:
+```json
+"@vue-flow/background": "^1.3.0",
+"@vue-flow/controls": "^1.1.2",
+"@vue-flow/core": "^1.41.2"
+```
+
+### Steps
+
+1. **Create the app directory and `package.json`** with the dependencies above
+
+2. **Create `nuxt.config.ts`** extending the packages you need
+
+3. **Create `crouton.config.js`** with collection schemas
+
+4. **Generate collections**
    ```bash
    cd apps/my-app
-   pnpm crouton generate
+   pnpm crouton config
    ```
 
-4. **Start development**
+5. **Generate DB migration**
+   ```bash
+   pnpm run db:generate
+   ```
+
+6. **Start development**
    ```bash
    pnpm dev
    ```
