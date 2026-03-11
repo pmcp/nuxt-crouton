@@ -19,10 +19,41 @@ import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTransl
 export default defineAppConfig({
   croutonCollections: {
     contentCategories: contentCategoriesConfig,
-    contentAteliers: contentAteliersConfig,
-    contentPersons: contentPersonsConfig,
-    contentLocations: contentLocationsConfig,
-    contentNews: contentNewsConfig,
+    contentAteliers: {
+      ...contentAteliersConfig,
+      display: {
+        title: 'title',
+        subtitle: 'age',
+        image: 'cardImage',
+        badge: 'status'
+      },
+      references: {
+        category: 'contentCategories'
+      }
+    },
+    contentPersons: {
+      ...contentPersonsConfig,
+      display: {
+        title: 'firstName',
+        subtitle: 'role',
+        image: 'image'
+      }
+    },
+    contentLocations: {
+      ...contentLocationsConfig,
+      display: {
+        title: 'title',
+        subtitle: 'city'
+      }
+    },
+    contentNews: {
+      ...contentNewsConfig,
+      display: {
+        title: 'title',
+        subtitle: 'text',
+        image: 'image'
+      }
+    },
     contentDownloads: contentDownloadsConfig,
     croutonAssets: croutonAssetsConfig,
     pagesPages: pagesPagesConfig,
