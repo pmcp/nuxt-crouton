@@ -4,15 +4,39 @@
 /* Scan Nuxt Crouton layers for Tailwind classes */
 @source "../../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
 
+@theme static {
+  /* Sint-Lukas brand green */
+  --color-sintlukas-50: #f1f8f5;
+  --color-sintlukas-100: #dcefe4;
+  --color-sintlukas-200: #c1e1d1;
+  --color-sintlukas-300: #8fc6ae;
+  --color-sintlukas-400: #5fa88a;
+  --color-sintlukas-500: #3e8b6f;
+  --color-sintlukas-600: #2c6f57;
+  --color-sintlukas-700: #235947;
+  --color-sintlukas-800: #1e4739;
+  --color-sintlukas-900: #1a3a31;
+  --color-sintlukas-950: #0d211b;
+
+  /* Sint-Lukas accent orange */
+  --color-accent-50: #fef4ee;
+  --color-accent-100: #fce6d8;
+  --color-accent-200: #f8c9b0;
+  --color-accent-300: #f3a37e;
+  --color-accent-400: #ee7349;
+  --color-accent-500: #e94e24;
+  --color-accent-600: #db371b;
+  --color-accent-700: #b52719;
+  --color-accent-800: #91221b;
+  --color-accent-900: #751f19;
+  --color-accent-950: #3f0c0b;
+}
+
+@theme {
+  --font-sans: 'Helvetica Neue', 'Helvetica', system-ui, sans-serif;
+}
+
 /* Force light mode */
 :root {
   color-scheme: light;
-}
-
-/* Sint-Lukas grid background pattern */
-.background-grid {
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
 }

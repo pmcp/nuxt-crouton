@@ -86,7 +86,7 @@ const images = computed<string[]>(() => {
     </div>
 
     <!-- Main image -->
-    <div v-if="item.mainImage" class="mb-8 rounded-2xl overflow-hidden aspect-[21/9] bg-neutral-100">
+    <div v-if="item.mainImage" class="mb-8 rounded-2xl overflow-hidden aspect-[21/9] bg-sintlukas-50">
       <img
         :src="`/images/${item.mainImage}`"
         :alt="title"
@@ -111,7 +111,7 @@ const images = computed<string[]>(() => {
             <div
               v-for="person in persons"
               :key="person.id"
-              class="flex items-center gap-3 bg-neutral-50 rounded-xl px-4 py-3"
+              class="flex items-center gap-3 bg-sintlukas-50 rounded-xl px-4 py-3"
             >
               <div v-if="person.image" class="size-12 rounded-full overflow-hidden bg-neutral-200 shrink-0">
                 <img :src="person.image" :alt="`${person.firstName} ${person.lastName}`" class="size-full object-cover">
@@ -146,7 +146,7 @@ const images = computed<string[]>(() => {
 
       <!-- Sidebar -->
       <aside v-if="sidebarContent" class="lg:col-span-1">
-        <div class="sticky top-24 bg-neutral-50 rounded-2xl p-6">
+        <div class="sticky top-24 bg-sintlukas-50 rounded-2xl p-6">
           <CroutonPagesRegularContent
             :content="sidebarContent"
             class="prose prose-sm prose-neutral max-w-none"

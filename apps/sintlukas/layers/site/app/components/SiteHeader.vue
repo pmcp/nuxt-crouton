@@ -42,9 +42,8 @@ const mainNavItems = computed(() =>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <NuxtLink :to="hideTeamInUrl ? `/${locale}` : `/${teamSlug}/${locale}`" class="flex items-center gap-2 shrink-0">
-          <span class="text-xl font-bold tracking-tight text-neutral-900">Sint-Lukas</span>
-          <span class="text-xs text-neutral-500 hidden sm:inline">Academie</span>
+        <NuxtLink :to="hideTeamInUrl ? `/${locale}` : `/${teamSlug}/${locale}`" class="shrink-0">
+          <img src="/logo.svg" alt="Sint-Lukas Academie" class="h-10" />
         </NuxtLink>
 
         <!-- Desktop navigation -->
@@ -55,8 +54,8 @@ const mainNavItems = computed(() =>
             :to="item.to"
             class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
             :class="item.active
-              ? 'text-neutral-900 bg-neutral-100'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'"
+              ? 'text-sintlukas-700 bg-sintlukas-50'
+              : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
           >
             {{ item.label }}
           </NuxtLink>
@@ -105,8 +104,8 @@ const mainNavItems = computed(() =>
             :to="item.to"
             class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors"
             :class="item.active
-              ? 'text-neutral-900 bg-neutral-100'
-              : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'"
+              ? 'text-sintlukas-700 bg-sintlukas-50'
+              : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
           >
             {{ item.label }}
           </NuxtLink>

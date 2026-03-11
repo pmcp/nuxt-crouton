@@ -17,6 +17,13 @@ import {pagesPagesConfig} from '../layers/pages/collections/pages/app/composable
 import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTranslationsUi';
 
 export default defineAppConfig({
+  ui: {
+    colors: {
+      primary: 'sintlukas',
+      secondary: 'accent',
+      neutral: 'slate'
+    }
+  },
   croutonCollections: {
     contentCategories: contentCategoriesConfig,
     contentAteliers: {
