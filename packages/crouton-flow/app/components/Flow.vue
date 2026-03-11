@@ -251,14 +251,15 @@ const layoutOptions = computed(() => ({
 
 const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
-// Position mutation (debounced) - only for standalone collection mode
-// When flowId is provided (even without sync), use the position store on flow_configs
-// Otherwise fall back to patching the collection's position field
-const { debouncedUpdate } = props.dataMode !== 'ephemeral'
-  ? (props.flowId && !props.sync)
-    ? useFlowPositionStore(props.flowId)
-    : useDebouncedPositionUpdate(props.collection, props.positionField, 500)
-  : { debouncedUpdate: () => {} }
+// Position persistence strategy:
+// 1. flowId provided (any dataMode) → save to flow_configs.nodePositions
+// 2. collection mode without flowId → PATCH collection row's position field
+// 3. ephemeral without flowId → no persistence
+const { debouncedUpdate } = (props.flowId && !props.sync)
+  ? useFlowPositionStore(props.flowId)
+  : (props.dataMode !== 'ephemeral')
+    ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
+    : { debouncedUpdate: () => {} }
 
 // Apply saved positions from flow_configs (if provided)
 const positionedNodes = computed(() => {
@@ -385,7 +386,7 @@ onNodeDragStop((event: NodeDragEvent) => {
 
   if (props.sync && syncState) {
     syncState.updatePosition(node.id, position)
-  } else if (props.dataMode !== 'ephemeral') {
+  } else {
     debouncedUpdate(node.id, position)
   }
 
