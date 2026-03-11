@@ -91,12 +91,12 @@ export async function getContentNewsByIds(teamId: string, newIds: string[]) {
 export async function createContentNew(data: NewContentNew) {
   const db = useDB()
 
-  const [new] = await (db as any)
+  const [record] = await (db as any)
     .insert(tables.contentNews)
     .values(data)
     .returning()
 
-  return new
+  return record
 }
 
 export async function updateContentNew(
@@ -117,7 +117,7 @@ export async function updateContentNew(
     conditions.push(eq(tables.contentNews.owner, userId))
   }
 
-  const [new] = await (db as any)
+  const [record] = await (db as any)
     .update(tables.contentNews)
     .set({
       ...updates,
@@ -126,14 +126,14 @@ export async function updateContentNew(
     .where(and(...conditions))
     .returning()
 
-  if (!new) {
+  if (!record) {
     throw createError({
       status: 404,
       statusText: 'ContentNew not found or unauthorized'
     })
   }
 
-  return new
+  return record
 }
 
 export async function deleteContentNew(
