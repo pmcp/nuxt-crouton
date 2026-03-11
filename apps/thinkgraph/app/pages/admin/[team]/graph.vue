@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { teamId } = useTeamContext()
 
-const { data: decisions, refresh } = useCollectionQuery('thinkgraphDecisions')
+const { items: decisions, refresh } = await useCollectionQuery('thinkgraphDecisions')
 
 // Create a new root decision
 const { open } = useCrouton()

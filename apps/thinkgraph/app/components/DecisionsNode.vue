@@ -64,6 +64,15 @@ function handleEdit(event: Event) {
   }
 }
 
+function handleAddChild(event: Event) {
+  event.stopPropagation()
+  if (props.collection && decision.value.id) {
+    open('create', props.collection, [], {
+      defaults: { parentId: decision.value.id }
+    })
+  }
+}
+
 function toggleStar(event: Event) {
   event.stopPropagation()
   const { teamId } = useTeamContext()
@@ -136,6 +145,13 @@ function toggleStar(event: Event) {
 
     <!-- Hover actions -->
     <div v-if="isHovered" class="decision-node__actions">
+      <button
+        class="decision-node__action"
+        title="Add child"
+        @click="handleAddChild"
+      >
+        <UIcon name="i-lucide-plus" class="size-3.5" />
+      </button>
       <button
         class="decision-node__action"
         title="Edit"
