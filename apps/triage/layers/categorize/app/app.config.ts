@@ -2,12 +2,12 @@ export default defineAppConfig({
   croutonApps: {
     categorize: {
       id: 'categorize',
-      name: 'Categorize',
+      name: 'categorize.title',
       icon: 'i-lucide-group',
       adminRoutes: [
         {
           path: '/categorize',
-          label: 'Categorize',
+          label: 'categorize.title',
           icon: 'i-lucide-group',
         },
       ],

@@ -1,3 +1,5 @@
 {
-  "Categorize": "Categoriseer"
+  "categorize": {
+    "title": "Categoriseer"
+  }
 }
