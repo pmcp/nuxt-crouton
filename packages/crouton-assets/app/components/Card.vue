@@ -17,6 +17,11 @@ const imageUrl = computed(() =>
     : null
 )
 
+const isPdf = computed(() => props.item.contentType === 'application/pdf')
+const pdfUrl = computed(() =>
+  isPdf.value && props.item.pathname ? `/images/${props.item.pathname}` : null
+)
+
 const handleEdit = () => crouton?.open('update', props.collection, [props.item.id], 'modal')
 const handleDelete = () => crouton?.open('delete', props.collection, [props.item.id])
 </script>
@@ -37,6 +42,17 @@ const handleDelete = () => crouton?.open('delete', props.collection, [props.item
         :alt="item.alt || item.filename"
         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
       >
+      <object
+        v-else-if="pdfUrl"
+        :data="pdfUrl"
+        type="application/pdf"
+        class="w-full h-full pointer-events-none"
+      >
+        <div class="w-full h-full flex flex-col items-center justify-center gap-2">
+          <UIcon name="i-lucide-file-text" class="size-8 opacity-60 text-orange-400" />
+          <span class="text-[10px] font-mono font-semibold text-muted uppercase tracking-wider">PDF</span>
+        </div>
+      </object>
       <div
         v-else
         class="w-full h-full flex flex-col items-center justify-center gap-2"
