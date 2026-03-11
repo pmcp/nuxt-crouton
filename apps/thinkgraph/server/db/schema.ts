@@ -3,4 +3,6 @@
 
 // Export auth schema from crouton-auth package
 export * from '@fyit/crouton-auth/server/database/schema/auth'
+// Export i18n schema (crouton-core extends crouton-i18n, table must exist)
+export { translationsUi } from './translations-ui'
 export { thinkgraphDecisions } from '../../layers/thinkgraph/collections/decisions/server/database/schema'
