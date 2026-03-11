@@ -133,6 +133,8 @@ const emit = defineEmits<{
   nodeDrop: [item: Record<string, unknown>, position: FlowPosition, collection: string]
   /** Emitted when a node's container assignment changes (drag into/out of group) */
   nodeContainerChange: [event: ContainerChangeEvent]
+  /** Emitted when nodes are deleted (keyboard delete or programmatic removal) */
+  nodeDelete: [nodeIds: string[]]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
   'update:rows': [rows: Record<string, unknown>[]]
 }>()
@@ -197,8 +199,21 @@ const {
   onNodeClick,
   onNodeDoubleClick,
   onEdgeClick,
+  onNodesChange,
   screenToFlowCoordinate
 } = useVueFlow()
+
+// Detect node removals (keyboard delete) and emit nodeDelete
+onNodesChange((changes) => {
+  const removedIds = changes
+    .filter((c) => c.type === 'remove')
+    .map((c) => c.id)
+  if (removedIds.length > 0) {
+    // Clean up position cache for removed nodes
+    for (const id of removedIds) positionCache.delete(id)
+    emit('nodeDelete', removedIds)
+  }
+})
 
 // ============================================
 // DRAG & DROP (external items onto canvas)
@@ -263,7 +278,7 @@ const layoutOptions = computed(() => ({
   rankSpacing: props.flowConfig?.rankSpacing ?? 100
 }))
 
-const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
+const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position persistence strategy:
 // 1. sync + ephemeral → Yjs position-only sync (real-time multiplayer)
@@ -290,15 +305,51 @@ const positionedNodes = computed(() => {
   })
 })
 
-// Apply layout to standalone nodes (once on initial load)
+// Position cache: remembers node positions across data refreshes
+// When rows update (CRUD), nodes get recreated at (0,0) because collection
+// data has no position field. This cache preserves last known positions.
+const positionCache = new Map<string, { x: number; y: number }>()
+
+const cachedNodes = computed(() => {
+  return positionedNodes.value.map((node) => {
+    // If node already has a valid position from data, use it
+    if (node.position && (node.position.x !== 0 || node.position.y !== 0)) {
+      return node
+    }
+    // Otherwise, restore from cache if available
+    const cached = positionCache.get(node.id)
+    if (cached) {
+      return { ...node, position: cached, _needsLayout: undefined }
+    }
+    return node
+  })
+})
+
+// Apply layout to standalone nodes (once on initial load, or when new nodes appear at 0,0)
 const initialLayoutApplied = ref(false)
 const layoutedNodes = computed(() => {
-  const nodes = positionedNodes.value
+  const nodes = cachedNodes.value
   const edges = dataEdges.value
 
   if (!initialLayoutApplied.value && needsLayout(nodes)) {
     const result = applyLayout(nodes, edges)
+    // Cache the layout positions
+    for (const node of result) {
+      if (node.position) positionCache.set(node.id, { ...node.position })
+    }
     nextTick(() => { initialLayoutApplied.value = true })
+    return result
+  }
+
+  // Check if any nodes are at (0,0) after initial layout — these are newly added nodes
+  if (initialLayoutApplied.value && nodes.some(n => !n.position || (n.position.x === 0 && n.position.y === 0))) {
+    const result = applyLayoutToNew(nodes, edges)
+    // Cache new positions
+    for (const node of result) {
+      if (node.position && !positionCache.has(node.id)) {
+        positionCache.set(node.id, { ...node.position })
+      }
+    }
     return result
   }
 
@@ -432,6 +483,9 @@ onNodeDragStop((event: NodeDragEvent) => {
       // The event handler is responsible for updating the nodes array
     }
   }
+
+  // Update position cache so data refreshes don't reset this node
+  positionCache.set(node.id, { ...position })
 
   if (props.sync && syncState) {
     syncState.updatePosition(node.id, position)
