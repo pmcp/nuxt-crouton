@@ -3,8 +3,8 @@ const { teamId } = useTeamContext()
 
 const { items: decisions, refresh } = await useCollectionQuery('thinkgraphDecisions')
 
-// Create a new root decision
 const { open } = useCrouton()
+const expanding = ref<string | null>(null)
 
 function addRootDecision() {
   open('create', 'thinkgraphDecisions')
@@ -14,15 +14,25 @@ function onNodeClick(nodeId: string, data: Record<string, unknown>) {
   open('update', 'thinkgraphDecisions', [nodeId])
 }
 
-function addChildDecision(parentId: string) {
-  open('create', 'thinkgraphDecisions', [], {
-    defaults: { parentId }
-  })
+async function expandWithAI(decisionId: string) {
+  if (expanding.value) return
+  expanding.value = decisionId
+
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
+      method: 'POST'
+    })
+    await refresh()
+  } catch (error) {
+    console.error('AI expand failed:', error)
+  } finally {
+    expanding.value = null
+  }
 }
 
-function onNodeDblClick(nodeId: string, data: Record<string, unknown>) {
-  addChildDecision(nodeId)
-}
+// Provide expand function to child nodes
+provide('thinkgraph:expand', expandWithAI)
+provide('thinkgraph:expanding', expanding)
 </script>
 
 <template>
@@ -53,7 +63,6 @@ function onNodeDblClick(nodeId: string, data: Record<string, unknown>) {
         label-field="content"
         minimap
         @node-click="onNodeClick"
-        @node-dbl-click="onNodeDblClick"
       />
       <div
         v-else

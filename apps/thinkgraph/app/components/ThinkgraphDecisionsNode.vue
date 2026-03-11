@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
 
@@ -18,8 +17,12 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
+const expandFn = inject<(id: string) => void>('thinkgraph:expand', () => {})
+const expandingId = inject<Ref<string | null>>('thinkgraph:expanding', ref(null))
+
 const { open } = useCrouton()
 const isHovered = ref(false)
+const isExpanding = computed(() => expandingId.value === decision.value.id)
 
 const decision = computed(() => props.data as unknown as ThinkgraphDecision)
 
@@ -70,6 +73,13 @@ function handleAddChild(event: Event) {
     open('create', props.collection, [], {
       defaults: { parentId: decision.value.id }
     })
+  }
+}
+
+function handleExpand(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    expandFn(decision.value.id)
   }
 }
 
@@ -143,8 +153,23 @@ function toggleStar(event: Event) {
       </span>
     </div>
 
+    <!-- AI source indicator -->
+    <div v-if="decision.source === 'ai'" class="mt-1.5 flex items-center gap-1">
+      <UIcon name="i-lucide-sparkles" class="size-3 text-violet-400" />
+      <span class="text-[10px] text-violet-400">AI generated</span>
+    </div>
+
     <!-- Hover actions -->
     <div v-if="isHovered" class="decision-node__actions">
+      <button
+        class="decision-node__action decision-node__action--ai"
+        :class="{ 'decision-node__action--loading': isExpanding }"
+        title="Expand with AI"
+        :disabled="isExpanding"
+        @click="handleExpand"
+      >
+        <UIcon :name="isExpanding ? 'i-lucide-loader-2' : 'i-lucide-sparkles'" class="size-3.5" :class="{ 'animate-spin': isExpanding }" />
+      </button>
       <button
         class="decision-node__action"
         title="Add child"
@@ -211,6 +236,10 @@ function toggleStar(event: Event) {
   @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-500 hover:text-primary-500 hover:scale-110;
+}
+
+.decision-node__action--ai {
+  @apply hover:text-violet-500 hover:border-violet-300;
 }
 
 .decision-handle {
