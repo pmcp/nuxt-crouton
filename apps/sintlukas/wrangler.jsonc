@@ -1,0 +1,20 @@
+{
+  "name": "sintlukas",
+  "compatibility_date": "2024-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sintlukas-db",
+      "database_id": "placeholder-create-with-wrangler",
+      "migrations_dir": "server/db/migrations/sqlite"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BLOB",
+      "bucket_name": "sintlukas-blob"
+    }
+  ]
+}

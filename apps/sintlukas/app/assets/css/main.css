@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Scan Nuxt Crouton layers for Tailwind classes */
+@source "../../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
+
+/* Force light mode */
+:root {
+  color-scheme: light;
+}
+
+/* Sint-Lukas grid background pattern */
+.background-grid {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

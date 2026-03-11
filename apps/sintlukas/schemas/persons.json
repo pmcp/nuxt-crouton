@@ -1,0 +1,45 @@
+{
+  "name": "persons",
+  "label": "Team",
+  "icon": "i-lucide-users",
+  "description": "Teachers and staff members",
+  "fields": [
+    {
+      "name": "firstName",
+      "type": "string",
+      "label": "First Name",
+      "required": true,
+      "maxLength": 100,
+      "area": "main"
+    },
+    {
+      "name": "lastName",
+      "type": "string",
+      "label": "Last Name",
+      "required": true,
+      "maxLength": 100,
+      "area": "main"
+    },
+    {
+      "name": "role",
+      "type": "string",
+      "label": "Role",
+      "maxLength": 100,
+      "area": "sidebar",
+      "description": "e.g. Leerkracht, Directie, Coördinator"
+    },
+    {
+      "name": "image",
+      "type": "image",
+      "label": "Portrait",
+      "area": "sidebar"
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Sort Order",
+      "default": 0,
+      "area": "sidebar"
+    }
+  ]
+}

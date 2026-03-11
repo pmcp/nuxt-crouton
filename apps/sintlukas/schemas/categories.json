@@ -1,0 +1,56 @@
+{
+  "name": "categories",
+  "label": "Categorieën",
+  "icon": "i-lucide-palette",
+  "description": "Age groups / course categories (Kinderen, Jongeren, Volwassenen, etc.)",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Name",
+      "required": true,
+      "translatable": true,
+      "maxLength": 100,
+      "area": "main"
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Sort Order",
+      "required": true,
+      "default": 0,
+      "area": "sidebar"
+    },
+    {
+      "name": "color",
+      "type": "string",
+      "label": "Brand Color",
+      "required": true,
+      "maxLength": 20,
+      "area": "sidebar",
+      "description": "Hex color for category cards (e.g. #2E8B57)"
+    },
+    {
+      "name": "thumbnail",
+      "type": "image",
+      "label": "Thumbnail",
+      "area": "sidebar",
+      "description": "Card background image"
+    },
+    {
+      "name": "background",
+      "type": "image",
+      "label": "Background Image",
+      "area": "sidebar",
+      "description": "Full-width banner background"
+    },
+    {
+      "name": "isSidebar",
+      "type": "boolean",
+      "label": "Sidebar Category",
+      "default": false,
+      "area": "sidebar",
+      "description": "Show in sidebar section (Extra Muros: Kunstkuur, Focus, Track)"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "downloads",
+  "label": "Downloads",
+  "icon": "i-lucide-download",
+  "description": "Downloadable documents (PDFs, schedules, regulations)",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Label",
+      "required": true,
+      "translatable": true,
+      "maxLength": 200,
+      "area": "main",
+      "description": "Button/link label shown to visitors"
+    },
+    {
+      "name": "internalName",
+      "type": "string",
+      "label": "Internal Name",
+      "maxLength": 100,
+      "area": "sidebar",
+      "description": "Reference name for admin use"
+    },
+    {
+      "name": "file",
+      "type": "file",
+      "label": "File",
+      "required": true,
+      "area": "main",
+      "description": "PDF or document file"
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Sort Order",
+      "default": 0,
+      "area": "sidebar"
+    }
+  ]
+}

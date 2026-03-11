@@ -1,0 +1,62 @@
+{
+  "name": "news",
+  "label": "Nieuws",
+  "icon": "i-lucide-newspaper",
+  "description": "News articles and announcements",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Title",
+      "required": true,
+      "translatable": true,
+      "maxLength": 300,
+      "area": "main"
+    },
+    {
+      "name": "date",
+      "type": "date",
+      "label": "Date",
+      "required": true,
+      "area": "sidebar"
+    },
+    {
+      "name": "image",
+      "type": "image",
+      "label": "Image",
+      "area": "sidebar"
+    },
+    {
+      "name": "text",
+      "type": "string",
+      "label": "Summary",
+      "translatable": true,
+      "maxLength": 500,
+      "area": "main",
+      "description": "Short description shown on the homepage"
+    },
+    {
+      "name": "link",
+      "type": "string",
+      "label": "External Link",
+      "maxLength": 500,
+      "area": "sidebar",
+      "description": "Optional link to external article or signup form"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "label": "Status",
+      "required": true,
+      "default": "published",
+      "maxLength": 20,
+      "area": "sidebar",
+      "displayAs": "optionsSelect",
+      "options": [
+        { "value": "draft", "label": "Draft" },
+        { "value": "published", "label": "Published" },
+        { "value": "archived", "label": "Archived" }
+      ]
+    }
+  ]
+}

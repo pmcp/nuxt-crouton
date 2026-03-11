@@ -1,0 +1,104 @@
+{
+  "name": "ateliers",
+  "label": "Ateliers",
+  "icon": "i-lucide-brush",
+  "description": "Course/workshop offerings",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Title",
+      "required": true,
+      "translatable": true,
+      "maxLength": 200,
+      "area": "main"
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "label": "Category",
+      "required": true,
+      "area": "sidebar",
+      "refTarget": "categories",
+      "description": "Parent category (Kinderen, Jongeren, etc.)"
+    },
+    {
+      "name": "age",
+      "type": "string",
+      "label": "Age / Subtitle",
+      "translatable": true,
+      "maxLength": 100,
+      "area": "sidebar",
+      "description": "e.g. '6-11 jaar', '18+', 'Samenwerking partnerschool'"
+    },
+    {
+      "name": "mainImage",
+      "type": "image",
+      "label": "Main Image",
+      "area": "sidebar",
+      "description": "Hero image for the atelier detail page"
+    },
+    {
+      "name": "cardImage",
+      "type": "image",
+      "label": "Card Image",
+      "area": "sidebar",
+      "description": "Thumbnail for catalog card (falls back to main image)"
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "label": "Description",
+      "translatable": true,
+      "area": "main",
+      "component": "CroutonPagesEditorBlockEditor",
+      "description": "Main body content (TipTap JSON)"
+    },
+    {
+      "name": "sidebarContent",
+      "type": "text",
+      "label": "Sidebar Info",
+      "translatable": true,
+      "area": "main",
+      "component": "CroutonPagesEditorBlockEditor",
+      "description": "Study trajectory, schedule, materials (TipTap JSON)"
+    },
+    {
+      "name": "persons",
+      "type": "array",
+      "label": "Teachers",
+      "area": "sidebar",
+      "refTarget": "persons",
+      "description": "Linked teacher/staff records"
+    },
+    {
+      "name": "images",
+      "type": "array",
+      "label": "Gallery Images",
+      "area": "sidebar",
+      "description": "Image IDs for the 'In beeld' gallery"
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Sort Order",
+      "default": 0,
+      "area": "sidebar"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "label": "Status",
+      "required": true,
+      "default": "published",
+      "maxLength": 20,
+      "area": "sidebar",
+      "displayAs": "optionsSelect",
+      "options": [
+        { "value": "draft", "label": "Draft" },
+        { "value": "published", "label": "Published" },
+        { "value": "archived", "label": "Archived" }
+      ]
+    }
+  ]
+}

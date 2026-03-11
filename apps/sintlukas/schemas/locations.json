@@ -1,0 +1,73 @@
+{
+  "name": "locations",
+  "label": "Vestigingen",
+  "icon": "i-lucide-map-pin",
+  "description": "School locations / campuses",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "label": "Name",
+      "required": true,
+      "translatable": true,
+      "maxLength": 200,
+      "area": "main"
+    },
+    {
+      "name": "street",
+      "type": "string",
+      "label": "Street",
+      "required": true,
+      "maxLength": 200,
+      "area": "main"
+    },
+    {
+      "name": "zip",
+      "type": "string",
+      "label": "Postal Code",
+      "required": true,
+      "maxLength": 10,
+      "area": "sidebar"
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "label": "City",
+      "required": true,
+      "maxLength": 100,
+      "area": "sidebar"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "label": "Coordinates",
+      "maxLength": 100,
+      "area": "sidebar",
+      "description": "Auto-filled by map [lng, lat]"
+    },
+    {
+      "name": "info",
+      "type": "text",
+      "label": "Additional Info",
+      "translatable": true,
+      "area": "main",
+      "component": "CroutonPagesEditorBlockEditor",
+      "description": "Opening hours, contact details (TipTap JSON)"
+    },
+    {
+      "name": "isMain",
+      "type": "boolean",
+      "label": "Main Location",
+      "default": false,
+      "area": "sidebar",
+      "description": "Highlighted as the primary school"
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Sort Order",
+      "default": 0,
+      "area": "sidebar"
+    }
+  ]
+}

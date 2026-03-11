@@ -1,0 +1,21 @@
+{
+  "content": {
+    "collections": {
+      "categories": {
+        "title": "Categories"
+      },
+      "ateliers": {
+        "title": "Ateliers"
+      },
+      "locations": {
+        "title": "Locations"
+      },
+      "news": {
+        "title": "News"
+      },
+      "downloads": {
+        "title": "Downloads"
+      }
+    }
+  }
+}
