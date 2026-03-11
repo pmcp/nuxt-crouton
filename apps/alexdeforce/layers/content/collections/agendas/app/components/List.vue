@@ -43,7 +43,7 @@
       <CroutonDate :date="row.original.publishedAt"></CroutonDate>
     </template>
     <template #content-cell="{ row }">
-      <CroutonEditorPreview :content="row.original.content" />
+      <CroutonEditorPreview :content="row.original.content" mode="thumbnail" />
     </template>
   </CroutonCollection>
 </template>
