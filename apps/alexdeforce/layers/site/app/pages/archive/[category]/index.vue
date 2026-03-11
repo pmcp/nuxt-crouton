@@ -23,7 +23,7 @@ const categoryLabels: Record<string, string> = {
         v-for="article in articles"
         :key="article.id"
         :title="article.title"
-        :slug="article.id"
+        :slug="article.slug"
         :category="article.categorySlug || category"
         :tags="article.tags"
       />

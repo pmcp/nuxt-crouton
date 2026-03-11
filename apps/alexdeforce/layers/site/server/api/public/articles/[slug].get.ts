@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(contentArticles)
     .where(and(
-      eq(contentArticles.id, slug),
+      eq(contentArticles.slug, slug),
       eq(contentArticles.status, 'published')
     ))
     .limit(1)

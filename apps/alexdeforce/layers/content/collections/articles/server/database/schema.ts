@@ -29,6 +29,7 @@ export const contentArticles = sqliteTable('content_articles', {
 
   order: integer('order').notNull().$default(() => 0),
   title: text('title').notNull(),
+  slug: text('slug').notNull(),
   date: integer('date', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   category: text('category').notNull(),
   content: text('content'),

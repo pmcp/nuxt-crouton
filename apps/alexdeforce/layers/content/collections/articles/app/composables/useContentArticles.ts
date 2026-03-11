@@ -28,6 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const contentArticleSchema = z.object({
   title: z.string().min(1, 'title is required'),
+  slug: z.string().min(1, 'slug is required'),
   date: z.date({ required_error: 'date is required' }),
   category: z.string().min(1, 'category is required'),
   content: z.string().optional(),
@@ -40,6 +41,7 @@ export const contentArticleSchema = z.object({
 
 export const contentArticlesColumns = [
   { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'slug', header: 'Slug' },
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'category', header: 'Category' },
   { accessorKey: 'content', header: 'Content' },
@@ -58,6 +60,7 @@ const _contentArticlesConfig = {
   componentName: 'ContentArticlesForm',
   defaultValues: {
     title: '',
+    slug: '',
     date: null,
     category: '',
     content: '',

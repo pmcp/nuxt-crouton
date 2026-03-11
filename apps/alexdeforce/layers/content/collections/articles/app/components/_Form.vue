@@ -41,7 +41,10 @@
       <template #main>
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="Title" name="title" class="not-last:pb-4">
-          <UInput v-model="state.title" class="w-full" size="xl" />
+          <UInput v-model="state.title" class="w-full" size="xl" @blur="generateSlug" />
+        </UFormField>
+        <UFormField label="Slug" name="slug" class="not-last:pb-4">
+          <UInput v-model="state.slug" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="Content" name="content" class="not-last:pb-4">
           <CroutonPagesEditorBlockEditor v-model="state.content" />
@@ -144,6 +147,19 @@ if (props.action === 'update' && props.activeItem?.id) {
 }
 
 const state = ref<ContentArticleFormData & { id?: string | null }>(initialValues)
+
+function generateSlug() {
+  if (!state.value.slug && state.value.title) {
+    state.value.slug = state.value.title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+  }
+}
 
 const handleSubmit = async () => {
   try {

@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
   const dbTimer = timing.start('db')
   const result = await updateContentArticle(articleId, team.id, user.id, {
     title: body.title,
+    slug: body.slug,
     date: body.date ? new Date(body.date) : body.date,
     category: body.category,
     content: body.content,
