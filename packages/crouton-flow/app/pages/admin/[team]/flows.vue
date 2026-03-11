@@ -13,6 +13,40 @@ definePageMeta({
 
 const { teamId, teamSlug } = useTeamContext()
 
+// Collection registry for smart form fields
+const { configs: collectionConfigs } = useCollections()
+
+const collectionItems = computed(() =>
+  Object.entries(collectionConfigs).map(([key, config]) => ({
+    label: config.displayName || config.name || key,
+    value: config.apiPath?.split('/').pop() || key,
+    key,
+    fields: config.fields || []
+  }))
+)
+
+// Get fields for a given collection API path
+function getFieldsForCollection(collectionApiSlug: string) {
+  const match = collectionItems.value.find(c => c.value === collectionApiSlug)
+  return match?.fields || []
+}
+
+function getFieldOptions(collectionApiSlug: string) {
+  const fields = getFieldsForCollection(collectionApiSlug)
+  return fields.map(f => ({ label: f.label || f.name, value: f.name }))
+}
+
+// Auto-detect best defaults for field mapping when collection changes
+function autoDetectFieldMapping(collectionApiSlug: string) {
+  const fields = getFieldsForCollection(collectionApiSlug)
+  const names = fields.map(f => f.name)
+  return {
+    labelField: names.find(n => ['title', 'name', 'label'].includes(n)) || 'title',
+    parentField: names.find(n => ['parentId', 'parent_id', 'parent'].includes(n)) || 'parentId',
+    positionField: names.find(n => ['position', 'order', 'sortOrder'].includes(n)) || 'position',
+  }
+}
+
 // Selected flow ID — synced with WorkspaceLayout via v-model
 const selectedFlowId = ref<string | null>(null)
 
@@ -53,12 +87,24 @@ const createForm = reactive({
 })
 const createPending = ref(false)
 
+// Auto-detect field mappings when collection changes
+watch(() => createForm.collection, (newCollection) => {
+  if (newCollection) {
+    const defaults = autoDetectFieldMapping(newCollection)
+    createForm.labelField = defaults.labelField
+    createForm.parentField = defaults.parentField
+    createForm.positionField = defaults.positionField
+  }
+})
+
+const createFieldOptions = computed(() => getFieldOptions(createForm.collection))
+
 function openCreate() {
   isCreateOpen.value = true
 }
 
 async function handleCreate() {
-  if (!createForm.name.trim() || !createForm.collection.trim()) return
+  if (!createForm.name.trim() || !createForm.collection) return
   createPending.value = true
   try {
     const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
@@ -97,6 +143,7 @@ const editForm = reactive({
   syncEnabled: false,
 })
 const editPending = ref(false)
+const editFieldOptions = computed(() => getFieldOptions(editForm.collection))
 
 function openEdit() {
   if (!flow.value) return
@@ -256,7 +303,13 @@ async function handleEdit() {
         </UFormField>
 
         <UFormField label="Collection" required hint="The collection to visualize">
-          <UInput v-model="createForm.collection" placeholder="e.g. decisions" class="w-full" />
+          <USelectMenu
+            v-model="createForm.collection"
+            :items="collectionItems"
+            value-key="value"
+            placeholder="Select a collection"
+            class="w-full"
+          />
         </UFormField>
 
         <USeparator />
@@ -265,13 +318,34 @@ async function handleEdit() {
 
         <div class="grid grid-cols-3 gap-3">
           <UFormField label="Label field">
-            <UInput v-model="createForm.labelField" class="w-full" />
+            <USelectMenu
+              v-if="createFieldOptions.length"
+              v-model="createForm.labelField"
+              :items="createFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="createForm.labelField" class="w-full" />
           </UFormField>
           <UFormField label="Parent field">
-            <UInput v-model="createForm.parentField" class="w-full" />
+            <USelectMenu
+              v-if="createFieldOptions.length"
+              v-model="createForm.parentField"
+              :items="createFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="createForm.parentField" class="w-full" />
           </UFormField>
           <UFormField label="Position field">
-            <UInput v-model="createForm.positionField" class="w-full" />
+            <USelectMenu
+              v-if="createFieldOptions.length"
+              v-model="createForm.positionField"
+              :items="createFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="createForm.positionField" class="w-full" />
           </UFormField>
         </div>
 
@@ -289,7 +363,7 @@ async function handleEdit() {
         <UButton color="neutral" variant="ghost" @click="isCreateOpen = false">Cancel</UButton>
         <UButton
           :loading="createPending"
-          :disabled="!createForm.name.trim() || !createForm.collection.trim()"
+          :disabled="!createForm.name.trim() || !createForm.collection"
           icon="i-lucide-plus"
           @click="handleCreate"
         >
@@ -312,7 +386,13 @@ async function handleEdit() {
         </UFormField>
 
         <UFormField label="Collection" required>
-          <UInput v-model="editForm.collection" class="w-full" />
+          <USelectMenu
+            v-model="editForm.collection"
+            :items="collectionItems"
+            value-key="value"
+            placeholder="Select a collection"
+            class="w-full"
+          />
         </UFormField>
 
         <USeparator />
@@ -321,13 +401,34 @@ async function handleEdit() {
 
         <div class="grid grid-cols-3 gap-3">
           <UFormField label="Label field">
-            <UInput v-model="editForm.labelField" class="w-full" />
+            <USelectMenu
+              v-if="editFieldOptions.length"
+              v-model="editForm.labelField"
+              :items="editFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="editForm.labelField" class="w-full" />
           </UFormField>
           <UFormField label="Parent field">
-            <UInput v-model="editForm.parentField" class="w-full" />
+            <USelectMenu
+              v-if="editFieldOptions.length"
+              v-model="editForm.parentField"
+              :items="editFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="editForm.parentField" class="w-full" />
           </UFormField>
           <UFormField label="Position field">
-            <UInput v-model="editForm.positionField" class="w-full" />
+            <USelectMenu
+              v-if="editFieldOptions.length"
+              v-model="editForm.positionField"
+              :items="editFieldOptions"
+              value-key="value"
+              class="w-full"
+            />
+            <UInput v-else v-model="editForm.positionField" class="w-full" />
           </UFormField>
         </div>
 
