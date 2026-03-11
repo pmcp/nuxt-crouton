@@ -129,6 +129,8 @@ const emit = defineEmits<{
   nodeDrop: [item: Record<string, unknown>, position: FlowPosition, collection: string]
   /** Emitted when a node's container assignment changes (drag into/out of group) */
   nodeContainerChange: [event: ContainerChangeEvent]
+  /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
+  'update:rows': [rows: Record<string, unknown>[]]
 }>()
 
 // Validate props
@@ -366,6 +368,14 @@ onNodeDragStop((event: NodeDragEvent) => {
     syncState.updatePosition(node.id, position)
   } else if (props.dataMode !== 'ephemeral') {
     debouncedUpdate(node.id, position)
+  }
+
+  // In ephemeral mode, emit updated rows so parent can track position changes
+  if (props.dataMode === 'ephemeral' && props.rows) {
+    const updatedRows = props.rows.map(r =>
+      (r as any).id === node.id ? { ...r, position } : r,
+    )
+    emit('update:rows', updatedRows)
   }
 
   emit('nodeMove', node.id, position)

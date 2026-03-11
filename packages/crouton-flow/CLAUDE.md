@@ -116,7 +116,7 @@ When `sync` is enabled:
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `rows` | `array` | - | Collection rows (not needed with sync) |
+| `rows` | `array` | - | Collection rows (not needed with sync). Supports `v-model:rows` in ephemeral mode for position sync. |
 | `collection` | `string` | **required** | Collection name |
 | `parentField` | `string` | `'parentId'` | Parent relationship field |
 | `positionField` | `string` | `'position'` | Node position field |
@@ -139,6 +139,7 @@ When `sync` is enabled:
 | `nodeMove` | `(nodeId, position)` | Node moved |
 | `edgeClick` | `(edgeId)` | Edge clicked |
 | `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
+| `update:rows` | `(rows)` | Emitted in ephemeral mode when node positions change (enables `v-model:rows`) |
 
 ## Composables
 
