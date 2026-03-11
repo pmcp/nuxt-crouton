@@ -1,0 +1,29 @@
+{
+  "name": "thinkgraph",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
+    "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "npx wrangler d1 migrations apply thinkgraph-db --local"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@libsql/client": "^0.15.0",
+    "@vue-flow/background": "^1.3.0",
+    "@vue-flow/controls": "^1.1.2",
+    "@vue-flow/core": "^1.41.2",
+    "drizzle-orm": "^0.45.0",
+    "nuxt": "^4.3.1"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "^0.31.0",
+    "wrangler": "^4.64.0"
+  }
+}

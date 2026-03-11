@@ -1,0 +1,17 @@
+# Cloudflare Pages configuration for thinkgraph
+# Deploy with: npx wrangler pages deploy dist/
+
+name = "thinkgraph"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "thinkgraph-db"
+database_id = "TODO"
+migrations_dir = "server/db/migrations/sqlite"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "TODO"
