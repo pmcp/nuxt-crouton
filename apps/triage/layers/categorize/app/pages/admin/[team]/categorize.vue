@@ -548,7 +548,10 @@ function buildNodesWithAutoGroup() {
       categoryProperty.value,
       (page) => {
         const val = page.properties[categoryProperty.value]
-        return val && typeof val === 'string' ? val : null
+        if (!val) return null
+        if (typeof val === 'string') return val
+        if (Array.isArray(val) && val.length > 0) return String(val[0])
+        return null
       },
       buildCardNode,
     )
@@ -677,9 +680,25 @@ function restoreFromLayout(layout: { groups: any[]; cards: any[] }) {
   nodes.value = allNodes
 }
 
+// ─── Per-column layout cache ───
+// Stores layout snapshots keyed by column name so switching columns preserves arrangements
+const columnLayoutCache = ref<Map<string, { groups: any[]; cards: any[] }>>(new Map())
+
 // ─── Re-group when category property or filters change ───
-watch(categoryProperty, () => {
-  if (canvasLoaded.value && pages.value.length > 0) {
+watch(categoryProperty, (newCol, oldCol) => {
+  if (!canvasLoaded.value || pages.value.length === 0) return
+
+  // Save current layout for the old column
+  if (oldCol && nodes.value.length > 0) {
+    columnLayoutCache.value.set(oldCol, buildLayoutSnapshot())
+  }
+
+  // Restore cached layout for the new column, or auto-group from scratch
+  const cached = newCol ? columnLayoutCache.value.get(newCol) : undefined
+  if (cached) {
+    restoreFromLayout(cached)
+  }
+  else {
     buildNodesWithAutoGroup()
   }
 })
