@@ -10,6 +10,7 @@ export const flowConfigs = sqliteTable('flow_configs', {
   parentField: text('parent_field').default('parentId'),
   positionField: text('position_field').default('position'),
   syncEnabled: integer('sync_enabled', { mode: 'boolean' }).default(false),
+  nodePositions: text('node_positions', { mode: 'json' }).$type<Record<string, { x: number; y: number }>>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$default(() => new Date()).$onUpdate(() => new Date()),
 }, (table) => [

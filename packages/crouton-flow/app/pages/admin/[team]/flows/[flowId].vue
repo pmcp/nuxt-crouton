@@ -136,6 +136,8 @@ async function handleEdit() {
         :label-field="flow.labelField ?? 'title'"
         :parent-field="flow.parentField ?? 'parentId'"
         :position-field="flow.positionField ?? 'position'"
+        :flow-id="flowId"
+        :saved-positions="flow.nodePositions"
         :minimap="true"
         class="h-full w-full"
       />

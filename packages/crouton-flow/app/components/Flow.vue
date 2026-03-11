@@ -10,6 +10,7 @@ import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, Flow
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
+import { useFlowPositionStore } from '../composables/useFlowPositionStore'
 import { useFlowSync } from '../composables/useFlowSync'
 import { useFlowDragDrop } from '../composables/useFlowDragDrop'
 import { useFlowSyncBridge } from '../composables/useFlowSyncBridge'
@@ -95,6 +96,8 @@ interface Props {
   containerOptions?: FlowContainerOptions
   /** Data mode: 'collection' (default) or 'ephemeral' (skip collection mutations) */
   dataMode?: FlowDataMode
+  /** Pre-loaded node positions from flow_configs (avoids extra fetch) */
+  savedPositions?: Record<string, { x: number; y: number }> | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -249,14 +252,30 @@ const layoutOptions = computed(() => ({
 const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position mutation (debounced) - only for standalone collection mode
+// When flowId is provided (even without sync), use the position store on flow_configs
+// Otherwise fall back to patching the collection's position field
 const { debouncedUpdate } = props.dataMode !== 'ephemeral'
-  ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
+  ? (props.flowId && !props.sync)
+    ? useFlowPositionStore(props.flowId)
+    : useDebouncedPositionUpdate(props.collection, props.positionField, 500)
   : { debouncedUpdate: () => {} }
+
+// Apply saved positions from flow_configs (if provided)
+const positionedNodes = computed(() => {
+  if (!props.savedPositions) return dataNodes.value
+  return dataNodes.value.map((node) => {
+    const saved = props.savedPositions![node.id]
+    if (saved) {
+      return { ...node, position: saved, _needsLayout: undefined }
+    }
+    return node
+  })
+})
 
 // Apply layout to standalone nodes (once on initial load)
 const initialLayoutApplied = ref(false)
 const layoutedNodes = computed(() => {
-  const nodes = dataNodes.value
+  const nodes = positionedNodes.value
   const edges = dataEdges.value
 
   if (!initialLayoutApplied.value && needsLayout(nodes)) {

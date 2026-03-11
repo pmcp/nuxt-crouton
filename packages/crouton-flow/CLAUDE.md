@@ -17,12 +17,14 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
 | `app/composables/useFlowEphemeralData.ts` | Convert non-collection items to Vue Flow nodes |
 | `app/composables/useFlowContainerDetection.ts` | Card-over-group overlap detection on drag stop |
+| `app/composables/useFlowPositionStore.ts` | Save positions to flow_configs (no collection schema needed) |
 | `app/composables/useFlowGroupManager.ts` | Group CRUD, assignments, auto-grouping |
 | `app/types/yjs.ts` | Flow node types (uses collab types) |
 | `app/types/flow.ts` | Flow config, data mode, container options types |
 | `app/app.config.ts` | App registration (croutonApps) |
 | `server/database/schema.ts` | Drizzle schema for flow_configs table |
 | `server/database/migrations/0002_flow_configs.sql` | SQL migration for flow_configs |
+| `server/database/migrations/0003_flow_node_positions.sql` | Add node_positions column |
 | `server/api/crouton-flow/teams/[id]/flows/` | CRUD API for flow configs |
 | `app/pages/admin/[team]/flows.vue` | Admin section parent layout |
 | `app/pages/admin/[team]/flows/index.vue` | Flow list with create modal |
@@ -49,6 +51,7 @@ Stores saved flow configurations per team:
 | parent_field | TEXT | Field for parent relationship (default: 'parentId') |
 | position_field | TEXT | Field for node position (default: 'position') |
 | sync_enabled | INTEGER | Enable live multiplayer sync |
+| node_positions | TEXT (JSON) | Saved node positions `{ [nodeId]: { x, y } }` — decoupled from collection schema |
 
 ### API Endpoints
 
@@ -59,6 +62,7 @@ Stores saved flow configurations per team:
 | `/api/crouton-flow/teams/[id]/flows/[flowId]` | GET | Get single flow |
 | `/api/crouton-flow/teams/[id]/flows/[flowId]` | PATCH | Update flow |
 | `/api/crouton-flow/teams/[id]/flows/[flowId]` | DELETE | Delete flow |
+| `/api/crouton-flow/teams/[id]/flows/[flowId]/positions` | PATCH | Save node positions (debounced from client) |
 
 ### Setup (consuming app)
 
@@ -122,7 +126,8 @@ When `sync` is enabled:
 | `positionField` | `string` | `'position'` | Node position field |
 | `labelField` | `string` | `'title'` | Node label field |
 | `sync` | `boolean` | `false` | Enable real-time sync |
-| `flowId` | `string` | - | Flow ID (required with sync) |
+| `flowId` | `string` | - | Flow config ID. Required with sync. Also used without sync to persist positions to flow_configs. |
+| `savedPositions` | `Record<string, { x, y }>` | - | Pre-loaded node positions from flow_configs (avoids extra fetch) |
 | `controls` | `boolean` | `true` | Show zoom controls |
 | `minimap` | `boolean` | `false` | Show minimap |
 | `draggable` | `boolean` | `true` | Enable node dragging |

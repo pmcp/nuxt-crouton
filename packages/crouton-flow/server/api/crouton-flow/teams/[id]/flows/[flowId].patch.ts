@@ -27,6 +27,7 @@ export default defineEventHandler(async (event) => {
   if (body.parentField !== undefined) updates.parentField = body.parentField.trim()
   if (body.positionField !== undefined) updates.positionField = body.positionField.trim()
   if (body.syncEnabled !== undefined) updates.syncEnabled = body.syncEnabled
+  if (body.nodePositions !== undefined) updates.nodePositions = body.nodePositions
 
   await db
     .update(flowConfigs)
