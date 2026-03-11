@@ -11,6 +11,7 @@ import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
 import { useFlowPositionStore } from '../composables/useFlowPositionStore'
+import { useFlowPositionSync } from '../composables/useFlowPositionSync'
 import { useFlowSync } from '../composables/useFlowSync'
 import { useFlowDragDrop } from '../composables/useFlowDragDrop'
 import { useFlowSyncBridge } from '../composables/useFlowSyncBridge'
@@ -151,11 +152,17 @@ const isDark = computed(() => colorMode.value === 'dark')
 // ============================================
 // SYNC MODE: Initialize real-time sync
 // ============================================
-const syncState = props.sync && props.flowId
+// Full sync: stores all node data in Yjs (collection mode)
+// Position sync: only positions in Yjs (ephemeral mode)
+const syncState = (props.sync && props.flowId && props.dataMode !== 'ephemeral')
   ? useFlowSync({
       flowId: props.flowId,
       collection: props.collection
     })
+  : null
+
+const positionSync = (props.sync && props.flowId && props.dataMode === 'ephemeral')
+  ? useFlowPositionSync({ flowId: props.flowId })
   : null
 
 // ============================================
@@ -228,6 +235,13 @@ const {
   stopGhostCleanup
 })
 
+// Position sync: filter other users for presence display
+const positionSyncOtherUsers = computed(() => {
+  if (!positionSync) return []
+  const currentId = positionSync.user.value?.id
+  return positionSync.users.value.filter(u => u.user?.id !== currentId)
+})
+
 // ============================================
 // STANDALONE MODE: Props-based data
 // ============================================
@@ -252,14 +266,17 @@ const layoutOptions = computed(() => ({
 const { applyLayout, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position persistence strategy:
-// 1. flowId provided (any dataMode) → save to flow_configs.nodePositions
-// 2. collection mode without flowId → PATCH collection row's position field
-// 3. ephemeral without flowId → no persistence
-const { debouncedUpdate } = (props.flowId && !props.sync)
-  ? useFlowPositionStore(props.flowId!)
-  : (props.dataMode !== 'ephemeral')
-    ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
-    : { debouncedUpdate: () => {} }
+// 1. sync + ephemeral → Yjs position-only sync (real-time multiplayer)
+// 2. flowId without sync → save to flow_configs.nodePositions (REST)
+// 3. collection mode without flowId → PATCH collection row's position field
+// 4. ephemeral without flowId/sync → no persistence
+const { debouncedUpdate } = positionSync
+  ? positionSync
+  : (props.flowId && !props.sync)
+    ? useFlowPositionStore(props.flowId!)
+    : (props.dataMode !== 'ephemeral')
+      ? useDebouncedPositionUpdate(props.collection, props.positionField, 500)
+      : { debouncedUpdate: () => {} }
 
 // Apply saved positions from flow_configs (if provided)
 const positionedNodes = computed(() => {
@@ -300,9 +317,22 @@ const finalNodes = computed(() => {
 
   if (props.dataMode === 'ephemeral') {
     // Ephemeral mode: rows are pre-built Vue Flow nodes
-    // Apply saved positions only on initial load (before any drag interaction)
     let ephemeralNodes = (props.rows || []) as unknown as Node[]
-    if (props.savedPositions && !ephemeralPositionsApplied.value) {
+
+    if (positionSync) {
+      // Yjs position sync: apply positions reactively from Y.Map
+      const yjsPositions = positionSync.positions.value
+      if (Object.keys(yjsPositions).length > 0) {
+        ephemeralNodes = ephemeralNodes.map((node) => {
+          const saved = yjsPositions[node.id]
+          if (saved) {
+            return { ...node, position: saved }
+          }
+          return node
+        })
+      }
+    } else if (props.savedPositions && !ephemeralPositionsApplied.value) {
+      // REST position store: apply saved positions once on initial load
       ephemeralNodes = ephemeralNodes.map((node) => {
         const saved = props.savedPositions![node.id]
         if (saved) {
@@ -366,7 +396,7 @@ const finalEdges = computed(() => {
 
 // Handle node drag - sync position in real-time (throttled to 50ms)
 const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
-  if (!props.draggable || !props.sync || !syncState) return
+  if (!props.draggable || !props.sync) return
 
   const { node } = event
   const position: FlowPosition = {
@@ -374,7 +404,11 @@ const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
     y: Math.round(node.position.y)
   }
 
-  syncState.updatePosition(node.id, position)
+  if (syncState) {
+    syncState.updatePosition(node.id, position)
+  } else if (positionSync) {
+    positionSync.debouncedUpdate(node.id, position)
+  }
 }, 50)
 
 onNodeDrag(syncDragPosition)
@@ -520,6 +554,26 @@ defineExpose({
         :users="otherUsersInRoom"
         :show-labels="true"
       />
+    </template>
+
+    <!-- Position sync mode overlays (ephemeral + sync) -->
+    <template v-if="positionSync">
+      <div class="crouton-flow-status">
+        <CollabStatus
+          :connected="positionSync.connected.value"
+          :synced="positionSync.synced.value"
+          :error="positionSync.error.value"
+          :show-label="false"
+        />
+      </div>
+
+      <div class="crouton-flow-presence">
+        <CollabPresence
+          :users="positionSyncOtherUsers"
+          :max-visible="5"
+          size="sm"
+        />
+      </div>
     </template>
 
     <VueFlow

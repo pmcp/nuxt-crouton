@@ -17,7 +17,8 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 | `app/composables/useFlowPresence.ts` | Presence UI utilities |
 | `app/composables/useFlowEphemeralData.ts` | Convert non-collection items to Vue Flow nodes |
 | `app/composables/useFlowContainerDetection.ts` | Card-over-group overlap detection on drag stop |
-| `app/composables/useFlowPositionStore.ts` | Save positions to flow_configs (no collection schema needed) |
+| `app/composables/useFlowPositionStore.ts` | Save positions to flow_configs via REST (no collection schema needed) |
+| `app/composables/useFlowPositionSync.ts` | Position-only Yjs sync for ephemeral mode (real-time multiplayer) |
 | `app/composables/useFlowGroupManager.ts` | Group CRUD, assignments, auto-grouping |
 | `app/types/yjs.ts` | Flow node types (uses collab types) |
 | `app/types/flow.ts` | Flow config, data mode, container options types |
@@ -158,6 +159,17 @@ const {
   updateGhostNode, clearGhostNode
 } = useFlowSync({ flowId: 'my-flow', collection: 'decisions' })
 ```
+
+### useFlowPositionSync (Position-only Yjs sync)
+
+Lightweight Yjs sync for ephemeral mode — syncs only node positions, not full node data. Enables real-time multiplayer position sync for flows where data comes from external sources (e.g. Notion).
+
+```typescript
+const { positions, debouncedUpdate, connected, synced, users } =
+  useFlowPositionSync({ flowId: 'flow-123' })
+```
+
+Activated automatically when `sync + dataMode="ephemeral" + flowId` are set on CroutonFlow.
 
 ### useFlowPresence (Uses collab types)
 
