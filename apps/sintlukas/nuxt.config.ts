@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   // Register app components globally so resolveComponent() finds them
   // (needed by crouton-pages binder detail renderer)
   components: [
-    { path: '~/app/components', global: true }
+    { path: '~/components', global: true }
   ],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
