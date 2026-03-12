@@ -101,6 +101,8 @@ interface Props {
   savedPositions?: Record<string, { x: number; y: number }> | null
   /** Selected node IDs (enables v-model:selected) */
   selected?: string[]
+  /** Additional edges to render alongside parent-derived edges */
+  additionalEdges?: Array<{ id: string; source: string; target: string }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -487,9 +489,11 @@ const finalEdges = computed(() => {
     return []
   }
   const rawEdges = (props.sync && syncState) ? syncEdges.value : dataEdges.value
+  const extra = props.additionalEdges || []
+  const allEdges = extra.length > 0 ? [...rawEdges, ...extra] : rawEdges
   // Apply current edge type to all edges
   const type = edgeType.value
-  return rawEdges.map(e => e.type === type ? e : { ...e, type })
+  return allEdges.map(e => e.type === type ? e : { ...e, type })
 })
 
 // ============================================

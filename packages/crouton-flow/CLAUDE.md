@@ -135,6 +135,7 @@ When `sync` is enabled:
 | `containerOptions` | `{ enabled: boolean }` | - | Enable container detection on drag stop |
 | `dataMode` | `'collection' \| 'ephemeral'` | `'collection'` | Data mode — 'ephemeral' skips collection mutations |
 | `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
+| `additionalEdges` | `Array<{ id, source, target }>` | `[]` | Extra edges rendered alongside parent-derived edges (e.g. multi-parent synthesis connections) |
 
 ## Events
 
