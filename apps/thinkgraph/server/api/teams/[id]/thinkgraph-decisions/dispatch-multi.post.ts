@@ -8,12 +8,14 @@ export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
 
   const body = await readBody(event)
-  const { nodeIds, serviceId, prompt, options } = body as {
+  const { nodeIds, serviceId, prompt, options, count = 1 } = body as {
     nodeIds: string[]
     serviceId: string
     prompt?: string
     options?: Record<string, unknown>
+    count?: number
   }
+  const variations = Math.min(Math.max(count, 1), 6)
 
   if (!nodeIds?.length) {
     throw createError({ status: 400, statusText: 'nodeIds array is required' })
@@ -41,32 +43,42 @@ export default defineEventHandler(async (event) => {
 
   const { combinedContext, combinedContent } = buildMultiNodeContext(targets, allDecisions)
 
-  const result = await service.execute(
-    {
-      nodeContent: combinedContent,
-      thinkingPath: combinedContext,
-      prompt,
-      options,
-    },
-    event
-  )
+  const createdNodes: any[] = []
 
-  // Connect to first source node via parentId, store all source IDs for extra edges
-  const existingArtifacts = Array.isArray(result.artifacts) ? result.artifacts : []
-  const childNode = await createThinkgraphDecision({
-    content: result.childContent,
-    nodeType: result.childNodeType,
-    pathType: 'explored',
-    parentId: nodeIds[0],
-    source: 'dispatch',
-    model: serviceId,
-    starred: false,
-    branchName: '',
-    versionTag: '',
-    artifacts: [...existingArtifacts, { type: 'synthesis', sourceNodeIds: nodeIds }],
-    teamId: team.id,
-    owner: user.id,
-  } as any)
+  for (let i = 0; i < variations; i++) {
+    const variationPrompt = variations > 1
+      ? `${prompt || ''}\n\n[Variation ${i + 1} of ${variations}: Take a distinctly different approach from previous variations. Be creative and explore a different angle, style, or strategy.]`.trim()
+      : prompt
 
-  return childNode
+    const result = await service.execute(
+      {
+        nodeContent: combinedContent,
+        thinkingPath: combinedContext,
+        prompt: variationPrompt,
+        options,
+      },
+      event
+    )
+
+    // Connect to first source node via parentId, store all source IDs for extra edges
+    const existingArtifacts = Array.isArray(result.artifacts) ? result.artifacts : []
+    const childNode = await createThinkgraphDecision({
+      content: variations > 1 ? `[v${i + 1}] ${result.childContent}` : result.childContent,
+      nodeType: result.childNodeType,
+      pathType: 'explored',
+      parentId: nodeIds[0],
+      source: 'dispatch',
+      model: serviceId,
+      starred: false,
+      branchName: '',
+      versionTag: variations > 1 ? `v${i + 1}` : '',
+      artifacts: [...existingArtifacts, { type: 'synthesis', sourceNodeIds: nodeIds }],
+      teamId: team.id,
+      owner: user.id,
+    } as any)
+
+    createdNodes.push(childNode)
+  }
+
+  return variations > 1 ? createdNodes : createdNodes[0]
 })
