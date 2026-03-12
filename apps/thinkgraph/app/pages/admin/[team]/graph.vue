@@ -144,6 +144,26 @@ const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
 
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
+// Compute extra edges from synthesis artifacts (multi-parent connections)
+const additionalEdges = computed(() => {
+  if (!decisions.value) return []
+  const edges: Array<{ id: string; source: string; target: string }> = []
+  for (const d of decisions.value as any[]) {
+    if (!d.artifacts) continue
+    for (const a of d.artifacts) {
+      if (a.type === 'synthesis' && Array.isArray(a.sourceNodeIds)) {
+        // parentId already creates edge for first source, add edges for the rest
+        for (const srcId of a.sourceNodeIds) {
+          if (srcId !== d.parentId) {
+            edges.push({ id: `e-synth-${srcId}-${d.id}`, source: srcId, target: d.id })
+          }
+        }
+      }
+    }
+  }
+  return edges
+})
+
 function addRootDecision() {
   open('create', 'thinkgraphDecisions')
 }
@@ -425,6 +445,7 @@ provide('thinkgraph:dispatch', openDispatch)
           :flow-id="flowId || undefined"
           :saved-positions="savedPositions"
           :flow-config="flowConfig"
+          :additional-edges="additionalEdges"
           minimap
           :selected="selectedNodeIds"
           @node-click="onNodeClick"

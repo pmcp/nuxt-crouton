@@ -48,14 +48,11 @@ Respond with a JSON object: {"content": "your synthesis (2-3 sentences)", "nodeT
     throw createError({ status: 500, statusText: 'AI returned invalid response' })
   }
 
-  // Find common parent (or use first node's parent)
-  const parentId = findCommonParent(allDecisions, nodeIds) || ''
-
   const decision = await createThinkgraphDecision({
     content: synthesis.content,
     nodeType: synthesis.nodeType || 'decision',
     pathType: 'chosen',
-    parentId,
+    parentId: nodeIds[0],
     source: 'ai',
     model: ai.getDefaultModel(),
     starred: true, // Syntheses are auto-starred
@@ -63,33 +60,9 @@ Respond with a JSON object: {"content": "your synthesis (2-3 sentences)", "nodeT
     versionTag: '',
     teamId: team.id,
     owner: user.id,
+    artifacts: [{ type: 'synthesis', sourceNodeIds: nodeIds }],
   } as any)
 
   return decision
 })
 
-function findCommonParent(allDecisions: any[], nodeIds: string[]): string | null {
-  // Get parent chains for all nodes
-  const chains = nodeIds.map((id: string) => {
-    const chain: string[] = []
-    let current = allDecisions.find((d: any) => d.id === id)
-    while (current) {
-      chain.unshift(current.id)
-      current = current.parentId ? allDecisions.find((d: any) => d.id === current.parentId) : null
-    }
-    return chain
-  })
-
-  // Find deepest common ancestor
-  let commonParent: string | null = null
-  const shortest = Math.min(...chains.map(c => c.length))
-  for (let i = 0; i < shortest; i++) {
-    if (chains.every(c => c[i] === chains[0][i])) {
-      commonParent = chains[0][i]
-    } else {
-      break
-    }
-  }
-
-  return commonParent
-}

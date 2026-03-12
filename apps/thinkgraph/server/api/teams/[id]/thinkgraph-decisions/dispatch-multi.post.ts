@@ -51,18 +51,19 @@ export default defineEventHandler(async (event) => {
     event
   )
 
-  // Create result as a root node (multi-select has no single parent)
+  // Connect to first source node via parentId, store all source IDs for extra edges
+  const existingArtifacts = Array.isArray(result.artifacts) ? result.artifacts : []
   const childNode = await createThinkgraphDecision({
     content: result.childContent,
     nodeType: result.childNodeType,
     pathType: 'explored',
-    parentId: '',
+    parentId: nodeIds[0],
     source: 'dispatch',
     model: serviceId,
     starred: false,
     branchName: '',
     versionTag: '',
-    artifacts: result.artifacts,
+    artifacts: [...existingArtifacts, { type: 'synthesis', sourceNodeIds: nodeIds }],
     teamId: team.id,
     owner: user.id,
   } as any)
