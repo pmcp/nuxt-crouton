@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "thinkgraph": {
+      "type": "http",
+      "url": "http://localhost:3004/mcp"
+    }
+  }
+}
