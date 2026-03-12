@@ -120,6 +120,19 @@ await requireTeamAdmin(event)   // Admin or owner
 await requireTeamOwner(event)   // Owner only
 ```
 
+### Public Team Resolution
+
+```typescript
+import { resolveTeamBySlugOrId } from '@crouton/auth/server'
+
+// Resolve team by slug or ID without requiring authentication
+// Used for public-facing endpoints (e.g., public collection API)
+const { team } = await resolveTeamBySlugOrId(event)
+
+// Custom route param name (default: 'id')
+const { team } = await resolveTeamBySlugOrId(event, 'team')
+```
+
 ### Query Functions
 
 ```typescript

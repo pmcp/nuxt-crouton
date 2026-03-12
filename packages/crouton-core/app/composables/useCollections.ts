@@ -126,6 +126,11 @@ interface CollectionConfig {
    * in crouton-pages, allowing collection items to be published as standalone pages.
    */
   publishable?: boolean
+  /**
+   * When true, this collection supports public (unauthenticated) access
+   * when bound via a binder page.
+   */
+  public?: boolean
   [key: string]: any
 }
 

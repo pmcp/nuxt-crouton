@@ -125,6 +125,54 @@ export async function resolveTeamAndCheckMembership(event: H3Event): Promise<Tea
 }
 
 /**
+ * Resolve a team by slug or ID without requiring authentication.
+ * Used for public-facing endpoints where team context is needed but auth is not.
+ *
+ * @param event - H3 event
+ * @param paramName - Route parameter name to read (default: 'id')
+ * @returns Object with resolved team
+ * @throws 400 if no team identifier provided
+ * @throws 404 if team not found
+ *
+ * @example
+ * ```typescript
+ * // Default: reads [id] param
+ * const { team } = await resolveTeamBySlugOrId(event)
+ *
+ * // Custom param: reads [team] param
+ * const { team } = await resolveTeamBySlugOrId(event, 'team')
+ * ```
+ */
+export async function resolveTeamBySlugOrId(
+  event: H3Event,
+  paramName: string = 'id'
+): Promise<{ team: Team }> {
+  const identifier = getRouterParam(event, paramName)
+
+  if (!identifier) {
+    throw createError({
+      status: 400,
+      statusText: 'No team identifier provided'
+    })
+  }
+
+  // Try to get team by ID first, then fall back to slug
+  let team = await getTeamById(event, identifier)
+  if (!team) {
+    team = await getTeamBySlug(event, identifier)
+  }
+
+  if (!team) {
+    throw createError({
+      status: 404,
+      statusText: 'Team not found'
+    })
+  }
+
+  return { team }
+}
+
+/**
  * Get membership for a user in a team
  *
  * Uses Better Auth's organization API to check membership.
