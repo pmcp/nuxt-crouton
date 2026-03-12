@@ -81,27 +81,37 @@ const { locale: i18nLocale, locales, setLocale } = useI18n()
 // In single-team mode, team param may be absent — resolve from config
 const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string } | undefined
 
-// Detect single-team param remapping: when URL is /en/academie, Vue Router
-// matches /:team/:locale/:slug* with team=en, locale=academie, slug=[].
-// We need to remap: team from config, locale from route.params.team, slug from route.params.locale + rest.
-const isSingleTeamRemap = computed(() => {
+// Detect single-team mode: either matched via single-team-locale-slug route
+// (no team param) or via team-locale-slug with locale-as-team param remapping.
+const isSingleTeamMode = computed(() => {
   if (!singleTeamConfig?.slug) return false
+  // Matched via /:locale([a-z]{2,3})/:slug(.*)* — no :team param
+  if (route.name === 'single-team-locale-slug') return true
+  // Matched via /:team/:locale/:slug* with team=en (locale-as-team)
   const teamParam = route.params.team as string | undefined
-  // Remap when team param doesn't match the actual team slug and looks like a locale code
   return !!teamParam && teamParam !== singleTeamConfig.slug && /^[a-z]{2,3}$/.test(teamParam)
 })
 
 const team = computed(() => {
-  if (isSingleTeamRemap.value) return singleTeamConfig!.slug!
+  if (isSingleTeamMode.value) return singleTeamConfig!.slug!
   return teamId.value || singleTeamConfig?.slug || null
 })
 const urlLocale = computed(() => {
-  if (isSingleTeamRemap.value) return route.params.team as string
+  if (isSingleTeamMode.value) {
+    // single-team-locale-slug: locale is in route.params.locale
+    // team-locale-slug remap: locale is in route.params.team
+    return (route.params.locale as string) || (route.params.team as string)
+  }
   return route.params.locale as string
 })
 const slug = computed(() => {
-  if (isSingleTeamRemap.value) {
-    // In remap mode: locale param is actually the first slug segment
+  if (isSingleTeamMode.value) {
+    if (route.name === 'single-team-locale-slug') {
+      // params: { locale: 'nl', slug: ['aanbod'] }
+      const restSlug = route.params.slug
+      return Array.isArray(restSlug) ? restSlug.join('/') : (restSlug || '')
+    }
+    // team-locale-slug remap: locale param is actually the first slug segment
     const firstSegment = route.params.locale as string
     const restSlug = route.params.slug
     const rest = Array.isArray(restSlug) ? restSlug.join('/') : (restSlug || '')

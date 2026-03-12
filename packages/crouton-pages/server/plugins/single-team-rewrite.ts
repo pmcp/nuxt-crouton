@@ -20,12 +20,16 @@ const SKIP_PREFIXES = [
 ]
 
 /**
- * Single-Team URL Rewriter (Nitro Plugin)
+ * Single-Team Context Plugin (Nitro Plugin)
  *
- * Wraps h3's app handler to modify event.node.req.url BEFORE h3 computes
- * _reqPath in createAppEventHandler. This is necessary because h3 resets
- * event._path and event.node.req.url from the original _reqPath on every
- * handler iteration, so server middleware modifications are lost.
+ * In single-team mode, sets context flags so useDomainContext() knows to
+ * hide the team slug in URLs. Also redirects root (/) to the default locale.
+ *
+ * NOTE: This plugin does NOT rewrite URLs. The page component ([...slug].vue)
+ * handles param remapping when Vue Router matches /nl/aanbod as team=nl.
+ * Rewriting URLs here would cause SSR/client hydration mismatches because
+ * the server would render with /sintlukas/nl/aanbod but the client browser
+ * URL is /nl/aanbod.
  *
  * Configured via: runtimeConfig.public.croutonPages.singleTeam
  */
@@ -43,13 +47,6 @@ export default defineNitroPlugin((nitroApp) => {
   nitroApp.h3App.handler = defineEventHandler(async (event) => {
     const path = event.node.req.url || '/'
 
-    // Skip if path already includes the team slug
-    if (path === `/${slug}` || path.startsWith(`/${slug}/`) || path.startsWith(`/${slug}?`)) {
-      event.context.isSingleTeam = true
-      event.context.singleTeamSlug = slug
-      return originalHandler(event)
-    }
-
     // Skip API routes, auth, admin, and internal paths
     if (SKIP_PREFIXES.some(p => path.startsWith(p))) {
       return originalHandler(event)
@@ -61,7 +58,7 @@ export default defineNitroPlugin((nitroApp) => {
       return originalHandler(event)
     }
 
-    // Set context flags for useDomainContext
+    // Set context flags for useDomainContext (hideTeamInUrl, isSingleTeam)
     event.context.isSingleTeam = true
     event.context.singleTeamSlug = slug
 
@@ -70,14 +67,7 @@ export default defineNitroPlugin((nitroApp) => {
       return sendRedirect(event, `/${defaultLocale}/`, 302)
     }
 
-    // Rewrite URL before h3 processes it
-    // event._path is undefined at this point, so h3 will read from event.node.req.url
-    event.node.req.url = `/${slug}${path}`
-
-    if (config.public?.croutonPages?.debug) {
-      console.log(`[crouton-pages] Single-team rewrite: ${path} → ${event.node.req.url}`)
-    }
-
+    // No URL rewrite — Vue Router + param remapping handles routing
     return originalHandler(event)
   })
 })

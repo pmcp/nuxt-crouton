@@ -6,6 +6,9 @@
  * /acme/about-us → /acme/en/about-us
  * /acme/ → /acme/en/
  *
+ * In single-team mode, this route matches /nl/ (team=nl, slug=[]).
+ * Detects the locale-as-team case and redirects to /nl/ via [locale]/[...slug].
+ *
  * The actual page rendering happens in [team]/[locale]/[...slug].vue
  */
 definePageMeta({
@@ -15,6 +18,15 @@ definePageMeta({
     if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
     }
+
+    // Single-team mode: team param is actually a locale code (e.g., /nl/ → team=nl).
+    // Reject so Vue Router falls through to the /:locale/:slug* route.
+    const config = useRuntimeConfig()
+    const singleTeamSlug = (config.public?.croutonPages as any)?.singleTeam?.slug
+    if (singleTeamSlug && teamParam !== singleTeamSlug && /^[a-z]{2,3}$/.test(teamParam)) {
+      return false
+    }
+
     // Verify team actually exists to avoid catching routes meant for other pages
     try {
       const { valid } = await $fetch<{ valid: boolean }>(`/api/crouton-pages/validate-team/${teamParam}`)
@@ -33,7 +45,7 @@ let locale = ref('en')
 try {
   const i18n = useI18n()
   locale = i18n.locale
-} catch (error) {
+} catch {
   if (import.meta.dev) {
     console.warn('[crouton-pages] useI18n() failed in redirect route, using fallback locale')
   }

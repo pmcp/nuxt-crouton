@@ -79,6 +79,27 @@ export default defineNuxtConfig({
     }
   },
 
+  hooks: {
+    // In single-team mode, add /:locale/:slug* route so Vue Router can match
+    // single-segment URLs like /nl/ (the 3-param /:team/:locale/:slug* route
+    // requires 2+ segments and can't match /nl/ alone).
+    // For 2+ segment URLs like /nl/aanbod, Vue Router prefers the 3-param route
+    // (team=nl, locale=aanbod) — the page's validate+setup handles param remapping.
+    'pages:extend'(pages) {
+      const teamLocalePage = pages.find(p =>
+        p.name === 'team-locale-slug' ||
+        (p.path && p.path.includes('team') && p.path.includes('locale') && p.path.includes('slug'))
+      )
+      if (teamLocalePage?.file) {
+        pages.push({
+          name: 'single-team-locale-slug',
+          path: '/:locale([a-z]{2,3})/:slug(.*)*',
+          file: teamLocalePage.file
+        })
+      }
+    }
+  },
+
   experimental: {
     inlineRouteRules: true
   },
