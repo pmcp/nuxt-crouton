@@ -90,17 +90,14 @@ export default defineCachedEventHandler(async (event) => {
     }
 
     // ── 3. Get items from the query registry ──
-    // Use @vite-ignore to prevent build failure when registry doesn't exist yet
-    const registryPath = '~~/server/utils/crouton-query-registry'
-    let queryRegistry: Record<string, { getAll?: () => Promise<any> }>
-    try {
-      const mod = await import(/* @vite-ignore */ registryPath)
-      queryRegistry = mod.queryRegistry
-    } catch {
+    // queryRegistry is auto-imported by Nitro from the app's server/utils/
+    // Use globalThis fallback for apps that haven't generated a registry yet
+    const registry = (globalThis as any).__crouton_query_registry ?? (typeof queryRegistry !== 'undefined' ? queryRegistry : null)
+    if (!registry) {
       throw createError({ status: 404, statusText: 'Not found' })
     }
 
-    const collectionQueries = queryRegistry[collectionParam]
+    const collectionQueries = registry[collectionParam]
     if (!collectionQueries?.getAll) {
       throw createError({ status: 404, statusText: 'Not found' })
     }
