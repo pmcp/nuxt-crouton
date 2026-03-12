@@ -74,7 +74,18 @@ const nodeTypeStyle = computed(() => {
 
 const displayContent = computed(() => {
   const content = decision.value.content || ''
-  return content.length > 80 ? content.slice(0, 77) + '...' : content
+  // Strip markdown syntax for cleaner node preview
+  const plain = content
+    .replace(/^#{1,6}\s+/gm, '')     // headings
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // bold
+    .replace(/\*([^*]+)\*/g, '$1')     // italic
+    .replace(/^[-*]\s+/gm, '• ')      // bullet lists
+    .replace(/^\d+\.\s+/gm, '')       // numbered lists
+    .replace(/`([^`]+)`/g, '$1')       // inline code
+    .replace(/\n{2,}/g, ' — ')        // paragraph breaks → dash
+    .replace(/\n/g, ' ')              // line breaks → space
+    .trim()
+  return plain.length > 80 ? plain.slice(0, 77) + '...' : plain
 })
 
 const imageArtifact = computed(() =>
