@@ -3,13 +3,17 @@ export default {
     {
       name: 'decisions',
       fieldsFile: './schemas/decision.json'
+    },
+    {
+      name: 'chatConversations',
+      fieldsFile: './schemas/chat-conversation.json'
     }
   ],
 
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['decisions']
+      collections: ['decisions', 'chatConversations']
     }
   ],
 

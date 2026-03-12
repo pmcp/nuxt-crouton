@@ -19,12 +19,98 @@ const {
   isLoading,
   error,
   clearMessages,
+  exportMessages,
+  importMessages,
 } = useChat({
   api: `/api/teams/${teamId.value}/thinkgraph-decisions/chat`,
   body: computed(() => ({
     nodeId: props.nodeId,
   })),
+  onFinish: () => {
+    // Save conversation after each AI response (fire-and-forget)
+    saveConversation()
+  },
 })
+
+// ─── Persistence ────────────────────────────────────────────────
+const conversationId = ref<string | null>(null)
+const isLoadingConversation = ref(false)
+
+const apiBase = computed(() => `/api/teams/${teamId.value}/thinkgraph-chatconversations`)
+
+/**
+ * Load an existing conversation for the current nodeId.
+ * If no nodeId is provided, we use a special "global" key.
+ */
+async function loadConversation(nodeId: string | null | undefined) {
+  isLoadingConversation.value = true
+  conversationId.value = null
+  clearMessages()
+  addedIds.value = new Set()
+
+  try {
+    const lookupId = nodeId || '__global__'
+    const result = await $fetch<any>(apiBase.value, {
+      query: { nodeId: lookupId },
+    })
+
+    if (result && result.id) {
+      conversationId.value = result.id
+      if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
+        importMessages(result.messages)
+      }
+    }
+  } catch {
+    // No existing conversation found — that's fine, start fresh
+  } finally {
+    isLoadingConversation.value = false
+  }
+}
+
+/**
+ * Save the current conversation — creates or updates.
+ * Fire-and-forget: does not block the UI.
+ */
+async function saveConversation() {
+  const exported = exportMessages()
+  if (!exported || exported.length === 0) return
+
+  const nodeIdValue = props.nodeId || '__global__'
+
+  try {
+    if (conversationId.value) {
+      // Update existing conversation
+      await $fetch(`${apiBase.value}/${conversationId.value}`, {
+        method: 'PATCH',
+        body: {
+          messages: exported,
+          messageCount: exported.length,
+          lastMessageAt: new Date().toISOString(),
+        },
+      })
+    } else {
+      // Create new conversation
+      const result = await $fetch<any>(apiBase.value, {
+        method: 'POST',
+        body: {
+          nodeId: nodeIdValue,
+          title: props.nodeName || 'Chat',
+          messages: exported,
+          messageCount: exported.length,
+          lastMessageAt: new Date().toISOString(),
+        },
+      })
+      if (result && result.id) {
+        conversationId.value = result.id
+      }
+    }
+  } catch (e) {
+    // Silently fail — don't disrupt the chat experience
+    console.warn('Failed to save conversation:', e)
+  }
+}
+
+// ─── Decision Extraction ────────────────────────────────────────
 
 // Parse DECISION: blocks from assistant messages
 const extractedDecisions = computed(() => {
@@ -91,11 +177,14 @@ watch(messages, () => {
   })
 }, { deep: true })
 
-// Reset when node changes
-watch(() => props.nodeId, () => {
-  clearMessages()
-  addedIds.value = new Set()
-})
+// Load conversation on mount and when nodeId changes
+watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
+  // Save current conversation before switching (fire-and-forget)
+  if (oldNodeId !== undefined && messages.value.length > 0) {
+    saveConversation()
+  }
+  await loadConversation(newNodeId)
+}, { immediate: true })
 </script>
 
 <template>
@@ -158,8 +247,16 @@ watch(() => props.nodeId, () => {
 
     <!-- Messages -->
     <div ref="messagesEl" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <!-- Loading conversation indicator -->
       <div
-        v-if="messages.length === 0"
+        v-if="isLoadingConversation"
+        class="h-full flex items-center justify-center text-neutral-400"
+      >
+        <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+      </div>
+
+      <div
+        v-else-if="messages.length === 0"
         class="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600"
       >
         <UIcon name="i-lucide-sparkles" class="size-8 mb-3 opacity-50" />
@@ -169,21 +266,23 @@ watch(() => props.nodeId, () => {
         <p class="text-xs mt-1 opacity-60">AI insights can be added to the graph</p>
       </div>
 
-      <div
-        v-for="msg in messages"
-        :key="msg.id"
-        class="flex"
-        :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
-      >
+      <template v-else>
         <div
-          class="max-w-[85%] rounded-xl px-3 py-2 text-sm"
-          :class="msg.role === 'user'
-            ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200'"
+          v-for="msg in messages"
+          :key="msg.id"
+          class="flex"
+          :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <p class="whitespace-pre-wrap leading-relaxed">{{ formatContent(msg.content) }}</p>
+          <div
+            class="max-w-[85%] rounded-xl px-3 py-2 text-sm"
+            :class="msg.role === 'user'
+              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200'"
+          >
+            <p class="whitespace-pre-wrap leading-relaxed">{{ formatContent(msg.content) }}</p>
+          </div>
         </div>
-      </div>
+      </template>
 
       <div v-if="isLoading" class="flex justify-start">
         <div class="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-3 py-2">
@@ -210,6 +309,7 @@ watch(() => props.nodeId, () => {
         :rows="1"
         autoresize
         class="flex-1"
+        :disabled="isLoadingConversation"
         @keydown.enter.exact.prevent="onSubmit"
       />
       <UButton
@@ -217,7 +317,7 @@ watch(() => props.nodeId, () => {
         icon="i-lucide-send"
         size="sm"
         :loading="isLoading"
-        :disabled="!input.trim()"
+        :disabled="!input.trim() || isLoadingConversation"
       />
     </form>
   </div>
