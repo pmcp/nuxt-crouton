@@ -322,7 +322,9 @@ const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
 const layoutOptions = computed(() => ({
   direction: props.flowConfig?.direction ?? 'TB',
   nodeSpacing: props.flowConfig?.nodeSpacing ?? 50,
-  rankSpacing: props.flowConfig?.rankSpacing ?? 100
+  rankSpacing: props.flowConfig?.rankSpacing ?? 100,
+  nodeWidth: props.flowConfig?.nodeWidth ?? 172,
+  nodeHeight: props.flowConfig?.nodeHeight ?? 36,
 }))
 
 const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)

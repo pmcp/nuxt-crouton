@@ -24,6 +24,10 @@ export interface FlowConfig {
   rankSpacing?: number
   /** Edge type: 'default' (bezier), 'smoothstep' (right angles), 'straight', 'step' */
   edgeType?: 'default' | 'smoothstep' | 'straight' | 'step'
+  /** Node width for layout calculation (default: 172) */
+  nodeWidth?: number
+  /** Node height for layout calculation (default: 36) */
+  nodeHeight?: number
 }
 
 /**
