@@ -686,8 +686,6 @@ defineExpose({
       :edges="finalEdges"
       :node-types="nodeTypes"
       :default-edge-options="defaultEdgeOptions"
-      :multi-selection-key-code="null"
-      :selection-key-code="null"
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
