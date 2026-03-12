@@ -30,6 +30,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/utils/content-detector.ts` | JSON vs HTML content detection |
 | `app/editor/extensions/page-blocks.ts` | TipTap extensions bundle |
 | `app/pages/[team]/[...slug].vue` | Public page catch-all route |
+| `server/middleware/00-single-team.ts` | Config-driven single-team URL rewriter |
 | `server/middleware/01-domain-resolver.ts` | Resolves custom domains to teams |
 | `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation |
 | `server/api/teams/[id]/pages/[slug].get.ts` | Get single page by slug |
@@ -371,9 +372,11 @@ Normal routing: [team]/[...slug].vue
 ```typescript
 const {
   isCustomDomain,    // Whether request is from custom domain
+  isSingleTeam,      // Whether single-team mode is active
+  singleTeamSlug,    // The single-team slug (when active)
   resolvedDomain,    // The custom domain hostname
   resolvedTeamId,    // Team ID from domain lookup
-  hideTeamInUrl,     // true on custom domains (hide team in links)
+  hideTeamInUrl,     // true on custom domains OR single-team mode
   hostname,          // Current hostname
   isAppDomain        // Whether hostname is known app domain
 } = useDomainContext()
@@ -404,12 +407,26 @@ export default defineNuxtConfig({
         // Domains to skip (not custom domains)
         appDomains: ['myapp.com', 'staging.myapp.com'],
         // Enable debug logging
-        debug: false
+        debug: false,
+        // Single-team mode: eliminates team slug from public URLs
+        singleTeam: {
+          slug: 'myteam',        // Team slug (empty = disabled)
+          defaultLocale: 'en'    // Locale for root redirect
+        }
       }
     }
   }
 })
 ```
+
+### Single-Team Mode
+
+For sites with only one team, single-team mode removes the team slug from public URLs:
+- `/nl/about` instead of `/myteam/nl/about`
+- `/` redirects to `/{defaultLocale}/`
+- Admin/API/auth routes are unaffected
+
+The middleware sets `event.context.isSingleTeam` which makes `useDomainContext().hideTeamInUrl` return `true`, so all navigation links automatically omit the team slug.
 
 ### Domain Setup
 

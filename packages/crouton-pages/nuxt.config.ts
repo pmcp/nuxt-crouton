@@ -65,7 +65,16 @@ export default defineNuxtConfig({
         redirectDashboard: false,
         // Base URL for absolute SEO URLs (Open Graph, canonical, hreflang)
         // Set via NUXT_PUBLIC_CROUTON_PAGES_SITE_URL env var
-        siteUrl: ''
+        siteUrl: '',
+        // Single-team mode: eliminates team slug from public URLs
+        // When set, all public URLs omit the team prefix
+        // e.g., /nl/about instead of /sintlukas/nl/about
+        singleTeam: {
+          // Team slug to use (empty = disabled)
+          slug: '',
+          // Default locale for root redirect (/ → /{slug}/{locale}/)
+          defaultLocale: 'en'
+        }
       }
     }
   },
