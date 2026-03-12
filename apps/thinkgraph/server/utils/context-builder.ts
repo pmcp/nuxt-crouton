@@ -11,6 +11,13 @@ export interface ContextNode {
   parentId?: string
   starred?: boolean
   branchName?: string
+  artifacts?: Array<{
+    type: string
+    content?: string
+    url?: string
+    provider?: string
+    metadata?: Record<string, unknown>
+  }>
 }
 
 export function buildAncestorChain(allDecisions: ContextNode[], targetId: string): ContextNode[] {
@@ -78,6 +85,31 @@ export function buildPrompt(
  * Build a context string for dispatch services.
  * Includes the full thinking chain and starred insights for maximum context.
  */
+/**
+ * Summarize artifacts for context (truncated to avoid blowing up the prompt).
+ */
+function summarizeArtifacts(node: ContextNode): string {
+  if (!node.artifacts?.length) return ''
+  const lines: string[] = []
+  for (const a of node.artifacts) {
+    if (a.type === 'code' && a.content) {
+      const lang = (a.metadata?.language as string) || 'code'
+      lines.push(`   [${a.type}/${lang}]: ${a.content.slice(0, 500)}`)
+    } else if (a.type === 'prototype' && a.content) {
+      lines.push(`   [prototype HTML]: ${a.content.slice(0, 800)}`)
+    } else if (a.type === 'text' && a.content) {
+      lines.push(`   [text]: ${a.content.slice(0, 500)}`)
+    } else if (a.type === 'image' && a.url) {
+      lines.push(`   [image from ${a.provider || 'unknown'}]`)
+    }
+  }
+  return lines.length > 0 ? '\n' + lines.join('\n') : ''
+}
+
+/**
+ * Build a context string for dispatch services.
+ * Includes the full thinking chain, artifact content, and starred insights.
+ */
 export function buildDispatchContext(
   target: ContextNode,
   allDecisions: ContextNode[]
@@ -90,11 +122,21 @@ export function buildDispatchContext(
   if (ancestors.length > 0) {
     context += 'Thinking path:\n'
     ancestors.forEach((a, i) => {
-      context += `${'  '.repeat(i)}→ ${a.content}\n`
+      context += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})${summarizeArtifacts(a)}\n`
     })
-    context += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+    context += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}${summarizeArtifacts(target)}\n\n`
   } else {
-    context += `Current thought: ${target.content}\n\n`
+    context += `Current thought: ${target.content}${summarizeArtifacts(target)}\n\n`
+  }
+
+  // Include children context so AI knows what already exists
+  const children = allDecisions.filter(d => d.parentId === target.id)
+  if (children.length > 0) {
+    context += 'Existing children of this node:\n'
+    children.forEach(c => {
+      context += `- ${c.content} (${c.nodeType})${summarizeArtifacts(c)}\n`
+    })
+    context += '\n'
   }
 
   if (starred.length > 0) {
@@ -122,7 +164,7 @@ export function buildMultiNodeContext(
 
   for (const target of targets) {
     const ancestors = buildAncestorChain(allDecisions, target.id)
-    context += `── ${target.nodeType.toUpperCase()}: ${target.content}\n`
+    context += `── ${target.nodeType.toUpperCase()}: ${target.content}${summarizeArtifacts(target)}\n`
     if (ancestors.length > 0) {
       context += `   Path: ${ancestors.map(a => a.content.slice(0, 50)).join(' → ')}\n`
     }

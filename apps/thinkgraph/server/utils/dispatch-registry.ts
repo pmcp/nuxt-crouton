@@ -56,11 +56,13 @@ export function isServiceAvailable(service: DispatchService, event: H3Event): bo
   return service.envKeys.every(key => !!(config as any)[key])
 }
 
-let _loading: Promise<void> | null = null
-export function ensureServicesLoaded() {
-  if (registry.size > 0) return Promise.resolve()
-  if (_loading) return _loading
-  _loading = Promise.all([
+let _loaded = false
+
+export async function ensureServicesLoaded() {
+  if (_loaded && registry.size > 0) return
+  _loaded = false
+  // Import all service files — each calls registerDispatchService() at top level
+  await Promise.all([
     import('./dispatch-services/dalle3'),
     import('./dispatch-services/flux'),
     import('./dispatch-services/lovable'),
@@ -76,6 +78,6 @@ export function ensureServicesLoaded() {
     import('./dispatch-services/technical-spec'),
     import('./dispatch-services/ui-prototype'),
     import('./dispatch-services/research-agent'),
-  ]).then(() => {})
-  return _loading
+  ])
+  _loaded = true
 }
