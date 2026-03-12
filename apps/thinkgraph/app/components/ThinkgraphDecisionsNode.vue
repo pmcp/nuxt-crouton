@@ -82,12 +82,39 @@ const imageArtifact = computed(() =>
 )
 
 const prototypeArtifact = computed(() =>
-  decision.value.artifacts?.find((a: any) => a.type === 'prototype' && a.url)
+  decision.value.artifacts?.find((a: any) => a.type === 'prototype' && a.content)
+)
+
+const codeArtifact = computed(() =>
+  decision.value.artifacts?.find((a: any) => a.type === 'code' && a.content)
 )
 
 const nonVisualArtifacts = computed(() =>
-  decision.value.artifacts?.filter((a: any) => a.type !== 'image' && !(a.type === 'prototype' && a.url)) || []
+  decision.value.artifacts?.filter((a: any) =>
+    a.type !== 'image'
+    && a.type !== 'code'
+    && !(a.type === 'prototype' && a.url)
+  ) || []
 )
+
+function openPrototype(event: Event) {
+  event.stopPropagation()
+  if (!prototypeArtifact.value?.content) return
+  const win = window.open('', '_blank')
+  if (win) {
+    win.document.write(prototypeArtifact.value.content)
+    win.document.close()
+  }
+}
+
+const codeCopied = ref(false)
+async function copyCode(event: Event) {
+  event.stopPropagation()
+  if (!codeArtifact.value?.content) return
+  await navigator.clipboard.writeText(codeArtifact.value.content)
+  codeCopied.value = true
+  setTimeout(() => { codeCopied.value = false }, 2000)
+}
 
 function handleEdit(event: Event) {
   event.stopPropagation()
@@ -243,17 +270,39 @@ function toggleStar(event: Event) {
       />
     </div>
 
-    <!-- Prototype artifact preview -->
-    <a
-      v-if="prototypeArtifact"
-      :href="prototypeArtifact.url"
-      target="_blank"
-      class="mt-1.5 -mx-1 block rounded border border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-950/20 p-2 text-center transition-colors hover:bg-primary-100/50 dark:hover:bg-primary-900/20"
-      @click.stop
-    >
-      <UIcon name="i-lucide-external-link" class="size-3.5 text-primary-500" />
-      <span class="text-[10px] text-primary-600 dark:text-primary-400 ml-1">Open prototype</span>
-    </a>
+    <!-- Prototype artifact preview (iframe) -->
+    <div v-if="prototypeArtifact" class="mt-1.5 -mx-1">
+      <div class="rounded border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+        <iframe
+          :srcdoc="prototypeArtifact.content"
+          class="w-full h-[120px] bg-white pointer-events-none"
+          sandbox="allow-scripts"
+        />
+        <button
+          class="flex items-center justify-center gap-1 w-full px-2 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+          @click="openPrototype"
+        >
+          <UIcon name="i-lucide-external-link" class="size-3 text-primary-500" />
+          <span class="text-[10px] text-primary-600 dark:text-primary-400">Open full size</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Code artifact preview -->
+    <div v-if="codeArtifact" class="mt-1.5 -mx-1">
+      <div class="rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
+        <div class="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
+          <span class="text-[10px] font-mono text-neutral-500">{{ codeArtifact.metadata?.language || 'code' }}</span>
+          <button
+            class="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+            @click="copyCode"
+          >
+            <UIcon :name="codeCopied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3" />
+          </button>
+        </div>
+        <pre class="px-2 py-1.5 text-[10px] font-mono leading-tight text-neutral-700 dark:text-neutral-300 max-h-[80px] overflow-hidden">{{ codeArtifact.content.slice(0, 200) }}{{ codeArtifact.content.length > 200 ? '...' : '' }}</pre>
+      </div>
+    </div>
 
     <!-- Non-visual artifact indicators -->
     <div v-if="nonVisualArtifacts.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">

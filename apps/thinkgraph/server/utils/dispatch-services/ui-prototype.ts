@@ -56,19 +56,11 @@ IMPORTANT: The HTML must be completely self-contained. No external resources exc
       html = html.replace(/^```(?:html)?\n?/, '').replace(/\n?```$/, '')
     }
 
-    // Save HTML to blob storage
-    const filename = `dispatch/prototype-${Date.now()}.html`
-    const blob = await hubBlob().put(filename, html, {
-      contentType: 'text/html',
-      addRandomSuffix: true,
-    })
-
     return {
       artifacts: [
         {
           type: 'prototype',
           provider: 'ui-prototype',
-          url: `/api/blob/${blob.pathname}`,
           content: html,
           prompt: context.prompt || context.nodeContent,
           metadata: { model, style },

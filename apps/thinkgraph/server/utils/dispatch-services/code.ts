@@ -38,9 +38,19 @@ Respond with ONLY the code, wrapped in a single markdown code block with the lan
       prompt: `${codePrompt}\n\nThinking context:\n${context.thinkingPath}`,
     })
 
-    const codeMatch = result.text.match(/```(\w+)?\n([\s\S]*?)```/)
-    const code = codeMatch ? codeMatch[2].trim() : result.text.trim()
+    // Strip markdown fences — handle various formats (```lang, ``` lang, leading whitespace)
+    let code = result.text.trim()
+    const codeMatch = code.match(/^```(\w+)?\s*\n([\s\S]*?)```\s*$/s)
     const detectedLang = codeMatch?.[1] || language
+    if (codeMatch) {
+      code = codeMatch[2].trim()
+    } else if (code.startsWith('```')) {
+      // Fallback: just strip first and last lines if they're fences
+      const lines = code.split('\n')
+      if (lines[0].startsWith('```')) lines.shift()
+      if (lines[lines.length - 1]?.trim() === '```') lines.pop()
+      code = lines.join('\n').trim()
+    }
 
     return {
       artifacts: [
