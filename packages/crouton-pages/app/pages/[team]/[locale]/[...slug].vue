@@ -27,7 +27,15 @@ definePageMeta({
   // (the rejected promise is detected by Node before Nuxt's Suspense catches it).
   validate: async (route) => {
     const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-    const teamParam = route.params.team as string
+    const teamParam = route.params.team as string | undefined
+
+    // Single-team mode: no team param in URL, team comes from config
+    if (!teamParam) {
+      // Only valid if single-team mode is configured
+      const config = useRuntimeConfig()
+      return !!(config.public?.croutonPages as any)?.singleTeam?.slug
+    }
+
     // Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
     if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
@@ -59,7 +67,9 @@ const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 const { locale: i18nLocale, locales, setLocale } = useI18n()
 
 // Get team, locale, and slug from route params
-const team = teamId
+// In single-team mode, team param may be absent — resolve from config
+const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string } | undefined
+const team = computed(() => teamId.value || singleTeamConfig?.slug || null)
 const urlLocale = computed(() => route.params.locale as string)
 const slug = computed(() => {
   const slugParts = route.params.slug

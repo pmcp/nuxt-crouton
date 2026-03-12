@@ -45,7 +45,6 @@ export interface NavigationItem {
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
   const { locale } = useI18n()
-  const { isCustomDomain, hideTeamInUrl } = useDomainContext()
   const collections = useCollections()
   const { teamId } = useTeamContext()
 
@@ -105,8 +104,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       const colConfig = collections.getConfig(binder.config.collection)
       if (!colConfig?.apiPath) return
 
-      const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
-      const pathPrefix = `${teamPrefix}/${locale.value}`
+      const pathPrefix = `/${team.value}/${locale.value}`
       const binderPath = `${pathPrefix}/${binder.slug || ''}`.replace(/\/+$/, '') || pathPrefix
 
       const titleField = colConfig.display?.title || 'title'
@@ -160,9 +158,10 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       p.visibility !== 'admin'
     )
 
-    // Build path prefix based on domain context (includes locale)
-    const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
-    const pathPrefix = `${teamPrefix}/${locale.value}`
+    // Build path prefix: always include team slug for Vue Router resolution.
+    // Client-side navigation needs the full [team]/[locale] path to match routes.
+    // The server-side single-team rewrite handles direct URL access without team slug.
+    const pathPrefix = `/${team.value}/${locale.value}`
 
     // Convert to NavigationItem format
     const items: NavigationItem[] = navPages.map((p: any) => ({
