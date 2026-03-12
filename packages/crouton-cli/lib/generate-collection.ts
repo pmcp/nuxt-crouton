@@ -43,6 +43,7 @@ import { generateRepeaterItemComponent } from './generators/repeater-item-compon
 import { generateFieldComponents } from './generators/field-components.ts'
 import { generateSeedFile } from './generators/seed-data.ts'
 import { generateCollectionTypesRegistry } from './generators/collection-types-registry.ts'
+import { generateQueryRegistryFile } from './generators/query-registry.ts'
 
 const execAsync = promisify(exec)
 
@@ -1148,6 +1149,19 @@ async function runPostGeneration(opts: PostGenerationOptions): Promise<void> {
     } catch (error: any) {
       console.log(`⚠ Could not generate type registry: ${error.message}`)
     }
+
+    // Generate server-side query registry for lazy-loaded query lookups
+    console.log(`\n${'═'.repeat(60)}`)
+    console.log(`  QUERY REGISTRY`)
+    console.log(`${'═'.repeat(60)}\n`)
+
+    try {
+      const queryRegistryResult = await generateQueryRegistryFile(process.cwd())
+      console.log(`✓ Generated query registry with ${queryRegistryResult.collectionsCount} collection(s)`)
+      console.log(`  → ${queryRegistryResult.outputPath}`)
+    } catch (error: any) {
+      console.log(`⚠ Could not generate query registry: ${error.message}`)
+    }
   }
 
   console.log(`\n${'═'.repeat(60)}`)
@@ -1519,6 +1533,19 @@ export async function runGenerate(options: RunGenerateOptions = {}): Promise<voi
         console.log(`  → ${registryResult.outputPath}`)
       } catch (error: any) {
         console.log(`⚠ Could not generate type registry: ${error.message}`)
+      }
+
+      // Generate server-side query registry
+      console.log(`\n${'═'.repeat(60)}`)
+      console.log(`  QUERY REGISTRY`)
+      console.log(`${'═'.repeat(60)}\n`)
+
+      try {
+        const queryRegistryResult = await generateQueryRegistryFile(process.cwd())
+        console.log(`✓ Generated query registry with ${queryRegistryResult.collectionsCount} collection(s)`)
+        console.log(`  → ${queryRegistryResult.outputPath}`)
+      } catch (error: any) {
+        console.log(`⚠ Could not generate query registry: ${error.message}`)
       }
 
       // Print .env hints for prompted configurations

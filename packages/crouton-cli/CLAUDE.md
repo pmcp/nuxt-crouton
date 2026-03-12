@@ -203,7 +203,8 @@ lib/generators/
 ├── seed-data.ts           → seed.ts (drizzle-seed data)
 ├── types.ts               → TypeScript interfaces
 ├── nuxt-config.ts         → Layer config
-└── field-components.ts    → Dependent field components
+├── field-components.ts    → Dependent field components
+└── query-registry.ts      → Server-side query registry (lazy imports)
 ```
 
 ## Schema Format
@@ -358,6 +359,9 @@ layers/[layer]/collections/[collection]/
 │       └── seed.ts          # Only with --seed flag
 ├── types.ts
 └── nuxt.config.ts
+
+# Also generated at app root (aggregated across all collections):
+server/utils/crouton-query-registry.ts   # Lazy-loaded query function registry
 ```
 
 ## Output Location
