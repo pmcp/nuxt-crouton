@@ -8,6 +8,7 @@ export default defineNuxtConfig({
   modules: ['@fyit/crouton'],
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-07-15',
+  devServer: { port: 3001 },
   devtools: { enabled: true },
   extends: [
     '@fyit/crouton-core',

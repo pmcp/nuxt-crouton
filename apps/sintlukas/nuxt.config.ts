@@ -7,6 +7,13 @@ const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
 export default defineNuxtConfig({
   modules: ['@fyit/crouton'],
   css: ['~/assets/css/main.css'],
+  devServer: { port: 3003 },
+
+  // Register app components globally so resolveComponent() finds them
+  // (needed by crouton-pages binder detail renderer)
+  components: [
+    { path: '~/app/components', global: true }
+  ],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   extends: [
