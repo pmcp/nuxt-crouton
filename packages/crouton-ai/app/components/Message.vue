@@ -60,15 +60,10 @@ async function handleCopy() {
           :class="[
             !isUser ? 'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-code:text-xs' : ''
           ]"
-        >
-          {{ message.content }}
-        </div>
-
-        <!-- Streaming indicator -->
-        <span
-          v-if="isStreaming && !isUser"
-          class="inline-block w-1.5 h-4 ml-0.5 bg-current animate-pulse rounded-sm"
-        />
+        >{{ message.content }}<span
+            v-if="isStreaming && !isUser"
+            class="ai-streaming-cursor"
+          /></div>
       </div>
 
       <!-- Actions (copy button) -->
@@ -88,3 +83,22 @@ async function handleCopy() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.ai-streaming-cursor {
+  display: inline-block;
+  width: 0.375rem;
+  height: 1em;
+  margin-left: 0.125rem;
+  background-color: currentColor;
+  border-radius: 0.125rem;
+  vertical-align: text-bottom;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+</style>
