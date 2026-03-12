@@ -58,14 +58,15 @@ export default defineCachedEventHandler(async (event) => {
 
     // Check if user is authenticated and a team member
     let isMember = false
+    let isAdmin = false
     try {
       const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
       const session = await getServerSession(event)
 
       if (session?.user) {
-        // Check team membership
+        // Check team membership and role
         const membership = await database
-          .select({ id: authSchema.member.id as any })
+          .select({ id: authSchema.member.id as any, role: authSchema.member.role as any })
           .from(authSchema.member as any)
           .where(
             and(
@@ -77,6 +78,7 @@ export default defineCachedEventHandler(async (event) => {
           .then((rows: any[]) => rows[0])
 
         isMember = !!membership
+        isAdmin = membership?.role === 'admin' || membership?.role === 'owner'
       }
     } catch {
       // Auth not available or error - continue as unauthenticated
@@ -103,6 +105,9 @@ export default defineCachedEventHandler(async (event) => {
       // Add visibility filter based on auth status
       if (visibilityFilter) {
         conditions.push(eq(pagesSchema.pagesPages.visibility as any, visibilityFilter))
+      } else if (isAdmin) {
+        // Admins see public + members + admin pages
+        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members', 'admin']))
       } else if (isMember) {
         // Authenticated members see public + members pages
         conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members']))

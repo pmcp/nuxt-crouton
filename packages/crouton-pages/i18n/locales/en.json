@@ -40,6 +40,7 @@
     "visibility": {
       "public": "Public",
       "members": "Members Only",
+      "admin": "Admin Only",
       "hidden": "Hidden"
     },
     "layout": {

@@ -35,6 +35,7 @@
     "visibility": {
       "public": "Openbaar",
       "members": "Alleen Leden",
+      "admin": "Alleen Beheerders",
       "hidden": "Verborgen"
     },
     "layout": {

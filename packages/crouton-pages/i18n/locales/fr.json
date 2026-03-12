@@ -35,6 +35,7 @@
     "visibility": {
       "public": "Public",
       "members": "Membres uniquement",
+      "admin": "Admin uniquement",
       "hidden": "Caché"
     },
     "layout": {

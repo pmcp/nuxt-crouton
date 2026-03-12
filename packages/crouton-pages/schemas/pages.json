@@ -82,6 +82,7 @@
       "options": [
         { "value": "public", "label": "Public" },
         { "value": "members", "label": "Members Only" },
+        { "value": "admin", "label": "Admin Only" },
         { "value": "hidden", "label": "Hidden (Direct Link)" }
       ]
     },

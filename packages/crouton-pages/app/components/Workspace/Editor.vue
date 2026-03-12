@@ -387,6 +387,7 @@ const binderGroupBy = computed({
   }
 })
 
+
 // Available collections for the binder picker
 const collectionOptions = computed(() =>
   Object.keys(collections.configs).map(name => {
@@ -520,6 +521,7 @@ const statusDropdownItems = computed(() => [
 const visibilityConfig: Record<string, { icon: string; label: string }> = {
   public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') || 'Public' },
   members: { icon: 'i-lucide-users', label: t('pages.visibility.members') || 'Members Only' },
+  admin: { icon: 'i-lucide-shield', label: t('pages.visibility.admin') || 'Admin Only' },
   hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') || 'Hidden' }
 }
 

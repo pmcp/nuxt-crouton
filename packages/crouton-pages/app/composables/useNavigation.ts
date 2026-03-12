@@ -156,7 +156,8 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     const navPages = pages.value.filter((p: any) =>
       p.status === 'published' &&
       p.showInNavigation !== false &&
-      p.visibility !== 'hidden'
+      p.visibility !== 'hidden' &&
+      p.visibility !== 'admin'
     )
 
     // Build path prefix based on domain context (includes locale)

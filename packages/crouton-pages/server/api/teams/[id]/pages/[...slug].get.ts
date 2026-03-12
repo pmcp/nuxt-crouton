@@ -145,8 +145,8 @@ export default defineEventHandler(async (event) => {
       // Check visibility
       if (page.visibility === 'hidden') {
         // Hidden pages require direct link - allow access
-      } else if (page.visibility === 'members') {
-        // Members-only pages require authentication
+      } else if (page.visibility === 'members' || page.visibility === 'admin') {
+        // Members/admin-only pages require authentication
         try {
           const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
           const session = await getServerSession(event)
@@ -160,7 +160,7 @@ export default defineEventHandler(async (event) => {
 
           // Check team membership
           const membership = await database
-            .select({ id: authSchema.member.id as any })
+            .select({ id: authSchema.member.id as any, role: authSchema.member.role as any })
             .from(authSchema.member as any)
             .where(
               and(
@@ -178,7 +178,15 @@ export default defineEventHandler(async (event) => {
             })
           }
 
-          // Prevent ISR/SWR from caching members-only page responses
+          // Admin-only pages require admin or owner role
+          if (page.visibility === 'admin' && membership.role !== 'admin' && membership.role !== 'owner') {
+            throw createError({
+              status: 403,
+              statusText: 'Access denied - admin access required'
+            })
+          }
+
+          // Prevent ISR/SWR from caching restricted page responses
           setResponseHeader(event, 'Cache-Control', 'private, no-store')
         } catch (authError: any) {
           if (authError.statusCode) throw authError

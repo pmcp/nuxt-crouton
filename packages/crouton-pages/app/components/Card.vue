@@ -70,6 +70,7 @@ const statusConfig: Record<string, { dotColor: string; label: string }> = {
 const visibilityConfig: Record<string, { icon: string; label: string }> = {
   public: { icon: 'i-lucide-globe', label: 'Public' },
   members: { icon: 'i-lucide-users', label: 'Members Only' },
+  admin: { icon: 'i-lucide-shield', label: 'Admin Only' },
   hidden: { icon: 'i-lucide-eye-off', label: 'Hidden' }
 }
 
