@@ -68,6 +68,13 @@ export function ensureServicesLoaded() {
     import('./dispatch-services/code'),
     import('./dispatch-services/text'),
     import('./dispatch-services/mermaid'),
+    import('./dispatch-services/gemini'),
+    import('./dispatch-services/business-canvas'),
+    import('./dispatch-services/user-stories'),
+    import('./dispatch-services/pitch'),
+    import('./dispatch-services/swot'),
+    import('./dispatch-services/technical-spec'),
+    import('./dispatch-services/ui-prototype'),
   ]).then(() => {})
   return _loading
 }

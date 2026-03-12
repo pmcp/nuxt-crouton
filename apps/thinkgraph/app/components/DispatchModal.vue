@@ -286,7 +286,33 @@ watch(open, (isOpen) => {
               />
             </div>
 
-            <!-- Prototype result -->
+            <!-- Prototype result with iframe preview -->
+            <div v-else-if="artifact.type === 'prototype' && artifact.url" class="space-y-2">
+              <iframe
+                :src="artifact.url"
+                class="w-full h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white"
+                sandbox="allow-scripts"
+              />
+              <div class="flex gap-2">
+                <UButton
+                  icon="i-lucide-external-link"
+                  label="Open full size"
+                  size="sm"
+                  @click="openExternal(artifact.url!)"
+                />
+                <UButton
+                  v-if="artifact.content"
+                  icon="i-lucide-copy"
+                  label="Copy HTML"
+                  size="sm"
+                  variant="outline"
+                  color="neutral"
+                  @click="copyContent(artifact.content!)"
+                />
+              </div>
+            </div>
+
+            <!-- Prototype result (prompt-only, no URL) -->
             <div v-else-if="artifact.type === 'prototype' && artifact.content" class="space-y-2">
               <pre class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm overflow-x-auto max-h-60 whitespace-pre-wrap">{{ artifact.content }}</pre>
               <div class="flex gap-2">

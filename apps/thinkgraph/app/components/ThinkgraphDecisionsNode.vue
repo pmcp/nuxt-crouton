@@ -77,6 +77,18 @@ const displayContent = computed(() => {
   return content.length > 80 ? content.slice(0, 77) + '...' : content
 })
 
+const imageArtifact = computed(() =>
+  decision.value.artifacts?.find((a: any) => a.type === 'image' && a.url)
+)
+
+const prototypeArtifact = computed(() =>
+  decision.value.artifacts?.find((a: any) => a.type === 'prototype' && a.url)
+)
+
+const nonVisualArtifacts = computed(() =>
+  decision.value.artifacts?.filter((a: any) => a.type !== 'image' && !(a.type === 'prototype' && a.url)) || []
+)
+
 function handleEdit(event: Event) {
   event.stopPropagation()
   if (props.collection && decision.value.id) {
@@ -222,15 +234,36 @@ function toggleStar(event: Event) {
       <span class="text-[10px] text-violet-400">{{ decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
     </div>
 
-    <!-- Artifact indicators -->
-    <div v-if="decision.artifacts?.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+    <!-- Image artifact preview -->
+    <div v-if="imageArtifact" class="mt-1.5 -mx-1">
+      <img
+        :src="imageArtifact.url"
+        :alt="imageArtifact.prompt || 'Generated image'"
+        class="w-full rounded border border-neutral-200 dark:border-neutral-700"
+      />
+    </div>
+
+    <!-- Prototype artifact preview -->
+    <a
+      v-if="prototypeArtifact"
+      :href="prototypeArtifact.url"
+      target="_blank"
+      class="mt-1.5 -mx-1 block rounded border border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-950/20 p-2 text-center transition-colors hover:bg-primary-100/50 dark:hover:bg-primary-900/20"
+      @click.stop
+    >
+      <UIcon name="i-lucide-external-link" class="size-3.5 text-primary-500" />
+      <span class="text-[10px] text-primary-600 dark:text-primary-400 ml-1">Open prototype</span>
+    </a>
+
+    <!-- Non-visual artifact indicators -->
+    <div v-if="nonVisualArtifacts.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">
       <span
-        v-for="(artifact, i) in decision.artifacts"
+        v-for="(artifact, i) in nonVisualArtifacts"
         :key="i"
         class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
       >
         <UIcon
-          :name="artifact.type === 'image' ? 'i-lucide-image' : artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
+          :name="artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
           class="size-3"
         />
         {{ artifact.type }}
