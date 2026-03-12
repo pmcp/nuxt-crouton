@@ -442,6 +442,20 @@ The middleware sets `event.context.isSingleTeam` which makes `useDomainContext()
 |----------|--------|---------|
 | `/api/teams/[id]/pages` | GET | List published pages (for navigation) |
 | `/api/teams/[id]/pages/[slug]` | GET | Get single page by slug |
+| `/api/public/[team]/[collection]` | GET | Public collection list (no auth, SWR cached) |
+| `/api/public/[team]/[collection]/[itemId]` | GET | Public collection item detail (no auth, SWR cached) |
+
+### Public Collection Endpoints
+
+Collection-binder pages with `visibility: 'public'` and `status: 'published'` automatically expose their bound collection via unauthenticated endpoints. These endpoints:
+- Resolve team by slug or ID
+- Validate a published public binder exists for the requested collection
+- Use the app's generated query registry (`server/utils/crouton-query-registry.ts`) for data access
+- Filter items to `status: 'published'` only
+- Strip internal fields (`createdBy`, `updatedBy`)
+- Cache responses with SWR (5 min)
+
+The `CollectionBinderRenderer` auto-switches to public endpoints when not in `/admin/` and the page visibility is `'public'`.
 
 ## Dependencies
 

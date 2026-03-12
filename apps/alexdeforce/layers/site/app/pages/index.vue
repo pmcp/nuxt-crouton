@@ -21,7 +21,7 @@ const { data: articles } = await useFetch('/api/public/articles', {
       <h1 class="pb-5 pt-1"><span class="text-xl">{{ article.title }}</span></h1>
       <div
         v-if="article.contentHtml"
-        class="prose"
+        class="prose prose-sm prose-p:font-medium"
         v-html="article.contentHtml"
       />
     </div>

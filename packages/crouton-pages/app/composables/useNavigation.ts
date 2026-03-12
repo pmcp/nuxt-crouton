@@ -49,6 +49,9 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const collections = useCollections()
   const { teamId } = useTeamContext()
 
+  // Detect public context: not in admin route
+  const isPublicContext = computed(() => !route.path.includes('/admin/'))
+
   // Resolve team from prop, route, or domain context
   // Prefer route param (slug) over teamId for API calls — teamId may switch from slug
   // to UUID after auth loads during hydration, causing useFetch payload mismatch and
@@ -109,8 +112,14 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       const titleField = colConfig.display?.title || 'title'
 
       try {
-        const response = await $fetch<any>(`/api/teams/${team.value}/${colConfig.apiPath}`)
-        const rawItems: any[] = Array.isArray(response?.items) ? response.items
+        // Use public endpoint when binder page visibility is public and we're on a public route
+        const usePublicEndpoint = isPublicContext.value && binder.visibility === 'public'
+        const fetchUrl = usePublicEndpoint
+          ? `/api/public/${team.value}/${binder.config.collection}`
+          : `/api/teams/${team.value}/${colConfig.apiPath}`
+        const response = await $fetch<any>(fetchUrl)
+        const rawItems: any[] = Array.isArray(response?.data) ? response.data
+          : Array.isArray(response?.items) ? response.items
           : Array.isArray(response) ? response
           : []
 

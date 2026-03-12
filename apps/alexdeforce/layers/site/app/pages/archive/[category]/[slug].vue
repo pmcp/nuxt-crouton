@@ -39,15 +39,8 @@ useHead({
 
     <div
       v-if="article.contentHtml"
-      class="prose"
+      class="prose prose-sm prose-p:font-medium"
       v-html="article.contentHtml"
     />
-
-    <img
-      v-if="article.imageUrl"
-      :src="article.imageUrl"
-      :alt="article.title"
-      class="mt-4 max-h-[80vh]"
-    >
   </div>
 </template>

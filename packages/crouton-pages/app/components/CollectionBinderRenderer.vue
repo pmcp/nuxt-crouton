@@ -60,6 +60,11 @@ const imageField = computed(() => colConfig.value?.display?.image || null)
 const badgeField = computed(() => colConfig.value?.display?.badge || null)
 const teamId = getTeamId()
 
+// Detect public context: not in admin AND page visibility is 'public'
+const isPublicContext = computed(() => {
+  return !route.path.includes('/admin/') && props.page.visibility === 'public'
+})
+
 // Build base path for item links (e.g. /acme/en/locations)
 const binderBasePath = computed(() => {
   const team = teamSlug?.value
@@ -75,10 +80,11 @@ const sortOrder = computed(() => props.page.config?.sortOrder as string || 'asc'
 const groupByField = computed(() => props.page.config?.groupBy as string || null)
 
 const { data: listResponse, status: listStatus } = await useFetch<any>(() => {
-  if (isItemView.value || !teamId || !apiPath.value) return null as any
-  const params: Record<string, string> = {}
-  if (sortField.value) params.sort = sortField.value
-  if (sortOrder.value) params.order = sortOrder.value
+  if (isItemView.value || !apiPath.value) return null as any
+  if (isPublicContext.value && teamSlug?.value && collectionName.value) {
+    return `/api/public/${teamSlug.value}/${collectionName.value}`
+  }
+  if (!teamId) return null as any
   return `/api/teams/${teamId}/${apiPath.value}`
 }, {
   params: computed(() => {
@@ -93,7 +99,7 @@ const { data: listResponse, status: listStatus } = await useFetch<any>(() => {
 const listItems = computed<Record<string, any>[]>(() => {
   const res = listResponse.value
   if (!res) return []
-  const items = res?.items || res
+  const items = res?.data || res?.items || res
   return Array.isArray(items) ? items : []
 })
 
@@ -129,7 +135,11 @@ const groupByRefApiPath = computed(() => {
 })
 
 const { data: groupRefData } = await useFetch<any>(() => {
-  if (!groupByRefApiPath.value || !teamId) return null as any
+  if (!groupByRefApiPath.value) return null as any
+  if (isPublicContext.value && teamSlug?.value && groupByRefCollection.value) {
+    return `/api/public/${teamSlug.value}/${groupByRefCollection.value}`
+  }
+  if (!teamId) return null as any
   return `/api/teams/${teamId}/${groupByRefApiPath.value}`
 }, {
   watch: [groupByRefApiPath]
@@ -185,11 +195,17 @@ const hasGroups = computed(() => groupByField.value && groupedItems.value.length
 // ── ITEM DETAIL MODE ───────────────────────────────────────────────────────
 
 const { data: detailItem, status: detailStatus } = await useFetch<Record<string, any> | null>(() => {
-  if (!isItemView.value || !teamId || !apiPath.value || !binderItemId.value) return null as any
+  if (!isItemView.value || !apiPath.value || !binderItemId.value) return null as any
+  if (isPublicContext.value && teamSlug?.value && collectionName.value) {
+    return `/api/public/${teamSlug.value}/${collectionName.value}/${binderItemId.value}`
+  }
+  if (!teamId) return null as any
   return `/api/teams/${teamId}/${apiPath.value}?ids=${binderItemId.value}`
 }, {
   transform: (response: any) => {
-    const items = response?.items || response
+    // Public endpoint returns { data: item }, authenticated returns array or { items: [...] }
+    if (response?.data && !Array.isArray(response.data)) return response.data
+    const items = response?.data || response?.items || response
     if (Array.isArray(items)) return items[0] || null
     return items
   },
