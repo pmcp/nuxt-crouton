@@ -36,10 +36,9 @@ useHead({
     </div>
 
     <h1 class="pb-5"><span class="text-2xl">{{ article.title }}</span></h1>
-
     <div
       v-if="article.contentHtml"
-      class="prose prose-sm prose-p:font-medium"
+      class="prose prose-sm"
       v-html="article.contentHtml"
     />
   </div>

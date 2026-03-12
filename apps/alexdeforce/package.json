@@ -29,7 +29,6 @@
   },
   "devDependencies": {
     "@fyit/crouton-cli": "workspace:*",
-    "@tailwindcss/typography": "^0.5.19",
     "drizzle-kit": "^0.31.0",
     "wrangler": "^4.64.0"
   }
