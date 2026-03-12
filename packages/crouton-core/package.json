@@ -71,6 +71,7 @@
     "@nuxt/image": "^1.11.0",
     "@nuxt/ui": "^4.3.0",
     "@nuxtjs/seo": "^3.3.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@vueuse/core": "^13.3.0",
     "@vueuse/integrations": "^13.3.0",
     "@vueuse/nuxt": "^13.3.0",

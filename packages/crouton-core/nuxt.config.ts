@@ -130,6 +130,8 @@ export default defineNuxtConfig({
     }
   },
 
+  css: [join(currentDir, 'app/assets/css/typography.css')],
+
   $meta: {
     description: 'Base CRUD layer for FYIT collections',
     name: 'crouton-core'

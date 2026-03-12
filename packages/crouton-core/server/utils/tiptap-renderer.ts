@@ -53,6 +53,15 @@ function renderMark(mark: TipTapMark, inner: string): string {
   }
 }
 
+function guessEmbedHeight(url: string): number {
+  const lower = url.toLowerCase()
+  if (lower.includes('spotify.com')) return 152
+  if (lower.includes('bandcamp.com')) return 120
+  if (lower.includes('soundcloud.com')) return 166
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 315
+  return 300
+}
+
 function renderNode(node: TipTapNode): string {
   if (!node) return ''
 
@@ -86,8 +95,9 @@ function renderNode(node: TipTapNode): string {
   if (node.type === 'embedBlock') {
     const src = node.attrs?.url || node.attrs?.src || ''
     if (!isSafeUrl(src)) return ''
-    const height = node.attrs?.height || 300
-    return `<div class="embed-container not-prose" style="margin:1rem 0"><iframe src="${escapeAttr(src)}" style="width:100%;height:${height}px;border:0;border-radius:0.375rem" allowfullscreen></iframe></div>`
+    const guessed = guessEmbedHeight(src)
+    const height = (node.attrs?.height && node.attrs.height !== 300) ? node.attrs.height : guessed
+    return `<div class="embed-container not-prose" style="margin:1.75rem 0"><iframe src="${escapeAttr(src)}" style="width:100%;height:${height}px;border:0;border-radius:0.375rem" allowfullscreen></iframe></div>`
   }
 
   // Mailing list block (Mailchimp form)
