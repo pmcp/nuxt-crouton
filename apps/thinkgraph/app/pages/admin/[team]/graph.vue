@@ -21,6 +21,11 @@ const selectedNodeId = ref<string | null>(null)
 // Layout key — only increment when we want a full dagre re-layout
 const layoutKey = ref(0)
 
+function autoLayout() {
+  savedPositions.value = null
+  layoutKey.value++
+}
+
 // Flow config — persist node positions across reloads
 const flowId = ref<string | null>(null)
 const savedPositions = ref<Record<string, { x: number; y: number }> | null>(null)
@@ -320,6 +325,14 @@ provide('thinkgraph:dispatch', openDispatch)
           @click="showHelp = true"
         />
         <UButton
+          icon="i-lucide-layout-grid"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          title="Auto-layout"
+          @click="autoLayout"
+        />
+        <UButton
           icon="i-lucide-message-square-text"
           label="Chat"
           size="sm"
@@ -364,6 +377,7 @@ provide('thinkgraph:dispatch', openDispatch)
           label-field="content"
           :flow-id="flowId || undefined"
           :saved-positions="savedPositions"
+          :flow-config="{ direction: 'TB', nodeSpacing: 80, rankSpacing: 160 }"
           minimap
           @node-click="onNodeClick"
           @node-delete="onNodeDelete"
