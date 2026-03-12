@@ -36,10 +36,5 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   versionTag: text('versionTag'),
   parentId: text('parentId'),
   source: text('source'),
-  model: text('model'),
-
-  createdAt: text('createdAt').notNull().$default(() => new Date().toISOString()),
-  updatedAt: text('updatedAt').notNull().$default(() => new Date().toISOString()),
-  createdBy: text('createdBy').notNull().$default(() => ''),
-  updatedBy: text('updatedBy').notNull().$default(() => '')
+  model: text('model')
 })

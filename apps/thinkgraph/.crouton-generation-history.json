@@ -1,5 +1,41 @@
 [
   {
+    "collection": "chatconversations",
+    "fields": [
+      "nodeId",
+      "title",
+      "messages",
+      "provider",
+      "model",
+      "systemPrompt",
+      "metadata",
+      "messageCount",
+      "lastMessageAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T11:03:21.030Z",
+    "layer": "thinkgraph",
+    "gitSha": "38f5e750"
+  },
+  {
+    "collection": "decisions",
+    "fields": [
+      "content",
+      "nodeType",
+      "pathType",
+      "starred",
+      "branchName",
+      "versionTag",
+      "parentId",
+      "source",
+      "model"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T11:03:20.992Z",
+    "layer": "thinkgraph",
+    "gitSha": "38f5e750"
+  },
+  {
     "collection": "decisions",
     "fields": [
       "content",

@@ -2,7 +2,7 @@
   @crouton-generated
   @collection decisions
   @layer thinkgraph
-  @generated 2026-03-11
+  @generated 2026-03-12
 
   ## AI Context
   - List component for decisions collection
