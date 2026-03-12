@@ -75,6 +75,7 @@ export function ensureServicesLoaded() {
     import('./dispatch-services/swot'),
     import('./dispatch-services/technical-spec'),
     import('./dispatch-services/ui-prototype'),
+    import('./dispatch-services/research-agent'),
   ]).then(() => {})
   return _loading
 }

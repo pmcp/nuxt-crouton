@@ -51,7 +51,55 @@ export default defineEventHandler(async (event) => {
     event
   )
 
-  // Create child node with artifacts
+  // Check if the result contains a tree structure (from agent services)
+  const tree = (result as any)._tree as Array<{ content: string; nodeType: string; children?: any[] }> | undefined
+
+  if (tree && tree.length > 0) {
+    // Create summary node as direct child
+    const summaryNode = await createThinkgraphDecision({
+      content: result.childContent,
+      nodeType: result.childNodeType,
+      pathType: 'explored',
+      parentId: decisionId,
+      source: 'dispatch',
+      model: serviceId,
+      starred: false,
+      branchName: '',
+      versionTag: '',
+      artifacts: result.artifacts,
+      teamId: team.id,
+      owner: user.id,
+    } as any)
+
+    // Recursively create tree nodes under the summary
+    async function createTreeNodes(nodes: any[], parentId: string) {
+      for (const node of nodes) {
+        const created = await createThinkgraphDecision({
+          content: node.content,
+          nodeType: node.nodeType || 'insight',
+          pathType: 'explored',
+          parentId,
+          source: 'dispatch',
+          model: serviceId,
+          starred: false,
+          branchName: '',
+          versionTag: '',
+          artifacts: [],
+          teamId: team.id,
+          owner: user.id,
+        } as any)
+
+        if (node.children?.length) {
+          await createTreeNodes(node.children, created.id)
+        }
+      }
+    }
+
+    await createTreeNodes(tree, summaryNode.id)
+    return summaryNode
+  }
+
+  // Standard single-node creation
   const childNode = await createThinkgraphDecision({
     content: result.childContent,
     nodeType: result.childNodeType,
