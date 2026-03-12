@@ -79,32 +79,6 @@ export default defineNuxtConfig({
     }
   },
 
-  hooks: {
-    // In single-team mode, add locale-prefixed routes (e.g., /en/about)
-    // that mirror [team]/[locale]/[...slug] routes. Without these, client-side
-    // navigation to /en/about fails because Vue Router only knows [team]/[locale]/[...slug].
-    // The server-side Nitro plugin handles URL rewriting for initial page loads,
-    // but client-side navigation bypasses the server entirely.
-    'pages:extend'(pages) {
-      // In single-team mode, add a locale-prefixed route (e.g., /en/about)
-      // that mirrors [team]/[locale]/[...slug]. This ensures Vue Router can
-      // resolve the path even though client-side navigation currently uses
-      // the full team-prefixed path. The server-side Nitro plugin handles
-      // URL rewriting for direct browser access to clean URLs.
-      const teamLocalePage = pages.find(p =>
-        p.name === 'team-locale-slug' ||
-        (p.path && p.path.includes('team') && p.path.includes('locale') && p.path.includes('slug'))
-      )
-      if (teamLocalePage?.file) {
-        pages.push({
-          name: 'single-team-locale-slug',
-          path: '/:locale()/:slug(.*)*',
-          file: teamLocalePage.file
-        })
-      }
-    }
-  },
-
   experimental: {
     inlineRouteRules: true
   },

@@ -44,12 +44,19 @@ export interface NavigationItem {
 
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
-  const { locale } = useI18n()
+  const { locale: i18nLocale } = useI18n()
   const collections = useCollections()
   const { teamId } = useTeamContext()
+  const { hideTeamInUrl } = useDomainContext()
 
   // Detect public context: not in admin route
   const isPublicContext = computed(() => !route.path.includes('/admin/'))
+
+  // Single-team mode config
+  const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string; defaultLocale?: string } | undefined
+
+  // Locale with fallback — i18n locale may be empty during hydration
+  const locale = computed(() => i18nLocale.value || singleTeamConfig?.defaultLocale || 'en')
 
   // Resolve team from prop, route, or domain context
   // Prefer route param (slug) over teamId for API calls — teamId may switch from slug
@@ -57,12 +64,18 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   // an empty navigation flash (or permanent loss when no setLocale retrigger occurs).
   const routeTeam = computed(() => {
     const param = route.params.team
-    return typeof param === 'string' ? param : null
+    if (typeof param !== 'string') return null
+    // In single-team mode, route.params.team may actually be a locale code
+    // (e.g., /en/academie → team=en). Don't use it as team in that case.
+    if (singleTeamConfig?.slug && param !== singleTeamConfig.slug && /^[a-z]{2,3}$/.test(param)) {
+      return singleTeamConfig.slug
+    }
+    return param
   })
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return routeTeam.value || teamId.value || null
+    return routeTeam.value || teamId.value || singleTeamConfig?.slug || null
   })
 
   // Fetch published pages for the team with locale for translated titles/slugs
@@ -104,7 +117,8 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       const colConfig = collections.getConfig(binder.config.collection)
       if (!colConfig?.apiPath) return
 
-      const pathPrefix = `/${team.value}/${locale.value}`
+      const binderTeamPrefix = (hideTeamInUrl.value || !!singleTeamConfig?.slug) ? '' : `/${team.value}`
+      const pathPrefix = `${binderTeamPrefix}/${locale.value}`
       const binderPath = `${pathPrefix}/${binder.slug || ''}`.replace(/\/+$/, '') || pathPrefix
 
       const titleField = colConfig.display?.title || 'title'
@@ -158,10 +172,10 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       p.visibility !== 'admin'
     )
 
-    // Build path prefix: always include team slug for Vue Router resolution.
-    // Client-side navigation needs the full [team]/[locale] path to match routes.
-    // The server-side single-team rewrite handles direct URL access without team slug.
-    const pathPrefix = `/${team.value}/${locale.value}`
+    // Build path prefix based on domain context (includes locale)
+    // Belt-and-suspenders: also check singleTeam config directly in case hideTeamInUrl is stale
+    const teamPrefix = (hideTeamInUrl.value || !!singleTeamConfig?.slug) ? '' : `/${team.value}`
+    const pathPrefix = `${teamPrefix}/${locale.value}`
 
     // Convert to NavigationItem format
     const items: NavigationItem[] = navPages.map((p: any) => ({

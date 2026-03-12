@@ -40,6 +40,17 @@ definePageMeta({
     if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
     }
+
+    // Single-team mode param remapping: when URL is /en/academie, Vue Router
+    // matches /:team/:locale/:slug* with team=en, locale=academie.
+    // Detect this case: teamParam looks like a locale code, not the actual team.
+    const config = useRuntimeConfig()
+    const singleTeamSlug = (config.public?.croutonPages as any)?.singleTeam?.slug
+    if (singleTeamSlug && teamParam !== singleTeamSlug && /^[a-z]{2,3}$/.test(teamParam)) {
+      // Accept — setup will remap team/locale/slug from the mismatched params
+      return true
+    }
+
     // Verify team actually exists to avoid catching routes meant for other pages
     try {
       const { valid } = await $fetch<{ valid: boolean }>(`/api/crouton-pages/validate-team/${teamParam}`)
@@ -69,9 +80,33 @@ const { locale: i18nLocale, locales, setLocale } = useI18n()
 // Get team, locale, and slug from route params
 // In single-team mode, team param may be absent — resolve from config
 const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string } | undefined
-const team = computed(() => teamId.value || singleTeamConfig?.slug || null)
-const urlLocale = computed(() => route.params.locale as string)
+
+// Detect single-team param remapping: when URL is /en/academie, Vue Router
+// matches /:team/:locale/:slug* with team=en, locale=academie, slug=[].
+// We need to remap: team from config, locale from route.params.team, slug from route.params.locale + rest.
+const isSingleTeamRemap = computed(() => {
+  if (!singleTeamConfig?.slug) return false
+  const teamParam = route.params.team as string | undefined
+  // Remap when team param doesn't match the actual team slug and looks like a locale code
+  return !!teamParam && teamParam !== singleTeamConfig.slug && /^[a-z]{2,3}$/.test(teamParam)
+})
+
+const team = computed(() => {
+  if (isSingleTeamRemap.value) return singleTeamConfig!.slug!
+  return teamId.value || singleTeamConfig?.slug || null
+})
+const urlLocale = computed(() => {
+  if (isSingleTeamRemap.value) return route.params.team as string
+  return route.params.locale as string
+})
 const slug = computed(() => {
+  if (isSingleTeamRemap.value) {
+    // In remap mode: locale param is actually the first slug segment
+    const firstSegment = route.params.locale as string
+    const restSlug = route.params.slug
+    const rest = Array.isArray(restSlug) ? restSlug.join('/') : (restSlug || '')
+    return firstSegment ? (rest ? `${firstSegment}/${rest}` : firstSegment) : ''
+  }
   const slugParts = route.params.slug
   if (!slugParts || (Array.isArray(slugParts) && slugParts.length === 0)) {
     return '' // Homepage
@@ -220,7 +255,7 @@ useServerSeoMeta({
   ogTitle: page.value?.seoTitle || page.value?.title || 'Page',
   ogDescription: page.value?.seoDescription || undefined,
   ogImage: toAbsoluteUrl(page.value?.ogImage, siteUrl),
-  ogUrl: `${siteUrl}/${team.value}/${urlLocale.value}/${page.value?.slug || ''}`,
+  ogUrl: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${urlLocale.value}/${page.value?.slug || ''}`,
   ogType: 'website',
   // Twitter Card
   twitterCard: page.value?.ogImage ? 'summary_large_image' : 'summary',
@@ -250,7 +285,7 @@ const alternateLinks = computed(() => {
     return {
       rel: 'alternate',
       hreflang: loc.code,
-      href: `${siteUrl}/${team.value}/${loc.code}/${translatedSlug}`
+      href: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${loc.code}/${translatedSlug}`
     }
   })
 })
@@ -262,7 +297,7 @@ useHead({
     // Canonical URL (absolute)
     {
       rel: 'canonical',
-      href: `${siteUrl}/${team.value}/${urlLocale.value}/${page.value?.slug || ''}`
+      href: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${urlLocale.value}/${page.value?.slug || ''}`
     },
     // hreflang alternatives
     ...alternateLinks.value
