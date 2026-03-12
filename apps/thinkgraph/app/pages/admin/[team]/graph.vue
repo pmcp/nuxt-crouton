@@ -12,7 +12,7 @@ const { teamId } = useTeamContext()
 const { items: decisions, refresh } = await useCollectionQuery('thinkgraphDecisions')
 
 const { open } = useCrouton()
-const { deleteItems, create } = useCollectionMutation('thinkgraphDecisions')
+const { deleteItems, create, update } = useCollectionMutation('thinkgraphDecisions')
 const expanding = ref<string | null>(null)
 const showQuickAdd = ref(false)
 const quickAddParentId = ref<string | undefined>()
@@ -69,6 +69,11 @@ const chatNodeName = computed(() => {
 
 // Multi-select for synthesis
 const selectedNodes = ref<Set<string>>(new Set())
+const selectedNodeIds = computed(() => Array.from(selectedNodes.value))
+
+// Filter sidebar
+const showFilters = ref(false)
+const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
 
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
@@ -76,7 +81,19 @@ function addRootDecision() {
   open('create', 'thinkgraphDecisions')
 }
 
-function onNodeClick(nodeId: string, data: Record<string, unknown>) {
+function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
+  // Shift+click for multi-select
+  if (event?.shiftKey) {
+    const s = new Set(selectedNodes.value)
+    if (s.has(nodeId)) {
+      s.delete(nodeId)
+    } else {
+      s.add(nodeId)
+    }
+    selectedNodes.value = s
+    return
+  }
+
   selectedNodeId.value = nodeId
   open('update', 'thinkgraphDecisions', [nodeId])
 }
@@ -166,6 +183,88 @@ async function synthesizeSelected() {
   }
 }
 
+// Brief generation
+const generatingBrief = ref(false)
+async function generateBrief(format: string) {
+  if (selectedNodes.value.size === 0 || generatingBrief.value) return
+  generatingBrief.value = true
+
+  try {
+    const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/brief`, {
+      method: 'POST',
+      body: { ids: Array.from(selectedNodes.value), format },
+    })
+    if (result?.brief) {
+      await navigator.clipboard.writeText(result.brief)
+    }
+  } catch (error) {
+    console.error('Brief generation failed:', error)
+  } finally {
+    generatingBrief.value = false
+  }
+}
+
+// Copy combined context for selected nodes
+async function copySelectedContext() {
+  for (const id of selectedNodes.value) {
+    await copyContext(id)
+  }
+}
+
+function deselectNode(id: string) {
+  const s = new Set(selectedNodes.value)
+  s.delete(id)
+  selectedNodes.value = s
+}
+
+function clearSelection() {
+  selectedNodes.value = new Set()
+  selectedNodeId.value = null
+}
+
+// Toggle star on a node
+async function toggleStar(nodeId: string) {
+  const node = decisions.value?.find((d: any) => d.id === nodeId)
+  if (!node) return
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
+    method: 'PATCH',
+    body: { starred: !node.starred },
+  })
+  await refresh()
+}
+
+// Toggle park (versionTag) on a node
+async function togglePark(nodeId: string) {
+  const node = decisions.value?.find((d: any) => d.id === nodeId)
+  if (!node) return
+  const newTag = node.versionTag === 'parked' ? 'v1' : 'parked'
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
+    method: 'PATCH',
+    body: { versionTag: newTag },
+  })
+  await refresh()
+}
+
+// Keyboard shortcuts
+const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNodes, {
+  toggleStar,
+  togglePark,
+  addChild: (nodeId: string) => open('create', 'thinkgraphDecisions', [], undefined, { parentId: nodeId }),
+  openQuickAdd,
+  openSearch: () => { showFilters.value = true },
+  clearSelection,
+  deleteSelected: onNodeDelete,
+  expandDefault: (nodeId: string) => expandWithAI(nodeId, 'default'),
+  openChat,
+  openGlobalChat,
+})
+
+// Pause shortcuts when modals are open
+watch([showQuickAdd, showChat], ([qa, ch]) => {
+  if (qa || ch) pause()
+  else resume()
+})
+
 // Provide functions to child nodes
 provide('thinkgraph:expand', expandWithAI)
 provide('thinkgraph:expanding', expanding)
@@ -183,16 +282,21 @@ provide('thinkgraph:openChat', openChat)
         <h1 class="text-lg font-semibold">ThinkGraph</h1>
       </div>
       <div class="flex items-center gap-2">
-        <!-- Synthesis button (visible when 2+ nodes selected) -->
         <UButton
-          v-if="selectedNodes.size >= 2"
-          icon="i-lucide-git-merge"
-          :label="`Synthesize ${selectedNodes.size}`"
+          icon="i-lucide-filter"
           size="sm"
-          color="primary"
-          variant="soft"
-          :loading="synthesizing"
-          @click="synthesizeSelected"
+          variant="ghost"
+          color="neutral"
+          title="Filters (/)"
+          @click="showFilters = !showFilters"
+        />
+        <UButton
+          icon="i-lucide-keyboard"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          title="Keyboard shortcuts (?)"
+          @click="showHelp = true"
         />
         <UButton
           icon="i-lucide-message-square-text"
@@ -219,10 +323,17 @@ provide('thinkgraph:openChat', openChat)
       </div>
     </div>
 
-    <!-- Graph + Chat split -->
+    <!-- Filter sidebar + Graph + Chat split -->
     <div class="flex-1 flex overflow-hidden">
+      <!-- Filter sidebar -->
+      <GraphFilters
+        v-if="showFilters && decisions?.length"
+        ref="filtersRef"
+        :decisions="decisions"
+      />
+
       <!-- Graph -->
-      <div class="flex-1">
+      <div class="flex-1 relative">
         <CroutonFlow
           v-if="decisions?.length"
           :key="layoutKey"
@@ -274,12 +385,26 @@ provide('thinkgraph:openChat', openChat)
       </div>
     </div>
 
+    <!-- Selection Bar (floating, bottom) -->
+    <SelectionBar
+      :selected-ids="selectedNodeIds"
+      :decisions="decisions || []"
+      @synthesize="synthesizeSelected"
+      @generate-brief="generateBrief"
+      @copy-context="copySelectedContext"
+      @clear="clearSelection"
+      @deselect="deselectNode"
+    />
+
     <!-- Quick Add Modal -->
     <UModal v-model:open="showQuickAdd">
       <template #content>
         <QuickAdd :parent-id="quickAddParentId" @added="onQuickAddDone" />
       </template>
     </UModal>
+
+    <!-- Shortcuts Help Modal -->
+    <ShortcutsHelp v-model:open="showHelp" />
 
     <!-- Crouton modal/slideover for CRUD -->
     <CroutonCollection collection="thinkgraphDecisions" @saved="refresh" />

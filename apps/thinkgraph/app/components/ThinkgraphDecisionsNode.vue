@@ -33,6 +33,9 @@ const decision = computed(() => props.data as unknown as ThinkgraphDecision)
 const isParked = computed(() => decision.value.versionTag === 'parked')
 const isStarred = computed(() => decision.value.starred)
 
+const { getBranchColor } = useBranchColors()
+const branchColor = computed(() => getBranchColor(decision.value.branchName))
+
 const expandModes = [
   { id: 'default', label: 'Quick expand', icon: 'i-lucide-sparkles', description: '3 diverse perspectives' },
   { id: 'diverge', label: 'Diverge', icon: 'i-lucide-git-branch-plus', description: '5 alternative approaches' },
@@ -144,12 +147,16 @@ function toggleStar(event: Event) {
 <template>
   <div
     class="decision-node"
-    :class="{
-      'decision-node--selected': selected,
-      'decision-node--dragging': dragging,
-      'decision-node--parked': isParked,
-      'decision-node--starred': isStarred
-    }"
+    :class="[
+      {
+        'decision-node--selected': selected,
+        'decision-node--dragging': dragging,
+        'decision-node--parked': isParked,
+        'decision-node--starred': isStarred,
+      },
+      branchColor.bg,
+      branchColor.border ? `border-l-3 ${branchColor.border}` : '',
+    ]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false; showExpandMenu = false"
   >
@@ -181,8 +188,10 @@ function toggleStar(event: Event) {
 
       <span
         v-if="decision.branchName && decision.branchName !== 'main'"
-        class="ml-auto text-[10px] text-neutral-400 dark:text-neutral-500 truncate max-w-[60px]"
+        class="ml-auto flex items-center gap-1 text-[10px] truncate max-w-[80px]"
+        :class="branchColor.text"
       >
+        <span class="size-1.5 rounded-full shrink-0" :class="branchColor.dot" />
         {{ decision.branchName }}
       </span>
     </div>
