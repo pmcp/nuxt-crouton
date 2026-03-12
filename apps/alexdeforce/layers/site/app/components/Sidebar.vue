@@ -8,7 +8,7 @@ const { data: pages } = await useFetch('/api/public/pages')
       <a
         v-if="page.pageType === 'core:link' && page.config?.url"
         :href="page.config.url"
-        class="rotated uppercase border-b-2 md:border-l-2 md:border-b-0 border-white hover:border-black mt-2 pr-2 pl-2 py-2"
+        class="rotated uppercase border-b-2 md:border-l-2 md:border-b-0 border-white hover:border-black mt-2 p-4 py-2"
         target="_blank"
       >
         {{ page.title }}
@@ -16,7 +16,7 @@ const { data: pages } = await useFetch('/api/public/pages')
       <NuxtLink
         v-else
         :to="`/${page.slug}`"
-        class="rotated uppercase border-b-2 md:border-l-2 md:border-b-0 border-white hover:border-black mt-2 pr-2 pl-2 py-2"
+        class="rotated uppercase border-b-2 md:border-l-2 md:border-b-0 border-white hover:border-black mt-2 p-4 py-2"
       >
         {{ page.title }}
       </NuxtLink>

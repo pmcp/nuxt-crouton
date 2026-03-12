@@ -64,6 +64,7 @@ html.dark, html.dark body,
 /* Rotated sidebar text (desktop only) */
 @media (min-width: 769px) {
   .rotated {
+    display: inline-block;
     writing-mode: vertical-lr;
     transform: rotate(180deg);
   }
