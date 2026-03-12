@@ -22,6 +22,7 @@ const expandingId = inject<Ref<string | null>>('thinkgraph:expanding', ref(null)
 const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('thinkgraph:copyContext', async () => {})
 const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
 const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
+const openDispatchFn = inject<(nodeId: string) => void>('thinkgraph:dispatch', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -125,6 +126,13 @@ function handleCopyContext(event: Event) {
   }
 }
 
+function handleDispatch(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    openDispatchFn(decision.value.id)
+  }
+}
+
 function handlePasteChildren(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
@@ -209,9 +217,24 @@ function toggleStar(event: Event) {
     </div>
 
     <!-- AI source indicator -->
-    <div v-if="decision.source === 'ai'" class="mt-1.5 flex items-center gap-1">
-      <UIcon name="i-lucide-sparkles" class="size-3 text-violet-400" />
-      <span class="text-[10px] text-violet-400">AI generated</span>
+    <div v-if="decision.source === 'ai' || decision.source === 'dispatch'" class="mt-1.5 flex items-center gap-1">
+      <UIcon :name="decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
+      <span class="text-[10px] text-violet-400">{{ decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
+    </div>
+
+    <!-- Artifact indicators -->
+    <div v-if="decision.artifacts?.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+      <span
+        v-for="(artifact, i) in decision.artifacts"
+        :key="i"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
+      >
+        <UIcon
+          :name="artifact.type === 'image' ? 'i-lucide-image' : artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
+          class="size-3"
+        />
+        {{ artifact.type }}
+      </span>
     </div>
 
     <!-- Hover actions -->
@@ -255,6 +278,15 @@ function toggleStar(event: Event) {
         @click="handleChat"
       >
         <UIcon name="i-lucide-message-square-text" class="size-3.5" />
+      </button>
+
+      <!-- Dispatch / Send to... -->
+      <button
+        class="decision-node__action decision-node__action--dispatch"
+        title="Send to..."
+        @click="handleDispatch"
+      >
+        <UIcon name="i-lucide-send" class="size-3.5" />
       </button>
 
       <!-- Copy context -->
@@ -362,6 +394,10 @@ function toggleStar(event: Event) {
 
 .decision-node__action--chat {
   &:hover { color: var(--color-blue-500, #3b82f6); border-color: var(--color-blue-300, #93c5fd); }
+}
+
+.decision-node__action--dispatch {
+  &:hover { color: var(--color-teal-500, #14b8a6); border-color: var(--color-teal-300, #5eead4); }
 }
 
 .decision-node__action--delete {

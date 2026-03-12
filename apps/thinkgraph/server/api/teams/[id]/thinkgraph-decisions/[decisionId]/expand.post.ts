@@ -1,6 +1,7 @@
 import { streamText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../../../layers/thinkgraph/collections/decisions/server/database/queries'
+import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'
 
 const modeConfig: Record<string, { system: string; count: number }> = {
   diverge: {
@@ -105,57 +106,3 @@ export default defineEventHandler(async (event) => {
 
   return created
 })
-
-function buildAncestorChain(allDecisions: any[], targetId: string): any[] {
-  const chain: any[] = []
-  let current = allDecisions.find((d: any) => d.id === targetId)
-  while (current?.parentId) {
-    const parent = allDecisions.find((d: any) => d.id === current.parentId)
-    if (!parent) break
-    chain.unshift(parent)
-    current = parent
-  }
-  return chain
-}
-
-function buildPrompt(target: any, ancestors: any[], siblings: any[], children: any[], starred: any[], count: number): string {
-  let prompt = ''
-
-  if (ancestors.length > 0) {
-    prompt += 'Thinking chain so far:\n'
-    ancestors.forEach((a, i) => {
-      prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
-    })
-    prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
-  } else {
-    prompt += `Starting thought: ${target.content}\n\n`
-  }
-
-  if (children.length > 0) {
-    prompt += 'Existing children (avoid duplicating these):\n'
-    children.forEach((c: any) => {
-      prompt += `- ${c.content} (${c.nodeType})\n`
-    })
-    prompt += '\n'
-  }
-
-  if (siblings.length > 0) {
-    prompt += 'Sibling perspectives:\n'
-    siblings.forEach((s: any) => {
-      prompt += `- ${s.content} (${s.nodeType})\n`
-    })
-    prompt += '\n'
-  }
-
-  if (starred.length > 0) {
-    prompt += 'Starred insights from other branches:\n'
-    starred.slice(0, 5).forEach((s: any) => {
-      prompt += `⭐ ${s.content}\n`
-    })
-    prompt += '\n'
-  }
-
-  prompt += `Generate ${count} new perspectives. Be different from existing children and siblings.\n`
-
-  return prompt
-}

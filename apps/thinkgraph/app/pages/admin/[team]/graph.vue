@@ -58,6 +58,26 @@ async function ensureFlowConfig() {
 
 await ensureFlowConfig()
 
+// Dispatch modal state
+const showDispatch = ref(false)
+const dispatchNodeId = ref<string | null>(null)
+const dispatchNodeContent = computed(() => {
+  if (!dispatchNodeId.value) return undefined
+  const node = decisions.value?.find((d: any) => d.id === dispatchNodeId.value)
+  return node?.content?.slice(0, 100) || undefined
+})
+
+function openDispatch(nodeId: string) {
+  dispatchNodeId.value = nodeId
+  showDispatch.value = true
+}
+
+async function onDispatched() {
+  showDispatch.value = false
+  await refresh()
+  layoutKey.value++
+}
+
 // Chat panel state
 const showChat = ref(false)
 const chatNodeId = ref<string | null>(null)
@@ -260,8 +280,8 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
 })
 
 // Pause shortcuts when modals are open
-watch([showQuickAdd, showChat], ([qa, ch]) => {
-  if (qa || ch) pause()
+watch([showQuickAdd, showChat, showDispatch], ([qa, ch, dp]) => {
+  if (qa || ch || dp) pause()
   else resume()
 })
 
@@ -271,6 +291,7 @@ provide('thinkgraph:expanding', expanding)
 provide('thinkgraph:copyContext', copyContext)
 provide('thinkgraph:openQuickAdd', openQuickAdd)
 provide('thinkgraph:openChat', openChat)
+provide('thinkgraph:dispatch', openDispatch)
 </script>
 
 <template>
@@ -392,6 +413,7 @@ provide('thinkgraph:openChat', openChat)
       @synthesize="synthesizeSelected"
       @generate-brief="generateBrief"
       @copy-context="copySelectedContext"
+      @dispatch="() => { if (selectedNodeIds.length > 0) openDispatch(selectedNodeIds[0]) }"
       @clear="clearSelection"
       @deselect="deselectNode"
     />
@@ -402,6 +424,14 @@ provide('thinkgraph:openChat', openChat)
         <QuickAdd :parent-id="quickAddParentId" @added="onQuickAddDone" />
       </template>
     </UModal>
+
+    <!-- Dispatch Modal -->
+    <DispatchModal
+      v-model:open="showDispatch"
+      :decision-id="dispatchNodeId"
+      :decision-content="dispatchNodeContent"
+      @dispatched="onDispatched"
+    />
 
     <!-- Shortcuts Help Modal -->
     <ShortcutsHelp v-model:open="showHelp" />

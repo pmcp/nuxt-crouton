@@ -10,6 +10,7 @@ const emit = defineEmits<{
   synthesize: []
   'generate-brief': [format: string]
   'copy-context': []
+  dispatch: []
   clear: []
   deselect: [id: string]
 }>()
@@ -87,6 +88,14 @@ const briefFormats = [
               color="neutral"
             />
           </UDropdownMenu>
+          <UButton
+            icon="i-lucide-send"
+            label="Send to..."
+            size="sm"
+            variant="soft"
+            color="neutral"
+            @click="emit('dispatch')"
+          />
           <UButton
             icon="i-lucide-copy"
             size="sm"

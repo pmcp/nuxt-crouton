@@ -23,6 +23,16 @@
 import type { z } from 'zod'
 import type { thinkgraphDecisionSchema } from './app/composables/useThinkgraphDecisions'
 
+export interface Artifact {
+  type: 'image' | 'code' | 'prototype' | 'text'
+  provider: string
+  url?: string
+  content?: string
+  prompt?: string
+  metadata?: Record<string, unknown>
+  createdAt: string
+}
+
 export interface ThinkgraphDecision {
   id: string
   teamId: string
@@ -36,6 +46,7 @@ export interface ThinkgraphDecision {
   parentId?: string
   source?: string
   model?: string
+  artifacts?: Artifact[]
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
 }

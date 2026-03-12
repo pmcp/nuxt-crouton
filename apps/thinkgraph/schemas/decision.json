@@ -88,5 +88,14 @@
       "area": "sidebar",
       "group": "provenance"
     }
+  },
+  "artifacts": {
+    "type": "json",
+    "meta": {
+      "label": "Artifacts",
+      "description": "Generated artifacts from AI dispatch services",
+      "area": "sidebar",
+      "group": "provenance"
+    }
   }
 }

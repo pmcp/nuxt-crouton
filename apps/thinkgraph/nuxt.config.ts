@@ -23,6 +23,10 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    falApiKey: '',  // NUXT_FAL_API_KEY
+  },
+
   hub: {
     db: 'sqlite',
     kv: true

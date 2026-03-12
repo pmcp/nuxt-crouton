@@ -1,0 +1,1 @@
+ALTER TABLE `thinkgraph_decisions` ADD `artifacts` text;

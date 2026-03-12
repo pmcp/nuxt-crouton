@@ -36,5 +36,6 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   versionTag: text('versionTag'),
   parentId: text('parentId'),
   source: text('source'),
-  model: text('model')
+  model: text('model'),
+  artifacts: jsonColumn('artifacts')
 })
