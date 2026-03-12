@@ -12,6 +12,14 @@ const { teamId } = useTeamContext()
 const { items: decisions, refresh } = await useCollectionQuery('thinkgraphDecisions')
 
 const { open } = useCrouton()
+
+// Auto-refresh graph when any thinkgraphDecisions mutation happens (e.g. create from form)
+useNuxtApp().hook('crouton:mutation', ({ collection }: any) => {
+  if (collection === 'thinkgraphDecisions') {
+    refresh()
+    layoutKey.value++
+  }
+})
 const { deleteItems, create, update } = useCollectionMutation('thinkgraphDecisions')
 const expanding = ref<string | null>(null)
 const showQuickAdd = ref(false)

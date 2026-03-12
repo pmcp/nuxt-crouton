@@ -36,6 +36,7 @@ const { teamId } = useTeamContext()
 const step = ref<'pick' | 'configure' | 'result'>('pick')
 const selectedService = ref<DispatchServiceInfo | null>(null)
 const customPrompt = ref('')
+const variationCount = ref(1)
 const serviceOptions = ref<Record<string, string>>({})
 const result = ref<{ artifacts: Artifact[]; content: string } | null>(null)
 const error = ref<string | null>(null)
@@ -123,6 +124,7 @@ async function dispatch() {
             serviceId: service.id,
             prompt: customPrompt.value || undefined,
             options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
+            count: variationCount.value > 1 ? variationCount.value : undefined,
           },
         },
       )
@@ -136,6 +138,7 @@ async function dispatch() {
             serviceId: service.id,
             prompt: customPrompt.value || undefined,
             options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
+            count: variationCount.value > 1 ? variationCount.value : undefined,
           },
         },
       )
@@ -177,6 +180,7 @@ watch(open, (isOpen) => {
     step.value = 'pick'
     selectedService.value = null
     customPrompt.value = ''
+    variationCount.value = 1
     serviceOptions.value = {}
     result.value = null
     error.value = null
@@ -273,6 +277,29 @@ watch(open, (isOpen) => {
             />
           </div>
 
+          <!-- Variations count -->
+          <div>
+            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+              Variations
+            </label>
+            <div class="flex items-center gap-2">
+              <button
+                v-for="n in [1, 2, 3, 4]"
+                :key="n"
+                class="w-9 h-9 rounded-lg border text-sm font-medium transition-all cursor-pointer"
+                :class="variationCount === n
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400'
+                  : 'border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-600'"
+                @click="variationCount = n"
+              >
+                {{ n }}
+              </button>
+              <span class="text-xs text-neutral-400 ml-1">
+                {{ variationCount > 1 ? `${variationCount} different versions` : 'single result' }}
+              </span>
+            </div>
+          </div>
+
           <!-- Custom prompt -->
           <div>
             <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
@@ -291,7 +318,7 @@ watch(open, (isOpen) => {
             <UButton variant="ghost" color="neutral" @click="goBack">Cancel</UButton>
             <UButton
               :icon="selectedService?.icon"
-              :label="`Send to ${selectedService?.name}`"
+              :label="variationCount > 1 ? `Generate ${variationCount} versions` : `Send to ${selectedService?.name}`"
               @click="dispatch"
             />
           </div>

@@ -13,11 +13,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { serviceId, prompt, options } = body as {
+  const { serviceId, prompt, options, count = 1 } = body as {
     serviceId: string
     prompt?: string
     options?: Record<string, unknown>
+    count?: number
   }
+  const variations = Math.min(Math.max(count, 1), 6) // clamp 1-6
 
   if (!serviceId) {
     throw createError({ status: 400, statusText: 'serviceId is required' })
@@ -41,79 +43,87 @@ export default defineEventHandler(async (event) => {
 
   const thinkingPath = buildDispatchContext(targetDecision, allDecisions)
 
-  const result = await service.execute(
-    {
-      nodeContent: targetDecision.content,
-      thinkingPath,
-      prompt,
-      options,
-    },
-    event
-  )
+  const createdNodes: any[] = []
 
-  // Check if the result contains a tree structure (from agent services)
-  const tree = (result as any)._tree as Array<{ content: string; nodeType: string; children?: any[] }> | undefined
+  for (let i = 0; i < variations; i++) {
+    // Add variation instruction when generating multiple versions
+    const variationPrompt = variations > 1
+      ? `${prompt || ''}\n\n[Variation ${i + 1} of ${variations}: Take a distinctly different approach from previous variations. Be creative and explore a different angle, style, or strategy.]`.trim()
+      : prompt
 
-  if (tree && tree.length > 0) {
-    // Create summary node as direct child
-    const summaryNode = await createThinkgraphDecision({
-      content: result.childContent,
-      nodeType: result.childNodeType,
-      pathType: 'explored',
-      parentId: decisionId,
-      source: 'dispatch',
-      model: serviceId,
-      starred: false,
-      branchName: '',
-      versionTag: '',
-      artifacts: result.artifacts,
-      teamId: team.id,
-      owner: user.id,
-    } as any)
+    const result = await service.execute(
+      {
+        nodeContent: targetDecision.content,
+        thinkingPath,
+        prompt: variationPrompt,
+        options,
+      },
+      event
+    )
 
-    // Recursively create tree nodes under the summary
-    async function createTreeNodes(nodes: any[], parentId: string) {
-      for (const node of nodes) {
-        const created = await createThinkgraphDecision({
-          content: node.content,
-          nodeType: node.nodeType || 'insight',
-          pathType: 'explored',
-          parentId,
-          source: 'dispatch',
-          model: serviceId,
-          starred: false,
-          branchName: '',
-          versionTag: '',
-          artifacts: [],
-          teamId: team.id,
-          owner: user.id,
-        } as any)
+    // Check if the result contains a tree structure (from agent services)
+    const tree = (result as any)._tree as Array<{ content: string; nodeType: string; children?: any[] }> | undefined
 
-        if (node.children?.length) {
-          await createTreeNodes(node.children, created.id)
+    if (tree && tree.length > 0) {
+      const summaryNode = await createThinkgraphDecision({
+        content: variations > 1 ? `[v${i + 1}] ${result.childContent}` : result.childContent,
+        nodeType: result.childNodeType,
+        pathType: 'explored',
+        parentId: decisionId,
+        source: 'dispatch',
+        model: serviceId,
+        starred: false,
+        branchName: '',
+        versionTag: variations > 1 ? `v${i + 1}` : '',
+        artifacts: result.artifacts,
+        teamId: team.id,
+        owner: user.id,
+      } as any)
+
+      async function createTreeNodes(nodes: any[], parentId: string) {
+        for (const node of nodes) {
+          const created = await createThinkgraphDecision({
+            content: node.content,
+            nodeType: node.nodeType || 'insight',
+            pathType: 'explored',
+            parentId,
+            source: 'dispatch',
+            model: serviceId,
+            starred: false,
+            branchName: '',
+            versionTag: '',
+            artifacts: [],
+            teamId: team.id,
+            owner: user.id,
+          } as any)
+
+          if (node.children?.length) {
+            await createTreeNodes(node.children, created.id)
+          }
         }
       }
-    }
 
-    await createTreeNodes(tree, summaryNode.id)
-    return summaryNode
+      await createTreeNodes(tree, summaryNode.id)
+      createdNodes.push(summaryNode)
+    } else {
+      const childNode = await createThinkgraphDecision({
+        content: variations > 1 ? `[v${i + 1}] ${result.childContent}` : result.childContent,
+        nodeType: result.childNodeType,
+        pathType: 'explored',
+        parentId: decisionId,
+        source: 'dispatch',
+        model: serviceId,
+        starred: false,
+        branchName: '',
+        versionTag: variations > 1 ? `v${i + 1}` : '',
+        artifacts: result.artifacts,
+        teamId: team.id,
+        owner: user.id,
+      } as any)
+
+      createdNodes.push(childNode)
+    }
   }
 
-  // Standard single-node creation
-  const childNode = await createThinkgraphDecision({
-    content: result.childContent,
-    nodeType: result.childNodeType,
-    pathType: 'explored',
-    parentId: decisionId,
-    source: 'dispatch',
-    model: serviceId,
-    starred: false,
-    branchName: '',
-    versionTag: '',
-    artifacts: result.artifacts,
-    teamId: team.id,
-    owner: user.id,
-  } as any)
-
-  return childNode
+  return variations > 1 ? createdNodes : createdNodes[0]
 })
