@@ -122,7 +122,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   /** Emitted when a node is clicked */
-  nodeClick: [nodeId: string, data: Record<string, unknown>]
+  nodeClick: [nodeId: string, data: Record<string, unknown>, event: MouseEvent]
   /** Emitted when a node is double-clicked */
   nodeDblClick: [nodeId: string, data: Record<string, unknown>]
   /** Emitted when a node position changes (after drag) */
@@ -556,19 +556,19 @@ onNodeDragStop((event: NodeDragEvent) => {
 })
 
 // Handle node click
-onNodeClick(({ node }) => {
+onNodeClick(({ node, event }) => {
   if (props.dataMode === 'ephemeral') {
-    emit('nodeClick', node.id, node.data as Record<string, unknown>)
+    emit('nodeClick', node.id, node.data as Record<string, unknown>, event)
   } else if (props.sync && syncState) {
     const syncNode = syncState.getNode(node.id)
     if (syncNode) {
       syncState.selectNode(node.id)
-      emit('nodeClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
+      emit('nodeClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title }, event)
     }
   } else {
     const item = getItem(node.id)
     if (item) {
-      emit('nodeClick', node.id, item)
+      emit('nodeClick', node.id, item, event)
     }
   }
 })
@@ -686,6 +686,8 @@ defineExpose({
       :edges="finalEdges"
       :node-types="nodeTypes"
       :default-edge-options="defaultEdgeOptions"
+      :multi-selection-key-code="null"
+      :selection-key-code="null"
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
@@ -824,34 +826,7 @@ defineExpose({
   stroke: var(--color-primary-500, #3b82f6);
 }
 
-:deep(.vue-flow__controls) {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.crouton-flow-dark :deep(.vue-flow__controls) {
-  background: #262626;
-  border-color: #404040;
-}
-
-:deep(.vue-flow__controls-button) {
-  background: transparent;
-  color: #525252;
-}
-
-.crouton-flow-dark :deep(.vue-flow__controls-button) {
-  color: #d4d4d4;
-}
-
-:deep(.vue-flow__controls-button:hover) {
-  background: #f5f5f5;
-}
-
-.crouton-flow-dark :deep(.vue-flow__controls-button:hover) {
-  background: #404040;
-}
+/* Controls overrides moved to unscoped block below */
 
 :deep(.vue-flow__minimap) {
   background: white;
@@ -884,5 +859,52 @@ defineExpose({
   top: 12px;
   right: 12px;
   z-index: 100;
+}
+</style>
+
+<style>
+/* Unscoped — needs to beat @vue-flow/controls/dist/style.css */
+.crouton-flow-container .vue-flow__controls {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.crouton-flow-dark .vue-flow__controls {
+  background: #1a1a1a;
+  border-color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.crouton-flow-container .vue-flow__controls-button {
+  background: transparent;
+  color: #525252;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.crouton-flow-container .vue-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.crouton-flow-dark .vue-flow__controls-button {
+  color: #e5e5e5;
+  border-bottom-color: #333;
+}
+
+.crouton-flow-container .vue-flow__controls-button:hover {
+  background: #f5f5f5;
+}
+
+.crouton-flow-dark .vue-flow__controls-button:hover {
+  background: #333;
+}
+
+.crouton-flow-container .vue-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.crouton-flow-dark .vue-flow__controls-button svg {
+  fill: #e5e5e5;
 }
 </style>
