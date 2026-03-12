@@ -17,19 +17,30 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
-const expandFn = inject<(id: string) => void>('thinkgraph:expand', () => {})
+const expandFn = inject<(id: string, mode?: string) => void>('thinkgraph:expand', () => {})
 const expandingId = inject<Ref<string | null>>('thinkgraph:expanding', ref(null))
 const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('thinkgraph:copyContext', async () => {})
 const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
+const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
+const showExpandMenu = ref(false)
 const isExpanding = computed(() => expandingId.value === decision.value.id)
 
 const decision = computed(() => props.data as unknown as ThinkgraphDecision)
 
 const isParked = computed(() => decision.value.versionTag === 'parked')
 const isStarred = computed(() => decision.value.starred)
+
+const expandModes = [
+  { id: 'default', label: 'Quick expand', icon: 'i-lucide-sparkles', description: '3 diverse perspectives' },
+  { id: 'diverge', label: 'Diverge', icon: 'i-lucide-git-branch-plus', description: '5 alternative approaches' },
+  { id: 'deep_dive', label: 'Deep dive', icon: 'i-lucide-microscope', description: 'Implications & edge cases' },
+  { id: 'prototype', label: 'Prototype', icon: 'i-lucide-hammer', description: 'Practical, actionable steps' },
+  { id: 'converge', label: 'Converge', icon: 'i-lucide-git-merge', description: 'Synthesize into strategy' },
+  { id: 'validate', label: 'Challenge', icon: 'i-lucide-shield-question', description: 'Find holes & risks' },
+]
 
 const pathTypeConfig: Record<string, { icon: string; color: string }> = {
   diverge: { icon: 'i-lucide-git-branch-plus', color: 'text-green-500' },
@@ -76,10 +87,24 @@ function handleAddChild(event: Event) {
   }
 }
 
-function handleExpand(event: Event) {
+function handleExpandClick(event: Event) {
+  event.stopPropagation()
+  if (isExpanding.value) return
+  showExpandMenu.value = !showExpandMenu.value
+}
+
+function handleExpandMode(mode: string, event: Event) {
+  event.stopPropagation()
+  showExpandMenu.value = false
+  if (decision.value.id) {
+    expandFn(decision.value.id, mode)
+  }
+}
+
+function handleChat(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    expandFn(decision.value.id)
+    openChatFn(decision.value.id)
   }
 }
 
@@ -119,7 +144,7 @@ function toggleStar(event: Event) {
       'decision-node--starred': isStarred
     }"
     @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false"
+    @mouseleave="isHovered = false; showExpandMenu = false"
   >
     <Handle type="target" :position="Position.Top" class="decision-handle" />
 
@@ -175,15 +200,48 @@ function toggleStar(event: Event) {
 
     <!-- Hover actions -->
     <div v-if="isHovered" class="decision-node__actions">
+      <!-- AI expand with mode picker -->
+      <div class="relative">
+        <button
+          class="decision-node__action decision-node__action--ai"
+          :class="{ 'decision-node__action--loading': isExpanding }"
+          title="Expand with AI"
+          :disabled="isExpanding"
+          @click="handleExpandClick"
+        >
+          <UIcon :name="isExpanding ? 'i-lucide-loader-2' : 'i-lucide-sparkles'" class="size-3.5" :class="{ 'animate-spin': isExpanding }" />
+        </button>
+
+        <!-- Expand mode dropdown -->
+        <div
+          v-if="showExpandMenu"
+          class="expand-menu"
+        >
+          <button
+            v-for="mode in expandModes"
+            :key="mode.id"
+            class="expand-menu__item"
+            @click="handleExpandMode(mode.id, $event)"
+          >
+            <UIcon :name="mode.icon" class="size-3.5 shrink-0" />
+            <div class="min-w-0">
+              <div class="text-xs font-medium">{{ mode.label }}</div>
+              <div class="text-[10px] opacity-60">{{ mode.description }}</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat -->
       <button
-        class="decision-node__action decision-node__action--ai"
-        :class="{ 'decision-node__action--loading': isExpanding }"
-        title="Expand with AI"
-        :disabled="isExpanding"
-        @click="handleExpand"
+        class="decision-node__action decision-node__action--chat"
+        title="Chat about this"
+        @click="handleChat"
       >
-        <UIcon :name="isExpanding ? 'i-lucide-loader-2' : 'i-lucide-sparkles'" class="size-3.5" :class="{ 'animate-spin': isExpanding }" />
+        <UIcon name="i-lucide-message-square-text" class="size-3.5" />
       </button>
+
+      <!-- Copy context -->
       <button
         class="decision-node__action"
         title="Copy context"
@@ -191,6 +249,8 @@ function toggleStar(event: Event) {
       >
         <UIcon name="i-lucide-copy" class="size-3.5" />
       </button>
+
+      <!-- Paste children -->
       <button
         class="decision-node__action"
         title="Paste children"
@@ -198,6 +258,8 @@ function toggleStar(event: Event) {
       >
         <UIcon name="i-lucide-clipboard-paste" class="size-3.5" />
       </button>
+
+      <!-- Add child -->
       <button
         class="decision-node__action"
         title="Add child"
@@ -205,6 +267,8 @@ function toggleStar(event: Event) {
       >
         <UIcon name="i-lucide-plus" class="size-3.5" />
       </button>
+
+      <!-- Edit -->
       <button
         class="decision-node__action"
         title="Edit"
@@ -268,7 +332,27 @@ function toggleStar(event: Event) {
 }
 
 .decision-node__action--ai {
-  @apply hover:text-violet-500 hover:border-violet-300;
+  &:hover { color: var(--color-violet-500, #8b5cf6); border-color: var(--color-violet-300, #c4b5fd); }
+}
+
+.decision-node__action--chat {
+  &:hover { color: var(--color-blue-500, #3b82f6); border-color: var(--color-blue-300, #93c5fd); }
+}
+
+.decision-node__action--loading {
+  @apply opacity-60;
+}
+
+.expand-menu {
+  @apply absolute top-8 right-0 w-52 py-1;
+  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700;
+  @apply rounded-lg shadow-lg z-50;
+}
+
+.expand-menu__item {
+  @apply flex items-center gap-2 w-full px-3 py-1.5 text-left;
+  @apply hover:bg-neutral-50 dark:hover:bg-neutral-700/50;
+  @apply transition-colors cursor-pointer;
 }
 
 .decision-handle {

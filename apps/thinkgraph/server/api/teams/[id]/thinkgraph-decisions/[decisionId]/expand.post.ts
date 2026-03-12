@@ -1,7 +1,43 @@
-import { z } from 'zod/v3'
 import { streamText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../../../layers/thinkgraph/collections/decisions/server/database/queries'
+
+const modeConfig: Record<string, { system: string; count: number }> = {
+  diverge: {
+    count: 5,
+    system: `You generate diverse alternative approaches. For each, provide a fresh angle that hasn't been considered.
+Respond with a JSON array. Each item: {"content": "...", "nodeType": "idea"|"question"|"observation"|"decision", "pathType": "explored"}`
+  },
+  deep_dive: {
+    count: 4,
+    system: `You go deep on a topic — implications, edge cases, trade-offs, second-order effects.
+Respond with a JSON array. Each item: {"content": "...", "nodeType": "insight"|"question"|"observation", "pathType": "explored"}`
+  },
+  prototype: {
+    count: 3,
+    system: `You create practical, actionable steps. Be specific — names, tools, concrete approaches.
+Respond with a JSON array. Each item: {"content": "...", "nodeType": "idea"|"decision", "pathType": "explored"}`
+  },
+  converge: {
+    count: 2,
+    system: `You synthesize multiple ideas into unified approaches. Find the common thread and create a coherent strategy.
+Respond with a JSON array. Each item: {"content": "...", "nodeType": "decision", "pathType": "chosen"}`
+  },
+  validate: {
+    count: 4,
+    system: `You stress-test ideas. Find holes, risks, blind spots, and counterarguments. Be constructively critical.
+Respond with a JSON array. Each item: {"content": "...", "nodeType": "question", "pathType": "pending"}`
+  },
+  default: {
+    count: 3,
+    system: `You help users explore decisions by generating diverse perspectives.
+Generate exactly 3 child nodes:
+1. A supporting perspective (nodeType: "idea")
+2. A challenging question (nodeType: "question")
+3. An alternative angle (nodeType: "observation")
+Respond ONLY with valid JSON array. Each item: {"content": "...", "nodeType": "...", "pathType": "explored"}`
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -11,7 +47,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Decision ID required' })
   }
 
-  // Get all decisions to build context
+  const body = await readBody(event).catch(() => ({}))
+  const mode = (body?.mode as string) || 'default'
+  const config = modeConfig[mode] || modeConfig.default
+
   const allDecisions = await getAllThinkgraphDecisions(team.id)
   const targetDecision = allDecisions.find((d: any) => d.id === decisionId)
 
@@ -19,45 +58,26 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Decision not found' })
   }
 
-  // Build tree context for the AI
   const ancestors = buildAncestorChain(allDecisions, decisionId)
   const siblings = allDecisions.filter((d: any) => d.parentId === targetDecision.parentId && d.id !== decisionId)
+  const children = allDecisions.filter((d: any) => d.parentId === decisionId)
+  const starred = allDecisions.filter((d: any) => d.starred && d.id !== decisionId)
 
   const ai = createAIProvider(event)
 
   const result = await streamText({
     model: ai.model(ai.getDefaultModel()),
-    system: `You are a structured thinking assistant. You help users explore decisions by generating diverse perspectives.
-
-When given a thought or decision, generate exactly 3 child nodes that explore different angles:
-1. A supporting/pro perspective (nodeType: "idea")
-2. A challenging/con perspective (nodeType: "question")
-3. An alternative or unexpected angle (nodeType: "observation")
-
-Respond ONLY with valid JSON array. Each item must have:
-- "content": A concise thought (1-2 sentences max)
-- "nodeType": One of "idea", "question", "observation", "decision"
-- "pathType": One of "chosen", "explored", "rejected", "pending"
-
-Example response:
-[
-  {"content": "This approach would reduce complexity by 40%", "nodeType": "idea", "pathType": "explored"},
-  {"content": "What about edge cases with concurrent users?", "nodeType": "question", "pathType": "pending"},
-  {"content": "We could combine both approaches using a facade pattern", "nodeType": "observation", "pathType": "explored"}
-]`,
-    prompt: buildPrompt(targetDecision, ancestors, siblings),
+    system: config.system + `\n\nKeep each content to 1-2 sentences. Be concise but insightful.`,
+    prompt: buildPrompt(targetDecision, ancestors, siblings, children, starred, config.count),
   })
 
-  // Collect the full streamed response
   let fullText = ''
   for await (const chunk of result.textStream) {
     fullText += chunk
   }
 
-  // Parse the JSON response
   let perspectives: Array<{ content: string; nodeType: string; pathType: string }>
   try {
-    // Extract JSON from potential markdown code blocks
     const jsonMatch = fullText.match(/\[[\s\S]*\]/)
     if (!jsonMatch) throw new Error('No JSON array found')
     perspectives = JSON.parse(jsonMatch[0])
@@ -65,7 +85,6 @@ Example response:
     throw createError({ status: 500, statusText: 'AI returned invalid response' })
   }
 
-  // Create child decisions in the database
   const created = []
   for (const p of perspectives) {
     const decision = await createThinkgraphDecision({
@@ -80,9 +99,7 @@ Example response:
       versionTag: '',
       teamId: team.id,
       owner: user.id,
-      createdBy: user.id,
-      updatedBy: user.id,
-    })
+    } as any)
     created.push(decision)
   }
 
@@ -101,28 +118,44 @@ function buildAncestorChain(allDecisions: any[], targetId: string): any[] {
   return chain
 }
 
-function buildPrompt(target: any, ancestors: any[], siblings: any[]): string {
+function buildPrompt(target: any, ancestors: any[], siblings: any[], children: any[], starred: any[], count: number): string {
   let prompt = ''
 
   if (ancestors.length > 0) {
     prompt += 'Thinking chain so far:\n'
     ancestors.forEach((a, i) => {
-      prompt += `${'  '.repeat(i)}→ ${a.content}\n`
+      prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
     })
     prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
   } else {
     prompt += `Starting thought: ${target.content}\n\n`
   }
 
+  if (children.length > 0) {
+    prompt += 'Existing children (avoid duplicating these):\n'
+    children.forEach((c: any) => {
+      prompt += `- ${c.content} (${c.nodeType})\n`
+    })
+    prompt += '\n'
+  }
+
   if (siblings.length > 0) {
-    prompt += 'Sibling perspectives already explored:\n'
+    prompt += 'Sibling perspectives:\n'
     siblings.forEach((s: any) => {
       prompt += `- ${s.content} (${s.nodeType})\n`
     })
-    prompt += '\nGenerate 3 NEW perspectives that are different from the siblings above.\n'
-  } else {
-    prompt += 'Generate 3 diverse perspectives on this thought.\n'
+    prompt += '\n'
   }
+
+  if (starred.length > 0) {
+    prompt += 'Starred insights from other branches:\n'
+    starred.slice(0, 5).forEach((s: any) => {
+      prompt += `⭐ ${s.content}\n`
+    })
+    prompt += '\n'
+  }
+
+  prompt += `Generate ${count} new perspectives. Be different from existing children and siblings.\n`
 
   return prompt
 }
