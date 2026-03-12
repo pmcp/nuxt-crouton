@@ -87,7 +87,7 @@ function renderNode(node: TipTapNode): string {
     const src = node.attrs?.url || node.attrs?.src || ''
     if (!isSafeUrl(src)) return ''
     const height = node.attrs?.height || 300
-    return `<div class="embed-container"><iframe src="${escapeAttr(src)}" height="${height}" frameborder="0" allowfullscreen></iframe></div>`
+    return `<div class="embed-container not-prose" style="margin:1rem 0"><iframe src="${escapeAttr(src)}" style="width:100%;height:${height}px;border:0;border-radius:0.375rem" allowfullscreen></iframe></div>`
   }
 
   // Mailing list block (Mailchimp form)
