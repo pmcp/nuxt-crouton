@@ -21,6 +21,30 @@ const selectedNodeId = ref<string | null>(null)
 // Layout key — only increment when we want a full dagre re-layout
 const layoutKey = ref(0)
 
+// Edge type toggle
+const edgeTypes = ['default', 'smoothstep', 'straight'] as const
+const edgeType = ref<'default' | 'smoothstep' | 'straight'>('smoothstep')
+
+function cycleEdgeType() {
+  const idx = edgeTypes.indexOf(edgeType.value)
+  edgeType.value = edgeTypes[(idx + 1) % edgeTypes.length]
+}
+
+const edgeTypeIcon = computed(() => {
+  switch (edgeType.value) {
+    case 'default': return 'i-lucide-spline'
+    case 'smoothstep': return 'i-lucide-git-commit-horizontal'
+    case 'straight': return 'i-lucide-minus'
+  }
+})
+
+const flowConfig = computed(() => ({
+  direction: 'TB' as const,
+  nodeSpacing: 80,
+  rankSpacing: 160,
+  edgeType: edgeType.value,
+}))
+
 function autoLayout() {
   savedPositions.value = null
   layoutKey.value++
@@ -170,12 +194,14 @@ function openGlobalChat() {
 }
 
 async function onChatAddToGraph(items: Array<{ content: string; nodeType: string }>) {
+  // Use the chat's focused node, or fall back to the currently selected node
+  const parentId = chatNodeId.value || selectedNodeId.value || ''
   for (const item of items) {
     await create({
       content: item.content,
       nodeType: item.nodeType,
       pathType: '',
-      parentId: chatNodeId.value || '',
+      parentId,
       source: 'ai',
       starred: false,
       branchName: '',
@@ -325,6 +351,14 @@ provide('thinkgraph:dispatch', openDispatch)
           @click="showHelp = true"
         />
         <UButton
+          :icon="edgeTypeIcon"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          :title="`Edge style: ${edgeType}`"
+          @click="cycleEdgeType"
+        />
+        <UButton
           icon="i-lucide-layout-grid"
           size="sm"
           variant="ghost"
@@ -377,7 +411,7 @@ provide('thinkgraph:dispatch', openDispatch)
           label-field="content"
           :flow-id="flowId || undefined"
           :saved-positions="savedPositions"
-          :flow-config="{ direction: 'TB', nodeSpacing: 80, rankSpacing: 160 }"
+          :flow-config="flowConfig"
           minimap
           @node-click="onNodeClick"
           @node-delete="onNodeDelete"
