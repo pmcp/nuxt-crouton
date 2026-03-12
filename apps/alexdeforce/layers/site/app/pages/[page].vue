@@ -23,6 +23,6 @@ useHead({
 <template>
   <div v-if="page">
     <h1 class="pb-5 pt-1"><span class="text-xl">{{ page.title }}</span></h1>
-    <div v-if="page.contentHtml" class="text-sm prose" v-html="page.contentHtml" />
+    <div v-if="page.contentHtml" class="prose" v-html="page.contentHtml" />
   </div>
 </template>

@@ -39,7 +39,7 @@ useHead({
 
     <div
       v-if="article.contentHtml"
-      class="text-sm leading-6 prose"
+      class="prose"
       v-html="article.contentHtml"
     />
 

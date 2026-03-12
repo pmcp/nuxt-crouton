@@ -29,6 +29,6 @@ function formatDate(date: string | number | null) {
 
     <p v-if="event.date" class="text-sm text-gray-500 mb-4">{{ formatDate(event.date) }}</p>
 
-    <div v-if="event.contentHtml" class="text-sm prose" v-html="event.contentHtml" />
+    <div v-if="event.contentHtml" class="prose" v-html="event.contentHtml" />
   </div>
 </template>
