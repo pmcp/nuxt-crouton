@@ -13,11 +13,6 @@
     "./shared/utils/scaffold": "./shared/utils/scaffold.ts",
     "./app/types/app": "./app/types/app.ts",
     "./app/types/block-definition": "./app/types/block-definition.ts",
-    "./server/database/schema/redirects": {
-      "types": "./server/database/schema/redirects.ts",
-      "import": "./server/database/schema/redirects.ts",
-      "default": "./server/database/schema/redirects.ts"
-    },
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",
       "import": "./dist/app/composables/*.mjs"
