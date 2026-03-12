@@ -3,6 +3,9 @@
     "crouton": {
       "command": "node",
       "args": ["./packages/nuxt-crouton-mcp-server/dist/index.js"]
+    },
+    "thinkgraph": {
+      "url": "http://localhost:3004/mcp"
     }
   }
 }
