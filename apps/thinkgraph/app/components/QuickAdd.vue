@@ -128,14 +128,23 @@ Supports:
       </div>
     </div>
 
-    <div v-if="parsed.length" class="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+    <div class="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
       <UButton variant="ghost" color="neutral" @click="close()">Cancel</UButton>
       <UButton
+        v-if="parsed.length"
         icon="i-lucide-plus"
         :label="`Add ${selectedIndices.size} items`"
         :loading="adding"
         :disabled="selectedIndices.size === 0"
         @click="addSelected"
+      />
+      <UButton
+        v-else
+        icon="i-lucide-clipboard-paste"
+        label="Paste content to extract"
+        disabled
+        variant="outline"
+        color="neutral"
       />
     </div>
   </div>
