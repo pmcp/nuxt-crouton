@@ -23,7 +23,7 @@ export async function getAllThinkgraphDecisions(teamId: string) {
     .from(tables.thinkgraphDecisions)
     .leftJoin(ownerUser, eq(tables.thinkgraphDecisions.owner, ownerUser.id))
     .where(eq(tables.thinkgraphDecisions.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+    .orderBy(desc(tables.thinkgraphDecisions.order))
 
   return decisions
 }
@@ -51,7 +51,7 @@ export async function getThinkgraphDecisionsByIds(teamId: string, decisionIds: s
         inArray(tables.thinkgraphDecisions.id, decisionIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+    .orderBy(desc(tables.thinkgraphDecisions.order))
 
   return decisions
 }
