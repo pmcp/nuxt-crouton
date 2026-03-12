@@ -24,7 +24,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    falApiKey: '',  // NUXT_FAL_API_KEY
+    falApiKey: '',      // NUXT_FAL_API_KEY
+    geminiApiKey: '',   // NUXT_GEMINI_API_KEY
   },
 
   hub: {
