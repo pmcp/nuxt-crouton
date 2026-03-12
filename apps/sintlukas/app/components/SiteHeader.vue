@@ -1,12 +1,9 @@
 <script setup lang="ts">
 /**
- * Sint-Lukas site header with traditional navigation bar.
+ * Sint-Lukas site header with explicit navigation.
  * Fixed top, white background, logo + nav links + CTA button.
  */
-const { navigation, isActive } = useNavigation()
 const { locale } = useI18n()
-const { teamSlug } = useTeamContext()
-const { hideTeamInUrl } = useDomainContext()
 
 const mobileMenuOpen = ref(false)
 const route = useRoute()
@@ -15,26 +12,21 @@ watch(() => route.fullPath, () => {
   mobileMenuOpen.value = false
 })
 
-// Build nav items from published pages
-const navItems = computed(() => {
-  if (!navigation.value) return []
-  return navigation.value
-    .filter((p: any) => p.showInNavigation !== false)
-    .map((p: any) => ({
-      label: p.title,
-      to: p.path,
-      active: isActive(p)
-    }))
-})
+const navItems = computed(() => [
+  { label: 'Home', to: `/${locale.value}`, match: (p: string) => p === `/${locale.value}` || p === `/${locale.value}/` },
+  { label: 'Aanbod', to: `/${locale.value}/aanbod`, match: (p: string) => p.startsWith(`/${locale.value}/aanbod`) },
+  { label: 'Academie', to: `/${locale.value}/academie`, match: (p: string) => p.startsWith(`/${locale.value}/academie`) },
+  { label: 'Contact', to: `/${locale.value}/contact`, match: (p: string) => p.startsWith(`/${locale.value}/contact`) },
+])
 
-// Registration link — the "Inschrijven" page if it exists
-const registrationItem = computed(() =>
-  navItems.value.find(item => item.to?.includes('inschrijven'))
-)
+const registrationLink = computed(() => ({
+  label: 'Inschrijven',
+  to: `/${locale.value}/inschrijven`
+}))
 
-const mainNavItems = computed(() =>
-  navItems.value.filter(item => item !== registrationItem.value)
-)
+function isActive(item: { match: (p: string) => boolean }) {
+  return item.match(route.path)
+}
 </script>
 
 <template>
@@ -42,18 +34,18 @@ const mainNavItems = computed(() =>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <NuxtLink :to="hideTeamInUrl ? `/${locale}` : `/${teamSlug}/${locale}`" class="shrink-0">
+        <NuxtLink :to="`/${locale}`" class="shrink-0">
           <img src="/logo.svg" alt="Sint-Lukas Academie" class="h-10" />
         </NuxtLink>
 
         <!-- Desktop navigation -->
         <nav class="hidden md:flex items-center gap-1">
           <NuxtLink
-            v-for="item in mainNavItems"
+            v-for="item in navItems"
             :key="item.to"
             :to="item.to"
             class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="item.active
+            :class="isActive(item)
               ? 'text-sintlukas-700 bg-sintlukas-50'
               : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
           >
@@ -65,12 +57,11 @@ const mainNavItems = computed(() =>
         <div class="flex items-center gap-2">
           <!-- CTA button -->
           <UButton
-            v-if="registrationItem"
-            :to="registrationItem.to"
+            :to="registrationLink.to"
             size="sm"
             class="hidden sm:inline-flex"
           >
-            {{ registrationItem.label }}
+            {{ registrationLink.label }}
           </UButton>
 
           <!-- Language switcher -->
@@ -103,11 +94,17 @@ const mainNavItems = computed(() =>
             :key="item.to"
             :to="item.to"
             class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="item.active
+            :class="isActive(item)
               ? 'text-sintlukas-700 bg-sintlukas-50'
               : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
           >
             {{ item.label }}
+          </NuxtLink>
+          <NuxtLink
+            :to="registrationLink.to"
+            class="block px-3 py-2 text-sm font-medium text-sintlukas-600 rounded-lg hover:bg-sintlukas-50 transition-colors"
+          >
+            {{ registrationLink.label }}
           </NuxtLink>
           <div class="mt-3 px-3">
             <CroutonI18nLanguageSwitcher class="w-auto" />
