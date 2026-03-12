@@ -64,6 +64,10 @@ function handleSaved() {
         @delete="showDeleteModal = true"
       />
 
+      <!-- Redirects -->
+      <USeparator class="my-8" />
+      <CroutonRedirectsList />
+
       <!-- Delete Confirmation Modal -->
       <TeamDeleteConfirm
         v-if="currentTeam && isOwner"
