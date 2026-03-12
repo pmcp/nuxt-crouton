@@ -42,6 +42,8 @@ const flowConfig = computed(() => ({
   direction: 'TB' as const,
   nodeSpacing: 80,
   rankSpacing: 160,
+  nodeWidth: 260,
+  nodeHeight: 200,
   edgeType: edgeType.value,
 }))
 

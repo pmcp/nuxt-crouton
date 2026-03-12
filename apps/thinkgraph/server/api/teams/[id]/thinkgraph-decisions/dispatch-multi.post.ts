@@ -1,5 +1,5 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../layers/thinkgraph/collections/decisions/server/database/queries'
+import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/collections/decisions/server/database/queries'
 import { getDispatchService, isServiceAvailable, ensureServicesLoaded } from '~~/server/utils/dispatch-registry'
 import { buildMultiNodeContext } from '~~/server/utils/context-builder'
 
