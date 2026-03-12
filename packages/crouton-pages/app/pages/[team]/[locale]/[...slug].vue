@@ -27,28 +27,11 @@ definePageMeta({
   // (the rejected promise is detected by Node before Nuxt's Suspense catches it).
   validate: async (route) => {
     const reservedPrefixes = ['auth', 'api', 'admin', 'dashboard', '_nuxt', '__nuxt']
-    const teamParam = route.params.team as string | undefined
-
-    // Single-team mode: no team param in URL, team comes from config
-    if (!teamParam) {
-      // Only valid if single-team mode is configured
-      const config = useRuntimeConfig()
-      return !!(config.public?.croutonPages as any)?.singleTeam?.slug
-    }
+    const teamParam = route.params.team as string
 
     // Reject reserved prefixes and file-like paths (e.g., favicon.svg, robots.txt)
-    if (reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
+    if (!teamParam || reservedPrefixes.includes(teamParam) || teamParam.includes('.')) {
       return false
-    }
-
-    // Single-team mode param remapping: when URL is /en/academie, Vue Router
-    // matches /:team/:locale/:slug* with team=en, locale=academie.
-    // Detect this case: teamParam looks like a locale code, not the actual team.
-    const config = useRuntimeConfig()
-    const singleTeamSlug = (config.public?.croutonPages as any)?.singleTeam?.slug
-    if (singleTeamSlug && teamParam !== singleTeamSlug && /^[a-z]{2,3}$/.test(teamParam)) {
-      // Accept — setup will remap team/locale/slug from the mismatched params
-      return true
     }
 
     // Verify team actually exists to avoid catching routes meant for other pages
@@ -78,45 +61,9 @@ const { isCustomDomain, hideTeamInUrl } = useDomainContext()
 const { locale: i18nLocale, locales, setLocale } = useI18n()
 
 // Get team, locale, and slug from route params
-// In single-team mode, team param may be absent — resolve from config
-const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string } | undefined
-
-// Detect single-team mode: either matched via single-team-locale-slug route
-// (no team param) or via team-locale-slug with locale-as-team param remapping.
-const isSingleTeamMode = computed(() => {
-  if (!singleTeamConfig?.slug) return false
-  // Matched via /:locale([a-z]{2,3})/:slug(.*)* — no :team param
-  if (route.name === 'single-team-locale-slug') return true
-  // Matched via /:team/:locale/:slug* with team=en (locale-as-team)
-  const teamParam = route.params.team as string | undefined
-  return !!teamParam && teamParam !== singleTeamConfig.slug && /^[a-z]{2,3}$/.test(teamParam)
-})
-
-const team = computed(() => {
-  if (isSingleTeamMode.value) return singleTeamConfig!.slug!
-  return teamId.value || singleTeamConfig?.slug || null
-})
-const urlLocale = computed(() => {
-  if (isSingleTeamMode.value) {
-    // single-team-locale-slug: locale is in route.params.locale
-    // team-locale-slug remap: locale is in route.params.team
-    return (route.params.locale as string) || (route.params.team as string)
-  }
-  return route.params.locale as string
-})
+const team = computed(() => teamId.value || null)
+const urlLocale = computed(() => route.params.locale as string)
 const slug = computed(() => {
-  if (isSingleTeamMode.value) {
-    if (route.name === 'single-team-locale-slug') {
-      // params: { locale: 'nl', slug: ['aanbod'] }
-      const restSlug = route.params.slug
-      return Array.isArray(restSlug) ? restSlug.join('/') : (restSlug || '')
-    }
-    // team-locale-slug remap: locale param is actually the first slug segment
-    const firstSegment = route.params.locale as string
-    const restSlug = route.params.slug
-    const rest = Array.isArray(restSlug) ? restSlug.join('/') : (restSlug || '')
-    return firstSegment ? (rest ? `${firstSegment}/${rest}` : firstSegment) : ''
-  }
   const slugParts = route.params.slug
   if (!slugParts || (Array.isArray(slugParts) && slugParts.length === 0)) {
     return '' // Homepage

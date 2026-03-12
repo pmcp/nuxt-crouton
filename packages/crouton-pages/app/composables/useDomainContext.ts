@@ -1,15 +1,15 @@
 /**
  * Domain Context Composable
  *
- * Detects if the current request is from a custom domain or single-team
- * mode and provides context about the resolved team.
+ * Detects if the current request is from a custom domain or using locale
+ * routing mode and provides context about the resolved team.
  *
  * @example
  * ```vue
  * <script setup>
  * const { isCustomDomain, hideTeamInUrl } = useDomainContext()
  *
- * // Hide team selector on custom domain / single-team sites
+ * // Hide team selector on custom domain / locale-mode sites
  * const showTeamSelector = computed(() => !hideTeamInUrl.value)
  * </script>
  * ```
@@ -17,6 +17,11 @@
 export function useDomainContext() {
   const nuxtApp = useNuxtApp()
   const config = useRuntimeConfig()
+
+  // Routing mode from config
+  const routingMode = computed(() => {
+    return ((config.public?.croutonPages as any)?.routingMode as string) || 'team'
+  })
 
   // Get domain context from SSR payload or event
   const domainContext = useState('crouton-domain-context', () => {
@@ -26,19 +31,16 @@ export function useDomainContext() {
       if (event) {
         return {
           isCustomDomain: event.context.isCustomDomain || false,
-          isSingleTeam: event.context.isSingleTeam || false,
-          singleTeamSlug: event.context.singleTeamSlug || null,
+          routingMode: event.context.routingMode || routingMode.value,
           resolvedDomain: event.context.resolvedDomain || null,
           resolvedTeamId: event.context.resolvedDomainTeamId || null
         }
       }
     }
-    // Default state — also check runtimeConfig for client-side hydration fallback
-    const singleTeam = config.public?.croutonPages?.singleTeam as { slug?: string } | undefined
+    // Default state
     return {
       isCustomDomain: false,
-      isSingleTeam: !!singleTeam?.slug,
-      singleTeamSlug: singleTeam?.slug || null,
+      routingMode: routingMode.value,
       resolvedDomain: null,
       resolvedTeamId: null
     }
@@ -46,15 +48,14 @@ export function useDomainContext() {
 
   // Computed properties for easy access
   const isCustomDomain = computed(() => domainContext.value.isCustomDomain)
-  const isSingleTeam = computed(() => domainContext.value.isSingleTeam)
-  const singleTeamSlug = computed(() => domainContext.value.singleTeamSlug)
+  const isLocaleMode = computed(() => domainContext.value.routingMode === 'locale')
   const resolvedDomain = computed(() => domainContext.value.resolvedDomain)
   const resolvedTeamId = computed(() => domainContext.value.resolvedTeamId)
 
   // Check if we should hide team-specific UI elements
   const hideTeamInUrl = computed(() => {
-    // On custom domains or single-team sites, the team is implicit
-    return isCustomDomain.value || isSingleTeam.value
+    // On custom domains or locale-mode sites, the team is implicit
+    return isCustomDomain.value || isLocaleMode.value
   })
 
   // Get the current hostname
@@ -81,15 +82,13 @@ export function useDomainContext() {
   return {
     /** Whether the current request is from a verified custom domain */
     isCustomDomain,
-    /** Whether single-team mode is active */
-    isSingleTeam,
-    /** The single-team slug (when in single-team mode) */
-    singleTeamSlug,
+    /** Whether locale routing mode is active */
+    isLocaleMode,
     /** The custom domain hostname (if any) */
     resolvedDomain,
     /** The team ID resolved from the custom domain */
     resolvedTeamId,
-    /** Whether to hide team slug in URLs (true on custom domains or single-team mode) */
+    /** Whether to hide team slug in URLs (true on custom domains or locale mode) */
     hideTeamInUrl,
     /** Current hostname */
     hostname,

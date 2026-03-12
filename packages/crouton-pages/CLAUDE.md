@@ -372,11 +372,10 @@ Normal routing: [team]/[...slug].vue
 ```typescript
 const {
   isCustomDomain,    // Whether request is from custom domain
-  isSingleTeam,      // Whether single-team mode is active
-  singleTeamSlug,    // The single-team slug (when active)
+  isLocaleMode,      // Whether locale routing mode is active
   resolvedDomain,    // The custom domain hostname
   resolvedTeamId,    // Team ID from domain lookup
-  hideTeamInUrl,     // true on custom domains OR single-team mode
+  hideTeamInUrl,     // true on custom domains OR locale mode
   hostname,          // Current hostname
   isAppDomain        // Whether hostname is known app domain
 } = useDomainContext()
@@ -408,25 +407,25 @@ export default defineNuxtConfig({
         appDomains: ['myapp.com', 'staging.myapp.com'],
         // Enable debug logging
         debug: false,
-        // Single-team mode: eliminates team slug from public URLs
-        singleTeam: {
-          slug: 'myteam',        // Team slug (empty = disabled)
-          defaultLocale: 'en'    // Locale for root redirect
-        }
+        // Routing mode: 'team' (default) or 'locale'
+        routingMode: 'team',
+        // Default locale for root redirect in locale mode
+        defaultLocale: 'en'
       }
     }
   }
 })
 ```
 
-### Single-Team Mode
+### Locale Routing Mode
 
-For sites with only one team, single-team mode removes the team slug from public URLs:
+For single-team sites, locale mode removes the team slug from public URLs and lets the app provide its own page routes:
 - `/nl/about` instead of `/myteam/nl/about`
 - `/` redirects to `/{defaultLocale}/`
 - Admin/API/auth routes are unaffected
+- crouton-pages does NOT register public page routes — the app provides `[locale]/[...slug].vue`
 
-The middleware sets `event.context.isSingleTeam` which makes `useDomainContext().hideTeamInUrl` return `true`, so all navigation links automatically omit the team slug.
+The server plugin sets `event.context.routingMode = 'locale'` which makes `useDomainContext().hideTeamInUrl` return `true`, so all navigation links automatically omit the team slug.
 
 ### Domain Setup
 

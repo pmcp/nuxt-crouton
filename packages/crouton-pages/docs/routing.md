@@ -4,46 +4,68 @@ How public page URLs are resolved, from request to render.
 
 ## Route Table
 
-Nuxt auto-generates these routes from the file system, plus one added by the `pages:extend` hook:
+Nuxt auto-generates these routes from the file system:
 
 | Route Name | Pattern | Source | Purpose |
 |---|---|---|---|
 | `team-locale-slug` | `/:team/:locale/:slug(.*)*` | `[team]/[locale]/[...slug].vue` | Main page renderer |
 | `team-slug` | `/:team/:slug(.*)*` | `[team]/[...slug].vue` | Locale-less redirect |
-| `single-team-locale-slug` | `/:locale([a-z]{2,3})/:slug(.*)*` | Same file as `team-locale-slug` | Single-team mode (no team in URL) |
 
-### How Vue Router picks a winner
+> In **locale mode** (`routingMode: 'locale'`), both routes are removed by the `pages:extend` hook. The app provides its own page routes (e.g., `[locale]/[...slug].vue`).
 
-Vue Router 4 scores routes by segment type:
+## Two Modes
 
-| Segment Type | Score |
-|---|---|
-| Static (`/about`) | +40 |
-| Param with regex (`/:locale([a-z]{2,3})`) | +30 |
-| Plain param (`/:team`) | +20 |
-| Wildcard (`/:slug(.*)*`) | -13 |
+### 1. Team Mode (default)
 
-**For `/nl/aanbod`** (2 segments):
-- `team-locale-slug` scores highest (3 params, more specific) — wins
-- Params: `team=nl, locale=aanbod, slug=[]`
-- Page detects locale-as-team and remaps (see [Param Remapping](#param-remapping))
+URLs include the team slug: `/acme/en/about`
 
-**For `/nl/`** (1 segment):
-- `team-locale-slug` can't match (needs 2+ segments before the catch-all)
-- `single-team-locale-slug` (+30 for regex param) beats `team-slug` (+20 for plain param)
-- Params: `locale=nl, slug=[]`
-
-**For `/acme/about`** (2 segments, multi-team):
-- `team-locale-slug` wins (3 params)
-- Params: `team=acme, locale=about, slug=[]`
-- Validate checks if `acme` is a real team
-
-> **Key insight**: The `[a-z]{2,3}` regex on the single-team route is what makes it score higher than `team-slug`. Without it, both routes have identical scores and `team-slug` wins (registered first), causing a 404 because Nuxt treats `validate: false` as a 404 — it does NOT fall through to the next matching route.
-
-## Request Lifecycle
+No special config needed. The `team-locale-slug` route handles everything.
 
 ```
-Browser: GET /nl/aanbod
+/acme/about     → [team]/[...slug].vue → redirect to /acme/en/about
+/acme/en/about  → [team]/[locale]/[...slug].vue → render page
+```
+
+### 2. Locale Mode
+
+URLs omit the team slug: `/nl/about`. The app provides its own page routes.
+
+```typescript
+// nuxt.config.ts
+runtimeConfig: {
+  public: {
+    croutonPages: {
+      routingMode: 'locale',
+      defaultLocale: 'nl'
+    }
+  }
+}
+```
+
+In locale mode, crouton-pages:
+- **Keeps**: admin routes (`/admin/[team]/*`), server APIs (`/api/teams/[id]/pages/*`), `useNavigation()`, `useDomainContext()`
+- **Skips**: public page route registration, virtual single-team route
+
+```
+/           → Nitro plugin redirects to /nl/ (302)
+/nl/        → App's own [locale]/[...slug].vue → render homepage
+/nl/about   → App's own [locale]/[...slug].vue → render page
+```
+
+### Custom Domain Mode
+
+A verified custom domain resolves to a team. URLs omit the team slug.
+
+```
+booking.acme.com/about → domain-resolver rewrites to /acme/about
+                       → [team]/[...slug].vue → redirect to /acme/en/about
+                       → render page (hideTeamInUrl hides team in nav links)
+```
+
+## Request Lifecycle (Team Mode)
+
+```
+Browser: GET /acme/en/about
          │
          ▼
 ┌─────────────────────────────────┐
@@ -55,11 +77,7 @@ Browser: GET /nl/aanbod
 │     → /acme/about               │
 │                                 │
 │  2. single-team-rewrite.ts      │
-│     Set context flags:          │
-│     event.context.isSingleTeam  │
-│     event.context.singleTeamSlug│
-│     Root / → redirect /nl/      │
-│     NO URL rewriting            │
+│     (no-op in team mode)        │
 │                                 │
 └─────────────────┬───────────────┘
                   │
@@ -67,9 +85,9 @@ Browser: GET /nl/aanbod
 ┌─────────────────────────────────┐
 │  Vue Router (SSR + client)      │
 │                                 │
-│  Matches route by score:        │
-│  /nl/aanbod → team-locale-slug  │
-│  /nl/       → single-team-*     │
+│  Matches team-locale-slug       │
+│  Params: team=acme, locale=en,  │
+│          slug=['about']         │
 │                                 │
 └─────────────────┬───────────────┘
                   │
@@ -78,11 +96,7 @@ Browser: GET /nl/aanbod
 │  Page Validate                  │
 │                                 │
 │  - Reserved prefix? → false     │
-│  - Single-team locale route?    │
-│    Accept if config has slug    │
-│  - Locale-as-team remap?        │
-│    Accept if looks like locale  │
-│  - Otherwise: API check team    │
+│  - API check team exists        │
 │                                 │
 └─────────────────┬───────────────┘
                   │
@@ -90,15 +104,9 @@ Browser: GET /nl/aanbod
 ┌─────────────────────────────────┐
 │  Page Setup (param resolution)  │
 │                                 │
-│  isSingleTeamMode? →            │
-│    team = config slug           │
-│    locale = first real param    │
-│    slug = remaining params      │
-│                                 │
-│  Normal mode? →                 │
-│    team = route.params.team     │
-│    locale = route.params.locale │
-│    slug = route.params.slug     │
+│  team = route.params.team       │
+│  locale = route.params.locale   │
+│  slug = route.params.slug       │
 │                                 │
 └─────────────────┬───────────────┘
                   │
@@ -113,78 +121,35 @@ Browser: GET /nl/aanbod
 └─────────────────────────────────┘
 ```
 
-## Three Modes
-
-### 1. Multi-Team Mode (default)
-
-URLs include the team slug: `/acme/en/about`
-
-No special config needed. The `team-locale-slug` route handles everything.
+## Request Lifecycle (Locale Mode)
 
 ```
-/acme/about     → [team]/[...slug].vue → redirect to /acme/en/about
-/acme/en/about  → [team]/[locale]/[...slug].vue → render page
+Browser: GET /nl/about
+         │
+         ▼
+┌─────────────────────────────────┐
+│  Nitro Plugin                   │
+│  single-team-rewrite.ts         │
+│                                 │
+│  Set context.routingMode =      │
+│    'locale'                     │
+│  Root / → redirect /nl/         │
+│                                 │
+└─────────────────┬───────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────┐
+│  App's own page routes          │
+│  (provided by the app, not      │
+│   crouton-pages)                │
+│                                 │
+│  e.g., [locale]/[...slug].vue   │
+│  Uses useNavigation() for nav   │
+│  Uses useDomainContext() for    │
+│  hideTeamInUrl                  │
+│                                 │
+└─────────────────────────────────┘
 ```
-
-### 2. Single-Team Mode
-
-URLs omit the team slug: `/nl/about`
-
-```typescript
-// nuxt.config.ts
-runtimeConfig: {
-  public: {
-    croutonPages: {
-      singleTeam: {
-        slug: 'myteam',      // team slug (empty = disabled)
-        defaultLocale: 'nl'   // locale for root redirect
-      }
-    }
-  }
-}
-```
-
-```
-/           → Nitro plugin redirects to /nl/ (302)
-/nl/        → single-team-locale-slug route → render homepage
-/nl/about   → team-locale-slug route (team=nl) → param remap → render page
-```
-
-### 3. Custom Domain Mode
-
-A verified custom domain resolves to a team. URLs omit the team slug.
-
-```
-booking.acme.com/about → domain-resolver rewrites to /acme/about
-                       → [team]/[...slug].vue → redirect to /acme/en/about
-                       → render page (hideTeamInUrl hides team in nav links)
-```
-
-## Param Remapping
-
-When Vue Router matches `/nl/aanbod` via the 3-param `team-locale-slug` route, the params are wrong:
-
-| Param | Value | Actual meaning |
-|---|---|---|
-| `team` | `nl` | This is the locale |
-| `locale` | `aanbod` | This is the slug |
-| `slug` | `[]` | Empty |
-
-The page component detects this (`isSingleTeamMode`) and remaps:
-
-| Resolved | Source |
-|---|---|
-| `team` | `singleTeam.slug` from config |
-| `locale` | `route.params.team` (`nl`) |
-| `slug` | `route.params.locale` + `route.params.slug` joined (`aanbod`) |
-
-When matched via `single-team-locale-slug` (for `/nl/`), there's no `:team` param at all:
-
-| Resolved | Source |
-|---|---|
-| `team` | `singleTeam.slug` from config |
-| `locale` | `route.params.locale` (`nl`) |
-| `slug` | `route.params.slug` (empty) |
 
 ## Navigation Links
 
@@ -196,22 +161,21 @@ hideTeamInUrl = false → /acme/nl/about
 ```
 
 `hideTeamInUrl` is `true` when:
-- Single-team mode is active (`isSingleTeam`), OR
+- Locale routing mode is active (`routingMode === 'locale'`), OR
 - Request came from a custom domain (`isCustomDomain`)
 
 ## Nitro Plugins
 
 ### `single-team-rewrite.ts`
 
-Sets context flags for downstream code. Does **NOT** rewrite URLs.
+Sets context flags for downstream code. Active only in locale mode.
 
 | Action | Details |
 |---|---|
 | Skip | API, auth, admin, `_nuxt`, static files |
-| Set flags | `event.context.isSingleTeam = true`, `event.context.singleTeamSlug = slug` |
+| Set context | `event.context.routingMode = 'locale'` |
 | Root redirect | `/` → `/{defaultLocale}/` (302) |
-
-> **Why no URL rewrite?** Rewriting `/nl/` to `/sintlukas/nl/` server-side causes SSR/client hydration mismatch. The server would render with path `/sintlukas/nl/` but the browser URL is `/nl/`, so `route.path` disagrees between SSR and hydration.
+| Team mode | No-op (plugin returns early) |
 
 ### `domain-resolver.ts`
 
@@ -229,28 +193,23 @@ Rewrites custom domain requests by prepending the team slug.
 
 ## Validate Behavior
 
-**`definePageMeta.validate` returning `false` = 404.** Nuxt does NOT fall through to the next matching route. This is why:
-
-- `[team]/[...slug].vue` rejects locale-like team params in single-team mode (safety net — the higher-scoring single-team route should match first)
-- The regex constraint on `single-team-locale-slug` is critical for correct route scoring
+**`definePageMeta.validate` returning `false` = 404.** Nuxt does NOT fall through to the next matching route.
 
 ## Key Files
 
 | File | Purpose |
 |---|---|
-| `app/pages/[team]/[locale]/[...slug].vue` | Main page renderer + param remapping |
-| `app/pages/[team]/[...slug].vue` | Locale-less redirect route |
-| `server/plugins/single-team-rewrite.ts` | Context flags + root redirect |
+| `app/pages/[team]/[locale]/[...slug].vue` | Main page renderer (team mode only) |
+| `app/pages/[team]/[...slug].vue` | Locale-less redirect route (team mode only) |
+| `server/plugins/single-team-rewrite.ts` | Context flags + root redirect (locale mode) |
 | `server/plugins/domain-resolver.ts` | Custom domain URL rewriting |
-| `app/composables/useDomainContext.ts` | `hideTeamInUrl`, `isSingleTeam`, `isCustomDomain` |
+| `app/composables/useDomainContext.ts` | `hideTeamInUrl`, `isLocaleMode`, `isCustomDomain` |
 | `app/composables/useNavigation.ts` | Navigation link building (respects hideTeamInUrl) |
-| `nuxt.config.ts` | `pages:extend` hook, `singleTeam` config |
+| `nuxt.config.ts` | `pages:extend` hook, `routingMode` config |
 
 ## Gotchas
 
-1. **Never rewrite URLs in single-team mode** — causes hydration mismatch
-2. **Route scoring matters** — a plain param (`/:team`) scores lower than a regex param (`/:locale([a-z]{2,3})`)
-3. **Validate rejection = 404** — Nuxt does not try the next route
-4. **`useI18n().locale` can be empty during hydration** — always use a fallback
-5. **`useDomainContext()` must be called at top level** — it reads SSR event context that's only available during the initial request
-6. **Team slugs of 2-3 lowercase letters** would collide with the single-team locale route in multi-team mode (rare edge case)
+1. **Route scoring matters** — a plain param (`/:team`) scores lower than a regex param (`/:locale([a-z]{2,3})`)
+2. **Validate rejection = 404** — Nuxt does not try the next route
+3. **`useI18n().locale` can be empty during hydration** — always use a fallback
+4. **`useDomainContext()` must be called at top level** — it reads SSR event context that's only available during the initial request

@@ -19,14 +19,6 @@ definePageMeta({
       return false
     }
 
-    // Single-team mode: team param is actually a locale code (e.g., /nl/ → team=nl).
-    // Reject so Vue Router falls through to the /:locale/:slug* route.
-    const config = useRuntimeConfig()
-    const singleTeamSlug = (config.public?.croutonPages as any)?.singleTeam?.slug
-    if (singleTeamSlug && teamParam !== singleTeamSlug && /^[a-z]{2,3}$/.test(teamParam)) {
-      return false
-    }
-
     // Verify team actually exists to avoid catching routes meant for other pages
     try {
       const { valid } = await $fetch<{ valid: boolean }>(`/api/crouton-pages/validate-team/${teamParam}`)

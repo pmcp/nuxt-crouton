@@ -52,11 +52,11 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   // Detect public context: not in admin route
   const isPublicContext = computed(() => !route.path.includes('/admin/'))
 
-  // Single-team mode config
-  const singleTeamConfig = (useRuntimeConfig().public?.croutonPages as any)?.singleTeam as { slug?: string; defaultLocale?: string } | undefined
+  // Pages config
+  const pagesConfig = (useRuntimeConfig().public?.croutonPages as any) as { defaultLocale?: string } | undefined
 
   // Locale with fallback — i18n locale may be empty during hydration
-  const locale = computed(() => i18nLocale.value || singleTeamConfig?.defaultLocale || 'en')
+  const locale = computed(() => i18nLocale.value || pagesConfig?.defaultLocale || 'en')
 
   // Resolve team from prop, route, or domain context
   // Prefer route param (slug) over teamId for API calls — teamId may switch from slug
@@ -65,17 +65,12 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const routeTeam = computed(() => {
     const param = route.params.team
     if (typeof param !== 'string') return null
-    // In single-team mode, route.params.team may actually be a locale code
-    // (e.g., /en/academie → team=en). Don't use it as team in that case.
-    if (singleTeamConfig?.slug && param !== singleTeamConfig.slug && /^[a-z]{2,3}$/.test(param)) {
-      return singleTeamConfig.slug
-    }
     return param
   })
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return routeTeam.value || teamId.value || singleTeamConfig?.slug || null
+    return routeTeam.value || teamId.value || null
   })
 
   // Fetch published pages for the team with locale for translated titles/slugs
@@ -117,7 +112,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       const colConfig = collections.getConfig(binder.config.collection)
       if (!colConfig?.apiPath) return
 
-      const binderTeamPrefix = (hideTeamInUrl.value || !!singleTeamConfig?.slug) ? '' : `/${team.value}`
+      const binderTeamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
       const pathPrefix = `${binderTeamPrefix}/${locale.value}`
       const binderPath = `${pathPrefix}/${binder.slug || ''}`.replace(/\/+$/, '') || pathPrefix
 
@@ -173,8 +168,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     )
 
     // Build path prefix based on domain context (includes locale)
-    // Belt-and-suspenders: also check singleTeam config directly in case hideTeamInUrl is stale
-    const teamPrefix = (hideTeamInUrl.value || !!singleTeamConfig?.slug) ? '' : `/${team.value}`
+    const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
     const pathPrefix = `${teamPrefix}/${locale.value}`
 
     // Convert to NavigationItem format

@@ -1,10 +1,8 @@
-// Extend H3EventContext for single-team mode
+// Extend H3EventContext for routing mode
 declare module 'h3' {
   interface H3EventContext {
-    /** Whether single-team mode is active */
-    isSingleTeam?: boolean
-    /** The team slug in single-team mode */
-    singleTeamSlug?: string | null
+    /** The crouton-pages routing mode */
+    routingMode?: 'team' | 'locale'
   }
 }
 
@@ -20,27 +18,23 @@ const SKIP_PREFIXES = [
 ]
 
 /**
- * Single-Team Context Plugin (Nitro Plugin)
+ * Routing Mode Context Plugin (Nitro Plugin)
  *
- * In single-team mode, sets context flags so useDomainContext() knows to
+ * In locale mode, sets context flags so useDomainContext() knows to
  * hide the team slug in URLs. Also redirects root (/) to the default locale.
  *
- * NOTE: This plugin does NOT rewrite URLs. The page component ([...slug].vue)
- * handles param remapping when Vue Router matches /nl/aanbod as team=nl.
- * Rewriting URLs here would cause SSR/client hydration mismatches because
- * the server would render with /sintlukas/nl/aanbod but the client browser
- * URL is /nl/aanbod.
+ * In team mode (default), this plugin is a no-op.
  *
- * Configured via: runtimeConfig.public.croutonPages.singleTeam
+ * Configured via: runtimeConfig.public.croutonPages.routingMode
  */
 export default defineNitroPlugin((nitroApp) => {
   const config = useRuntimeConfig()
-  const singleTeam = config.public?.croutonPages?.singleTeam as { slug?: string; defaultLocale?: string } | undefined
+  const pagesConfig = config.public?.croutonPages as { routingMode?: string; defaultLocale?: string } | undefined
+  const routingMode = pagesConfig?.routingMode || 'team'
 
-  if (!singleTeam?.slug) return
+  if (routingMode !== 'locale') return
 
-  const slug = singleTeam.slug
-  const defaultLocale = singleTeam.defaultLocale || 'en'
+  const defaultLocale = pagesConfig?.defaultLocale || 'en'
 
   const originalHandler = nitroApp.h3App.handler
 
@@ -58,16 +52,14 @@ export default defineNitroPlugin((nitroApp) => {
       return originalHandler(event)
     }
 
-    // Set context flags for useDomainContext (hideTeamInUrl, isSingleTeam)
-    event.context.isSingleTeam = true
-    event.context.singleTeamSlug = slug
+    // Set routing mode context for useDomainContext (hideTeamInUrl)
+    event.context.routingMode = 'locale'
 
     // Root URL → redirect to default locale
     if (path === '/') {
       return sendRedirect(event, `/${defaultLocale}/`, 302)
     }
 
-    // No URL rewrite — Vue Router + param remapping handles routing
     return originalHandler(event)
   })
 })

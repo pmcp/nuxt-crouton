@@ -42,6 +42,15 @@ export default defineNuxtConfig({
     dataValue: 'light'
   },
 
+  runtimeConfig: {
+    public: {
+      croutonPages: {
+        routingMode: 'locale',
+        defaultLocale: 'nl'
+      }
+    }
+  },
+
   croutonAuth: {
     methods: {
       passkeys: false

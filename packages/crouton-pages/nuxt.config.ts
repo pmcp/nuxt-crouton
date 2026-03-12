@@ -66,39 +66,34 @@ export default defineNuxtConfig({
         // Base URL for absolute SEO URLs (Open Graph, canonical, hreflang)
         // Set via NUXT_PUBLIC_CROUTON_PAGES_SITE_URL env var
         siteUrl: '',
-        // Single-team mode: eliminates team slug from public URLs
-        // When set, all public URLs omit the team prefix
-        // e.g., /nl/about instead of /sintlukas/nl/about
-        singleTeam: {
-          // Team slug to use (empty = disabled)
-          slug: '',
-          // Default locale for root redirect (/ → /{slug}/{locale}/)
-          defaultLocale: 'en'
-        }
+        // Routing mode: how public page URLs are structured
+        // 'team'   — /[team]/[locale]/[slug] (multi-tenant, default)
+        // 'locale'  — app provides its own page routes, crouton-pages skips public route registration
+        routingMode: 'team',
+        // Default locale for root redirect in locale mode (/ → /{defaultLocale}/)
+        defaultLocale: 'en'
       }
     }
   },
 
-  hooks: {
-    // In single-team mode, add /:locale/:slug* route so Vue Router can match
-    // single-segment URLs like /nl/ (the 3-param /:team/:locale/:slug* route
-    // requires 2+ segments and can't match /nl/ alone).
-    // For 2+ segment URLs like /nl/aanbod, Vue Router prefers the 3-param route
-    // (team=nl, locale=aanbod) — the page's validate+setup handles param remapping.
-    'pages:extend'(pages) {
-      const teamLocalePage = pages.find(p =>
-        p.name === 'team-locale-slug' ||
-        (p.path && p.path.includes('team') && p.path.includes('locale') && p.path.includes('slug'))
-      )
-      if (teamLocalePage?.file) {
-        pages.push({
-          name: 'single-team-locale-slug',
-          path: '/:locale([a-z]{2,3})/:slug(.*)*',
-          file: teamLocalePage.file
-        })
-      }
+  modules: [
+    // In locale mode, remove crouton-pages public page routes so the app
+    // can provide its own [locale]/* routes without conflicts.
+    function (_options, nuxt) {
+      nuxt.hook('pages:extend', (pages) => {
+        const routingMode = (nuxt.options.runtimeConfig?.public as any)?.croutonPages?.routingMode || 'team'
+        if (routingMode === 'locale') {
+          const publicRouteNames = new Set(['team-locale-slug', 'team-slug'])
+          for (let i = pages.length - 1; i >= 0; i--) {
+            const name = pages[i]?.name
+            if (name && publicRouteNames.has(name)) {
+              pages.splice(i, 1)
+            }
+          }
+        }
+      })
     }
-  },
+  ],
 
   experimental: {
     inlineRouteRules: true
