@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     .from(contentTags)
   const tagMap = new Map(allTags.map(t => [t.id, t.title]))
 
-  const allCats = query.category ? [] : await db
+  const allCats = await db
     .select({ id: contentCategories.id, title: contentCategories.title })
     .from(contentCategories)
   const catMap = new Map(allCats.map(c => [c.id, c.title.toLowerCase()]))

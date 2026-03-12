@@ -158,6 +158,7 @@ function generateSlug() {
       .trim()
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
   }
 }
 
