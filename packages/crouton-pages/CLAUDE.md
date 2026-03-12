@@ -31,7 +31,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/editor/extensions/page-blocks.ts` | TipTap extensions bundle |
 | `app/pages/[team]/[...slug].vue` | Public page catch-all route |
 | `server/plugins/single-team-rewrite.ts` | Config-driven single-team URL rewriter (Nitro plugin) |
-| `server/middleware/01-domain-resolver.ts` | Resolves custom domains to teams |
+| `server/plugins/domain-resolver.ts` | Resolves custom domains to teams (Nitro plugin) |
 | `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation |
 | `server/api/teams/[id]/pages/[slug].get.ts` | Get single page by slug |
 | `app/stubs/AIPageGenerator.vue` | Stub for AI page generator (real impl in crouton-ai) |
