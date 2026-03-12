@@ -154,6 +154,19 @@ function handleExpandClick(event: Event) {
   showExpandMenu.value = !showExpandMenu.value
 }
 
+// Close expand menu on any outside click
+function onClickOutside() {
+  showExpandMenu.value = false
+  isHovered.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onClickOutside)
+})
+
 function handleExpandMode(mode: string, event: Event) {
   event.stopPropagation()
   showExpandMenu.value = false
@@ -190,6 +203,12 @@ function handlePasteChildren(event: Event) {
   }
 }
 
+function onMouseLeave() {
+  // Keep actions visible while expand menu is open
+  if (showExpandMenu.value) return
+  isHovered.value = false
+}
+
 function toggleStar(event: Event) {
   event.stopPropagation()
   const { teamId } = useTeamContext()
@@ -216,7 +235,7 @@ function toggleStar(event: Event) {
       branchColor.border ? `border-l-3 ${branchColor.border}` : '',
     ]"
     @mouseenter="isHovered = true"
-    @mouseleave="isHovered = false; showExpandMenu = false"
+    @mouseleave="onMouseLeave"
   >
     <Handle type="target" :position="Position.Top" class="decision-handle" />
 
@@ -355,7 +374,7 @@ function toggleStar(event: Event) {
             class="expand-menu__item"
             @click="handleExpandMode(mode.id, $event)"
           >
-            <UIcon :name="mode.icon" class="size-3.5 shrink-0" />
+            <UIcon :name="mode.icon" class="size-4 shrink-0 text-violet-500" />
             <div class="min-w-0">
               <div class="text-xs font-medium">{{ mode.label }}</div>
               <div class="text-[10px] opacity-60">{{ mode.description }}</div>
@@ -441,6 +460,12 @@ function toggleStar(event: Event) {
   @apply shadow-sm transition-all duration-150;
   @apply min-w-[160px] max-w-[240px];
   @apply relative;
+  /* Extend hover zone to cover action buttons positioned outside */
+  &::after {
+    content: '';
+    @apply absolute -inset-3 pointer-events-auto;
+    z-index: -1;
+  }
 }
 
 .decision-node--selected {
@@ -502,15 +527,19 @@ function toggleStar(event: Event) {
 }
 
 .expand-menu {
-  @apply absolute top-8 right-0 w-52 py-1;
-  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700;
-  @apply rounded-lg shadow-lg z-50;
+  @apply absolute top-8 left-0 w-56 py-1.5;
+  @apply bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-600;
+  @apply rounded-lg shadow-2xl z-50;
 }
 
 .expand-menu__item {
-  @apply flex items-center gap-2 w-full px-3 py-1.5 text-left;
-  @apply hover:bg-neutral-50 dark:hover:bg-neutral-700/50;
+  @apply flex items-center gap-2.5 w-full px-3 py-2 text-left;
+  @apply text-neutral-700 dark:text-neutral-200;
+  @apply hover:bg-neutral-100 dark:hover:bg-neutral-700;
   @apply transition-colors cursor-pointer;
+
+  .text-xs { @apply text-neutral-800 dark:text-neutral-100; }
+  .opacity-60 { opacity: 1; @apply text-neutral-500 dark:text-neutral-400; }
 }
 
 .decision-handle {
