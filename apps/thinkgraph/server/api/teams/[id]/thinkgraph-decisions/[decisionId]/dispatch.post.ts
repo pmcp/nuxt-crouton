@@ -10,6 +10,7 @@ import '~~/server/utils/dispatch-services/lovable'
 import '~~/server/utils/dispatch-services/v0'
 import '~~/server/utils/dispatch-services/code'
 import '~~/server/utils/dispatch-services/text'
+import '~~/server/utils/dispatch-services/mermaid'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
