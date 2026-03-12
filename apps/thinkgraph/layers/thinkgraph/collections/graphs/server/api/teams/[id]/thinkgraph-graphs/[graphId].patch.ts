@@ -18,11 +18,19 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<Partial<ThinkgraphGraph>>(event)
 
+  const updates = Object.fromEntries(
+    Object.entries({
+      name: body.name,
+      description: body.description
+    }).filter(([, v]) => v !== undefined)
+  )
+
+  if (Object.keys(updates).length === 0) {
+    throw createError({ status: 400, statusText: 'No valid fields to update' })
+  }
+
   const dbTimer = timing.start('db')
-  const result = await updateThinkgraphGraph(graphId, team.id, user.id, {
-    name: body.name,
-    description: body.description
-  }, { role: membership.role })
+  const result = await updateThinkgraphGraph(graphId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })
