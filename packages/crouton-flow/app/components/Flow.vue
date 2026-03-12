@@ -681,6 +681,7 @@ defineExpose({
       :nodes="finalNodes"
       :edges="finalEdges"
       :node-types="nodeTypes"
+      :default-edge-options="{ type: props.flowConfig?.edgeType || 'default' }"
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
@@ -791,6 +792,14 @@ defineExpose({
 }
 
 /* Vue Flow overrides */
+:deep(.vue-flow__node-default) {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
 :deep(.vue-flow__background) {
   background-color: #fafafa;
 }

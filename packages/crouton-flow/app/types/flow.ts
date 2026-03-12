@@ -22,6 +22,8 @@ export interface FlowConfig {
   nodeSpacing?: number
   /** Spacing between ranks/levels */
   rankSpacing?: number
+  /** Edge type: 'default' (bezier), 'smoothstep' (right angles), 'straight', 'step' */
+  edgeType?: 'default' | 'smoothstep' | 'straight' | 'step'
 }
 
 /**
