@@ -19,6 +19,7 @@ interface DispatchServiceInfo {
 
 const props = defineProps<{
   decisionId: string | null
+  decisionIds?: string[]
   decisionContent?: string
 }>()
 
@@ -88,34 +89,59 @@ function goBack() {
 
 const toast = useToast()
 
+const isMulti = computed(() => props.decisionIds && props.decisionIds.length > 1)
+
 async function dispatch() {
-  if (!props.decisionId || !selectedService.value) return
+  if (!selectedService.value) return
+  if (!isMulti.value && !props.decisionId) return
 
   const service = selectedService.value
-  const decisionId = props.decisionId
-  const body = {
-    serviceId: service.id,
-    prompt: customPrompt.value || undefined,
-    options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
-  }
+  const toastId = `dispatch-${props.decisionId || 'multi'}`
 
   // Close modal immediately and show toast
   open.value = false
   toast.add({
-    id: `dispatch-${decisionId}`,
+    id: toastId,
     title: `Generating with ${service.name}...`,
+    description: isMulti.value ? `Combining ${props.decisionIds!.length} nodes` : undefined,
     icon: 'i-lucide-loader-2',
     color: 'info' as any,
     duration: 0,
   })
 
   try {
-    const response = await $fetch<any>(
-      `/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/dispatch`,
-      { method: 'POST', body },
-    )
+    let response: any
 
-    toast.remove(`dispatch-${decisionId}`)
+    if (isMulti.value) {
+      // Multi-node dispatch
+      response = await $fetch<any>(
+        `/api/teams/${teamId.value}/thinkgraph-decisions/dispatch-multi`,
+        {
+          method: 'POST',
+          body: {
+            nodeIds: props.decisionIds,
+            serviceId: service.id,
+            prompt: customPrompt.value || undefined,
+            options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
+          },
+        },
+      )
+    } else {
+      // Single-node dispatch
+      response = await $fetch<any>(
+        `/api/teams/${teamId.value}/thinkgraph-decisions/${props.decisionId}/dispatch`,
+        {
+          method: 'POST',
+          body: {
+            serviceId: service.id,
+            prompt: customPrompt.value || undefined,
+            options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
+          },
+        },
+      )
+    }
+
+    toast.remove(toastId)
     toast.add({
       title: `${service.name} complete`,
       icon: 'i-lucide-check-circle',
@@ -126,7 +152,7 @@ async function dispatch() {
     emit('dispatched', response.id)
   }
   catch (e: any) {
-    toast.remove(`dispatch-${decisionId}`)
+    toast.remove(toastId)
     toast.add({
       title: `${service.name} failed`,
       description: e.data?.statusText || e.message || 'Unknown error',
@@ -184,8 +210,13 @@ watch(open, (isOpen) => {
         </div>
 
         <!-- Node context chip -->
-        <div v-if="decisionContent && step !== 'result'" class="mb-4 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm text-neutral-600 dark:text-neutral-400 truncate">
-          {{ decisionContent }}
+        <div v-if="step !== 'result'" class="mb-4 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm text-neutral-600 dark:text-neutral-400">
+          <template v-if="isMulti">
+            <span class="font-medium">{{ decisionIds!.length }} nodes selected</span> — combined context will be sent
+          </template>
+          <template v-else-if="decisionContent">
+            <span class="truncate block">{{ decisionContent }}</span>
+          </template>
         </div>
 
         <!-- Step: Pick service -->

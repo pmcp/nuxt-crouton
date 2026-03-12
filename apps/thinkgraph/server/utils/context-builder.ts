@@ -107,3 +107,37 @@ export function buildDispatchContext(
 
   return context
 }
+
+/**
+ * Build a combined context from multiple selected nodes.
+ * Shows each node with its thinking path for rich multi-perspective context.
+ */
+export function buildMultiNodeContext(
+  targets: ContextNode[],
+  allDecisions: ContextNode[]
+): { combinedContext: string; combinedContent: string } {
+  const starred = allDecisions.filter(d => d.starred && !targets.some(t => t.id === d.id))
+
+  let context = `Selected ${targets.length} nodes to combine:\n\n`
+
+  for (const target of targets) {
+    const ancestors = buildAncestorChain(allDecisions, target.id)
+    context += `── ${target.nodeType.toUpperCase()}: ${target.content}\n`
+    if (ancestors.length > 0) {
+      context += `   Path: ${ancestors.map(a => a.content.slice(0, 50)).join(' → ')}\n`
+    }
+    context += '\n'
+  }
+
+  if (starred.length > 0) {
+    context += 'Key insights from graph:\n'
+    starred.slice(0, 5).forEach(s => {
+      context += `- ${s.content}\n`
+    })
+    context += '\n'
+  }
+
+  const combinedContent = targets.map(t => t.content).join('; ')
+
+  return { combinedContext: context, combinedContent }
+}

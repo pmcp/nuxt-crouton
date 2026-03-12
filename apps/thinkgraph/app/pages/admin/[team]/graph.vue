@@ -90,6 +90,7 @@ await ensureFlowConfig()
 // Dispatch modal state
 const showDispatch = ref(false)
 const dispatchNodeId = ref<string | null>(null)
+const dispatchNodeIds = ref<string[]>([])
 const dispatchNodeContent = computed(() => {
   if (!dispatchNodeId.value) return undefined
   const node = decisions.value?.find((d: any) => d.id === dispatchNodeId.value)
@@ -97,7 +98,14 @@ const dispatchNodeContent = computed(() => {
 })
 
 function openDispatch(nodeId: string) {
+  dispatchNodeIds.value = [nodeId]
   dispatchNodeId.value = nodeId
+  showDispatch.value = true
+}
+
+function openMultiDispatch(nodeIds: string[]) {
+  dispatchNodeIds.value = nodeIds
+  dispatchNodeId.value = nodeIds[0] || null
   showDispatch.value = true
 }
 
@@ -461,7 +469,7 @@ provide('thinkgraph:dispatch', openDispatch)
       @synthesize="synthesizeSelected"
       @generate-brief="generateBrief"
       @copy-context="copySelectedContext"
-      @dispatch="() => { if (selectedNodeIds.length > 0) openDispatch(selectedNodeIds[0]) }"
+      @dispatch="() => { if (selectedNodeIds.length > 0) openMultiDispatch(selectedNodeIds) }"
       @clear="clearSelection"
       @deselect="deselectNode"
     />
@@ -477,6 +485,7 @@ provide('thinkgraph:dispatch', openDispatch)
     <DispatchModal
       v-model:open="showDispatch"
       :decision-id="dispatchNodeId"
+      :decision-ids="dispatchNodeIds"
       :decision-content="dispatchNodeContent"
       @dispatched="onDispatched"
     />
