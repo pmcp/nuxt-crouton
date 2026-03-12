@@ -1,4 +1,14 @@
 {
+  "graphId": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Graph",
+      "description": "The graph this decision belongs to",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
   "content": {
     "type": "text",
     "meta": {

@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   },
   extends: [
     './collections/decisions',
-    './collections/chatconversations'
+    './collections/chatconversations',
+    './collections/graphs'
   ]
 })

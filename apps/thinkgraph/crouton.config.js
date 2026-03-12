@@ -1,6 +1,10 @@
 export default {
   collections: [
     {
+      name: 'graphs',
+      fieldsFile: './schemas/graph.json'
+    },
+    {
       name: 'decisions',
       fieldsFile: './schemas/decision.json'
     },
@@ -13,7 +17,7 @@ export default {
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['decisions', 'chatConversations']
+      collections: ['graphs', 'decisions', 'chatConversations']
     }
   ],
 

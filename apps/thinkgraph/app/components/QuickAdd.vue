@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   parentId?: string
+  graphId?: string
 }>()
 
 const emit = defineEmits<{
@@ -41,6 +42,7 @@ async function addSelected() {
         content: item.content,
         nodeType: item.nodeType,
         pathType: item.pathType,
+        graphId: props.graphId || '',
         parentId: props.parentId || '',
         source: 'paste',
         starred: false,

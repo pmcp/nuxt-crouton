@@ -15,10 +15,12 @@
  * ## Registered Collections
  * - thinkgraphChatconversations: ThinkgraphChatconversation
  * - thinkgraphDecisions: ThinkgraphDecision
+ * - thinkgraphGraphs: ThinkgraphGraph
  */
 
 import type { ThinkgraphChatconversation, ThinkgraphChatconversationFormData, NewThinkgraphChatconversation } from './layers/thinkgraph/collections/chatconversations/types'
 import type { ThinkgraphDecision, ThinkgraphDecisionFormData, NewThinkgraphDecision } from './layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphGraph, ThinkgraphGraphFormData, NewThinkgraphGraph } from './layers/thinkgraph/collections/graphs/types'
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
@@ -31,6 +33,11 @@ declare module '#crouton/types' {
       Item: ThinkgraphDecision
       FormData: ThinkgraphDecisionFormData
       NewItem: NewThinkgraphDecision
+    }
+    thinkgraphGraphs: {
+      Item: ThinkgraphGraph
+      FormData: ThinkgraphGraphFormData
+      NewItem: NewThinkgraphGraph
     }
   }
 }

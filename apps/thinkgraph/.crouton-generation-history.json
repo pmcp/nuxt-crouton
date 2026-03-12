@@ -13,6 +13,104 @@
       "lastMessageAt"
     ],
     "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:09:15.468Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "decisions",
+    "fields": [
+      "graphId",
+      "content",
+      "nodeType",
+      "pathType",
+      "starred",
+      "branchName",
+      "versionTag",
+      "parentId",
+      "source",
+      "model",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:09:15.448Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "graphs",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:09:15.430Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "chatconversations",
+    "fields": [
+      "nodeId",
+      "title",
+      "messages",
+      "provider",
+      "model",
+      "systemPrompt",
+      "metadata",
+      "messageCount",
+      "lastMessageAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:08:21.757Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "decisions",
+    "fields": [
+      "graphId",
+      "content",
+      "nodeType",
+      "pathType",
+      "starred",
+      "branchName",
+      "versionTag",
+      "parentId",
+      "source",
+      "model",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:08:21.735Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "graphs",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-12T22:08:21.713Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6bfeeb8"
+  },
+  {
+    "collection": "chatconversations",
+    "fields": [
+      "nodeId",
+      "title",
+      "messages",
+      "provider",
+      "model",
+      "systemPrompt",
+      "metadata",
+      "messageCount",
+      "lastMessageAt"
+    ],
+    "generator": "crouton-cli",
     "timestamp": "2026-03-12T11:03:21.030Z",
     "layer": "thinkgraph",
     "gitSha": "38f5e750"

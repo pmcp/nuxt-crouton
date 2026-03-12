@@ -21,20 +21,13 @@ const jsonColumn = customType<any>({
   },
 })
 
-export const thinkgraphChatConversations = sqliteTable('thinkgraph_chatconversations', {
+export const thinkgraphGraphs = sqliteTable('thinkgraph_graphs', {
   id: text('id').primaryKey().$default(() => nanoid()),
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
-  nodeId: text('nodeId'),
-  title: text('title'),
-  messages: jsonColumn('messages').notNull().$default(() => ({})),
-  provider: text('provider'),
-  model: text('model'),
-  systemPrompt: text('systemPrompt'),
-  metadata: jsonColumn('metadata').$default(() => ({})),
-  messageCount: integer('messageCount'),
-  lastMessageAt: integer('lastMessageAt', { mode: 'timestamp' }).$default(() => new Date())
+  name: text('name').notNull(),
+  description: text('description')
 })

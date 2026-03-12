@@ -9,7 +9,7 @@
  * - Form data type: ThinkgraphDecisionFormData
  * - New item type: NewThinkgraphDecision
  * - Form props: ThinkgraphDecisionFormProps
- * - Fields: content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model
+ * - Fields: graphId, content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model, artifacts
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -23,20 +23,11 @@
 import type { z } from 'zod'
 import type { thinkgraphDecisionSchema } from './app/composables/useThinkgraphDecisions'
 
-export interface Artifact {
-  type: 'image' | 'code' | 'prototype' | 'text'
-  provider: string
-  url?: string
-  content?: string
-  prompt?: string
-  metadata?: Record<string, unknown>
-  createdAt: string
-}
-
 export interface ThinkgraphDecision {
   id: string
   teamId: string
   owner: string
+  graphId: string
   content: string
   nodeType: string
   pathType?: string
@@ -46,9 +37,20 @@ export interface ThinkgraphDecision {
   parentId?: string
   source?: string
   model?: string
-  artifacts?: Artifact[]
+  artifacts?: Record<string, any>
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
+}
+
+export interface Artifact {
+  type: string
+  provider?: string
+  url?: string
+  content?: string
+  prompt?: string
+  metadata?: Record<string, any>
+  createdAt?: string
+  sourceNodeIds?: string[]
 }
 
 export type ThinkgraphDecisionFormData = z.infer<typeof thinkgraphDecisionSchema>

@@ -28,6 +28,7 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
+  graphId: text('graphId').notNull(),
   content: text('content').notNull(),
   nodeType: text('nodeType').notNull(),
   pathType: text('pathType'),
@@ -37,5 +38,5 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   parentId: text('parentId'),
   source: text('source'),
   model: text('model'),
-  artifacts: jsonColumn('artifacts')
+  artifacts: jsonColumn('artifacts').$default(() => ({}))
 })

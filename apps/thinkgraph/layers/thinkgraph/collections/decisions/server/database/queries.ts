@@ -5,10 +5,15 @@ import * as tables from './schema'
 import type { ThinkgraphDecision, NewThinkgraphDecision } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllThinkgraphDecisions(teamId: string) {
+export async function getAllThinkgraphDecisions(teamId: string, graphId?: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
+
+  const conditions = [eq(tables.thinkgraphDecisions.teamId, teamId)]
+  if (graphId) {
+    conditions.push(eq(tables.thinkgraphDecisions.graphId, graphId))
+  }
 
   const decisions = await (db as any)
     .select({
@@ -22,8 +27,24 @@ export async function getAllThinkgraphDecisions(teamId: string) {
     } as any)
     .from(tables.thinkgraphDecisions)
     .leftJoin(ownerUser, eq(tables.thinkgraphDecisions.owner, ownerUser.id))
-    .where(eq(tables.thinkgraphDecisions.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphDecisions.order))
+    .where(and(...conditions))
+    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  decisions.forEach((item: any) => {
+      // Parse artifacts from JSON string
+      if (typeof item.artifacts === 'string') {
+        try {
+          item.artifacts = JSON.parse(item.artifacts)
+        } catch (e) {
+          console.error('Error parsing artifacts:', e)
+          item.artifacts = null
+        }
+      }
+      if (item.artifacts === null || item.artifacts === undefined) {
+        item.artifacts = null
+      }
+  })
 
   return decisions
 }
@@ -51,7 +72,23 @@ export async function getThinkgraphDecisionsByIds(teamId: string, decisionIds: s
         inArray(tables.thinkgraphDecisions.id, decisionIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphDecisions.order))
+    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  decisions.forEach((item: any) => {
+      // Parse artifacts from JSON string
+      if (typeof item.artifacts === 'string') {
+        try {
+          item.artifacts = JSON.parse(item.artifacts)
+        } catch (e) {
+          console.error('Error parsing artifacts:', e)
+          item.artifacts = null
+        }
+      }
+      if (item.artifacts === null || item.artifacts === undefined) {
+        item.artifacts = null
+      }
+  })
 
   return decisions
 }

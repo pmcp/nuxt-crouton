@@ -1,15 +1,15 @@
 <!--
   @crouton-generated
-  @collection decisions
+  @collection graphs
   @layer thinkgraph
   @generated 2026-03-12
 
   ## AI Context
-  - List component for decisions collection
-  - Collection name: thinkgraphDecisions
-  - API endpoint: /api/teams/[id]/thinkgraph-decisions
-  - Columns composable: useThinkgraphDecisions()
-  - Column fields: graphId, content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model, artifacts
+  - List component for graphs collection
+  - Collection name: thinkgraphGraphs
+  - API endpoint: /api/teams/[id]/thinkgraph-graphs
+  - Columns composable: useThinkgraphGraphs()
+  - Column fields: name, description
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -24,26 +24,23 @@
 <template>
   <CroutonCollection
     :layout="layout"
-    collection="thinkgraphDecisions"
+    collection="thinkgraphGraphs"
     :columns="columns"
-    :rows="decisions || []"
+    :rows="graphs || []"
     :loading="pending"
   >
     <template #header>
       <CroutonTableHeader
-        title="ThinkgraphDecisions"
-        :collection="'thinkgraphDecisions'"
+        title="ThinkgraphGraphs"
+        :collection="'thinkgraphGraphs'"
         createButton
       />
-    </template>
-    <template #starred-cell="{ row }">
-      <CroutonBoolean :value="row.original.starred" />
     </template>
   </CroutonCollection>
 </template>
 
 <script setup lang="ts">
-import useThinkgraphDecisions from '../composables/useThinkgraphDecisions'
+import useThinkgraphGraphs from '../composables/useThinkgraphGraphs'
 
 const props = withDefaults(defineProps<{
   layout?: any
@@ -51,10 +48,10 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const { columns } = useThinkgraphDecisions()
+const { columns } = useThinkgraphGraphs()
 
-const { items: decisions, pending } = await useCollectionQuery(
-  'thinkgraphDecisions'
+const { items: graphs, pending } = await useCollectionQuery(
+  'thinkgraphGraphs'
 )
 
 </script>

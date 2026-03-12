@@ -4,11 +4,14 @@ import {thinkgraphChatConversationsConfig} from '../layers/thinkgraph/collection
 
 import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTranslationsUi';
 
+import {thinkgraphGraphsConfig} from '../layers/thinkgraph/collections/graphs/app/composables/useThinkgraphGraphs';
+
 export default defineAppConfig({
   croutonCollections: {
     thinkgraphDecisions: thinkgraphDecisionsConfig,
     thinkgraphChatConversations: thinkgraphChatConversationsConfig,
-    translationsUi: translationsUiConfig
+    translationsUi: translationsUiConfig,
+    thinkgraphGraphs: thinkgraphGraphsConfig
   },
 
   croutonApps: {
@@ -18,7 +21,7 @@ export default defineAppConfig({
       icon: 'i-lucide-brain-circuit',
       adminRoutes: [
         {
-          path: '/graph',
+          path: '/graphs',
           label: 'ThinkGraph',
           icon: 'i-lucide-brain-circuit'
         }

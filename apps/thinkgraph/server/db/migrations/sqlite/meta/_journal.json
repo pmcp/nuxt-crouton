@@ -29,6 +29,13 @@
       "when": 1773326585014,
       "tag": "0003_great_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1773353309059,
+      "tag": "0004_first_ironclad",
+      "breakpoints": true
     }
   ]
 }

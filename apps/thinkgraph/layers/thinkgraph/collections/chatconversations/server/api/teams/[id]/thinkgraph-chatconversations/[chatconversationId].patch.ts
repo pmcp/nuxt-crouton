@@ -7,8 +7,8 @@ import type { ThinkgraphChatConversation } from '../../../../../types'
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { chatconversationId } = getRouterParams(event)
-  if (!chatconversationId) {
+  const { chatConversationId } = getRouterParams(event)
+  if (!chatConversationId) {
     throw createError({ status: 400, statusText: 'Missing chatconversation ID' })
   }
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<Partial<ThinkgraphChatConversation>>(event)
 
   const dbTimer = timing.start('db')
-  const result = await updateThinkgraphChatConversation(chatconversationId, team.id, user.id, {
+  const result = await updateThinkgraphChatConversation(chatConversationId, team.id, user.id, {
     nodeId: body.nodeId,
     title: body.title,
     messages: body.messages,

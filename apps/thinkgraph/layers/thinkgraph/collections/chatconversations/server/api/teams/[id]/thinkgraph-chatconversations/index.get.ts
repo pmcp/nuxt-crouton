@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { getAllThinkgraphChatConversations, getThinkgraphChatConversationsByIds, getThinkgraphChatConversationByNodeId } from '../../../../database/queries'
+import { getAllThinkgraphChatConversations, getThinkgraphChatConversationsByIds } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
@@ -13,14 +13,6 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
 
   const dbTimer = timing.start('db')
-
-  // Look up by nodeId — returns single conversation or null
-  if (query.nodeId) {
-    const result = await getThinkgraphChatConversationByNodeId(team.id, String(query.nodeId))
-    dbTimer.end()
-    return result
-  }
-
   if (query.ids) {
     const ids = String(query.ids).split(',')
     const result = await getThinkgraphChatConversationsByIds(team.id, ids)

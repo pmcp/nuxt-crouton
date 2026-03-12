@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const dbTimer = timing.start('db')
   const result = await updateThinkgraphDecision(decisionId, team.id, user.id, {
+    graphId: body.graphId,
     content: body.content,
     nodeType: body.nodeType,
     pathType: body.pathType,
@@ -28,7 +29,8 @@ export default defineEventHandler(async (event) => {
     versionTag: body.versionTag,
     parentId: body.parentId,
     source: body.source,
-    model: body.model
+    model: body.model,
+    artifacts: body.artifacts
   }, { role: membership.role })
   dbTimer.end()
   return result

@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/thinkgraph-decisions
  * - Form component: ThinkgraphDecisionsForm
  * - List component: ThinkgraphDecisionsList
- * - Fields: content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model
+ * - Fields: graphId, content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model, artifacts
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,6 +27,7 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const thinkgraphDecisionSchema = z.object({
+  graphId: z.string().min(1, 'graphId is required'),
   content: z.string().min(1, 'content is required'),
   nodeType: z.string().min(1, 'nodeType is required'),
   pathType: z.string().optional(),
@@ -35,10 +36,12 @@ export const thinkgraphDecisionSchema = z.object({
   versionTag: z.string().optional(),
   parentId: z.string().optional(),
   source: z.string().optional(),
-  model: z.string().optional()
+  model: z.string().optional(),
+  artifacts: z.record(z.string(), z.any()).optional()
 })
 
 export const thinkgraphDecisionsColumns = [
+  { accessorKey: 'graphId', header: 'GraphId' },
   { accessorKey: 'content', header: 'Content' },
   { accessorKey: 'nodeType', header: 'NodeType' },
   { accessorKey: 'pathType', header: 'PathType' },
@@ -47,7 +50,8 @@ export const thinkgraphDecisionsColumns = [
   { accessorKey: 'versionTag', header: 'VersionTag' },
   { accessorKey: 'parentId', header: 'ParentId' },
   { accessorKey: 'source', header: 'Source' },
-  { accessorKey: 'model', header: 'Model' }
+  { accessorKey: 'model', header: 'Model' },
+  { accessorKey: 'artifacts', header: 'Artifacts' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -57,6 +61,7 @@ const _thinkgraphDecisionsConfig = {
   apiPath: 'thinkgraph-decisions',
   componentName: 'ThinkgraphDecisionsForm',
   defaultValues: {
+    graphId: '',
     content: '',
     nodeType: '',
     pathType: '',
@@ -65,10 +70,17 @@ const _thinkgraphDecisionsConfig = {
     versionTag: '',
     parentId: '',
     source: '',
-    model: ''
+    model: '',
+    artifacts: {}
   },
   columns: thinkgraphDecisionsColumns,
   fields: [
+      {
+          "name": "graphId",
+          "type": "string",
+          "label": "Graph",
+          "area": "sidebar"
+      },
       {
           "name": "content",
           "type": "text",
@@ -124,6 +136,12 @@ const _thinkgraphDecisionsConfig = {
           "name": "model",
           "type": "string",
           "label": "AI Model",
+          "area": "sidebar"
+      },
+      {
+          "name": "artifacts",
+          "type": "json",
+          "label": "Artifacts",
           "area": "sidebar"
       }
   ],

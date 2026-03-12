@@ -52,6 +52,7 @@ Respond with a JSON object: {"content": "your synthesis (2-3 sentences)", "nodeT
     content: synthesis.content,
     nodeType: synthesis.nodeType || 'decision',
     pathType: 'chosen',
+    graphId: (selectedNodes[0] as any)?.graphId || '',
     parentId: nodeIds[0],
     source: 'ai',
     model: ai.getDefaultModel(),

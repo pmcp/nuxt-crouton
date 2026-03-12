@@ -66,6 +66,7 @@ export default defineEventHandler(async (event) => {
       content: variations > 1 ? `[v${i + 1}] ${result.childContent}` : result.childContent,
       nodeType: result.childNodeType,
       pathType: 'explored',
+      graphId: targets[0]?.graphId || '',
       parentId: nodeIds[0],
       source: 'dispatch',
       model: serviceId,

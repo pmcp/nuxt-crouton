@@ -5,12 +5,13 @@ export default defineMcpTool({
   description: 'Create a new node in the thinking graph. Can be a root node or a child of an existing node. Use search-graph first to find the right parent.',
   inputSchema: {
     teamId: z.string().describe('Team ID'),
+    graphId: z.string().describe('Graph ID this node belongs to'),
     content: z.string().describe('Node content (the idea, decision, question, or insight)'),
     nodeType: z.enum(['idea', 'insight', 'decision', 'question']).default('idea').describe('Type of thinking node'),
     parentId: z.string().optional().describe('Parent node ID (omit for root node)'),
     starred: z.boolean().optional().default(false).describe('Star this node as important'),
   },
-  async handler({ teamId, content, nodeType, parentId, starred }) {
+  async handler({ teamId, graphId, content, nodeType, parentId, starred }) {
     try {
       // Validate parent exists if specified
       if (parentId) {
@@ -25,6 +26,7 @@ export default defineMcpTool({
         content,
         nodeType,
         pathType: '',
+        graphId,
         parentId: parentId || '',
         source: 'mcp',
         model: '',

@@ -92,6 +92,7 @@ export default defineEventHandler(async (event) => {
       content: p.content,
       nodeType: p.nodeType || 'idea',
       pathType: p.pathType || 'explored',
+      graphId: (targetDecision as any)?.graphId || '',
       parentId: decisionId,
       source: 'ai',
       model: ai.getDefaultModel(),

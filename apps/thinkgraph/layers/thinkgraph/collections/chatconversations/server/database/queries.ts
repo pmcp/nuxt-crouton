@@ -112,46 +112,6 @@ export async function getThinkgraphChatConversationsByIds(teamId: string, chatCo
   return chatConversations
 }
 
-export async function getThinkgraphChatConversationByNodeId(teamId: string, nodeId: string) {
-  const db = useDB()
-
-  const chatConversations = await (db as any)
-    .select()
-    .from(tables.thinkgraphChatConversations)
-    .where(
-      and(
-        eq(tables.thinkgraphChatConversations.teamId, teamId),
-        eq(tables.thinkgraphChatConversations.nodeId, nodeId)
-      )
-    )
-    .orderBy(desc(tables.thinkgraphChatConversations.createdAt))
-    .limit(1)
-
-  const item = chatConversations[0] || null
-
-  // Post-query processing for JSON fields
-  if (item) {
-    if (typeof item.messages === 'string') {
-      try {
-        item.messages = JSON.parse(item.messages)
-      } catch (e) {
-        console.error('Error parsing messages:', e)
-        item.messages = null
-      }
-    }
-    if (typeof item.metadata === 'string') {
-      try {
-        item.metadata = JSON.parse(item.metadata)
-      } catch (e) {
-        console.error('Error parsing metadata:', e)
-        item.metadata = null
-      }
-    }
-  }
-
-  return item
-}
-
 export async function createThinkgraphChatConversation(data: NewThinkgraphChatConversation) {
   const db = useDB()
 
