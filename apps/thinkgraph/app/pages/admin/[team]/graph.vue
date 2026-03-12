@@ -451,6 +451,6 @@ provide('thinkgraph:dispatch', openDispatch)
     <ShortcutsHelp v-model:open="showHelp" />
 
     <!-- Crouton modal/slideover for CRUD -->
-    <CroutonCollection collection="thinkgraphDecisions" @saved="refresh" />
+    <CroutonForm />
   </div>
 </template>
