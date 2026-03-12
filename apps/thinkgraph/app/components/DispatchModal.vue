@@ -32,7 +32,7 @@ const open = defineModel<boolean>('open', { default: false })
 const { teamId } = useTeamContext()
 
 // State
-const step = ref<'pick' | 'configure' | 'loading' | 'result'>('pick')
+const step = ref<'pick' | 'configure' | 'result'>('pick')
 const selectedService = ref<DispatchServiceInfo | null>(null)
 const customPrompt = ref('')
 const serviceOptions = ref<Record<string, string>>({})
@@ -86,33 +86,54 @@ function goBack() {
   }
 }
 
+const toast = useToast()
+
 async function dispatch() {
   if (!props.decisionId || !selectedService.value) return
-  step.value = 'loading'
-  error.value = null
+
+  const service = selectedService.value
+  const decisionId = props.decisionId
+  const body = {
+    serviceId: service.id,
+    prompt: customPrompt.value || undefined,
+    options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
+  }
+
+  // Close modal immediately and show toast
+  open.value = false
+  toast.add({
+    id: `dispatch-${decisionId}`,
+    title: `Generating with ${service.name}...`,
+    icon: 'i-lucide-loader-2',
+    color: 'info' as any,
+    duration: 0,
+  })
 
   try {
     const response = await $fetch<any>(
-      `/api/teams/${teamId.value}/thinkgraph-decisions/${props.decisionId}/dispatch`,
-      {
-        method: 'POST',
-        body: {
-          serviceId: selectedService.value.id,
-          prompt: customPrompt.value || undefined,
-          options: Object.keys(serviceOptions.value).length > 0 ? serviceOptions.value : undefined,
-        },
-      }
+      `/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/dispatch`,
+      { method: 'POST', body },
     )
 
-    result.value = {
-      artifacts: response.artifacts || [],
-      content: response.content,
-    }
-    step.value = 'result'
+    toast.remove(`dispatch-${decisionId}`)
+    toast.add({
+      title: `${service.name} complete`,
+      icon: 'i-lucide-check-circle',
+      color: 'success' as any,
+      duration: 3000,
+    })
+
     emit('dispatched', response.id)
-  } catch (e: any) {
-    error.value = e.data?.statusText || e.message || 'Dispatch failed'
-    step.value = 'configure'
+  }
+  catch (e: any) {
+    toast.remove(`dispatch-${decisionId}`)
+    toast.add({
+      title: `${service.name} failed`,
+      description: e.data?.statusText || e.message || 'Unknown error',
+      icon: 'i-lucide-alert-circle',
+      color: 'error' as any,
+      duration: 5000,
+    })
   }
 }
 
@@ -152,7 +173,7 @@ watch(open, (isOpen) => {
           </button>
           <UIcon name="i-lucide-send" class="size-5 text-primary-500" />
           <h3 class="text-lg font-semibold">
-            {{ step === 'pick' ? 'Send to...' : step === 'loading' ? 'Generating...' : step === 'result' ? 'Result' : selectedService?.name }}
+            {{ step === 'pick' ? 'Send to...' : step === 'result' ? 'Result' : selectedService?.name }}
           </h3>
           <button
             class="ml-auto text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
@@ -245,13 +266,7 @@ watch(open, (isOpen) => {
           </div>
         </div>
 
-        <!-- Step: Loading -->
-        <div v-else-if="step === 'loading'" class="flex flex-col items-center justify-center py-12">
-          <UIcon name="i-lucide-loader-2" class="size-8 text-primary-500 animate-spin mb-4" />
-          <p class="text-sm text-neutral-500">Generating with {{ selectedService?.name }}...</p>
-        </div>
-
-        <!-- Step: Result -->
+        <!-- Step: Result (shown when modal is re-opened after generation) -->
         <div v-else-if="step === 'result' && result" class="space-y-4">
           <div v-for="(artifact, i) in result.artifacts" :key="i" class="space-y-3">
             <!-- Image result -->
