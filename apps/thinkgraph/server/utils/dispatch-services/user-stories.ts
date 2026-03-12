@@ -1,12 +1,25 @@
-import { generateText } from 'ai'
+import { generateObject } from 'ai'
+import { z } from 'zod/v3'
 import { registerDispatchService } from '../dispatch-registry'
 import type { DispatchContext, DispatchResult } from '../dispatch-registry'
 import type { H3Event } from 'h3'
 
+const userStoriesSchema = z.object({
+  summary: z.string().describe('Brief 1-line summary of the user stories generated'),
+  stories: z.array(z.object({
+    title: z.string().describe('Short title, e.g. "View Daily Predictions"'),
+    persona: z.string().describe('The user persona, e.g. "restaurant manager"'),
+    goal: z.string().describe('What the user wants to do'),
+    benefit: z.string().describe('Why they want it'),
+    acceptanceCriteria: z.array(z.string()).describe('3-5 acceptance criteria'),
+    priority: z.enum(['Must', 'Should', 'Could']),
+  })),
+})
+
 registerDispatchService({
   id: 'user-stories',
   name: 'User Stories',
-  description: 'Generate user stories with acceptance criteria',
+  description: 'Generate user stories with acceptance criteria (one node per story)',
   type: 'text',
   icon: 'i-lucide-list-checks',
   options: [
@@ -29,24 +42,25 @@ registerDispatchService({
       spike: 'Generate 2-3 technical spike stories to explore unknowns and validate feasibility.',
     }
 
-    const result = await generateText({
+    const result = await generateObject({
       model: ai.model(model),
+      schema: userStoriesSchema,
       system: `You are a product manager. Generate user stories from the given concept.
 ${scopeInstructions[scope] || scopeInstructions.mvp}
 
-Format each story as:
-### US-N: [Title]
-**As a** [persona], **I want** [goal] **so that** [benefit]
-
-**Acceptance Criteria:**
-- [ ] [Criterion 1]
-- [ ] [Criterion 2]
-- [ ] [Criterion 3]
-
-**Priority:** [Must/Should/Could]
-
-Be specific to the actual idea, not generic software stories.`,
+Be specific to the actual idea, not generic software stories. Base your stories on the full context provided, including any prototypes, code, or artifacts in the thinking path.`,
       prompt: `${context.prompt || context.nodeContent}\n\nThinking context:\n${context.thinkingPath}`,
+    })
+
+    const stories = result.object.stories
+
+    // Build tree: each story becomes its own child node
+    const tree = stories.map(story => {
+      const storyText = `**${story.title}**\nAs a ${story.persona}, I want ${story.goal} so that ${story.benefit}\n\nAcceptance Criteria:\n${story.acceptanceCriteria.map(c => `- [ ] ${c}`).join('\n')}\n\nPriority: ${story.priority}`
+      return {
+        content: storyText,
+        nodeType: 'insight',
+      }
     })
 
     return {
@@ -54,14 +68,15 @@ Be specific to the actual idea, not generic software stories.`,
         {
           type: 'text',
           provider: 'user-stories',
-          content: result.text,
+          content: stories.map((s, i) => `### US-${i + 1}: ${s.title}\nAs a ${s.persona}, I want ${s.goal} so that ${s.benefit}\n\nAcceptance Criteria:\n${s.acceptanceCriteria.map(c => `- [ ] ${c}`).join('\n')}\n\nPriority: ${s.priority}`).join('\n\n'),
           prompt: context.prompt || context.nodeContent,
-          metadata: { model, scope },
+          metadata: { model, scope, count: stories.length },
           createdAt: new Date().toISOString(),
         },
       ],
-      childContent: result.text.length > 200 ? result.text.slice(0, 197) + '...' : result.text,
+      childContent: result.object.summary,
       childNodeType: 'insight',
-    }
+      _tree: tree,
+    } as DispatchResult & { _tree: typeof tree }
   },
 })
