@@ -165,6 +165,10 @@ function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: Mous
   open('update', 'thinkgraphDecisions', [nodeId])
 }
 
+function onSelectionChange(nodeIds: string[]) {
+  selectedNodes.value = new Set(nodeIds)
+}
+
 // Handle keyboard delete — Vue Flow removes visually, we persist to DB
 async function onNodeDelete(nodeIds: string[]) {
   await deleteItems(nodeIds)
@@ -431,8 +435,10 @@ provide('thinkgraph:dispatch', openDispatch)
           :saved-positions="savedPositions"
           :flow-config="flowConfig"
           minimap
+          :selected="selectedNodeIds"
           @node-click="onNodeClick"
           @node-delete="onNodeDelete"
+          @selection-change="onSelectionChange"
         />
         <div
           v-else
