@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  addToGraph: [items: Array<{ content: string; nodeType: string }>]
+  addToGraph: [items: Array<{ content: string; nodeType: string; parentId?: string }>]
   close: []
 }>()
 
@@ -117,7 +117,7 @@ async function saveConversation() {
 
 // Parse DECISION: blocks from assistant messages
 const extractedDecisions = computed(() => {
-  const decisions: Array<{ content: string; nodeType: string; messageId: string }> = []
+  const decisions: Array<{ content: string; nodeType: string; parentId?: string; messageId: string }> = []
   for (const msg of messages.value) {
     if (msg.role !== 'assistant') continue
     const regex = /DECISION:\s*(\{[^}]+\})/g
@@ -129,6 +129,7 @@ const extractedDecisions = computed(() => {
           decisions.push({
             content: parsed.content,
             nodeType: parsed.nodeType || 'idea',
+            parentId: parsed.parentId,
             messageId: msg.id,
           })
         }
@@ -140,11 +141,11 @@ const extractedDecisions = computed(() => {
 
 const addedIds = ref<Set<string>>(new Set())
 
-function addDecision(decision: { content: string; nodeType: string; messageId: string }) {
+function addDecision(decision: { content: string; nodeType: string; parentId?: string; messageId: string }) {
   const key = `${decision.messageId}-${decision.content}`
   if (addedIds.value.has(key)) return
   addedIds.value.add(key)
-  emit('addToGraph', [{ content: decision.content, nodeType: decision.nodeType }])
+  emit('addToGraph', [{ content: decision.content, nodeType: decision.nodeType, parentId: decision.parentId }])
 }
 
 function addAllDecisions() {
@@ -156,7 +157,7 @@ function addAllDecisions() {
   for (const d of toAdd) {
     addedIds.value.add(`${d.messageId}-${d.content}`)
   }
-  emit('addToGraph', toAdd.map(d => ({ content: d.content, nodeType: d.nodeType })))
+  emit('addToGraph', toAdd.map(d => ({ content: d.content, nodeType: d.nodeType, parentId: d.parentId })))
 }
 
 function onSubmit() {

@@ -149,17 +149,8 @@ function addRootDecision() {
 }
 
 function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
-  // Shift+click for multi-select
-  if (event?.shiftKey) {
-    const s = new Set(selectedNodes.value)
-    if (s.has(nodeId)) {
-      s.delete(nodeId)
-    } else {
-      s.add(nodeId)
-    }
-    selectedNodes.value = s
-    return
-  }
+  // Shift+click is handled by Vue Flow's native multi-select
+  if (event?.shiftKey) return
 
   selectedNodeId.value = nodeId
   open('update', 'thinkgraphDecisions', [nodeId])
@@ -215,15 +206,15 @@ function openGlobalChat() {
   showChat.value = true
 }
 
-async function onChatAddToGraph(items: Array<{ content: string; nodeType: string }>) {
-  // Use the chat's focused node, or fall back to the currently selected node
-  const parentId = chatNodeId.value || selectedNodeId.value || ''
+async function onChatAddToGraph(items: Array<{ content: string; nodeType: string; parentId?: string }>) {
+  // Per-item parentId (from AI) takes priority, then chat's focused node, then selected node
+  const fallbackParentId = chatNodeId.value || selectedNodeId.value || ''
   for (const item of items) {
     await create({
       content: item.content,
       nodeType: item.nodeType,
       pathType: '',
-      parentId,
+      parentId: item.parentId || fallbackParentId,
       source: 'ai',
       starred: false,
       branchName: '',
