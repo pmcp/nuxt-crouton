@@ -134,6 +134,7 @@ When `sync` is enabled:
 | `nodeTypeComponents` | `Record<string, NodeTypeRegistration>` | - | Custom node type components (key = type, value = { component, isContainer? }) |
 | `containerOptions` | `{ enabled: boolean }` | - | Enable container detection on drag stop |
 | `dataMode` | `'collection' \| 'ephemeral'` | `'collection'` | Data mode — 'ephemeral' skips collection mutations |
+| `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
 
 ## Events
 
@@ -145,6 +146,7 @@ When `sync` is enabled:
 | `edgeClick` | `(edgeId)` | Edge clicked |
 | `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
 | `update:rows` | `(rows)` | Emitted in ephemeral mode when node positions change (enables `v-model:rows`) |
+| `update:selected` | `(selectedNodeIds: string[])` | Emitted when selection changes (enables `v-model:selected`). Primary API for tracking multi-select. |
 
 ## Composables
 

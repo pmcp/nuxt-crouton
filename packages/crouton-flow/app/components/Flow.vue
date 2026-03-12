@@ -99,6 +99,8 @@ interface Props {
   dataMode?: FlowDataMode
   /** Pre-loaded node positions from flow_configs (avoids extra fetch) */
   savedPositions?: Record<string, { x: number; y: number }> | null
+  /** Selected node IDs (enables v-model:selected) */
+  selected?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -137,6 +139,8 @@ const emit = defineEmits<{
   nodeDelete: [nodeIds: string[]]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
   'update:rows': [rows: Record<string, unknown>[]]
+  /** Emitted when selection changes (enables v-model:selected) */
+  'update:selected': [selectedNodeIds: string[]]
 }>()
 
 // Validate props
@@ -200,10 +204,18 @@ const {
   onNodeDoubleClick,
   onEdgeClick,
   onNodesChange,
-  screenToFlowCoordinate
+  screenToFlowCoordinate,
+  getSelectedNodes,
+  addSelectedNodes,
+  removeSelectedNodes,
+  findNode
 } = useVueFlow()
 
+// Flag to prevent emit loops when syncing selected prop to Vue Flow
+const isSyncingFromProp = ref(false)
+
 // Detect node removals (keyboard delete) and emit nodeDelete
+// Also detect selection changes and emit update:selected
 onNodesChange((changes) => {
   const removedIds = changes
     .filter((c) => c.type === 'remove')
@@ -213,7 +225,42 @@ onNodesChange((changes) => {
     for (const id of removedIds) positionCache.delete(id)
     emit('nodeDelete', removedIds)
   }
+
+  // Detect selection changes and emit update:selected
+  // Skip emitting when we're syncing from the selected prop to avoid loops
+  const hasSelectionChange = changes.some((c) => c.type === 'select')
+  if (hasSelectionChange && !isSyncingFromProp.value) {
+    const selectedIds = getSelectedNodes.value.map((n) => n.id)
+    emit('update:selected', selectedIds)
+    emit('selectionChange', selectedIds)
+  }
 })
+
+// Watch the selected prop and sync to Vue Flow when parent changes it externally
+watch(() => props.selected, (newSelected) => {
+  if (!newSelected) return
+  isSyncingFromProp.value = true
+
+  const currentSelectedIds = new Set(getSelectedNodes.value.map((n) => n.id))
+  const targetSelectedIds = new Set(newSelected)
+
+  // Remove nodes that should no longer be selected
+  const toDeselect = getSelectedNodes.value.filter((n) => !targetSelectedIds.has(n.id))
+  if (toDeselect.length > 0) {
+    removeSelectedNodes(toDeselect)
+  }
+
+  // Add nodes that should be selected but aren't yet
+  const toSelect = newSelected
+    .filter((id) => !currentSelectedIds.has(id))
+    .map((id) => findNode(id))
+    .filter(Boolean) as Node[]
+  if (toSelect.length > 0) {
+    addSelectedNodes(toSelect)
+  }
+
+  nextTick(() => { isSyncingFromProp.value = false })
+}, { deep: true })
 
 // ============================================
 // DRAG & DROP (external items onto canvas)
