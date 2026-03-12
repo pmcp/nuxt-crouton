@@ -6,8 +6,8 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { chatConversationId } = getRouterParams(event)
-  if (!chatConversationId) {
+  const { chatconversationId } = getRouterParams(event)
+  if (!chatconversationId) {
     throw createError({ status: 400, statusText: 'Missing chatconversation ID' })
   }
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   authTimer.end()
 
   const dbTimer = timing.start('db')
-  const result = await deleteThinkgraphChatConversation(chatConversationId, team.id, user.id, { role: membership.role })
+  const result = await deleteThinkgraphChatConversation(chatconversationId, team.id, user.id, { role: membership.role })
   dbTimer.end()
   return result
 })

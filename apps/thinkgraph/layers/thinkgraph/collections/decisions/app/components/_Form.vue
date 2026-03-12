@@ -47,7 +47,7 @@
           </UFormField>
 
           <UFormField v-if="action === 'update'" label="Path" name="pathType">
-            <USelect v-model="state.pathType" :items="pathTypeOptions" class="w-full" size="xl" />
+            <USelect v-model="state.pathType" :items="pathTypeOptions" placeholder="None" class="w-full" size="xl" />
           </UFormField>
 
           <UFormField v-if="action === 'update'" label="Starred" name="starred">
@@ -87,7 +87,6 @@ const nodeTypeOptions = [
 ]
 
 const pathTypeOptions = [
-  { label: 'None', value: '' },
   { label: 'Diverge', value: 'diverge' },
   { label: 'Deep Dive', value: 'deep_dive' },
   { label: 'Prototype', value: 'prototype' },

@@ -38,70 +38,9 @@ const age = computed(() => {
   return v ? String(v) : null
 })
 
-// Convert TipTap JSON to HTML (lightweight renderer)
-function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-function renderTipTapToHtml(node: any): string {
-  if (!node) return ''
-  if (typeof node === 'string') return node
-
-  if (node.type === 'text') {
-    let html = escapeHtml(node.text || '')
-    if (node.marks) {
-      for (const mark of node.marks) {
-        if (mark.type === 'bold') html = `<strong>${html}</strong>`
-        else if (mark.type === 'italic') html = `<em>${html}</em>`
-        else if (mark.type === 'link') html = `<a href="${escapeHtml(mark.attrs?.href || '#')}">${html}</a>`
-        else if (mark.type === 'underline') html = `<u>${html}</u>`
-        else if (mark.type === 'strike') html = `<s>${html}</s>`
-        else if (mark.type === 'code') html = `<code>${html}</code>`
-      }
-    }
-    return html
-  }
-
-  if (node.type === 'imageBlock' || node.type === 'image') {
-    const src = node.attrs?.src || ''
-    const alt = escapeHtml(node.attrs?.alt || '')
-    return `<img src="${escapeHtml(src)}" alt="${alt}" style="max-width:100%;border-radius:0.375rem;" />`
-  }
-  if (node.type === 'hardBreak') return '<br>'
-
-  const children = Array.isArray(node.content) ? node.content.map(renderTipTapToHtml).join('') : ''
-
-  switch (node.type) {
-    case 'paragraph': return `<p>${children || '&nbsp;'}</p>`
-    case 'heading': return `<h${node.attrs?.level || 2}>${children}</h${node.attrs?.level || 2}>`
-    case 'blockquote': return `<blockquote>${children}</blockquote>`
-    case 'bulletList': return `<ul>${children}</ul>`
-    case 'orderedList': return `<ol>${children}</ol>`
-    case 'listItem': return `<li>${children}</li>`
-    case 'codeBlock': return `<pre><code>${children}</code></pre>`
-    case 'horizontalRule': return '<hr>'
-    case 'doc': return children
-    default: return children
-  }
-}
-
-function contentToHtml(raw: any): string {
-  if (!raw) return ''
-  // TipTap JSON object
-  if (typeof raw === 'object' && raw?.type === 'doc') return renderTipTapToHtml(raw)
-  // TipTap JSON string
-  if (typeof raw === 'string' && raw.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(raw)
-      if (parsed?.type === 'doc') return renderTipTapToHtml(parsed)
-    }
-    catch { /* not JSON, treat as HTML */ }
-  }
-  return String(raw)
-}
-
-const mainContentHtml = computed(() => contentToHtml(getField('content')))
-const sidebarContentHtml = computed(() => contentToHtml(getField('sidebarContent')))
+// Pre-rendered HTML from the public API endpoint (server-side renderTipTapToHtml)
+const mainContentHtml = computed(() => props.item.contentHtml || '')
+const sidebarContentHtml = computed(() => props.item.sidebarContentHtml || '')
 
 // Back path
 const backPath = computed(() => {
