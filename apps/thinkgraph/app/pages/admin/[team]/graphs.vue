@@ -223,7 +223,7 @@ const additionalEdges = computed(() => {
   if (!decisions.value) return []
   const edges: Array<{ id: string; source: string; target: string }> = []
   for (const d of decisions.value as any[]) {
-    if (!d.artifacts) continue
+    if (!Array.isArray(d.artifacts)) continue
     for (const a of d.artifacts) {
       if (a.type === 'synthesis' && Array.isArray(a.sourceNodeIds)) {
         for (const srcId of a.sourceNodeIds) {

@@ -88,24 +88,28 @@ const displayContent = computed(() => {
   return plain.length > 80 ? plain.slice(0, 77) + '...' : plain
 })
 
+const artifactsArray = computed(() =>
+  Array.isArray(decision.value.artifacts) ? decision.value.artifacts : []
+)
+
 const imageArtifact = computed(() =>
-  decision.value.artifacts?.find((a: any) => a.type === 'image' && a.url)
+  artifactsArray.value.find((a: any) => a.type === 'image' && a.url)
 )
 
 const prototypeArtifact = computed(() =>
-  decision.value.artifacts?.find((a: any) => a.type === 'prototype' && a.content)
+  artifactsArray.value.find((a: any) => a.type === 'prototype' && a.content)
 )
 
 const codeArtifact = computed(() =>
-  decision.value.artifacts?.find((a: any) => a.type === 'code' && a.content)
+  artifactsArray.value.find((a: any) => a.type === 'code' && a.content)
 )
 
 const nonVisualArtifacts = computed(() =>
-  decision.value.artifacts?.filter((a: any) =>
+  artifactsArray.value.filter((a: any) =>
     a.type !== 'image'
     && a.type !== 'code'
     && !(a.type === 'prototype' && a.url)
-  ) || []
+  )
 )
 
 function openPrototype(event: Event) {

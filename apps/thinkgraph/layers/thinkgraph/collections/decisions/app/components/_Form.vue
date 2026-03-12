@@ -100,7 +100,7 @@ const { close, loading } = useCrouton()
 
 const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
-  : { ...defaultValue, nodeType: 'idea', source: 'manual' }
+  : { ...defaultValue, nodeType: 'idea', source: 'manual', ...props.activeItem }
 
 const state = ref<ThinkgraphDecisionFormData & { id?: string | null }>(initialValues)
 
