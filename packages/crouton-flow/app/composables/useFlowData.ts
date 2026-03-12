@@ -80,7 +80,6 @@ export function useFlowData<T extends Record<string, unknown>>(
           id: `e-${parentId}-${id}`,
           source: parentId,
           target: id,
-          type: 'default'
         })
       }
     }

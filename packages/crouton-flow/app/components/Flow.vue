@@ -479,15 +479,17 @@ const finalNodes = computed(() => {
   return [...baseNodes, ...ghosts]
 })
 
+const edgeType = computed(() => props.flowConfig?.edgeType || 'default')
+const defaultEdgeOptions = computed(() => ({ type: edgeType.value }))
+
 const finalEdges = computed(() => {
   if (props.dataMode === 'ephemeral') {
-    // Ephemeral mode has no edges (container relationships via parentNode, not edges)
     return []
   }
-  if (props.sync && syncState) {
-    return syncEdges.value
-  }
-  return dataEdges.value
+  const rawEdges = (props.sync && syncState) ? syncEdges.value : dataEdges.value
+  // Apply current edge type to all edges
+  const type = edgeType.value
+  return rawEdges.map(e => e.type === type ? e : { ...e, type })
 })
 
 // ============================================
@@ -683,7 +685,7 @@ defineExpose({
       :nodes="finalNodes"
       :edges="finalEdges"
       :node-types="nodeTypes"
-      :default-edge-options="{ type: props.flowConfig?.edgeType || 'default' }"
+      :default-edge-options="defaultEdgeOptions"
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
