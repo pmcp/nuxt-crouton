@@ -80,6 +80,13 @@ function handleEdit(event: Event) {
   }
 }
 
+function handleDelete(event: Event) {
+  event.stopPropagation()
+  if (props.collection && decision.value.id) {
+    open('delete', props.collection, [decision.value.id])
+  }
+}
+
 function handleAddChild(event: Event) {
   event.stopPropagation()
   if (props.collection && decision.value.id) {
@@ -276,6 +283,15 @@ function toggleStar(event: Event) {
       >
         <UIcon name="i-lucide-pencil" class="size-3.5" />
       </button>
+
+      <!-- Delete -->
+      <button
+        class="decision-node__action decision-node__action--delete"
+        title="Delete"
+        @click="handleDelete"
+      >
+        <UIcon name="i-lucide-trash-2" class="size-3.5" />
+      </button>
     </div>
 
     <Handle type="source" :position="Position.Bottom" class="decision-handle" />
@@ -337,6 +353,10 @@ function toggleStar(event: Event) {
 
 .decision-node__action--chat {
   &:hover { color: var(--color-blue-500, #3b82f6); border-color: var(--color-blue-300, #93c5fd); }
+}
+
+.decision-node__action--delete {
+  &:hover { color: var(--color-red-500, #ef4444); border-color: var(--color-red-300, #fca5a5); }
 }
 
 .decision-node__action--loading {
