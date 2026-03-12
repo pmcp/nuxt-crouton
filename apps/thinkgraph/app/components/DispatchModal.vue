@@ -39,11 +39,15 @@ const serviceOptions = ref<Record<string, string>>({})
 const result = ref<{ artifacts: Artifact[]; content: string } | null>(null)
 const error = ref<string | null>(null)
 
-// Fetch available services
-const { data: services } = await useFetch<DispatchServiceInfo[]>(
+// Fetch available services (lazy — triggered when modal opens)
+const { data: services, execute: fetchServices } = useLazyFetch<DispatchServiceInfo[]>(
   () => `/api/teams/${teamId.value}/thinkgraph-decisions/dispatch/services`,
-  { default: () => [] }
+  { immediate: false, default: () => [] }
 )
+
+watch(open, (isOpen) => {
+  if (isOpen) fetchServices()
+})
 
 const servicesByType = computed(() => {
   const groups: Record<string, DispatchServiceInfo[]> = {}
@@ -208,10 +212,12 @@ watch(open, (isOpen) => {
               v-if="opt.type === 'select' && opt.choices"
               v-model="serviceOptions[opt.key]"
               :items="opt.choices"
+              class="w-full"
             />
             <UInput
               v-else
               v-model="serviceOptions[opt.key]"
+              class="w-full"
             />
           </div>
 
@@ -224,6 +230,7 @@ watch(open, (isOpen) => {
               v-model="customPrompt"
               placeholder="Override the default prompt with your own instructions..."
               :rows="3"
+              class="w-full"
             />
           </div>
 

@@ -1,19 +1,12 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { getAllDispatchServices, isServiceAvailable } from '~~/server/utils/dispatch-registry'
-
-// Import all services to register them
-import '~~/server/utils/dispatch-services/dalle3'
-import '~~/server/utils/dispatch-services/flux'
-import '~~/server/utils/dispatch-services/lovable'
-import '~~/server/utils/dispatch-services/v0'
-import '~~/server/utils/dispatch-services/code'
-import '~~/server/utils/dispatch-services/text'
-import '~~/server/utils/dispatch-services/mermaid'
+import { getAllDispatchServices, isServiceAvailable, ensureServicesLoaded } from '~~/server/utils/dispatch-registry'
 
 export default defineEventHandler(async (event) => {
   await resolveTeamAndCheckMembership(event)
 
+  await ensureServicesLoaded()
   const services = getAllDispatchServices()
+  console.log('[dispatch/services] registry size:', services.length, services.map(s => s.id))
 
   return services.map(service => ({
     id: service.id,

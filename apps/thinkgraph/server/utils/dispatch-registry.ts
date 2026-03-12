@@ -31,7 +31,12 @@ export interface DispatchService {
   execute: (context: DispatchContext, event: H3Event) => Promise<DispatchResult>
 }
 
-const registry = new Map<string, DispatchService>()
+// Use globalThis to survive Nitro HMR in dev mode
+const REGISTRY_KEY = '__thinkgraph_dispatch_registry__'
+if (!(globalThis as any)[REGISTRY_KEY]) {
+  (globalThis as any)[REGISTRY_KEY] = new Map<string, DispatchService>()
+}
+const registry: Map<string, DispatchService> = (globalThis as any)[REGISTRY_KEY]
 
 export function registerDispatchService(service: DispatchService) {
   registry.set(service.id, service)
@@ -49,4 +54,20 @@ export function isServiceAvailable(service: DispatchService, event: H3Event): bo
   if (!service.envKeys || service.envKeys.length === 0) return true
   const config = useRuntimeConfig(event)
   return service.envKeys.every(key => !!(config as any)[key])
+}
+
+let _loading: Promise<void> | null = null
+export function ensureServicesLoaded() {
+  if (registry.size > 0) return Promise.resolve()
+  if (_loading) return _loading
+  _loading = Promise.all([
+    import('./dispatch-services/dalle3'),
+    import('./dispatch-services/flux'),
+    import('./dispatch-services/lovable'),
+    import('./dispatch-services/v0'),
+    import('./dispatch-services/code'),
+    import('./dispatch-services/text'),
+    import('./dispatch-services/mermaid'),
+  ]).then(() => {})
+  return _loading
 }

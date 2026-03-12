@@ -1,18 +1,10 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../../../layers/thinkgraph/collections/decisions/server/database/queries'
-import { getDispatchService, isServiceAvailable } from '~~/server/utils/dispatch-registry'
+import { getDispatchService, isServiceAvailable, ensureServicesLoaded } from '~~/server/utils/dispatch-registry'
 import { buildDispatchContext } from '~~/server/utils/context-builder'
 
-// Import all services to register them
-import '~~/server/utils/dispatch-services/dalle3'
-import '~~/server/utils/dispatch-services/flux'
-import '~~/server/utils/dispatch-services/lovable'
-import '~~/server/utils/dispatch-services/v0'
-import '~~/server/utils/dispatch-services/code'
-import '~~/server/utils/dispatch-services/text'
-import '~~/server/utils/dispatch-services/mermaid'
-
 export default defineEventHandler(async (event) => {
+  await ensureServicesLoaded()
   const { team, user } = await resolveTeamAndCheckMembership(event)
   const decisionId = getRouterParam(event, 'decisionId')
 
