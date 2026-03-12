@@ -125,7 +125,7 @@ importers:
         version: 1.11.0(db0@0.3.4(@libsql/client@0.17.0)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(ioredis@5.9.3)(magicast@0.5.2)
       '@nuxt/ui':
         specifier: ^4.3.0
-        version: 4.3.0(5a96e36ab82e1dbe509c360ec9bf2f2c)
+        version: 4.3.0(b7ddab99b6ae690f6aaa3edd02aa9fe3)
       '@nuxtjs/mcp-toolkit':
         specifier: ^0.5.2
         version: 0.5.2(magicast@0.5.2)(zod@4.2.1)
@@ -383,7 +383,7 @@ importers:
     devDependencies:
       nuxt:
         specifier: ^4.3.1
-        version: 4.3.1(@libsql/client@0.17.0)(@parcel/watcher@2.5.4)(@types/node@22.19.7)(@vue/compiler-sfc@3.5.28)(better-sqlite3@12.6.2)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.17.0)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.3)(lightningcss@1.30.2)(magicast@0.5.2)(optionator@0.9.4)(rolldown@1.0.0-beta.60)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue-tsc@3.2.2(typescript@5.9.3))(yaml@2.8.2)
+        version: 4.3.1(@libsql/client@0.17.0)(@parcel/watcher@2.5.4)(@types/node@22.19.7)(@vue/compiler-sfc@3.5.28)(better-sqlite3@12.6.2)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.17.0)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.3)(lightningcss@1.30.2)(magicast@0.5.2)(optionator@0.9.4)(rolldown@1.0.0-beta.60)(rollup@4.55.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue-tsc@3.2.2(typescript@5.9.3))(yaml@2.8.2)
       unbuild:
         specifier: ^3.6.1
         version: 3.6.1(typescript@5.9.3)(vue-tsc@3.2.2(typescript@5.9.3))(vue@3.5.26(typescript@5.9.3))
@@ -395,7 +395,7 @@ importers:
         version: link:../crouton-themes
       '@nuxt/ui':
         specifier: ^4.3.0
-        version: 4.3.0(b7ddab99b6ae690f6aaa3edd02aa9fe3)
+        version: 4.3.0(5a96e36ab82e1dbe509c360ec9bf2f2c)
     devDependencies:
       '@nuxt/kit':
         specifier: ^3.14.0
@@ -435,7 +435,7 @@ importers:
         version: 4.3.19(react@19.2.3)(zod@4.2.1)
       nuxt:
         specifier: ^4.3.1
-        version: 4.3.1(@libsql/client@0.17.0)(@parcel/watcher@2.5.4)(@types/node@22.19.7)(@vue/compiler-sfc@3.5.28)(better-sqlite3@12.6.2)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.17.0)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.3)(lightningcss@1.30.2)(magicast@0.5.2)(optionator@0.9.4)(rolldown@1.0.0-beta.60)(rollup@4.55.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue-tsc@3.2.2(typescript@5.9.3))(yaml@2.8.2)
+        version: 4.3.1(@libsql/client@0.17.0)(@parcel/watcher@2.5.4)(@types/node@22.19.7)(@vue/compiler-sfc@3.5.28)(better-sqlite3@12.6.2)(cac@6.7.14)(db0@0.3.4(@libsql/client@0.17.0)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(eslint@9.39.2(jiti@2.6.1))(ioredis@5.9.3)(lightningcss@1.30.2)(magicast@0.5.2)(optionator@0.9.4)(rolldown@1.0.0-beta.60)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue-tsc@3.2.2(typescript@5.9.3))(yaml@2.8.2)
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -506,13 +506,13 @@ importers:
     dependencies:
       '@better-auth/passkey':
         specifier: ^1.2.0
-        version: 1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)))(better-call@1.1.8(zod@4.2.1))(nanostores@1.1.0)
+        version: 1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)))(better-call@1.1.8(zod@4.2.1))(nanostores@1.1.0)
       '@nuxt/ui':
         specifier: ^4.3.0
         version: 4.3.0(2d14ce948e970646637faa26b792f6a8)
       better-auth:
         specifier: ^1.2.0
-        version: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
+        version: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
       defu:
         specifier: ^6.1.4
         version: 6.1.4
@@ -522,7 +522,7 @@ importers:
     devDependencies:
       '@better-auth/cli':
         specifier: ^1.2.0
-        version: 1.4.15(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-call@1.1.8(zod@4.2.1))(drizzle-kit@0.20.18)(jose@6.1.3)(kysely@0.28.10)(magicast@0.5.2)(nanostores@1.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
+        version: 1.4.15(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-call@1.1.8(zod@4.2.1))(drizzle-kit@0.20.18)(jose@6.1.3)(kysely@0.28.10)(magicast@0.5.2)(nanostores@1.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
       '@nuxt/kit':
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
@@ -558,7 +558,7 @@ importers:
         version: 2.0.0(typescript@5.9.3)(vue-tsc@3.2.2(typescript@5.9.3))
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
       vue:
         specifier: ^3.5.13
         version: 3.5.26(typescript@5.9.3)
@@ -611,13 +611,13 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^2.1.8
-        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
       happy-dom:
         specifier: ^15.11.7
         version: 15.11.7
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-cli:
     dependencies:
@@ -660,7 +660,7 @@ importers:
         version: 22.19.7
       vitest:
         specifier: ^2.1.0
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-collab:
     dependencies:
@@ -700,7 +700,7 @@ importers:
         version: 15.11.7
       vitest:
         specifier: ^2.0.0
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-core:
     dependencies:
@@ -728,6 +728,9 @@ importers:
       '@nuxtjs/seo':
         specifier: ^3.3.0
         version: 3.3.0(@unhead/vue@2.1.4(vue@3.5.26(typescript@5.9.3)))(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(ioredis@5.9.3)(magicast@0.5.2)(rollup@4.57.1)(unhead@2.1.4)(unstorage@1.17.4(db0@0.3.4(@libsql/client@0.15.15)(better-sqlite3@12.6.2)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1)))(ioredis@5.9.3))(vite@7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.26(typescript@5.9.3))(zod@4.2.1)
+      '@tailwindcss/typography':
+        specifier: ^0.5.19
+        version: 0.5.19
       '@vueuse/core':
         specifier: ^13.3.0
         version: 13.9.0(vue@3.5.26(typescript@5.9.3))
@@ -761,7 +764,7 @@ importers:
         version: 1.15.9
       '@vitest/coverage-v8':
         specifier: ^2.1.9
-        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
       happy-dom:
         specifier: ^16.6.0
         version: 16.8.1
@@ -773,7 +776,7 @@ importers:
         version: 3.6.1(typescript@5.9.3)(vue-tsc@3.2.2(typescript@5.9.3))(vue@3.5.26(typescript@5.9.3))
       vitest:
         specifier: ^2.1.0
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-designer:
     dependencies:
@@ -921,13 +924,13 @@ importers:
         version: 4.20260118.0
       '@vitest/coverage-v8':
         specifier: ^2.1.8
-        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))
       happy-dom:
         specifier: ^15.11.7
         version: 15.11.7
       vitest:
         specifier: ^2.1.8
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-i18n:
     dependencies:
@@ -986,7 +989,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.0
-        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   packages/crouton-mcp-toolkit:
     dependencies:
@@ -5112,6 +5115,11 @@ packages:
 
   '@tailwindcss/postcss@4.1.18':
     resolution: {integrity: sha512-Ce0GFnzAOuPyfV5SxjXGn0CubwGcuDB0zcdaPuCSzAa/2vII24JTkH+I6jcbXLb1ctjZMZZI6OjDaLPJQL1S0g==}
+
+  '@tailwindcss/typography@0.5.19':
+    resolution: {integrity: sha512-w31dd8HOx3k9vPtcQh5QHP9GwKcgbMp87j58qi6xgiBnFFtKEAgCWnDw4qUT8aHwkCp8bKvb/KGKWWHedP0AAg==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
 
   '@tailwindcss/vite@4.1.18':
     resolution: {integrity: sha512-jVA+/UpKL1vRLg6Hkao5jldawNmRo7mQYrZtNHMIVpLfLhDml5nMRUo/8MwoX2vNXvnaXNNMedrMfMugAVX1nA==}
@@ -10700,6 +10708,10 @@ packages:
     peerDependencies:
       postcss: ^8.4.32
 
+  postcss-selector-parser@6.0.10:
+    resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
+    engines: {node: '>=4'}
+
   postcss-selector-parser@6.1.2:
     resolution: {integrity: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==}
     engines: {node: '>=4'}
@@ -13353,7 +13365,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@better-auth/cli@1.4.15(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-call@1.1.8(zod@4.2.1))(drizzle-kit@0.20.18)(jose@6.1.3)(kysely@0.28.10)(magicast@0.5.2)(nanostores@1.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))':
+  '@better-auth/cli@1.4.15(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-call@1.1.8(zod@4.2.1))(drizzle-kit@0.20.18)(jose@6.1.3)(kysely@0.28.10)(magicast@0.5.2)(nanostores@1.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))':
     dependencies:
       '@babel/core': 7.28.6
       '@babel/preset-react': 7.28.5(@babel/core@7.28.6)
@@ -13365,7 +13377,7 @@ snapshots:
       '@mrleebo/prisma-ast': 0.13.1
       '@prisma/client': 5.22.0
       '@types/pg': 8.16.0
-      better-auth: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@12.6.2)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
+      better-auth: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@12.6.2)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
       better-sqlite3: 12.6.2
       c12: 3.3.3(magicast@0.5.2)
       chalk: 5.6.2
@@ -13436,14 +13448,14 @@ snapshots:
       nanostores: 1.1.0
       zod: 4.2.1
 
-  '@better-auth/passkey@1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)))(better-call@1.1.8(zod@4.2.1))(nanostores@1.1.0)':
+  '@better-auth/passkey@1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)))(better-call@1.1.8(zod@4.2.1))(nanostores@1.1.0)':
     dependencies:
       '@better-auth/core': 1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0)
       '@better-auth/utils': 0.3.0
       '@better-fetch/fetch': 1.1.21
       '@simplewebauthn/browser': 13.2.2
       '@simplewebauthn/server': 13.2.2
-      better-auth: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
+      better-auth: 1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3))
       better-call: 1.1.8(zod@4.2.1)
       nanostores: 1.1.0
       zod: 4.2.1
@@ -19014,6 +19026,10 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.1.18
 
+  '@tailwindcss/typography@0.5.19':
+    dependencies:
+      postcss-selector-parser: 6.0.10
+
   '@tailwindcss/vite@4.1.18(vite@7.3.1(@types/node@22.19.7)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@tailwindcss/node': 4.1.18
@@ -20055,7 +20071,7 @@ snapshots:
       vite: 7.3.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       vue: 3.5.26(typescript@5.9.3)
 
-  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))':
+  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
@@ -20069,11 +20085,11 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
-      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))':
+  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
@@ -20087,7 +20103,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
-      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
+      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -20867,7 +20883,7 @@ snapshots:
 
   baseline-browser-mapping@2.9.15: {}
 
-  better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)):
+  better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@11.10.0)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)):
     dependencies:
       '@better-auth/core': 1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0)
       '@better-auth/telemetry': 1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))
@@ -20889,10 +20905,10 @@ snapshots:
       pg: 8.17.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
+      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
       vue: 3.5.26(typescript@5.9.3)
 
-  better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@12.6.2)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)):
+  better-auth@1.4.15(@prisma/client@5.22.0)(better-sqlite3@12.6.2)(drizzle-kit@0.20.18)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.0)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.10)(pg@8.17.1))(pg@8.17.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.26(typescript@5.9.3)):
     dependencies:
       '@better-auth/core': 1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0)
       '@better-auth/telemetry': 1.4.15(@better-auth/core@1.4.15(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.2.1))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0))
@@ -20914,7 +20930,7 @@ snapshots:
       pg: 8.17.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
+      vitest: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
       vue: 3.5.26(typescript@5.9.3)
 
   better-call@1.1.8(zod@4.2.1):
@@ -27289,6 +27305,11 @@ snapshots:
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
 
+  postcss-selector-parser@6.0.10:
+    dependencies:
+      cssesc: 3.0.0
+      util-deprecate: 1.0.2
+
   postcss-selector-parser@6.1.2:
     dependencies:
       cssesc: 3.0.0
@@ -29591,7 +29612,7 @@ snapshots:
       - typescript
       - vitest
 
-  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
+  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@15.11.7)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))
@@ -29629,7 +29650,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
+  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))
@@ -29667,7 +29688,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0):
+  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))
@@ -29705,7 +29726,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17(vitest@4.0.17))(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
+  vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@20.3.3)(jsdom@27.4.0)(lightningcss@1.30.2)(terser@5.46.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))
