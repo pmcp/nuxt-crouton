@@ -3,6 +3,8 @@
 const props = defineProps<{
   nodeId?: string | null
   nodeName?: string
+  selectedNodeIds?: string[]
+  decisions?: Array<{ id: string; content: string; nodeType: string }>
 }>()
 
 const emit = defineEmits<{
@@ -25,6 +27,7 @@ const {
   api: `/api/teams/${teamId.value}/thinkgraph-decisions/chat`,
   body: computed(() => ({
     nodeId: props.nodeId,
+    selectedNodeIds: props.selectedNodeIds?.length ? props.selectedNodeIds : undefined,
   })),
   onFinish: () => {
     // Save conversation after each AI response (fire-and-forget)
@@ -191,11 +194,14 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
   <div class="flex flex-col h-full">
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-message-square-text" class="size-4 text-violet-500" />
-        <span class="text-sm font-medium">Think with AI</span>
+      <div class="flex items-center gap-2 min-w-0">
+        <UIcon name="i-lucide-message-square-text" class="size-4 text-violet-500 shrink-0" />
+        <span class="text-sm font-medium shrink-0">Think with AI</span>
         <span v-if="nodeName" class="text-xs text-neutral-400 truncate max-w-[150px]">
           — {{ nodeName }}
+        </span>
+        <span v-if="selectedNodeIds?.length" class="text-xs text-violet-400 shrink-0">
+          ({{ selectedNodeIds.length }} selected)
         </span>
       </div>
       <UButton

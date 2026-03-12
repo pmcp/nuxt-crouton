@@ -466,6 +466,8 @@ provide('thinkgraph:dispatch', openDispatch)
         <ChatPanel
           :node-id="chatNodeId"
           :node-name="chatNodeName"
+          :selected-node-ids="selectedNodeIds"
+          :decisions="decisions"
           @add-to-graph="onChatAddToGraph"
           @close="showChat = false"
         />

@@ -5,7 +5,7 @@ import { getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/coll
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
   const body = await readBody(event)
-  const { messages, nodeId } = body
+  const { messages, nodeId, selectedNodeIds } = body
 
   if (!messages || !Array.isArray(messages)) {
     throw createError({ status: 400, statusText: 'Messages required' })
@@ -50,6 +50,23 @@ export default defineEventHandler(async (event) => {
       roots.forEach((r: any) => {
         contextBlock += buildTreeString(allDecisions, r.id, 0)
       })
+    }
+  }
+
+  // Add selected nodes context
+  if (selectedNodeIds && Array.isArray(selectedNodeIds) && selectedNodeIds.length > 0) {
+    contextBlock += '\n## Currently selected nodes\n'
+    contextBlock += 'The user has selected these nodes (they may ask you to work with them):\n'
+    for (const selId of selectedNodeIds) {
+      const node = allDecisions.find((d: any) => d.id === selId)
+      if (node) {
+        contextBlock += `- ${node.content} (${node.nodeType})`
+        if (node.artifacts?.length) {
+          const types = node.artifacts.map((a: any) => a.type).join(', ')
+          contextBlock += ` [has artifacts: ${types}]`
+        }
+        contextBlock += '\n'
+      }
     }
   }
 

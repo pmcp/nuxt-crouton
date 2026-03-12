@@ -191,7 +191,7 @@ watch(open, (isOpen) => {
 <template>
   <UModal v-model:open="open" :ui="{ width: 'sm:max-w-xl' }">
     <template #content="{ close }">
-      <div class="p-6">
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-5">
           <button
