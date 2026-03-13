@@ -113,5 +113,28 @@
     "selectAll": "Tout sélectionner",
     "deselectAll": "Tout désélectionner",
     "bulkActions": "Actions groupées"
+  },
+  "emailLogs": {
+    "title": "Journaux d'e-mails",
+    "description": "Consultez tous les e-mails d'authentification envoyés aux membres de l'équipe.",
+    "totalEmails": "Total e-mails",
+    "type": "Type",
+    "recipient": "Destinataire",
+    "status": "Statut",
+    "sentAt": "Envoyé le",
+    "createdAt": "Créé le",
+    "allTypes": "Tous les types",
+    "allStatuses": "Tous les statuts",
+    "typeVerification": "Vérification",
+    "typePasswordReset": "Réinitialisation",
+    "typeInvitation": "Invitation",
+    "typeMagicLink": "Lien magique",
+    "typeUnknown": "Inconnu",
+    "statusSent": "Envoyé",
+    "statusPending": "En attente",
+    "statusFailed": "Échoué",
+    "statusUnknown": "Inconnu",
+    "noLogs": "Aucun journal d'e-mail trouvé.",
+    "errorDetails": "Détails de l'erreur"
   }
 }

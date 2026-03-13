@@ -354,6 +354,42 @@ export const scopedAccessToken = sqliteTable('scopedAccessToken', {
 ])
 
 // ============================================================================
+// Auth Email Log Table
+// ============================================================================
+
+/**
+ * Auth Email Log table - Tracks all authentication-related emails
+ *
+ * Logs every email dispatched through the crouton:auth:email hook.
+ * Provides admin visibility into verification, password reset,
+ * invitation, and magic link emails.
+ */
+export const authEmailLog = sqliteTable('auth_email_log', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  /** Organization/team context (null for non-team emails) */
+  organizationId: text('organizationId'),
+  /** Email type: verification, password-reset, invitation, magic-link */
+  emailType: text('emailType').notNull(),
+  /** Recipient email address */
+  recipientEmail: text('recipientEmail').notNull(),
+  /** Delivery status */
+  status: text('status').notNull().default('pending'), // pending, sent, failed
+  /** Error message if delivery failed */
+  error: text('error'),
+  /** When the email was actually sent */
+  sentAt: integer('sentAt', { mode: 'timestamp' }),
+  /** Additional context (e.g., inviter name, team name) */
+  metadata: text('metadata', { mode: 'json' }).$type<Record<string, string>>(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date())
+}, table => [
+  index('auth_email_log_org_idx').on(table.organizationId),
+  index('auth_email_log_type_idx').on(table.emailType),
+  index('auth_email_log_status_idx').on(table.status),
+  index('auth_email_log_recipient_idx').on(table.recipientEmail),
+  index('auth_email_log_created_idx').on(table.createdAt)
+])
+
+// ============================================================================
 // Relations
 // ============================================================================
 
@@ -446,6 +482,13 @@ export const scopedAccessTokenRelations = relations(scopedAccessToken, ({ one })
   })
 }))
 
+export const authEmailLogRelations = relations(authEmailLog, ({ one }) => ({
+  organization: one(organization, {
+    fields: [authEmailLog.organizationId],
+    references: [organization.id]
+  })
+}))
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -485,6 +528,9 @@ export type NewDomain = typeof domain.$inferInsert
 
 export type ScopedAccessToken = typeof scopedAccessToken.$inferSelect
 export type NewScopedAccessToken = typeof scopedAccessToken.$inferInsert
+
+export type AuthEmailLog = typeof authEmailLog.$inferSelect
+export type NewAuthEmailLog = typeof authEmailLog.$inferInsert
 
 // ============================================================================
 // Team Settings Table

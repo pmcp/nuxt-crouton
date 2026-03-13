@@ -7,7 +7,7 @@
 import * as schema from '../database/schema'
 
 // Export commonly used query builder functions
-export { eq, and, or, ne, not, lt, gt, asc, desc, count } from 'drizzle-orm'
+export { eq, and, or, ne, not, lt, gt, asc, desc, count, inArray, sql } from 'drizzle-orm'
 
 // Export schema as tables for easy access
 export const tables = schema

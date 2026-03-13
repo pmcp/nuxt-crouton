@@ -113,5 +113,28 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "bulkActions": "Bulk actions"
+  },
+  "emailLogs": {
+    "title": "Email Logs",
+    "description": "View all authentication emails sent to team members.",
+    "totalEmails": "Total emails",
+    "type": "Type",
+    "recipient": "Recipient",
+    "status": "Status",
+    "sentAt": "Sent at",
+    "createdAt": "Created at",
+    "allTypes": "All types",
+    "allStatuses": "All statuses",
+    "typeVerification": "Verification",
+    "typePasswordReset": "Password reset",
+    "typeInvitation": "Invitation",
+    "typeMagicLink": "Magic link",
+    "typeUnknown": "Unknown",
+    "statusSent": "Sent",
+    "statusPending": "Pending",
+    "statusFailed": "Failed",
+    "statusUnknown": "Unknown",
+    "noLogs": "No email logs found.",
+    "errorDetails": "Error Details"
   }
 }

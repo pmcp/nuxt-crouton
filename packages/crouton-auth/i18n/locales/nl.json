@@ -113,5 +113,28 @@
     "selectAll": "Alles selecteren",
     "deselectAll": "Selectie opheffen",
     "bulkActions": "Bulk acties"
+  },
+  "emailLogs": {
+    "title": "E-mail logs",
+    "description": "Bekijk alle authenticatie-e-mails verstuurd naar teamleden.",
+    "totalEmails": "Totaal e-mails",
+    "type": "Type",
+    "recipient": "Ontvanger",
+    "status": "Status",
+    "sentAt": "Verstuurd op",
+    "createdAt": "Aangemaakt op",
+    "allTypes": "Alle types",
+    "allStatuses": "Alle statussen",
+    "typeVerification": "Verificatie",
+    "typePasswordReset": "Wachtwoord reset",
+    "typeInvitation": "Uitnodiging",
+    "typeMagicLink": "Magic link",
+    "typeUnknown": "Onbekend",
+    "statusSent": "Verstuurd",
+    "statusPending": "In afwachting",
+    "statusFailed": "Mislukt",
+    "statusUnknown": "Onbekend",
+    "noLogs": "Geen e-mail logs gevonden.",
+    "errorDetails": "Foutdetails"
   }
 }

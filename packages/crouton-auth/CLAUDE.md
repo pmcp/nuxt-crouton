@@ -89,6 +89,9 @@ const safeUrl = sanitizeRedirectUrl(redirectParam)  // '/' on external URLs
 - `Members`, `MemberRow`, `MemberInviteForm`
 - `Invitations`, `DeleteConfirm`
 
+### Admin Components
+- `EmailLogs` — Auth email log viewer with stats, filtering, and error details
+
 ### Sidebar Components
 - `AuthSidebar`, `TeamSection`, `UserMenu`
 
@@ -214,6 +217,16 @@ Located in `server/database/schema/auth.ts`:
 - `passkey` - WebAuthn credentials
 - `twoFactor` - 2FA settings
 - `teamSettings` - Team-specific settings (translations, AI keys, theme)
+- `authEmailLog` - Auth email audit log (verification, password reset, invitation, magic link)
+
+### Auth Email Log API
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/teams/[id]/email-logs` | GET | Admin | List email logs (filter by `type`, `status`; paginate with `limit`, `offset`) |
+| `/api/teams/[id]/email-logs/stats` | GET | Admin | Aggregate stats (total, sent, failed, pending, by type) |
+
+Logs are scoped to team member email addresses. The `auth-email-logger` Nitro plugin automatically records every `crouton:auth:email` hook emission.
 
 ### Team Settings Table
 
