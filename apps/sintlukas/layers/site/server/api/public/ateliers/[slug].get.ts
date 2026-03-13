@@ -3,6 +3,20 @@ import { contentAteliers, contentCategories, contentPersons, organization } from
 
 const TEAM_SLUG = 'sintlukas'
 
+/**
+ * Strip broken shortcode remnants from rendered HTML.
+ * The seed script's regex failed on `:dispatch{:data='{"download":["..."]}' type='downloads'}`
+ * because of nested braces, leaving `' type='downloads'}` or `' type='Link'}` in the text.
+ * Also removes empty `<p>` tags left behind after stripping.
+ */
+function cleanShortcodeRemnants(html: string): string {
+  return html
+    .replace(/&#39;\s*type=&#39;(?:downloads|Link)&#39;\}/g, '')
+    .replace(/'\s*type='(?:downloads|Link)'\}/g, '')
+    .replace(/<p>\s*&nbsp;\s*<\/p>/g, '')
+    .replace(/<p>\s*<\/p>/g, '')
+}
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
   if (!slug) {
@@ -59,8 +73,8 @@ export default defineEventHandler(async (event) => {
 
   return {
     ...atelier,
-    contentHtml: atelier.content ? renderTipTapToHtml(atelier.content) : '',
-    sidebarContentHtml: atelier.sidebarContent ? renderTipTapToHtml(atelier.sidebarContent) : '',
+    contentHtml: atelier.content ? cleanShortcodeRemnants(renderTipTapToHtml(atelier.content)) : '',
+    sidebarContentHtml: atelier.sidebarContent ? cleanShortcodeRemnants(renderTipTapToHtml(atelier.sidebarContent)) : '',
     categoryData,
     personsData
   }

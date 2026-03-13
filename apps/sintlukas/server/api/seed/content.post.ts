@@ -338,7 +338,8 @@ function markdownToTipTap(md: string): string {
   if (!md || !md.trim()) return doc()
 
   // Clean up: remove :dispatch directives (Nuxt Content components)
-  const cleaned = md.replace(/:dispatch\{[^}]*\}/g, '').trim()
+  // Handles nested braces in :data='{"key":"value"}' attributes
+  const cleaned = md.replace(/:dispatch\{(?:[^{}]|\{[^}]*\})*\}/g, '').trim()
 
   const rawBlocks = cleaned.split(/\n\n+/).filter(b => b.trim())
   const docNodes: TipTapNode[] = []

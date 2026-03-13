@@ -3,6 +3,18 @@ import { contentAteliers, contentCategories, contentPersons, organization } from
 
 const TEAM_SLUG = 'sintlukas'
 
+/**
+ * Strip broken shortcode remnants from rendered HTML.
+ * See [slug].get.ts for full explanation.
+ */
+function cleanShortcodeRemnants(html: string): string {
+  return html
+    .replace(/&#39;\s*type=&#39;(?:downloads|Link)&#39;\}/g, '')
+    .replace(/'\s*type='(?:downloads|Link)'\}/g, '')
+    .replace(/<p>\s*&nbsp;\s*<\/p>/g, '')
+    .replace(/<p>\s*<\/p>/g, '')
+}
+
 export default defineEventHandler(async () => {
   const db = useDB()
 
@@ -56,8 +68,8 @@ export default defineEventHandler(async () => {
 
   return ateliers.map((atelier: any) => ({
     ...atelier,
-    contentHtml: atelier.content ? renderTipTapToHtml(atelier.content) : '',
-    sidebarContentHtml: atelier.sidebarContent ? renderTipTapToHtml(atelier.sidebarContent) : '',
+    contentHtml: atelier.content ? cleanShortcodeRemnants(renderTipTapToHtml(atelier.content)) : '',
+    sidebarContentHtml: atelier.sidebarContent ? cleanShortcodeRemnants(renderTipTapToHtml(atelier.sidebarContent)) : '',
     categoryData: categoriesMap.get(atelier.category) || null,
     personsData: Array.isArray(atelier.persons)
       ? (atelier.persons as string[]).map(id => personsMap.get(id)).filter(Boolean)
