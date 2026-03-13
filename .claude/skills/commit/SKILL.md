@@ -74,7 +74,8 @@ Categorize the **relevant** files into logical groups. Each group = one commit.
 
 For each group:
 1. `git add <specific-files>`
-2. `git commit` with the message (use HEREDOC format, no Co-Authored-By)
+2. **Verify staged files** — run `git diff --cached --name-only` and review the list. If ANY file looks unrelated to the commit's intent (wrong scope, different feature, pre-existing change that snuck in), unstage it with `git reset HEAD <file>` before committing. This is the last line of defense against sweeping unrelated changes into a commit.
+3. `git commit` with the message (use HEREDOC format, no Co-Authored-By)
 
 **Do not wait for approval.** Commit immediately.
 
