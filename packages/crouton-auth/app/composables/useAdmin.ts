@@ -25,7 +25,7 @@ export function useAdmin() {
   async function sendPasswordReset(email: string) {
     loading.value = true
     try {
-      await authClient?.forgetPassword({ email, redirectTo: '/auth/reset-password' })
+      await authClient?.requestPasswordReset({ email, redirectTo: '/auth/reset-password' })
       notify.success(t('admin.passwordResetSent'), { description: t('admin.passwordResetSentDescription', { email }) })
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : t('admin.failedToSendPasswordReset')
