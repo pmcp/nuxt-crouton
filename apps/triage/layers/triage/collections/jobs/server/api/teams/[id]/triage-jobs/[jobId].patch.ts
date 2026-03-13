@@ -5,15 +5,21 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import type { TriageJob } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { jobId } = getRouterParams(event)
   if (!jobId) {
     throw createError({ status: 400, statusText: 'Missing job ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody<Partial<TriageJob>>(event)
 
-  return await updateTriageJob(jobId, team.id, user.id, {
+  const dbTimer = timing.start('db')
+  const result = await updateTriageJob(jobId, team.id, user.id, {
     discussionId: body.discussionId,
     flowInputId: body.flowInputId,
     status: body.status,
@@ -27,5 +33,7 @@ export default defineEventHandler(async (event) => {
     processingTime: body.processingTime,
     taskIds: body.taskIds,
     metadata: body.metadata
-  })
+  }, { role: membership.role })
+  dbTimer.end()
+  return result
 })

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection outputs
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageOutputs
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/triage-outputs
  * - Form component: TriageOutputsForm
  * - List component: TriageOutputsList
- * - Fields: flowId, outputType, domainFilter, isDefault, outputConfig, accountId, active
+ * - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -29,20 +29,20 @@ import { z } from 'zod'
 export const triageOutputSchema = z.object({
   flowId: z.string().min(1, 'flowId is required'),
   outputType: z.string().min(1, 'outputType is required'),
+  name: z.string().min(1, 'name is required'),
   domainFilter: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
   outputConfig: z.record(z.string(), z.any()).optional(),
-  accountId: z.string().optional(),
   active: z.boolean()
 })
 
 export const triageOutputsColumns = [
   { accessorKey: 'flowId', header: 'FlowId' },
   { accessorKey: 'outputType', header: 'OutputType' },
+  { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'domainFilter', header: 'DomainFilter' },
   { accessorKey: 'isDefault', header: 'IsDefault' },
   { accessorKey: 'outputConfig', header: 'OutputConfig' },
-  { accessorKey: 'accountId', header: 'AccountId' },
   { accessorKey: 'active', header: 'Active' }
 ]
 
@@ -55,13 +55,57 @@ const _triageOutputsConfig = {
   defaultValues: {
     flowId: '',
     outputType: '',
+    name: '',
     domainFilter: [],
     isDefault: false,
     outputConfig: {},
-    accountId: '',
     active: false
   },
   columns: triageOutputsColumns,
+  fields: [
+      {
+          "name": "flowId",
+          "type": "string",
+          "label": "Flow",
+          "area": "sidebar"
+      },
+      {
+          "name": "outputType",
+          "type": "string",
+          "label": "Output Type",
+          "area": "main"
+      },
+      {
+          "name": "name",
+          "type": "string",
+          "label": "Output Name",
+          "area": "main"
+      },
+      {
+          "name": "domainFilter",
+          "type": "array",
+          "label": "Domain Filter",
+          "area": "main"
+      },
+      {
+          "name": "isDefault",
+          "type": "boolean",
+          "label": "Default Output",
+          "area": "sidebar"
+      },
+      {
+          "name": "outputConfig",
+          "type": "json",
+          "label": "Output Configuration",
+          "area": "main"
+      },
+      {
+          "name": "active",
+          "type": "boolean",
+          "label": "Active",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

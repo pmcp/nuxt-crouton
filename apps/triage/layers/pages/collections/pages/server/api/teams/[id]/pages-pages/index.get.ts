@@ -4,13 +4,23 @@ import { getAllPagesPages, getPagesPagesByIds } from '../../../../database/queri
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const query = getQuery(event)
+
+  const dbTimer = timing.start('db')
   if (query.ids) {
     const ids = String(query.ids).split(',')
-    return await getPagesPagesByIds(team.id, ids)
+    const result = await getPagesPagesByIds(team.id, ids)
+    dbTimer.end()
+    return result
   }
 
-  return await getAllPagesPages(team.id)
+  const result = await getAllPagesPages(team.id)
+  dbTimer.end()
+  return result
 })

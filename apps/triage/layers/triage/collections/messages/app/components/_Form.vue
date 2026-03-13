@@ -2,7 +2,7 @@
   @crouton-generated
   @collection messages
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for messages collection
@@ -192,24 +192,24 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.receivedAt) {
-    initialValues.receivedAt = new Date(initialValues.receivedAt as any)
+    initialValues.receivedAt = new Date(initialValues.receivedAt)
   }
   if (initialValues.forwardedAt) {
-    initialValues.forwardedAt = new Date(initialValues.forwardedAt as any)
+    initialValues.forwardedAt = new Date(initialValues.forwardedAt)
   }
 }
 
-const state = ref<TriageMessageFormData & { id?: string | null }>(initialValues as any)
+const state = ref<TriageMessageFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.receivedAt instanceof Date) {
-      ;(serializedData as any).receivedAt = serializedData.receivedAt.toISOString()
+      serializedData.receivedAt = serializedData.receivedAt.toISOString()
     }
     if (serializedData.forwardedAt instanceof Date) {
-      ;(serializedData as any).forwardedAt = serializedData.forwardedAt.toISOString()
+      serializedData.forwardedAt = serializedData.forwardedAt.toISOString()
     }
 
     if (props.action === 'create') {

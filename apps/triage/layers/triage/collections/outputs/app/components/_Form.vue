@@ -2,14 +2,14 @@
   @crouton-generated
   @collection outputs
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for outputs collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/triage-outputs
   - Zod schema: useTriageOutputs() composable
-  - Fields: flowId, outputType, domainFilter, isDefault, outputConfig, accountId, active
+  - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -43,6 +43,9 @@
       <div v-show="!tabs || activeSection === 'basic'" class="flex flex-col gap-4 p-1">
         <UFormField label="OutputType" name="outputType" class="not-last:pb-4">
           <UInput v-model="state.outputType" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField label="Name" name="name" class="not-last:pb-4">
+          <UInput v-model="state.name" class="w-full" size="xl" />
         </UFormField>
       </div>
 
@@ -88,17 +91,6 @@
       <div class="flex flex-col gap-4 p-1">
         <UFormField label="IsDefault" name="isDefault" class="not-last:pb-4">
           <UCheckbox v-model="state.isDefault" />
-        </UFormField>
-      </div>
-
-      <div class="flex flex-col gap-4 p-1">
-        <UFormField label="AccountId" name="accountId" class="not-last:pb-4">
-          <CroutonFormReferenceSelect
-            :model-value="(state.accountId ?? null) as any"
-            @update:model-value="state.accountId = $event as any"
-            collection="triageAccounts"
-            label="AccountId"
-          />
         </UFormField>
       </div>
 
@@ -149,6 +141,7 @@ const activeSection = ref('basic')
 // Map field names to their tab groups for error tracking
 const fieldToGroup: Record<string, string> = {
   'outputType': 'basic',
+  'name': 'basic',
   'domainFilter': 'routing',
   'outputConfig': 'config'
 }
@@ -191,7 +184,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<TriageOutputFormData & { id?: string | null }>(initialValues as any)
+const state = ref<TriageOutputFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

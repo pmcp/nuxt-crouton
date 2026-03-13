@@ -134,24 +134,28 @@ export async function createPagesPage(data: NewPagesPage) {
 export async function updatePagesPage(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<PagesPage>
+  userId: string,
+  updates: Partial<PagesPage>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.pagesPages.id, recordId),
+    eq(tables.pagesPages.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.pagesPages.owner, userId))
+  }
 
   const [page] = await (db as any)
     .update(tables.pagesPages)
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.pagesPages.id, recordId),
-        eq(tables.pagesPages.teamId, teamId),
-        eq(tables.pagesPages.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!page) {
@@ -167,19 +171,23 @@ export async function updatePagesPage(
 export async function deletePagesPage(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.pagesPages.id, recordId),
+    eq(tables.pagesPages.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.pagesPages.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.pagesPages)
-    .where(
-      and(
-        eq(tables.pagesPages.id, recordId),
-        eq(tables.pagesPages.teamId, teamId),
-        eq(tables.pagesPages.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

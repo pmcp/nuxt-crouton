@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection inputs
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Main interface: TriageInput
  * - Form data type: TriageInputFormData
  * - New item type: NewTriageInput
  * - Form props: TriageInputFormProps
- * - Fields: flowId, sourceType, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
+ * - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, active
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -29,13 +29,13 @@ export interface TriageInput {
   owner: string
   flowId: string
   sourceType: string
+  name: string
   apiToken?: string
   webhookUrl?: string
   webhookSecret?: string
   emailAddress?: string
   emailSlug?: string
   sourceMetadata?: Record<string, any>
-  accountId?: string
   active: boolean
   createdAt: Date
   updatedAt: Date

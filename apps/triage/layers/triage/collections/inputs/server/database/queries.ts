@@ -4,7 +4,6 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { TriageInput, NewTriageInput } from '../../types'
 import * as flowsSchema from '../../../flows/server/database/schema'
-import * as accountsSchema from '../../../accounts/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllTriageInputs(teamId: string) {
@@ -18,7 +17,6 @@ export async function getAllTriageInputs(teamId: string) {
     .select({
       ...tables.triageInputs,
       flowIdData: flowsSchema.triageFlows,
-      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -40,7 +38,6 @@ export async function getAllTriageInputs(teamId: string) {
     } as any)
     .from(tables.triageInputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageInputs.flowId, flowsSchema.triageFlows.id))
-    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageInputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageInputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageInputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageInputs.updatedBy, updatedByUser.id))
@@ -77,7 +74,6 @@ export async function getTriageInputsByIds(teamId: string, inputIds: string[]) {
     .select({
       ...tables.triageInputs,
       flowIdData: flowsSchema.triageFlows,
-      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -99,7 +95,6 @@ export async function getTriageInputsByIds(teamId: string, inputIds: string[]) {
     } as any)
     .from(tables.triageInputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageInputs.flowId, flowsSchema.triageFlows.id))
-    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageInputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageInputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageInputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageInputs.updatedBy, updatedByUser.id))
@@ -144,24 +139,28 @@ export async function createTriageInput(data: NewTriageInput) {
 export async function updateTriageInput(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<TriageInput>
+  userId: string,
+  updates: Partial<TriageInput>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageInputs.id, recordId),
+    eq(tables.triageInputs.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageInputs.owner, userId))
+  }
 
   const [input] = await (db as any)
     .update(tables.triageInputs)
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.triageInputs.id, recordId),
-        eq(tables.triageInputs.teamId, teamId),
-        eq(tables.triageInputs.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!input) {
@@ -177,19 +176,23 @@ export async function updateTriageInput(
 export async function deleteTriageInput(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageInputs.id, recordId),
+    eq(tables.triageInputs.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageInputs.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.triageInputs)
-    .where(
-      and(
-        eq(tables.triageInputs.id, recordId),
-        eq(tables.triageInputs.teamId, teamId),
-        eq(tables.triageInputs.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

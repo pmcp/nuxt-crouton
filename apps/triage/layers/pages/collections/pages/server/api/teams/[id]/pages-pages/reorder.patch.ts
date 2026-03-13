@@ -4,7 +4,11 @@ import { reorderSiblingsPagesPages } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -22,5 +26,8 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return await reorderSiblingsPagesPages(team.id, body.updates)
+  const dbTimer = timing.start('db')
+  const result = await reorderSiblingsPagesPages(team.id, body.updates)
+  dbTimer.end()
+  return result
 })

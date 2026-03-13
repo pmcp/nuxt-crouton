@@ -4,13 +4,23 @@ import { getAllTriageDiscussions, getTriageDiscussionsByIds } from '../../../../
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const query = getQuery(event)
+
+  const dbTimer = timing.start('db')
   if (query.ids) {
     const ids = String(query.ids).split(',')
-    return await getTriageDiscussionsByIds(team.id, ids)
+    const result = await getTriageDiscussionsByIds(team.id, ids)
+    dbTimer.end()
+    return result
   }
 
-  return await getAllTriageDiscussions(team.id)
+  const result = await getAllTriageDiscussions(team.id)
+  dbTimer.end()
+  return result
 })

@@ -4,7 +4,6 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { TriageOutput, NewTriageOutput } from '../../types'
 import * as flowsSchema from '../../../flows/server/database/schema'
-import * as accountsSchema from '../../../accounts/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 export async function getAllTriageOutputs(teamId: string) {
@@ -18,7 +17,6 @@ export async function getAllTriageOutputs(teamId: string) {
     .select({
       ...tables.triageOutputs,
       flowIdData: flowsSchema.triageFlows,
-      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -40,7 +38,6 @@ export async function getAllTriageOutputs(teamId: string) {
     } as any)
     .from(tables.triageOutputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageOutputs.flowId, flowsSchema.triageFlows.id))
-    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageOutputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageOutputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageOutputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageOutputs.updatedBy, updatedByUser.id))
@@ -77,7 +74,6 @@ export async function getTriageOutputsByIds(teamId: string, outputIds: string[])
     .select({
       ...tables.triageOutputs,
       flowIdData: flowsSchema.triageFlows,
-      accountIdData: accountsSchema.triageAccounts,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -99,7 +95,6 @@ export async function getTriageOutputsByIds(teamId: string, outputIds: string[])
     } as any)
     .from(tables.triageOutputs)
     .leftJoin(flowsSchema.triageFlows, eq(tables.triageOutputs.flowId, flowsSchema.triageFlows.id))
-    .leftJoin(accountsSchema.triageAccounts, eq(tables.triageOutputs.accountId, accountsSchema.triageAccounts.id))
     .leftJoin(ownerUser, eq(tables.triageOutputs.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.triageOutputs.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.triageOutputs.updatedBy, updatedByUser.id))
@@ -144,24 +139,28 @@ export async function createTriageOutput(data: NewTriageOutput) {
 export async function updateTriageOutput(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<TriageOutput>
+  userId: string,
+  updates: Partial<TriageOutput>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageOutputs.id, recordId),
+    eq(tables.triageOutputs.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageOutputs.owner, userId))
+  }
 
   const [output] = await (db as any)
     .update(tables.triageOutputs)
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.triageOutputs.id, recordId),
-        eq(tables.triageOutputs.teamId, teamId),
-        eq(tables.triageOutputs.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!output) {
@@ -177,19 +176,23 @@ export async function updateTriageOutput(
 export async function deleteTriageOutput(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageOutputs.id, recordId),
+    eq(tables.triageOutputs.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageOutputs.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.triageOutputs)
-    .where(
-      and(
-        eq(tables.triageOutputs.id, recordId),
-        eq(tables.triageOutputs.teamId, teamId),
-        eq(tables.triageOutputs.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

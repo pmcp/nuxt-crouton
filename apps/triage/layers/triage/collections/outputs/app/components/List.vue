@@ -2,14 +2,14 @@
   @crouton-generated
   @collection outputs
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - List component for outputs collection
   - Collection name: triageOutputs
   - API endpoint: /api/teams/[id]/triage-outputs
   - Columns composable: useTriageOutputs()
-  - Column fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, accountId, active
+  - Column fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -41,13 +41,6 @@
         v-if="row.original.flowId"
         :id="row.original.flowId"
         collection="triageFlows"
-      />
-    </template>
-    <template #accountId-cell="{ row }">
-      <CroutonItemCardMini
-        v-if="row.original.accountId"
-        :id="row.original.accountId"
-        collection="triageAccounts"
       />
     </template>
     <template #domainFilter-cell="{ row }">

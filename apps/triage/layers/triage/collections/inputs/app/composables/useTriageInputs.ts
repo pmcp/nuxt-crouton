@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection inputs
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageInputs
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/triage-inputs
  * - Form component: TriageInputsForm
  * - List component: TriageInputsList
- * - Fields: flowId, sourceType, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
+ * - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, active
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -29,26 +29,26 @@ import { z } from 'zod'
 export const triageInputSchema = z.object({
   flowId: z.string().min(1, 'flowId is required'),
   sourceType: z.string().min(1, 'sourceType is required'),
+  name: z.string().min(1, 'name is required'),
   apiToken: z.string().optional(),
   webhookUrl: z.string().optional(),
   webhookSecret: z.string().optional(),
   emailAddress: z.string().optional(),
   emailSlug: z.string().optional(),
   sourceMetadata: z.record(z.string(), z.any()).optional(),
-  accountId: z.string().optional(),
   active: z.boolean()
 })
 
 export const triageInputsColumns = [
   { accessorKey: 'flowId', header: 'FlowId' },
   { accessorKey: 'sourceType', header: 'SourceType' },
+  { accessorKey: 'name', header: 'Name' },
   { accessorKey: 'apiToken', header: 'ApiToken' },
   { accessorKey: 'webhookUrl', header: 'WebhookUrl' },
   { accessorKey: 'webhookSecret', header: 'WebhookSecret' },
   { accessorKey: 'emailAddress', header: 'EmailAddress' },
   { accessorKey: 'emailSlug', header: 'EmailSlug' },
   { accessorKey: 'sourceMetadata', header: 'SourceMetadata' },
-  { accessorKey: 'accountId', header: 'AccountId' },
   { accessorKey: 'active', header: 'Active' }
 ]
 
@@ -61,16 +61,78 @@ const _triageInputsConfig = {
   defaultValues: {
     flowId: '',
     sourceType: '',
+    name: '',
     apiToken: '',
     webhookUrl: '',
     webhookSecret: '',
     emailAddress: '',
     emailSlug: '',
     sourceMetadata: {},
-    accountId: '',
     active: false
   },
   columns: triageInputsColumns,
+  fields: [
+      {
+          "name": "flowId",
+          "type": "string",
+          "label": "Flow",
+          "area": "sidebar"
+      },
+      {
+          "name": "sourceType",
+          "type": "string",
+          "label": "Source Type",
+          "area": "main"
+      },
+      {
+          "name": "name",
+          "type": "string",
+          "label": "Input Name",
+          "area": "main"
+      },
+      {
+          "name": "apiToken",
+          "type": "string",
+          "label": "API Token",
+          "area": "main"
+      },
+      {
+          "name": "webhookUrl",
+          "type": "string",
+          "label": "Webhook URL",
+          "area": "main"
+      },
+      {
+          "name": "webhookSecret",
+          "type": "string",
+          "label": "Webhook Secret",
+          "area": "main"
+      },
+      {
+          "name": "emailAddress",
+          "type": "string",
+          "label": "Email Address",
+          "area": "main"
+      },
+      {
+          "name": "emailSlug",
+          "type": "string",
+          "label": "Email Slug",
+          "area": "main"
+      },
+      {
+          "name": "sourceMetadata",
+          "type": "json",
+          "label": "Source Metadata",
+          "area": "sidebar"
+      },
+      {
+          "name": "active",
+          "type": "boolean",
+          "label": "Active",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

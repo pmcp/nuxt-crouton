@@ -5,15 +5,21 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import type { TriageDiscussion } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { discussionId } = getRouterParams(event)
   if (!discussionId) {
     throw createError({ status: 400, statusText: 'Missing discussion ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody<Partial<TriageDiscussion>>(event)
 
-  return await updateTriageDiscussion(discussionId, team.id, user.id, {
+  const dbTimer = timing.start('db')
+  const result = await updateTriageDiscussion(discussionId, team.id, user.id, {
     sourceType: body.sourceType,
     sourceThreadId: body.sourceThreadId,
     sourceUrl: body.sourceUrl,
@@ -34,5 +40,7 @@ export default defineEventHandler(async (event) => {
     rawPayload: body.rawPayload,
     metadata: body.metadata,
     processedAt: body.processedAt ? new Date(body.processedAt) : body.processedAt
-  })
+  }, { role: membership.role })
+  dbTimer.end()
+  return result
 })

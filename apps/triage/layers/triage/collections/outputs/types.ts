@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection outputs
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Main interface: TriageOutput
  * - Form data type: TriageOutputFormData
  * - New item type: NewTriageOutput
  * - Form props: TriageOutputFormProps
- * - Fields: flowId, outputType, domainFilter, isDefault, outputConfig, accountId, active
+ * - Fields: flowId, outputType, name, domainFilter, isDefault, outputConfig, active
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -29,10 +29,10 @@ export interface TriageOutput {
   owner: string
   flowId: string
   outputType: string
+  name: string
   domainFilter?: string[]
   isDefault?: boolean
   outputConfig?: Record<string, any>
-  accountId?: string
   active: boolean
   createdAt: Date
   updatedAt: Date

@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { sqliteTable, text, integer, real, customType } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, customType, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 // Custom JSON column that handles NULL values gracefully during LEFT JOINs
 const jsonColumn = customType<any>({
@@ -30,7 +30,7 @@ export const triageTasks = sqliteTable('triage_tasks', {
   order: integer('order').notNull().$default(() => 0),
   discussionId: text('discussionId').notNull(),
   syncJobId: text('syncJobId').notNull(),
-  notionPageId: text('notionPageId').notNull().unique(),
+  notionPageId: text('notionPageId').notNull(),
   notionPageUrl: text('notionPageUrl').notNull(),
   title: text('title').notNull(),
   description: text('description'),
@@ -47,4 +47,6 @@ export const triageTasks = sqliteTable('triage_tasks', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),
   createdBy: text('createdBy').notNull(),
   updatedBy: text('updatedBy').notNull()
-})
+}, (table) => [
+  uniqueIndex('triage_tasks_team_notion_page_id_idx').on(table.teamId, table.notionPageId)
+])

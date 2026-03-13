@@ -4,11 +4,19 @@ import { deletePagesPage } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { pageId } = getRouterParams(event)
   if (!pageId) {
     throw createError({ status: 400, statusText: 'Missing page ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
 
-  return await deletePagesPage(pageId, team.id, user.id)
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
+
+  const dbTimer = timing.start('db')
+  const result = await deletePagesPage(pageId, team.id, user.id, { role: membership.role })
+  dbTimer.end()
+  return result
 })

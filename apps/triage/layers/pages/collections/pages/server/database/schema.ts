@@ -33,7 +33,7 @@ export const pagesPages = sqliteTable('pages_pages', {
   depth: integer('depth').notNull().$default(() => 0),
   order: integer('order').notNull().$default(() => 0),
   title: text('title'),
-  slug: text('slug').notNull(),
+  slug: text('slug'),
   pageType: text('pageType').notNull(),
   content: text('content'),
   config: jsonColumn('config').$default(() => ({})),
@@ -44,7 +44,6 @@ export const pagesPages = sqliteTable('pages_pages', {
   layout: text('layout'),
   seoTitle: text('seoTitle'),
   seoDescription: text('seoDescription'),
-  translations: jsonColumn('translations'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

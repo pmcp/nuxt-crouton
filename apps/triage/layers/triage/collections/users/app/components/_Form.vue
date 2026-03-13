@@ -2,7 +2,7 @@
   @crouton-generated
   @collection users
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for users collection

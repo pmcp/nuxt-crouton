@@ -4,7 +4,11 @@ import { createTriageJob } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team, user } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -19,11 +23,14 @@ export default defineEventHandler(async (event) => {
   if (dataWithoutId.completedAt) {
     dataWithoutId.completedAt = new Date(dataWithoutId.completedAt)
   }
-  return await createTriageJob({
+  const dbTimer = timing.start('db')
+  const result = await createTriageJob({
     ...dataWithoutId,
     teamId: team.id,
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id
   })
+  dbTimer.end()
+  return result
 })

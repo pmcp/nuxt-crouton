@@ -2,14 +2,14 @@
   @crouton-generated
   @collection inputs
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for inputs collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/triage-inputs
   - Zod schema: useTriageInputs() composable
-  - Fields: flowId, sourceType, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, accountId, active
+  - Fields: flowId, sourceType, name, apiToken, webhookUrl, webhookSecret, emailAddress, emailSlug, sourceMetadata, active
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -43,6 +43,9 @@
       <div v-show="!tabs || activeSection === 'basic'" class="flex flex-col gap-4 p-1">
         <UFormField label="SourceType" name="sourceType" class="not-last:pb-4">
           <UInput v-model="state.sourceType" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField label="Name" name="name" class="not-last:pb-4">
+          <UInput v-model="state.name" class="w-full" size="xl" />
         </UFormField>
       </div>
 
@@ -97,17 +100,6 @@
       </div>
 
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="AccountId" name="accountId" class="not-last:pb-4">
-          <CroutonFormReferenceSelect
-            :model-value="(state.accountId ?? null) as any"
-            @update:model-value="state.accountId = $event as any"
-            collection="triageAccounts"
-            label="AccountId"
-          />
-        </UFormField>
-      </div>
-
-      <div class="flex flex-col gap-4 p-1">
         <UFormField label="Active" name="active" class="not-last:pb-4">
           <UCheckbox v-model="state.active" />
         </UFormField>
@@ -155,6 +147,7 @@ const activeSection = ref('basic')
 // Map field names to their tab groups for error tracking
 const fieldToGroup: Record<string, string> = {
   'sourceType': 'basic',
+  'name': 'basic',
   'apiToken': 'credentials',
   'webhookUrl': 'webhook',
   'webhookSecret': 'webhook',
@@ -200,7 +193,7 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<TriageInputFormData & { id?: string | null }>(initialValues as any)
+const state = ref<TriageInputFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {

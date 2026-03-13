@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection jobs
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageJobs
@@ -80,6 +80,87 @@ const _triageJobsConfig = {
     metadata: {}
   },
   columns: triageJobsColumns,
+  fields: [
+      {
+          "name": "discussionId",
+          "type": "string",
+          "label": "Discussion",
+          "area": "sidebar"
+      },
+      {
+          "name": "flowInputId",
+          "type": "string",
+          "label": "Flow Input",
+          "area": "sidebar"
+      },
+      {
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "main",
+          "displayAs": "badge"
+      },
+      {
+          "name": "stage",
+          "type": "string",
+          "label": "Current Stage",
+          "area": "main"
+      },
+      {
+          "name": "attempts",
+          "type": "number",
+          "label": "Attempts",
+          "area": "sidebar"
+      },
+      {
+          "name": "maxAttempts",
+          "type": "number",
+          "label": "Max Attempts",
+          "area": "sidebar"
+      },
+      {
+          "name": "error",
+          "type": "text",
+          "label": "Error Message",
+          "area": "main"
+      },
+      {
+          "name": "errorStack",
+          "type": "text",
+          "label": "Error Stack",
+          "area": "sidebar"
+      },
+      {
+          "name": "startedAt",
+          "type": "date",
+          "label": "Started At",
+          "area": "sidebar"
+      },
+      {
+          "name": "completedAt",
+          "type": "date",
+          "label": "Completed At",
+          "area": "sidebar"
+      },
+      {
+          "name": "processingTime",
+          "type": "number",
+          "label": "Processing Time (ms)",
+          "area": "sidebar"
+      },
+      {
+          "name": "taskIds",
+          "type": "array",
+          "label": "Created Task IDs",
+          "area": "sidebar"
+      },
+      {
+          "name": "metadata",
+          "type": "json",
+          "label": "Metadata",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

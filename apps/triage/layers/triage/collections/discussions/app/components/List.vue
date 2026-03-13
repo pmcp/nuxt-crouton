@@ -2,7 +2,7 @@
   @crouton-generated
   @collection discussions
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - List component for discussions collection

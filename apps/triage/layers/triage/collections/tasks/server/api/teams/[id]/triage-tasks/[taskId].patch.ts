@@ -5,15 +5,21 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import type { TriageTask } from '../../../../../types'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
   const { taskId } = getRouterParams(event)
   if (!taskId) {
     throw createError({ status: 400, statusText: 'Missing task ID' })
   }
-  const { team, user } = await resolveTeamAndCheckMembership(event)
+
+  const authTimer = timing.start('auth')
+  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody<Partial<TriageTask>>(event)
 
-  return await updateTriageTask(taskId, team.id, user.id, {
+  const dbTimer = timing.start('db')
+  const result = await updateTriageTask(taskId, team.id, user.id, {
     discussionId: body.discussionId,
     syncJobId: body.syncJobId,
     notionPageId: body.notionPageId,
@@ -28,5 +34,7 @@ export default defineEventHandler(async (event) => {
     isMultiTaskChild: body.isMultiTaskChild,
     taskIndex: body.taskIndex,
     metadata: body.metadata
-  })
+  }, { role: membership.role })
+  dbTimer.end()
+  return result
 })

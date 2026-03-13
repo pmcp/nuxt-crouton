@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection messages
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageMessages
@@ -34,7 +34,7 @@ export const triageMessageSchema = z.object({
   subject: z.string().min(1, 'subject is required'),
   htmlBody: z.string().optional(),
   textBody: z.string().optional(),
-  receivedAt: z.date({ error: 'receivedAt is required' }),
+  receivedAt: z.date({ required_error: 'receivedAt is required' }),
   read: z.boolean().optional(),
   forwardedTo: z.string().optional(),
   forwardedAt: z.date().optional(),
@@ -77,6 +77,81 @@ const _triageMessagesConfig = {
     resendEmailId: ''
   },
   columns: triageMessagesColumns,
+  fields: [
+      {
+          "name": "flowInputId",
+          "type": "string",
+          "label": "Flow Input",
+          "area": "sidebar"
+      },
+      {
+          "name": "messageType",
+          "type": "string",
+          "label": "Message Type",
+          "area": "sidebar",
+          "displayAs": "badge"
+      },
+      {
+          "name": "from",
+          "type": "string",
+          "label": "From",
+          "area": "main"
+      },
+      {
+          "name": "to",
+          "type": "string",
+          "label": "To",
+          "area": "main"
+      },
+      {
+          "name": "subject",
+          "type": "string",
+          "label": "Subject",
+          "area": "main"
+      },
+      {
+          "name": "htmlBody",
+          "type": "text",
+          "label": "HTML Body",
+          "area": "main"
+      },
+      {
+          "name": "textBody",
+          "type": "text",
+          "label": "Text Body",
+          "area": "main"
+      },
+      {
+          "name": "receivedAt",
+          "type": "date",
+          "label": "Received At",
+          "area": "sidebar"
+      },
+      {
+          "name": "read",
+          "type": "boolean",
+          "label": "Read",
+          "area": "sidebar"
+      },
+      {
+          "name": "forwardedTo",
+          "type": "string",
+          "label": "Forwarded To",
+          "area": "sidebar"
+      },
+      {
+          "name": "forwardedAt",
+          "type": "date",
+          "label": "Forwarded At",
+          "area": "sidebar"
+      },
+      {
+          "name": "resendEmailId",
+          "type": "string",
+          "label": "Resend Email ID",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

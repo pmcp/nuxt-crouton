@@ -5,7 +5,11 @@ import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
   const { team, user } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
 
   const body = await readBody(event)
 
@@ -31,7 +35,8 @@ export default defineEventHandler(async (event) => {
   if (dataWithoutId.publishedAt) {
     dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
   }
-  return await createPagesPage({
+  const dbTimer = timing.start('db')
+  const result = await createPagesPage({
     ...dataWithoutId,
     id: recordId,
     path,
@@ -41,4 +46,6 @@ export default defineEventHandler(async (event) => {
     createdBy: user.id,
     updatedBy: user.id
   })
+  dbTimer.end()
+  return result
 })

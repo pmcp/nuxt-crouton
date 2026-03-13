@@ -134,24 +134,28 @@ export async function createTriageUser(data: NewTriageUser) {
 export async function updateTriageUser(
   recordId: string,
   teamId: string,
-  ownerId: string,
-  updates: Partial<TriageUser>
+  userId: string,
+  updates: Partial<TriageUser>,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageUsers.id, recordId),
+    eq(tables.triageUsers.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageUsers.owner, userId))
+  }
 
   const [user] = await (db as any)
     .update(tables.triageUsers)
     .set({
       ...updates,
-      updatedBy: ownerId
+      updatedBy: userId
     })
-    .where(
-      and(
-        eq(tables.triageUsers.id, recordId),
-        eq(tables.triageUsers.teamId, teamId),
-        eq(tables.triageUsers.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!user) {
@@ -167,19 +171,23 @@ export async function updateTriageUser(
 export async function deleteTriageUser(
   recordId: string,
   teamId: string,
-  ownerId: string
+  userId: string,
+  options?: { role?: string }
 ) {
   const db = useDB()
+  const isAdmin = options?.role === 'admin' || options?.role === 'owner'
+
+  const conditions = [
+    eq(tables.triageUsers.id, recordId),
+    eq(tables.triageUsers.teamId, teamId),
+  ]
+  if (!isAdmin) {
+    conditions.push(eq(tables.triageUsers.owner, userId))
+  }
 
   const [deleted] = await (db as any)
     .delete(tables.triageUsers)
-    .where(
-      and(
-        eq(tables.triageUsers.id, recordId),
-        eq(tables.triageUsers.teamId, teamId),
-        eq(tables.triageUsers.owner, ownerId)
-      )
-    )
+    .where(and(...conditions))
     .returning()
 
   if (!deleted) {

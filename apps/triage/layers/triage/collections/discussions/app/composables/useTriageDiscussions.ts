@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection discussions
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageDiscussions
@@ -101,6 +101,129 @@ const _triageDiscussionsConfig = {
     processedAt: null
   },
   columns: triageDiscussionsColumns,
+  fields: [
+      {
+          "name": "sourceType",
+          "type": "string",
+          "label": "Source Type",
+          "area": "sidebar"
+      },
+      {
+          "name": "sourceThreadId",
+          "type": "string",
+          "label": "Source Thread ID",
+          "area": "sidebar"
+      },
+      {
+          "name": "sourceUrl",
+          "type": "string",
+          "label": "Source URL",
+          "area": "main"
+      },
+      {
+          "name": "flowInputId",
+          "type": "string",
+          "label": "Flow Input",
+          "area": "sidebar"
+      },
+      {
+          "name": "title",
+          "type": "string",
+          "label": "Title",
+          "area": "main"
+      },
+      {
+          "name": "content",
+          "type": "text",
+          "label": "Content",
+          "area": "main"
+      },
+      {
+          "name": "authorHandle",
+          "type": "string",
+          "label": "Author Handle",
+          "area": "main"
+      },
+      {
+          "name": "participants",
+          "type": "array",
+          "label": "Participants",
+          "area": "sidebar"
+      },
+      {
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "sidebar",
+          "displayAs": "badge"
+      },
+      {
+          "name": "threadData",
+          "type": "json",
+          "label": "Thread Data",
+          "area": "main"
+      },
+      {
+          "name": "totalMessages",
+          "type": "number",
+          "label": "Total Messages",
+          "area": "sidebar"
+      },
+      {
+          "name": "aiSummary",
+          "type": "text",
+          "label": "AI Summary",
+          "area": "main"
+      },
+      {
+          "name": "aiKeyPoints",
+          "type": "array",
+          "label": "AI Key Points",
+          "area": "main"
+      },
+      {
+          "name": "aiTasks",
+          "type": "json",
+          "label": "Detected Tasks",
+          "area": "main"
+      },
+      {
+          "name": "isMultiTask",
+          "type": "boolean",
+          "label": "Is Multi-Task",
+          "area": "sidebar"
+      },
+      {
+          "name": "syncJobId",
+          "type": "string",
+          "label": "Sync Job",
+          "area": "sidebar"
+      },
+      {
+          "name": "notionTaskIds",
+          "type": "array",
+          "label": "Notion Task IDs",
+          "area": "sidebar"
+      },
+      {
+          "name": "rawPayload",
+          "type": "json",
+          "label": "Raw Payload",
+          "area": "sidebar"
+      },
+      {
+          "name": "metadata",
+          "type": "json",
+          "label": "Metadata",
+          "area": "sidebar"
+      },
+      {
+          "name": "processedAt",
+          "type": "date",
+          "label": "Processed At",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection flows
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageFlows
@@ -77,6 +77,80 @@ const _triageFlowsConfig = {
     onboardingComplete: false
   },
   columns: triageFlowsColumns,
+  fields: [
+      {
+          "name": "name",
+          "type": "string",
+          "label": "Flow Name",
+          "area": "main"
+      },
+      {
+          "name": "description",
+          "type": "text",
+          "label": "Description",
+          "area": "main"
+      },
+      {
+          "name": "availableDomains",
+          "type": "array",
+          "label": "Available Domains",
+          "area": "main"
+      },
+      {
+          "name": "aiEnabled",
+          "type": "boolean",
+          "label": "AI Enabled",
+          "area": "sidebar"
+      },
+      {
+          "name": "anthropicApiKey",
+          "type": "string",
+          "label": "Claude API Key",
+          "area": "main"
+      },
+      {
+          "name": "anthropicApiKeyHint",
+          "type": "string",
+          "label": "API Key Hint",
+          "area": "sidebar"
+      },
+      {
+          "name": "aiSummaryPrompt",
+          "type": "text",
+          "label": "AI Summary Prompt",
+          "area": "main"
+      },
+      {
+          "name": "aiTaskPrompt",
+          "type": "text",
+          "label": "AI Task Detection Prompt",
+          "area": "main"
+      },
+      {
+          "name": "replyPersonality",
+          "type": "string",
+          "label": "Reply Personality",
+          "area": "main"
+      },
+      {
+          "name": "personalityIcon",
+          "type": "string",
+          "label": "Personality Icon",
+          "area": "main"
+      },
+      {
+          "name": "active",
+          "type": "boolean",
+          "label": "Active",
+          "area": "sidebar"
+      },
+      {
+          "name": "onboardingComplete",
+          "type": "boolean",
+          "label": "Onboarding Complete",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

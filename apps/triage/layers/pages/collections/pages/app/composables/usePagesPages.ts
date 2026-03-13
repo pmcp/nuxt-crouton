@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -86,6 +86,80 @@ const _pagesPagesConfig = {
     depthField: 'depth',
     orderField: 'order'
   },
+  fields: [
+      {
+          "name": "title",
+          "type": "string",
+          "label": "Title",
+          "area": "main"
+      },
+      {
+          "name": "slug",
+          "type": "string",
+          "label": "URL Slug",
+          "area": "main"
+      },
+      {
+          "name": "pageType",
+          "type": "string",
+          "label": "Page Type",
+          "area": "meta"
+      },
+      {
+          "name": "content",
+          "type": "text",
+          "label": "Content",
+          "area": "main"
+      },
+      {
+          "name": "config",
+          "type": "json",
+          "label": "Page Configuration",
+          "area": "meta"
+      },
+      {
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "sidebar"
+      },
+      {
+          "name": "visibility",
+          "type": "string",
+          "label": "Visibility",
+          "area": "sidebar"
+      },
+      {
+          "name": "publishedAt",
+          "type": "date",
+          "label": "Published At",
+          "area": "sidebar"
+      },
+      {
+          "name": "showInNavigation",
+          "type": "boolean",
+          "label": "Show in Navigation",
+          "area": "sidebar"
+      },
+      {
+          "name": "layout",
+          "type": "string",
+          "label": "Layout",
+          "area": "sidebar"
+      },
+      {
+          "name": "seoTitle",
+          "type": "string",
+          "label": "SEO Title",
+          "area": "meta"
+      },
+      {
+          "name": "seoDescription",
+          "type": "string",
+          "label": "SEO Description",
+          "area": "meta"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

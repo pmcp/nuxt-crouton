@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection tasks
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageTasks
@@ -83,6 +83,93 @@ const _triageTasksConfig = {
     metadata: {}
   },
   columns: triageTasksColumns,
+  fields: [
+      {
+          "name": "discussionId",
+          "type": "string",
+          "label": "Discussion",
+          "area": "sidebar"
+      },
+      {
+          "name": "syncJobId",
+          "type": "string",
+          "label": "Sync Job",
+          "area": "sidebar"
+      },
+      {
+          "name": "notionPageId",
+          "type": "string",
+          "label": "Notion Page ID",
+          "area": "sidebar"
+      },
+      {
+          "name": "notionPageUrl",
+          "type": "string",
+          "label": "Notion Page URL",
+          "area": "main"
+      },
+      {
+          "name": "title",
+          "type": "string",
+          "label": "Task Title",
+          "area": "main"
+      },
+      {
+          "name": "description",
+          "type": "text",
+          "label": "Task Description",
+          "area": "main"
+      },
+      {
+          "name": "status",
+          "type": "string",
+          "label": "Status",
+          "area": "sidebar",
+          "displayAs": "badge"
+      },
+      {
+          "name": "priority",
+          "type": "string",
+          "label": "Priority",
+          "area": "sidebar"
+      },
+      {
+          "name": "assignee",
+          "type": "string",
+          "label": "Assignee Handle",
+          "area": "sidebar"
+      },
+      {
+          "name": "summary",
+          "type": "text",
+          "label": "AI Summary",
+          "area": "main"
+      },
+      {
+          "name": "sourceUrl",
+          "type": "string",
+          "label": "Source URL",
+          "area": "main"
+      },
+      {
+          "name": "isMultiTaskChild",
+          "type": "boolean",
+          "label": "Is Multi-Task Child",
+          "area": "sidebar"
+      },
+      {
+          "name": "taskIndex",
+          "type": "number",
+          "label": "Task Index",
+          "area": "sidebar"
+      },
+      {
+          "name": "metadata",
+          "type": "json",
+          "label": "Metadata",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection users
  * @layer triage
- * @generated 2026-02-11
+ * @generated 2026-03-10
  *
  * ## AI Context
  * - Composable: useTriageUsers
@@ -80,6 +80,86 @@ const _triageUsersConfig = {
     metadata: {}
   },
   columns: triageUsersColumns,
+  fields: [
+      {
+          "name": "sourceType",
+          "type": "string",
+          "label": "Source Type",
+          "area": "main"
+      },
+      {
+          "name": "sourceWorkspaceId",
+          "type": "string",
+          "label": "Source Workspace ID",
+          "area": "main"
+      },
+      {
+          "name": "sourceUserId",
+          "type": "string",
+          "label": "Source User ID",
+          "area": "main"
+      },
+      {
+          "name": "sourceUserEmail",
+          "type": "string",
+          "label": "Source User Email",
+          "area": "main"
+      },
+      {
+          "name": "sourceUserName",
+          "type": "string",
+          "label": "Source User Name",
+          "area": "main"
+      },
+      {
+          "name": "notionUserId",
+          "type": "string",
+          "label": "Notion User ID",
+          "area": "main"
+      },
+      {
+          "name": "notionUserName",
+          "type": "string",
+          "label": "Notion User Name",
+          "area": "main"
+      },
+      {
+          "name": "notionUserEmail",
+          "type": "string",
+          "label": "Notion User Email",
+          "area": "main"
+      },
+      {
+          "name": "mappingType",
+          "type": "string",
+          "label": "Mapping Type",
+          "area": "sidebar"
+      },
+      {
+          "name": "confidence",
+          "type": "number",
+          "label": "Confidence Score",
+          "area": "sidebar"
+      },
+      {
+          "name": "active",
+          "type": "boolean",
+          "label": "Active",
+          "area": "sidebar"
+      },
+      {
+          "name": "lastSyncedAt",
+          "type": "string",
+          "label": "Last Synced At",
+          "area": "sidebar"
+      },
+      {
+          "name": "metadata",
+          "type": "json",
+          "label": "Additional Metadata",
+          "area": "sidebar"
+      }
+  ],
 }
 
 // Add schema as non-enumerable property so klona skips it during cloning

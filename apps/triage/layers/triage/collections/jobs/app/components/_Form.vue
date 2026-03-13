@@ -2,7 +2,7 @@
   @crouton-generated
   @collection jobs
   @layer triage
-  @generated 2026-02-11
+  @generated 2026-03-10
 
   ## AI Context
   - Form component for jobs collection
@@ -213,24 +213,24 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 // Convert date strings to Date objects for date fields during editing
 if (props.action === 'update' && props.activeItem?.id) {
   if (initialValues.startedAt) {
-    initialValues.startedAt = new Date(initialValues.startedAt as any)
+    initialValues.startedAt = new Date(initialValues.startedAt)
   }
   if (initialValues.completedAt) {
-    initialValues.completedAt = new Date(initialValues.completedAt as any)
+    initialValues.completedAt = new Date(initialValues.completedAt)
   }
 }
 
-const state = ref<TriageJobFormData & { id?: string | null }>(initialValues as any)
+const state = ref<TriageJobFormData & { id?: string | null }>(initialValues)
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
     const serializedData = { ...state.value }
     if (serializedData.startedAt instanceof Date) {
-      ;(serializedData as any).startedAt = serializedData.startedAt.toISOString()
+      serializedData.startedAt = serializedData.startedAt.toISOString()
     }
     if (serializedData.completedAt instanceof Date) {
-      ;(serializedData as any).completedAt = serializedData.completedAt.toISOString()
+      serializedData.completedAt = serializedData.completedAt.toISOString()
     }
 
     if (props.action === 'create') {
