@@ -53,7 +53,11 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const isPublicContext = computed(() => !route.path.includes('/admin/'))
 
   // Pages config
-  const pagesConfig = (useRuntimeConfig().public?.croutonPages as any) as { defaultLocale?: string } | undefined
+  const runtimeConfig = useRuntimeConfig()
+  const pagesConfig = (runtimeConfig.public?.croutonPages as any) as { defaultLocale?: string } | undefined
+
+  // Default team slug from auth config (for locale/custom routing modes without auth)
+  const defaultTeamSlug = (runtimeConfig.public?.crouton as any)?.auth?.teams?.defaultTeamSlug as string | undefined
 
   // Locale with fallback — i18n locale may be empty during hydration
   const locale = computed(() => i18nLocale.value || pagesConfig?.defaultLocale || 'en')
@@ -70,7 +74,7 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return routeTeam.value || teamId.value || null
+    return routeTeam.value || teamId.value || defaultTeamSlug || null
   })
 
   // Fetch published pages for the team with locale for translated titles/slugs
@@ -160,11 +164,13 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     if (!pages.value || !Array.isArray(pages.value)) return []
 
     // Filter to only published pages that should show in navigation
+    // Footer pages are excluded — they are rendered separately via useFooterPage()
     const navPages = pages.value.filter((p: any) =>
       p.status === 'published' &&
       p.showInNavigation !== false &&
       p.visibility !== 'hidden' &&
-      p.visibility !== 'admin'
+      p.visibility !== 'admin' &&
+      p.pageType !== 'pages:footer'
     )
 
     // Build path prefix based on domain context (includes locale)
