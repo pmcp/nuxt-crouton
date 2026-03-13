@@ -78,6 +78,7 @@ export async function ensureServicesLoaded() {
     import('./dispatch-services/technical-spec'),
     import('./dispatch-services/ui-prototype'),
     import('./dispatch-services/research-agent'),
+    import('./dispatch-services/excalidraw'),
   ])
   _loaded = true
 }
