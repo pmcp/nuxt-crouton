@@ -483,6 +483,10 @@ provide('thinkgraph:copyContext', copyContext)
 provide('thinkgraph:openQuickAdd', openQuickAdd)
 provide('thinkgraph:openChat', openChat)
 provide('thinkgraph:dispatch', openDispatch)
+provide('thinkgraph:focusInPath', (nodeId: string) => {
+  selectedNodeId.value = nodeId
+  showPath.value = true
+})
 
 // Selected graph info
 const selectedGraph = computed(() =>

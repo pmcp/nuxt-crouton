@@ -23,6 +23,7 @@ const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('
 const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
 const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
 const openDispatchFn = inject<(nodeId: string) => void>('thinkgraph:dispatch', () => {})
+const focusInPathFn = inject<(nodeId: string) => void>('thinkgraph:focusInPath', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -204,6 +205,13 @@ function handlePasteChildren(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
     openQuickAddFn(decision.value.id)
+  }
+}
+
+function handleFocusInPath(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    focusInPathFn(decision.value.id)
   }
 }
 
@@ -403,6 +411,15 @@ function toggleStar(event: Event) {
         @click="handleDispatch"
       >
         <UIcon name="i-lucide-send" class="size-3.5" />
+      </button>
+
+      <!-- Focus in path -->
+      <button
+        class="decision-node__action"
+        title="Show in thinking path"
+        @click="handleFocusInPath"
+      >
+        <UIcon name="i-lucide-route" class="size-3.5" />
       </button>
 
       <!-- Copy context -->

@@ -74,6 +74,17 @@ async function handleCopyContext(nodeId: string) {
   setTimeout(() => { contextCopied.value = null }, 2000)
 }
 
+// Auto-scroll to selected node when it changes
+const scrollContainer = ref<HTMLElement | null>(null)
+
+watch(() => props.nodeId, (id) => {
+  if (!id) return
+  nextTick(() => {
+    const el = scrollContainer.value?.querySelector(`[data-node-id="${id}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+})
+
 // Quick add input
 const quickAddContent = ref('')
 const quickAddType = ref<'idea' | 'insight' | 'decision' | 'question'>('idea')
@@ -122,7 +133,7 @@ const quickAddTypes = [
     </div>
 
     <!-- Path content -->
-    <div v-else class="flex-1 overflow-y-auto">
+    <div v-else ref="scrollContainer" class="flex-1 overflow-y-auto">
       <!-- Ancestor chain -->
       <div class="px-3 pt-3 pb-1">
         <p class="text-[10px] font-semibold text-muted uppercase tracking-wider px-1 mb-2">Path</p>
@@ -131,6 +142,7 @@ const quickAddTypes = [
           <div
             v-for="(node, index) in ancestorChain"
             :key="node.id"
+            :data-node-id="node.id"
             class="relative"
             @mouseenter="hoveredNodeId = node.id"
             @mouseleave="hoveredNodeId = null"
