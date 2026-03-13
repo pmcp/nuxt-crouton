@@ -279,7 +279,7 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
   <UModal
     v-model:open="isOpen"
     :title="modalTitle"
-    :ui="{ content: 'sm:max-w-md', title: 'sr-only' }"
+    :ui="{ overlay: 'z-[60]', content: 'z-[60] sm:max-w-md', title: 'sr-only' }"
   >
     <template #content>
       <div class="p-6">
