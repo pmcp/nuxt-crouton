@@ -1,15 +1,18 @@
 import { z } from 'zod'
 import { getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
   description: 'Get a full overview of the thinking graph as a tree structure. Shows all nodes organized by their parent-child relationships. Use this to understand the full thinking landscape before making changes.',
   inputSchema: {
-    teamId: z.string().describe('Team ID'),
+    teamId: z.string().describe('Team ID or slug'),
+    graphId: z.string().optional().describe('Graph ID to filter by (if omitted, shows all nodes across all graphs)'),
     starredOnly: z.boolean().optional().default(false).describe('Only show starred nodes'),
   },
-  async handler({ teamId, starredOnly }) {
+  async handler({ teamId, graphId, starredOnly }) {
     try {
-      let all = await getAllThinkgraphDecisions(teamId)
+      const resolvedTeamId = await resolveTeamId(teamId)
+      let all = await getAllThinkgraphDecisions(resolvedTeamId, graphId)
 
       if (starredOnly) {
         all = all.filter((d: any) => d.starred)

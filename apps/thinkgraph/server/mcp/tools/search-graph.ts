@@ -1,17 +1,20 @@
 import { z } from 'zod'
 import { getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
   description: 'Search the thinking graph for nodes matching a query. Returns matching decisions with their context (parent chain, children, artifacts).',
   inputSchema: {
-    teamId: z.string().describe('Team ID'),
+    teamId: z.string().describe('Team ID or slug'),
+    graphId: z.string().optional().describe('Graph ID to filter by'),
     query: z.string().describe('Search text (matches against node content)'),
     nodeType: z.enum(['idea', 'insight', 'decision', 'question']).optional().describe('Filter by node type'),
     limit: z.number().optional().default(10).describe('Max results'),
   },
-  async handler({ teamId, query, nodeType, limit }) {
+  async handler({ teamId, graphId, query, nodeType, limit }) {
     try {
-      const all = await getAllThinkgraphDecisions(teamId)
+      const resolvedTeamId = await resolveTeamId(teamId)
+      const all = await getAllThinkgraphDecisions(resolvedTeamId, graphId)
       const q = query.toLowerCase()
 
       let matches = all.filter((d: any) =>

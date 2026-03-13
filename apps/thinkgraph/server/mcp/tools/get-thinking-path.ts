@@ -1,15 +1,18 @@
 import { z } from 'zod'
 import { getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
   description: 'Get the full thinking path for a node — its ancestor chain, siblings, children, and related context. Useful for understanding the reasoning behind a decision.',
   inputSchema: {
-    teamId: z.string().describe('Team ID'),
+    teamId: z.string().describe('Team ID or slug'),
+    graphId: z.string().optional().describe('Graph ID to filter by'),
     nodeId: z.string().describe('Decision node ID'),
   },
-  async handler({ teamId, nodeId }) {
+  async handler({ teamId, graphId, nodeId }) {
     try {
-      const all = await getAllThinkgraphDecisions(teamId)
+      const resolvedTeamId = await resolveTeamId(teamId)
+      const all = await getAllThinkgraphDecisions(resolvedTeamId, graphId)
       const target = all.find((d: any) => d.id === nodeId)
 
       if (!target) {
