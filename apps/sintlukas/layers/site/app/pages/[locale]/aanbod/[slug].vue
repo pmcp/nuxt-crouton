@@ -55,7 +55,7 @@ useHead({
     <div class="w-full relative mb-12 md:mb-16 z-0" :class="atelier.mainImage ? 'h-96' : 'h-60'">
       <img
         v-if="atelier.mainImage"
-        :src="`/images/${atelier.mainImage}`"
+        :src="atelier.mainImage"
         :alt="title"
         class="h-full w-full object-cover object-center relative z-20"
       />
@@ -120,7 +120,7 @@ useHead({
                 :key="idx"
                 class="aspect-square overflow-hidden bg-neutral-100"
               >
-                <img :src="`/images/${imgId}`" alt="" class="w-full h-full object-cover" />
+                <img :src="imgId" alt="" class="w-full h-full object-cover" />
               </div>
             </div>
           </div>

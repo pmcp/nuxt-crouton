@@ -80,7 +80,7 @@ const images = computed<string[]>(() => {
     <!-- Main image -->
     <div v-if="item.mainImage" class="mb-8 rounded-2xl overflow-hidden aspect-[21/9] bg-sintlukas-50">
       <img
-        :src="`/images/${item.mainImage}`"
+        :src="item.mainImage"
         :alt="title"
         class="w-full h-full object-cover"
       >
@@ -127,7 +127,7 @@ const images = computed<string[]>(() => {
               class="aspect-square rounded-xl overflow-hidden bg-neutral-100"
             >
               <img
-                :src="`/images/${imgId}`"
+                :src="imgId"
                 alt=""
                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               >

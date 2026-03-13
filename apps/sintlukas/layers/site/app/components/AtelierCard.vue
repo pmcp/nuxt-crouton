@@ -28,7 +28,7 @@ const link = computed(() => `/${props.locale}/aanbod/${props.slug}`)
           class="relative h-full w-full bg-cover bg-center"
           :style="{
             backgroundColor: categoryColor || '#3e8b6f',
-            backgroundImage: cardImage ? `url('/images/${cardImage}')` : undefined
+            backgroundImage: cardImage ? `url('${cardImage}')` : undefined
           }"
         >
           <div class="absolute z-20 top-0 left-0 w-full h-full flex justify-center items-center px-4 py-2 text-center">

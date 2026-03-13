@@ -12,7 +12,7 @@ defineProps<{
     <div class="size-32 mx-auto rounded-full overflow-hidden bg-neutral-100 mb-3">
       <img
         v-if="image"
-        :src="`/images/${image}`"
+        :src="image"
         :alt="`${firstName} ${lastName}`"
         class="size-full object-cover group-hover:scale-105 transition-transform duration-300"
       >
