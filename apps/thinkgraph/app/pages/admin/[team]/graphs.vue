@@ -694,6 +694,7 @@ const selectedGraph = computed(() =>
             v-if="showPath && !showChat"
             :node-id="selectedNodeId"
             :decisions="decisions"
+            :graph-id="selectedGraphId"
             @close="showPath = false"
             @select-node="(id: string) => { selectedNodeId = id }"
             @open-chat="openChat"
@@ -701,6 +702,12 @@ const selectedGraph = computed(() =>
             @dispatch="openDispatch"
             @edit="(id: string) => open('update', 'thinkgraphDecisions', [id])"
             @add-child="(id: string) => open('create', 'thinkgraphDecisions', [], undefined, { parentId: id, graphId: selectedGraphId })"
+            @toggle-star="toggleStar"
+            @delete-node="(id: string) => onNodeDelete([id])"
+            @create-node="async (data: { content: string; nodeType: string; parentId: string }) => {
+              await create({ ...data, graphId: selectedGraphId || '', pathType: '', source: 'manual', starred: false, branchName: '', versionTag: 'v1', model: '' })
+              await refreshDecisions()
+            }"
           />
 
           <!-- Chat panel (side panel) -->

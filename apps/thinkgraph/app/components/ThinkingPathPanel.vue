@@ -2,6 +2,7 @@
 interface Props {
   nodeId: string | null
   decisions: any[]
+  graphId: string | null
 }
 
 const props = defineProps<Props>()
@@ -14,11 +15,13 @@ const emit = defineEmits<{
   'dispatch': [nodeId: string]
   'edit': [nodeId: string]
   'add-child': [nodeId: string]
+  'toggle-star': [nodeId: string]
+  'delete-node': [nodeId: string]
+  'create-node': [data: { content: string; nodeType: string; parentId: string }]
 }>()
 
-const { generateContext, copyContext } = useContextGenerator(computed(() => props.decisions))
+const { copyContext } = useContextGenerator(computed(() => props.decisions))
 
-// Build ancestor chain for selected node
 function getNodeById(id: string) {
   return props.decisions.find((d) => d.id === id)
 }
@@ -34,19 +37,16 @@ const ancestorChain = computed(() => {
   return chain
 })
 
-// Children of the selected node
 const children = computed(() => {
   if (!props.nodeId) return []
   return props.decisions.filter((d) => d.parentId === props.nodeId)
 })
 
-// Selected node
 const selectedNode = computed(() => {
   if (!props.nodeId) return null
   return getNodeById(props.nodeId)
 })
 
-// Starred insights from other branches
 const starredInsights = computed(() => {
   if (!props.nodeId) return []
   const ancestorIds = new Set(ancestorChain.value.map((n: any) => n.id))
@@ -64,17 +64,40 @@ function getNodeConfig(nodeType: string) {
   return nodeTypeConfig[nodeType] || nodeTypeConfig.insight
 }
 
-const contextCopied = ref(false)
-async function handleCopyContext() {
-  if (!props.nodeId) return
-  await copyContext(props.nodeId)
-  contextCopied.value = true
-  setTimeout(() => { contextCopied.value = false }, 2000)
+// Hover actions per node
+const hoveredNodeId = ref<string | null>(null)
+
+const contextCopied = ref<string | null>(null)
+async function handleCopyContext(nodeId: string) {
+  await copyContext(nodeId)
+  contextCopied.value = nodeId
+  setTimeout(() => { contextCopied.value = null }, 2000)
 }
+
+// Quick add input
+const quickAddContent = ref('')
+const quickAddType = ref<'idea' | 'insight' | 'decision' | 'question'>('idea')
+
+function handleQuickAdd() {
+  if (!quickAddContent.value.trim() || !props.nodeId) return
+  emit('create-node', {
+    content: quickAddContent.value.trim(),
+    nodeType: quickAddType.value,
+    parentId: props.nodeId,
+  })
+  quickAddContent.value = ''
+}
+
+const quickAddTypes = [
+  { value: 'idea', icon: 'i-lucide-lightbulb', color: 'text-emerald-500' },
+  { value: 'insight', icon: 'i-lucide-eye', color: 'text-blue-500' },
+  { value: 'decision', icon: 'i-lucide-check-circle', color: 'text-purple-500' },
+  { value: 'question', icon: 'i-lucide-help-circle', color: 'text-amber-500' },
+] as const
 </script>
 
 <template>
-  <div class="w-[340px] border-l border-default flex flex-col h-full bg-default flex-shrink-0">
+  <div class="w-[360px] border-l border-default flex flex-col h-full bg-default flex-shrink-0">
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-default shrink-0">
       <div class="flex items-center gap-2 min-w-0">
@@ -109,6 +132,8 @@ async function handleCopyContext() {
             v-for="(node, index) in ancestorChain"
             :key="node.id"
             class="relative"
+            @mouseenter="hoveredNodeId = node.id"
+            @mouseleave="hoveredNodeId = null"
           >
             <!-- Connector line -->
             <div
@@ -116,8 +141,8 @@ async function handleCopyContext() {
               class="absolute left-[15px] -top-1 w-px h-2 bg-neutral-200 dark:bg-neutral-700"
             />
 
-            <button
-              class="w-full text-left px-2 py-2 rounded-lg transition-all group cursor-pointer"
+            <div
+              class="w-full text-left px-2 py-2 rounded-lg transition-all cursor-pointer"
               :class="[
                 node.id === nodeId
                   ? 'bg-primary-50 dark:bg-primary-950/30 ring-1 ring-primary-200 dark:ring-primary-800'
@@ -139,7 +164,7 @@ async function handleCopyContext() {
                 </div>
 
                 <div class="min-w-0 flex-1">
-                  <!-- Type + starred -->
+                  <!-- Type + badges -->
                   <div class="flex items-center gap-1.5 mb-0.5">
                     <span class="text-[10px] font-medium" :class="getNodeConfig(node.nodeType).color">
                       {{ node.nodeType }}
@@ -156,16 +181,72 @@ async function handleCopyContext() {
                     />
                   </div>
 
-                  <!-- Content -->
+                  <!-- Full content -->
                   <p
-                    class="text-sm leading-snug"
-                    :class="node.id === nodeId ? 'text-highlighted font-medium' : 'text-muted group-hover:text-highlighted'"
+                    class="text-sm leading-snug whitespace-pre-wrap"
+                    :class="node.id === nodeId ? 'text-highlighted font-medium' : 'text-default'"
                   >
-                    {{ node.content?.length > 120 ? node.content.slice(0, 117) + '...' : node.content }}
+                    {{ node.content }}
                   </p>
+
+                  <!-- Hover actions -->
+                  <div
+                    v-if="hoveredNodeId === node.id"
+                    class="flex items-center gap-1 mt-1.5 -ml-0.5"
+                  >
+                    <button
+                      class="p-1 rounded hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors"
+                      title="Expand with AI"
+                      @click.stop="emit('expand', node.id)"
+                    >
+                      <UIcon name="i-lucide-sparkles" class="size-3.5 text-violet-500" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                      title="Chat"
+                      @click.stop="emit('open-chat', node.id)"
+                    >
+                      <UIcon name="i-lucide-message-square-text" class="size-3.5 text-blue-500" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-teal-100 dark:hover:bg-teal-900/30 transition-colors"
+                      title="Send to..."
+                      @click.stop="emit('dispatch', node.id)"
+                    >
+                      <UIcon name="i-lucide-send" class="size-3.5 text-teal-500" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Add child"
+                      @click.stop="emit('add-child', node.id)"
+                    >
+                      <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-500" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                      :title="node.starred ? 'Unstar' : 'Star'"
+                      @click.stop="emit('toggle-star', node.id)"
+                    >
+                      <UIcon name="i-lucide-star" class="size-3.5" :class="node.starred ? 'text-amber-400' : 'text-neutral-400'" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Edit"
+                      @click.stop="emit('edit', node.id)"
+                    >
+                      <UIcon name="i-lucide-pencil" class="size-3.5 text-neutral-500" />
+                    </button>
+                    <button
+                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      :title="contextCopied === node.id ? 'Copied!' : 'Copy context'"
+                      @click.stop="handleCopyContext(node.id)"
+                    >
+                      <UIcon :name="contextCopied === node.id ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3.5 text-neutral-500" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </button>
+            </div>
 
             <!-- Connector line after (except last) -->
             <div
@@ -183,23 +264,72 @@ async function handleCopyContext() {
         </p>
 
         <div class="space-y-1">
-          <button
+          <div
             v-for="child in children"
             :key="child.id"
-            class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-all group cursor-pointer"
-            @click="emit('select-node', child.id)"
+            class="group relative"
+            @mouseenter="hoveredNodeId = child.id"
+            @mouseleave="hoveredNodeId = null"
           >
-            <div class="flex items-start gap-2">
-              <UIcon
-                :name="getNodeConfig(child.nodeType).icon"
-                class="size-3.5 mt-0.5 shrink-0"
-                :class="getNodeConfig(child.nodeType).color"
-              />
-              <p class="text-xs text-muted group-hover:text-highlighted leading-snug">
-                {{ child.content?.length > 80 ? child.content.slice(0, 77) + '...' : child.content }}
-              </p>
+            <div
+              class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-all cursor-pointer"
+              @click="emit('select-node', child.id)"
+            >
+              <div class="flex items-start gap-2">
+                <UIcon
+                  :name="getNodeConfig(child.nodeType).icon"
+                  class="size-3.5 mt-0.5 shrink-0"
+                  :class="getNodeConfig(child.nodeType).color"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs text-default leading-snug whitespace-pre-wrap">
+                    {{ child.content }}
+                  </p>
+
+                  <!-- Hover actions for children -->
+                  <div
+                    v-if="hoveredNodeId === child.id"
+                    class="flex items-center gap-1 mt-1 -ml-0.5"
+                  >
+                    <button
+                      class="p-0.5 rounded hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors"
+                      title="Expand"
+                      @click.stop="emit('expand', child.id)"
+                    >
+                      <UIcon name="i-lucide-sparkles" class="size-3 text-violet-500" />
+                    </button>
+                    <button
+                      class="p-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                      title="Chat"
+                      @click.stop="emit('open-chat', child.id)"
+                    >
+                      <UIcon name="i-lucide-message-square-text" class="size-3 text-blue-500" />
+                    </button>
+                    <button
+                      class="p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Edit"
+                      @click.stop="emit('edit', child.id)"
+                    >
+                      <UIcon name="i-lucide-pencil" class="size-3 text-neutral-500" />
+                    </button>
+                    <button
+                      class="p-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                      @click.stop="emit('toggle-star', child.id)"
+                    >
+                      <UIcon name="i-lucide-star" class="size-3" :class="child.starred ? 'text-amber-400' : 'text-neutral-400'" />
+                    </button>
+                    <button
+                      class="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title="Delete"
+                      @click.stop="emit('delete-node', child.id)"
+                    >
+                      <UIcon name="i-lucide-trash-2" class="size-3 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -218,8 +348,8 @@ async function handleCopyContext() {
           >
             <div class="flex items-start gap-2">
               <UIcon name="i-lucide-star" class="size-3.5 mt-0.5 shrink-0 text-amber-400" />
-              <p class="text-xs text-muted group-hover:text-highlighted leading-snug">
-                {{ node.content?.length > 80 ? node.content.slice(0, 77) + '...' : node.content }}
+              <p class="text-xs text-muted group-hover:text-highlighted leading-snug whitespace-pre-wrap">
+                {{ node.content }}
               </p>
             </div>
           </button>
@@ -227,60 +357,35 @@ async function handleCopyContext() {
       </div>
     </div>
 
-    <!-- Actions footer -->
-    <div v-if="nodeId && selectedNode" class="px-3 py-3 border-t border-default shrink-0 space-y-2">
-      <!-- Quick actions row -->
-      <div class="flex gap-1.5">
-        <UButton
-          icon="i-lucide-sparkles"
-          size="xs"
-          variant="soft"
-          color="violet"
-          title="Expand with AI"
-          @click="emit('expand', nodeId)"
-        />
-        <UButton
-          icon="i-lucide-message-square-text"
-          size="xs"
-          variant="soft"
-          color="blue"
-          title="Chat"
-          @click="emit('open-chat', nodeId)"
-        />
-        <UButton
-          icon="i-lucide-send"
-          size="xs"
-          variant="soft"
-          color="teal"
-          title="Dispatch"
-          @click="emit('dispatch', nodeId)"
-        />
-        <UButton
-          icon="i-lucide-plus"
-          size="xs"
-          variant="soft"
-          color="neutral"
-          title="Add child"
-          @click="emit('add-child', nodeId)"
-        />
-        <UButton
-          icon="i-lucide-pencil"
-          size="xs"
-          variant="soft"
-          color="neutral"
-          title="Edit"
-          @click="emit('edit', nodeId)"
-        />
-        <div class="flex-1" />
-        <UButton
-          :icon="contextCopied ? 'i-lucide-check' : 'i-lucide-copy'"
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          title="Copy context"
-          @click="handleCopyContext"
-        />
+    <!-- Quick add footer -->
+    <div v-if="nodeId" class="px-3 py-3 border-t border-default shrink-0">
+      <div class="flex items-center gap-1.5 mb-2">
+        <button
+          v-for="t in quickAddTypes"
+          :key="t.value"
+          class="p-1 rounded transition-colors"
+          :class="quickAddType === t.value ? 'bg-neutral-100 dark:bg-neutral-800' : 'hover:bg-muted/50'"
+          :title="t.value"
+          @click="quickAddType = t.value"
+        >
+          <UIcon :name="t.icon" class="size-3.5" :class="quickAddType === t.value ? t.color : 'text-neutral-400'" />
+        </button>
       </div>
+      <form class="flex gap-2" @submit.prevent="handleQuickAdd">
+        <UInput
+          v-model="quickAddContent"
+          :placeholder="`Add ${quickAddType} as child...`"
+          size="sm"
+          class="flex-1"
+          @keydown.meta.enter="handleQuickAdd"
+        />
+        <UButton
+          type="submit"
+          icon="i-lucide-plus"
+          size="sm"
+          :disabled="!quickAddContent.trim()"
+        />
+      </form>
     </div>
   </div>
 </template>
