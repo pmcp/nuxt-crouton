@@ -40,6 +40,25 @@ const academieImages = computed(() => {
   return images
 })
 
+// Format date to Dutch locale (e.g. "29 januari 2026")
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ''
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
+// Clean and truncate text (remove YAML artifacts like `|-`, trim, and cap at 120 chars)
+function truncateText(text: string, maxLength = 120): string {
+  const cleaned = text.replace(/^\|-?\s*/, '').trim()
+  if (!cleaned) return ''
+  if (cleaned.length <= maxLength) return cleaned
+  return cleaned.slice(0, maxLength).trimEnd() + '…'
+}
+
 // Latest news (first 3)
 const latestNews = computed(() => {
   const items = news.value || []
@@ -83,9 +102,9 @@ useHead({
                   <img v-if="article.image" :src="article.image" :alt="t(article, 'title')" class="w-full h-full object-cover">
                 </div>
                 <div class="col-span-6 inline-flex flex-col md:gap-2 justify-center">
-                  <div class="text-xs text-gray-500">{{ article.date }}</div>
+                  <div class="text-xs text-gray-500">{{ formatDate(article.date) }}</div>
                   <span class="text-xl">{{ t(article, 'title') }}</span>
-                  <div class="text-sm text-gray-600">{{ t(article, 'text') }}</div>
+                  <div class="text-sm text-gray-600">{{ truncateText(t(article, 'text')) }}</div>
                 </div>
               </div>
             </div>
@@ -97,7 +116,7 @@ useHead({
           <!-- BLOCK: AANBOD (categories) -->
           <div class="flex flex-col gap-4 col-span-1">
             <span class="uppercase font-bold tracking-wider">Aanbod</span>
-            <div class="text-2xl">Vind jouw atelier</div>
+            <div class="text-2xl">Ontmoetingsplaats tussen disciplines, artistieke processen, leeftijden en culturen.</div>
             <div class="flex flex-col gap-2 mt-8 sticky top-28">
               <NuxtLink
                 v-for="cat in sortedCategories"
@@ -149,14 +168,30 @@ useHead({
       <div class="grid grid-cols-2 mt-16 col-span-2">
         <div class="col-span-full md:col-span-1 bg-white p-4 md:p-4 grid gap-4">
           <span class="uppercase font-bold tracking-wider">Kalender</span>
-          <div>Bekijk onze jaarkalender voor alle belangrijke data.</div>
+          <div>Blijf op de hoogte van al onze evenementen, toonmomenten, uitstappen en sluitingsdagen.</div>
           <UButton
-            :to="`/${locale}/contact`"
+            to="https://timetreeapp.com/public_calendars/sintlukasacademie"
+            target="_blank"
             color="neutral"
             class="w-fit rounded-none font-bold bg-sintlukas-200 hover:bg-sintlukas-400 text-black"
           >
-            Bekijk kalender
+            Kalender bekijken
           </UButton>
+          <iframe
+            src="https://timetreeapp.com/public_calendars/sintlukasacademie"
+            class="w-full border-0 mt-2"
+            style="min-height: 400px;"
+            loading="lazy"
+            title="Sint-Lukas Academie kalender"
+          />
+        </div>
+        <div class="hidden md:block col-span-1 bg-sintlukas-100 overflow-hidden">
+          <img
+            v-if="academieImages.length"
+            :src="academieImages[0]"
+            alt="Sint-Lukas Academie"
+            class="w-full h-full object-cover"
+          >
         </div>
       </div>
       <div class="h-8" />

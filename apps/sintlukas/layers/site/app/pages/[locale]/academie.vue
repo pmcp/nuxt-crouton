@@ -20,6 +20,15 @@ function t(item: any, field: string): string {
   return String(item?.[field] || '')
 }
 
+const pdfLinks = [
+  { label: 'Jaarkalender 2025-2026', href: '#' },
+  { label: 'Algemene informatie voor studenten', href: '#' },
+  { label: 'Artistiek Pedagogisch Project', href: '#' },
+  { label: 'Academie reglement', href: '#' },
+  { label: 'Lees ons taalbeleid', href: '#' },
+  { label: 'Evaluatiereglement', href: '#' }
+]
+
 useHead({
   title: 'Onze academie — Sint-Lukas Academie'
 })
@@ -27,27 +36,62 @@ useHead({
 
 <template>
   <div>
-    <!-- Banner -->
-    <div class="w-full relative mb-12 md:mb-16 z-0 h-60">
-      <div class="absolute z-30 h-full w-full pt-8 sm:pt-16 top-0">
-        <div class="text-4xl leading-tight h-auto whitespace-pre-line mx-auto px-6 lg:px-8 max-w-7xl" />
-      </div>
+    <!-- Banner image -->
+    <div class="w-full relative mb-12 md:mb-16 z-0 h-96">
+      <img
+        src="/assets/uploads/banner-academie.jpg"
+        alt="Onze academie"
+        class="h-full w-full object-cover object-center relative z-20"
+      />
     </div>
 
     <!-- Content -->
-    <div class="mx-auto px-6 lg:px-8 max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-16">
-      <div class="flex flex-col col-span-full md:col-span-2">
-        <h1 class="text-4xl pb-0">Academie</h1>
-        <div
-          v-if="page?.contentHtml"
-          class="prose prose-neutral max-w-none mt-4"
-          v-html="page.contentHtml"
-        />
-        <div v-else class="prose prose-neutral max-w-3xl mt-4">
+    <div class="mx-auto px-6 lg:px-8 max-w-7xl grid grid-cols-1 gap-8">
+      <h1 class="text-4xl pb-0">Onze academie</h1>
+
+      <div
+        v-if="page?.contentHtml"
+        class="prose prose-neutral max-w-none"
+        v-html="page.contentHtml"
+      />
+      <div v-else class="grid md:grid-cols-2 gap-4 md:gap-0">
+        <!-- Left column: description + aanbod link -->
+        <div class="prose prose-neutral pr-0 md:pr-8">
           <p>
             Sint-Lukas Academie is al sinds 1880 dé plek voor beeldende kunsten in Brussel.
             Wij bieden een breed aanbod aan voor kinderen, jongeren en volwassenen.
+            Met ateliers voor tekenen, schilderen, beeldhouwen, grafiek, textiel, fotografie,
+            digitale kunst en meer, is er voor iedereen iets te ontdekken.
           </p>
+          <NuxtLink
+            :to="`/${locale}/aanbod`"
+            class="inline-flex items-center gap-2 no-underline font-semibold text-primary hover:underline"
+          >
+            Aanbod &rarr;
+          </NuxtLink>
+        </div>
+
+        <!-- Right column: info text + PDF downloads -->
+        <div class="border-l-0 md:border-l md:pl-8">
+          <div class="prose prose-neutral">
+            <p>
+              Onze academie hecht veel belang aan een warme, creatieve leeromgeving
+              waar iedereen zich kan ontwikkelen op eigen tempo. Hieronder vind je
+              alle belangrijke documenten.
+            </p>
+          </div>
+          <ul class="mt-4 space-y-2">
+            <li v-for="pdf in pdfLinks" :key="pdf.label">
+              <a
+                :href="pdf.href"
+                target="_blank"
+                class="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                <UIcon name="i-heroicons-document-arrow-down" class="size-4 shrink-0" />
+                {{ pdf.label }}
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -70,6 +114,7 @@ useHead({
             :zip="location.zip"
             :city="location.city"
             :is-main="location.isMain"
+            :location="(location as any).location"
           />
         </div>
       </div>

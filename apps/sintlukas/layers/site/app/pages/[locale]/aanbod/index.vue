@@ -73,23 +73,19 @@ Ontdek onze extra muros projecten.
     <div class="mx-auto px-6 lg:px-8 max-w-7xl grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:grid-cols-[1fr_1fr_1px_1fr] gap-16">
       <!-- Main courses (2 col) -->
       <div class="w-full col-span-full md:col-span-full lg:col-span-2 grid grid-cols-1 md:grid-cols-2 w-full items-end gap-8 max-w-2xl">
-        <NuxtLink
+        <SiteAtelierCard
           v-for="c in mainCourses"
           :key="c.id"
-          :to="`/${locale}/aanbod/${slugify(t(c, 'title'))}`"
-          class="w-full mb-2"
-        >
-          <SiteAtelierCard
-            :title="t(c, 'title')"
-            :age="t(c, 'age') || null"
-            :card-image="c.cardImage || c.mainImage"
-            :category-color="c.catColor"
-            :slug="slugify(t(c, 'title'))"
-            :locale="locale"
-            :first="c.first"
-            :category-name="c.catTitle"
-          />
-        </NuxtLink>
+          :title="t(c, 'title')"
+          :age="t(c, 'age') || null"
+          :show-subtitle="c.first"
+          :card-image="c.cardImage || c.mainImage"
+          :category-color="c.catColor"
+          :slug="slugify(t(c, 'title'))"
+          :locale="locale"
+          :first="c.first"
+          :category-name="c.catTitle"
+        />
       </div>
 
       <!-- Vertical divider -->
@@ -97,23 +93,19 @@ Ontdek onze extra muros projecten.
 
       <!-- Sidebar courses (sticky) -->
       <div v-if="sideCourses.length" class="col-span-full md:col-span-full lg:col-span-1 xl:col-span-1 flex flex-col md:flex-row lg:flex-col w-full gap-8 self-start sticky top-24">
-        <NuxtLink
+        <SiteAtelierCard
           v-for="c in sideCourses"
           :key="c.id"
-          :to="`/${locale}/aanbod/${slugify(t(c, 'title'))}`"
-          class="w-full mb-2"
-        >
-          <SiteAtelierCard
-            :title="t(c, 'title')"
-            :age="t(c, 'age') || null"
-            :card-image="c.cardImage || c.mainImage"
-            :category-color="c.catColor"
-            :slug="slugify(t(c, 'title'))"
-            :locale="locale"
-            :first="c.first"
-            :category-name="c.catTitle"
-          />
-        </NuxtLink>
+          :title="t(c, 'title')"
+          :age="t(c, 'age') || null"
+          :show-subtitle="c.first"
+          :card-image="c.cardImage || c.mainImage"
+          :category-color="c.catColor"
+          :slug="slugify(t(c, 'title'))"
+          :locale="locale"
+          :first="c.first"
+          :category-name="c.catTitle"
+        />
       </div>
 
       <div class="h-4" />
