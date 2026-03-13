@@ -25,6 +25,21 @@ const sortedCategories = computed(() =>
   [...(categories.value || [])].sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
 )
 
+// Pick showcase images from ateliers for the academie section
+const academieImages = computed(() => {
+  const items = ateliers.value || []
+  const images: string[] = []
+  for (const atelier of items) {
+    const gallery = Array.isArray((atelier as any).images) ? (atelier as any).images : []
+    for (const img of gallery) {
+      if (images.length < 3 && img) images.push(img)
+      if (images.length >= 3) break
+    }
+    if (images.length >= 3) break
+  }
+  return images
+})
+
 // Latest news (first 3)
 const latestNews = computed(() => {
   const items = news.value || []
@@ -64,7 +79,9 @@ useHead({
             <span class="uppercase font-bold tracking-wider">Nieuws</span>
             <div class="flex flex-col gap-4 border-b pb-4 md:pb-6">
               <div v-for="article in latestNews" :key="article.id" class="grid grid-cols-8 gap-4 w-full">
-                <div class="col-span-2 min-w-20 w-full h-full bg-sintlukas-100 rounded-none" />
+                <div class="col-span-2 min-w-20 w-full h-full bg-sintlukas-100 rounded-none overflow-hidden">
+                  <img v-if="article.image" :src="article.image" :alt="t(article, 'title')" class="w-full h-full object-cover">
+                </div>
                 <div class="col-span-6 inline-flex flex-col md:gap-2 justify-center">
                   <div class="text-xs text-gray-500">{{ article.date }}</div>
                   <span class="text-xl">{{ t(article, 'title') }}</span>
@@ -97,20 +114,26 @@ useHead({
 
         <!-- BLOCK: ABOUT -->
         <div class="col-span-full grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Two stacked images on the left -->
+          <div v-if="academieImages.length >= 2" class="col-span-1 grid grid-rows-2 gap-4">
+            <div class="overflow-hidden">
+              <img :src="academieImages[0]" alt="" class="w-full h-full object-cover">
+            </div>
+            <div class="overflow-hidden">
+              <img :src="academieImages[1]" alt="" class="w-full h-full object-cover">
+            </div>
+          </div>
+          <!-- Text on the right -->
           <div class="col-span-1">
             <div class="sticky top-28 flex flex-col gap-2">
               <span class="uppercase font-bold tracking-wider">Academie</span>
-              <span class="text-2xl">Sint-Lukas is een bruisende plek in het hart van Brussel, al sinds 1880.</span>
-              <span class="prose">Dé academie voor beeldende kunsten: voor kinderen, jongeren en volwassenen.</span>
-              <UButton
-                :to="`/${locale}/academie`"
-                color="neutral"
-                variant="outline"
-                class="rounded-none w-fit mt-4 font-bold"
-              >
-                Meer over de academie
-              </UButton>
+              <span class="text-2xl">Deeltijds kunstonderwijs voor volwassenen, jongeren en kinderen</span>
+              <span class="prose">De Sint-Lukas academie is een instelling van het deeltijds kunstonderwijs (DKO). We richten ons op kinderen (6 tot 12 jaar), jongeren (12 tot 18 jaar) en volwassenen (18+) die in hun vrije tijd de mogelijkheden van de beeldende kunsten willen verkennen. Wij bieden u, geheel naar onze unieke pedagogie, kwalitatief onderwijs op maat in creatieve opleidingen.</span>
             </div>
+          </div>
+          <!-- Full-width image below -->
+          <div v-if="academieImages.length >= 3" class="col-span-full overflow-hidden max-h-80">
+            <img :src="academieImages[2]" alt="" class="w-full h-full object-cover">
           </div>
         </div>
       </div>
