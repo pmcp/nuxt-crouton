@@ -69,8 +69,14 @@ async function refreshDecisions() {
 
 const { deleteItems, create, update } = useCollectionMutation('thinkgraphDecisions')
 
-// Auto-refresh graph when any thinkgraphDecisions mutation happens
+// Auto-refresh graph when any thinkgraphDecisions mutation happens (local or remote)
 nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
+  if (collection === 'thinkgraphDecisions') {
+    refreshDecisions()
+    layoutKey.value++
+  }
+})
+nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   if (collection === 'thinkgraphDecisions') {
     refreshDecisions()
     layoutKey.value++
@@ -587,6 +593,7 @@ const selectedGraph = computed(() =>
               collection="thinkgraphDecisions"
               parent-field="parentId"
               label-field="content"
+              data-mode="ephemeral"
               :flow-id="flowId || undefined"
               :saved-positions="savedPositions"
               :flow-config="flowConfig"

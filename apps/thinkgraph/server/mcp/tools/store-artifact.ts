@@ -45,6 +45,9 @@ export default defineMcpTool({
 
       await updateThinkgraphDecision(nodeId, resolvedTeamId, 'mcp', { artifacts: updatedArtifacts as any }, { role: 'admin' })
 
+      // Signal real-time update — use original slug/id since clients key rooms by slug
+      signalCollectionChange(teamId, 'thinkgraphDecisions')
+
       return {
         content: [{
           type: 'text' as const,

@@ -28,7 +28,7 @@ export async function getAllThinkgraphDecisions(teamId: string, graphId?: string
     .from(tables.thinkgraphDecisions)
     .leftJoin(ownerUser, eq(tables.thinkgraphDecisions.owner, ownerUser.id))
     .where(and(...conditions))
-    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+    .orderBy(desc(tables.thinkgraphDecisions.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   decisions.forEach((item: any) => {
@@ -72,7 +72,7 @@ export async function getThinkgraphDecisionsByIds(teamId: string, decisionIds: s
         inArray(tables.thinkgraphDecisions.id, decisionIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphDecisions.createdAt))
+    .orderBy(desc(tables.thinkgraphDecisions.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   decisions.forEach((item: any) => {
@@ -124,10 +124,7 @@ export async function updateThinkgraphDecision(
 
   const [decision] = await (db as any)
     .update(tables.thinkgraphDecisions)
-    .set({
-      ...updates,
-      updatedBy: userId
-    })
+    .set(updates)
     .where(and(...conditions))
     .returning()
 
@@ -157,6 +154,17 @@ export async function deleteThinkgraphDecision(
   if (!isAdmin) {
     conditions.push(eq(tables.thinkgraphDecisions.owner, userId))
   }
+
+  // Re-parent children as root nodes before deleting
+  await (db as any)
+    .update(tables.thinkgraphDecisions)
+    .set({ parentId: null })
+    .where(
+      and(
+        eq(tables.thinkgraphDecisions.parentId, recordId),
+        eq(tables.thinkgraphDecisions.teamId, teamId),
+      )
+    )
 
   const [deleted] = await (db as any)
     .delete(tables.thinkgraphDecisions)

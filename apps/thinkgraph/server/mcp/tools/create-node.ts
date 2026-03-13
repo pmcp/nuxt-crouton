@@ -40,6 +40,9 @@ export default defineMcpTool({
         owner: 'mcp',
       } as any)
 
+      // Signal real-time update — use original slug/id since clients key rooms by slug
+      signalCollectionChange(teamId, 'thinkgraphDecisions')
+
       return {
         content: [{
           type: 'text' as const,
