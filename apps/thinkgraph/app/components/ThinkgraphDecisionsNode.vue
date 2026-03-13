@@ -474,6 +474,7 @@ function toggleStar(event: Event) {
 
 <style scoped>
 @reference "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 .decision-node {
   @apply px-3 py-2.5 rounded-lg border bg-white dark:bg-neutral-900;

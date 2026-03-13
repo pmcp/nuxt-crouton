@@ -14,7 +14,6 @@ import type { ContextNode } from './context-builder'
 
 const CLAUDE_PATH = '/Users/pmcp/.local/bin/claude'
 const PROJECT_DIR = '/Users/pmcp/Projects/nuxt-crouton'
-const MCP_PORT = 3004
 
 // Debounce: track in-flight responses per graph to avoid flooding
 const activeResponses = new Set<string>()
@@ -68,8 +67,28 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     ], {
       cwd: PROJECT_DIR,
       env: { ...process.env, CLAUDECODE: undefined },
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
+    })
+
+    let stderr = ''
+    child.stderr?.on('data', (data: Buffer) => { stderr += data.toString() })
+    child.stdout?.on('data', (data: Buffer) => {
+      console.log(`[claude-responder] stdout: ${data.toString().slice(0, 200)}`)
+    })
+
+    child.on('error', (err) => {
+      activeResponses.delete(responseKey)
+      console.error('[claude-responder] Process error:', err)
+    })
+
+    child.on('exit', (code) => {
+      activeResponses.delete(responseKey)
+      if (code !== 0) {
+        console.error(`[claude-responder] Exited with code ${code}. stderr: ${stderr.slice(0, 500)}`)
+      } else {
+        console.log(`[claude-responder] Completed successfully for node "${node.content.slice(0, 50)}..."`)
+      }
     })
 
     child.unref()
@@ -78,10 +97,6 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     setTimeout(() => {
       activeResponses.delete(responseKey)
     }, 120_000)
-
-    child.on('exit', () => {
-      activeResponses.delete(responseKey)
-    })
 
     console.log(`[claude-responder] Spawned Claude for node "${node.content.slice(0, 50)}..." in graph ${graphId}`)
   }
@@ -125,35 +140,20 @@ Content: ${nodeContent}
 
 ## How to Create Nodes
 
-Write each node's JSON to /tmp/thinkgraph-node.json, then POST to the MCP endpoint:
+Use the ThinkGraph MCP server tool \`create-node\` (server name: "thinkgraph"). Call it for each node you want to create:
 
-\`\`\`bash
-cat > /tmp/thinkgraph-node.json << 'ENDJSON'
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "create-node",
-    "arguments": {
-      "teamId": "${teamSlug}",
-      "graphId": "${graphId}",
-      "content": "<your thought>",
-      "nodeType": "<idea|insight|question|decision>",
-      "parentId": "${nodeId}"
-    }
-  }
-}
-ENDJSON
-curl -s -X POST http://localhost:${MCP_PORT}/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d @/tmp/thinkgraph-node.json
-\`\`\`
+- teamId: "${teamSlug}"
+- graphId: "${graphId}"
+- parentId: "${nodeId}" (or use a previously created node's ID to chain)
+- content: your thought (1-2 sentences)
+- nodeType: one of "idea", "insight", "question", "decision"
 
 ## Rules
 
-- Keep nodes concise (1-3 sentences each)
-- Don't create more than 3 nodes
+- Keep nodes concise (1-2 sentences each)
+- Each node = ONE atomic thought the user can branch from
 - Use parentId to chain deeper thoughts (first node's ID becomes parent for the next)
-- Star important insights with "starred": true
+- Star important insights with starred: true
 - Be substantive — no filler like "Let me think about this..."
 - Reference specific details from the context when relevant
 - After creating nodes, output a brief 1-line summary of what you added`
