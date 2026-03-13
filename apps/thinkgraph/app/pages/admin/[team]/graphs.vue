@@ -73,13 +73,11 @@ const { deleteItems, create, update } = useCollectionMutation('thinkgraphDecisio
 nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
   if (collection === 'thinkgraphDecisions') {
     refreshDecisions()
-    layoutKey.value++
   }
 })
 nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   if (collection === 'thinkgraphDecisions') {
     refreshDecisions()
-    layoutKey.value++
   }
 })
 
@@ -202,8 +200,10 @@ function openMultiDispatch(nodeIds: string[]) {
 async function onDispatched() {
   showDispatch.value = false
   await refreshDecisions()
-  layoutKey.value++
 }
+
+// Thinking path panel state
+const showPath = ref(true)
 
 // Chat panel state
 const showChat = ref(false)
@@ -251,7 +251,7 @@ function addRootDecision() {
 function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
   if (event?.shiftKey) return
   selectedNodeId.value = nodeId
-  open('update', 'thinkgraphDecisions', [nodeId])
+  showPath.value = true
 }
 
 function onSelectionChange(nodeIds: string[]) {
@@ -274,7 +274,6 @@ async function expandWithAI(decisionId: string, mode?: string) {
       body: { mode: mode || 'default' }
     })
     await refreshDecisions()
-    layoutKey.value++
   } catch (error) {
     console.error('AI expand failed:', error)
   } finally {
@@ -290,7 +289,6 @@ function openQuickAdd(parentId?: string) {
 async function onQuickAddDone() {
   showQuickAdd.value = false
   await refreshDecisions()
-  layoutKey.value++
 }
 
 // ─── Connect-to-create (drag connector to empty space) ───
@@ -335,7 +333,6 @@ async function createFromConnect(nodeType: string) {
   })
 
   await refreshDecisions()
-  layoutKey.value++
 
   // Open the edit form for the newly created node so user can add content
   const newest = decisions.value?.find((d: any) => d.parentId === sourceNodeId && !d.content)
@@ -375,7 +372,6 @@ async function onChatAddToGraph(items: Array<{ content: string; nodeType: string
     })
   }
   await refreshDecisions()
-  layoutKey.value++
 }
 
 // Synthesis
@@ -391,7 +387,6 @@ async function synthesizeSelected() {
     })
     selectedNodes.value.clear()
     await refreshDecisions()
-    layoutKey.value++
   } catch (error) {
     console.error('Synthesis failed:', error)
   } finally {
@@ -609,6 +604,14 @@ const selectedGraph = computed(() =>
               @click="autoLayout"
             />
             <UButton
+              icon="i-lucide-route"
+              size="sm"
+              :variant="showPath ? 'soft' : 'ghost'"
+              :color="showPath ? 'primary' : 'neutral'"
+              title="Thinking path (t)"
+              @click="showPath = !showPath"
+            />
+            <UButton
               icon="i-lucide-message-square-text"
               label="Chat"
               size="sm"
@@ -685,6 +688,20 @@ const selectedGraph = computed(() =>
               </div>
             </div>
           </div>
+
+          <!-- Thinking path panel (persistent right pane) -->
+          <ThinkingPathPanel
+            v-if="showPath && !showChat"
+            :node-id="selectedNodeId"
+            :decisions="decisions"
+            @close="showPath = false"
+            @select-node="(id: string) => { selectedNodeId = id }"
+            @open-chat="openChat"
+            @expand="(id: string, mode?: string) => expandWithAI(id, mode)"
+            @dispatch="openDispatch"
+            @edit="(id: string) => open('update', 'thinkgraphDecisions', [id])"
+            @add-child="(id: string) => open('create', 'thinkgraphDecisions', [], undefined, { parentId: id, graphId: selectedGraphId })"
+          />
 
           <!-- Chat panel (side panel) -->
           <div
