@@ -2,6 +2,7 @@
 /**
  * Sint-Lukas site header — faithful port of original UHeader style.
  * No backdrop blur, underline active states, rounded-none CTA button.
+ * Navigation is driven by the Pages CMS collection.
  */
 const { locale } = useI18n()
 
@@ -12,16 +13,7 @@ watch(() => route.fullPath, () => {
   mobileMenuOpen.value = false
 })
 
-const navItems = computed(() => [
-  { label: 'Start', to: `/${locale.value}`, match: (p: string) => p === `/${locale.value}` || p === `/${locale.value}/` },
-  { label: 'Aanbod', to: `/${locale.value}/aanbod`, match: (p: string) => p.startsWith(`/${locale.value}/aanbod`) },
-  { label: 'Academie', to: `/${locale.value}/academie`, match: (p: string) => p.startsWith(`/${locale.value}/academie`) },
-  { label: 'Contact', to: `/${locale.value}/contact`, match: (p: string) => p.startsWith(`/${locale.value}/contact`) },
-])
-
-function isActive(item: { match: (p: string) => boolean }) {
-  return item.match(route.path)
-}
+const { navigation, isActive: isNavActive } = useNavigation()
 </script>
 
 <template>
@@ -36,15 +28,15 @@ function isActive(item: { match: (p: string) => boolean }) {
         <!-- Desktop navigation -->
         <nav class="hidden lg:flex items-center gap-0 grow">
           <NuxtLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
+            v-for="item in navigation"
+            :key="item.id"
+            :to="item.path"
             class="relative px-2.5 py-0 text-md font-medium transition-colors after:absolute after:bottom-0 after:inset-x-2 after:block after:h-[1px] after:mt-2"
-            :class="isActive(item)
+            :class="isNavActive(item)
               ? 'text-gray-900 after:bg-black'
               : 'text-gray-500 hover:text-gray-900 hover:after:bg-sintlukas-500'"
           >
-            {{ item.label }}
+            {{ item.title }}
           </NuxtLink>
         </nav>
 
@@ -78,12 +70,12 @@ function isActive(item: { match: (p: string) => boolean }) {
       <div v-if="mobileMenuOpen" class="lg:hidden mt-4">
         <div class="flex flex-col gap-4 w-full justify-center">
           <NuxtLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
+            v-for="item in navigation"
+            :key="item.id"
+            :to="item.path"
             class="text-3xl text-center py-4"
           >
-            <span class="hover:border-b">{{ item.label }}</span>
+            <span class="hover:border-b">{{ item.title }}</span>
           </NuxtLink>
           <NuxtLink
             :to="`/${locale}/inschrijven`"
