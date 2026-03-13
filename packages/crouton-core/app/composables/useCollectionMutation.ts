@@ -256,12 +256,15 @@ export function useCollectionMutation(collection: string): CollectionMutationRet
     const timestamp = Date.now()
 
     try {
-      // Delete each item individually
+      // Delete each item individually (treat 404 as success — item already gone)
       await Promise.all(
         ids.map(id =>
           $fetch(`${baseUrl}/${id}`, {
             method: 'DELETE',
             credentials: 'include'
+          }).catch((err: any) => {
+            if (err?.response?.status === 404 || err?.status === 404 || err?.statusCode === 404) return
+            throw err
           })
         )
       )
