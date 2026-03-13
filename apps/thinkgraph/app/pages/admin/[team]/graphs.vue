@@ -492,6 +492,59 @@ provide('thinkgraph:focusInPath', (nodeId: string) => {
 const selectedGraph = computed(() =>
   graphs.value?.find((g: any) => g.id === selectedGraphId.value)
 )
+
+// Export graph as markdown
+const { copy } = useClipboard()
+
+async function exportGraph() {
+  if (!decisions.value?.length || !selectedGraph.value) return
+
+  const nodeMap = new Map(decisions.value.map((d: any) => [d.id, d]))
+  const roots = decisions.value.filter((d: any) => !d.parentId)
+
+  function renderNode(node: any, depth: number): string {
+    const indent = '  '.repeat(depth)
+    const star = node.starred ? ' *' : ''
+    const type = node.nodeType || 'idea'
+    const lines: string[] = []
+
+    lines.push(`${indent}- **[${type}]**${star} ${node.content}`)
+
+    const children = decisions.value.filter((d: any) => d.parentId === node.id)
+    for (const child of children) {
+      lines.push(renderNode(child, depth + 1))
+    }
+
+    return lines.join('\n')
+  }
+
+  const sections: string[] = []
+  sections.push(`# ${selectedGraph.value.name}`)
+  if (selectedGraph.value.description) {
+    sections.push(selectedGraph.value.description)
+  }
+  sections.push(`\n**${decisions.value.length} nodes** | Exported ${new Date().toLocaleDateString()}\n`)
+
+  // Starred highlights
+  const starred = decisions.value.filter((d: any) => d.starred)
+  if (starred.length) {
+    sections.push('## Key Insights (starred)\n')
+    for (const s of starred) {
+      sections.push(`- **[${s.nodeType}]** ${s.content}`)
+    }
+    sections.push('')
+  }
+
+  // Full tree
+  sections.push('## Full Graph\n')
+  for (const root of roots) {
+    sections.push(renderNode(root, 0))
+  }
+
+  const markdown = sections.join('\n')
+  await copy(markdown)
+  toast.add({ title: 'Graph exported to clipboard', color: 'success' })
+}
 </script>
 
 <template>
@@ -614,6 +667,14 @@ const selectedGraph = computed(() =>
               :color="showPath ? 'primary' : 'neutral'"
               title="Thinking path (t)"
               @click="showPath = !showPath"
+            />
+            <UButton
+              icon="i-lucide-download"
+              size="sm"
+              variant="ghost"
+              color="neutral"
+              title="Export graph as markdown"
+              @click="exportGraph"
             />
             <UButton
               icon="i-lucide-message-square-text"
