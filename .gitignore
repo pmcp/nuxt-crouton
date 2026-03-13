@@ -75,3 +75,5 @@ apps/velo/seed.sql
 apps/velo/seed_reordered.sql
 
 apps/alexdeforce/.data
+apps/sintlukas/.data
+apps/thinkgraph/.data
