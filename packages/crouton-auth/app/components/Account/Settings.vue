@@ -53,6 +53,13 @@ const tabs = computed(() => {
     })
   }
 
+  // Sessions tab (always available)
+  items.push({
+    value: 'sessions',
+    label: t('account.sessions.title'),
+    icon: 'i-lucide-monitor-smartphone'
+  })
+
   // Only show linked accounts if OAuth is enabled
   if (hasOAuth.value) {
     items.push({
@@ -107,6 +114,9 @@ const tabs = computed(() => {
             <USeparator v-if="has2FA && hasPasskeys" />
             <AccountPasskeyManager v-if="hasPasskeys" />
           </div>
+
+          <!-- Sessions Tab -->
+          <AccountSessions v-else-if="item.value === 'sessions'" />
 
           <!-- Linked Accounts Tab -->
           <AccountLinkedAccounts v-else-if="item.value === 'linked'" />

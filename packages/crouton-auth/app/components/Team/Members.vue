@@ -3,7 +3,7 @@
  * Team Members Component
  *
  * Displays list of team members with management actions.
- * Includes role management and member removal.
+ * Includes per-row dropdown actions, bulk selection, and bulk actions.
  * Supports grid (card) and table (list) layouts.
  *
  * @example
@@ -42,6 +42,19 @@ const {
   loading: teamLoading
 } = useTeam()
 
+const {
+  sendPasswordReset,
+  banUser,
+  unbanUser,
+  revokeUserSessions,
+  impersonateUser,
+  bulkSendPasswordReset,
+  bulkBanUsers,
+  bulkUnbanUsers,
+  bulkRevokeUserSessions,
+  loading: adminLoading
+} = useAdmin()
+
 const { user } = useSession()
 const notify = useNotify()
 
@@ -51,6 +64,9 @@ const layout = ref<'grid' | 'table'>('grid')
 // Local loading state
 const loadingMemberId = ref<string | null>(null)
 
+// Selection state for bulk actions
+const selectedMemberIds = ref<Set<string>>(new Set())
+
 // Load members on mount
 onMounted(async () => {
   await loadMembers()
@@ -59,13 +75,51 @@ onMounted(async () => {
 // Reload when team changes
 watch(currentTeam, async () => {
   await loadMembers()
+  selectedMemberIds.value.clear()
 })
+
+// Toggle selection for a single member
+function toggleSelection(memberId: string) {
+  const newSet = new Set(selectedMemberIds.value)
+  if (newSet.has(memberId)) {
+    newSet.delete(memberId)
+  } else {
+    newSet.add(memberId)
+  }
+  selectedMemberIds.value = newSet
+}
+
+// Toggle select all
+function toggleSelectAll() {
+  if (selectedMemberIds.value.size === actionableMembers.value.length) {
+    selectedMemberIds.value = new Set()
+  } else {
+    selectedMemberIds.value = new Set(actionableMembers.value.map(m => m.id))
+  }
+}
+
+// Members that can have actions performed on them (not self, not owner if not owner)
+const actionableMembers = computed(() => {
+  return sortedMembers.value.filter(m => {
+    if (m.userId === user.value?.id) return false
+    if (m.role === 'owner' && !isOwner.value) return false
+    return true
+  })
+})
+
+const allSelected = computed(() =>
+  actionableMembers.value.length > 0 && selectedMemberIds.value.size === actionableMembers.value.length
+)
+
+// Clear selection
+function clearSelection() {
+  selectedMemberIds.value = new Set()
+}
 
 // Handle role change
 async function handleRoleChange(memberId: string, role: MemberRole) {
   loadingMemberId.value = memberId
   try {
-    // Find member by ID to get userId
     const member = members.value.find(m => m.id === memberId)
     if (member) {
       await updateMemberRole(member.userId, role)
@@ -84,6 +138,7 @@ async function handleRemove(memberId: string) {
   loadingMemberId.value = memberId
   try {
     await removeMember(memberId)
+    selectedMemberIds.value.delete(memberId)
     notify.success(t('teams.memberRemoved'), { description: t('teams.memberRemovedDescription') })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : t('teams.failedToRemoveMember')
@@ -91,6 +146,125 @@ async function handleRemove(memberId: string) {
   } finally {
     loadingMemberId.value = null
   }
+}
+
+// Bulk action handlers
+async function handleBulkPasswordReset() {
+  const emails = getSelectedEmails()
+  if (emails.length) {
+    await bulkSendPasswordReset(emails)
+    clearSelection()
+  }
+}
+
+async function handleBulkForceLogout() {
+  const userIds = getSelectedUserIds()
+  if (userIds.length) {
+    await bulkRevokeUserSessions(userIds)
+    clearSelection()
+  }
+}
+
+async function handleBulkBan() {
+  const userIds = getSelectedUserIds()
+  if (userIds.length) {
+    await bulkBanUsers(userIds)
+    clearSelection()
+  }
+}
+
+async function handleBulkUnban() {
+  const userIds = getSelectedUserIds()
+  if (userIds.length) {
+    await bulkUnbanUsers(userIds)
+    clearSelection()
+  }
+}
+
+async function handleBulkRemove() {
+  const ids = [...selectedMemberIds.value]
+  for (const id of ids) {
+    await handleRemove(id)
+  }
+  clearSelection()
+}
+
+async function handleBulkRoleChange(role: MemberRole) {
+  const ids = [...selectedMemberIds.value]
+  for (const id of ids) {
+    await handleRoleChange(id, role)
+  }
+  clearSelection()
+}
+
+function getSelectedUserIds(): string[] {
+  return [...selectedMemberIds.value]
+    .map(id => members.value.find(m => m.id === id))
+    .filter(Boolean)
+    .map(m => m!.userId)
+}
+
+function getSelectedEmails(): string[] {
+  return [...selectedMemberIds.value]
+    .map(id => members.value.find(m => m.id === id))
+    .filter(Boolean)
+    .map(m => {
+      const memberUser = 'user' in m! ? (m as MemberWithUser).user : undefined
+      return memberUser?.email
+    })
+    .filter(Boolean) as string[]
+}
+
+// Get dropdown action items for a member
+function getMemberActions(member: Member | MemberWithUser) {
+  const isSelf = member.userId === user.value?.id
+  const isOwnerRole = member.role === 'owner'
+  const memberUser = 'user' in member ? (member as MemberWithUser).user : undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: any[][] = []
+
+  if (isSelf || (isOwnerRole && !isOwner.value)) return items
+
+  // Role change group
+  const roleItems = [
+    { label: t('teams.member'), icon: 'i-lucide-user', disabled: member.role === 'member', onSelect: () => handleRoleChange(member.id, 'member') },
+    { label: t('teams.admin'), icon: 'i-lucide-shield', disabled: member.role === 'admin', onSelect: () => handleRoleChange(member.id, 'admin') }
+  ]
+  if (isOwner.value && !isSelf) {
+    roleItems.push({ label: t('teams.owner'), icon: 'i-lucide-crown', disabled: member.role === 'owner', onSelect: () => handleRoleChange(member.id, 'owner') })
+  }
+  items.push(roleItems)
+
+  // Admin actions group
+  const adminActions = []
+  if (memberUser?.email) {
+    adminActions.push({ label: t('admin.sendPasswordReset'), icon: 'i-lucide-mail', onSelect: () => sendPasswordReset(memberUser.email) })
+  }
+  adminActions.push({ label: t('admin.forceLogout'), icon: 'i-lucide-log-out', onSelect: () => revokeUserSessions(member.userId) })
+
+  // Ban/unban
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isBanned = (memberUser as any)?.banned
+  if (isBanned) {
+    adminActions.push({ label: t('admin.unbanUser'), icon: 'i-lucide-shield-check', onSelect: () => unbanUser(member.userId) })
+  } else {
+    adminActions.push({ label: t('admin.banUser'), icon: 'i-lucide-shield-off', onSelect: () => banUser(member.userId) })
+  }
+
+  // Impersonate (owner only)
+  if (isOwner.value) {
+    adminActions.push({ label: t('admin.impersonate'), icon: 'i-lucide-eye', onSelect: () => impersonateUser(member.userId) })
+  }
+  items.push(adminActions)
+
+  // Destructive group
+  if (!isSelf && !isOwnerRole) {
+    items.push([
+      { label: t('admin.removeFromTeam'), icon: 'i-lucide-user-x', color: 'error' as const, onSelect: () => handleRemove(member.id) }
+    ])
+  }
+
+  return items
 }
 
 // Sort members: owners first, then admins, then members
@@ -106,13 +280,40 @@ const sortedMembers = computed(() => {
 // Table columns
 const UAvatar = resolveComponent('UAvatar')
 const UBadge = resolveComponent('UBadge')
-const USelectMenu = resolveComponent('USelectMenu')
 const UButton = resolveComponent('UButton')
+const UCheckbox = resolveComponent('UCheckbox')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 type MemberRow = Member | MemberWithUser
 
 const columns = computed<TableColumn<MemberRow>[]>(() => {
-  const cols: TableColumn<MemberRow>[] = [
+  const cols: TableColumn<MemberRow>[] = []
+
+  // Checkbox column (only for admins)
+  if (canManageMembers.value) {
+    cols.push({
+      id: 'select',
+      header: () => {
+        return h(UCheckbox, {
+          'modelValue': allSelected.value,
+          'indeterminate': selectedMemberIds.value.size > 0 && !allSelected.value,
+          'onUpdate:modelValue': () => toggleSelectAll()
+        })
+      },
+      cell: ({ row }) => {
+        const member = row.original
+        const isSelf = member.userId === user.value?.id
+        const isOwnerRole = member.role === 'owner' && !isOwner.value
+        if (isSelf || isOwnerRole) return h('div')
+        return h(UCheckbox, {
+          'modelValue': selectedMemberIds.value.has(member.id),
+          'onUpdate:modelValue': () => toggleSelection(member.id)
+        })
+      }
+    })
+  }
+
+  cols.push(
     {
       id: 'name',
       header: t('teams.name'),
@@ -159,7 +360,7 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
         return h(UBadge, { color, variant: 'subtle', size: 'xs', class: 'capitalize' }, () => row.original.role)
       }
     }
-  ]
+  )
 
   if (canManageMembers.value) {
     cols.push({
@@ -168,44 +369,15 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
       meta: { class: { td: 'text-right', th: 'text-right' } },
       cell: ({ row }) => {
         const member = row.original
-        const isSelf = member.userId === user.value?.id
-        const isOwnerRole = member.role === 'owner'
-        const canChangeRole = !(isSelf && !isOwner.value) && !(isOwnerRole && !isOwner.value)
-        const canRemove = !isSelf && !isOwnerRole
-
-        const children = []
-
-        if (canChangeRole) {
-          children.push(h(USelectMenu, {
-            'modelValue': member.role,
-            'items': [
-              { label: t('teams.member'), value: 'member' },
-              { label: t('teams.admin'), value: 'admin' },
-              ...(isOwner.value && !isSelf ? [{ label: t('teams.owner'), value: 'owner' }] : [])
-            ],
-            'valueKey': 'value',
-            'disabled': loadingMemberId.value === member.id,
-            'size': 'sm',
-            'class': 'w-28',
-            'onUpdate:modelValue': (role: MemberRole) => handleRoleChange(member.id, role)
-          }))
+        const actionItems = getMemberActions(member)
+        if (!actionItems.length) {
+          return h('span', { class: 'text-xs text-muted' }, t('teams.noActions'))
         }
-
-        if (canRemove) {
-          children.push(h(resolveComponent('CroutonConfirmButton'), {
-            label: t('teams.remove'),
-            confirmLabel: t('teams.sure'),
-            icon: 'i-lucide-user-x',
-            loading: loadingMemberId.value === member.id,
-            onConfirm: () => handleRemove(member.id)
-          }))
-        }
-
-        if (!children.length) {
-          children.push(h('span', { class: 'text-xs text-muted' }, t('teams.noActions')))
-        }
-
-        return h('div', { class: 'flex items-center justify-end gap-2' }, children)
+        return h('div', { class: 'flex justify-end' }, [
+          h(UDropdownMenu, { items: actionItems }, {
+            default: () => h(UButton, { icon: 'i-lucide-more-horizontal', variant: 'ghost', color: 'neutral', size: 'xs' })
+          })
+        ])
       }
     })
   }
@@ -294,9 +466,21 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
         v-for="member in sortedMembers"
         :key="member.id"
         class="relative p-4 rounded-lg border border-default bg-elevated hover:bg-muted/50 transition-colors"
+        :class="{ 'ring-2 ring-primary': selectedMemberIds.has(member.id) }"
       >
-        <!-- Role badge in corner -->
-        <div class="absolute top-3 right-3">
+        <!-- Checkbox in top-left corner -->
+        <div
+          v-if="canManageMembers && member.userId !== user?.id && !(member.role === 'owner' && !isOwner)"
+          class="absolute top-3 left-3"
+        >
+          <UCheckbox
+            :model-value="selectedMemberIds.has(member.id)"
+            @update:model-value="toggleSelection(member.id)"
+          />
+        </div>
+
+        <!-- Role badge + actions dropdown in top-right corner -->
+        <div class="absolute top-3 right-3 flex items-center gap-1">
           <UBadge
             :color="member.role === 'owner' ? 'primary' : member.role === 'admin' ? 'info' : 'neutral'"
             variant="subtle"
@@ -304,6 +488,17 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
           >
             {{ member.role }}
           </UBadge>
+          <UDropdownMenu
+            v-if="canManageMembers && getMemberActions(member).length > 0"
+            :items="getMemberActions(member)"
+          >
+            <UButton
+              icon="i-lucide-more-horizontal"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+            />
+          </UDropdownMenu>
         </div>
 
         <!-- Member info centered -->
@@ -322,42 +517,61 @@ const columns = computed<TableColumn<MemberRow>[]>(() => {
             {{ (member as any).user?.email }}
           </div>
         </div>
-
-        <!-- Actions -->
-        <div class="flex items-center justify-center gap-2 pt-3 border-t border-default">
-          <USelectMenu
-            v-if="canManageMembers && !(member.userId === user?.id && !isOwner) && !(member.role === 'owner' && !isOwner)"
-            :model-value="member.role"
-            :items="[
-              { label: t('teams.member'), value: 'member' },
-              { label: t('teams.admin'), value: 'admin' },
-              ...(isOwner && member.userId !== user?.id ? [{ label: t('teams.owner'), value: 'owner' }] : [])
-            ]"
-            value-key="value"
-            :disabled="loadingMemberId === member.id"
-            size="sm"
-            class="w-28"
-            @update:model-value="(role: MemberRole) => handleRoleChange(member.id, role)"
-          />
-
-          <CroutonConfirmButton
-            v-if="canManageMembers && member.userId !== user?.id && member.role !== 'owner'"
-            :label="t('teams.remove')"
-            :confirm-label="t('teams.sure')"
-            icon="i-lucide-user-x"
-            :loading="loadingMemberId === member.id"
-            @confirm="handleRemove(member.id)"
-          />
-
-          <!-- Show placeholder if no actions available -->
-          <span
-            v-if="!canManageMembers || (member.userId === user?.id && !isOwner) || (member.role === 'owner' && !isOwner)"
-            class="text-xs text-muted"
-          >
-            {{ t('teams.noActions') }}
-          </span>
-        </div>
       </div>
     </div>
+
+    <!-- Bulk Action Bar -->
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="translate-y-4 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-4 opacity-0"
+    >
+      <div
+        v-if="selectedMemberIds.size > 0 && canManageMembers"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-elevated border border-default rounded-xl shadow-xl px-4 py-3 flex items-center gap-3"
+      >
+        <span class="text-sm font-medium whitespace-nowrap">
+          {{ t('admin.selected', { count: selectedMemberIds.size }) }}
+        </span>
+        <USeparator orientation="vertical" class="h-6" />
+        <div class="flex items-center gap-1">
+          <UDropdownMenu
+            :items="[
+              [
+                { label: t('teams.member'), icon: 'i-lucide-user', onSelect: () => handleBulkRoleChange('member') },
+                { label: t('teams.admin'), icon: 'i-lucide-shield', onSelect: () => handleBulkRoleChange('admin') }
+              ]
+            ]"
+          >
+            <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-users">
+              {{ t('admin.changeRole') }}
+            </UButton>
+          </UDropdownMenu>
+          <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-mail" :loading="adminLoading" @click="handleBulkPasswordReset">
+            {{ t('admin.sendPasswordReset') }}
+          </UButton>
+          <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-log-out" :loading="adminLoading" @click="handleBulkForceLogout">
+            {{ t('admin.forceLogout') }}
+          </UButton>
+          <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-shield-off" :loading="adminLoading" @click="handleBulkBan">
+            {{ t('admin.banUser') }}
+          </UButton>
+          <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-shield-check" :loading="adminLoading" @click="handleBulkUnban">
+            {{ t('admin.unbanUser') }}
+          </UButton>
+          <USeparator orientation="vertical" class="h-6" />
+          <UButton variant="ghost" color="error" size="xs" icon="i-lucide-user-x" @click="handleBulkRemove">
+            {{ t('admin.removeFromTeam') }}
+          </UButton>
+        </div>
+        <USeparator orientation="vertical" class="h-6" />
+        <UButton variant="ghost" color="neutral" size="xs" icon="i-lucide-x" @click="clearSelection">
+          {{ t('admin.deselectAll') }}
+        </UButton>
+      </div>
+    </Transition>
   </div>
 </template>
