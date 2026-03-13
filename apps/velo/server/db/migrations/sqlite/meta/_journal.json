@@ -64,6 +64,13 @@
       "when": 1773403502139,
       "tag": "0008_chemical_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1773406033517,
+      "tag": "0009_famous_stick",
+      "breakpoints": true
     }
   ]
 }
