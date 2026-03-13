@@ -15,7 +15,8 @@
  */
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { organization, twoFactor, magicLink, type TwoFactorOptions } from 'better-auth/plugins'
+import { organization, twoFactor, magicLink, admin, haveIBeenPwned, type TwoFactorOptions } from 'better-auth/plugins'
+import { i18n } from '@better-auth/i18n'
 import { passkey } from '@better-auth/passkey'
 import { sql } from 'drizzle-orm'
 import { useNitroApp } from 'nitropack/runtime'
@@ -645,7 +646,53 @@ function buildPlugins(
   const plugins: any[] = [
     // Organization plugin is always enabled (teams support)
     // Cast to any to work around strict typing - config is validated at runtime
-    organization(buildOrganizationConfig(config, db) as any)
+    organization(buildOrganizationConfig(config, db) as any),
+
+    // Admin plugin - user management (ban, impersonate, revoke sessions, etc.)
+    admin({
+      defaultRole: 'user',
+      adminRoles: ['admin']
+    }),
+
+    // Password breach checking via Have I Been Pwned API
+    // Only sends first 5 chars of password hash - full password never leaves the server
+    haveIBeenPwned(),
+
+    // Internationalized auth error messages
+    // Detects locale from header, cookie, or session
+    i18n({
+      defaultLocale: 'en',
+      translations: {
+        nl: {
+          USER_NOT_FOUND: 'Gebruiker niet gevonden',
+          INVALID_EMAIL_OR_PASSWORD: 'Ongeldig e-mailadres of wachtwoord',
+          EMAIL_NOT_VERIFIED: 'E-mailadres niet geverifieerd',
+          PASSWORD_TOO_SHORT: 'Wachtwoord is te kort',
+          PASSWORD_TOO_LONG: 'Wachtwoord is te lang',
+          USER_ALREADY_EXISTS: 'Er bestaat al een account met dit e-mailadres',
+          SESSION_EXPIRED: 'Sessie verlopen, log opnieuw in',
+          INVALID_TOKEN: 'Ongeldige of verlopen token',
+          INVALID_EMAIL: 'Ongeldig e-mailadres',
+          SOCIAL_ACCOUNT_ALREADY_LINKED: 'Dit sociale account is al gekoppeld',
+          FAILED_TO_CREATE_USER: 'Kon gebruiker niet aanmaken',
+          PASSWORD_COMPROMISED: 'Dit wachtwoord is gelekt in een datalek. Kies een ander wachtwoord.'
+        },
+        fr: {
+          USER_NOT_FOUND: 'Utilisateur non trouvé',
+          INVALID_EMAIL_OR_PASSWORD: 'Email ou mot de passe invalide',
+          EMAIL_NOT_VERIFIED: 'Adresse email non vérifiée',
+          PASSWORD_TOO_SHORT: 'Le mot de passe est trop court',
+          PASSWORD_TOO_LONG: 'Le mot de passe est trop long',
+          USER_ALREADY_EXISTS: 'Un compte existe déjà avec cette adresse email',
+          SESSION_EXPIRED: 'Session expirée, veuillez vous reconnecter',
+          INVALID_TOKEN: 'Jeton invalide ou expiré',
+          INVALID_EMAIL: 'Adresse email invalide',
+          SOCIAL_ACCOUNT_ALREADY_LINKED: 'Ce compte social est déjà lié',
+          FAILED_TO_CREATE_USER: 'Impossible de créer l\'utilisateur',
+          PASSWORD_COMPROMISED: 'Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.'
+        }
+      }
+    })
   ]
 
   // Conditionally add passkey plugin

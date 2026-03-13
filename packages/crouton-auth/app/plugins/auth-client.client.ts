@@ -5,7 +5,7 @@
  * Configures organization, passkey, and 2FA client plugins based on @crouton/auth config.
  */
 import { createAuthClient } from 'better-auth/client'
-import { organizationClient, twoFactorClient } from 'better-auth/client/plugins'
+import { organizationClient, twoFactorClient, adminClient } from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
 import type { CroutonAuthConfig } from '../../types/config'
 
@@ -53,7 +53,9 @@ function buildClientPlugins(config?: CroutonAuthConfig) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [
     // Organization client is always enabled
-    organizationClient()
+    organizationClient(),
+    // Admin client for user management (ban, impersonate, etc.)
+    adminClient()
   ]
 
   // Conditionally add passkey client
