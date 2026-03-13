@@ -67,8 +67,9 @@ export default defineNuxtConfig({
         // Set via NUXT_PUBLIC_CROUTON_PAGES_SITE_URL env var
         siteUrl: '',
         // Routing mode: how public page URLs are structured
-        // 'team'   — /[team]/[locale]/[slug] (multi-tenant, default)
-        // 'locale'  — app provides its own page routes, crouton-pages skips public route registration
+        // 'team'    — /[team]/[locale]/[slug] (multi-tenant, default)
+        // 'locale'  — /[locale]/[slug], app provides own routes, root redirects to /{defaultLocale}/
+        // 'custom'  — app provides all its own routes, no prefix, no redirect
         routingMode: 'team',
         // Default locale for root redirect in locale mode (/ → /{defaultLocale}/)
         defaultLocale: 'en'
@@ -77,12 +78,12 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    // In locale mode, remove crouton-pages public page routes so the app
-    // can provide its own [locale]/* routes without conflicts.
+    // In locale/custom mode, remove crouton-pages public page routes so the app
+    // can provide its own routes without conflicts.
     function (_options, nuxt) {
       nuxt.hook('pages:extend', (pages) => {
         const routingMode = (nuxt.options.runtimeConfig?.public as any)?.croutonPages?.routingMode || 'team'
-        if (routingMode === 'locale') {
+        if (routingMode === 'locale' || routingMode === 'custom') {
           const publicRouteNames = new Set(['team-locale-slug', 'team-slug'])
           for (let i = pages.length - 1; i >= 0; i--) {
             const name = pages[i]?.name

@@ -2,7 +2,7 @@
 declare module 'h3' {
   interface H3EventContext {
     /** The crouton-pages routing mode */
-    routingMode?: 'team' | 'locale'
+    routingMode?: 'team' | 'locale' | 'custom'
   }
 }
 
@@ -32,7 +32,9 @@ export default defineNitroPlugin((nitroApp) => {
   const pagesConfig = config.public?.croutonPages as { routingMode?: string; defaultLocale?: string } | undefined
   const routingMode = pagesConfig?.routingMode || 'team'
 
-  if (routingMode !== 'locale') return
+  // 'custom' mode: app provides all its own routes, no locale redirect
+  // 'locale' mode: app provides locale-prefixed routes, root redirects to /{defaultLocale}/
+  if (routingMode !== 'locale' && routingMode !== 'custom') return
 
   const defaultLocale = pagesConfig?.defaultLocale || 'en'
 
@@ -53,10 +55,10 @@ export default defineNitroPlugin((nitroApp) => {
     }
 
     // Set routing mode context for useDomainContext (hideTeamInUrl)
-    event.context.routingMode = 'locale'
+    event.context.routingMode = routingMode as 'locale' | 'custom'
 
-    // Root URL → redirect to default locale
-    if (path === '/') {
+    // Root URL → redirect to default locale (locale mode only)
+    if (routingMode === 'locale' && path === '/') {
       return sendRedirect(event, `/${defaultLocale}/`, 302)
     }
 

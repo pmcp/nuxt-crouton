@@ -48,7 +48,7 @@ export function useDomainContext() {
 
   // Computed properties for easy access
   const isCustomDomain = computed(() => domainContext.value.isCustomDomain)
-  const isLocaleMode = computed(() => domainContext.value.routingMode === 'locale')
+  const isLocaleMode = computed(() => domainContext.value.routingMode === 'locale' || domainContext.value.routingMode === 'custom')
   const resolvedDomain = computed(() => domainContext.value.resolvedDomain)
   const resolvedTeamId = computed(() => domainContext.value.resolvedTeamId)
 

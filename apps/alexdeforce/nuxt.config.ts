@@ -38,7 +38,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       croutonPages: {
-        routingMode: 'locale',
+        routingMode: 'custom',
         defaultLocale: 'nl'
       }
     }
