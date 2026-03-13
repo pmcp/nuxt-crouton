@@ -3,14 +3,37 @@ import type { H3Event } from 'h3'
 /**
  * Authenticate an MCP request and verify team membership.
  *
- * Since MCP Toolkit runs inside the Nuxt server process, the H3 event
- * carries session cookies. We delegate to crouton-auth's team resolution.
+ * Tries two auth strategies in order:
+ * 1. Bearer token (scoped access token) — for headless MCP clients (Claude Desktop, Cursor, etc.)
+ * 2. Session cookie — for browser-based MCP access
+ *
+ * Scoped tokens are team-scoped: the token's organizationId must match the requested teamId.
  */
 export async function requireMcpAuth(event: H3Event, teamId: string) {
-  // Import dynamically to avoid hard dependency on crouton-auth
-  const { resolveTeamAndCheckMembership } = await import('@fyit/crouton-auth/server/utils/team')
+  // 1. Try bearer token (scoped access)
+  const authHeader = getHeader(event, 'authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    const { validateScopedToken } = await import('@fyit/crouton-auth/server/utils/scoped-access')
+    const token = authHeader.slice(7)
+    const result = await validateScopedToken(token)
 
-  // Set the team ID param so resolveTeamAndCheckMembership can find it
+    if (!result) {
+      throw createError({ status: 401, statusText: 'Invalid or expired MCP token' })
+    }
+
+    if (result.resourceType !== 'mcp') {
+      throw createError({ status: 403, statusText: 'Token is not an MCP access token' })
+    }
+
+    if (result.organizationId !== teamId) {
+      throw createError({ status: 403, statusText: 'Token does not grant access to this team' })
+    }
+
+    return result
+  }
+
+  // 2. Fall back to session cookie
+  const { resolveTeamAndCheckMembership } = await import('@fyit/crouton-auth/server/utils/team')
   event.context.params = event.context.params || {}
   event.context.params.id = teamId
 
