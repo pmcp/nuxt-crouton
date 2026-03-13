@@ -587,14 +587,13 @@ const selectedGraph = computed(() =>
           <!-- Graph -->
           <div class="flex-1 relative">
             <CroutonFlow
-              v-if="decisions?.length"
+              v-if="decisions?.length && flowId"
               :key="layoutKey"
               :rows="decisions"
               collection="thinkgraphDecisions"
               parent-field="parentId"
               label-field="content"
-              data-mode="ephemeral"
-              :flow-id="flowId || undefined"
+              :flow-id="flowId"
               :saved-positions="savedPositions"
               :flow-config="flowConfig"
               :additional-edges="additionalEdges"
