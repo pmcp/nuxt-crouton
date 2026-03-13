@@ -40,6 +40,13 @@ const academieImages = computed(() => {
   return images
 })
 
+// Map category title to SVG banner filename
+function categoryBannerUrl(title: string): string {
+  // Capitalize first letter to match filenames like "Kinderen", "Jongeren", etc.
+  const name = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+  return `/assets/aanbod/Banner aanbod 600x60px_${name}.svg`
+}
+
 // Format date to Dutch locale (e.g. "29 januari 2026")
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -122,10 +129,18 @@ useHead({
                 v-for="cat in sortedCategories"
                 :key="cat.id"
                 :to="`/${locale}/aanbod`"
-                class="text-4xl uppercase font-bold px-2 inline-block"
-                :style="{ backgroundColor: cat.color || '#3e8b6f' }"
+                class="block"
               >
-                {{ t(cat, 'title') }}
+                <span
+                  class="text-4xl uppercase font-bold px-2 inline-block"
+                  :style="{
+                    backgroundColor: cat.color || '#3e8b6f',
+                    backgroundImage: `url('${categoryBannerUrl(t(cat, 'title'))}')`,
+                    backgroundSize: 'contain',
+                  }"
+                >
+                  {{ t(cat, 'title') }}
+                </span>
               </NuxtLink>
             </div>
           </div>
@@ -133,16 +148,16 @@ useHead({
 
         <!-- BLOCK: ABOUT -->
         <div class="col-span-full grid grid-cols-1 md:grid-cols-2 gap-8">
-          <!-- Two stacked images on the left -->
-          <div v-if="academieImages.length >= 2" class="col-span-1 grid grid-rows-2 gap-4">
+          <!-- Row 1: Two images side by side (full width) -->
+          <div v-if="academieImages.length >= 2" class="grid grid-cols-2 col-span-1 md:col-span-2 gap-2 md:gap-8">
             <div class="overflow-hidden">
-              <img :src="academieImages[0]" alt="" class="w-full h-full object-cover">
+              <img :src="academieImages[0]" alt="" class="w-full h-full object-cover object-center">
             </div>
             <div class="overflow-hidden">
-              <img :src="academieImages[1]" alt="" class="w-full h-full object-cover">
+              <img :src="academieImages[1]" alt="" class="w-full h-full object-cover object-center">
             </div>
           </div>
-          <!-- Text on the right -->
+          <!-- Row 2 left: Text -->
           <div class="col-span-1">
             <div class="sticky top-28 flex flex-col gap-2">
               <span class="uppercase font-bold tracking-wider">Academie</span>
@@ -150,9 +165,9 @@ useHead({
               <span class="prose">De Sint-Lukas academie is een instelling van het deeltijds kunstonderwijs (DKO). We richten ons op kinderen (6 tot 12 jaar), jongeren (12 tot 18 jaar) en volwassenen (18+) die in hun vrije tijd de mogelijkheden van de beeldende kunsten willen verkennen. Wij bieden u, geheel naar onze unieke pedagogie, kwalitatief onderwijs op maat in creatieve opleidingen.</span>
             </div>
           </div>
-          <!-- Full-width image below -->
-          <div v-if="academieImages.length >= 3" class="col-span-full overflow-hidden max-h-80">
-            <img :src="academieImages[2]" alt="" class="w-full h-full object-cover">
+          <!-- Row 2 right: Image -->
+          <div v-if="academieImages.length >= 3" class="col-span-1 h-fit overflow-hidden">
+            <img :src="academieImages[2]" alt="" class="w-full h-full object-cover object-center">
           </div>
         </div>
       </div>
@@ -185,13 +200,8 @@ useHead({
             title="Sint-Lukas Academie kalender"
           />
         </div>
-        <div class="hidden md:block col-span-1 bg-sintlukas-100 overflow-hidden">
-          <img
-            v-if="academieImages.length"
-            :src="academieImages[0]"
-            alt="Sint-Lukas Academie"
-            class="w-full h-full object-cover"
-          >
+        <div class="self-stretch hidden md:block">
+          <SvgCalendarIllustration class="col-span-1 h-full p-20 relative -left-40 lg:left-0" />
         </div>
       </div>
       <div class="h-8" />
