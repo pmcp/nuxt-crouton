@@ -349,6 +349,11 @@ const isRegularPage = computed(() => {
   return !pt || pt === 'regular' || pt === 'core:regular' || pt === 'pages:regular' || pt.endsWith(':regular')
 })
 
+// Whether the block editor should be shown (regular pages + page types with hasBlockContent)
+const showBlockEditor = computed(() => {
+  return isRegularPage.value || selectedPageType.value?.hasBlockContent === true
+})
+
 // Collection page type detection (publishable item pages — e.g. bookings:bookingsLocations-detail)
 const isCollectionPage = computed(() => !!selectedPageType.value?.collection)
 const collectionPageName = computed(() => selectedPageType.value?.collection || '')
@@ -612,7 +617,7 @@ async function handleSubmit() {
     let translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; content?: string }>
 
     // Extract collab content
-    if (collabLocalizedContent && isRegularPage.value) {
+    if (collabLocalizedContent && showBlockEditor.value) {
       const activeFragments = collabLocalizedContent.getActiveFragments()
       for (const { locale: loc } of activeFragments) {
         const contentJson = collabLocalizedContent.getContentJson(loc)
@@ -655,7 +660,7 @@ async function handleSubmit() {
     const primaryLocale = Object.keys(translations)[0] || 'en'
     const primary = translations[primaryLocale] || {}
 
-    const rawContent = isRegularPage.value ? (primary.content || state.value.content) : state.value.content
+    const rawContent = showBlockEditor.value ? (primary.content || state.value.content) : state.value.content
     const submitData = {
       ...state.value,
       title: primary.title || state.value.title,
@@ -664,7 +669,7 @@ async function handleSubmit() {
       seoDescription: (primary as any).seoDescription || '',
       content: rawContent && typeof rawContent === 'object' ? JSON.stringify(rawContent) : rawContent,
       translations,
-      config: !isRegularPage.value ? state.value.config : null
+      config: isRegularPage.value ? null : state.value.config
     } as any
 
     let savedPage: any
@@ -702,7 +707,7 @@ function handleDelete() {
 
 // Translatable fields
 const translatableFields = computed(() => {
-  if (isRegularPage.value) {
+  if (showBlockEditor.value) {
     return ['title', 'slug', 'seoTitle', 'seoDescription', 'content']
   }
   return ['title', 'slug', 'seoTitle', 'seoDescription']
@@ -710,7 +715,7 @@ const translatableFields = computed(() => {
 
 // Field components
 const fieldComponents = computed((): Record<string, string> => {
-  if (isRegularPage.value) {
+  if (showBlockEditor.value) {
     return { content: 'CroutonPagesEditorBlockEditorWithPreview' }
   }
   return {}
@@ -775,7 +780,7 @@ const previewPage = computed(() => {
   const translations = { ...state.value.translations } as Record<string, { title?: string; slug?: string; content?: string }>
 
   // In collab mode, pull live content from Yjs fragments
-  if (collabLocalizedContent && isRegularPage.value) {
+  if (collabLocalizedContent && showBlockEditor.value) {
     const activeFragments = collabLocalizedContent.getActiveFragments?.() || []
     for (const { locale: loc } of activeFragments) {
       const contentJson = collabLocalizedContent.getContentJson(loc)
@@ -1034,8 +1039,8 @@ defineExpose({ state })
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
         </div>
 
-        <!-- Config fields for app pages -->
-        <template v-if="!isRegularPage && !isCollectionPage && selectedPageType?.configSchema?.length">
+        <!-- Config fields for app pages (non-regular, non-collection, non-block-content page types) -->
+        <template v-if="!showBlockEditor && !isCollectionPage && selectedPageType?.configSchema?.length">
           <USeparator :label="t('pages.editor.pageSettings')" class="my-6" />
           <div class="space-y-4">
             <div v-for="field in selectedPageType.configSchema" :key="field.name" class="text-sm text-muted">
@@ -1044,7 +1049,7 @@ defineExpose({ state })
           </div>
         </template>
 
-        <template v-else-if="!isRegularPage && !isCollectionPage && !selectedPageType?.configSchema?.length">
+        <template v-else-if="!showBlockEditor && !isCollectionPage && !selectedPageType?.configSchema?.length">
           <div class="p-4 bg-muted/30 rounded-lg text-center text-sm text-muted mt-6">
             <UIcon name="i-lucide-info" class="size-5 mb-2" />
             <p>{{ t('pages.editor.noConfig') }}</p>

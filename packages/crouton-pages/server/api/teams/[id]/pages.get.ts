@@ -11,6 +11,7 @@
  * - navigation=true: Only return pages with showInNavigation=true
  * - visibility: Filter by visibility (public, members, hidden)
  * - locale: Locale for translated title/slug (e.g., 'en', 'nl', 'fr')
+ * - pageType: Filter by page type (e.g., 'pages:footer') — includes content in response
  */
 import { eq, and, or, asc, inArray } from 'drizzle-orm'
 
@@ -28,6 +29,7 @@ export default defineCachedEventHandler(async (event) => {
   const navigationOnly = query.navigation === 'true'
   const visibilityFilter = query.visibility as string | undefined
   const locale = query.locale as string | undefined
+  const pageTypeFilter = query.pageType as string | undefined
 
   try {
     // Import schema - using dynamic import since layer structure
@@ -102,6 +104,11 @@ export default defineCachedEventHandler(async (event) => {
         conditions.push(eq(pagesSchema.pagesPages.showInNavigation as any, true))
       }
 
+      // Add page type filter
+      if (pageTypeFilter) {
+        conditions.push(eq(pagesSchema.pagesPages.pageType as any, pageTypeFilter))
+      }
+
       // Add visibility filter based on auth status
       if (visibilityFilter) {
         conditions.push(eq(pagesSchema.pagesPages.visibility as any, visibilityFilter))
@@ -119,6 +126,7 @@ export default defineCachedEventHandler(async (event) => {
       // Build select fields — translations/config columns are optional (depends on generated schema)
       const hasTranslations = 'translations' in pagesSchema.pagesPages
       const hasConfig = 'config' in pagesSchema.pagesPages
+      const hasContent = 'content' in pagesSchema.pagesPages
       const selectFields: Record<string, any> = {
         id: pagesSchema.pagesPages.id,
         title: pagesSchema.pagesPages.title,
@@ -131,6 +139,10 @@ export default defineCachedEventHandler(async (event) => {
         order: pagesSchema.pagesPages.order,
         depth: pagesSchema.pagesPages.depth,
         path: pagesSchema.pagesPages.path
+      }
+      // Include content when filtering by pageType (e.g., footer needs block content)
+      if (pageTypeFilter && hasContent) {
+        selectFields.content = (pagesSchema.pagesPages as any).content
       }
       if (hasTranslations) {
         selectFields.translations = (pagesSchema.pagesPages as any).translations
@@ -182,7 +194,7 @@ export default defineCachedEventHandler(async (event) => {
           }
         }
 
-        return {
+        const result: Record<string, any> = {
           id: page.id,
           title: resolvedTitle,
           slug: resolvedSlug,
@@ -196,6 +208,26 @@ export default defineCachedEventHandler(async (event) => {
           path: page.path,
           config
         }
+
+        // Include content + translations when filtering by pageType
+        if (pageTypeFilter) {
+          // Resolve localized content
+          let resolvedContent = page.content || null
+          if (hasTranslations && page.translations) {
+            const translations = page.translations as Record<string, { content?: string }> | null
+            if (locale && translations?.[locale]?.content) {
+              resolvedContent = translations[locale].content!
+            } else if (translations?.en?.content) {
+              resolvedContent = translations.en.content
+            }
+          }
+          result.content = resolvedContent
+          if (hasTranslations) {
+            result.translations = page.translations
+          }
+        }
+
+        return result
       })
 
       return {
@@ -237,7 +269,8 @@ export default defineCachedEventHandler(async (event) => {
     const locale = (query.locale as string) || 'en'
     const nav = query.navigation === 'true' ? '1' : '0'
     const visibility = (query.visibility as string) || 'public'
-    return `${teamParam}:${locale}:nav=${nav}:vis=${visibility}`
+    const pt = (query.pageType as string) || ''
+    return `${teamParam}:${locale}:nav=${nav}:vis=${visibility}${pt ? `:pt=${pt}` : ''}`
   },
   shouldBypassCache: async (event) => {
     try {

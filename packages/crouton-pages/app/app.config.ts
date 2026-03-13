@@ -36,6 +36,17 @@ export default defineAppConfig({
           component: 'CroutonPagesCollectionBinderRenderer',
           category: 'collections',
           configSchema: []
+        },
+        {
+          id: 'footer',
+          name: 'Footer',
+          description: 'Site footer — compose with blocks, renders in UFooter layout',
+          icon: 'i-lucide-panel-bottom',
+          component: 'CroutonPagesFooterRenderer',
+          category: 'layout',
+          hasBlockContent: true,
+          singleton: true,
+          configSchema: []
         }
       ]
     }

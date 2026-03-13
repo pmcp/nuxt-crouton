@@ -203,6 +203,23 @@ export interface CroutonPageType {
    * @example 'shopBikes', 'blogPosts'
    */
   collection?: string
+
+  /**
+   * Whether this page type uses the block editor for content.
+   * When true, the admin editor shows the block editor (like regular pages)
+   * AND can also show configSchema fields below it.
+   * Regular pages always have block content; this flag is for non-regular
+   * page types that also need block-based content editing.
+   * @default false
+   */
+  hasBlockContent?: boolean
+
+  /**
+   * Whether only one page of this type should exist per team.
+   * When true, the admin UI warns when trying to create a second instance.
+   * @default false
+   */
+  singleton?: boolean
 }
 
 /**

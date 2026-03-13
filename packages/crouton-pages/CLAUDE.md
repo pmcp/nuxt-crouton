@@ -18,10 +18,13 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/composables/useDomainContext.ts` | Custom domain detection and context |
 | `app/composables/useNavigation.ts` | Build navigation from published pages |
 | `app/composables/usePageBlocks.ts` | Block manipulation utilities |
+| `app/composables/useFooterPage.ts` | Fetch singleton footer page for current team |
 | `app/components/Renderer.vue` | `CroutonPagesRenderer` - Renders page based on type |
 | `app/components/CollectionPageRenderer.vue` | `CroutonPagesCollectionPageRenderer` - Bridge for publishable collection pages |
 | `app/components/RegularContent.vue` | `CroutonPagesRegularContent` - Rich text content display |
 | `app/components/BlockContent.vue` | `CroutonPagesBlockContent` - Block-based content display |
+| `app/components/Footer.vue` | `CroutonPagesFooter` - Self-contained footer for layouts (uses UFooter) |
+| `app/components/FooterRenderer.vue` | `CroutonPagesFooterRenderer` - Footer page renderer (used by Renderer.vue) |
 | `app/components/Editor/BlockEditor.vue` | Block-based page editor |
 | `app/components/Form.vue` | Page creation/editing form |
 | `app/types/blocks.ts` | Block type definitions |
@@ -32,7 +35,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/pages/[team]/[...slug].vue` | Public page catch-all route |
 | `server/plugins/single-team-rewrite.ts` | Config-driven single-team URL rewriter (Nitro plugin) |
 | `server/plugins/domain-resolver.ts` | Resolves custom domains to teams (Nitro plugin) |
-| `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation |
+| `server/api/teams/[id]/pages.get.ts` | Get published pages for navigation (supports `?pageType=` filter) |
 | `server/api/teams/[id]/pages/[slug].get.ts` | Get single page by slug |
 | `app/stubs/AIPageGenerator.vue` | Stub for AI page generator (real impl in crouton-ai) |
 | `nuxt.config.ts` | Layer configuration |
@@ -290,6 +293,8 @@ Components auto-import with `CroutonPages` prefix:
 - `CollectionPageRenderer.vue` → `<CroutonPagesCollectionPageRenderer />`
 - `RegularContent.vue` → `<CroutonPagesRegularContent />`
 - `BlockContent.vue` → `<CroutonPagesBlockContent />`
+- `Footer.vue` → `<CroutonPagesFooter />`
+- `FooterRenderer.vue` → `<CroutonPagesFooterRenderer />`
 - `Editor/BlockEditor.vue` → `<CroutonPagesEditorBlockEditor />`
 - `Blocks/Render/HeroBlock.vue` → `<CroutonPagesBlocksRenderHeroBlock />`
 
@@ -343,6 +348,35 @@ interface PageRecord {
 ```vue
 <CroutonPagesRenderer :page="pageData" />
 ```
+
+## Footer System
+
+The package includes a footer page type (`pages:footer`) that uses the block editor for content and renders inside Nuxt UI's `UFooter` component.
+
+### How It Works
+
+1. Create a page with type "Footer" in the admin — uses block editor
+2. `<CroutonPagesFooter />` in the public layout fetches and renders it automatically
+3. Renders nothing if no footer page exists — safe to include unconditionally
+
+### useFooterPage() Composable
+
+```typescript
+const { footer, content, isLoading, refresh } = useFooterPage()
+// footer: raw page record (or null)
+// content: localized block content string
+```
+
+### Custom Footer Layouts
+
+Apps that need custom footer styling (e.g., branded layouts) can:
+1. Use `useFooterPage()` directly and render with their own component
+2. Register custom blocks via `croutonBlocks` in `app.config.ts`
+3. Or use the default `<CroutonPagesFooter />` which wraps content in `UFooter`
+
+### Page Type Properties
+
+The footer page type uses `hasBlockContent: true` — a flag on `CroutonPageType` that tells the editor to show the block editor for non-regular page types. Also uses `singleton: true` to indicate only one should exist per team.
 
 ## Custom Domain Support
 

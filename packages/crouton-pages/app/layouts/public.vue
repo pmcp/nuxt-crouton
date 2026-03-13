@@ -171,6 +171,9 @@ const mainClasses = computed(() => {
       <slot />
     </main>
 
+    <!-- Footer (renders nothing if no footer page exists) -->
+    <CroutonPagesFooter />
+
     <!-- Editing drawer (slides up from bottom with scale-background effect) -->
     <UDrawer
       v-model:open="drawerOpen"
