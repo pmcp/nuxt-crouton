@@ -1,4 +1,7 @@
 export default defineNuxtConfig({
+  extends: [
+    './collections/categorize-layouts'
+  ],
   components: {
     dirs: [
       {

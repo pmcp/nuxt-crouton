@@ -10,6 +10,8 @@ import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTran
 import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composables/usePagesPages'
 import { triageAccountsConfig } from '../layers/triage/collections/accounts/app/composables/useTriageAccounts'
 
+import {categorizeCategorizeLayoutsConfig} from '../layers/categorize/collections/categorize-layouts/app/composables/useCategorizeCategorizeLayouts';
+
 export default defineAppConfig({
   croutonCollections: {
     triageAccounts: triageAccountsConfig,
@@ -23,5 +25,6 @@ export default defineAppConfig({
     triageTasks: triageTasksConfig,
     triageDiscussions: triageDiscussionsConfig,
     triageFlows: triageFlowsConfig,
+    categorizeCategorizeLayouts: categorizeCategorizeLayoutsConfig
   }
 })

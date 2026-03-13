@@ -20,7 +20,8 @@ export default {
         pathField: 'path',
         depthField: 'depth'
       }
-    }
+    },
+    { name: 'categorize-layouts', fieldsFile: './schemas/categorize-layout.json' }
   ],
 
   targets: [
@@ -37,7 +38,8 @@ export default {
         'messages'
       ]
     },
-    { layer: 'pages', collections: ['pages'] }
+    { layer: 'pages', collections: ['pages'] },
+    { layer: 'categorize', collections: ['categorize-layouts'] }
   ],
 
   dialect: 'sqlite',
