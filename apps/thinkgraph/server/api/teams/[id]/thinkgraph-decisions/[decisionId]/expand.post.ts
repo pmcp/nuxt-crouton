@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await streamText({
     model: ai.model(ai.getDefaultModel()),
-    system: config.system + `\n\nKeep each content to 1-2 sentences. Be concise but insightful.`,
+    system: config.system + `\n\nCRITICAL: Each node must be ONE atomic thought — a single idea you can branch from. Maximum 1-2 sentences. Never chain multiple thoughts into one node. If you have a complex idea, split it into separate nodes. Think of each node as a tweet, not a paragraph.`,
     prompt: buildPrompt(targetDecision, ancestors, siblings, children, starred, config.count),
   })
 
