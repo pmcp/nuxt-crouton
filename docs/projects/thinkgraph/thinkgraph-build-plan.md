@@ -507,6 +507,69 @@ DECISION: {"content": "your insight", "type": "insight", "branch": "current_bran
 
 ---
 
+## Bidirectional Claude Integration (Active)
+
+Real-time conversation between ThinkGraph UI and Claude Code. When a user adds a node in the graph, Claude reads the context and responds with new nodes via MCP — creating a live thinking dialogue.
+
+### Architecture
+
+```
+User creates node (source: 'manual')
+         │
+         ▼
+POST /api/teams/[id]/thinkgraph-decisions/
+         │
+         ▼
+claude-responder.ts (server utility)
+  1. Build graph context (ancestors, siblings, starred)
+  2. Spawn `claude` CLI with prompt + MCP instructions
+  3. Claude reads graph, creates child nodes via MCP (source: 'mcp')
+  4. signalCollectionChange → Yjs → UI updates live
+         │
+         ▼
+Loop guard: only trigger on source !== 'mcp'
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|---|---|
+| Spawn `claude` CLI (not API) | Has access to `.claude/skills/`, project context, MCP tools |
+| `source` field as loop guard | MCP-created nodes have `source: 'mcp'`, UI nodes have `source: 'manual'` — only trigger on manual |
+| Fire-and-forget spawning | Don't block the POST response; Claude works asynchronously |
+| Pass context in prompt | Faster than having Claude call MCP to read context first |
+| Use team slug for MCP | `signalCollectionChange` needs slug, not UUID |
+
+### Files
+
+| File | Purpose |
+|---|---|
+| `server/utils/claude-responder.ts` | Spawns Claude CLI with graph context |
+| `server/api/.../index.post.ts` | Modified to call responder for manual nodes |
+| `.claude/skills/think-aloud.md` | Skill for Claude's reasoning-as-nodes workflow |
+
+### Spawn Pattern
+
+```typescript
+spawn('claude', ['-p', prompt, '--no-session-persistence', '--permission-mode', 'bypassPermissions'], {
+  cwd: projectDir,
+  env: { ...process.env, CLAUDECODE: undefined }, // allow nested spawning
+  stdio: 'ignore',
+  detached: true
+}).unref()
+```
+
+### Future: Agent SDK
+
+When `@anthropic-ai/claude-agent-sdk` matures, replace CLI spawning with:
+```typescript
+import { ClaudeAgent } from '@anthropic-ai/claude-agent-sdk'
+const agent = new ClaudeAgent({ cwd: projectDir })
+for await (const event of agent.run(prompt)) { /* stream */ }
+```
+
+---
+
 ## V2 Features (Parked)
 
 | Feature | Description |

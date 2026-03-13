@@ -20,7 +20,9 @@ export function useFooterPage(teamSlug?: MaybeRef<string | null>) {
   const { locale: i18nLocale } = useI18n()
   const { teamId } = useTeamContext()
 
-  const pagesConfig = (useRuntimeConfig().public?.croutonPages as any) as { defaultLocale?: string } | undefined
+  const runtimeConfig = useRuntimeConfig()
+  const pagesConfig = (runtimeConfig.public?.croutonPages as any) as { defaultLocale?: string } | undefined
+  const defaultTeamSlug = (runtimeConfig.public?.crouton as any)?.auth?.teams?.defaultTeamSlug as string | undefined
   const locale = computed(() => i18nLocale.value || pagesConfig?.defaultLocale || 'en')
 
   // Resolve team from prop, route, or auth context
@@ -32,22 +34,24 @@ export function useFooterPage(teamSlug?: MaybeRef<string | null>) {
   const team = computed(() => {
     const teamValue = toValue(teamSlug)
     if (teamValue) return teamValue
-    return routeTeam.value || teamId.value || null
+    return routeTeam.value || teamId.value || defaultTeamSlug || null
   })
 
   // Fetch footer page by pageType filter
-  const { data: footerData, pending: isLoading, refresh } = useFetch(() => {
-    if (!team.value) return null as any
-    return `/api/teams/${team.value}/pages`
-  }, {
-    params: { pageType: 'pages:footer', locale },
-    default: () => null,
-    transform: (data: any) => {
+  // Uses useAsyncData + $fetch to avoid useFetch dedup issues during SSR
+  // (in locale routing mode, team may not resolve until after initial SSR render)
+  const { data: footerData, pending: isLoading, refresh } = useAsyncData(
+    () => `footer-page-${team.value}`,
+    async () => {
+      if (!team.value) return null
+      const data = await $fetch<any>(`/api/teams/${team.value}/pages`, {
+        params: { pageType: 'pages:footer', locale: locale.value }
+      })
       const pages = data?.data || data || []
-      // Return first (singleton) footer page
       return pages[0] || null
-    }
-  })
+    },
+    { watch: [team, locale] }
+  )
 
   // Parsed footer page record
   const footer = computed(() => footerData.value)

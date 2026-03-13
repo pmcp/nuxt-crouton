@@ -290,9 +290,9 @@ function toggleStar(event: Event) {
     </div>
 
     <!-- AI source indicator -->
-    <div v-if="decision.source === 'ai' || decision.source === 'dispatch'" class="mt-1.5 flex items-center gap-1">
-      <UIcon :name="decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
-      <span class="text-[10px] text-violet-400">{{ decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
+    <div v-if="decision.source === 'ai' || decision.source === 'dispatch' || decision.source === 'mcp'" class="mt-1.5 flex items-center gap-1">
+      <UIcon :name="decision.source === 'mcp' ? 'i-lucide-terminal' : decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
+      <span class="text-[10px] text-violet-400">{{ decision.source === 'mcp' ? 'Claude Code' : decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
     </div>
 
     <!-- Image artifact preview -->
