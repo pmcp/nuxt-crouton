@@ -226,11 +226,7 @@ Core includes a built-in `croutonRedirects` collection for managing URL redirect
 
 **Cache** (`server/utils/redirectCache.ts`) loads all active redirects into memory on first request. Invalidated automatically on create/update/delete via the API.
 
-**App setup:** Apps must export the schema in their `server/db/schema.ts`:
-```typescript
-export { croutonRedirects } from '@fyit/crouton-core/server/database/schema/redirects'
-```
-Then run `db:generate` and `db:migrate`.
+**App setup:** The redirects schema is auto-discovered by NuxtHub via `server/db/schema.ts` in the crouton-core layer — no manual schema export needed. Apps just need to run `db:generate` and `db:migrate` to create the table.
 
 ## Common Tasks
 
