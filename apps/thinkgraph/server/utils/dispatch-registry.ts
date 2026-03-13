@@ -6,6 +6,14 @@ export interface DispatchContext {
   thinkingPath: string
   prompt?: string
   options?: Record<string, unknown>
+  /** Internal metadata passed by the dispatch endpoint — team, graph, node details */
+  _meta?: {
+    teamSlug: string
+    teamId: string
+    graphId: string
+    decisionId: string
+    allDecisions: any[]
+  }
 }
 
 export interface DispatchResult {
@@ -79,6 +87,7 @@ export async function ensureServicesLoaded() {
     import('./dispatch-services/ui-prototype'),
     import('./dispatch-services/research-agent'),
     import('./dispatch-services/excalidraw'),
+    import('./dispatch-services/claude-code'),
   ])
   _loaded = true
 }

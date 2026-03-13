@@ -57,9 +57,21 @@ export default defineEventHandler(async (event) => {
         thinkingPath,
         prompt: variationPrompt,
         options,
+        _meta: {
+          teamSlug: team.slug,
+          teamId: team.id,
+          graphId: (targetDecision as any).graphId || '',
+          decisionId: decisionId!,
+          allDecisions,
+        },
       },
       event
     )
+
+    // Async services (e.g. Claude Code) create nodes via MCP — no placeholder needed
+    if ((result as any)._async) {
+      return { async: true, serviceId }
+    }
 
     // Check if the result contains a tree structure (from agent services)
     const tree = (result as any)._tree as Array<{ content: string; nodeType: string; children?: any[] }> | undefined

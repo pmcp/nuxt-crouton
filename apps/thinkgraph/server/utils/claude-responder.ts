@@ -1,9 +1,9 @@
 /**
- * Claude Responder — spawns a Claude CLI instance to respond to manual graph nodes.
+ * Claude Responder — spawns a Claude CLI instance to respond to graph nodes.
  *
- * When a user creates a node in the ThinkGraph UI (source !== 'mcp'),
- * this utility builds the graph context and spawns Claude Code to
- * analyze and respond with child nodes via MCP.
+ * Called by the "claude-code" dispatch service when the user explicitly
+ * sends a node to Claude Code. Spawns the CLI which creates child nodes
+ * via MCP with full project context.
  *
  * Loop prevention: Claude creates nodes with source: 'mcp',
  * so they won't re-trigger this responder.
@@ -30,10 +30,11 @@ export interface ClaudeResponderOptions {
     parentId?: string
   }
   allNodes: ContextNode[]
+  depthInstruction?: string
 }
 
 export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
-  const { teamSlug, graphId, node, allNodes } = options
+  const { teamSlug, graphId, node, allNodes, depthInstruction } = options
   const responseKey = `${graphId}:${node.id}`
 
   // Don't spawn if we're already responding to this node
@@ -56,6 +57,7 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     nodeContent: node.content,
     nodeType: node.nodeType,
     context,
+    depthInstruction,
   })
 
   try {
@@ -96,10 +98,11 @@ function buildClaudePrompt(options: {
   nodeContent: string
   nodeType: string
   context: string
+  depthInstruction?: string
 }): string {
-  const { teamSlug, graphId, nodeId, nodeContent, nodeType, context } = options
+  const { teamSlug, graphId, nodeId, nodeContent, nodeType, context, depthInstruction } = options
 
-  return `You are responding to a node in a ThinkGraph thinking canvas. The user just added a "${nodeType}" node. Your job is to respond thoughtfully by creating 1-3 child nodes that advance the thinking.
+  return `You are responding to a node in a ThinkGraph thinking canvas. The user just added a "${nodeType}" node. Your job is to respond thoughtfully by creating child nodes that advance the thinking.
 
 ## Graph Context
 
@@ -114,10 +117,11 @@ Content: ${nodeContent}
 ## Instructions
 
 1. Read the context above carefully
-2. Create 1-3 child nodes under node "${nodeId}" that advance the thinking
-3. Each node should be a discrete thought (1-3 sentences)
-4. Use appropriate node types: idea, insight, question, or decision
-5. Go deep rather than broad — follow the most promising thread
+2. Create child nodes under node "${nodeId}" that advance the thinking
+3. ${depthInstruction || '1-2 child nodes, each 1-2 sentences. Be brief and atomic.'}
+4. Each node should be ONE discrete, atomic thought — something the user can branch from
+5. Use appropriate node types: idea, insight, question, or decision
+6. Go deep rather than broad — follow the most promising thread
 
 ## How to Create Nodes
 
