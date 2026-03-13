@@ -91,11 +91,11 @@ const statusOptions = [
 
 // Table columns
 const columns = [
-  { key: 'emailType', label: t('emailLogs.type') },
-  { key: 'recipientEmail', label: t('emailLogs.recipient') },
-  { key: 'status', label: t('emailLogs.status') },
-  { key: 'sentAt', label: t('emailLogs.sentAt') },
-  { key: 'createdAt', label: t('emailLogs.createdAt') }
+  { accessorKey: 'emailType', header: t('emailLogs.type') },
+  { accessorKey: 'recipientEmail', header: t('emailLogs.recipient') },
+  { accessorKey: 'status', header: t('emailLogs.status') },
+  { accessorKey: 'sentAt', header: t('emailLogs.sentAt') },
+  { accessorKey: 'createdAt', header: t('emailLogs.createdAt') }
 ]
 
 function formatDate(date: string | Date | null) {
