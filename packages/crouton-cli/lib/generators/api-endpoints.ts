@@ -124,6 +124,11 @@ import { nanoid } from 'nanoid'`
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 ${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { z } from 'zod'
+
+const bodySchema = z.object({
+  ${data.fieldsSchema}
+}).strip()
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
@@ -132,7 +137,7 @@ export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
   authTimer.end()
 
-  const body = await readBody(event)
+  const body = await readValidatedBody(event, bodySchema.parse)
 
   // Exclude id field${hasHierarchy ? ' (we generate it for path calculation)' : ' to let the database generate it'}
   const { id, ...dataWithoutId } = body
@@ -175,7 +180,11 @@ export function generatePatchEndpoint(data: Record<string, any>, config: Record<
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 ${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import type { ${prefixedPascalCase} } from '../../../../../types'
+import { z } from 'zod'
+
+const bodySchema = z.object({
+  ${data.fieldsSchema}
+}).partial().strip()
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
@@ -189,7 +198,7 @@ export default defineEventHandler(async (event) => {
   const { team, user, membership } = await resolveTeamAndCheckMembership(event)
   authTimer.end()
 
-  const body = await readBody<Partial<${prefixedPascalCase}>>(event)${hasTranslations
+  const body = await readValidatedBody(event, bodySchema.parse)${hasTranslations
     ? `
 
   // Handle translation updates properly

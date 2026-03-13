@@ -288,6 +288,7 @@ export const apiEndpointData = {
   layerPascalCase: 'Shop',
   layerCamelCase: 'shop',
   fields: basicFields,
+  fieldsSchema: `name: z.string().min(1, 'name is required'),\n  description: z.string().optional(),\n  price: z.number().optional(),\n  active: z.boolean().optional()`,
   hierarchy: null,
   sortable: null
 }
