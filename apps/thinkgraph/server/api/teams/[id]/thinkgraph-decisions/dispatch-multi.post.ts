@@ -56,9 +56,21 @@ export default defineEventHandler(async (event) => {
         thinkingPath: combinedContext,
         prompt: variationPrompt,
         options,
+        _meta: {
+          teamSlug: team.slug,
+          teamId: team.id,
+          graphId: targets[0]?.graphId || '',
+          decisionId: nodeIds[0],
+          allDecisions,
+        },
       },
       event
     )
+
+    // Async services (e.g. Claude Code) create nodes via MCP — no placeholder needed
+    if ((result as any)._async) {
+      return { async: true, serviceId }
+    }
 
     // Connect to first source node via parentId, store all source IDs for extra edges
     const existingArtifacts = Array.isArray(result.artifacts) ? result.artifacts : []
