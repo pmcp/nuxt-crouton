@@ -16,5 +16,11 @@ export default defineNuxtConfig({
     './collections/decisions',
     './collections/chatconversations',
     './collections/graphs'
-  ]
+  ],
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json' }
+    ],
+    langDir: './locales'
+  }
 })
