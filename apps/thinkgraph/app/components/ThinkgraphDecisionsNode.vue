@@ -148,7 +148,7 @@ function handleDelete(event: Event) {
 function handleAddChild(event: Event) {
   event.stopPropagation()
   if (props.collection && decision.value.id) {
-    open('create', props.collection, [], undefined, { parentId: decision.value.id })
+    open('create', props.collection, [], undefined, { parentId: decision.value.id, graphId: decision.value.graphId })
   }
 }
 
