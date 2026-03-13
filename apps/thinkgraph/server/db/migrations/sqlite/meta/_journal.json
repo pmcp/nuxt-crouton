@@ -36,6 +36,13 @@
       "when": 1773353309059,
       "tag": "0004_first_ironclad",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1773403907999,
+      "tag": "0005_simple_payback",
+      "breakpoints": true
     }
   ]
 }

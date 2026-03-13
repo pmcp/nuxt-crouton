@@ -23,7 +23,7 @@ export async function getAllThinkgraphGraphs(teamId: string) {
     .from(tables.thinkgraphGraphs)
     .leftJoin(ownerUser, eq(tables.thinkgraphGraphs.owner, ownerUser.id))
     .where(eq(tables.thinkgraphGraphs.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphGraphs.createdAt))
+    .orderBy(desc(tables.thinkgraphGraphs.order))
 
   return graphs
 }
@@ -51,7 +51,7 @@ export async function getThinkgraphGraphsByIds(teamId: string, graphIds: string[
         inArray(tables.thinkgraphGraphs.id, graphIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphGraphs.createdAt))
+    .orderBy(desc(tables.thinkgraphGraphs.order))
 
   return graphs
 }
@@ -87,10 +87,7 @@ export async function updateThinkgraphGraph(
 
   const [graph] = await (db as any)
     .update(tables.thinkgraphGraphs)
-    .set({
-      ...updates,
-      updatedBy: userId
-    })
+    .set(updates)
     .where(and(...conditions))
     .returning()
 
