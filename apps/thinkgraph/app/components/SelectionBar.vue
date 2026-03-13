@@ -40,7 +40,7 @@ const briefFormats = [
 <template>
   <Transition name="slide-up">
     <div v-if="selectedIds.length >= 2" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-xl">
+      <div class="flex items-center gap-3 px-4 py-3 bg-default ring ring-default rounded-2xl shadow-lg">
         <!-- Count badge -->
         <span class="flex items-center justify-center size-7 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs font-semibold">
           {{ selectedIds.length }}
@@ -51,7 +51,7 @@ const briefFormats = [
           <span
             v-for="d in visibleChips"
             :key="d.id"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-elevated text-default"
           >
             {{ truncate(d.content) }}
             <button
@@ -61,13 +61,13 @@ const briefFormats = [
               <UIcon name="i-lucide-x" class="size-3" />
             </button>
           </span>
-          <span v-if="overflowCount > 0" class="text-xs text-neutral-400">
+          <span v-if="overflowCount > 0" class="text-xs text-muted">
             +{{ overflowCount }} more
           </span>
         </div>
 
         <!-- Separator -->
-        <div class="w-px h-6 bg-neutral-200 dark:bg-neutral-700" />
+        <USeparator orientation="vertical" class="h-6" />
 
         <!-- Actions -->
         <div class="flex items-center gap-1.5">

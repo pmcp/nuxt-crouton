@@ -194,11 +194,11 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
 <template>
   <div class="flex flex-col h-full">
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-default">
       <div class="flex items-center gap-2 min-w-0">
         <UIcon name="i-lucide-message-square-text" class="size-4 text-violet-500 shrink-0" />
         <span class="text-sm font-medium shrink-0">Think with AI</span>
-        <span v-if="nodeName" class="text-xs text-neutral-400 truncate max-w-[150px]">
+        <span v-if="nodeName" class="text-xs text-muted truncate max-w-[150px]">
           — {{ nodeName }}
         </span>
         <span v-if="selectedNodeIds?.length" class="text-xs text-violet-400 shrink-0">
@@ -247,7 +247,7 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
             :class="addedIds.has(`${d.messageId}-${d.content}`) ? 'text-emerald-500' : 'text-violet-500'"
           />
           <span class="truncate">{{ d.content }}</span>
-          <span class="shrink-0 text-[10px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">{{ d.nodeType }}</span>
+          <span class="shrink-0 text-[10px] px-1 py-0.5 rounded bg-elevated">{{ d.nodeType }}</span>
         </button>
       </div>
     </div>
@@ -257,14 +257,14 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
       <!-- Loading conversation indicator -->
       <div
         v-if="isLoadingConversation"
-        class="h-full flex items-center justify-center text-neutral-400"
+        class="h-full flex items-center justify-center text-muted"
       >
         <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
       </div>
 
       <div
         v-else-if="messages.length === 0"
-        class="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600"
+        class="h-full flex flex-col items-center justify-center text-muted"
       >
         <UIcon name="i-lucide-sparkles" class="size-8 mb-3 opacity-50" />
         <p class="text-sm text-center">
@@ -283,8 +283,8 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
           <div
             class="max-w-[85%] rounded-xl px-3 py-2 text-sm"
             :class="msg.role === 'user'
-              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200'"
+              ? 'bg-inverted text-inverted'
+              : 'bg-elevated text-default'"
           >
             <p class="whitespace-pre-wrap leading-relaxed">{{ formatContent(msg.content) }}</p>
           </div>
@@ -292,8 +292,8 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
       </template>
 
       <div v-if="isLoading" class="flex justify-start">
-        <div class="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-3 py-2">
-          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-neutral-400" />
+        <div class="bg-elevated rounded-xl px-3 py-2">
+          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-muted" />
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
 
     <!-- Input -->
     <form
-      class="flex items-end gap-2 px-4 py-3 border-t border-neutral-200 dark:border-neutral-800"
+      class="flex items-end gap-2 px-4 py-3 border-t border-default"
       @submit.prevent="onSubmit"
     >
       <UTextarea

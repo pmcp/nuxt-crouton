@@ -62,7 +62,7 @@ async function addSelected() {
 const confidenceColor = (c: number) => {
   if (c >= 0.8) return 'text-emerald-500'
   if (c >= 0.5) return 'text-amber-500'
-  return 'text-neutral-400'
+  return 'text-muted'
 }
 
 const nodeTypeIcon: Record<string, string> = {
@@ -77,7 +77,7 @@ const nodeTypeIcon: Record<string, string> = {
   <div class="flex flex-col gap-4 p-4 max-h-[80vh]">
     <div>
       <h3 class="text-lg font-semibold mb-1">Quick Add</h3>
-      <p class="text-sm text-neutral-500">Paste AI output to extract decisions and insights.</p>
+      <p class="text-sm text-muted">Paste AI output to extract decisions and insights.</p>
     </div>
 
     <UTextarea
@@ -97,7 +97,7 @@ Supports:
     <div v-if="parsed.length" class="flex flex-col gap-1">
       <div class="flex items-center justify-between mb-1">
         <span class="text-sm font-medium">{{ parsed.length }} items found</span>
-        <span class="text-xs text-neutral-400">{{ selectedIndices.size }} selected</span>
+        <span class="text-xs text-muted">{{ selectedIndices.size }} selected</span>
       </div>
 
       <div class="max-h-[300px] overflow-y-auto flex flex-col gap-1.5">
@@ -107,7 +107,7 @@ Supports:
           class="flex items-start gap-2 p-2 rounded-lg border text-left transition-colors cursor-pointer"
           :class="selectedIndices.has(i)
             ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/10'
-            : 'border-neutral-200 dark:border-neutral-700 opacity-50'"
+            : 'border-default opacity-50'"
           @click="toggleItem(i)"
         >
           <UIcon
@@ -118,7 +118,7 @@ Supports:
           <div class="flex-1 min-w-0">
             <p class="text-sm leading-snug">{{ item.content }}</p>
             <div class="flex items-center gap-2 mt-1">
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-elevated">
                 {{ item.nodeType }}
               </span>
               <span class="text-[10px]" :class="confidenceColor(item.confidence)">
@@ -130,7 +130,7 @@ Supports:
       </div>
     </div>
 
-    <div class="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+    <div class="flex justify-end gap-2 pt-2 border-t border-default">
       <UButton variant="ghost" color="neutral" @click="close()">Cancel</UButton>
       <UButton
         v-if="parsed.length"

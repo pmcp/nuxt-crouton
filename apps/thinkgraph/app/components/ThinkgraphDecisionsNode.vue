@@ -53,14 +53,14 @@ const pathTypeConfig: Record<string, { icon: string; color: string }> = {
   prototype: { icon: 'i-lucide-hammer', color: 'text-orange-500' },
   converge: { icon: 'i-lucide-git-merge', color: 'text-purple-500' },
   validate: { icon: 'i-lucide-shield-question', color: 'text-yellow-500' },
-  park: { icon: 'i-lucide-archive', color: 'text-neutral-400' }
+  park: { icon: 'i-lucide-archive', color: 'text-stone-400' }
 }
 
 const nodeTypeConfig: Record<string, { color: string }> = {
-  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
+  idea: { color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400/80' },
+  insight: { color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400/80' },
+  decision: { color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400/80' },
+  question: { color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400/80' }
 }
 
 const pathIcon = computed(() => {
@@ -286,13 +286,13 @@ function toggleStar(event: Event) {
     </div>
 
     <!-- Content -->
-    <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-snug">
+    <p class="text-sm text-default leading-snug">
       {{ displayContent }}
     </p>
 
     <!-- Version tag for non-v1 -->
     <div v-if="decision.versionTag && decision.versionTag !== 'v1'" class="mt-1.5">
-      <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
+      <span class="text-[10px] text-muted font-mono">
         {{ decision.versionTag }}
       </span>
     </div>
@@ -308,20 +308,20 @@ function toggleStar(event: Event) {
       <img
         :src="imageArtifact.url"
         :alt="imageArtifact.prompt || 'Generated image'"
-        class="w-full rounded border border-neutral-200 dark:border-neutral-700"
+        class="w-full rounded border border-stone-200 dark:border-stone-700"
       />
     </div>
 
     <!-- Prototype artifact preview (iframe) -->
     <div v-if="prototypeArtifact" class="mt-1.5 -mx-1">
-      <div class="rounded border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+      <div class="rounded border border-stone-200 dark:border-stone-700 overflow-hidden">
         <iframe
           :srcdoc="prototypeArtifact.content"
           class="w-full h-[120px] bg-white pointer-events-none"
           sandbox="allow-scripts"
         />
         <button
-          class="flex items-center justify-center gap-1 w-full px-2 py-1.5 bg-neutral-100 dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+          class="flex items-center justify-center gap-1 w-full px-2 py-1.5 bg-stone-100 dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors cursor-pointer"
           @click="openPrototype"
         >
           <UIcon name="i-lucide-external-link" class="size-3 text-primary-500" />
@@ -332,17 +332,17 @@ function toggleStar(event: Event) {
 
     <!-- Code artifact preview -->
     <div v-if="codeArtifact" class="mt-1.5 -mx-1">
-      <div class="rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 overflow-hidden">
-        <div class="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
-          <span class="text-[10px] font-mono text-neutral-500">{{ codeArtifact.metadata?.language || 'code' }}</span>
+      <div class="rounded border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 overflow-hidden">
+        <div class="flex items-center justify-between px-2 py-1 border-b border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800">
+          <span class="text-[10px] font-mono text-stone-500">{{ codeArtifact.metadata?.language || 'code' }}</span>
           <button
-            class="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+            class="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors cursor-pointer"
             @click="copyCode"
           >
             <UIcon :name="codeCopied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3" />
           </button>
         </div>
-        <pre class="px-2 py-1.5 text-[10px] font-mono leading-tight text-neutral-700 dark:text-neutral-300 max-h-[80px] overflow-hidden">{{ codeArtifact.content.slice(0, 200) }}{{ codeArtifact.content.length > 200 ? '...' : '' }}</pre>
+        <pre class="px-2 py-1.5 text-[10px] font-mono leading-tight text-stone-700 dark:text-stone-300 max-h-[80px] overflow-hidden">{{ codeArtifact.content.slice(0, 200) }}{{ codeArtifact.content.length > 200 ? '...' : '' }}</pre>
       </div>
     </div>
 
@@ -351,7 +351,7 @@ function toggleStar(event: Event) {
       <span
         v-for="(artifact, i) in nonVisualArtifacts"
         :key="i"
-        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
       >
         <UIcon
           :name="artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
@@ -477,11 +477,12 @@ function toggleStar(event: Event) {
 @custom-variant dark (&:where(.dark, .dark *));
 
 .decision-node {
-  @apply px-3 py-2.5 rounded-lg border bg-white dark:bg-neutral-900;
-  @apply border-neutral-200 dark:border-neutral-700;
-  @apply shadow-sm transition-all duration-150;
-  @apply min-w-[160px] max-w-[240px];
+  @apply px-4 py-3 rounded-xl border bg-white dark:bg-stone-900;
+  @apply border-stone-200 dark:border-stone-700;
+  @apply transition-all duration-150;
+  @apply min-w-[160px] max-w-[280px];
   @apply relative;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   /* Extend hover zone to cover action buttons positioned outside */
   &::after {
     content: '';
@@ -491,7 +492,7 @@ function toggleStar(event: Event) {
 }
 
 .decision-node--selected {
-  @apply ring-2;
+  @apply ring-1;
   border-color: var(--color-primary-500);
   --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
 }
@@ -505,11 +506,11 @@ function toggleStar(event: Event) {
 }
 
 .decision-node--starred {
-  @apply border-amber-300 dark:border-amber-700;
+  @apply border-amber-200 dark:border-amber-800;
 }
 
 .star-btn {
-  @apply text-neutral-300 dark:text-neutral-600 hover:text-amber-400 transition-colors cursor-pointer;
+  @apply text-stone-300 dark:text-stone-500 hover:text-amber-400 transition-colors cursor-pointer;
 }
 
 .star-btn--active {
@@ -522,9 +523,9 @@ function toggleStar(event: Event) {
 
 .decision-node__action {
   @apply w-6 h-6 rounded-full flex items-center justify-center;
-  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
+  @apply bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600;
   @apply shadow-sm cursor-pointer transition-all duration-150;
-  @apply text-neutral-500 hover:scale-110;
+  @apply text-stone-500 hover:scale-110;
   &:hover { color: var(--color-primary-500); }
 }
 
@@ -550,24 +551,24 @@ function toggleStar(event: Event) {
 
 .expand-menu {
   @apply absolute top-8 left-0 w-56 py-1.5;
-  @apply bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-600;
-  @apply rounded-lg shadow-2xl z-50;
+  @apply bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-600;
+  @apply rounded-xl shadow-lg z-50;
 }
 
 .expand-menu__item {
   @apply flex items-center gap-2.5 w-full px-3 py-2 text-left;
-  @apply text-neutral-700 dark:text-neutral-200;
-  @apply hover:bg-neutral-100 dark:hover:bg-neutral-700;
+  @apply text-stone-700 dark:text-stone-200;
+  @apply hover:bg-stone-100 dark:hover:bg-stone-700;
   @apply transition-colors cursor-pointer;
 
-  .text-xs { @apply text-neutral-800 dark:text-neutral-100; }
-  .opacity-60 { opacity: 1; @apply text-neutral-500 dark:text-neutral-400; }
+  .text-xs { @apply text-stone-800 dark:text-stone-100; }
+  .opacity-60 { opacity: 1; @apply text-stone-500 dark:text-stone-400; }
 }
 
 .decision-handle {
   @apply w-2 h-2 rounded-full;
-  @apply bg-neutral-400 dark:bg-neutral-500;
-  @apply border border-white dark:border-neutral-800;
+  @apply bg-stone-400 dark:bg-stone-500;
+  @apply border border-white dark:border-stone-800;
   @apply transition-colors;
 }
 

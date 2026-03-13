@@ -10,7 +10,7 @@ export function useBranchColors() {
     { bg: 'bg-rose-50 dark:bg-rose-950/30', border: 'border-rose-300 dark:border-rose-700', text: 'text-rose-600 dark:text-rose-400', dot: 'bg-rose-500' },
   ]
 
-  const mainColor = { bg: '', border: '', text: 'text-neutral-400 dark:text-neutral-500', dot: 'bg-neutral-400' }
+  const mainColor = { bg: '', border: '', text: 'text-stone-400 dark:text-stone-500', dot: 'bg-stone-400' }
 
   function getBranchColor(branchName?: string | null) {
     if (!branchName || branchName === 'main') return mainColor

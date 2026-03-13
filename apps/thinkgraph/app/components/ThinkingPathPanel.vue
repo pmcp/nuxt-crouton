@@ -54,10 +54,10 @@ const starredInsights = computed(() => {
 })
 
 const nodeTypeConfig: Record<string, { icon: string; color: string; bg: string }> = {
-  idea: { icon: 'i-lucide-lightbulb', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-  insight: { icon: 'i-lucide-eye', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-  decision: { icon: 'i-lucide-check-circle', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-950/30' },
-  question: { icon: 'i-lucide-help-circle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+  idea: { icon: 'i-lucide-lightbulb', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  insight: { icon: 'i-lucide-eye', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+  decision: { icon: 'i-lucide-check-circle', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+  question: { icon: 'i-lucide-help-circle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
 }
 
 function getNodeConfig(nodeType: string) {
@@ -150,7 +150,7 @@ const quickAddTypes = [
             <!-- Connector line -->
             <div
               v-if="index > 0"
-              class="absolute left-[15px] -top-1 w-px h-2 bg-neutral-200 dark:bg-neutral-700"
+              class="absolute left-[15px] -top-1 w-px h-2 bg-stone-200 dark:bg-stone-600"
             />
 
             <div
@@ -228,32 +228,32 @@ const quickAddTypes = [
                       <UIcon name="i-lucide-send" class="size-3.5 text-teal-500" />
                     </button>
                     <button
-                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      class="p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                       title="Add child"
                       @click.stop="emit('add-child', node.id)"
                     >
-                      <UIcon name="i-lucide-plus" class="size-3.5 text-neutral-500" />
+                      <UIcon name="i-lucide-plus" class="size-3.5 text-stone-500" />
                     </button>
                     <button
                       class="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                       :title="node.starred ? 'Unstar' : 'Star'"
                       @click.stop="emit('toggle-star', node.id)"
                     >
-                      <UIcon name="i-lucide-star" class="size-3.5" :class="node.starred ? 'text-amber-400' : 'text-neutral-400'" />
+                      <UIcon name="i-lucide-star" class="size-3.5" :class="node.starred ? 'text-amber-400' : 'text-stone-400'" />
                     </button>
                     <button
-                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      class="p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                       title="Edit"
                       @click.stop="emit('edit', node.id)"
                     >
-                      <UIcon name="i-lucide-pencil" class="size-3.5 text-neutral-500" />
+                      <UIcon name="i-lucide-pencil" class="size-3.5 text-stone-500" />
                     </button>
                     <button
-                      class="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      class="p-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                       :title="contextCopied === node.id ? 'Copied!' : 'Copy context'"
                       @click.stop="handleCopyContext(node.id)"
                     >
-                      <UIcon :name="contextCopied === node.id ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3.5 text-neutral-500" />
+                      <UIcon :name="contextCopied === node.id ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3.5 text-stone-500" />
                     </button>
                   </div>
                 </div>
@@ -263,7 +263,7 @@ const quickAddTypes = [
             <!-- Connector line after (except last) -->
             <div
               v-if="index < ancestorChain.length - 1"
-              class="absolute left-[15px] -bottom-1 w-px h-2 bg-neutral-200 dark:bg-neutral-700"
+              class="absolute left-[15px] -bottom-1 w-px h-2 bg-stone-200 dark:bg-stone-600"
             />
           </div>
         </div>
@@ -318,17 +318,17 @@ const quickAddTypes = [
                       <UIcon name="i-lucide-message-square-text" class="size-3 text-blue-500" />
                     </button>
                     <button
-                      class="p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      class="p-0.5 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                       title="Edit"
                       @click.stop="emit('edit', child.id)"
                     >
-                      <UIcon name="i-lucide-pencil" class="size-3 text-neutral-500" />
+                      <UIcon name="i-lucide-pencil" class="size-3 text-stone-500" />
                     </button>
                     <button
                       class="p-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                       @click.stop="emit('toggle-star', child.id)"
                     >
-                      <UIcon name="i-lucide-star" class="size-3" :class="child.starred ? 'text-amber-400' : 'text-neutral-400'" />
+                      <UIcon name="i-lucide-star" class="size-3" :class="child.starred ? 'text-amber-400' : 'text-stone-400'" />
                     </button>
                     <button
                       class="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
@@ -376,11 +376,11 @@ const quickAddTypes = [
           v-for="t in quickAddTypes"
           :key="t.value"
           class="p-1 rounded transition-colors"
-          :class="quickAddType === t.value ? 'bg-neutral-100 dark:bg-neutral-800' : 'hover:bg-muted/50'"
+          :class="quickAddType === t.value ? 'bg-stone-100 dark:bg-stone-800' : 'hover:bg-muted/50'"
           :title="t.value"
           @click="quickAddType = t.value"
         >
-          <UIcon :name="t.icon" class="size-3.5" :class="quickAddType === t.value ? t.color : 'text-neutral-400'" />
+          <UIcon :name="t.icon" class="size-3.5" :class="quickAddType === t.value ? t.color : 'text-stone-400'" />
         </button>
       </div>
       <form class="flex gap-2" @submit.prevent="handleQuickAdd">

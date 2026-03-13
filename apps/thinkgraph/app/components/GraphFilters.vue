@@ -35,7 +35,7 @@ defineExpose({ filteredIds })
 
 <template>
   <div
-    class="border-r border-neutral-200 dark:border-neutral-800 flex-shrink-0 flex flex-col h-full transition-all duration-200 overflow-hidden"
+    class="border-r border-default flex-shrink-0 flex flex-col h-full transition-all duration-200 overflow-hidden"
     :class="collapsed ? 'w-10' : 'w-[240px]'"
   >
     <!-- Collapsed state -->
@@ -44,7 +44,7 @@ defineExpose({ filteredIds })
         class="relative cursor-pointer"
         @click="collapsed = false"
       >
-        <UIcon name="i-lucide-filter" class="size-4 text-neutral-500" />
+        <UIcon name="i-lucide-filter" class="size-4 text-muted" />
         <span
           v-if="activeFilterCount > 0"
           class="absolute -top-1 -right-1 size-3.5 rounded-full bg-primary-500 text-white text-[9px] flex items-center justify-center"
@@ -57,9 +57,9 @@ defineExpose({ filteredIds })
     <!-- Expanded state -->
     <template v-else>
       <!-- Header -->
-      <div class="flex items-center justify-between px-3 py-2.5 border-b border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center justify-between px-3 py-2.5 border-b border-default">
         <div class="flex items-center gap-1.5">
-          <UIcon name="i-lucide-filter" class="size-3.5 text-neutral-500" />
+          <UIcon name="i-lucide-filter" class="size-3.5 text-muted" />
           <span class="text-xs font-medium">Filters</span>
           <span
             v-if="activeFilterCount > 0"
@@ -77,7 +77,7 @@ defineExpose({ filteredIds })
             Clear
           </button>
           <button class="cursor-pointer" @click="collapsed = true">
-            <UIcon name="i-lucide-panel-left-close" class="size-3.5 text-neutral-400 hover:text-neutral-600" />
+            <UIcon name="i-lucide-panel-left-close" class="size-3.5 text-muted hover:text-neutral-600" />
           </button>
         </div>
       </div>
@@ -98,7 +98,7 @@ defineExpose({ filteredIds })
 
         <!-- Node type -->
         <div>
-          <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Type</p>
+          <p class="text-[10px] font-medium text-muted uppercase tracking-wider mb-1.5">Type</p>
           <div class="space-y-1">
             <label
               v-for="nt in nodeTypes"
@@ -120,7 +120,7 @@ defineExpose({ filteredIds })
 
         <!-- Path type -->
         <div>
-          <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Path</p>
+          <p class="text-[10px] font-medium text-muted uppercase tracking-wider mb-1.5">Path</p>
           <div class="space-y-1">
             <label
               v-for="pt in pathTypes"
@@ -132,7 +132,7 @@ defineExpose({ filteredIds })
                 size="xs"
                 @update:model-value="filters.pathTypes = toggleArrayFilter(filters.pathTypes, pt.id)"
               />
-              <UIcon :name="pt.icon" class="size-3.5 text-neutral-500" />
+              <UIcon :name="pt.icon" class="size-3.5 text-muted" />
               <span>{{ pt.label }}</span>
             </label>
           </div>
@@ -142,7 +142,7 @@ defineExpose({ filteredIds })
 
         <!-- Starred -->
         <div>
-          <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Starred</p>
+          <p class="text-[10px] font-medium text-muted uppercase tracking-wider mb-1.5">Starred</p>
           <div class="flex gap-1">
             <UButton
               size="xs"
@@ -172,7 +172,7 @@ defineExpose({ filteredIds })
         <template v-if="availableBranches.length > 1">
           <USeparator />
           <div>
-            <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Branch</p>
+            <p class="text-[10px] font-medium text-muted uppercase tracking-wider mb-1.5">Branch</p>
             <div class="space-y-1">
               <label
                 v-for="b in availableBranches"
@@ -185,7 +185,7 @@ defineExpose({ filteredIds })
                   @update:model-value="filters.branches = toggleArrayFilter(filters.branches, b.name)"
                 />
                 <span class="flex-1 truncate">{{ b.name }}</span>
-                <span class="text-[10px] text-neutral-400">{{ b.count }}</span>
+                <span class="text-[10px] text-muted">{{ b.count }}</span>
               </label>
             </div>
           </div>
@@ -195,7 +195,7 @@ defineExpose({ filteredIds })
         <template v-if="availableVersionTags.length > 0">
           <USeparator />
           <div>
-            <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Version</p>
+            <p class="text-[10px] font-medium text-muted uppercase tracking-wider mb-1.5">Version</p>
             <div class="space-y-1">
               <label
                 v-for="v in availableVersionTags"
@@ -208,7 +208,7 @@ defineExpose({ filteredIds })
                   @update:model-value="filters.versionTags = toggleArrayFilter(filters.versionTags, v.name)"
                 />
                 <span class="font-mono">{{ v.name }}</span>
-                <span class="text-[10px] text-neutral-400">{{ v.count }}</span>
+                <span class="text-[10px] text-muted">{{ v.count }}</span>
               </label>
             </div>
           </div>
@@ -218,7 +218,7 @@ defineExpose({ filteredIds })
       <!-- Footer: match count -->
       <div
         v-if="filteredIds !== null"
-        class="px-3 py-2 border-t border-neutral-200 dark:border-neutral-800 text-[10px] text-neutral-400"
+        class="px-3 py-2 border-t border-default text-[10px] text-muted"
       >
         {{ filteredIds.size }} / {{ decisions.length }} nodes
       </div>

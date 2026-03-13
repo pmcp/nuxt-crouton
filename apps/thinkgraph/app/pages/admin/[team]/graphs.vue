@@ -12,6 +12,8 @@ if (!nuxtApp.vueApp.component('ThinkgraphDecisionsNode')) {
 const { teamId } = useTeamContext()
 const { open } = useCrouton()
 const toast = useToast()
+const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 // ─── Workspace state ───
 const selectedGraphId = ref<string | null>(null)
@@ -723,6 +725,7 @@ async function exportGraph() {
               :saved-positions="savedPositions"
               :flow-config="flowConfig"
               :additional-edges="additionalEdges"
+              :background-pattern-color="isDark ? '#3a3530' : '#d4cfc8'"
               minimap
               :selected="selectedNodeIds"
               @node-click="onNodeClick"
@@ -732,7 +735,7 @@ async function exportGraph() {
             />
             <div
               v-else
-              class="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600"
+              class="h-full flex flex-col items-center justify-center text-muted"
             >
               <UIcon name="i-lucide-brain-circuit" class="size-12 mb-4" />
               <p class="text-lg font-medium mb-2">Start thinking</p>
@@ -778,7 +781,7 @@ async function exportGraph() {
           <!-- Chat panel (side panel) -->
           <div
             v-if="showChat"
-            class="w-[380px] border-l border-neutral-200 dark:border-neutral-800 flex-shrink-0"
+            class="w-[380px] border-l border-default flex-shrink-0"
           >
             <ChatPanel
               :node-id="chatNodeId"
@@ -882,16 +885,16 @@ async function exportGraph() {
       @contextmenu.prevent="closeConnectMenu"
     >
       <div
-        class="absolute w-48 py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-2xl"
+        class="absolute w-48 py-1.5 bg-default border border-default rounded-xl shadow-lg"
         :style="{ left: `${connectMenu.x}px`, top: `${connectMenu.y}px` }"
       >
-        <p class="px-3 py-1.5 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+        <p class="px-3 py-1.5 text-[10px] font-semibold text-muted uppercase tracking-wider">
           Create node
         </p>
         <button
           v-for="nt in connectNodeTypes"
           :key="nt.id"
-          class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm text-default hover:bg-elevated transition-colors cursor-pointer"
           @click="createFromConnect(nt.id)"
         >
           <UIcon :name="nt.icon" class="size-4" :class="nt.color" />

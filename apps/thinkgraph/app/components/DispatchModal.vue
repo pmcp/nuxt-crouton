@@ -196,7 +196,7 @@ watch(open, (isOpen) => {
         <div class="flex items-center gap-3 mb-5">
           <button
             v-if="step !== 'pick'"
-            class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+            class="text-muted hover:text-default transition-colors cursor-pointer"
             @click="goBack"
           >
             <UIcon name="i-lucide-arrow-left" class="size-5" />
@@ -206,7 +206,7 @@ watch(open, (isOpen) => {
             {{ step === 'pick' ? 'Send to...' : step === 'result' ? 'Result' : selectedService?.name }}
           </h3>
           <button
-            class="ml-auto text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+            class="ml-auto text-muted hover:text-default transition-colors cursor-pointer"
             @click="close"
           >
             <UIcon name="i-lucide-x" class="size-5" />
@@ -214,7 +214,7 @@ watch(open, (isOpen) => {
         </div>
 
         <!-- Node context chip -->
-        <div v-if="step !== 'result'" class="mb-4 px-3 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm text-neutral-600 dark:text-neutral-400">
+        <div v-if="step !== 'result'" class="mb-4 px-3 py-2 rounded-lg bg-elevated text-sm text-muted">
           <template v-if="isMulti">
             <span class="font-medium">{{ decisionIds!.length }} nodes selected</span> — combined context will be sent
           </template>
@@ -228,7 +228,7 @@ watch(open, (isOpen) => {
           <div v-for="(groupServices, type) in servicesByType" :key="type">
             <div class="flex items-center gap-2 mb-2">
               <UIcon :name="typeLabels[type]?.icon || 'i-lucide-box'" class="size-4 text-neutral-400" />
-              <span class="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+              <span class="text-xs font-medium text-muted uppercase tracking-wide">
                 {{ typeLabels[type]?.label || type }}
               </span>
             </div>
@@ -238,15 +238,15 @@ watch(open, (isOpen) => {
                 :key="service.id"
                 class="flex items-start gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer"
                 :class="service.available
-                  ? 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/20'
-                  : 'border-neutral-100 dark:border-neutral-800 opacity-40 cursor-not-allowed'"
+                  ? 'border-default hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/20'
+                  : 'border-default opacity-40 cursor-not-allowed'"
                 :disabled="!service.available"
                 @click="service.available && selectService(service)"
               >
                 <UIcon :name="service.icon" class="size-5 text-primary-500 shrink-0 mt-0.5" />
                 <div class="min-w-0">
                   <div class="text-sm font-medium">{{ service.name }}</div>
-                  <div class="text-xs text-neutral-500 dark:text-neutral-400">{{ service.description }}</div>
+                  <div class="text-xs text-muted">{{ service.description }}</div>
                   <span v-if="!service.available" class="text-[10px] text-amber-500 mt-1 block">API key not configured</span>
                 </div>
               </button>
@@ -263,7 +263,7 @@ watch(open, (isOpen) => {
 
           <!-- Service options -->
           <div v-for="opt in selectedService?.options" :key="opt.key">
-            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">{{ opt.label }}</label>
+            <label class="block text-sm font-medium text-default mb-1">{{ opt.label }}</label>
             <USelect
               v-if="opt.type === 'select' && opt.choices"
               v-model="serviceOptions[opt.key]"
@@ -279,7 +279,7 @@ watch(open, (isOpen) => {
 
           <!-- Variations count -->
           <div>
-            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+            <label class="block text-sm font-medium text-default mb-1">
               Variations
             </label>
             <div class="flex items-center gap-2">
@@ -289,12 +289,12 @@ watch(open, (isOpen) => {
                 class="w-9 h-9 rounded-lg border text-sm font-medium transition-all cursor-pointer"
                 :class="variationCount === n
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400'
-                  : 'border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-600'"
+                  : 'border-default text-muted hover:border-stone-300 dark:hover:border-stone-600'"
                 @click="variationCount = n"
               >
                 {{ n }}
               </button>
-              <span class="text-xs text-neutral-400 ml-1">
+              <span class="text-xs text-muted ml-1">
                 {{ variationCount > 1 ? `${variationCount} different versions` : 'single result' }}
               </span>
             </div>
@@ -302,8 +302,8 @@ watch(open, (isOpen) => {
 
           <!-- Custom prompt -->
           <div>
-            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-              Custom prompt <span class="text-neutral-400 font-normal">(optional)</span>
+            <label class="block text-sm font-medium text-default mb-1">
+              Custom prompt <span class="text-muted font-normal">(optional)</span>
             </label>
             <UTextarea
               v-model="customPrompt"
@@ -332,7 +332,7 @@ watch(open, (isOpen) => {
               <img
                 :src="artifact.url"
                 :alt="artifact.prompt || 'Generated image'"
-                class="w-full rounded-lg border border-neutral-200 dark:border-neutral-700"
+                class="w-full rounded-lg border border-default"
               />
               <div class="flex gap-2">
                 <UButton
@@ -348,7 +348,7 @@ watch(open, (isOpen) => {
 
             <!-- Code result -->
             <div v-else-if="artifact.type === 'code' && artifact.content" class="space-y-2">
-              <pre class="p-4 rounded-lg bg-neutral-900 text-neutral-100 text-sm overflow-x-auto max-h-80"><code>{{ artifact.content }}</code></pre>
+              <pre class="p-4 rounded-lg bg-stone-900 text-stone-100 text-sm overflow-x-auto max-h-80"><code>{{ artifact.content }}</code></pre>
               <UButton
                 icon="i-lucide-copy"
                 label="Copy code"
@@ -363,7 +363,7 @@ watch(open, (isOpen) => {
             <div v-else-if="artifact.type === 'prototype' && artifact.url" class="space-y-2">
               <iframe
                 :src="artifact.url"
-                class="w-full h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white"
+                class="w-full h-80 rounded-lg border border-default bg-white"
                 sandbox="allow-scripts"
               />
               <div class="flex gap-2">
@@ -387,7 +387,7 @@ watch(open, (isOpen) => {
 
             <!-- Prototype result (prompt-only, no URL) -->
             <div v-else-if="artifact.type === 'prototype' && artifact.content" class="space-y-2">
-              <pre class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm overflow-x-auto max-h-60 whitespace-pre-wrap">{{ artifact.content }}</pre>
+              <pre class="p-4 rounded-lg bg-elevated text-sm overflow-x-auto max-h-60 whitespace-pre-wrap">{{ artifact.content }}</pre>
               <div class="flex gap-2">
                 <UButton
                   icon="i-lucide-copy"
@@ -409,7 +409,7 @@ watch(open, (isOpen) => {
 
             <!-- Text result -->
             <div v-else-if="artifact.type === 'text' && artifact.content" class="space-y-2">
-              <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 text-sm prose dark:prose-invert max-h-80 overflow-y-auto">
+              <div class="p-4 rounded-lg bg-elevated text-sm prose dark:prose-invert max-h-80 overflow-y-auto">
                 {{ artifact.content }}
               </div>
               <UButton
