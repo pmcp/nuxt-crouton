@@ -293,6 +293,61 @@ async function onQuickAddDone() {
   layoutKey.value++
 }
 
+// ─── Connect-to-create (drag connector to empty space) ───
+const connectMenu = ref<{ show: boolean; x: number; y: number; sourceNodeId: string; position: { x: number; y: number } }>({
+  show: false, x: 0, y: 0, sourceNodeId: '', position: { x: 0, y: 0 }
+})
+
+const connectNodeTypes = [
+  { id: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb', color: 'text-emerald-500' },
+  { id: 'insight', label: 'Insight', icon: 'i-lucide-eye', color: 'text-blue-500' },
+  { id: 'decision', label: 'Decision', icon: 'i-lucide-check-circle', color: 'text-purple-500' },
+  { id: 'question', label: 'Question', icon: 'i-lucide-help-circle', color: 'text-amber-500' },
+]
+
+function onConnectEnd(event: { sourceNodeId: string; sourceHandleType: string; position: { x: number; y: number }; mouseEvent: MouseEvent }) {
+  connectMenu.value = {
+    show: true,
+    x: event.mouseEvent.clientX,
+    y: event.mouseEvent.clientY,
+    sourceNodeId: event.sourceNodeId,
+    position: event.position,
+  }
+}
+
+async function createFromConnect(nodeType: string) {
+  const { sourceNodeId, position } = connectMenu.value
+  connectMenu.value.show = false
+
+  if (!selectedGraphId.value) return
+
+  await create({
+    content: '',
+    nodeType,
+    pathType: '',
+    graphId: selectedGraphId.value,
+    parentId: sourceNodeId,
+    source: 'manual',
+    starred: false,
+    branchName: '',
+    versionTag: 'v1',
+    model: '',
+  })
+
+  await refreshDecisions()
+  layoutKey.value++
+
+  // Open the edit form for the newly created node so user can add content
+  const newest = decisions.value?.find((d: any) => d.parentId === sourceNodeId && !d.content)
+  if (newest) {
+    open('update', 'thinkgraphDecisions', [newest.id])
+  }
+}
+
+function closeConnectMenu() {
+  connectMenu.value.show = false
+}
+
 function openChat(nodeId: string) {
   chatNodeId.value = nodeId
   showChat.value = true
@@ -419,7 +474,10 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
 
 // Pause shortcuts when modals are open
 watch([showQuickAdd, showChat, showDispatch], ([qa, ch, dp]) => {
-  if (qa || ch || dp) pause()
+  if (qa || ch || dp) {
+    pause()
+    connectMenu.value.show = false
+  }
   else resume()
 })
 
@@ -602,6 +660,7 @@ const selectedGraph = computed(() =>
               @node-click="onNodeClick"
               @node-delete="onNodeDelete"
               @selection-change="onSelectionChange"
+              @connect-end="onConnectEnd"
             />
             <div
               v-else
@@ -724,4 +783,32 @@ const selectedGraph = computed(() =>
 
   <!-- Crouton modal/slideover for CRUD -->
   <CroutonForm />
+
+  <!-- Connect-to-create floating menu -->
+  <Teleport to="body">
+    <div
+      v-if="connectMenu.show"
+      class="fixed inset-0 z-[9999]"
+      @click.self="closeConnectMenu"
+      @contextmenu.prevent="closeConnectMenu"
+    >
+      <div
+        class="absolute w-48 py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-2xl"
+        :style="{ left: `${connectMenu.x}px`, top: `${connectMenu.y}px` }"
+      >
+        <p class="px-3 py-1.5 text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+          Create node
+        </p>
+        <button
+          v-for="nt in connectNodeTypes"
+          :key="nt.id"
+          class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          @click="createFromConnect(nt.id)"
+        >
+          <UIcon :name="nt.icon" class="size-4" :class="nt.color" />
+          {{ nt.label }}
+        </button>
+      </div>
+    </div>
+  </Teleport>
 </template>
