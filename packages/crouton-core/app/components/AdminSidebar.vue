@@ -190,6 +190,12 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
         icon: 'i-lucide-languages',
         to: translationsPath,
         active: route.path === translationsPath || route.path.startsWith(`${translationsPath}/`)
+      },
+      {
+        label: t('emailLogs.title') || 'Email Logs',
+        icon: 'i-lucide-mail-check',
+        to: `${teamPath}/email-logs`,
+        active: route.path === `${teamPath}/email-logs` || route.path === `${teamPath}/email-logs/`
       }
     ]
   }
