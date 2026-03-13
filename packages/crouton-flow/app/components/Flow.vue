@@ -103,6 +103,8 @@ interface Props {
   selected?: string[]
   /** Additional edges to render alongside parent-derived edges */
   additionalEdges?: Array<{ id: string; source: string; target: string }>
+  /** Color for background dot/line pattern (default: '#aaa') */
+  backgroundPatternColor?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -775,7 +777,7 @@ defineExpose({
       <!-- Background -->
       <Background
         v-if="background"
-        :pattern-color="'#aaa'"
+        :pattern-color="backgroundPatternColor || '#aaa'"
         :gap="16"
         :variant="backgroundPattern"
       />
