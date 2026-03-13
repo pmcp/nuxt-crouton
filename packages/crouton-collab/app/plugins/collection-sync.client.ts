@@ -33,6 +33,9 @@ export default defineNuxtPlugin((nuxtApp) => {
       teamId,
       debounceMs: 300,
       onCollectionChanged: async (collection: string) => {
+        // Fire hook so pages with raw $fetch can also react to remote changes
+        nuxtApp.callHook('crouton:remoteChange' as any, { collection })
+
         // Find all cache keys for this collection and refresh them
         const prefix = `collection:${collection}:`
 

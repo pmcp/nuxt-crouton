@@ -44,6 +44,9 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       websocket: true
+    },
+    imports: {
+      dirs: [join(currentDir, 'server/utils')]
     }
   },
 

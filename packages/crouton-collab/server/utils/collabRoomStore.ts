@@ -61,6 +61,40 @@ export function getAllRooms(): Map<string, CollabRoomData> {
 }
 
 /**
+ * Signal a collection change from server-side code.
+ * Increments the version counter in the team's sync room Y.Map
+ * and broadcasts the Yjs update to all connected WebSocket clients.
+ *
+ * This enables MCP tools, webhooks, and other server-side mutations
+ * to trigger real-time UI refreshes without going through the client.
+ */
+export function signalCollectionChange(teamId: string, collection: string): void {
+  const roomId = `team:${teamId}:sync`
+  const room = getRoom('sync', roomId)
+  if (!room) return
+
+  const ymap = room.doc.getMap<number>('versions')
+  const currentVersion = ymap.get(collection) ?? 0
+  const newVersion = currentVersion + 1
+
+  // Capture the Yjs update produced by this change
+  const updateHandler = (update: Uint8Array) => {
+    // Broadcast to all connected peers
+    for (const peer of room.peers) {
+      try {
+        peer.send(update)
+      } catch {
+        // Peer disconnected
+      }
+    }
+  }
+
+  room.doc.on('update', updateHandler)
+  ymap.set(collection, newVersion)
+  room.doc.off('update', updateHandler)
+}
+
+/**
  * Clear a room (for cleanup/testing)
  */
 export function clearRoom(roomType: string, roomId: string): void {
