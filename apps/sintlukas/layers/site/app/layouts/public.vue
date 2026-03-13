@@ -1,19 +1,16 @@
 <script setup lang="ts">
 /**
- * Sint-Lukas public layout override.
- * Replaces the floating pill nav from crouton-pages with a
- * traditional header + content + footer structure.
+ * Sint-Lukas public layout — faithful port of original.
+ * Overflow clip, header + UPage-style content + footer.
  */
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white">
+  <div class="relative overflow-clip w-full">
     <SiteHeader />
-
-    <main class="flex-1">
+    <main class="mt-0 pb-0">
       <slot />
     </main>
-
     <SiteFooter />
   </div>
 </template>

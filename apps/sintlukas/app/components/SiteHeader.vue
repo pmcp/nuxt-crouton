@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * Sint-Lukas site header with explicit navigation.
- * Fixed top, white background, logo + nav links + CTA button.
+ * Sint-Lukas site header — faithful port of original UHeader style.
+ * No backdrop blur, underline active states, rounded-none CTA button.
  */
 const { locale } = useI18n()
 
@@ -13,16 +13,11 @@ watch(() => route.fullPath, () => {
 })
 
 const navItems = computed(() => [
-  { label: 'Home', to: `/${locale.value}`, match: (p: string) => p === `/${locale.value}` || p === `/${locale.value}/` },
+  { label: 'Start', to: `/${locale.value}`, match: (p: string) => p === `/${locale.value}` || p === `/${locale.value}/` },
   { label: 'Aanbod', to: `/${locale.value}/aanbod`, match: (p: string) => p.startsWith(`/${locale.value}/aanbod`) },
   { label: 'Academie', to: `/${locale.value}/academie`, match: (p: string) => p.startsWith(`/${locale.value}/academie`) },
   { label: 'Contact', to: `/${locale.value}/contact`, match: (p: string) => p.startsWith(`/${locale.value}/contact`) },
 ])
-
-const registrationLink = computed(() => ({
-  label: 'Inschrijven',
-  to: `/${locale.value}/inschrijven`
-}))
 
 function isActive(item: { match: (p: string) => boolean }) {
   return item.match(route.path)
@@ -30,87 +25,84 @@ function isActive(item: { match: (p: string) => boolean }) {
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-200">
+  <header class="sticky -top-0 z-40 bg-white border-b-0 pt-4 pb-4">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
+      <div class="flex items-end justify-between">
         <!-- Logo -->
-        <NuxtLink :to="`/${locale}`" class="shrink-0">
-          <img src="/logo.svg" alt="Sint-Lukas Academie" class="h-10" />
+        <NuxtLink :to="`/${locale}`" class="shrink-0 mr-4">
+          <SvgLogo />
         </NuxtLink>
 
         <!-- Desktop navigation -->
-        <nav class="hidden md:flex items-center gap-1">
+        <nav class="hidden lg:flex items-center gap-0 grow">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+            class="relative px-2.5 py-0 text-md font-medium transition-colors after:absolute after:bottom-0 after:inset-x-2 after:block after:h-[1px] after:mt-2"
             :class="isActive(item)
-              ? 'text-sintlukas-700 bg-sintlukas-50'
-              : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
+              ? 'text-gray-900 after:bg-black'
+              : 'text-gray-500 hover:text-gray-900 hover:after:bg-sintlukas-500'"
           >
             {{ item.label }}
           </NuxtLink>
         </nav>
 
-        <!-- Right side -->
+        <!-- Right side: CTA + language switcher -->
         <div class="flex items-center gap-2">
-          <!-- CTA button -->
           <UButton
-            :to="registrationLink.to"
-            size="sm"
-            class="hidden sm:inline-flex"
+            :to="`/${locale}/inschrijven`"
+            size="md"
+            color="neutral"
+            class="hidden sm:inline-flex rounded-none font-bold"
           >
-            {{ registrationLink.label }}
+            Inschrijven
           </UButton>
 
-          <!-- Language switcher -->
           <CroutonI18nLanguageSwitcher class="w-auto hidden sm:flex" />
 
           <!-- Mobile menu button -->
-          <UButton
-            :icon="mobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            class="md:hidden"
+          <button
+            class="lg:hidden rounded-none bg-sintlukas-200 hover:bg-sintlukas-500 p-3"
             @click="mobileMenuOpen = !mobileMenuOpen"
-          />
+          >
+            <UIcon
+              :name="mobileMenuOpen ? 'i-heroicons-x-mark-20-solid' : 'i-heroicons-bars-3-20-solid'"
+              class="size-5"
+            />
+          </button>
         </div>
       </div>
 
-      <!-- Mobile navigation -->
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 -translate-y-2"
-        enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 -translate-y-2"
-      >
-        <div v-if="mobileMenuOpen" class="md:hidden pb-4 border-t border-neutral-100 pt-3">
+      <!-- Mobile navigation panel -->
+      <div v-if="mobileMenuOpen" class="lg:hidden mt-4">
+        <div class="flex flex-col gap-4 w-full justify-center">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="isActive(item)
-              ? 'text-sintlukas-700 bg-sintlukas-50'
-              : 'text-neutral-600 hover:text-sintlukas-700 hover:bg-sintlukas-50'"
+            class="text-3xl text-center py-4"
           >
-            {{ item.label }}
+            <span class="hover:border-b">{{ item.label }}</span>
           </NuxtLink>
           <NuxtLink
-            :to="registrationLink.to"
-            class="block px-3 py-2 text-sm font-medium text-sintlukas-600 rounded-lg hover:bg-sintlukas-50 transition-colors"
+            :to="`/${locale}/inschrijven`"
+            class="text-3xl text-center py-4"
           >
-            {{ registrationLink.label }}
+            <span class="hover:border-b">Inschrijven</span>
           </NuxtLink>
-          <div class="mt-3 px-3">
+          <div class="flex justify-center mt-2">
             <CroutonI18nLanguageSwitcher class="w-auto" />
           </div>
         </div>
-      </Transition>
+      </div>
     </div>
   </header>
 </template>
+
+<style scoped>
+.navButtons a {
+  margin-bottom: 0 !important;
+  padding: 12px !important;
+}
+</style>

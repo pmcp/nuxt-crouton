@@ -1,99 +1,56 @@
 <script setup lang="ts">
 /**
- * Sint-Lukas site footer with contact info, social links, and newsletter.
- * Uses useTeamSiteInfo() to pull admin-editable settings.
+ * Sint-Lukas site footer — faithful port of original.
+ * Light green bg (sintlukas-200), border-b accent, social SVG icons.
  */
 const { contactEmail, socialLinks, newsletterUrl, calendarUrl } = useTeamSiteInfo()
-const { t } = useT()
 const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="bg-sintlukas-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Brand -->
-        <div>
-          <img src="/logo.svg" alt="Sint-Lukas Academie" class="h-10 mb-3 brightness-0 invert" />
-          <p class="text-sintlukas-300 text-sm leading-relaxed">
-            Dé academie voor beeldende kunsten in hartje Brussel.
-          </p>
+  <footer class="bg-sintlukas-200 border-b-4 border-accent-800 w-full">
+    <!-- Top section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div class="flex flex-col w-full gap-2">
+        <!-- Newsletter text -->
+        <div v-if="newsletterUrl" class="w-fit">
+          <p class="mb-2">Laat hier je e-mailadres achter om nieuws uit de academie te ontvangen.</p>
+          <a :href="newsletterUrl" target="_blank" rel="noopener" class="text-sintlukas-700 font-bold hover:underline">
+            Nieuwsbrief &rarr;
+          </a>
         </div>
 
-        <!-- Contact -->
-        <div>
-          <h4 class="font-semibold text-sm uppercase tracking-wider text-neutral-400 mb-3">Contact</h4>
-          <ul class="space-y-2 text-sm text-neutral-300">
-            <li v-if="contactEmail">
-              <a :href="`mailto:${contactEmail}`" class="hover:text-white transition-colors">
-                {{ contactEmail }}
-              </a>
-            </li>
-            <li v-if="calendarUrl">
-              <a :href="calendarUrl" target="_blank" rel="noopener" class="hover:text-white transition-colors">
-                {{ t('site.footer.calendar') || 'Jaarkalender' }}
-              </a>
-            </li>
-            <li v-if="newsletterUrl">
-              <a :href="newsletterUrl" target="_blank" rel="noopener" class="hover:text-white transition-colors">
-                {{ t('site.footer.newsletter') || 'Nieuwsbrief' }}
-              </a>
-            </li>
-          </ul>
+        <!-- Calendar link -->
+        <div v-if="calendarUrl" class="mt-2">
+          <a :href="calendarUrl" target="_blank" rel="noopener" class="text-sintlukas-700 font-bold hover:underline">
+            Jaarkalender &rarr;
+          </a>
         </div>
 
-        <!-- Social -->
-        <div>
-          <h4 class="font-semibold text-sm uppercase tracking-wider text-neutral-400 mb-3">Volg ons</h4>
-          <div class="flex gap-3">
-            <a
-              v-if="socialLinks.facebook"
-              :href="socialLinks.facebook"
-              target="_blank"
-              rel="noopener"
-              class="size-10 rounded-full bg-sintlukas-800 flex items-center justify-center hover:bg-sintlukas-700 transition-colors"
-              aria-label="Facebook"
-            >
-              <UIcon name="i-lucide-facebook" class="size-5" />
-            </a>
-            <a
-              v-if="socialLinks.instagram"
-              :href="socialLinks.instagram"
-              target="_blank"
-              rel="noopener"
-              class="size-10 rounded-full bg-sintlukas-800 flex items-center justify-center hover:bg-sintlukas-700 transition-colors"
-              aria-label="Instagram"
-            >
-              <UIcon name="i-lucide-instagram" class="size-5" />
-            </a>
-            <a
-              v-if="socialLinks.youtube"
-              :href="socialLinks.youtube"
-              target="_blank"
-              rel="noopener"
-              class="size-10 rounded-full bg-sintlukas-800 flex items-center justify-center hover:bg-sintlukas-700 transition-colors"
-              aria-label="YouTube"
-            >
-              <UIcon name="i-lucide-youtube" class="size-5" />
-            </a>
-            <a
-              v-if="socialLinks.linkedin"
-              :href="socialLinks.linkedin"
-              target="_blank"
-              rel="noopener"
-              class="size-10 rounded-full bg-sintlukas-800 flex items-center justify-center hover:bg-sintlukas-700 transition-colors"
-              aria-label="LinkedIn"
-            >
-              <UIcon name="i-lucide-linkedin" class="size-5" />
-            </a>
-          </div>
+        <!-- Contact email -->
+        <div v-if="contactEmail" class="mt-2">
+          <a :href="`mailto:${contactEmail}`" class="hover:underline">{{ contactEmail }}</a>
+        </div>
+
+        <!-- Social icons -->
+        <div class="flex relative -left-1 mt-2">
+          <a v-if="socialLinks.facebook" :href="socialLinks.facebook" target="_blank" rel="noopener" aria-label="Facebook">
+            <SvgFb class="h-8 w-auto" />
+          </a>
+          <a v-if="socialLinks.instagram" :href="socialLinks.instagram" target="_blank" rel="noopener" aria-label="Instagram">
+            <SvgInstagram class="h-8 w-auto p-1" />
+          </a>
         </div>
       </div>
+    </div>
 
-      <!-- Bottom bar -->
-      <div class="mt-10 pt-6 border-t border-sintlukas-800 text-sintlukas-300 text-xs flex flex-col sm:flex-row justify-between gap-2">
-        <p>&copy; {{ year }} Sint-Lukas Academie. Alle rechten voorbehouden.</p>
-        <p>Groenstraat 156, 1030 Brussel</p>
+    <!-- Bottom bar -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-4 lg:flex lg:items-end lg:justify-between lg:gap-x-3">
+      <p class="text-gray-500 text-sm">
+        &copy; {{ year }}
+      </p>
+      <div class="mt-3 lg:mt-0">
+        <SvgLogo class="h-12 w-auto" />
       </div>
     </div>
   </footer>

@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-neutral-200 p-5 hover:shadow-md transition-shadow">
+  <div class="bg-white rounded-none border border-neutral-200 p-5">
     <h3 class="font-semibold text-neutral-900 mb-2">{{ title }}</h3>
     <p class="text-sm text-neutral-600 leading-relaxed">
       {{ street }}<br>

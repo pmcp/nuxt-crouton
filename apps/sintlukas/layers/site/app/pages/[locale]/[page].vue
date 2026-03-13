@@ -25,12 +25,22 @@ useHead({
 </script>
 
 <template>
-  <div v-if="page" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-3xl sm:text-4xl font-bold text-neutral-900 mb-10">{{ page.title }}</h1>
-    <div
-      v-if="page.contentHtml"
-      class="prose prose-neutral prose-lg max-w-none"
-      v-html="page.contentHtml"
-    />
+  <div v-if="page">
+    <!-- Banner -->
+    <div class="w-full relative mb-12 md:mb-16 z-0 h-60">
+      <div class="absolute z-30 h-full w-full pt-8 sm:pt-16 top-0">
+        <div class="text-4xl leading-tight h-auto whitespace-pre-line mx-auto px-6 lg:px-8 max-w-7xl" />
+      </div>
+    </div>
+
+    <div class="mx-auto px-6 lg:px-8 max-w-7xl">
+      <h1 class="text-4xl pb-0">{{ page.title }}</h1>
+      <div
+        v-if="page.contentHtml"
+        class="prose max-w-none mt-8"
+        v-html="page.contentHtml"
+      />
+    </div>
+    <div class="h-8" />
   </div>
 </template>
