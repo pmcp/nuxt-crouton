@@ -5,7 +5,7 @@ import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import type { Node, NodeDragEvent } from '@vue-flow/core'
+import type { Node, NodeDragEvent, OnConnectStartParams } from '@vue-flow/core'
 import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
@@ -139,6 +139,8 @@ const emit = defineEmits<{
   nodeContainerChange: [event: ContainerChangeEvent]
   /** Emitted when nodes are deleted (keyboard delete or programmatic removal) */
   nodeDelete: [nodeIds: string[]]
+  /** Emitted when a connection drag ends without connecting to a target handle */
+  connectEnd: [event: { sourceNodeId: string; sourceHandleType: string; position: FlowPosition; mouseEvent: MouseEvent }]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
   'update:rows': [rows: Record<string, unknown>[]]
   /** Emitted when selection changes (enables v-model:selected) */
@@ -206,6 +208,9 @@ const {
   onNodeDoubleClick,
   onEdgeClick,
   onNodesChange,
+  onConnect,
+  onConnectStart,
+  onConnectEnd,
   screenToFlowCoordinate,
   getSelectedNodes,
   addSelectedNodes,
@@ -263,6 +268,50 @@ watch(() => props.selected, (newSelected) => {
 
   nextTick(() => { isSyncingFromProp.value = false })
 }, { deep: true })
+
+// ============================================
+// CONNECTION DRAG (connector to empty space)
+// ============================================
+const pendingConnection = ref<{ nodeId: string; handleType: string } | null>(null)
+let connectionCompleted = false
+
+onConnectStart(({ nodeId, handleType }: OnConnectStartParams) => {
+  if (nodeId) {
+    pendingConnection.value = { nodeId, handleType: handleType || 'source' }
+    connectionCompleted = false
+  }
+})
+
+onConnect(() => {
+  connectionCompleted = true
+})
+
+onConnectEnd((event: MouseEvent | TouchEvent | undefined) => {
+  if (connectionCompleted || !pendingConnection.value || !event) {
+    pendingConnection.value = null
+    return
+  }
+
+  // Connection ended without hitting a target handle
+  const mouseEvent = event instanceof MouseEvent ? event : (event as TouchEvent).changedTouches?.[0]
+  if (!mouseEvent) {
+    pendingConnection.value = null
+    return
+  }
+
+  const clientX = 'clientX' in mouseEvent ? mouseEvent.clientX : 0
+  const clientY = 'clientY' in mouseEvent ? mouseEvent.clientY : 0
+  const flowPosition = screenToFlowCoordinate({ x: clientX, y: clientY })
+
+  emit('connectEnd', {
+    sourceNodeId: pendingConnection.value.nodeId,
+    sourceHandleType: pendingConnection.value.handleType,
+    position: { x: Math.round(flowPosition.x), y: Math.round(flowPosition.y) },
+    mouseEvent: event instanceof MouseEvent ? event : new MouseEvent('mouseup', { clientX, clientY }),
+  })
+
+  pendingConnection.value = null
+})
 
 // ============================================
 // DRAG & DROP (external items onto canvas)

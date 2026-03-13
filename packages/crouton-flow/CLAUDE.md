@@ -146,6 +146,7 @@ When `sync` is enabled:
 | `nodeMove` | `(nodeId, position)` | Node moved |
 | `edgeClick` | `(edgeId)` | Edge clicked |
 | `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
+| `connectEnd` | `({ sourceNodeId, sourceHandleType, position, mouseEvent })` | Connection drag ended in empty space (no target handle). Use to show a "create node" menu. |
 | `update:rows` | `(rows)` | Emitted in ephemeral mode when node positions change (enables `v-model:rows`) |
 | `update:selected` | `(selectedNodeIds: string[])` | Emitted when selection changes (enables `v-model:selected`). Primary API for tracking multi-select. |
 
