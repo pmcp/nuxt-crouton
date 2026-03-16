@@ -117,7 +117,7 @@ export function createAuth(options: CreateAuthOptions) {
         if (config.debug) {
           console.log(`[crouton/auth] Verification email for ${user.email}: ${url}`)
         }
-        useNitroApp().hooks.callHook('crouton:auth:email', {
+        await useNitroApp().hooks.callHook('crouton:auth:email', {
           type: 'verification',
           to: user.email,
           url,
@@ -180,7 +180,7 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
         if (config.debug) {
           console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
         }
-        useNitroApp().hooks.callHook('crouton:auth:email', {
+        await useNitroApp().hooks.callHook('crouton:auth:email', {
           type: 'password-reset',
           to: user.email,
           url,
@@ -202,7 +202,7 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
         if (config.debug) {
           console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
         }
-        useNitroApp().hooks.callHook('crouton:auth:email', {
+        await useNitroApp().hooks.callHook('crouton:auth:email', {
           type: 'password-reset',
           to: user.email,
           url,
@@ -719,7 +719,7 @@ function buildPlugins(
         if (debug) {
           console.log(`[crouton/auth] Magic link for ${email}: ${url}`)
         }
-        useNitroApp().hooks.callHook('crouton:auth:email', {
+        await useNitroApp().hooks.callHook('crouton:auth:email', {
           type: 'magic-link',
           to: email,
           url
@@ -1167,7 +1167,7 @@ function buildOrganizationConfig(
       if (config.debug) {
         console.log(`[crouton/auth] Invitation for ${data.email} to ${data.organization.name} (id: ${data.id})`)
       }
-      useNitroApp().hooks.callHook('crouton:auth:email', {
+      await useNitroApp().hooks.callHook('crouton:auth:email', {
         type: 'invitation',
         to: data.email,
         invitationId: data.id,
