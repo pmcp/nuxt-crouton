@@ -241,7 +241,7 @@
       "variableHint": "You can use variables like {'{{'}name{'}}'},  {'{{'}date{'}}'},  etc.",
       "namePlaceholder": "e.g., Booking Confirmation",
       "previewTitle": "Email Preview",
-      "fromEmailPlaceholder": "noreply@example.com",
+      "fromEmailPlaceholder": "noreply{'@'}example.com",
       "triggers": {
         "bookingCreated": "Booking Created",
         "bookingCreatedDesc": "Sent when a new booking is made",

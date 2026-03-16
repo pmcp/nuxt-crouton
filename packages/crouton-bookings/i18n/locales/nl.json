@@ -241,7 +241,7 @@
       "variableHint": "U kunt variabelen gebruiken zoals {'{{'}name{'}}'},  {'{{'}date{'}}'},  enz.",
       "namePlaceholder": "bijv. Boekingsbevestiging",
       "previewTitle": "E-mailvoorbeeld",
-      "fromEmailPlaceholder": "noreply@voorbeeld.nl",
+      "fromEmailPlaceholder": "noreply{'@'}voorbeeld.nl",
       "triggers": {
         "bookingCreated": "Boeking Aangemaakt",
         "bookingCreatedDesc": "Verzonden wanneer een nieuwe boeking wordt gemaakt",
