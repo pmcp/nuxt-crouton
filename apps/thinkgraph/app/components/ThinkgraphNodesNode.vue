@@ -27,7 +27,6 @@ const canvasActions = inject<{
   copyContext: (nodeId: string) => Promise<void>
 } | null>('canvasActions', null)
 const isHovered = ref(false)
-const showContextMenu = ref(false)
 
 const node = computed(() => props.data as unknown as ThinkgraphNode)
 
@@ -80,12 +79,6 @@ function handleAddChild(event: Event) {
   }
 }
 
-function handleContextMenu(event: MouseEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-  showContextMenu.value = true
-}
-
 const contextMenuItems = computed(() => [
   [
     { label: 'Open detail', icon: 'i-lucide-panel-right-open', onSelect: () => canvasActions?.openDetail(node.value.id) },
@@ -107,6 +100,7 @@ const contextMenuItems = computed(() => [
 </script>
 
 <template>
+  <UContextMenu :items="contextMenuItems">
   <div
     class="work-node"
     :class="[
@@ -119,7 +113,6 @@ const contextMenuItems = computed(() => [
     :style="{ borderLeftColor: depthAccent, borderLeftWidth: '3px' }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="handleContextMenu"
   >
     <Handle type="target" :position="Position.Top" class="work-handle" />
 
@@ -236,7 +229,7 @@ const contextMenuItems = computed(() => [
     </div>
 
     <!-- Hover actions -->
-    <div v-if="isHovered && !showContextMenu" class="work-node__actions">
+    <div v-if="isHovered" class="work-node__actions">
       <button
         class="work-node__action"
         title="Add child"
@@ -253,16 +246,9 @@ const contextMenuItems = computed(() => [
       </button>
     </div>
 
-    <!-- Right-click context menu -->
-    <UDropdownMenu
-      v-model:open="showContextMenu"
-      :items="contextMenuItems"
-    >
-      <span />
-    </UDropdownMenu>
-
     <Handle type="source" :position="Position.Bottom" class="work-handle" />
   </div>
+  </UContextMenu>
 </template>
 
 <style scoped>
