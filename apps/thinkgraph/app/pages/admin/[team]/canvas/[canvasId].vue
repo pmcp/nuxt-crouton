@@ -240,18 +240,17 @@ function openPathType(parentId?: string) {
   showPathType.value = true
 }
 
+// ─── Context generator ───
+const nodesRef = computed(() => nodes.value)
+const { copyPrompt } = useNodeContextGenerator(nodesRef)
+
 async function handlePathSelect(pathType: string, method: string) {
   showPathType.value = false
   if (method === 'copy') {
-    // Copy context for this node to clipboard
+    // Copy path-type-aware prompt to clipboard
     if (selectedNodeId.value) {
-      const nodesRef = computed(() => nodes.value)
-      const { buildContext } = useNodeContext(nodesRef)
-      const payload = buildContext(selectedNodeId.value)
-      if (payload.markdown) {
-        await navigator.clipboard.writeText(payload.markdown)
-        useToast().add({ title: 'Context copied to clipboard', color: 'success' })
-      }
+      await copyPrompt(selectedNodeId.value, pathType)
+      toast.add({ title: `${pathType} prompt copied to clipboard`, color: 'success' })
     }
     return
   }
@@ -358,7 +357,7 @@ async function handleGenerateBrief(format: string) {
 }
 
 // ─── Quick status change for selected node ───
-const { update: updateNode } = useCollectionMutation('thinkgraphNodes')
+const { update: updateNode, remove: removeNode } = useCollectionMutation('thinkgraphNodes')
 
 async function setSelectedNodeStatus(status: string) {
   if (!selectedNodeId.value) return
@@ -366,6 +365,24 @@ async function setSelectedNodeStatus(status: string) {
   toast.add({ title: `Status: ${status.replace('_', ' ')}`, color: 'success' })
   await refreshNodes()
 }
+
+async function deleteSelectedNode() {
+  if (!selectedNodeId.value) return
+  const nodeTitle = selectedNode.value?.title || 'node'
+  // Check for children
+  const children = nodes.value.filter(n => n.parentId === selectedNodeId.value)
+  if (children.length > 0) {
+    toast.add({ title: `Cannot delete "${nodeTitle}" — has ${children.length} children`, color: 'warning' })
+    return
+  }
+  await removeNode(selectedNodeId.value)
+  toast.add({ title: `Deleted "${nodeTitle}"`, color: 'success' })
+  closeDetail()
+  await refreshNodes()
+}
+
+// ─── Shortcuts help ───
+const showShortcuts = ref(false)
 
 // ─── Keyboard shortcuts ───
 const createInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('createInput')
@@ -417,7 +434,31 @@ onKeyStroke('w', (e) => {
   setSelectedNodeStatus('working')
 })
 
+onKeyStroke('Backspace', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  e.preventDefault()
+  deleteSelectedNode()
+})
+
+onKeyStroke('Delete', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  e.preventDefault()
+  deleteSelectedNode()
+})
+
+onKeyStroke('?', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  e.preventDefault()
+  showShortcuts.value = !showShortcuts.value
+})
+
 onKeyStroke('Escape', () => {
+  if (showShortcuts.value) { showShortcuts.value = false; return }
   if (showQuickAdd.value) { showQuickAdd.value = false; return }
   if (showPathType.value) { showPathType.value = false; return }
   if (showDetail.value) closeDetail()
@@ -644,6 +685,9 @@ watch(showCreate, async (open) => {
         />
       </template>
     </UModal>
+
+    <!-- Shortcuts help -->
+    <ShortcutsHelp v-model:open="showShortcuts" />
 
     <!-- Multi-select floating bar -->
     <SelectionBar

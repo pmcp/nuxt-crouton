@@ -45,6 +45,13 @@ const hasBrief = computed(() => !!node.value.brief)
 const hasHandoff = computed(() => !!node.value.handoffType)
 const hasWorktree = computed(() => !!node.value.worktree)
 
+// Depth-based left accent color
+const DEPTH_COLORS = ['#f43f5e', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899']
+const depthAccent = computed(() => {
+  const depth = (node.value as any).depth ?? 0
+  return DEPTH_COLORS[depth % DEPTH_COLORS.length]
+})
+
 const originIcon = computed(() => {
   switch (node.value.origin) {
     case 'ai': return 'i-lucide-sparkles'
@@ -79,6 +86,7 @@ function handleAddChild(event: Event) {
       },
       statusConfig.class,
     ]"
+    :style="{ borderLeftColor: depthAccent, borderLeftWidth: '3px' }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
