@@ -48,7 +48,9 @@ async function getOverrides(emailType: EmailTemplateType, context: {
  * with no handler, which is a silent no-op.
  */
 export default defineNitroPlugin((nitroApp) => {
+  console.log('[crouton-email] 🔌 auth-email-listener plugin registered')
   nitroApp.hooks.hook('crouton:auth:email', async (payload) => {
+    console.log(`[crouton-email] 📨 Hook received: type=${payload.type}, to=${payload.to}`)
     try {
       switch (payload.type) {
         case 'verification': {
@@ -90,10 +92,13 @@ export default defineNitroPlugin((nitroApp) => {
             || (runtimeConfig as any).auth?.baseUrl
             || brand.appUrl
           const acceptLink = `${actionBaseUrl}/auth/accept-invitation/${payload.invitationId}`
+          console.log(`[crouton-email] 🔗 Invitation accept link: ${acceptLink}`)
+          console.log(`[crouton-email] 🔍 BETTER_AUTH_URL=${process.env.BETTER_AUTH_URL}, auth.baseUrl=${(runtimeConfig as any).auth?.baseUrl}, brand.appUrl=${brand.appUrl}`)
           const overrides = await getOverrides('team-invite', {
             organizationName: payload.organizationName
           })
-          await sendTeamInvite({
+          console.log(`[crouton-email] 📋 Overrides resolved:`, overrides ? 'yes' : 'none')
+          const result = await sendTeamInvite({
             to: payload.to,
             link: acceptLink,
             inviterName: payload.inviterName,
@@ -102,6 +107,7 @@ export default defineNitroPlugin((nitroApp) => {
             brandName: payload.organizationName,
             ...(overrides && { overrides })
           })
+          console.log(`[crouton-email] 📬 sendTeamInvite result:`, JSON.stringify(result))
           break
         }
 

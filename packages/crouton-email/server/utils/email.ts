@@ -10,10 +10,11 @@ import type { SendEmailOptions, SendEmailResult } from '../../types'
  */
 function getResendClient(event?: any): Resend {
   let resolvedEvent = event
-  if (!resolvedEvent) { try { resolvedEvent = useEvent() } catch {} }
+  if (!resolvedEvent) { try { resolvedEvent = useEvent() } catch (e) { console.log(`[crouton-email] ⚠️ useEvent() failed in getResendClient: ${e}`) } }
   const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
+  console.log(`[crouton-email] 🔑 Resend API key present: ${!!emailConfig?.resendApiKey}, from: ${emailConfig?.from}`)
   const apiKey = emailConfig?.resendApiKey
 
   if (!apiKey) {

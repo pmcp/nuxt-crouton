@@ -1167,16 +1167,23 @@ function buildOrganizationConfig(
       if (config.debug) {
         console.log(`[crouton/auth] Invitation for ${data.email} to ${data.organization.name} (id: ${data.id})`)
       }
-      await useNitroApp().hooks.callHook('crouton:auth:email', {
-        type: 'invitation',
-        to: data.email,
-        invitationId: data.id,
-        organizationName: data.organization.name,
-        inviterName: data.inviter.user.name,
-        inviterEmail: data.inviter.user.email,
-        role: data.role,
-        expiresAt: data.expiresAt
-      }).catch(() => {})
+      console.log(`[crouton/auth] 📧 sendInvitationEmail called for ${data.email} to org "${data.organization.name}" (invitationId: ${data.id})`)
+      try {
+        await useNitroApp().hooks.callHook('crouton:auth:email', {
+          type: 'invitation',
+          to: data.email,
+          invitationId: data.id,
+          organizationName: data.organization.name,
+          inviterName: data.inviter.user.name,
+          inviterEmail: data.inviter.user.email,
+          role: data.role,
+          expiresAt: data.expiresAt
+        })
+        console.log(`[crouton/auth] ✅ crouton:auth:email hook completed for ${data.email}`)
+      }
+      catch (err) {
+        console.error(`[crouton/auth] ❌ crouton:auth:email hook FAILED for ${data.email}:`, err)
+      }
     },
 
     // Organization lifecycle hooks
