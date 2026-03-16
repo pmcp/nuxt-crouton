@@ -61,18 +61,25 @@ export function useServerAuth(event?: H3Event): AuthInstance {
     )
   }
 
-  // Get base URL - use request URL if event available, otherwise fall back to config
+  // Get base URL - explicit config takes priority, then derive from request
   let baseURL: string | undefined = (config.auth as { baseUrl?: string })?.baseUrl
     || process.env.BETTER_AUTH_URL
     || (config.public?.baseUrl as string | undefined)
 
-  // If we have an event, use the actual request origin (handles dynamic ports)
+  // If no explicit URL configured, derive from the incoming request
+  // This handles Cloudflare Pages preview deploys, dynamic ports, and avoids
+  // the need to set BETTER_AUTH_URL for every environment
   if (!baseURL && event) {
     const url = getRequestURL(event)
     baseURL = `${url.protocol}//${url.host}`
   }
 
-  baseURL = baseURL || 'http://localhost:3000'
+  if (!baseURL) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[crouton/auth] No BETTER_AUTH_URL set and no request event available. Auth URLs may be incorrect.')
+    }
+    baseURL = 'http://localhost:3000'
+  }
 
   // Get database instance from NuxtHub v0.10+ (db from hub:db)
   if (typeof db === 'undefined' || db === null) {
