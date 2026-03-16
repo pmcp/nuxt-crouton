@@ -49,6 +49,7 @@ const userDropdownItems = computed(() => userMenu?.dropdownItems?.value ?? [])
 
 const showCreateTeamModal = ref(false)
 
+const { t } = useI18n()
 const colorMode = useColorMode()
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -141,7 +142,7 @@ function handleTeamCreated(team: { slug: string }) {
         <!-- Logged in: Team cards -->
         <template v-else-if="loggedIn">
           <p class="text-center text-sm text-(--ui-text-muted)">
-            Your teams
+            {{ $t('home.yourTeams') }}
           </p>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -184,7 +185,7 @@ function handleTeamCreated(team: { slug: string }) {
                   class="flex-1"
                 >
                   <UIcon name="i-lucide-layout-grid" />
-                  Admin
+                  {{ $t('home.admin') }}
                 </UButton>
                 <UButton
                   :to="`/${team.slug}`"
@@ -193,7 +194,7 @@ function handleTeamCreated(team: { slug: string }) {
                   class="flex-1"
                 >
                   <UIcon name="i-lucide-globe" />
-                  Website
+                  {{ $t('home.website') }}
                 </UButton>
               </div>
             </UCard>
@@ -209,7 +210,7 @@ function handleTeamCreated(team: { slug: string }) {
                   name="i-lucide-plus"
                   class="size-8"
                 />
-                <span class="text-sm font-medium">Create team</span>
+                <span class="text-sm font-medium">{{ $t('home.createTeam') }}</span>
               </div>
             </UCard>
           </div>
@@ -226,7 +227,7 @@ function handleTeamCreated(team: { slug: string }) {
               block
             >
               <UIcon name="i-lucide-shield-check" />
-              Super Admin
+              {{ $t('home.superAdmin') }}
             </UButton>
           </div>
         </template>
@@ -234,7 +235,7 @@ function handleTeamCreated(team: { slug: string }) {
         <!-- Logged out: Login / Register -->
         <template v-else>
           <p class="text-center text-sm text-(--ui-text-muted)">
-            Sign in to get started
+            {{ $t('home.signInToGetStarted') }}
           </p>
           <div class="space-y-3">
             <UButton
@@ -243,7 +244,7 @@ function handleTeamCreated(team: { slug: string }) {
               block
             >
               <UIcon name="i-lucide-log-in" />
-              Login
+              {{ $t('home.login') }}
             </UButton>
             <UButton
               to="/auth/register"
@@ -252,7 +253,7 @@ function handleTeamCreated(team: { slug: string }) {
               block
             >
               <UIcon name="i-lucide-user-plus" />
-              Register
+              {{ $t('home.register') }}
             </UButton>
           </div>
         </template>
@@ -278,7 +279,7 @@ function handleTeamCreated(team: { slug: string }) {
       <template #content="{ close }">
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">
-            Create team
+            {{ $t('home.createTeam') }}
           </h3>
           <TeamCreateForm
             @success="handleTeamCreated"

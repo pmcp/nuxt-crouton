@@ -1,9 +1,244 @@
 {
   "form": {
-    "collapse": "Collapse to sidebar",
-    "expand": "Expand to fullscreen",
-    "close": "Close",
-    "dragToReorder": "Drag to reorder",
-    "removeItem": "Remove item"
+    "collapse": "Samenvouwen naar zijbalk",
+    "expand": "Uitbreiden naar volledig scherm",
+    "close": "Sluiten",
+    "dragToReorder": "Slepen om te herordenen",
+    "removeItem": "Item verwijderen",
+    "metaSettings": "Meta-instellingen",
+    "tryAgain": "Opnieuw proberen",
+    "anErrorOccurred": "Er is een fout opgetreden"
+  },
+  "common": {
+    "create": "Aanmaken",
+    "edit": "Bewerken",
+    "delete": "Verwijderen",
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "yes": "Ja",
+    "no": "Nee",
+    "apply": "Toepassen",
+    "remove": "Verwijderen",
+    "close": "Sluiten",
+    "back": "Terug",
+    "next": "Volgende",
+    "done": "Klaar",
+    "import": "Importeren",
+    "retry": "Opnieuw",
+    "loading": "Laden",
+    "search": "Zoeken",
+    "noResults": "Geen resultaten",
+    "untitled": "Naamloos",
+    "export": "Exporteren",
+    "new": "Nieuw",
+    "editing": "Bewerken"
+  },
+  "mutations": {
+    "creationFailed": "Aanmaken mislukt",
+    "updateFailed": "Bijwerken mislukt",
+    "deleteFailed": "Verwijderen mislukt",
+    "moveFailed": "Verplaatsen mislukt",
+    "reorderFailed": "Herordenen mislukt"
+  },
+  "import": {
+    "complete": "Import voltooid",
+    "completeWithErrors": "{created} aangemaakt, {failed} mislukt",
+    "completeSuccess": "{created} aangemaakt",
+    "failed": "Import mislukt",
+    "unexpected": "Er is een onverwachte fout opgetreden",
+    "requiredFieldMissing": "Verplicht veld ontbreekt",
+    "mapping": "Koppeling",
+    "preview": "Voorbeeld",
+    "importing": "Importeren",
+    "importComplete": "Import voltooid",
+    "mapColumnsHint": "Koppel je bestandskolommen aan collectievelden. Verplichte velden zijn gemarkeerd met *.",
+    "rowsFound": "{count} rijen gevonden",
+    "validCount": "{count} geldig",
+    "invalidCount": "{count} met fouten",
+    "skipInvalid": "Ongeldige rijen overslaan",
+    "statusOk": "OK",
+    "statusError": "Fout",
+    "statusColumn": "Status",
+    "skipColumn": "— Overslaan —",
+    "willImport": "{count} rijen worden geïmporteerd",
+    "importingRows": "{count} rijen importeren...",
+    "percentComplete": "{percent}% voltooid",
+    "itemsCreated": "{count} items aangemaakt",
+    "itemsFailed": "{count} items mislukt",
+    "rowsSkipped": "{count} rijen overgeslagen (validatiefouten)"
+  },
+  "errors": {
+    "checkConnection": "Controleer je verbindingsstatus.",
+    "notLoggedIn": "Je bent niet ingelogd.",
+    "unableToLoad": "Kan opties niet laden",
+    "notFound": "Het data-eindpunt kon niet worden gevonden. Controleer je teaminstellingen of neem contact op met support.",
+    "noPermission": "Je hebt geen toestemming om deze gegevens te bekijken.",
+    "serverError": "Er is een serverfout opgetreden. Probeer het later opnieuw.",
+    "loadingData": "Er is een fout opgetreden bij het laden van gegevens.",
+    "errorLoadingDetails": "Fout bij het laden van details",
+    "failedToCreateOption": "Optie aanmaken mislukt",
+    "errorLoading": "Fout bij laden"
+  },
+  "collection": {
+    "noItemsYet": "Nog geen items",
+    "createFirstItem": "Maak je eerste {collection} item aan om te beginnen",
+    "componentError": "Kan collectiecomponent niet laden: {error}",
+    "componentNotFound": "Component niet gevonden voor collectie: {collection}",
+    "selectItem": "Selecteer een item om te beginnen",
+    "orPressN": "of druk op N om een nieuw item aan te maken",
+    "newItem": "Nieuw item"
+  },
+  "detail": {
+    "details": "Details",
+    "created": "Aangemaakt",
+    "updated": "Bijgewerkt",
+    "noContent": "Geen inhoud beschikbaar"
+  },
+  "deleteConfirm": {
+    "title": "{count} {name} verwijderen?",
+    "cannotBeUndone": "Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "kanban": {
+    "groupBy": "Groeperen op:",
+    "noItemsToDisplay": "Geen items om weer te geven",
+    "addItemsOrChangeGrouping": "Voeg items toe of wijzig het groeperingsveld.",
+    "dropItemsHere": "Zet items hier neer"
+  },
+  "tree": {
+    "addChild": "Subpagina toevoegen",
+    "addBelow": "Pagina hieronder toevoegen",
+    "moveUp": "Omhoog verplaatsen",
+    "moveDown": "Omlaag verplaatsen",
+    "moveToRoot": "Naar hoofdniveau verplaatsen"
+  },
+  "dropzone": {
+    "idle": "Sleep bestanden hierheen",
+    "dropHere": "Laat bestanden hier vallen"
+  },
+  "image": {
+    "cropImage": "Afbeelding bijsnijden",
+    "cropApply": "Bijsnijden en toepassen",
+    "cropAvatar": "Avatar bijsnijden",
+    "change": "Wijzigen",
+    "upload": "Uploaden"
+  },
+  "repeater": {
+    "emptyState": "Nog geen items. Klik op \"{label}\" om te beginnen.",
+    "addItem": "Item toevoegen"
+  },
+  "validation": {
+    "fixErrors": "Corrigeer {count} validatiefout | Corrigeer {count} validatiefouten",
+    "errorCount": "{count} fout | {count} fouten"
+  },
+  "statusBar": {
+    "ready": "Klaar",
+    "justNow": "zojuist",
+    "secondsAgo": "{count}s geleden",
+    "minutesAgo": "{count}m geleden",
+    "hoursAgo": "{count}u geleden",
+    "createdNamed": "{user} heeft {label} \"{name}\" aangemaakt",
+    "created": "{user} heeft een {label} aangemaakt",
+    "savedNamed": "{user} heeft \"{name}\" opgeslagen",
+    "saved": "{user} heeft de {label} opgeslagen",
+    "deletedMultiple": "{user} heeft {count} {label}s verwijderd",
+    "deleted": "{user} heeft een {label} verwijderd",
+    "reordered": "{user} heeft {label}s herschikt",
+    "done": "Klaar",
+    "defaultUser": "Jij"
+  },
+  "reference": {
+    "selectPlaceholder": "Selecteer {label}",
+    "createNew": "Nieuwe {label} aanmaken"
+  },
+  "options": {
+    "selectPlaceholder": "Selecteer {label}",
+    "createNew": "Nieuwe {label} aanmaken",
+    "labelField": "Label",
+    "displayName": "Weergavenaam",
+    "valueField": "Waarde",
+    "valuePlaceholder": "Automatisch gegenereerd vanuit label",
+    "valueHint": "Laat leeg om automatisch te genereren vanuit label",
+    "createSuccess": "Optie aangemaakt",
+    "created": "\"{label}\" is toegevoegd"
+  },
+  "dependent": {
+    "loadingOptions": "Opties laden...",
+    "failedToLoadOptions": "Opties laden mislukt",
+    "required": "{label} is verplicht",
+    "noOptions": "Geen opties beschikbaar"
+  },
+  "table": {
+    "previewOnly": "Alleen voorbeeld",
+    "search": "Zoeken",
+    "display": "Weergave",
+    "selectAll": "Alles selecteren",
+    "selectRow": "Rij selecteren",
+    "actions": "Acties",
+    "createdAt": "Aangemaakt",
+    "updatedAt": "Bijgewerkt",
+    "createdBy": "Aangemaakt door",
+    "updatedBy": "Bijgewerkt door",
+    "rowsPerPage": "Rijen per pagina",
+    "showing": "Toont",
+    "to": "tot",
+    "of": "van",
+    "results": "resultaten"
+  },
+  "export": {
+    "csv": "CSV",
+    "json": "JSON",
+    "noData": "Geen gegevens om te exporteren"
+  },
+  "iconPicker": {
+    "noIcons": "Geen iconen gevonden"
+  },
+  "help": {
+    "customizeCard": "Kaartweergave aanpassen",
+    "customizeCardDescription": "Maak een aangepast Card.vue component voor deze collectie",
+    "fileLocation": "Bestandslocatie:",
+    "gotIt": "Begrepen"
+  },
+  "home": {
+    "yourTeams": "Jouw teams",
+    "admin": "Beheer",
+    "website": "Website",
+    "createTeam": "Team aanmaken",
+    "superAdmin": "Super Admin",
+    "signInToGetStarted": "Log in om te beginnen",
+    "login": "Inloggen",
+    "register": "Registreren"
+  },
+  "redirects": {
+    "title": "Omleidingen",
+    "fromPath": "Van pad",
+    "toPath": "Naar pad",
+    "statusCode": "Statuscode",
+    "active": "Actief",
+    "permanent": "Permanent",
+    "temporary": "Tijdelijk"
+  },
+  "setup": {
+    "collections": "Collecties",
+    "manageCollections": "Beheer je crouton-collecties",
+    "refreshStats": "Statistieken vernieuwen",
+    "failedToLoadStats": "Kan collectiestatistieken niet laden",
+    "noCollections": "Geen collecties gevonden",
+    "runGenerator": "Voer de crouton-generator uit om je eerste collectie aan te maken.",
+    "featureTree": "Boom",
+    "featureSortable": "Sorteerbaar",
+    "items": "items",
+    "fields": "velden",
+    "viewCollection": "Collectie bekijken",
+    "generatorConfig": "Generatorconfiguratie",
+    "notConfigured": "Niet geconfigureerd",
+    "hideConfig": "Configuratie verbergen",
+    "showConfig": "Configuratie tonen",
+    "noConfigFile": "Geen {file} gevonden in uw projectroot.",
+    "configDescription": "Dit bestand wordt gebruikt door de crouton-generator om collecties en hun schema's te definiëren.",
+    "retry": "Opnieuw"
+  },
+  "workspace": {
+    "selectItem": "Selecteer een item om te beginnen",
+    "pressNToCreate": "of druk op N om nieuw aan te maken"
   }
 }

@@ -73,6 +73,6 @@ const customComponent = computed(() => {
     <span
       v-else-if="error"
       class="text-red-500 text-sm"
-    >Error loading</span>
+    >{{ $t('errors.errorLoading') }}</span>
   </div>
 </template>

@@ -244,8 +244,8 @@ defineExpose({
       <div class="flex-1 flex items-center justify-center text-muted">
         <div class="text-center">
           <UIcon name="i-lucide-mouse-pointer-click" class="size-12 mb-3 opacity-30" />
-          <p class="text-sm">Select an item to get started</p>
-          <p class="text-xs text-muted mt-1">or press N to create new</p>
+          <p class="text-sm">{{ $t('workspace.selectItem') }}</p>
+          <p class="text-xs text-muted mt-1">{{ $t('workspace.pressNToCreate') }}</p>
         </div>
       </div>
     </slot>

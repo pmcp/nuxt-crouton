@@ -35,7 +35,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: OptionItemData]
 }>()
 
-const { locale, locales } = useI18n()
+const { t, locale, locales } = useI18n()
 
 // Track which locale we're editing
 const editingLocale = ref(locale.value)
@@ -161,7 +161,7 @@ watch(() => props.modelValue?.label, (newLabel) => {
         :model-value="getTranslation(editingLocale)"
         :placeholder="editingLocale !== 'en' && getTranslation('en')
           ? `Fallback: ${getTranslation('en')}`
-          : 'Display name'"
+          : t('options.displayName')"
         class="w-full"
         @update:model-value="setTranslation(editingLocale, $event)"
       />
@@ -173,16 +173,16 @@ watch(() => props.modelValue?.label, (newLabel) => {
     <!-- Value input (slug, not translatable) -->
     <UFormField
       v-if="editingLocale === 'en'"
-      label="Value"
+      :label="t('options.valueField')"
     >
       <UInput
         v-model="value"
-        :placeholder="slugify(label) || 'auto-generated-from-label'"
+        :placeholder="slugify(label) || t('options.valuePlaceholder')"
         class="w-full"
       />
       <template #hint>
         <span class="text-xs text-muted">
-          Internal identifier (auto-generated from label if left empty)
+          {{ t('options.valueHint') }}
         </span>
       </template>
     </UFormField>

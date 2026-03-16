@@ -18,10 +18,10 @@
     <CroutonFormLayout v-model="activeSection">
       <template #main>
         <div class="flex flex-col gap-4 p-1">
-          <UFormField label="From Path" name="fromPath" class="not-last:pb-4">
+          <UFormField :label="$t('redirects.fromPath')" name="fromPath" class="not-last:pb-4">
             <UInput v-model="state.fromPath" class="w-full" size="xl" placeholder="/old-page" />
           </UFormField>
-          <UFormField label="To Path" name="toPath" class="not-last:pb-4">
+          <UFormField :label="$t('redirects.toPath')" name="toPath" class="not-last:pb-4">
             <UInput v-model="state.toPath" class="w-full" size="xl" placeholder="/new-page" />
           </UFormField>
         </div>
@@ -29,7 +29,7 @@
 
       <template #sidebar>
         <div class="flex flex-col gap-4 p-1">
-          <UFormField label="Status Code" name="statusCode" class="not-last:pb-4">
+          <UFormField :label="$t('redirects.statusCode')" name="statusCode" class="not-last:pb-4">
             <USelectMenu
               v-model="state.statusCode"
               :items="statusCodeOptions"
@@ -37,7 +37,7 @@
               size="xl"
             />
           </UFormField>
-          <UFormField label="Active" name="isActive" class="not-last:pb-4">
+          <UFormField :label="$t('redirects.active')" name="isActive" class="not-last:pb-4">
             <USwitch v-model="state.isActive" />
           </UFormField>
         </div>
@@ -68,14 +68,15 @@ import type { CroutonRedirectFormProps, CroutonRedirectFormData } from '../../ty
 import useCroutonRedirects from '../composables/useCroutonRedirects'
 
 const props = defineProps<CroutonRedirectFormProps>()
+const { t } = useI18n()
 const { defaultValue, schema, collection } = useCroutonRedirects()
 
 const activeSection = ref('main')
 
-const statusCodeOptions = [
-  { label: '301 — Permanent', value: '301' },
-  { label: '302 — Temporary', value: '302' }
-]
+const statusCodeOptions = computed(() => [
+  { label: `301 — ${t('redirects.permanent')}`, value: '301' },
+  { label: `302 — ${t('redirects.temporary')}`, value: '302' }
+])
 
 const validationErrors = ref<Array<{ name: string; message: string }>>([])
 

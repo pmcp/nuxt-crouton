@@ -8,7 +8,7 @@
   >
     <template #header>
       <CroutonTableHeader
-        title="Redirects"
+        :title="$t('redirects.title')"
         :collection="'croutonRedirects'"
         createButton
       />

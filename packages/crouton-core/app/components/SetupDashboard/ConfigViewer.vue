@@ -18,7 +18,7 @@ const isOpen = ref(false)
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-settings-2" class="w-5 h-5 text-gray-500" />
-          <span class="font-semibold">Generator Configuration</span>
+          <span class="font-semibold">{{ $t('setup.generatorConfig') }}</span>
         </div>
         <UBadge
           v-if="hasConfig"
@@ -29,7 +29,7 @@ const isOpen = ref(false)
         />
         <UBadge
           v-else
-          label="Not configured"
+          :label="$t('setup.notConfigured')"
           color="warning"
           variant="subtle"
           size="xs"
@@ -48,7 +48,7 @@ const isOpen = ref(false)
           :ui="{ trailingIcon: 'transition-transform duration-200' }"
           block
         >
-          {{ isOpen ? 'Hide configuration' : 'Show configuration' }}
+          {{ isOpen ? $t('setup.hideConfig') : $t('setup.showConfig') }}
         </UButton>
 
         <template #content>
@@ -63,8 +63,8 @@ const isOpen = ref(false)
       v-else
       class="text-sm text-gray-500 dark:text-gray-400"
     >
-      <p>No <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">crouton.config.js</code> found in your project root.</p>
-      <p class="mt-2">This file is used by the crouton generator to define collections and their schemas.</p>
+      <p>{{ $t('setup.noConfigFile', { file: 'crouton.config.js' }) }}</p>
+      <p class="mt-2">{{ $t('setup.configDescription') }}</p>
     </div>
   </UCard>
 </template>

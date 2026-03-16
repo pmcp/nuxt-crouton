@@ -16,6 +16,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t } = useI18n()
 const { buildDashboardUrl } = useTeamContext()
 
 const displayName = computed(() => {
@@ -31,10 +32,10 @@ const fieldCount = computed(() => props.config.columns?.length || 0)
 const features = computed(() => {
   const list = []
   if (props.config.hierarchy?.enabled) {
-    list.push({ label: 'Tree', icon: 'i-lucide-git-branch', color: 'info' as const })
+    list.push({ label: t('setup.featureTree'), icon: 'i-lucide-git-branch', color: 'info' as const })
   }
   if (props.config.sortable?.enabled) {
-    list.push({ label: 'Sortable', icon: 'i-lucide-arrow-up-down', color: 'success' as const })
+    list.push({ label: t('setup.featureSortable'), icon: 'i-lucide-arrow-up-down', color: 'success' as const })
   }
   return list
 })
@@ -67,11 +68,11 @@ const collectionUrl = computed(() => buildDashboardUrl(`/crouton/${props.name}`)
       <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
         <div class="flex items-center gap-1.5">
           <UIcon name="i-lucide-database" class="w-4 h-4" />
-          <span>{{ count ?? '—' }} items</span>
+          <span>{{ count ?? '—' }} {{ $t('setup.items') }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <UIcon name="i-lucide-columns" class="w-4 h-4" />
-          <span>{{ fieldCount }} fields</span>
+          <span>{{ fieldCount }} {{ $t('setup.fields') }}</span>
         </div>
       </div>
 
@@ -107,7 +108,7 @@ const collectionUrl = computed(() => buildDashboardUrl(`/crouton/${props.name}`)
           size="xs"
           trailing-icon="i-lucide-arrow-right"
         >
-          View Collection
+          {{ $t('setup.viewCollection') }}
         </UButton>
       </div>
     </template>

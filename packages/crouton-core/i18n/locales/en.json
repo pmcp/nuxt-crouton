@@ -23,7 +23,15 @@
     "back": "Back",
     "next": "Next",
     "done": "Done",
-    "import": "Import"
+    "import": "Import",
+    "retry": "Retry",
+    "loading": "Loading",
+    "search": "Search",
+    "noResults": "No results",
+    "untitled": "Untitled",
+    "export": "Export",
+    "new": "New",
+    "editing": "Editing"
   },
   "mutations": {
     "creationFailed": "Creation failed",
@@ -68,13 +76,17 @@
     "serverError": "A server error occurred. Please try again later.",
     "loadingData": "An error occurred while loading data.",
     "errorLoadingDetails": "Error loading details",
-    "failedToCreateOption": "Failed to create option"
+    "failedToCreateOption": "Failed to create option",
+    "errorLoading": "Error loading"
   },
   "collection": {
     "noItemsYet": "No items yet",
     "createFirstItem": "Create your first {collection} item to get started",
     "componentError": "Unable to load collection component: {error}",
-    "componentNotFound": "Component not found for collection: {collection}"
+    "componentNotFound": "Component not found for collection: {collection}",
+    "selectItem": "Select an item to get started",
+    "orPressN": "or press N to create new",
+    "newItem": "New item"
   },
   "detail": {
     "details": "Details",
@@ -156,7 +168,26 @@
     "noOptions": "No options available"
   },
   "table": {
-    "previewOnly": "Preview only"
+    "previewOnly": "Preview only",
+    "search": "Search",
+    "display": "Display",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "actions": "Actions",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "createdBy": "Created by",
+    "updatedBy": "Updated by",
+    "rowsPerPage": "Rows per page",
+    "showing": "Showing",
+    "to": "to",
+    "of": "of",
+    "results": "results"
+  },
+  "export": {
+    "csv": "CSV",
+    "json": "JSON",
+    "noData": "No data to export"
   },
   "iconPicker": {
     "noIcons": "No icons found"
@@ -166,5 +197,48 @@
     "customizeCardDescription": "Create a custom Card.vue component for this collection",
     "fileLocation": "File location:",
     "gotIt": "Got it"
+  },
+  "home": {
+    "yourTeams": "Your teams",
+    "admin": "Admin",
+    "website": "Website",
+    "createTeam": "Create team",
+    "superAdmin": "Super Admin",
+    "signInToGetStarted": "Sign in to get started",
+    "login": "Login",
+    "register": "Register"
+  },
+  "redirects": {
+    "title": "Redirects",
+    "fromPath": "From Path",
+    "toPath": "To Path",
+    "statusCode": "Status Code",
+    "active": "Active",
+    "permanent": "Permanent",
+    "temporary": "Temporary"
+  },
+  "setup": {
+    "collections": "Collections",
+    "manageCollections": "Manage your crouton collections",
+    "refreshStats": "Refresh Stats",
+    "failedToLoadStats": "Failed to load collection stats",
+    "noCollections": "No collections found",
+    "runGenerator": "Run the crouton generator to create your first collection.",
+    "featureTree": "Tree",
+    "featureSortable": "Sortable",
+    "items": "items",
+    "fields": "fields",
+    "viewCollection": "View Collection",
+    "generatorConfig": "Generator Configuration",
+    "notConfigured": "Not configured",
+    "hideConfig": "Hide configuration",
+    "showConfig": "Show configuration",
+    "noConfigFile": "No {file} found in your project root.",
+    "configDescription": "This file is used by the crouton generator to define collections and their schemas.",
+    "retry": "Retry"
+  },
+  "workspace": {
+    "selectItem": "Select an item to get started",
+    "pressNToCreate": "or press N to create new"
   }
 }

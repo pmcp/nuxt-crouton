@@ -41,9 +41,9 @@ const getCollectionConfig = (name: string): CollectionConfig => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Collections</h1>
+        <h1 class="text-2xl font-bold">{{ $t('setup.collections') }}</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-1">
-          Manage your crouton collections
+          {{ $t('setup.manageCollections') }}
         </p>
       </div>
       <UButton
@@ -54,7 +54,7 @@ const getCollectionConfig = (name: string): CollectionConfig => {
         :loading="statsPending"
         @click="refreshStats()"
       >
-        Refresh Stats
+        {{ $t('setup.refreshStats') }}
       </UButton>
     </div>
 
@@ -97,14 +97,14 @@ const getCollectionConfig = (name: string): CollectionConfig => {
         class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg flex items-center gap-2"
       >
         <UIcon name="i-lucide-alert-circle" class="w-5 h-5" />
-        <span>Failed to load collection stats</span>
+        <span>{{ $t('setup.failedToLoadStats') }}</span>
         <UButton
           color="error"
           variant="ghost"
           size="xs"
           @click="refreshStats()"
         >
-          Retry
+          {{ $t('setup.retry') }}
         </UButton>
       </div>
     </div>
@@ -115,9 +115,9 @@ const getCollectionConfig = (name: string): CollectionConfig => {
       class="text-center py-12"
     >
       <UIcon name="i-lucide-database" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto" />
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No collections found</h3>
+      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ $t('setup.noCollections') }}</h3>
       <p class="mt-2 text-gray-500 dark:text-gray-400">
-        Run the crouton generator to create your first collection.
+        {{ $t('setup.runGenerator') }}
       </p>
       <div class="mt-4">
         <code class="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded">

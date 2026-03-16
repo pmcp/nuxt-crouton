@@ -1,9 +1,244 @@
 {
   "form": {
-    "collapse": "Collapse to sidebar",
-    "expand": "Expand to fullscreen",
-    "close": "Close",
-    "dragToReorder": "Drag to reorder",
-    "removeItem": "Remove item"
+    "collapse": "Réduire dans la barre latérale",
+    "expand": "Agrandir en plein écran",
+    "close": "Fermer",
+    "dragToReorder": "Glisser pour réorganiser",
+    "removeItem": "Supprimer l'élément",
+    "metaSettings": "Paramètres méta",
+    "tryAgain": "Réessayer",
+    "anErrorOccurred": "Une erreur s'est produite"
+  },
+  "common": {
+    "create": "Créer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "yes": "Oui",
+    "no": "Non",
+    "apply": "Appliquer",
+    "remove": "Retirer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé",
+    "import": "Importer",
+    "retry": "Réessayer",
+    "loading": "Chargement",
+    "search": "Rechercher",
+    "noResults": "Aucun résultat",
+    "untitled": "Sans titre",
+    "export": "Exporter",
+    "new": "Nouveau",
+    "editing": "Modification"
+  },
+  "mutations": {
+    "creationFailed": "Échec de la création",
+    "updateFailed": "Échec de la mise à jour",
+    "deleteFailed": "Échec de la suppression",
+    "moveFailed": "Échec du déplacement",
+    "reorderFailed": "Échec de la réorganisation"
+  },
+  "import": {
+    "complete": "Import terminé",
+    "completeWithErrors": "{created} créés, {failed} échoués",
+    "completeSuccess": "{created} créés",
+    "failed": "Échec de l'import",
+    "unexpected": "Une erreur inattendue s'est produite",
+    "requiredFieldMissing": "Champ obligatoire manquant",
+    "mapping": "Correspondance",
+    "preview": "Aperçu",
+    "importing": "Import en cours",
+    "importComplete": "Import terminé",
+    "mapColumnsHint": "Associez les colonnes de votre fichier aux champs de la collection. Les champs obligatoires sont marqués d'un *.",
+    "rowsFound": "{count} lignes trouvées",
+    "validCount": "{count} valides",
+    "invalidCount": "{count} avec des erreurs",
+    "skipInvalid": "Ignorer les lignes invalides",
+    "statusOk": "OK",
+    "statusError": "Erreur",
+    "statusColumn": "Statut",
+    "skipColumn": "— Ignorer —",
+    "willImport": "{count} lignes seront importées",
+    "importingRows": "Import de {count} lignes...",
+    "percentComplete": "{percent}% terminé",
+    "itemsCreated": "{count} éléments créés",
+    "itemsFailed": "{count} éléments échoués",
+    "rowsSkipped": "{count} lignes ignorées (erreurs de validation)"
+  },
+  "errors": {
+    "checkConnection": "Vérifiez l'état de votre connexion.",
+    "notLoggedIn": "Vous n'êtes pas connecté.",
+    "unableToLoad": "Impossible de charger les options",
+    "notFound": "Le point d'accès aux données est introuvable. Vérifiez les paramètres de votre équipe ou contactez le support.",
+    "noPermission": "Vous n'avez pas la permission de voir ces données.",
+    "serverError": "Une erreur serveur s'est produite. Veuillez réessayer plus tard.",
+    "loadingData": "Une erreur s'est produite lors du chargement des données.",
+    "errorLoadingDetails": "Erreur lors du chargement des détails",
+    "failedToCreateOption": "Échec de la création de l'option",
+    "errorLoading": "Erreur de chargement"
+  },
+  "collection": {
+    "noItemsYet": "Aucun élément pour le moment",
+    "createFirstItem": "Créez votre premier élément {collection} pour commencer",
+    "componentError": "Impossible de charger le composant de collection : {error}",
+    "componentNotFound": "Composant introuvable pour la collection : {collection}",
+    "selectItem": "Sélectionnez un élément pour commencer",
+    "orPressN": "ou appuyez sur N pour créer un nouvel élément",
+    "newItem": "Nouvel élément"
+  },
+  "detail": {
+    "details": "Détails",
+    "created": "Créé",
+    "updated": "Mis à jour",
+    "noContent": "Aucun contenu disponible"
+  },
+  "deleteConfirm": {
+    "title": "Supprimer {count} {name} ?",
+    "cannotBeUndone": "Cette action est irréversible."
+  },
+  "kanban": {
+    "groupBy": "Grouper par :",
+    "noItemsToDisplay": "Aucun élément à afficher",
+    "addItemsOrChangeGrouping": "Ajoutez des éléments ou modifiez le champ de regroupement.",
+    "dropItemsHere": "Déposez les éléments ici"
+  },
+  "tree": {
+    "addChild": "Ajouter une sous-page",
+    "addBelow": "Ajouter une page en dessous",
+    "moveUp": "Déplacer vers le haut",
+    "moveDown": "Déplacer vers le bas",
+    "moveToRoot": "Déplacer à la racine"
+  },
+  "dropzone": {
+    "idle": "Glissez-déposez des fichiers ici",
+    "dropHere": "Déposez les fichiers ici"
+  },
+  "image": {
+    "cropImage": "Recadrer l'image",
+    "cropApply": "Recadrer et appliquer",
+    "cropAvatar": "Recadrer l'avatar",
+    "change": "Modifier",
+    "upload": "Télécharger"
+  },
+  "repeater": {
+    "emptyState": "Aucun élément pour le moment. Cliquez sur \"{label}\" pour commencer.",
+    "addItem": "Ajouter un élément"
+  },
+  "validation": {
+    "fixErrors": "Veuillez corriger {count} erreur de validation | Veuillez corriger {count} erreurs de validation",
+    "errorCount": "{count} erreur | {count} erreurs"
+  },
+  "statusBar": {
+    "ready": "Prêt",
+    "justNow": "à l'instant",
+    "secondsAgo": "il y a {count}s",
+    "minutesAgo": "il y a {count}m",
+    "hoursAgo": "il y a {count}h",
+    "createdNamed": "{user} a créé {label} \"{name}\"",
+    "created": "{user} a créé un {label}",
+    "savedNamed": "{user} a enregistré \"{name}\"",
+    "saved": "{user} a enregistré le {label}",
+    "deletedMultiple": "{user} a supprimé {count} {label}s",
+    "deleted": "{user} a supprimé un {label}",
+    "reordered": "{user} a réorganisé les {label}s",
+    "done": "Terminé",
+    "defaultUser": "Vous"
+  },
+  "reference": {
+    "selectPlaceholder": "Sélectionner {label}",
+    "createNew": "Créer un nouveau {label}"
+  },
+  "options": {
+    "selectPlaceholder": "Sélectionner {label}",
+    "createNew": "Créer un nouveau {label}",
+    "labelField": "Libellé",
+    "displayName": "Nom d'affichage",
+    "valueField": "Valeur",
+    "valuePlaceholder": "Généré automatiquement à partir du libellé",
+    "valueHint": "Laisser vide pour générer automatiquement à partir du libellé",
+    "createSuccess": "Option créée",
+    "created": "\"{label}\" a été ajouté"
+  },
+  "dependent": {
+    "loadingOptions": "Chargement des options...",
+    "failedToLoadOptions": "Échec du chargement des options",
+    "required": "{label} obligatoire",
+    "noOptions": "Aucune option disponible"
+  },
+  "table": {
+    "previewOnly": "Aperçu uniquement",
+    "search": "Rechercher",
+    "display": "Affichage",
+    "selectAll": "Tout sélectionner",
+    "selectRow": "Sélectionner la ligne",
+    "actions": "Actions",
+    "createdAt": "Créé",
+    "updatedAt": "Mis à jour",
+    "createdBy": "Créé par",
+    "updatedBy": "Mis à jour par",
+    "rowsPerPage": "Lignes par page",
+    "showing": "Affichage de",
+    "to": "à",
+    "of": "sur",
+    "results": "résultats"
+  },
+  "export": {
+    "csv": "CSV",
+    "json": "JSON",
+    "noData": "Aucune donnée à exporter"
+  },
+  "iconPicker": {
+    "noIcons": "Aucune icône trouvée"
+  },
+  "help": {
+    "customizeCard": "Personnaliser l'affichage de la carte",
+    "customizeCardDescription": "Créez un composant Card.vue personnalisé pour cette collection",
+    "fileLocation": "Emplacement du fichier :",
+    "gotIt": "Compris"
+  },
+  "home": {
+    "yourTeams": "Vos équipes",
+    "admin": "Administration",
+    "website": "Site web",
+    "createTeam": "Créer une équipe",
+    "superAdmin": "Super Admin",
+    "signInToGetStarted": "Connectez-vous pour commencer",
+    "login": "Connexion",
+    "register": "S'inscrire"
+  },
+  "redirects": {
+    "title": "Redirections",
+    "fromPath": "Chemin source",
+    "toPath": "Chemin de destination",
+    "statusCode": "Code de statut",
+    "active": "Actif",
+    "permanent": "Permanent",
+    "temporary": "Temporaire"
+  },
+  "setup": {
+    "collections": "Collections",
+    "manageCollections": "Gérez vos collections crouton",
+    "refreshStats": "Actualiser les statistiques",
+    "failedToLoadStats": "Impossible de charger les statistiques des collections",
+    "noCollections": "Aucune collection trouvée",
+    "runGenerator": "Exécutez le générateur crouton pour créer votre première collection.",
+    "featureTree": "Arbre",
+    "featureSortable": "Triable",
+    "items": "éléments",
+    "fields": "champs",
+    "viewCollection": "Voir la collection",
+    "generatorConfig": "Configuration du générateur",
+    "notConfigured": "Non configuré",
+    "hideConfig": "Masquer la configuration",
+    "showConfig": "Afficher la configuration",
+    "noConfigFile": "Aucun fichier {file} trouvé à la racine de votre projet.",
+    "configDescription": "Ce fichier est utilisé par le générateur crouton pour définir les collections et leurs schémas.",
+    "retry": "Réessayer"
+  },
+  "workspace": {
+    "selectItem": "Sélectionnez un élément pour commencer",
+    "pressNToCreate": "ou appuyez sur N pour en créer un nouveau"
   }
 }
