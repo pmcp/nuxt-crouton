@@ -74,6 +74,7 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
           BETTER_AUTH_URL: 'https://alexdeforce.friendlyinter.net'
+          BETTER_AUTH_SECRET: prerender-placeholder
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy dist/ --commit-dirty=true
         working-directory: apps/alexdeforce
