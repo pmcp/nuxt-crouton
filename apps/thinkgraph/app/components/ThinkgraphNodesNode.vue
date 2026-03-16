@@ -21,8 +21,13 @@ const props = withDefaults(defineProps<Props>(), {
 const canvasActions = inject<{
   openCreate: (nodeType: string, parentId?: string) => void
   openDetail: (nodeId: string) => void
+  openPathType: (parentId?: string) => void
+  setStatus: (nodeId: string, status: string) => Promise<void>
+  deleteNode: (nodeId: string) => Promise<void>
+  copyContext: (nodeId: string) => Promise<void>
 } | null>('canvasActions', null)
 const isHovered = ref(false)
+const showContextMenu = ref(false)
 
 const node = computed(() => props.data as unknown as ThinkgraphNode)
 
@@ -74,6 +79,31 @@ function handleAddChild(event: Event) {
     canvasActions?.openCreate('idea', node.value.id)
   }
 }
+
+function handleContextMenu(event: MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  showContextMenu.value = true
+}
+
+const contextMenuItems = computed(() => [
+  [
+    { label: 'Open detail', icon: 'i-lucide-panel-right-open', onSelect: () => canvasActions?.openDetail(node.value.id) },
+    { label: 'Add child', icon: 'i-lucide-plus', onSelect: () => canvasActions?.openCreate('idea', node.value.id) },
+    { label: 'Start path', icon: 'i-lucide-git-branch-plus', onSelect: () => canvasActions?.openPathType(node.value.id) },
+  ],
+  [
+    { label: 'Mark done', icon: 'i-lucide-check-circle-2', onSelect: () => canvasActions?.setStatus(node.value.id, 'done') },
+    { label: 'Mark working', icon: 'i-lucide-loader-2', onSelect: () => canvasActions?.setStatus(node.value.id, 'working') },
+    { label: 'Mark idle', icon: 'i-lucide-circle', onSelect: () => canvasActions?.setStatus(node.value.id, 'idle') },
+  ],
+  [
+    { label: 'Copy context', icon: 'i-lucide-copy', onSelect: () => canvasActions?.copyContext(node.value.id) },
+  ],
+  [
+    { label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => canvasActions?.deleteNode(node.value.id) },
+  ],
+])
 </script>
 
 <template>
@@ -89,6 +119,7 @@ function handleAddChild(event: Event) {
     :style="{ borderLeftColor: depthAccent, borderLeftWidth: '3px' }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    @contextmenu="handleContextMenu"
   >
     <Handle type="target" :position="Position.Top" class="work-handle" />
 
@@ -205,7 +236,7 @@ function handleAddChild(event: Event) {
     </div>
 
     <!-- Hover actions -->
-    <div v-if="isHovered" class="work-node__actions">
+    <div v-if="isHovered && !showContextMenu" class="work-node__actions">
       <button
         class="work-node__action"
         title="Add child"
@@ -221,6 +252,14 @@ function handleAddChild(event: Event) {
         <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
       </button>
     </div>
+
+    <!-- Right-click context menu -->
+    <UDropdownMenu
+      v-model:open="showContextMenu"
+      :items="contextMenuItems"
+    >
+      <span />
+    </UDropdownMenu>
 
     <Handle type="source" :position="Position.Bottom" class="work-handle" />
   </div>

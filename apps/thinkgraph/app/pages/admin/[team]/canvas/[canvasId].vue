@@ -117,7 +117,29 @@ function openDetail(nodeId: string) {
 }
 
 // Provide actions to child components (ThinkgraphNodesNode)
-provide('canvasActions', { openCreate, openDetail })
+provide('canvasActions', {
+  openCreate,
+  openDetail,
+  openPathType,
+  setStatus: async (nodeId: string, status: string) => {
+    await updateNode(nodeId, { status })
+    await refreshNodes()
+  },
+  deleteNode: async (nodeId: string) => {
+    const children = nodes.value.filter(n => n.parentId === nodeId)
+    if (children.length > 0) {
+      toast.add({ title: 'Cannot delete node with children', color: 'warning' })
+      return
+    }
+    await removeNode(nodeId)
+    if (selectedNodeId.value === nodeId) closeDetail()
+    await refreshNodes()
+  },
+  copyContext: async (nodeId: string) => {
+    await copyPrompt(nodeId)
+    toast.add({ title: 'Context copied', color: 'success' })
+  },
+})
 
 async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
@@ -601,10 +623,10 @@ watch(showCreate, async (open) => {
           v-else
           class="h-full flex flex-col items-center justify-center text-muted"
         >
-          <UIcon name="i-lucide-layout-dashboard" class="size-12 mb-4" />
+          <UIcon name="i-lucide-layout-dashboard" class="size-12 mb-4 opacity-40" />
           <p class="text-lg font-medium mb-2">Empty canvas</p>
           <p class="text-sm mb-4">Add your first node to start coordinating.</p>
-          <div class="flex gap-2">
+          <div class="flex gap-2 mb-6">
             <UButton
               icon="i-lucide-mountain"
               label="Add Epic"
@@ -617,6 +639,18 @@ watch(showCreate, async (open) => {
               label="Add Node"
               @click="openCreate('idea')"
             />
+            <UButton
+              icon="i-lucide-clipboard-paste"
+              label="Paste AI Output"
+              variant="outline"
+              color="neutral"
+              @click="openQuickAdd()"
+            />
+          </div>
+          <div class="flex items-center gap-4 text-xs text-muted">
+            <span><kbd class="px-1.5 py-0.5 rounded border border-default bg-elevated font-mono text-[10px]">N</kbd> new node</span>
+            <span><kbd class="px-1.5 py-0.5 rounded border border-default bg-elevated font-mono text-[10px]">Q</kbd> quick add</span>
+            <span><kbd class="px-1.5 py-0.5 rounded border border-default bg-elevated font-mono text-[10px]">?</kbd> all shortcuts</span>
           </div>
         </div>
       </div>
