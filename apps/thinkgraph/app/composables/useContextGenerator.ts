@@ -1,41 +1,16 @@
-export function useContextGenerator(decisions: ComputedRef<any[]>) {
+import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+
+export function useContextGenerator(decisions: Ref<ThinkgraphDecision[]> | ComputedRef<ThinkgraphDecision[]>) {
   const { copy } = useClipboard()
-
-  function getNodeById(nodeId: string) {
-    return decisions.value.find((d) => d.id === nodeId)
-  }
-
-  function getAncestorChain(nodeId: string): any[] {
-    const chain: any[] = []
-    let current = getNodeById(nodeId)
-
-    while (current) {
-      chain.unshift(current)
-      current = current.parentId ? getNodeById(current.parentId) : null
-    }
-
-    return chain
-  }
-
-  function getStarredInsights(nodeId: string): any[] {
-    const ancestorIds = new Set(getAncestorChain(nodeId).map((n) => n.id))
-
-    return decisions.value.filter((d) => d.starred && !ancestorIds.has(d.id))
-  }
-
-  function getPinnedNodes(nodeId: string): any[] {
-    const ancestorIds = new Set(getAncestorChain(nodeId).map((n) => n.id))
-
-    return decisions.value.filter((d) => d.pinned && !ancestorIds.has(d.id))
-  }
+  const { getNodeById, getAncestorChain, getStarredOutsidePath, getPinnedOutsidePath } = useDecisionGraph(decisions)
 
   function generateContext(nodeId: string, pathType?: string): string {
     const node = getNodeById(nodeId)
     if (!node) return ''
 
     const chain = getAncestorChain(nodeId)
-    const pinned = getPinnedNodes(nodeId)
-    const starred = getStarredInsights(nodeId)
+    const pinned = getPinnedOutsidePath(nodeId)
+    const starred = getStarredOutsidePath(nodeId)
     const effectivePathType = pathType || node.pathType || 'diverge'
 
     const sections: string[] = []
@@ -105,5 +80,5 @@ export function useContextGenerator(decisions: ComputedRef<any[]>) {
     await copy(context)
   }
 
-  return { getAncestorChain, getStarredInsights, getPinnedNodes, generateContext, copyContext }
+  return { getAncestorChain, getStarredOutsidePath, getPinnedOutsidePath, generateContext, copyContext }
 }

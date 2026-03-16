@@ -1,43 +1,25 @@
 <script setup lang="ts">
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import { FILTER_NODE_TYPES, FILTER_PATH_TYPES } from '~/utils/thinkgraph-config'
+import type { GraphFilterState } from '~/composables/useGraphFilters'
 
 const props = defineProps<{
-  decisions: ThinkgraphDecision[]
+  filters: GraphFilterState
+  filteredIds: Set<string> | null
+  activeFilterCount: number
+  availableBranches: Array<{ name: string; count: number }>
+  availableVersionTags: Array<{ name: string; count: number }>
+  totalCount: number
 }>()
 
-const decisionsRef = computed(() => props.decisions)
-const { filters, filteredIds, activeFilterCount, availableBranches, availableVersionTags, clearFilters } = useGraphFilters(decisionsRef)
+const emit = defineEmits<{
+  clearFilters: []
+}>()
 
 const collapsed = ref(false)
-
-const nodeTypes = [
-  { id: 'idea', label: 'Idea', color: 'bg-emerald-500' },
-  { id: 'insight', label: 'Insight', color: 'bg-blue-500' },
-  { id: 'decision', label: 'Decision', color: 'bg-purple-500' },
-  { id: 'question', label: 'Question', color: 'bg-amber-500' },
-  { id: 'epic', label: 'Epic', color: 'bg-indigo-500' },
-  { id: 'user_story', label: 'User Story', color: 'bg-cyan-500' },
-  { id: 'task', label: 'Task', color: 'bg-teal-500' },
-  { id: 'milestone', label: 'Milestone', color: 'bg-rose-500' },
-  { id: 'remark', label: 'Remark', color: 'bg-neutral-500' },
-  { id: 'fork', label: 'Fork', color: 'bg-orange-500' },
-  { id: 'send', label: 'Send', color: 'bg-sky-500' },
-]
-
-const pathTypes = [
-  { id: 'diverge', label: 'Diverge', icon: 'i-lucide-git-branch-plus' },
-  { id: 'deep_dive', label: 'Deep dive', icon: 'i-lucide-microscope' },
-  { id: 'prototype', label: 'Prototype', icon: 'i-lucide-hammer' },
-  { id: 'converge', label: 'Converge', icon: 'i-lucide-git-merge' },
-  { id: 'validate', label: 'Validate', icon: 'i-lucide-shield-question' },
-  { id: 'park', label: 'Park', icon: 'i-lucide-archive' },
-]
 
 function toggleArrayFilter(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value]
 }
-
-defineExpose({ filteredIds })
 </script>
 
 <template>
@@ -79,7 +61,7 @@ defineExpose({ filteredIds })
           <button
             v-if="activeFilterCount > 0"
             class="text-[10px] text-primary-500 hover:underline cursor-pointer"
-            @click="clearFilters"
+            @click="emit('clearFilters')"
           >
             Clear
           </button>
@@ -108,7 +90,7 @@ defineExpose({ filteredIds })
           <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Type</p>
           <div class="space-y-1">
             <label
-              v-for="nt in nodeTypes"
+              v-for="nt in FILTER_NODE_TYPES"
               :key="nt.id"
               class="flex items-center gap-2 py-0.5 cursor-pointer text-xs"
             >
@@ -130,7 +112,7 @@ defineExpose({ filteredIds })
           <p class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1.5">Path</p>
           <div class="space-y-1">
             <label
-              v-for="pt in pathTypes"
+              v-for="pt in FILTER_PATH_TYPES"
               :key="pt.id"
               class="flex items-center gap-2 py-0.5 cursor-pointer text-xs"
             >
@@ -257,7 +239,7 @@ defineExpose({ filteredIds })
         v-if="filteredIds !== null"
         class="px-3 py-2 border-t border-neutral-200 dark:border-neutral-800 text-[10px] text-neutral-400"
       >
-        {{ filteredIds.size }} / {{ decisions.length }} nodes
+        {{ filteredIds.size }} / {{ totalCount }} nodes
       </div>
     </template>
   </div>

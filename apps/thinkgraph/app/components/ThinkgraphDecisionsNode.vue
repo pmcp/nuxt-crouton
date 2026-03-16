@@ -17,13 +17,19 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
-const expandFn = inject<(id: string, mode?: string) => void>('thinkgraph:expand', () => {})
-const expandingId = inject<Ref<string | null>>('thinkgraph:expanding', ref(null))
-const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('thinkgraph:copyContext', async () => {})
-const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
-const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
-const openDispatchFn = inject<(nodeId: string) => void>('thinkgraph:dispatch', () => {})
-const openTerminalFn = inject<(nodeId: string) => void>('thinkgraph:openTerminal', () => {})
+import {
+  THINKGRAPH_EXPAND, THINKGRAPH_EXPANDING, THINKGRAPH_COPY_CONTEXT,
+  THINKGRAPH_OPEN_QUICK_ADD, THINKGRAPH_OPEN_CHAT, THINKGRAPH_DISPATCH,
+  THINKGRAPH_OPEN_TERMINAL, THINKGRAPH_TOGGLE_PIN, THINKGRAPH_TOGGLE_STAR,
+} from '~/utils/thinkgraph-inject'
+
+const expandFn = inject(THINKGRAPH_EXPAND, () => {})
+const expandingId = inject(THINKGRAPH_EXPANDING, ref(null))
+const copyContextFn = inject(THINKGRAPH_COPY_CONTEXT, async () => {})
+const openQuickAddFn = inject(THINKGRAPH_OPEN_QUICK_ADD, () => {})
+const openChatFn = inject(THINKGRAPH_OPEN_CHAT, () => {})
+const openDispatchFn = inject(THINKGRAPH_DISPATCH, () => {})
+const openTerminalFn = inject(THINKGRAPH_OPEN_TERMINAL, () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -32,7 +38,8 @@ const isExpanding = computed(() => expandingId.value === decision.value.id)
 
 const decision = computed(() => props.data as unknown as ThinkgraphDecision)
 
-const togglePinFn = inject<(id: string) => void>('thinkgraph:togglePin', () => {})
+const togglePinFn = inject(THINKGRAPH_TOGGLE_PIN, () => {})
+const toggleStarFn = inject(THINKGRAPH_TOGGLE_STAR, () => {})
 
 const isParked = computed(() => decision.value.versionTag === 'parked')
 const isStarred = computed(() => decision.value.starred)
@@ -41,65 +48,20 @@ const isPinned = computed(() => decision.value.pinned)
 const { getBranchColor } = useBranchColors()
 const branchColor = computed(() => getBranchColor(decision.value.branchName))
 
-const expandModes = [
-  { id: 'default', label: 'Quick expand', icon: 'i-lucide-sparkles', description: '3 diverse perspectives' },
-  { id: 'diverge', label: 'Diverge', icon: 'i-lucide-git-branch-plus', description: '5 alternative approaches' },
-  { id: 'deep_dive', label: 'Deep dive', icon: 'i-lucide-microscope', description: 'Implications & edge cases' },
-  { id: 'prototype', label: 'Prototype', icon: 'i-lucide-hammer', description: 'Practical, actionable steps' },
-  { id: 'converge', label: 'Converge', icon: 'i-lucide-git-merge', description: 'Synthesize into strategy' },
-  { id: 'validate', label: 'Challenge', icon: 'i-lucide-shield-question', description: 'Find holes & risks' },
-]
-
-const pathTypeConfig: Record<string, { icon: string; color: string }> = {
-  diverge: { icon: 'i-lucide-git-branch-plus', color: 'text-green-500' },
-  deep_dive: { icon: 'i-lucide-microscope', color: 'text-blue-500' },
-  prototype: { icon: 'i-lucide-hammer', color: 'text-orange-500' },
-  converge: { icon: 'i-lucide-git-merge', color: 'text-purple-500' },
-  validate: { icon: 'i-lucide-shield-question', color: 'text-yellow-500' },
-  park: { icon: 'i-lucide-archive', color: 'text-neutral-400' }
-}
-
-const nodeTypeConfig: Record<string, { color: string; icon: string }> = {
-  // Thinking types (existing)
-  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: 'i-lucide-lightbulb' },
-  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: 'i-lucide-eye' },
-  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', icon: 'i-lucide-check-circle' },
-  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: 'i-lucide-help-circle' },
-  // Planning types
-  epic: { color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', icon: 'i-lucide-mountain' },
-  user_story: { color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400', icon: 'i-lucide-user' },
-  task: { color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: 'i-lucide-square-check' },
-  // Execution types
-  milestone: { color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400', icon: 'i-lucide-flag' },
-  remark: { color: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400', icon: 'i-lucide-message-circle' },
-  fork: { color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: 'i-lucide-git-fork' },
-  send: { color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400', icon: 'i-lucide-send' },
-}
+import { EXPAND_MODES, PATH_TYPE_CONFIG, STATUS_CONFIG, getNodeTypeConfig, getNodeTypeBadge } from '~/utils/thinkgraph-config'
 
 const pathIcon = computed(() => {
   const pt = decision.value.pathType
-  return pt ? pathTypeConfig[pt] : null
+  return pt ? PATH_TYPE_CONFIG[pt] : null
 })
 
 const nodeTypeStyle = computed(() => {
-  const nt = decision.value.nodeType
-  return nodeTypeConfig[nt] || nodeTypeConfig.insight
+  return { color: getNodeTypeBadge(decision.value.nodeType), icon: getNodeTypeConfig(decision.value.nodeType).icon }
 })
 
-const statusConfig: Record<string, { class: string; icon: string }> = {
-  idle: { class: '', icon: '' },
-  draft: { class: 'decision-node--draft', icon: 'i-lucide-pencil-line' },
-  thinking: { class: 'decision-node--thinking', icon: 'i-lucide-brain' },
-  working: { class: 'decision-node--working', icon: 'i-lucide-loader-2' },
-  blocked: { class: 'decision-node--blocked', icon: 'i-lucide-pause-circle' },
-  needs_attention: { class: 'decision-node--attention', icon: 'i-lucide-alert-triangle' },
-  done: { class: 'decision-node--done', icon: 'i-lucide-check-circle-2' },
-  error: { class: 'decision-node--error', icon: 'i-lucide-x-circle' },
-}
-
 const nodeStatus = computed(() => {
-  const s = (decision.value as any).status || 'idle'
-  return statusConfig[s] || statusConfig.idle
+  const s = decision.value.status || 'idle'
+  return STATUS_CONFIG[s] || STATUS_CONFIG.idle
 })
 
 const displayContent = computed(() => {
@@ -172,13 +134,9 @@ function handlePasteChildren(event: Event) {
 
 function toggleStar(event: Event) {
   event.stopPropagation()
-  const { teamId } = useTeamContext()
-  if (!teamId.value || !decision.value.id) return
-
-  $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decision.value.id}`, {
-    method: 'PATCH',
-    body: { starred: !decision.value.starred }
-  })
+  if (decision.value.id) {
+    toggleStarFn(decision.value.id)
+  }
 }
 
 function togglePin(event: Event) {
@@ -252,13 +210,13 @@ function togglePin(event: Event) {
         :name="nodeStatus.icon"
         class="size-3.5"
         :class="{
-          'text-neutral-400 dark:text-neutral-500': (decision as any).status === 'draft',
-          'text-blue-400 animate-pulse': (decision as any).status === 'thinking',
-          'text-primary-500 animate-spin': (decision as any).status === 'working',
-          'text-neutral-400': (decision as any).status === 'blocked',
-          'text-orange-500': (decision as any).status === 'needs_attention',
-          'text-green-500': (decision as any).status === 'done',
-          'text-red-500': (decision as any).status === 'error',
+          'text-neutral-400 dark:text-neutral-500': decision.status === 'draft',
+          'text-blue-400 animate-pulse': decision.status === 'thinking',
+          'text-primary-500 animate-spin': decision.status === 'working',
+          'text-neutral-400': decision.status === 'blocked',
+          'text-orange-500': decision.status === 'needs_attention',
+          'text-green-500': decision.status === 'done',
+          'text-red-500': decision.status === 'error',
         }"
       />
 
@@ -291,26 +249,26 @@ function togglePin(event: Event) {
     </div>
 
     <!-- Notion sync indicator -->
-    <div v-if="(decision as any).notionId" class="mt-1.5 flex items-center gap-1">
+    <div v-if="decision.notionId" class="mt-1.5 flex items-center gap-1">
       <UIcon name="i-lucide-link" class="size-3 text-neutral-400" />
       <span class="text-[10px] text-neutral-400">Notion synced</span>
     </div>
 
     <!-- Claude Code terminal indicator -->
     <button
-      v-if="(decision as any).status === 'thinking' || (decision as any).status === 'working'"
+      v-if="decision.status === 'thinking' || decision.status === 'working'"
       class="mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 rounded bg-neutral-900 dark:bg-neutral-950 text-left cursor-pointer hover:bg-neutral-800 dark:hover:bg-neutral-900 transition-colors"
       @click.stop="openTerminalFn(decision.id)"
     >
       <UIcon name="i-lucide-terminal" class="size-3 text-green-400 shrink-0" />
       <span class="text-[10px] text-green-400 font-mono truncate">
-        {{ (decision as any).status === 'thinking' ? 'Claude is thinking...' : 'Claude is working...' }}
+        {{ decision.status === 'thinking' ? 'Claude is thinking...' : 'Claude is working...' }}
       </span>
       <UIcon name="i-lucide-maximize-2" class="size-3 text-neutral-500 ml-auto shrink-0" />
     </button>
 
     <!-- Brief available indicator -->
-    <div v-if="(decision as any).brief" class="mt-1.5 flex items-center gap-1">
+    <div v-if="decision.brief" class="mt-1.5 flex items-center gap-1">
       <UIcon name="i-lucide-file-text" class="size-3 text-teal-400" />
       <span class="text-[10px] text-teal-400">Brief available</span>
     </div>
@@ -350,7 +308,7 @@ function togglePin(event: Event) {
           class="expand-menu"
         >
           <button
-            v-for="mode in expandModes"
+            v-for="mode in EXPAND_MODES"
             :key="mode.id"
             class="expand-menu__item"
             @click="handleExpandMode(mode.id, $event)"

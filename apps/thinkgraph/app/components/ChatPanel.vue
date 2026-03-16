@@ -12,9 +12,11 @@ const emit = defineEmits<{
 
 const { teamId } = useTeamContext()
 
+import { THINKGRAPH_CONTEXT_NODE_IDS, THINKGRAPH_CONTEXT_MODE } from '~/utils/thinkgraph-inject'
+
 // Inject context mode from parent
-const contextNodeIds = inject<Ref<string[]>>('thinkgraph:contextNodeIds', ref([]))
-const contextMode = inject<Ref<'path' | 'selection'>>('thinkgraph:contextMode', ref('path'))
+const contextNodeIds = inject(THINKGRAPH_CONTEXT_NODE_IDS, ref([]))
+const contextMode = inject(THINKGRAPH_CONTEXT_MODE, ref<'path' | 'selection'>('path'))
 
 const {
   messages,

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+
 interface Props {
   nodeId: string | null
-  decisions: any[]
+  decisions: ThinkgraphDecision[]
   graphId: string | null
 }
 
@@ -20,49 +22,31 @@ const emit = defineEmits<{
   'create-node': [data: { content: string; nodeType: string; parentId: string }]
 }>()
 
-const { copyContext } = useContextGenerator(computed(() => props.decisions))
-
-function getNodeById(id: string) {
-  return props.decisions.find((d) => d.id === id)
-}
+const decisionsRef = computed(() => props.decisions)
+const { copyContext } = useContextGenerator(decisionsRef)
+const { getNodeById, getAncestorChain, getChildren, getStarredOutsidePath } = useDecisionGraph(decisionsRef)
 
 const ancestorChain = computed(() => {
   if (!props.nodeId) return []
-  const chain: any[] = []
-  let current = getNodeById(props.nodeId)
-  while (current) {
-    chain.unshift(current)
-    current = current.parentId ? getNodeById(current.parentId) : null
-  }
-  return chain
+  return getAncestorChain(props.nodeId)
 })
 
 const children = computed(() => {
   if (!props.nodeId) return []
-  return props.decisions.filter((d) => d.parentId === props.nodeId)
+  return getChildren(props.nodeId)
 })
 
 const selectedNode = computed(() => {
   if (!props.nodeId) return null
-  return getNodeById(props.nodeId)
+  return getNodeById(props.nodeId) || null
 })
 
 const starredInsights = computed(() => {
   if (!props.nodeId) return []
-  const ancestorIds = new Set(ancestorChain.value.map((n: any) => n.id))
-  return props.decisions.filter((d) => d.starred && !ancestorIds.has(d.id))
+  return getStarredOutsidePath(props.nodeId)
 })
 
-const nodeTypeConfig: Record<string, { icon: string; color: string; bg: string }> = {
-  idea: { icon: 'i-lucide-lightbulb', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  insight: { icon: 'i-lucide-eye', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  decision: { icon: 'i-lucide-check-circle', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-  question: { icon: 'i-lucide-help-circle', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-}
-
-function getNodeConfig(nodeType: string) {
-  return nodeTypeConfig[nodeType] || nodeTypeConfig.insight
-}
+import { getNodeTypeConfig } from '~/utils/thinkgraph-config'
 
 // Hover actions per node
 const hoveredNodeId = ref<string | null>(null)
@@ -166,19 +150,19 @@ const quickAddTypes = [
                 <!-- Node type icon -->
                 <div
                   class="mt-0.5 size-[22px] rounded-md flex items-center justify-center shrink-0"
-                  :class="getNodeConfig(node.nodeType).bg"
+                  :class="getNodeTypeConfig(node.nodeType).bg"
                 >
                   <UIcon
-                    :name="getNodeConfig(node.nodeType).icon"
+                    :name="getNodeTypeConfig(node.nodeType).icon"
                     class="size-3.5"
-                    :class="getNodeConfig(node.nodeType).color"
+                    :class="getNodeTypeConfig(node.nodeType).color"
                   />
                 </div>
 
                 <div class="min-w-0 flex-1">
                   <!-- Type + badges -->
                   <div class="flex items-center gap-1.5 mb-0.5">
-                    <span class="text-[10px] font-medium" :class="getNodeConfig(node.nodeType).color">
+                    <span class="text-[10px] font-medium" :class="getNodeTypeConfig(node.nodeType).color">
                       {{ node.nodeType }}
                     </span>
                     <UIcon
@@ -289,9 +273,9 @@ const quickAddTypes = [
             >
               <div class="flex items-start gap-2">
                 <UIcon
-                  :name="getNodeConfig(child.nodeType).icon"
+                  :name="getNodeTypeConfig(child.nodeType).icon"
                   class="size-3.5 mt-0.5 shrink-0"
-                  :class="getNodeConfig(child.nodeType).color"
+                  :class="getNodeTypeConfig(child.nodeType).color"
                 />
                 <div class="min-w-0 flex-1">
                   <p class="text-xs text-default leading-snug whitespace-pre-wrap">

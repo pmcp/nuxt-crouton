@@ -1,66 +1,33 @@
 <script setup lang="ts">
+import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+
 interface Props {
   nodeId: string
-  decisions: any[]
+  decisions: ThinkgraphDecision[]
 }
 
 const props = defineProps<Props>()
 
-const { generateContext } = useContextGenerator(computed(() => props.decisions))
+import { getNodeTypeBadge } from '~/utils/thinkgraph-config'
+
+const decisionsRef = computed(() => props.decisions)
+const { generateContext } = useContextGenerator(decisionsRef)
 const { copy } = useClipboard()
+const { getNodeById, getAncestorChain, getChildren, getSiblings, getStarredOutsidePath, getPinnedOutsidePath } = useDecisionGraph(decisionsRef)
 
-const nodeTypeConfig: Record<string, { color: string }> = {
-  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-}
-
-function getNodeById(id: string) {
-  return props.decisions.find((d: any) => d.id === id)
-}
-
-// Ancestor chain (root -> current)
-const ancestorChain = computed(() => {
-  const chain: any[] = []
-  let current = getNodeById(props.nodeId)
-  while (current) {
-    chain.unshift(current)
-    current = current.parentId ? getNodeById(current.parentId) : null
-  }
-  return chain
-})
-
-const ancestorIds = computed(() => new Set(ancestorChain.value.map((n: any) => n.id)))
+const ancestorChain = computed(() => getAncestorChain(props.nodeId))
 
 const selectedNode = computed(() => getNodeById(props.nodeId))
 
-// Pinned nodes (not in ancestor chain)
-const pinnedNodes = computed(() =>
-  props.decisions.filter((d: any) => d.pinned && !ancestorIds.value.has(d.id)),
-)
+const pinnedNodes = computed(() => getPinnedOutsidePath(props.nodeId))
 
-// Starred nodes (not in ancestor chain)
-const starredNodes = computed(() => {
-  const starred = props.decisions.filter((d: any) => d.starred && !ancestorIds.value.has(d.id))
-  return starred.slice(0, 5)
-})
+const starredNodes = computed(() => getStarredOutsidePath(props.nodeId).slice(0, 5))
 
-const totalStarred = computed(() =>
-  props.decisions.filter((d: any) => d.starred && !ancestorIds.value.has(d.id)).length,
-)
+const totalStarred = computed(() => getStarredOutsidePath(props.nodeId).length)
 
-// Siblings & children
-const siblings = computed(() => {
-  if (!selectedNode.value?.parentId) return []
-  return props.decisions.filter(
-    (d: any) => d.parentId === selectedNode.value.parentId && d.id !== props.nodeId,
-  )
-})
+const siblings = computed(() => getSiblings(props.nodeId))
 
-const children = computed(() =>
-  props.decisions.filter((d: any) => d.parentId === props.nodeId),
-)
+const children = computed(() => getChildren(props.nodeId))
 
 // Token estimate
 const totalTokens = computed(() => {
@@ -80,10 +47,10 @@ function truncate(text: string, max = 60): string {
 }
 
 function getNodeTypeStyle(nodeType: string) {
-  return nodeTypeConfig[nodeType]?.color || nodeTypeConfig.insight.color
+  return getNodeTypeBadge(nodeType)
 }
 
-function getParentContent(node: any): string {
+function getParentContent(node: ThinkgraphDecision): string {
   if (!node.parentId) return 'root'
   const parent = getNodeById(node.parentId)
   return parent ? truncate(parent.content, 30) : 'unknown'

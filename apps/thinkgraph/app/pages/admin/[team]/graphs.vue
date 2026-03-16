@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import ThinkgraphDecisionsNode from '~/components/ThinkgraphDecisionsNode.vue'
+import type { ThinkgraphDecision } from '../../../layers/thinkgraph/collections/decisions/types'
+import { CONNECT_NODE_TYPES } from '~/utils/thinkgraph-config'
+import {
+  THINKGRAPH_EXPAND, THINKGRAPH_EXPANDING, THINKGRAPH_COPY_CONTEXT,
+  THINKGRAPH_OPEN_QUICK_ADD, THINKGRAPH_OPEN_CHAT, THINKGRAPH_DISPATCH,
+  THINKGRAPH_OPEN_TERMINAL, THINKGRAPH_TOGGLE_PIN, THINKGRAPH_TOGGLE_STAR,
+  THINKGRAPH_CONTEXT_NODE_IDS, THINKGRAPH_CONTEXT_MODE, THINKGRAPH_FOCUS_IN_PATH,
+} from '~/utils/thinkgraph-inject'
 
 definePageMeta({ layout: 'admin' })
 
@@ -21,7 +29,7 @@ const layoutRef = ref<{ select: (item: any) => void; create: () => void } | null
 
 // ─── Graphs list ───
 const { items: graphs, pending: loadingGraphs, refresh: refreshGraphs } = await useCollectionQuery('thinkgraphGraphs')
-const { create: createGraph, deleteItems: deleteGraphs } = useCollectionMutation('thinkgraphGraphs')
+const { create: createGraph } = useCollectionMutation('thinkgraphGraphs')
 
 // ─── Create graph modal ───
 const isCreateOpen = ref(false)
@@ -48,7 +56,7 @@ async function handleCreate() {
 }
 
 // ─── Decisions for selected graph ───
-const decisions = ref<any[]>([])
+const decisions = ref<ThinkgraphDecision[]>([])
 const decisionsLoading = ref(false)
 
 async function refreshDecisions() {
@@ -58,7 +66,7 @@ async function refreshDecisions() {
   }
   decisionsLoading.value = true
   try {
-    const result = await $fetch<any[]>(`/api/teams/${teamId.value}/thinkgraph-decisions`, {
+    const result = await $fetch<ThinkgraphDecision[]>(`/api/teams/${teamId.value}/thinkgraph-decisions`, {
       query: { graphId: selectedGraphId.value },
     })
     decisions.value = result || []
@@ -83,86 +91,89 @@ nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   }
 })
 
-// ─── Graph canvas state ───
-const expanding = ref<string | null>(null)
-const showQuickAdd = ref(false)
-const quickAddParentId = ref<string | undefined>()
-const selectedNodeId = ref<string | null>(null)
-const layoutKey = ref(0)
+// ─── Composables ───
+const {
+  expanding, layoutKey, edgeType, edgeTypeIcon, flowConfig,
+  flowId, savedPositions, cycleEdgeType, autoLayout, ensureFlowConfig, resetCanvas,
+} = useGraphCanvas(teamId, selectedGraphId)
 
-// Edge type toggle
-const edgeTypes = ['default', 'smoothstep', 'straight'] as const
-const edgeType = ref<'default' | 'smoothstep' | 'straight'>('smoothstep')
+const {
+  selectedNodeId, selectedNodes, selectedNodeIds,
+  contextMode, contextNodeIds,
+  onNodeClick: handleNodeClick, onSelectionChange, deselectNode, clearSelection,
+  useSelectionAsContext, clearContextSelection,
+} = useGraphSelection()
 
-function cycleEdgeType() {
-  const idx = edgeTypes.indexOf(edgeType.value)
-  edgeType.value = edgeTypes[(idx + 1) % edgeTypes.length]
-}
+const {
+  showPath, showChat, showFilters, showInspector,
+  showQuickAdd, showTerminal, showDispatch,
+  chatNodeId, chatNodeName, openChat, openGlobalChat,
+  quickAddParentId, openQuickAdd,
+  terminalNodeId, openTerminal,
+  dispatchNodeId, dispatchNodeIds, dispatchNodeContent,
+  openDispatch, openMultiDispatch,
+} = useGraphPanels(decisions)
 
-const edgeTypeIcon = computed(() => {
-  switch (edgeType.value) {
-    case 'default': return 'i-lucide-spline'
-    case 'smoothstep': return 'i-lucide-git-commit-horizontal'
-    case 'straight': return 'i-lucide-minus'
-  }
+const { generateContext, copyContext } = useContextGenerator(decisions)
+
+const {
+  expandWithAI, toggleStar, togglePin, togglePark,
+  synthesizing, synthesizeSelected,
+  resuming, resumeGraph,
+  showDigest, digestContent, digestLoading, generateDigest,
+  generatingBrief, generateBrief,
+  copySelectedContext,
+  onChatAddToGraph,
+  connectMenu, onConnectEnd, createFromConnect, closeConnectMenu,
+  onNodeDelete,
+  exportGraph: exportGraphAction,
+} = useGraphActions({
+  teamId,
+  decisions,
+  selectedGraphId,
+  expanding,
+  contextMode,
+  contextNodeIds,
+  selectedNodes,
+  chatNodeId,
+  selectedNodeId,
+  refreshDecisions,
+  create,
+  update,
+  deleteItems,
+  copyContext,
 })
 
-const flowConfig = computed(() => ({
-  direction: 'TB' as const,
-  nodeSpacing: 80,
-  rankSpacing: 160,
-  nodeWidth: 260,
-  nodeHeight: 200,
-  edgeType: edgeType.value,
-}))
+// ─── Filters ───
+const { filters: graphFilters, filteredIds, activeFilterCount, availableBranches, availableVersionTags, clearFilters } = useGraphFilters(decisions)
 
-function autoLayout() {
-  savedPositions.value = null
-  layoutKey.value++
-}
+const visibleDecisions = computed(() => {
+  if (!filteredIds.value) return decisions.value
+  return decisions.value.filter(d => filteredIds.value!.has(d.id))
+})
 
-// Flow config — persist node positions across reloads
-const flowId = ref<string | null>(null)
-const savedPositions = ref<Record<string, { x: number; y: number }> | null>(null)
-
-async function ensureFlowConfig() {
-  if (!teamId.value || !selectedGraphId.value) return
-
-  const flowName = `thinkgraph-${selectedGraphId.value}`
-
-  try {
-    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
-      query: { collection: 'thinkgraphDecisions', name: flowName },
-    })
-    const existing = flows?.find((f: any) => f.name === flowName)
-    if (existing) {
-      flowId.value = existing.id
-      savedPositions.value = existing.nodePositions || null
-      return
+// ─── Additional edges (synthesis artifacts) ───
+const additionalEdges = computed(() => {
+  if (!decisions.value) return []
+  const edges: Array<{ id: string; source: string; target: string }> = []
+  for (const d of decisions.value) {
+    if (!Array.isArray(d.artifacts)) continue
+    for (const a of d.artifacts) {
+      if (a.type === 'synthesis' && Array.isArray((a as any).sourceNodeIds)) {
+        for (const srcId of (a as any).sourceNodeIds) {
+          if (srcId !== d.parentId) {
+            edges.push({ id: `e-synth-${srcId}-${d.id}`, source: srcId, target: d.id })
+          }
+        }
+      }
     }
-  } catch { /* no existing config */ }
+  }
+  return edges
+})
 
-  try {
-    const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
-      method: 'POST',
-      body: {
-        name: flowName,
-        collection: 'thinkgraphDecisions',
-        labelField: 'content',
-        parentField: 'parentId',
-      },
-    })
-    if (created?.id) {
-      flowId.value = created.id
-    }
-  } catch { /* flow config creation failed */ }
-}
-
-// Re-init flow config and load decisions when graph changes
+// ─── Graph change watcher ───
 watch(selectedGraphId, async (newId) => {
-  // Reset graph canvas state
-  flowId.value = null
-  savedPositions.value = null
+  resetCanvas()
   selectedNodes.value = new Set()
   selectedNodeId.value = null
   showChat.value = false
@@ -177,94 +188,22 @@ watch(selectedGraphId, async (newId) => {
   }
 })
 
-// Dispatch modal state
-const showDispatch = ref(false)
-const dispatchNodeId = ref<string | null>(null)
-const dispatchNodeIds = ref<string[]>([])
-const dispatchNodeContent = computed(() => {
-  if (!dispatchNodeId.value) return undefined
-  const node = decisions.value?.find((d: any) => d.id === dispatchNodeId.value)
-  return node?.content?.slice(0, 100) || undefined
-})
-
-function openDispatch(nodeId: string) {
-  dispatchNodeIds.value = [nodeId]
-  dispatchNodeId.value = nodeId
-  showDispatch.value = true
+// ─── Node click with path panel ───
+function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
+  handleNodeClick(nodeId, data, event)
+  if (!event?.shiftKey) showPath.value = true
 }
 
-function openMultiDispatch(nodeIds: string[]) {
-  dispatchNodeIds.value = nodeIds
-  dispatchNodeId.value = nodeIds[0] || null
-  showDispatch.value = true
+// ─── Quick add done ───
+async function onQuickAddDone() {
+  showQuickAdd.value = false
+  await refreshDecisions()
 }
 
 async function onDispatched() {
   showDispatch.value = false
   await refreshDecisions()
 }
-
-// Thinking path panel state
-const showPath = ref(true)
-
-// Chat panel state
-const showChat = ref(false)
-const chatNodeId = ref<string | null>(null)
-const chatNodeName = computed(() => {
-  if (!chatNodeId.value) return undefined
-  const node = decisions.value?.find((d: any) => d.id === chatNodeId.value)
-  return node?.content?.slice(0, 50) || undefined
-})
-
-// Multi-select for synthesis
-const selectedNodes = ref<Set<string>>(new Set())
-const selectedNodeIds = computed(() => Array.from(selectedNodes.value))
-
-// Filter sidebar
-const showFilters = ref(false)
-const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
-
-const showInspector = ref(false)
-
-// Context mode: which nodes provide AI context
-const contextMode = ref<'path' | 'selection'>('path')
-const contextNodeIds = ref<string[]>([])
-
-function useSelectionAsContext() {
-  contextNodeIds.value = Array.from(selectedNodes.value)
-  contextMode.value = 'selection'
-  toast.add({
-    title: `${contextNodeIds.value.length} nodes set as AI context`,
-    icon: 'i-lucide-brain',
-    color: 'info',
-  })
-}
-
-function clearContextSelection() {
-  contextMode.value = 'path'
-  contextNodeIds.value = []
-}
-
-const { generateContext, copyContext } = useContextGenerator(decisions)
-
-// Compute extra edges from synthesis artifacts (multi-parent connections)
-const additionalEdges = computed(() => {
-  if (!decisions.value) return []
-  const edges: Array<{ id: string; source: string; target: string }> = []
-  for (const d of decisions.value as any[]) {
-    if (!Array.isArray(d.artifacts)) continue
-    for (const a of d.artifacts) {
-      if (a.type === 'synthesis' && Array.isArray(a.sourceNodeIds)) {
-        for (const srcId of a.sourceNodeIds) {
-          if (srcId !== d.parentId) {
-            edges.push({ id: `e-synth-${srcId}-${d.id}`, source: srcId, target: d.id })
-          }
-        }
-      }
-    }
-  }
-  return edges
-})
 
 function addRootDecision() {
   if (!selectedGraphId.value) return
@@ -288,285 +227,7 @@ const newNodeItems = computed(() => [
   ],
 ])
 
-function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
-  if (event?.shiftKey) return
-  selectedNodeId.value = nodeId
-  showPath.value = true
-}
-
-function onSelectionChange(nodeIds: string[]) {
-  selectedNodes.value = new Set(nodeIds)
-}
-
-async function onNodeDelete(nodeIds: string[]) {
-  await deleteItems(nodeIds)
-  for (const id of nodeIds) selectedNodes.value.delete(id)
-  await refreshDecisions()
-}
-
-async function expandWithAI(decisionId: string, mode?: string) {
-  if (expanding.value) return
-  expanding.value = decisionId
-
-  try {
-    if (contextMode.value === 'selection' && contextNodeIds.value.length > 0) {
-      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/expand-with-context`, {
-        method: 'POST',
-        body: {
-          nodeId: decisionId,
-          mode: mode || 'default',
-          contextNodeIds: contextNodeIds.value,
-          includeAncestors: true,
-        },
-      })
-    } else {
-      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
-        method: 'POST',
-        body: { mode: mode || 'default' },
-      })
-    }
-    await refreshDecisions()
-  } catch (error) {
-    console.error('AI expand failed:', error)
-  } finally {
-    expanding.value = null
-  }
-}
-
-function openQuickAdd(parentId?: string) {
-  quickAddParentId.value = parentId
-  showQuickAdd.value = true
-}
-
-async function onQuickAddDone() {
-  showQuickAdd.value = false
-  await refreshDecisions()
-}
-
-// ─── Connect-to-create (drag connector to empty space) ───
-const connectMenu = ref<{ show: boolean; x: number; y: number; sourceNodeId: string; position: { x: number; y: number } }>({
-  show: false, x: 0, y: 0, sourceNodeId: '', position: { x: 0, y: 0 }
-})
-
-const connectNodeTypes = [
-  // Thinking types
-  { id: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb', color: 'text-emerald-500' },
-  { id: 'insight', label: 'Insight', icon: 'i-lucide-eye', color: 'text-blue-500' },
-  { id: 'decision', label: 'Decision', icon: 'i-lucide-check-circle', color: 'text-purple-500' },
-  { id: 'question', label: 'Question', icon: 'i-lucide-help-circle', color: 'text-amber-500' },
-  // Planning types
-  { id: 'epic', label: 'Epic', icon: 'i-lucide-mountain', color: 'text-rose-500' },
-  { id: 'user_story', label: 'User Story', icon: 'i-lucide-user', color: 'text-sky-500' },
-  { id: 'task', label: 'Task', icon: 'i-lucide-square-check', color: 'text-indigo-500' },
-  // Execution types
-  { id: 'milestone', label: 'Milestone', icon: 'i-lucide-flag', color: 'text-teal-500' },
-  { id: 'remark', label: 'Remark', icon: 'i-lucide-message-circle', color: 'text-neutral-500' },
-  { id: 'fork', label: 'Fork', icon: 'i-lucide-git-fork', color: 'text-orange-500' },
-  { id: 'send', label: 'Send', icon: 'i-lucide-send', color: 'text-cyan-500' },
-]
-
-function onConnectEnd(event: { sourceNodeId: string; sourceHandleType: string; position: { x: number; y: number }; mouseEvent: MouseEvent }) {
-  connectMenu.value = {
-    show: true,
-    x: event.mouseEvent.clientX,
-    y: event.mouseEvent.clientY,
-    sourceNodeId: event.sourceNodeId,
-    position: event.position,
-  }
-}
-
-async function createFromConnect(nodeType: string) {
-  const { sourceNodeId, position } = connectMenu.value
-  connectMenu.value.show = false
-
-  if (!selectedGraphId.value) return
-
-  await create({
-    content: '',
-    nodeType,
-    pathType: '',
-    graphId: selectedGraphId.value,
-    parentId: sourceNodeId,
-    source: 'manual',
-    starred: false,
-    branchName: '',
-    versionTag: 'v1',
-    model: '',
-  })
-
-  await refreshDecisions()
-
-  // Open the edit form for the newly created node so user can add content
-  const newest = decisions.value?.find((d: any) => d.parentId === sourceNodeId && !d.content)
-  if (newest) {
-    open('update', 'thinkgraphDecisions', [newest.id])
-  }
-}
-
-function closeConnectMenu() {
-  connectMenu.value.show = false
-}
-
-function openChat(nodeId: string) {
-  chatNodeId.value = nodeId
-  showChat.value = true
-}
-
-function openGlobalChat() {
-  chatNodeId.value = null
-  showChat.value = true
-}
-
-async function onChatAddToGraph(items: Array<{ content: string; nodeType: string; parentId?: string }>) {
-  const fallbackParentId = chatNodeId.value || selectedNodeId.value || ''
-  for (const item of items) {
-    await create({
-      content: item.content,
-      nodeType: item.nodeType,
-      pathType: '',
-      graphId: selectedGraphId.value || '',
-      parentId: item.parentId || fallbackParentId,
-      source: 'ai',
-      starred: false,
-      branchName: '',
-      versionTag: '',
-      model: '',
-    })
-  }
-  await refreshDecisions()
-}
-
-// Synthesis
-const synthesizing = ref(false)
-async function synthesizeSelected() {
-  if (selectedNodes.value.size < 2 || synthesizing.value) return
-  synthesizing.value = true
-
-  try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/synthesize`, {
-      method: 'POST',
-      body: { nodeIds: Array.from(selectedNodes.value) }
-    })
-    selectedNodes.value.clear()
-    await refreshDecisions()
-  } catch (error) {
-    console.error('Synthesis failed:', error)
-  } finally {
-    synthesizing.value = false
-  }
-}
-
-// Resume briefing
-const resuming = ref(false)
-async function resumeGraph() {
-  if (resuming.value) return
-  resuming.value = true
-  try {
-    const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`)
-    if (result?.briefing) {
-      await navigator.clipboard.writeText(result.briefing)
-      toast.add({ title: 'Resume briefing copied to clipboard', icon: 'i-lucide-clipboard-check', color: 'success' })
-    }
-  } catch (error) {
-    console.error('Resume failed:', error)
-  } finally {
-    resuming.value = false
-  }
-}
-
-// Digest state
-const showDigest = ref(false)
-const digestContent = ref('')
-const digestLoading = ref(false)
-
-async function generateDigest() {
-  if (digestLoading.value) return
-  digestLoading.value = true
-  try {
-    const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/digest`, {
-      method: 'POST',
-    })
-    if (result?.digest) {
-      digestContent.value = result.digest
-      showDigest.value = true
-    }
-  } catch (error) {
-    console.error('Digest generation failed:', error)
-  } finally {
-    digestLoading.value = false
-  }
-}
-
-// Brief generation
-const generatingBrief = ref(false)
-async function generateBrief(format: string) {
-  if (selectedNodes.value.size === 0 || generatingBrief.value) return
-  generatingBrief.value = true
-
-  try {
-    const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/brief`, {
-      method: 'POST',
-      body: { ids: Array.from(selectedNodes.value), format },
-    })
-    if (result?.brief) {
-      await navigator.clipboard.writeText(result.brief)
-    }
-  } catch (error) {
-    console.error('Brief generation failed:', error)
-  } finally {
-    generatingBrief.value = false
-  }
-}
-
-async function copySelectedContext() {
-  for (const id of selectedNodes.value) {
-    await copyContext(id)
-  }
-}
-
-function deselectNode(id: string) {
-  const s = new Set(selectedNodes.value)
-  s.delete(id)
-  selectedNodes.value = s
-}
-
-function clearSelection() {
-  selectedNodes.value = new Set()
-  selectedNodeId.value = null
-}
-
-async function toggleStar(nodeId: string) {
-  const node = decisions.value?.find((d: any) => d.id === nodeId)
-  if (!node) return
-  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
-    method: 'PATCH',
-    body: { starred: !node.starred },
-  })
-  await refreshDecisions()
-}
-
-async function togglePin(nodeId: string) {
-  const node = decisions.value?.find((d: any) => d.id === nodeId)
-  if (!node) return
-  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
-    method: 'PATCH',
-    body: { pinned: !node.pinned },
-  })
-  await refreshDecisions()
-}
-
-async function togglePark(nodeId: string) {
-  const node = decisions.value?.find((d: any) => d.id === nodeId)
-  if (!node) return
-  const newTag = node.versionTag === 'parked' ? 'v1' : 'parked'
-  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
-    method: 'PATCH',
-    body: { versionTag: newTag },
-  })
-  await refreshDecisions()
-}
-
-// Keyboard shortcuts
+// ─── Keyboard shortcuts ───
 const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNodes, {
   toggleStar,
   togglePark,
@@ -580,15 +241,6 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
   toggleInspector: () => { showInspector.value = !showInspector.value; if (showInspector.value) showChat.value = false },
 })
 
-// Terminal panel state
-const showTerminal = ref(false)
-const terminalNodeId = ref<string | null>(null)
-
-function openTerminal(nodeId: string) {
-  terminalNodeId.value = nodeId
-  showTerminal.value = true
-}
-
 // Pause shortcuts when modals are open
 watch([showQuickAdd, showChat, showDispatch, showDigest, showTerminal], ([qa, ch, dp, dg, tm]) => {
   if (qa || ch || dp || dg || tm) {
@@ -598,78 +250,30 @@ watch([showQuickAdd, showChat, showDispatch, showDigest, showTerminal], ([qa, ch
   else resume()
 })
 
-// Provide functions to child nodes
-provide('thinkgraph:expand', expandWithAI)
-provide('thinkgraph:expanding', expanding)
-provide('thinkgraph:copyContext', copyContext)
-provide('thinkgraph:openQuickAdd', openQuickAdd)
-provide('thinkgraph:openChat', openChat)
-provide('thinkgraph:dispatch', openDispatch)
-provide('thinkgraph:openTerminal', openTerminal)
-provide('thinkgraph:togglePin', togglePin)
-provide('thinkgraph:contextNodeIds', contextNodeIds)
-provide('thinkgraph:contextMode', contextMode)
-provide('thinkgraph:focusInPath', (nodeId: string) => {
+// ─── Provide to child nodes ───
+provide(THINKGRAPH_EXPAND, expandWithAI)
+provide(THINKGRAPH_EXPANDING, expanding)
+provide(THINKGRAPH_COPY_CONTEXT, copyContext)
+provide(THINKGRAPH_OPEN_QUICK_ADD, openQuickAdd)
+provide(THINKGRAPH_OPEN_CHAT, openChat)
+provide(THINKGRAPH_DISPATCH, openDispatch)
+provide(THINKGRAPH_OPEN_TERMINAL, openTerminal)
+provide(THINKGRAPH_TOGGLE_PIN, togglePin)
+provide(THINKGRAPH_TOGGLE_STAR, toggleStar)
+provide(THINKGRAPH_CONTEXT_NODE_IDS, contextNodeIds)
+provide(THINKGRAPH_CONTEXT_MODE, contextMode)
+provide(THINKGRAPH_FOCUS_IN_PATH, (nodeId: string) => {
   selectedNodeId.value = nodeId
   showPath.value = true
 })
 
-// Selected graph info
+// ─── Derived state ───
 const selectedGraph = computed(() =>
-  graphs.value?.find((g: any) => g.id === selectedGraphId.value)
+  graphs.value?.find(g => g.id === selectedGraphId.value),
 )
 
-// Export graph as markdown
-const { copy } = useClipboard()
-
-async function exportGraph() {
-  if (!decisions.value?.length || !selectedGraph.value) return
-
-  const nodeMap = new Map(decisions.value.map((d: any) => [d.id, d]))
-  const roots = decisions.value.filter((d: any) => !d.parentId)
-
-  function renderNode(node: any, depth: number): string {
-    const indent = '  '.repeat(depth)
-    const star = node.starred ? ' *' : ''
-    const type = node.nodeType || 'idea'
-    const lines: string[] = []
-
-    lines.push(`${indent}- **[${type}]**${star} ${node.content}`)
-
-    const children = decisions.value.filter((d: any) => d.parentId === node.id)
-    for (const child of children) {
-      lines.push(renderNode(child, depth + 1))
-    }
-
-    return lines.join('\n')
-  }
-
-  const sections: string[] = []
-  sections.push(`# ${selectedGraph.value.name}`)
-  if (selectedGraph.value.description) {
-    sections.push(selectedGraph.value.description)
-  }
-  sections.push(`\n**${decisions.value.length} nodes** | Exported ${new Date().toLocaleDateString()}\n`)
-
-  // Starred highlights
-  const starred = decisions.value.filter((d: any) => d.starred)
-  if (starred.length) {
-    sections.push('## Key Insights (starred)\n')
-    for (const s of starred) {
-      sections.push(`- **[${s.nodeType}]** ${s.content}`)
-    }
-    sections.push('')
-  }
-
-  // Full tree
-  sections.push('## Full Graph\n')
-  for (const root of roots) {
-    sections.push(renderNode(root, 0))
-  }
-
-  const markdown = sections.join('\n')
-  await copy(markdown)
-  toast.add({ title: 'Graph exported to clipboard', color: 'success' })
+function exportGraph() {
+  exportGraphAction(selectedGraph.value)
 }
 </script>
 
@@ -875,8 +479,13 @@ async function exportGraph() {
           <!-- Filter sidebar -->
           <GraphFilters
             v-if="showFilters && decisions?.length"
-            ref="filtersRef"
-            :decisions="decisions"
+            :filters="graphFilters"
+            :filtered-ids="filteredIds"
+            :active-filter-count="activeFilterCount"
+            :available-branches="availableBranches"
+            :available-version-tags="availableVersionTags"
+            :total-count="decisions.length"
+            @clear-filters="clearFilters"
           />
 
           <!-- Graph -->
@@ -884,7 +493,7 @@ async function exportGraph() {
             <CroutonFlow
               v-if="decisions?.length && flowId"
               :key="layoutKey"
-              :rows="decisions"
+              :rows="visibleDecisions"
               collection="thinkgraphDecisions"
               parent-field="parentId"
               label-field="content"
@@ -1104,7 +713,7 @@ async function exportGraph() {
           Create node
         </p>
         <button
-          v-for="nt in connectNodeTypes"
+          v-for="nt in CONNECT_NODE_TYPES"
           :key="nt.id"
           class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm text-default hover:bg-elevated transition-colors cursor-pointer"
           @click="createFromConnect(nt.id)"
