@@ -11,6 +11,7 @@ interface GraphShortcutActions {
   expandDefault: (nodeId: string) => void
   openChat: (nodeId: string) => void
   openGlobalChat: () => void
+  toggleInspector: () => void
 }
 
 export function useGraphShortcuts(
@@ -81,6 +82,10 @@ export function useGraphShortcuts(
             e.preventDefault()
             actions.openGlobalChat()
           }
+          break
+        case 'i':
+          e.preventDefault()
+          actions.toggleInspector()
           break
         case '?':
           e.preventDefault()

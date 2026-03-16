@@ -95,6 +95,8 @@ const selectedNodeIds = computed(() => Array.from(selectedNodes.value))
 const showFilters = ref(false)
 const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
 
+const showInspector = ref(false)
+
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
 function addRootDecision() {
@@ -289,6 +291,7 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
   expandDefault: (nodeId: string) => expandWithAI(nodeId, 'default'),
   openChat,
   openGlobalChat,
+  toggleInspector: () => { showInspector.value = !showInspector.value; if (showInspector.value) showChat.value = false },
 })
 
 // Pause shortcuts when modals are open
@@ -316,6 +319,14 @@ provide('thinkgraph:togglePin', togglePin)
         <h1 class="text-lg font-semibold">ThinkGraph</h1>
       </div>
       <div class="flex items-center gap-2">
+        <UButton
+          icon="i-lucide-layers"
+          size="sm"
+          :variant="showInspector ? 'soft' : 'ghost'"
+          :color="showInspector ? 'primary' : 'neutral'"
+          title="Context inspector (i)"
+          @click="showInspector = !showInspector; if (showInspector) showChat = false"
+        />
         <UButton
           icon="i-lucide-filter"
           size="sm"
@@ -404,6 +415,13 @@ provide('thinkgraph:togglePin', togglePin)
           </div>
         </div>
       </div>
+
+      <!-- Context Inspector panel -->
+      <ContextInspector
+        v-if="showInspector && !showChat && selectedNodeId"
+        :node-id="selectedNodeId"
+        :decisions="decisions || []"
+      />
 
       <!-- Chat panel (side panel) -->
       <div
