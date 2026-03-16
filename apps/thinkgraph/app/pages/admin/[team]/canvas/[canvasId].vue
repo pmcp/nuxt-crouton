@@ -116,11 +116,42 @@ function openDetail(nodeId: string) {
   showDetail.value = true
 }
 
+// ─── Node context menu (canvas-level) ───
+const contextMenuNodeId = ref<string | null>(null)
+const contextMenuPos = ref({ x: 0, y: 0 })
+const showNodeContextMenu = ref(false)
+
+function openContextMenu(nodeId: string, event: MouseEvent) {
+  contextMenuNodeId.value = nodeId
+  contextMenuPos.value = { x: event.clientX, y: event.clientY }
+  showNodeContextMenu.value = true
+  // Select the node too
+  selectedNodeId.value = nodeId
+}
+
+function closeContextMenu() {
+  showNodeContextMenu.value = false
+  contextMenuNodeId.value = null
+}
+
+const contextMenuNode = computed(() =>
+  contextMenuNodeId.value ? nodes.value.find(n => n.id === contextMenuNodeId.value) : null,
+)
+
+// Close context menu on click anywhere
+if (import.meta.client) {
+  useEventListener(document, 'click', closeContextMenu)
+  useEventListener(document, 'contextmenu', () => {
+    // Don't close here — the node's handler will open a new one
+  })
+}
+
 // Provide actions to child components (ThinkgraphNodesNode)
 provide('canvasActions', {
   openCreate,
   openDetail,
   openPathType,
+  openContextMenu,
   setStatus: async (nodeId: string, status: string) => {
     await updateNode(nodeId, { status })
     await refreshNodes()
@@ -723,6 +754,46 @@ watch(showCreate, async (open) => {
     <!-- Shortcuts help -->
     <ShortcutsHelp v-model:open="showShortcuts" />
 
+    <!-- Node context menu (positioned at click) -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showNodeContextMenu && contextMenuNode"
+          class="fixed z-[100] min-w-[180px] py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl"
+          :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
+          @click.stop
+        >
+          <button class="ctx-item" @click="openDetail(contextMenuNode!.id); closeContextMenu()">
+            <UIcon name="i-lucide-panel-right-open" class="size-4" /> Open detail
+          </button>
+          <button class="ctx-item" @click="openCreate('idea', contextMenuNode!.id); closeContextMenu()">
+            <UIcon name="i-lucide-plus" class="size-4" /> Add child
+          </button>
+          <button class="ctx-item" @click="openPathType(contextMenuNode!.id); closeContextMenu()">
+            <UIcon name="i-lucide-git-branch-plus" class="size-4" /> Start path
+          </button>
+          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'done' }); refreshNodes(); closeContextMenu()">
+            <UIcon name="i-lucide-check-circle-2" class="size-4 text-green-500" /> Mark done
+          </button>
+          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'working' }); refreshNodes(); closeContextMenu()">
+            <UIcon name="i-lucide-loader-2" class="size-4 text-primary-500" /> Mark working
+          </button>
+          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'idle' }); refreshNodes(); closeContextMenu()">
+            <UIcon name="i-lucide-circle" class="size-4" /> Mark idle
+          </button>
+          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+          <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
+            <UIcon name="i-lucide-copy" class="size-4" /> Copy context
+          </button>
+          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+          <button class="ctx-item ctx-item--danger" @click="deleteSelectedNode(); closeContextMenu()">
+            <UIcon name="i-lucide-trash-2" class="size-4" /> Delete
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Multi-select floating bar -->
     <SelectionBar
       :selected-ids="multiSelectedIds"
@@ -774,4 +845,26 @@ watch(showCreate, async (open) => {
   box-shadow: 0 0 0 2px var(--color-primary-500, #3b82f6), 0 0 12px color-mix(in srgb, var(--color-primary-500) 30%, transparent);
   transition: box-shadow 0.3s ease;
 }
+
+/* Node context menu */
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--color-neutral-700);
+  transition: background-color 0.1s;
+  cursor: pointer;
+}
+.dark .ctx-item { color: var(--color-neutral-300); }
+.ctx-item:hover { background-color: var(--color-neutral-100); }
+.dark .ctx-item:hover { background-color: var(--color-neutral-800); }
+.ctx-item--danger { color: var(--color-red-500, #ef4444); }
+.ctx-item--danger:hover { background-color: rgba(239, 68, 68, 0.1); }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
