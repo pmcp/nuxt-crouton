@@ -165,7 +165,7 @@ function moveLink(index: number, direction: 'up' | 'down') {
       <CroutonIconPicker
         :model-value="link.icon || ''"
         size="sm"
-        placeholder="Add icon"
+        :placeholder="t('pages.blocks.addIcon')"
         @update:model-value="updateLink(index, 'icon', $event)"
       />
     </div>

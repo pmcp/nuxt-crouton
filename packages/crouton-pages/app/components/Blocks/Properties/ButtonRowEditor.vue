@@ -282,7 +282,7 @@ function removeFile(index: number) {
       <CroutonIconPicker
         :model-value="btn.icon || ''"
         size="sm"
-        placeholder="Add icon"
+        :placeholder="t('pages.blocks.addIcon')"
         @update:model-value="updateButton(index, 'icon', $event)"
       />
     </div>
