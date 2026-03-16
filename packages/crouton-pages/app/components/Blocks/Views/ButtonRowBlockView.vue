@@ -20,6 +20,7 @@ const props = defineProps<{
   getPos: () => number
 }>()
 
+const { t } = useT()
 const attrs = computed(() => props.node.attrs)
 
 const buttons = computed<ButtonRowItem[]>(() => {
@@ -81,7 +82,7 @@ function handleOpenPanel() {
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Edit block properties"
+              :title="t('pages.blocks.editBlock')"
               @click.stop="handleOpenPanel"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +92,7 @@ function handleOpenPanel() {
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Delete block"
+              :title="t('pages.blocks.deleteBlock')"
               @click.stop="deleteNode"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
