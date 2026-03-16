@@ -273,7 +273,7 @@ describe('renderTipTapToHtml', () => {
           attrs: { src: 'https://youtube.com/embed/abc', height: 400 }
         }]
       })
-      expect(result).toBe('<div class="embed-container"><iframe src="https://youtube.com/embed/abc" height="400" frameborder="0" allowfullscreen></iframe></div>')
+      expect(result).toBe('<div class="embed-container not-prose" style="margin:1.75rem 0"><iframe src="https://youtube.com/embed/abc" style="width:100%;height:400px;border:0;border-radius:0.375rem" allowfullscreen></iframe></div>')
     })
 
     it('uses default height 300 for embedBlock', () => {
@@ -281,7 +281,7 @@ describe('renderTipTapToHtml', () => {
         type: 'doc',
         content: [{ type: 'embedBlock', attrs: { src: 'https://example.com' } }]
       })
-      expect(result).toContain('height="300"')
+      expect(result).toContain('height:300px')
     })
 
     it('blocks javascript: in embedBlock src', () => {

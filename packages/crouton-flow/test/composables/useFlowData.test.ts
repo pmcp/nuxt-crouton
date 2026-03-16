@@ -132,13 +132,11 @@ describe('useFlowData', () => {
         id: 'e-parent-child-1',
         source: 'parent',
         target: 'child-1',
-        type: 'default'
       })
       expect(edges.value[1]).toEqual({
         id: 'e-parent-child-2',
         source: 'parent',
         target: 'child-2',
-        type: 'default'
       })
     })
 
