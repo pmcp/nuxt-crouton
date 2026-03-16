@@ -96,6 +96,8 @@ export interface VerificationEmailOptions {
   expiryMinutes?: number
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
 }
 
 /**
@@ -112,6 +114,8 @@ export interface VerificationLinkEmailOptions {
   expiryMinutes?: number
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
 }
 
 /**
@@ -128,6 +132,8 @@ export interface MagicLinkEmailOptions {
   expiryMinutes?: number
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
 }
 
 /**
@@ -144,6 +150,8 @@ export interface PasswordResetEmailOptions {
   expiryMinutes?: number
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
 }
 
 /**
@@ -162,6 +170,8 @@ export interface TeamInviteEmailOptions {
   role?: string
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
 }
 
 /**
@@ -176,6 +186,25 @@ export interface WelcomeEmailOptions {
   getStartedLink?: string
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
+  /** Admin-configured content overrides */
+  overrides?: EmailContentOverrides
+}
+
+/**
+ * Content overrides for admin-customizable email templates.
+ * All fields support {{variable}} placeholders that are interpolated at render time.
+ */
+export interface EmailContentOverrides {
+  /** Custom subject line */
+  subject?: string
+  /** Custom greeting (e.g. "Hallo {{name}}") */
+  greeting?: string
+  /** Custom body text */
+  body?: string
+  /** Custom CTA button label */
+  buttonText?: string
+  /** Custom footer/disclaimer text */
+  footer?: string
 }
 
 /**

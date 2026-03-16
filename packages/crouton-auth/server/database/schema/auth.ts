@@ -594,6 +594,30 @@ export interface TeamSiteSettings {
 }
 
 /**
+ * Email template content overrides per email type.
+ * Admins can customize the copy in auth emails sent to their team's users.
+ * All fields are optional — omitted fields fall back to the template defaults.
+ */
+export type EmailTemplateType = 'password-reset' | 'verification' | 'magic-link' | 'team-invite' | 'welcome'
+
+export interface EmailTemplateOverrides {
+  /** Email subject line. Supports {{brandName}}, {{teamName}} placeholders. */
+  subject?: string
+  /** Greeting text (e.g. "Hi {{name}}"). Supports {{name}} placeholder. */
+  greeting?: string
+  /** Main body text. Supports {{brandName}}, {{name}}, {{teamName}}, {{inviterName}}, {{role}} depending on type. */
+  body?: string
+  /** CTA button label (e.g. "Reset password") */
+  buttonText?: string
+  /** Footer/disclaimer text. Supports {{minutes}} for expiry-based emails. */
+  footer?: string
+}
+
+export type TeamEmailSettings = {
+  [K in EmailTemplateType]?: EmailTemplateOverrides
+}
+
+/**
  * Theme settings for team visual customization
  * Similar to Nuxt UI's theme picker
  */
@@ -643,6 +667,11 @@ export const teamSettings = sqliteTable('team_settings', {
    * Safe to expose to client - no sensitive data
    */
   siteSettings: text('site_settings', { mode: 'json' }).$type<TeamSiteSettings>(),
+  /**
+   * Email template content overrides per email type
+   * Safe to expose to client - no sensitive data, just copy/labels
+   */
+  emailSettings: text('email_settings', { mode: 'json' }).$type<TeamEmailSettings>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$onUpdate(() => new Date())
 }, table => [

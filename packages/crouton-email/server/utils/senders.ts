@@ -39,12 +39,16 @@ export async function sendVerificationEmail(
     name: options.name,
     expiryMinutes,
     preview: `Your verification code is ${options.code}`,
-    ...brandConfig
+    ...brandConfig,
+    // Content overrides from team settings
+    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Your verification code is ${options.code}`,
+    subject: options.overrides?.subject || `Your verification code is ${options.code}`,
     html,
     text
   })
@@ -71,12 +75,16 @@ export async function sendVerificationLink(
     name: options.name,
     expiryMinutes,
     preview: 'Verify your email address',
-    ...brandConfig
+    ...brandConfig,
+    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Verify your ${brandConfig.brandName} email`,
+    subject: options.overrides?.subject || `Verify your ${brandConfig.brandName} email`,
     html,
     text
   })
@@ -103,12 +111,16 @@ export async function sendMagicLink(
     name: options.name,
     expiryMinutes,
     preview: 'Click to sign in to your account',
-    ...brandConfig
+    ...brandConfig,
+    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Sign in to ${brandConfig.brandName}`,
+    subject: options.overrides?.subject || `Sign in to ${brandConfig.brandName}`,
     html,
     text
   })
@@ -135,12 +147,16 @@ export async function sendPasswordReset(
     name: options.name,
     expiryMinutes,
     preview: 'Reset your password',
-    ...brandConfig
+    ...brandConfig,
+    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Reset your ${brandConfig.brandName} password`,
+    subject: options.overrides?.subject || `Reset your ${brandConfig.brandName} password`,
     html,
     text
   })
@@ -161,12 +177,15 @@ export async function sendTeamInvite(
     teamName: options.teamName,
     role: options.role,
     preview: `${options.inviterName} invited you to join ${options.teamName}`,
-    ...brandConfig
+    ...brandConfig,
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Join ${options.teamName} on ${brandConfig.brandName}`,
+    subject: options.overrides?.subject || `Join ${options.teamName} on ${brandConfig.brandName}`,
     html,
     text
   })
@@ -185,12 +204,16 @@ export async function sendWelcome(
     name: options.name,
     getStartedLink: options.getStartedLink,
     preview: `Welcome to ${brandConfig.brandName}!`,
-    ...brandConfig
+    ...brandConfig,
+    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
+    ...(options.overrides?.body && { body: options.overrides.body }),
+    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
+    ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
   return useEmailService().send({
     to: options.to,
-    subject: `Welcome to ${brandConfig.brandName}!`,
+    subject: options.overrides?.subject || `Welcome to ${brandConfig.brandName}!`,
     html,
     text
   })

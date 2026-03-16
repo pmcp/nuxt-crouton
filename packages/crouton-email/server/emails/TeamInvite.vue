@@ -12,6 +12,10 @@ interface Props {
   logoUrl?: string
   primaryColor?: string
   appUrl?: string
+  // Content overrides (admin-editable)
+  body?: string
+  buttonText?: string
+  footer?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,10 +24,30 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: ''
+  appUrl: '',
+  body: '',
+  buttonText: '',
+  footer: ''
 })
 
+function interpolate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+}
+
+const vars = {
+  inviterName: props.inviterName,
+  teamName: props.teamName,
+  role: props.role,
+  brandName: props.brandName
+}
+
 const previewText = props.preview || `${props.inviterName} invited you to join ${props.teamName}`
+const resolvedButtonText = props.buttonText
+  ? interpolate(props.buttonText, vars)
+  : `Join ${props.teamName}`
+const resolvedFooter = props.footer
+  ? interpolate(props.footer, vars)
+  : "If you weren't expecting this invitation, you can safely ignore this email."
 </script>
 
 <template>
@@ -35,6 +59,18 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
     :app-url="appUrl"
   >
     <EText
+      v-if="body"
+      :style="{
+        fontSize: '14px',
+        lineHeight: '24px',
+        color: '#0a0a0a',
+        margin: '0 0 24px'
+      }"
+    >
+      {{ interpolate(body, vars) }}
+    </EText>
+    <EText
+      v-else
       :style="{
         fontSize: '14px',
         lineHeight: '24px',
@@ -65,7 +101,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
           padding: '12px 24px'
         }"
       >
-        Join {{ teamName }}
+        {{ resolvedButtonText }}
       </EButton>
     </ESection>
 
@@ -96,7 +132,7 @@ const previewText = props.preview || `${props.inviterName} invited you to join $
         margin: '0'
       }"
     >
-      If you weren't expecting this invitation, you can safely ignore this email.
+      {{ resolvedFooter }}
     </EText>
   </BaseLayout>
 </template>

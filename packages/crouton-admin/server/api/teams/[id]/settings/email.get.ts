@@ -1,0 +1,22 @@
+/**
+ * GET /api/teams/[id]/settings/email
+ *
+ * Get team email template overrides.
+ * Requires team admin or owner role.
+ */
+import { requireTeamAdmin } from '@fyit/crouton-auth/server/utils/team'
+import { useDB, eq } from '@fyit/crouton-auth/server/utils/database'
+import { teamSettings } from '@fyit/crouton-auth/server/database/schema/auth'
+
+export default defineEventHandler(async (event) => {
+  const { team } = await requireTeamAdmin(event)
+
+  const db = useDB()
+  const settings = await db
+    .select({ emailSettings: teamSettings.emailSettings })
+    .from(teamSettings)
+    .where(eq(teamSettings.teamId, team.id))
+    .limit(1)
+
+  return settings[0]?.emailSettings ?? {}
+})

@@ -10,6 +10,11 @@ interface Props {
   logoUrl?: string
   primaryColor?: string
   appUrl?: string
+  // Content overrides (admin-editable)
+  greeting?: string
+  body?: string
+  buttonText?: string
+  footer?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -18,10 +23,33 @@ const props = withDefaults(defineProps<Props>(), {
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: ''
+  appUrl: '',
+  greeting: '',
+  body: '',
+  buttonText: '',
+  footer: ''
 })
 
+function interpolate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+}
+
+const vars = {
+  name: props.name,
+  brandName: props.brandName
+}
+
 const previewText = props.preview || `Welcome to ${props.brandName}!`
+const resolvedGreeting = props.greeting
+  ? interpolate(props.greeting, vars)
+  : `Welcome aboard, ${props.name}`
+const resolvedBody = props.body
+  ? interpolate(props.body, vars)
+  : ''
+const resolvedButtonText = props.buttonText || 'Get Started'
+const resolvedFooter = props.footer
+  ? interpolate(props.footer, vars)
+  : "Questions? Just reply to this email — we're here to help."
 </script>
 
 <template>
@@ -41,10 +69,11 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         lineHeight: '28px'
       }"
     >
-      Welcome aboard, {{ name }}
+      {{ resolvedGreeting }}
     </EText>
 
     <EText
+      v-if="resolvedBody"
       :style="{
         fontSize: '15px',
         lineHeight: '24px',
@@ -52,30 +81,42 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         margin: '0 0 28px'
       }"
     >
-      Your account is ready. Here's how to get started:
+      {{ resolvedBody }}
     </EText>
-
-    <ESection
-      :style="{
-        backgroundColor: '#fafafa',
-        borderRadius: '8px',
-        padding: '24px',
-        margin: '0 0 28px'
-      }"
-    >
+    <template v-else>
       <EText
         :style="{
-          fontSize: '14px',
+          fontSize: '15px',
           lineHeight: '24px',
           color: '#52525b',
-          margin: '0'
+          margin: '0 0 28px'
         }"
       >
-        1. Complete your profile<br>
-        2. Explore the dashboard<br>
-        3. Invite your team members
+        Your account is ready. Here's how to get started:
       </EText>
-    </ESection>
+
+      <ESection
+        :style="{
+          backgroundColor: '#fafafa',
+          borderRadius: '8px',
+          padding: '24px',
+          margin: '0 0 28px'
+        }"
+      >
+        <EText
+          :style="{
+            fontSize: '14px',
+            lineHeight: '24px',
+            color: '#52525b',
+            margin: '0'
+          }"
+        >
+          1. Complete your profile<br>
+          2. Explore the dashboard<br>
+          3. Invite your team members
+        </EText>
+      </ESection>
+    </template>
 
     <ESection
       v-if="getStartedLink"
@@ -95,7 +136,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
           padding: '12px 32px'
         }"
       >
-        Get Started
+        {{ resolvedButtonText }}
       </EButton>
     </ESection>
 
@@ -107,7 +148,7 @@ const previewText = props.preview || `Welcome to ${props.brandName}!`
         margin: '0'
       }"
     >
-      Questions? Just reply to this email — we're here to help.
+      {{ resolvedFooter }}
     </EText>
   </BaseLayout>
 </template>

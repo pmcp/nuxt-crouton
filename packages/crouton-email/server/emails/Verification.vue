@@ -11,17 +11,44 @@ interface Props {
   logoUrl?: string
   primaryColor?: string
   appUrl?: string
+  // Content overrides (admin-editable)
+  greeting?: string
+  body?: string
+  footer?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   name: '',
   expiryMinutes: 10,
   preview: '',
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: ''
+  appUrl: '',
+  greeting: '',
+  body: '',
+  footer: ''
 })
+
+function interpolate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+}
+
+const vars = {
+  name: props.name,
+  brandName: props.brandName,
+  minutes: String(props.expiryMinutes)
+}
+
+const resolvedGreeting = props.greeting
+  ? interpolate(props.greeting, vars)
+  : `Hi${props.name ? ` ${props.name}` : ''}`
+const resolvedBody = props.body
+  ? interpolate(props.body, vars)
+  : 'Your verification code is below.'
+const resolvedFooter = props.footer
+  ? interpolate(props.footer, vars)
+  : `This code expires in ${props.expiryMinutes} minutes. If you didn't request this, you can safely ignore this email.`
 </script>
 
 <template>
@@ -40,8 +67,8 @@ withDefaults(defineProps<Props>(), {
         margin: '0 0 24px'
       }"
     >
-      Hi{{ name ? ` ${name}` : '' }},<br><br>
-      Your verification code is below.
+      {{ resolvedGreeting }},<br><br>
+      {{ resolvedBody }}
     </EText>
 
     <ESection
@@ -72,8 +99,7 @@ withDefaults(defineProps<Props>(), {
         margin: '0'
       }"
     >
-      This code expires in {{ expiryMinutes }} minutes. If you didn't
-      request this, you can safely ignore this email.
+      {{ resolvedFooter }}
     </EText>
   </BaseLayout>
 </template>

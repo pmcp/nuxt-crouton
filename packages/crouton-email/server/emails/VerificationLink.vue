@@ -11,17 +11,47 @@ interface Props {
   logoUrl?: string
   primaryColor?: string
   appUrl?: string
+  // Content overrides (admin-editable)
+  greeting?: string
+  body?: string
+  buttonText?: string
+  footer?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   name: '',
   expiryMinutes: 10,
   preview: 'Verify your email address',
   brandName: 'My App',
   logoUrl: '',
   primaryColor: '#0F766E',
-  appUrl: ''
+  appUrl: '',
+  greeting: '',
+  body: '',
+  buttonText: '',
+  footer: ''
 })
+
+function interpolate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+}
+
+const vars = {
+  name: props.name,
+  brandName: props.brandName,
+  minutes: String(props.expiryMinutes)
+}
+
+const resolvedGreeting = props.greeting
+  ? interpolate(props.greeting, vars)
+  : `Hi${props.name ? ` ${props.name}` : ''}`
+const resolvedBody = props.body
+  ? interpolate(props.body, vars)
+  : 'Please verify your email address by clicking the link below.'
+const resolvedButtonText = props.buttonText || 'Verify email'
+const resolvedFooter = props.footer
+  ? interpolate(props.footer, vars)
+  : `This link expires in ${props.expiryMinutes} minutes. If you didn't create an account, you can safely ignore this email.`
 </script>
 
 <template>
@@ -40,8 +70,8 @@ withDefaults(defineProps<Props>(), {
         margin: '0 0 24px'
       }"
     >
-      Hi{{ name ? ` ${name}` : '' }},<br><br>
-      Please verify your email address by clicking the link below.
+      {{ resolvedGreeting }},<br><br>
+      {{ resolvedBody }}
     </EText>
 
     <ESection :style="{ margin: '0 0 24px' }">
@@ -59,7 +89,7 @@ withDefaults(defineProps<Props>(), {
           padding: '12px 24px'
         }"
       >
-        Verify email
+        {{ resolvedButtonText }}
       </EButton>
     </ESection>
 
@@ -90,8 +120,7 @@ withDefaults(defineProps<Props>(), {
         margin: '0'
       }"
     >
-      This link expires in {{ expiryMinutes }} minutes. If you didn't
-      create an account, you can safely ignore this email.
+      {{ resolvedFooter }}
     </EText>
   </BaseLayout>
 </template>
