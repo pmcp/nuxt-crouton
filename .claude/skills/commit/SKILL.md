@@ -35,6 +35,17 @@ Any doc files updated by sync-docs become part of this commit (grouped with the 
 - The changes are docs-only (they ARE the doc update)
 - User explicitly says to skip
 
+### Step 0.5: i18n check (when .vue files changed)
+
+**If any changed files are `.vue` files in an app with i18n configured, run `/i18n-check --fix`.**
+
+This catches hardcoded labels, missing locale keys, and untranslated strings before they're committed. Any fixes become part of this commit.
+
+**Skip i18n-check if:**
+- No `.vue` files were changed
+- Changes are only in packages (not apps)
+- User explicitly says to skip
+
 ### Step 1: Analyze the working tree
 
 Run these in parallel:
