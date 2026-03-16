@@ -63,6 +63,10 @@ jobs:
         run: npx wrangler d1 migrations apply DB --remote
         working-directory: apps/alexdeforce
 
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: apps/alexdeforce
+
       - name: Build
         run: npx nuxt build
         working-directory: apps/alexdeforce

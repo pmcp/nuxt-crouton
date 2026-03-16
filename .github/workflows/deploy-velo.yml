@@ -86,6 +86,10 @@ jobs:
           fi
         working-directory: apps/velo
 
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: apps/velo
+
       - name: Build
         run: npx nuxt build
         working-directory: apps/velo
