@@ -9,7 +9,7 @@ definePageMeta({
   middleware: 'super-admin'
 })
 
-const { t } = useI18n()
+const { t } = useT()
 
 useSeoMeta({ title: 'Dashboard - Super Admin' })
 

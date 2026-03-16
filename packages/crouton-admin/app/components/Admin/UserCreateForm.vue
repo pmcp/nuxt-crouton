@@ -9,6 +9,8 @@ import { ref } from 'vue'
 import { z } from 'zod'
 import type { CreateUserPayload } from '../../../types/admin'
 
+const { t } = useT()
+
 interface Props {
   /** Whether the form is submitting */
   loading?: boolean
@@ -27,9 +29,9 @@ const emit = defineEmits<{
 }>()
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(1, t('userCreate.nameRequired')),
+  email: z.string().email(t('userCreate.invalidEmail')),
+  password: z.string().min(8, t('userCreate.passwordMinLength')),
   emailVerified: z.boolean(),
   superAdmin: z.boolean()
 })
@@ -72,20 +74,20 @@ function handleSubmit() {
   >
     <!-- Name -->
     <UFormField
-      label="Name"
+      :label="$t('superAdmin.users.name')"
       name="name"
       required
     >
       <UInput
         v-model="state.name"
-        placeholder="John Doe"
+        :placeholder="$t('userCreate.namePlaceholder')"
         autocomplete="off"
       />
     </UFormField>
 
     <!-- Email -->
     <UFormField
-      label="Email"
+      :label="$t('superAdmin.users.email')"
       name="email"
       required
     >
@@ -99,7 +101,7 @@ function handleSubmit() {
 
     <!-- Password -->
     <UFormField
-      label="Password"
+      :label="$t('userCreate.password')"
       name="password"
       required
     >
@@ -107,7 +109,7 @@ function handleSubmit() {
         <UInput
           v-model="state.password"
           type="text"
-          placeholder="Enter password"
+          :placeholder="$t('userCreate.passwordPlaceholder')"
           autocomplete="new-password"
           class="flex-1"
         />
@@ -117,7 +119,7 @@ function handleSubmit() {
           icon="i-lucide-key-round"
           @click="generatePassword"
         >
-          Generate
+          {{ $t('userCreate.generate') }}
         </UButton>
       </div>
     </UFormField>
@@ -127,7 +129,7 @@ function handleSubmit() {
       <div class="flex items-center gap-2">
         <USwitch v-model="state.emailVerified" />
         <span class="text-sm text-gray-700 dark:text-gray-300">
-          Mark email as verified
+          {{ $t('userCreate.markEmailVerified') }}
         </span>
       </div>
     </UFormField>
@@ -140,14 +142,14 @@ function handleSubmit() {
       <div class="flex items-center gap-2">
         <USwitch v-model="state.superAdmin" />
         <span class="text-sm text-gray-700 dark:text-gray-300">
-          Grant super admin privileges
+          {{ $t('userCreate.grantSuperAdmin') }}
         </span>
       </div>
       <p
         v-if="state.superAdmin"
         class="mt-1 text-xs text-amber-600 dark:text-amber-400"
       >
-        Super admins have full access to the admin panel
+        {{ $t('userCreate.superAdminWarning') }}
       </p>
     </UFormField>
 
@@ -159,14 +161,14 @@ function handleSubmit() {
         :disabled="loading"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ $t('common.cancel') }}
       </UButton>
       <UButton
         type="submit"
         color="primary"
         :loading="loading"
       >
-        Create User
+        {{ $t('superAdmin.users.createUser') }}
       </UButton>
     </div>
   </UForm>

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import type { AdminUserListItem, BanDuration } from '../../../types/admin'
 import { BAN_DURATIONS } from '../../../types/admin'
 
-const { t } = useI18n()
+const { t } = useT()
 
 interface Props {
   /** The user being banned */

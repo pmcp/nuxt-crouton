@@ -76,7 +76,7 @@ function selectPreset(preset: ThemePreset) {
 // Handle save
 async function handleSave() {
   if (!isAdmin.value) {
-    notify.error('Permission denied', { description: 'Only team admins can update theme settings.' })
+    notify.error(t('themeSettings.adminRequired'), { description: t('themeSettings.adminRequiredDescription') })
     return
   }
 
@@ -89,13 +89,13 @@ async function handleSave() {
       radius: localTheme.radius
     })
 
-    notify.success('Theme settings saved', { icon: 'i-lucide-palette' })
+    notify.success(t('themeSettings.saved'), { icon: 'i-lucide-palette' })
 
     emit('saved', saved)
   }
   catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to save theme settings'
-    notify.error(t('common.error') || 'Error', { description: message })
+    const message = e instanceof Error ? e.message : t('common.error')
+    notify.error(t('common.error'), { description: message })
   }
   finally {
     isSaving.value = false
@@ -127,19 +127,19 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
   <div class="space-y-6">
     <div>
       <h3 class="text-lg font-semibold">
-        Theme Settings
+        {{ $t('themeSettings.title') }}
       </h3>
       <p class="text-sm text-muted mt-1">
-        Customize your team's visual appearance. Changes preview in real-time.
+        {{ $t('themeSettings.description') }}
       </p>
     </div>
 
     <!-- Allow users to switch themes -->
     <div class="flex items-center justify-between">
       <div>
-        <p class="text-sm font-medium text-default">Let users change their own theme</p>
+        <p class="text-sm font-medium text-default">{{ $t('themeSettings.allowUserThemes') }}</p>
         <p class="text-xs text-muted mt-0.5">
-          When off, only admins can switch themes.
+          {{ $t('themeSettings.allowUserThemesDescription') }}
         </p>
       </div>
       <USwitch
@@ -168,7 +168,7 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
         <div class="flex-1 min-w-0 space-y-5">
           <!-- Preset Picker (vertical) -->
           <div class="space-y-2">
-            <label class="text-sm font-medium text-default">Theme Preset</label>
+            <label class="text-sm font-medium text-default">{{ $t('themeSettings.preset') }}</label>
             <div class="flex flex-col gap-2">
               <button
                 v-for="[key, preset] in presetEntries"
@@ -215,14 +215,14 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
             <TeamColorSwatchPicker
               v-model="localTheme.primary"
               :colors="PRIMARY_COLORS"
-              label="Primary Color"
+              :label="$t('themeSettings.primaryColor')"
               :disabled="!isAdmin || isSaving"
             />
 
             <TeamColorSwatchPicker
               v-model="localTheme.neutral"
               :colors="NEUTRAL_COLORS"
-              label="Neutral Color"
+              :label="$t('themeSettings.neutralColor')"
               :disabled="!isAdmin || isSaving"
             />
 
@@ -235,7 +235,7 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
 
         <!-- Right: Live Preview -->
         <div class="w-64 shrink-0 space-y-2 sticky top-4">
-          <label class="text-sm font-medium text-default">Live Preview</label>
+          <label class="text-sm font-medium text-default">{{ $t('themeSettings.livePreview') }}</label>
           <div class="p-4 border border-muted rounded-lg bg-muted/10 space-y-4">
             <div class="flex flex-wrap gap-2">
               <UButton
@@ -301,7 +301,7 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
           :disabled="isSaving"
           @click="handleReset"
         >
-          Reset to Defaults
+          {{ $t('themeSettings.resetToDefaults') }}
         </UButton>
 
         <div class="flex gap-3">
@@ -310,7 +310,7 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
             :disabled="isSaving || !hasChanges"
             @click="revertChanges"
           >
-            {{ t('common.cancel') || 'Cancel' }}
+            {{ $t('common.cancel') }}
           </UButton>
           <UButton
             color="primary"
@@ -318,7 +318,7 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
             :disabled="!hasChanges || !isAdmin"
             @click="handleSave"
           >
-            {{ t('common.saveChanges') || 'Save Changes' }}
+            {{ $t('common.saveChanges') }}
           </UButton>
         </div>
       </div>
@@ -328,8 +328,8 @@ const presetEntries = Object.entries(THEME_PRESETS) as [ThemePreset, (typeof THE
         v-if="!isAdmin"
         color="warning"
         icon="i-lucide-shield-alert"
-        title="Admin access required"
-        description="Only team admins and owners can modify theme settings."
+        :title="$t('themeSettings.adminRequired')"
+        :description="$t('themeSettings.adminRequiredDescription')"
       />
     </template>
   </div>
