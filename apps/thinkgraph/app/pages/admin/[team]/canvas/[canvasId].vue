@@ -23,6 +23,26 @@ const { data: canvas } = await useFetch(() => `/api/teams/${teamId.value}/thinkg
   transform: (items: any[]) => items?.find((c: any) => c.id === canvasId.value),
 })
 
+// ─── Saved positions (from flow_configs) ───
+const savedPositions = ref<Record<string, { x: number, y: number }> | null>(null)
+
+async function loadPositions() {
+  if (!canvasId.value || !teamId.value) return
+  try {
+    const config = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows/${canvasId.value}`)
+    if (config?.nodePositions) {
+      savedPositions.value = typeof config.nodePositions === 'string'
+        ? JSON.parse(config.nodePositions)
+        : config.nodePositions
+    }
+  }
+  catch {
+    // Flow config may not exist yet — that's fine, dagre will layout
+  }
+}
+
+await loadPositions()
+
 // ─── Nodes for this canvas ───
 const nodes = ref<ThinkgraphNode[]>([])
 const nodesLoading = ref(false)
@@ -643,8 +663,8 @@ watch(showCreate, async (open) => {
           parent-field="parentId"
           label-field="title"
           :flow-id="canvasId"
+          :saved-positions="savedPositions"
           :background-pattern-color="isDark ? '#3a3530' : '#d4cfc8'"
-          sync
           minimap
           @node-click="onNodeClick"
         >
