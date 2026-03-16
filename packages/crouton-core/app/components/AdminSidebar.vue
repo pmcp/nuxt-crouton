@@ -192,6 +192,12 @@ const teamItem = computed<NavigationMenuItem | null>(() => {
         active: route.path === translationsPath || route.path.startsWith(`${translationsPath}/`)
       },
       {
+        label: t('redirects.title') || 'Redirects',
+        icon: 'i-lucide-arrow-right-left',
+        to: `${teamPath}/redirects`,
+        active: route.path === `${teamPath}/redirects` || route.path === `${teamPath}/redirects/`
+      },
+      {
         label: t('emailTemplates.title') || 'Email Templates',
         icon: 'i-lucide-mail-open',
         to: `${teamPath}/email-templates`,

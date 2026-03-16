@@ -45,6 +45,11 @@ const tabs = computed(() => [
       to: `/admin/${teamSlug.value}/team/domains`
     },
     {
+      label: t('redirects.title') || 'Redirects',
+      icon: 'i-lucide-arrow-right-left',
+      to: `/admin/${teamSlug.value}/team/redirects`
+    },
+    {
       label: 'Email Templates',
       icon: 'i-lucide-mail-open',
       to: `/admin/${teamSlug.value}/team/email-templates`

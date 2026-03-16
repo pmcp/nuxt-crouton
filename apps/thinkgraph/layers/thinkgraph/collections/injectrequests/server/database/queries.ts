@@ -26,7 +26,7 @@ export async function getAllThinkgraphInjectRequests(teamId: string) {
     .leftJoin(nodesSchema.thinkgraphNodes, eq(tables.thinkgraphInjectRequests.nodeId, nodesSchema.thinkgraphNodes.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphInjectRequests.owner, ownerUser.id))
     .where(eq(tables.thinkgraphInjectRequests.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphInjectRequests.createdAt))
+    .orderBy(desc(tables.thinkgraphInjectRequests.order))
 
   return injectRequests
 }
@@ -56,7 +56,7 @@ export async function getThinkgraphInjectRequestsByIds(teamId: string, injectReq
         inArray(tables.thinkgraphInjectRequests.id, injectRequestIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphInjectRequests.createdAt))
+    .orderBy(desc(tables.thinkgraphInjectRequests.order))
 
   return injectRequests
 }

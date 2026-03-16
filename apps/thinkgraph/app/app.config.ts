@@ -33,6 +33,11 @@ export default defineAppConfig({
           path: '/graphs',
           label: 'ThinkGraph',
           icon: 'i-lucide-brain-circuit'
+        },
+        {
+          path: '/canvases',
+          label: 'Canvases',
+          icon: 'i-lucide-layout-dashboard'
         }
       ],
       dashboardRoutes: [],
