@@ -17,6 +17,8 @@ export interface EmailTemplateOverrides {
   body?: string
   buttonText?: string
   footer?: string
+  /** Override the sender name (From: header) per team */
+  fromName?: string
 }
 
 /**

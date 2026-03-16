@@ -50,7 +50,8 @@ export async function sendVerificationEmail(
     to: options.to,
     subject: options.overrides?.subject || `Your verification code is ${options.code}`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }
 
@@ -86,7 +87,8 @@ export async function sendVerificationLink(
     to: options.to,
     subject: options.overrides?.subject || `Verify your ${brandConfig.brandName} email`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }
 
@@ -122,7 +124,8 @@ export async function sendMagicLink(
     to: options.to,
     subject: options.overrides?.subject || `Sign in to ${brandConfig.brandName}`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }
 
@@ -158,7 +161,8 @@ export async function sendPasswordReset(
     to: options.to,
     subject: options.overrides?.subject || `Reset your ${brandConfig.brandName} password`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }
 
@@ -187,7 +191,8 @@ export async function sendTeamInvite(
     to: options.to,
     subject: options.overrides?.subject || `Join ${options.teamName} on ${brandConfig.brandName}`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }
 
@@ -215,6 +220,7 @@ export async function sendWelcome(
     to: options.to,
     subject: options.overrides?.subject || `Welcome to ${brandConfig.brandName}!`,
     html,
-    text
+    text,
+    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
   })
 }

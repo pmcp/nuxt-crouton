@@ -205,6 +205,8 @@ export interface EmailContentOverrides {
   buttonText?: string
   /** Custom footer/disclaimer text */
   footer?: string
+  /** Override sender name (From: header) per team */
+  fromName?: string
 }
 
 /**
