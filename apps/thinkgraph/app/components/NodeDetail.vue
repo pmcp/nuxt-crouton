@@ -21,6 +21,10 @@ const nodeTypeStyle = computed(() => getNodeTypeConfig(props.node.nodeType))
 const nodeTypeBadge = computed(() => getNodeTypeBadge(props.node.nodeType))
 const statusConfig = computed(() => STATUS_CONFIG[props.node.status] || STATUS_CONFIG.idle)
 
+// ─── Context ───
+const nodesRef = computed(() => props.nodes)
+const { buildContext } = useNodeContext(nodesRef)
+
 // ─── Editable fields ───
 const editingBrief = ref(false)
 const briefDraft = ref('')
@@ -88,6 +92,54 @@ async function setHandoff(type: string) {
 async function setContextScope(scope: string) {
   await update(props.node.id, { contextScope: scope })
   emit('refresh')
+}
+
+// ─── Manual context node picker ───
+const manualSearchQuery = ref('')
+const isManualScope = computed(() => (props.node.contextScope || 'branch') === 'manual')
+
+const selectedContextIds = computed(() => {
+  const ids = props.node.contextNodeIds
+  if (!ids) return [] as string[]
+  return Array.isArray(ids) ? ids as string[] : Object.keys(ids)
+})
+
+const selectedContextNodes = computed(() =>
+  selectedContextIds.value
+    .map(id => props.nodes.find(n => n.id === id))
+    .filter((n): n is ThinkgraphNode => !!n),
+)
+
+const pickableNodes = computed(() => {
+  const q = manualSearchQuery.value.toLowerCase()
+  return props.nodes
+    .filter(n => n.id !== props.node.id)
+    .filter(n => !selectedContextIds.value.includes(n.id))
+    .filter(n => !q || n.title.toLowerCase().includes(q) || n.nodeType.toLowerCase().includes(q))
+    .slice(0, 20)
+})
+
+async function addContextNode(nodeId: string) {
+  const ids = [...selectedContextIds.value, nodeId]
+  await update(props.node.id, { contextNodeIds: ids })
+  manualSearchQuery.value = ''
+  emit('refresh')
+}
+
+async function removeContextNode(nodeId: string) {
+  const ids = selectedContextIds.value.filter(id => id !== nodeId)
+  await update(props.node.id, { contextNodeIds: ids })
+  emit('refresh')
+}
+
+// ─── Context preview ───
+const showContextPreview = ref(false)
+const contextPayload = computed(() => buildContext(props.node.id))
+
+async function copyContext() {
+  if (!contextPayload.value.markdown) return
+  await navigator.clipboard.writeText(contextPayload.value.markdown)
+  toast.add({ title: 'Context copied to clipboard', color: 'success' })
 }
 
 // ─── Ancestor chain ───
@@ -276,6 +328,93 @@ const children = computed(() =>
             {{ scope }}
           </UButton>
         </div>
+
+        <!-- Manual context node picker -->
+        <div v-if="isManualScope" class="mt-3">
+          <!-- Selected context nodes -->
+          <div v-if="selectedContextNodes.length" class="flex flex-wrap gap-1.5 mb-2">
+            <span
+              v-for="cn in selectedContextNodes"
+              :key="cn.id"
+              class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800"
+            >
+              <UIcon :name="getNodeTypeConfig(cn.nodeType).icon" class="size-3" />
+              <span class="truncate max-w-[140px]">{{ cn.title }}</span>
+              <button class="hover:text-red-500 transition-colors ml-0.5" @click="removeContextNode(cn.id)">
+                <UIcon name="i-lucide-x" class="size-3" />
+              </button>
+            </span>
+          </div>
+
+          <!-- Search input -->
+          <UInput
+            v-model="manualSearchQuery"
+            size="xs"
+            placeholder="Search nodes to add..."
+            icon="i-lucide-search"
+            class="w-full"
+          />
+
+          <!-- Pickable nodes dropdown -->
+          <div v-if="manualSearchQuery && pickableNodes.length" class="mt-1.5 max-h-[160px] overflow-y-auto rounded-md border border-default bg-elevated">
+            <button
+              v-for="pn in pickableNodes"
+              :key="pn.id"
+              class="w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-sm hover:bg-muted/50 transition-colors"
+              @click="addContextNode(pn.id)"
+            >
+              <UIcon :name="getNodeTypeConfig(pn.nodeType).icon" class="size-3.5 shrink-0" :class="getNodeTypeConfig(pn.nodeType).color" />
+              <span class="truncate">{{ pn.title }}</span>
+              <span class="text-[10px] text-muted ml-auto shrink-0">{{ pn.nodeType }}</span>
+            </button>
+          </div>
+          <p v-else-if="manualSearchQuery && !pickableNodes.length" class="text-xs text-muted mt-1.5">
+            No matching nodes
+          </p>
+        </div>
+      </div>
+
+      <!-- Context preview -->
+      <div class="px-4 py-3 border-b border-default">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <p class="text-[11px] font-semibold text-muted uppercase tracking-wider">Context</p>
+            <span v-if="contextPayload.tokenEstimate" class="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-muted font-mono">
+              ~{{ contextPayload.tokenEstimate.toLocaleString() }} tokens
+            </span>
+          </div>
+          <div class="flex items-center gap-1">
+            <UButton
+              v-if="contextPayload.markdown"
+              icon="i-lucide-copy"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              title="Copy context"
+              @click="copyContext"
+            />
+            <UButton
+              icon="i-lucide-eye"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              :class="showContextPreview ? 'text-primary' : ''"
+              title="Toggle preview"
+              @click="showContextPreview = !showContextPreview"
+            />
+          </div>
+        </div>
+        <p v-if="!contextPayload.chain.length" class="text-sm text-muted italic">
+          {{ isManualScope ? 'Select nodes above to build context' : 'No context chain' }}
+        </p>
+        <template v-else>
+          <div class="flex items-center gap-1.5 text-xs text-muted mb-1">
+            <span>{{ contextPayload.chain.length }} nodes in chain</span>
+          </div>
+          <div v-if="showContextPreview" class="mt-2 p-3 rounded-md bg-neutral-50 dark:bg-neutral-900 border border-default max-h-[300px] overflow-y-auto">
+            <pre class="text-xs whitespace-pre-wrap font-mono text-default leading-relaxed">{{ contextPayload.markdown }}</pre>
+          </div>
+        </template>
       </div>
 
       <!-- Ancestor chain -->

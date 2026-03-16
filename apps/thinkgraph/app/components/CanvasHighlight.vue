@@ -22,8 +22,8 @@ function getAncestorIds(nodeId: string): Set<string> {
   return ids
 }
 
-// Build set of edge IDs that form the context chain
-function getContextEdgeIds(nodeId: string): Set<string> {
+// Build set of edge IDs that form the ancestor chain
+function getAncestorEdgeIds(nodeId: string): Set<string> {
   const edgeIds = new Set<string>()
   let current = props.nodes.find(n => n.id === nodeId)
   while (current?.parentId) {
@@ -33,27 +33,74 @@ function getContextEdgeIds(nodeId: string): Set<string> {
   return edgeIds
 }
 
+// Resolve context node IDs based on scope
+function getContextNodeIds(nodeId: string): Set<string> {
+  const node = props.nodes.find(n => n.id === nodeId)
+  if (!node) return new Set([nodeId])
+
+  const scope = node.contextScope || 'branch'
+
+  if (scope === 'manual' && node.contextNodeIds) {
+    const ids = Array.isArray(node.contextNodeIds)
+      ? node.contextNodeIds as string[]
+      : Object.keys(node.contextNodeIds)
+    return new Set([nodeId, ...ids])
+  }
+
+  // branch or full: use ancestor chain
+  const ancestorIds = getAncestorIds(nodeId)
+  return new Set([nodeId, ...ancestorIds])
+}
+
+// Resolve context edge IDs based on scope
+function getContextEdgeIds(nodeId: string): Set<string> {
+  const node = props.nodes.find(n => n.id === nodeId)
+  if (!node) return new Set()
+
+  const scope = node.contextScope || 'branch'
+
+  if (scope === 'manual' && node.contextNodeIds) {
+    // For manual scope, highlight edges between the selected node and each manual context node
+    const ids = Array.isArray(node.contextNodeIds)
+      ? node.contextNodeIds as string[]
+      : Object.keys(node.contextNodeIds)
+    const edgeIds = new Set<string>()
+    // Highlight any edge connecting two context nodes
+    const contextSet = new Set([nodeId, ...ids])
+    for (const edge of getEdges.value) {
+      if (contextSet.has(edge.source) && contextSet.has(edge.target)) {
+        edgeIds.add(edge.id)
+      }
+    }
+    return edgeIds
+  }
+
+  return getAncestorEdgeIds(nodeId)
+}
+
+function clearHighlights() {
+  for (const edge of getEdges.value) {
+    edge.class = ''
+    edge.style = undefined
+  }
+  for (const node of getNodes.value) {
+    node.class = typeof node.class === 'string'
+      ? node.class.replace(/\bcontext-dimmed\b/g, '').trim()
+      : ''
+  }
+}
+
 watch(() => props.selectedNodeId, (nodeId) => {
   const edges = getEdges.value
   const flowNodes = getNodes.value
 
   if (!nodeId) {
-    // Clear all highlights
-    for (const edge of edges) {
-      edge.class = ''
-      edge.style = undefined
-    }
-    for (const node of flowNodes) {
-      node.class = typeof node.class === 'string'
-        ? node.class.replace(/\bcontext-dimmed\b/g, '').trim()
-        : ''
-    }
+    clearHighlights()
     return
   }
 
-  const ancestorIds = getAncestorIds(nodeId)
+  const contextNodeIds = getContextNodeIds(nodeId)
   const contextEdgeIds = getContextEdgeIds(nodeId)
-  const contextNodeIds = new Set([nodeId, ...ancestorIds])
 
   // Highlight context chain edges
   for (const edge of edges) {
@@ -83,17 +130,7 @@ watch(() => props.selectedNodeId, (nodeId) => {
 
 // Clean up on unmount
 onBeforeUnmount(() => {
-  const edges = getEdges.value
-  const flowNodes = getNodes.value
-  for (const edge of edges) {
-    edge.class = ''
-    edge.style = undefined
-  }
-  for (const node of flowNodes) {
-    node.class = typeof node.class === 'string'
-      ? node.class.replace(/\bcontext-dimmed\b/g, '').trim()
-      : ''
-  }
+  clearHighlights()
 })
 </script>
 

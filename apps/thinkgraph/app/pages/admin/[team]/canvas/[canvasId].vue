@@ -320,23 +320,31 @@ watch(showCreate, async (open) => {
 .vue-flow__edge.context-chain-edge .vue-flow__edge-path {
   stroke: var(--color-primary-500, #3b82f6);
   stroke-width: 2.5;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-primary-500) 40%, transparent));
+  stroke-dasharray: 8 4;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-primary-500) 50%, transparent));
+  animation: context-flow 0.8s linear infinite;
   transition: stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+}
+
+@keyframes context-flow {
+  to {
+    stroke-dashoffset: -12;
+  }
 }
 
 .vue-flow__edge.context-dimmed-edge .vue-flow__edge-path {
   stroke: #d4d4d4;
-  opacity: 0.3;
+  opacity: 0.2;
   transition: stroke 0.3s ease, opacity 0.3s ease;
 }
 
 .dark .vue-flow__edge.context-dimmed-edge .vue-flow__edge-path {
   stroke: #404040;
-  opacity: 0.3;
+  opacity: 0.2;
 }
 
 .vue-flow__node.context-dimmed {
-  opacity: 0.35;
+  opacity: 0.3;
   transition: opacity 0.3s ease;
 }
 </style>
