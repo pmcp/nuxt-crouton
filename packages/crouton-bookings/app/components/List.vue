@@ -132,11 +132,11 @@ async function handleResendEmail(booking: Booking, triggerType: string) {
       emit('emailSent')
     }
     else {
-      notify.error(t('bookings.notifications.emailFailed'), { description: result.error || 'An error occurred' })
+      notify.error(t('bookings.notifications.emailFailed'), { description: result.error || t('bookings.notifications.errorOccurred') })
     }
   }
   catch (error: any) {
-    notify.error(t('bookings.notifications.emailFailed'), { description: error.message || 'An error occurred' })
+    notify.error(t('bookings.notifications.emailFailed'), { description: error.message || t('bookings.notifications.errorOccurred') })
   }
   finally {
     sendingEmailState.value = null
@@ -545,7 +545,7 @@ watch(
     <div v-else-if="resolvedError" class="bg-error/10 border border-error/20 rounded-lg p-6 text-center">
       <UIcon name="i-lucide-alert-circle" class="w-8 h-8 text-error mx-auto mb-2" />
       <p class="text-sm text-error font-medium">{{ t('bookings.list.failedToLoad') }}</p>
-      <p class="text-xs text-muted mt-1">{{ resolvedError.message || 'An error occurred' }}</p>
+      <p class="text-xs text-muted mt-1">{{ resolvedError.message || $t('bookings.notifications.errorOccurred') }}</p>
       <UButton
         v-if="listData"
         variant="soft"

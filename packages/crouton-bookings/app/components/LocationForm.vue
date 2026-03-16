@@ -144,7 +144,7 @@
               <CroutonFormRepeater
                 v-model="(state.slots as any)"
                 component-name="BookingsLocationsSlotInput"
-                add-label="Add Time Slot"
+                :add-label="$t('bookings.locationForm.addTimeSlot')"
                 :sortable="true"
               />
             </UFormField>
@@ -158,7 +158,7 @@
               <CroutonFormRepeater
                 v-model="(state.blockedDates as any)"
                 component-name="CroutonBookingsBlockedDateInput"
-                add-label="Add Blocked Period"
+                :add-label="$t('bookings.schedule.addBlockedPeriod')"
                 :sortable="false"
               />
             </UFormField>
@@ -179,7 +179,7 @@
             }"
             show-ai-translate
             field-type="locations"
-            label="Translations"
+            :label="$t('bookings.locationForm.translations')"
           />
         </div>
       </template>

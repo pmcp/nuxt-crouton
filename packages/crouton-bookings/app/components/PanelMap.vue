@@ -14,6 +14,8 @@ const emit = defineEmits<{
   'ready': []
 }>()
 
+const { t } = useI18n()
+
 // Get localized location title with fallbacks
 function getLocationTitle(location: LocationData): string {
   const { locale } = useI18n()
@@ -22,7 +24,7 @@ function getLocationTitle(location: LocationData): string {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || location.title
-    || 'Untitled'
+    || t('bookings.untitled')
 }
 
 // Parse GeoJSON coordinates from location data

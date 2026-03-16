@@ -9,9 +9,9 @@ const { variables, getPreviewValues } = useBookingEmailVariables()
 const previewValues = getPreviewValues()
 
 // Strings with {{ (defined here to avoid Vue template parsing issues)
-const editorPlaceholder = 'Write your email content here. Type {{ to insert variables...'
-const subjectPlaceholder = 'e.g., Your booking is confirmed for {{booking_date}}'
-const variableHint = 'You can use variables like {{customer_name}}'
+const editorPlaceholder = computed(() => t('bookings.emailTemplates.editorPlaceholder'))
+const subjectPlaceholder = computed(() => t('bookings.emailTemplates.subjectPlaceholder'))
+const variableHint = computed(() => t('bookings.emailTemplates.variableHint'))
 
 // Available locales for translations
 const locales = [
@@ -530,7 +530,7 @@ function getLocationName(locationId: string | null) {
         <UFormField :label="t('bookings.emailTemplates.templateName', { locale: activeLocale.toUpperCase() })" name="name" :required="activeLocale === 'en'">
           <UInput
             v-model="nameValue"
-            placeholder="e.g., Booking Confirmation"
+            :placeholder="$t('bookings.emailTemplates.namePlaceholder')"
             class="w-full"
           />
         </UFormField>
@@ -553,7 +553,7 @@ function getLocationName(locationId: string | null) {
             v-model="bodyValue"
             :variables="variables"
             :preview-values="previewValues"
-            preview-title="Email Preview"
+            :preview-title="$t('bookings.emailTemplates.previewTitle')"
             :placeholder="editorPlaceholder"
           />
         </UFormField>
@@ -565,7 +565,7 @@ function getLocationName(locationId: string | null) {
           <UInput
             v-model="formState.fromEmail"
             type="email"
-            placeholder="noreply@example.com"
+            :placeholder="$t('bookings.emailTemplates.fromEmailPlaceholder')"
             class="w-full"
           />
         </UFormField>

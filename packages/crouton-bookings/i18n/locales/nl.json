@@ -197,6 +197,8 @@
       "scheduling": "Planning",
       "schedulingHint": "Bepaal wanneer deze locatie beschikbaar is voor boekingen.",
       "slots": "Slots",
+      "addTimeSlot": "Tijdslot toevoegen",
+      "translations": "Vertalingen",
       "tabSettings": "Instellingen",
       "tabBookings": "Boekingen",
       "tabContent": "Inhoud"
@@ -234,6 +236,12 @@
       "days": "dagen",
       "deleteConfirm": "Weet je zeker dat je dit sjabloon wilt verwijderen?",
       "generateWithAI": "Genereren met AI",
+      "editorPlaceholder": "Schrijf hier uw e-mailinhoud...",
+      "subjectPlaceholder": "bijv. Uw boeking is bevestigd...",
+      "variableHint": "U kunt variabelen gebruiken zoals {{name}}, {{date}}, enz.",
+      "namePlaceholder": "bijv. Boekingsbevestiging",
+      "previewTitle": "E-mailvoorbeeld",
+      "fromEmailPlaceholder": "noreply@voorbeeld.nl",
       "triggers": {
         "bookingCreated": "Boeking Aangemaakt",
         "bookingCreatedDesc": "Verzonden wanneer een nieuwe boeking wordt gemaakt",
@@ -290,7 +298,8 @@
       "allSlotsTakenDescription": "Alle tijdslots op alle locaties zijn volgeboekt voor deze dag.",
       "emailSent": "E-mail verzonden",
       "emailSentDescription": "Bevestigingsmail is succesvol opnieuw verzonden",
-      "emailFailed": "E-mail verzenden mislukt"
+      "emailFailed": "E-mail verzenden mislukt",
+      "errorOccurred": "Er is een fout opgetreden"
     },
     "block": {
       "booking": "Boeking",

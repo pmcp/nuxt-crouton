@@ -197,6 +197,8 @@
       "scheduling": "Scheduling",
       "schedulingHint": "Define when this location is available for bookings.",
       "slots": "Slots",
+      "addTimeSlot": "Add Time Slot",
+      "translations": "Translations",
       "tabSettings": "Settings",
       "tabBookings": "Bookings",
       "tabContent": "Content"
@@ -234,6 +236,12 @@
       "days": "days",
       "deleteConfirm": "Are you sure you want to delete this template?",
       "generateWithAI": "Generate with AI",
+      "editorPlaceholder": "Write your email content here...",
+      "subjectPlaceholder": "e.g., Your booking is confirmed...",
+      "variableHint": "You can use variables like {{name}}, {{date}}, etc.",
+      "namePlaceholder": "e.g., Booking Confirmation",
+      "previewTitle": "Email Preview",
+      "fromEmailPlaceholder": "noreply@example.com",
       "triggers": {
         "bookingCreated": "Booking Created",
         "bookingCreatedDesc": "Sent when a new booking is made",
@@ -290,7 +298,8 @@
       "allSlotsTakenDescription": "All time slots across all locations are fully booked for this day.",
       "emailSent": "Email sent",
       "emailSentDescription": "Confirmation email has been resent successfully",
-      "emailFailed": "Failed to send email"
+      "emailFailed": "Failed to send email",
+      "errorOccurred": "An error occurred"
     },
     "block": {
       "booking": "Booking",

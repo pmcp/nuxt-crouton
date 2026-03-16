@@ -197,6 +197,8 @@
       "scheduling": "Planification",
       "schedulingHint": "Définir quand ce lieu est disponible pour les réservations.",
       "slots": "Créneaux",
+      "addTimeSlot": "Ajouter un créneau",
+      "translations": "Traductions",
       "tabSettings": "Paramètres",
       "tabBookings": "Réservations",
       "tabContent": "Contenu"
@@ -234,6 +236,12 @@
       "days": "jours",
       "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce modèle ?",
       "generateWithAI": "Générer avec l'IA",
+      "editorPlaceholder": "Écrivez votre contenu d'e-mail ici...",
+      "subjectPlaceholder": "ex. Votre réservation est confirmée...",
+      "variableHint": "Vous pouvez utiliser des variables comme {{name}}, {{date}}, etc.",
+      "namePlaceholder": "ex. Confirmation de réservation",
+      "previewTitle": "Aperçu de l'e-mail",
+      "fromEmailPlaceholder": "noreply@exemple.com",
       "triggers": {
         "bookingCreated": "Réservation créée",
         "bookingCreatedDesc": "Envoyé lors de la création d'une nouvelle réservation",
@@ -290,7 +298,8 @@
       "allSlotsTakenDescription": "Tous les créneaux horaires de tous les lieux sont complets pour cette journée.",
       "emailSent": "E-mail envoyé",
       "emailSentDescription": "L'e-mail de confirmation a été renvoyé avec succès",
-      "emailFailed": "Échec de l'envoi de l'e-mail"
+      "emailFailed": "Échec de l'envoi de l'e-mail",
+      "errorOccurred": "Une erreur s'est produite"
     },
     "block": {
       "booking": "Réservation",

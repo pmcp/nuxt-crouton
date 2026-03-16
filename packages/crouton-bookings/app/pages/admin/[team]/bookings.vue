@@ -19,28 +19,28 @@ const { t } = useT()
 const tabs = computed(() => [
   [
     {
-      label: t('bookings.admin.overview') || 'Overview',
+      label: t('bookings.admin.overview'),
       icon: 'i-lucide-calendar',
       to: `/admin/${teamSlug.value}/bookings`,
       exact: true // Only highlight when exactly on /bookings, not child routes
     },
     {
-      label: t('bookings.admin.locations') || 'Locations',
+      label: t('bookings.admin.locations'),
       icon: 'i-lucide-map-pin',
       to: `/admin/${teamSlug.value}/bookings/locations`
     },
     {
-      label: t('bookings.admin.settings') || 'Settings',
+      label: t('bookings.admin.settings'),
       icon: 'i-lucide-settings',
       to: `/admin/${teamSlug.value}/bookings/settings`
     },
     {
-      label: t('bookings.settings.emailTemplates') || 'Email Templates',
+      label: t('bookings.settings.emailTemplates'),
       icon: 'i-lucide-mail',
       to: `/admin/${teamSlug.value}/bookings/email-templates`
     },
     {
-      label: t('bookings.settings.emailLogs') || 'Email Logs',
+      label: t('bookings.settings.emailLogs'),
       icon: 'i-lucide-file-text',
       to: `/admin/${teamSlug.value}/bookings/email-logs`
     }
@@ -51,7 +51,7 @@ const tabs = computed(() => [
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar :title="t('bookings.admin.sectionTitle') || 'Bookings'">
+      <UDashboardNavbar :title="t('bookings.admin.sectionTitle')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

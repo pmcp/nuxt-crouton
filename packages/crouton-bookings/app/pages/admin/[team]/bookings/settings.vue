@@ -14,7 +14,7 @@ const { t } = useI18n()
   <div class="h-full">
     <CroutonCollectionViewer
       collection-name="bookingsSettings"
-      :empty-text="t('bookings.settings.empty') || 'No settings configured. Create booking settings for this team.'"
+      :empty-text="t('bookings.settings.empty')"
     />
   </div>
 </template>
