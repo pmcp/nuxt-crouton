@@ -60,16 +60,18 @@ export default defineEventHandler(async (event) => {
   }
 
   const ancestors = buildAncestorChain(allDecisions, decisionId)
+  const ancestorIds = new Set(ancestors.map((a: any) => a.id))
   const siblings = allDecisions.filter((d: any) => d.parentId === targetDecision.parentId && d.id !== decisionId)
   const children = allDecisions.filter((d: any) => d.parentId === decisionId)
   const starred = allDecisions.filter((d: any) => d.starred && d.id !== decisionId)
+  const pinned = allDecisions.filter((d: any) => d.pinned && d.id !== decisionId && !ancestorIds.has(d.id))
 
   const ai = createAIProvider(event)
 
   const result = await streamText({
     model: ai.model(ai.getDefaultModel()),
-    system: config.system + `\n\nCRITICAL: Each node must be ONE atomic thought — a single idea you can branch from. Maximum 1-2 sentences. Never chain multiple thoughts into one node. If you have a complex idea, split it into separate nodes. Think of each node as a tweet, not a paragraph.`,
-    prompt: buildPrompt(targetDecision, ancestors, siblings, children, starred, config.count),
+    system: config.system + `\n\nKeep each content to 1-2 sentences. Be concise but insightful.`,
+    prompt: buildPrompt(targetDecision, ancestors, siblings, children, starred, config.count, pinned),
   })
 
   let fullText = ''
@@ -92,7 +94,6 @@ export default defineEventHandler(async (event) => {
       content: p.content,
       nodeType: p.nodeType || 'idea',
       pathType: p.pathType || 'explored',
-      graphId: (targetDecision as any)?.graphId || '',
       parentId: decisionId,
       source: 'ai',
       model: ai.getDefaultModel(),

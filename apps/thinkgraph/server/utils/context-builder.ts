@@ -10,14 +10,8 @@ export interface ContextNode {
   pathType?: string
   parentId?: string
   starred?: boolean
+  pinned?: boolean
   branchName?: string
-  artifacts?: Array<{
-    type: string
-    content?: string
-    url?: string
-    provider?: string
-    metadata?: Record<string, unknown>
-  }>
 }
 
 export function buildAncestorChain(allDecisions: ContextNode[], targetId: string): ContextNode[] {
@@ -38,7 +32,8 @@ export function buildPrompt(
   siblings: ContextNode[],
   children: ContextNode[],
   starred: ContextNode[],
-  count: number
+  count: number,
+  pinned?: ContextNode[]
 ): string {
   let prompt = ''
 
@@ -68,6 +63,14 @@ export function buildPrompt(
     prompt += '\n'
   }
 
+  if (pinned && pinned.length > 0) {
+    prompt += 'Pinned context (always active):\n'
+    pinned.slice(0, 5).forEach(p => {
+      prompt += `📌 ${p.content}\n`
+    })
+    prompt += '\n'
+  }
+
   if (starred.length > 0) {
     prompt += 'Starred insights from other branches:\n'
     starred.slice(0, 5).forEach(s => {
@@ -85,36 +88,13 @@ export function buildPrompt(
  * Build a context string for dispatch services.
  * Includes the full thinking chain and starred insights for maximum context.
  */
-/**
- * Summarize artifacts for context (truncated to avoid blowing up the prompt).
- */
-function summarizeArtifacts(node: ContextNode): string {
-  if (!node.artifacts?.length) return ''
-  const lines: string[] = []
-  for (const a of node.artifacts) {
-    if (a.type === 'code' && a.content) {
-      const lang = (a.metadata?.language as string) || 'code'
-      lines.push(`   [${a.type}/${lang}]: ${a.content.slice(0, 500)}`)
-    } else if (a.type === 'prototype' && a.content) {
-      lines.push(`   [prototype HTML]: ${a.content.slice(0, 800)}`)
-    } else if (a.type === 'text' && a.content) {
-      lines.push(`   [text]: ${a.content.slice(0, 500)}`)
-    } else if (a.type === 'image' && a.url) {
-      lines.push(`   [image from ${a.provider || 'unknown'}]`)
-    }
-  }
-  return lines.length > 0 ? '\n' + lines.join('\n') : ''
-}
-
-/**
- * Build a context string for dispatch services.
- * Includes the full thinking chain, artifact content, and starred insights.
- */
 export function buildDispatchContext(
   target: ContextNode,
   allDecisions: ContextNode[]
 ): string {
   const ancestors = buildAncestorChain(allDecisions, target.id)
+  const ancestorIds = new Set(ancestors.map(a => a.id))
+  const pinned = allDecisions.filter(d => d.pinned && d.id !== target.id && !ancestorIds.has(d.id))
   const starred = allDecisions.filter(d => d.starred && d.id !== target.id)
 
   let context = ''
@@ -122,19 +102,17 @@ export function buildDispatchContext(
   if (ancestors.length > 0) {
     context += 'Thinking path:\n'
     ancestors.forEach((a, i) => {
-      context += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})${summarizeArtifacts(a)}\n`
+      context += `${'  '.repeat(i)}→ ${a.content}\n`
     })
-    context += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}${summarizeArtifacts(target)}\n\n`
+    context += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
   } else {
-    context += `Current thought: ${target.content}${summarizeArtifacts(target)}\n\n`
+    context += `Current thought: ${target.content}\n\n`
   }
 
-  // Include children context so AI knows what already exists
-  const children = allDecisions.filter(d => d.parentId === target.id)
-  if (children.length > 0) {
-    context += 'Existing children of this node:\n'
-    children.forEach(c => {
-      context += `- ${c.content} (${c.nodeType})${summarizeArtifacts(c)}\n`
+  if (pinned.length > 0) {
+    context += 'Pinned context (always active):\n'
+    pinned.slice(0, 5).forEach(p => {
+      context += `- ${p.content}\n`
     })
     context += '\n'
   }
@@ -148,38 +126,4 @@ export function buildDispatchContext(
   }
 
   return context
-}
-
-/**
- * Build a combined context from multiple selected nodes.
- * Shows each node with its thinking path for rich multi-perspective context.
- */
-export function buildMultiNodeContext(
-  targets: ContextNode[],
-  allDecisions: ContextNode[]
-): { combinedContext: string; combinedContent: string } {
-  const starred = allDecisions.filter(d => d.starred && !targets.some(t => t.id === d.id))
-
-  let context = `Selected ${targets.length} nodes to combine:\n\n`
-
-  for (const target of targets) {
-    const ancestors = buildAncestorChain(allDecisions, target.id)
-    context += `── ${target.nodeType.toUpperCase()}: ${target.content}${summarizeArtifacts(target)}\n`
-    if (ancestors.length > 0) {
-      context += `   Path: ${ancestors.map(a => a.content.slice(0, 50)).join(' → ')}\n`
-    }
-    context += '\n'
-  }
-
-  if (starred.length > 0) {
-    context += 'Key insights from graph:\n'
-    starred.slice(0, 5).forEach(s => {
-      context += `- ${s.content}\n`
-    })
-    context += '\n'
-  }
-
-  const combinedContent = targets.map(t => t.content).join('; ')
-
-  return { combinedContext: context, combinedContent }
 }

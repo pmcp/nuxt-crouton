@@ -28,15 +28,15 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   owner: text('owner').notNull(),
 
   order: integer('order').notNull().$default(() => 0),
-  graphId: text('graphId').notNull(),
   content: text('content').notNull(),
   nodeType: text('nodeType').notNull(),
   pathType: text('pathType'),
   starred: integer('starred', { mode: 'boolean' }).$default(() => false),
+  pinned: integer('pinned', { mode: 'boolean' }).$default(() => false),
   branchName: text('branchName'),
   versionTag: text('versionTag'),
   parentId: text('parentId'),
   source: text('source'),
   model: text('model'),
-  artifacts: jsonColumn('artifacts').$default(() => ({}))
+  artifacts: jsonColumn('artifacts')
 })

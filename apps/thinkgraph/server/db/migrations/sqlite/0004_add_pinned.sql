@@ -1,0 +1,1 @@
+ALTER TABLE `thinkgraph_decisions` ADD `pinned` integer DEFAULT false;

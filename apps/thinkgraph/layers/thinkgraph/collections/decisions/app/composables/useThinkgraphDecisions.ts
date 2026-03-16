@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/thinkgraph-decisions
  * - Form component: ThinkgraphDecisionsForm
  * - List component: ThinkgraphDecisionsList
- * - Fields: graphId, content, nodeType, pathType, starred, branchName, versionTag, parentId, source, model, artifacts
+ * - Fields: content, nodeType, pathType, starred, pinned, branchName, versionTag, parentId, source, model
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -27,31 +27,29 @@ import { z } from 'zod'
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const thinkgraphDecisionSchema = z.object({
-  graphId: z.string().min(1, 'graphId is required'),
   content: z.string().min(1, 'content is required'),
   nodeType: z.string().min(1, 'nodeType is required'),
   pathType: z.string().optional(),
   starred: z.boolean().optional(),
+  pinned: z.boolean().optional(),
   branchName: z.string().optional(),
   versionTag: z.string().optional(),
   parentId: z.string().optional(),
   source: z.string().optional(),
-  model: z.string().optional(),
-  artifacts: z.record(z.string(), z.any()).optional()
+  model: z.string().optional()
 })
 
 export const thinkgraphDecisionsColumns = [
-  { accessorKey: 'graphId', header: 'GraphId' },
   { accessorKey: 'content', header: 'Content' },
   { accessorKey: 'nodeType', header: 'NodeType' },
   { accessorKey: 'pathType', header: 'PathType' },
   { accessorKey: 'starred', header: 'Starred' },
+  { accessorKey: 'pinned', header: 'Pinned' },
   { accessorKey: 'branchName', header: 'BranchName' },
   { accessorKey: 'versionTag', header: 'VersionTag' },
   { accessorKey: 'parentId', header: 'ParentId' },
   { accessorKey: 'source', header: 'Source' },
-  { accessorKey: 'model', header: 'Model' },
-  { accessorKey: 'artifacts', header: 'Artifacts' }
+  { accessorKey: 'model', header: 'Model' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -61,26 +59,19 @@ const _thinkgraphDecisionsConfig = {
   apiPath: 'thinkgraph-decisions',
   componentName: 'ThinkgraphDecisionsForm',
   defaultValues: {
-    graphId: '',
     content: '',
     nodeType: '',
     pathType: '',
     starred: false,
+    pinned: false,
     branchName: '',
     versionTag: '',
     parentId: '',
     source: '',
-    model: '',
-    artifacts: {}
+    model: ''
   },
   columns: thinkgraphDecisionsColumns,
   fields: [
-      {
-          "name": "graphId",
-          "type": "string",
-          "label": "Graph",
-          "area": "sidebar"
-      },
       {
           "name": "content",
           "type": "text",
@@ -105,6 +96,12 @@ const _thinkgraphDecisionsConfig = {
           "name": "starred",
           "type": "boolean",
           "label": "Starred",
+          "area": "sidebar"
+      },
+      {
+          "name": "pinned",
+          "type": "boolean",
+          "label": "Pinned",
           "area": "sidebar"
       },
       {
@@ -136,12 +133,6 @@ const _thinkgraphDecisionsConfig = {
           "name": "model",
           "type": "string",
           "label": "AI Model",
-          "area": "sidebar"
-      },
-      {
-          "name": "artifacts",
-          "type": "json",
-          "label": "Artifacts",
           "area": "sidebar"
       }
   ],

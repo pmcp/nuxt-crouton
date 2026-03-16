@@ -6,6 +6,7 @@ export interface GraphFilterState {
   nodeTypes: string[]
   pathTypes: string[]
   starred: boolean | null
+  pinned: boolean | null
   versionTags: string[]
 }
 
@@ -16,6 +17,7 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
     nodeTypes: [],
     pathTypes: [],
     starred: null,
+    pinned: null,
     versionTags: [],
   })
 
@@ -45,7 +47,7 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
   const filteredIds = computed<Set<string> | null>(() => {
     const f = filters.value
     const hasFilters = f.search || f.branches.length || f.nodeTypes.length
-      || f.pathTypes.length || f.starred !== null || f.versionTags.length
+      || f.pathTypes.length || f.starred !== null || f.pinned !== null || f.versionTags.length
 
     if (!hasFilters) return null
 
@@ -59,6 +61,8 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
       if (f.pathTypes.length && (!d.pathType || !f.pathTypes.includes(d.pathType))) continue
       if (f.starred === true && !d.starred) continue
       if (f.starred === false && d.starred) continue
+      if (f.pinned === true && !d.pinned) continue
+      if (f.pinned === false && d.pinned) continue
       if (f.versionTags.length && (!d.versionTag || !f.versionTags.includes(d.versionTag))) continue
       ids.add(d.id)
     }
@@ -72,6 +76,7 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
     if (filters.value.nodeTypes.length) count++
     if (filters.value.pathTypes.length) count++
     if (filters.value.starred !== null) count++
+    if (filters.value.pinned !== null) count++
     if (filters.value.versionTags.length) count++
     return count
   })
@@ -83,6 +88,7 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
       nodeTypes: [],
       pathTypes: [],
       starred: null,
+      pinned: null,
       versionTags: [],
     }
   }

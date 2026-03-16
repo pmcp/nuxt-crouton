@@ -1,14 +1,4 @@
 {
-  "graphId": {
-    "type": "string",
-    "meta": {
-      "required": true,
-      "label": "Graph",
-      "description": "The graph this decision belongs to",
-      "area": "sidebar",
-      "group": "structure"
-    }
-  },
   "content": {
     "type": "text",
     "meta": {
@@ -47,6 +37,16 @@
       "default": false,
       "label": "Starred",
       "description": "Marked as valuable insight",
+      "area": "sidebar",
+      "group": "classification"
+    }
+  },
+  "pinned": {
+    "type": "boolean",
+    "meta": {
+      "default": false,
+      "label": "Pinned",
+      "description": "Always include in AI context regardless of path",
       "area": "sidebar",
       "group": "classification"
     }

@@ -23,11 +23,18 @@ export function useContextGenerator(decisions: ComputedRef<any[]>) {
     return decisions.value.filter((d) => d.starred && !ancestorIds.has(d.id))
   }
 
+  function getPinnedNodes(nodeId: string): any[] {
+    const ancestorIds = new Set(getAncestorChain(nodeId).map((n) => n.id))
+
+    return decisions.value.filter((d) => d.pinned && !ancestorIds.has(d.id))
+  }
+
   function generateContext(nodeId: string, pathType?: string): string {
     const node = getNodeById(nodeId)
     if (!node) return ''
 
     const chain = getAncestorChain(nodeId)
+    const pinned = getPinnedNodes(nodeId)
     const starred = getStarredInsights(nodeId)
     const effectivePathType = pathType || node.pathType || 'diverge'
 
@@ -42,6 +49,18 @@ export function useContextGenerator(decisions: ComputedRef<any[]>) {
     })
 
     sections.push(`## Thinking path\n${pathLines.join('\n')}`)
+
+    // Pinned context (always included)
+    if (pinned.length > 0) {
+      const pinnedLines = pinned.map((n) => {
+        const branch = n.branchName ? ` (branch: ${n.branchName})` : ''
+        return `📌 ${n.content}${branch}`
+      })
+
+      sections.push(
+        `## Pinned context (always included)\n${pinnedLines.join('\n')}`,
+      )
+    }
 
     // Starred insights
     if (starred.length > 0) {
@@ -86,5 +105,5 @@ export function useContextGenerator(decisions: ComputedRef<any[]>) {
     await copy(context)
   }
 
-  return { getAncestorChain, getStarredInsights, generateContext, copyContext }
+  return { getAncestorChain, getStarredInsights, getPinnedNodes, generateContext, copyContext }
 }

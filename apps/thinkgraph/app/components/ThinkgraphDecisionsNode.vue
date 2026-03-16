@@ -23,7 +23,6 @@ const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('
 const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
 const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
 const openDispatchFn = inject<(nodeId: string) => void>('thinkgraph:dispatch', () => {})
-const focusInPathFn = inject<(nodeId: string) => void>('thinkgraph:focusInPath', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -32,8 +31,11 @@ const isExpanding = computed(() => expandingId.value === decision.value.id)
 
 const decision = computed(() => props.data as unknown as ThinkgraphDecision)
 
+const togglePinFn = inject<(id: string) => void>('thinkgraph:togglePin', () => {})
+
 const isParked = computed(() => decision.value.versionTag === 'parked')
 const isStarred = computed(() => decision.value.starred)
+const isPinned = computed(() => decision.value.pinned)
 
 const { getBranchColor } = useBranchColors()
 const branchColor = computed(() => getBranchColor(decision.value.branchName))
@@ -53,14 +55,14 @@ const pathTypeConfig: Record<string, { icon: string; color: string }> = {
   prototype: { icon: 'i-lucide-hammer', color: 'text-orange-500' },
   converge: { icon: 'i-lucide-git-merge', color: 'text-purple-500' },
   validate: { icon: 'i-lucide-shield-question', color: 'text-yellow-500' },
-  park: { icon: 'i-lucide-archive', color: 'text-stone-400' }
+  park: { icon: 'i-lucide-archive', color: 'text-neutral-400' }
 }
 
 const nodeTypeConfig: Record<string, { color: string }> = {
-  idea: { color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400/80' },
-  insight: { color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400/80' },
-  decision: { color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400/80' },
-  question: { color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400/80' }
+  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
 }
 
 const pathIcon = computed(() => {
@@ -75,62 +77,8 @@ const nodeTypeStyle = computed(() => {
 
 const displayContent = computed(() => {
   const content = decision.value.content || ''
-  // Strip markdown syntax for cleaner node preview
-  const plain = content
-    .replace(/^#{1,6}\s+/gm, '')     // headings
-    .replace(/\*\*([^*]+)\*\*/g, '$1') // bold
-    .replace(/\*([^*]+)\*/g, '$1')     // italic
-    .replace(/^[-*]\s+/gm, '• ')      // bullet lists
-    .replace(/^\d+\.\s+/gm, '')       // numbered lists
-    .replace(/`([^`]+)`/g, '$1')       // inline code
-    .replace(/\n{2,}/g, ' — ')        // paragraph breaks → dash
-    .replace(/\n/g, ' ')              // line breaks → space
-    .trim()
-  return plain.length > 80 ? plain.slice(0, 77) + '...' : plain
+  return content.length > 80 ? content.slice(0, 77) + '...' : content
 })
-
-const artifactsArray = computed(() =>
-  Array.isArray(decision.value.artifacts) ? decision.value.artifacts : []
-)
-
-const imageArtifact = computed(() =>
-  artifactsArray.value.find((a: any) => a.type === 'image' && a.url)
-)
-
-const prototypeArtifact = computed(() =>
-  artifactsArray.value.find((a: any) => a.type === 'prototype' && a.content)
-)
-
-const codeArtifact = computed(() =>
-  artifactsArray.value.find((a: any) => a.type === 'code' && a.content)
-)
-
-const nonVisualArtifacts = computed(() =>
-  artifactsArray.value.filter((a: any) =>
-    a.type !== 'image'
-    && a.type !== 'code'
-    && !(a.type === 'prototype' && a.url)
-  )
-)
-
-function openPrototype(event: Event) {
-  event.stopPropagation()
-  if (!prototypeArtifact.value?.content) return
-  const win = window.open('', '_blank')
-  if (win) {
-    win.document.write(prototypeArtifact.value.content)
-    win.document.close()
-  }
-}
-
-const codeCopied = ref(false)
-async function copyCode(event: Event) {
-  event.stopPropagation()
-  if (!codeArtifact.value?.content) return
-  await navigator.clipboard.writeText(codeArtifact.value.content)
-  codeCopied.value = true
-  setTimeout(() => { codeCopied.value = false }, 2000)
-}
 
 function handleEdit(event: Event) {
   event.stopPropagation()
@@ -149,7 +97,7 @@ function handleDelete(event: Event) {
 function handleAddChild(event: Event) {
   event.stopPropagation()
   if (props.collection && decision.value.id) {
-    open('create', props.collection, [], undefined, { parentId: decision.value.id, graphId: decision.value.graphId })
+    open('create', props.collection, [], undefined, { parentId: decision.value.id })
   }
 }
 
@@ -158,19 +106,6 @@ function handleExpandClick(event: Event) {
   if (isExpanding.value) return
   showExpandMenu.value = !showExpandMenu.value
 }
-
-// Close expand menu on any outside click
-function onClickOutside() {
-  showExpandMenu.value = false
-  isHovered.value = false
-}
-
-onMounted(() => {
-  document.addEventListener('click', onClickOutside)
-})
-onUnmounted(() => {
-  document.removeEventListener('click', onClickOutside)
-})
 
 function handleExpandMode(mode: string, event: Event) {
   event.stopPropagation()
@@ -208,19 +143,6 @@ function handlePasteChildren(event: Event) {
   }
 }
 
-function handleFocusInPath(event: Event) {
-  event.stopPropagation()
-  if (decision.value.id) {
-    focusInPathFn(decision.value.id)
-  }
-}
-
-function onMouseLeave() {
-  // Keep actions visible while expand menu is open
-  if (showExpandMenu.value) return
-  isHovered.value = false
-}
-
 function toggleStar(event: Event) {
   event.stopPropagation()
   const { teamId } = useTeamContext()
@@ -230,6 +152,13 @@ function toggleStar(event: Event) {
     method: 'PATCH',
     body: { starred: !decision.value.starred }
   })
+}
+
+function togglePin(event: Event) {
+  event.stopPropagation()
+  if (decision.value.id) {
+    togglePinFn(decision.value.id)
+  }
 }
 </script>
 
@@ -242,12 +171,13 @@ function toggleStar(event: Event) {
         'decision-node--dragging': dragging,
         'decision-node--parked': isParked,
         'decision-node--starred': isStarred,
+        'decision-node--pinned': isPinned,
       },
       branchColor.bg,
       branchColor.border ? `border-l-3 ${branchColor.border}` : '',
     ]"
     @mouseenter="isHovered = true"
-    @mouseleave="onMouseLeave"
+    @mouseleave="isHovered = false; showExpandMenu = false"
   >
     <Handle type="target" :position="Position.Top" class="decision-handle" />
 
@@ -259,6 +189,14 @@ function toggleStar(event: Event) {
         @click="toggleStar"
       >
         <UIcon :name="isStarred ? 'i-lucide-star' : 'i-lucide-star'" class="size-3.5" />
+      </button>
+
+      <button
+        class="pin-btn"
+        :class="{ 'pin-btn--active': isPinned }"
+        @click="togglePin"
+      >
+        <UIcon :name="isPinned ? 'i-lucide-pin' : 'i-lucide-pin-off'" class="size-3.5" />
       </button>
 
       <UIcon
@@ -286,75 +224,32 @@ function toggleStar(event: Event) {
     </div>
 
     <!-- Content -->
-    <p class="text-sm text-default leading-snug">
+    <p class="text-sm text-neutral-800 dark:text-neutral-200 leading-snug">
       {{ displayContent }}
     </p>
 
     <!-- Version tag for non-v1 -->
     <div v-if="decision.versionTag && decision.versionTag !== 'v1'" class="mt-1.5">
-      <span class="text-[10px] text-muted font-mono">
+      <span class="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono">
         {{ decision.versionTag }}
       </span>
     </div>
 
     <!-- AI source indicator -->
-    <div v-if="decision.source === 'ai' || decision.source === 'dispatch' || decision.source === 'mcp'" class="mt-1.5 flex items-center gap-1">
-      <UIcon :name="decision.source === 'mcp' ? 'i-lucide-terminal' : decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
-      <span class="text-[10px] text-violet-400">{{ decision.source === 'mcp' ? 'Claude Code' : decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
+    <div v-if="decision.source === 'ai' || decision.source === 'dispatch'" class="mt-1.5 flex items-center gap-1">
+      <UIcon :name="decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
+      <span class="text-[10px] text-violet-400">{{ decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
     </div>
 
-    <!-- Image artifact preview -->
-    <div v-if="imageArtifact" class="mt-1.5 -mx-1">
-      <img
-        :src="imageArtifact.url"
-        :alt="imageArtifact.prompt || 'Generated image'"
-        class="w-full rounded border border-stone-200 dark:border-stone-700"
-      />
-    </div>
-
-    <!-- Prototype artifact preview (iframe) -->
-    <div v-if="prototypeArtifact" class="mt-1.5 -mx-1">
-      <div class="rounded border border-stone-200 dark:border-stone-700 overflow-hidden">
-        <iframe
-          :srcdoc="prototypeArtifact.content"
-          class="w-full h-[120px] bg-white pointer-events-none"
-          sandbox="allow-scripts"
-        />
-        <button
-          class="flex items-center justify-center gap-1 w-full px-2 py-1.5 bg-stone-100 dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors cursor-pointer"
-          @click="openPrototype"
-        >
-          <UIcon name="i-lucide-external-link" class="size-3 text-primary-500" />
-          <span class="text-[10px] text-primary-600 dark:text-primary-400">Open full size</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Code artifact preview -->
-    <div v-if="codeArtifact" class="mt-1.5 -mx-1">
-      <div class="rounded border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 overflow-hidden">
-        <div class="flex items-center justify-between px-2 py-1 border-b border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800">
-          <span class="text-[10px] font-mono text-stone-500">{{ codeArtifact.metadata?.language || 'code' }}</span>
-          <button
-            class="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors cursor-pointer"
-            @click="copyCode"
-          >
-            <UIcon :name="codeCopied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3" />
-          </button>
-        </div>
-        <pre class="px-2 py-1.5 text-[10px] font-mono leading-tight text-stone-700 dark:text-stone-300 max-h-[80px] overflow-hidden">{{ codeArtifact.content.slice(0, 200) }}{{ codeArtifact.content.length > 200 ? '...' : '' }}</pre>
-      </div>
-    </div>
-
-    <!-- Non-visual artifact indicators -->
-    <div v-if="nonVisualArtifacts.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+    <!-- Artifact indicators -->
+    <div v-if="decision.artifacts?.length" class="mt-1.5 flex items-center gap-1.5 flex-wrap">
       <span
-        v-for="(artifact, i) in nonVisualArtifacts"
+        v-for="(artifact, i) in decision.artifacts"
         :key="i"
-        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
       >
         <UIcon
-          :name="artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
+          :name="artifact.type === 'image' ? 'i-lucide-image' : artifact.type === 'code' ? 'i-lucide-code' : artifact.type === 'prototype' ? 'i-lucide-layout-template' : 'i-lucide-text'"
           class="size-3"
         />
         {{ artifact.type }}
@@ -386,7 +281,7 @@ function toggleStar(event: Event) {
             class="expand-menu__item"
             @click="handleExpandMode(mode.id, $event)"
           >
-            <UIcon :name="mode.icon" class="size-4 shrink-0 text-violet-500" />
+            <UIcon :name="mode.icon" class="size-3.5 shrink-0" />
             <div class="min-w-0">
               <div class="text-xs font-medium">{{ mode.label }}</div>
               <div class="text-[10px] opacity-60">{{ mode.description }}</div>
@@ -411,15 +306,6 @@ function toggleStar(event: Event) {
         @click="handleDispatch"
       >
         <UIcon name="i-lucide-send" class="size-3.5" />
-      </button>
-
-      <!-- Focus in path -->
-      <button
-        class="decision-node__action"
-        title="Show in thinking path"
-        @click="handleFocusInPath"
-      >
-        <UIcon name="i-lucide-route" class="size-3.5" />
       </button>
 
       <!-- Copy context -->
@@ -474,25 +360,17 @@ function toggleStar(event: Event) {
 
 <style scoped>
 @reference "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
 .decision-node {
-  @apply px-4 py-3 rounded-xl border bg-white dark:bg-stone-900;
-  @apply border-stone-200 dark:border-stone-700;
-  @apply transition-all duration-150;
-  @apply min-w-[160px] max-w-[280px];
+  @apply px-3 py-2.5 rounded-lg border bg-white dark:bg-neutral-900;
+  @apply border-neutral-200 dark:border-neutral-700;
+  @apply shadow-sm transition-all duration-150;
+  @apply min-w-[160px] max-w-[240px];
   @apply relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  /* Extend hover zone to cover action buttons positioned outside */
-  &::after {
-    content: '';
-    @apply absolute -inset-3 pointer-events-auto;
-    z-index: -1;
-  }
 }
 
 .decision-node--selected {
-  @apply ring-1;
+  @apply ring-2;
   border-color: var(--color-primary-500);
   --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
 }
@@ -506,15 +384,27 @@ function toggleStar(event: Event) {
 }
 
 .decision-node--starred {
-  @apply border-amber-200 dark:border-amber-800;
+  @apply border-amber-300 dark:border-amber-700;
+}
+
+.decision-node--pinned {
+  @apply border-blue-300 dark:border-blue-700;
 }
 
 .star-btn {
-  @apply text-stone-300 dark:text-stone-500 hover:text-amber-400 transition-colors cursor-pointer;
+  @apply text-neutral-300 dark:text-neutral-600 hover:text-amber-400 transition-colors cursor-pointer;
 }
 
 .star-btn--active {
   @apply text-amber-400;
+}
+
+.pin-btn {
+  @apply text-neutral-300 dark:text-neutral-600 hover:text-blue-400 transition-colors cursor-pointer;
+}
+
+.pin-btn--active {
+  @apply text-blue-400;
 }
 
 .decision-node__actions {
@@ -523,9 +413,9 @@ function toggleStar(event: Event) {
 
 .decision-node__action {
   @apply w-6 h-6 rounded-full flex items-center justify-center;
-  @apply bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600;
+  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
   @apply shadow-sm cursor-pointer transition-all duration-150;
-  @apply text-stone-500 hover:scale-110;
+  @apply text-neutral-500 hover:scale-110;
   &:hover { color: var(--color-primary-500); }
 }
 
@@ -550,25 +440,21 @@ function toggleStar(event: Event) {
 }
 
 .expand-menu {
-  @apply absolute top-8 left-0 w-56 py-1.5;
-  @apply bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-600;
-  @apply rounded-xl shadow-lg z-50;
+  @apply absolute top-8 right-0 w-52 py-1;
+  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700;
+  @apply rounded-lg shadow-lg z-50;
 }
 
 .expand-menu__item {
-  @apply flex items-center gap-2.5 w-full px-3 py-2 text-left;
-  @apply text-stone-700 dark:text-stone-200;
-  @apply hover:bg-stone-100 dark:hover:bg-stone-700;
+  @apply flex items-center gap-2 w-full px-3 py-1.5 text-left;
+  @apply hover:bg-neutral-50 dark:hover:bg-neutral-700/50;
   @apply transition-colors cursor-pointer;
-
-  .text-xs { @apply text-stone-800 dark:text-stone-100; }
-  .opacity-60 { opacity: 1; @apply text-stone-500 dark:text-stone-400; }
 }
 
 .decision-handle {
   @apply w-2 h-2 rounded-full;
-  @apply bg-stone-400 dark:bg-stone-500;
-  @apply border border-white dark:border-stone-800;
+  @apply bg-neutral-400 dark:bg-neutral-500;
+  @apply border border-white dark:border-neutral-800;
   @apply transition-colors;
 }
 
