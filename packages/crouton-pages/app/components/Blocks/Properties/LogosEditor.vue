@@ -315,7 +315,7 @@ function getImageMode(index: number): string {
             </div>
             <UInput
               :model-value="item.alt || ''"
-              placeholder="Alt text"
+              :placeholder="t('pages.blocks.altText')"
               size="sm"
               class="w-full"
               @update:model-value="updateItem(index, 'alt', $event)"
@@ -352,7 +352,7 @@ function getImageMode(index: number): string {
               />
               <UButton
                 icon="i-lucide-link"
-                label="URL"
+                :label="t('pages.blocks.urlLabel')"
                 variant="soft"
                 color="neutral"
                 size="xs"
@@ -372,7 +372,7 @@ function getImageMode(index: number): string {
             </Suspense>
             <div class="flex gap-1">
               <UButton icon="i-lucide-upload" :label="t('pages.blocks.media.upload')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'upload'" />
-              <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
+              <UButton icon="i-lucide-link" :label="t('pages.blocks.urlLabel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
               <UButton v-if="item.value" :label="t('common.cancel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
             </div>
           </div>
@@ -382,7 +382,7 @@ function getImageMode(index: number): string {
             <CroutonImageUpload @file-selected="handleFileSelected(index, $event)" />
             <div class="flex gap-1">
               <UButton v-if="hasAssetsPicker" icon="i-lucide-folder-open" :label="t('pages.blocks.media.browse')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'browse'" />
-              <UButton icon="i-lucide-link" label="URL" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
+              <UButton icon="i-lucide-link" :label="t('pages.blocks.urlLabel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'url'" />
               <UButton v-if="item.value" :label="t('common.cancel')" variant="ghost" color="neutral" size="xs" @click="imageMode[item._id] = 'preview'" />
             </div>
           </div>

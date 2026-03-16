@@ -509,9 +509,9 @@ const pageTypeDropdownItems = computed(() => [
 
 // Status config
 const statusConfig: Record<string, { color: string; icon: string; label: string }> = {
-  draft: { color: 'warning', icon: 'i-lucide-pencil', label: t('pages.status.draft') || 'Draft' },
-  published: { color: 'success', icon: 'i-lucide-check', label: t('pages.status.published') || 'Published' },
-  archived: { color: 'error', icon: 'i-lucide-archive', label: t('pages.status.archived') || 'Archived' }
+  draft: { color: 'warning', icon: 'i-lucide-pencil', label: t('pages.status.draft') },
+  published: { color: 'success', icon: 'i-lucide-check', label: t('pages.status.published') },
+  archived: { color: 'error', icon: 'i-lucide-archive', label: t('pages.status.archived') }
 }
 
 const statusDropdownItems = computed(() => [
@@ -524,10 +524,10 @@ const statusDropdownItems = computed(() => [
 
 // Visibility config
 const visibilityConfig: Record<string, { icon: string; label: string }> = {
-  public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') || 'Public' },
-  members: { icon: 'i-lucide-users', label: t('pages.visibility.members') || 'Members Only' },
-  admin: { icon: 'i-lucide-shield', label: t('pages.visibility.admin') || 'Admin Only' },
-  hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') || 'Hidden' }
+  public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') },
+  members: { icon: 'i-lucide-users', label: t('pages.visibility.members') },
+  admin: { icon: 'i-lucide-shield', label: t('pages.visibility.admin') },
+  hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') }
 }
 
 const visibilityDropdownItems = computed(() => [
@@ -540,21 +540,21 @@ const visibilityDropdownItems = computed(() => [
 
 // Layout options
 const layoutOptions = [
-  { value: 'default', label: t('pages.layout.default') || 'Default (Scrollable)' },
-  { value: 'full-height', label: t('pages.layout.fullHeight') || 'Full Height (Fixed)' },
-  { value: 'full-screen', label: t('pages.layout.fullScreen') || 'Full Screen (No Padding)' }
+  { value: 'default', label: t('pages.layout.default') },
+  { value: 'full-height', label: t('pages.layout.fullHeight') },
+  { value: 'full-screen', label: t('pages.layout.fullScreen') }
 ]
 
 // Robots options for SEO
 const robotsOptions = [
-  { value: 'index', label: t('pages.robots.index') || 'Allow indexing' },
-  { value: 'noindex', label: t('pages.robots.noindex') || 'No indexing' }
+  { value: 'index', label: t('pages.robots.index') },
+  { value: 'noindex', label: t('pages.robots.noindex') }
 ]
 
 // Parent page options
 const parentOptions = computed(() => {
   const options: { value: string | null; label: string; disabled?: boolean }[] = [
-    { value: null, label: t('pages.parent.root') || 'Root (No Parent)' }
+    { value: null, label: t('pages.parent.root') }
   ]
 
   const pages = allPages.value
@@ -728,11 +728,11 @@ const fieldOptions = {
 
 // Field groups for collapsible sections in the i18n input
 const fieldGroups = computed(() => ({
-  title: 'Info',
-  slug: 'Info',
-  seoTitle: 'Extra',
-  seoDescription: 'Extra',
-  content: 'Content',
+  title: t('pages.fieldGroups.info'),
+  slug: t('pages.fieldGroups.info'),
+  seoTitle: t('pages.fieldGroups.extra'),
+  seoDescription: t('pages.fieldGroups.extra'),
+  content: t('pages.fieldGroups.content'),
 }))
 
 // Preview drawer state
@@ -966,14 +966,14 @@ defineExpose({ state })
           :field-components="fieldComponents"
           :field-options="fieldOptions"
           :field-groups="fieldGroups"
-          :default-open-groups="['Info', 'Content']"
+          :default-open-groups="[t('pages.fieldGroups.info'), t('pages.fieldGroups.content')]"
           :collab="collabForI18n"
           :class="isCollectionPage ? 'min-h-64' : 'h-full'"
         >
           <template #group-extra="{ locale: previewLocale }">
             <USeparator class="mt-3 mb-2" />
             <div class="flex flex-col gap-2">
-              <UFormField :label="t('pages.fields.ogImage') || 'Social Image'" name="ogImage">
+              <UFormField :label="t('pages.fields.ogImage')" name="ogImage">
                 <Suspense v-if="hasAssetsPicker">
                   <CroutonAssetsPicker
                     v-model="selectedOgImageAssetId"
@@ -990,7 +990,7 @@ defineExpose({ state })
                   accept="image/*"
                 />
               </UFormField>
-              <UFormField :label="t('pages.fields.robots') || 'Search Indexing'" name="robots">
+              <UFormField :label="t('pages.fields.robots')" name="robots">
                 <USelect
                   v-model="state.robots"
                   :items="robotsOptions"

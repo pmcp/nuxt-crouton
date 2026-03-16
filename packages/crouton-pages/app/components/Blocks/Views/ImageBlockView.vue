@@ -20,6 +20,7 @@ const props = defineProps<{
   getPos: () => number
 }>()
 
+const { t } = useT()
 const attrs = computed(() => props.node.attrs)
 
 const hasSrc = computed(() => !!attrs.value.src)
@@ -65,14 +66,14 @@ function handleOpenPanel() {
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            Image
+            {{ t('pages.blocks.typeLabels.image') }}
           </span>
           <!-- Action buttons -->
           <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Edit block properties"
+              :title="t('pages.blocks.editBlock')"
               @click.stop="handleOpenPanel"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +83,7 @@ function handleOpenPanel() {
             <button
               type="button"
               class="p-1 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-              title="Delete block"
+              :title="t('pages.blocks.deleteBlock')"
               @click.stop="deleteNode"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +117,7 @@ function handleOpenPanel() {
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            <span class="text-sm font-medium">No image — double-click to add</span>
+            <span class="text-sm font-medium">{{ t('pages.blocks.noImage') }}</span>
           </div>
         </div>
       </div>

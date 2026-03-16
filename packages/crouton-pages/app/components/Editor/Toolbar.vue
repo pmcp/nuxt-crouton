@@ -290,7 +290,7 @@ const { t } = useT()
             <div class="p-4 w-72 space-y-4">
               <div class="text-sm font-medium text-default mb-3">{{ t('pages.editor.pageSettings') }}</div>
 
-              <UFormField :label="t('pages.fields.layout') || 'Layout'" name="layout">
+              <UFormField :label="t('pages.fields.layout')" name="layout">
                 <USelect
                   :model-value="layout"
                   :items="layoutOptions"
@@ -301,13 +301,13 @@ const { t } = useT()
                 />
               </UFormField>
 
-              <UFormField :label="t('pages.fields.parent') || 'Parent'" name="parentId">
+              <UFormField :label="t('pages.fields.parent')" name="parentId">
                 <USelect
                   :model-value="parentId"
                   :items="parentOptions"
                   value-key="value"
                   :loading="pagesPending"
-                  placeholder="None"
+                  :placeholder="t('pages.editor.noParent')"
                   size="sm"
                   class="w-full"
                   @update:model-value="(val: string | null) => emit('update:parentId', val)"

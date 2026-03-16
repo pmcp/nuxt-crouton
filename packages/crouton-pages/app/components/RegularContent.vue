@@ -49,7 +49,7 @@ const resolvedContent = computed(() => {
     <div v-if="resolvedContent" v-html="resolvedContent" />
     <div v-else class="text-muted text-center py-12">
       <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto block" />
-      <p>This page has no content yet.</p>
+      <p>{{ $t('pages.noContent') }}</p>
     </div>
   </article>
 </template>

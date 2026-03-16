@@ -6,23 +6,28 @@
       "title": "Pagina Werkruimte",
       "emptyTitle": "Selecteer een pagina",
       "emptyDescription": "Kies een pagina uit de zijbalk om te bewerken, of maak een nieuwe aan.",
-      "keyboardShortcuts": "Keyboard shortcuts",
-      "newPage": "New page",
-      "search": "Search"
+      "keyboardShortcuts": "Sneltoetsen",
+      "newPage": "Nieuwe pagina",
+      "search": "Zoeken"
     },
     "notFound": "Pagina niet gevonden",
     "notFoundDescription": "De pagina die je zoekt bestaat niet.",
     "backToHome": "Terug naar Home",
-    "create": "Pagina Aanmaken",
-    "createNew": "Nieuwe Pagina Aanmaken",
-    "selectType": "Selecteer Paginatype",
+    "create": "Pagina aanmaken",
+    "createNew": "Nieuwe pagina aanmaken",
+    "selectType": "Selecteer paginatype",
     "empty": "Nog geen pagina's",
     "emptyDescription": "Maak je eerste pagina aan om te beginnen",
+    "noContent": "Deze pagina heeft nog geen inhoud.",
+    "untitled": "Naamloos",
+    "unknownPageType": "Onbekend paginatype",
+    "unknownPageTypeDescription": "Het paginatype \"{type}\" is niet geregistreerd. De app die dit paginatype levert is mogelijk niet geïnstalleerd.",
+    "newPagePlaceholder": "Nieuwe pagina...",
     "admin": {
       "pages": "Pagina's",
       "title": "Pagina's",
-      "createPage": "Pagina Aanmaken",
-      "editPage": "Pagina Bewerken",
+      "createPage": "Pagina aanmaken",
+      "editPage": "Pagina bewerken",
       "pageType": "Paginatype",
       "content": "Inhoud",
       "settings": "Instellingen"
@@ -34,17 +39,17 @@
     },
     "visibility": {
       "public": "Openbaar",
-      "members": "Alleen Leden",
-      "admin": "Alleen Beheerders",
+      "members": "Alleen leden",
+      "admin": "Alleen beheerders",
       "hidden": "Verborgen"
     },
     "layout": {
       "default": "Standaard",
-      "fullHeight": "Volledige Hoogte",
-      "fullScreen": "Volledig Scherm"
+      "fullHeight": "Volledige hoogte",
+      "fullScreen": "Volledig scherm"
     },
     "parent": {
-      "root": "Root (Geen Ouder)"
+      "root": "Root (geen ouder)"
     },
     "fields": {
       "title": "Titel",
@@ -53,13 +58,13 @@
       "content": "Inhoud",
       "status": "Status",
       "visibility": "Zichtbaarheid",
-      "showInNavigation": "Tonen in Navigatie",
-      "seoTitle": "SEO Titel",
-      "seoDescription": "SEO Beschrijving",
+      "showInNavigation": "Tonen in navigatie",
+      "seoTitle": "SEO-titel",
+      "seoDescription": "SEO-beschrijving",
       "ogImage": "Sociale afbeelding",
-      "robots": "Zoekindex",
+      "robots": "Zoekindexering",
       "layout": "Layout",
-      "parent": "Bovenliggende Pagina"
+      "parent": "Bovenliggende pagina"
     },
     "robots": {
       "index": "Indexering toestaan",
@@ -69,28 +74,236 @@
       "menu": "Menu"
     },
     "collection": {
-      "itemUnavailable": "Item Unavailable"
+      "itemUnavailable": "Item niet beschikbaar",
+      "noItemSelected": "Geen collectie-item geselecteerd",
+      "noItemSelectedDescription": "Deze pagina is gekoppeld aan een collectie maar er is nog geen item geselecteerd.",
+      "itemUnavailableDescription": "Het collectie-item is mogelijk verwijderd of niet meer toegankelijk.",
+      "previewUnavailable": "Voorbeeld niet beschikbaar",
+      "previewUnavailableDescription": "Er is geen detailcomponent beschikbaar voor deze collectie.",
+      "noCollectionBound": "Geen collectie gekoppeld",
+      "noCollectionBoundDescription": "Deze pagina is een collectiebinder maar er is nog geen collectie geselecteerd. Bewerk de pagina in het beheer om een collectie te koppelen.",
+      "noItems": "Geen items gevonden in deze collectie.",
+      "backToList": "Terug naar overzicht"
     },
     "editor": {
-      "settings": "Settings",
-      "pageSettings": "Page Settings",
-      "generate": "Generate",
-      "preview": "Preview",
-      "search": "Search",
-      "social": "Social",
-      "yourBrief": "Your brief",
-      "examples": "Examples"
+      "settings": "Instellingen",
+      "pageSettings": "Pagina-instellingen",
+      "generate": "Genereren",
+      "preview": "Voorbeeld",
+      "search": "Zoeken",
+      "social": "Sociaal",
+      "yourBrief": "Jouw briefing",
+      "examples": "Voorbeelden",
+      "editBlock": "Blok bewerken",
+      "livePreview": "Live voorbeeld",
+      "unknownBlockType": "Onbekend bloktype",
+      "deleteBlock": "Blok verwijderen",
+      "done": "Klaar",
+      "pagePreview": "Paginavoorbeeld",
+      "draftPreview": "Conceptvoorbeeld",
+      "tabEditor": "Editor",
+      "tabPreview": "Voorbeeld",
+      "insertBlock": "Blok invoegen",
+      "slashHint": "Typ / om blokken in te voegen",
+      "zoomTo100": "Zoom naar 100%",
+      "zoomToPercent": "Zoom naar {percent}%",
+      "defaultPageType": "Pagina",
+      "regularPage": "Gewone pagina",
+      "shownInMenu": "Getoond in menu",
+      "hiddenFromMenu": "Verborgen uit menu",
+      "hiddenFromNavigation": "Verborgen uit navigatie",
+      "inMenu": "In menu",
+      "noMenu": "Geen menu",
+      "noParent": "Geen",
+      "generateWithAI": "Pagina genereren met AI",
+      "previewDraft": "Concept bekijken",
+      "previewPage": "Pagina bekijken",
+      "openInPublic": "Openen in publiek",
+      "publishToOpen": "Publiceer pagina om publiek te openen",
+      "open": "Openen",
+      "confirmDelete": "Verwijderen?",
+      "loadingPage": "Pagina laden...",
+      "selectItem": "Selecteer {name}",
+      "updated": "Bijgewerkt {time}",
+      "noConfig": "Dit paginatype heeft geen extra configuratie.",
+      "displaysComponent": "De pagina toont het {name} component.",
+      "configField": "Configuratieveld: {name}",
+      "binder": {
+        "bindCollection": "Collectie koppelen",
+        "bindCollectionHelp": "Alle items uit deze collectie verschijnen als sub-items in de navigatie.",
+        "sortField": "Sorteerveld",
+        "sortFieldHelp": "bijv. title, order",
+        "sortOrder": "Sorteervolgorde",
+        "groupBy": "Groeperen op",
+        "groupByHelp": "Groepeer items op een referentieveld (bijv. categorie). Items worden gegroepeerd op de titel van het gerefereerde record.",
+        "groupByPlaceholder": "bijv. categorie",
+        "selectCollection": "Selecteer een collectie..."
+      }
+    },
+    "sidebar": {
+      "drafts": "Concepten",
+      "noResults": "Geen pagina's gevonden",
+      "createFirst": "Eerste pagina aanmaken",
+      "changes": "{count} wijziging | {count} wijzigingen",
+      "discard": "Verwerpen",
+      "publish": "Publiceren"
+    },
+    "seo": {
+      "pageTitle": "Paginatitel",
+      "noDescription": "Geen beschrijving — voeg een metabeschrijving toe om SEO te verbeteren.",
+      "noSocialImage": "Geen sociale afbeelding ingesteld"
+    },
+    "errors": {
+      "loadFailed": "Pagina laden mislukt",
+      "titleRequired": "Titel vereist",
+      "titleRequiredDescription": "Voer een titel in voor minstens één taal"
     },
     "blocks": {
-      "highlight": "Highlight",
-      "addCard": "Add Card"
+      "highlight": "Markeren",
+      "addCard": "Kaart toevoegen",
+      "categories": {
+        "hero": "Hero",
+        "content": "Inhoud",
+        "cta": "Call to Action",
+        "layout": "Layout"
+      },
+      "blockSettings": "{name} instellingen",
+      "unknownBlock": "Blok",
+      "blockSize": "Blokgrootte",
+      "sizeDefault": "Standaard",
+      "sizeNarrow": "Smal",
+      "sizeWide": "Breed",
+      "sizeFull": "Volledige breedte",
+      "typeLabels": {
+        "collection": "Collectie",
+        "fileDownload": "Bestandsdownload",
+        "video": "Video",
+        "logos": "Logo's",
+        "image": "Afbeelding"
+      },
+      "editBlock": "Blokeigenschappen bewerken",
+      "deleteBlock": "Blok verwijderen",
+      "noImage": "Geen afbeelding — dubbelklik om toe te voegen",
+      "colors": {
+        "primary": "Primair",
+        "secondary": "Secundair",
+        "success": "Succes",
+        "warning": "Waarschuwing",
+        "error": "Fout",
+        "info": "Info",
+        "neutral": "Neutraal"
+      },
+      "variants": {
+        "solid": "Gevuld",
+        "outline": "Omlijnd",
+        "soft": "Zacht",
+        "subtle": "Subtiel",
+        "ghost": "Ghost",
+        "link": "Link"
+      },
+      "defaults": {
+        "newButton": "Nieuwe knop",
+        "newCard": "Nieuwe kaart",
+        "newFeature": "Nieuw kenmerk",
+        "newQuestion": "Nieuwe vraag"
+      },
+      "addIcon": "Icoon toevoegen",
+      "urlLabel": "URL",
+      "altText": "Alt-tekst",
+      "layoutNames": {
+        "table": "Tabel",
+        "list": "Lijst",
+        "grid": "Raster",
+        "cards": "Kaarten"
+      },
+      "collection": {
+        "noCollectionSelected": "Geen collectie geselecteerd",
+        "itemsPerPage": "{count} items/pagina",
+        "selectPlaceholder": "Selecteer een collectie...",
+        "noCollections": "Geen collecties gevonden in het register."
+      },
+      "embed": {
+        "noUrl": "Geen URL ingesteld — voer een URL in bij eigenschappen"
+      },
+      "file": {
+        "noFile": "Geen bestand — dubbelklik om toe te voegen",
+        "clickToUpload": "Klik om een bestand te uploaden"
+      },
+      "video": {
+        "noVideo": "Geen video — dubbelklik om toe te voegen",
+        "noVideoSet": "Geen video ingesteld",
+        "clickToSelect": "Klik om een videobestand te selecteren",
+        "bunnyStream": "Bunny Stream",
+        "bunnyInstructions": "Plak je Bunny Stream embed-URL. Je vindt deze in het Bunny-dashboard bij de embed-instellingen van je video."
+      },
+      "image": {
+        "noImage": "Geen afbeelding ingesteld"
+      },
+      "logos": {
+        "noLogos": "Geen logo's — dubbelklik om toe te voegen",
+        "typeIcon": "Icoon",
+        "typeImage": "Afbeelding",
+        "noImage": "Geen afbeelding",
+        "addIcon": "Icoon toevoegen",
+        "addImage": "Afbeelding toevoegen"
+      },
+      "media": {
+        "browse": "Bladeren",
+        "pasteUrl": "URL plakken",
+        "upload": "Uploaden",
+        "loadingLibrary": "Bibliotheek laden...",
+        "uploadInstead": "Upload in plaats daarvan",
+        "browseLibrary": "Blader door bibliotheek",
+        "uploading": "Uploaden...",
+        "clickToUpload": "Klik om te uploaden"
+      },
+      "links": {
+        "buttonN": "Knop {n}",
+        "buttonTextPlaceholder": "Knoptekst",
+        "urlPlaceholder": "/pagina of https://...",
+        "addButton": "Knop toevoegen"
+      },
+      "faq": {
+        "questionPlaceholder": "Vraag",
+        "answerPlaceholder": "Antwoord",
+        "addQuestion": "Vraag toevoegen"
+      },
+      "features": {
+        "featureN": "Kenmerk {n}",
+        "titlePlaceholder": "Kenmerktitel",
+        "descriptionPlaceholder": "Kenmerkbeschrijving",
+        "addFeature": "Kenmerk toevoegen"
+      },
+      "cards": {
+        "cardN": "Kaart {n}",
+        "titlePlaceholder": "Kaarttitel",
+        "descriptionPlaceholder": "Kaartbeschrijving",
+        "linkPlaceholder": "Link-URL (optioneel)"
+      },
+      "buttonRow": {
+        "modeLink": "Link",
+        "modeDownload": "Download",
+        "openInNewTab": "Openen in nieuw tabblad"
+      }
+    },
+    "fieldGroups": {
+      "info": "Info",
+      "extra": "Extra",
+      "content": "Inhoud"
     }
   },
   "common": {
     "cancel": "Annuleren",
     "continue": "Doorgaan",
     "save": "Opslaan",
+    "create": "Aanmaken",
     "delete": "Verwijderen",
-    "back": "Terug"
+    "back": "Terug",
+    "edit": "Bewerken",
+    "apply": "Toepassen",
+    "undo": "Ongedaan maken",
+    "redo": "Opnieuw",
+    "ascending": "Oplopend",
+    "descending": "Aflopend"
   }
 }

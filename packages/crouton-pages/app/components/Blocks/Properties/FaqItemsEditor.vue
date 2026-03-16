@@ -28,7 +28,7 @@ function emitChange() {
 }
 
 function addItem() {
-  items.value.push({ question: 'New question', answer: '' })
+  items.value.push({ question: t('pages.blocks.defaults.newQuestion'), answer: '' })
   emitChange()
 }
 

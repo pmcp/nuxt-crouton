@@ -304,7 +304,7 @@ const headingClasses: Record<number, string> = {
       class="text-center py-12 text-muted"
     >
       <UIcon name="i-lucide-file-text" class="size-12 mb-4 mx-auto" />
-      <p>This page has no content yet.</p>
+      <p>{{ $t('pages.noContent') }}</p>
     </div>
   </div>
 </template>

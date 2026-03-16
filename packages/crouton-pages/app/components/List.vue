@@ -27,7 +27,7 @@ const { items: pages, pending } = await useCollectionQuery('pagesPages')
   >
     <template #header>
       <CroutonTableHeader
-        title="Pages"
+        :title="$t('pages.title')"
         collection="pagesPages"
         createButton
       />

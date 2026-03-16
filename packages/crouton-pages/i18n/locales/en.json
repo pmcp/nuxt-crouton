@@ -79,7 +79,11 @@
       "noItemSelectedDescription": "This page is linked to a collection but no item has been selected yet.",
       "itemUnavailableDescription": "The referenced collection item may have been deleted or is no longer accessible.",
       "previewUnavailable": "Preview Unavailable",
-      "previewUnavailableDescription": "No detail component is available for this collection."
+      "previewUnavailableDescription": "No detail component is available for this collection.",
+      "noCollectionBound": "No Collection Bound",
+      "noCollectionBoundDescription": "This page is a collection binder but no collection has been selected yet. Edit the page in the admin to bind a collection.",
+      "noItems": "No items found in this collection.",
+      "backToList": "Back to list"
     },
     "editor": {
       "settings": "Settings",
@@ -107,6 +111,7 @@
       "regularPage": "Regular Page",
       "shownInMenu": "Shown in Menu",
       "hiddenFromMenu": "Hidden from Menu",
+      "hiddenFromNavigation": "Hidden from navigation",
       "inMenu": "In Menu",
       "noMenu": "No Menu",
       "noParent": "None",
@@ -169,6 +174,48 @@
       "sizeNarrow": "Narrow",
       "sizeWide": "Wide",
       "sizeFull": "Full Width",
+      "typeLabels": {
+        "collection": "Collection",
+        "fileDownload": "File Download",
+        "video": "Video",
+        "logos": "Logos",
+        "image": "Image"
+      },
+      "editBlock": "Edit block properties",
+      "deleteBlock": "Delete block",
+      "noImage": "No image — double-click to add",
+      "colors": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "success": "Success",
+        "warning": "Warning",
+        "error": "Error",
+        "info": "Info",
+        "neutral": "Neutral"
+      },
+      "variants": {
+        "solid": "Solid",
+        "outline": "Outline",
+        "soft": "Soft",
+        "subtle": "Subtle",
+        "ghost": "Ghost",
+        "link": "Link"
+      },
+      "defaults": {
+        "newButton": "New Button",
+        "newCard": "New Card",
+        "newFeature": "New Feature",
+        "newQuestion": "New question"
+      },
+      "addIcon": "Add icon",
+      "urlLabel": "URL",
+      "altText": "Alt text",
+      "layoutNames": {
+        "table": "Table",
+        "list": "List",
+        "grid": "Grid",
+        "cards": "Cards"
+      },
       "collection": {
         "noCollectionSelected": "No collection selected",
         "itemsPerPage": "{count} items/page",
@@ -238,6 +285,11 @@
         "modeDownload": "Download",
         "openInNewTab": "Open in new tab"
       }
+    },
+    "fieldGroups": {
+      "info": "Info",
+      "extra": "Extra",
+      "content": "Content"
     }
   },
   "common": {

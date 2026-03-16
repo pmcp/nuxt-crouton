@@ -252,10 +252,9 @@ const { t } = useT()
     <!-- No collection configured -->
     <div v-if="!collectionName" class="p-8 text-center">
       <UIcon name="i-lucide-layers" class="size-12 text-muted mb-4 mx-auto block" />
-      <h2 class="text-lg font-semibold mb-2">No Collection Bound</h2>
+      <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.noCollectionBound') }}</h2>
       <p class="text-muted text-sm">
-        This page is a collection binder but no collection has been selected yet.
-        Edit the page in the admin to bind a collection.
+        {{ t('pages.collection.noCollectionBoundDescription') }}
       </p>
     </div>
 
@@ -271,11 +270,11 @@ const { t } = useT()
         <UIcon name="i-lucide-unlink" class="size-12 text-warning mb-4 mx-auto block" />
         <h2 class="text-lg font-semibold mb-2">{{ t('pages.collection.itemUnavailable') }}</h2>
         <p class="text-muted text-sm">
-          This item may have been deleted or is no longer accessible.
+          {{ t('pages.collection.itemUnavailableDescription') }}
         </p>
         <UButton :to="binderBasePath" variant="soft" class="mt-4">
           <UIcon name="i-lucide-arrow-left" class="mr-2" />
-          Back to list
+          {{ t('pages.collection.backToList') }}
         </UButton>
       </div>
 
@@ -293,11 +292,11 @@ const { t } = useT()
         <!-- Back link -->
         <UButton :to="binderBasePath" variant="ghost" size="sm" class="mb-6">
           <UIcon name="i-lucide-arrow-left" class="mr-1" />
-          Back
+          {{ t('common.back') }}
         </UButton>
 
         <h1 class="text-2xl font-bold mb-4">
-          {{ getItemValue(detailItem, titleField) || 'Untitled' }}
+          {{ getItemValue(detailItem, titleField) || t('pages.untitled') }}
         </h1>
 
         <p v-if="subtitleField" class="text-muted mb-4">
@@ -320,7 +319,7 @@ const { t } = useT()
         <!-- Empty state -->
         <div v-if="listItems.length === 0" class="text-center py-16">
           <UIcon name="i-lucide-inbox" class="size-12 text-muted mb-4 mx-auto block" />
-          <p class="text-muted">No items found in this collection.</p>
+          <p class="text-muted">{{ t('pages.collection.noItems') }}</p>
         </div>
 
         <!-- Grouped item grid -->
@@ -349,7 +348,7 @@ const { t } = useT()
                     {{ item[badgeField] }}
                   </UBadge>
                   <h3 class="font-semibold text-default group-hover:text-primary transition-colors">
-                    {{ getItemValue(item, titleField) || 'Untitled' }}
+                    {{ getItemValue(item, titleField) || t('pages.untitled') }}
                   </h3>
                   <p v-if="subtitleField" class="text-sm text-muted mt-1 line-clamp-2">
                     {{ getItemValue(item, subtitleField) }}
@@ -393,7 +392,7 @@ const { t } = useT()
 
               <!-- Title -->
               <h2 class="font-semibold text-default group-hover:text-primary transition-colors">
-                {{ getItemValue(item, titleField) || 'Untitled' }}
+                {{ getItemValue(item, titleField) || t('pages.untitled') }}
               </h2>
 
               <!-- Subtitle -->

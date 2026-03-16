@@ -17,14 +17,14 @@ const emit = defineEmits<{
 }>()
 
 // Color options
-const colorOptions = [
-  { label: 'Primary', value: 'primary' },
-  { label: 'Secondary', value: 'secondary' },
-  { label: 'Neutral', value: 'neutral' },
-  { label: 'Success', value: 'success' },
-  { label: 'Warning', value: 'warning' },
-  { label: 'Error', value: 'error' }
-]
+const colorOptions = computed(() => [
+  { label: t('pages.blocks.colors.primary'), value: 'primary' },
+  { label: t('pages.blocks.colors.secondary'), value: 'secondary' },
+  { label: t('pages.blocks.colors.neutral'), value: 'neutral' },
+  { label: t('pages.blocks.colors.success'), value: 'success' },
+  { label: t('pages.blocks.colors.warning'), value: 'warning' },
+  { label: t('pages.blocks.colors.error'), value: 'error' }
+])
 
 // Local copy for editing
 const cards = ref<BlockCard[]>([...props.modelValue])
@@ -42,7 +42,7 @@ function emitChange() {
 // Add a new card
 function addCard() {
   cards.value.push({
-    title: 'New Card',
+    title: t('pages.blocks.defaults.newCard'),
     description: '',
     icon: 'i-lucide-box'
   })

@@ -35,7 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { getPageType } = usePageTypes()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const { getSlugForLocale } = useLocalizedSlug()
 
 // Get page type info for icon
@@ -50,7 +50,7 @@ const localizedTitle = computed(() => {
   return translations?.[locale.value]?.title
     || translations?.en?.title
     || props.item.title
-    || 'Untitled'
+    || t('pages.untitled')
 })
 
 // Get localized slug with fallbacks
@@ -60,26 +60,26 @@ const localizedSlug = computed(() => getSlugForLocale(props.item, locale.value))
 const timeAgo = useTimeAgo(() => props.item.updatedAt || props.item.createdAt || new Date())
 
 // Status config - colored dots (matches Form.vue)
-const statusConfig: Record<string, { dotColor: string; label: string }> = {
-  draft: { dotColor: 'bg-warning', label: 'Draft' },
-  published: { dotColor: 'bg-success', label: 'Published' },
-  archived: { dotColor: 'bg-error', label: 'Archived' }
-}
+const statusConfig = computed<Record<string, { dotColor: string; label: string }>>(() => ({
+  draft: { dotColor: 'bg-warning', label: t('pages.status.draft') },
+  published: { dotColor: 'bg-success', label: t('pages.status.published') },
+  archived: { dotColor: 'bg-error', label: t('pages.status.archived') }
+}))
 
 // Visibility config - icons only, no color variation
-const visibilityConfig: Record<string, { icon: string; label: string }> = {
-  public: { icon: 'i-lucide-globe', label: 'Public' },
-  members: { icon: 'i-lucide-users', label: 'Members Only' },
-  admin: { icon: 'i-lucide-shield', label: 'Admin Only' },
-  hidden: { icon: 'i-lucide-eye-off', label: 'Hidden' }
-}
+const visibilityConfig = computed<Record<string, { icon: string; label: string }>>(() => ({
+  public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') },
+  members: { icon: 'i-lucide-users', label: t('pages.visibility.members') },
+  admin: { icon: 'i-lucide-shield', label: t('pages.visibility.admin') },
+  hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') }
+}))
 
-const statusStyle = computed(() => statusConfig[props.item.status || ''] || statusConfig.draft!)
-const visibilityStyle = computed(() => visibilityConfig[props.item.visibility || ''] || visibilityConfig.public!)
+const statusStyle = computed(() => statusConfig.value[props.item.status || ''] || statusConfig.value.draft!)
+const visibilityStyle = computed(() => visibilityConfig.value[props.item.visibility || ''] || visibilityConfig.value.public!)
 
 // Show in navigation indicator
 const showInMenuLabel = computed(() =>
-  props.item.showInNavigation ? 'Shown in Menu' : 'Hidden from Menu'
+  props.item.showInNavigation ? t('pages.editor.shownInMenu') : t('pages.editor.hiddenFromMenu')
 )
 </script>
 
@@ -93,7 +93,7 @@ const showInMenuLabel = computed(() =>
     ]"
   >
     <!-- Page type icon -->
-    <UTooltip :text="pageTypeInfo?.name || 'Regular Page'">
+    <UTooltip :text="pageTypeInfo?.name || $t('pages.editor.regularPage')">
       <UIcon
         :name="pageTypeInfo?.icon || 'i-lucide-file'"
         class="size-4 text-muted shrink-0"
@@ -113,7 +113,7 @@ const showInMenuLabel = computed(() =>
     <!-- Icons on the right -->
     <div class="flex items-center gap-1.5 shrink-0">
       <!-- Hidden from menu indicator (first) -->
-      <UTooltip v-if="!item.showInNavigation" text="Hidden from navigation">
+      <UTooltip v-if="!item.showInNavigation" :text="$t('pages.editor.hiddenFromNavigation')">
         <UIcon
           name="i-lucide-eye-off"
           class="size-3.5 text-muted"

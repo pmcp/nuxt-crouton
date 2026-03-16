@@ -18,22 +18,22 @@ const emit = defineEmits<{
   'update:modelValue': [value: ButtonRowItem[]]
 }>()
 
-const colorOptions = [
-  { label: 'Primary', value: 'primary' },
-  { label: 'Secondary', value: 'secondary' },
-  { label: 'Neutral', value: 'neutral' },
-  { label: 'Success', value: 'success' },
-  { label: 'Warning', value: 'warning' },
-  { label: 'Error', value: 'error' }
-]
+const colorOptions = computed(() => [
+  { label: t('pages.blocks.colors.primary'), value: 'primary' },
+  { label: t('pages.blocks.colors.secondary'), value: 'secondary' },
+  { label: t('pages.blocks.colors.neutral'), value: 'neutral' },
+  { label: t('pages.blocks.colors.success'), value: 'success' },
+  { label: t('pages.blocks.colors.warning'), value: 'warning' },
+  { label: t('pages.blocks.colors.error'), value: 'error' }
+])
 
-const variantOptions = [
-  { label: 'Solid', value: 'solid' },
-  { label: 'Outline', value: 'outline' },
-  { label: 'Soft', value: 'soft' },
-  { label: 'Ghost', value: 'ghost' },
-  { label: 'Link', value: 'link' }
-]
+const variantOptions = computed(() => [
+  { label: t('pages.blocks.variants.solid'), value: 'solid' },
+  { label: t('pages.blocks.variants.outline'), value: 'outline' },
+  { label: t('pages.blocks.variants.soft'), value: 'soft' },
+  { label: t('pages.blocks.variants.ghost'), value: 'ghost' },
+  { label: t('pages.blocks.variants.link'), value: 'link' }
+])
 
 const { t } = useT()
 const buttons = ref<ButtonRowItem[]>([...props.modelValue])
@@ -48,7 +48,7 @@ function emitChange() {
 
 function addButton() {
   buttons.value.push({
-    label: 'New Button',
+    label: t('pages.blocks.defaults.newButton'),
     to: '',
     color: 'primary',
     variant: 'solid'
@@ -203,7 +203,7 @@ function removeFile(index: number) {
       <template v-if="!btn.download">
         <UInput
           :model-value="btn.to || ''"
-          placeholder="/page or https://..."
+          :placeholder="t('pages.blocks.links.urlPlaceholder')"
           size="sm"
           @update:model-value="updateButton(index, 'to', $event)"
         >

@@ -78,7 +78,7 @@ const adminDropdownItems = computed<DropdownMenuItem[][]>(() => {
   // Dashboard
   groups.push([
     {
-      label: t('admin.dashboard') || 'Dashboard',
+      label: t('admin.dashboard'),
       icon: 'i-lucide-layout-dashboard',
       to: prefix
     }
@@ -88,22 +88,22 @@ const adminDropdownItems = computed<DropdownMenuItem[][]>(() => {
   const teamPath = `${prefix}/team`
   groups.push([
     {
-      label: t('teams.members') || 'Members',
+      label: t('teams.members'),
       icon: 'i-lucide-users',
       to: teamPath
     },
     {
-      label: t('pages.admin.pages') || 'Pages',
+      label: t('pages.admin.pages'),
       icon: 'i-lucide-file-text',
       to: `${prefix}/pages`
     },
     {
-      label: t('teams.teamSettings') || 'Team Settings',
+      label: t('teams.teamSettings'),
       icon: 'i-lucide-settings',
       to: `${teamPath}/settings`
     },
     {
-      label: t('navigation.translations') || 'Translations',
+      label: t('navigation.translations'),
       icon: 'i-lucide-languages',
       to: `${prefix}/translations`
     }
@@ -128,7 +128,7 @@ const adminDropdownItems = computed<DropdownMenuItem[][]>(() => {
 
     groups.push(
       allRoutes.map(appRoute => ({
-        label: t(appRoute.label) || appRoute.label,
+        label: t(appRoute.label),
         icon: appRoute.icon,
         to: `${prefix}${appRoute.path}`
       }))
@@ -211,7 +211,7 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
             color="neutral"
             variant="ghost"
             size="sm"
-            :label="t('auth.signIn') || 'Sign In'"
+            :label="t('auth.signIn')"
           />
 
           <!-- Admin menu -->

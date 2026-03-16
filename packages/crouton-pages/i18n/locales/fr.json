@@ -6,9 +6,9 @@
       "title": "Espace de travail Pages",
       "emptyTitle": "Sélectionnez une page",
       "emptyDescription": "Choisissez une page dans la barre latérale pour la modifier, ou créez-en une nouvelle.",
-      "keyboardShortcuts": "Keyboard shortcuts",
-      "newPage": "New page",
-      "search": "Search"
+      "keyboardShortcuts": "Raccourcis clavier",
+      "newPage": "Nouvelle page",
+      "search": "Rechercher"
     },
     "notFound": "Page non trouvée",
     "notFoundDescription": "La page que vous recherchez n'existe pas.",
@@ -18,6 +18,11 @@
     "selectType": "Sélectionner le type de page",
     "empty": "Aucune page pour le moment",
     "emptyDescription": "Créez votre première page pour commencer",
+    "noContent": "Cette page n'a pas encore de contenu.",
+    "untitled": "Sans titre",
+    "unknownPageType": "Type de page inconnu",
+    "unknownPageTypeDescription": "Le type de page \"{type}\" n'est pas enregistré. L'application fournissant ce type de page n'est peut-être pas installée.",
+    "newPagePlaceholder": "Nouvelle page...",
     "admin": {
       "pages": "Pages",
       "title": "Pages",
@@ -44,7 +49,7 @@
       "fullScreen": "Plein écran"
     },
     "parent": {
-      "root": "Racine (Pas de parent)"
+      "root": "Racine (pas de parent)"
     },
     "fields": {
       "title": "Titre",
@@ -69,28 +74,236 @@
       "menu": "Menu"
     },
     "collection": {
-      "itemUnavailable": "Item Unavailable"
+      "itemUnavailable": "Élément indisponible",
+      "noItemSelected": "Aucun élément de collection sélectionné",
+      "noItemSelectedDescription": "Cette page est liée à une collection mais aucun élément n'a encore été sélectionné.",
+      "itemUnavailableDescription": "L'élément de collection référencé a peut-être été supprimé ou n'est plus accessible.",
+      "previewUnavailable": "Aperçu indisponible",
+      "previewUnavailableDescription": "Aucun composant de détail n'est disponible pour cette collection.",
+      "noCollectionBound": "Aucune collection liée",
+      "noCollectionBoundDescription": "Cette page est un lieur de collection mais aucune collection n'a encore été sélectionnée. Modifiez la page dans l'admin pour lier une collection.",
+      "noItems": "Aucun élément trouvé dans cette collection.",
+      "backToList": "Retour à la liste"
     },
     "editor": {
-      "settings": "Settings",
-      "pageSettings": "Page Settings",
-      "generate": "Generate",
-      "preview": "Preview",
-      "search": "Search",
+      "settings": "Paramètres",
+      "pageSettings": "Paramètres de la page",
+      "generate": "Générer",
+      "preview": "Aperçu",
+      "search": "Rechercher",
       "social": "Social",
-      "yourBrief": "Your brief",
-      "examples": "Examples"
+      "yourBrief": "Votre brief",
+      "examples": "Exemples",
+      "editBlock": "Modifier le bloc",
+      "livePreview": "Aperçu en direct",
+      "unknownBlockType": "Type de bloc inconnu",
+      "deleteBlock": "Supprimer le bloc",
+      "done": "Terminé",
+      "pagePreview": "Aperçu de la page",
+      "draftPreview": "Aperçu du brouillon",
+      "tabEditor": "Éditeur",
+      "tabPreview": "Aperçu",
+      "insertBlock": "Insérer un bloc",
+      "slashHint": "Tapez / pour insérer des blocs",
+      "zoomTo100": "Zoom à 100%",
+      "zoomToPercent": "Zoom à {percent}%",
+      "defaultPageType": "Page",
+      "regularPage": "Page standard",
+      "shownInMenu": "Affiché dans le menu",
+      "hiddenFromMenu": "Masqué du menu",
+      "hiddenFromNavigation": "Masqué de la navigation",
+      "inMenu": "Dans le menu",
+      "noMenu": "Pas de menu",
+      "noParent": "Aucun",
+      "generateWithAI": "Générer la page avec l'IA",
+      "previewDraft": "Aperçu du brouillon",
+      "previewPage": "Aperçu de la page",
+      "openInPublic": "Ouvrir en public",
+      "publishToOpen": "Publiez la page pour l'ouvrir publiquement",
+      "open": "Ouvrir",
+      "confirmDelete": "Supprimer ?",
+      "loadingPage": "Chargement de la page...",
+      "selectItem": "Sélectionner {name}",
+      "updated": "Mis à jour {time}",
+      "noConfig": "Ce type de page n'a pas de configuration supplémentaire.",
+      "displaysComponent": "La page affichera le composant {name}.",
+      "configField": "Champ de configuration : {name}",
+      "binder": {
+        "bindCollection": "Lier une collection",
+        "bindCollectionHelp": "Tous les éléments de cette collection apparaîtront comme sous-entrées dans la navigation.",
+        "sortField": "Champ de tri",
+        "sortFieldHelp": "ex. title, order",
+        "sortOrder": "Ordre de tri",
+        "groupBy": "Grouper par",
+        "groupByHelp": "Grouper les éléments par un champ de référence (ex. catégorie). Les éléments sont groupés par le titre de l'enregistrement référencé.",
+        "groupByPlaceholder": "ex. catégorie",
+        "selectCollection": "Sélectionner une collection..."
+      }
+    },
+    "sidebar": {
+      "drafts": "Brouillons",
+      "noResults": "Aucune page ne correspond à votre recherche",
+      "createFirst": "Créer la première page",
+      "changes": "{count} modification | {count} modifications",
+      "discard": "Annuler",
+      "publish": "Publier"
+    },
+    "seo": {
+      "pageTitle": "Titre de la page",
+      "noDescription": "Aucune description — ajoutez une méta-description pour améliorer le SEO.",
+      "noSocialImage": "Aucune image sociale définie"
+    },
+    "errors": {
+      "loadFailed": "Échec du chargement de la page",
+      "titleRequired": "Titre requis",
+      "titleRequiredDescription": "Veuillez saisir un titre pour au moins une langue"
     },
     "blocks": {
-      "highlight": "Highlight",
-      "addCard": "Add Card"
+      "highlight": "Mettre en surbrillance",
+      "addCard": "Ajouter une carte",
+      "categories": {
+        "hero": "Hero",
+        "content": "Contenu",
+        "cta": "Appel à l'action",
+        "layout": "Mise en page"
+      },
+      "blockSettings": "Paramètres de {name}",
+      "unknownBlock": "Bloc",
+      "blockSize": "Taille du bloc",
+      "sizeDefault": "Par défaut",
+      "sizeNarrow": "Étroit",
+      "sizeWide": "Large",
+      "sizeFull": "Pleine largeur",
+      "typeLabels": {
+        "collection": "Collection",
+        "fileDownload": "Téléchargement de fichier",
+        "video": "Vidéo",
+        "logos": "Logos",
+        "image": "Image"
+      },
+      "editBlock": "Modifier les propriétés du bloc",
+      "deleteBlock": "Supprimer le bloc",
+      "noImage": "Aucune image — double-cliquez pour ajouter",
+      "colors": {
+        "primary": "Primaire",
+        "secondary": "Secondaire",
+        "success": "Succès",
+        "warning": "Avertissement",
+        "error": "Erreur",
+        "info": "Info",
+        "neutral": "Neutre"
+      },
+      "variants": {
+        "solid": "Plein",
+        "outline": "Contour",
+        "soft": "Doux",
+        "subtle": "Subtil",
+        "ghost": "Ghost",
+        "link": "Lien"
+      },
+      "defaults": {
+        "newButton": "Nouveau bouton",
+        "newCard": "Nouvelle carte",
+        "newFeature": "Nouvelle fonctionnalité",
+        "newQuestion": "Nouvelle question"
+      },
+      "addIcon": "Ajouter une icône",
+      "urlLabel": "URL",
+      "altText": "Texte alternatif",
+      "layoutNames": {
+        "table": "Tableau",
+        "list": "Liste",
+        "grid": "Grille",
+        "cards": "Cartes"
+      },
+      "collection": {
+        "noCollectionSelected": "Aucune collection sélectionnée",
+        "itemsPerPage": "{count} éléments/page",
+        "selectPlaceholder": "Sélectionner une collection...",
+        "noCollections": "Aucune collection trouvée dans le registre."
+      },
+      "embed": {
+        "noUrl": "Aucune URL définie — saisissez une URL dans les propriétés"
+      },
+      "file": {
+        "noFile": "Aucun fichier — double-cliquez pour ajouter",
+        "clickToUpload": "Cliquez pour télécharger un fichier"
+      },
+      "video": {
+        "noVideo": "Aucune vidéo — double-cliquez pour ajouter",
+        "noVideoSet": "Aucune vidéo définie",
+        "clickToSelect": "Cliquez pour sélectionner un fichier vidéo",
+        "bunnyStream": "Bunny Stream",
+        "bunnyInstructions": "Collez votre URL d'intégration Bunny Stream. Vous la trouverez dans le tableau de bord Bunny dans les paramètres d'intégration de votre vidéo."
+      },
+      "image": {
+        "noImage": "Aucune image définie"
+      },
+      "logos": {
+        "noLogos": "Aucun logo — double-cliquez pour ajouter",
+        "typeIcon": "Icône",
+        "typeImage": "Image",
+        "noImage": "Aucune image",
+        "addIcon": "Ajouter une icône",
+        "addImage": "Ajouter une image"
+      },
+      "media": {
+        "browse": "Parcourir",
+        "pasteUrl": "Coller l'URL",
+        "upload": "Télécharger",
+        "loadingLibrary": "Chargement de la bibliothèque...",
+        "uploadInstead": "Télécharger à la place",
+        "browseLibrary": "Parcourir la bibliothèque",
+        "uploading": "Téléchargement...",
+        "clickToUpload": "Cliquez pour télécharger"
+      },
+      "links": {
+        "buttonN": "Bouton {n}",
+        "buttonTextPlaceholder": "Texte du bouton",
+        "urlPlaceholder": "/page ou https://...",
+        "addButton": "Ajouter un bouton"
+      },
+      "faq": {
+        "questionPlaceholder": "Question",
+        "answerPlaceholder": "Réponse",
+        "addQuestion": "Ajouter une question"
+      },
+      "features": {
+        "featureN": "Fonctionnalité {n}",
+        "titlePlaceholder": "Titre de la fonctionnalité",
+        "descriptionPlaceholder": "Description de la fonctionnalité",
+        "addFeature": "Ajouter une fonctionnalité"
+      },
+      "cards": {
+        "cardN": "Carte {n}",
+        "titlePlaceholder": "Titre de la carte",
+        "descriptionPlaceholder": "Description de la carte",
+        "linkPlaceholder": "URL du lien (optionnel)"
+      },
+      "buttonRow": {
+        "modeLink": "Lien",
+        "modeDownload": "Téléchargement",
+        "openInNewTab": "Ouvrir dans un nouvel onglet"
+      }
+    },
+    "fieldGroups": {
+      "info": "Info",
+      "extra": "Extra",
+      "content": "Contenu"
     }
   },
   "common": {
     "cancel": "Annuler",
     "continue": "Continuer",
     "save": "Enregistrer",
+    "create": "Créer",
     "delete": "Supprimer",
-    "back": "Retour"
+    "back": "Retour",
+    "edit": "Modifier",
+    "apply": "Appliquer",
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "ascending": "Croissant",
+    "descending": "Décroissant"
   }
 }

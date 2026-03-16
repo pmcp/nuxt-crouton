@@ -244,7 +244,7 @@ function handleAssetSelected(asset: Record<string, any>) {
         />
         <UButton
           icon="i-lucide-link"
-          label="URL"
+          :label="t('pages.blocks.urlLabel')"
           variant="ghost"
           color="neutral"
           size="xs"

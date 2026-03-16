@@ -34,7 +34,7 @@ function emitChange() {
 // Add a new feature
 function addFeature() {
   features.value.push({
-    title: 'New Feature',
+    title: t('pages.blocks.defaults.newFeature'),
     description: '',
     icon: 'i-lucide-star'
   })
