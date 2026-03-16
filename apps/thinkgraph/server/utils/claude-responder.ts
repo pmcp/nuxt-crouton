@@ -295,46 +295,76 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
  * Format a Claude Code stream-json event into a human-readable terminal line.
  * Returns null for events that shouldn't be displayed.
  *
- * Stream-json event types:
- * - { type: "system", ... } — system init
- * - { type: "assistant", subtype: "text", content: "..." } — text output
- * - { type: "assistant", subtype: "tool_use", tool: "...", input: {...} } — tool call
- * - { type: "tool_result", tool: "...", content: "..." } — tool result
- * - { type: "result", ... } — final result
+ * Actual stream-json format:
+ * - { type: "system", subtype: "init", tools: [...], mcp_servers: [...] }
+ * - { type: "assistant", message: { content: [{ type: "thinking", thinking: "..." }] } }
+ * - { type: "assistant", message: { content: [{ type: "tool_use", name: "...", input: {...} }] } }
+ * - { type: "user", message: { content: [{ type: "tool_result", content: "..." }] } }
+ * - { type: "assistant", message: { content: [{ type: "text", text: "..." }] } }
+ * - { type: "result", subtype: "success", result: "..." }
  */
 function formatStreamEvent(event: any): string | null {
   if (!event || !event.type) return null
 
   switch (event.type) {
     case 'system':
-      return `⚙ ${event.message || 'System initialized'}`
-
-    case 'assistant':
-      if (event.subtype === 'text' && event.content) {
-        return event.content
-      }
-      if (event.subtype === 'tool_use') {
-        const toolName = event.tool || 'unknown'
-        const inputSummary = event.input
-          ? Object.entries(event.input)
-              .filter(([_, v]) => typeof v === 'string' && (v as string).length < 100)
-              .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-              .slice(0, 3)
-              .join(' ')
-          : ''
-        return `🔧 ${toolName} ${inputSummary}`
+      if (event.subtype === 'init') {
+        const mcpCount = event.mcp_servers?.length || 0
+        return `⚙ Session started (${mcpCount} MCP servers connected)`
       }
       return null
 
-    case 'tool_result': {
-      const result = typeof event.content === 'string'
-        ? event.content.slice(0, 150)
-        : JSON.stringify(event.content)?.slice(0, 150)
-      return `  ↳ ${result || '(empty result)'}${(result?.length || 0) >= 150 ? '...' : ''}`
+    case 'assistant': {
+      const content = event.message?.content
+      if (!Array.isArray(content) || content.length === 0) return null
+
+      const item = content[0]
+      if (item.type === 'text' && item.text) {
+        return item.text
+      }
+      if (item.type === 'tool_use') {
+        const toolName = item.name || 'unknown'
+        const input = item.input || {}
+        const inputSummary = Object.entries(input)
+          .filter(([_, v]) => typeof v === 'string' && (v as string).length < 80)
+          .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+          .slice(0, 3)
+          .join(' ')
+        return `🔧 ${toolName} ${inputSummary}`
+      }
+      if (item.type === 'thinking') {
+        // Show first line of thinking, truncated
+        const thought = (item.thinking || '').split('\n')[0].slice(0, 120)
+        return thought ? `💭 ${thought}${item.thinking.length > 120 ? '...' : ''}` : null
+      }
+      return null
+    }
+
+    case 'user': {
+      // Tool results
+      const content = event.message?.content
+      if (!Array.isArray(content) || content.length === 0) return null
+
+      const item = content[0]
+      if (item.type === 'tool_result') {
+        const result = typeof item.content === 'string'
+          ? item.content.slice(0, 120)
+          : JSON.stringify(item.content)?.slice(0, 120) || ''
+        return `  ↳ ${result}${result.length >= 120 ? '...' : ''}`
+      }
+      return null
     }
 
     case 'result':
-      return `✓ Done`
+      if (event.subtype === 'success') {
+        const cost = event.total_cost_usd ? ` ($${event.total_cost_usd.toFixed(3)})` : ''
+        const turns = event.num_turns ? ` ${event.num_turns} turns` : ''
+        return `✓ Done${turns}${cost}`
+      }
+      if (event.is_error) {
+        return `✗ Error: ${event.result?.slice(0, 200) || 'Unknown error'}`
+      }
+      return null
 
     default:
       return null
