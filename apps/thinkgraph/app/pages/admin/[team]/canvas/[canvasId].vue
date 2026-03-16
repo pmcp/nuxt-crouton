@@ -755,44 +755,42 @@ watch(showCreate, async (open) => {
     <ShortcutsHelp v-model:open="showShortcuts" />
 
     <!-- Node context menu (positioned at click) -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div
-          v-if="showNodeContextMenu && contextMenuNode"
-          class="fixed z-[100] min-w-[180px] py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl"
-          :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
-          @click.stop
-        >
-          <button class="ctx-item" @click="openDetail(contextMenuNode!.id); closeContextMenu()">
-            <UIcon name="i-lucide-panel-right-open" class="size-4" /> Open detail
-          </button>
-          <button class="ctx-item" @click="openCreate('idea', contextMenuNode!.id); closeContextMenu()">
-            <UIcon name="i-lucide-plus" class="size-4" /> Add child
-          </button>
-          <button class="ctx-item" @click="openPathType(contextMenuNode!.id); closeContextMenu()">
-            <UIcon name="i-lucide-git-branch-plus" class="size-4" /> Start path
-          </button>
-          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
-          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'done' }); refreshNodes(); closeContextMenu()">
-            <UIcon name="i-lucide-check-circle-2" class="size-4 text-green-500" /> Mark done
-          </button>
-          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'working' }); refreshNodes(); closeContextMenu()">
-            <UIcon name="i-lucide-loader-2" class="size-4 text-primary-500" /> Mark working
-          </button>
-          <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'idle' }); refreshNodes(); closeContextMenu()">
-            <UIcon name="i-lucide-circle" class="size-4" /> Mark idle
-          </button>
-          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
-          <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
-            <UIcon name="i-lucide-copy" class="size-4" /> Copy context
-          </button>
-          <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
-          <button class="ctx-item ctx-item--danger" @click="deleteSelectedNode(); closeContextMenu()">
-            <UIcon name="i-lucide-trash-2" class="size-4" /> Delete
-          </button>
-        </div>
-      </Transition>
-    </Teleport>
+    <Transition name="fade">
+      <div
+        v-if="showNodeContextMenu && contextMenuNode"
+        class="fixed z-[100] min-w-[180px] py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl"
+        :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
+        @click.stop
+      >
+        <button class="ctx-item" @click="openDetail(contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-panel-right-open" class="size-4" /> Open detail
+        </button>
+        <button class="ctx-item" @click="openCreate('idea', contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-plus" class="size-4" /> Add child
+        </button>
+        <button class="ctx-item" @click="openPathType(contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-git-branch-plus" class="size-4" /> Start path
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'done' }); refreshNodes(); closeContextMenu()">
+          <UIcon name="i-lucide-check-circle-2" class="size-4 text-green-500" /> Mark done
+        </button>
+        <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'working' }); refreshNodes(); closeContextMenu()">
+          <UIcon name="i-lucide-loader-2" class="size-4 text-primary-500" /> Mark working
+        </button>
+        <button class="ctx-item" @click="updateNode(contextMenuNode!.id, { status: 'idle' }); refreshNodes(); closeContextMenu()">
+          <UIcon name="i-lucide-circle" class="size-4" /> Mark idle
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
+          <UIcon name="i-lucide-copy" class="size-4" /> Copy context
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item ctx-item--danger" @click="deleteSelectedNode(); closeContextMenu()">
+          <UIcon name="i-lucide-trash-2" class="size-4" /> Delete
+        </button>
+      </div>
+    </Transition>
 
     <!-- Multi-select floating bar -->
     <SelectionBar
