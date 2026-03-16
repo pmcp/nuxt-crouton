@@ -33,6 +33,10 @@ export default defineNuxtConfig({
 
   // Enable booking email notifications
   runtimeConfig: {
+    email: {
+      from: 'noreply@messages.friendlyinter.net',
+      fromName: 'Friendly Internet'
+    },
     croutonBookings: {
       email: { enabled: true }
     },
@@ -42,7 +46,7 @@ export default defineNuxtConfig({
           brand: {
             name: 'Velotheek',
             primaryColor: '#0F766E',
-            url: '' // Set NUXT_PUBLIC_CROUTON_EMAIL_BRAND_URL in production
+            url: 'https://velo.friendlyinter.net'
           }
         }
       } as any,
