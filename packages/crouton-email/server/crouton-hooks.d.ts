@@ -22,10 +22,14 @@ declare module 'nitropack' {
   }
 }
 
-export type CroutonAuthEmailPayload =
+export type CroutonAuthEmailPayload = {
+  /** H3 event for Cloudflare Workers runtime config access. Optional for backwards compat. */
+  _event?: import('h3').H3Event
+} & (
   | { type: 'verification', to: string, url: string, userName?: string }
   | { type: 'password-reset', to: string, url: string, userName?: string }
   | { type: 'invitation', to: string, invitationId: string, organizationName: string, inviterName: string, inviterEmail: string, role: string, expiresAt: Date }
   | { type: 'magic-link', to: string, url: string }
+)
 
 export {}

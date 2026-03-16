@@ -64,7 +64,7 @@ export default defineNitroPlugin((nitroApp) => {
             name: payload.userName,
             ...(brandName && { brandName }),
             ...(overrides && { overrides })
-          })
+          }, payload._event)
           break
         }
 
@@ -79,7 +79,7 @@ export default defineNitroPlugin((nitroApp) => {
             name: payload.userName,
             ...(brandName && { brandName }),
             ...(overrides && { overrides })
-          })
+          }, payload._event)
           break
         }
 
@@ -87,7 +87,7 @@ export default defineNitroPlugin((nitroApp) => {
           const brand = getEmailBrandConfig()
           // Use BETTER_AUTH_URL for action links (reflects the actual running instance),
           // falling back to brand.appUrl for backwards compatibility
-          const runtimeConfig = useRuntimeConfig()
+          const runtimeConfig = payload._event ? useRuntimeConfig(payload._event) : useRuntimeConfig()
           const actionBaseUrl = process.env.BETTER_AUTH_URL
             || (runtimeConfig as any).auth?.baseUrl
             || brand.appUrl
@@ -106,7 +106,7 @@ export default defineNitroPlugin((nitroApp) => {
             role: payload.role,
             brandName: payload.organizationName,
             ...(overrides && { overrides })
-          })
+          }, payload._event)
           console.log(`[crouton-email] 📬 sendTeamInvite result:`, JSON.stringify(result))
           break
         }
@@ -121,7 +121,7 @@ export default defineNitroPlugin((nitroApp) => {
             link: payload.url,
             ...(brandName && { brandName }),
             ...(overrides && { overrides })
-          })
+          }, payload._event)
           break
         }
       }

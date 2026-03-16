@@ -117,7 +117,9 @@ export function createAuth(options: CreateAuthOptions) {
         if (config.debug) {
           console.log(`[crouton/auth] Verification email for ${user.email}: ${url}`)
         }
+        let _event: any; try { _event = useEvent() } catch {}
         await useNitroApp().hooks.callHook('crouton:auth:email', {
+          _event,
           type: 'verification',
           to: user.email,
           url,
@@ -180,7 +182,9 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
         if (config.debug) {
           console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
         }
+        let _event: any; try { _event = useEvent() } catch {}
         await useNitroApp().hooks.callHook('crouton:auth:email', {
+          _event,
           type: 'password-reset',
           to: user.email,
           url,
@@ -202,7 +206,9 @@ function buildEmailPasswordConfig(config: CroutonAuthConfig): BetterAuthOptions[
         if (config.debug) {
           console.log(`[crouton/auth] Password reset email for ${user.email}: ${url}`)
         }
+        let _event: any; try { _event = useEvent() } catch {}
         await useNitroApp().hooks.callHook('crouton:auth:email', {
+          _event,
           type: 'password-reset',
           to: user.email,
           url,
@@ -719,7 +725,9 @@ function buildPlugins(
         if (debug) {
           console.log(`[crouton/auth] Magic link for ${email}: ${url}`)
         }
+        let _event: any; try { _event = useEvent() } catch {}
         await useNitroApp().hooks.callHook('crouton:auth:email', {
+          _event,
           type: 'magic-link',
           to: email,
           url
@@ -1168,8 +1176,10 @@ function buildOrganizationConfig(
         console.log(`[crouton/auth] Invitation for ${data.email} to ${data.organization.name} (id: ${data.id})`)
       }
       console.log(`[crouton/auth] 📧 sendInvitationEmail called for ${data.email} to org "${data.organization.name}" (invitationId: ${data.id})`)
+      let _event: any; try { _event = useEvent() } catch {}
       try {
         await useNitroApp().hooks.callHook('crouton:auth:email', {
+          _event,
           type: 'invitation',
           to: data.email,
           invitationId: data.id,

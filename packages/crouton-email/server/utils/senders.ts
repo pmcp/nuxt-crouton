@@ -22,10 +22,10 @@ import WelcomeEmail from '../emails/Welcome.vue'
  * Send a verification code email
  */
 export async function sendVerificationEmail(
-  options: VerificationEmailOptions
+  options: VerificationEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
-  let event
-  try { event = useEvent() } catch {}
+  if (!event) { try { event = useEvent() } catch {} }
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -46,7 +46,7 @@ export async function sendVerificationEmail(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Your verification code is ${options.code}`,
     html,
@@ -59,10 +59,10 @@ export async function sendVerificationEmail(
  * Send a verification link email (link-based, used by Better Auth)
  */
 export async function sendVerificationLink(
-  options: VerificationLinkEmailOptions
+  options: VerificationLinkEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
-  let event
-  try { event = useEvent() } catch {}
+  if (!event) { try { event = useEvent() } catch {} }
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -83,7 +83,7 @@ export async function sendVerificationLink(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Verify your ${brandConfig.brandName} email`,
     html,
@@ -96,10 +96,10 @@ export async function sendVerificationLink(
  * Send a magic link login email
  */
 export async function sendMagicLink(
-  options: MagicLinkEmailOptions
+  options: MagicLinkEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
-  let event
-  try { event = useEvent() } catch {}
+  if (!event) { try { event = useEvent() } catch {} }
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -120,7 +120,7 @@ export async function sendMagicLink(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Sign in to ${brandConfig.brandName}`,
     html,
@@ -133,10 +133,10 @@ export async function sendMagicLink(
  * Send a password reset email
  */
 export async function sendPasswordReset(
-  options: PasswordResetEmailOptions
+  options: PasswordResetEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
-  let event
-  try { event = useEvent() } catch {}
+  if (!event) { try { event = useEvent() } catch {} }
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
   const brandConfig = getEmailBrandConfig()
@@ -157,7 +157,7 @@ export async function sendPasswordReset(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Reset your ${brandConfig.brandName} password`,
     html,
@@ -170,7 +170,8 @@ export async function sendPasswordReset(
  * Send a team invitation email
  */
 export async function sendTeamInvite(
-  options: TeamInviteEmailOptions
+  options: TeamInviteEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
   if (options.brandName) brandConfig.brandName = options.brandName
@@ -187,7 +188,7 @@ export async function sendTeamInvite(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Join ${options.teamName} on ${brandConfig.brandName}`,
     html,
@@ -200,7 +201,8 @@ export async function sendTeamInvite(
  * Send a welcome email
  */
 export async function sendWelcome(
-  options: WelcomeEmailOptions
+  options: WelcomeEmailOptions,
+  event?: any
 ): Promise<SendEmailResult> {
   const brandConfig = getEmailBrandConfig()
   if (options.brandName) brandConfig.brandName = options.brandName
@@ -216,7 +218,7 @@ export async function sendWelcome(
     ...(options.overrides?.footer && { footer: options.overrides.footer })
   })
 
-  return useEmailService().send({
+  return useEmailService(event).send({
     to: options.to,
     subject: options.overrides?.subject || `Welcome to ${brandConfig.brandName}!`,
     html,
