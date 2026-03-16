@@ -50,8 +50,9 @@ export function useGraphActions(deps: GraphActionDeps) {
         })
       }
       await refreshDecisions()
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI expand failed:', error)
+      toast.add({ title: 'Expand failed', description: error?.message || 'Could not expand node', color: 'error' })
     } finally {
       expanding.value = null
     }
@@ -91,10 +92,11 @@ export function useGraphActions(deps: GraphActionDeps) {
         method: 'POST',
         body: { nodeIds: Array.from(selectedNodes.value) },
       })
-      selectedNodes.value.clear()
+      selectedNodes.value = new Set()
       await refreshDecisions()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Synthesis failed:', error)
+      toast.add({ title: 'Synthesis failed', description: error?.message || 'Could not synthesize selected nodes', color: 'error' })
     } finally {
       synthesizing.value = false
     }
@@ -111,8 +113,9 @@ export function useGraphActions(deps: GraphActionDeps) {
         await navigator.clipboard.writeText(result.briefing)
         toast.add({ title: 'Resume briefing copied to clipboard', icon: 'i-lucide-clipboard-check', color: 'success' })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Resume failed:', error)
+      toast.add({ title: 'Resume failed', description: error?.message || 'Could not generate resume briefing', color: 'error' })
     } finally {
       resuming.value = false
     }
@@ -134,8 +137,9 @@ export function useGraphActions(deps: GraphActionDeps) {
         digestContent.value = result.digest
         showDigest.value = true
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Digest generation failed:', error)
+      toast.add({ title: 'Digest failed', description: error?.message || 'Could not generate digest', color: 'error' })
     } finally {
       digestLoading.value = false
     }
@@ -155,8 +159,9 @@ export function useGraphActions(deps: GraphActionDeps) {
       if (result?.brief) {
         await navigator.clipboard.writeText(result.brief)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Brief generation failed:', error)
+      toast.add({ title: 'Brief generation failed', description: error?.message || 'Could not generate brief', color: 'error' })
     } finally {
       generatingBrief.value = false
     }
@@ -238,7 +243,9 @@ export function useGraphActions(deps: GraphActionDeps) {
   // ─── Node delete ───
   async function onNodeDelete(nodeIds: string[]) {
     await deleteItems(nodeIds)
-    for (const id of nodeIds) selectedNodes.value.delete(id)
+    const next = new Set(selectedNodes.value)
+    for (const id of nodeIds) next.delete(id)
+    selectedNodes.value = next
     await refreshDecisions()
   }
 

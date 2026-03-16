@@ -21,6 +21,9 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
     versionTags: [],
   })
 
+  const searchTerm = computed(() => filters.value.search)
+  const debouncedSearch = refDebounced(searchTerm, 200)
+
   const availableBranches = computed(() => {
     const counts = new Map<string, number>()
     for (const d of decisions.value || []) {
@@ -46,16 +49,17 @@ export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
 
   const filteredIds = computed<Set<string> | null>(() => {
     const f = filters.value
-    const hasFilters = f.search || f.branches.length || f.nodeTypes.length
+    const search = debouncedSearch.value
+    const hasFilters = search || f.branches.length || f.nodeTypes.length
       || f.pathTypes.length || f.starred !== null || f.pinned !== null || f.versionTags.length
 
     if (!hasFilters) return null
 
     const ids = new Set<string>()
-    const searchLower = f.search.toLowerCase()
+    const searchLower = search.toLowerCase()
 
     for (const d of decisions.value || []) {
-      if (f.search && !d.content?.toLowerCase().includes(searchLower)) continue
+      if (search && !d.content?.toLowerCase().includes(searchLower)) continue
       if (f.branches.length && !f.branches.includes(d.branchName || 'main')) continue
       if (f.nodeTypes.length && !f.nodeTypes.includes(d.nodeType)) continue
       if (f.pathTypes.length && (!d.pathType || !f.pathTypes.includes(d.pathType))) continue

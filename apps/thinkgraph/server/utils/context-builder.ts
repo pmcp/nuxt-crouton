@@ -3,6 +3,14 @@
  * Extracted from expand.post.ts — used by expand, chat, brief, and dispatch endpoints.
  */
 
+/** Rough token estimate: ~4 chars per token */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4)
+}
+
+/** Max tokens reserved for assembled context (leaves room for system prompt + response) */
+const MAX_CONTEXT_TOKENS = 12000
+
 export interface ContextNode {
   id: string
   content: string
@@ -95,69 +103,105 @@ export function buildPrompt(
   count: number,
   pinned?: ContextNode[]
 ): string {
-  let prompt = ''
+  const sections: string[] = []
+  let usedTokens = 0
+  const instructionLine = `Generate ${count} new perspectives. Be different from existing children and siblings.\n`
+  const instructionTokens = estimateTokens(instructionLine)
+  const budget = MAX_CONTEXT_TOKENS - instructionTokens
+
+  // Priority 1: Current node + ancestors (50% budget max)
+  const ancestorBudget = Math.floor(budget * 0.5)
+  let ancestorSection = ''
 
   if (ancestors.length > 0) {
-    // Use briefs when available for bounded context
     const hasBriefs = ancestors.some(a => a.brief)
     if (hasBriefs) {
-      prompt += 'Context chain:\n'
+      ancestorSection += 'Context chain:\n'
       ancestors.forEach((a, i) => {
         const label = `${nodeTypeLabel(a.nodeType)}: ${a.content.slice(0, 80)}`
         if (a.brief) {
-          prompt += `${'  '.repeat(i)}→ ${label}\n`
-          prompt += `${'  '.repeat(i + 1)}Brief: ${a.brief.slice(0, 200)}\n`
+          ancestorSection += `${'  '.repeat(i)}→ ${label}\n`
+          ancestorSection += `${'  '.repeat(i + 1)}Brief: ${a.brief.slice(0, 200)}\n`
         } else {
-          prompt += `${'  '.repeat(i)}→ ${label}\n`
+          ancestorSection += `${'  '.repeat(i)}→ ${label}\n`
         }
       })
-      prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+      ancestorSection += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
     } else {
-      prompt += 'Thinking chain so far:\n'
-      ancestors.forEach((a, i) => {
-        prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
+      ancestorSection += 'Thinking chain so far:\n'
+      // If ancestors exceed budget, keep direct parent + truncation note
+      let ancestorList = ancestors
+      if (estimateTokens(ancestors.map(a => a.content).join('')) > ancestorBudget && ancestors.length > 1) {
+        const omitted = ancestors.length - 1
+        ancestorSection += `[Context truncated - ${omitted} earlier ancestor${omitted > 1 ? 's' : ''} omitted]\n`
+        ancestorList = ancestors.slice(-1) // just the direct parent
+      }
+      ancestorList.forEach((a, i) => {
+        ancestorSection += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
       })
-      prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+      ancestorSection += `${'  '.repeat(ancestorList.length)}→ [CURRENT] ${target.content}\n\n`
     }
   } else {
-    prompt += `Starting thought: ${target.content}\n\n`
+    ancestorSection += `Starting thought: ${target.content}\n\n`
   }
 
-  if (children.length > 0) {
-    prompt += 'Existing children (avoid duplicating these):\n'
+  sections.push(ancestorSection)
+  usedTokens += estimateTokens(ancestorSection)
+
+  // Priority 2: Children (dedup context)
+  if (children.length > 0 && usedTokens < budget) {
+    let section = 'Existing children (avoid duplicating these):\n'
     children.forEach(c => {
-      prompt += `- ${c.content} (${c.nodeType})\n`
+      section += `- ${c.content} (${c.nodeType})\n`
     })
-    prompt += '\n'
+    section += '\n'
+    if (usedTokens + estimateTokens(section) <= budget) {
+      sections.push(section)
+      usedTokens += estimateTokens(section)
+    }
   }
 
-  if (siblings.length > 0) {
-    prompt += 'Sibling perspectives:\n'
+  // Priority 3: Siblings
+  if (siblings.length > 0 && usedTokens < budget) {
+    let section = 'Sibling perspectives:\n'
     siblings.forEach(s => {
-      prompt += `- ${s.content} (${s.nodeType})\n`
+      section += `- ${s.content} (${s.nodeType})\n`
     })
-    prompt += '\n'
+    section += '\n'
+    if (usedTokens + estimateTokens(section) <= budget) {
+      sections.push(section)
+      usedTokens += estimateTokens(section)
+    }
   }
 
-  if (pinned && pinned.length > 0) {
-    prompt += 'Pinned context (always active):\n'
+  // Priority 4: Pinned
+  if (pinned && pinned.length > 0 && usedTokens < budget) {
+    let section = 'Pinned context (always active):\n'
     pinned.slice(0, 5).forEach(p => {
-      prompt += `📌 ${p.content}\n`
+      section += `📌 ${p.content}\n`
     })
-    prompt += '\n'
+    section += '\n'
+    if (usedTokens + estimateTokens(section) <= budget) {
+      sections.push(section)
+      usedTokens += estimateTokens(section)
+    }
   }
 
-  if (starred.length > 0) {
-    prompt += 'Starred insights from other branches:\n'
+  // Priority 5: Starred
+  if (starred.length > 0 && usedTokens < budget) {
+    let section = 'Starred insights from other branches:\n'
     starred.slice(0, 5).forEach(s => {
-      prompt += `⭐ ${s.content}\n`
+      section += `⭐ ${s.content}\n`
     })
-    prompt += '\n'
+    section += '\n'
+    if (usedTokens + estimateTokens(section) <= budget) {
+      sections.push(section)
+      usedTokens += estimateTokens(section)
+    }
   }
 
-  prompt += `Generate ${count} new perspectives. Be different from existing children and siblings.\n`
-
-  return prompt
+  sections.push(instructionLine)
+  return sections.join('')
 }
 
 /**
