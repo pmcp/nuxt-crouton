@@ -13,6 +13,7 @@ export interface ThinkgraphContext {
   contextNodeIds: Ref<string[]>
   contextMode: Ref<'path' | 'selection'>
   focusInPath: (nodeId: string) => void
+  graphId: Ref<string>
 }
 
 const THINKGRAPH_CONTEXT_KEY: InjectionKey<ThinkgraphContext> = Symbol('thinkgraph:context')

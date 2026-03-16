@@ -5,7 +5,9 @@ import { getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/coll
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const body = await readBody(event).catch(() => ({}))
+  const graphId = body?.graphId ? String(body.graphId) : undefined
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId)
 
   if (!allDecisions || allDecisions.length === 0) {
     throw createError({ status: 400, statusText: 'No decisions found for this graph' })

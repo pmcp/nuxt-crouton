@@ -32,14 +32,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 403, statusText: `Service "${serviceId}" is not configured` })
   }
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  // Derive graphId from first target after lookup; filter query to graph scope
+  const allDecisionsUnfiltered = await getAllThinkgraphDecisions(team.id)
   const targets = nodeIds
-    .map(id => allDecisions.find((d: any) => d.id === id))
+    .map(id => allDecisionsUnfiltered.find((d: any) => d.id === id))
     .filter(Boolean) as any[]
 
   if (targets.length === 0) {
     throw createError({ status: 404, statusText: 'No matching decisions found' })
   }
+
+  // Re-fetch scoped to this graph for context building
+  const derivedGraphId = targets[0]?.graphId || ''
+  const allDecisions = derivedGraphId
+    ? await getAllThinkgraphDecisions(team.id, derivedGraphId)
+    : allDecisionsUnfiltered
 
   const { combinedContext, combinedContent } = buildMultiNodeContext(targets, allDecisions)
 

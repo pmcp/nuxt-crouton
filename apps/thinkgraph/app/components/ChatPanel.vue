@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 const { teamId } = useTeamContext()
 
-const { contextNodeIds, contextMode } = useThinkgraphContext()
+const { contextNodeIds, contextMode, graphId } = useThinkgraphContext()
 
 const {
   messages,
@@ -27,6 +27,7 @@ const {
   api: `/api/teams/${teamId.value}/thinkgraph-decisions/chat`,
   body: computed(() => ({
     nodeId: props.nodeId,
+    graphId: graphId.value || '',
     ...(contextMode.value === 'selection' && contextNodeIds.value.length > 0
       ? { contextNodeIds: contextNodeIds.value }
       : {}),

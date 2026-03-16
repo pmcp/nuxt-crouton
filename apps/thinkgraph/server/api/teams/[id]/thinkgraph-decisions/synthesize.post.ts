@@ -5,13 +5,13 @@ import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../..
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
   const body = await readBody(event)
-  const { nodeIds } = body
+  const { nodeIds, graphId } = body
 
   if (!nodeIds || !Array.isArray(nodeIds) || nodeIds.length < 2) {
     throw createError({ status: 400, statusText: 'At least 2 node IDs required' })
   }
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId || undefined)
   const selectedNodes = nodeIds
     .map((id: string) => allDecisions.find((d: any) => d.id === id))
     .filter(Boolean)

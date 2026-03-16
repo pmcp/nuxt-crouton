@@ -41,12 +41,13 @@ export function useGraphActions(deps: GraphActionDeps) {
             mode: mode || 'default',
             contextNodeIds: contextNodeIds.value,
             includeAncestors: true,
+            graphId: selectedGraphId.value || '',
           },
         })
       } else {
         await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
           method: 'POST',
-          body: { mode: mode || 'default' },
+          body: { mode: mode || 'default', graphId: selectedGraphId.value || '' },
         })
       }
       await refreshDecisions()
@@ -90,7 +91,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     try {
       await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/synthesize`, {
         method: 'POST',
-        body: { nodeIds: Array.from(selectedNodes.value) },
+        body: { nodeIds: Array.from(selectedNodes.value), graphId: selectedGraphId.value || '' },
       })
       selectedNodes.value = new Set()
       await refreshDecisions()
@@ -108,7 +109,9 @@ export function useGraphActions(deps: GraphActionDeps) {
     if (resuming.value) return
     resuming.value = true
     try {
-      const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`)
+      const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`, {
+        query: { graphId: selectedGraphId.value || '' },
+      })
       if (result?.briefing) {
         await navigator.clipboard.writeText(result.briefing)
         toast.add({ title: 'Resume briefing copied to clipboard', icon: 'i-lucide-clipboard-check', color: 'success' })
@@ -132,6 +135,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     try {
       const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/digest`, {
         method: 'POST',
+        body: { graphId: selectedGraphId.value || '' },
       })
       if (result?.digest) {
         digestContent.value = result.digest
@@ -154,7 +158,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     try {
       const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/brief`, {
         method: 'POST',
-        body: { ids: Array.from(selectedNodes.value), format },
+        body: { ids: Array.from(selectedNodes.value), format, graphId: selectedGraphId.value || '' },
       })
       if (result?.brief) {
         await navigator.clipboard.writeText(result.brief)

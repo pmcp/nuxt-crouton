@@ -5,13 +5,13 @@ import { getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/coll
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
   const body = await readBody(event)
-  const { messages, nodeId, contextNodeIds } = body
+  const { messages, nodeId, contextNodeIds, graphId } = body
 
   if (!messages || !Array.isArray(messages)) {
     throw createError({ status: 400, statusText: 'Messages required' })
   }
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId || undefined)
 
   // Build context from the selected node's thinking path
   let contextBlock = ''

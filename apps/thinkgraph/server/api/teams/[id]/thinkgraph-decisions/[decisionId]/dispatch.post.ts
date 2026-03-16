@@ -34,12 +34,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 403, statusText: `Service "${serviceId}" is not configured (missing API key)` })
   }
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
-  const targetDecision = allDecisions.find((d: any) => d.id === decisionId)
+  // First find the target to get its graphId, then re-fetch scoped to graph
+  const allDecisionsUnfiltered = await getAllThinkgraphDecisions(team.id)
+  const targetDecision = allDecisionsUnfiltered.find((d: any) => d.id === decisionId)
 
   if (!targetDecision) {
     throw createError({ status: 404, statusText: 'Decision not found' })
   }
+
+  const derivedGraphId = (targetDecision as any).graphId || ''
+  const allDecisions = derivedGraphId
+    ? await getAllThinkgraphDecisions(team.id, derivedGraphId)
+    : allDecisionsUnfiltered
 
   const thinkingPath = buildDispatchContext(targetDecision, allDecisions)
 

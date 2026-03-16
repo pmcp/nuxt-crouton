@@ -11,7 +11,7 @@ const formatPrompts: Record<string, string> = {
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
   const body = await readBody(event)
-  const { ids, format } = body
+  const { ids, format, graphId } = body
 
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     throw createError({ status: 400, statusText: 'At least 1 node ID required' })
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   const validFormat = formatPrompts[format] ? format : 'markdown'
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId || undefined)
   const selectedNodes = ids
     .map((id: string) => allDecisions.find((d: any) => d.id === id))
     .filter(Boolean)

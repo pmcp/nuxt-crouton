@@ -4,7 +4,9 @@ import { getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/coll
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const query = getQuery(event)
+  const graphId = query.graphId ? String(query.graphId) : undefined
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId)
 
   if (allDecisions.length === 0) {
     return {

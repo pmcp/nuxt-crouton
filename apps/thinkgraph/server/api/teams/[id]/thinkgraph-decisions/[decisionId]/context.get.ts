@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Decision ID required' })
   }
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const graphId = query.graphId ? String(query.graphId) : undefined
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId)
   const target = allDecisions.find((d: any) => d.id === decisionId)
 
   if (!target) {

@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
   const mode = (rawMode as string) || 'default'
   const config = modeConfig[mode] || modeConfig.default
 
-  const allDecisions = await getAllThinkgraphDecisions(team.id)
+  const allDecisions = await getAllThinkgraphDecisions(team.id, graphId || undefined)
   const targetDecision = allDecisions.find((d: any) => d.id === nodeId)
 
   if (!targetDecision) {
@@ -115,6 +115,7 @@ export default defineEventHandler(async (event) => {
       content: p.content,
       nodeType: p.nodeType || 'idea',
       pathType: p.pathType || 'explored',
+      graphId: graphId || (targetDecision as any).graphId || '',
       parentId: nodeId,
       source: 'ai',
       model: ai.getDefaultModel(),

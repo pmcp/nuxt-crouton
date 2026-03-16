@@ -204,6 +204,7 @@ provideThinkgraphContext({
     selectedNodeId.value = nodeId
     showPath.value = true
   },
+  graphId: graphIdRef,
 })
 
 function exportGraph() {

@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   if (nodeIds?.length) {
     const all = await getAllThinkgraphDecisions(team.id)
     const selected = nodeIds
-      .map(id => all.find((d: any) => d.id === id))
+      .map((id: string) => all.find((d: any) => d.id === id))
       .filter(Boolean) as any[]
 
     if (selected.length > 0) {
