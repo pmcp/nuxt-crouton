@@ -238,7 +238,7 @@
       "generateWithAI": "Generate with AI",
       "editorPlaceholder": "Write your email content here...",
       "subjectPlaceholder": "e.g., Your booking is confirmed...",
-      "variableHint": "You can use variables like {{name}}, {{date}}, etc.",
+      "variableHint": "You can use variables like {'{{'}name{'}}'},  {'{{'}date{'}}'},  etc.",
       "namePlaceholder": "e.g., Booking Confirmation",
       "previewTitle": "Email Preview",
       "fromEmailPlaceholder": "noreply@example.com",

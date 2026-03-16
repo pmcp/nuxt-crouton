@@ -238,7 +238,7 @@
       "generateWithAI": "Genereren met AI",
       "editorPlaceholder": "Schrijf hier uw e-mailinhoud...",
       "subjectPlaceholder": "bijv. Uw boeking is bevestigd...",
-      "variableHint": "U kunt variabelen gebruiken zoals {{name}}, {{date}}, enz.",
+      "variableHint": "U kunt variabelen gebruiken zoals {'{{'}name{'}}'},  {'{{'}date{'}}'},  enz.",
       "namePlaceholder": "bijv. Boekingsbevestiging",
       "previewTitle": "E-mailvoorbeeld",
       "fromEmailPlaceholder": "noreply@voorbeeld.nl",
