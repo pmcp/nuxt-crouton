@@ -83,7 +83,13 @@ export default defineNitroPlugin((nitroApp) => {
 
         case 'invitation': {
           const brand = getEmailBrandConfig()
-          const acceptLink = `${brand.appUrl}/auth/accept-invitation/${payload.invitationId}`
+          // Use BETTER_AUTH_URL for action links (reflects the actual running instance),
+          // falling back to brand.appUrl for backwards compatibility
+          const runtimeConfig = useRuntimeConfig()
+          const actionBaseUrl = process.env.BETTER_AUTH_URL
+            || (runtimeConfig as any).auth?.baseUrl
+            || brand.appUrl
+          const acceptLink = `${actionBaseUrl}/auth/accept-invitation/${payload.invitationId}`
           const overrides = await getOverrides('team-invite', {
             organizationName: payload.organizationName
           })
