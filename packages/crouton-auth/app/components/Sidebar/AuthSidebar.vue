@@ -78,10 +78,17 @@ function buildContextUrl(path: string): string {
   return isAdminContext.value ? buildAdminUrl(path) : buildDashboardUrl(path, '')
 }
 
+// Translate a label with graceful fallback (vue-i18n wraps missing keys in brackets)
+function tLabel(label: string): string {
+  const translated = t(label)
+  if (translated.startsWith('[') && translated.endsWith(']')) return label
+  return translated
+}
+
 // Convert app routes to navigation items
 function appRoutesToNavItems(routes: Array<{ path: string; label: string; icon?: string }>): NavigationMenuItem[] {
   return routes.map((appRoute) => ({
-    label: t(appRoute.label) || appRoute.label,
+    label: tLabel(appRoute.label),
     icon: appRoute.icon || 'i-lucide-folder',
     to: buildContextUrl(appRoute.path)
   }))
@@ -139,7 +146,7 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
     if (settingsRoutes.value.length > 0) {
       settingsChildren.push(
         ...settingsRoutes.value.map((appRoute) => ({
-          label: t(appRoute.label) || appRoute.label,
+          label: tLabel(appRoute.label),
           icon: appRoute.icon || 'i-lucide-settings',
           to: `${baseUrl}/settings${appRoute.path}`
         }))

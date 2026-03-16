@@ -62,6 +62,13 @@ const getVariant = (base: string) => themeHelpers.value.getVariant(base)
 // Translation support
 const { t } = useT()
 
+// Translate with graceful fallback — vue-i18n wraps missing keys in brackets
+function tLabel(label: string): string {
+  const translated = t(label)
+  if (translated.startsWith('[') && translated.endsWith(']')) return label
+  return translated
+}
+
 // Get team context (for team admin)
 const { teamSlug: teamSlugRef, teamId: teamIdRef, hasTeamContext } = useTeamContext()
 const route = useRoute()
@@ -97,7 +104,7 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
       // Exact match: current path equals the route path (with or without trailing slash)
       const isExactMatch = route.path === fullPath || route.path === `${fullPath}/`
       return {
-        label: t(appRoute.label),
+        label: tLabel(appRoute.label),
         icon: appRoute.icon,
         to: fullPath,
         active: isExactMatch,
@@ -111,7 +118,7 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
     } else {
       // Multi-item apps get a group header
       groups.push({
-        label: t(app.name),
+        label: tLabel(app.name),
         icon: app.icon,
         defaultOpen: true,
         children: routeItems
