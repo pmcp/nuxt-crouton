@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Invitation ID is required' })
   }
 
-  const result = await (db as any)
+  const result = await (useDrizzle() as any)
     .select({
       id: invitation.id,
       email: invitation.email,
