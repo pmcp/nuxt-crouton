@@ -318,3 +318,90 @@ export function buildMultiNodeContext(
 
   return { combinedContext: context, combinedContent }
 }
+
+/** Placeholder for artifact summary — returns empty string if no artifacts */
+function summarizeArtifacts(_node: ContextNode): string {
+  return ''
+}
+
+// ─── New execution canvas context model ───
+
+export interface NodeContextPayload {
+  nodeId: string
+  chain: NodeContextEntry[]
+  tokenEstimate: number
+  markdown: string
+}
+
+export interface NodeContextEntry {
+  id: string
+  title: string
+  nodeType: string
+  status: string
+  brief?: string
+  output?: string
+}
+
+/**
+ * Build context payload for the new canvas node model (title/brief/output).
+ * Walks the parentId chain respecting the node's contextScope setting.
+ */
+export function buildNodeContext(
+  allNodes: Array<{ id: string; parentId?: string; title: string; nodeType: string; status: string; brief?: string; output?: string; contextScope?: string; contextNodeIds?: Record<string, unknown> | string[] | null }>,
+  targetId: string,
+): NodeContextPayload {
+  const nodeMap = new Map(allNodes.map(n => [n.id, n]))
+  const target = nodeMap.get(targetId)
+
+  if (!target) {
+    return { nodeId: targetId, chain: [], tokenEstimate: 0, markdown: '' }
+  }
+
+  const scope = target.contextScope || 'branch'
+  let contextNodes: typeof allNodes
+
+  if (scope === 'manual' && target.contextNodeIds) {
+    const ids = Array.isArray(target.contextNodeIds)
+      ? target.contextNodeIds as string[]
+      : Object.keys(target.contextNodeIds)
+    contextNodes = ids.map(id => nodeMap.get(id)).filter((n): n is NonNullable<typeof n> => !!n)
+  }
+  else {
+    // Walk ancestor chain (root first)
+    const chain: typeof allNodes = []
+    let current = target
+    while (current) {
+      chain.unshift(current)
+      current = current.parentId ? nodeMap.get(current.parentId)! : undefined!
+    }
+    contextNodes = chain
+  }
+
+  const chain: NodeContextEntry[] = contextNodes.map(n => ({
+    id: n.id,
+    title: n.title,
+    nodeType: n.nodeType,
+    status: n.status,
+    brief: n.brief || undefined,
+    output: n.output || undefined,
+  }))
+
+  const markdown = formatNodeContextMarkdown(chain, targetId)
+  const tokenEstimate = estimateTokens(markdown)
+
+  return { nodeId: targetId, chain, tokenEstimate, markdown }
+}
+
+function formatNodeContextMarkdown(chain: NodeContextEntry[], targetId: string): string {
+  if (chain.length === 0) return ''
+
+  const lines = chain.map((entry, i) => {
+    const isCurrent = entry.id === targetId
+    const prefix = isCurrent ? '→ [CURRENT]' : `${i + 1}.`
+    const content = entry.output || entry.brief || entry.title
+    const meta = [nodeTypeLabel(entry.nodeType), entry.status !== 'idle' ? entry.status : ''].filter(Boolean).join(', ')
+    return `${prefix} **${entry.title}**${meta ? ` (${meta})` : ''}\n   ${content}`
+  })
+
+  return `## Context chain\n\n${lines.join('\n\n')}`
+}
