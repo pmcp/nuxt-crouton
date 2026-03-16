@@ -151,9 +151,6 @@ export async function deleteThinkgraphDecision(
     eq(tables.thinkgraphDecisions.id, recordId),
     eq(tables.thinkgraphDecisions.teamId, teamId),
   ]
-  if (!isAdmin) {
-    conditions.push(eq(tables.thinkgraphDecisions.owner, userId))
-  }
 
   // Re-parent children as root nodes before deleting
   await (db as any)
