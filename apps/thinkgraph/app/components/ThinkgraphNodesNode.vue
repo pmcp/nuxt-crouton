@@ -18,7 +18,10 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
-const { open } = useCrouton()
+const canvasActions = inject<{
+  openCreate: (nodeType: string, parentId?: string) => void
+  openDetail: (nodeId: string) => void
+} | null>('canvasActions', null)
 const isHovered = ref(false)
 
 const node = computed(() => props.data as unknown as ThinkgraphNode)
@@ -53,25 +56,15 @@ const originIcon = computed(() => {
 
 function handleEdit(event: Event) {
   event.stopPropagation()
-  if (props.collection && node.value.id) {
-    open('update', props.collection, [node.value.id])
+  if (node.value.id) {
+    canvasActions?.openDetail(node.value.id)
   }
 }
 
 function handleAddChild(event: Event) {
   event.stopPropagation()
-  if (props.collection && node.value.id) {
-    open('create', props.collection, [], undefined, {
-      parentId: node.value.id,
-      canvasId: node.value.canvasId
-    })
-  }
-}
-
-function handleDelete(event: Event) {
-  event.stopPropagation()
-  if (props.collection && node.value.id) {
-    open('delete', props.collection, [node.value.id])
+  if (node.value.id) {
+    canvasActions?.openCreate('idea', node.value.id)
   }
 }
 </script>
@@ -216,17 +209,10 @@ function handleDelete(event: Event) {
       </button>
       <button
         class="work-node__action"
-        title="Edit"
+        title="Open detail"
         @click="handleEdit"
       >
-        <UIcon name="i-lucide-pencil" class="size-3.5" />
-      </button>
-      <button
-        class="work-node__action work-node__action--delete"
-        title="Delete"
-        @click="handleDelete"
-      >
-        <UIcon name="i-lucide-trash-2" class="size-3.5" />
+        <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
       </button>
     </div>
 

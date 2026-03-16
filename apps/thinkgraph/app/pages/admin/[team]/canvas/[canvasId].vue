@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 import { CONNECT_NODE_TYPES } from '~/utils/thinkgraph-config'
-
 definePageMeta({ layout: 'admin' })
 
 const route = useRoute()
 const { teamId } = useTeamContext()
-const { open } = useCrouton()
 const nuxtApp = useNuxtApp()
 const colorMode = useColorMode()
 const isDark = computed(() => colorMode.value === 'dark')
@@ -65,31 +63,66 @@ function onNodeClick(nodeId: string, _data: Record<string, unknown>, event?: Mou
   if (!event?.shiftKey) showDetail.value = true
 }
 
-// ─── Node creation ───
-function createNode(nodeType: string, parentId?: string) {
-  open('create', 'thinkgraphNodes', [], undefined, {
-    canvasId: canvasId.value,
-    nodeType,
-    status: nodeType === 'task' ? 'draft' : 'idle',
-    origin: 'human',
-    ...(parentId ? { parentId } : {}),
-  })
+// ─── Quick-create ───
+const showCreate = ref(false)
+const createTitle = ref('')
+const createType = ref('idea')
+const createParentId = ref<string | undefined>()
+const createPending = ref(false)
+
+function openCreate(nodeType: string, parentId?: string) {
+  createType.value = nodeType
+  createParentId.value = parentId
+  createTitle.value = ''
+  showCreate.value = true
+}
+
+function openDetail(nodeId: string) {
+  selectedNodeId.value = nodeId
+  showDetail.value = true
+}
+
+// Provide actions to child components (ThinkgraphNodesNode)
+provide('canvasActions', { openCreate, openDetail })
+
+async function handleCreate() {
+  if (!createTitle.value.trim() || !teamId.value) return
+  createPending.value = true
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+      method: 'POST',
+      body: {
+        canvasId: canvasId.value,
+        title: createTitle.value.trim(),
+        nodeType: createType.value,
+        status: createType.value === 'task' ? 'draft' : 'idle',
+        origin: 'human',
+        contextScope: 'branch',
+        ...(createParentId.value ? { parentId: createParentId.value } : {}),
+      },
+    })
+    showCreate.value = false
+    await refreshNodes()
+  }
+  finally {
+    createPending.value = false
+  }
 }
 
 const newNodeItems = computed(() => [
   [
-    { label: 'Idea', icon: 'i-lucide-lightbulb', onSelect: () => createNode('idea') },
-    { label: 'Question', icon: 'i-lucide-help-circle', onSelect: () => createNode('question') },
-    { label: 'Decision', icon: 'i-lucide-check-circle', onSelect: () => createNode('decision') },
+    { label: 'Idea', icon: 'i-lucide-lightbulb', onSelect: () => openCreate('idea') },
+    { label: 'Question', icon: 'i-lucide-help-circle', onSelect: () => openCreate('question') },
+    { label: 'Decision', icon: 'i-lucide-check-circle', onSelect: () => openCreate('decision') },
   ],
   [
-    { label: 'Epic', icon: 'i-lucide-mountain', onSelect: () => createNode('epic') },
-    { label: 'User Story', icon: 'i-lucide-user', onSelect: () => createNode('user_story') },
-    { label: 'Task', icon: 'i-lucide-square-check', onSelect: () => createNode('task') },
+    { label: 'Epic', icon: 'i-lucide-mountain', onSelect: () => openCreate('epic') },
+    { label: 'User Story', icon: 'i-lucide-user', onSelect: () => openCreate('user_story') },
+    { label: 'Task', icon: 'i-lucide-square-check', onSelect: () => openCreate('task') },
   ],
   [
-    { label: 'Milestone', icon: 'i-lucide-flag', onSelect: () => createNode('milestone') },
-    { label: 'Remark', icon: 'i-lucide-message-circle', onSelect: () => createNode('remark') },
+    { label: 'Milestone', icon: 'i-lucide-flag', onSelect: () => openCreate('milestone') },
+    { label: 'Remark', icon: 'i-lucide-message-circle', onSelect: () => openCreate('remark') },
   ],
 ])
 
@@ -104,7 +137,7 @@ const statusSummary = computed(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
+  <div class="h-full w-full flex flex-col flex-1 min-w-0">
     <!-- Toolbar -->
     <div class="flex items-center justify-between px-4 py-2.5 border-b border-default bg-default shrink-0">
       <div class="flex items-center gap-3">
@@ -182,12 +215,12 @@ const statusSummary = computed(() => {
               label="Add Epic"
               variant="outline"
               color="neutral"
-              @click="createNode('epic')"
+              @click="openCreate('epic')"
             />
             <UButton
               icon="i-lucide-plus"
               label="Add Node"
-              @click="createNode('idea')"
+              @click="openCreate('idea')"
             />
           </div>
         </div>
@@ -203,7 +236,35 @@ const statusSummary = computed(() => {
       />
     </div>
 
-    <!-- Crouton CRUD modal -->
-    <CroutonForm />
+    <!-- Quick-create modal -->
+    <UModal v-model:open="showCreate">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            New {{ createType.replace('_', ' ') }}
+          </h3>
+          <UFormField label="Title" required>
+            <UInput
+              v-model="createTitle"
+              :placeholder="`What is this ${createType.replace('_', ' ')} about?`"
+              class="w-full"
+              autofocus
+              @keydown.enter="handleCreate"
+            />
+          </UFormField>
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
+            <UButton
+              :loading="createPending"
+              :disabled="!createTitle.trim()"
+              icon="i-lucide-plus"
+              @click="handleCreate"
+            >
+              Create
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

@@ -47,8 +47,7 @@ export const thinkgraphNodeSchema = z.object({
   stepIndex: z.number().optional(),
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
-  userId: z.string().optional(),
-  parentId: z.string().nullable().optional()
+  userId: z.string().optional()
 })
 
 export const thinkgraphNodesColumns = [
@@ -102,8 +101,7 @@ const _thinkgraphNodesConfig = {
     stepIndex: 0,
     skillVersion: '',
     tokenCount: 0,
-    userId: '',
-    parentId: null
+    userId: ''
   },
   columns: thinkgraphNodesColumns,
   hierarchy: {
