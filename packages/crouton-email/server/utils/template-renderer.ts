@@ -28,10 +28,17 @@ export function getEmailBrandConfig(event?: any) {
   const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const publicConfig = (config.public as any)?.crouton?.email
 
+  // Fall back to BETTER_AUTH_URL for appUrl — it must be set for auth to work,
+  // so invitation emails always get an absolute URL even if brand.url is missing.
+  const appUrl = publicConfig?.brand?.url
+    || (config as any).auth?.baseUrl
+    || process.env.BETTER_AUTH_URL
+    || ''
+
   return {
     brandName: publicConfig?.brand?.name || 'My App',
     logoUrl: publicConfig?.brand?.logoUrl || '',
     primaryColor: publicConfig?.brand?.primaryColor || '#0F766E',
-    appUrl: publicConfig?.brand?.url || ''
+    appUrl
   }
 }
