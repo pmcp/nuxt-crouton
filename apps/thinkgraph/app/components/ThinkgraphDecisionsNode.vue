@@ -58,11 +58,21 @@ const pathTypeConfig: Record<string, { icon: string; color: string }> = {
   park: { icon: 'i-lucide-archive', color: 'text-neutral-400' }
 }
 
-const nodeTypeConfig: Record<string, { color: string }> = {
-  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
+const nodeTypeConfig: Record<string, { color: string; icon: string }> = {
+  // Thinking types (existing)
+  idea: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: 'i-lucide-lightbulb' },
+  insight: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: 'i-lucide-eye' },
+  decision: { color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', icon: 'i-lucide-check-circle' },
+  question: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: 'i-lucide-help-circle' },
+  // Planning types
+  epic: { color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', icon: 'i-lucide-mountain' },
+  user_story: { color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400', icon: 'i-lucide-user' },
+  task: { color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: 'i-lucide-square-check' },
+  // Execution types
+  milestone: { color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400', icon: 'i-lucide-flag' },
+  remark: { color: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400', icon: 'i-lucide-message-circle' },
+  fork: { color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: 'i-lucide-git-fork' },
+  send: { color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400', icon: 'i-lucide-send' },
 }
 
 const pathIcon = computed(() => {
@@ -73,6 +83,22 @@ const pathIcon = computed(() => {
 const nodeTypeStyle = computed(() => {
   const nt = decision.value.nodeType
   return nodeTypeConfig[nt] || nodeTypeConfig.insight
+})
+
+const statusConfig: Record<string, { class: string; icon: string }> = {
+  idle: { class: '', icon: '' },
+  draft: { class: 'decision-node--draft', icon: 'i-lucide-pencil-line' },
+  thinking: { class: 'decision-node--thinking', icon: 'i-lucide-brain' },
+  working: { class: 'decision-node--working', icon: 'i-lucide-loader-2' },
+  blocked: { class: 'decision-node--blocked', icon: 'i-lucide-pause-circle' },
+  needs_attention: { class: 'decision-node--attention', icon: 'i-lucide-alert-triangle' },
+  done: { class: 'decision-node--done', icon: 'i-lucide-check-circle-2' },
+  error: { class: 'decision-node--error', icon: 'i-lucide-x-circle' },
+}
+
+const nodeStatus = computed(() => {
+  const s = (decision.value as any).status || 'idle'
+  return statusConfig[s] || statusConfig.idle
 })
 
 const displayContent = computed(() => {
@@ -175,6 +201,7 @@ function togglePin(event: Event) {
       },
       branchColor.bg,
       branchColor.border ? `border-l-3 ${branchColor.border}` : '',
+      nodeStatus.class,
     ]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false; showExpandMenu = false"
@@ -207,11 +234,32 @@ function togglePin(event: Event) {
       />
 
       <span
-        class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+        class="text-[10px] font-medium px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5"
         :class="nodeTypeStyle.color"
       >
+        <UIcon
+          v-if="nodeTypeStyle.icon"
+          :name="nodeTypeStyle.icon"
+          class="size-3"
+        />
         {{ decision.nodeType }}
       </span>
+
+      <!-- Status indicator -->
+      <UIcon
+        v-if="nodeStatus.icon"
+        :name="nodeStatus.icon"
+        class="size-3.5"
+        :class="{
+          'text-neutral-400 dark:text-neutral-500': (decision as any).status === 'draft',
+          'text-blue-400 animate-pulse': (decision as any).status === 'thinking',
+          'text-primary-500 animate-spin': (decision as any).status === 'working',
+          'text-neutral-400': (decision as any).status === 'blocked',
+          'text-orange-500': (decision as any).status === 'needs_attention',
+          'text-green-500': (decision as any).status === 'done',
+          'text-red-500': (decision as any).status === 'error',
+        }"
+      />
 
       <span
         v-if="decision.branchName && decision.branchName !== 'main'"
@@ -239,6 +287,18 @@ function togglePin(event: Event) {
     <div v-if="decision.source === 'ai' || decision.source === 'dispatch'" class="mt-1.5 flex items-center gap-1">
       <UIcon :name="decision.source === 'dispatch' ? 'i-lucide-send' : 'i-lucide-sparkles'" class="size-3 text-violet-400" />
       <span class="text-[10px] text-violet-400">{{ decision.source === 'dispatch' ? decision.model : 'AI generated' }}</span>
+    </div>
+
+    <!-- Notion sync indicator -->
+    <div v-if="(decision as any).notionId" class="mt-1.5 flex items-center gap-1">
+      <UIcon name="i-lucide-link" class="size-3 text-neutral-400" />
+      <span class="text-[10px] text-neutral-400">Notion synced</span>
+    </div>
+
+    <!-- Brief available indicator -->
+    <div v-if="(decision as any).brief" class="mt-1.5 flex items-center gap-1">
+      <UIcon name="i-lucide-file-text" class="size-3 text-teal-400" />
+      <span class="text-[10px] text-teal-400">Brief available</span>
     </div>
 
     <!-- Artifact indicators -->
@@ -460,5 +520,55 @@ function togglePin(event: Event) {
 
 .decision-handle:hover {
   background-color: var(--color-primary-500);
+}
+
+.decision-node--draft {
+  @apply border-dashed opacity-75;
+}
+
+.decision-node--thinking {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+.decision-node--working {
+  animation: pulse-work 1.5s ease-in-out infinite;
+  border-color: var(--color-primary-400);
+}
+
+.decision-node--blocked {
+  @apply opacity-50;
+}
+
+.decision-node--attention {
+  animation: glow-attention 2s ease-in-out infinite;
+}
+
+.decision-node--done {
+  @apply border-green-300 dark:border-green-700;
+}
+
+.decision-node--error {
+  animation: pulse-error 1.5s ease-in-out infinite;
+  @apply border-red-400 dark:border-red-600;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse-work {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary-500) 30%, transparent); }
+  50% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-500) 15%, transparent); }
+}
+
+@keyframes glow-attention {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(251, 146, 60, 0.3); }
+}
+
+@keyframes pulse-error {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.2); }
 }
 </style>
