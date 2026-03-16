@@ -671,7 +671,7 @@ watch(showCreate, async (open) => {
           <CanvasHighlight :selected-node-id="selectedNodeId" :nodes="nodes" :search-match-ids="searchMatchIds" />
         </CroutonFlow>
         <div
-          v-else
+          v-if="!nodes.length"
           class="h-full flex flex-col items-center justify-center text-muted"
         >
           <UIcon name="i-lucide-layout-dashboard" class="size-12 mb-4 opacity-40" />

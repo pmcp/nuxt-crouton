@@ -680,6 +680,7 @@ defineExpose({
 </script>
 
 <template>
+  <ClientOnly>
   <div
     ref="containerRef"
     class="crouton-flow-container"
@@ -800,6 +801,7 @@ defineExpose({
       <slot />
     </VueFlow>
   </div>
+  </ClientOnly>
 </template>
 
 <style scoped>
