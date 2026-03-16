@@ -71,21 +71,21 @@ function validate(formState: Partial<typeof state>): FormError[] {
   const errors: FormError[] = []
 
   if (!formState.name?.trim()) {
-    errors.push({ name: 'name', message: 'Team name is required' })
+    errors.push({ name: 'name', message: t('errors.requiredField') })
   } else if (formState.name.length < 2) {
-    errors.push({ name: 'name', message: 'Team name must be at least 2 characters' })
+    errors.push({ name: 'name', message: t('errors.minLength', { params: { min: 2 } }) })
   } else if (formState.name.length > 50) {
-    errors.push({ name: 'name', message: 'Team name must be less than 50 characters' })
+    errors.push({ name: 'name', message: t('errors.maxLength', { params: { max: 50 } }) })
   }
 
   if (!formState.slug?.trim()) {
-    errors.push({ name: 'slug', message: 'URL slug is required' })
+    errors.push({ name: 'slug', message: t('errors.requiredField') })
   } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(formState.slug)) {
-    errors.push({ name: 'slug', message: 'Slug must contain only lowercase letters, numbers, and hyphens' })
+    errors.push({ name: 'slug', message: t('teams.slugValidation') })
   }
 
   if (formState.logo && !/^https?:\/\//.test(formState.logo)) {
-    errors.push({ name: 'logo', message: 'Logo must be a valid URL' })
+    errors.push({ name: 'logo', message: t('teams.logoInvalidUrl') })
   }
 
   return errors
@@ -98,7 +98,7 @@ const isLoading = computed(() => props.loading || internalLoading.value)
 // Handle form submission
 async function onSubmit(event: FormSubmitEvent<typeof state>) {
   if (!isAdmin.value) {
-    notify.error('Permission denied', { description: 'Only team owners and admins can update settings.' })
+    notify.error(t('teams.permissionDenied'), { description: t('teams.permissionDeniedDescription') })
     return
   }
 
@@ -110,12 +110,12 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
       logo: event.data.logo || undefined
     })
 
-    notify.success('Settings saved', { description: 'Team settings have been updated.' })
+    notify.success(t('teams.settingsSaved'), { description: t('teams.settingsSavedDescription') })
 
     emit('saved', team)
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to save settings'
-    notify.error('Error', { description: message })
+    const message = e instanceof Error ? e.message : t('teams.failedToSaveSettings')
+    notify.error(t('common.error'), { description: message })
   } finally {
     internalLoading.value = false
   }
@@ -210,7 +210,7 @@ function resetForm() {
         <UFormField name="slug" class="flex items-start">
           <UInput
             v-model="state.slug"
-            placeholder="my-team"
+            :placeholder="$t('teams.yourSlug')"
             icon="i-lucide-link"
             :disabled="isLoading || !isAdmin"
             class="w-full"

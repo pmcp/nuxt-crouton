@@ -84,10 +84,10 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
     })
 
     if (result.error) {
-      throw new Error(result.error.message ?? 'Password change failed')
+      throw new Error(result.error.message ?? t('account.passwordChangeFailed'))
     }
 
-    notify.success(t('account.passwordUpdated'), { description: 'Your password has been changed successfully.' })
+    notify.success(t('account.passwordUpdated'), { description: t('account.passwordChangedDescription') })
 
     // Clear form
     state.currentPassword = ''
@@ -96,8 +96,8 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 
     emit('saved')
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to change password'
-    notify.error('Error', { description: message })
+    const message = e instanceof Error ? e.message : t('account.passwordChangeFailed')
+    notify.error(t('common.error'), { description: message })
   } finally {
     internalLoading.value = false
   }
@@ -118,7 +118,7 @@ function resetForm() {
         {{ t('auth.changePassword') }}
       </h3>
       <p class="text-sm text-muted mt-1">
-        Update your password to keep your account secure.
+        {{ t('account.passwordDescription') }}
       </p>
     </div>
 
@@ -137,7 +137,7 @@ function resetForm() {
         <UInput
           v-model="state.currentPassword"
           type="password"
-          placeholder="Enter current password"
+          :placeholder="$t('auth.placeholders.currentPassword')"
           icon="i-lucide-lock"
           :disabled="isLoading"
           class="w-full"
@@ -153,12 +153,12 @@ function resetForm() {
         class="w-full"
       >
         <template #hint>
-          <span class="text-xs text-muted">Minimum 8 characters</span>
+          <span class="text-xs text-muted">{{ $t('auth.placeholders.atLeastChars', { min: 8 }) }}</span>
         </template>
         <UInput
           v-model="state.newPassword"
           type="password"
-          placeholder="Enter new password"
+          :placeholder="$t('auth.placeholders.newPassword')"
           icon="i-lucide-key"
           :disabled="isLoading"
           class="w-full"
@@ -174,7 +174,7 @@ function resetForm() {
         <UInput
           v-model="state.confirmPassword"
           type="password"
-          placeholder="Confirm new password"
+          :placeholder="$t('auth.placeholders.confirmPassword')"
           icon="i-lucide-key"
           :disabled="isLoading"
           class="w-full"

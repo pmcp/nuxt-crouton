@@ -88,7 +88,7 @@ function validate(formState: Partial<typeof state>): FormError[] {
   }
 
   if (formState.image && !/^(https?|blob):\/\//.test(formState.image)) {
-    errors.push({ name: 'image', message: 'Avatar must be a valid URL' })
+    errors.push({ name: 'image', message: t('account.avatarInvalidUrl') })
   }
 
   return errors
@@ -111,8 +111,8 @@ async function handleAvatarUpload(file: File | null) {
       state.image = result.url
     }
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to upload avatar'
-    notify.error('Upload failed', { description: message })
+    const message = e instanceof Error ? e.message : t('account.failedToUploadAvatar')
+    notify.error(t('account.uploadFailed'), { description: message })
   }
 }
 
@@ -153,12 +153,12 @@ async function onSubmit(event: FormSubmitEvent<typeof state>) {
 
     await refreshSession()
 
-    notify.success(t('account.profileUpdated'), { description: 'Your profile has been saved.' })
+    notify.success(t('account.profileUpdated'), { description: t('account.profileSavedDescription') })
 
     emit('saved')
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to update profile'
-    notify.error('Error', { description: message })
+    const message = e instanceof Error ? e.message : t('account.failedToUpdateProfile')
+    notify.error(t('common.error'), { description: message })
   } finally {
     internalLoading.value = false
   }
@@ -181,7 +181,7 @@ function resetForm() {
         {{ t('account.profile') }}
       </h3>
       <p class="text-sm text-muted mt-1">
-        Update your personal information.
+        {{ t('account.profileDescription') }}
       </p>
     </div>
 
@@ -224,7 +224,7 @@ function resetForm() {
       >
         <UInput
           v-model="state.name"
-          placeholder="John Doe"
+          :placeholder="$t('auth.placeholders.name')"
           icon="i-lucide-user"
           :disabled="isLoading"
           class="w-full"
@@ -244,7 +244,7 @@ function resetForm() {
         <UInput
           v-model="state.email"
           type="email"
-          placeholder="you@example.com"
+          :placeholder="$t('auth.placeholders.email')"
           icon="i-lucide-mail"
           :disabled="isLoading"
           class="w-full"
