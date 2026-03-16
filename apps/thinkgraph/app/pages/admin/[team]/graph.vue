@@ -237,6 +237,24 @@ async function synthesizeSelected() {
   }
 }
 
+// Resume briefing
+const resuming = ref(false)
+async function resumeGraph() {
+  if (resuming.value) return
+  resuming.value = true
+  try {
+    const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`)
+    if (result?.briefing) {
+      await navigator.clipboard.writeText(result.briefing)
+      toast.add({ title: 'Resume briefing copied to clipboard', icon: 'i-lucide-clipboard-check', color: 'success' })
+    }
+  } catch (error) {
+    console.error('Resume failed:', error)
+  } finally {
+    resuming.value = false
+  }
+}
+
 // Brief generation
 const generatingBrief = ref(false)
 async function generateBrief(format: string) {
@@ -389,6 +407,16 @@ provide('thinkgraph:togglePin', togglePin)
           color="neutral"
           title="Keyboard shortcuts (?)"
           @click="showHelp = true"
+        />
+        <UButton
+          icon="i-lucide-play"
+          label="Resume"
+          size="sm"
+          variant="outline"
+          color="neutral"
+          :loading="resuming"
+          title="Copy graph resume briefing to clipboard"
+          @click="resumeGraph"
         />
         <UButton
           icon="i-lucide-message-square-text"

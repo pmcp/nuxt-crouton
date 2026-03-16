@@ -17,6 +17,10 @@ export default defineNuxtConfig({
     '@fyit/crouton'
   ],
 
+  crouton: {
+    mcpToolkit: true,
+  },
+
   croutonAuth: {
     methods: {
       password: true,
