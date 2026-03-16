@@ -17,29 +17,14 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
-import {
-  THINKGRAPH_EXPAND, THINKGRAPH_EXPANDING, THINKGRAPH_COPY_CONTEXT,
-  THINKGRAPH_OPEN_QUICK_ADD, THINKGRAPH_OPEN_CHAT, THINKGRAPH_DISPATCH,
-  THINKGRAPH_OPEN_TERMINAL, THINKGRAPH_TOGGLE_PIN, THINKGRAPH_TOGGLE_STAR,
-} from '~/utils/thinkgraph-inject'
-
-const expandFn = inject(THINKGRAPH_EXPAND, () => {})
-const expandingId = inject(THINKGRAPH_EXPANDING, ref(null))
-const copyContextFn = inject(THINKGRAPH_COPY_CONTEXT, async () => {})
-const openQuickAddFn = inject(THINKGRAPH_OPEN_QUICK_ADD, () => {})
-const openChatFn = inject(THINKGRAPH_OPEN_CHAT, () => {})
-const openDispatchFn = inject(THINKGRAPH_DISPATCH, () => {})
-const openTerminalFn = inject(THINKGRAPH_OPEN_TERMINAL, () => {})
+const ctx = useThinkgraphContext()
 
 const { open } = useCrouton()
 const isHovered = ref(false)
 const showExpandMenu = ref(false)
-const isExpanding = computed(() => expandingId.value === decision.value.id)
 
 const decision = computed(() => props.data as unknown as ThinkgraphDecision)
-
-const togglePinFn = inject(THINKGRAPH_TOGGLE_PIN, () => {})
-const toggleStarFn = inject(THINKGRAPH_TOGGLE_STAR, () => {})
+const isExpanding = computed(() => ctx.expanding.value === decision.value.id)
 
 const isParked = computed(() => decision.value.versionTag === 'parked')
 const isStarred = computed(() => decision.value.starred)
@@ -100,49 +85,49 @@ function handleExpandMode(mode: string, event: Event) {
   event.stopPropagation()
   showExpandMenu.value = false
   if (decision.value.id) {
-    expandFn(decision.value.id, mode)
+    ctx.expand(decision.value.id, mode)
   }
 }
 
 function handleChat(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    openChatFn(decision.value.id)
+    ctx.openChat(decision.value.id)
   }
 }
 
 function handleCopyContext(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    copyContextFn(decision.value.id)
+    ctx.copyContext(decision.value.id)
   }
 }
 
 function handleDispatch(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    openDispatchFn(decision.value.id)
+    ctx.openDispatch(decision.value.id)
   }
 }
 
 function handlePasteChildren(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    openQuickAddFn(decision.value.id)
+    ctx.openQuickAdd(decision.value.id)
   }
 }
 
 function toggleStar(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    toggleStarFn(decision.value.id)
+    ctx.toggleStar(decision.value.id)
   }
 }
 
 function togglePin(event: Event) {
   event.stopPropagation()
   if (decision.value.id) {
-    togglePinFn(decision.value.id)
+    ctx.togglePin(decision.value.id)
   }
 }
 </script>
@@ -258,7 +243,7 @@ function togglePin(event: Event) {
     <button
       v-if="decision.status === 'thinking' || decision.status === 'working'"
       class="mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 rounded bg-neutral-900 dark:bg-neutral-950 text-left cursor-pointer hover:bg-neutral-800 dark:hover:bg-neutral-900 transition-colors"
-      @click.stop="openTerminalFn(decision.id)"
+      @click.stop="ctx.openTerminal(decision.id)"
     >
       <UIcon name="i-lucide-terminal" class="size-3 text-green-400 shrink-0" />
       <span class="text-[10px] text-green-400 font-mono truncate">
