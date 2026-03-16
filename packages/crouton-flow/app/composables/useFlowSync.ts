@@ -43,8 +43,12 @@ export function useFlowSync(options: UseFlowSyncOptions) {
   // Type the Y.Map to our flow node type
   const nodesMap = collab.ymap as Y.Map<YjsFlowNode>
 
-  // Auto-detect user from session
-  const { user: sessionUser } = useUserSession()
+  // Auto-detect user from session (optional — useUserSession may not be available)
+  let sessionUser: { value: unknown } = { value: null }
+  if (typeof useUserSession === 'function') {
+    const session = useUserSession()
+    sessionUser = session.user
+  }
   const user = computed(() => {
     if (!sessionUser.value) return null
     // User type varies by auth provider - access properties safely
