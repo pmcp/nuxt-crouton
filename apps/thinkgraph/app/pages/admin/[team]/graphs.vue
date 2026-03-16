@@ -738,7 +738,7 @@ async function exportGraph() {
               :variant="showInspector ? 'soft' : 'ghost'"
               :color="showInspector ? 'primary' : 'neutral'"
               title="Context inspector (i)"
-              @click="showInspector = !showInspector; if (showInspector) showChat = false"
+              @click="() => { showInspector = !showInspector; if (showInspector) { showPath = false; showChat = false } }"
             />
             <UButton
               icon="i-lucide-filter"
@@ -888,7 +888,7 @@ async function exportGraph() {
 
           <!-- Thinking path panel (persistent right pane) -->
           <ThinkingPathPanel
-            v-if="showPath && !showChat"
+            v-if="showPath && !showChat && !showInspector"
             :node-id="selectedNodeId"
             :decisions="decisions"
             :graph-id="selectedGraphId"
