@@ -7,16 +7,84 @@
  *
  * Loop prevention: Claude creates nodes with source: 'mcp',
  * so they won't re-trigger this responder.
+ *
+ * Status lifecycle: thinking → working → done/error
+ * Terminal output: streamed to clients via SSE
  */
 import { spawn } from 'node:child_process'
 import { buildAncestorChain, buildDispatchContext } from './context-builder'
 import type { ContextNode } from './context-builder'
+import { updateThinkgraphDecision } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
 
 const CLAUDE_PATH = '/Users/pmcp/.local/bin/claude'
 const PROJECT_DIR = '/Users/pmcp/Projects/nuxt-crouton'
 
 // Debounce: track in-flight responses per graph to avoid flooding
 const activeResponses = new Set<string>()
+
+// Terminal output store: nodeId → { lines, listeners, status }
+export interface TerminalSession {
+  nodeId: string
+  lines: string[]
+  status: 'thinking' | 'working' | 'done' | 'error'
+  startedAt: number
+  listeners: Set<(event: TerminalEvent) => void>
+}
+
+export interface TerminalEvent {
+  type: 'output' | 'status' | 'done' | 'error'
+  data: string
+  timestamp: number
+}
+
+const terminalSessions = new Map<string, TerminalSession>()
+
+/** Get an active terminal session for a node */
+export function getTerminalSession(nodeId: string): TerminalSession | undefined {
+  return terminalSessions.get(nodeId)
+}
+
+/** Get all active terminal sessions */
+export function getActiveTerminalSessions(): Map<string, TerminalSession> {
+  return terminalSessions
+}
+
+/** Subscribe to terminal events for a node */
+export function subscribeTerminal(nodeId: string, listener: (event: TerminalEvent) => void): () => void {
+  const session = terminalSessions.get(nodeId)
+  if (!session) return () => {}
+  session.listeners.add(listener)
+  return () => session.listeners.delete(listener)
+}
+
+function emitTerminalEvent(nodeId: string, event: TerminalEvent) {
+  const session = terminalSessions.get(nodeId)
+  if (!session) return
+  if (event.type === 'output') {
+    session.lines.push(event.data)
+    // Keep last 200 lines to avoid memory bloat
+    if (session.lines.length > 200) {
+      session.lines.splice(0, session.lines.length - 200)
+    }
+  }
+  for (const listener of session.listeners) {
+    try { listener(event) } catch {}
+  }
+}
+
+async function updateNodeStatus(
+  nodeId: string,
+  teamId: string,
+  status: 'thinking' | 'working' | 'done' | 'error' | 'idle',
+) {
+  try {
+    await updateThinkgraphDecision(nodeId, teamId, 'system', { status } as any, { role: 'admin' })
+    signalCollectionChange(teamId, 'thinkgraphDecisions')
+  }
+  catch (err) {
+    console.error(`[claude-responder] Failed to update node status to "${status}":`, err)
+  }
+}
 
 export interface ClaudeResponderOptions {
   teamSlug: string
@@ -33,12 +101,22 @@ export interface ClaudeResponderOptions {
 }
 
 export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
-  const { teamSlug, graphId, node, allNodes, depthInstruction } = options
+  const { teamSlug, teamId, graphId, node, allNodes, depthInstruction } = options
   const responseKey = `${graphId}:${node.id}`
 
   // Don't spawn if we're already responding to this node
   if (activeResponses.has(responseKey)) return
   activeResponses.add(responseKey)
+
+  // Create terminal session
+  const session: TerminalSession = {
+    nodeId: node.id,
+    lines: [],
+    status: 'thinking',
+    startedAt: Date.now(),
+    listeners: new Set(),
+  }
+  terminalSessions.set(node.id, session)
 
   // Build context using existing context-builder
   const contextNode: ContextNode = {
@@ -59,6 +137,14 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     depthInstruction,
   })
 
+  // Set node status to 'thinking' immediately
+  updateNodeStatus(node.id, teamId, 'thinking')
+  emitTerminalEvent(node.id, {
+    type: 'status',
+    data: 'thinking',
+    timestamp: Date.now(),
+  })
+
   try {
     const child = spawn(CLAUDE_PATH, [
       '-p', prompt,
@@ -72,37 +158,110 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     })
 
     let stderr = ''
-    child.stderr?.on('data', (data: Buffer) => { stderr += data.toString() })
+    let hasReceivedOutput = false
+
+    child.stderr?.on('data', (data: Buffer) => {
+      const text = data.toString()
+      stderr += text
+      emitTerminalEvent(node.id, {
+        type: 'output',
+        data: `[stderr] ${text}`,
+        timestamp: Date.now(),
+      })
+    })
+
     child.stdout?.on('data', (data: Buffer) => {
-      console.log(`[claude-responder] stdout: ${data.toString().slice(0, 200)}`)
+      const text = data.toString()
+
+      // Transition to 'working' on first real output
+      if (!hasReceivedOutput) {
+        hasReceivedOutput = true
+        session.status = 'working'
+        updateNodeStatus(node.id, teamId, 'working')
+        emitTerminalEvent(node.id, {
+          type: 'status',
+          data: 'working',
+          timestamp: Date.now(),
+        })
+      }
+
+      emitTerminalEvent(node.id, {
+        type: 'output',
+        data: text,
+        timestamp: Date.now(),
+      })
     })
 
     child.on('error', (err) => {
       activeResponses.delete(responseKey)
+      session.status = 'error'
+      updateNodeStatus(node.id, teamId, 'error')
+      emitTerminalEvent(node.id, {
+        type: 'error',
+        data: err.message,
+        timestamp: Date.now(),
+      })
       console.error('[claude-responder] Process error:', err)
+      // Clean up session after a delay so clients can read the error
+      setTimeout(() => terminalSessions.delete(node.id), 30_000)
     })
 
     child.on('exit', (code) => {
       activeResponses.delete(responseKey)
       if (code !== 0) {
+        session.status = 'error'
+        updateNodeStatus(node.id, teamId, 'error')
+        emitTerminalEvent(node.id, {
+          type: 'error',
+          data: `Exited with code ${code}. ${stderr.slice(0, 300)}`,
+          timestamp: Date.now(),
+        })
         console.error(`[claude-responder] Exited with code ${code}. stderr: ${stderr.slice(0, 500)}`)
-      } else {
+      }
+      else {
+        session.status = 'done'
+        updateNodeStatus(node.id, teamId, 'done')
+        emitTerminalEvent(node.id, {
+          type: 'done',
+          data: 'Completed successfully',
+          timestamp: Date.now(),
+        })
         console.log(`[claude-responder] Completed successfully for node "${node.content.slice(0, 50)}..."`)
       }
+      // Clean up session after 30s so clients can read final state
+      setTimeout(() => terminalSessions.delete(node.id), 30_000)
     })
 
     child.unref()
 
-    // Clean up tracking after a timeout (max 2 minutes)
+    // Clean up tracking after a timeout (max 5 minutes)
     setTimeout(() => {
       activeResponses.delete(responseKey)
-    }, 120_000)
+      if (terminalSessions.has(node.id) && session.status !== 'done' && session.status !== 'error') {
+        session.status = 'error'
+        updateNodeStatus(node.id, teamId, 'error')
+        emitTerminalEvent(node.id, {
+          type: 'error',
+          data: 'Timed out after 5 minutes',
+          timestamp: Date.now(),
+        })
+        setTimeout(() => terminalSessions.delete(node.id), 30_000)
+      }
+    }, 300_000)
 
     console.log(`[claude-responder] Spawned Claude for node "${node.content.slice(0, 50)}..." in graph ${graphId}`)
   }
   catch (error) {
     activeResponses.delete(responseKey)
+    session.status = 'error'
+    updateNodeStatus(node.id, teamId, 'error')
+    emitTerminalEvent(node.id, {
+      type: 'error',
+      data: `Failed to spawn: ${(error as Error).message}`,
+      timestamp: Date.now(),
+    })
     console.error('[claude-responder] Failed to spawn Claude:', error)
+    setTimeout(() => terminalSessions.delete(node.id), 30_000)
   }
 }
 

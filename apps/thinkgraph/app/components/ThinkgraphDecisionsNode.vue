@@ -23,6 +23,7 @@ const copyContextFn = inject<(id: string, pathType?: string) => Promise<void>>('
 const openQuickAddFn = inject<(parentId?: string) => void>('thinkgraph:openQuickAdd', () => {})
 const openChatFn = inject<(nodeId: string) => void>('thinkgraph:openChat', () => {})
 const openDispatchFn = inject<(nodeId: string) => void>('thinkgraph:dispatch', () => {})
+const openTerminalFn = inject<(nodeId: string) => void>('thinkgraph:openTerminal', () => {})
 
 const { open } = useCrouton()
 const isHovered = ref(false)
@@ -294,6 +295,19 @@ function togglePin(event: Event) {
       <UIcon name="i-lucide-link" class="size-3 text-neutral-400" />
       <span class="text-[10px] text-neutral-400">Notion synced</span>
     </div>
+
+    <!-- Claude Code terminal indicator -->
+    <button
+      v-if="(decision as any).status === 'thinking' || (decision as any).status === 'working'"
+      class="mt-2 w-full flex items-center gap-1.5 px-2 py-1.5 rounded bg-neutral-900 dark:bg-neutral-950 text-left cursor-pointer hover:bg-neutral-800 dark:hover:bg-neutral-900 transition-colors"
+      @click.stop="openTerminalFn(decision.id)"
+    >
+      <UIcon name="i-lucide-terminal" class="size-3 text-green-400 shrink-0" />
+      <span class="text-[10px] text-green-400 font-mono truncate">
+        {{ (decision as any).status === 'thinking' ? 'Claude is thinking...' : 'Claude is working...' }}
+      </span>
+      <UIcon name="i-lucide-maximize-2" class="size-3 text-neutral-500 ml-auto shrink-0" />
+    </button>
 
     <!-- Brief available indicator -->
     <div v-if="(decision as any).brief" class="mt-1.5 flex items-center gap-1">
