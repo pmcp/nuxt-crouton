@@ -3,6 +3,58 @@
     "name": "Flow",
     "admin": {
       "flows": "Flows"
+    },
+    "sidebar": {
+      "search": "Flows zoeken...",
+      "noResults": "Geen flows gevonden",
+      "empty": "Nog geen flows"
+    },
+    "actions": {
+      "create": "Flow aanmaken",
+      "createNew": "Nieuwe flow aanmaken",
+      "new": "Nieuwe flow",
+      "configure": "Configureren",
+      "save": "Wijzigingen opslaan",
+      "delete": "Verwijderen"
+    },
+    "status": {
+      "live": "Live"
+    },
+    "errors": {
+      "notFound": "Flow niet gevonden"
+    },
+    "placeholder": {
+      "title": "Selecteer een flow",
+      "description": "Kies een flow uit de zijbalk of maak een nieuwe aan"
+    },
+    "modal": {
+      "newTitle": "Nieuwe Flow",
+      "configureTitle": "Flow configureren"
+    },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "bijv. Beslisboom",
+      "description": "Beschrijving",
+      "descriptionPlaceholder": "Optionele beschrijving",
+      "collection": "Collectie",
+      "collectionPlaceholder": "Selecteer een collectie",
+      "collectionHint": "De collectie om te visualiseren",
+      "fieldMapping": "Veldkoppeling",
+      "labelField": "Labelveld",
+      "parentField": "Bovenliggend veld",
+      "positionField": "Positieveld",
+      "liveSync": "Live synchronisatie",
+      "liveSyncDescription": "Real-time multiplayer synchronisatie inschakelen"
+    },
+    "node": {
+      "default": "Knooppunt",
+      "edit": "Bewerken",
+      "delete": "Verwijderen"
+    },
+    "common": {
+      "cancel": "Annuleren",
+      "edit": "Bewerken",
+      "delete": "Verwijderen"
     }
   }
 }

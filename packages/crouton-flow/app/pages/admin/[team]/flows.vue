@@ -11,6 +11,7 @@ definePageMeta({
   middleware: ['auth']
 })
 
+const { t } = useI18n()
 const { teamId, teamSlug } = useTeamContext()
 
 // Collection registry for smart form fields
@@ -201,7 +202,7 @@ async function handleEdit() {
     ref="layoutRef"
     v-model="selectedFlowId"
     query-param="flow"
-    title="Flows"
+    :title="$t('flow.admin.flows')"
     sidebar-id="flows-sidebar"
   >
     <template #sidebar-actions>
@@ -234,7 +235,7 @@ async function handleEdit() {
               <UBadge color="neutral" variant="soft" size="xs">{{ flow.collection }}</UBadge>
               <UBadge v-if="flow.syncEnabled" color="success" variant="soft" size="xs">
                 <UIcon name="i-lucide-radio" class="size-3 mr-1" />
-                Live
+                {{ $t('flow.status.live') }}
               </UBadge>
             </div>
 
@@ -246,7 +247,7 @@ async function handleEdit() {
                 icon="i-lucide-settings"
                 @click="openEdit"
               >
-                Configure
+                {{ $t('flow.actions.configure') }}
               </UButton>
             </div>
           </template>
@@ -260,7 +261,7 @@ async function handleEdit() {
 
           <div v-else-if="!flow" class="h-full flex items-center justify-center text-center">
             <div>
-              <p class="font-medium text-highlighted">Flow not found</p>
+              <p class="font-medium text-highlighted">{{ $t('flow.errors.notFound') }}</p>
             </div>
           </div>
 
@@ -298,12 +299,12 @@ async function handleEdit() {
           <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
             <UIcon name="i-lucide-share-2" class="size-8 text-muted" />
           </div>
-          <h3 class="text-lg font-semibold mb-2">Select a flow</h3>
+          <h3 class="text-lg font-semibold mb-2">{{ $t('flow.placeholder.title') }}</h3>
           <p class="text-sm text-muted mb-6">
-            Choose a flow from the sidebar, or create a new one to visualize your collection data.
+            {{ $t('flow.placeholder.description') }}
           </p>
           <UButton color="primary" icon="i-lucide-plus" @click="openCreate">
-            Create new flow
+            {{ $t('flow.actions.createNew') }}
           </UButton>
         </div>
       </div>
@@ -311,33 +312,33 @@ async function handleEdit() {
   </CroutonWorkspaceLayout>
 
   <!-- Create modal -->
-  <UModal v-model:open="isCreateOpen" title="New Flow">
+  <UModal v-model:open="isCreateOpen" :title="$t('flow.modal.newTitle')">
     <template #body>
       <div class="flex flex-col gap-4">
-        <UFormField label="Name" required>
-          <UInput v-model="createForm.name" placeholder="e.g. Decision Tree" class="w-full" />
+        <UFormField :label="$t('flow.fields.name')" required>
+          <UInput v-model="createForm.name" :placeholder="$t('flow.fields.namePlaceholder')" class="w-full" />
         </UFormField>
 
-        <UFormField label="Description">
-          <UInput v-model="createForm.description" placeholder="Optional description" class="w-full" />
+        <UFormField :label="$t('flow.fields.description')">
+          <UInput v-model="createForm.description" :placeholder="$t('flow.fields.descriptionPlaceholder')" class="w-full" />
         </UFormField>
 
-        <UFormField label="Collection" required hint="The collection to visualize">
+        <UFormField :label="$t('flow.fields.collection')" required :hint="$t('flow.fields.collectionHint')">
           <USelectMenu
             v-model="createForm.collection"
             :items="collectionItems"
             value-key="value"
-            placeholder="Select a collection"
+            :placeholder="$t('flow.fields.collectionPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
         <USeparator />
 
-        <p class="text-xs font-medium text-muted uppercase tracking-wide">Field mapping</p>
+        <p class="text-xs font-medium text-muted uppercase tracking-wide">{{ $t('flow.fields.fieldMapping') }}</p>
 
         <div class="grid grid-cols-3 gap-3">
-          <UFormField label="Label field">
+          <UFormField :label="$t('flow.fields.labelField')">
             <USelectMenu
               v-if="createFieldOptions.length"
               v-model="createForm.labelField"
@@ -347,7 +348,7 @@ async function handleEdit() {
             />
             <UInput v-else v-model="createForm.labelField" class="w-full" />
           </UFormField>
-          <UFormField label="Parent field">
+          <UFormField :label="$t('flow.fields.parentField')">
             <USelectMenu
               v-if="createFieldOptions.length"
               v-model="createForm.parentField"
@@ -357,7 +358,7 @@ async function handleEdit() {
             />
             <UInput v-else v-model="createForm.parentField" class="w-full" />
           </UFormField>
-          <UFormField label="Position field">
+          <UFormField :label="$t('flow.fields.positionField')">
             <USelectMenu
               v-if="createFieldOptions.length"
               v-model="createForm.positionField"
@@ -369,10 +370,10 @@ async function handleEdit() {
           </UFormField>
         </div>
 
-        <UFormField label="Live sync">
+        <UFormField :label="$t('flow.fields.liveSync')">
           <div class="flex items-center gap-2">
             <USwitch v-model="createForm.syncEnabled" />
-            <span class="text-sm text-muted">Enable real-time multiplayer sync</span>
+            <span class="text-sm text-muted">{{ $t('flow.fields.liveSyncDescription') }}</span>
           </div>
         </UFormField>
       </div>
@@ -380,47 +381,47 @@ async function handleEdit() {
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <UButton color="neutral" variant="ghost" @click="isCreateOpen = false">Cancel</UButton>
+        <UButton color="neutral" variant="ghost" @click="isCreateOpen = false">{{ $t('flow.common.cancel') }}</UButton>
         <UButton
           :loading="createPending"
           :disabled="!createForm.name.trim() || !createForm.collection"
           icon="i-lucide-plus"
           @click="handleCreate"
         >
-          Create flow
+          {{ $t('flow.actions.create') }}
         </UButton>
       </div>
     </template>
   </UModal>
 
   <!-- Edit modal -->
-  <UModal v-model:open="isEditOpen" title="Configure Flow">
+  <UModal v-model:open="isEditOpen" :title="$t('flow.modal.configureTitle')">
     <template #body>
       <div class="flex flex-col gap-4">
-        <UFormField label="Name" required>
+        <UFormField :label="$t('flow.fields.name')" required>
           <UInput v-model="editForm.name" class="w-full" />
         </UFormField>
 
-        <UFormField label="Description">
+        <UFormField :label="$t('flow.fields.description')">
           <UInput v-model="editForm.description" class="w-full" />
         </UFormField>
 
-        <UFormField label="Collection" required>
+        <UFormField :label="$t('flow.fields.collection')" required>
           <USelectMenu
             v-model="editForm.collection"
             :items="collectionItems"
             value-key="value"
-            placeholder="Select a collection"
+            :placeholder="$t('flow.fields.collectionPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
         <USeparator />
 
-        <p class="text-xs font-medium text-muted uppercase tracking-wide">Field mapping</p>
+        <p class="text-xs font-medium text-muted uppercase tracking-wide">{{ $t('flow.fields.fieldMapping') }}</p>
 
         <div class="grid grid-cols-3 gap-3">
-          <UFormField label="Label field">
+          <UFormField :label="$t('flow.fields.labelField')">
             <USelectMenu
               v-if="editFieldOptions.length"
               v-model="editForm.labelField"
@@ -430,7 +431,7 @@ async function handleEdit() {
             />
             <UInput v-else v-model="editForm.labelField" class="w-full" />
           </UFormField>
-          <UFormField label="Parent field">
+          <UFormField :label="$t('flow.fields.parentField')">
             <USelectMenu
               v-if="editFieldOptions.length"
               v-model="editForm.parentField"
@@ -440,7 +441,7 @@ async function handleEdit() {
             />
             <UInput v-else v-model="editForm.parentField" class="w-full" />
           </UFormField>
-          <UFormField label="Position field">
+          <UFormField :label="$t('flow.fields.positionField')">
             <USelectMenu
               v-if="editFieldOptions.length"
               v-model="editForm.positionField"
@@ -452,10 +453,10 @@ async function handleEdit() {
           </UFormField>
         </div>
 
-        <UFormField label="Live sync">
+        <UFormField :label="$t('flow.fields.liveSync')">
           <div class="flex items-center gap-2">
             <USwitch v-model="editForm.syncEnabled" />
-            <span class="text-sm text-muted">Enable real-time multiplayer sync</span>
+            <span class="text-sm text-muted">{{ $t('flow.fields.liveSyncDescription') }}</span>
           </div>
         </UFormField>
       </div>
@@ -463,8 +464,8 @@ async function handleEdit() {
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <UButton color="neutral" variant="ghost" @click="isEditOpen = false">Cancel</UButton>
-        <UButton :loading="editPending" @click="handleEdit">Save changes</UButton>
+        <UButton color="neutral" variant="ghost" @click="isEditOpen = false">{{ $t('flow.common.cancel') }}</UButton>
+        <UButton :loading="editPending" @click="handleEdit">{{ $t('flow.actions.save') }}</UButton>
       </div>
     </template>
   </UModal>

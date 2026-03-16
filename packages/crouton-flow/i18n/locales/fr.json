@@ -3,6 +3,58 @@
     "name": "Flow",
     "admin": {
       "flows": "Flows"
+    },
+    "sidebar": {
+      "search": "Rechercher des flows...",
+      "noResults": "Aucun flow ne correspond à votre recherche",
+      "empty": "Aucun flow pour le moment"
+    },
+    "actions": {
+      "create": "Créer un flow",
+      "createNew": "Créer un nouveau flow",
+      "new": "Nouveau flow",
+      "configure": "Configurer",
+      "save": "Enregistrer les modifications",
+      "delete": "Supprimer"
+    },
+    "status": {
+      "live": "En direct"
+    },
+    "errors": {
+      "notFound": "Flow introuvable"
+    },
+    "placeholder": {
+      "title": "Sélectionnez un flow",
+      "description": "Choisissez un flow dans la barre latérale ou créez-en un nouveau"
+    },
+    "modal": {
+      "newTitle": "Nouveau Flow",
+      "configureTitle": "Configurer le Flow"
+    },
+    "fields": {
+      "name": "Nom",
+      "namePlaceholder": "ex. Arbre de décision",
+      "description": "Description",
+      "descriptionPlaceholder": "Description optionnelle",
+      "collection": "Collection",
+      "collectionPlaceholder": "Sélectionner une collection",
+      "collectionHint": "La collection à visualiser",
+      "fieldMapping": "Correspondance des champs",
+      "labelField": "Champ de libellé",
+      "parentField": "Champ parent",
+      "positionField": "Champ de position",
+      "liveSync": "Synchronisation en direct",
+      "liveSyncDescription": "Activer la synchronisation multijoueur en temps réel"
+    },
+    "node": {
+      "default": "Noeud",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "common": {
+      "cancel": "Annuler",
+      "edit": "Modifier",
+      "delete": "Supprimer"
     }
   }
 }

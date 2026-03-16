@@ -33,6 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Crouton integration for edit/delete
+const { t } = useI18n()
 const { open } = useCrouton()
 const isHovered = ref(false)
 
@@ -63,7 +64,7 @@ const displayLabel = computed(() => {
     return content.length > 50 ? content.slice(0, 47) + '...' : content
   }
   if (props.data?.id) return String(props.data.id)
-  return 'Node'
+  return t('flow.node.default')
 })
 
 // Optional subtitle (type, status, etc.)
@@ -98,7 +99,7 @@ const subtitle = computed(() => {
     >
       <button
         class="crouton-flow-node__action crouton-flow-node__action--edit"
-        title="Edit"
+        :title="$t('flow.node.edit')"
         @click="handleEdit"
       >
         <svg
@@ -118,7 +119,7 @@ const subtitle = computed(() => {
       </button>
       <button
         class="crouton-flow-node__action crouton-flow-node__action--delete"
-        title="Delete"
+        :title="$t('flow.node.delete')"
         @click="handleDelete"
       >
         <svg
@@ -173,6 +174,7 @@ const subtitle = computed(() => {
 
 <style scoped>
 @reference "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 .crouton-flow-node {
   @apply px-4 py-2 rounded-lg border bg-white dark:bg-neutral-900;

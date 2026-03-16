@@ -18,6 +18,7 @@ const emit = defineEmits<{
   create: []
 }>()
 
+const { t } = useI18n()
 const { teamId } = useTeamContext()
 
 const { data: flows, pending, refresh } = await useFetch(
@@ -72,7 +73,7 @@ defineExpose({ focusSearch, refresh })
         ref="searchInputRef"
         v-model="searchQuery"
         icon="i-lucide-search"
-        placeholder="Search flows..."
+        :placeholder="$t('flow.sidebar.search')"
         size="sm"
         class="flex-1"
       />
@@ -92,7 +93,7 @@ defineExpose({ focusSearch, refresh })
     >
       <UIcon name="i-lucide-share-2" class="size-8 mb-2 opacity-50" />
       <p class="text-sm">
-        {{ searchQuery ? 'No flows match your search' : 'No flows yet' }}
+        {{ searchQuery ? t('flow.sidebar.noResults') : t('flow.sidebar.empty') }}
       </p>
       <UButton
         v-if="!searchQuery"
@@ -102,7 +103,7 @@ defineExpose({ focusSearch, refresh })
         class="mt-3"
         @click="emit('create')"
       >
-        Create flow
+        {{ $t('flow.actions.create') }}
       </UButton>
     </div>
 
@@ -137,7 +138,7 @@ defineExpose({ focusSearch, refresh })
             </div>
             <UDropdownMenu
               :items="[
-                [{ label: 'Delete', icon: 'i-lucide-trash-2', color: 'error' as const, loading: deletingId === flow.id, onSelect: () => handleDelete(flow.id) }]
+                [{ label: t('flow.actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, loading: deletingId === flow.id, onSelect: () => handleDelete(flow.id) }]
               ]"
               :content="{ align: 'end' as const }"
             >
@@ -165,7 +166,7 @@ defineExpose({ focusSearch, refresh })
         block
         @click="emit('create')"
       >
-        New flow
+        {{ t('flow.actions.new') }}
       </UButton>
     </div>
   </div>

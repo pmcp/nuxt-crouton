@@ -3,6 +3,58 @@
     "name": "Flow",
     "admin": {
       "flows": "Flows"
+    },
+    "sidebar": {
+      "search": "Search flows...",
+      "noResults": "No flows match your search",
+      "empty": "No flows yet"
+    },
+    "actions": {
+      "create": "Create flow",
+      "createNew": "Create new flow",
+      "new": "New flow",
+      "configure": "Configure",
+      "save": "Save changes",
+      "delete": "Delete"
+    },
+    "status": {
+      "live": "Live"
+    },
+    "errors": {
+      "notFound": "Flow not found"
+    },
+    "placeholder": {
+      "title": "Select a flow",
+      "description": "Choose a flow from the sidebar or create a new one"
+    },
+    "modal": {
+      "newTitle": "New Flow",
+      "configureTitle": "Configure Flow"
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Decision Tree",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description",
+      "collection": "Collection",
+      "collectionPlaceholder": "Select a collection",
+      "collectionHint": "The collection to visualize",
+      "fieldMapping": "Field mapping",
+      "labelField": "Label field",
+      "parentField": "Parent field",
+      "positionField": "Position field",
+      "liveSync": "Live sync",
+      "liveSyncDescription": "Enable real-time multiplayer sync"
+    },
+    "node": {
+      "default": "Node",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "common": {
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete"
     }
   }
 }
