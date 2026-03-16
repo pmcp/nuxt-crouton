@@ -263,6 +263,7 @@ onMounted(loadSettings)
               <UInput
                 :model-value="getFieldValue('subject')"
                 placeholder="Leave empty for default"
+                class="w-full"
                 @update:model-value="updateField('subject', $event as string)"
               />
             </UFormField>
@@ -274,6 +275,7 @@ onMounted(loadSettings)
               <UInput
                 :model-value="getFieldValue('greeting')"
                 :placeholder="getPlaceholder('greeting')"
+                class="w-full"
                 @update:model-value="updateField('greeting', $event as string)"
               />
             </UFormField>
@@ -283,6 +285,7 @@ onMounted(loadSettings)
                 :model-value="getFieldValue('body')"
                 :placeholder="getPlaceholder('body')"
                 :rows="3"
+                class="w-full"
                 @update:model-value="updateField('body', $event as string)"
               />
             </UFormField>
@@ -294,6 +297,7 @@ onMounted(loadSettings)
               <UInput
                 :model-value="getFieldValue('buttonText')"
                 :placeholder="getPlaceholder('buttonText')"
+                class="w-full"
                 @update:model-value="updateField('buttonText', $event as string)"
               />
             </UFormField>
@@ -302,6 +306,7 @@ onMounted(loadSettings)
               <UTextarea
                 :model-value="getFieldValue('footer')"
                 :placeholder="getPlaceholder('footer')"
+                class="w-full"
                 :rows="2"
                 @update:model-value="updateField('footer', $event as string)"
               />

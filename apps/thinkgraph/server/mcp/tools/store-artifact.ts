@@ -12,7 +12,7 @@ export default defineMcpTool({
     url: z.string().optional().describe('External URL (for images, hosted diagrams)'),
     content: z.string().optional().describe('Raw content (code, HTML, Mermaid markup, Excalidraw JSON, text)'),
     prompt: z.string().optional().describe('The prompt that generated this artifact'),
-    metadata: z.record(z.any()).optional().describe('Additional metadata (language, model, style, dimensions, etc.)'),
+    metadata: z.record(z.string(), z.any()).optional().describe('Additional metadata (language, model, style, dimensions, etc.)'),
     sourceNodeIds: z.array(z.string()).optional().describe('IDs of nodes that contributed to this artifact (for synthesis)'),
   },
   async handler({ teamId, nodeId, type, provider, url, content, prompt, metadata, sourceNodeIds }) {
