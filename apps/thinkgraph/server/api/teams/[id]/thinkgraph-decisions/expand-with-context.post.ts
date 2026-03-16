@@ -1,6 +1,6 @@
 import { streamText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../layers/thinkgraph/collections/decisions/server/database/queries'
+import { createThinkgraphDecision, getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/collections/decisions/server/database/queries'
 import { buildAncestorChain, buildSelectedBranchContext } from '~~/server/utils/context-builder'
 
 const modeConfig: Record<string, { system: string; count: number }> = {

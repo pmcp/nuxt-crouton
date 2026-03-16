@@ -344,8 +344,31 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
 })
 
 // Pause shortcuts when modals are open
-watch([showQuickAdd, showChat, showDispatch], ([qa, ch, dp]) => {
-  if (qa || ch || dp) pause()
+// Digest state
+const showDigest = ref(false)
+const digestContent = ref('')
+const digestLoading = ref(false)
+
+async function generateDigest() {
+  if (digestLoading.value) return
+  digestLoading.value = true
+  try {
+    const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/digest`, {
+      method: 'POST',
+    })
+    if (result?.digest) {
+      digestContent.value = result.digest
+      showDigest.value = true
+    }
+  } catch (error) {
+    console.error('Digest generation failed:', error)
+  } finally {
+    digestLoading.value = false
+  }
+}
+
+watch([showQuickAdd, showChat, showDispatch, showDigest], ([qa, ch, dp, dg]) => {
+  if (qa || ch || dp || dg) pause()
   else resume()
 })
 
@@ -417,6 +440,15 @@ provide('thinkgraph:togglePin', togglePin)
           :loading="resuming"
           title="Copy graph resume briefing to clipboard"
           @click="resumeGraph"
+        />
+        <UButton
+          icon="i-lucide-scroll-text"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          title="Generate graph digest"
+          :loading="digestLoading"
+          @click="generateDigest"
         />
         <UButton
           icon="i-lucide-message-square-text"
@@ -542,6 +574,34 @@ provide('thinkgraph:togglePin', togglePin)
 
     <!-- Shortcuts Help Modal -->
     <ShortcutsHelp v-model:open="showHelp" />
+
+    <!-- Digest Modal -->
+    <UModal v-model:open="showDigest">
+      <template #content="{ close }">
+        <div class="p-6 max-h-[70vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-scroll-text" class="size-5 text-primary" />
+              <h3 class="text-lg font-semibold">Graph Digest</h3>
+            </div>
+            <UButton
+              icon="i-lucide-copy"
+              size="sm"
+              variant="ghost"
+              color="neutral"
+              title="Copy digest"
+              @click="async () => { await navigator.clipboard.writeText(digestContent); toast.add({ title: 'Digest copied', color: 'success' }) }"
+            />
+          </div>
+          <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+            {{ digestContent }}
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton color="neutral" variant="ghost" @click="close">Close</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
 
     <!-- Crouton modal/slideover for CRUD -->
     <CroutonCollection collection="thinkgraphDecisions" @saved="refresh" />
