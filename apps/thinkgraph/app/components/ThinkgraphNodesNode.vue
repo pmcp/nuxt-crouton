@@ -76,8 +76,6 @@ function handleAddChild(event: Event) {
       {
         'work-node--selected': selected,
         'work-node--dragging': dragging,
-        'work-node--draft': isDraft,
-        'work-node--done': isDone,
       },
       statusConfig.class,
     ]"
@@ -249,21 +247,25 @@ function handleAddChild(event: Event) {
   @apply border-green-300 dark:border-green-700;
 }
 
-/* Status animations (reusing class names from STATUS_CONFIG) */
-.decision-node--thinking {
+/* Status animations (class names from STATUS_CONFIG) */
+.work-node--thinking {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
-.decision-node--working {
+.work-node--working {
   animation: pulse-work 1.5s ease-in-out infinite;
   border-color: var(--color-primary-400);
 }
 
-.decision-node--attention {
+.work-node--blocked {
+  @apply border-neutral-400 dark:border-neutral-500 opacity-80;
+}
+
+.work-node--attention {
   animation: glow-attention 2s ease-in-out infinite;
 }
 
-.decision-node--error {
+.work-node--error {
   animation: pulse-error 1.5s ease-in-out infinite;
   @apply border-red-400 dark:border-red-600;
 }

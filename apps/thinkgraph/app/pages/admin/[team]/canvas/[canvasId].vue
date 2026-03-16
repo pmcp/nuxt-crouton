@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
-import { CONNECT_NODE_TYPES } from '~/utils/thinkgraph-config'
+import { CONNECT_NODE_TYPES, STATUS_CONFIG } from '~/utils/thinkgraph-config'
+import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
+
+// Explicitly register so CroutonFlow's resolveComponent() can find it
+const app = useNuxtApp().vueApp
+if (!app.component('ThinkgraphNodesNode')) {
+  app.component('ThinkgraphNodesNode', ThinkgraphNodesNodeComponent)
+}
 definePageMeta({ layout: 'admin' })
 
 const route = useRoute()
@@ -61,6 +68,11 @@ const selectedNode = computed(() =>
 function onNodeClick(nodeId: string, _data: Record<string, unknown>, event?: MouseEvent) {
   selectedNodeId.value = nodeId
   if (!event?.shiftKey) showDetail.value = true
+}
+
+function closeDetail() {
+  showDetail.value = false
+  selectedNodeId.value = null
 }
 
 // ─── Quick-create ───
@@ -134,6 +146,45 @@ const statusSummary = computed(() => {
   }
   return counts
 })
+
+const STATUS_PILL_CLASSES: Record<string, string> = {
+  draft: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+  idle: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+  thinking: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  working: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+  blocked: 'bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400',
+  needs_attention: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  error: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+}
+
+function statusPillClass(status: string): string {
+  return STATUS_PILL_CLASSES[status] || STATUS_PILL_CLASSES.idle
+}
+
+// ─── Keyboard shortcuts ───
+const createInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('createInput')
+
+onKeyStroke('n', (e) => {
+  // Don't trigger when typing in an input/textarea
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  e.preventDefault()
+  openCreate('idea')
+})
+
+onKeyStroke('Escape', () => {
+  if (showDetail.value) closeDetail()
+  else if (selectedNodeId.value) selectedNodeId.value = null
+})
+
+// Auto-focus the title input when the create modal opens
+watch(showCreate, async (open) => {
+  if (open) {
+    await nextTick()
+    createInput.value?.inputRef?.focus()
+  }
+})
 </script>
 
 <template>
@@ -154,22 +205,14 @@ const statusSummary = computed(() => {
         <!-- Status summary pills -->
         <div class="flex items-center gap-1.5 ml-4">
           <span
-            v-if="statusSummary.working"
-            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+            v-for="(count, status) in statusSummary"
+            :key="status"
+            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+            :class="statusPillClass(status as string)"
           >
-            {{ statusSummary.working }} working
-          </span>
-          <span
-            v-if="statusSummary.needs_attention"
-            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-          >
-            {{ statusSummary.needs_attention }} blocked
-          </span>
-          <span
-            v-if="statusSummary.done"
-            class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-          >
-            {{ statusSummary.done }} done
+            <UIcon v-if="STATUS_CONFIG[status]?.icon" :name="STATUS_CONFIG[status].icon" class="size-3" />
+            {{ count }}
+            <span class="hidden sm:inline">{{ (status as string).replace('_', ' ') }}</span>
           </span>
         </div>
       </div>
@@ -201,7 +244,9 @@ const statusSummary = computed(() => {
           sync
           minimap
           @node-click="onNodeClick"
-        />
+        >
+          <CanvasHighlight :selected-node-id="selectedNodeId" :nodes="nodes" />
+        </CroutonFlow>
         <div
           v-else
           class="h-full flex flex-col items-center justify-center text-muted"
@@ -231,7 +276,7 @@ const statusSummary = computed(() => {
         v-if="showDetail && selectedNode"
         :node="selectedNode"
         :nodes="nodes"
-        @close="showDetail = false"
+        @close="closeDetail"
         @refresh="refreshNodes"
       />
     </div>
@@ -245,6 +290,7 @@ const statusSummary = computed(() => {
           </h3>
           <UFormField label="Title" required>
             <UInput
+              ref="createInput"
               v-model="createTitle"
               :placeholder="`What is this ${createType.replace('_', ' ')} about?`"
               class="w-full"
@@ -268,3 +314,29 @@ const statusSummary = computed(() => {
     </UModal>
   </div>
 </template>
+
+<style>
+/* Context chain highlight — unscoped to target Vue Flow internals */
+.vue-flow__edge.context-chain-edge .vue-flow__edge-path {
+  stroke: var(--color-primary-500, #3b82f6);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-primary-500) 40%, transparent));
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+}
+
+.vue-flow__edge.context-dimmed-edge .vue-flow__edge-path {
+  stroke: #d4d4d4;
+  opacity: 0.3;
+  transition: stroke 0.3s ease, opacity 0.3s ease;
+}
+
+.dark .vue-flow__edge.context-dimmed-edge .vue-flow__edge-path {
+  stroke: #404040;
+  opacity: 0.3;
+}
+
+.vue-flow__node.context-dimmed {
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+</style>

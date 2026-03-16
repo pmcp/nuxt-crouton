@@ -67,13 +67,13 @@ export const PATH_TYPE_CONFIG: Record<string, { icon: string; color: string }> =
 
 export const STATUS_CONFIG: Record<string, { class: string; icon: string }> = {
   idle: { class: '', icon: '' },
-  draft: { class: 'decision-node--draft', icon: 'i-lucide-pencil-line' },
-  thinking: { class: 'decision-node--thinking', icon: 'i-lucide-brain' },
-  working: { class: 'decision-node--working', icon: 'i-lucide-loader-2' },
-  blocked: { class: 'decision-node--blocked', icon: 'i-lucide-pause-circle' },
-  needs_attention: { class: 'decision-node--attention', icon: 'i-lucide-alert-triangle' },
-  done: { class: 'decision-node--done', icon: 'i-lucide-check-circle-2' },
-  error: { class: 'decision-node--error', icon: 'i-lucide-x-circle' },
+  draft: { class: 'work-node--draft', icon: 'i-lucide-pencil-line' },
+  thinking: { class: 'work-node--thinking', icon: 'i-lucide-brain' },
+  working: { class: 'work-node--working', icon: 'i-lucide-loader-2' },
+  blocked: { class: 'work-node--blocked', icon: 'i-lucide-pause-circle' },
+  needs_attention: { class: 'work-node--attention', icon: 'i-lucide-alert-triangle' },
+  done: { class: 'work-node--done', icon: 'i-lucide-check-circle-2' },
+  error: { class: 'work-node--error', icon: 'i-lucide-x-circle' },
 }
 
 // ─── Expand Modes ───

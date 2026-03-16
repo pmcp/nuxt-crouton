@@ -27,7 +27,6 @@ const bodySchema = z.object({
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
   userId: z.string().optional(),
-  parentId: z.string().nullable().optional()
 }).strip()
 
 export default defineEventHandler(async (event) => {
