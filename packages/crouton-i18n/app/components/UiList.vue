@@ -58,7 +58,7 @@
     <!-- Translations table -->
     <UTable
       v-else
-      :data="filteredItems"
+      :data="paginatedItems"
       :columns="columns"
     >
       <template #empty>
@@ -137,6 +137,22 @@
         </div>
       </template>
     </UTable>
+
+    <!-- Pagination -->
+    <div
+      v-if="!pending && !error && filteredItems.length > pageSize"
+      class="flex items-center justify-between pt-2"
+    >
+      <span class="text-sm text-gray-500">
+        {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredItems.length) }}
+        of {{ filteredItems.length }} translations
+      </span>
+      <UPagination
+        v-model="currentPage"
+        :items-per-page="pageSize"
+        :total="filteredItems.length"
+      />
+    </div>
 
     <!-- Override Modal -->
     <UModal v-model:open="showModal">
@@ -285,10 +301,15 @@ const items = computed(() => {
       // Build from locale files
       const systemValues: Record<string, string> = {}
       for (const locale of locales.value) {
-        const messages = getLocaleMessage(locale) as Record<string, any>
+        const messages = toRaw(getLocaleMessage(locale)) as Record<string, any>
         let current: any = messages
         for (const part of key.split('.')) current = current?.[part]
-        if (typeof current === 'string') systemValues[locale] = current
+        // Handle vue-i18n compiled messages
+        if (current && typeof current === 'object' && current.loc?.source) {
+          systemValues[locale] = current.loc.source
+        } else if (typeof current === 'string') {
+          systemValues[locale] = current
+        }
       }
       result.push({
         keyPath: key,
@@ -327,21 +348,34 @@ const locales = computed(() =>
 )
 
 // Build flattened key list from i18n locale messages
-function flattenMessages(obj: Record<string, any>, prefix = ''): { key: string, value: string }[] {
+// Handles vue-i18n compiled messages where each key is stored as:
+// { loc: { source: "value" }, body: { static: "value" } }
+function flattenMessages(obj: Record<string, any>, prefix = '', depth = 0, seen = new WeakSet()): { key: string, value: string }[] {
+  if (depth > 10 || typeof obj !== 'object' || obj === null || Array.isArray(obj)) return []
+  const raw = toRaw(obj)
+  if (seen.has(raw)) return []
+  seen.add(raw)
+
   const result: { key: string, value: string }[] = []
-  for (const [k, v] of Object.entries(obj)) {
+  for (const [k, v] of Object.entries(raw)) {
     const path = prefix ? `${prefix}.${k}` : k
-    if (typeof v === 'object' && v !== null) {
-      result.push(...flattenMessages(v, path))
-    } else {
-      result.push({ key: path, value: String(v) })
+    if (typeof v === 'string') {
+      result.push({ key: path, value: v })
+    } else if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+      const rawV = toRaw(v)
+      // Detect vue-i18n compiled message: { loc: { source: "..." }, body: { ... } }
+      if (rawV.loc?.source && typeof rawV.loc.source === 'string') {
+        result.push({ key: path, value: rawV.loc.source })
+      } else {
+        result.push(...flattenMessages(rawV, path, depth + 1, seen))
+      }
     }
   }
   return result
 }
 
 const flatKeys = computed(() => {
-  const messages = getLocaleMessage('en') as Record<string, any>
+  const messages = toRaw(getLocaleMessage('en')) as Record<string, any>
   return flattenMessages(messages)
 })
 
@@ -357,20 +391,27 @@ const selectedKeySystemValues = computed(() => {
   if (!newKeyPath.value) return null
   const values: Record<string, string> = {}
   for (const locale of locales.value) {
-    const messages = getLocaleMessage(locale) as Record<string, any>
+    const messages = toRaw(getLocaleMessage(locale)) as Record<string, any>
     const parts = newKeyPath.value.split('.')
     let current: any = messages
     for (const part of parts) {
       current = current?.[part]
     }
-    if (typeof current === 'string') values[locale] = current
+    // Handle vue-i18n compiled messages
+    if (current && typeof current === 'object' && current.loc?.source) {
+      values[locale] = current.loc.source
+    } else if (typeof current === 'string') {
+      values[locale] = current
+    }
   }
   return Object.keys(values).length > 0 ? values : null
 })
 
-// Search and filter
+// Search, filter, pagination
 const search = ref('')
 const categoryFilter = ref<string | undefined>(undefined)
+const currentPage = ref(1)
+const pageSize = 50
 
 const categories = computed(() => {
   if (!items.value) return []
@@ -386,6 +427,14 @@ const filteredItems = computed(() => {
     const matchesCategory = !categoryFilter.value || item.category === categoryFilter.value
     return matchesSearch && matchesCategory
   })
+})
+
+// Reset page when filters change
+watch([search, categoryFilter], () => { currentPage.value = 1 })
+
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredItems.value.slice(start, start + pageSize)
 })
 
 // Modal state
