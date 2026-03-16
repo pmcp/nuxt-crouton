@@ -45,6 +45,11 @@ const tabs = computed(() => [
       to: `/admin/${teamSlug.value}/team/domains`
     },
     {
+      label: 'Email Templates',
+      icon: 'i-lucide-mail-open',
+      to: `/admin/${teamSlug.value}/team/email-templates`
+    },
+    {
       label: t('emailLogs.title') || 'Email Logs',
       icon: 'i-lucide-mail',
       to: `/admin/${teamSlug.value}/team/email-logs`
