@@ -15,3 +15,11 @@ migrations_dir = "server/db/migrations/sqlite"
 [[kv_namespaces]]
 binding = "KV"
 id = "TODO"
+
+[[durable_objects.bindings]]
+name = "COLLAB_ROOMS"
+class_name = "CollabRoom"
+
+[[migrations]]
+tag = "collab-v1"
+new_classes = ["CollabRoom"]

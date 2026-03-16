@@ -364,6 +364,7 @@ function exportGraph() {
           :flow-config="flowConfig"
           :additional-edges="additionalEdges"
           :background-pattern-color="isDark ? '#3a3530' : '#d4cfc8'"
+          sync
           minimap
           :selected="selectedNodeIds"
           @node-click="onNodeClick"
