@@ -16,6 +16,7 @@ const searchQuery = ref('')
 const typeFilter = ref('all')
 const pendingSelection = ref<string | null>(null)
 
+const { t } = useI18n()
 const crouton = useCrouton()
 const { getConfig } = useCollections()
 // Resolve API path: prefer generated collection configs that have apiPath set
@@ -33,13 +34,13 @@ const selectedAsset = computed(() =>
   (assets.value as any[] | null)?.find((a: any) => a.id === modelValue.value)
 )
 
-const tabs = [
-  { label: 'All', value: 'all' },
-  { label: 'Images', value: 'image' },
-  { label: 'Video', value: 'video' },
-  { label: 'Audio', value: 'audio' },
-  { label: 'Documents', value: 'document' },
-]
+const tabs = computed(() => [
+  { label: t('assets.picker.all'), value: 'all' },
+  { label: t('assets.picker.images'), value: 'image' },
+  { label: t('assets.picker.video'), value: 'video' },
+  { label: t('assets.picker.audio'), value: 'audio' },
+  { label: t('assets.picker.documents'), value: 'document' },
+])
 
 
 const filteredAssets = computed(() => {
@@ -167,7 +168,7 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
             name="i-lucide-image-plus"
             class="w-8 h-8"
           />
-          <span class="text-sm">Select asset...</span>
+          <span class="text-sm">{{ $t('assets.picker.selectAsset') }}</span>
         </div>
       </template>
     </button>
@@ -182,11 +183,11 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
             <h3 class="text-lg font-semibold">
-              Select Asset
+              {{ $t('assets.picker.title') }}
             </h3>
             <UButton
               icon="i-lucide-upload"
-              label="Upload"
+              :label="$t('assets.picker.upload')"
               size="sm"
               variant="soft"
               @click="showUploader = true"
@@ -198,7 +199,7 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
             <UInput
               v-model="searchQuery"
               icon="i-lucide-search"
-              placeholder="Search assets..."
+              :placeholder="$t('assets.picker.search')"
             />
             <div class="flex gap-1">
               <button
@@ -254,7 +255,7 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
                 class="w-12 h-12 mb-3"
               />
               <p class="text-sm">
-                {{ searchQuery || typeFilter !== 'all' ? 'No assets match your filter' : 'No assets yet' }}
+                {{ searchQuery || typeFilter !== 'all' ? $t('assets.picker.noResults') : $t('assets.picker.empty') }}
               </p>
             </div>
           </div>
@@ -266,12 +267,12 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
               <UButton
                 color="neutral"
                 variant="ghost"
-                label="Cancel"
+                :label="$t('assets.picker.cancel')"
                 @click="close"
               />
               <UButton
                 color="primary"
-                label="Select"
+                :label="$t('assets.picker.select')"
                 :disabled="!pendingSelection"
                 @click="confirmSelection"
               />
@@ -284,7 +285,7 @@ useNuxtApp().hooks.hook('crouton:mutation', async (event: any) => {
           <template #content="{ close: closeUploader }">
             <div class="p-6">
               <h3 class="text-lg font-semibold mb-4">
-                Upload Asset
+                {{ $t('assets.picker.uploadTitle') }}
               </h3>
               <CroutonAssetsUploader
                 :collection="collectionName"

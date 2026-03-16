@@ -7,7 +7,7 @@ definePageMeta({
 
 <template>
   <UDashboardPanel id="assets-library">
-    <UDashboardNavbar title="Media Library">
+    <UDashboardNavbar :title="$t('assets.admin.media')">
       <template #leading>
         <UDashboardSidebarCollapse />
       </template>

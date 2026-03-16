@@ -9,12 +9,29 @@
       "skipCrop": "Skip crop",
       "altText": "Alt Text",
       "altTextPlaceholder": "Describe the image for accessibility",
+      "altTextDescription": "Describe the image for screen readers and SEO",
       "generateAltText": "Generate alt text with AI",
       "filename": "Filename:",
       "size": "Size:",
       "type": "Type:",
       "upload": "Upload Asset",
       "uploading": "Uploading..."
+    },
+    "picker": {
+      "title": "Select Asset",
+      "selectAsset": "Select asset...",
+      "upload": "Upload",
+      "uploadTitle": "Upload Asset",
+      "search": "Search assets...",
+      "all": "All",
+      "images": "Images",
+      "video": "Video",
+      "audio": "Audio",
+      "documents": "Documents",
+      "noResults": "No assets match your filter",
+      "empty": "No assets yet",
+      "select": "Select",
+      "cancel": "Cancel"
     }
   }
 }

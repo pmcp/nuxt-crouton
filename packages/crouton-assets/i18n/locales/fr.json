@@ -5,16 +5,33 @@
       "media": "Médiathèque"
     },
     "uploader": {
-      "cropImage": "Crop Image",
-      "skipCrop": "Skip crop",
-      "altText": "Alt Text",
-      "altTextPlaceholder": "Describe the image for accessibility",
-      "generateAltText": "Generate alt text with AI",
-      "filename": "Filename:",
-      "size": "Size:",
-      "type": "Type:",
-      "upload": "Upload Asset",
-      "uploading": "Uploading..."
+      "cropImage": "Recadrer l'image",
+      "skipCrop": "Ignorer le recadrage",
+      "altText": "Texte alternatif",
+      "altTextPlaceholder": "Décrivez l'image pour l'accessibilité",
+      "altTextDescription": "Décrivez l'image pour les lecteurs d'écran et le SEO",
+      "generateAltText": "Générer le texte alternatif avec l'IA",
+      "filename": "Nom du fichier :",
+      "size": "Taille :",
+      "type": "Type :",
+      "upload": "Télécharger l'asset",
+      "uploading": "Téléchargement en cours..."
+    },
+    "picker": {
+      "title": "Sélectionner un asset",
+      "selectAsset": "Sélectionner un asset...",
+      "upload": "Télécharger",
+      "uploadTitle": "Télécharger un asset",
+      "search": "Rechercher des assets...",
+      "all": "Tout",
+      "images": "Images",
+      "video": "Vidéo",
+      "audio": "Audio",
+      "documents": "Documents",
+      "noResults": "Aucun asset ne correspond à votre filtre",
+      "empty": "Aucun asset pour le moment",
+      "select": "Sélectionner",
+      "cancel": "Annuler"
     }
   }
 }

@@ -19,7 +19,7 @@ const generatingAlt = ref(false)
 const { hasApp } = useCroutonApps()
 const hasAI = hasApp('ai')
 
-const { locales } = useI18n()
+const { t, locales } = useI18n()
 const hasMultipleLocales = computed(() => locales.value.length > 1)
 
 // Crop state
@@ -207,9 +207,9 @@ const handleSave = async () => {
         <!-- Multi-language alt text -->
         <template v-if="isImage && hasMultipleLocales">
           <UFormField
-            label="Alt Text"
+            :label="$t('assets.uploader.altText')"
             name="alt"
-            description="Describe the image for screen readers and SEO"
+            :description="$t('assets.uploader.altTextDescription')"
           >
             <div class="flex items-start gap-2 mt-1">
               <div class="flex-1">
@@ -222,7 +222,7 @@ const handleSave = async () => {
                   @update:english="({ value }: { field: string, value: string }) => { state.alt = value }"
                 />
               </div>
-              <UTooltip v-if="hasAI" text="Generate with AI" :delay-duration="0">
+              <UTooltip v-if="hasAI" :text="$t('assets.uploader.generateAltText')" :delay-duration="0">
                 <UButton
                   :loading="generatingAlt"
                   variant="ghost"
@@ -239,17 +239,17 @@ const handleSave = async () => {
         <!-- Single-language alt text -->
         <UFormField
           v-else-if="isImage"
-          label="Alt Text"
+          :label="$t('assets.uploader.altText')"
           name="alt"
-          description="Describe the image for screen readers and SEO"
+          :description="$t('assets.uploader.altTextDescription')"
         >
           <div class="flex gap-2 mt-1">
             <UInput
               v-model="state.alt"
-              placeholder="A person riding a bicycle on a city street…"
+              :placeholder="$t('assets.uploader.altTextPlaceholder')"
               class="flex-1"
             />
-            <UTooltip v-if="hasAI" text="Generate with AI" :delay-duration="0">
+            <UTooltip v-if="hasAI" :text="$t('assets.uploader.generateAltText')" :delay-duration="0">
               <UButton
                 :loading="generatingAlt"
                 variant="ghost"
@@ -262,7 +262,7 @@ const handleSave = async () => {
         </UFormField>
 
         <UButton :loading="saving || uploading" block @click="handleSave">
-          Save
+          {{ $t('common.save') }}
         </UButton>
       </div>
     </template>

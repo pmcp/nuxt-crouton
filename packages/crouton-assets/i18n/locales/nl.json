@@ -5,16 +5,33 @@
       "media": "Mediabibliotheek"
     },
     "uploader": {
-      "cropImage": "Crop Image",
-      "skipCrop": "Skip crop",
-      "altText": "Alt Text",
-      "altTextPlaceholder": "Describe the image for accessibility",
-      "generateAltText": "Generate alt text with AI",
-      "filename": "Filename:",
-      "size": "Size:",
+      "cropImage": "Afbeelding bijsnijden",
+      "skipCrop": "Bijsnijden overslaan",
+      "altText": "Alt-tekst",
+      "altTextPlaceholder": "Beschrijf de afbeelding voor toegankelijkheid",
+      "altTextDescription": "Beschrijf de afbeelding voor schermlezers en SEO",
+      "generateAltText": "Alt-tekst genereren met AI",
+      "filename": "Bestandsnaam:",
+      "size": "Grootte:",
       "type": "Type:",
-      "upload": "Upload Asset",
-      "uploading": "Uploading..."
+      "upload": "Asset uploaden",
+      "uploading": "Uploaden..."
+    },
+    "picker": {
+      "title": "Selecteer asset",
+      "selectAsset": "Selecteer asset...",
+      "upload": "Uploaden",
+      "uploadTitle": "Asset uploaden",
+      "search": "Assets zoeken...",
+      "all": "Alles",
+      "images": "Afbeeldingen",
+      "video": "Video",
+      "audio": "Audio",
+      "documents": "Documenten",
+      "noResults": "Geen assets gevonden met dit filter",
+      "empty": "Nog geen assets",
+      "select": "Selecteren",
+      "cancel": "Annuleren"
     }
   }
 }
