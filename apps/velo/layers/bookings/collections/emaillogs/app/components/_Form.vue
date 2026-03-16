@@ -40,27 +40,27 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="BookingId" name="bookingId" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.bookingId')" name="bookingId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.bookingId as any"
             collection="bookingsBookings"
-            label="BookingId"
+            :label="$t('bookings.fields.bookingId')"
           />
         </UFormField>
-        <UFormField label="TemplateId" name="templateId" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.templateId')" name="templateId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.templateId as any"
             collection="bookingsEmailtemplates"
-            label="TemplateId"
+            :label="$t('bookings.fields.templateId')"
           />
         </UFormField>
-        <UFormField label="RecipientEmail" name="recipientEmail" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.recipientEmail')" name="recipientEmail" class="not-last:pb-4">
           <UInput v-model="state.recipientEmail" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="TriggerType" name="triggerType" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.triggerType')" name="triggerType" class="not-last:pb-4">
           <UInput v-model="state.triggerType" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Error" name="error" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.error')" name="error" class="not-last:pb-4">
           <UTextarea v-model="state.error" class="w-full" size="xl" />
         </UFormField>
       </div>
@@ -70,7 +70,7 @@
       <div class="flex flex-col gap-4 p-1">
       </div>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Status" name="status" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.status')" name="status" class="not-last:pb-4">
           <USelect
             v-model="state.status"
             :items="statusOptions"
@@ -78,7 +78,7 @@
             size="xl"
           />
         </UFormField>
-        <UFormField label="SentAt" name="sentAt" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.sentAt')" name="sentAt" class="not-last:pb-4">
           <UInput v-model="state.sentAt" class="w-full" size="xl" />
         </UFormField>
       </div>
@@ -106,12 +106,14 @@ const { defaultValue, schema, collection } = useBookingsEmaillogs()
 // Form layout configuration
 const tabs = ref(false)
 
+const { t: $t } = useI18n()
+
 // Static select options
-const statusOptions = [
-  { label: 'Pending', value: 'pending' },
-  { label: 'Sent', value: 'sent' },
-  { label: 'Failed', value: 'failed' }
-]
+const statusOptions = computed(() => [
+  { label: $t('bookings.emailStatus.pending'), value: 'pending' },
+  { label: $t('bookings.emailStatus.sent'), value: 'sent' },
+  { label: $t('bookings.emailStatus.failed'), value: 'failed' }
+])
 
 
 

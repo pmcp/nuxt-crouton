@@ -41,25 +41,25 @@
     <CroutonFormLayout :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection">
       <template #main="{ activeSection }">
       <div v-show="!tabs || activeSection === 'scheduling'" class="flex flex-col gap-4 p-1">
-        <UFormField label="Slots" name="slots" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.slots')" name="slots" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.slots as any"
             component-name="BookingsLocationsSlotInput"
-            add-label="Add Time Slot"
+            :add-label="$t('bookings.actions.addTimeSlot')"
             :sortable="true"
           />
         </UFormField>
-        <UFormField label="OpenDays" name="openDays" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.openDays')" name="openDays" class="not-last:pb-4">
           <OpenDaysPicker v-model="state.openDays" />
         </UFormField>
-        <UFormField label="SlotSchedule" name="slotSchedule" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.slotSchedule')" name="slotSchedule" class="not-last:pb-4">
           <ScheduleGrid v-model="state.slotSchedule" />
         </UFormField>
-        <UFormField label="BlockedDates" name="blockedDates" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.blockedDates')" name="blockedDates" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.blockedDates as any"
             component-name="BookingsLocationsBlockedDateInput"
-            add-label="Add Blocked Period"
+            :add-label="$t('bookings.actions.addBlockedPeriod')"
             :sortable="false"
           />
         </UFormField>
@@ -68,7 +68,7 @@
       <div v-show="!tabs || activeSection === 'address'" class="flex flex-col gap-4 p-1">
 
        <!-- MapBox Map Display -->
-      <UFormField label="Location Map" name="location" class="not-last:pb-4">
+      <UFormField :label="$t('bookings.fields.locationMap')" name="location" class="not-last:pb-4">
         <CroutonMapsMap
           :center="mapCenter"
           :zoom="14"
@@ -90,7 +90,7 @@
           </template>
         </CroutonMapsMap>
         <p v-if="geocoding" class="text-sm text-gray-500 mt-2">
-          Geocoding address...
+          {{ $t('bookings.messages.geocoding') }}
         </p>
       </UFormField>
       </div>
@@ -113,7 +113,7 @@
         }"
         show-ai-translate
         field-type="locations"
-        label="Translations"
+        :label="$t('bookings.fields.translations')"
       />
       </div>
       </template>
@@ -122,35 +122,35 @@
       <div class="flex flex-col gap-4 p-1">
       </div>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Color" name="color" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.color')" name="color" class="not-last:pb-4">
           <CroutonFormColorPicker v-model="state.color" />
         </UFormField>
       </div>
 
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="AllowedMemberIds" name="allowedMemberIds" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.allowedMemberIds')" name="allowedMemberIds" class="not-last:pb-4">
           <UTextarea
             :model-value="Array.isArray(state.allowedMemberIds) ? state.allowedMemberIds.join('\n') : ''"
             @update:model-value="(val) => state.allowedMemberIds = val ? val.split('\n').filter(Boolean) : []"
             class="w-full"
             :rows="6"
-            placeholder="Enter one value per line"
+            :placeholder="$t('bookings.messages.enterOnePerLine')"
           />
-          <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
+          <p class="text-sm text-gray-500 mt-1">{{ $t('bookings.messages.enterOnePerLine') }}</p>
         </UFormField>
       </div>
 
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="InventoryMode" name="inventoryMode" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.inventoryMode')" name="inventoryMode" class="not-last:pb-4">
           <UCheckbox v-model="state.inventoryMode" />
         </UFormField>
-        <UFormField label="Quantity" name="quantity" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.quantity')" name="quantity" class="not-last:pb-4">
           <UInputNumber v-model="state.quantity" class="w-full" />
         </UFormField>
       </div>
 
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="MaxBookingsPerMonth" name="maxBookingsPerMonth" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.maxBookingsPerMonth')" name="maxBookingsPerMonth" class="not-last:pb-4">
           <UInputNumber v-model="state.maxBookingsPerMonth" class="w-full" />
         </UFormField>
       </div>
@@ -184,10 +184,11 @@ const props = defineProps<BookingsLocationFormProps>()
 const { defaultValue, schema, collection } = useBookingsLocations()
 
 // Form layout configuration
-const navigationItems = [
-  { label: 'Scheduling', value: 'scheduling' },
-  { label: 'Address', value: 'address' }
-]
+const { t: $t } = useI18n()
+const navigationItems = computed(() => [
+  { label: $t('bookings.tabs.scheduling'), value: 'scheduling' },
+  { label: $t('bookings.tabs.address'), value: 'address' }
+])
 
 const tabs = ref(true)
 const activeSection = ref('scheduling')

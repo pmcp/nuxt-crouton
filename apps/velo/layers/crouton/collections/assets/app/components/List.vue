@@ -31,7 +31,7 @@
   >
     <template #header>
       <CroutonTableHeader
-        title="CroutonAssets"
+        :title="useFormatCollections().collectionWithCapital('croutonAssets')"
         :collection="'croutonAssets'"
         createButton
       />

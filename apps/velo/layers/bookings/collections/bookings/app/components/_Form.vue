@@ -40,31 +40,31 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Location" name="location" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.location')" name="location" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.location"
             collection="bookingsLocations"
-            label="Location"
+            :label="$t('bookings.fields.location')"
           />
         </UFormField>
-        <UFormField label="Date" name="date" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.date')" name="date" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.date" />
         </UFormField>
-        <UFormField label="Slot" name="slot" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.slot')" name="slot" class="not-last:pb-4">
           <CroutonFormDependentFieldLoader
             v-model="state.slot"
             :dependent-value="state.location"
             dependent-collection="bookingsLocations"
             dependent-field="slots"
-            dependent-label="Location"
+            :dependent-label="$t('bookings.fields.location')"
           />
         </UFormField>
-        <UFormField label="Age Group" name="group" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.group')" name="group" class="not-last:pb-4">
           <CroutonFormOptionsSelect
             v-model="state.group"
             options-collection="bookingsSettings"
             options-field="groups"
-            label="Age Group"
+            :label="$t('bookings.fields.group')"
           />
         </UFormField>
       </div>
@@ -74,18 +74,18 @@
       <div class="flex flex-col gap-4 p-1">
       </div>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Quantity" name="quantity" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.quantity')" name="quantity" class="not-last:pb-4">
           <UInputNumber v-model="state.quantity" class="w-full" />
         </UFormField>
       </div>
 
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Status" name="status" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.status')" name="status" class="not-last:pb-4">
           <CroutonFormOptionsSelect
             v-model="state.status"
             options-collection="bookingsSettings"
             options-field="statuses"
-            label="Status"
+            :label="$t('bookings.fields.status')"
           />
         </UFormField>
       </div>

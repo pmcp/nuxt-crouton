@@ -40,19 +40,19 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Statuses" name="statuses" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.statuses')" name="statuses" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.statuses as any"
             component-name="BookingsSettingsStatuseInput"
-            add-label="Add Status"
+            :add-label="$t('bookings.actions.addStatus')"
             :sortable="true"
           />
         </UFormField>
-        <UFormField label="Groups" name="groups" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.groups')" name="groups" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.groups as any"
             component-name="BookingsSettingsGroupInput"
-            add-label="Add Group"
+            :add-label="$t('bookings.actions.addGroup')"
             :sortable="true"
           />
         </UFormField>

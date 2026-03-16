@@ -31,7 +31,7 @@
   >
     <template #header>
       <CroutonTableHeader
-        title="BookingsLocations"
+        :title="$t('bookings.collections.locations.title')"
         :collection="'bookingsLocations'"
         createButton
       />

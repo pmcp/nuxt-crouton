@@ -54,7 +54,7 @@
         }"
         show-ai-translate
         field-type="emailtemplates"
-        label="Translations"
+        :label="$t('bookings.fields.translations')"
       />
       </div>
       </template>
@@ -63,10 +63,10 @@
       <div class="flex flex-col gap-4 p-1">
       </div>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="FromEmail" name="fromEmail" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.fromEmail')" name="fromEmail" class="not-last:pb-4">
           <UInput v-model="state.fromEmail" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Trigger Type" name="triggerType" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.triggerType')" name="triggerType" class="not-last:pb-4">
           <USelect
             v-model="state.triggerType"
             :items="triggerTypeOptions"
@@ -74,7 +74,7 @@
             size="xl"
           />
         </UFormField>
-        <UFormField label="Send To" name="recipientType" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.recipientType')" name="recipientType" class="not-last:pb-4">
           <USelect
             v-model="state.recipientType"
             :items="recipientTypeOptions"
@@ -82,17 +82,17 @@
             size="xl"
           />
         </UFormField>
-        <UFormField label="IsActive" name="isActive" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.isActive')" name="isActive" class="not-last:pb-4">
           <UCheckbox v-model="state.isActive" />
         </UFormField>
-        <UFormField label="DaysOffset" name="daysOffset" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.daysOffset')" name="daysOffset" class="not-last:pb-4">
           <UInputNumber v-model="state.daysOffset" class="w-full" />
         </UFormField>
-        <UFormField label="LocationId" name="locationId" class="not-last:pb-4">
+        <UFormField :label="$t('bookings.fields.locationId')" name="locationId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.locationId as any"
             collection="bookingsLocations"
-            label="LocationId"
+            :label="$t('bookings.fields.locationId')"
           />
         </UFormField>
       </div>
@@ -120,19 +120,21 @@ const { defaultValue, schema, collection } = useBookingsEmailtemplates()
 // Form layout configuration
 const tabs = ref(false)
 
-// Static select options
-const triggerTypeOptions = [
-  { label: 'Booking Created', value: 'booking_created' },
-  { label: 'Reminder Before', value: 'reminder_before' },
-  { label: 'Booking Cancelled', value: 'booking_cancelled' },
-  { label: 'Follow Up After', value: 'follow_up_after' }
-]
+const { t: $t } = useI18n()
 
-const recipientTypeOptions = [
-  { label: 'Customer', value: 'customer' },
-  { label: 'Admin', value: 'admin' },
-  { label: 'Both', value: 'both' }
-]
+// Static select options
+const triggerTypeOptions = computed(() => [
+  { label: $t('bookings.triggerTypes.booking_created'), value: 'booking_created' },
+  { label: $t('bookings.triggerTypes.reminder_before'), value: 'reminder_before' },
+  { label: $t('bookings.triggerTypes.booking_cancelled'), value: 'booking_cancelled' },
+  { label: $t('bookings.triggerTypes.follow_up_after'), value: 'follow_up_after' }
+])
+
+const recipientTypeOptions = computed(() => [
+  { label: $t('bookings.recipientTypes.customer'), value: 'customer' },
+  { label: $t('bookings.recipientTypes.admin'), value: 'admin' },
+  { label: $t('bookings.recipientTypes.both'), value: 'both' }
+])
 
 
 
