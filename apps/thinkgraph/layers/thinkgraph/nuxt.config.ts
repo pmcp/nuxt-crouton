@@ -15,7 +15,10 @@ export default defineNuxtConfig({
   extends: [
     './collections/decisions',
     './collections/chatconversations',
-    './collections/graphs'
+    './collections/graphs',
+    './collections/canvases',
+    './collections/nodes',
+    './collections/injectrequests'
   ],
   i18n: {
     locales: [

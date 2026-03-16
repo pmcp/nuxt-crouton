@@ -1,0 +1,38 @@
+{
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Title",
+      "description": "Canvas title",
+      "area": "main"
+    }
+  },
+  "epicId": {
+    "type": "string",
+    "meta": {
+      "label": "Notion Epic ID",
+      "description": "Links this canvas to a Notion epic",
+      "area": "sidebar",
+      "group": "notion"
+    }
+  },
+  "epicBrief": {
+    "type": "text",
+    "meta": {
+      "label": "Epic Brief",
+      "description": "The epic brief text, synced from Notion or written manually",
+      "area": "main"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "label": "Status",
+      "description": "active, closed",
+      "default": "active",
+      "area": "sidebar",
+      "displayAs": "badge"
+    }
+  }
+}

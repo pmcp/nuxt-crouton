@@ -1,5 +1,61 @@
 [
   {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-16T18:29:00.536Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6abf84c"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-16T18:29:00.513Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6abf84c"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-16T18:29:00.484Z",
+    "layer": "thinkgraph",
+    "gitSha": "b6abf84c"
+  },
+  {
     "collection": "chatconversations",
     "fields": [
       "nodeId",

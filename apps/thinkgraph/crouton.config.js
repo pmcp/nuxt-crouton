@@ -1,23 +1,27 @@
 export default {
   collections: [
     {
-      name: 'graphs',
-      fieldsFile: './schemas/graph.json'
+      name: 'canvases',
+      fieldsFile: './schemas/canvas.json'
     },
     {
-      name: 'decisions',
-      fieldsFile: './schemas/decision.json'
+      name: 'nodes',
+      fieldsFile: './schemas/node.json',
+      hierarchy: {
+        enabled: true,
+        parentField: 'parentId'
+      }
     },
     {
-      name: 'chatConversations',
-      fieldsFile: './schemas/chat-conversation.json'
+      name: 'injectRequests',
+      fieldsFile: './schemas/inject-request.json'
     }
   ],
 
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['graphs', 'decisions', 'chatConversations']
+      collections: ['canvases', 'nodes', 'injectRequests']
     }
   ],
 

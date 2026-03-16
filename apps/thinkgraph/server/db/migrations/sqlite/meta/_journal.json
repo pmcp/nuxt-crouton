@@ -50,6 +50,20 @@
       "when": 1774003200000,
       "tag": "0006_execution_canvas",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1773676501083,
+      "tag": "0007_flashy_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1773685750218,
+      "tag": "0008_lowly_puck",
+      "breakpoints": true
     }
   ]
 }

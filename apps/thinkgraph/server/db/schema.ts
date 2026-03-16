@@ -9,3 +9,6 @@ export { thinkgraphDecisions } from '../../layers/thinkgraph/collections/decisio
 export { flowConfigs } from '@fyit/crouton-flow/server/database/schema'
 export { thinkgraphChatConversations } from '../../layers/thinkgraph/collections/chatconversations/server/database/schema'
 export { thinkgraphGraphs } from '../../layers/thinkgraph/collections/graphs/server/database/schema'
+export { thinkgraphCanvases } from '../../layers/thinkgraph/collections/canvases/server/database/schema'
+export { thinkgraphNodes } from '../../layers/thinkgraph/collections/nodes/server/database/schema'
+export { thinkgraphInjectRequests } from '../../layers/thinkgraph/collections/injectrequests/server/database/schema'

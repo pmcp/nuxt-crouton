@@ -1,0 +1,198 @@
+{
+  "canvasId": {
+    "type": "string",
+    "refTarget": "canvases",
+    "meta": {
+      "required": true,
+      "label": "Canvas",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "parentId": {
+    "type": "string",
+    "refTarget": "nodes",
+    "meta": {
+      "label": "Parent Node",
+      "description": "Parent node for tree structure",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "nodeType": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Type",
+      "description": "epic | user_story | task | milestone | question | decision | remark | fork | send",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "idle",
+      "label": "Status",
+      "description": "draft | idle | thinking | working | needs_attention | done | error",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Title",
+      "description": "Node title",
+      "area": "main"
+    }
+  },
+  "brief": {
+    "type": "text",
+    "meta": {
+      "label": "Brief",
+      "description": "Input. What needs to happen here.",
+      "area": "main"
+    }
+  },
+  "output": {
+    "type": "text",
+    "meta": {
+      "label": "Output",
+      "description": "The handoff brief. Produced when node is done.",
+      "area": "main"
+    }
+  },
+  "handoffType": {
+    "type": "string",
+    "meta": {
+      "label": "Handoff Type",
+      "description": "task | claude_code | human_review | child_nodes | send | close",
+      "area": "sidebar",
+      "group": "handoff"
+    }
+  },
+  "handoffMeta": {
+    "type": "json",
+    "meta": {
+      "label": "Handoff Meta",
+      "description": "Worktree path, send target, assignee, etc.",
+      "area": "sidebar",
+      "group": "handoff"
+    }
+  },
+  "contextScope": {
+    "type": "string",
+    "meta": {
+      "label": "Context Scope",
+      "default": "branch",
+      "description": "full | branch | manual",
+      "area": "sidebar",
+      "group": "context"
+    }
+  },
+  "contextNodeIds": {
+    "type": "json",
+    "meta": {
+      "label": "Manual Context Nodes",
+      "description": "Node IDs for contextScope: manual",
+      "area": "sidebar",
+      "group": "context"
+    }
+  },
+  "notionTaskId": {
+    "type": "string",
+    "meta": {
+      "label": "Notion Task ID",
+      "description": "Set when task is written to Notion",
+      "area": "sidebar",
+      "group": "notion"
+    }
+  },
+  "worktree": {
+    "type": "string",
+    "meta": {
+      "label": "Worktree",
+      "description": "Git worktree branch for task/fork nodes",
+      "area": "sidebar",
+      "group": "execution"
+    }
+  },
+  "sendTarget": {
+    "type": "string",
+    "meta": {
+      "label": "Send Target",
+      "description": "claude | gpt | gemini | flux | human:{userId}",
+      "area": "sidebar",
+      "group": "execution"
+    }
+  },
+  "sendMode": {
+    "type": "string",
+    "meta": {
+      "label": "Send Mode",
+      "description": "block | async | fire_and_forget",
+      "area": "sidebar",
+      "group": "execution"
+    }
+  },
+  "injectMode": {
+    "type": "string",
+    "meta": {
+      "label": "Inject Mode",
+      "default": "queue",
+      "description": "direct | queue | fork",
+      "area": "sidebar",
+      "group": "collaboration"
+    }
+  },
+  "origin": {
+    "type": "string",
+    "meta": {
+      "label": "Origin",
+      "description": "human | ai | notion_sync",
+      "area": "sidebar",
+      "group": "provenance",
+      "displayAs": "badge"
+    }
+  },
+  "stepIndex": {
+    "type": "integer",
+    "meta": {
+      "label": "Step",
+      "description": "Creation order within canvas",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "skillVersion": {
+    "type": "string",
+    "meta": {
+      "label": "Skill Version",
+      "description": "Which skill version ran on this node",
+      "area": "sidebar",
+      "group": "provenance"
+    }
+  },
+  "tokenCount": {
+    "type": "integer",
+    "meta": {
+      "label": "Token Count",
+      "description": "Total tokens consumed by this node",
+      "area": "sidebar",
+      "group": "cost"
+    }
+  },
+  "userId": {
+    "type": "string",
+    "meta": {
+      "label": "Created By",
+      "area": "sidebar",
+      "group": "provenance"
+    }
+  }
+}
