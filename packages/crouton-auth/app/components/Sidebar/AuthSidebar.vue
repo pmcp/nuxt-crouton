@@ -127,6 +127,11 @@ const defaultNavItems = computed<NavigationMenuItem[][]>(() => {
         label: t('teams.invitationsShort') || t('teams.invitations') || 'Invitations',
         icon: 'i-lucide-mail',
         to: `${baseUrl}/invitations`
+      },
+      {
+        label: 'Email Templates',
+        icon: 'i-lucide-mail-open',
+        to: `${baseUrl}/team/email-templates`
       }
     )
 
