@@ -13,6 +13,7 @@ definePageMeta({
   layout: 'auth'
 })
 
+const { t } = useT()
 const route = useRoute()
 const router = useRouter()
 const notify = useNotify()
@@ -50,20 +51,20 @@ async function verifyMagicLink() {
     })
 
     if (result.error) {
-      throw new Error(result.error.message ?? 'Magic link verification failed')
+      throw new Error(result.error.message ?? t('auth.magicLink.verificationFailed'))
     }
 
     verified.value = true
-    notify.success('Signed in', { description: 'You have been signed in successfully.' })
+    notify.success(t('auth.magicLink.signedIn'), { description: t('auth.magicLink.signedInDescription') })
 
     // Redirect after short delay
     setTimeout(() => {
       router.push(redirects.afterLogin)
     }, 1500)
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Magic link verification failed'
+    const message = e instanceof Error ? e.message : t('auth.magicLink.verificationFailed')
     verifyError.value = message
-    notify.error('Sign in failed', { description: message })
+    notify.error(t('auth.magicLink.signInFailed'), { description: message })
   } finally {
     verifying.value = false
   }
@@ -75,7 +76,7 @@ async function verifyMagicLink() {
     <!-- Header -->
     <div class="text-center">
       <h1 class="text-2xl font-bold text-highlighted">
-        Magic Link Sign In
+        {{ $t('auth.magicLink.title') }}
       </h1>
     </div>
 
@@ -87,15 +88,15 @@ async function verifyMagicLink() {
       <UAlert
         color="warning"
         icon="i-lucide-alert-triangle"
-        title="Magic link not enabled"
-        description="Magic link authentication is not enabled for this application."
+        :title="$t('auth.magicLink.notEnabled')"
+        :description="$t('auth.magicLink.notEnabledDescription')"
       />
       <NuxtLink
         to="/auth/login"
         class="block mt-6"
       >
         <UButton block>
-          Sign in with another method
+          {{ $t('auth.magicLink.signInWithAnotherMethod') }}
         </UButton>
       </NuxtLink>
     </div>
@@ -108,15 +109,15 @@ async function verifyMagicLink() {
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
-        title="Invalid link"
-        description="The magic link is invalid or has expired. Please request a new one."
+        :title="$t('auth.magicLink.invalidLink')"
+        :description="$t('auth.magicLink.invalidLinkDescription')"
       />
       <NuxtLink
         to="/auth/login"
         class="block mt-6"
       >
         <UButton block>
-          Request new magic link
+          {{ $t('auth.magicLink.requestNewLink') }}
         </UButton>
       </NuxtLink>
     </div>
@@ -131,7 +132,7 @@ async function verifyMagicLink() {
         class="size-12 animate-spin text-primary"
       />
       <p class="mt-4 text-muted">
-        Signing you in...
+        {{ $t('auth.magicLink.signingYouIn') }}
       </p>
     </div>
 
@@ -143,8 +144,8 @@ async function verifyMagicLink() {
       <UAlert
         color="success"
         icon="i-lucide-check-circle"
-        title="Signed in"
-        description="You have been signed in successfully. Redirecting to dashboard..."
+        :title="$t('auth.magicLink.signedIn')"
+        :description="$t('auth.magicLink.signedInRedirecting')"
       />
       <div class="mt-4 text-center">
         <UIcon
@@ -162,17 +163,17 @@ async function verifyMagicLink() {
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
-        title="Sign in failed"
+        :title="$t('auth.magicLink.signInFailed')"
         :description="verifyError"
       />
       <div class="mt-6 space-y-3">
         <NuxtLink to="/auth/login">
           <UButton block>
-            Try again
+            {{ $t('auth.magicLink.tryAgain') }}
           </UButton>
         </NuxtLink>
         <p class="text-center text-sm text-muted">
-          The magic link may have expired. Request a new one from the login page.
+          {{ $t('auth.magicLink.expiredHint') }}
         </p>
       </div>
     </div>

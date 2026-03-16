@@ -13,6 +13,7 @@ definePageMeta({
   layout: 'auth'
 })
 
+const { t } = useT()
 const route = useRoute()
 const router = useRouter()
 const notify = useNotify()
@@ -52,15 +53,15 @@ async function verifyEmail() {
     })
 
     if (result.error) {
-      throw new Error(result.error.message ?? 'Verification failed')
+      throw new Error(result.error.message ?? t('auth.verifyEmail.verificationFailed'))
     }
 
     verified.value = true
-    notify.success('Email verified', { description: 'Your email has been verified successfully.' })
+    notify.success(t('auth.verifyEmail.emailVerified'), { description: t('auth.verifyEmail.emailVerifiedDescription') })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Verification failed'
+    const message = e instanceof Error ? e.message : t('auth.verifyEmail.verificationFailed')
     verifyError.value = message
-    notify.error('Verification failed', { description: message })
+    notify.error(t('auth.verifyEmail.verificationFailed'), { description: message })
   } finally {
     verifying.value = false
   }
@@ -69,7 +70,7 @@ async function verifyEmail() {
 // Resend verification email
 async function resendVerification() {
   if (!user.value?.email) {
-    notify.error('Error', { description: 'Please sign in first to resend verification.' })
+    notify.error(t('common.error'), { description: t('auth.verifyEmail.signInFirstToResend') })
     return
   }
 
@@ -83,14 +84,14 @@ async function resendVerification() {
     })
 
     if (result.error) {
-      throw new Error(result.error.message ?? 'Failed to send verification email')
+      throw new Error(result.error.message ?? t('auth.verifyEmail.failedToSend'))
     }
 
     resent.value = true
-    notify.success('Email sent', { description: 'Verification email has been sent to your inbox.' })
+    notify.success(t('auth.verifyEmail.emailSent'), { description: t('auth.verifyEmail.emailSentDescription') })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to send verification email'
-    notify.error('Error', { description: message })
+    const message = e instanceof Error ? e.message : t('auth.verifyEmail.failedToSend')
+    notify.error(t('common.error'), { description: message })
   } finally {
     resending.value = false
   }
@@ -112,7 +113,7 @@ function goToLogin() {
     <!-- Header -->
     <div class="text-center">
       <h1 class="text-2xl font-bold text-highlighted">
-        {{ token ? 'Verifying your email' : 'Verify your email' }}
+        {{ token ? $t('auth.verifyEmail.verifyingYourEmail') : $t('auth.verifyEmail.verifyYourEmail') }}
       </h1>
     </div>
 
@@ -126,7 +127,7 @@ function goToLogin() {
         class="size-12 animate-spin text-primary"
       />
       <p class="mt-4 text-muted">
-        Verifying your email address...
+        {{ $t('auth.verifyEmail.verifyingEmailAddress') }}
       </p>
     </div>
 
@@ -138,15 +139,15 @@ function goToLogin() {
       <UAlert
         color="success"
         icon="i-lucide-check-circle"
-        title="Email verified"
-        description="Your email has been verified successfully. You can now access all features."
+        :title="$t('auth.verifyEmail.emailVerified')"
+        :description="$t('auth.verifyEmail.emailVerifiedFullDescription')"
       />
       <UButton
         class="mt-6"
         block
         @click="loggedIn ? goToDashboard() : goToLogin()"
       >
-        {{ loggedIn ? 'Go to dashboard' : 'Sign in' }}
+        {{ loggedIn ? $t('auth.verifyEmail.goToDashboard') : $t('auth.signIn') }}
       </UButton>
     </div>
 
@@ -158,7 +159,7 @@ function goToLogin() {
       <UAlert
         color="error"
         icon="i-lucide-alert-triangle"
-        title="Verification failed"
+        :title="$t('auth.verifyEmail.verificationFailed')"
         :description="verifyError"
       />
       <div class="mt-6 space-y-3">
@@ -168,7 +169,7 @@ function goToLogin() {
           :loading="resending"
           @click="resendVerification"
         >
-          Resend verification email
+          {{ $t('auth.verifyEmail.resendVerificationEmail') }}
         </UButton>
         <NuxtLink to="/auth/login">
           <UButton
@@ -176,7 +177,7 @@ function goToLogin() {
             variant="outline"
             block
           >
-            Back to sign in
+            {{ $t('auth.backToSignIn') }}
           </UButton>
         </NuxtLink>
       </div>
@@ -193,10 +194,10 @@ function goToLogin() {
           class="size-12 mx-auto mb-4"
         />
         <p>
-          Check your email inbox for a verification link.
+          {{ $t('auth.verifyEmail.checkInbox') }}
         </p>
         <p class="mt-2">
-          Click the link to verify your email address.
+          {{ $t('auth.verifyEmail.clickLink') }}
         </p>
       </div>
 
@@ -209,8 +210,8 @@ function goToLogin() {
           v-if="resent"
           color="primary"
           icon="i-lucide-mail-check"
-          title="Email sent"
-          :description="`Verification email sent to ${user.email}`"
+          :title="$t('auth.verifyEmail.emailSent')"
+          :description="$t('auth.verifyEmail.emailSentTo', { email: user.email })"
         />
 
         <UButton
@@ -219,7 +220,7 @@ function goToLogin() {
           :loading="resending"
           @click="resendVerification"
         >
-          Resend verification email
+          {{ $t('auth.verifyEmail.resendVerificationEmail') }}
         </UButton>
 
         <NuxtLink :to="redirects.authenticated">
@@ -228,7 +229,7 @@ function goToLogin() {
             variant="outline"
             block
           >
-            Go to dashboard
+            {{ $t('auth.verifyEmail.goToDashboard') }}
           </UButton>
         </NuxtLink>
       </div>
@@ -240,7 +241,7 @@ function goToLogin() {
       >
         <NuxtLink to="/auth/login">
           <UButton block>
-            Sign in
+            {{ $t('auth.signIn') }}
           </UButton>
         </NuxtLink>
       </div>

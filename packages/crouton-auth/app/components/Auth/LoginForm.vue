@@ -82,7 +82,7 @@ function onSubmit(event: FormSubmitEvent<typeof state>) {
       <UInput
         v-model="state.email"
         type="email"
-        placeholder="you@example.com"
+        :placeholder="$t('auth.placeholders.email')"
         autocomplete="email"
         icon="i-lucide-mail"
       />

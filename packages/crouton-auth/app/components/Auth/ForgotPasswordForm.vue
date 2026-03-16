@@ -121,7 +121,7 @@ function handleReset() {
         <UInput
           v-model="state.email"
           type="email"
-          placeholder="you@example.com"
+          :placeholder="$t('auth.placeholders.email')"
           autocomplete="email"
           icon="i-lucide-mail"
         />

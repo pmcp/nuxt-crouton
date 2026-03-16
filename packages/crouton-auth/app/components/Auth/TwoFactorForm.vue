@@ -54,9 +54,9 @@ function validate(formState: Partial<typeof state>): FormError[] {
   if (!formState.code) {
     errors.push({ name: 'code', message: t('errors.requiredField') })
   } else if (mode.value === 'totp' && !/^\d{6}$/.test(formState.code)) {
-    errors.push({ name: 'code', message: 'Enter a 6-digit code' })
+    errors.push({ name: 'code', message: t('auth.twoFactor.enter6DigitCode') })
   } else if (mode.value === 'backup' && formState.code.length < 8) {
-    errors.push({ name: 'code', message: 'Enter a valid backup code' })
+    errors.push({ name: 'code', message: t('auth.twoFactor.enterValidBackupCode') })
   }
   return errors
 }
@@ -91,7 +91,7 @@ function toggleMode() {
       <!-- TOTP Mode -->
       <template v-if="mode === 'totp'">
         <UFormField
-          label="Authentication code"
+          :label="$t('auth.twoFactor.authenticationCode')"
           name="code"
         >
           <UInput
@@ -107,33 +107,33 @@ function toggleMode() {
           />
         </UFormField>
         <p class="text-sm text-muted">
-          Enter the 6-digit code from your authenticator app.
+          {{ $t('auth.twoFactor.authenticatorDescription') }}
         </p>
 
         <UCheckbox
           v-if="showTrustDevice"
           v-model="state.trustDevice"
-          label="Trust this device for 30 days"
+          :label="$t('auth.twoFactor.trustDevice')"
         />
       </template>
 
       <!-- Backup Code Mode -->
       <template v-else>
         <UFormField
-          label="Backup code"
+          :label="$t('auth.twoFactor.backupCode')"
           name="code"
         >
           <UInput
             v-model="state.code"
             type="text"
-            placeholder="Enter backup code"
+            :placeholder="$t('auth.twoFactor.enterBackupCode')"
             autocomplete="off"
             icon="i-lucide-shield"
             class="font-mono"
           />
         </UFormField>
         <p class="text-sm text-muted">
-          Enter one of your backup codes. Each code can only be used once.
+          {{ $t('auth.twoFactor.backupCodeDescription') }}
         </p>
       </template>
 
@@ -160,7 +160,7 @@ function toggleMode() {
           class="text-sm font-medium text-primary hover:text-primary/80"
           @click="toggleMode"
         >
-          {{ mode === 'totp' ? 'Use backup code instead' : 'Use authenticator app' }}
+          {{ mode === 'totp' ? $t('auth.twoFactor.useBackupCode') : $t('auth.twoFactor.useAuthenticatorApp') }}
         </button>
       </div>
     </UForm>
