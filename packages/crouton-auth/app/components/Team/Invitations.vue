@@ -10,6 +10,8 @@
  * <TeamInvitations />
  * ```
  */
+import { h } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
 import type { MemberRole } from '../../../types'
 
 interface InvitationData {
@@ -45,7 +47,6 @@ const {
   cancelInvitation,
   acceptInvitation,
   rejectInvitation,
-  canManageMembers,
   loading: teamLoading
 } = useTeam()
 
@@ -63,7 +64,10 @@ async function loadInvitations() {
   isLoading.value = true
   try {
     const result = await getPendingInvitations()
-    invitations.value = result as InvitationData[]
+    // Filter to only show pending invitations (API returns all statuses)
+    invitations.value = (result as InvitationData[]).filter(
+      i => i.status === 'pending'
+    )
   } catch (e) {
     console.error('Failed to load invitations:', e)
     invitations.value = []
@@ -82,7 +86,6 @@ async function handleCancel(invitationId: string) {
   try {
     await cancelInvitation(invitationId)
     notify.success('Invitation cancelled', { description: 'The invitation has been cancelled.' })
-    // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to cancel invitation'
@@ -98,7 +101,6 @@ async function handleAccept(invitationId: string) {
   try {
     await acceptInvitation(invitationId)
     notify.success('Invitation accepted', { description: 'You have joined the team.' })
-    // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to accept invitation'
@@ -114,7 +116,6 @@ async function handleReject(invitationId: string) {
   try {
     await rejectInvitation(invitationId)
     notify.info('Invitation declined', { description: 'The invitation has been declined.' })
-    // Remove from list
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to decline invitation'
@@ -149,132 +150,99 @@ function roleBadgeColor(role: MemberRole): 'primary' | 'info' | 'neutral' {
       return 'neutral'
   }
 }
+
+// Table columns
+const columns = computed<TableColumn<InvitationData>[]>(() => {
+  const cols: TableColumn<InvitationData>[] = [
+    {
+      accessorKey: 'email',
+      header: t('teams.email') || 'Email'
+    },
+    {
+      accessorKey: 'role',
+      header: t('teams.role') || 'Role',
+      cell: ({ row }) => h(resolveComponent('UBadge'), {
+        color: roleBadgeColor(row.original.role),
+        variant: 'subtle',
+        size: 'xs'
+      }, () => row.original.role)
+    },
+    {
+      accessorKey: 'expiresAt',
+      header: t('teams.expires') || 'Expires',
+      cell: ({ row }) => formatExpiry(row.original.expiresAt)
+    },
+    {
+      accessorKey: 'inviter',
+      header: t('teams.invitedBy') || 'Invited by',
+      cell: ({ row }) => row.original.inviter
+        ? (row.original.inviter.name || row.original.inviter.email)
+        : '-'
+    }
+  ]
+
+  // Actions column
+  if (props.showTeamInvitations) {
+    cols.push({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => h('div', { class: 'flex justify-end' }, [
+        h(resolveComponent('UButton'), {
+          icon: 'i-lucide-x',
+          variant: 'ghost',
+          color: 'error',
+          size: 'xs',
+          loading: loadingInvitationId.value === row.original.id,
+          onClick: () => handleCancel(row.original.id)
+        }, () => t('common.cancel'))
+      ])
+    })
+  }
+
+  if (props.showUserInvitations) {
+    cols.push({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => h('div', { class: 'flex justify-end gap-2' }, [
+        h(resolveComponent('UButton'), {
+          icon: 'i-lucide-x',
+          variant: 'ghost',
+          size: 'xs',
+          loading: loadingInvitationId.value === row.original.id,
+          onClick: () => handleReject(row.original.id)
+        }, () => t('teams.decline')),
+        h(resolveComponent('UButton'), {
+          icon: 'i-lucide-check',
+          size: 'xs',
+          loading: loadingInvitationId.value === row.original.id,
+          onClick: () => handleAccept(row.original.id)
+        }, () => t('teams.accept'))
+      ])
+    })
+  }
+
+  return cols
+})
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <h3 class="text-lg font-semibold">
-        {{ showUserInvitations ? t('teams.yourInvitations') : t('teams.pendingInvitations') }}
-      </h3>
-      <p class="text-sm text-muted mt-1">
-        {{
-          showUserInvitations
-            ? t('teams.yourInvitationsDescription')
-            : t('teams.pendingInvitationsDescription')
-        }}
-      </p>
-    </div>
-
-    <!-- Loading State -->
-    <div
-      v-if="(isLoading || teamLoading) && invitations.length === 0"
-      class="py-8 text-center text-muted"
-    >
-      <UIcon
-        name="i-lucide-loader-2"
-        class="size-6 animate-spin mx-auto mb-2"
-      />
-      <p>{{ t('teams.loadingInvitations') }}</p>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-else-if="invitations.length === 0"
-      class="py-8 text-center text-muted"
-    >
-      <UIcon
-        name="i-lucide-mail-open"
-        class="size-8 mx-auto mb-2"
-      />
-      <p>{{ t('teams.noPendingInvitations') }}</p>
-    </div>
-
-    <!-- Invitations List -->
-    <div
-      v-else
-      class="divide-y divide-border rounded-lg border border-border overflow-hidden"
-    >
-      <div
-        v-for="invitation in invitations"
-        :key="invitation.id"
-        class="flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors"
-      >
-        <div class="flex items-center gap-3">
-          <UIcon
-            name="i-lucide-mail"
-            class="size-5 text-muted-foreground"
-          />
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-medium">{{ invitation.email }}</span>
-              <UBadge
-                :color="roleBadgeColor(invitation.role)"
-                variant="subtle"
-                size="xs"
-              >
-                {{ invitation.role }}
-              </UBadge>
-            </div>
-            <p class="text-xs text-muted">
-              Expires in {{ formatExpiry(invitation.expiresAt) }}
-              <template v-if="invitation.inviter">
-                &bull; Invited by {{ invitation.inviter.name || invitation.inviter.email }}
-              </template>
-            </p>
-          </div>
-        </div>
-
-        <!-- Admin Actions (Cancel) -->
-        <div
-          v-if="showTeamInvitations && canManageMembers"
-          class="flex items-center gap-2"
-        >
-          <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            color="error"
-            size="sm"
-            :loading="loadingInvitationId === invitation.id"
-            :title="t('teams.cancelInvitation')"
-            @click="handleCancel(invitation.id)"
-          >
-            {{ t('common.cancel') }}
-          </UButton>
-        </div>
-
-        <!-- User Actions (Accept/Reject) -->
-        <div
-          v-if="showUserInvitations"
-          class="flex items-center gap-2"
-        >
-          <UButton
-            icon="i-lucide-x"
-            variant="ghost"
-            size="sm"
-            :loading="loadingInvitationId === invitation.id"
-            @click="handleReject(invitation.id)"
-          >
-            {{ t('teams.decline') }}
-          </UButton>
-          <UButton
-            icon="i-lucide-check"
-            size="sm"
-            :loading="loadingInvitationId === invitation.id"
-            @click="handleAccept(invitation.id)"
-          >
-            {{ t('teams.accept') }}
-          </UButton>
-        </div>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">
+          {{ showUserInvitations ? t('teams.yourInvitations') : t('teams.pendingInvitations') }}
+        </h3>
+        <p class="text-sm text-muted mt-1">
+          {{
+            showUserInvitations
+              ? t('teams.yourInvitationsDescription')
+              : t('teams.pendingInvitationsDescription')
+          }}
+        </p>
       </div>
-    </div>
 
-    <!-- Refresh Button -->
-    <div
-      v-if="invitations.length > 0"
-      class="flex justify-end"
-    >
       <UButton
+        v-if="invitations.length > 0"
         variant="ghost"
         size="sm"
         icon="i-lucide-refresh-cw"
@@ -284,5 +252,20 @@ function roleBadgeColor(role: MemberRole): 'primary' | 'info' | 'neutral' {
         {{ t('common.refresh') }}
       </UButton>
     </div>
+
+    <UTable
+      :data="invitations"
+      :columns="columns"
+      :loading="(isLoading || teamLoading) && invitations.length === 0"
+    >
+      <template #empty>
+        <UEmpty
+          icon="i-lucide-mail-open"
+          :title="t('teams.noPendingInvitations')"
+          variant="naked"
+          size="sm"
+        />
+      </template>
+    </UTable>
   </div>
 </template>
