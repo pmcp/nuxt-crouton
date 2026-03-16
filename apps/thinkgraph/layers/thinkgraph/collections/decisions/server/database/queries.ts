@@ -118,9 +118,6 @@ export async function updateThinkgraphDecision(
     eq(tables.thinkgraphDecisions.id, recordId),
     eq(tables.thinkgraphDecisions.teamId, teamId),
   ]
-  if (!isAdmin) {
-    conditions.push(eq(tables.thinkgraphDecisions.owner, userId))
-  }
 
   const [decision] = await (db as any)
     .update(tables.thinkgraphDecisions)
