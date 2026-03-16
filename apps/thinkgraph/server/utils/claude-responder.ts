@@ -150,6 +150,7 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
       '-p', prompt,
       '--no-session-persistence',
       '--permission-mode', 'bypassPermissions',
+      '--output-format', 'stream-json',
     ], {
       cwd: PROJECT_DIR,
       env: { ...process.env, CLAUDECODE: undefined },
@@ -159,6 +160,7 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
 
     let stderr = ''
     let hasReceivedOutput = false
+    let lineBuffer = ''
 
     child.stderr?.on('data', (data: Buffer) => {
       const text = data.toString()
@@ -172,24 +174,47 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
 
     child.stdout?.on('data', (data: Buffer) => {
       const text = data.toString()
+      lineBuffer += text
 
-      // Transition to 'working' on first real output
-      if (!hasReceivedOutput) {
-        hasReceivedOutput = true
-        session.status = 'working'
-        updateNodeStatus(node.id, teamId, 'working')
-        emitTerminalEvent(node.id, {
-          type: 'status',
-          data: 'working',
-          timestamp: Date.now(),
-        })
+      // Parse stream-json: one JSON object per line
+      const lines = lineBuffer.split('\n')
+      lineBuffer = lines.pop() || '' // keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.trim()) continue
+
+        // Transition to 'working' on first real output
+        if (!hasReceivedOutput) {
+          hasReceivedOutput = true
+          session.status = 'working'
+          updateNodeStatus(node.id, teamId, 'working')
+          emitTerminalEvent(node.id, {
+            type: 'status',
+            data: 'working',
+            timestamp: Date.now(),
+          })
+        }
+
+        try {
+          const event = JSON.parse(line)
+          const display = formatStreamEvent(event)
+          if (display) {
+            emitTerminalEvent(node.id, {
+              type: 'output',
+              data: display,
+              timestamp: Date.now(),
+            })
+          }
+        }
+        catch {
+          // Not valid JSON, emit raw
+          emitTerminalEvent(node.id, {
+            type: 'output',
+            data: line,
+            timestamp: Date.now(),
+          })
+        }
       }
-
-      emitTerminalEvent(node.id, {
-        type: 'output',
-        data: text,
-        timestamp: Date.now(),
-      })
     })
 
     child.on('error', (err) => {
@@ -262,6 +287,56 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
     })
     console.error('[claude-responder] Failed to spawn Claude:', error)
     setTimeout(() => terminalSessions.delete(node.id), 30_000)
+  }
+}
+
+/**
+ * Format a Claude Code stream-json event into a human-readable terminal line.
+ * Returns null for events that shouldn't be displayed.
+ *
+ * Stream-json event types:
+ * - { type: "system", ... } — system init
+ * - { type: "assistant", subtype: "text", content: "..." } — text output
+ * - { type: "assistant", subtype: "tool_use", tool: "...", input: {...} } — tool call
+ * - { type: "tool_result", tool: "...", content: "..." } — tool result
+ * - { type: "result", ... } — final result
+ */
+function formatStreamEvent(event: any): string | null {
+  if (!event || !event.type) return null
+
+  switch (event.type) {
+    case 'system':
+      return `⚙ ${event.message || 'System initialized'}`
+
+    case 'assistant':
+      if (event.subtype === 'text' && event.content) {
+        return event.content
+      }
+      if (event.subtype === 'tool_use') {
+        const toolName = event.tool || 'unknown'
+        const inputSummary = event.input
+          ? Object.entries(event.input)
+              .filter(([_, v]) => typeof v === 'string' && (v as string).length < 100)
+              .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+              .slice(0, 3)
+              .join(' ')
+          : ''
+        return `🔧 ${toolName} ${inputSummary}`
+      }
+      return null
+
+    case 'tool_result': {
+      const result = typeof event.content === 'string'
+        ? event.content.slice(0, 150)
+        : JSON.stringify(event.content)?.slice(0, 150)
+      return `  ↳ ${result || '(empty result)'}${(result?.length || 0) >= 150 ? '...' : ''}`
+    }
+
+    case 'result':
+      return `✓ Done`
+
+    default:
+      return null
   }
 }
 
