@@ -10,8 +10,8 @@
       "total": "Total",
       "subtotal": "Sous-total",
       "checkout": "Passer à la caisse",
-      "selectClient": "Please select a client to proceed",
-      "pay": "Pay"
+      "selectClient": "Veuillez sélectionner un client pour continuer",
+      "pay": "Payer"
     },
     "products": {
       "title": "Produits",
@@ -21,7 +21,7 @@
       "options": "Options",
       "remarks": "Remarques",
       "remarksPlaceholder": "Demandes spéciales...",
-      "addToCart": "Add to Cart"
+      "addToCart": "Ajouter au panier"
     },
     "categories": {
       "all": "Tout",
@@ -38,18 +38,18 @@
       "items": "Articles",
       "status": "Statut",
       "createdAt": "Créée le",
-      "orderCreated": "Order created",
-      "submittedSuccessfully": "The order has been submitted successfully.",
-      "error": "Error",
-      "failedToCreate": "Failed to create order",
-      "autoRefresh": "Auto-refresh",
-      "processing": "Processing",
+      "orderCreated": "Commande créée",
+      "submittedSuccessfully": "La commande a été soumise avec succès.",
+      "error": "Erreur",
+      "failedToCreate": "Échec de la création de la commande",
+      "autoRefresh": "Actualisation automatique",
+      "processing": "En cours de traitement",
       "client": "Client",
-      "rePrint": "Re-print",
-      "printTriggered": "Print triggered",
-      "printFailed": "Print failed",
-      "printError": "Could not trigger print for this order",
-      "noOrdersFound": "No orders found"
+      "rePrint": "Réimprimer",
+      "printTriggered": "Impression lancée",
+      "printFailed": "Échec de l'impression",
+      "printError": "Impossible de lancer l'impression pour cette commande",
+      "noOrdersFound": "Aucune commande trouvée"
     },
     "events": {
       "title": "Événements",
@@ -70,12 +70,12 @@
       "status": "Statut"
     },
     "sidebar": {
-      "events": "Events",
-      "products": "Products",
-      "categories": "Categories",
-      "locations": "Locations",
-      "printers": "Printers",
-      "helpers": "Helpers",
+      "events": "Événements",
+      "products": "Produits",
+      "categories": "Catégories",
+      "locations": "Emplacements",
+      "printers": "Imprimantes",
+      "helpers": "Assistants",
       "clients": "Clients"
     },
     "client": {
@@ -84,13 +84,13 @@
       "phone": "Téléphone",
       "notes": "Notes",
       "label": "Client",
-      "selectOrCreate": "Select or create client...",
-      "enterName": "Enter client name..."
+      "selectOrCreate": "Sélectionner ou créer un client...",
+      "enterName": "Saisir le nom du client..."
     },
     "offline": {
       "title": "Hors ligne",
       "message": "Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées.",
-      "banner": "You are offline. Orders cannot be submitted."
+      "banner": "Vous êtes hors ligne. Les commandes ne peuvent pas être soumises."
     }
   }
 }

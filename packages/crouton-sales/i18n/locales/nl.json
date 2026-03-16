@@ -10,8 +10,8 @@
       "total": "Totaal",
       "subtotal": "Subtotaal",
       "checkout": "Afrekenen",
-      "selectClient": "Please select a client to proceed",
-      "pay": "Pay"
+      "selectClient": "Selecteer een klant om door te gaan",
+      "pay": "Betalen"
     },
     "products": {
       "title": "Producten",
@@ -21,7 +21,7 @@
       "options": "Opties",
       "remarks": "Opmerkingen",
       "remarksPlaceholder": "Speciale verzoeken...",
-      "addToCart": "Add to Cart"
+      "addToCart": "Toevoegen aan winkelwagen"
     },
     "categories": {
       "all": "Alles",
@@ -38,18 +38,18 @@
       "items": "Items",
       "status": "Status",
       "createdAt": "Aangemaakt",
-      "orderCreated": "Order created",
-      "submittedSuccessfully": "The order has been submitted successfully.",
-      "error": "Error",
-      "failedToCreate": "Failed to create order",
-      "autoRefresh": "Auto-refresh",
-      "processing": "Processing",
-      "client": "Client",
-      "rePrint": "Re-print",
-      "printTriggered": "Print triggered",
-      "printFailed": "Print failed",
-      "printError": "Could not trigger print for this order",
-      "noOrdersFound": "No orders found"
+      "orderCreated": "Bestelling aangemaakt",
+      "submittedSuccessfully": "De bestelling is succesvol ingediend.",
+      "error": "Fout",
+      "failedToCreate": "Bestelling aanmaken mislukt",
+      "autoRefresh": "Automatisch vernieuwen",
+      "processing": "Verwerken",
+      "client": "Klant",
+      "rePrint": "Opnieuw printen",
+      "printTriggered": "Printopdracht verstuurd",
+      "printFailed": "Printen mislukt",
+      "printError": "Kan geen printopdracht starten voor deze bestelling",
+      "noOrdersFound": "Geen bestellingen gevonden"
     },
     "events": {
       "title": "Evenementen",
@@ -70,27 +70,27 @@
       "status": "Status"
     },
     "sidebar": {
-      "events": "Events",
-      "products": "Products",
-      "categories": "Categories",
-      "locations": "Locations",
+      "events": "Evenementen",
+      "products": "Producten",
+      "categories": "Categorieën",
+      "locations": "Locaties",
       "printers": "Printers",
       "helpers": "Helpers",
-      "clients": "Clients"
+      "clients": "Klanten"
     },
     "client": {
       "name": "Naam",
       "email": "E-mail",
       "phone": "Telefoon",
       "notes": "Notities",
-      "label": "Client",
-      "selectOrCreate": "Select or create client...",
-      "enterName": "Enter client name..."
+      "label": "Klant",
+      "selectOrCreate": "Selecteer of maak klant aan...",
+      "enterName": "Voer klantnaam in..."
     },
     "offline": {
       "title": "Offline",
       "message": "Je bent momenteel offline. Sommige functies kunnen beperkt zijn.",
-      "banner": "You are offline. Orders cannot be submitted."
+      "banner": "Je bent offline. Bestellingen kunnen niet worden ingediend."
     }
   }
 }
