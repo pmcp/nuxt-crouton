@@ -59,6 +59,7 @@ nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
 
 // ─── Selection ───
 const selectedNodeId = ref<string | null>(null)
+const multiSelectedIds = ref<string[]>([])
 const showDetail = ref(false)
 
 const selectedNode = computed(() =>
@@ -66,13 +67,34 @@ const selectedNode = computed(() =>
 )
 
 function onNodeClick(nodeId: string, _data: Record<string, unknown>, event?: MouseEvent) {
+  if (event?.shiftKey) {
+    // Multi-select: toggle node in selection
+    const idx = multiSelectedIds.value.indexOf(nodeId)
+    if (idx >= 0) {
+      multiSelectedIds.value = multiSelectedIds.value.filter(id => id !== nodeId)
+    }
+    else {
+      multiSelectedIds.value = [...multiSelectedIds.value, nodeId]
+    }
+    return
+  }
+  // Single select
+  multiSelectedIds.value = []
   selectedNodeId.value = nodeId
-  if (!event?.shiftKey) showDetail.value = true
+  showDetail.value = true
 }
 
 function closeDetail() {
   showDetail.value = false
   selectedNodeId.value = null
+}
+
+function deselectNode(id: string) {
+  multiSelectedIds.value = multiSelectedIds.value.filter(i => i !== id)
+}
+
+function clearMultiSelect() {
+  multiSelectedIds.value = []
 }
 
 // ─── Quick-create ───
@@ -162,6 +184,84 @@ function statusPillClass(status: string): string {
   return STATUS_PILL_CLASSES[status] || STATUS_PILL_CLASSES.idle
 }
 
+// ─── QuickAdd & PathType modals ───
+const showQuickAdd = ref(false)
+const showPathType = ref(false)
+const pathTypeParentId = ref<string | undefined>()
+
+function openQuickAdd(parentId?: string) {
+  createParentId.value = parentId
+  showQuickAdd.value = true
+}
+
+function openPathType(parentId?: string) {
+  pathTypeParentId.value = parentId
+  showPathType.value = true
+}
+
+async function handlePathSelect(pathType: string, method: string) {
+  showPathType.value = false
+  if (method === 'copy') {
+    // Copy context for this node to clipboard
+    if (selectedNodeId.value) {
+      const nodesRef = computed(() => nodes.value)
+      const { buildContext } = useNodeContext(nodesRef)
+      const payload = buildContext(selectedNodeId.value)
+      if (payload.markdown) {
+        await navigator.clipboard.writeText(payload.markdown)
+        useToast().add({ title: 'Context copied to clipboard', color: 'success' })
+      }
+    }
+    return
+  }
+  // For other methods, create a child node with the path type set
+  if (!teamId.value) return
+  const parentId = pathTypeParentId.value || selectedNodeId.value
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+    method: 'POST',
+    body: {
+      canvasId: canvasId.value,
+      title: `${pathType} from ${selectedNode.value?.title || 'node'}`,
+      nodeType: pathType === 'converge' ? 'decision' : 'idea',
+      status: 'idle',
+      origin: 'human',
+      contextScope: 'branch',
+      ...(parentId ? { parentId } : {}),
+    },
+  })
+  await refreshNodes()
+}
+
+// ─── Selection bar actions ───
+const toast = useToast()
+
+async function handleCopyContext() {
+  const nodesRef = computed(() => nodes.value)
+  const { buildContext } = useNodeContext(nodesRef)
+  // Build context for all selected nodes
+  const contexts = multiSelectedIds.value
+    .map(id => buildContext(id))
+    .filter(c => c.markdown)
+  if (contexts.length === 0) return
+  const combined = contexts.map(c => c.markdown).join('\n\n---\n\n')
+  await navigator.clipboard.writeText(combined)
+  toast.add({ title: `Context for ${contexts.length} nodes copied`, color: 'success' })
+}
+
+async function handleUseAsContext() {
+  // Set the last selected node's contextScope to manual with the other selected nodes as context
+  if (multiSelectedIds.value.length < 2) return
+  const targetId = multiSelectedIds.value[multiSelectedIds.value.length - 1]
+  const contextIds = multiSelectedIds.value.slice(0, -1)
+  const { update } = useCollectionMutation('thinkgraphNodes')
+  await update(targetId, { contextScope: 'manual', contextNodeIds: contextIds })
+  toast.add({ title: `Set ${contextIds.length} nodes as manual context`, color: 'success' })
+  multiSelectedIds.value = []
+  selectedNodeId.value = targetId
+  showDetail.value = true
+  await refreshNodes()
+}
+
 // ─── Keyboard shortcuts ───
 const createInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('createInput')
 
@@ -173,8 +273,26 @@ onKeyStroke('n', (e) => {
   openCreate('idea')
 })
 
+onKeyStroke('q', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  e.preventDefault()
+  openQuickAdd()
+})
+
+onKeyStroke('p', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  e.preventDefault()
+  openPathType()
+})
+
 onKeyStroke('Escape', () => {
+  if (showQuickAdd.value) { showQuickAdd.value = false; return }
+  if (showPathType.value) { showPathType.value = false; return }
   if (showDetail.value) closeDetail()
+  else if (multiSelectedIds.value.length) clearMultiSelect()
   else if (selectedNodeId.value) selectedNodeId.value = null
 })
 
@@ -218,6 +336,23 @@ watch(showCreate, async (open) => {
       </div>
 
       <div class="flex items-center gap-2">
+        <UButton
+          icon="i-lucide-clipboard-paste"
+          label="Quick Add"
+          size="sm"
+          variant="outline"
+          color="neutral"
+          @click="openQuickAdd()"
+        />
+        <UButton
+          v-if="selectedNodeId"
+          icon="i-lucide-git-branch-plus"
+          label="Path"
+          size="sm"
+          variant="outline"
+          color="neutral"
+          @click="openPathType()"
+        />
         <UDropdownMenu :items="newNodeItems">
           <UButton
             icon="i-lucide-plus"
@@ -312,6 +447,39 @@ watch(showCreate, async (open) => {
         </div>
       </template>
     </UModal>
+
+    <!-- QuickAdd modal -->
+    <UModal v-model:open="showQuickAdd">
+      <template #content>
+        <QuickAdd
+          :canvas-id="canvasId"
+          :parent-id="createParentId"
+          @added="refreshNodes"
+          @close="showQuickAdd = false"
+        />
+      </template>
+    </UModal>
+
+    <!-- PathType modal -->
+    <UModal v-model:open="showPathType">
+      <template #content>
+        <PathTypeModal
+          :node-title="selectedNode?.title"
+          @select="handlePathSelect"
+          @close="showPathType = false"
+        />
+      </template>
+    </UModal>
+
+    <!-- Multi-select floating bar -->
+    <SelectionBar
+      :selected-ids="multiSelectedIds"
+      :nodes="nodes"
+      @copy-context="handleCopyContext"
+      @use-as-context="handleUseAsContext"
+      @deselect="deselectNode"
+      @clear="clearMultiSelect"
+    />
   </div>
 </template>
 

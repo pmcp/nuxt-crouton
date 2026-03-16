@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 
 const props = defineProps<{
   selectedIds: string[]
-  decisions: ThinkgraphDecision[]
+  nodes: ThinkgraphNode[]
 }>()
 
 const emit = defineEmits<{
@@ -11,22 +11,21 @@ const emit = defineEmits<{
   'generate-brief': [format: string]
   'copy-context': []
   'use-as-context': []
-  dispatch: []
   clear: []
   deselect: [id: string]
 }>()
 
-const selectedDecisions = computed(() =>
+const selectedNodes = computed(() =>
   props.selectedIds
-    .map(id => props.decisions.find(d => d.id === id))
-    .filter(Boolean) as ThinkgraphDecision[]
+    .map(id => props.nodes.find(n => n.id === id))
+    .filter((n): n is ThinkgraphNode => !!n),
 )
 
-const visibleChips = computed(() => selectedDecisions.value.slice(0, 3))
-const overflowCount = computed(() => Math.max(0, selectedDecisions.value.length - 3))
+const visibleChips = computed(() => selectedNodes.value.slice(0, 3))
+const overflowCount = computed(() => Math.max(0, selectedNodes.value.length - 3))
 
 function truncate(text: string, max = 30) {
-  return text.length > max ? text.slice(0, max - 1) + '…' : text
+  return text.length > max ? text.slice(0, max - 1) + '...' : text
 }
 
 const briefFormats = [
@@ -50,14 +49,14 @@ const briefFormats = [
         <!-- Node chips -->
         <div class="flex items-center gap-1.5">
           <span
-            v-for="d in visibleChips"
-            :key="d.id"
+            v-for="n in visibleChips"
+            :key="n.id"
             class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
           >
-            {{ truncate(d.content) }}
+            {{ truncate(n.title) }}
             <button
               class="hover:text-red-500 transition-colors cursor-pointer"
-              @click="emit('deselect', d.id)"
+              @click="emit('deselect', n.id)"
             >
               <UIcon name="i-lucide-x" class="size-3" />
             </button>
@@ -97,14 +96,6 @@ const briefFormats = [
               color="neutral"
             />
           </UDropdownMenu>
-          <UButton
-            icon="i-lucide-send"
-            label="Send to..."
-            size="sm"
-            variant="soft"
-            color="neutral"
-            @click="emit('dispatch')"
-          />
           <UButton
             icon="i-lucide-copy"
             size="sm"

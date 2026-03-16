@@ -1,16 +1,16 @@
 <script setup lang="ts">
 const props = defineProps<{
   parentId?: string
-  graphId?: string
+  canvasId: string
 }>()
 
 const emit = defineEmits<{
   added: []
+  close: []
 }>()
 
+const { teamId } = useTeamContext()
 const { parse } = useDecisionParser()
-const { create } = useCollectionMutation('thinkgraphDecisions')
-const { close } = useCrouton()
 
 const input = ref('')
 const parsed = computed(() => input.value.trim() ? parse(input.value) : [])
@@ -34,27 +34,29 @@ function toggleItem(index: number) {
 }
 
 async function addSelected() {
+  if (!teamId.value) return
   adding.value = true
   try {
     const selected = parsed.value.filter((_, i) => selectedIndices.value.has(i))
     for (const item of selected) {
-      await create({
-        content: item.content,
-        nodeType: item.nodeType,
-        pathType: item.pathType,
-        graphId: props.graphId || '',
-        parentId: props.parentId || '',
-        source: 'paste',
-        starred: false,
-        branchName: '',
-        versionTag: '',
-        model: '',
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+        method: 'POST',
+        body: {
+          canvasId: props.canvasId,
+          title: item.content,
+          nodeType: item.nodeType === 'observation' ? 'insight' : item.nodeType,
+          status: 'idle',
+          origin: 'paste',
+          contextScope: 'branch',
+          ...(props.parentId ? { parentId: props.parentId } : {}),
+        },
       })
     }
     input.value = ''
     emit('added')
-    close()
-  } finally {
+    emit('close')
+  }
+  finally {
     adding.value = false
   }
 }
@@ -70,6 +72,7 @@ const nodeTypeIcon: Record<string, string> = {
   idea: 'i-lucide-lightbulb',
   question: 'i-lucide-help-circle',
   observation: 'i-lucide-eye',
+  insight: 'i-lucide-eye',
 }
 </script>
 
@@ -131,7 +134,7 @@ Supports:
     </div>
 
     <div class="flex justify-end gap-2 pt-2 border-t border-default">
-      <UButton variant="ghost" color="neutral" @click="close()">Cancel</UButton>
+      <UButton variant="ghost" color="neutral" @click="emit('close')">Cancel</UButton>
       <UButton
         v-if="parsed.length"
         icon="i-lucide-plus"
