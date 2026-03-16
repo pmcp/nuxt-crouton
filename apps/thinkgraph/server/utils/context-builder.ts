@@ -85,6 +85,43 @@ export function buildPrompt(
 }
 
 /**
+ * Build context from explicitly selected nodes (multi-branch context).
+ * Merges the target's ancestor chain with user-selected nodes from other branches.
+ */
+export function buildSelectedBranchContext(
+  target: ContextNode,
+  selectedContextNodes: ContextNode[],
+  ancestors: ContextNode[],
+  allDecisions: ContextNode[]
+): string {
+  let prompt = ''
+
+  if (ancestors.length > 0) {
+    prompt += 'Thinking path to current node:\n'
+    ancestors.forEach((a, i) => {
+      prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
+    })
+    prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+  } else {
+    prompt += `Current node: ${target.content} (${target.nodeType})\n\n`
+  }
+
+  if (selectedContextNodes.length > 0) {
+    prompt += 'Selected context from other branches:\n\n'
+    for (const node of selectedContextNodes) {
+      const nodeAncestors = buildAncestorChain(allDecisions, node.id)
+      prompt += `── ${node.nodeType.toUpperCase()}: ${node.content}\n`
+      if (nodeAncestors.length > 0) {
+        prompt += `   Path: ${nodeAncestors.map(a => a.content.slice(0, 50)).join(' → ')}\n`
+      }
+      prompt += '\n'
+    }
+  }
+
+  return prompt
+}
+
+/**
  * Build a context string for dispatch services.
  * Includes the full thinking chain and starred insights for maximum context.
  */

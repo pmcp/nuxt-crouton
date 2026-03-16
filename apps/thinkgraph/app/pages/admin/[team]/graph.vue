@@ -97,6 +97,25 @@ const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
 
 const showInspector = ref(false)
 
+// Context mode: which nodes provide AI context
+const contextMode = ref<'path' | 'selection'>('path')
+const contextNodeIds = ref<string[]>([])
+
+function useSelectionAsContext() {
+  contextNodeIds.value = Array.from(selectedNodes.value)
+  contextMode.value = 'selection'
+  toast.add({
+    title: `${contextNodeIds.value.length} nodes set as AI context`,
+    icon: 'i-lucide-brain',
+    color: 'info',
+  })
+}
+
+function clearContextSelection() {
+  contextMode.value = 'path'
+  contextNodeIds.value = []
+}
+
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
 function addRootDecision() {
@@ -132,10 +151,22 @@ async function expandWithAI(decisionId: string, mode?: string) {
   expanding.value = decisionId
 
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
-      method: 'POST',
-      body: { mode: mode || 'default' }
-    })
+    if (contextMode.value === 'selection' && contextNodeIds.value.length > 0) {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/expand-with-context`, {
+        method: 'POST',
+        body: {
+          nodeId: decisionId,
+          mode: mode || 'default',
+          contextNodeIds: contextNodeIds.value,
+          includeAncestors: true,
+        },
+      })
+    } else {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
+        method: 'POST',
+        body: { mode: mode || 'default' },
+      })
+    }
     await refresh()
     layoutKey.value++
   } catch (error) {
@@ -307,6 +338,8 @@ provide('thinkgraph:copyContext', copyContext)
 provide('thinkgraph:openQuickAdd', openQuickAdd)
 provide('thinkgraph:openChat', openChat)
 provide('thinkgraph:dispatch', openDispatch)
+provide('thinkgraph:contextNodeIds', contextNodeIds)
+provide('thinkgraph:contextMode', contextMode)
 provide('thinkgraph:togglePin', togglePin)
 </script>
 
@@ -319,6 +352,20 @@ provide('thinkgraph:togglePin', togglePin)
         <h1 class="text-lg font-semibold">ThinkGraph</h1>
       </div>
       <div class="flex items-center gap-2">
+        <!-- Context mode indicator -->
+        <div v-if="contextMode === 'selection'" class="flex items-center gap-2 px-2 py-1 rounded-lg bg-violet-50 dark:bg-violet-950/30">
+          <UIcon name="i-lucide-brain" class="size-3.5 text-violet-500" />
+          <span class="text-xs text-violet-600 dark:text-violet-400">
+            {{ contextNodeIds.length }} context nodes active
+          </span>
+          <UButton
+            icon="i-lucide-x"
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            @click="clearContextSelection"
+          />
+        </div>
         <UButton
           icon="i-lucide-layers"
           size="sm"
@@ -444,6 +491,7 @@ provide('thinkgraph:togglePin', togglePin)
       @synthesize="synthesizeSelected"
       @generate-brief="generateBrief"
       @copy-context="copySelectedContext"
+      @use-as-context="useSelectionAsContext"
       @dispatch="() => { if (selectedNodeIds.length > 0) openDispatch(selectedNodeIds[0]) }"
       @clear="clearSelection"
       @deselect="deselectNode"

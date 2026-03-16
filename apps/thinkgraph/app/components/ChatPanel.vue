@@ -3,16 +3,18 @@
 const props = defineProps<{
   nodeId?: string | null
   nodeName?: string
-  selectedNodeIds?: string[]
-  decisions?: Array<{ id: string; content: string; nodeType: string }>
 }>()
 
 const emit = defineEmits<{
-  addToGraph: [items: Array<{ content: string; nodeType: string; parentId?: string }>]
+  addToGraph: [items: Array<{ content: string; nodeType: string }>]
   close: []
 }>()
 
 const { teamId } = useTeamContext()
+
+// Inject context mode from parent
+const contextNodeIds = inject<Ref<string[]>>('thinkgraph:contextNodeIds', ref([]))
+const contextMode = inject<Ref<'path' | 'selection'>>('thinkgraph:contextMode', ref('path'))
 
 const {
   messages,
@@ -27,7 +29,9 @@ const {
   api: `/api/teams/${teamId.value}/thinkgraph-decisions/chat`,
   body: computed(() => ({
     nodeId: props.nodeId,
-    selectedNodeIds: props.selectedNodeIds?.length ? props.selectedNodeIds : undefined,
+    ...(contextMode.value === 'selection' && contextNodeIds.value.length > 0
+      ? { contextNodeIds: contextNodeIds.value }
+      : {}),
   })),
   onFinish: () => {
     // Save conversation after each AI response (fire-and-forget)
@@ -117,7 +121,7 @@ async function saveConversation() {
 
 // Parse DECISION: blocks from assistant messages
 const extractedDecisions = computed(() => {
-  const decisions: Array<{ content: string; nodeType: string; parentId?: string; messageId: string }> = []
+  const decisions: Array<{ content: string; nodeType: string; messageId: string }> = []
   for (const msg of messages.value) {
     if (msg.role !== 'assistant') continue
     const regex = /DECISION:\s*(\{[^}]+\})/g
@@ -129,7 +133,6 @@ const extractedDecisions = computed(() => {
           decisions.push({
             content: parsed.content,
             nodeType: parsed.nodeType || 'idea',
-            parentId: parsed.parentId,
             messageId: msg.id,
           })
         }
@@ -141,11 +144,11 @@ const extractedDecisions = computed(() => {
 
 const addedIds = ref<Set<string>>(new Set())
 
-function addDecision(decision: { content: string; nodeType: string; parentId?: string; messageId: string }) {
+function addDecision(decision: { content: string; nodeType: string; messageId: string }) {
   const key = `${decision.messageId}-${decision.content}`
   if (addedIds.value.has(key)) return
   addedIds.value.add(key)
-  emit('addToGraph', [{ content: decision.content, nodeType: decision.nodeType, parentId: decision.parentId }])
+  emit('addToGraph', [{ content: decision.content, nodeType: decision.nodeType }])
 }
 
 function addAllDecisions() {
@@ -157,7 +160,7 @@ function addAllDecisions() {
   for (const d of toAdd) {
     addedIds.value.add(`${d.messageId}-${d.content}`)
   }
-  emit('addToGraph', toAdd.map(d => ({ content: d.content, nodeType: d.nodeType, parentId: d.parentId })))
+  emit('addToGraph', toAdd.map(d => ({ content: d.content, nodeType: d.nodeType })))
 }
 
 function onSubmit() {
@@ -194,15 +197,12 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
 <template>
   <div class="flex flex-col h-full">
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-default">
-      <div class="flex items-center gap-2 min-w-0">
-        <UIcon name="i-lucide-message-square-text" class="size-4 text-violet-500 shrink-0" />
-        <span class="text-sm font-medium shrink-0">Think with AI</span>
-        <span v-if="nodeName" class="text-xs text-muted truncate max-w-[150px]">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+      <div class="flex items-center gap-2">
+        <UIcon name="i-lucide-message-square-text" class="size-4 text-violet-500" />
+        <span class="text-sm font-medium">Think with AI</span>
+        <span v-if="nodeName" class="text-xs text-neutral-400 truncate max-w-[150px]">
           — {{ nodeName }}
-        </span>
-        <span v-if="selectedNodeIds?.length" class="text-xs text-violet-400 shrink-0">
-          ({{ selectedNodeIds.length }} selected)
         </span>
       </div>
       <UButton
@@ -247,7 +247,7 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
             :class="addedIds.has(`${d.messageId}-${d.content}`) ? 'text-emerald-500' : 'text-violet-500'"
           />
           <span class="truncate">{{ d.content }}</span>
-          <span class="shrink-0 text-[10px] px-1 py-0.5 rounded bg-elevated">{{ d.nodeType }}</span>
+          <span class="shrink-0 text-[10px] px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">{{ d.nodeType }}</span>
         </button>
       </div>
     </div>
@@ -257,14 +257,14 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
       <!-- Loading conversation indicator -->
       <div
         v-if="isLoadingConversation"
-        class="h-full flex items-center justify-center text-muted"
+        class="h-full flex items-center justify-center text-neutral-400"
       >
         <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
       </div>
 
       <div
         v-else-if="messages.length === 0"
-        class="h-full flex flex-col items-center justify-center text-muted"
+        class="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600"
       >
         <UIcon name="i-lucide-sparkles" class="size-8 mb-3 opacity-50" />
         <p class="text-sm text-center">
@@ -283,8 +283,8 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
           <div
             class="max-w-[85%] rounded-xl px-3 py-2 text-sm"
             :class="msg.role === 'user'
-              ? 'bg-inverted text-inverted'
-              : 'bg-elevated text-default'"
+              ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200'"
           >
             <p class="whitespace-pre-wrap leading-relaxed">{{ formatContent(msg.content) }}</p>
           </div>
@@ -292,8 +292,8 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
       </template>
 
       <div v-if="isLoading" class="flex justify-start">
-        <div class="bg-elevated rounded-xl px-3 py-2">
-          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-muted" />
+        <div class="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-3 py-2">
+          <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-neutral-400" />
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ watch(() => props.nodeId, async (newNodeId, oldNodeId) => {
 
     <!-- Input -->
     <form
-      class="flex items-end gap-2 px-4 py-3 border-t border-default"
+      class="flex items-end gap-2 px-4 py-3 border-t border-neutral-200 dark:border-neutral-800"
       @submit.prevent="onSubmit"
     >
       <UTextarea

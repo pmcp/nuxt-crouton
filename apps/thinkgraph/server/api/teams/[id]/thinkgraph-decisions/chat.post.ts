@@ -5,7 +5,7 @@ import { getAllThinkgraphDecisions } from '../../../../../layers/thinkgraph/coll
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
   const body = await readBody(event)
-  const { messages, nodeId, selectedNodeIds } = body
+  const { messages, nodeId, contextNodeIds } = body
 
   if (!messages || !Array.isArray(messages)) {
     throw createError({ status: 400, statusText: 'Messages required' })
@@ -42,7 +42,28 @@ export default defineEventHandler(async (event) => {
         })
       }
     }
-  } else {
+  }
+
+  // Add cross-branch context from selected nodes
+  if (Array.isArray(contextNodeIds) && contextNodeIds.length > 0) {
+    const selectedNodes = contextNodeIds
+      .map((id: string) => allDecisions.find((d: any) => d.id === id))
+      .filter(Boolean)
+
+    if (selectedNodes.length > 0) {
+      contextBlock += '\n## Selected context from other branches\n'
+      for (const node of selectedNodes) {
+        const nodeAncestors = buildAncestorChain(allDecisions, node.id)
+        contextBlock += `── ${node.nodeType.toUpperCase()}: ${node.content}\n`
+        if (nodeAncestors.length > 0) {
+          contextBlock += `   Path: ${nodeAncestors.map((a: any) => a.content.slice(0, 50)).join(' → ')}\n`
+        }
+        contextBlock += '\n'
+      }
+    }
+  }
+
+  if (!nodeId && !(Array.isArray(contextNodeIds) && contextNodeIds.length > 0)) {
     // No specific node — provide full graph overview
     const roots = allDecisions.filter((d: any) => !d.parentId)
     if (roots.length > 0) {
@@ -50,30 +71,6 @@ export default defineEventHandler(async (event) => {
       roots.forEach((r: any) => {
         contextBlock += buildTreeString(allDecisions, r.id, 0)
       })
-    }
-  }
-
-  // Add selected nodes context with IDs so the AI can reference them as parents
-  if (selectedNodeIds && Array.isArray(selectedNodeIds) && selectedNodeIds.length > 0) {
-    contextBlock += '\n## Currently selected nodes\n'
-    contextBlock += 'The user has selected these nodes (use their IDs as parentId when adding children):\n'
-    for (const selId of selectedNodeIds) {
-      const node = allDecisions.find((d: any) => d.id === selId)
-      if (node) {
-        contextBlock += `- [id: ${node.id}] ${node.content} (${node.nodeType})`
-        if (node.artifacts?.length) {
-          const types = node.artifacts.map((a: any) => a.type).join(', ')
-          contextBlock += ` [has artifacts: ${types}]`
-        }
-        contextBlock += '\n'
-        // Show existing children so AI doesn't duplicate
-        const children = allDecisions.filter((d: any) => d.parentId === node.id)
-        if (children.length > 0) {
-          for (const c of children) {
-            contextBlock += `  └─ ${c.content} (${c.nodeType})\n`
-          }
-        }
-      }
     }
   }
 
@@ -87,10 +84,7 @@ ${contextBlock ? `The user is working on a thinking graph. Here is the current c
 When you have a key insight worth adding to the graph, format it on its own line as:
 DECISION: {"content": "your insight", "nodeType": "idea"|"question"|"insight"|"decision"}
 
-To add a child node under a specific existing node, include its parentId:
-DECISION: {"content": "your insight", "nodeType": "task", "parentId": "the-node-id"}
-
-You can include multiple DECISION lines in a single response. The user can then choose which ones to add to their graph. When the user asks you to add items to specific nodes, ALWAYS use parentId to attach them correctly.
+You can include multiple DECISION lines in a single response. The user can then choose which ones to add to their graph.
 
 Be concise. Ask clarifying questions. Challenge weak reasoning. Suggest novel angles.`,
     messages,
