@@ -7,7 +7,6 @@ interface GraphShortcutActions {
   openQuickAdd: (parentId?: string) => void
   openSearch: () => void
   clearSelection: () => void
-  deleteSelected: (nodeIds: string[]) => void
   expandDefault: (nodeId: string) => void
   openChat: (nodeId: string) => void
   openGlobalChat: () => void
@@ -58,16 +57,8 @@ export function useGraphShortcuts(
           e.preventDefault()
           actions.clearSelection()
           break
-        case 'Delete':
-        case 'Backspace':
-          if (selectedNodes.value.size > 0) {
-            e.preventDefault()
-            actions.deleteSelected(Array.from(selectedNodes.value))
-          } else if (nodeId) {
-            e.preventDefault()
-            actions.deleteSelected([nodeId])
-          }
-          break
+        // Delete/Backspace handled by Vue Flow's built-in deleteKeyCode
+        // which triggers @node-delete on CroutonFlow — no need to duplicate here
         case 'e':
           if (nodeId) { e.preventDefault(); actions.expandDefault(nodeId) }
           break

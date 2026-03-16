@@ -574,16 +574,24 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
   openQuickAdd,
   openSearch: () => { showFilters.value = true },
   clearSelection,
-  deleteSelected: onNodeDelete,
   expandDefault: (nodeId: string) => expandWithAI(nodeId, 'default'),
   openChat,
   openGlobalChat,
   toggleInspector: () => { showInspector.value = !showInspector.value; if (showInspector.value) showChat.value = false },
 })
 
+// Terminal panel state
+const showTerminal = ref(false)
+const terminalNodeId = ref<string | null>(null)
+
+function openTerminal(nodeId: string) {
+  terminalNodeId.value = nodeId
+  showTerminal.value = true
+}
+
 // Pause shortcuts when modals are open
-watch([showQuickAdd, showChat, showDispatch, showDigest], ([qa, ch, dp, dg]) => {
-  if (qa || ch || dp || dg) {
+watch([showQuickAdd, showChat, showDispatch, showDigest, showTerminal], ([qa, ch, dp, dg, tm]) => {
+  if (qa || ch || dp || dg || tm) {
     pause()
     connectMenu.value.show = false
   }
@@ -597,6 +605,7 @@ provide('thinkgraph:copyContext', copyContext)
 provide('thinkgraph:openQuickAdd', openQuickAdd)
 provide('thinkgraph:openChat', openChat)
 provide('thinkgraph:dispatch', openDispatch)
+provide('thinkgraph:openTerminal', openTerminal)
 provide('thinkgraph:togglePin', togglePin)
 provide('thinkgraph:contextNodeIds', contextNodeIds)
 provide('thinkgraph:contextMode', contextMode)
@@ -1066,6 +1075,15 @@ async function exportGraph() {
       </div>
     </template>
   </UModal>
+
+  <!-- Terminal Panel (Claude Code output) -->
+  <TerminalPanel
+    v-if="terminalNodeId"
+    :node-id="terminalNodeId"
+    :team-id="teamId || ''"
+    :open="showTerminal"
+    @update:open="showTerminal = $event"
+  />
 
   <!-- Crouton modal/slideover for CRUD -->
   <CroutonForm />
