@@ -224,6 +224,27 @@ const selectedNodeIds = computed(() => Array.from(selectedNodes.value))
 const showFilters = ref(false)
 const filtersRef = ref<{ filteredIds: Set<string> | null } | null>(null)
 
+const showInspector = ref(false)
+
+// Context mode: which nodes provide AI context
+const contextMode = ref<'path' | 'selection'>('path')
+const contextNodeIds = ref<string[]>([])
+
+function useSelectionAsContext() {
+  contextNodeIds.value = Array.from(selectedNodes.value)
+  contextMode.value = 'selection'
+  toast.add({
+    title: `${contextNodeIds.value.length} nodes set as AI context`,
+    icon: 'i-lucide-brain',
+    color: 'info',
+  })
+}
+
+function clearContextSelection() {
+  contextMode.value = 'path'
+  contextNodeIds.value = []
+}
+
 const { generateContext, copyContext } = useContextGenerator(decisions)
 
 // Compute extra edges from synthesis artifacts (multi-parent connections)
@@ -271,10 +292,22 @@ async function expandWithAI(decisionId: string, mode?: string) {
   expanding.value = decisionId
 
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
-      method: 'POST',
-      body: { mode: mode || 'default' }
-    })
+    if (contextMode.value === 'selection' && contextNodeIds.value.length > 0) {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/expand-with-context`, {
+        method: 'POST',
+        body: {
+          nodeId: decisionId,
+          mode: mode || 'default',
+          contextNodeIds: contextNodeIds.value,
+          includeAncestors: true,
+        },
+      })
+    } else {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
+        method: 'POST',
+        body: { mode: mode || 'default' },
+      })
+    }
     await refreshDecisions()
   } catch (error) {
     console.error('AI expand failed:', error)
@@ -396,6 +429,47 @@ async function synthesizeSelected() {
   }
 }
 
+// Resume briefing
+const resuming = ref(false)
+async function resumeGraph() {
+  if (resuming.value) return
+  resuming.value = true
+  try {
+    const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`)
+    if (result?.briefing) {
+      await navigator.clipboard.writeText(result.briefing)
+      toast.add({ title: 'Resume briefing copied to clipboard', icon: 'i-lucide-clipboard-check', color: 'success' })
+    }
+  } catch (error) {
+    console.error('Resume failed:', error)
+  } finally {
+    resuming.value = false
+  }
+}
+
+// Digest state
+const showDigest = ref(false)
+const digestContent = ref('')
+const digestLoading = ref(false)
+
+async function generateDigest() {
+  if (digestLoading.value) return
+  digestLoading.value = true
+  try {
+    const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/digest`, {
+      method: 'POST',
+    })
+    if (result?.digest) {
+      digestContent.value = result.digest
+      showDigest.value = true
+    }
+  } catch (error) {
+    console.error('Digest generation failed:', error)
+  } finally {
+    digestLoading.value = false
+  }
+}
+
 // Brief generation
 const generatingBrief = ref(false)
 async function generateBrief(format: string) {
@@ -444,6 +518,16 @@ async function toggleStar(nodeId: string) {
   await refreshDecisions()
 }
 
+async function togglePin(nodeId: string) {
+  const node = decisions.value?.find((d: any) => d.id === nodeId)
+  if (!node) return
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${nodeId}`, {
+    method: 'PATCH',
+    body: { pinned: !node.pinned },
+  })
+  await refreshDecisions()
+}
+
 async function togglePark(nodeId: string) {
   const node = decisions.value?.find((d: any) => d.id === nodeId)
   if (!node) return
@@ -467,11 +551,12 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
   expandDefault: (nodeId: string) => expandWithAI(nodeId, 'default'),
   openChat,
   openGlobalChat,
+  toggleInspector: () => { showInspector.value = !showInspector.value; if (showInspector.value) showChat.value = false },
 })
 
 // Pause shortcuts when modals are open
-watch([showQuickAdd, showChat, showDispatch], ([qa, ch, dp]) => {
-  if (qa || ch || dp) {
+watch([showQuickAdd, showChat, showDispatch, showDigest], ([qa, ch, dp, dg]) => {
+  if (qa || ch || dp || dg) {
     pause()
     connectMenu.value.show = false
   }
@@ -485,6 +570,9 @@ provide('thinkgraph:copyContext', copyContext)
 provide('thinkgraph:openQuickAdd', openQuickAdd)
 provide('thinkgraph:openChat', openChat)
 provide('thinkgraph:dispatch', openDispatch)
+provide('thinkgraph:togglePin', togglePin)
+provide('thinkgraph:contextNodeIds', contextNodeIds)
+provide('thinkgraph:contextMode', contextMode)
 provide('thinkgraph:focusInPath', (nodeId: string) => {
   selectedNodeId.value = nodeId
   showPath.value = true
@@ -630,6 +718,28 @@ async function exportGraph() {
             <span class="font-medium text-highlighted truncate">{{ selectedGraph?.name }}</span>
           </div>
           <div class="flex items-center gap-2">
+            <!-- Context mode indicator -->
+            <div v-if="contextMode === 'selection'" class="flex items-center gap-2 px-2 py-1 rounded-lg bg-violet-50 dark:bg-violet-950/30">
+              <UIcon name="i-lucide-brain" class="size-3.5 text-violet-500" />
+              <span class="text-xs text-violet-600 dark:text-violet-400">
+                {{ contextNodeIds.length }} context nodes active
+              </span>
+              <UButton
+                icon="i-lucide-x"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                @click="clearContextSelection"
+              />
+            </div>
+            <UButton
+              icon="i-lucide-layers"
+              size="sm"
+              :variant="showInspector ? 'soft' : 'ghost'"
+              :color="showInspector ? 'primary' : 'neutral'"
+              title="Context inspector (i)"
+              @click="showInspector = !showInspector; if (showInspector) showChat = false"
+            />
             <UButton
               icon="i-lucide-filter"
               size="sm"
@@ -677,6 +787,25 @@ async function exportGraph() {
               color="neutral"
               title="Export graph as markdown"
               @click="exportGraph"
+            />
+            <UButton
+              icon="i-lucide-play"
+              label="Resume"
+              size="sm"
+              variant="outline"
+              color="neutral"
+              :loading="resuming"
+              title="Copy graph resume briefing to clipboard"
+              @click="resumeGraph"
+            />
+            <UButton
+              icon="i-lucide-scroll-text"
+              size="sm"
+              variant="ghost"
+              color="neutral"
+              title="Generate graph digest"
+              :loading="digestLoading"
+              @click="generateDigest"
             />
             <UButton
               icon="i-lucide-message-square-text"
@@ -778,6 +907,13 @@ async function exportGraph() {
             }"
           />
 
+          <!-- Context Inspector panel -->
+          <ContextInspector
+            v-if="showInspector && !showChat && selectedNodeId"
+            :node-id="selectedNodeId"
+            :decisions="decisions || []"
+          />
+
           <!-- Chat panel (side panel) -->
           <div
             v-if="showChat"
@@ -801,6 +937,7 @@ async function exportGraph() {
           @synthesize="synthesizeSelected"
           @generate-brief="generateBrief"
           @copy-context="copySelectedContext"
+          @use-as-context="useSelectionAsContext"
           @dispatch="() => { if (selectedNodeIds.length > 0) openMultiDispatch(selectedNodeIds) }"
           @clear="clearSelection"
           @deselect="deselectNode"
@@ -872,6 +1009,34 @@ async function exportGraph() {
 
   <!-- Shortcuts Help Modal -->
   <ShortcutsHelp v-model:open="showHelp" />
+
+  <!-- Digest Modal -->
+  <UModal v-model:open="showDigest">
+    <template #content="{ close }">
+      <div class="p-6 max-h-[70vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-scroll-text" class="size-5 text-primary" />
+            <h3 class="text-lg font-semibold">Graph Digest</h3>
+          </div>
+          <UButton
+            icon="i-lucide-copy"
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            title="Copy digest"
+            @click="async () => { await navigator.clipboard.writeText(digestContent); toast.add({ title: 'Digest copied', color: 'success' }) }"
+          />
+        </div>
+        <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+          {{ digestContent }}
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <UButton color="neutral" variant="ghost" @click="close">Close</UButton>
+        </div>
+      </div>
+    </template>
+  </UModal>
 
   <!-- Crouton modal/slideover for CRUD -->
   <CroutonForm />
