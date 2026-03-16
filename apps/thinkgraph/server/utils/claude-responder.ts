@@ -151,6 +151,7 @@ export function spawnClaudeResponse(options: ClaudeResponderOptions): void {
       '--no-session-persistence',
       '--permission-mode', 'bypassPermissions',
       '--output-format', 'stream-json',
+      '--verbose',
     ], {
       cwd: PROJECT_DIR,
       env: { ...process.env, CLAUDECODE: undefined },
