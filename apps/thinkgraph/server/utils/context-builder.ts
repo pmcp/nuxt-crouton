@@ -12,6 +12,12 @@ export interface ContextNode {
   starred?: boolean
   pinned?: boolean
   branchName?: string
+  // New execution canvas fields
+  status?: string
+  origin?: string
+  brief?: string
+  contextScope?: string
+  notionId?: string
 }
 
 export function buildAncestorChain(allDecisions: ContextNode[], targetId: string): ContextNode[] {
@@ -26,6 +32,60 @@ export function buildAncestorChain(allDecisions: ContextNode[], targetId: string
   return chain
 }
 
+/**
+ * Build context from ancestor briefs instead of raw content.
+ * This is the execution canvas context model — briefs are the context payload,
+ * not raw session output. Token usage stays bounded regardless of tree depth.
+ */
+export function buildBriefChain(allDecisions: ContextNode[], targetId: string): string {
+  const ancestors = buildAncestorChain(allDecisions, targetId)
+  const target = allDecisions.find(d => d.id === targetId)
+
+  if (ancestors.length === 0 && !target) return ''
+
+  let context = 'Context chain (briefs):\n\n'
+
+  for (const ancestor of ancestors) {
+    const brief = ancestor.brief
+    if (brief) {
+      context += `## ${ancestor.nodeType.toUpperCase()}: ${ancestor.content.slice(0, 80)}\n`
+      context += `${brief}\n\n`
+    } else {
+      // Fallback to content if no brief exists yet
+      context += `## ${ancestor.nodeType.toUpperCase()}: ${ancestor.content}\n\n`
+    }
+  }
+
+  if (target) {
+    context += `## [CURRENT] ${target.nodeType.toUpperCase()}: ${target.content}\n`
+    if (target.brief) {
+      context += `${target.brief}\n`
+    }
+  }
+
+  return context
+}
+
+/**
+ * Human-readable label for node types (used in prompts and context).
+ */
+export function nodeTypeLabel(nodeType: string): string {
+  const labels: Record<string, string> = {
+    idea: 'Idea',
+    insight: 'Insight',
+    decision: 'Decision',
+    question: 'Question',
+    epic: 'Epic',
+    user_story: 'User Story',
+    task: 'Task',
+    milestone: 'Milestone',
+    remark: 'Remark',
+    fork: 'Fork',
+    send: 'Send',
+  }
+  return labels[nodeType] || nodeType
+}
+
 export function buildPrompt(
   target: ContextNode,
   ancestors: ContextNode[],
@@ -38,11 +98,27 @@ export function buildPrompt(
   let prompt = ''
 
   if (ancestors.length > 0) {
-    prompt += 'Thinking chain so far:\n'
-    ancestors.forEach((a, i) => {
-      prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
-    })
-    prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+    // Use briefs when available for bounded context
+    const hasBriefs = ancestors.some(a => a.brief)
+    if (hasBriefs) {
+      prompt += 'Context chain:\n'
+      ancestors.forEach((a, i) => {
+        const label = `${nodeTypeLabel(a.nodeType)}: ${a.content.slice(0, 80)}`
+        if (a.brief) {
+          prompt += `${'  '.repeat(i)}→ ${label}\n`
+          prompt += `${'  '.repeat(i + 1)}Brief: ${a.brief.slice(0, 200)}\n`
+        } else {
+          prompt += `${'  '.repeat(i)}→ ${label}\n`
+        }
+      })
+      prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+    } else {
+      prompt += 'Thinking chain so far:\n'
+      ancestors.forEach((a, i) => {
+        prompt += `${'  '.repeat(i)}→ ${a.content} (${a.nodeType})\n`
+      })
+      prompt += `${'  '.repeat(ancestors.length)}→ [CURRENT] ${target.content}\n\n`
+    }
   } else {
     prompt += `Starting thought: ${target.content}\n\n`
   }

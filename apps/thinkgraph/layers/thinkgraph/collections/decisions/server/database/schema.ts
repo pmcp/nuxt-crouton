@@ -39,5 +39,23 @@ export const thinkgraphDecisions = sqliteTable('thinkgraph_decisions', {
   parentId: text('parentId'),
   source: text('source'),
   model: text('model'),
-  artifacts: jsonColumn('artifacts')
+  artifacts: jsonColumn('artifacts'),
+
+  // Execution status for visual language
+  status: text('status').$default(() => 'idle'),
+  // Origin of the node
+  origin: text('origin').$default(() => 'human'),
+  // Notion sync fields
+  notionId: text('notionId'),
+  notionUrl: text('notionUrl'),
+  // Execution fields
+  worktreeRef: text('worktreeRef'),
+  sessionId: text('sessionId'),
+  // Handoff brief - the context payload that travels to child nodes
+  brief: text('brief'),
+  // Per-node context scope configuration
+  contextScope: text('contextScope').$default(() => 'branch'),
+  // Approval tracking (for draft/planning pass nodes)
+  approvedAt: text('approvedAt'),
+  approvedBy: text('approvedBy'),
 })

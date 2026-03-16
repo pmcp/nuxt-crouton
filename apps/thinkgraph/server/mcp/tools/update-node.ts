@@ -3,17 +3,21 @@ import { getAllThinkgraphDecisions, updateThinkgraphDecision } from '~~/layers/t
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
-  description: 'Update an existing node in the thinking graph. Can change content, type, starred status, or reparent it. Only provided fields are updated.',
+  description: 'Update an existing node in the thinking graph. Can change content, type, status, brief, context scope, starred status, or reparent it. Only provided fields are updated.',
   inputSchema: {
     teamId: z.string().describe('Team ID or slug'),
     nodeId: z.string().describe('The node to update'),
     content: z.string().optional().describe('Updated node content'),
-    nodeType: z.enum(['idea', 'insight', 'decision', 'question']).optional().describe('Change the node type'),
+    nodeType: z.enum(['idea', 'insight', 'decision', 'question', 'epic', 'user_story', 'task', 'milestone', 'remark', 'fork', 'send']).optional().describe('Change the node type'),
     starred: z.boolean().optional().describe('Star or unstar the node'),
+    status: z.enum(['idle', 'draft', 'thinking', 'working', 'blocked', 'needs_attention', 'done', 'error']).optional().describe('Update the visual status'),
+    brief: z.string().optional().describe('Set or update the handoff brief'),
+    contextScope: z.enum(['full', 'branch', 'manual']).optional().describe('Change context scope'),
+    origin: z.enum(['notion', 'ai', 'human', 'mcp']).optional().describe('Change the origin'),
     pathType: z.string().optional().describe('Path type (e.g., "explored", "parked", "committed")'),
     parentId: z.string().optional().describe('Reparent the node under a different parent'),
   },
-  async handler({ teamId, nodeId, content, nodeType, starred, pathType, parentId }) {
+  async handler({ teamId, nodeId, content, nodeType, starred, pathType, parentId, status, brief, contextScope, origin }) {
     try {
       const resolvedTeamId = await resolveTeamId(teamId)
 
@@ -24,6 +28,10 @@ export default defineMcpTool({
       if (starred !== undefined) updates.starred = starred
       if (pathType !== undefined) updates.pathType = pathType
       if (parentId !== undefined) updates.parentId = parentId
+      if (status !== undefined) updates.status = status
+      if (brief !== undefined) updates.brief = brief
+      if (contextScope !== undefined) updates.contextScope = contextScope
+      if (origin !== undefined) updates.origin = origin
 
       if (Object.keys(updates).length === 0) {
         return { content: [{ type: 'text' as const, text: 'No fields to update — provide at least one of: content, nodeType, starred, pathType, parentId' }], isError: true }

@@ -23,6 +23,26 @@
 import type { z } from 'zod'
 import type { thinkgraphDecisionSchema } from './app/composables/useThinkgraphDecisions'
 
+// Node types - expanded taxonomy for execution canvas
+export type ThinkgraphNodeType =
+  | 'idea' | 'insight' | 'decision' | 'question'  // existing thinking types
+  | 'epic' | 'user_story' | 'task'                  // planning types (Notion-synced)
+  | 'milestone' | 'remark' | 'fork' | 'send'        // execution types
+
+// Node status for visual language
+export type ThinkgraphNodeStatus =
+  | 'idle' | 'draft' | 'thinking' | 'working'
+  | 'blocked' | 'needs_attention' | 'done' | 'error'
+
+// Node origin
+export type ThinkgraphNodeOrigin = 'notion' | 'ai' | 'human' | 'mcp'
+
+// Context scope per node
+export type ThinkgraphContextScope = 'full' | 'branch' | 'manual'
+
+// Send node execution mode
+export type ThinkgraphSendMode = 'block' | 'async' | 'fire_and_forget'
+
 export interface Artifact {
   type: 'image' | 'code' | 'prototype' | 'text'
   provider: string
@@ -48,6 +68,16 @@ export interface ThinkgraphDecision {
   source?: string
   model?: string
   artifacts?: Artifact[]
+  status?: ThinkgraphNodeStatus
+  origin?: ThinkgraphNodeOrigin
+  notionId?: string
+  notionUrl?: string
+  worktreeRef?: string
+  sessionId?: string
+  brief?: string
+  contextScope?: ThinkgraphContextScope
+  approvedAt?: string
+  approvedBy?: string
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
 }

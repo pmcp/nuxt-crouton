@@ -36,6 +36,20 @@
       "when": 1773580800000,
       "tag": "0004_add_pinned",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1773667200000,
+      "tag": "0005_simple_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1774003200000,
+      "tag": "0006_execution_canvas",
+      "breakpoints": true
     }
   ]
 }

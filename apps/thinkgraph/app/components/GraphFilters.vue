@@ -15,6 +15,13 @@ const nodeTypes = [
   { id: 'insight', label: 'Insight', color: 'bg-blue-500' },
   { id: 'decision', label: 'Decision', color: 'bg-purple-500' },
   { id: 'question', label: 'Question', color: 'bg-amber-500' },
+  { id: 'epic', label: 'Epic', color: 'bg-indigo-500' },
+  { id: 'user_story', label: 'User Story', color: 'bg-cyan-500' },
+  { id: 'task', label: 'Task', color: 'bg-teal-500' },
+  { id: 'milestone', label: 'Milestone', color: 'bg-rose-500' },
+  { id: 'remark', label: 'Remark', color: 'bg-neutral-500' },
+  { id: 'fork', label: 'Fork', color: 'bg-orange-500' },
+  { id: 'send', label: 'Send', color: 'bg-sky-500' },
 ]
 
 const pathTypes = [

@@ -271,6 +271,23 @@ function addRootDecision() {
   open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value })
 }
 
+const newNodeItems = computed(() => [
+  [
+    { label: 'Idea', icon: 'i-lucide-lightbulb', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'idea' }) },
+    { label: 'Question', icon: 'i-lucide-help-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'question' }) },
+    { label: 'Decision', icon: 'i-lucide-check-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'decision' }) },
+  ],
+  [
+    { label: 'Epic', icon: 'i-lucide-mountain', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'epic' }) },
+    { label: 'User Story', icon: 'i-lucide-user', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'user_story' }) },
+    { label: 'Task', icon: 'i-lucide-square-check', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'task', status: 'draft' }) },
+  ],
+  [
+    { label: 'Milestone', icon: 'i-lucide-flag', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'milestone' }) },
+    { label: 'Remark', icon: 'i-lucide-message-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: selectedGraphId.value, nodeType: 'remark' }) },
+  ],
+])
+
 function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: MouseEvent) {
   if (event?.shiftKey) return
   selectedNodeId.value = nodeId
@@ -332,10 +349,20 @@ const connectMenu = ref<{ show: boolean; x: number; y: number; sourceNodeId: str
 })
 
 const connectNodeTypes = [
+  // Thinking types
   { id: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb', color: 'text-emerald-500' },
   { id: 'insight', label: 'Insight', icon: 'i-lucide-eye', color: 'text-blue-500' },
   { id: 'decision', label: 'Decision', icon: 'i-lucide-check-circle', color: 'text-purple-500' },
   { id: 'question', label: 'Question', icon: 'i-lucide-help-circle', color: 'text-amber-500' },
+  // Planning types
+  { id: 'epic', label: 'Epic', icon: 'i-lucide-mountain', color: 'text-rose-500' },
+  { id: 'user_story', label: 'User Story', icon: 'i-lucide-user', color: 'text-sky-500' },
+  { id: 'task', label: 'Task', icon: 'i-lucide-square-check', color: 'text-indigo-500' },
+  // Execution types
+  { id: 'milestone', label: 'Milestone', icon: 'i-lucide-flag', color: 'text-teal-500' },
+  { id: 'remark', label: 'Remark', icon: 'i-lucide-message-circle', color: 'text-neutral-500' },
+  { id: 'fork', label: 'Fork', icon: 'i-lucide-git-fork', color: 'text-orange-500' },
+  { id: 'send', label: 'Send', icon: 'i-lucide-send', color: 'text-cyan-500' },
 ]
 
 function onConnectEnd(event: { sourceNodeId: string; sourceHandleType: string; position: { x: number; y: number }; mouseEvent: MouseEvent }) {
@@ -823,12 +850,14 @@ async function exportGraph() {
               color="neutral"
               @click="openQuickAdd()"
             />
-            <UButton
-              icon="i-lucide-plus"
-              label="New Decision"
-              size="sm"
-              @click="addRootDecision"
-            />
+            <UDropdownMenu :items="newNodeItems">
+              <UButton
+                icon="i-lucide-plus"
+                label="New Node"
+                size="sm"
+                trailing-icon="i-lucide-chevron-down"
+              />
+            </UDropdownMenu>
           </div>
         </div>
 
@@ -879,7 +908,7 @@ async function exportGraph() {
                 />
                 <UButton
                   icon="i-lucide-plus"
-                  label="New Decision"
+                  label="New Node"
                   @click="addRootDecision"
                 />
               </div>
