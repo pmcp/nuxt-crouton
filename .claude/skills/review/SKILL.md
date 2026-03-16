@@ -99,6 +99,14 @@ Check every changed file against this checklist. Skip categories that don't appl
 - [ ] `useState()` for state — no Pinia
 - [ ] Composition API only
 
+#### Package Boundaries
+- [ ] No direct DB queries for tables owned by another package (e.g., crouton-email querying `teamSettings` directly instead of going through crouton-auth exports)
+- [ ] No type imports from deep internal paths of another package — use public exports or auto-imports
+- [ ] API endpoints live in the package that owns the domain (e.g., team settings CRUD in crouton-core/crouton-admin, not scattered)
+- [ ] No server utils in package A that duplicate logic from package B (e.g., re-implementing team resolution instead of using crouton-auth's `resolveTeamAndCheckMembership`)
+- [ ] Components that belong to a domain live in that domain's package (e.g., email components in crouton-email, not crouton-core)
+- [ ] Auto-imports from other packages are used via Nitro/Nuxt auto-import, not manual deep imports
+
 #### Dead Code
 - [ ] No unused imports
 - [ ] No unreachable code after return/throw
