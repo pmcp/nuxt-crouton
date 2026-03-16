@@ -5,6 +5,8 @@ import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/type
 interface Props {
   selectedNodeId: string | null
   nodes: ThinkgraphNode[]
+  /** Set of node IDs matching search/filter. null = no filtering active */
+  searchMatchIds?: Set<string> | null
 }
 
 const props = defineProps<Props>()
@@ -85,47 +87,70 @@ function clearHighlights() {
   }
   for (const node of getNodes.value) {
     node.class = typeof node.class === 'string'
-      ? node.class.replace(/\bcontext-dimmed\b/g, '').trim()
+      ? node.class.replace(/\bcontext-dimmed\b/g, '').replace(/\bsearch-match\b/g, '').trim()
       : ''
   }
 }
 
-watch(() => props.selectedNodeId, (nodeId) => {
+function applyHighlights() {
   const edges = getEdges.value
   const flowNodes = getNodes.value
+  const nodeId = props.selectedNodeId
+  const searchIds = props.searchMatchIds
 
-  if (!nodeId) {
+  // If nothing active, clear
+  if (!nodeId && !searchIds) {
     clearHighlights()
     return
   }
 
-  const contextNodeIds = getContextNodeIds(nodeId)
-  const contextEdgeIds = getContextEdgeIds(nodeId)
+  // Context chain highlighting (when a node is selected)
+  if (nodeId) {
+    const contextNodeIds = getContextNodeIds(nodeId)
+    const contextEdgeIds = getContextEdgeIds(nodeId)
 
-  // Highlight context chain edges
-  for (const edge of edges) {
-    if (contextEdgeIds.has(edge.id)) {
-      edge.class = 'context-chain-edge'
+    for (const edge of edges) {
+      edge.class = contextEdgeIds.has(edge.id) ? 'context-chain-edge' : 'context-dimmed-edge'
       edge.style = undefined
     }
-    else {
-      edge.class = 'context-dimmed-edge'
-      edge.style = undefined
+
+    for (const node of flowNodes) {
+      const baseClass = typeof node.class === 'string'
+        ? node.class.replace(/\bcontext-dimmed\b/g, '').replace(/\bsearch-match\b/g, '').trim()
+        : ''
+      if (!contextNodeIds.has(node.id)) {
+        node.class = baseClass ? `${baseClass} context-dimmed` : 'context-dimmed'
+      }
+      else {
+        node.class = baseClass
+      }
     }
+    return
   }
 
-  // Dim non-context nodes
-  for (const node of flowNodes) {
-    const baseClass = typeof node.class === 'string'
-      ? node.class.replace(/\bcontext-dimmed\b/g, '').trim()
-      : ''
-    if (!contextNodeIds.has(node.id)) {
-      node.class = baseClass ? `${baseClass} context-dimmed` : 'context-dimmed'
+  // Search/filter highlighting (no node selected, but search is active)
+  if (searchIds) {
+    for (const edge of edges) {
+      edge.class = ''
+      edge.style = undefined
     }
-    else {
-      node.class = baseClass
+
+    for (const node of flowNodes) {
+      const baseClass = typeof node.class === 'string'
+        ? node.class.replace(/\bcontext-dimmed\b/g, '').replace(/\bsearch-match\b/g, '').trim()
+        : ''
+      if (!searchIds.has(node.id)) {
+        node.class = baseClass ? `${baseClass} context-dimmed` : 'context-dimmed'
+      }
+      else {
+        node.class = baseClass ? `${baseClass} search-match` : 'search-match'
+      }
     }
   }
+}
+
+watch([() => props.selectedNodeId, () => props.searchMatchIds], () => {
+  applyHighlights()
 }, { immediate: true })
 
 // Clean up on unmount

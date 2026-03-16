@@ -184,6 +184,47 @@ function statusPillClass(status: string): string {
   return STATUS_PILL_CLASSES[status] || STATUS_PILL_CLASSES.idle
 }
 
+// ─── Search & Filter ───
+const searchQuery = ref('')
+const filterStatus = ref<string | undefined>()
+const filterType = ref<string | undefined>()
+const showSearch = ref(false)
+const searchInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('searchInput')
+
+const searchMatchIds = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  const status = filterStatus.value
+  const type = filterType.value
+  if (!q && !status && !type) return null // null = no filtering
+  return new Set(
+    nodes.value
+      .filter((n) => {
+        if (q && !n.title.toLowerCase().includes(q)) return false
+        if (status && n.status !== status) return false
+        if (type && n.nodeType !== type) return false
+        return true
+      })
+      .map(n => n.id),
+  )
+})
+
+const statusFilterItems = computed(() => [
+  [{ label: 'All statuses', onSelect: () => { filterStatus.value = undefined } }],
+  ...Object.keys(STATUS_CONFIG).map(s => [{
+    label: s.replace('_', ' '),
+    icon: STATUS_CONFIG[s]?.icon || undefined,
+    onSelect: () => { filterStatus.value = s },
+  }]),
+])
+
+const typeFilterItems = computed(() => [
+  [{ label: 'All types', onSelect: () => { filterType.value = undefined } }],
+  ...[...new Set(nodes.value.map(n => n.nodeType))].map(t => [{
+    label: t.replace('_', ' '),
+    onSelect: () => { filterType.value = t },
+  }]),
+])
+
 // ─── QuickAdd & PathType modals ───
 const showQuickAdd = ref(false)
 const showPathType = ref(false)
@@ -262,6 +303,70 @@ async function handleUseAsContext() {
   await refreshNodes()
 }
 
+async function handleSynthesize() {
+  if (multiSelectedIds.value.length < 2 || !teamId.value) return
+  const nodesRef = computed(() => nodes.value)
+  const { buildContext } = useNodeContext(nodesRef)
+  // Build combined context from all selected
+  const titles = multiSelectedIds.value
+    .map(id => nodes.value.find(n => n.id === id)?.title)
+    .filter(Boolean)
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+    method: 'POST',
+    body: {
+      canvasId: canvasId.value,
+      title: `Synthesis: ${titles.slice(0, 3).join(', ')}${titles.length > 3 ? '...' : ''}`,
+      nodeType: 'decision',
+      status: 'idle',
+      origin: 'human',
+      contextScope: 'manual',
+      contextNodeIds: multiSelectedIds.value,
+    },
+  })
+  toast.add({ title: 'Convergence node created', color: 'success' })
+  multiSelectedIds.value = []
+  await refreshNodes()
+}
+
+async function handleGenerateBrief(format: string) {
+  const nodesRef = computed(() => nodes.value)
+  const { buildContext } = useNodeContext(nodesRef)
+  const contexts = multiSelectedIds.value
+    .map(id => buildContext(id))
+    .filter(c => c.markdown)
+  if (contexts.length === 0) return
+
+  let output = ''
+  if (format === 'markdown') {
+    output = contexts.map(c => c.markdown).join('\n\n---\n\n')
+  }
+  else if (format === 'ai-prompt') {
+    const nodesList = multiSelectedIds.value
+      .map(id => nodes.value.find(n => n.id === id))
+      .filter(Boolean)
+    output = `You are continuing a thinking exploration.\n\n## Selected nodes\n${nodesList.map(n => `- **${n!.title}** (${n!.nodeType})`).join('\n')}\n\n## Context\n${contexts.map(c => c.markdown).join('\n\n')}\n\n## Task\nSynthesize these ideas into a coherent approach. Identify patterns, resolve tensions, and propose a unified direction.`
+  }
+  else if (format === 'dev-brief') {
+    const nodesList = multiSelectedIds.value
+      .map(id => nodes.value.find(n => n.id === id))
+      .filter(Boolean)
+    output = `# Development Brief\n\n## Goals\n${nodesList.map(n => `- ${n!.title}`).join('\n')}\n\n## Context\n${contexts.map(c => c.markdown).join('\n\n')}\n\n## Acceptance Criteria\n- [ ] TODO\n\n## Notes\nGenerated from ${contexts.length} nodes, ~${contexts.reduce((sum, c) => sum + c.tokenEstimate, 0)} tokens of context.`
+  }
+
+  await navigator.clipboard.writeText(output)
+  toast.add({ title: `${format} brief copied to clipboard`, color: 'success' })
+}
+
+// ─── Quick status change for selected node ───
+const { update: updateNode } = useCollectionMutation('thinkgraphNodes')
+
+async function setSelectedNodeStatus(status: string) {
+  if (!selectedNodeId.value) return
+  await updateNode(selectedNodeId.value, { status })
+  toast.add({ title: `Status: ${status.replace('_', ' ')}`, color: 'success' })
+  await refreshNodes()
+}
+
 // ─── Keyboard shortcuts ───
 const createInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('createInput')
 
@@ -286,6 +391,30 @@ onKeyStroke('p', (e) => {
   if (!selectedNodeId.value) return
   e.preventDefault()
   openPathType()
+})
+
+onKeyStroke('/', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  e.preventDefault()
+  showSearch.value = true
+  nextTick(() => searchInput.value?.inputRef?.focus())
+})
+
+onKeyStroke('d', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  e.preventDefault()
+  setSelectedNodeStatus('done')
+})
+
+onKeyStroke('w', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  e.preventDefault()
+  setSelectedNodeStatus('working')
 })
 
 onKeyStroke('Escape', () => {
@@ -336,6 +465,51 @@ watch(showCreate, async (open) => {
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Search -->
+        <div v-if="showSearch" class="flex items-center gap-1.5">
+          <UInput
+            ref="searchInput"
+            v-model="searchQuery"
+            size="sm"
+            placeholder="Search nodes..."
+            icon="i-lucide-search"
+            class="w-48"
+            @keydown.escape="showSearch = false; searchQuery = ''"
+          />
+          <UDropdownMenu :items="statusFilterItems">
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              :label="filterStatus ? filterStatus.replace('_', ' ') : 'Status'"
+              :icon="filterStatus ? STATUS_CONFIG[filterStatus]?.icon : undefined"
+            />
+          </UDropdownMenu>
+          <UDropdownMenu :items="typeFilterItems">
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              :label="filterType ? filterType.replace('_', ' ') : 'Type'"
+            />
+          </UDropdownMenu>
+          <UButton
+            icon="i-lucide-x"
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            @click="showSearch = false; searchQuery = ''; filterStatus = undefined; filterType = undefined"
+          />
+        </div>
+        <UButton
+          v-else
+          icon="i-lucide-search"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          @click="showSearch = true; nextTick(() => searchInput?.inputRef?.focus())"
+        />
+
         <UButton
           icon="i-lucide-clipboard-paste"
           label="Quick Add"
@@ -380,7 +554,7 @@ watch(showCreate, async (open) => {
           minimap
           @node-click="onNodeClick"
         >
-          <CanvasHighlight :selected-node-id="selectedNodeId" :nodes="nodes" />
+          <CanvasHighlight :selected-node-id="selectedNodeId" :nodes="nodes" :search-match-ids="searchMatchIds" />
         </CroutonFlow>
         <div
           v-else
@@ -477,6 +651,8 @@ watch(showCreate, async (open) => {
       :nodes="nodes"
       @copy-context="handleCopyContext"
       @use-as-context="handleUseAsContext"
+      @synthesize="handleSynthesize"
+      @generate-brief="handleGenerateBrief"
       @deselect="deselectNode"
       @clear="clearMultiSelect"
     />
@@ -514,5 +690,10 @@ watch(showCreate, async (open) => {
 .vue-flow__node.context-dimmed {
   opacity: 0.3;
   transition: opacity 0.3s ease;
+}
+
+.vue-flow__node.search-match {
+  box-shadow: 0 0 0 2px var(--color-primary-500, #3b82f6), 0 0 12px color-mix(in srgb, var(--color-primary-500) 30%, transparent);
+  transition: box-shadow 0.3s ease;
 }
 </style>
