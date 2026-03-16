@@ -14,8 +14,12 @@ function getResendClient(event?: any): Resend {
   const config = resolvedEvent ? useRuntimeConfig(resolvedEvent) : useRuntimeConfig()
   const emailConfig = (config as any).email
 
-  console.log(`[crouton-email] 🔑 Resend API key present: ${!!emailConfig?.resendApiKey}, from: ${emailConfig?.from}`)
+  // On Cloudflare Workers, useRuntimeConfig() without the event can't access
+  // env bindings. Fall back to process.env as a last resort.
   const apiKey = emailConfig?.resendApiKey
+    || process.env.NUXT_EMAIL_RESEND_API_KEY
+    || process.env.RESEND_API_KEY
+  console.log(`[crouton-email] 🔑 Resend API key present: ${!!apiKey} (runtimeConfig: ${!!emailConfig?.resendApiKey}, env: ${!!process.env.NUXT_EMAIL_RESEND_API_KEY || !!process.env.RESEND_API_KEY}), from: ${emailConfig?.from}`)
 
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured. Set it in runtimeConfig.email.resendApiKey or NUXT_EMAIL_RESEND_API_KEY env variable.')
