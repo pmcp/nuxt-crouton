@@ -9,18 +9,20 @@ definePageMeta({
   middleware: 'super-admin'
 })
 
+const { t } = useI18n()
+
 useSeoMeta({ title: 'Teams - Super Admin' })
 
 const { data, status, error } = await useFetch('/api/admin/teams', {
   query: { pageSize: 100 }
 })
 
-const columns = [
-  { accessorKey: 'name', header: 'Team' },
-  { accessorKey: 'memberCount', header: 'Members' },
-  { accessorKey: 'createdAt', header: 'Created' },
+const columns = computed(() => [
+  { accessorKey: 'name', header: t('superAdmin.teams.name') },
+  { accessorKey: 'memberCount', header: t('superAdmin.teams.members') },
+  { accessorKey: 'createdAt', header: t('superAdmin.teams.created') },
   { accessorKey: 'actions', header: '' }
-]
+])
 
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleDateString()
@@ -31,8 +33,8 @@ function formatDate(date: string | Date) {
   <div class="p-6">
     <div class="mb-6 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Teams</h1>
-        <p class="text-sm text-muted">All teams on the platform</p>
+        <h1 class="text-2xl font-bold">{{ $t('superAdmin.teams.title') }}</h1>
+        <p class="text-sm text-muted">{{ $t('superAdmin.teams.allTeamsOnPlatform') }}</p>
       </div>
     </div>
 
@@ -40,7 +42,7 @@ function formatDate(date: string | Date) {
       v-if="error"
       color="error"
       icon="i-lucide-alert-circle"
-      title="Failed to load teams"
+      :title="$t('superAdmin.teams.failedToLoadTeams')"
       :description="error.message"
       class="mb-4"
     />
@@ -67,7 +69,7 @@ function formatDate(date: string | Date) {
 
       <template #memberCount-cell="{ row }">
         <UBadge variant="subtle" color="neutral">
-          {{ row.original.memberCount }} {{ row.original.memberCount === 1 ? 'member' : 'members' }}
+          {{ $t('superAdmin.teams.memberCount', row.original.memberCount, { count: row.original.memberCount }) }}
         </UBadge>
       </template>
 

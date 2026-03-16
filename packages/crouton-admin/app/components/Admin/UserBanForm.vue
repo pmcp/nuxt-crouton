@@ -9,6 +9,8 @@ import { z } from 'zod'
 import type { AdminUserListItem, BanDuration } from '../../../types/admin'
 import { BAN_DURATIONS } from '../../../types/admin'
 
+const { t } = useI18n()
+
 interface Props {
   /** The user being banned */
   user: AdminUserListItem
@@ -26,7 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const schema = z.object({
-  reason: z.string().min(1, 'Please provide a reason for the ban'),
+  reason: z.string().min(1, t('userBan.reasonRequired')),
   duration: z.string()
 })
 
@@ -59,7 +61,7 @@ function handleSubmit() {
     <!-- User info -->
     <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        Banning user
+        {{ $t('userBan.banning') }}
       </p>
       <p class="font-medium text-gray-900 dark:text-white">
         {{ user.name }} ({{ user.email }})
@@ -68,20 +70,20 @@ function handleSubmit() {
 
     <!-- Reason -->
     <UFormField
-      label="Reason"
+      :label="$t('userBan.reason')"
       name="reason"
       required
     >
       <UTextarea
         v-model="state.reason"
-        placeholder="Enter the reason for banning this user..."
+        :placeholder="$t('userBan.reasonPlaceholder')"
         :rows="3"
       />
     </UFormField>
 
     <!-- Duration -->
     <UFormField
-      label="Duration"
+      :label="$t('userBan.duration')"
       name="duration"
     >
       <USelect
@@ -100,14 +102,14 @@ function handleSubmit() {
         :disabled="loading"
         @click="emit('cancel')"
       >
-        Cancel
+        {{ $t('common.cancel') }}
       </UButton>
       <UButton
         type="submit"
         color="error"
         :loading="loading"
       >
-        Ban User
+        {{ $t('superAdmin.users.banUser') }}
       </UButton>
     </div>
   </UForm>

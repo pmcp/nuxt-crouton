@@ -9,6 +9,8 @@ definePageMeta({
   middleware: 'super-admin'
 })
 
+const { t } = useI18n()
+
 useSeoMeta({ title: 'Users - Super Admin' })
 
 const search = ref('')
@@ -28,13 +30,13 @@ const { data, status, error, refresh } = useFetch('/api/admin/users', {
   }))
 })
 
-const columns = [
-  { accessorKey: 'name', header: 'User' },
-  { accessorKey: 'membershipCount', header: 'Teams' },
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'createdAt', header: 'Joined' },
+const columns = computed(() => [
+  { accessorKey: 'name', header: t('superAdmin.users.name') },
+  { accessorKey: 'membershipCount', header: t('superAdmin.users.teams') },
+  { accessorKey: 'status', header: t('superAdmin.users.status') },
+  { accessorKey: 'createdAt', header: t('superAdmin.users.created') },
   { accessorKey: 'actions', header: '' }
-]
+])
 
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleDateString()
@@ -58,8 +60,8 @@ async function handleImpersonate(userId: string) {
   <div class="p-6">
     <div class="mb-6 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold">Users</h1>
-        <p class="text-sm text-muted">Manage all user accounts</p>
+        <h1 class="text-2xl font-bold">{{ $t('superAdmin.users.title') }}</h1>
+        <p class="text-sm text-muted">{{ $t('superAdmin.users.manageAllAccounts') }}</p>
       </div>
     </div>
 
@@ -67,14 +69,14 @@ async function handleImpersonate(userId: string) {
       v-if="error"
       color="error"
       icon="i-lucide-alert-circle"
-      title="Failed to load users"
+      :title="$t('superAdmin.users.failedToLoadUsers')"
       :description="error.message"
       class="mb-4"
     />
 
     <UInput
       v-model="search"
-      placeholder="Search users..."
+      :placeholder="$t('superAdmin.users.searchPlaceholder')"
       icon="i-lucide-search"
       class="mb-4 max-w-sm"
     />
@@ -92,7 +94,7 @@ async function handleImpersonate(userId: string) {
             <p class="text-xs text-muted">{{ row.original.email }}</p>
           </div>
           <UBadge v-if="row.original.superAdmin" color="primary" variant="subtle" size="xs">
-            Admin
+            {{ $t('superAdmin.users.adminBadge') }}
           </UBadge>
         </div>
       </template>
@@ -107,7 +109,7 @@ async function handleImpersonate(userId: string) {
           variant="subtle"
           size="xs"
         >
-          {{ row.original.banned ? 'Banned' : 'Active' }}
+          {{ row.original.banned ? $t('superAdmin.users.statusBanned') : $t('superAdmin.users.statusActive') }}
         </UBadge>
       </template>
 
@@ -120,7 +122,7 @@ async function handleImpersonate(userId: string) {
           v-if="!row.original.superAdmin"
           :items="[
             [{
-              label: 'Impersonate',
+              label: t('superAdmin.users.impersonate'),
               icon: 'i-lucide-eye',
               disabled: row.original.banned,
               onSelect: () => handleImpersonate(row.original.id)

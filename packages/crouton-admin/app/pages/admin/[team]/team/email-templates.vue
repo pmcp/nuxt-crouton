@@ -13,12 +13,12 @@ const { isAdmin } = useTeam()
 const notify = useNotify()
 
 // Email types with metadata
-const emailTypes = [
+const emailTypes = computed(() => [
   {
     key: 'password-reset' as const,
-    label: 'Password Reset',
+    label: t('emailTemplates.types.passwordReset.label'),
     icon: 'i-lucide-key-round',
-    description: 'Sent when a user requests a password reset.',
+    description: t('emailTemplates.types.passwordReset.description'),
     variables: ['{{name}}', '{{brandName}}', '{{minutes}}'],
     defaults: {
       greeting: 'Hi {{name}}',
@@ -29,9 +29,9 @@ const emailTypes = [
   },
   {
     key: 'verification' as const,
-    label: 'Email Verification',
+    label: t('emailTemplates.types.verification.label'),
     icon: 'i-lucide-mail-check',
-    description: 'Sent when a user needs to verify their email.',
+    description: t('emailTemplates.types.verification.description'),
     variables: ['{{name}}', '{{brandName}}', '{{minutes}}'],
     defaults: {
       greeting: 'Hi {{name}}',
@@ -42,9 +42,9 @@ const emailTypes = [
   },
   {
     key: 'magic-link' as const,
-    label: 'Magic Link',
+    label: t('emailTemplates.types.magicLink.label'),
     icon: 'i-lucide-wand-sparkles',
-    description: 'Sent when a user requests a magic link sign-in.',
+    description: t('emailTemplates.types.magicLink.description'),
     variables: ['{{name}}', '{{brandName}}', '{{minutes}}'],
     defaults: {
       greeting: 'Hi {{name}}',
@@ -55,9 +55,9 @@ const emailTypes = [
   },
   {
     key: 'team-invite' as const,
-    label: 'Team Invitation',
+    label: t('emailTemplates.types.teamInvite.label'),
     icon: 'i-lucide-user-plus',
-    description: 'Sent when a team member is invited.',
+    description: t('emailTemplates.types.teamInvite.description'),
     variables: ['{{inviterName}}', '{{teamName}}', '{{role}}', '{{brandName}}'],
     defaults: {
       body: '{{inviterName}} has invited you to join {{teamName}} on {{brandName}}.',
@@ -67,9 +67,9 @@ const emailTypes = [
   },
   {
     key: 'welcome' as const,
-    label: 'Welcome',
+    label: t('emailTemplates.types.welcome.label'),
     icon: 'i-lucide-party-popper',
-    description: 'Sent after a user creates their account.',
+    description: t('emailTemplates.types.welcome.description'),
     variables: ['{{name}}', '{{brandName}}'],
     defaults: {
       greeting: 'Welcome aboard, {{name}}',
@@ -78,9 +78,9 @@ const emailTypes = [
       footer: 'Questions? Just reply to this email — we\'re here to help.'
     }
   }
-]
+])
 
-type EmailTypeKey = typeof emailTypes[number]['key']
+type EmailTypeKey = 'password-reset' | 'verification' | 'magic-link' | 'team-invite' | 'welcome'
 type OverrideFields = { subject?: string, greeting?: string, body?: string, buttonText?: string, footer?: string }
 type EmailSettings = Partial<Record<EmailTypeKey, OverrideFields>>
 
@@ -90,7 +90,7 @@ const activeType = ref<EmailTypeKey>('password-reset')
 const settings = ref<EmailSettings>({})
 
 // Current type metadata
-const currentType = computed(() => emailTypes.find(t => t.key === activeType.value)!)
+const currentType = computed(() => emailTypes.value.find(t => t.key === activeType.value)!)
 
 // Current form values (reactive proxy into settings)
 const form = computed({
@@ -159,10 +159,10 @@ async function save() {
       body: cleaned
     })
     settings.value = cleaned
-    notify.success('Saved', { description: 'Email template settings updated.' })
+    notify.success(t('common.saved'), { description: t('emailTemplates.settingsSaved') })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Failed to save'
-    notify.error('Error', { description: message })
+    const message = e instanceof Error ? e.message : t('emailTemplates.failedToSave')
+    notify.error(t('common.error'), { description: message })
   } finally {
     isSaving.value = false
   }
@@ -187,11 +187,11 @@ onMounted(loadSettings)
         name="i-lucide-shield-alert"
         class="size-12 mx-auto mb-4 text-muted opacity-50"
       />
-      <h3 class="text-lg font-medium">{{ t('common.accessRestricted') || 'Access Restricted' }}</h3>
-      <p class="text-muted mt-2 max-w-md mx-auto">{{ t('teams.adminAccessRequired') || 'Admin access required' }}</p>
+      <h3 class="text-lg font-medium">{{ $t('common.accessRestricted') }}</h3>
+      <p class="text-muted mt-2 max-w-md mx-auto">{{ $t('teams.adminAccessRequired') }}</p>
       <NuxtLink :to="`/admin/${teamSlug}/team`">
         <UButton
-          :label="t('navigation.backToTeam') || 'Back to Team'"
+          :label="$t('navigation.backToTeam')"
           variant="outline"
           class="mt-4"
         />
@@ -205,9 +205,9 @@ onMounted(loadSettings)
     <div v-else class="space-y-6">
       <!-- Header -->
       <div>
-        <h3 class="text-lg font-semibold">Email Templates</h3>
+        <h3 class="text-lg font-semibold">{{ $t('emailTemplates.title') }}</h3>
         <p class="text-sm text-muted mt-1">
-          Customize the content of auth emails sent to your users. Leave fields empty to use defaults.
+          {{ $t('emailTemplates.description') }}
         </p>
       </div>
 
@@ -249,7 +249,7 @@ onMounted(loadSettings)
 
           <!-- Available variables -->
           <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-xs text-muted">Variables:</span>
+            <span class="text-xs text-muted">{{ $t('emailTemplates.variables') }}:</span>
             <code
               v-for="v in currentType.variables"
               :key="v"
@@ -259,10 +259,10 @@ onMounted(loadSettings)
 
           <!-- Fields -->
           <div class="space-y-4">
-            <UFormField label="Subject">
+            <UFormField :label="$t('emailTemplates.fields.subject')">
               <UInput
                 :model-value="getFieldValue('subject')"
-                placeholder="Leave empty for default"
+                :placeholder="$t('emailTemplates.leaveEmptyForDefault')"
                 class="w-full"
                 @update:model-value="updateField('subject', $event as string)"
               />
@@ -270,7 +270,7 @@ onMounted(loadSettings)
 
             <UFormField
               v-if="'greeting' in currentType.defaults"
-              label="Greeting"
+              :label="$t('emailTemplates.fields.greeting')"
             >
               <UInput
                 :model-value="getFieldValue('greeting')"
@@ -280,7 +280,7 @@ onMounted(loadSettings)
               />
             </UFormField>
 
-            <UFormField label="Body">
+            <UFormField :label="$t('emailTemplates.fields.body')">
               <UTextarea
                 :model-value="getFieldValue('body')"
                 :placeholder="getPlaceholder('body')"
@@ -292,7 +292,7 @@ onMounted(loadSettings)
 
             <UFormField
               v-if="'buttonText' in currentType.defaults"
-              label="Button Text"
+              :label="$t('emailTemplates.fields.buttonText')"
             >
               <UInput
                 :model-value="getFieldValue('buttonText')"
@@ -302,7 +302,7 @@ onMounted(loadSettings)
               />
             </UFormField>
 
-            <UFormField label="Footer">
+            <UFormField :label="$t('emailTemplates.fields.footer')">
               <UTextarea
                 :model-value="getFieldValue('footer')"
                 :placeholder="getPlaceholder('footer')"
@@ -317,7 +317,7 @@ onMounted(loadSettings)
           <div class="flex items-center justify-between pt-2">
             <UButton
               v-if="hasOverrides(activeType)"
-              label="Reset to defaults"
+              :label="$t('emailTemplates.resetToDefaults')"
               variant="ghost"
               color="neutral"
               size="sm"
@@ -327,7 +327,7 @@ onMounted(loadSettings)
             <div v-else />
 
             <UButton
-              label="Save"
+              :label="$t('common.save')"
               :loading="isSaving"
               @click="save"
             />
