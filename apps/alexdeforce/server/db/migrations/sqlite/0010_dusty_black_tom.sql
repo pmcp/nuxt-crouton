@@ -1,0 +1,1 @@
+ALTER TABLE `team_settings` ADD `email_settings` text;

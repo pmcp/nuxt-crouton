@@ -71,6 +71,13 @@
       "when": 1773406033517,
       "tag": "0009_famous_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1773676496172,
+      "tag": "0010_brainy_thena",
+      "breakpoints": true
     }
   ]
 }
