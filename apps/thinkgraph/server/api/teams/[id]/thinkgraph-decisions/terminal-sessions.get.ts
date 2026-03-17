@@ -1,5 +1,5 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { getActiveTerminalSessions } from '~~/server/utils/claude-responder'
+import { getActiveTerminalSessions } from '~~/server/utils/terminal-sessions'
 
 /**
  * GET /api/teams/:id/thinkgraph-decisions/terminal-sessions

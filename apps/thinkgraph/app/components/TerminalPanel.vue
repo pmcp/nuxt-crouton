@@ -18,6 +18,8 @@ const isOpen = computed({
 const lines = ref<string[]>([])
 const status = ref<'thinking' | 'working' | 'done' | 'error' | 'idle'>('idle')
 const terminalEl = ref<HTMLElement>()
+const steerMessage = ref('')
+const isSending = ref(false)
 let eventSource: EventSource | null = null
 
 function connect() {
@@ -106,6 +108,40 @@ watch(() => props.nodeId, () => {
   if (props.open) connect()
 })
 
+async function sendSteer() {
+  if (!steerMessage.value.trim() || isSending.value) return
+  isSending.value = true
+  try {
+    await $fetch(`/api/teams/${props.teamId}/thinkgraph-decisions/${props.nodeId}/terminal-steer`, {
+      method: 'POST',
+      body: { message: steerMessage.value },
+    })
+    lines.value.push(`> ${steerMessage.value}`)
+    steerMessage.value = ''
+    nextTick(() => scrollToBottom())
+  }
+  catch (err) {
+    lines.value.push(`[error] Failed to send: ${(err as Error).message}`)
+  }
+  finally {
+    isSending.value = false
+  }
+}
+
+async function sendAbort() {
+  try {
+    await $fetch(`/api/teams/${props.teamId}/thinkgraph-decisions/${props.nodeId}/terminal-steer`, {
+      method: 'POST',
+      body: { abort: true },
+    })
+    lines.value.push('[system] Abort signal sent')
+    nextTick(() => scrollToBottom())
+  }
+  catch (err) {
+    lines.value.push(`[error] Failed to abort: ${(err as Error).message}`)
+  }
+}
+
 onUnmounted(() => disconnect())
 </script>
 
@@ -152,6 +188,37 @@ onUnmounted(() => disconnect())
           <span
             v-if="status === 'thinking' || status === 'working'"
             class="inline-block w-2 h-4 bg-green-400 animate-pulse"
+          />
+        </div>
+
+        <!-- Steering input (visible when agent is working) -->
+        <div
+          v-if="status === 'thinking' || status === 'working'"
+          class="px-4 py-2 border-t border-neutral-800 flex items-center gap-2"
+        >
+          <input
+            v-model="steerMessage"
+            type="text"
+            placeholder="Steer the agent..."
+            class="flex-1 bg-neutral-900 text-neutral-200 text-xs font-mono px-3 py-1.5 rounded border border-neutral-700 focus:border-green-500 focus:outline-none placeholder-neutral-600"
+            @keydown.enter="sendSteer"
+          >
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-send"
+            :loading="isSending"
+            :disabled="!steerMessage.trim()"
+            @click="sendSteer"
+          />
+          <UButton
+            size="xs"
+            color="error"
+            variant="soft"
+            icon="i-lucide-square"
+            label="Stop"
+            @click="sendAbort"
           />
         </div>
 

@@ -1,6 +1,6 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { getTerminalSession, subscribeTerminal } from '~~/server/utils/claude-responder'
-import type { TerminalEvent } from '~~/server/utils/claude-responder'
+import { getTerminalSession, subscribeTerminal } from '~~/server/utils/terminal-sessions'
+import type { TerminalEvent } from '~~/server/utils/terminal-sessions'
 
 /**
  * SSE endpoint that streams Claude Code terminal output for a node.
