@@ -87,7 +87,6 @@ export async function ensureServicesLoaded() {
     import('./dispatch-services/ui-prototype'),
     import('./dispatch-services/research-agent'),
     import('./dispatch-services/excalidraw'),
-    import('./dispatch-services/claude-code'),
     import('./dispatch-services/pi-agent'),
   ])
   _loaded = true
