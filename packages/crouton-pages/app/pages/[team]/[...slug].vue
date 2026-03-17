@@ -30,7 +30,6 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { teamId } = useTeamContext()
 
 // Safely get locale - may fail during unexpected SSR contexts (e.g., refreshNuxtData triggers)
 let locale = ref('en')
@@ -43,8 +42,8 @@ try {
   }
 }
 
-// Get team and slug from route params
-const team = teamId.value ?? ''
+// Get team slug from route params (not teamId — context may not be resolved during client-side nav)
+const team = route.params.team as string
 const slugParts = route.params.slug
 const slug = !slugParts || (Array.isArray(slugParts) && slugParts.length === 0)
   ? ''
