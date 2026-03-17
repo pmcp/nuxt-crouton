@@ -1,0 +1,16 @@
+[Unit]
+Description=ThinkGraph Pi Worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/nuxt-crouton/apps/thinkgraph-worker
+ExecStart=/home/pi/.nvm/versions/node/v22/bin/node dist/index.js
+Restart=always
+RestartSec=10
+EnvironmentFile=/home/pi/nuxt-crouton/apps/thinkgraph-worker/.env
+
+[Install]
+WantedBy=multi-user.target

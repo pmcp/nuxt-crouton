@@ -12,6 +12,7 @@
  *   pnpm start   # Production
  */
 import 'dotenv/config'
+import { createServer } from 'node:http'
 import { loadConfig } from './config.js'
 import { AgentSessionManager } from './session-manager.js'
 import { DispatchWatcher } from './dispatch-watcher.js'
@@ -98,7 +99,34 @@ async function main() {
     yjsClient.connect()
   }
 
-  // Health check info
+  // Health HTTP endpoint
+  const startedAt = Date.now()
+  const healthPort = parseInt(process.env.HEALTH_PORT || '8787', 10)
+  const healthServer = createServer((req, res) => {
+    if (req.url === '/health') {
+      const mem = process.memoryUsage()
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({
+        status: 'ok',
+        uptime: Math.floor((Date.now() - startedAt) / 1000),
+        activeSessions: sessionManager.activeCount,
+        maxSessions: sessionManager.maxSessions,
+        yjsConnected: process.env.ENABLE_YJS === 'true' ? yjsClient.isConnected : false,
+        memory: {
+          rss: Math.round(mem.rss / 1024 / 1024),
+          heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
+          heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
+        },
+      }))
+    } else {
+      res.writeHead(404)
+      res.end()
+    }
+  })
+  healthServer.listen(healthPort, () => {
+    console.log(`Health endpoint: http://localhost:${healthPort}/health`)
+  })
+
   console.log()
   console.log('Worker running. Watching for dispatch triggers...')
   console.log('Press Ctrl+C to stop.')
@@ -106,6 +134,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log('\nShutting down...')
+    healthServer.close()
     dispatchWatcher.stop()
     yjsClient.disconnect()
     await sessionManager.abortAll()
