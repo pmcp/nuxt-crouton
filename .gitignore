@@ -77,3 +77,13 @@ apps/velo/seed_reordered.sql
 apps/alexdeforce/.data
 apps/sintlukas/.data
 apps/thinkgraph/.data
+
+# Wrangler local state
+apps/*/.wrangler/state/
+apps/*/.wrangler/deploy/
+
+# Screenshots (temp)
+*.png
+
+# Claude Code projects
+.claude/projects/
