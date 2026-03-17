@@ -662,7 +662,14 @@ function buildPlugins(
 
     // Password breach checking via Have I Been Pwned API
     // Only sends first 5 chars of password hash - full password never leaves the server
-    haveIBeenPwned(),
+    //
+    // KNOWN ISSUE: The plugin calls getCurrentAuthContext() (AsyncLocalStorage) inside
+    // password.hash(). On Cloudflare Workers, ALS context can be lost during certain
+    // endpoints (confirmed: /reset-password). Excluding /reset-password from paths
+    // doesn't help because getCurrentAuthContext() is called BEFORE the path check.
+    // Disabling until better-auth fixes the ALS dependency in the plugin's init() hook.
+    // TODO: Re-enable when better-auth fixes haveIBeenPwned for CF Workers
+    // haveIBeenPwned(),
 
     // Internationalized auth error messages
     // Detects locale from header, cookie, or session
