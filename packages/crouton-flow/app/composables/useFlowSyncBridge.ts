@@ -44,45 +44,27 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
   // Track if Yjs was seeded from rows
   const seeded = ref(false)
 
-  // Seed Yjs doc from rows if needed (when sync mode with rows but empty Yjs doc)
+  // Unified seeding watcher: watches BOTH synced and rows.length so it fires
+  // regardless of which arrives first — fixes race condition where synced fires
+  // before rows are loaded, or rows arrive before Yjs connects.
   watch(
-    () => syncState?.synced.value,
-    (synced) => {
-      if (synced && syncState && !seeded.value) {
-        if (syncState.nodes.value.length > 0) {
-          seeded.value = true
-          return
-        }
+    () => ({
+      synced: syncState?.synced.value,
+      rowCount: rows.value?.length ?? 0
+    }),
+    ({ synced, rowCount }) => {
+      if (!synced || !syncState || seeded.value) return
 
-        const currentRows = rows.value
-        if (currentRows && currentRows.length > 0) {
-          for (const row of currentRows) {
-            const id = String(row.id || crypto.randomUUID())
-            const title = String(row[labelField] || 'Untitled')
-            const parentId = row[parentField] as string | null | undefined
-            const position = parsePosition(row[positionField])
-
-            syncState.createNode({
-              id,
-              title,
-              parentId: parentId || null,
-              position: position || { x: 0, y: 0 },
-              data: { ...row }
-            })
-          }
-          seeded.value = true
-        }
+      // Yjs already has nodes (from persisted state) — no seeding needed
+      if (syncState.nodes.value.length > 0) {
+        seeded.value = true
+        return
       }
-    },
-    { immediate: true }
-  )
 
-  // Also watch rows — if they arrive after synced, seed then
-  watch(
-    () => rows.value?.length,
-    (len) => {
-      if (len && len > 0 && syncState?.synced.value && !seeded.value && syncState.nodes.value.length === 0) {
-        for (const row of rows.value!) {
+      // Yjs is empty but we have rows — seed from rows
+      const currentRows = rows.value
+      if (currentRows && currentRows.length > 0) {
+        for (const row of currentRows) {
           const id = String(row.id || crypto.randomUUID())
           const title = String(row[labelField] || 'Untitled')
           const parentId = row[parentField] as string | null | undefined

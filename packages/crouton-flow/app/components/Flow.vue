@@ -500,24 +500,31 @@ const finalNodes = computed(() => {
     baseNodes = ephemeralNodes
   } else if (props.sync && syncState) {
     const nodes = syncNodes.value
-    const edges = syncEdges.value
-    const needsLayoutResult = needsLayout(nodes)
 
-    if (needsLayoutResult && !layoutAppliedToYjs.value) {
-      const layoutedNodesResult = applyLayout(nodes, edges)
-
-      nextTick(() => {
-        for (const node of layoutedNodesResult) {
-          if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
-            syncState.updatePosition(node.id, node.position)
-          }
-        }
-        layoutAppliedToYjs.value = true
-      })
-
-      baseNodes = layoutedNodesResult
+    // Fallback: if sync hasn't loaded nodes yet, show rows-based layout
+    // so the canvas isn't blank while waiting for Yjs to connect/sync
+    if (nodes.length === 0 && !syncState.synced.value) {
+      baseNodes = layoutedNodes.value
     } else {
-      baseNodes = nodes
+      const edges = syncEdges.value
+      const needsLayoutResult = needsLayout(nodes)
+
+      if (needsLayoutResult && !layoutAppliedToYjs.value) {
+        const layoutedNodesResult = applyLayout(nodes, edges)
+
+        nextTick(() => {
+          for (const node of layoutedNodesResult) {
+            if (node.position && typeof node.position.x === 'number' && typeof node.position.y === 'number') {
+              syncState.updatePosition(node.id, node.position)
+            }
+          }
+          layoutAppliedToYjs.value = true
+        })
+
+        baseNodes = layoutedNodesResult
+      } else {
+        baseNodes = nodes
+      }
     }
   } else {
     baseNodes = layoutedNodes.value
