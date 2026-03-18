@@ -106,17 +106,22 @@ export function useServerAuth(event?: H3Event): AuthInstance {
 
 /**
  * Extract session token from request cookies.
- * Handles both Cloudflare (__Secure-better-auth.session_token)
- * and dev (better_auth_session) cookie names.
+ * Better Auth uses different cookie names depending on environment:
+ * - Production (HTTPS): __Secure-better-auth.session_token
+ * - Development (HTTP):  better-auth.session_token
  */
 function extractSessionToken(event: H3Event): string | null {
   const cookies = parseCookies(event)
-  // Cloudflare secure cookie
-  const secureCookie = cookies['__Secure-better-auth.session_token']
-  if (secureCookie) return secureCookie
-  // Dev cookie
-  const devCookie = getCookie(event, 'better_auth_session')
-  if (devCookie) return devCookie
+  // Check all known Better Auth cookie name variants
+  const cookieNames = [
+    '__Secure-better-auth.session_token', // Cloudflare/HTTPS
+    'better-auth.session_token',           // Dev/HTTP
+    'better_auth_session',                 // Legacy
+  ]
+  for (const name of cookieNames) {
+    const value = cookies[name]
+    if (value) return value
+  }
   return null
 }
 
@@ -131,8 +136,11 @@ function extractSessionToken(event: H3Event): string | null {
  * @returns Session with user data, or null if not authenticated
  */
 export async function getServerSession(event: H3Event) {
-  const token = extractSessionToken(event)
-  if (!token) return null
+  const rawToken = extractSessionToken(event)
+  if (!rawToken) return null
+
+  // Better Auth signs cookies as "token.signature" — extract just the token part
+  const token = rawToken.includes('.') ? rawToken.split('.')[0] : rawToken
 
   try {
     const database = useDB()
