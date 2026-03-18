@@ -40,7 +40,7 @@ export function createThinkGraphTools(
       label: 'Create Node',
       description: 'Create a new node in the ThinkGraph thinking canvas. Use this to add child thoughts, insights, questions, or decisions.',
       parameters: Type.Object({
-        content: Type.String({ description: 'The node content (1-2 sentences, one atomic thought)' }),
+        content: Type.String({ description: 'The node title/content (1-2 sentences, one atomic thought)' }),
         nodeType: Type.Optional(Type.String({ description: 'Node type: idea, insight, question, decision, task, epic, user_story, milestone, remark', default: 'idea' })),
         parentId: Type.Optional(Type.String({ description: 'Parent node ID. Defaults to the dispatched node.' })),
         starred: Type.Optional(Type.Boolean({ description: 'Star important insights' })),
@@ -48,21 +48,28 @@ export function createThinkGraphTools(
       }),
       execute: async (_toolCallId, params) => {
         const body = {
-          graphId,
-          content: params.content,
+          canvasId: graphId,
+          title: params.content,
           nodeType: params.nodeType || 'idea',
           parentId: params.parentId || parentNodeId,
           starred: params.starred || false,
           brief: params.brief || '',
+          status: 'idle',
           origin: 'ai',
           source: 'pi-agent',
+          contextScope: 'branch',
         }
-        const result = await ofetch(`${baseUrl}/thinkgraph-nodes`, {
-          method: 'POST',
-          headers,
-          body,
-        })
-        return textResult(JSON.stringify({ ok: true, nodeId: result.id, content: body.content }))
+        try {
+          const result = await ofetch(`${baseUrl}/thinkgraph-nodes`, {
+            method: 'POST',
+            headers,
+            body,
+          })
+          return textResult(JSON.stringify({ ok: true, nodeId: result.id, title: body.title }))
+        } catch (err: any) {
+          console.error(`[pi-extension] create_node failed:`, err.message, err.data || '')
+          return textResult(JSON.stringify({ ok: false, error: err.message }))
+        }
       },
     },
     {
