@@ -47,6 +47,7 @@ const {
   cancelInvitation,
   acceptInvitation,
   rejectInvitation,
+  resendInvitation,
   loading: teamLoading
 } = useTeam()
 
@@ -80,16 +81,30 @@ async function loadInvitations() {
 onMounted(loadInvitations)
 watch(currentTeam, loadInvitations)
 
+// Handle resend invitation
+async function handleResend(invitationId: string) {
+  loadingInvitationId.value = invitationId
+  try {
+    await resendInvitation(invitationId)
+    notify.success(t('teams.invitationResent'), { description: t('teams.invitationResentDescription') })
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Failed to resend invitation'
+    notify.error(t('common.error'), { description: message })
+  } finally {
+    loadingInvitationId.value = null
+  }
+}
+
 // Handle cancel invitation
 async function handleCancel(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await cancelInvitation(invitationId)
-    notify.success('Invitation cancelled', { description: 'The invitation has been cancelled.' })
+    notify.success(t('teams.invitationCancelled'), { description: t('teams.invitationCancelledDescription') })
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to cancel invitation'
-    notify.error('Error', { description: message })
+    notify.error(t('common.error'), { description: message })
   } finally {
     loadingInvitationId.value = null
   }
@@ -100,11 +115,11 @@ async function handleAccept(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await acceptInvitation(invitationId)
-    notify.success('Invitation accepted', { description: 'You have joined the team.' })
+    notify.success(t('teams.invitationAccepted'), { description: t('teams.invitationAcceptedDescription') })
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to accept invitation'
-    notify.error('Error', { description: message })
+    notify.error(t('common.error'), { description: message })
   } finally {
     loadingInvitationId.value = null
   }
@@ -115,11 +130,11 @@ async function handleReject(invitationId: string) {
   loadingInvitationId.value = invitationId
   try {
     await rejectInvitation(invitationId)
-    notify.info('Invitation declined', { description: 'The invitation has been declined.' })
+    notify.info(t('teams.invitationDeclined'), { description: t('teams.invitationDeclinedDescription') })
     invitations.value = invitations.value.filter(i => i.id !== invitationId)
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to decline invitation'
-    notify.error('Error', { description: message })
+    notify.error(t('common.error'), { description: message })
   } finally {
     loadingInvitationId.value = null
   }
@@ -133,10 +148,10 @@ function formatExpiry(date: string | Date): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffMs < 0) return 'Expired'
-  if (diffHours < 1) return 'Less than 1 hour'
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'}`
-  return `${diffDays} day${diffDays === 1 ? '' : 's'}`
+  if (diffMs < 0) return t('teams.expired')
+  if (diffHours < 1) return t('teams.lessThanOneHour')
+  if (diffHours < 24) return t('teams.expiresHours', { count: diffHours })
+  return t('teams.expiresDays', { count: diffDays })
 }
 
 // Role badge color
@@ -156,11 +171,11 @@ const columns = computed<TableColumn<InvitationData>[]>(() => {
   const cols: TableColumn<InvitationData>[] = [
     {
       accessorKey: 'email',
-      header: t('teams.email') || 'Email'
+      header: t('teams.email')
     },
     {
       accessorKey: 'role',
-      header: t('teams.role') || 'Role',
+      header: t('teams.role'),
       cell: ({ row }) => h(resolveComponent('UBadge'), {
         color: roleBadgeColor(row.original.role),
         variant: 'subtle',
@@ -169,12 +184,12 @@ const columns = computed<TableColumn<InvitationData>[]>(() => {
     },
     {
       accessorKey: 'expiresAt',
-      header: t('teams.expires') || 'Expires',
+      header: t('teams.expires'),
       cell: ({ row }) => formatExpiry(row.original.expiresAt)
     },
     {
       accessorKey: 'inviter',
-      header: t('teams.invitedBy') || 'Invited by',
+      header: t('teams.invitedBy'),
       cell: ({ row }) => row.original.inviter
         ? (row.original.inviter.name || row.original.inviter.email)
         : '-'
@@ -186,7 +201,14 @@ const columns = computed<TableColumn<InvitationData>[]>(() => {
     cols.push({
       id: 'actions',
       header: '',
-      cell: ({ row }) => h('div', { class: 'flex justify-end' }, [
+      cell: ({ row }) => h('div', { class: 'flex justify-end gap-2' }, [
+        h(resolveComponent('UButton'), {
+          icon: 'i-lucide-mail',
+          variant: 'ghost',
+          size: 'xs',
+          loading: loadingInvitationId.value === row.original.id,
+          onClick: () => handleResend(row.original.id)
+        }, () => t('teams.resend')),
         h(resolveComponent('UButton'), {
           icon: 'i-lucide-x',
           variant: 'ghost',

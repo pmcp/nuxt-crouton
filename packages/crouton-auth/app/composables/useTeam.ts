@@ -658,6 +658,25 @@ export function useTeam() {
     }
   }
 
+  /**
+   * Resend an invitation email for a pending invitation
+   */
+  async function resendInvitation(invitationId: string): Promise<void> {
+    loading.value = true
+    error.value = null
+    try {
+      await $fetch(`/api/auth/invitations/${invitationId}/resend`, {
+        method: 'POST',
+      })
+    } catch (e: unknown) {
+      const message = extractErrorMessage(e, 'Failed to resend invitation')
+      error.value = message
+      throw new Error(message)
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     currentTeam,
@@ -695,6 +714,7 @@ export function useTeam() {
     getPendingInvitations,
     cancelInvitation,
     acceptInvitation,
-    rejectInvitation
+    rejectInvitation,
+    resendInvitation
   }
 }
