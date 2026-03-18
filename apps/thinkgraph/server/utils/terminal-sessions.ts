@@ -106,6 +106,35 @@ export function getWorkerConnection(nodeId: string): { send: (data: string) => v
   return activeWorkerConnections.get(nodeId)
 }
 
+// Browser WebSocket peers (for relaying terminal events directly to browsers)
+const browserPeers = new Map<string, Set<{ send: (data: string) => void }>>()
+
+/** Register a browser WebSocket peer for a node */
+export function registerBrowserPeer(nodeId: string, peer: { send: (data: string) => void }) {
+  if (!browserPeers.has(nodeId)) {
+    browserPeers.set(nodeId, new Set())
+  }
+  browserPeers.get(nodeId)!.add(peer)
+}
+
+/** Unregister a browser WebSocket peer */
+export function unregisterBrowserPeer(nodeId: string, peer: { send: (data: string) => void }) {
+  browserPeers.get(nodeId)?.delete(peer)
+  if (browserPeers.get(nodeId)?.size === 0) {
+    browserPeers.delete(nodeId)
+  }
+}
+
+/** Broadcast a terminal event to all browser peers for a node */
+export function broadcastToBrowsers(nodeId: string, event: TerminalEvent) {
+  const peers = browserPeers.get(nodeId)
+  if (!peers) return
+  const msg = JSON.stringify(event)
+  for (const peer of peers) {
+    try { peer.send(msg) } catch {}
+  }
+}
+
 /** Update node status in DB and signal collection change */
 export async function updateNodeStatus(
   nodeId: string,

@@ -20,7 +20,8 @@ const status = ref<'thinking' | 'working' | 'done' | 'error' | 'idle'>('idle')
 const terminalEl = ref<HTMLElement>()
 const steerMessage = ref('')
 const isSending = ref(false)
-let eventSource: EventSource | null = null
+let ws: WebSocket | null = null
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 function connect() {
   if (!props.nodeId || !props.teamId) return
@@ -29,47 +30,60 @@ function connect() {
   lines.value = []
   status.value = 'thinking'
 
-  const url = `/api/teams/${props.teamId}/thinkgraph-decisions/${props.nodeId}/terminal`
-  eventSource = new EventSource(url)
+  // Connect to the terminal WebSocket as a read-only listener
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const url = `${protocol}//${window.location.host}/api/teams/${props.teamId}/terminal-ws/${props.nodeId}`
+  ws = new WebSocket(url)
 
-  eventSource.onmessage = (event) => {
+  ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data)
       if (data.type === 'output') {
         lines.value.push(data.data)
-        // Keep last 200 lines
         if (lines.value.length > 200) {
           lines.value.splice(0, lines.value.length - 200)
         }
         nextTick(() => scrollToBottom())
       }
       else if (data.type === 'status') {
-        status.value = data.data
+        status.value = data.data as typeof status.value
       }
       else if (data.type === 'done') {
         status.value = 'done'
-        disconnect()
+        lines.value.push('[system] Session completed')
+        nextTick(() => scrollToBottom())
       }
       else if (data.type === 'error') {
         status.value = 'error'
         if (data.data !== 'No active session') {
           lines.value.push(`[error] ${data.data}`)
+          nextTick(() => scrollToBottom())
         }
-        disconnect()
       }
     }
     catch {}
   }
 
-  eventSource.onerror = () => {
-    disconnect()
+  ws.onclose = () => {
+    if (status.value === 'thinking' || status.value === 'working') {
+      // Reconnect if session might still be active
+      reconnectTimer = setTimeout(() => connect(), 2000)
+    }
+  }
+
+  ws.onerror = () => {
+    // Will trigger onclose
   }
 }
 
 function disconnect() {
-  if (eventSource) {
-    eventSource.close()
-    eventSource = null
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+  if (ws) {
+    ws.close()
+    ws = null
   }
 }
 
@@ -108,14 +122,11 @@ watch(() => props.nodeId, () => {
   if (props.open) connect()
 })
 
-async function sendSteer() {
-  if (!steerMessage.value.trim() || isSending.value) return
+function sendSteer() {
+  if (!steerMessage.value.trim() || isSending.value || !ws || ws.readyState !== WebSocket.OPEN) return
   isSending.value = true
   try {
-    await $fetch(`/api/teams/${props.teamId}/thinkgraph-decisions/${props.nodeId}/terminal-steer`, {
-      method: 'POST',
-      body: { message: steerMessage.value },
-    })
+    ws.send(JSON.stringify({ type: 'steer', message: steerMessage.value }))
     lines.value.push(`> ${steerMessage.value}`)
     steerMessage.value = ''
     nextTick(() => scrollToBottom())
@@ -128,12 +139,10 @@ async function sendSteer() {
   }
 }
 
-async function sendAbort() {
+function sendAbort() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return
   try {
-    await $fetch(`/api/teams/${props.teamId}/thinkgraph-decisions/${props.nodeId}/terminal-steer`, {
-      method: 'POST',
-      body: { abort: true },
-    })
+    ws.send(JSON.stringify({ type: 'abort' }))
     lines.value.push('[system] Abort signal sent')
     nextTick(() => scrollToBottom())
   }

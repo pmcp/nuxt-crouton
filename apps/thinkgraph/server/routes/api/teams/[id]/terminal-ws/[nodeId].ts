@@ -10,11 +10,15 @@
  * Auth: Service token issued by worker-auth endpoint.
  */
 import {
+  broadcastToBrowsers,
   createTerminalSession,
   emitTerminalEvent,
   getTerminalSession,
+  getWorkerConnection,
+  registerBrowserPeer,
   registerWorkerConnection,
   scheduleSessionCleanup,
+  unregisterBrowserPeer,
   unregisterWorkerConnection,
   updateNodeStatus,
 } from '~~/server/utils/terminal-sessions'
@@ -67,13 +71,22 @@ export default defineWebSocketHandler({
       return
     }
 
+    // Determine if this is a worker (has service token) or browser (has cookie)
+    const isWorker = !!token
+
+    const peerSend = { send: (data: string) => { try { peer.send(data) } catch {} } }
+
     // Store metadata on peer for use in message/close handlers
     const peerData = peer as unknown as {
       _nodeId: string
       _teamId: string
+      _isWorker: boolean
+      _peerSend: { send: (data: string) => void }
     }
     peerData._nodeId = nodeId
     peerData._teamId = teamId
+    peerData._isWorker = isWorker
+    peerData._peerSend = peerSend
 
     // Create or get terminal session
     const existing = getTerminalSession(nodeId)
@@ -81,24 +94,36 @@ export default defineWebSocketHandler({
       createTerminalSession(nodeId)
     }
 
-    // Register this WebSocket so steer/abort commands can be forwarded
-    registerWorkerConnection(nodeId, {
-      send: (data: string) => {
-        try { peer.send(data) } catch {}
-      },
-    })
+    const peerSend = { send: (data: string) => { try { peer.send(data) } catch {} } }
 
-    console.log(`[terminal-ws] Pi worker connected for node ${nodeId} in team ${teamId}`)
+    if (isWorker) {
+      // Pi worker connection — receives steer/abort, sends terminal events
+      registerWorkerConnection(nodeId, peerData._peerSend)
+      console.log(`[terminal-ws] Pi worker connected for node ${nodeId} in team ${teamId}`)
+    } else {
+      // Browser connection — receives terminal events, sends steer/abort
+      registerBrowserPeer(nodeId, peerData._peerSend)
+      // Send buffered lines to catch up
+      const session = getTerminalSession(nodeId)
+      if (session) {
+        peer.send(JSON.stringify({ type: 'status', data: session.status, timestamp: Date.now() }))
+        for (const line of session.lines) {
+          peer.send(JSON.stringify({ type: 'output', data: line, timestamp: Date.now() }))
+        }
+      }
+      console.log(`[terminal-ws] Browser connected for node ${nodeId} in team ${teamId}`)
+    }
   },
 
   message(peer, message) {
-    const peerData = peer as unknown as { _nodeId?: string; _teamId?: string }
+    const peerData = peer as unknown as { _nodeId?: string; _teamId?: string; _isWorker?: boolean }
     const nodeId = peerData._nodeId
     const teamId = peerData._teamId
+    const isWorker = peerData._isWorker
     if (!nodeId || !teamId) return
 
-    // Parse message — Pi worker sends JSON terminal events
-    let parsed: { type?: string; data?: string } | undefined
+    // Parse message
+    let parsed: { type?: string; data?: string; message?: string } | undefined
     try {
       const text = typeof message === 'string'
         ? message
@@ -115,52 +140,67 @@ export default defineWebSocketHandler({
 
     if (!parsed?.type) return
 
-    const event = {
-      type: parsed.type as 'output' | 'status' | 'done' | 'error',
-      data: parsed.data || '',
-      timestamp: Date.now(),
-    }
+    if (isWorker) {
+      // Pi worker sends terminal events → relay to browsers + SSE listeners
+      const event = {
+        type: parsed.type as 'output' | 'status' | 'done' | 'error',
+        data: parsed.data || '',
+        timestamp: Date.now(),
+      }
 
-    // Emit to SSE listeners (browser clients)
-    emitTerminalEvent(nodeId, event)
+      emitTerminalEvent(nodeId, event)
+      broadcastToBrowsers(nodeId, event)
 
-    // Update node status in DB for status-changing events
-    if (event.type === 'status' && (event.data === 'working' || event.data === 'thinking')) {
-      updateNodeStatus(nodeId, teamId, event.data)
-    }
-    else if (event.type === 'done') {
-      updateNodeStatus(nodeId, teamId, 'done')
-      scheduleSessionCleanup(nodeId)
-    }
-    else if (event.type === 'error') {
-      updateNodeStatus(nodeId, teamId, 'error')
-      scheduleSessionCleanup(nodeId)
+      if (event.type === 'status' && (event.data === 'working' || event.data === 'thinking')) {
+        updateNodeStatus(nodeId, teamId, event.data)
+      }
+      else if (event.type === 'done') {
+        updateNodeStatus(nodeId, teamId, 'done')
+        scheduleSessionCleanup(nodeId)
+      }
+      else if (event.type === 'error') {
+        updateNodeStatus(nodeId, teamId, 'error')
+        scheduleSessionCleanup(nodeId)
+      }
+    } else {
+      // Browser sends steer/abort → forward to Pi worker
+      const worker = getWorkerConnection(nodeId)
+      if (worker && (parsed.type === 'steer' || parsed.type === 'abort')) {
+        worker.send(JSON.stringify(parsed))
+      }
     }
   },
 
   close(peer) {
-    const peerData = peer as unknown as { _nodeId?: string; _teamId?: string }
+    const peerData = peer as unknown as { _nodeId?: string; _teamId?: string; _isWorker?: boolean; _peerSend?: { send: (data: string) => void } }
     const nodeId = peerData._nodeId
     const teamId = peerData._teamId
+    const isWorker = peerData._isWorker
 
-    if (nodeId) {
+    if (!nodeId) return
+
+    if (isWorker) {
       unregisterWorkerConnection(nodeId)
 
       // If session wasn't explicitly ended, mark as error
       const session = getTerminalSession(nodeId)
       if (session && session.status !== 'done' && session.status !== 'error') {
-        emitTerminalEvent(nodeId, {
-          type: 'error',
+        const errorEvent = {
+          type: 'error' as const,
           data: 'Worker connection closed unexpectedly',
           timestamp: Date.now(),
-        })
+        }
+        emitTerminalEvent(nodeId, errorEvent)
+        broadcastToBrowsers(nodeId, errorEvent)
         if (teamId) {
           updateNodeStatus(nodeId, teamId, 'error')
         }
         scheduleSessionCleanup(nodeId)
       }
-
       console.log(`[terminal-ws] Pi worker disconnected for node ${nodeId}`)
+    } else if (peerData._peerSend) {
+      unregisterBrowserPeer(nodeId, peerData._peerSend)
+      console.log(`[terminal-ws] Browser disconnected for node ${nodeId}`)
     }
   },
 
