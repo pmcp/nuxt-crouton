@@ -22,6 +22,7 @@ const canvasActions = inject<{
   openCreate: (nodeType: string, parentId?: string) => void
   openDetail: (nodeId: string) => void
   openPathType: (parentId?: string) => void
+  openTerminal: (nodeId: string) => void
   setStatus: (nodeId: string, status: string) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
   copyContext: (nodeId: string) => Promise<void>
@@ -217,6 +218,17 @@ function handleContextMenu(event: MouseEvent) {
     >
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
+
+    <!-- Terminal indicator (clickable, shows when working/thinking) -->
+    <button
+      v-if="(isWorking || isThinking) && canvasActions"
+      class="mt-1.5 inline-flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+      title="Watch terminal"
+      @click.stop="canvasActions.openTerminal(node.id)"
+    >
+      <UIcon name="i-lucide-terminal" class="size-3 animate-pulse" />
+      <span>terminal</span>
+    </button>
 
     <!-- Hover actions -->
     <div v-if="isHovered" class="work-node__actions">

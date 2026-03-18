@@ -118,6 +118,20 @@ watch(hasActiveDispatch, (active) => {
 }, { immediate: true })
 onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
+// ─── Terminal panel ───
+const showTerminal = ref(false)
+const terminalNodeId = ref<string | null>(null)
+
+function openTerminal(nodeId: string) {
+  terminalNodeId.value = nodeId
+  showTerminal.value = true
+}
+
+function closeTerminal() {
+  showTerminal.value = false
+  terminalNodeId.value = null
+}
+
 // ─── Selection ───
 const selectedNodeId = ref<string | null>(null)
 const multiSelectedIds = ref<string[]>([])
@@ -213,6 +227,7 @@ provide('canvasActions', {
   openDetail,
   openPathType,
   openContextMenu,
+  openTerminal,
   setStatus: async (nodeId: string, status: string) => {
     await updateNode(nodeId, { status })
     await refreshNodes()
@@ -502,6 +517,7 @@ async function dispatchToPiAgent(nodeId: string) {
       },
     })
     toast.add({ title: 'Dispatched to Pi Agent', color: 'success' })
+    openTerminal(nodeId)
     // Delay refresh to let context menu DOM clean up first
     setTimeout(() => refreshNodes(), 300)
   }
@@ -601,7 +617,22 @@ onKeyStroke('?', (e) => {
   showShortcuts.value = !showShortcuts.value
 })
 
+onKeyStroke('t', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (!selectedNodeId.value) return
+  const selNode = selectedNode.value
+  if (!selNode || (selNode.status !== 'working' && selNode.status !== 'thinking' && selNode.status !== 'dispatching')) return
+  e.preventDefault()
+  if (showTerminal.value && terminalNodeId.value === selectedNodeId.value) {
+    closeTerminal()
+  } else {
+    openTerminal(selectedNodeId.value)
+  }
+})
+
 onKeyStroke('Escape', () => {
+  if (showTerminal.value) { closeTerminal(); return }
   if (showShortcuts.value) { showShortcuts.value = false; return }
   if (showQuickAdd.value) { showQuickAdd.value = false; return }
   if (showPathType.value) { showPathType.value = false; return }
@@ -881,6 +912,13 @@ watch(showCreate, async (open) => {
         <button class="ctx-item" @click="dispatchToPiAgent(contextMenuNode!.id); closeContextMenu()">
           <UIcon name="i-lucide-cpu" class="size-4 text-green-500" /> Send to Pi Agent
         </button>
+        <button
+          v-if="contextMenuNode?.status === 'working' || contextMenuNode?.status === 'thinking' || contextMenuNode?.status === 'dispatching'"
+          class="ctx-item"
+          @click="openTerminal(contextMenuNode!.id); closeContextMenu()"
+        >
+          <UIcon name="i-lucide-terminal" class="size-4 text-green-400" /> Watch terminal
+        </button>
         <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
         <button class="ctx-item ctx-item--danger" @click="deleteSelectedNode(); closeContextMenu()">
           <UIcon name="i-lucide-trash-2" class="size-4" /> Delete
@@ -898,6 +936,15 @@ watch(showCreate, async (open) => {
       @generate-brief="handleGenerateBrief"
       @deselect="deselectNode"
       @clear="clearMultiSelect"
+    />
+
+    <!-- Terminal panel -->
+    <TerminalPanel
+      v-if="terminalNodeId"
+      :node-id="terminalNodeId"
+      :team-id="teamId"
+      :open="showTerminal"
+      @update:open="(v: boolean) => { if (!v) closeTerminal() }"
     />
   </div>
 </template>
