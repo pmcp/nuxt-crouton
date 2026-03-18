@@ -48,7 +48,7 @@ export class DispatchWatcher {
     try {
       // Fetch all nodes — filter for 'dispatching' status
       const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}`
-      const result = await ofetch(`${baseUrl}/thinkgraph-decisions`, {
+      const result = await ofetch(`${baseUrl}/thinkgraph-nodes`, {
         headers: {
           'Cookie': this.config.serviceToken,
         },
@@ -74,18 +74,18 @@ export class DispatchWatcher {
         const claimed = await this.claimNode(node.id)
         if (!claimed) continue
 
-        console.log(`[dispatch-watcher] Claimed node ${node.id}: "${node.content?.slice(0, 50)}"`)
+        console.log(`[dispatch-watcher] Claimed node ${node.id}: "${(node.title || node.content)?.slice(0, 50)}"`)
 
         // Start agent session (non-blocking)
         const payload: DispatchPayload = {
           nodeId: node.id,
-          graphId: handoff.graphId || node.graphId,
+          graphId: handoff.graphId || node.canvasId || node.graphId,
           depth: handoff.depth || 'concise',
           depthInstruction: handoff.depthInstruction || '1-2 child nodes, each 1-2 sentences.',
           prompt: handoff.prompt || '',
           context: handoff.context || '',
           teamSlug: handoff.teamSlug || this.config.teamId,
-          nodeContent: handoff.nodeContent || node.content,
+          nodeContent: handoff.nodeContent || node.title || node.content,
           nodeType: handoff.nodeType || node.nodeType,
         }
 
@@ -104,8 +104,13 @@ export class DispatchWatcher {
     }
   }
 
-  /** Extract handoff metadata from node artifacts */
+  /** Extract handoff metadata from node */
   private extractHandoffMeta(node: any): any | null {
+    // New schema: handoffMeta is a direct field on the node
+    if (node.handoffMeta && typeof node.handoffMeta === 'object' && node.handoffMeta.service) {
+      return node.handoffMeta
+    }
+    // Legacy: check artifacts array
     const artifacts = Array.isArray(node.artifacts) ? node.artifacts : []
     return artifacts.find((a: any) => a?.type === 'handoff') || null
   }
@@ -114,7 +119,7 @@ export class DispatchWatcher {
   private async claimNode(nodeId: string): Promise<boolean> {
     try {
       const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}`
-      await ofetch(`${baseUrl}/thinkgraph-decisions/${nodeId}`, {
+      await ofetch(`${baseUrl}/thinkgraph-nodes/${nodeId}`, {
         method: 'PATCH',
         headers: {
           'Cookie': this.config.serviceToken,

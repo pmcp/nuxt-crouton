@@ -463,6 +463,35 @@ async function setSelectedNodeStatus(status: string) {
   await refreshNodes()
 }
 
+// ─── Dispatch to Pi Agent ───
+async function dispatchToPiAgent(nodeId: string) {
+  const node = nodes.value.find(n => n.id === nodeId)
+  if (!node) return
+
+  try {
+    await updateNode(nodeId, {
+      status: 'dispatching',
+      handoffMeta: {
+        type: 'handoff',
+        service: 'pi-agent',
+        depth: 'concise',
+        depthInstruction: '1-2 child nodes, each 1-2 sentences. Be brief and atomic.',
+        prompt: '',
+        context: '',
+        nodeId: node.id,
+        nodeContent: node.title,
+        nodeType: node.nodeType,
+        graphId: canvasId,
+      },
+    })
+    toast.add({ title: 'Dispatched to Pi Agent', color: 'success' })
+    await refreshNodes()
+  }
+  catch (err) {
+    toast.add({ title: 'Dispatch failed', description: (err as Error).message, color: 'error' })
+  }
+}
+
 async function deleteSelectedNode() {
   if (!selectedNodeId.value) return
   const nodeTitle = selectedNode.value?.title || 'node'
@@ -829,6 +858,10 @@ watch(showCreate, async (open) => {
         <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
         <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
           <UIcon name="i-lucide-copy" class="size-4" /> Copy context
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item" @click="dispatchToPiAgent(contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-cpu" class="size-4 text-green-500" /> Send to Pi Agent
         </button>
         <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
         <button class="ctx-item ctx-item--danger" @click="deleteSelectedNode(); closeContextMenu()">

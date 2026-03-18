@@ -214,7 +214,7 @@ export class AgentSessionManager {
   /** Update node status via ThinkGraph HTTP API */
   private async updateNodeStatus(nodeId: string, status: string): Promise<void> {
     try {
-      await ofetch(`${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}/thinkgraph-decisions/${nodeId}`, {
+      await ofetch(`${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}/thinkgraph-nodes/${nodeId}`, {
         method: 'PATCH',
         headers: {
           'Cookie': this.config.serviceToken,

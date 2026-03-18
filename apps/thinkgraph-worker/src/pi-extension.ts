@@ -57,7 +57,7 @@ export function createThinkGraphTools(
           origin: 'ai',
           source: 'pi-agent',
         }
-        const result = await ofetch(`${baseUrl}/thinkgraph-decisions`, {
+        const result = await ofetch(`${baseUrl}/thinkgraph-nodes`, {
           method: 'POST',
           headers,
           body,
@@ -79,7 +79,7 @@ export function createThinkGraphTools(
       }),
       execute: async (_toolCallId, params) => {
         const { nodeId, ...updates } = params
-        await ofetch(`${baseUrl}/thinkgraph-decisions/${nodeId}`, {
+        await ofetch(`${baseUrl}/thinkgraph-nodes/${nodeId}`, {
           method: 'PATCH',
           headers,
           body: updates,
@@ -97,7 +97,7 @@ export function createThinkGraphTools(
       execute: async (_toolCallId, params) => {
         const query = new URLSearchParams({ graphId })
         if (params.starredOnly) query.set('starred', 'true')
-        const result = await ofetch(`${baseUrl}/thinkgraph-decisions?${query}`, { headers })
+        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?${query}`, { headers })
         const nodes = Array.isArray(result) ? result : result.data || []
         const lines = nodes.map((n: any) =>
           `${n.starred ? '* ' : '  '}[${n.nodeType}] ${n.content?.slice(0, 80)} (${n.id.slice(0, 8)}...)${n.status !== 'idle' ? ` [${n.status}]` : ''}`
@@ -113,7 +113,7 @@ export function createThinkGraphTools(
         nodeId: Type.String({ description: 'The node ID to get the thinking path for' }),
       }),
       execute: async (_toolCallId, params) => {
-        const result = await ofetch(`${baseUrl}/thinkgraph-decisions?graphId=${graphId}`, { headers })
+        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?graphId=${graphId}`, { headers })
         const nodes = Array.isArray(result) ? result : result.data || []
         const target = nodes.find((n: any) => n.id === params.nodeId)
         if (!target) return textResult('Node not found')
@@ -162,7 +162,7 @@ export function createThinkGraphTools(
       execute: async (_toolCallId, params) => {
         const { nodeId, ...artifact } = params
         ;(artifact as any).provider = 'pi-agent'
-        await ofetch(`${baseUrl}/thinkgraph-decisions/${nodeId}/artifacts`, {
+        await ofetch(`${baseUrl}/thinkgraph-nodes/${nodeId}/artifacts`, {
           method: 'POST',
           headers,
           body: artifact,
@@ -184,7 +184,7 @@ export function createThinkGraphTools(
           search: params.query,
           limit: String(params.limit || 10),
         })
-        const result = await ofetch(`${baseUrl}/thinkgraph-decisions?${query}`, { headers })
+        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?${query}`, { headers })
         const nodes = Array.isArray(result) ? result : result.data || []
         if (nodes.length === 0) return textResult('No matching nodes found')
         return textResult(nodes.map((n: any) =>
