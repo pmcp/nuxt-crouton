@@ -266,19 +266,22 @@ ${payload.prompt ? `## User Instructions\n\n${payload.prompt}\n\n` : ''}## Instr
 
 ## How to Create Nodes
 
-Use the \`create_node\` tool to add child nodes. For each node:
-- content: your thought (1-2 sentences)
-- nodeType: one of "idea", "insight", "question", "decision"
-- parentId: defaults to the dispatched node, or use a previously created node's ID to chain deeper
+Use the \`create_node\` tool. Each node has three parts:
+- **title**: Short post-it label (5-10 words max, like a sticky note headline)
+- **brief**: The actual thought (1-2 sentences explaining the idea)
+- **nodeType**: one of "idea", "insight", "question", "decision"
+- **parentId**: defaults to the dispatched node, or use a previously created node's ID to chain deeper
 
 ## Rules
 
-- Keep nodes concise (1-2 sentences each)
+- Title = short headline (post-it style). Brief = the explanation.
 - Each node = ONE atomic thought the user can branch from
 - Star important insights with starred: true
-- Be substantive — no filler like "Let me think about this..."
+- Be substantive — no filler
 - Reference specific details from the context when relevant
-- After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set its \`brief\` to a 1-line summary of what you explored`
+- After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set:
+  - \`brief\`: 1-line summary of what you explored
+  - \`output\`: a short handoff summary (what was concluded, what to explore next)`
   }
 
   /** Abort all active sessions (for graceful shutdown) */

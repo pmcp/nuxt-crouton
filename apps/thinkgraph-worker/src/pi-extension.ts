@@ -40,16 +40,16 @@ export function createThinkGraphTools(
       label: 'Create Node',
       description: 'Create a new node in the ThinkGraph thinking canvas. Use this to add child thoughts, insights, questions, or decisions.',
       parameters: Type.Object({
-        content: Type.String({ description: 'The node title/content (1-2 sentences, one atomic thought)' }),
-        nodeType: Type.Optional(Type.String({ description: 'Node type: idea, insight, question, decision, task, epic, user_story, milestone, remark', default: 'idea' })),
+        title: Type.String({ description: 'Short post-it headline (5-10 words max)' }),
+        brief: Type.Optional(Type.String({ description: 'The actual thought — 1-2 sentences explaining the idea' })),
+        nodeType: Type.Optional(Type.String({ description: 'Node type: idea, insight, question, decision', default: 'idea' })),
         parentId: Type.Optional(Type.String({ description: 'Parent node ID. Defaults to the dispatched node.' })),
         starred: Type.Optional(Type.Boolean({ description: 'Star important insights' })),
-        brief: Type.Optional(Type.String({ description: 'Handoff brief for child nodes (context payload)' })),
       }),
       execute: async (_toolCallId, params) => {
         const body = {
           canvasId: graphId,
-          title: params.content,
+          title: params.title,
           nodeType: params.nodeType || 'idea',
           parentId: params.parentId || parentNodeId,
           starred: params.starred || false,
