@@ -42,9 +42,8 @@ export default defineNuxtConfig({
       from: 'hi@messages.friendlyinter.net',
       fromName: 'ThinkGraph',
     },
-    public: {
-      collabWorkerUrl: process.env.NUXT_PUBLIC_COLLAB_WORKER_URL || '',
-    },
+    // collabWorkerUrl is provided by crouton-collab layer
+    // Override via NUXT_PUBLIC_COLLAB_WORKER_URL env var in production
   },
 
   hub: {
