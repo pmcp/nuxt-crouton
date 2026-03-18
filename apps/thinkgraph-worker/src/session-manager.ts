@@ -80,12 +80,14 @@ export class AgentSessionManager {
 
     try {
       // Create ThinkGraph tools for this session
+      console.log(`[session-manager] Creating tools for ${payload.nodeId}`)
       const tools = createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
       // Build the prompt
       const agentPrompt = this.buildAgentPrompt(payload)
 
       // Create Pi agent session
+      console.log(`[session-manager] Creating agent session for ${payload.nodeId} (workDir: ${this.config.workDir})`)
       const authStorage = AuthStorage.create()
       const modelRegistry = new ModelRegistry(authStorage)
 
@@ -96,6 +98,7 @@ export class AgentSessionManager {
         modelRegistry,
         customTools: tools,
       })
+      console.log(`[session-manager] Agent session created for ${payload.nodeId}`)
 
       // Track active session
       const activeSession: ActiveSession = {
@@ -112,6 +115,7 @@ export class AgentSessionManager {
       })
 
       // Start the agent work
+      console.log(`[session-manager] Sending prompt for ${payload.nodeId}`)
       ws.sendStatus('working')
       await session.prompt(agentPrompt)
 
@@ -121,7 +125,9 @@ export class AgentSessionManager {
     }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
+      const stack = error instanceof Error ? error.stack : ''
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
+      if (stack) console.error(`[session-manager] Stack:`, stack)
       ws.sendError(message)
       await this.updateNodeStatus(payload.nodeId, 'error')
     }
