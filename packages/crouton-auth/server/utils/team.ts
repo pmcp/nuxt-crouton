@@ -9,11 +9,21 @@ import { createError, getRouterParam } from 'h3'
 import { useRuntimeConfig } from '#imports'
 import { drizzle } from 'drizzle-orm/d1'
 import { sql, eq, and } from 'drizzle-orm'
+import { hasRequestState, runWithRequestState } from '@better-auth/core/context'
 import { member } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
 import { mapOrganizationToTeam } from '../../shared/utils/auth'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
+
+/**
+ * Ensure Better Auth request state is available.
+ * All auth.api.* calls need this context on Cloudflare Workers.
+ */
+async function ensureRequestState<T>(fn: () => Promise<T>): Promise<T> {
+  if (await hasRequestState()) return fn()
+  return runWithRequestState(new WeakMap(), fn)
+}
 
 // D1Database type from Cloudflare workers-types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,6 +89,10 @@ export interface TeamContext {
  * ```
  */
 export async function resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
+  return ensureRequestState(() => _resolveTeamAndCheckMembership(event))
+}
+
+async function _resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
   // Get authenticated session from Better Auth (cast to extended type with org properties)
   const session = await requireServerSession(event) as OrganizationSession
 

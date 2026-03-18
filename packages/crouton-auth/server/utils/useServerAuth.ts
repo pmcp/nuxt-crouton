@@ -21,6 +21,7 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestURL } from 'h3'
 import { useRuntimeConfig } from '#imports'
+import { hasRequestState, runWithRequestState } from '@better-auth/core/context'
 import { createAuth, type AuthInstance, setAuthInstance, getAuthInstance, isAuthInitialized } from '../lib/auth'
 import type { CroutonAuthConfig } from '../../types/config'
 import * as authSchema from '../database/schema/auth'
@@ -112,9 +113,15 @@ export function useServerAuth(event?: H3Event): AuthInstance {
  */
 export async function getServerSession(event: H3Event) {
   const auth = useServerAuth(event)
-  return auth.api.getSession({
-    headers: event.headers
-  })
+  const run = () => auth.api.getSession({ headers: event.headers })
+
+  // Better Auth 1.4+ requires runWithRequestState for API calls outside
+  // the catch-all auth handler. This ensures it works for direct API
+  // calls from external clients (e.g., Pi worker, curl).
+  if (await hasRequestState()) {
+    return run()
+  }
+  return runWithRequestState(new WeakMap(), run)
 }
 
 /**
