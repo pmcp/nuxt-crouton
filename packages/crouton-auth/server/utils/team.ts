@@ -9,21 +9,11 @@ import { createError, getRouterParam } from 'h3'
 import { useRuntimeConfig } from '#imports'
 import { drizzle } from 'drizzle-orm/d1'
 import { sql, eq, and } from 'drizzle-orm'
-import { hasRequestState, runWithRequestState } from '@better-auth/core/context'
-import { member } from '../database/schema/auth'
+import { organization, member as memberTable } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
 import { mapOrganizationToTeam } from '../../shared/utils/auth'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
-
-/**
- * Ensure Better Auth request state is available.
- * All auth.api.* calls need this context on Cloudflare Workers.
- */
-async function ensureRequestState<T>(fn: () => Promise<T>): Promise<T> {
-  if (await hasRequestState()) return fn()
-  return runWithRequestState(new WeakMap(), fn)
-}
 
 // D1Database type from Cloudflare workers-types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,10 +79,6 @@ export interface TeamContext {
  * ```
  */
 export async function resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
-  return ensureRequestState(() => _resolveTeamAndCheckMembership(event))
-}
-
-async function _resolveTeamAndCheckMembership(event: H3Event): Promise<TeamContext> {
   // Get authenticated session from Better Auth (cast to extended type with org properties)
   const session = await requireServerSession(event) as OrganizationSession
 
@@ -198,29 +184,21 @@ export async function resolveTeamBySlugOrId(
  */
 export async function getMembership(event: H3Event, teamId: string, userId: string, _userId?: string): Promise<Member | null> {
   try {
-    const auth = useServerAuth(event)
-    const api = auth.api as unknown as OrganizationApi
+    const database = useDB()
+    const results = await (database as any)
+      .select()
+      .from(memberTable)
+      .where(and(eq(memberTable.organizationId, teamId), eq(memberTable.userId, userId)))
+      .limit(1)
 
-    // Use Better Auth's organization API to get member
-    const response = await api.listMembers({
-      query: { organizationId: teamId },
-      headers: event.headers
-    })
-
-    // Find the member with matching userId
-    const member = response?.members?.find((m: { userId: string }) => m.userId === userId)
-
-    if (!member) {
-      return null
-    }
-
-    // Map Better Auth member to our Member type
+    if (!results || results.length === 0) return null
+    const m = results[0]
     return {
-      id: member.id,
-      organizationId: teamId,
-      userId: member.userId,
-      role: member.role as 'owner' | 'admin' | 'member',
-      createdAt: new Date(member.createdAt)
+      id: m.id,
+      organizationId: m.organizationId,
+      userId: m.userId,
+      role: m.role as 'owner' | 'admin' | 'member',
+      createdAt: m.createdAt instanceof Date ? m.createdAt : new Date(m.createdAt),
     }
   } catch (error) {
     console.error('[crouton/auth] getMembership error:', error)
@@ -243,23 +221,16 @@ export async function getMembership(event: H3Event, teamId: string, userId: stri
  */
 export async function getTeamById(event: H3Event, teamId: string): Promise<Team | null> {
   try {
-    const auth = useServerAuth(event)
-    const api = auth.api as unknown as OrganizationApi
+    const database = useDB()
+    const results = await (database as any)
+      .select()
+      .from(organization)
+      .where(eq(organization.id, teamId))
+      .limit(1)
 
-    // Use Better Auth's organization API to get organization
-    const response = await api.getFullOrganization({
-      query: { organizationId: teamId },
-      headers: event.headers
-    })
-
-    if (!response) {
-      return null
-    }
-
-    // Map Better Auth organization to our Team type
-    return mapOrganizationToTeam(response)
+    if (!results || results.length === 0) return null
+    return mapOrganizationToTeam(results[0])
   } catch {
-    // Silently return null - caller handles logging if both ID and slug fail
     return null
   }
 }
@@ -275,23 +246,16 @@ export async function getTeamById(event: H3Event, teamId: string): Promise<Team 
  */
 export async function getTeamBySlug(event: H3Event, slug: string): Promise<Team | null> {
   try {
-    const auth = useServerAuth(event)
-    const api = auth.api as unknown as OrganizationApi
+    const database = useDB()
+    const results = await (database as any)
+      .select()
+      .from(organization)
+      .where(eq(organization.slug, slug))
+      .limit(1)
 
-    // Use Better Auth's organization API to get by slug
-    const response = await api.getFullOrganization({
-      query: { organizationSlug: slug },
-      headers: event.headers
-    })
-
-    if (!response) {
-      return null
-    }
-
-    // Map Better Auth organization to our Team type
-    return mapOrganizationToTeam(response)
+    if (!results || results.length === 0) return null
+    return mapOrganizationToTeam(results[0])
   } catch {
-    // Silently return null - caller handles logging if both ID and slug fail
     return null
   }
 }

@@ -19,10 +19,11 @@
  * ```
  */
 import type { H3Event } from 'h3'
-import { createError, getRequestURL } from 'h3'
+import { createError, getRequestURL, getCookie, parseCookies } from 'h3'
 import { useRuntimeConfig } from '#imports'
-import { hasRequestState, runWithRequestState } from '@better-auth/core/context'
+import { eq, and, gt } from 'drizzle-orm'
 import { createAuth, type AuthInstance, setAuthInstance, getAuthInstance, isAuthInitialized } from '../lib/auth'
+import { session as sessionTable, user as userTable } from '../database/schema/auth'
 import type { CroutonAuthConfig } from '../../types/config'
 import * as authSchema from '../database/schema/auth'
 
@@ -104,24 +105,98 @@ export function useServerAuth(event?: H3Event): AuthInstance {
 }
 
 /**
+ * Extract session token from request cookies.
+ * Handles both Cloudflare (__Secure-better-auth.session_token)
+ * and dev (better_auth_session) cookie names.
+ */
+function extractSessionToken(event: H3Event): string | null {
+  const cookies = parseCookies(event)
+  // Cloudflare secure cookie
+  const secureCookie = cookies['__Secure-better-auth.session_token']
+  if (secureCookie) return secureCookie
+  // Dev cookie
+  const devCookie = getCookie(event, 'better_auth_session')
+  if (devCookie) return devCookie
+  return null
+}
+
+/**
  * Get session from request
  *
- * Convenience wrapper around Better Auth's getSession API.
+ * Uses direct DB query to validate the session token from cookies.
+ * This bypasses Better Auth's runWithRequestState requirement which
+ * doesn't work on Cloudflare Workers for cross-endpoint API calls.
  *
  * @param event - H3 event
  * @returns Session with user data, or null if not authenticated
  */
 export async function getServerSession(event: H3Event) {
-  const auth = useServerAuth(event)
-  const run = () => auth.api.getSession({ headers: event.headers })
+  const token = extractSessionToken(event)
+  if (!token) return null
 
-  // Better Auth 1.4+ requires runWithRequestState for API calls outside
-  // the catch-all auth handler. This ensures it works for direct API
-  // calls from external clients (e.g., Pi worker, curl).
-  if (await hasRequestState()) {
-    return run()
+  try {
+    const database = useDB()
+    const results = await (database as any)
+      .select({
+        sessionId: sessionTable.id,
+        sessionToken: sessionTable.token,
+        sessionExpiresAt: sessionTable.expiresAt,
+        sessionUserId: sessionTable.userId,
+        sessionActiveOrgId: sessionTable.activeOrganizationId,
+        userId: userTable.id,
+        userName: userTable.name,
+        userEmail: userTable.email,
+        userEmailVerified: userTable.emailVerified,
+        userImage: userTable.image,
+        userCreatedAt: userTable.createdAt,
+        userUpdatedAt: userTable.updatedAt,
+        userRole: userTable.role,
+        userBanned: userTable.banned,
+        userSuperAdmin: userTable.superAdmin,
+        userBannedReason: userTable.bannedReason,
+        userBannedUntil: userTable.bannedUntil,
+      })
+      .from(sessionTable)
+      .innerJoin(userTable, eq(sessionTable.userId, userTable.id))
+      .where(
+        and(
+          eq(sessionTable.token, token),
+          gt(sessionTable.expiresAt, new Date()),
+        ),
+      )
+      .limit(1)
+
+    if (!results || results.length === 0) return null
+
+    const row = results[0]
+    return {
+      session: {
+        id: row.sessionId,
+        token: row.sessionToken,
+        userId: row.sessionUserId,
+        expiresAt: row.sessionExpiresAt,
+        activeOrganizationId: row.sessionActiveOrgId,
+      },
+      user: {
+        id: row.userId,
+        name: row.userName,
+        email: row.userEmail,
+        emailVerified: row.userEmailVerified,
+        image: row.userImage,
+        createdAt: row.userCreatedAt,
+        updatedAt: row.userUpdatedAt,
+        role: row.userRole,
+        banned: row.userBanned,
+        superAdmin: row.userSuperAdmin,
+        bannedReason: row.userBannedReason,
+        bannedUntil: row.userBannedUntil,
+      },
+    }
   }
-  return runWithRequestState(new WeakMap(), run)
+  catch (err) {
+    console.error('[crouton/auth] getServerSession DB query failed:', err)
+    return null
+  }
 }
 
 /**
