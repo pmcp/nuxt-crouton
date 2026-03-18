@@ -77,6 +77,31 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
     { immediate: true }
   )
 
+  // Also watch rows — if they arrive after synced, seed then
+  watch(
+    () => rows.value?.length,
+    (len) => {
+      if (len && len > 0 && syncState?.synced.value && !seeded.value && syncState.nodes.value.length === 0) {
+        for (const row of rows.value!) {
+          const id = String(row.id || crypto.randomUUID())
+          const title = String(row[labelField] || 'Untitled')
+          const parentId = row[parentField] as string | null | undefined
+          const position = parsePosition(row[positionField])
+
+          syncState.createNode({
+            id,
+            title,
+            parentId: parentId || null,
+            position: position || { x: 0, y: 0 },
+            data: { ...row }
+          })
+        }
+        seeded.value = true
+      }
+    },
+    { immediate: true }
+  )
+
   // Watch for new/updated items in rows and sync them to Yjs
   watch(
     () => ({

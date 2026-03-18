@@ -42,6 +42,9 @@ export default defineNuxtConfig({
       from: 'hi@messages.friendlyinter.net',
       fromName: 'ThinkGraph',
     },
+    public: {
+      collabWorkerUrl: process.env.NUXT_PUBLIC_COLLAB_WORKER_URL || '',
+    },
   },
 
   hub: {

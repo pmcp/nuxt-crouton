@@ -42,7 +42,7 @@ async function ensureFlowConfig() {
       savedPositions.value = existing.nodePositions || null
       return
     }
-  } catch (e) { console.error('[ensureFlowConfig] GET failed:', e) }
+  } catch { /* no existing config */ }
 
   try {
     const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
@@ -54,11 +54,10 @@ async function ensureFlowConfig() {
         parentField: 'parentId',
       },
     })
-    console.log('[ensureFlowConfig] POST result:', created)
     if (created?.id) {
       flowId.value = created.id
     }
-  } catch (e) { console.error('[ensureFlowConfig] POST failed:', e) }
+  } catch { /* flow config creation failed */ }
 }
 
 // ─── Nodes for this canvas ───
@@ -85,6 +84,7 @@ async function refreshNodes() {
   }
 }
 
+// Load everything on client to ensure auth context and avoid hydration mismatch
 // Load flow config + nodes on client to ensure auth context and avoid hydration mismatch
 onMounted(async () => {
   await Promise.all([

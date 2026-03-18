@@ -104,6 +104,7 @@ jobs:
           CLOUDFLARE_ENV: ${{ (inputs.environment || 'staging') == 'staging' && 'preview' || '' }}
           BETTER_AUTH_URL: ${{ (inputs.environment || 'staging') == 'production' && 'https://thinkgraph.pages.dev' || 'https://staging.thinkgraph.pages.dev' }}
           BETTER_AUTH_SECRET: prerender-placeholder
+          NUXT_PUBLIC_COLLAB_WORKER_URL: https://thinkgraph-collab.cloudflare-e53.workers.dev
 
       - name: Strip env from redirected wrangler config
         run: |
