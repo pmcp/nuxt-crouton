@@ -278,7 +278,7 @@ Use the \`create_node\` tool to add child nodes. For each node:
 - Star important insights with starred: true
 - Be substantive — no filler like "Let me think about this..."
 - Reference specific details from the context when relevant
-- After creating nodes, provide a brief 1-line summary of what you added`
+- After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set its \`brief\` to a 1-line summary of what you explored`
   }
 
   /** Abort all active sessions (for graceful shutdown) */
