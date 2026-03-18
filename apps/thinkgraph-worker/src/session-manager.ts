@@ -110,14 +110,22 @@ export class AgentSessionManager {
       this.activeSessions.set(payload.nodeId, activeSession)
 
       // Subscribe to session events for terminal streaming
+      let eventCount = 0
       session.subscribe((event: any) => {
+        eventCount++
+        if (eventCount <= 3) {
+          console.log(`[session-manager] Event #${eventCount} for ${payload.nodeId}:`, event.type, JSON.stringify(event).slice(0, 200))
+        }
         this.handleSessionEvent(payload.nodeId, event, ws)
       })
 
       // Start the agent work
       console.log(`[session-manager] Sending prompt for ${payload.nodeId}`)
+      console.log(`[session-manager] Prompt length: ${agentPrompt.length} chars`)
       ws.sendStatus('working')
-      await session.prompt(agentPrompt)
+      const result = await session.prompt(agentPrompt)
+      console.log(`[session-manager] Prompt resolved for ${payload.nodeId}, events received: ${eventCount}`)
+      console.log(`[session-manager] Result:`, JSON.stringify(result).slice(0, 500))
 
       // Session completed successfully
       ws.sendDone('Agent session completed')
