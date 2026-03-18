@@ -101,6 +101,23 @@ nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   if (collection === 'thinkgraphNodes') refreshNodes()
 })
 
+// Poll for updates while any node is dispatching/working (Pi agent creates nodes via HTTP API)
+const hasActiveDispatch = computed(() =>
+  nodes.value.some(n => n.status === 'dispatching' || n.status === 'working')
+)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+watch(hasActiveDispatch, (active) => {
+  if (active && !pollTimer) {
+    pollTimer = setInterval(() => refreshNodes(), 3000)
+  } else if (!active && pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+    // One final refresh to catch the last update
+    refreshNodes()
+  }
+}, { immediate: true })
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
+
 // ─── Selection ───
 const selectedNodeId = ref<string | null>(null)
 const multiSelectedIds = ref<string[]>([])
@@ -481,11 +498,12 @@ async function dispatchToPiAgent(nodeId: string) {
         nodeId: node.id,
         nodeContent: node.title,
         nodeType: node.nodeType,
-        graphId: canvasId,
+        graphId: canvasId.value,
       },
     })
     toast.add({ title: 'Dispatched to Pi Agent', color: 'success' })
-    await refreshNodes()
+    // Delay refresh to let context menu DOM clean up first
+    setTimeout(() => refreshNodes(), 300)
   }
   catch (err) {
     toast.add({ title: 'Dispatch failed', description: (err as Error).message, color: 'error' })

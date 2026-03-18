@@ -7,8 +7,8 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
-    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
-    "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
+    "cf:deploy": "NUXT_PUBLIC_COLLAB_WORKER_URL=https://thinkgraph-collab.cloudflare-e53.workers.dev NITRO_PRESET=cloudflare-pages nuxt prepare && NUXT_PUBLIC_COLLAB_WORKER_URL=https://thinkgraph-collab.cloudflare-e53.workers.dev NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist/ --commit-dirty=true",
+    "cf:preview": "NUXT_PUBLIC_COLLAB_WORKER_URL=https://thinkgraph-collab.cloudflare-e53.workers.dev NITRO_PRESET=cloudflare-pages nuxt prepare && NUXT_PUBLIC_COLLAB_WORKER_URL=https://thinkgraph-collab.cloudflare-e53.workers.dev NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist/ --branch preview --commit-dirty=true",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply thinkgraph-db --local"
   },

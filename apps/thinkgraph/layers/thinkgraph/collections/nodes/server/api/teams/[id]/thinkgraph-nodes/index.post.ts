@@ -69,5 +69,9 @@ export default defineEventHandler(async (event) => {
     updatedBy: user.id
   })
   dbTimer.end()
+
+  // Signal real-time update so connected browsers refresh
+  signalCollectionChange(team.id, 'thinkgraphNodes')
+
   return result
 })
