@@ -42,7 +42,7 @@ async function ensureFlowConfig() {
       savedPositions.value = existing.nodePositions || null
       return
     }
-  } catch { /* no existing config */ }
+  } catch (e) { console.error('[ensureFlowConfig] GET failed:', e) }
 
   try {
     const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
@@ -54,30 +54,12 @@ async function ensureFlowConfig() {
         parentField: 'parentId',
       },
     })
+    console.log('[ensureFlowConfig] POST result:', created)
     if (created?.id) {
       flowId.value = created.id
     }
-  } catch { /* flow config creation failed */ }
+  } catch (e) { console.error('[ensureFlowConfig] POST failed:', e) }
 }
-
-// Run on client to ensure auth context is available (SSR may lack session cookies)
-if (import.meta.server) {
-  // On server: only try to load existing config (read-only, no POST)
-  try {
-    const flowName = `canvas-${canvasId.value}`
-    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
-      query: { collection: 'thinkgraphNodes', name: flowName },
-    })
-    const existing = flows?.find((f: any) => f.name === flowName)
-    if (existing) {
-      flowId.value = existing.id
-      savedPositions.value = existing.nodePositions || null
-    }
-  } catch { /* will retry on client */ }
-}
-onMounted(() => {
-  if (!flowId.value) ensureFlowConfig()
-})
 
 // ─── Nodes for this canvas ───
 const nodes = ref<ThinkgraphNode[]>([])
@@ -103,7 +85,13 @@ async function refreshNodes() {
   }
 }
 
-await refreshNodes()
+// Load flow config + nodes on client to ensure auth context and avoid hydration mismatch
+onMounted(async () => {
+  await Promise.all([
+    ensureFlowConfig(),
+    refreshNodes(),
+  ])
+})
 
 // Auto-refresh on mutations
 nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
