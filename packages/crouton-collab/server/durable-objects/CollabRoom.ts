@@ -4,6 +4,7 @@ import * as Y from 'yjs'
 
 interface Env {
   DB: D1Database
+  BETTER_AUTH_SECRET?: string
 }
 
 interface Session {
@@ -180,21 +181,60 @@ export class CollabRoom implements DurableObject {
    *
    * Returns the user ID string on success, or null if the session is absent/invalid.
    */
+  /**
+   * Verify an HMAC-signed collab token.
+   * Token format: base64(JSON payload).base64(HMAC signature)
+   */
+  private async verifyToken(token: string): Promise<string | null> {
+    const secret = this.env.BETTER_AUTH_SECRET
+    if (!secret) return null
+
+    const [payloadB64, signatureB64] = token.split('.')
+    if (!payloadB64 || !signatureB64) return null
+
+    try {
+      const payload = atob(payloadB64)
+      const enc = new TextEncoder()
+      const key = await crypto.subtle.importKey(
+        'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
+      )
+      const sigBytes = Uint8Array.from(atob(signatureB64), c => c.charCodeAt(0))
+      const valid = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(payload))
+      if (!valid) return null
+
+      const data = JSON.parse(payload) as { userId: string; exp: number }
+      if (Date.now() > data.exp) return null
+
+      return data.userId
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Validate request auth — supports two modes:
+   * 1. Token-based (cross-origin direct WS): ?token=... query param, verified via HMAC
+   * 2. Cookie-based (same-origin proxy): forwards session cookie to app's auth endpoint
+   */
   private async validateSession(request: Request): Promise<string | null> {
+    const url = new URL(request.url)
+
+    // Mode 1: Token-based auth (cross-origin direct connection)
+    const token = url.searchParams.get('token')
+    if (token) {
+      return this.verifyToken(token)
+    }
+
+    // Mode 2: Cookie-based auth (same-origin proxy)
     const cookieHeader = request.headers.get('cookie')
     if (!cookieHeader) return null
 
+    const appOrigin = url.searchParams.get('appOrigin') || `https://${url.hostname}`
+
     try {
-      // Derive the app origin from the DO's own URL (same host, standard scheme)
-      const requestUrl = new URL(request.url)
-      const appOrigin = `https://${requestUrl.hostname}`
-
       const sessionResponse = await fetch(`${appOrigin}/api/auth/get-session`, {
-        headers: {
-          cookie: cookieHeader
-        }
+        headers: { cookie: cookieHeader }
       })
-
       if (!sessionResponse.ok) return null
 
       const data = await sessionResponse.json() as { user?: { id: string } } | null

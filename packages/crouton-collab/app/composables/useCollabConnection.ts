@@ -93,24 +93,59 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
   let intentionalDisconnect = false
 
   /**
-   * Build WebSocket URL from roomId, roomType, and optional teamId
+   * Build WebSocket URL from roomId, roomType, and optional teamId.
+   *
+   * In dev: connects to same-origin Nitro crossws handler at /api/collab/{roomId}/ws
+   * In production with collabWorkerUrl: connects directly to the collab worker
+   *   at wss://{worker}/{roomKey}/ws?{params} — bypasses Nitro which can't proxy WS frames
    */
   function buildWebSocketUrl(): string {
     if (isServer || !roomId) return ''
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
+    const config = useRuntimeConfig()
+    const workerUrl = config.public.collabWorkerUrl as string
+
     const params = new URLSearchParams({ type: roomType })
     if (teamId) {
       params.set('teamId', teamId)
     }
+    // Also pass roomId and teamId as query params for the DO's metadata extraction
+    params.set('roomId', roomId)
+
+    if (workerUrl) {
+      // Production: connect directly to the collab worker
+      // Worker expects: /{roomKey}/{action}?{params}
+      const roomKey = encodeURIComponent(`${roomType}:${roomId}`)
+      const wsUrl = workerUrl.replace(/^https?:/, 'wss:')
+      params.set('appOrigin', window.location.origin)
+      return `${wsUrl}/${roomKey}/ws?${params.toString()}`
+    }
+
+    // Dev: connect to same-origin Nitro crossws handler
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = window.location.host
     return `${protocol}//${host}/api/collab/${roomId}/ws?${params.toString()}`
+  }
+
+  /** Cached collab token for cross-origin auth */
+  let collabToken: string | null = null
+
+  /**
+   * Fetch a short-lived collab token from the app (same-origin, cookies sent)
+   */
+  async function fetchCollabToken(): Promise<string | null> {
+    try {
+      const result = await $fetch<{ token: string }>('/api/collab/token')
+      return result.token
+    } catch {
+      return null
+    }
   }
 
   /**
    * Connect to the collaboration room
    */
-  function connect(): void {
+  async function connect(): Promise<void> {
     if (isServer || !roomId) return
 
     // Clean up existing connection
@@ -120,7 +155,23 @@ export function useCollabConnection(options: UseCollabConnectionOptions): UseCol
     }
 
     intentionalDisconnect = false
-    const url = buildWebSocketUrl()
+
+    // For cross-origin connections, fetch a collab token first
+    const config = useRuntimeConfig()
+    const workerUrl = config.public.collabWorkerUrl as string
+    if (workerUrl && !collabToken) {
+      collabToken = await fetchCollabToken()
+      if (!collabToken) {
+        state.value = { ...state.value, error: new Error('Failed to get collab token') }
+        return
+      }
+    }
+
+    let url = buildWebSocketUrl()
+    // Append token for cross-origin auth
+    if (workerUrl && collabToken) {
+      url += `&token=${encodeURIComponent(collabToken)}`
+    }
 
     try {
       const socket = new WebSocket(url)

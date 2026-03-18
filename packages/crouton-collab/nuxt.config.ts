@@ -19,6 +19,13 @@ export default defineNuxtConfig({
   // Note: This is an addon layer - users must explicitly extend:
   // extends: ['@fyit/crouton-core', '@fyit/crouton-collab']
 
+  // Runtime config for collab worker URL (production WebSocket direct connection)
+  runtimeConfig: {
+    public: {
+      collabWorkerUrl: '', // e.g. 'https://thinkgraph-collab.cloudflare-e53.workers.dev'
+    }
+  },
+
   // Plugins
   plugins: [
     { src: join(currentDir, 'app/plugins/form-collab.client.ts'), mode: 'client' },
