@@ -5,12 +5,12 @@
 # Prerequisites:
 #   - SSH key access to Pi
 #   - Node.js 22 installed on Pi via nvm
-#   - Initial clone done: git clone <repo> /home/pi/nuxt-crouton
+#   - Initial clone done: git clone <repo> /home/pmcp/nuxt-crouton
 
 set -euo pipefail
 
-PI_HOST="${1:-pi@raspberrypi.local}"
-REMOTE_DIR="/home/pi/nuxt-crouton"
+PI_HOST="${1:-pmcp@pmcpi.local}"
+REMOTE_DIR="/home/pmcp/nuxt-crouton"
 WORKER_DIR="$REMOTE_DIR/apps/thinkgraph-worker"
 
 echo "=== Deploying ThinkGraph Worker to $PI_HOST ==="

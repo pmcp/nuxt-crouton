@@ -42,10 +42,11 @@ async function main() {
       }
 
       // Sign in to get session cookie
+      // Origin header required — Better Auth validates it for CSRF protection
       const signInResult = await ofetch(`${config.thinkgraphUrl}/api/auth/sign-in/email`, {
         method: 'POST',
+        headers: { 'Origin': config.thinkgraphUrl },
         body: { email, password },
-        // Get set-cookie header
         onResponse({ response }) {
           const setCookie = response.headers.get('set-cookie')
           if (setCookie) {
