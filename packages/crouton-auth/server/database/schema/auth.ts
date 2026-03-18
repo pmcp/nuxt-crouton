@@ -620,6 +620,25 @@ export type TeamEmailSettings = {
 }
 
 /**
+ * Notion integration settings for two-way task sync
+ * Used by ThinkGraph to create/update Notion pages when node status changes
+ */
+export interface TeamNotionSettings {
+  /** Notion internal integration token (secret_...) */
+  integrationToken?: string
+  /** Masked hint of the token for display (e.g. "secret_...abc") */
+  integrationTokenHint?: string
+  /** Notion database ID to create task pages in */
+  taskDatabaseId?: string
+  /** Mapping from ThinkGraph node statuses to Notion Status property values */
+  statusMapping?: {
+    idle?: string      // e.g. "To Do"
+    working?: string   // e.g. "In Progress"
+    done?: string      // e.g. "Done"
+  }
+}
+
+/**
  * Theme settings for team visual customization
  * Similar to Nuxt UI's theme picker
  */
@@ -674,6 +693,11 @@ export const teamSettings = sqliteTable('team_settings', {
    * Safe to expose to client - no sensitive data, just copy/labels
    */
   emailSettings: text('email_settings', { mode: 'json' }).$type<TeamEmailSettings>(),
+  /**
+   * Notion integration settings for two-way task sync
+   * SECURITY: Contains integration token - never expose raw token to client
+   */
+  notionSettings: text('notion_settings', { mode: 'json' }).$type<TeamNotionSettings>(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$default(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$onUpdate(() => new Date())
 }, table => [
