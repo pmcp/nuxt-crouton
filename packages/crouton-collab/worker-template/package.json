@@ -1,0 +1,19 @@
+{
+  "name": "{{APP_NAME}}-collab-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone Cloudflare Worker hosting the CollabRoom Durable Object",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "yjs": "^13.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "wrangler": "^4.64.0",
+    "typescript": "^5.7.0"
+  }
+}

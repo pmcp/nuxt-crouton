@@ -1,0 +1,56 @@
+# ============================================================================
+# Collab Worker — Standalone Cloudflare Worker for CollabRoom Durable Objects
+# ============================================================================
+#
+# This worker hosts the CollabRoom Durable Object for real-time collaboration.
+# Cloudflare Pages cannot host DOs directly, so every app that uses
+# crouton-collab in production needs this separate Worker.
+#
+# Setup:
+#   1. Replace all {{PLACEHOLDER}} values below
+#   2. Set the shared auth secret:
+#        npx wrangler secret put BETTER_AUTH_SECRET
+#      (must match the BETTER_AUTH_SECRET in your Pages app)
+#   3. Deploy:
+#        npx wrangler deploy
+#   4. Set in your Pages app environment:
+#        NUXT_PUBLIC_COLLAB_WORKER_URL=https://{{APP_NAME}}-collab.workers.dev
+#
+# ============================================================================
+
+name = "{{APP_NAME}}-collab"
+main = "src/index.ts"
+compatibility_date = "2024-09-02"
+compatibility_flags = ["nodejs_compat"]
+
+# ----------------------------------------------------------------------------
+# D1 Database Binding
+# ----------------------------------------------------------------------------
+# Must point to the SAME D1 database as your Pages app so CollabRoom can
+# persist Yjs state to the yjs_collab_states table.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "{{D1_DATABASE_NAME}}"
+database_id = "{{D1_DATABASE_ID}}"
+
+# ----------------------------------------------------------------------------
+# Durable Object Binding (self-referencing)
+# ----------------------------------------------------------------------------
+# The CollabRoom class lives in this worker. This binding lets the fetch
+# handler route requests to the correct DO instance.
+
+[durable_objects]
+bindings = [
+  { name = "COLLAB_ROOMS", class_name = "CollabRoom" }
+]
+
+# ----------------------------------------------------------------------------
+# DO Migration (required on first deploy)
+# ----------------------------------------------------------------------------
+# Tells Cloudflare to create the CollabRoom class. Keep this section
+# permanently — removing it would delete all DO instances.
+
+[[migrations]]
+tag = "collab-v1"
+new_classes = ["CollabRoom"]
