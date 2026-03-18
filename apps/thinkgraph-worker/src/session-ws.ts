@@ -19,6 +19,8 @@ export class SessionWebSocket {
   private ws: WebSocket | null = null
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private closed = false
+  private connected = false
+  private buffer: Array<{ type: string; data: string }> = []
 
   constructor(
     private config: WorkerConfig,
@@ -26,52 +28,72 @@ export class SessionWebSocket {
     private callbacks: SessionWsCallbacks,
   ) {}
 
-  connect(): void {
-    const wsUrl = this.config.thinkgraphUrl.replace(/^http/, 'ws')
-    const url = `${wsUrl}/api/teams/${this.config.teamId}/terminal-ws/${this.nodeId}?token=${this.config.serviceToken}`
+  /** Connect and return a promise that resolves when the WebSocket is open */
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const wsUrl = this.config.thinkgraphUrl.replace(/^http/, 'ws')
+      const url = `${wsUrl}/api/teams/${this.config.teamId}/terminal-ws/${this.nodeId}?token=${this.config.serviceToken}`
 
-    this.ws = new WebSocket(url, {
-      headers: {
-        'Cookie': this.config.serviceToken,
-      },
-    })
+      this.ws = new WebSocket(url, {
+        headers: {
+          'Cookie': this.config.serviceToken,
+        },
+      })
 
-    this.ws.on('open', () => {
-      console.log(`[session-ws] Connected for node ${this.nodeId}`)
-    })
+      this.ws.on('open', () => {
+        console.log(`[session-ws] Connected for node ${this.nodeId}`)
+        this.connected = true
 
-    this.ws.on('message', (data) => {
-      try {
-        const msg = JSON.parse(data.toString())
-        if (msg.type === 'steer' && msg.message) {
-          this.callbacks.onSteer(msg.message)
-        } else if (msg.type === 'abort') {
-          this.callbacks.onAbort()
+        // Flush buffered messages
+        for (const event of this.buffer) {
+          this.ws!.send(JSON.stringify(event))
         }
-      } catch {
-        // Ignore non-JSON messages
-      }
-    })
+        if (this.buffer.length > 0) {
+          console.log(`[session-ws] Flushed ${this.buffer.length} buffered events for ${this.nodeId}`)
+        }
+        this.buffer = []
 
-    this.ws.on('error', (err) => {
-      console.error(`[session-ws] Error for node ${this.nodeId}:`, err.message)
-      this.callbacks.onError(err)
-    })
+        resolve()
+      })
 
-    this.ws.on('close', () => {
-      console.log(`[session-ws] Closed for node ${this.nodeId}`)
-      if (!this.closed) {
-        // Attempt reconnect after 2s
-        this.reconnectTimer = setTimeout(() => this.connect(), 2000)
-      }
-      this.callbacks.onClose()
+      this.ws.on('message', (data) => {
+        try {
+          const msg = JSON.parse(data.toString())
+          if (msg.type === 'steer' && msg.message) {
+            this.callbacks.onSteer(msg.message)
+          } else if (msg.type === 'abort') {
+            this.callbacks.onAbort()
+          }
+        } catch {
+          // Ignore non-JSON messages
+        }
+      })
+
+      this.ws.on('error', (err) => {
+        console.error(`[session-ws] Error for node ${this.nodeId}:`, err.message)
+        this.callbacks.onError(err)
+        if (!this.connected) reject(err)
+      })
+
+      this.ws.on('close', () => {
+        console.log(`[session-ws] Closed for node ${this.nodeId}`)
+        this.connected = false
+        if (!this.closed) {
+          // Attempt reconnect after 2s
+          this.reconnectTimer = setTimeout(() => this.connect(), 2000)
+        }
+        this.callbacks.onClose()
+      })
     })
   }
 
-  /** Send a terminal event to ThinkGraph */
+  /** Send a terminal event to ThinkGraph (buffers if not yet connected) */
   send(event: { type: string; data: string }): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(event))
+    } else if (!this.closed) {
+      // Buffer events until connected
+      this.buffer.push(event)
     }
   }
 

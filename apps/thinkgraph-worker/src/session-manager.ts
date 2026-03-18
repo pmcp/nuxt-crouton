@@ -72,7 +72,7 @@ export class AgentSessionManager {
       onError: (err) => console.error(`[session-manager] WS error for ${payload.nodeId}:`, err.message),
       onClose: () => {},
     })
-    ws.connect()
+    await ws.connect()
     ws.sendStatus('thinking')
 
     // Update node status to 'working' via HTTP API
