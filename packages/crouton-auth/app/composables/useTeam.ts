@@ -490,7 +490,7 @@ export function useTeam() {
   /**
    * Update a member's role
    */
-  async function updateMemberRole(userId: string, role: MemberRole): Promise<void> {
+  async function updateMemberRole(memberId: string, role: MemberRole): Promise<void> {
     loading.value = true
     error.value = null
     try {
@@ -504,7 +504,7 @@ export function useTeam() {
 
       const result = await authClient.organization.updateMemberRole({
         organizationId: currentTeam.value.id,
-        memberId: userId,
+        memberId,
         role
       })
 

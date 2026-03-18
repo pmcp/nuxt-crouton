@@ -122,7 +122,7 @@ async function handleRoleChange(memberId: string, role: MemberRole) {
   try {
     const member = members.value.find(m => m.id === memberId)
     if (member) {
-      await updateMemberRole(member.userId, role)
+      await updateMemberRole(member.id, role)
       notify.success(t('teams.roleUpdated'), { description: t('teams.roleUpdatedDescription') })
     }
   } catch (e: unknown) {
