@@ -123,9 +123,8 @@ export class AgentSessionManager {
       console.log(`[session-manager] Sending prompt for ${payload.nodeId}`)
       console.log(`[session-manager] Prompt length: ${agentPrompt.length} chars`)
       ws.sendStatus('working')
-      const result = await session.prompt(agentPrompt)
+      await session.prompt(agentPrompt)
       console.log(`[session-manager] Prompt resolved for ${payload.nodeId}, events received: ${eventCount}`)
-      console.log(`[session-manager] Result:`, JSON.stringify(result).slice(0, 500))
 
       // Session completed successfully
       ws.sendDone('Agent session completed')
