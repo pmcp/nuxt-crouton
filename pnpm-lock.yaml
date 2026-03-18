@@ -206,6 +206,9 @@ importers:
       '@fyit/crouton':
         specifier: workspace:*
         version: link:../../packages/crouton
+      '@fyit/crouton-email':
+        specifier: workspace:*
+        version: link:../../packages/crouton-email
       '@libsql/client':
         specifier: ^0.15.0
         version: 0.15.15
@@ -429,7 +432,7 @@ importers:
         version: link:../crouton-themes
       '@nuxt/ui':
         specifier: ^4.3.0
-        version: 4.3.0(918746911e5ef74269fe6e36fe197688)
+        version: 4.3.0(f51ca2092ad9a8a1558d246212194f84)
     devDependencies:
       '@nuxt/kit':
         specifier: ^3.14.0
@@ -463,7 +466,7 @@ importers:
         version: 1.2.12(vue@3.5.26(typescript@5.9.3))(zod@4.2.1)
       '@nuxt/ui':
         specifier: ^4.3.0
-        version: 4.3.0(f51ca2092ad9a8a1558d246212194f84)
+        version: 4.3.0(918746911e5ef74269fe6e36fe197688)
       ai:
         specifier: ^4.0.0
         version: 4.3.19(react@19.2.3)(zod@4.2.1)
@@ -1141,6 +1144,22 @@ importers:
       unbuild:
         specifier: ^3.6.1
         version: 3.6.1(typescript@5.9.3)(vue-tsc@3.2.2(typescript@5.9.3))(vue@3.5.26(typescript@5.9.3))
+
+  workers/collab-worker:
+    dependencies:
+      yjs:
+        specifier: ^13.6.0
+        version: 13.6.29
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241127.0
+        version: 4.20260118.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.64.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260118.0)
 
 packages:
 

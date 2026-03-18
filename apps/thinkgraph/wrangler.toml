@@ -9,17 +9,15 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "thinkgraph-db"
-database_id = "TODO"
+database_id = "a370a513-908a-4402-a559-609a79401475"
 migrations_dir = "server/db/migrations/sqlite"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "TODO"
+id = "7356f04d4f1f44208130654c4de11c44"
 
+# Durable Objects — CollabRoom lives in a separate Worker (Pages can't define DO classes)
 [[durable_objects.bindings]]
 name = "COLLAB_ROOMS"
 class_name = "CollabRoom"
-
-[[migrations]]
-tag = "collab-v1"
-new_classes = ["CollabRoom"]
+script_name = "thinkgraph-collab"

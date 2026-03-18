@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-email": "workspace:*",
     "@libsql/client": "^0.15.0",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
