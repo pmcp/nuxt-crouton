@@ -113,8 +113,8 @@ export class AgentSessionManager {
       let eventCount = 0
       session.subscribe((event: any) => {
         eventCount++
-        if (eventCount <= 3) {
-          console.log(`[session-manager] Event #${eventCount} for ${payload.nodeId}:`, event.type, JSON.stringify(event).slice(0, 200))
+        if (eventCount <= 10) {
+          console.log(`[session-manager] Event #${eventCount} for ${payload.nodeId}:`, event.type, JSON.stringify(event).slice(0, 300))
         }
         this.handleSessionEvent(payload.nodeId, event, ws)
       })

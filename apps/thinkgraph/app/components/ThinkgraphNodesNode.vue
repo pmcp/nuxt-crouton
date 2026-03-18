@@ -81,18 +81,29 @@ function handleAddChild(event: Event) {
   }
 }
 
-function handleContextMenu(event: MouseEvent) {
+function handleContextMenu(event: MouseEvent | Event) {
   event.preventDefault()
   event.stopPropagation()
   if (node.value.id) {
-    canvasActions?.openContextMenu(node.value.id, event)
+    // For button clicks (no clientX/Y), use the node element's position
+    const mouseEvent = 'clientX' in event ? event as MouseEvent : {
+      clientX: (event.target as HTMLElement)?.getBoundingClientRect().right ?? 0,
+      clientY: (event.target as HTMLElement)?.getBoundingClientRect().top ?? 0,
+    } as MouseEvent
+    canvasActions?.openContextMenu(node.value.id, mouseEvent)
   }
+}
+
+// Touch device detection for always-visible action buttons
+const isTouchDevice = ref(false)
+if (import.meta.client) {
+  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 }
 </script>
 
 <template>
   <div
-    class="work-node"
+    class="work-node group"
     :class="[
       {
         'work-node--selected': selected,
@@ -230,21 +241,28 @@ function handleContextMenu(event: MouseEvent) {
       <span>terminal</span>
     </button>
 
-    <!-- Hover actions -->
-    <div v-if="isHovered" class="work-node__actions">
+    <!-- Node actions (hover on desktop, always visible on touch) -->
+    <div class="work-node__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
       <button
         class="work-node__action"
         title="Add child"
-        @click="handleAddChild"
+        @click.stop="handleAddChild"
       >
         <UIcon name="i-lucide-plus" class="size-3.5" />
       </button>
       <button
         class="work-node__action"
         title="Open detail"
-        @click="handleEdit"
+        @click.stop="handleEdit"
       >
         <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
+      </button>
+      <button
+        class="work-node__action"
+        title="More actions"
+        @click.stop="handleContextMenu"
+      >
+        <UIcon name="i-lucide-ellipsis" class="size-3.5" />
       </button>
     </div>
 
