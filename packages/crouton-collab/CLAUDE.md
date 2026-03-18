@@ -15,7 +15,8 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 | File | Purpose |
 |------|---------|
 | `server/durable-objects/CollabRoom.ts` | Cloudflare Durable Object for Yjs sync |
-| `server/routes/api/collab/[roomId]/ws.ts` | WebSocket endpoint (local + production) |
+| `server/routes/api/collab/[roomId]/ws.ts` | WebSocket endpoint (local dev via crossws) |
+| `server/routes/api/collab/token.get.ts` | HMAC token endpoint for cross-origin WS auth |
 | `server/database/migrations/0001_yjs_collab_states.sql` | D1 table for state persistence |
 | `app/types/collab.ts` | TypeScript types for collaboration |
 | `app/composables/useCollabConnection.ts` | Low-level WebSocket connection manager |
@@ -36,41 +37,59 @@ Real-time collaboration infrastructure for Nuxt Crouton using Yjs CRDTs. This pa
 
 ## Architecture
 
+### Local Development
+
+In local dev, everything runs in-process — the crossws handler at `/api/collab/[roomId]/ws` handles WebSocket connections directly.
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                          Clients                                │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐                         │
-│  │ User A  │  │ User B  │  │ User C  │                         │
-│  └────┬────┘  └────┬────┘  └────┬────┘                         │
-│       │            │            │                               │
-│       └────────────┼────────────┘                               │
-│                    │ WebSocket                                  │
-│                    ▼                                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              /api/collab/[roomId]/ws                    │   │
-│  │              ?type=page|flow|document                   │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                    │                                            │
-│                    ▼                                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                   CollabRoom DO                         │   │
-│  │  ┌─────────┐  ┌──────────────┐  ┌────────────────────┐ │   │
-│  │  │  Y.Doc  │  │   Sessions   │  │    Awareness      │ │   │
-│  │  │ (CRDT)  │  │ (WebSockets) │  │ (User Presence)   │ │   │
-│  │  └────┬────┘  └──────────────┘  └────────────────────┘ │   │
-│  └───────┼─────────────────────────────────────────────────┘   │
-│          │                                                      │
-│          ▼                                                      │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                 D1: yjs_collab_states                   │   │
-│  │  ┌────────────┬─────────┬───────┬─────────┬─────────┐  │   │
-│  │  │ room_type  │ room_id │ state │ version │ updated │  │   │
-│  │  ├────────────┼─────────┼───────┼─────────┼─────────┤  │   │
-│  │  │ page       │ abc-123 │ BLOB  │ 42      │ 17...   │  │   │
-│  │  │ flow       │ def-456 │ BLOB  │ 17      │ 17...   │  │   │
-│  │  └────────────┴─────────┴───────┴─────────┴─────────┘  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+Client → ws://localhost:3000/api/collab/{roomId}/ws → crossws handler (in-process)
+```
+
+### Production (Cloudflare Pages)
+
+Two hard constraints force a split architecture in production:
+
+1. **Cloudflare Pages cannot host Durable Objects** — DO classes must live in a separate Worker
+2. **Nitro cannot proxy WebSocket frames** — a Nitro middleware can forward the 101 upgrade, but no messages flow through
+
+The client must connect **directly** to a standalone collab worker, bypassing Nitro entirely:
+
+```
+Client Browser
+  │ wss://{collab-worker}/{roomKey}/ws?token=...
+  │ (direct connection — bypasses Nitro)
+  ▼
+Collab Worker (standalone Cloudflare Worker)
+  │ Routes by roomKey to DO instance
+  ▼
+CollabRoom Durable Object
+  ├── WebSocket sync (Yjs CRDTs)
+  ├── Awareness/presence
+  ├── DO storage (fast) + D1 (durable)
+  └── Auth: HMAC token verification
+
+App (Cloudflare Pages)
+  └── /api/collab/token → HMAC-signed {userId, exp} using BETTER_AUTH_SECRET
+```
+
+### Cross-Origin Auth Flow
+
+Since the collab worker is a different origin, session cookies aren't sent. `useCollabConnection` handles this automatically:
+
+1. Detects `collabWorkerUrl` is set (cross-origin)
+2. Fetches `/api/collab/token` from the app (same-origin, cookies sent)
+3. Server validates session, creates HMAC-signed token
+4. Client passes token as `?token=` query param to worker WebSocket
+5. CollabRoom DO verifies HMAC signature and expiry
+
+Both the app and collab worker must share `BETTER_AUTH_SECRET`.
+
+### Runtime Config
+
+The package provides `collabWorkerUrl` in `runtimeConfig.public`. Apps do NOT need to redeclare it — just set the env var in production:
+
+```bash
+NUXT_PUBLIC_COLLAB_WORKER_URL=https://my-collab-worker.workers.dev
 ```
 
 ## How CollabRoom Works
@@ -92,6 +111,14 @@ The `type` query parameter differentiates room types:
 | `document` | Plain text | `Y.Text` |
 | `sync` | Collection version sync | `Y.Map` |
 | `generic` | Custom | Any |
+
+### Known Constraints
+
+- **Nitro cannot proxy WebSocket frames** — The 101 upgrade succeeds but no messages flow. Clients must connect directly to the collab worker in production.
+- **Cloudflare Pages cannot host Durable Objects** — CollabRoom must live in a separate Worker, referenced via `script_name`.
+- **`NUXT_PUBLIC_COLLAB_WORKER_URL` is build-time** — It's baked into the client bundle. Changing it requires a rebuild.
+- **Token expiry is 60 seconds** — Enough for initial connection. Reconnections auto-fetch a fresh token.
+- **`BETTER_AUTH_SECRET` must match** — Both the Pages app and collab worker use the same secret for HMAC signing/verification.
 
 ## Real-Time Collection Sync
 
@@ -162,24 +189,69 @@ export default defineNuxtConfig({
 })
 ```
 
-### 2. Configure Cloudflare (wrangler.toml)
+### 2. Deploy a Collab Worker (Production)
 
+Cloudflare Pages cannot host Durable Objects. You need a standalone Worker:
+
+```
+workers/collab-worker/
+├── src/index.ts          # Routes /{roomKey}/{action} to CollabRoom DO
+├── wrangler.toml         # DO bindings, D1 binding, BETTER_AUTH_SECRET
+└── package.json
+```
+
+The worker's `wrangler.toml`:
 ```toml
+name = "my-app-collab"
+
 [[durable_objects.bindings]]
 name = "COLLAB_ROOMS"
 class_name = "CollabRoom"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "my-app-db"
+database_id = "..."
 
 [[migrations]]
 tag = "collab-v1"
 new_classes = ["CollabRoom"]
 ```
 
-### 3. Run D1 Migration
+Deploy the worker and set the shared secret:
+```bash
+cd workers/collab-worker
+npx wrangler secret put BETTER_AUTH_SECRET  # Same value as your Pages app
+npx wrangler deploy
+```
+
+The app references the worker via `script_name` in its `wrangler.toml` (for DO binding):
+```toml
+[[durable_objects.bindings]]
+name = "COLLAB_ROOMS"
+class_name = "CollabRoom"
+script_name = "my-app-collab"
+```
+
+### 3. Set the Worker URL
+
+Set at **build time** (baked into client bundle via runtimeConfig.public):
+```bash
+NUXT_PUBLIC_COLLAB_WORKER_URL=https://my-app-collab.workers.dev
+```
+
+### 4. Run D1 Migration
 
 ```bash
-npx wrangler d1 execute <DB_NAME> \
+npx wrangler d1 execute <DB_NAME> --remote \
   --file=./packages/nuxt-crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
 ```
+
+### 5. Deploy Order
+
+1. Deploy collab worker first (Pages app references it via `script_name`)
+2. Run D1 migration (first time only)
+3. Deploy Pages app with `NUXT_PUBLIC_COLLAB_WORKER_URL` set
 
 ### 4. Connect from Client
 
