@@ -30,7 +30,11 @@ export class SessionWebSocket {
     const wsUrl = this.config.thinkgraphUrl.replace(/^http/, 'ws')
     const url = `${wsUrl}/api/teams/${this.config.teamId}/terminal-ws/${this.nodeId}?token=${this.config.serviceToken}`
 
-    this.ws = new WebSocket(url)
+    this.ws = new WebSocket(url, {
+      headers: {
+        'Cookie': this.config.serviceToken,
+      },
+    })
 
     this.ws.on('open', () => {
       console.log(`[session-ws] Connected for node ${this.nodeId}`)

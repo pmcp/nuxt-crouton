@@ -41,34 +41,35 @@ async function main() {
         throw new Error('THINKGRAPH_SERVICE_TOKEN or THINKGRAPH_EMAIL + THINKGRAPH_PASSWORD required')
       }
 
-      // Sign in to get session cookie
-      // Origin header required — Better Auth validates it for CSRF protection
-      const signInResult = await ofetch(`${config.thinkgraphUrl}/api/auth/sign-in/email`, {
+      // Sign in — capture the full session cookie from set-cookie header
+      // On Cloudflare, cookie name is __Secure-better-auth.session_token
+      // In dev, it's better_auth_session
+      // Origin header required for CSRF protection
+      let sessionCookie = '' // Full "name=value" pair for the Cookie header
+      await ofetch(`${config.thinkgraphUrl}/api/auth/sign-in/email`, {
         method: 'POST',
         headers: { 'Origin': config.thinkgraphUrl },
         body: { email, password },
         onResponse({ response }) {
-          const setCookie = response.headers.get('set-cookie')
-          if (setCookie) {
-            // Extract session token from cookie
-            const match = setCookie.match(/better_auth_session=([^;]+)/)
+          const cookies = (response.headers as any).getSetCookie?.() || []
+          for (const cookie of cookies) {
+            // Match either cookie name pattern (Cloudflare secure or dev)
+            const match = cookie.match(/((?:__Secure-)?better[_-]auth[._]session(?:_token)?)=([^;]+)/)
             if (match) {
-              config.serviceToken = match[1]
+              sessionCookie = `${match[1]}=${match[2]}`
+              break
             }
           }
         },
       })
 
-      if (!config.serviceToken) {
-        // Try getting a worker token
-        const tokenResult = await ofetch(`${config.thinkgraphUrl}/api/teams/${config.teamId}/worker-auth`, {
-          method: 'POST',
-          headers: {
-            'Cookie': `better_auth_session=${config.serviceToken}`,
-          },
-        })
-        config.serviceToken = tokenResult.token
+      if (!sessionCookie) {
+        throw new Error('Sign-in succeeded but no session cookie in response headers')
       }
+
+      // Store the full cookie string (name=value) for use in Cookie headers
+      config.serviceToken = sessionCookie
+      console.log('Session cookie captured:', sessionCookie.split('=')[0] + '=...')
 
       console.log('Authentication successful')
     }

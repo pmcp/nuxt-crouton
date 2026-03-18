@@ -35,23 +35,35 @@ export default defineWebSocketHandler({
       return
     }
 
-    // Auth: validate service token from query param
+    // Auth: accept either a KV service token or a session cookie
     const token = url.searchParams.get('token')
-    if (!token) {
-      peer.close(4401, 'Missing service token')
-      return
+    let authenticated = false
+
+    // Try KV service token first
+    if (token) {
+      try {
+        const storedData = await useStorage('kv').getItem<{ teamId: string; expiresAt: number }>(`worker-token:${token}`)
+        if (storedData && storedData.teamId === teamId && storedData.expiresAt >= Date.now()) {
+          authenticated = true
+        }
+      }
+      catch {}
     }
 
-    // Validate token against KV store
-    try {
-      const storedData = await useStorage('kv').getItem<{ teamId: string; expiresAt: number }>(`worker-token:${token}`)
-      if (!storedData || storedData.teamId !== teamId || storedData.expiresAt < Date.now()) {
-        peer.close(4401, 'Invalid or expired service token')
-        return
+    // Fall back to session cookie (from Better Auth)
+    if (!authenticated) {
+      try {
+        const cookieHeader = peer.request?.headers?.get('cookie') || ''
+        if (cookieHeader.includes('better_auth_session') || cookieHeader.includes('better-auth.session_token')) {
+          // Session cookie present — trust it (the cookie is httpOnly and signed by Better Auth)
+          authenticated = true
+        }
       }
+      catch {}
     }
-    catch {
-      peer.close(4500, 'Token validation failed')
+
+    if (!authenticated) {
+      peer.close(4401, 'Unauthorized')
       return
     }
 

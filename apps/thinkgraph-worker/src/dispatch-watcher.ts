@@ -50,7 +50,7 @@ export class DispatchWatcher {
       const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}`
       const result = await ofetch(`${baseUrl}/thinkgraph-decisions`, {
         headers: {
-          'Authorization': `Bearer ${this.config.serviceToken}`,
+          'Cookie': this.config.serviceToken,
         },
         query: { status: 'dispatching' },
       })
@@ -117,7 +117,7 @@ export class DispatchWatcher {
       await ofetch(`${baseUrl}/thinkgraph-decisions/${nodeId}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${this.config.serviceToken}`,
+          'Cookie': this.config.serviceToken,
           'Content-Type': 'application/json',
         },
         body: {

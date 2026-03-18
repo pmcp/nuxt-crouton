@@ -217,7 +217,7 @@ export class AgentSessionManager {
       await ofetch(`${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}/thinkgraph-decisions/${nodeId}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${this.config.serviceToken}`,
+          'Cookie': this.config.serviceToken,
           'Content-Type': 'application/json',
         },
         body: { status },

@@ -30,7 +30,7 @@ export function createThinkGraphTools(
   const baseUrl = `${config.thinkgraphUrl}/api/teams/${config.teamId}`
 
   const headers = {
-    'Authorization': `Bearer ${config.serviceToken}`,
+    'Cookie': config.serviceToken,
     'Content-Type': 'application/json',
   }
 
