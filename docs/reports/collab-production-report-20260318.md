@@ -50,20 +50,47 @@ Both the Pages app and the collab worker share `BETTER_AUTH_SECRET` for signing/
 ### 4. Canvas page needed SSR/client split
 The canvas page (`[canvasId].vue`) previously loaded positions via SSR using a broken direct-canvasId lookup. Fixed to use `ensureFlowConfig` pattern (auto-creates `flow_configs` row) and moved all data loading to `onMounted` to avoid hydration mismatches when `flowId` is null on server but set on client.
 
-### 5. SyncBridge race condition
+### 5. SyncBridge race condition (original)
 When CroutonFlow mounts with `sync`, the Yjs WebSocket and `refreshNodes` run concurrently. If the WebSocket connects (`synced=true`) before nodes are loaded (`rows` is empty), the bridge skips seeding. Added a second watcher on `rows.length` to handle late-arriving data.
+
+### 6. Blank canvas in production — no fallback when sync fails
+**Recurring bug:** Nodes exist in the database but the canvas renders empty. Root cause: `Flow.vue`'s `finalNodes` computed uses `syncNodes` (Yjs data) exclusively when `sync=true`. If the WebSocket is slow to connect (DO cold start), fails entirely, or the seeding race condition hits, `syncNodes` is empty and there's **no fallback to rows**.
+
+**Symptoms:** Canvas appears blank, but node count badges (e.g., "1 dispatching") still show because they read from the `nodes` ref (DB data), not from Yjs.
+
+**Fix (two parts):**
+
+1. **Fallback rendering in `Flow.vue`** — When sync mode is active but Yjs hasn't synced yet (`syncNodes` empty + `synced` false), fall back to `layoutedNodes` (rows-based rendering). Once Yjs syncs, it takes over seamlessly.
+
+   ```typescript
+   // In finalNodes computed
+   if (nodes.length === 0 && !syncState.synced.value) {
+     baseNodes = layoutedNodes.value  // Show rows while Yjs connects
+   }
+   ```
+
+2. **Unified seeding watcher in `useFlowSyncBridge.ts`** — Replaced the two separate watchers (one on `synced`, one on `rows.length`) with a single watcher that tracks **both** values. The old approach was fragile: each watcher only re-fired when its own dependency changed, so if both conditions were already true when the watchers were set up, neither would trigger seeding.
+
+### 7. Deploy script must include collab worker URL
+The `NUXT_PUBLIC_COLLAB_WORKER_URL` env var must be set at **build time** (it's baked into the client bundle via `runtimeConfig.public`). Without it, the WebSocket has no endpoint and sync mode silently fails.
+
+Updated `apps/thinkgraph/package.json` `cf:deploy` script to include the collab worker URL, `nuxt prepare` step (rolldown tsconfig bug), and `--commit-dirty=true`. Deploy is now just:
+
+```bash
+cd apps/thinkgraph && pnpm cf:deploy
+```
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
 | `workers/collab-worker/*` | New standalone Worker hosting CollabRoom DO |
-| `packages/crouton-collab/server/middleware/00.collab-proxy.ts` | Proxy middleware (still present but bypassed by direct connection) |
+| `packages/crouton-collab/server/middleware/00.collab-proxy.ts` | Proxy middleware (later removed — Nitro can't proxy WS frames) |
 | `packages/crouton-collab/server/routes/api/collab/token.get.ts` | New HMAC token endpoint |
 | `packages/crouton-collab/server/durable-objects/CollabRoom.ts` | Added HMAC token verification alongside cookie auth |
 | `packages/crouton-collab/app/composables/useCollabConnection.ts` | Direct worker URL + token auth flow |
 | `packages/crouton-collab/nuxt.config.ts` | Added `collabWorkerUrl` runtime config |
-| `packages/crouton-flow/app/composables/useFlowSyncBridge.ts` | Late-seed watcher for race condition fix |
+| `packages/crouton-flow/app/composables/useFlowSyncBridge.ts` | Unified seeding watcher (replaced fragile two-watcher approach) |
 | `apps/thinkgraph/app/pages/admin/[team]/canvas/[canvasId].vue` | Enabled sync, ensureFlowConfig, client-side loading |
 | `apps/thinkgraph/nuxt.config.ts` | Added `collabWorkerUrl` public runtime config |
 | `apps/thinkgraph/wrangler.toml` | Added DO binding with `script_name` |
@@ -100,9 +127,17 @@ When deploying collab changes:
      npx wrangler pages deploy dist/ --commit-dirty=true
    ```
 
+## Additional Files Changed (follow-up fix)
+
+| File | Change |
+|------|--------|
+| `packages/crouton-flow/app/components/Flow.vue` | Added fallback to rows-based rendering when sync hasn't connected |
+| `packages/crouton-flow/app/composables/useFlowSyncBridge.ts` | Unified seeding into single watcher on both `synced` + `rows.length` |
+| `apps/thinkgraph/package.json` | `cf:deploy` script now includes collab worker URL + prepare step |
+
 ## Known Limitations
 
-- **Collab proxy middleware** (`00.collab-proxy.ts`) is still present but unused for WebSocket paths. It could be used for non-WS endpoints (`/state`, `/users`) if needed.
+- **Collab proxy middleware** (`00.collab-proxy.ts`) was removed — Nitro cannot proxy WebSocket frames, and HTTP endpoints (`/state`, `/users`) work via normal Nitro routes.
 - **Token expiry** is 60 seconds — enough for initial connection. Reconnections fetch a fresh token.
 - **BETTER_AUTH_SECRET rotation** requires updating both the Pages project and the collab worker simultaneously.
 - The collab worker URL is hardcoded in CI. If the worker is redeployed to a different URL, update `deploy-thinkgraph.yml`.
