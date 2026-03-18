@@ -94,8 +94,6 @@ export default defineWebSocketHandler({
       createTerminalSession(nodeId)
     }
 
-    const peerSend = { send: (data: string) => { try { peer.send(data) } catch {} } }
-
     if (isWorker) {
       // Pi worker connection — receives steer/abort, sends terminal events
       registerWorkerConnection(nodeId, peerData._peerSend)
