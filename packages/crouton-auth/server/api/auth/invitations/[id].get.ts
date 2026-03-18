@@ -14,7 +14,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Invitation ID is required' })
   }
 
-  const result = await (useDrizzle() as any)
+  // useDB() is NuxtHub's auto-imported server util that returns a Drizzle instance
+  const db = useDB()
+
+  const result = await (db as any)
     .select({
       id: invitation.id,
       email: invitation.email,

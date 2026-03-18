@@ -47,7 +47,9 @@ export const user = sqliteTable('user', {
   /** Reason for the ban (shown to user and admin) */
   bannedReason: text('bannedReason'),
   /** When the ban expires (null = permanent) */
-  bannedUntil: integer('bannedUntil', { mode: 'timestamp' })
+  bannedUntil: integer('bannedUntil', { mode: 'timestamp' }),
+  // Better Auth 1.5+ user role (admin plugin)
+  role: text('role').default('user')
 }, table => [
   index('user_email_idx').on(table.email),
   index('user_stripe_customer_idx').on(table.stripeCustomerId),
