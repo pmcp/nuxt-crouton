@@ -510,6 +510,7 @@ const finalNodes = computed(() => {
       const needsLayoutResult = needsLayout(nodes)
 
       if (needsLayoutResult && !layoutAppliedToYjs.value) {
+        // Initial layout — all nodes need positioning
         const layoutedNodesResult = applyLayout(nodes, edges)
 
         nextTick(() => {
@@ -523,7 +524,28 @@ const finalNodes = computed(() => {
 
         baseNodes = layoutedNodesResult
       } else {
-        baseNodes = nodes
+        // Check if any new nodes are at (0,0) and need incremental layout
+        const hasNewUnpositioned = nodes.some(n =>
+          n.position.x === 0 && n.position.y === 0 && nodes.length > 1
+        )
+        if (hasNewUnpositioned) {
+          const incrementalResult = applyLayoutToNew(nodes, edges)
+
+          // Persist new positions to Yjs
+          nextTick(() => {
+            for (const node of incrementalResult) {
+              const original = nodes.find(n => n.id === node.id)
+              if (original && original.position.x === 0 && original.position.y === 0 &&
+                  node.position && (node.position.x !== 0 || node.position.y !== 0)) {
+                syncState.updatePosition(node.id, node.position)
+              }
+            }
+          })
+
+          baseNodes = incrementalResult
+        } else {
+          baseNodes = nodes
+        }
       }
     }
   } else {
