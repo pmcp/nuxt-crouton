@@ -23,25 +23,61 @@ const { data: canvas } = await useFetch(() => `/api/teams/${teamId.value}/thinkg
   transform: (items: any[]) => items?.find((c: any) => c.id === canvasId.value),
 })
 
-// ─── Saved positions (from flow_configs) ───
+// ─── Flow config (positions + sync) ───
+const flowId = ref<string | null>(null)
 const savedPositions = ref<Record<string, { x: number, y: number }> | null>(null)
 
-async function loadPositions() {
+async function ensureFlowConfig() {
   if (!canvasId.value || !teamId.value) return
+
+  const flowName = `canvas-${canvasId.value}`
+
   try {
-    const config = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows/${canvasId.value}`)
-    if (config?.nodePositions) {
-      savedPositions.value = typeof config.nodePositions === 'string'
-        ? JSON.parse(config.nodePositions)
-        : config.nodePositions
+    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
+      query: { collection: 'thinkgraphNodes', name: flowName },
+    })
+    const existing = flows?.find((f: any) => f.name === flowName)
+    if (existing) {
+      flowId.value = existing.id
+      savedPositions.value = existing.nodePositions || null
+      return
     }
-  }
-  catch {
-    // Flow config may not exist yet — that's fine, dagre will layout
-  }
+  } catch { /* no existing config */ }
+
+  try {
+    const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
+      method: 'POST',
+      body: {
+        name: flowName,
+        collection: 'thinkgraphNodes',
+        labelField: 'title',
+        parentField: 'parentId',
+      },
+    })
+    if (created?.id) {
+      flowId.value = created.id
+    }
+  } catch { /* flow config creation failed */ }
 }
 
-await loadPositions()
+// Run on client to ensure auth context is available (SSR may lack session cookies)
+if (import.meta.server) {
+  // On server: only try to load existing config (read-only, no POST)
+  try {
+    const flowName = `canvas-${canvasId.value}`
+    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
+      query: { collection: 'thinkgraphNodes', name: flowName },
+    })
+    const existing = flows?.find((f: any) => f.name === flowName)
+    if (existing) {
+      flowId.value = existing.id
+      savedPositions.value = existing.nodePositions || null
+    }
+  } catch { /* will retry on client */ }
+}
+onMounted(() => {
+  if (!flowId.value) ensureFlowConfig()
+})
 
 // ─── Nodes for this canvas ───
 const nodes = ref<ThinkgraphNode[]>([])
@@ -657,14 +693,15 @@ watch(showCreate, async (open) => {
       <!-- Graph -->
       <div class="flex-1 relative">
         <CroutonFlow
-          v-if="nodes.length"
+          v-if="nodes.length && flowId"
           :rows="nodes"
           collection="thinkgraphNodes"
           parent-field="parentId"
           label-field="title"
-          :flow-id="canvasId"
+          :flow-id="flowId"
           :saved-positions="savedPositions"
           :background-pattern-color="isDark ? '#3a3530' : '#d4cfc8'"
+          sync
           minimap
           @node-click="onNodeClick"
         >
