@@ -7,7 +7,7 @@
  */
 import { Type } from '@sinclair/typebox'
 import { ofetch } from 'ofetch'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import type { ToolDefinition, AgentToolResult } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
 
@@ -170,14 +170,14 @@ export function createPMTools(
           const baseBranch = params.base || 'main'
 
           const args = [
-            'gh', 'pr', 'create',
+            'pr', 'create',
             '--title', prTitle,
             '--body', prBody,
             '--base', baseBranch,
           ]
           if (params.draft) args.push('--draft')
 
-          const result = execSync(args.join(' '), {
+          const result = execFileSync('gh', args, {
             cwd: params.worktreePath,
             encoding: 'utf-8',
             timeout: 30_000,

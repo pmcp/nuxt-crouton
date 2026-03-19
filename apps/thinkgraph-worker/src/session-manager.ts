@@ -603,6 +603,10 @@ git worktree add /tmp/thinkgraph/${payload.nodeId} -b ${branchName} origin/main
 cd /tmp/thinkgraph/${payload.nodeId}
 \`\`\`
 
+**IMPORTANT**: Do NOT run \`pnpm install\` in the worktree. This is a monorepo — the worktree shares node_modules with the main checkout via pnpm's workspace hoisting. Running install will fail due to postinstall scripts in sibling apps. Just work with the existing dependencies.
+
+Similarly, do NOT run \`pnpm typecheck\` from the worktree — it requires the full Nuxt context from the main checkout. Type checking should be done from the main repo after merging.
+
 After completing your work:
 
 \`\`\`bash
@@ -634,7 +638,7 @@ Your job is to generate crouton collections and code in the worktree.
    - Run \`pnpm run db:generate\` to create database migrations
 3. Verify the generated code:
    - Check that the generated files look correct
-   - Run \`pnpm typecheck\` from the app directory
+   - Do NOT run pnpm typecheck from the worktree (it won't work — requires main checkout)
 4. Commit, push, and update the work item as described above
 
 The crouton CLI reads \`crouton.config.js\` and schema JSON files to generate:
@@ -660,8 +664,8 @@ Your job is to build pages and wire components in the worktree.
    - Add proper layouts, navigation, and responsive design
 3. Apply theming if specified in the brief
 4. Verify:
-   - Run \`pnpm typecheck\` from the app directory
-   - Check that pages render correctly
+   - Check that pages look correct by reading the code
+   - Do NOT run pnpm typecheck from the worktree (it won't work — requires main checkout)
 5. Commit, push, and update the work item as described above
 
 Key Nuxt UI 4 patterns:
