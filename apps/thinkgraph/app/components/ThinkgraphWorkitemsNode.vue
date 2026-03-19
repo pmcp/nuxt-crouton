@@ -63,7 +63,7 @@ const TYPE_CONFIG: Record<string, { icon: string; color: string; badge: string }
 }
 
 const STATUS_CONFIG: Record<string, { icon: string; class: string }> = {
-  queued: { icon: 'i-lucide-circle-dashed', class: '' },
+  queued: { icon: 'i-lucide-circle-dashed', class: 'work-item--queued' },
   active: { icon: 'i-lucide-loader-2', class: 'work-item--active' },
   waiting: { icon: 'i-lucide-pause-circle', class: 'work-item--waiting' },
   done: { icon: 'i-lucide-check-circle', class: 'work-item--done' },
@@ -272,26 +272,36 @@ function handleDispatch(event: Event) {
 }
 
 .work-item--done {
-  @apply opacity-60;
+  @apply opacity-30 scale-95;
+  filter: grayscale(0.5);
 }
 
 .work-item--active {
   animation: pulse-work 2s ease-in-out infinite;
+  @apply shadow-md scale-105;
 }
 
 .work-item--waiting {
-  @apply opacity-80;
+  @apply shadow-sm;
+  outline: 2px dashed rgba(251, 146, 60, 0.6);
+  outline-offset: 2px;
 }
 
 .work-item--blocked {
-  @apply opacity-50;
+  @apply opacity-40;
   background: #fecaca !important;
   color: #7f1d1d !important;
+  text-decoration: line-through;
 }
 
 :root.dark .work-item--blocked {
   background: #450a0a !important;
   color: #fca5a5 !important;
+}
+
+/* Queued items: slightly muted, waiting to be picked up */
+.work-item--queued {
+  @apply opacity-70;
 }
 
 @keyframes pulse-work {
