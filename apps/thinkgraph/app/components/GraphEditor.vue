@@ -133,6 +133,19 @@ function onNodeClick(nodeId: string, data: Record<string, unknown>, event?: Mous
   if (!event?.shiftKey) showPath.value = true
 }
 
+// ─── Auto-group handler ───
+function onAutoGrouped(result: { groupNode: Record<string, unknown>; nodes: Record<string, unknown>[] }) {
+  // The group was created visually on the canvas.
+  // For sync mode, the nodes will be re-rendered with their new parentNode.
+  // We show a toast so the user knows what happened.
+  toast.add({
+    title: 'Nodes grouped',
+    description: 'Drag nodes out of the group to ungroup them.',
+    color: 'info',
+    duration: 3000,
+  })
+}
+
 // ─── Quick add done ───
 async function onQuickAddDone() {
   showQuickAdd.value = false
@@ -367,6 +380,7 @@ function exportGraph() {
           :flow-config="flowConfig"
           :additional-edges="additionalEdges"
           :background-pattern-color="isDark ? '#3a3530' : '#d4cfc8'"
+          :auto-group="{ enabled: true, hoverDelay: 1000 }"
           sync
           minimap
           :selected="selectedNodeIds"
@@ -374,6 +388,7 @@ function exportGraph() {
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
           @connect-end="onConnectEnd"
+          @auto-grouped="onAutoGrouped"
         />
         <div
           v-else

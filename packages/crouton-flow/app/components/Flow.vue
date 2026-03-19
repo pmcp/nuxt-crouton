@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
+import { computed, nextTick, onUnmounted, ref, resolveComponent, watch, markRaw } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import type { Node, NodeDragEvent, OnConnectStartParams } from '@vue-flow/core'
-import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions } from '../types/flow'
+import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions, FlowAutoGroupOptions } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
 import { useDebouncedPositionUpdate } from '../composables/useFlowMutation'
@@ -16,8 +16,10 @@ import { useFlowSync } from '../composables/useFlowSync'
 import { useFlowDragDrop } from '../composables/useFlowDragDrop'
 import { useFlowSyncBridge } from '../composables/useFlowSyncBridge'
 import { useFlowContainerDetection, type ContainerChangeEvent } from '../composables/useFlowContainerDetection'
+import { useFlowAutoGroup, type AutoGroupResult } from '../composables/useFlowAutoGroup'
 import CroutonFlowNode from './Node.vue'
 import CroutonFlowGhostNode from './GhostNode.vue'
+import CroutonFlowGroupNode from './GroupNode.vue'
 
 // Import default styles
 import '@vue-flow/core/dist/style.css'
@@ -95,6 +97,8 @@ interface Props {
   nodeTypeComponents?: Record<string, NodeTypeRegistration>
   /** Container detection options — enable card-over-group overlap detection on drag stop */
   containerOptions?: FlowContainerOptions
+  /** Auto-group options — drag a node over another for 1s+ to create a group */
+  autoGroup?: FlowAutoGroupOptions
   /** Data mode: 'collection' (default) or 'ephemeral' (skip collection mutations) */
   dataMode?: FlowDataMode
   /** Pre-loaded node positions from flow_configs (avoids extra fetch) */
@@ -141,6 +145,8 @@ const emit = defineEmits<{
   nodeContainerChange: [event: ContainerChangeEvent]
   /** Emitted when nodes are deleted (keyboard delete or programmatic removal) */
   nodeDelete: [nodeIds: string[]]
+  /** Emitted when nodes are auto-grouped (drag overlap for 1s+) */
+  autoGrouped: [result: AutoGroupResult]
   /** Emitted when a connection drag ends without connecting to a target handle */
   connectEnd: [event: { sourceNodeId: string; sourceHandleType: string; position: FlowPosition; mouseEvent: MouseEvent }]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
@@ -184,6 +190,7 @@ const positionSync = (props.sync && props.flowId && props.dataMode === 'ephemera
 const nodeTypes = computed(() => {
   const types: Record<string, any> = {
     ghost: markRaw(CroutonFlowGhostNode),
+    resizableGroup: markRaw(CroutonFlowGroupNode),
   }
   if (props.nodeTypeComponents) {
     for (const [typeName, reg] of Object.entries(props.nodeTypeComponents)) {
@@ -199,6 +206,21 @@ const nodeTypes = computed(() => {
 const containerDetection = props.containerOptions?.enabled && props.nodeTypeComponents
   ? useFlowContainerDetection({ nodeTypeComponents: props.nodeTypeComponents })
   : null
+
+// ============================================
+// AUTO-GROUP (drag overlap → group creation)
+// ============================================
+const autoGroupDetection = props.autoGroup?.enabled
+  ? useFlowAutoGroup({
+      hoverDelay: props.autoGroup.hoverDelay,
+      overlapThreshold: props.autoGroup.overlapThreshold,
+    })
+  : null
+
+// Clean up auto-group timers on unmount
+onUnmounted(() => {
+  autoGroupDetection?.dispose()
+})
 
 // ============================================
 // VUEFLOW INSTANCE
@@ -613,7 +635,14 @@ const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
   }
 }, 50)
 
-onNodeDrag(syncDragPosition)
+onNodeDrag((event: NodeDragEvent) => {
+  syncDragPosition(event)
+
+  // Auto-group: track hover overlap
+  if (autoGroupDetection) {
+    autoGroupDetection.handleDrag(finalNodes.value, event)
+  }
+})
 
 // Handle node drag end - final position sync + container detection
 onNodeDragStop((event: NodeDragEvent) => {
@@ -623,6 +652,26 @@ onNodeDragStop((event: NodeDragEvent) => {
   const position: FlowPosition = {
     x: Math.round(node.position.x),
     y: Math.round(node.position.y)
+  }
+
+  // Auto-group detection (if enabled) — takes priority over container detection
+  if (autoGroupDetection) {
+    const autoResult = autoGroupDetection.handleDragStop(finalNodes.value, event)
+    if (autoResult) {
+      emit('autoGrouped', autoResult)
+      // In ephemeral mode, emit updated rows so the parent can update its nodes
+      if (props.dataMode === 'ephemeral' && props.rows) {
+        emit('update:rows', autoResult.nodes as unknown as Record<string, unknown>[])
+      }
+      // Position cache: update both child positions in the new group
+      for (const n of autoResult.nodes) {
+        if (n.parentNode === autoResult.groupNode.id) {
+          positionCache.set(n.id, { ...n.position })
+        }
+      }
+      positionCache.set(autoResult.groupNode.id, { ...autoResult.groupNode.position })
+      return // Skip normal position update — group creation handles it
+    }
   }
 
   // Container detection (if enabled)
@@ -717,10 +766,11 @@ const customNodeComponent = computed(() => {
   return null
 })
 
-// Expose sync state and container detection for external access
+// Expose sync state, container detection, and auto-group for external access
 defineExpose({
   syncState,
   containerDetection,
+  autoGroupDetection,
 })
 </script>
 
@@ -1006,5 +1056,42 @@ defineExpose({
 
 .crouton-flow-dark .vue-flow__controls-button svg {
   fill: #e5e5e5;
+}
+
+/* ─── Auto-group shake animation ─── */
+/* Target the inner content of the node (first child), not the .vue-flow__node
+   wrapper, because Vue Flow uses transform: translate() on the wrapper for positioning. */
+.crouton-flow-auto-group-target > .vue-flow__node-default,
+.crouton-flow-auto-group-target > div {
+  animation: crouton-flow-shake 0.4s ease-in-out infinite;
+}
+
+.crouton-flow-auto-group-target {
+  z-index: 10 !important;
+}
+
+/* Dashed outline ring around the shaking node */
+.crouton-flow-auto-group-target::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px dashed var(--color-primary-500, #3b82f6);
+  border-radius: 12px;
+  pointer-events: none;
+  animation: crouton-flow-pulse-ring 1.2s ease-in-out infinite;
+}
+
+@keyframes crouton-flow-shake {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-1.5deg) translateX(-2px); }
+  30% { transform: rotate(1.5deg) translateX(2px); }
+  45% { transform: rotate(-1deg) translateX(-1px); }
+  60% { transform: rotate(1deg) translateX(1px); }
+  75% { transform: rotate(-0.5deg); }
+}
+
+@keyframes crouton-flow-pulse-ring {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 </style>

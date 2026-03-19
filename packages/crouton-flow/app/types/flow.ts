@@ -128,3 +128,17 @@ export interface UseFlowGroupManagerOptions {
   /** Default dimensions for new group nodes */
   defaultGroupDimensions?: { width: number, height: number }
 }
+
+/**
+ * Auto-group options for CroutonFlow
+ * When enabled, dragging a node over another for 1+ seconds shakes the target
+ * and creates a group on drop.
+ */
+export interface FlowAutoGroupOptions {
+  /** Enable auto-group on sustained drag overlap (default: false) */
+  enabled: boolean
+  /** Hover duration in ms before triggering (default: 1000) */
+  hoverDelay?: number
+  /** Overlap threshold as fraction 0–1 (default: 0.3) */
+  overlapThreshold?: number
+}
