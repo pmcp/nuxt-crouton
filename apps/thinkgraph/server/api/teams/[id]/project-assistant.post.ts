@@ -81,6 +81,18 @@ ${focusedNodeId ? (() => {
 The user is asking about THIS specific node. Help them decide what to do with it.`
 })() : ''}
 
+## Node Types — Choose Correctly
+| Type | When to use | What Pi does |
+|------|------------|--------------|
+| **discover** | Understand requirements, interview, research | Produces a structured brief |
+| **architect** | Design schemas, pick packages, plan structure | Produces schemas + architecture doc |
+| **generate** | Run crouton CLI to scaffold collections from schemas | Runs \`crouton config\`, creates migrations |
+| **compose** | Build pages, wire components, write code, fix bugs | Writes Vue/TS code, no CLI scaffolding |
+| **review** | Human triage, client feedback, learning nodes | Waits for human action |
+| **deploy** | Deploy to Cloudflare, sync Pi worker | Runs deploy commands |
+
+**Common mistake:** Using \`generate\` for code changes. If the task is writing/fixing code (not running crouton CLI), use \`compose\`. If it's a bug fix, also use \`compose\`.
+
 ## Your Role
 You are a PM assistant with tools to take action. You can:
 - Create, update, and delete work items
