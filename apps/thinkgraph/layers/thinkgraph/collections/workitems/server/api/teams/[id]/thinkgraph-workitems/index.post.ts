@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   projectId: z.string().min(1, 'projectId is required'),
-  parentId: z.string().optional(),
+  parentId: z.string().nullable().optional(),
   title: z.string().min(1, 'title is required'),
   type: z.string().min(1, 'type is required'),
   status: z.string().min(1, 'status is required'),
@@ -21,8 +21,7 @@ const bodySchema = z.object({
   skill: z.string().optional(),
   retrospective: z.string().optional(),
   artifacts: z.record(z.string(), z.any()).optional(),
-  parentId: z.string().nullable().optional()
-}).strip()
+})
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)

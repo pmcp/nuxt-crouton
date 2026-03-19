@@ -28,7 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const thinkgraphWorkItemSchema = z.object({
   projectId: z.string().min(1, 'projectId is required'),
-  parentId: z.string().optional(),
+  parentId: z.string().nullable().optional(),
   title: z.string().min(1, 'title is required'),
   type: z.string().min(1, 'type is required'),
   status: z.string().min(1, 'status is required'),
@@ -41,8 +41,7 @@ export const thinkgraphWorkItemSchema = z.object({
   deployUrl: z.string().optional(),
   skill: z.string().optional(),
   retrospective: z.string().optional(),
-  artifacts: z.record(z.string(), z.any()).optional(),
-  parentId: z.string().nullable().optional()
+  artifacts: z.record(z.string(), z.any()).optional()
 })
 
 export const thinkgraphWorkItemsColumns = [
@@ -85,7 +84,6 @@ const _thinkgraphWorkItemsConfig = {
     skill: '',
     retrospective: '',
     artifacts: {},
-    parentId: null
   },
   columns: thinkgraphWorkItemsColumns,
   hierarchy: {
