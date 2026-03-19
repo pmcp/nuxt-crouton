@@ -100,6 +100,23 @@ export class AgentSessionManager {
     await ws.connect()
     ws.sendStatus('thinking')
 
+    // Register early so updateNodeStatus can find collectionPath and teamId
+    const earlySession: ActiveSession = {
+      nodeId: payload.nodeId,
+      ws,
+      session: null,
+      abort: async () => {},
+      mode,
+      promptQueue: [],
+      isProcessing: false,
+      messageCounter: 0,
+      callbackUrl: payload.callbackUrl,
+      accumulatedOutput: [],
+      collectionPath: payload.collectionPath || 'thinkgraph-nodes',
+      teamId: payload.teamId || this.config.teamId,
+    }
+    this.activeSessions.set(payload.nodeId, earlySession)
+
     // Update node status to 'working' via HTTP API
     await this.updateNodeStatus(payload.nodeId, 'working')
 
@@ -123,22 +140,10 @@ export class AgentSessionManager {
         customTools: tools,
       })
 
-      // Track active session
-      const activeSession: ActiveSession = {
-        nodeId: payload.nodeId,
-        ws,
-        session,
-        abort: () => session.abort(),
-        mode,
-        promptQueue: [],
-        isProcessing: false,
-        messageCounter: 0,
-        callbackUrl: payload.callbackUrl,
-        accumulatedOutput: [],
-        collectionPath: payload.collectionPath || 'thinkgraph-nodes',
-        teamId: payload.teamId || this.config.teamId,
-      }
-      this.activeSessions.set(payload.nodeId, activeSession)
+      // Update the early session entry with the real agent session
+      const activeSession = this.activeSessions.get(payload.nodeId)!
+      activeSession.session = session
+      activeSession.abort = () => session.abort()
 
       // Subscribe to session events
       session.subscribe((event: any) => {
