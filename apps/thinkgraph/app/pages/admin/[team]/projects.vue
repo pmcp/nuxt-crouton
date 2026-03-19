@@ -1,10 +1,37 @@
 <script setup lang="ts">
+import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
+
 definePageMeta({ layout: 'admin' })
 
 const { teamId } = useTeamContext()
 
 const { items: projects, pending: loading, refresh } = await useCollectionQuery('thinkgraphProjects')
 const { create } = useCollectionMutation('thinkgraphProjects')
+
+// Fetch all work items for status counts
+const { data: workItems } = await useFetch<ThinkgraphWorkItem[]>(
+  () => `/api/teams/${teamId.value}/thinkgraph-workitems`,
+)
+
+// Group status counts by projectId
+const statusCountsByProject = computed(() => {
+  const map: Record<string, Record<string, number>> = {}
+  for (const item of workItems.value || []) {
+    if (!item.projectId) continue
+    if (!map[item.projectId]) map[item.projectId] = {}
+    map[item.projectId][item.status] = (map[item.projectId][item.status] || 0) + 1
+  }
+  return map
+})
+
+const STATUS_PILL: Record<string, string> = {
+  active: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+  waiting: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  blocked: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+}
+
+const STATUS_ORDER = ['active', 'waiting', 'blocked', 'done'] as const
 
 const isCreateOpen = ref(false)
 const createForm = reactive({ name: '', clientName: '', appId: '', description: '' })
@@ -106,6 +133,19 @@ const statusStyle = (status: string) => {
           <span v-if="project.deployUrl" class="inline-flex items-center gap-1">
             <UIcon name="i-lucide-globe" class="size-3" />
             live
+          </span>
+        </div>
+
+        <!-- Work item status counts -->
+        <div v-if="statusCountsByProject[project.id]" class="flex items-center gap-1 mt-3">
+          <span
+            v-for="status in STATUS_ORDER"
+            :key="status"
+            v-show="statusCountsByProject[project.id]?.[status]"
+            class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+            :class="STATUS_PILL[status]"
+          >
+            {{ statusCountsByProject[project.id]?.[status] }} {{ status }}
           </span>
         </div>
       </NuxtLink>
