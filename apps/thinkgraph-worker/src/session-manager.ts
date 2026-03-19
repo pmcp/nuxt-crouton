@@ -736,7 +736,7 @@ Before doing any work, set up an isolated git worktree:
 
 \`\`\`bash
 cd ~/nuxt-crouton
-git fetch origin main
+git pull origin main
 git worktree add /tmp/thinkgraph/${payload.nodeId} -b ${branchName} origin/main
 cd /tmp/thinkgraph/${payload.nodeId}
 \`\`\`
