@@ -555,22 +555,138 @@ Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken to
 `
   }
 
+  /**
+   * Detect whether ancestor context contains a substantive brief or output.
+   * Looks for non-current entries in the context chain that have content beyond just a title.
+   */
+  private hasParentBrief(payload: DispatchPayload): boolean {
+    if (!payload.context) return false
+    // Context chain format: numbered entries like "1. **Title** (type, status)\n   content"
+    // Current node is marked with "→ [CURRENT]"
+    // If there are ancestor entries with real content (not just titles), parent has a brief
+    const lines = payload.context.split('\n')
+    let hasAncestorContent = false
+    for (const line of lines) {
+      // Skip the current node and its content
+      if (line.includes('→ [CURRENT]')) break
+      // Check for numbered entries with content that looks like a brief/output (multi-word content lines)
+      if (/^\d+\.\s+\*\*/.test(line.trim())) {
+        // This is an ancestor entry header — check if context has substantive content
+        continue
+      }
+      // Content lines under ancestor entries (indented with 3 spaces)
+      if (/^\s{3}\S/.test(line) && line.trim().length > 50) {
+        hasAncestorContent = true
+        break
+      }
+    }
+    return hasAncestorContent
+  }
+
   private discoverInstructions(payload: DispatchPayload): string {
-    return `## Instructions — Discovery
+    if (this.hasParentBrief(payload)) {
+      return this.discoverValidationMode(payload)
+    }
+    return this.discoverQuestionnaireMode(payload)
+  }
 
-Your job is to understand what the client needs and produce a structured brief.
+  /**
+   * Mode A: Fresh discovery — no parent context exists.
+   * Uses a structured questionnaire template to gather requirements.
+   */
+  private discoverQuestionnaireMode(_payload: DispatchPayload): string {
+    return `## Instructions — Discovery (Questionnaire Mode)
 
-1. Read the context and brief carefully
-2. Analyze what the client is asking for — features, user types, workflows
-3. Produce a structured discovery brief that includes:
-   - **App purpose**: What the app does in one sentence
-   - **User types**: Who uses it and their roles
-   - **Core features**: Bulleted list of must-have functionality
-   - **Data model sketch**: What collections/entities are needed (e.g., bookings, members, schedules)
-   - **Integrations**: Any external services needed (payments, email, etc.)
-   - **Open questions**: Things that need client clarification
+No parent context was found, so your job is to build a comprehensive brief from scratch.
 
-Keep it practical and specific. This brief feeds directly into the architect phase.`
+1. Read the work item title and any brief carefully
+2. Based on what's described, produce a **structured discovery brief** using this template:
+
+### Discovery Brief Template
+
+**1. App Purpose**
+- What does this app do? (one sentence)
+- What problem does it solve?
+
+**2. Users & Roles**
+- Who are the primary users? (e.g., admin, member, guest)
+- How many concurrent users are expected? (rough estimate: <10, 10-100, 100-1000, 1000+)
+- What authentication method? (email/password, social login, SSO, none)
+
+**3. Core Features** (must-have for v1)
+- List each feature as a bullet with a one-line description
+- Prioritize: what's the MVP vs nice-to-have?
+
+**4. Data Model Sketch**
+- What collections/entities are needed? (e.g., bookings, members, schedules)
+- Key relationships between entities
+- Any tree/hierarchical structures?
+
+**5. Integrations**
+- External services needed (payments, email, SMS, maps, etc.)
+- Third-party APIs to connect with
+- Import/export requirements
+
+**6. Technical Constraints**
+- Budget tier: hobby / startup / enterprise
+- Timeline: days / weeks / months
+- Hosting preferences (Cloudflare, Vercel, self-hosted)
+- Offline/mobile requirements
+
+**7. Content & Media**
+- Rich text editing needed?
+- File uploads / asset management?
+- Multi-language / i18n requirements?
+
+**8. Open Questions**
+- List anything ambiguous that needs client clarification
+- Flag assumptions you've made
+
+Fill in as much as you can infer from the work item description. For anything you cannot determine, note it explicitly in Open Questions. Be specific and practical — this brief feeds directly into the architect phase.`
+  }
+
+  /**
+   * Mode B: Validation mode — parent context already contains a brief.
+   * Verify assumptions, flag gaps, and refine the existing brief.
+   */
+  private discoverValidationMode(_payload: DispatchPayload): string {
+    return `## Instructions — Discovery (Validation Mode)
+
+Parent context already contains a brief or discovery output. Your job is to **validate and refine**, not start from scratch.
+
+1. Read the ancestor context chain carefully — it contains prior discovery work
+2. Perform these validation steps:
+
+### Step 1: Verify Assumptions
+- List every assumption made in the parent brief
+- For each, mark as: ✅ confirmed, ⚠️ needs clarification, or ❌ contradicted by new context
+- Pay special attention to scope assumptions (what's in/out of v1)
+
+### Step 2: Gap Analysis
+Check the parent brief against this checklist and flag anything missing:
+- [ ] User roles and permissions clearly defined
+- [ ] Data model entities and relationships identified
+- [ ] Core vs nice-to-have features separated
+- [ ] Integration points specified (payments, auth, email, etc.)
+- [ ] Technical constraints noted (budget, timeline, hosting)
+- [ ] Content requirements clear (rich text, assets, i18n)
+- [ ] User count / scale expectations set
+- [ ] Authentication method decided
+
+### Step 3: Conflict Detection
+- Does the current work item's brief contradict anything in the parent?
+- Are there scope creep signals (features that don't align with stated purpose)?
+- Are there unstated dependencies between features?
+
+### Step 4: Refined Brief
+Produce an updated brief that:
+- Incorporates the parent's work (don't repeat — reference and build on it)
+- Resolves any contradictions found
+- Fills gaps identified in Step 2
+- Clearly marks what's new vs what's carried forward
+- Lists remaining open questions that truly need human input
+
+Keep it practical and specific. This refined brief feeds directly into the architect phase.`
   }
 
   private architectInstructions(payload: DispatchPayload): string {
