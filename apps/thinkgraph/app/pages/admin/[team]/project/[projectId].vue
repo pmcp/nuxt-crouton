@@ -384,6 +384,25 @@ const TYPE_BADGE: Record<string, string> = {
   deploy: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 }
 
+// ─── Kanban config ───
+const kanbanColumns = [
+  { value: 'queued', label: 'Queued', color: 'neutral', icon: 'i-lucide-circle-dashed' },
+  { value: 'active', label: 'Active', color: 'primary', icon: 'i-lucide-loader-2' },
+  { value: 'waiting', label: 'Waiting', color: 'warning', icon: 'i-lucide-pause-circle' },
+  { value: 'done', label: 'Done', color: 'success', icon: 'i-lucide-check-circle' },
+  { value: 'blocked', label: 'Blocked', color: 'error', icon: 'i-lucide-alert-circle' },
+]
+
+async function onKanbanMove(payload: { id: string; newValue: string | null; newOrder: number }) {
+  if (!payload.newValue) return
+  await updateItem(payload.id, { status: payload.newValue })
+}
+
+function onKanbanSelect(item: any) {
+  selectedItemId.value = item.id
+  showDetail.value = true
+}
+
 // ─── New item dropdown ───
 const newItemOptions = computed(() => [
   WORK_TYPES.map(t => ({
@@ -394,7 +413,7 @@ const newItemOptions = computed(() => [
 ])
 
 // ─── View mode ───
-const viewMode = ref<'canvas' | 'list'>('canvas')
+const viewMode = ref<'canvas' | 'list' | 'kanban'>('canvas')
 const showAssistant = ref(false)
 
 // ─── Filtered/sorted items for list view ───
@@ -538,7 +557,7 @@ function handleKeydown(e: KeyboardEvent) {
       if (selectedItemId.value) openTerminal(selectedItemId.value)
       break
     case 'v': case 'V':
-      viewMode.value = viewMode.value === 'canvas' ? 'list' : 'canvas'
+      viewMode.value = viewMode.value === 'canvas' ? 'kanban' : viewMode.value === 'kanban' ? 'list' : 'canvas'
       break
     case 'a': case 'A':
       showAssistant.value = !showAssistant.value
@@ -589,6 +608,13 @@ if (import.meta.client) {
             @click="viewMode = 'canvas'"
           >
             <UIcon name="i-lucide-git-branch" class="size-3.5" />
+          </button>
+          <button
+            class="px-2 py-1 text-xs transition-colors"
+            :class="viewMode === 'kanban' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : 'text-muted hover:text-default'"
+            @click="viewMode = 'kanban'"
+          >
+            <UIcon name="i-lucide-columns-3" class="size-3.5" />
           </button>
           <button
             class="px-2 py-1 text-xs transition-colors"
@@ -676,6 +702,19 @@ if (import.meta.client) {
             {{ t.label }}
           </button>
         </div>
+      </div>
+
+      <!-- Kanban view -->
+      <div v-else-if="viewMode === 'kanban'" class="flex-1 overflow-hidden">
+        <CroutonKanban
+          :rows="items"
+          collection="thinkgraphWorkItems"
+          group-field="status"
+          :columns="kanbanColumns"
+          :show-counts="true"
+          @move="onKanbanMove"
+          @select="onKanbanSelect"
+        />
       </div>
 
       <!-- List / triage view -->
