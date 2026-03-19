@@ -36,9 +36,9 @@ export default defineAppConfig({
       icon: 'i-lucide-brain-circuit',
       adminRoutes: [
         {
-          path: '/graphs',
-          label: 'ThinkGraph',
-          icon: 'i-lucide-brain-circuit'
+          path: '/projects',
+          label: 'Projects',
+          icon: 'i-lucide-folder-kanban'
         },
         {
           path: '/canvases',

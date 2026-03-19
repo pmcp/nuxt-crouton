@@ -4,8 +4,9 @@ import ThinkgraphWorkitemsNodeComponent from '~/components/ThinkgraphWorkitemsNo
 
 // Explicitly register so CroutonFlow's resolveComponent() can find it
 const app = useNuxtApp().vueApp
-if (!app.component('ThinkgraphWorkitemsNode')) {
-  app.component('ThinkgraphWorkitemsNode', ThinkgraphWorkitemsNodeComponent)
+// CroutonFlow resolves collection "workItems" → PascalCase "WorkItemsNode"
+if (!app.component('WorkItemsNode')) {
+  app.component('WorkItemsNode', ThinkgraphWorkitemsNodeComponent)
 }
 definePageMeta({ layout: 'admin' })
 
@@ -262,6 +263,15 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
   switch (e.key) {
     case 'n': case 'N': showCreate.value = true; break
+    case 'Backspace': case 'Delete':
+      if (selectedItemId.value && !showCreate.value) {
+        e.preventDefault()
+        deleteItem(selectedItemId.value)
+      }
+      break
+    case 'd': case 'D':
+      if (selectedItemId.value) updateItem(selectedItemId.value, { status: 'done' })
+      break
     case 'Escape':
       if (showDetail.value) closeDetail()
       else if (showCreate.value) showCreate.value = false
@@ -274,7 +284,7 @@ if (import.meta.client) {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-full w-full flex flex-col flex-1 min-w-0">
     <!-- Top bar -->
     <div class="flex items-center justify-between px-4 py-2 border-b border-default bg-default/80 backdrop-blur-sm shrink-0">
       <div class="flex items-center gap-3">
@@ -352,7 +362,7 @@ if (import.meta.client) {
             <UFormField label="Type">
               <USelectMenu
                 :model-value="selectedItem.type"
-                :items="WORK_TYPES.map(t => ({ label: t.label, value: t.value }))"
+                :items="WORK_TYPES.map(t => t.value)"
                 class="w-full"
                 @update:model-value="(v: string) => updateItem(selectedItem!.id, { type: v })"
               />
@@ -360,7 +370,7 @@ if (import.meta.client) {
             <UFormField label="Status">
               <USelectMenu
                 :model-value="selectedItem.status"
-                :items="['queued', 'active', 'waiting', 'done', 'blocked'].map(s => ({ label: s, value: s }))"
+                :items="['queued', 'active', 'waiting', 'done', 'blocked']"
                 class="w-full"
                 @update:model-value="(v: string) => updateItem(selectedItem!.id, { status: v })"
               />
@@ -371,7 +381,7 @@ if (import.meta.client) {
           <UFormField label="Assignee" class="mb-4">
             <USelectMenu
               :model-value="selectedItem.assignee || 'pi'"
-              :items="ASSIGNEES.map(a => ({ label: a.label, value: a.value }))"
+              :items="ASSIGNEES.map(a => a.value)"
               class="w-full"
               @update:model-value="(v: string) => updateItem(selectedItem!.id, { assignee: v })"
             />
@@ -468,14 +478,14 @@ if (import.meta.client) {
               <UFormField label="Type">
                 <USelectMenu
                   v-model="createType"
-                  :items="WORK_TYPES.map(t => ({ label: t.label, value: t.value }))"
+                  :items="WORK_TYPES.map(t => t.value)"
                   class="w-full"
                 />
               </UFormField>
               <UFormField label="Assignee">
                 <USelectMenu
                   v-model="createAssignee"
-                  :items="ASSIGNEES.map(a => ({ label: a.label, value: a.value }))"
+                  :items="ASSIGNEES.map(a => a.value)"
                   class="w-full"
                 />
               </UFormField>
