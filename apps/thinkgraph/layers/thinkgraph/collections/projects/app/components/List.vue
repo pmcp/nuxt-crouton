@@ -9,7 +9,7 @@
   - Collection name: thinkgraphProjects
   - API endpoint: /api/teams/[id]/thinkgraph-projects
   - Columns composable: useThinkgraphProjects()
-  - Column fields: name, appId, repoUrl, deployUrl, status, clientName, description
+  - Column fields: name, appId, repoUrl, deployUrl, status, clientName, description, shareToken
 
   ## Common Modifications
   - Add column: Update columns array in composable

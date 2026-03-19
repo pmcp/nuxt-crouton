@@ -34,5 +34,6 @@ export const thinkgraphProjects = sqliteTable('thinkgraph_projects', {
   deployUrl: text('deployUrl'),
   status: text('status').notNull(),
   clientName: text('clientName'),
-  description: text('description')
+  description: text('description'),
+  shareToken: text('shareToken')
 })

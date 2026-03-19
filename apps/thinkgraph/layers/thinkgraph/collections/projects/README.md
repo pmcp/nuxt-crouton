@@ -49,6 +49,7 @@ collections/projects/
 | status | string | Yes |
 | clientName | string | No |
 | description | text | No |
+| shareToken | string | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |
 | createdBy | string | Auto |

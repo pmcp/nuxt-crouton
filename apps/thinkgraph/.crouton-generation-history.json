@@ -1,5 +1,39 @@
 [
   {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description",
+      "shareToken"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T16:57:29.818Z",
+    "layer": "thinkgraph",
+    "gitSha": "92e35b02"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description",
+      "shareToken"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T16:57:13.456Z",
+    "layer": "thinkgraph",
+    "gitSha": "92e35b02"
+  },
+  {
     "collection": "injectrequests",
     "fields": [
       "nodeId",

@@ -9,7 +9,7 @@
  * - Form data type: ThinkgraphProjectFormData
  * - New item type: NewThinkgraphProject
  * - Form props: ThinkgraphProjectFormProps
- * - Fields: name, appId, repoUrl, deployUrl, status, clientName, description
+ * - Fields: name, appId, repoUrl, deployUrl, status, clientName, description, shareToken
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -34,6 +34,7 @@ export interface ThinkgraphProject {
   status: string
   clientName?: string
   description?: string
+  shareToken?: string
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
 }

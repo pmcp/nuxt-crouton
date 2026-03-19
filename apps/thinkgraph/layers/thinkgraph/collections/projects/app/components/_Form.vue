@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/thinkgraph-projects
   - Zod schema: useThinkgraphProjects() composable
-  - Fields: name, appId, repoUrl, deployUrl, status, clientName, description
+  - Fields: name, appId, repoUrl, deployUrl, status, clientName, description, shareToken
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -64,6 +64,9 @@
         </UFormField>
         <UFormField label="Status" name="status" class="not-last:pb-4">
           <UInput v-model="state.status" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField label="ShareToken" name="shareToken" class="not-last:pb-4">
+          <UInput v-model="state.shareToken" class="w-full" size="xl" />
         </UFormField>
       </div>
 

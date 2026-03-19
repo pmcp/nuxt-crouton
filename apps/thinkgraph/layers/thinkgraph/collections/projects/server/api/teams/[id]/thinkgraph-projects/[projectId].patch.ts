@@ -11,7 +11,8 @@ const bodySchema = z.object({
   deployUrl: z.string().optional(),
   status: z.string().min(1, 'status is required'),
   clientName: z.string().optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
+  shareToken: z.string().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
@@ -28,16 +29,16 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
+  // Only include fields that were actually sent in the request
+  const updates: Record<string, any> = {}
+  for (const [key, value] of Object.entries(body)) {
+    if (value !== undefined) {
+      updates[key] = value
+    }
+  }
+
   const dbTimer = timing.start('db')
-  const result = await updateThinkgraphProject(projectId, team.id, user.id, {
-    name: body.name,
-    appId: body.appId,
-    repoUrl: body.repoUrl,
-    deployUrl: body.deployUrl,
-    status: body.status,
-    clientName: body.clientName,
-    description: body.description
-  }, { role: membership.role })
+  const result = await updateThinkgraphProject(projectId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })

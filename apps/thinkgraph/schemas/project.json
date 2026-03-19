@@ -65,5 +65,14 @@
       "area": "main",
       "group": "details"
     }
+  },
+  "shareToken": {
+    "type": "string",
+    "meta": {
+      "label": "Share Token",
+      "description": "Auto-generated token for public share link",
+      "area": "sidebar",
+      "group": "config"
+    }
   }
 }

@@ -631,18 +631,19 @@ export default {
 21. ✅ Fix output format — only keep final complete text, not progressive deltas
 22. ✅ Suppress `pi-extension` old tool errors — PM dispatches use dedicated PM tools (`update_workitem`, `get_workitem`) instead of legacy thinking graph tools
 23. ✅ Auto-advance — when a node completes, webhook auto-sets next queued child to active
-24. PR creation — optionally create a GitHub PR from the work item branch
+24. ✅ PR creation — `create_pr` PM tool added to pm-tools.ts, runs `gh pr create` and updates work item artifacts
 25. ✅ Retrospective field — agents write lessons learned after each task, visible on node cards and detail panel
 26. ✅ Output capture fix — PM dispatches use tool-written output (not streaming deltas), callback only sends status
+27. ✅ Fix `get_workitem` 404 — tool was hitting non-existent single-item GET endpoint, now uses `?ids=` on list endpoint
 
-### Phase 3: Client View
+### Phase 3: Client View ✅
 
 **Goal:** Shareable project view with feedback.
 
-13. Share token generation (on project model)
-14. Public project view page (`/project/[shareToken]`)
-15. `ClientFeedback.vue` — form that creates review nodes with client feedback
-16. Live preview embed (iframe of deployed app URL)
+13. ✅ Share token generation — `shareToken` field on project model, Share button on canvas copies link
+14. ✅ Public project view page (`/project/[shareToken]`) — read-only tree view, progress bar, no auth
+15. ✅ `ClientFeedback.vue` — feedback form creates `review` work items with `assignee: human`
+16. ✅ Live preview embed — iframe toggle when project has `deployUrl`, browser chrome styling
 
 ### Phase 4: Additional Providers
 

@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ThinkgraphProject, NewThinkgraphProject } from '../../types'
@@ -23,7 +23,6 @@ export async function getAllThinkgraphProjects(teamId: string) {
     .from(tables.thinkgraphProjects)
     .leftJoin(ownerUser, eq(tables.thinkgraphProjects.owner, ownerUser.id))
     .where(eq(tables.thinkgraphProjects.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphProjects.order))
 
   return projects
 }
@@ -51,7 +50,6 @@ export async function getThinkgraphProjectsByIds(teamId: string, projectIds: str
         inArray(tables.thinkgraphProjects.id, projectIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphProjects.order))
 
   return projects
 }
@@ -89,7 +87,6 @@ export async function updateThinkgraphProject(
     .update(tables.thinkgraphProjects)
     .set({
       ...updates,
-      // updatedBy: userId  // No metadata columns
     })
     .where(and(...conditions))
     .returning()

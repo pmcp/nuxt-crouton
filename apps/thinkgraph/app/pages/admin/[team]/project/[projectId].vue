@@ -254,6 +254,34 @@ if (import.meta.client) {
 }
 
 // ─── Dispatch ───
+// ─── Share link ───
+const shareLoading = ref(false)
+
+async function generateShareLink() {
+  if (!project.value || !teamId.value) return
+  shareLoading.value = true
+  try {
+    let token = project.value.shareToken
+    if (!token) {
+      // Generate a new share token
+      token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-projects/${projectId.value}`, {
+        method: 'PATCH',
+        body: { shareToken: token },
+      })
+      await refreshProject()
+    }
+    const url = `${window.location.origin}/project/${token}`
+    await navigator.clipboard.writeText(url)
+    toast.add({ title: 'Share link copied!', description: url, color: 'success' })
+  } catch (err: any) {
+    toast.add({ title: 'Failed to generate share link', description: err.message, color: 'error' })
+  } finally {
+    shareLoading.value = false
+  }
+}
+
+// ─── Dispatch ───
 const { dispatch: dispatchWork, dispatching } = useWorkDispatch()
 
 async function openDispatch(id: string) {
@@ -369,6 +397,15 @@ if (import.meta.client) {
           </span>
         </div>
 
+        <UButton
+          icon="i-lucide-share-2"
+          size="sm"
+          label="Share"
+          variant="soft"
+          color="neutral"
+          :loading="shareLoading"
+          @click="generateShareLink"
+        />
         <UDropdownMenu :items="newItemOptions">
           <UButton icon="i-lucide-plus" size="sm" label="New" variant="soft" />
         </UDropdownMenu>

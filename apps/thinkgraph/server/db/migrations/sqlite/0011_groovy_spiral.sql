@@ -1,0 +1,1 @@
+ALTER TABLE `thinkgraph_projects` ADD `shareToken` text;

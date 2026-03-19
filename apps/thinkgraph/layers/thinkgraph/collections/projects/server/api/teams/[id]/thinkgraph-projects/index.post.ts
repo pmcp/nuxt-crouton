@@ -11,7 +11,8 @@ const bodySchema = z.object({
   deployUrl: z.string().optional(),
   status: z.string().min(1, 'status is required'),
   clientName: z.string().optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
+  shareToken: z.string().optional()
 }).strip()
 
 export default defineEventHandler(async (event) => {
@@ -31,8 +32,6 @@ export default defineEventHandler(async (event) => {
     ...dataWithoutId,
     teamId: team.id,
     owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
   })
   dbTimer.end()
   return result

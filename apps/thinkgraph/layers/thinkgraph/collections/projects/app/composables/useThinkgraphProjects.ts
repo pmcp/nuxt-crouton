@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/thinkgraph-projects
  * - Form component: ThinkgraphProjectsForm
  * - List component: ThinkgraphProjectsList
- * - Fields: name, appId, repoUrl, deployUrl, status, clientName, description
+ * - Fields: name, appId, repoUrl, deployUrl, status, clientName, description, shareToken
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -33,7 +33,8 @@ export const thinkgraphProjectSchema = z.object({
   deployUrl: z.string().optional(),
   status: z.string().min(1, 'status is required'),
   clientName: z.string().optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
+  shareToken: z.string().optional()
 })
 
 export const thinkgraphProjectsColumns = [
@@ -43,7 +44,8 @@ export const thinkgraphProjectsColumns = [
   { accessorKey: 'deployUrl', header: 'DeployUrl' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'clientName', header: 'ClientName' },
-  { accessorKey: 'description', header: 'Description' }
+  { accessorKey: 'description', header: 'Description' },
+  { accessorKey: 'shareToken', header: 'ShareToken' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -59,7 +61,8 @@ const _thinkgraphProjectsConfig = {
     deployUrl: '',
     status: '',
     clientName: '',
-    description: ''
+    description: '',
+    shareToken: ''
   },
   columns: thinkgraphProjectsColumns,
   fields: [
@@ -105,6 +108,12 @@ const _thinkgraphProjectsConfig = {
           "type": "text",
           "label": "Description",
           "area": "main"
+      },
+      {
+          "name": "shareToken",
+          "type": "string",
+          "label": "Share Token",
+          "area": "sidebar"
       }
   ],
 }
