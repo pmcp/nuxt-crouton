@@ -8,6 +8,8 @@
 import { Type } from '@sinclair/typebox'
 import { ofetch } from 'ofetch'
 import { execFileSync } from 'node:child_process'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type { ToolDefinition, AgentToolResult } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
 
@@ -202,6 +204,81 @@ export function createPMTools(
           return textResult(JSON.stringify({ ok: true, prUrl, workItemId }))
         } catch (err: any) {
           console.error(`[pm-tools] create_pr failed:`, err.message)
+          return textResult(JSON.stringify({ ok: false, error: err.message }))
+        }
+      },
+    },
+    {
+      name: 'take_screenshot',
+      label: 'Take Screenshot',
+      description: 'Take a screenshot of a web page using Playwright. Returns the image so you can visually inspect UI components, verify layouts, or check deployed previews. Requires Playwright to be installed on the machine.',
+      parameters: Type.Object({
+        url: Type.String({ description: 'URL to screenshot (e.g., http://localhost:3000 or a deployed preview URL)' }),
+        selector: Type.Optional(Type.String({ description: 'CSS selector to screenshot a specific element instead of the full viewport' })),
+        fullPage: Type.Optional(Type.Boolean({ description: 'Capture the full scrollable page instead of just the viewport. Defaults to false.' })),
+        width: Type.Optional(Type.Number({ description: 'Viewport width in pixels. Defaults to 1280.' })),
+        height: Type.Optional(Type.Number({ description: 'Viewport height in pixels. Defaults to 800.' })),
+        delay: Type.Optional(Type.Number({ description: 'Milliseconds to wait after page load before capturing. Defaults to 0.' })),
+      }),
+      execute: async (_toolCallId, params) => {
+        try {
+          // Dynamic import so Playwright is only loaded when this tool is used
+          const { chromium } = await import('playwright')
+
+          const browser = await chromium.launch({ headless: true })
+          try {
+            const context = await browser.newContext({
+              viewport: {
+                width: params.width || 1280,
+                height: params.height || 800,
+              },
+            })
+            const page = await context.newPage()
+
+            await page.goto(params.url, { waitUntil: 'networkidle', timeout: 30_000 })
+
+            if (params.delay && params.delay > 0) {
+              await page.waitForTimeout(params.delay)
+            }
+
+            let screenshotBuffer: Buffer
+
+            if (params.selector) {
+              const element = await page.waitForSelector(params.selector, { timeout: 10_000 })
+              if (!element) {
+                return textResult(JSON.stringify({ ok: false, error: `Selector "${params.selector}" not found on page` }))
+              }
+              screenshotBuffer = await element.screenshot({ type: 'png' })
+            } else {
+              screenshotBuffer = await page.screenshot({
+                type: 'png',
+                fullPage: params.fullPage || false,
+              })
+            }
+
+            // Also save to disk for artifact attachment
+            const screenshotDir = '/tmp/thinkgraph-screenshots'
+            mkdirSync(screenshotDir, { recursive: true })
+            const timestamp = Date.now()
+            const filePath = join(screenshotDir, `screenshot-${workItemId}-${timestamp}.png`)
+            writeFileSync(filePath, screenshotBuffer)
+
+            const base64Data = screenshotBuffer.toString('base64')
+
+            console.log(`[pm-tools] Screenshot captured: ${params.url} → ${filePath} (${Math.round(screenshotBuffer.length / 1024)}KB)`)
+
+            return {
+              content: [
+                { type: 'image' as const, data: base64Data, mimeType: 'image/png' },
+                { type: 'text' as const, text: JSON.stringify({ ok: true, url: params.url, filePath, sizeKB: Math.round(screenshotBuffer.length / 1024), selector: params.selector || null, fullPage: params.fullPage || false }) },
+              ],
+              details: undefined,
+            }
+          } finally {
+            await browser.close()
+          }
+        } catch (err: any) {
+          console.error(`[pm-tools] take_screenshot failed:`, err.message)
           return textResult(JSON.stringify({ ok: false, error: err.message }))
         }
       },
