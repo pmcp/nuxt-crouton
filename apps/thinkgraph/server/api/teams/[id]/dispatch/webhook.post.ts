@@ -1,4 +1,4 @@
-import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems, getThinkgraphWorkItemsByIds } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -47,9 +47,13 @@ export default defineEventHandler(async (event) => {
     updates.output = output
   }
 
-  // Merge artifacts (keep existing non-handoff artifacts, add new ones)
+  // Merge new artifacts with existing ones (don't replace)
   if (artifacts) {
-    updates.artifacts = Array.isArray(artifacts) ? artifacts : [artifacts]
+    const newArtifacts = Array.isArray(artifacts) ? artifacts : [artifacts]
+    // Fetch existing artifacts to merge
+    const [existing] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+    const existingArtifacts = Array.isArray(existing?.artifacts) ? existing.artifacts : []
+    updates.artifacts = [...existingArtifacts, ...newArtifacts]
   }
 
   // Set error info in output if failed
