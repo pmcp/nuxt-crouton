@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
+import type { Ref } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 
 /**
@@ -37,6 +38,12 @@ const { t } = useI18n()
 const { open } = useCrouton()
 const isHovered = ref(false)
 
+// Lock state — injected from parent CroutonFlow
+const lockedIds = inject<Ref<Set<string>>>('croutonFlowLockedIds', ref(new Set()))
+const unlockNode = inject<(id: string) => void>('croutonFlowUnlockNode', () => {})
+
+const isLocked = computed(() => lockedIds.value.has(nodeId.value))
+
 const nodeId = computed(() => String(props.data?.id || ''))
 
 function handleEdit(event: Event) {
@@ -50,6 +57,13 @@ function handleDelete(event: Event) {
   event.stopPropagation()
   if (props.collection && nodeId.value) {
     open('delete', props.collection, [nodeId.value])
+  }
+}
+
+function handleUnlock(event: Event) {
+  event.stopPropagation()
+  if (nodeId.value) {
+    unlockNode(nodeId.value)
   }
 }
 
@@ -92,11 +106,55 @@ const subtitle = computed(() => {
       class="crouton-flow-handle"
     />
 
+    <!-- Lock indicator (always visible when locked) -->
+    <div
+      v-if="isLocked"
+      class="crouton-flow-node__lock"
+      :title="$t('flow.node.locked', 'Position locked')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+    </div>
+
     <!-- Action buttons (show on hover) -->
     <div
       v-if="collection && isHovered"
       class="crouton-flow-node__actions"
     >
+      <!-- Unlock button (only shown for locked nodes) -->
+      <button
+        v-if="isLocked"
+        class="crouton-flow-node__action crouton-flow-node__action--unlock"
+        :title="$t('flow.node.unlock', 'Unlock position')"
+        @click="handleUnlock"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+        </svg>
+      </button>
       <button
         class="crouton-flow-node__action crouton-flow-node__action--edit"
         :title="$t('flow.node.edit')"
@@ -214,6 +272,18 @@ const subtitle = computed(() => {
 .crouton-flow-node__action--delete {
   @apply text-red-600 dark:text-red-400;
   @apply hover:bg-red-50 dark:hover:bg-red-900/30;
+}
+
+.crouton-flow-node__action--unlock {
+  @apply text-amber-600 dark:text-amber-400;
+  @apply hover:bg-amber-50 dark:hover:bg-amber-900/30;
+}
+
+.crouton-flow-node__lock {
+  @apply absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full flex items-center justify-center;
+  @apply bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400;
+  @apply border border-amber-300 dark:border-amber-700;
+  @apply z-10 pointer-events-none;
 }
 
 .crouton-flow-node__content {
