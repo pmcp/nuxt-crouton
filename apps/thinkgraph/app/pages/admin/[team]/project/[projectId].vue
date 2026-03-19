@@ -204,13 +204,34 @@ async function deleteItem(id: string) {
   if (!teamId.value) return
   const children = items.value.filter(n => n.parentId === id)
   if (children.length > 0) {
-    toast.add({ title: 'Cannot delete item with children', color: 'warning' })
+    toast.add({ title: 'Cannot delete — has children. Delete children first.', color: 'warning' })
     return
   }
-  await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
-    method: 'DELETE',
-  })
-  if (selectedItemId.value === id) closeDetail()
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+      method: 'DELETE',
+    })
+    if (selectedItemId.value === id) closeDetail()
+    await refreshItems()
+  } catch (err: any) {
+    toast.add({ title: 'Delete failed', description: err.message, color: 'error' })
+  }
+}
+
+async function onNodeDelete(nodeIds: string[]) {
+  if (!teamId.value) return
+  for (const id of nodeIds) {
+    const children = items.value.filter(n => n.parentId === id)
+    if (children.length > 0) {
+      toast.add({ title: `Cannot delete "${items.value.find(n => n.id === id)?.title}" — has children`, color: 'warning' })
+      continue
+    }
+    try {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+        method: 'DELETE',
+      })
+    } catch { /* skip failed deletes */ }
+  }
   await refreshItems()
 }
 
@@ -624,6 +645,7 @@ if (import.meta.client) {
           minimap
           @node-click="onNodeClick"
           @connect-end="onConnectEnd"
+          @node-delete="onNodeDelete"
         />
 
         <!-- Quick create menu (appears on drag-to-empty) -->
