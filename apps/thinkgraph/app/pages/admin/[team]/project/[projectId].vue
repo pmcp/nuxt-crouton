@@ -26,6 +26,7 @@ const { data: project, refresh: refreshProject } = await useFetch(
 // ─── Flow config ───
 const flowId = ref<string | null>(null)
 const savedPositions = ref<Record<string, { x: number; y: number }> | null>(null)
+const flowKey = ref(0) // increment to force re-render
 
 async function ensureFlowConfig() {
   if (!projectId.value || !teamId.value) return
@@ -472,6 +473,15 @@ function assistantFocusNode(nodeId: string) {
   // TODO: programmatic zoom-to-node when CroutonFlow exposes fitView/setCenter
 }
 
+async function assistantRefresh() {
+  // Reload items (may have been created/updated/deleted by assistant)
+  await refreshItems()
+  // Reload flow positions (may have been rearranged by assistant)
+  await ensureFlowConfig()
+  // Force canvas re-render with new positions
+  flowKey.value++
+}
+
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -597,6 +607,7 @@ if (import.meta.client) {
 
         <CroutonFlow
           v-else
+          :key="flowKey"
           ref="flowRef"
           :rows="items"
           collection="workItems"
@@ -708,6 +719,7 @@ if (import.meta.client) {
         @close="showAssistant = false"
         @create-item="assistantCreateItem"
         @focus-node="assistantFocusNode"
+        @refresh="assistantRefresh"
       />
     </div>
 

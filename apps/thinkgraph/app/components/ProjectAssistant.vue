@@ -9,6 +9,7 @@ const emit = defineEmits<{
   close: []
   createItem: [data: { title: string; type: string; brief: string }]
   focusNode: [nodeId: string]
+  refresh: []
 }>()
 
 const { teamId } = useTeamContext()
@@ -25,6 +26,10 @@ const {
     projectId: props.projectId,
     flowId: props.flowId,
   })),
+  onFinish: () => {
+    // Refresh parent after assistant may have taken actions (tool calls)
+    emit('refresh')
+  },
 })
 
 function onSubmit() {
