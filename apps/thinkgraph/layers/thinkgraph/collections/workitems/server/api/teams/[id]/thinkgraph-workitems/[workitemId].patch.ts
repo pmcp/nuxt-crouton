@@ -26,6 +26,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  if (Object.keys(updates).length === 0) {
+    throw createError({ status: 400, statusText: 'No valid fields to update' })
+  }
+
   const dbTimer = timing.start('db')
   const result = await updateThinkgraphWorkItem(workitemId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()

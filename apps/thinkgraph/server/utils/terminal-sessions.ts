@@ -8,7 +8,7 @@
  * Status lifecycle: thinking → working → done/error
  * Terminal output: streamed to browser clients via SSE (terminal.get.ts)
  */
-import { updateThinkgraphDecision } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 // ─── Agent Event Types (structured events from Pi coding agent) ───
 
@@ -191,17 +191,27 @@ export function broadcastToBrowsers(nodeId: string, event: TerminalEvent) {
   }
 }
 
+/** Map terminal statuses to work item statuses */
+const TERMINAL_TO_WORKITEM_STATUS: Record<string, string> = {
+  thinking: 'active',
+  working: 'active',
+  done: 'done',
+  error: 'blocked',
+  idle: 'queued',
+}
+
 /** Update node status in DB and signal collection change */
 export async function updateNodeStatus(
   nodeId: string,
   teamId: string,
   status: 'thinking' | 'working' | 'done' | 'error' | 'idle',
 ) {
+  const workItemStatus = TERMINAL_TO_WORKITEM_STATUS[status] || 'active'
   try {
-    await updateThinkgraphDecision(nodeId, teamId, 'system', { status } as any, { role: 'admin' })
-    signalCollectionChange(teamId, 'thinkgraphDecisions')
+    await updateThinkgraphWorkItem(nodeId, teamId, 'system', { status: workItemStatus } as any, { role: 'admin' })
+    signalCollectionChange(teamId, 'thinkgraphWorkItems')
   }
   catch (err) {
-    console.error(`[terminal-sessions] Failed to update node status to "${status}":`, err)
+    console.error(`[terminal-sessions] Failed to update node status to "${status}" (→ ${workItemStatus}):`, err)
   }
 }
