@@ -213,6 +213,46 @@ async function deleteItem(id: string) {
   await refreshItems()
 }
 
+// ─── Quick create on drag-to-empty ───
+const showQuickCreate = ref(false)
+const quickCreatePos = ref({ x: 0, y: 0 })
+const quickCreateParentId = ref<string | undefined>()
+
+function onConnectEnd(event: { sourceNodeId: string; position: { x: number; y: number }; mouseEvent: MouseEvent }) {
+  quickCreateParentId.value = event.sourceNodeId
+  quickCreatePos.value = { x: event.mouseEvent.clientX, y: event.mouseEvent.clientY }
+  showQuickCreate.value = true
+}
+
+async function handleQuickCreate(type: string) {
+  if (!teamId.value || !quickCreateParentId.value) return
+  showQuickCreate.value = false
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+      method: 'POST',
+      body: {
+        projectId: projectId.value,
+        title: `New ${type}`,
+        type,
+        status: 'queued',
+        assignee: type === 'review' ? 'human' : 'pi',
+        skill: ['discover', 'architect', 'generate', 'compose'].includes(type) ? type : undefined,
+        parentId: quickCreateParentId.value,
+      },
+    })
+    await refreshItems()
+  } catch (err: any) {
+    toast.add({ title: 'Failed to create', description: err.message, color: 'error' })
+  }
+}
+
+// Close quick create on click anywhere
+if (import.meta.client) {
+  useEventListener(document, 'click', () => {
+    if (showQuickCreate.value) showQuickCreate.value = false
+  })
+}
+
 // ─── Dispatch ───
 const { dispatch: dispatchWork, dispatching } = useWorkDispatch()
 
@@ -364,7 +404,26 @@ if (import.meta.client) {
         :saved-positions="savedPositions || undefined"
         minimap
         @node-click="onNodeClick"
+        @connect-end="onConnectEnd"
       />
+
+      <!-- Quick create menu (appears on drag-to-empty) -->
+      <div
+        v-if="showQuickCreate"
+        class="fixed z-50 bg-default border border-default rounded-lg shadow-lg p-2 min-w-[160px]"
+        :style="{ left: quickCreatePos.x + 'px', top: quickCreatePos.y + 'px' }"
+      >
+        <p class="text-xs text-muted px-2 py-1 mb-1">Add connected node</p>
+        <button
+          v-for="t in WORK_TYPES"
+          :key="t.value"
+          class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 cursor-pointer"
+          @click="handleQuickCreate(t.value)"
+        >
+          <UIcon :name="t.icon" class="size-4" />
+          {{ t.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Detail panel (slideover) -->
