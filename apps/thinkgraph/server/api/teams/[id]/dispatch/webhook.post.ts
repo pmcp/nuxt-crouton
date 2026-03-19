@@ -72,8 +72,9 @@ export default defineEventHandler(async (event) => {
     try {
       const allItems = await getAllThinkgraphWorkItems(teamId)
       // Find queued children of the completed item (ordered by creation)
+      // Only auto-advance pi-assigned items — human/client items wait for triage
       const queuedChildren = allItems
-        .filter((item: any) => item.parentId === workItemId && item.status === 'queued')
+        .filter((item: any) => item.parentId === workItemId && item.status === 'queued' && item.assignee === 'pi')
         .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
 
       if (queuedChildren.length > 0) {
