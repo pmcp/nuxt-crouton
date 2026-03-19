@@ -236,6 +236,12 @@ watch(messages, () => {
             >
               Status summary
             </button>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 transition-colors"
+              @click="input = 'Reset all stuck active items back to queued'; onSubmit()"
+            >
+              Reset stuck items
+            </button>
           </template>
         </div>
       </div>

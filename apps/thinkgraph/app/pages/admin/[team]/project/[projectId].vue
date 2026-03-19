@@ -697,6 +697,7 @@ if (import.meta.client) {
 
           <div v-if="selectedIds.size > 0" class="ml-auto flex items-center gap-1">
             <span class="text-xs text-muted mr-1">{{ selectedIds.size }} selected</span>
+            <UButton size="xs" variant="soft" color="warning" icon="i-lucide-rotate-ccw" label="Reset" @click="bulkUpdateStatus('queued')" />
             <UButton size="xs" variant="soft" color="green" icon="i-lucide-check" label="Done" @click="bulkUpdateStatus('done')" />
             <UButton size="xs" variant="soft" color="red" icon="i-lucide-trash-2" label="Delete" @click="bulkDelete" />
           </div>
@@ -865,13 +866,21 @@ if (import.meta.client) {
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-2 pt-4 border-t border-default">
+          <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
             <UButton
               v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked'"
               icon="i-lucide-send"
               label="Dispatch"
               :loading="dispatching"
               @click="openDispatch(selectedItem.id)"
+            />
+            <UButton
+              v-if="selectedItem.status === 'active'"
+              icon="i-lucide-rotate-ccw"
+              label="Reset to Queued"
+              variant="soft"
+              color="warning"
+              @click="updateItem(selectedItem.id, { status: 'queued' })"
             />
             <UButton
               v-if="selectedItem.status !== 'done'"
