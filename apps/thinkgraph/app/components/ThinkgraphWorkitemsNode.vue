@@ -172,7 +172,8 @@ function handleDispatch(event: Event) {
   <div
     class="work-item group"
     :class="[
-      { 'work-item--selected': selected, 'work-item--dragging': dragging },
+      `work-item--type-${item.type}`,
+      { 'work-item--selected': selected, 'work-item--dragging': dragging, 'work-item--done': isDone },
       statusConfig.class,
     ]"
     @mouseenter="isHovered = true"
@@ -180,106 +181,31 @@ function handleDispatch(event: Event) {
   >
     <Handle type="target" :position="Position.Top" class="work-handle" />
 
-    <!-- Header: type badge + status + assignee -->
-    <div class="flex items-center gap-1.5 mb-1.5">
-      <!-- Type badge -->
-      <span
-        class="text-[10px] font-medium px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5"
-        :class="typeConfig.badge"
-      >
-        <UIcon :name="typeConfig.icon" class="size-3" />
-        {{ item.type }}
-      </span>
-
-      <!-- Status icon -->
+    <!-- Header: status + assignee -->
+    <div class="flex items-center gap-1 mb-1 opacity-70">
+      <UIcon :name="typeConfig.icon" class="size-3" />
       <UIcon
         :name="statusConfig.icon"
-        class="size-3.5"
-        :class="{
-          'text-neutral-400 dark:text-neutral-500': item.status === 'queued',
-          'text-primary-500 animate-spin': item.status === 'active',
-          'text-amber-500': item.status === 'waiting',
-          'text-green-500': item.status === 'done',
-          'text-red-500': item.status === 'blocked',
-        }"
+        class="size-3"
+        :class="{ 'animate-spin': item.status === 'active' }"
       />
-
-      <!-- Assignee -->
-      <span class="ml-auto inline-flex items-center gap-0.5 text-[10px] text-muted">
+      <span class="ml-auto">
         <UIcon :name="assigneeConfig.icon" class="size-3" />
-        {{ assigneeConfig.label }}
       </span>
     </div>
 
     <!-- Title -->
-    <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-snug">
+    <p class="text-xs font-medium leading-snug">
       {{ displayTitle }}
     </p>
 
-    <!-- Output preview (live while active, final when done) -->
-    <p
-      v-if="hasOutput"
-      class="mt-1 text-[11px] leading-snug line-clamp-3"
-      :class="isActive ? 'text-green-400/80 font-mono' : 'text-neutral-500 dark:text-neutral-400'"
-    >
-      {{ item.output?.slice(-200) }}
-      <span v-if="isActive" class="inline-block w-1.5 h-3 bg-green-400 animate-pulse ml-0.5" />
-    </p>
-
-    <!-- Brief preview (when no output yet) -->
-    <p
-      v-else-if="hasBrief"
-      class="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2"
-    >
-      {{ item.brief }}
-    </p>
-
-    <!-- Bottom indicators -->
-    <div class="mt-2 flex items-center gap-1.5 flex-wrap">
-      <span v-if="hasWorktree" class="inline-flex items-center gap-0.5 text-[10px] text-teal-500">
-        <UIcon name="i-lucide-git-branch" class="size-3" />
-        {{ item.worktree }}
-      </span>
-
-      <span v-if="hasOutput" class="inline-flex items-center gap-0.5 text-[10px] text-green-500">
-        <UIcon name="i-lucide-file-check" class="size-3" />
-        output
-      </span>
-
-      <span v-if="hasDeployUrl" class="inline-flex items-center gap-0.5 text-[10px] text-blue-500">
-        <UIcon name="i-lucide-globe" class="size-3" />
-        preview
-      </span>
-
-      <span v-if="hasRetrospective" class="inline-flex items-center gap-0.5 text-[10px] text-amber-500" title="Has retrospective">
-        <UIcon name="i-lucide-lightbulb" class="size-3" />
-        lessons
-      </span>
-
-      <span v-if="item.skill" class="inline-flex items-center gap-0.5 text-[10px] text-violet-400 ml-auto">
-        <UIcon name="i-lucide-terminal" class="size-3" />
-        /{{ item.skill }}
-      </span>
-    </div>
-
-    <!-- Progress bar for active status -->
+    <!-- Progress bar (active only) -->
     <div
       v-if="isActive"
-      class="mt-2 h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
+      class="mt-1.5 h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
     >
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
-
-    <!-- Terminal indicator (clickable, shows when active) -->
-    <button
-      v-if="isActive && projectActions"
-      class="mt-1.5 inline-flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 cursor-pointer transition-colors"
-      title="Watch terminal"
-      @click.stop="projectActions.openTerminal(item.id)"
-    >
-      <UIcon name="i-lucide-terminal" class="size-3 animate-pulse" />
-      <span>terminal</span>
-    </button>
 
     <!-- Node actions (hover on desktop, always visible on touch) -->
     <div class="work-item__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
@@ -315,17 +241,30 @@ function handleDispatch(event: Event) {
 @reference "tailwindcss";
 
 .work-item {
-  @apply px-3 py-2.5 rounded-lg border bg-white dark:bg-neutral-900;
-  @apply border-neutral-200 dark:border-neutral-700;
-  @apply shadow-sm transition-all duration-150;
-  @apply min-w-[180px] max-w-[260px];
+  @apply px-3 py-2.5 rounded-md transition-all duration-150;
+  @apply min-w-[160px] max-w-[220px];
   @apply relative;
+  @apply border-0 shadow-none;
 }
 
+/* Post-it colors per type */
+.work-item--type-discover { background: #f3e8ff; color: #581c87; }
+.work-item--type-architect { background: #dbeafe; color: #1e3a5f; }
+.work-item--type-generate { background: #fef3c7; color: #78350f; }
+.work-item--type-compose { background: #cffafe; color: #164e63; }
+.work-item--type-review { background: #dcfce7; color: #14532d; }
+.work-item--type-deploy { background: #ffe4e6; color: #881337; }
+
+:root.dark .work-item--type-discover { background: #3b0764; color: #e9d5ff; }
+:root.dark .work-item--type-architect { background: #1e3a5f; color: #bfdbfe; }
+:root.dark .work-item--type-generate { background: #451a03; color: #fde68a; }
+:root.dark .work-item--type-compose { background: #164e63; color: #a5f3fc; }
+:root.dark .work-item--type-review { background: #14532d; color: #bbf7d0; }
+:root.dark .work-item--type-deploy { background: #4c0519; color: #fecdd3; }
+
 .work-item--selected {
-  @apply ring-2;
-  border-color: var(--color-primary-500);
-  --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+  @apply ring-2 ring-offset-1;
+  --tw-ring-color: var(--color-primary-500);
 }
 
 .work-item--dragging {
@@ -333,30 +272,31 @@ function handleDispatch(event: Event) {
 }
 
 .work-item--done {
-  @apply border-green-300 dark:border-green-700;
+  @apply opacity-60;
 }
 
 .work-item--active {
-  animation: pulse-work 1.5s ease-in-out infinite;
-  border-color: var(--color-primary-400);
+  animation: pulse-work 2s ease-in-out infinite;
 }
 
 .work-item--waiting {
-  animation: glow-waiting 2s ease-in-out infinite;
+  @apply opacity-80;
 }
 
 .work-item--blocked {
-  @apply border-red-300 dark:border-red-700 opacity-90;
+  @apply opacity-50;
+  background: #fecaca !important;
+  color: #7f1d1d !important;
+}
+
+:root.dark .work-item--blocked {
+  background: #450a0a !important;
+  color: #fca5a5 !important;
 }
 
 @keyframes pulse-work {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary-500) 30%, transparent); }
-  50% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-500) 15%, transparent); }
-}
-
-@keyframes glow-waiting {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
-  50% { box-shadow: 0 0 12px 2px rgba(251, 146, 60, 0.2); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(99, 102, 241, 0.15); }
 }
 
 @keyframes progress {
@@ -371,8 +311,8 @@ function handleDispatch(event: Event) {
 
 .work-handle {
   @apply w-2 h-2 rounded-full;
-  @apply bg-neutral-400 dark:bg-neutral-500;
-  @apply border border-white dark:border-neutral-800;
+  @apply bg-neutral-400/50;
+  @apply border border-white/50 dark:border-neutral-800/50;
   @apply transition-colors;
 }
 
@@ -385,8 +325,8 @@ function handleDispatch(event: Event) {
 }
 
 .work-item__action {
-  @apply w-6 h-6 rounded-full flex items-center justify-center;
-  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
+  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm;
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-500 hover:scale-110;
   &:hover { color: var(--color-primary-500); }
