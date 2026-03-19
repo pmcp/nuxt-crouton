@@ -26,7 +26,7 @@ export async function getAllThinkgraphWorkItems(teamId: string) {
     .leftJoin(projectsSchema.thinkgraphProjects, eq(tables.thinkgraphWorkItems.projectId, projectsSchema.thinkgraphProjects.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphWorkItems.owner, ownerUser.id))
     .where(eq(tables.thinkgraphWorkItems.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphWorkItems.createdAt))
+    .orderBy(desc(tables.thinkgraphWorkItems.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   workItems.forEach((item: any) => {
@@ -72,7 +72,7 @@ export async function getThinkgraphWorkItemsByIds(teamId: string, workItemIds: s
         inArray(tables.thinkgraphWorkItems.id, workItemIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphWorkItems.createdAt))
+    .orderBy(desc(tables.thinkgraphWorkItems.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   workItems.forEach((item: any) => {
