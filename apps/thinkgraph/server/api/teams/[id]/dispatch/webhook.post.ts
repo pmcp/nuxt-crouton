@@ -1,4 +1,4 @@
-import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems, getThinkgraphWorkItemsByIds, createThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -95,10 +95,50 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Create learning nodes from retrospective
+  let learningIds: string[] = []
+  if (updates.status === 'done') {
+    try {
+      // Fetch the completed item to get its retrospective and projectId
+      const [completedItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+      const retro = completedItem?.retrospective
+      if (retro && retro.trim().length > 0) {
+        // Parse retrospective into individual learnings
+        // Supports: bullet points (- or *), numbered lists (1.), or newline-separated paragraphs
+        const lines = retro
+          .split(/\n/)
+          .map((l: string) => l.replace(/^[\s]*[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+          .filter((l: string) => l.length > 10) // skip short/empty lines
+
+        for (const learning of lines) {
+          const item = await createThinkgraphWorkItem({
+            teamId,
+            owner: 'system',
+            projectId: completedItem.projectId,
+            parentId: workItemId,
+            title: learning.length > 80 ? learning.slice(0, 77) + '...' : learning,
+            type: 'review',
+            status: 'queued',
+            assignee: 'human',
+            brief: learning,
+          } as any)
+          learningIds.push(item.id)
+        }
+        if (learningIds.length > 0) {
+          console.log(`[webhook] Created ${learningIds.length} learning node(s) from retrospective of ${workItemId}`)
+        }
+      }
+    } catch (err) {
+      // Learning creation is best-effort
+      console.error('[webhook] Learning node creation failed:', err)
+    }
+  }
+
   return {
     success: true,
     workItemId,
     status: updates.status,
     advancedItemId,
+    learningIds,
   }
 })
