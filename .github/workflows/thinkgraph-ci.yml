@@ -1,0 +1,88 @@
+name: ThinkGraph CI Typecheck
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'apps/**'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  typecheck:
+    name: Typecheck & Report to ThinkGraph
+    # Only run on thinkgraph/* branches (Pi agent PRs)
+    if: startsWith(github.head_ref, 'thinkgraph/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build MCP Server
+        run: pnpm --filter @fyit/crouton-mcp build
+
+      - name: Type check MCP Server
+        id: typecheck
+        continue-on-error: true
+        run: |
+          pnpm --filter @fyit/crouton-mcp typecheck 2>&1 | tee /tmp/typecheck-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Report result to ThinkGraph
+        if: always() && steps.typecheck.outcome != 'skipped'
+        env:
+          THINKGRAPH_WEBHOOK_SECRET: ${{ secrets.THINKGRAPH_WEBHOOK_SECRET }}
+          THINKGRAPH_TEAM_ID: ${{ secrets.THINKGRAPH_TEAM_ID }}
+          THINKGRAPH_API_URL: ${{ secrets.THINKGRAPH_API_URL }}
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "${{ steps.typecheck.outcome }}" = "success" ]; then
+            STATUS="pass"
+            ERROR=""
+          else
+            STATUS="fail"
+            ERROR=$(cat /tmp/typecheck-output.txt | tail -200)
+          fi
+
+          # Only call webhook if secrets are configured
+          if [ -z "$THINKGRAPH_API_URL" ] || [ -z "$THINKGRAPH_TEAM_ID" ]; then
+            echo "ThinkGraph webhook not configured (missing THINKGRAPH_API_URL or THINKGRAPH_TEAM_ID). Skipping."
+            exit 0
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg branch "$BRANCH" \
+            --arg status "$STATUS" \
+            --arg check "typecheck" \
+            --arg error "$ERROR" \
+            --arg runUrl "$RUN_URL" \
+            '{branch: $branch, status: $status, check: $check, error: $error, runUrl: $runUrl}')
+
+          echo "Sending CI result to ThinkGraph..."
+          echo "Branch: $BRANCH"
+          echo "Status: $STATUS"
+
+          curl -sf -X POST \
+            "${THINKGRAPH_API_URL}/api/teams/${THINKGRAPH_TEAM_ID}/dispatch/ci-webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${THINKGRAPH_WEBHOOK_SECRET}" \
+            -d "$PAYLOAD" \
+            && echo "Webhook sent successfully" \
+            || echo "Warning: Webhook call failed (non-critical)"
+
+      - name: Fail if typecheck failed
+        if: steps.typecheck.outcome == 'failure'
+        run: exit 1
