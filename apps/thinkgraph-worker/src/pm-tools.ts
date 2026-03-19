@@ -43,10 +43,11 @@ export function createPMTools(
         retrospective: Type.Optional(Type.String({ description: 'Free-text reflection on this session — displayed on the node card' })),
         learnings: Type.Optional(Type.Array(
           Type.Object({
-            text: Type.String({ description: 'The learning — what should change, what was missing, what broke' }),
+            title: Type.String({ description: 'Short headline (5-10 words max). Example: "Webhook overwrites artifacts — should merge"' }),
+            detail: Type.String({ description: 'Full explanation with context and what should change' }),
             scope: Type.Optional(Type.String({ description: 'What this applies to: skill, prompt, tool, infra, or process' })),
           }),
-          { description: 'Actionable learnings only — things that should change in skills, prompts, tools, or process. Do NOT include things that went well.' },
+          { description: 'Actionable learnings only. Pyramid style: title is the point, detail is the explanation. Do NOT include things that went well.' },
         )),
         status: Type.Optional(Type.String({ description: 'Status: queued, active, waiting, done, blocked' })),
         deployUrl: Type.Optional(Type.String({ description: 'Preview deployment URL' })),
@@ -80,9 +81,6 @@ export function createPMTools(
 
               if (projectId) {
                 for (const learning of params.learnings) {
-                  const title = learning.text.length > 80
-                    ? learning.text.slice(0, 77) + '...'
-                    : learning.text
                   const scope = learning.scope || 'process'
 
                   await ofetch(baseUrl, {
@@ -91,11 +89,11 @@ export function createPMTools(
                     body: {
                       projectId,
                       parentId: workItemId,
-                      title: `[${scope}] ${title}`,
+                      title: `[${scope}] ${learning.title}`,
                       type: 'review',
                       status: 'queued',
                       assignee: 'human',
-                      brief: learning.text,
+                      brief: learning.detail,
                     },
                   })
                   learningCount++

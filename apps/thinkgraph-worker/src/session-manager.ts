@@ -543,15 +543,17 @@ Use \`update_workitem\` to set ALL of these fields:
 2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)
 3. **learnings** — structured array of ONLY actionable items. Each learning becomes a task node for the human to triage. Only include things that should change — not things that went well.
 
-Example learnings:
+Example learnings (pyramid style — title is the point, detail explains):
 \`\`\`json
 [
-  { "text": "Discover skill should detect when parent already has a brief and switch to validation mode", "scope": "skill" },
-  { "text": "Missing schemas for velo custom collections — architect phase needs to create them first", "scope": "process" }
+  { "title": "Discover skill can't detect existing briefs", "detail": "When parent already has a brief, discover should switch to validation mode instead of generating from scratch. Currently always runs questionnaire.", "scope": "skill" },
+  { "title": "Missing schemas block generate phase", "detail": "Velo custom collections have no schemas in apps/velo/schemas/. Architect phase needs to create them before CLI generator can run.", "scope": "process" }
 ]
 \`\`\`
 
 Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken tool), \`prompt\` (unclear instructions), \`infra\` (infrastructure/config issue), \`process\` (workflow improvement).
+
+**Title rules:** 5-10 words max. The point, not the explanation. Must be scannable at a glance.
 `
   }
 
