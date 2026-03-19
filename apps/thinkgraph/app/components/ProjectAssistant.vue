@@ -7,6 +7,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   createItem: [data: { title: string; type: string; brief: string }]
+  focusNode: [nodeId: string]
 }>()
 
 const { teamId } = useTeamContext()
@@ -133,20 +134,24 @@ watch(messages, () => {
     <!-- Suggested actions -->
     <div
       v-if="suggestedActions.length > 0"
-      class="px-4 py-2 border-t border-default bg-violet-50 dark:bg-violet-900/10"
+      class="px-4 py-2 border-t border-default bg-violet-50 dark:bg-violet-900/10 space-y-1.5"
     >
-      <div v-for="action in suggestedActions" :key="action.messageId" class="flex items-center gap-2 text-xs">
-        <UIcon name="i-lucide-zap" class="size-3 text-violet-500 shrink-0" />
-        <span class="flex-1 truncate">{{ action.type }}: {{ action.title }}</span>
+      <p class="text-[10px] font-medium text-violet-600 dark:text-violet-400 mb-1">Suggested actions</p>
+      <div v-for="action in suggestedActions" :key="action.messageId" class="flex items-center gap-2">
         <UButton
           v-if="!createdActions.has(action.messageId)"
           size="xs"
           variant="soft"
+          color="primary"
           icon="i-lucide-plus"
-          label="Create"
+          :label="`${action.type}: ${action.title}`"
+          class="flex-1 justify-start text-left truncate"
           @click="createFromSuggestion(action)"
         />
-        <UIcon v-else name="i-lucide-check" class="size-3 text-green-500" />
+        <div v-else class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <UIcon name="i-lucide-check-circle" class="size-3.5" />
+          <span class="truncate">{{ action.title }}</span>
+        </div>
       </div>
     </div>
 

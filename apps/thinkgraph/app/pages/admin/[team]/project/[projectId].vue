@@ -438,6 +438,40 @@ async function promoteToTask(id: string, type: string) {
   await updateItem(id, { type, assignee: 'pi', status: 'queued' })
 }
 
+// ─── Flow ref for programmatic control ───
+const flowRef = ref<any>(null)
+
+// ─── Assistant actions ───
+async function assistantCreateItem(data: { title: string; type: string; brief: string }) {
+  if (!teamId.value) return
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+      method: 'POST',
+      body: {
+        projectId: projectId.value,
+        title: data.title,
+        type: data.type,
+        status: 'queued',
+        assignee: 'pi',
+        brief: data.brief,
+        skill: ['discover', 'architect', 'generate', 'compose'].includes(data.type) ? data.type : undefined,
+      },
+    })
+    toast.add({ title: 'Work item created', description: data.title, color: 'success' })
+    await refreshItems()
+  } catch (err: any) {
+    toast.add({ title: 'Failed to create', description: err.message, color: 'error' })
+  }
+}
+
+function assistantFocusNode(nodeId: string) {
+  // Switch to canvas view and select the node
+  viewMode.value = 'canvas'
+  selectedItemId.value = nodeId
+  showDetail.value = true
+  // TODO: programmatic zoom-to-node when CroutonFlow exposes fitView/setCenter
+}
+
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -540,60 +574,62 @@ if (import.meta.client) {
       </div>
     </div>
 
-    <!-- Canvas view -->
-    <div v-if="viewMode === 'canvas'" class="flex-1 relative">
-      <div v-if="itemsLoading && !items.length" class="absolute inset-0 flex items-center justify-center">
-        <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
-      </div>
+    <!-- Main content area: view + assistant side by side -->
+    <div class="flex-1 flex min-h-0">
+      <!-- Canvas view -->
+      <div v-if="viewMode === 'canvas'" class="flex-1 relative">
+        <div v-if="itemsLoading && !items.length" class="absolute inset-0 flex items-center justify-center">
+          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
+        </div>
 
-      <div v-else-if="!items.length" class="absolute inset-0 flex items-center justify-center">
-        <div class="text-center">
-          <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-            <UIcon name="i-lucide-git-branch" class="size-8 text-muted" />
+        <div v-else-if="!items.length" class="absolute inset-0 flex items-center justify-center">
+          <div class="text-center">
+            <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <UIcon name="i-lucide-git-branch" class="size-8 text-muted" />
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Empty canvas</h3>
+            <p class="text-sm text-muted mb-4">Start by adding your first work item.</p>
+            <UDropdownMenu :items="newItemOptions">
+              <UButton icon="i-lucide-plus" label="Add work item" />
+            </UDropdownMenu>
           </div>
-          <h3 class="text-lg font-semibold mb-2">Empty canvas</h3>
-          <p class="text-sm text-muted mb-4">Start by adding your first work item.</p>
-          <UDropdownMenu :items="newItemOptions">
-            <UButton icon="i-lucide-plus" label="Add work item" />
-          </UDropdownMenu>
+        </div>
+
+        <CroutonFlow
+          v-else
+          ref="flowRef"
+          :rows="items"
+          collection="workItems"
+          parent-field="parentId"
+          label-field="title"
+          :flow-id="flowId || undefined"
+          :saved-positions="savedPositions || undefined"
+          minimap
+          @node-click="onNodeClick"
+          @connect-end="onConnectEnd"
+        />
+
+        <!-- Quick create menu (appears on drag-to-empty) -->
+        <div
+          v-if="showQuickCreate"
+          class="fixed z-50 bg-default border border-default rounded-lg shadow-lg p-2 min-w-[160px]"
+          :style="{ left: quickCreatePos.x + 'px', top: quickCreatePos.y + 'px' }"
+        >
+          <p class="text-xs text-muted px-2 py-1 mb-1">Add connected node</p>
+          <button
+            v-for="t in WORK_TYPES"
+            :key="t.value"
+            class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 cursor-pointer"
+            @click="handleQuickCreate(t.value)"
+          >
+            <UIcon :name="t.icon" class="size-4" />
+            {{ t.label }}
+          </button>
         </div>
       </div>
 
-      <CroutonFlow
-        v-else
-        :rows="items"
-        collection="workItems"
-        parent-field="parentId"
-        label-field="title"
-        :flow-id="flowId || undefined"
-        :saved-positions="savedPositions || undefined"
-        minimap
-        @node-click="onNodeClick"
-        @connect-end="onConnectEnd"
-      />
-
-      <!-- Quick create menu (appears on drag-to-empty) -->
-      <div
-        v-if="showQuickCreate"
-        class="fixed z-50 bg-default border border-default rounded-lg shadow-lg p-2 min-w-[160px]"
-        :style="{ left: quickCreatePos.x + 'px', top: quickCreatePos.y + 'px' }"
-      >
-        <p class="text-xs text-muted px-2 py-1 mb-1">Add connected node</p>
-        <button
-          v-for="t in WORK_TYPES"
-          :key="t.value"
-          class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 cursor-pointer"
-          @click="handleQuickCreate(t.value)"
-        >
-          <UIcon :name="t.icon" class="size-4" />
-          {{ t.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- List / triage view -->
-    <div v-else class="flex-1 flex min-h-0">
-      <div class="flex-1 overflow-y-auto">
+      <!-- List / triage view -->
+      <div v-else class="flex-1 overflow-y-auto">
         <!-- Filter bar + bulk actions -->
         <div class="sticky top-0 z-10 bg-default/80 backdrop-blur-sm border-b border-default px-4 py-2 flex items-center gap-2">
           <button
@@ -624,81 +660,53 @@ if (import.meta.client) {
             class="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors cursor-pointer"
             @click="onNodeClick(item.id)"
           >
-            <!-- Checkbox -->
             <input
               type="checkbox"
               :checked="selectedIds.has(item.id)"
               class="mt-1 rounded border-neutral-300 dark:border-neutral-600"
               @click.stop="toggleSelect(item.id)"
             >
-
-            <!-- Status icon -->
             <UIcon
               :name="STATUS_CONFIG_LIST[item.status]?.icon || 'i-lucide-circle-dashed'"
               class="size-4 mt-0.5 shrink-0"
               :class="STATUS_CONFIG_LIST[item.status]?.class || 'text-neutral-400'"
             />
-
-            <!-- Content -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span
-                  class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                  :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'"
-                >
+                <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full" :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'">
                   {{ item.type }}
                 </span>
                 <span class="text-sm font-medium truncate">{{ item.title }}</span>
               </div>
               <p v-if="item.brief" class="text-xs text-muted mt-0.5 line-clamp-1">{{ item.brief }}</p>
             </div>
-
-            <!-- Assignee -->
-            <span class="text-[10px] text-muted shrink-0 mt-1">
-              {{ item.assignee || 'pi' }}
-            </span>
-
-            <!-- Promote action (for review/learning nodes) -->
+            <span class="text-[10px] text-muted shrink-0 mt-1">{{ item.assignee || 'pi' }}</span>
             <UDropdownMenu
               v-if="item.type === 'review' && item.assignee === 'human'"
-              :items="[
-                [
-                  { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
-                  { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
-                  { label: 'Promote to Compose', icon: 'i-lucide-layout', onSelect: () => promoteToTask(item.id, 'compose') },
-                ],
-              ]"
+              :items="[[
+                { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
+                { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
+                { label: 'Promote to Compose', icon: 'i-lucide-layout', onSelect: () => promoteToTask(item.id, 'compose') },
+              ]]"
             >
-              <UButton
-                icon="i-lucide-arrow-up-right"
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                title="Promote to task"
-                @click.stop
-              />
+              <UButton icon="i-lucide-arrow-up-right" size="xs" variant="ghost" color="neutral" title="Promote to task" @click.stop />
             </UDropdownMenu>
           </div>
         </div>
-
         <div v-if="!filteredListItems.length" class="py-12 text-center text-sm text-muted">
           No items{{ listFilter ? ` with status "${listFilter}"` : '' }}
         </div>
       </div>
 
-      <!-- Assistant panel (right side in list view) -->
+      <!-- Assistant panel (works in both views) -->
       <ProjectAssistant
         v-if="showAssistant"
         :project-id="projectId"
         :project-name="project?.name"
         class="w-[360px] shrink-0"
         @close="showAssistant = false"
-        @create-item="(data) => {
-          createType = data.type
-          createTitle = data.title
-          createAssignee = 'pi'
-          showCreate = true
-        }"
+        @create-item="assistantCreateItem"
+        @focus-node="assistantFocusNode"
       />
     </div>
 
