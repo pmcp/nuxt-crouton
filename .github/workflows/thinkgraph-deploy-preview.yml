@@ -1,0 +1,59 @@
+name: ThinkGraph Deploy Preview URL
+
+on:
+  deployment_status:
+
+jobs:
+  notify:
+    name: Send preview URL to ThinkGraph
+    runs-on: ubuntu-latest
+    # Only run when: deployment succeeded, it's a preview (not production),
+    # and the branch matches thinkgraph/* naming convention
+    if: >
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment != 'production' &&
+      startsWith(github.event.deployment.ref, 'thinkgraph/')
+    steps:
+      - name: Extract branch and deploy URL
+        id: extract
+        run: |
+          BRANCH="${{ github.event.deployment.ref }}"
+          DEPLOY_URL="${{ github.event.deployment_status.environment_url }}"
+
+          # Fallback: try target_url if environment_url is empty
+          if [ -z "$DEPLOY_URL" ]; then
+            DEPLOY_URL="${{ github.event.deployment_status.target_url }}"
+          fi
+
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Branch: $BRANCH"
+          echo "Deploy URL: $DEPLOY_URL"
+
+      - name: Send deploy URL to ThinkGraph
+        if: steps.extract.outputs.deploy_url != ''
+        env:
+          THINKGRAPH_WEBHOOK_SECRET: ${{ secrets.THINKGRAPH_WEBHOOK_SECRET }}
+          THINKGRAPH_TEAM_ID: ${{ secrets.THINKGRAPH_TEAM_ID }}
+          THINKGRAPH_API_URL: ${{ secrets.THINKGRAPH_API_URL }}
+        run: |
+          if [ -z "$THINKGRAPH_API_URL" ] || [ -z "$THINKGRAPH_TEAM_ID" ]; then
+            echo "ThinkGraph webhook not configured (missing THINKGRAPH_API_URL or THINKGRAPH_TEAM_ID). Skipping."
+            exit 0
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg branch "${{ steps.extract.outputs.branch }}" \
+            --arg deployUrl "${{ steps.extract.outputs.deploy_url }}" \
+            '{branch: $branch, deployUrl: $deployUrl}')
+
+          echo "Sending deploy URL to ThinkGraph..."
+          echo "$PAYLOAD" | jq .
+
+          curl -sf -X POST \
+            "${THINKGRAPH_API_URL}/api/teams/${THINKGRAPH_TEAM_ID}/dispatch/deploy-webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${THINKGRAPH_WEBHOOK_SECRET}" \
+            -d "$PAYLOAD" \
+            && echo "Deploy URL sent successfully" \
+            || echo "Warning: Webhook call failed (non-critical)"
