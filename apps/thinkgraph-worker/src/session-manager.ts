@@ -34,6 +34,8 @@ export interface DispatchPayload {
   mode?: 'legacy' | 'rich'
   callbackUrl?: string
   skill?: string
+  /** API collection path — 'thinkgraph-workitems' for PM work items, 'thinkgraph-nodes' for legacy */
+  collectionPath?: string
 }
 
 interface ActiveSession {
@@ -47,6 +49,7 @@ interface ActiveSession {
   messageCounter: number
   callbackUrl?: string
   accumulatedOutput: string[]
+  collectionPath: string
 }
 
 export class AgentSessionManager {
@@ -129,6 +132,7 @@ export class AgentSessionManager {
         messageCounter: 0,
         callbackUrl: payload.callbackUrl,
         accumulatedOutput: [],
+        collectionPath: payload.collectionPath || 'thinkgraph-nodes',
       }
       this.activeSessions.set(payload.nodeId, activeSession)
 
@@ -433,8 +437,11 @@ export class AgentSessionManager {
 
   /** Update node status via ThinkGraph HTTP API */
   private async updateNodeStatus(nodeId: string, status: string): Promise<void> {
+    // Determine the correct API path based on the active session
+    const active = this.activeSessions.get(nodeId)
+    const collection = active?.collectionPath || 'thinkgraph-nodes'
     try {
-      await ofetch(`${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}/thinkgraph-nodes/${nodeId}`, {
+      await ofetch(`${this.config.thinkgraphUrl}/api/teams/${this.config.teamId}/${collection}/${nodeId}`, {
         method: 'PATCH',
         headers: {
           'Cookie': this.config.serviceToken,

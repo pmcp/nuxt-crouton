@@ -172,6 +172,7 @@ async function main() {
           mode: 'rich' as const,
           callbackUrl: payload.callbackUrl || undefined,
           skill: payload.skill || undefined,
+          collectionPath: 'thinkgraph-workitems',
         }
 
         // Start session (async — don't await completion)

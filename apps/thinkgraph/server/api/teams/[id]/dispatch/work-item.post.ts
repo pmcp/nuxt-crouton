@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
 
   // Dispatch to Pi worker via HTTP
   const config = useRuntimeConfig()
-  const piWorkerUrl = config.piWorkerUrl || 'https://pi.pmcp.dev'
+  const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
   let piAccepted = false
 
   if (provider === 'pi') {
@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
           skill: handoffMeta.skill,
           workItemType: targetItem.type,
           teamSlug: team.slug || team.id,
-          callbackUrl: `${process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3004'}/api/teams/${team.id}/dispatch/webhook`,
+          callbackUrl: `${config.public?.siteUrl || process.env.NUXT_PUBLIC_SITE_URL || 'https://thinkgraph.pages.dev'}/api/teams/${team.id}/dispatch/webhook`,
         },
       })
       piAccepted = piResponse?.accepted || false
