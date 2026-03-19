@@ -471,7 +471,22 @@ When any provider completes:
 1. Output captured in node's `output` field
 2. Artifacts stored (schemas, images, configs, generated files)
 3. Status → `done`
-4. Next node in the chain auto-queues
+4. Next pi-assigned node in the chain auto-queues (human/client items wait for triage)
+5. Structured learnings (if any) create child `review` nodes for human triage
+
+### Structured Learnings
+
+Pi submits learnings as a typed array via `update_workitem`:
+```json
+{
+  "learnings": [
+    { "text": "Discover skill should detect existing briefs", "scope": "skill" },
+    { "text": "Missing schemas for custom collections", "scope": "process" }
+  ]
+}
+```
+
+Each learning becomes a child `review` node with `assignee: human`, titled with its scope tag (e.g., `[skill] ...`, `[tool] ...`). Scope values: `skill`, `tool`, `prompt`, `infra`, `process`. This creates a triage workflow: you see learnings on the canvas, promote actionable ones to tasks, dismiss the rest.
 
 ### Context Building
 
@@ -620,7 +635,7 @@ export default {
 15. ✅ Terminal panel wired (WebSocket — works locally, needs DO relay for production)
 16. ✅ Quick-create menu on drag-to-empty from node handle
 
-### Phase 2b: Pi Agent Workflow
+### Phase 2b: Pi Agent Workflow ✅
 
 **Goal:** Pi actually builds crouton apps, not just answers questions.
 
@@ -630,11 +645,14 @@ export default {
 20. ✅ Git workflow — Pi commits in the worktree, pushes the branch, stores branch name in work item `worktree` field
 21. ✅ Fix output format — only keep final complete text, not progressive deltas
 22. ✅ Suppress `pi-extension` old tool errors — PM dispatches use dedicated PM tools (`update_workitem`, `get_workitem`) instead of legacy thinking graph tools
-23. ✅ Auto-advance — when a node completes, webhook auto-sets next queued child to active
+23. ✅ Auto-advance — when a node completes, webhook auto-sets next queued pi-assigned child to active (human/client items wait for triage)
 24. ✅ PR creation — `create_pr` PM tool added to pm-tools.ts, runs `gh pr create` and updates work item artifacts
 25. ✅ Retrospective field — agents write lessons learned after each task, visible on node cards and detail panel
 26. ✅ Output capture fix — PM dispatches use tool-written output (not streaming deltas), callback only sends status
 27. ✅ Fix `get_workitem` 404 — tool was hitting non-existent single-item GET endpoint, now uses `?ids=` on list endpoint
+28. ✅ Structured learnings — `update_workitem` accepts typed `learnings` array (text + scope), creates child review nodes for human triage
+29. ✅ Terminal sessions fix — `updateNodeStatus` was using legacy `thinkgraphDecisions` collection, now uses `thinkgraphWorkItems` with status mapping
+30. ✅ Callback URL fix — dispatch uses request Host header instead of hardcoded production URL, so dev dispatches work correctly
 
 ### Phase 3: Client View ✅
 
