@@ -456,8 +456,9 @@ function buildGeneratorData(params: {
 
   const fieldsSchema = (() => {
     const translatableFieldNames = config?.translations?.collections?.[cases.plural] || []
+    const hierarchyFieldNames = hierarchy?.enabled ? ['parentId', 'path', 'depth', 'order'] : []
     const regularFieldsSchema = fields
-      .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name))
+      .filter(f => f.name !== 'id' && !translatableFieldNames.includes(f.name) && !hierarchyFieldNames.includes(f.name))
       .map((f) => {
         const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
         const hasRepeaterProperties = f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties)
@@ -525,7 +526,8 @@ ${translationsFieldSchema}
   })()
 
   const fieldsDefault = (() => {
-    let fieldDefaults = fields.filter(f => f.name !== 'id').map((f) => {
+    const hierarchyDefaultNames = hierarchy?.enabled ? ['parentId', 'path', 'depth', 'order'] : []
+    let fieldDefaults = fields.filter(f => f.name !== 'id' && !hierarchyDefaultNames.includes(f.name)).map((f) => {
       const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
       if (isDependentField) {
         return `${f.name}: null`
@@ -783,10 +785,10 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     console.log(`• ${base}/app/composables/use${layerPascalCase}${cases.pascalCasePlural}.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/index.get.ts`)
     console.log(`• ${base}/server/api/teams/[id]/${apiPath}/index.post.ts`)
-    console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id].patch.ts`)
-    console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id].delete.ts`)
+    console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.camelCase}Id].patch.ts`)
+    console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.camelCase}Id].delete.ts`)
     if (hierarchy.enabled) {
-      console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.singular}Id]/move.patch.ts`)
+      console.log(`• ${base}/server/api/teams/[id]/${apiPath}/[${cases.camelCase}Id]/move.patch.ts`)
       console.log(`• ${base}/server/api/teams/[id]/${apiPath}/reorder.patch.ts`)
     }
     console.log(`• ${base}/server/database/queries.ts`)
@@ -832,7 +834,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
 
   // Add subdirectory for move endpoint when hierarchy is enabled
   if (hierarchy.enabled) {
-    dirs.push(path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id]`))
+    dirs.push(path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.camelCase}Id]`))
   }
 
   for (const dir of dirs) {
@@ -866,11 +868,11 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       content: generatePostEndpoint(data, config)
     },
     {
-      path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].patch.ts`),
+      path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.camelCase}Id].patch.ts`),
       content: generatePatchEndpoint(data, config)
     },
     {
-      path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id].delete.ts`),
+      path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.camelCase}Id].delete.ts`),
       content: generateDeleteEndpoint(data, config)
     },
     {
@@ -909,7 +911,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   if (hierarchy.enabled) {
     files.push(
       {
-        path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.singular}Id]`, 'move.patch.ts'),
+        path: path.join(base, 'server', 'api', 'teams', '[id]', apiPath, `[${cases.camelCase}Id]`, 'move.patch.ts'),
         content: generateMoveEndpoint(data, config)
       },
       {

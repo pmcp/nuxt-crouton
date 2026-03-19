@@ -51,6 +51,7 @@ export function generatePostEndpoint(data: Record<string, any>, config: Record<s
 
   // Check if hierarchy is enabled
   const hasHierarchy = data.hierarchy?.enabled === true
+  const useMetadata = config?.flags?.useMetadata ?? true
 
   // Get hierarchy field names
   const parentField = data.hierarchy?.parentField || 'parentId'
@@ -100,6 +101,9 @@ import { nanoid } from 'nanoid'`
 `
     : ''
 
+  // Generate metadata fields for create call
+  const metadataFields = useMetadata ? `\n    createdBy: user.id,\n    updatedBy: user.id` : ''
+
   // Generate the create call based on hierarchy
   const createCall = hasHierarchy
     ? `const result = await create${prefixedPascalCase}({
@@ -108,16 +112,12 @@ import { nanoid } from 'nanoid'`
     ${pathField},
     ${depthField},
     teamId: team.id,${hasUserIdField ? '\n    userId: user.id,' : ''}
-    owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
+    owner: user.id,${metadataFields}
   })`
     : `const result = await create${prefixedPascalCase}({
     ...dataWithoutId,
     teamId: team.id,${hasUserIdField ? '\n    userId: user.id,' : ''}
-    owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
+    owner: user.id,${metadataFields}
   })`
 
   return `// Team-based endpoint - requires @fyit/crouton-auth package
@@ -157,8 +157,12 @@ export function generatePatchEndpoint(data: Record<string, any>, config: Record<
   // Check if this collection has translations
   const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
 
-  // Generate field selection for update with date conversion
-  let fieldSelection = fields.map((field) => {
+  // System fields that should not be in PATCH body — they are managed by the server
+  const systemFields = new Set(['id', 'teamId', 'owner', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'path', 'depth'])
+
+  // Generate field selection for update with date conversion (exclude id and system fields)
+  const patchableFields = fields.filter((f) => !systemFields.has(f.name))
+  let fieldSelection = patchableFields.map((field) => {
     if (field.type === 'date') {
       return `    ${field.name}: body.${field.name} ? new Date(body.${field.name}) : body.${field.name}`
     }
@@ -216,10 +220,16 @@ export default defineEventHandler(async (event) => {
   }`
     : ''}
 
+  // Only include fields that were actually sent in the request
+  const updates: Record<string, any> = {}
+  for (const [key, value] of Object.entries(body)) {
+    if (value !== undefined) {
+      updates[key] = value
+    }
+  }
+
   const dbTimer = timing.start('db')
-  const result = await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, {
-${fieldSelection}
-  }, { role: membership.role })
+  const result = await update${prefixedPascalCase}(${camelCase}Id, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })`

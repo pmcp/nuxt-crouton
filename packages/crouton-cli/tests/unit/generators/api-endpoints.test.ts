@@ -113,9 +113,10 @@ describe('API Endpoint Generators', () => {
       expect(result).toContain("throw createError({ status: 400, statusText: 'Missing product ID' })")
     })
 
-    it('handles date field conversion in updates', () => {
+    it('only includes defined fields in updates', () => {
       const result = generatePatchEndpoint(apiWithDateData, minimalConfig as AnyConfig)
-      expect(result).toContain('body.publishedAt ? new Date(body.publishedAt)')
+      expect(result).toContain('if (value !== undefined)')
+      expect(result).toContain('updates[key] = value')
     })
 
     it('includes translation merge logic when configured', () => {

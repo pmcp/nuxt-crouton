@@ -117,13 +117,16 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
+  // Only include fields that were actually sent in the request
+  const updates: Record<string, any> = {}
+  for (const [key, value] of Object.entries(body)) {
+    if (value !== undefined) {
+      updates[key] = value
+    }
+  }
+
   const dbTimer = timing.start('db')
-  const result = await updateShopProduct(productId, team.id, user.id, {
-    name: body.name,
-    description: body.description,
-    price: body.price,
-    active: body.active
-  }, { role: membership.role })
+  const result = await updateShopProduct(productId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })"

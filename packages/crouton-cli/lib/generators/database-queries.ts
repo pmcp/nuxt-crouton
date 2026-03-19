@@ -539,12 +539,17 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   // Check if hierarchy or sortable is enabled for import modifications
   const hasHierarchy = data.hierarchy && data.hierarchy.enabled
   const hasSortable = data.sortable && data.sortable.enabled
+  const useMetadata = config?.flags?.useMetadata ?? true
   const sqlImport = hasHierarchy ? ', sql' : ''
   const ascImport = (hasHierarchy || hasSortable) ? ', asc' : ''
   const orderField = hasSortable ? (data.sortable.orderField || 'order') : 'order'
   const orderByClause = hasSortable
-    ? `asc(tables.${tableName}.${orderField}), desc(tables.${tableName}.createdAt)`
-    : `desc(tables.${tableName}.createdAt)`
+    ? (useMetadata
+        ? `asc(tables.${tableName}.${orderField}), desc(tables.${tableName}.createdAt)`
+        : `asc(tables.${tableName}.${orderField})`)
+    : (useMetadata
+        ? `desc(tables.${tableName}.createdAt)`
+        : '')
 
   // Generate tree queries if hierarchy is enabled
   const treeQueries = generateTreeQueries(data, tableName, prefixedPascalCase, prefixedPascalCasePlural, camelCasePlural)
@@ -554,7 +559,7 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   const sortableQueries = hasHierarchy ? '' : generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
   return `// Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
+import { eq, and${useMetadata ? ', desc' : ''}${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
@@ -565,8 +570,8 @@ ${aliasDefinitions}
   const ${camelCasePlural} = await (db as any)
     .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
-    .where(eq(tables.${tableName}.teamId, teamId))
-    .orderBy(${orderByClause})
+    .where(eq(tables.${tableName}.teamId, teamId))${orderByClause ? `
+    .orderBy(${orderByClause})` : ''}
 ${jsonFieldProcessing}${postQueryProcessing}
   return ${camelCasePlural}
 }
@@ -582,8 +587,8 @@ ${aliasDefinitions}
         eq(tables.${tableName}.teamId, teamId),
         inArray(tables.${tableName}.id, ${camelCase}Ids)
       )
-    )
-    .orderBy(${orderByClause})
+    )${orderByClause ? `
+    .orderBy(${orderByClause})` : ''}
 ${jsonFieldProcessing}${postQueryProcessing}
   return ${camelCasePlural}
 }
@@ -620,8 +625,8 @@ export async function update${prefixedPascalCase}(
   const [${camelCase}] = await (db as any)
     .update(tables.${tableName})
     .set({
-      ...updates,
-      updatedBy: userId
+      ...updates,${useMetadata ? `
+      updatedBy: userId` : ''}
     })
     .where(and(...conditions))
     .returning()
