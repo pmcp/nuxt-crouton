@@ -62,7 +62,48 @@ export function createPMTools(
             headers,
             body: updates,
           })
-          return textResult(JSON.stringify({ ok: true, workItemId, updated: Object.keys(updates) }))
+
+          // When a retrospective is written, parse it into learning nodes
+          let learningCount = 0
+          if (params.retrospective) {
+            try {
+              // Get projectId from the work item
+              const items = await ofetch(baseUrl, { headers, query: { ids: workItemId } })
+              const item = Array.isArray(items) ? items[0] : null
+              const projectId = item?.projectId
+
+              if (projectId) {
+                const lines = params.retrospective
+                  .split(/\n/)
+                  .map((l: string) => l.replace(/^[\s]*[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+                  .filter((l: string) => l.length > 10)
+
+                for (const learning of lines) {
+                  await ofetch(baseUrl, {
+                    method: 'POST',
+                    headers,
+                    body: {
+                      projectId,
+                      parentId: workItemId,
+                      title: learning.length > 80 ? learning.slice(0, 77) + '...' : learning,
+                      type: 'review',
+                      status: 'queued',
+                      assignee: 'human',
+                      brief: learning,
+                    },
+                  })
+                  learningCount++
+                }
+                if (learningCount > 0) {
+                  console.log(`[pm-tools] Created ${learningCount} learning node(s) from retrospective`)
+                }
+              }
+            } catch (err: any) {
+              console.error(`[pm-tools] Learning node creation failed:`, err.message)
+            }
+          }
+
+          return textResult(JSON.stringify({ ok: true, workItemId, updated: Object.keys(updates), learningsCreated: learningCount }))
         } catch (err: any) {
           console.error(`[pm-tools] update_workitem failed:`, err.message)
           return textResult(JSON.stringify({ ok: false, error: err.message }))
