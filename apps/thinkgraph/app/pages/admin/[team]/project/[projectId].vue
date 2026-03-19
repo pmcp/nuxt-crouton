@@ -336,6 +336,7 @@ function openTerminal(id: string) {
 }
 
 // Provide actions to WorkItemsNode
+provide('projectItems', items)
 provide('projectActions', {
   openDetail: (id: string) => {
     selectedItemId.value = id

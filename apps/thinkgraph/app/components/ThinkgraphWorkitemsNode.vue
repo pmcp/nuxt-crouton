@@ -101,6 +101,48 @@ const hasWorktree = computed(() => !!item.value.worktree)
 const hasDeployUrl = computed(() => !!item.value.deployUrl)
 const hasRetrospective = computed(() => !!item.value.retrospective)
 
+// Sibling items for child detection
+const allItems = inject<Ref<ThinkgraphWorkItem[]>>('projectItems', ref([]))
+
+// Glanceable tags
+const arts = computed(() => {
+  const a = item.value.artifacts
+  return Array.isArray(a) ? a : []
+})
+
+const hasPR = computed(() => arts.value.some((a: any) => a?.type === 'pr'))
+
+const ciArtifact = computed(() => arts.value.find((a: any) => a?.type === 'ci') as any)
+const ciStatus = computed(() => ciArtifact.value?.status || null) // 'pass' | 'fail' | null
+
+const hasOpenQuestions = computed(() => {
+  // Check children that are question-type or review with question scope
+  return allItems.value.some(
+    (i) => i.parentId === item.value.id && i.type === 'review' && i.status !== 'done' && i.title?.startsWith('[')
+      && (i.title?.includes('question') || i.brief?.includes('?'))
+  )
+})
+
+const hasLearningChildren = computed(() => {
+  return allItems.value.some(
+    (i) => i.parentId === item.value.id && i.type === 'review' && i.assignee === 'human'
+  )
+})
+
+const isWaitingHuman = computed(() => item.value.status === 'waiting' && item.value.assignee === 'human')
+
+const tags = computed(() => {
+  const t: Array<{ emoji: string; title: string }> = []
+  if (hasPR.value) t.push({ emoji: '🔀', title: 'Has PR' })
+  if (hasWorktree.value) t.push({ emoji: '🔧', title: 'Worktree set' })
+  if (hasOpenQuestions.value) t.push({ emoji: '❓', title: 'Open questions' })
+  if (hasLearningChildren.value) t.push({ emoji: '💡', title: 'Has learnings' })
+  if (ciStatus.value === 'pass') t.push({ emoji: '✅', title: 'CI passed' })
+  if (ciStatus.value === 'fail') t.push({ emoji: '❌', title: 'CI failed' })
+  if (isWaitingHuman.value) t.push({ emoji: '👀', title: 'Waiting for you' })
+  return t
+})
+
 // Live status from artifacts
 const handoff = computed(() => {
   const arts = item.value.artifacts
@@ -198,6 +240,16 @@ function handleDispatch(event: Event) {
     <p class="text-xs font-medium leading-snug">
       {{ displayTitle }}
     </p>
+
+    <!-- Glanceable tags -->
+    <div v-if="tags.length" class="flex items-center gap-0.5 mt-1">
+      <span
+        v-for="tag in tags"
+        :key="tag.emoji"
+        :title="tag.title"
+        class="text-[10px] leading-none select-none cursor-default"
+      >{{ tag.emoji }}</span>
+    </div>
 
     <!-- Progress bar (active only) -->
     <div
