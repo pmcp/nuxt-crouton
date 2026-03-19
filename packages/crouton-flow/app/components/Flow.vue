@@ -414,14 +414,15 @@ const positionCache = new Map<string, { x: number; y: number }>()
 
 const cachedNodes = computed(() => {
   return positionedNodes.value.map((node) => {
-    // If node already has a valid position from data, use it
-    if (node.position && (node.position.x !== 0 || node.position.y !== 0)) {
-      return node
-    }
-    // Otherwise, restore from cache if available
+    // Position cache always wins — it holds the latest drag position
+    // and is more current than savedPositions (loaded once at mount)
     const cached = positionCache.get(node.id)
     if (cached) {
       return { ...node, position: cached, _needsLayout: undefined }
+    }
+    // Fall back to savedPositions / data position if non-zero
+    if (node.position && (node.position.x !== 0 || node.position.y !== 0)) {
+      return node
     }
     return node
   })
