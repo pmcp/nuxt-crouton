@@ -843,7 +843,37 @@ Your job is to review the work produced by ancestor work items and provide feedb
   }
 
   private deployInstructions(payload: DispatchPayload): string {
-    return `## Instructions — Deploy
+    if (payload.skill === 'worker-sync') {
+      return this.workerSyncInstructions()
+    }
+    return this.cloudflareDeployInstructions()
+  }
+
+  private workerSyncInstructions(): string {
+    return `## Instructions — Worker Sync
+
+Your job is to update the Pi worker to the latest main branch.
+
+1. Pull the latest changes from main:
+   \`\`\`bash
+   cd ~/nuxt-crouton
+   git pull origin main
+   \`\`\`
+2. Rebuild the thinkgraph-worker:
+   \`\`\`bash
+   cd apps/thinkgraph-worker
+   pnpm build
+   \`\`\`
+3. Verify the build succeeded (check exit code and output)
+4. If the build fails, read the error output and report it in your output — do NOT attempt to fix code
+5. Report the git SHA that was pulled and whether the build succeeded
+
+**IMPORTANT**: Do NOT restart the worker process — the PM will handle that separately.
+`
+  }
+
+  private cloudflareDeployInstructions(): string {
+    return `## Instructions — Deploy (Cloudflare Pages)
 
 Your job is to deploy the crouton app to Cloudflare Pages.
 

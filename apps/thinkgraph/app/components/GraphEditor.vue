@@ -430,7 +430,7 @@ function exportGraph() {
       <!-- Chat panel (side panel) -->
       <div
         v-if="showChat"
-        class="w-[380px] border-l border-default flex-shrink-0"
+        class="w-[380px] border-l border-default flex-shrink-0 overflow-hidden"
       >
         <ChatPanel
           :node-id="chatNodeId"
