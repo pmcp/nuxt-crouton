@@ -578,16 +578,38 @@ Keep it practical and specific. This brief feeds directly into the architect pha
 
 Your job is to design the data model and technical architecture for this crouton app.
 
+### Available Crouton Packages
+
+Before designing custom schemas, map the app's requirements to these existing packages. Use them whenever they cover the needed functionality — only design custom collections for domain-specific data not covered by a package.
+
+| Package | Capabilities |
+|---------|-------------|
+| **crouton** | Core framework — always included. Collections, CRUD, Drizzle ORM, composables. |
+| **crouton-auth** | Teams, user sessions, OAuth providers, role-based access, invitations. |
+| **crouton-pages** | CMS pages with flexible block system, page hierarchy, slug routing, SEO meta. |
+| **crouton-assets** | File uploads, image management, media library, image transformations, CDN integration. |
+| **crouton-editor** | TipTap-based rich text editor, collaborative editing support, custom extensions. |
+| **crouton-flow** | Graph/canvas visualization, node-based workflows, connections, layout algorithms. |
+| **crouton-bookings** | Slot-based booking system, capacity management, recurring schedules, availability windows. |
+
+### Steps
+
 1. Read the discovery brief and context from ancestor work items
-2. Design the crouton collection schemas:
+2. **Map requirements to existing packages first:**
+   - Identify which packages cover parts of the requirements
+   - List the packages to extend (e.g., crouton-auth for user management, crouton-pages for content)
+   - Note any package configuration or customization needed
+3. Design custom crouton collection schemas only for domain-specific data:
    - Define each collection with its fields, types, and metadata
    - Use crouton field types: string, text, number, boolean, date, json, ref (with refTarget)
    - Include field meta: label, description, required, default, area (main/sidebar), group
    - Consider hierarchy (parentId) where tree structures make sense
-3. Specify which crouton packages to extend:
-   - crouton (always), crouton-auth (if users), crouton-flow (if graph/canvas), crouton-editor (if rich text), crouton-ai (if AI features)
+   - Reference package-provided collections via ref fields where appropriate
 4. Output the schemas as JSON that can be used with \`crouton config\`
-Output format: structured markdown with JSON schema blocks for each collection.`
+
+Output format: structured markdown with:
+- A "Package Selection" section listing which packages to use and why
+- JSON schema blocks for each custom collection`
   }
 
   private worktreeInstructions(payload: DispatchPayload): string {
