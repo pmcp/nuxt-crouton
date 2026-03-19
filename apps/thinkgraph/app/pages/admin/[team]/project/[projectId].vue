@@ -753,6 +753,8 @@ if (import.meta.client) {
         :project-id="projectId"
         :project-name="project?.name"
         :flow-id="flowId"
+        :focused-node-id="selectedItemId"
+        :focused-node-title="selectedItem?.title"
         class="w-[360px] shrink-0"
         @close="showAssistant = false"
         @create-item="assistantCreateItem"

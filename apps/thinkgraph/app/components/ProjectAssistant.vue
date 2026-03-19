@@ -3,6 +3,8 @@ const props = defineProps<{
   projectId: string
   projectName?: string
   flowId?: string | null
+  focusedNodeId?: string | null
+  focusedNodeTitle?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -28,6 +30,7 @@ const {
   body: computed(() => ({
     projectId: props.projectId,
     flowId: props.flowId,
+    focusedNodeId: props.focusedNodeId,
   })),
   onFinish: () => {
     // Refresh parent after assistant may have taken actions (tool calls)
@@ -191,26 +194,49 @@ watch(messages, () => {
 
       <div v-else-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-muted">
         <UIcon name="i-lucide-sparkles" class="size-8 mb-3 opacity-50" />
-        <p class="text-sm text-center">Ask me what to do next</p>
+        <p v-if="focusedNodeTitle" class="text-sm text-center font-medium text-default mb-1">{{ focusedNodeTitle }}</p>
+        <p class="text-sm text-center">{{ focusedNodeId ? 'What should I do with this?' : 'Ask me what to do next' }}</p>
         <div class="flex flex-wrap gap-1.5 mt-3 justify-center">
-          <button
-            class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
-            @click="input = 'What should I work on next?'; onSubmit()"
-          >
-            What's next?
-          </button>
-          <button
-            class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
-            @click="input = 'Triage the pending learnings — which are actionable?'; onSubmit()"
-          >
-            Triage learnings
-          </button>
-          <button
-            class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
-            @click="input = 'Summarize the project status'; onSubmit()"
-          >
-            Status summary
-          </button>
+          <template v-if="focusedNodeId">
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'What should I do with this node? Is it actionable?'; onSubmit()"
+            >
+              Triage this
+            </button>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'Create the next step from this learning'; onSubmit()"
+            >
+              Next step
+            </button>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'This is done, mark it complete'; onSubmit()"
+            >
+              Mark done
+            </button>
+          </template>
+          <template v-else>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'What should I work on next?'; onSubmit()"
+            >
+              What's next?
+            </button>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'Triage the pending learnings — which are actionable?'; onSubmit()"
+            >
+              Triage learnings
+            </button>
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-muted/50 hover:bg-muted text-muted hover:text-default transition-colors"
+              @click="input = 'Summarize the project status'; onSubmit()"
+            >
+              Status summary
+            </button>
+          </template>
         </div>
       </div>
 

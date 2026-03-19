@@ -17,7 +17,7 @@ import { flowConfigs } from '~~/server/db/schema'
  */
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
-  const { messages, projectId, flowId } = await readBody(event)
+  const { messages, projectId, flowId, focusedNodeId } = await readBody(event)
 
   if (!projectId) {
     throw createError({ status: 400, statusText: 'Missing projectId' })
@@ -64,6 +64,22 @@ ${Object.entries(statusCounts).map(([s, c]) => `${s}: ${c}`).join(', ')}
 
 ## Learnings Pending Triage (${learnings.length})
 ${learnings.join('\n') || 'None'}
+${focusedNodeId ? (() => {
+  const focused = projectItems.find((i: any) => i.id === focusedNodeId)
+  if (!focused) return ''
+  return `
+## Currently Focused Node
+- ID: ${focused.id}
+- Title: ${focused.title}
+- Type: ${focused.type}
+- Status: ${focused.status}
+- Assignee: ${focused.assignee || 'pi'}
+- Brief: ${focused.brief || '(none)'}
+- Output: ${focused.output ? focused.output.slice(0, 500) : '(none)'}
+- Parent: ${focused.parentId || '(root)'}
+
+The user is asking about THIS specific node. Help them decide what to do with it.`
+})() : ''}
 
 ## Your Role
 You are a PM assistant with tools to take action. You can:
