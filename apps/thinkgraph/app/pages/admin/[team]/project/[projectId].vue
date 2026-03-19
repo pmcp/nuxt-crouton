@@ -333,6 +333,24 @@ const STATUS_PILL: Record<string, string> = {
   blocked: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
+// ─── List view config ───
+const STATUS_CONFIG_LIST: Record<string, { icon: string; class: string }> = {
+  queued: { icon: 'i-lucide-circle-dashed', class: 'text-neutral-400' },
+  active: { icon: 'i-lucide-loader-2', class: 'text-primary-500 animate-spin' },
+  waiting: { icon: 'i-lucide-pause-circle', class: 'text-amber-500' },
+  done: { icon: 'i-lucide-check-circle', class: 'text-green-500' },
+  blocked: { icon: 'i-lucide-alert-circle', class: 'text-red-500' },
+}
+
+const TYPE_BADGE: Record<string, string> = {
+  discover: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  architect: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  generate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  compose: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  review: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  deploy: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+}
+
 // ─── New item dropdown ───
 const newItemOptions = computed(() => [
   WORK_TYPES.map(t => ({
@@ -341,6 +359,83 @@ const newItemOptions = computed(() => [
     onSelect: () => openCreate(t.value),
   })),
 ])
+
+// ─── View mode ───
+const viewMode = ref<'canvas' | 'list'>('canvas')
+
+// ─── Filtered/sorted items for list view ───
+const STATUS_ORDER: Record<string, number> = { active: 0, waiting: 1, blocked: 2, queued: 3, done: 4 }
+
+const listItems = computed(() => {
+  return [...items.value].sort((a, b) => {
+    const sa = STATUS_ORDER[a.status] ?? 5
+    const sb = STATUS_ORDER[b.status] ?? 5
+    if (sa !== sb) return sa - sb
+    return (a.order ?? 0) - (b.order ?? 0)
+  })
+})
+
+const listFilter = ref<string | null>(null)
+
+const filteredListItems = computed(() => {
+  if (!listFilter.value) return listItems.value
+  return listItems.value.filter(i => i.status === listFilter.value)
+})
+
+// ─── Bulk actions ───
+const selectedIds = ref<Set<string>>(new Set())
+
+function toggleSelect(id: string) {
+  if (selectedIds.value.has(id)) {
+    selectedIds.value.delete(id)
+  } else {
+    selectedIds.value.add(id)
+  }
+  selectedIds.value = new Set(selectedIds.value) // trigger reactivity
+}
+
+function selectAll() {
+  if (selectedIds.value.size === filteredListItems.value.length) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(filteredListItems.value.map(i => i.id))
+  }
+}
+
+async function bulkUpdateStatus(status: string) {
+  if (!teamId.value || selectedIds.value.size === 0) return
+  const promises = [...selectedIds.value].map(id =>
+    $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+      method: 'PATCH',
+      body: { status },
+    }),
+  )
+  await Promise.all(promises)
+  selectedIds.value = new Set()
+  await refreshItems()
+}
+
+async function bulkDelete() {
+  if (!teamId.value || selectedIds.value.size === 0) return
+  const ids = [...selectedIds.value]
+  const hasChildren = ids.some(id => items.value.some(i => i.parentId === id))
+  if (hasChildren) {
+    toast.add({ title: 'Cannot delete items with children', color: 'warning' })
+    return
+  }
+  const promises = ids.map(id =>
+    $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, { method: 'DELETE' }),
+  )
+  await Promise.all(promises)
+  selectedIds.value = new Set()
+  await refreshItems()
+}
+
+async function promoteToTask(id: string, type: string) {
+  const item = items.value.find(i => i.id === id)
+  if (!item || !teamId.value) return
+  await updateItem(id, { type, assignee: 'pi', status: 'queued' })
+}
 
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
@@ -358,6 +453,9 @@ function handleKeydown(e: KeyboardEvent) {
       break
     case 't': case 'T':
       if (selectedItemId.value) openTerminal(selectedItemId.value)
+      break
+    case 'v': case 'V':
+      viewMode.value = viewMode.value === 'canvas' ? 'list' : 'canvas'
       break
     case 'Escape':
       if (showDetail.value) closeDetail()
@@ -397,6 +495,24 @@ if (import.meta.client) {
           </span>
         </div>
 
+        <!-- View toggle -->
+        <div class="flex items-center border border-default rounded-lg overflow-hidden mr-1">
+          <button
+            class="px-2 py-1 text-xs transition-colors"
+            :class="viewMode === 'canvas' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : 'text-muted hover:text-default'"
+            @click="viewMode = 'canvas'"
+          >
+            <UIcon name="i-lucide-git-branch" class="size-3.5" />
+          </button>
+          <button
+            class="px-2 py-1 text-xs transition-colors"
+            :class="viewMode === 'list' ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : 'text-muted hover:text-default'"
+            @click="viewMode = 'list'"
+          >
+            <UIcon name="i-lucide-list" class="size-3.5" />
+          </button>
+        </div>
+
         <UButton
           icon="i-lucide-share-2"
           size="sm"
@@ -412,8 +528,8 @@ if (import.meta.client) {
       </div>
     </div>
 
-    <!-- Graph -->
-    <div class="flex-1 relative">
+    <!-- Canvas view -->
+    <div v-if="viewMode === 'canvas'" class="flex-1 relative">
       <div v-if="itemsLoading && !items.length" class="absolute inset-0 flex items-center justify-center">
         <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
       </div>
@@ -460,6 +576,100 @@ if (import.meta.client) {
           <UIcon :name="t.icon" class="size-4" />
           {{ t.label }}
         </button>
+      </div>
+    </div>
+
+    <!-- List / triage view -->
+    <div v-else class="flex-1 overflow-y-auto">
+      <!-- Filter bar + bulk actions -->
+      <div class="sticky top-0 z-10 bg-default/80 backdrop-blur-sm border-b border-default px-4 py-2 flex items-center gap-2">
+        <button
+          v-for="s in [null, 'active', 'waiting', 'queued', 'blocked', 'done']"
+          :key="s || 'all'"
+          class="text-xs px-2 py-1 rounded-full transition-colors"
+          :class="listFilter === s
+            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+            : 'text-muted hover:text-default hover:bg-muted/50'"
+          @click="listFilter = s"
+        >
+          {{ s || 'all' }}
+          <span class="ml-0.5 opacity-60">{{ s ? items.filter(i => i.status === s).length : items.length }}</span>
+        </button>
+
+        <div v-if="selectedIds.size > 0" class="ml-auto flex items-center gap-1">
+          <span class="text-xs text-muted mr-1">{{ selectedIds.size }} selected</span>
+          <UButton size="xs" variant="soft" color="green" icon="i-lucide-check" label="Done" @click="bulkUpdateStatus('done')" />
+          <UButton size="xs" variant="soft" color="red" icon="i-lucide-trash-2" label="Delete" @click="bulkDelete" />
+        </div>
+      </div>
+
+      <!-- Items list -->
+      <div class="divide-y divide-default">
+        <div
+          v-for="item in filteredListItems"
+          :key="item.id"
+          class="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors cursor-pointer"
+          @click="onNodeClick(item.id)"
+        >
+          <!-- Checkbox -->
+          <input
+            type="checkbox"
+            :checked="selectedIds.has(item.id)"
+            class="mt-1 rounded border-neutral-300 dark:border-neutral-600"
+            @click.stop="toggleSelect(item.id)"
+          >
+
+          <!-- Status icon -->
+          <UIcon
+            :name="STATUS_CONFIG_LIST[item.status]?.icon || 'i-lucide-circle-dashed'"
+            class="size-4 mt-0.5 shrink-0"
+            :class="STATUS_CONFIG_LIST[item.status]?.class || 'text-neutral-400'"
+          />
+
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span
+                class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'"
+              >
+                {{ item.type }}
+              </span>
+              <span class="text-sm font-medium truncate">{{ item.title }}</span>
+            </div>
+            <p v-if="item.brief" class="text-xs text-muted mt-0.5 line-clamp-1">{{ item.brief }}</p>
+          </div>
+
+          <!-- Assignee -->
+          <span class="text-[10px] text-muted shrink-0 mt-1">
+            {{ item.assignee || 'pi' }}
+          </span>
+
+          <!-- Promote action (for review/learning nodes) -->
+          <UDropdownMenu
+            v-if="item.type === 'review' && item.assignee === 'human'"
+            :items="[
+              [
+                { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
+                { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
+                { label: 'Promote to Compose', icon: 'i-lucide-layout', onSelect: () => promoteToTask(item.id, 'compose') },
+              ],
+            ]"
+          >
+            <UButton
+              icon="i-lucide-arrow-up-right"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              title="Promote to task"
+              @click.stop
+            />
+          </UDropdownMenu>
+        </div>
+      </div>
+
+      <div v-if="!filteredListItems.length" class="py-12 text-center text-sm text-muted">
+        No items{{ listFilter ? ` with status "${listFilter}"` : '' }}
       </div>
     </div>
 
