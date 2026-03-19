@@ -476,10 +476,26 @@ function assistantFocusNode(nodeId: string) {
 async function assistantRefresh() {
   // Reload items (may have been created/updated/deleted by assistant)
   await refreshItems()
+
   // Reload flow positions (may have been rearranged by assistant)
-  await ensureFlowConfig()
-  // Force canvas re-render with new positions
-  flowKey.value++
+  if (flowId.value && teamId.value) {
+    try {
+      const flow = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows/${flowId.value}`)
+      if (flow?.nodePositions) {
+        // Ensure ALL items have a position — dagre overrides if any node is at (0,0)
+        const positions = { ...flow.nodePositions }
+        for (const item of items.value) {
+          if (!positions[item.id]) {
+            // Give unpositioned nodes a default so dagre doesn't run
+            positions[item.id] = { x: 100, y: 100 }
+          }
+        }
+        savedPositions.value = positions
+        // Force re-mount with complete positions
+        flowKey.value++
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 // ─── Keyboard shortcuts ───
