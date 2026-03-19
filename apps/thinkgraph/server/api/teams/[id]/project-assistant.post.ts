@@ -178,14 +178,16 @@ BRIEF: <what the work item should do>
           id: z.string().describe('Work item ID to dispatch'),
         }),
         execute: async (params) => {
-          const item = projectItems.find((i: any) => i.id === params.id)
+          // Re-fetch to get items created during this conversation (not stale snapshot)
+          const freshItems = await getAllThinkgraphWorkItems(team.id)
+          const item = freshItems.find((i: any) => i.id === params.id)
           if (!item) return { success: false, error: 'Work item not found' }
           if (item.status !== 'queued') return { success: false, error: `Item is ${item.status}, not queued` }
           if (item.assignee !== 'pi') return { success: false, error: `Item assigned to ${item.assignee}, not pi` }
 
-          // Build context chain
+          // Build context chain (use fresh items)
           const contextPayload = buildNodeContext(
-            allItems.map((i: any) => ({
+            freshItems.map((i: any) => ({
               id: i.id, parentId: i.parentId, title: i.title,
               nodeType: i.type, status: i.status, brief: i.brief, output: i.output,
             })),
