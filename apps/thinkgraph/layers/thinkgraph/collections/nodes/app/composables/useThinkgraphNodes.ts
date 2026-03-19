@@ -28,7 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const thinkgraphNodeSchema = z.object({
   canvasId: z.string().min(1, 'canvasId is required'),
-  parentId: z.string().optional(),
+  parentId: z.string().nullable().optional(),
   nodeType: z.string().min(1, 'nodeType is required'),
   status: z.string().min(1, 'status is required'),
   title: z.string().min(1, 'title is required'),
@@ -48,7 +48,6 @@ export const thinkgraphNodeSchema = z.object({
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
   userId: z.string().optional(),
-  parentId: z.string().nullable().optional()
 })
 
 export const thinkgraphNodesColumns = [
@@ -83,7 +82,7 @@ const _thinkgraphNodesConfig = {
   componentName: 'ThinkgraphNodesForm',
   defaultValues: {
     canvasId: '',
-    parentId: '',
+    parentId: null,
     nodeType: '',
     status: '',
     title: '',
@@ -102,8 +101,7 @@ const _thinkgraphNodesConfig = {
     stepIndex: 0,
     skillVersion: '',
     tokenCount: 0,
-    userId: '',
-    parentId: null
+    userId: ''
   },
   columns: thinkgraphNodesColumns,
   hierarchy: {
