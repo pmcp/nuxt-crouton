@@ -626,44 +626,52 @@ const syncDragPosition = useThrottleFn((event: NodeDragEvent) => {
 onNodeDrag(syncDragPosition)
 
 // Handle node drag end - final position sync + container detection
+// event.nodes contains ALL dragged nodes (multi-select), event.node is just the primary
 onNodeDragStop((event: NodeDragEvent) => {
   if (!props.draggable) return
 
-  const { node } = event
-  const position: FlowPosition = {
-    x: Math.round(node.position.x),
-    y: Math.round(node.position.y)
-  }
+  const draggedNodes = event.nodes
 
-  // Container detection (if enabled)
+  // Container detection (if enabled) — only for the primary node
   if (containerDetection) {
     const result = containerDetection.handleDragStop(finalNodes.value, event)
     if (result) {
       emit('nodeContainerChange', result.change)
-      // In ephemeral mode, the parent manages nodes; don't persist to collection
-      // The event handler is responsible for updating the nodes array
     }
   }
 
-  // Update position cache and lock the node so dagre never overrides it
-  positionCache.set(node.id, { ...position })
-  lockedNodeIds.value.add(node.id)
+  // Persist positions for ALL dragged nodes
+  for (const n of draggedNodes) {
+    const position: FlowPosition = {
+      x: Math.round(n.position.x),
+      y: Math.round(n.position.y)
+    }
 
-  if (props.sync && syncState) {
-    syncState.updatePosition(node.id, position)
-  } else {
-    debouncedUpdate(node.id, position)
+    positionCache.set(n.id, { ...position })
+    lockedNodeIds.value.add(n.id)
+
+    if (props.sync && syncState) {
+      syncState.updatePosition(n.id, position)
+    } else {
+      debouncedUpdate(n.id, position)
+    }
+
+    emit('nodeMove', n.id, position)
   }
 
   // In ephemeral mode, emit updated rows so parent can track position changes
   if (props.dataMode === 'ephemeral' && props.rows) {
-    const updatedRows = props.rows.map(r =>
-      (r as any).id === node.id ? { ...r, position } : r,
-    )
+    const movedIds = new Set(draggedNodes.map(n => n.id))
+    const updatedRows = props.rows.map(r => {
+      const id = (r as any).id
+      if (movedIds.has(id)) {
+        const n = draggedNodes.find(dn => dn.id === id)!
+        return { ...r, position: { x: Math.round(n.position.x), y: Math.round(n.position.y) } }
+      }
+      return r
+    })
     emit('update:rows', updatedRows)
   }
-
-  emit('nodeMove', node.id, position)
 })
 
 // Handle node click
