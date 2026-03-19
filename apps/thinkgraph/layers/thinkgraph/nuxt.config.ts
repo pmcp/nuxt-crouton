@@ -18,7 +18,9 @@ export default defineNuxtConfig({
     './collections/graphs',
     './collections/canvases',
     './collections/nodes',
-    './collections/injectrequests'
+    './collections/injectrequests',
+    './collections/projects',
+    './collections/workitems'
   ],
   i18n: {
     locales: [

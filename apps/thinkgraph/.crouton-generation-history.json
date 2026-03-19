@@ -8,6 +8,101 @@
       "status"
     ],
     "generator": "crouton-cli",
+    "timestamp": "2026-03-19T10:01:48.318Z",
+    "layer": "thinkgraph",
+    "gitSha": "b43b2084"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T10:01:48.300Z",
+    "layer": "thinkgraph",
+    "gitSha": "b43b2084"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T10:01:48.280Z",
+    "layer": "thinkgraph",
+    "gitSha": "b43b2084"
+  },
+  {
+    "collection": "workitems",
+    "fields": [
+      "projectId",
+      "parentId",
+      "title",
+      "type",
+      "status",
+      "brief",
+      "output",
+      "assignee",
+      "provider",
+      "sessionId",
+      "worktree",
+      "deployUrl",
+      "skill",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T10:01:48.257Z",
+    "layer": "thinkgraph",
+    "gitSha": "b43b2084"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T10:01:48.233Z",
+    "layer": "thinkgraph",
+    "gitSha": "b43b2084"
+  },
+  {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
     "timestamp": "2026-03-16T18:29:00.536Z",
     "layer": "thinkgraph",
     "gitSha": "b6abf84c"

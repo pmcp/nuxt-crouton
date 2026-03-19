@@ -12,3 +12,5 @@ export { thinkgraphGraphs } from '../../layers/thinkgraph/collections/graphs/ser
 export { thinkgraphCanvases } from '../../layers/thinkgraph/collections/canvases/server/database/schema'
 export { thinkgraphNodes } from '../../layers/thinkgraph/collections/nodes/server/database/schema'
 export { thinkgraphInjectRequests } from '../../layers/thinkgraph/collections/injectrequests/server/database/schema'
+export { thinkgraphProjects } from '../../layers/thinkgraph/collections/projects/server/database/schema'
+export { thinkgraphWorkItems } from '../../layers/thinkgraph/collections/workitems/server/database/schema'

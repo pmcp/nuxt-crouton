@@ -1,5 +1,19 @@
 export default {
   collections: [
+    // PM collections (new)
+    {
+      name: 'projects',
+      fieldsFile: './schemas/project.json'
+    },
+    {
+      name: 'workItems',
+      fieldsFile: './schemas/work-item.json',
+      hierarchy: {
+        enabled: true,
+        parentField: 'parentId'
+      }
+    },
+    // Legacy collections (kept for migration)
     {
       name: 'canvases',
       fieldsFile: './schemas/canvas.json'
@@ -21,7 +35,7 @@ export default {
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['canvases', 'nodes', 'injectRequests']
+      collections: ['projects', 'workItems', 'canvases', 'nodes', 'injectRequests']
     }
   ],
 

@@ -12,6 +12,10 @@ import {thinkgraphNodesConfig} from '../layers/thinkgraph/collections/nodes/app/
 
 import {thinkgraphInjectRequestsConfig} from '../layers/thinkgraph/collections/injectrequests/app/composables/useThinkgraphInjectRequests';
 
+import {thinkgraphProjectsConfig} from '../layers/thinkgraph/collections/projects/app/composables/useThinkgraphProjects';
+
+import {thinkgraphWorkItemsConfig} from '../layers/thinkgraph/collections/workitems/app/composables/useThinkgraphWorkItems';
+
 export default defineAppConfig({
   croutonCollections: {
     thinkgraphDecisions: thinkgraphDecisionsConfig,
@@ -20,7 +24,9 @@ export default defineAppConfig({
     thinkgraphGraphs: thinkgraphGraphsConfig,
     thinkgraphCanvases: thinkgraphCanvasesConfig,
     thinkgraphNodes: thinkgraphNodesConfig,
-    thinkgraphInjectRequests: thinkgraphInjectRequestsConfig
+    thinkgraphInjectRequests: thinkgraphInjectRequestsConfig,
+    thinkgraphProjects: thinkgraphProjectsConfig,
+    thinkgraphWorkItems: thinkgraphWorkItemsConfig
   },
 
   croutonApps: {

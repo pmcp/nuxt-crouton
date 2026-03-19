@@ -1,0 +1,499 @@
+<script setup lang="ts">
+import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
+import ThinkgraphWorkitemsNodeComponent from '~/components/ThinkgraphWorkitemsNode.vue'
+
+// Explicitly register so CroutonFlow's resolveComponent() can find it
+const app = useNuxtApp().vueApp
+if (!app.component('ThinkgraphWorkitemsNode')) {
+  app.component('ThinkgraphWorkitemsNode', ThinkgraphWorkitemsNodeComponent)
+}
+definePageMeta({ layout: 'admin' })
+
+const route = useRoute()
+const { teamId } = useTeamContext()
+const nuxtApp = useNuxtApp()
+const toast = useToast()
+
+const projectId = computed(() => route.params.projectId as string)
+
+// ─── Project data ───
+const { data: project, refresh: refreshProject } = await useFetch(
+  () => `/api/teams/${teamId.value}/thinkgraph-projects`,
+  { transform: (items: any[]) => items?.find((p: any) => p.id === projectId.value) },
+)
+
+// ─── Flow config ───
+const flowId = ref<string | null>(null)
+const savedPositions = ref<Record<string, { x: number; y: number }> | null>(null)
+
+async function ensureFlowConfig() {
+  if (!projectId.value || !teamId.value) return
+
+  const flowName = `project-${projectId.value}`
+
+  try {
+    const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
+      query: { collection: 'thinkgraphWorkItems', name: flowName },
+    })
+    const existing = flows?.find((f: any) => f.name === flowName)
+    if (existing) {
+      flowId.value = existing.id
+      savedPositions.value = existing.nodePositions || null
+      return
+    }
+  } catch { /* no existing config */ }
+
+  try {
+    const created = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
+      method: 'POST',
+      body: {
+        name: flowName,
+        collection: 'thinkgraphWorkItems',
+        labelField: 'title',
+        parentField: 'parentId',
+      },
+    })
+    if (created?.id) {
+      flowId.value = created.id
+    }
+  } catch { /* flow config creation failed */ }
+}
+
+// ─── Work items ───
+const items = ref<ThinkgraphWorkItem[]>([])
+const itemsLoading = ref(false)
+
+async function refreshItems() {
+  if (!projectId.value || !teamId.value) {
+    items.value = []
+    return
+  }
+  itemsLoading.value = true
+  try {
+    const result = await $fetch<ThinkgraphWorkItem[]>(
+      `/api/teams/${teamId.value}/thinkgraph-workitems`,
+      { query: { projectId: projectId.value } },
+    )
+    items.value = result || []
+  }
+  catch {
+    items.value = []
+  }
+  finally {
+    itemsLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([ensureFlowConfig(), refreshItems()])
+})
+
+// Auto-refresh on mutations
+nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
+  if (collection === 'thinkgraphWorkItems') refreshItems()
+})
+nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
+  if (collection === 'thinkgraphWorkItems') refreshItems()
+})
+
+// Poll while any item is active (Pi agent working)
+const hasActiveWork = computed(() =>
+  items.value.some(n => n.status === 'active'),
+)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+watch(hasActiveWork, (active) => {
+  if (active && !pollTimer) {
+    pollTimer = setInterval(() => refreshItems(), 3000)
+  } else if (!active && pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+    refreshItems()
+  }
+}, { immediate: true })
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
+
+// ─── Selection ───
+const selectedItemId = ref<string | null>(null)
+const showDetail = ref(false)
+
+const selectedItem = computed(() =>
+  items.value.find(n => n.id === selectedItemId.value),
+)
+
+function onNodeClick(nodeId: string) {
+  selectedItemId.value = nodeId
+  showDetail.value = true
+}
+
+function closeDetail() {
+  showDetail.value = false
+  selectedItemId.value = null
+}
+
+// ─── Create work item ───
+const showCreate = ref(false)
+const createTitle = ref('')
+const createType = ref('generate')
+const createParentId = ref<string | undefined>()
+const createPending = ref(false)
+
+const WORK_TYPES = [
+  { value: 'discover', label: 'Discover', icon: 'i-lucide-search' },
+  { value: 'architect', label: 'Architect', icon: 'i-lucide-pencil-ruler' },
+  { value: 'generate', label: 'Generate', icon: 'i-lucide-hammer' },
+  { value: 'compose', label: 'Compose', icon: 'i-lucide-layout' },
+  { value: 'review', label: 'Review', icon: 'i-lucide-eye' },
+  { value: 'deploy', label: 'Deploy', icon: 'i-lucide-rocket' },
+]
+
+const ASSIGNEES = [
+  { value: 'pi', label: 'Pi.dev', icon: 'i-lucide-bot' },
+  { value: 'human', label: 'You', icon: 'i-lucide-user' },
+  { value: 'client', label: 'Client', icon: 'i-lucide-users' },
+]
+
+const createAssignee = ref('pi')
+
+function openCreate(type?: string, parentId?: string) {
+  createType.value = type || 'generate'
+  createParentId.value = parentId
+  createTitle.value = ''
+  createAssignee.value = type === 'review' ? 'human' : 'pi'
+  showCreate.value = true
+}
+
+async function handleCreate() {
+  if (!createTitle.value.trim() || !teamId.value) return
+  createPending.value = true
+  try {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+      method: 'POST',
+      body: {
+        projectId: projectId.value,
+        title: createTitle.value.trim(),
+        type: createType.value,
+        status: 'queued',
+        assignee: createAssignee.value,
+        skill: ['discover', 'architect', 'generate', 'compose'].includes(createType.value)
+          ? createType.value
+          : undefined,
+        ...(createParentId.value ? { parentId: createParentId.value } : {}),
+      },
+    })
+    showCreate.value = false
+    await refreshItems()
+  }
+  finally {
+    createPending.value = false
+  }
+}
+
+// ─── Update work item ───
+async function updateItem(id: string, data: Partial<ThinkgraphWorkItem>) {
+  if (!teamId.value) return
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+    method: 'PATCH',
+    body: data,
+  })
+  await refreshItems()
+}
+
+async function deleteItem(id: string) {
+  if (!teamId.value) return
+  const children = items.value.filter(n => n.parentId === id)
+  if (children.length > 0) {
+    toast.add({ title: 'Cannot delete item with children', color: 'warning' })
+    return
+  }
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+    method: 'DELETE',
+  })
+  if (selectedItemId.value === id) closeDetail()
+  await refreshItems()
+}
+
+// ─── Dispatch ───
+function openDispatch(id: string) {
+  // For now, just mark as active — Pi.dev integration comes in Phase 2
+  updateItem(id, { status: 'active' })
+  toast.add({ title: 'Dispatch coming in Phase 2', description: 'Marked as active for now.', color: 'info' })
+}
+
+// Provide actions to WorkItemsNode
+provide('projectActions', {
+  openDetail: (id: string) => {
+    selectedItemId.value = id
+    showDetail.value = true
+  },
+  addChild: (parentId: string) => {
+    openCreate(undefined, parentId)
+  },
+  dispatch: openDispatch,
+})
+
+// ─── Status summary ───
+const statusSummary = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const n of items.value) {
+    counts[n.status] = (counts[n.status] || 0) + 1
+  }
+  return counts
+})
+
+const STATUS_PILL: Record<string, string> = {
+  queued: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
+  active: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+  waiting: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  blocked: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+}
+
+// ─── New item dropdown ───
+const newItemOptions = computed(() => [
+  WORK_TYPES.map(t => ({
+    label: t.label,
+    icon: t.icon,
+    onSelect: () => openCreate(t.value),
+  })),
+])
+
+// ─── Keyboard shortcuts ───
+function handleKeydown(e: KeyboardEvent) {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  switch (e.key) {
+    case 'n': case 'N': showCreate.value = true; break
+    case 'Escape':
+      if (showDetail.value) closeDetail()
+      else if (showCreate.value) showCreate.value = false
+      break
+  }
+}
+if (import.meta.client) {
+  useEventListener(document, 'keydown', handleKeydown)
+}
+</script>
+
+<template>
+  <div class="h-screen flex flex-col">
+    <!-- Top bar -->
+    <div class="flex items-center justify-between px-4 py-2 border-b border-default bg-default/80 backdrop-blur-sm shrink-0">
+      <div class="flex items-center gap-3">
+        <NuxtLink :to="`/admin/${teamId}/projects`" class="text-muted hover:text-default transition-colors">
+          <UIcon name="i-lucide-arrow-left" class="size-4" />
+        </NuxtLink>
+        <div>
+          <h1 class="text-sm font-semibold">{{ project?.name || 'Project' }}</h1>
+          <p v-if="project?.clientName" class="text-xs text-muted">{{ project.clientName }}</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Status summary pills -->
+        <div class="flex items-center gap-1 mr-2">
+          <span
+            v-for="(count, status) in statusSummary"
+            :key="status"
+            class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+            :class="STATUS_PILL[status as string] || STATUS_PILL.queued"
+          >
+            {{ count }} {{ status }}
+          </span>
+        </div>
+
+        <UDropdownMenu :items="newItemOptions">
+          <UButton icon="i-lucide-plus" size="sm" label="New" variant="soft" />
+        </UDropdownMenu>
+      </div>
+    </div>
+
+    <!-- Graph -->
+    <div class="flex-1 relative">
+      <div v-if="itemsLoading && !items.length" class="absolute inset-0 flex items-center justify-center">
+        <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
+      </div>
+
+      <div v-else-if="!items.length" class="absolute inset-0 flex items-center justify-center">
+        <div class="text-center">
+          <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <UIcon name="i-lucide-git-branch" class="size-8 text-muted" />
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Empty canvas</h3>
+          <p class="text-sm text-muted mb-4">Start by adding your first work item.</p>
+          <UDropdownMenu :items="newItemOptions">
+            <UButton icon="i-lucide-plus" label="Add work item" />
+          </UDropdownMenu>
+        </div>
+      </div>
+
+      <CroutonFlow
+        v-else
+        :rows="items"
+        collection="workItems"
+        parent-field="parentId"
+        label-field="title"
+        :flow-id="flowId || undefined"
+        :saved-positions="savedPositions || undefined"
+        minimap
+        @node-click="onNodeClick"
+      />
+    </div>
+
+    <!-- Detail panel (slideover) -->
+    <USlideover v-if="showDetail && selectedItem" v-model:open="showDetail" side="right" :ui="{ width: 'max-w-md' }">
+      <template #content>
+        <div class="p-6 h-full overflow-y-auto">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
+            <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
+          </div>
+
+          <!-- Type & Status -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <UFormField label="Type">
+              <USelectMenu
+                :model-value="selectedItem.type"
+                :items="WORK_TYPES.map(t => ({ label: t.label, value: t.value }))"
+                class="w-full"
+                @update:model-value="(v: string) => updateItem(selectedItem!.id, { type: v })"
+              />
+            </UFormField>
+            <UFormField label="Status">
+              <USelectMenu
+                :model-value="selectedItem.status"
+                :items="['queued', 'active', 'waiting', 'done', 'blocked'].map(s => ({ label: s, value: s }))"
+                class="w-full"
+                @update:model-value="(v: string) => updateItem(selectedItem!.id, { status: v })"
+              />
+            </UFormField>
+          </div>
+
+          <!-- Assignee -->
+          <UFormField label="Assignee" class="mb-4">
+            <USelectMenu
+              :model-value="selectedItem.assignee || 'pi'"
+              :items="ASSIGNEES.map(a => ({ label: a.label, value: a.value }))"
+              class="w-full"
+              @update:model-value="(v: string) => updateItem(selectedItem!.id, { assignee: v })"
+            />
+          </UFormField>
+
+          <!-- Brief -->
+          <UFormField label="Brief" class="mb-4">
+            <UTextarea
+              :model-value="selectedItem.brief || ''"
+              placeholder="What needs to happen?"
+              :rows="4"
+              class="w-full"
+              @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { brief: (e.target as HTMLTextAreaElement).value })"
+            />
+          </UFormField>
+
+          <!-- Output -->
+          <UFormField label="Output" class="mb-4">
+            <UTextarea
+              :model-value="selectedItem.output || ''"
+              placeholder="Result will appear here..."
+              :rows="4"
+              class="w-full"
+              @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { output: (e.target as HTMLTextAreaElement).value })"
+            />
+          </UFormField>
+
+          <!-- Metadata -->
+          <div class="space-y-3 mb-6">
+            <UFormField label="Skill">
+              <UInput
+                :model-value="selectedItem.skill || ''"
+                placeholder="e.g. architect"
+                class="w-full"
+                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { skill: (e.target as HTMLInputElement).value })"
+              />
+            </UFormField>
+            <UFormField label="Worktree">
+              <UInput
+                :model-value="selectedItem.worktree || ''"
+                placeholder="e.g. feat/blog-collection"
+                class="w-full"
+                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { worktree: (e.target as HTMLInputElement).value })"
+              />
+            </UFormField>
+            <UFormField label="Preview URL">
+              <UInput
+                :model-value="selectedItem.deployUrl || ''"
+                placeholder="https://..."
+                class="w-full"
+                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { deployUrl: (e.target as HTMLInputElement).value })"
+              />
+            </UFormField>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-2 pt-4 border-t border-default">
+            <UButton
+              v-if="selectedItem.status === 'queued'"
+              icon="i-lucide-send"
+              label="Dispatch"
+              @click="openDispatch(selectedItem.id)"
+            />
+            <UButton
+              v-if="selectedItem.status !== 'done'"
+              icon="i-lucide-check"
+              label="Mark Done"
+              variant="soft"
+              color="green"
+              @click="updateItem(selectedItem.id, { status: 'done' })"
+            />
+            <UButton
+              icon="i-lucide-trash-2"
+              variant="soft"
+              color="red"
+              class="ml-auto"
+              @click="deleteItem(selectedItem.id)"
+            />
+          </div>
+        </div>
+      </template>
+    </USlideover>
+
+    <!-- Create modal -->
+    <UModal v-model:open="showCreate">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">New Work Item</h3>
+          <div class="flex flex-col gap-4">
+            <UFormField label="Title" required>
+              <UInput v-model="createTitle" placeholder="e.g. Design blog collection schema" class="w-full" />
+            </UFormField>
+            <div class="grid grid-cols-2 gap-3">
+              <UFormField label="Type">
+                <USelectMenu
+                  v-model="createType"
+                  :items="WORK_TYPES.map(t => ({ label: t.label, value: t.value }))"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="Assignee">
+                <USelectMenu
+                  v-model="createAssignee"
+                  :items="ASSIGNEES.map(a => ({ label: a.label, value: a.value }))"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
+            <UButton
+              :loading="createPending"
+              :disabled="!createTitle.trim()"
+              icon="i-lucide-plus"
+              @click="handleCreate"
+            >
+              Create
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+  </div>
+</template>
