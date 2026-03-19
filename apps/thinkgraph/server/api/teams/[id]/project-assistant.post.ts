@@ -275,7 +275,11 @@ BRIEF: <what the work item should do>
             })
             piAccepted = resp?.accepted || false
           } catch (err: any) {
-            return { success: true, id: params.id, piAccepted: false, warning: `Handoff stored but Pi not reachable: ${err.message}` }
+            // Pi rejected or unreachable — reset to queued so it can be dispatched later
+            await updateThinkgraphWorkItem(params.id, team.id, 'system', {
+              status: 'queued',
+            }, { role: 'admin' })
+            return { success: false, id: params.id, error: `Pi unavailable: ${err.message}. Item reset to queued.` }
           }
 
           return { success: true, id: params.id, piAccepted, skill: handoffMeta.skill }
