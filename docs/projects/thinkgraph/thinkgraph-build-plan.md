@@ -620,16 +620,16 @@ export default {
 15. ✅ Terminal panel wired (WebSocket — works locally, needs DO relay for production)
 16. ✅ Quick-create menu on drag-to-empty from node handle
 
-### Phase 2b: Pi Agent Workflow (NEXT)
+### Phase 2b: Pi Agent Workflow
 
 **Goal:** Pi actually builds crouton apps, not just answers questions.
 
-17. Rewrite `buildAgentPrompt` per node type — different prompt for discover/architect/generate/compose/review/deploy
-18. Worktree management — Pi creates a git branch + worktree per generate/compose node (`git worktree add /tmp/workitem-{id} -b thinkgraph/{id}`)
-19. Skill execution — generate nodes run `/crouton` skill (crouton CLI), compose nodes build pages
-20. Git workflow — Pi commits in the worktree, pushes the branch, stores branch name in work item `worktree` field
-21. Fix output format — only keep final complete text, not progressive deltas
-22. Suppress `pi-extension` old tool errors (or disable for PM dispatch)
+17. ✅ Rewrite `buildAgentPrompt` per node type — different prompt for discover/architect/generate/compose/review/deploy
+18. ✅ Worktree management — Pi creates a git branch + worktree per generate/compose node (`git worktree add /tmp/thinkgraph/{id} -b thinkgraph/{id}`)
+19. ✅ Skill execution — generate nodes run `/crouton` skill (crouton CLI), compose nodes build pages
+20. ✅ Git workflow — Pi commits in the worktree, pushes the branch, stores branch name in work item `worktree` field
+21. ✅ Fix output format — only keep final complete text, not progressive deltas
+22. ✅ Suppress `pi-extension` old tool errors — PM dispatches use dedicated PM tools (`update_workitem`, `get_workitem`) instead of legacy thinking graph tools
 23. Auto-advance — when a node completes, auto-queue the next node in the chain
 24. PR creation — optionally create a GitHub PR from the work item branch
 
