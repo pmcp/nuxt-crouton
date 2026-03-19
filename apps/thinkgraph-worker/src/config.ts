@@ -21,13 +21,23 @@ export interface WorkerConfig {
 }
 
 export function loadConfig(): WorkerConfig {
-  const thinkgraphUrl = process.env.THINKGRAPH_URL
+  const isDev = process.env.NODE_ENV === 'development' || process.env.THINKGRAPH_ENV === 'dev'
+
+  // Support dev/prod URLs: THINKGRAPH_URL_DEV / THINKGRAPH_URL_PROD or just THINKGRAPH_URL
+  const thinkgraphUrl = isDev
+    ? (process.env.THINKGRAPH_URL_DEV || process.env.THINKGRAPH_URL)
+    : (process.env.THINKGRAPH_URL_PROD || process.env.THINKGRAPH_URL)
   if (!thinkgraphUrl) throw new Error('THINKGRAPH_URL is required')
 
-  const teamId = process.env.THINKGRAPH_TEAM
+  // Support dev/prod team IDs: THINKGRAPH_TEAM_DEV / THINKGRAPH_TEAM_PROD or THINKGRAPH_TEAM_ID / THINKGRAPH_TEAM
+  const teamId = isDev
+    ? (process.env.THINKGRAPH_TEAM_DEV || process.env.THINKGRAPH_TEAM_ID || process.env.THINKGRAPH_TEAM)
+    : (process.env.THINKGRAPH_TEAM_PROD || process.env.THINKGRAPH_TEAM_ID || process.env.THINKGRAPH_TEAM)
   if (!teamId) throw new Error('THINKGRAPH_TEAM is required')
 
   const serviceToken = process.env.THINKGRAPH_SERVICE_TOKEN || ''
+
+  console.log(`Environment: ${isDev ? 'DEV' : 'PROD'}`)
 
   return {
     thinkgraphUrl: thinkgraphUrl.replace(/\/$/, ''),
