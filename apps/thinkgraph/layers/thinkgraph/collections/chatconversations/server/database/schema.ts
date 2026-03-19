@@ -38,4 +38,5 @@ export const thinkgraphChatConversations = sqliteTable('thinkgraph_chatconversat
   messageCount: integer('messageCount'),
   lastMessageAt: integer('lastMessageAt', { mode: 'timestamp' }).$default(() => new Date()),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
 })
