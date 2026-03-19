@@ -18,8 +18,10 @@ import { AgentSessionManager } from './session-manager.js'
 import { DispatchWatcher } from './dispatch-watcher.js'
 import { YjsClient } from './yjs-client.js'
 
+const WORKER_VERSION = 'pm-2'
+
 async function main() {
-  console.log('=== ThinkGraph Pi Worker ===')
+  console.log(`=== ThinkGraph Pi Worker (${WORKER_VERSION}) ===`)
   console.log()
 
   const config = loadConfig()
@@ -124,6 +126,7 @@ async function main() {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
         status: 'ok',
+        version: WORKER_VERSION,
         uptime: Math.floor((Date.now() - startedAt) / 1000),
         activeSessions: sessionManager.activeCount,
         maxSessions: sessionManager.maxSessions,
@@ -190,6 +193,7 @@ async function main() {
         res.writeHead(202, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({
           accepted: true,
+          version: WORKER_VERSION,
           workItemId: payload.workItemId,
           skill: payload.skill,
         }))
