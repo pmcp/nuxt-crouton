@@ -294,6 +294,19 @@ function buildTrustedOrigins(baseURL: string): string[] {
       origins.add(`http://localhost:${port}`)
       origins.add(`http://127.0.0.1:${port}`)
     }
+
+    // Add custom trusted origins from env (comma-separated)
+    const extraOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
+    if (extraOrigins) {
+      for (const origin of extraOrigins.split(',')) {
+        origins.add(origin.trim())
+      }
+    }
+
+    // Add local network IPs for Pi worker / device testing
+    for (let port = 3000; port <= 3010; port++) {
+      origins.add(`http://192.168.0.157:${port}`)
+    }
   }
 
   return Array.from(origins)
