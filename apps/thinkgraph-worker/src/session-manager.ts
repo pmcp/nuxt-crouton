@@ -510,22 +510,38 @@ ${payload.skill ? `Skill: ${payload.skill}` : ''}
 
 ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
 
+    let body: string
     switch (payload.nodeType) {
       case 'discover':
-        return header + this.discoverInstructions(payload)
+        body = this.discoverInstructions(payload); break
       case 'architect':
-        return header + this.architectInstructions(payload)
+        body = this.architectInstructions(payload); break
       case 'generate':
-        return header + this.generateInstructions(payload)
+        body = this.generateInstructions(payload); break
       case 'compose':
-        return header + this.composeInstructions(payload)
+        body = this.composeInstructions(payload); break
       case 'review':
-        return header + this.reviewInstructions(payload)
+        body = this.reviewInstructions(payload); break
       case 'deploy':
-        return header + this.deployInstructions(payload)
+        body = this.deployInstructions(payload); break
       default:
-        return header + this.generateInstructions(payload)
+        body = this.generateInstructions(payload); break
     }
+
+    return header + body + this.retrospectiveFooter()
+  }
+
+  /** Shared closing instruction for all PM prompts */
+  private retrospectiveFooter(): string {
+    return `
+
+## Before You Finish (MANDATORY)
+
+Use \`update_workitem\` to set BOTH of these fields:
+
+1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)
+2. **retrospective** — honest reflection on this session: what was difficult, what failed, what tools were missing, what prompts were unclear, what could be optimised. This is how we improve agents, skills, and prompts over time. Be specific and candid.
+`
   }
 
   private discoverInstructions(payload: DispatchPayload): string {
@@ -542,8 +558,6 @@ Your job is to understand what the client needs and produce a structured brief.
    - **Data model sketch**: What collections/entities are needed (e.g., bookings, members, schedules)
    - **Integrations**: Any external services needed (payments, email, etc.)
    - **Open questions**: Things that need client clarification
-
-4. Use \`update_workitem\` to store your discovery brief as the output
 
 Keep it practical and specific. This brief feeds directly into the architect phase.`
   }
@@ -562,8 +576,6 @@ Your job is to design the data model and technical architecture for this crouton
 3. Specify which crouton packages to extend:
    - crouton (always), crouton-auth (if users), crouton-flow (if graph/canvas), crouton-editor (if rich text), crouton-ai (if AI features)
 4. Output the schemas as JSON that can be used with \`crouton config\`
-5. Use \`update_workitem\` to store the architecture output
-
 Output format: structured markdown with JSON schema blocks for each collection.`
   }
 
@@ -589,9 +601,7 @@ git commit -m "${payload.nodeType}(${payload.skill || payload.nodeType}): ${payl
 git push -u origin ${branchName}
 \`\`\`
 
-Then use \`update_workitem\` to set:
-- \`worktree\`: "${branchName}"
-- \`output\`: summary of what was created/changed
+Then use \`update_workitem\` to set \`worktree\` to "${branchName}".
 
 Finally, clean up the worktree:
 \`\`\`bash
@@ -672,7 +682,6 @@ Your job is to review the work produced by ancestor work items and provide feedb
    - **What's good**: things done well
    - **Issues**: specific problems found (with file paths if applicable)
    - **Suggestions**: improvements for the next iteration
-5. Use \`update_workitem\` to store your review as the output
 `
   }
 
@@ -700,9 +709,7 @@ Your job is to deploy the crouton app to Cloudflare Pages.
    npx wrangler pages deploy dist/
    \`\`\`
 5. Capture the deployed URL
-6. Use \`update_workitem\` to set:
-   - \`deployUrl\`: the preview/production URL
-   - \`output\`: deployment summary (URL, any issues)
+6. Use \`update_workitem\` to set \`deployUrl\` to the preview/production URL
 `
   }
 
@@ -749,7 +756,10 @@ Use the \`create_node\` tool. Each node has three parts:
   - \`output\`: a short handoff summary (what was concluded, what to explore next)`
   }
 
-  /** Flush accumulated output to ThinkGraph work item (progressive updates) */
+  /** Flush accumulated output to ThinkGraph work item (progressive updates).
+   *  For PM dispatches, writes to `_liveOutput` so it doesn't clobber the real
+   *  `output` field that Pi sets deliberately via update_workitem tool.
+   *  For legacy dispatches, writes directly to `output`. */
   private async flushOutput(nodeId: string): Promise<void> {
     const active = this.activeSessions.get(nodeId)
     if (!active || active.accumulatedOutput.length === 0) return
@@ -760,6 +770,7 @@ Use the \`create_node\` tool. Each node has three parts:
     active.lastFlushedLength = currentOutput.length
     const collection = active.collectionPath || 'thinkgraph-nodes'
     const teamId = active.teamId || this.config.teamId
+    const isPM = collection === 'thinkgraph-workitems'
 
     try {
       await ofetch(`${this.config.thinkgraphUrl}/api/teams/${teamId}/${collection}/${nodeId}`, {
@@ -768,7 +779,9 @@ Use the \`create_node\` tool. Each node has three parts:
           'Cookie': this.config.serviceToken,
           'Content-Type': 'application/json',
         },
-        body: { output: currentOutput },
+        // PM: preview in _liveOutput, don't clobber tool-written output
+        // Legacy: write directly to output
+        body: isPM ? { _liveOutput: currentOutput } : { output: currentOutput },
       })
     }
     catch {
@@ -790,8 +803,20 @@ Use the \`create_node\` tool. Each node has three parts:
     if (!session.callbackUrl) return
 
     try {
-      // accumulatedOutput is a single-element array with the final complete text
-      const output = (session.accumulatedOutput[0] || '').trim()
+      const isPM = session.collectionPath === 'thinkgraph-workitems'
+      // PM dispatches: Pi writes output deliberately via update_workitem tool.
+      // Don't overwrite it with streaming text. Only send status + error.
+      const body: Record<string, unknown> = {
+        workItemId: session.nodeId,
+        status,
+      }
+      if (error) body.error = error
+      if (!isPM) {
+        // Legacy: send accumulated streaming output as the result
+        const output = (session.accumulatedOutput[0] || '').trim()
+        if (output) body.output = output
+      }
+
       await ofetch(session.callbackUrl, {
         method: 'POST',
         headers: {
@@ -799,12 +824,7 @@ Use the \`create_node\` tool. Each node has three parts:
           'Content-Type': 'application/json',
           'X-Webhook-Secret': process.env.WEBHOOK_SECRET || '',
         },
-        body: {
-          workItemId: session.nodeId,
-          status,
-          output: output || undefined,
-          error,
-        },
+        body,
       })
       console.log(`[session-manager] Callback sent for ${session.nodeId} → ${status}`)
     }

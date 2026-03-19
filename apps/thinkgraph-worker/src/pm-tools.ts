@@ -38,7 +38,8 @@ export function createPMTools(
       description: 'Update the current work item in ThinkGraph. Use this to set the worktree branch name after creating a git worktree, store output summaries, or update status.',
       parameters: Type.Object({
         worktree: Type.Optional(Type.String({ description: 'Git branch name for this work item (e.g., thinkgraph/abc123)' })),
-        output: Type.Optional(Type.String({ description: 'Output summary — what was produced' })),
+        output: Type.Optional(Type.String({ description: 'Output summary — what was produced (your deliverable)' })),
+        retrospective: Type.Optional(Type.String({ description: 'Lessons learned — what was difficult, what failed, what tools were missing, what prompts were unclear, what could be optimised' })),
         status: Type.Optional(Type.String({ description: 'Status: queued, active, waiting, done, blocked' })),
         deployUrl: Type.Optional(Type.String({ description: 'Preview deployment URL' })),
       }),
@@ -46,6 +47,7 @@ export function createPMTools(
         const updates: Record<string, unknown> = {}
         if (params.worktree !== undefined) updates.worktree = params.worktree
         if (params.output !== undefined) updates.output = params.output
+        if (params.retrospective !== undefined) updates.retrospective = params.retrospective
         if (params.status !== undefined) updates.status = params.status
         if (params.deployUrl !== undefined) updates.deployUrl = params.deployUrl
 
