@@ -53,6 +53,8 @@ interface ActiveSession {
   accumulatedOutput: string[]
   collectionPath: string
   teamId: string
+  outputFlushTimer?: ReturnType<typeof setInterval>
+  lastFlushedLength: number
 }
 
 export class AgentSessionManager {
@@ -114,8 +116,14 @@ export class AgentSessionManager {
       accumulatedOutput: [],
       collectionPath: payload.collectionPath || 'thinkgraph-nodes',
       teamId: payload.teamId || this.config.teamId,
+      lastFlushedLength: 0,
     }
     this.activeSessions.set(payload.nodeId, earlySession)
+
+    // Flush output to ThinkGraph every 3 seconds so the UI shows progress
+    earlySession.outputFlushTimer = setInterval(() => {
+      this.flushOutput(payload.nodeId)
+    }, 3000)
 
     // Update node status to 'working' via HTTP API
     await this.updateNodeStatus(payload.nodeId, 'working')
@@ -171,6 +179,7 @@ export class AgentSessionManager {
         await this.processPromptQueue(payload.nodeId)
       } else {
         // HTTP dispatch or legacy: complete and callback
+        this.stopFlushTimer(payload.nodeId)
         ws.sendDone('Agent session completed')
         await this.updateNodeStatus(payload.nodeId, 'done')
         await this.sendCallback(activeSession, 'done')
@@ -183,6 +192,7 @@ export class AgentSessionManager {
       const message = error instanceof Error ? error.message : String(error)
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
       ws.sendError(message)
+      this.stopFlushTimer(payload.nodeId)
       await this.updateNodeStatus(payload.nodeId, 'error')
       const failedSession = this.activeSessions.get(payload.nodeId)
       if (failedSession) {
@@ -334,8 +344,8 @@ export class AgentSessionManager {
         for (const item of content) {
           if (item.type === 'text' && item.text) {
             blocks.push({ type: 'text', text: item.text })
-            // Accumulate text output for callback
-            active.accumulatedOutput.push(item.text)
+            // Store latest complete text (replaces previous — not incremental)
+            active.accumulatedOutput = [item.text]
           }
           else if (item.type === 'tool_use') {
             blocks.push({
@@ -506,6 +516,42 @@ Use the \`create_node\` tool. Each node has three parts:
 - After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set:
   - \`brief\`: 1-line summary of what you explored
   - \`output\`: a short handoff summary (what was concluded, what to explore next)`
+  }
+
+  /** Flush accumulated output to ThinkGraph work item (progressive updates) */
+  private async flushOutput(nodeId: string): Promise<void> {
+    const active = this.activeSessions.get(nodeId)
+    if (!active || active.accumulatedOutput.length === 0) return
+
+    const currentOutput = active.accumulatedOutput[0] || ''
+    if (currentOutput.length === active.lastFlushedLength) return // No new output
+
+    active.lastFlushedLength = currentOutput.length
+    const collection = active.collectionPath || 'thinkgraph-nodes'
+    const teamId = active.teamId || this.config.teamId
+
+    try {
+      await ofetch(`${this.config.thinkgraphUrl}/api/teams/${teamId}/${collection}/${nodeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Cookie': this.config.serviceToken,
+          'Content-Type': 'application/json',
+        },
+        body: { output: currentOutput },
+      })
+    }
+    catch {
+      // Silent — flush is best-effort
+    }
+  }
+
+  /** Stop the output flush timer for a session */
+  private stopFlushTimer(nodeId: string): void {
+    const active = this.activeSessions.get(nodeId)
+    if (active?.outputFlushTimer) {
+      clearInterval(active.outputFlushTimer)
+      active.outputFlushTimer = undefined
+    }
   }
 
   /** Send callback to ThinkGraph webhook when session completes */

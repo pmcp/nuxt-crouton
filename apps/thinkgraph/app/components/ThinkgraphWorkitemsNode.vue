@@ -100,6 +100,51 @@ const hasBrief = computed(() => !!item.value.brief)
 const hasWorktree = computed(() => !!item.value.worktree)
 const hasDeployUrl = computed(() => !!item.value.deployUrl)
 
+// Live status from artifacts
+const handoff = computed(() => {
+  const arts = item.value.artifacts
+  if (!Array.isArray(arts)) return null
+  return arts.find((a: any) => a?.type === 'handoff') || null
+})
+
+const liveStatus = computed(() => {
+  const arts = item.value.artifacts
+  if (!Array.isArray(arts)) return null
+  return arts.find((a: any) => a?.type === 'liveStatus') || null
+})
+
+const activityText = computed(() => liveStatus.value?.activity || null)
+const modelName = computed(() => {
+  const m = liveStatus.value?.model || handoff.value?.provider || null
+  if (!m) return null
+  // Shorten common model names
+  return m.replace('claude-', '').replace('-20250', '')
+})
+
+const elapsedText = computed(() => {
+  const dispatched = handoff.value?.dispatchedAt
+  if (!dispatched || !isActive.value) return null
+  const ms = Date.now() - new Date(dispatched).getTime()
+  const secs = Math.floor(ms / 1000)
+  if (secs < 60) return `${secs}s`
+  const mins = Math.floor(secs / 60)
+  if (mins < 60) return `${mins}m ${secs % 60}s`
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+})
+
+// Tick elapsed time every second when active
+const now = ref(Date.now())
+let elapsedTimer: ReturnType<typeof setInterval> | null = null
+watch(isActive, (active) => {
+  if (active && !elapsedTimer) {
+    elapsedTimer = setInterval(() => { now.value = Date.now() }, 1000)
+  } else if (!active && elapsedTimer) {
+    clearInterval(elapsedTimer)
+    elapsedTimer = null
+  }
+}, { immediate: true })
+onUnmounted(() => { if (elapsedTimer) clearInterval(elapsedTimer) })
+
 // Touch device detection
 const isTouchDevice = ref(false)
 if (import.meta.client) {
@@ -170,9 +215,19 @@ function handleDispatch(event: Event) {
       {{ displayTitle }}
     </p>
 
+    <!-- Output preview (live while active, final when done) -->
+    <p
+      v-if="hasOutput"
+      class="mt-1 text-[11px] leading-snug line-clamp-3"
+      :class="isActive ? 'text-green-400/80 font-mono' : 'text-neutral-500 dark:text-neutral-400'"
+    >
+      {{ item.output?.slice(-200) }}
+      <span v-if="isActive" class="inline-block w-1.5 h-3 bg-green-400 animate-pulse ml-0.5" />
+    </p>
+
     <!-- Brief preview (when no output yet) -->
     <p
-      v-if="hasBrief && !hasOutput"
+      v-else-if="hasBrief"
       class="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2"
     >
       {{ item.brief }}
