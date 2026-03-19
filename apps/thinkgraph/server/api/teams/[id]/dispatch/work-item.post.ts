@@ -94,6 +94,7 @@ export default defineEventHandler(async (event) => {
           context: contextPayload.markdown,
           skill: handoffMeta.skill,
           workItemType: targetItem.type,
+          teamId: team.id,
           teamSlug: team.slug || team.id,
           callbackUrl: `${config.public?.siteUrl || process.env.NUXT_PUBLIC_SITE_URL || 'https://thinkgraph.pages.dev'}/api/teams/${team.id}/dispatch/webhook`,
         },

@@ -173,6 +173,7 @@ async function main() {
           callbackUrl: payload.callbackUrl || undefined,
           skill: payload.skill || undefined,
           collectionPath: 'thinkgraph-workitems',
+          teamId: payload.teamId || undefined,
         }
 
         // Start session (async — don't await completion)
