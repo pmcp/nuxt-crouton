@@ -1,41 +1,63 @@
-# ThinkGraph — Build Plan (Revised)
+# ThinkGraph — Build Plan
 
 ## One-liner
 
-Your thinking belongs to you. Branch, explore, and merge ideas across any AI.
+Multi-project control panel for crouton apps. Pi.dev builds, you steer.
+
+---
+
+## Context: Where This Fits
+
+ThinkGraph is the **PM and orchestration layer** for the crouton platform. It sits above the skill chain and AI workers:
+
+```
+Client describes what they need
+        ↓
+ThinkGraph: project + work items visible on a canvas
+        ↓
+Skills execute: /discover → /architect → /generate → /compose → /brand
+        ↓
+Pi.dev: does the actual work (runs skills, CLI, code generation)
+        ↓
+ThinkGraph: captures results, routes to review, tracks deploys
+        ↓
+Client sees progress, gives feedback
+        ↓
+Loop
+```
+
+The **Designer app pivot** (building a visual schema builder) was replaced by **skills** — conversational steps that decompose work. ThinkGraph doesn't replace skills; it's the **control room where you see which skills have run, what's next, and who needs to act.**
+
+For the broader Atelier vision (non-technical users getting crouton apps via conversation), ThinkGraph is the professional's interface — the dashboard you use when you're managing 5+ client apps simultaneously.
 
 ---
 
 ## The Problem
 
-When working with AI on complex problems:
+When running multiple crouton apps for different clients simultaneously:
 
-1. **Context pollution** — Conversations get messy. You go too far down one path and can't get back cleanly.
-2. **Ideas get lost** — You say "not now" to a v2 idea and it disappears forever.
-3. **Thinking is trapped** — Your insights are locked in ChatGPT's history, or Claude's, or scattered across both.
-4. **Starting over** — When you revisit an old project, the reasoning that led to decisions is gone.
-5. **No cross-AI workflow** — You want Claude for analysis, Gemini for divergence, Cursor for prototyping. They don't share context.
+1. **No overview** — Each app is a separate worktree, a separate Pi conversation, a separate mental context. Nothing shows the full picture.
+2. **Context switching is expensive** — Jumping between client projects means losing your place. "Where was I on client B's app?"
+3. **AI work is invisible** — Pi is building something in a worktree, but you can't see progress without switching terminals.
+4. **Client communication gap** — No way to show a client what's in progress, what's deployed, what needs their input.
+5. **Handoffs fall through** — "This needs review" lives in your head, not in a system. Things get forgotten when you're juggling 5 apps.
 
 ---
 
 ## The Solution
 
-A **visual thinking graph** where:
+A **project control panel** where:
 
-- Every insight/decision is a **node**
-- Nodes connect in a **tree structure** (parent → children)
-- You can **branch** to explore different directions
-- You can **star** valuable insights
-- You can **park** future ideas (v2/v3) without losing them
-- You can **generate portable context** from any selection
-- **Any AI** can read the graph and continue
-- **Multiple entry points**: auto-capture where possible, paste fallback where not
+- Each **crouton app** is a canvas with its active work visible
+- **Work nodes** map to skill chain stages — not arbitrary tasks, but the actual steps of building a crouton app
+- **Pi.dev** is dispatched directly from nodes — send work, get results back
+- **Status is visible at a glance** — what's building, what's blocked, what needs your input, what's deployed
+- **Clients can see their project** — read-only view with feedback capability
+- **You open it every morning** and know exactly where everything stands
 
 ---
 
 ## What Crouton Already Provides
-
-This plan was originally written when crouton was minimal. Now the framework provides most of the infrastructure out of the box:
 
 | Capability | Package | What you get |
 |---|---|---|
@@ -44,13 +66,9 @@ This plan was originally written when crouton was minimal. Now the framework pro
 | Real-time sync | **crouton-collab** (via crouton-flow) | Yjs CRDTs, WebSocket rooms, conflict resolution |
 | Presence & cursors | **crouton-collab** | `<CollabPresence />`, `<CollabCursors />`, `<CollabStatus />` |
 | Auth + teams | **crouton-auth** | Better Auth, team context, sessions |
-| AI integration | **crouton-ai** | `useChat()`, multi-provider (Claude, GPT, Gemini) |
 | Rich text editing | **crouton-editor** | TipTap with blocks, slash commands, variables |
 | Collection scaffolding | **crouton-cli** | Full CRUD generation from JSON schema |
 | Position persistence | **crouton-flow** | `useFlowPositionStore()` + `flow_configs` table |
-| Drag-and-drop | **crouton-flow** | `useFlowDragDrop()` for external items onto canvas |
-| Custom nodes | **crouton-flow** | Auto-resolves `[Collection]Node.vue` components |
-| Container grouping | **crouton-flow** | `useFlowGroupManager()`, `useFlowContainerDetection()` |
 
 **Bottom line:** The infrastructure is done. The work is building ThinkGraph-specific UX on top.
 
@@ -62,134 +80,231 @@ This plan was originally written when crouton was minimal. Now the framework pro
 |---|---|---|
 | Framework | Nuxt + crouton ecosystem | Extends crouton, crouton-flow, crouton-ai |
 | Database | SQLite (local) / D1 (Cloudflare) | Via NuxtHub, team-scoped |
-| Graph UI | crouton-flow (Vue Flow + dagre) | `<CroutonFlow />` with custom node |
+| Graph UI | crouton-flow (Vue Flow + dagre) | `<CroutonFlow />` with custom nodes |
 | Real-time | crouton-collab (Yjs) | Comes free with crouton-flow |
-| AI interface | crouton-ai + `llm` CLI | Multi-provider chat + CLI log import |
+| AI Worker | Pi.dev (HTTP dispatch) | RPC or SDK integration |
 | Hosting | Cloudflare Pages | GitHub CI + Wrangler |
 
 ---
 
 ## Data Model
 
-### decisions (crouton collection schema)
+### projects (crouton collection)
+
+One project = one crouton app = one client.
 
 ```json
 {
-  "content": {
-    "type": "text",
+  "name": {
+    "type": "string",
     "meta": {
       "required": true,
-      "label": "Content",
-      "description": "The decision or insight text",
+      "label": "Project Name",
+      "description": "Client or app name",
       "area": "main",
       "group": "details"
     }
   },
-  "nodeType": {
+  "appId": {
+    "type": "string",
+    "meta": {
+      "label": "Crouton App",
+      "description": "apps/ directory name (e.g., velo, clientapp)",
+      "area": "sidebar",
+      "group": "config"
+    }
+  },
+  "repoUrl": {
+    "type": "string",
+    "meta": {
+      "label": "Repository",
+      "description": "Git repo URL if separate from monorepo",
+      "area": "sidebar",
+      "group": "config"
+    }
+  },
+  "deployUrl": {
+    "type": "string",
+    "meta": {
+      "label": "Live URL",
+      "description": "Deployed app URL",
+      "area": "sidebar",
+      "group": "config"
+    }
+  },
+  "status": {
     "type": "string",
     "meta": {
       "required": true,
-      "default": "insight",
-      "label": "Type",
-      "description": "idea, insight, decision, question",
+      "default": "active",
+      "label": "Status",
+      "description": "active, paused, completed",
       "area": "sidebar",
-      "group": "classification",
+      "group": "config",
       "displayAs": "badge"
     }
   },
-  "pathType": {
+  "clientName": {
     "type": "string",
     "meta": {
-      "label": "Path Type",
-      "description": "diverge, deep_dive, prototype, converge, validate, park",
+      "label": "Client",
+      "description": "Client name for display",
       "area": "sidebar",
-      "group": "classification",
-      "displayAs": "badge"
+      "group": "details"
     }
   },
-  "starred": {
-    "type": "boolean",
+  "description": {
+    "type": "text",
     "meta": {
-      "default": false,
-      "label": "Starred",
-      "description": "Marked as valuable insight",
-      "area": "sidebar",
-      "group": "classification"
-    }
-  },
-  "branchName": {
-    "type": "string",
-    "meta": {
-      "default": "main",
-      "label": "Branch",
-      "description": "Exploration branch name",
-      "area": "sidebar",
-      "group": "structure"
-    }
-  },
-  "versionTag": {
-    "type": "string",
-    "meta": {
-      "default": "v1",
-      "label": "Version",
-      "description": "v1, v2, v3, parked",
-      "area": "sidebar",
-      "group": "structure",
-      "displayAs": "badge"
-    }
-  },
-  "parentId": {
-    "type": "string",
-    "meta": {
-      "label": "Parent Decision",
-      "description": "Parent node for tree structure",
-      "area": "sidebar",
-      "group": "structure"
-    }
-  },
-  "source": {
-    "type": "string",
-    "meta": {
-      "label": "Source",
-      "description": "llm, paste, mcp, import, manual",
-      "area": "sidebar",
-      "group": "provenance"
-    }
-  },
-  "model": {
-    "type": "string",
-    "meta": {
-      "label": "AI Model",
-      "description": "Which AI model generated this",
-      "area": "sidebar",
-      "group": "provenance"
+      "label": "Description",
+      "description": "What this app does",
+      "area": "main",
+      "group": "details"
     }
   }
 }
 ```
 
-### decision-sources (for merges)
+### work-items (crouton collection)
+
+Nodes on the canvas. Each represents a concrete unit of work.
 
 ```json
 {
-  "decisionId": {
+  "projectId": {
     "type": "string",
-    "refTarget": "decisions",
+    "refTarget": "projects",
     "meta": {
       "required": true,
-      "label": "Decision",
+      "label": "Project",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "parentId": {
+    "type": "string",
+    "meta": {
+      "label": "Parent",
+      "description": "Parent work item for tree structure",
+      "area": "sidebar",
+      "group": "structure"
+    }
+  },
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "label": "Title",
+      "description": "Short description of the work",
       "area": "main",
       "group": "details"
     }
   },
-  "sourceId": {
+  "type": {
     "type": "string",
-    "refTarget": "decisions",
     "meta": {
       "required": true,
-      "label": "Source Decision",
+      "default": "generate",
+      "label": "Type",
+      "description": "discover, architect, generate, compose, review, deploy",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "queued",
+      "label": "Status",
+      "description": "queued, active, waiting, done, blocked",
+      "area": "sidebar",
+      "group": "classification",
+      "displayAs": "badge"
+    }
+  },
+  "brief": {
+    "type": "text",
+    "meta": {
+      "label": "Brief",
+      "description": "Input: what needs to happen",
       "area": "main",
       "group": "details"
+    }
+  },
+  "output": {
+    "type": "text",
+    "meta": {
+      "label": "Output",
+      "description": "Result: what was produced",
+      "area": "main",
+      "group": "details"
+    }
+  },
+  "assignee": {
+    "type": "string",
+    "meta": {
+      "default": "pi",
+      "label": "Assignee",
+      "description": "pi, human, client, or api:<provider> (e.g. api:flux, api:openai)",
+      "area": "sidebar",
+      "group": "routing",
+      "displayAs": "badge"
+    }
+  },
+  "provider": {
+    "type": "string",
+    "meta": {
+      "label": "AI Provider",
+      "description": "Target provider for AI work (pi, flux, openai, anthropic, replicate)",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "sessionId": {
+    "type": "string",
+    "meta": {
+      "label": "Session ID",
+      "description": "External session/job ID (Pi session, Replicate prediction, etc.)",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "worktree": {
+    "type": "string",
+    "meta": {
+      "label": "Worktree",
+      "description": "Git worktree branch for this work",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "deployUrl": {
+    "type": "string",
+    "meta": {
+      "label": "Preview URL",
+      "description": "Deployed preview for this work item",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "skill": {
+    "type": "string",
+    "meta": {
+      "label": "Skill",
+      "description": "Which crouton skill to run (discover, architect, generate, compose, brand)",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "artifacts": {
+    "type": "json",
+    "meta": {
+      "label": "Artifacts",
+      "description": "Generated files: schemas, configs, logs from skill run",
+      "area": "sidebar",
+      "group": "output"
     }
   }
 }
@@ -197,16 +312,204 @@ This plan was originally written when crouton was minimal. Now the framework pro
 
 ---
 
-## Path Types
+## Node Types
 
-| Type | Icon | Purpose | When to use |
+6 types, mapped to the skill chain + coordination.
+
+| Type | Icon | Skill chain step | Purpose | Typical assignee |
+|---|---|---|---|---|
+| **discover** | `i-lucide-search` | `/discover` | Interview client, understand needs | human or pi |
+| **architect** | `i-lucide-pencil-ruler` | `/architect` | Design schemas, data model, package selection | pi |
+| **generate** | `i-lucide-hammer` | `/generate` | Run CLI, generate collections, write code | pi |
+| **compose** | `i-lucide-layout` | `/compose` | Build pages, wire components | pi |
+| **review** | `i-lucide-eye` | (handoff) | Review output, give feedback | human or client |
+| **deploy** | `i-lucide-rocket` | (ops) | Deploy to Cloudflare | pi |
+
+These map directly to the crouton skill chain. A project canvas shows the actual pipeline stages, not abstract "tasks." The `/brand` skill is folded into compose (it's theming config, not a separate work unit).
+
+### Status Lifecycle
+
+```
+queued → active → done
+              ↘ waiting (needs input from someone else)
+              ↘ blocked (something is wrong)
+```
+
+5 statuses. No drafts, no thinking/working distinction, no needs_attention. Simple.
+
+---
+
+## Core Flow
+
+A new project starts with discover and flows through the skill chain:
+
+```
+Project canvas (one per crouton app):
+
+  ┌─────────────┐
+  │  discover   │  "Yoga studio needs bookings, schedule, member area"
+  │   ● active  │
+  │   → human   │  (interview with client)
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │  architect  │  Pi designs schemas, picks packages (bookings, auth, pages)
+  │   ○ queued  │
+  │   → pi      │  (runs /architect skill)
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │   review    │  You review schemas + package selection
+  │   ○ queued  │
+  │   → human   │
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │  generate   │  Pi runs crouton CLI, generates collections
+  │   ○ queued  │
+  │   → pi      │  (runs /generate skill)
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │   compose   │  Pi builds pages, wires components, applies theme
+  │   ○ queued  │
+  │   → pi      │  (runs /compose + /brand skills)
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │   deploy    │  Deploy preview to Cloudflare
+  │   ○ queued  │
+  │   → pi      │
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │   review    │  Client clicks through live app, gives feedback
+  │   ○ queued  │
+  │   → client  │
+  └──────┬──────┘
+         │
+    (feedback spawns new architect/generate/compose nodes → cycle repeats)
+```
+
+### Iteration, Not Branching
+
+The old ThinkGraph had "branching" as a core concept. The PM version keeps it simple: feedback from a review node spawns new work nodes. If the client wants to explore two directions ("try tabs" vs "try sidebar"), that's two generate nodes under the same review. You pick the winner. No branch metaphor needed — it's just a tree.
+
+### Partial Runs
+
+Not every iteration goes through the full chain. "Change the schedule page layout" spawns only a compose → deploy → review cycle. "Add an invoicing collection" spawns architect → generate → compose → deploy → review. The pipeline is flexible, not rigid.
+
+---
+
+## Pages
+
+### Dashboard (`/admin/[team]/`)
+
+All projects at a glance.
+
+```
+┌─────────────────────────────────────────────┐
+│  ThinkGraph                          [+ New] │
+├─────────────┬─────────────┬─────────────────┤
+│ Velo        │ Client B    │ Client C        │
+│ ● 2 active  │ 🔄 building │ ○ waiting on    │
+│   items     │   auth flow │   feedback      │
+│ velo.f...   │             │                 │
+│ [Open]      │ [Open]      │ [Open]          │
+└─────────────┴─────────────┴─────────────────┘
+```
+
+### Project Canvas (`/admin/[team]/project/[projectId]`)
+
+Graph view of work items for one project.
+
+```vue
+<CroutonFlow
+  :rows="workItems"
+  collection="work-items"
+  parent-field="parentId"
+  label-field="title"
+  :flow-id="`project-${projectId}`"
+  minimap
+  @node-click="openDetail"
+/>
+```
+
+Right panel: work item detail with brief, output, assignee, dispatch controls.
+
+### Client View (`/project/[shareToken]`)
+
+Read-only. No auth required. Shows:
+- Project status
+- Active work items
+- Live preview embeds
+- Feedback form (creates feedback nodes)
+
+---
+
+## Work Dispatch
+
+ThinkGraph dispatches work to different providers. Pi.dev is the primary worker for code tasks, but any AI can be a target.
+
+### Providers
+
+| Provider | Assignee | What it does | Use case |
 |---|---|---|---|
-| **Diverge** | `i-lucide-git-branch-plus` | Generate many options | Starting exploration, brainstorming |
-| **Deep dive** | `i-lucide-microscope` | Explore one idea fully | Found something interesting |
-| **Prototype** | `i-lucide-hammer` | Make it real | Validated, ready to build |
-| **Converge** | `i-lucide-git-merge` | Merge insights | Multiple paths, need synthesis |
-| **Validate** | `i-lucide-shield-question` | Stress-test | Challenge assumptions |
-| **Park** | `i-lucide-archive` | Save for later | Good idea but not now |
+| **Pi.dev** | `pi` | Coding agent with crouton skills | Schema design, code gen, deployment |
+| **Human** | `human` | Waits for you to act | Review, manual config, decisions |
+| **Client** | `client` | Waits for client input (shared view) | Feedback, approval |
+| **Flux/Replicate** | `api:flux` | Image generation API | Hero images, logos, brand assets |
+| **OpenAI** | `api:openai` | GPT/DALL-E/Codex API | Alternative code gen, image gen, comparison |
+| **Anthropic** | `api:anthropic` | Claude API | Alternative code review, documentation |
+
+### Dispatch Flow
+
+From any work item node, "Dispatch" button:
+
+1. Determines provider from `assignee` field
+2. Builds context: node brief + project config + ancestor chain + previous artifacts
+3. **Pi**: dispatches via HTTP/RPC with the crouton skill to run
+4. **API providers**: HTTP call with brief + relevant artifacts (e.g. brand brief → Flux)
+5. **Human/client**: sets status to `waiting`, sends notification
+6. Stores `sessionId` on the node
+7. Node status → `active`
+
+### Result Capture
+
+When any provider completes:
+1. Output captured in node's `output` field
+2. Artifacts stored (schemas, images, configs, generated files)
+3. Status → `done`
+4. Next node in the chain auto-queues
+
+### Context Building
+
+Every provider receives context assembled from the graph — that's ThinkGraph's unique value. No single AI has the full picture. ThinkGraph does:
+
+- Project description + app config
+- The work item brief
+- Previous artifacts in the chain (schemas from architect, images from Flux, etc.)
+- Feedback from review nodes
+- For Pi: the specific crouton skill to execute
+- For image gen: brand brief, color palette, style references from earlier nodes
+
+### Skill Mapping (Pi.dev)
+
+| Node type | Skill | What Pi does |
+|---|---|---|
+| discover | `/discover` | Interview questions, brief generation |
+| architect | `/architect` | Schema design, package selection, config |
+| generate | `/generate` (= `/crouton`) | Run CLI, generate collections, migrations |
+| compose | `/compose` | Build pages, wire components, TipTap content |
+| deploy | (no skill — ops) | `wrangler pages deploy`, D1 migrations |
+
+### Multi-AI Patterns
+
+**Competitive comparison**: Create two sibling nodes from a review — one assigned to Pi, one to `api:openai`. Both get the same brief. You review both outputs and pick the winner.
+
+**Pipeline with mixed providers**: architect (Pi) → generate (Pi) → compose (Pi) → brand assets (Flux) → deploy (Pi) → review (client). Each node targets the right tool for the job.
+
+**Challenger pattern**: After Pi completes a build node, optionally spawn a review node assigned to `api:anthropic` for an independent code review before human review.
 
 ---
 
@@ -220,46 +523,38 @@ apps/thinkgraph/
 ├── package.json
 ├── wrangler.toml
 ├── schemas/
-│   ├── decision.json
-│   └── decision-source.json
+│   ├── project.json
+│   └── work-item.json
 ├── app/
 │   ├── pages/
-│   │   ├── index.vue                    # Landing / project selector
-│   │   └── admin/[team]/
-│   │       └── graph.vue                # Main graph workspace
+│   │   ├── index.vue                         # Landing
+│   │   ├── admin/[team]/
+│   │   │   ├── index.vue                     # Dashboard (all projects)
+│   │   │   └── project/[projectId].vue       # Project canvas
+│   │   └── project/[shareToken].vue          # Client view (public)
 │   ├── components/
-│   │   ├── DecisionsNode.vue            # Custom Vue Flow node (auto-resolved)
-│   │   ├── ParkedNode.vue               # Dotted-border parked node variant
-│   │   ├── PathTypeModal.vue            # Path type selector
-│   │   ├── QuickAdd.vue                 # Paste input + parser
-│   │   ├── SelectionBar.vue             # Multi-select actions
-│   │   └── ContextGenerator.vue         # Brief/context generation
+│   │   ├── WorkItemsNode.vue                 # Custom Vue Flow node
+│   │   ├── ProjectCard.vue                   # Dashboard project card
+│   │   ├── WorkItemDetail.vue                # Right panel detail
+│   │   ├── WorkDispatch.vue                  # Dispatch controls (Pi, API providers, human)
+│   │   └── ClientFeedback.vue                # Public feedback form
 │   └── composables/
-│       ├── useDecisionGraph.ts          # Graph-specific logic (filtering, context chains)
-│       ├── useDecisionParser.ts         # Parse DECISION: blocks from pasted text
-│       └── useContextGenerator.ts       # Build portable context from node paths
+│       ├── useProjectDashboard.ts            # Multi-project overview data
+│       ├── useWorkDispatch.ts                # Provider dispatch (Pi, Flux, OpenAI, etc.)
+│       └── useWorkItemFlow.ts                # Graph-specific logic
 ├── server/
-│   └── api/teams/[id]/
-│       ├── decisions/
-│       │   ├── tree.get.ts              # Returns nodes + edges for graph
-│       │   └── context/[decisionId].get.ts  # Portable context for a decision chain
-│       ├── briefs/
-│       │   └── generate.post.ts         # Generate brief from selected node IDs
-│       └── llm/
-│           └── import.get.ts            # Scan llm CLI logs, return candidates
+│   ├── api/teams/[id]/
+│   │   ├── projects/                         # Generated CRUD
+│   │   ├── work-items/                       # Generated CRUD
+│   │   └── dispatch/
+│   │       ├── index.post.ts                 # Send work to any provider (Pi, Flux, OpenAI...)
+│   │       └── webhook.post.ts               # Receive results from providers
+│   └── api/public/
+│       └── project/[shareToken].get.ts       # Client view data
 └── layers/thinkgraph/
     └── collections/
-        ├── decisions/                   # Generated by crouton-cli
-        │   ├── types.ts
-        │   ├── app/components/
-        │   │   ├── _Form.vue
-        │   │   └── List.vue
-        │   ├── app/composables/
-        │   │   └── useThinkgraphDecisions.ts
-        │   └── server/
-        │       ├── api/teams/[id]/thinkgraph-decisions/
-        │       └── database/
-        └── decision-sources/            # Generated by crouton-cli
+        ├── projects/                          # Generated by crouton-cli
+        └── work-items/                        # Generated by crouton-cli
 ```
 
 ### nuxt.config.ts
@@ -268,8 +563,7 @@ apps/thinkgraph/
 export default defineNuxtConfig({
   extends: [
     '@fyit/crouton',
-    '@fyit/crouton-flow',   // includes crouton-collab
-    '@fyit/crouton-ai',     // for context generation
+    '@fyit/crouton-flow',
     './layers/thinkgraph'
   ],
 
@@ -285,23 +579,23 @@ export default defineNuxtConfig({
 export default {
   collections: [
     {
-      name: 'decisions',
-      fieldsFile: './schemas/decision.json',
+      name: 'projects',
+      fieldsFile: './schemas/project.json'
+    },
+    {
+      name: 'work-items',
+      fieldsFile: './schemas/work-item.json',
       hierarchy: {
         enabled: true,
         parentField: 'parentId'
       }
-    },
-    {
-      name: 'decision-sources',
-      fieldsFile: './schemas/decision-source.json'
     }
   ],
 
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['decisions', 'decision-sources']
+      collections: ['projects', 'work-items']
     }
   ],
 
@@ -320,299 +614,111 @@ export default {
 
 ## Build Phases
 
-### Phase 1: Scaffold & Graph (core)
+### Phase 1: Foundation
 
-**Goal:** Decisions as nodes on an interactive graph.
+**Goal:** Projects + work items, basic graph view.
 
-1. **Create app scaffold**
-   ```bash
-   # Copy from playground template
-   cp -r apps/playground apps/thinkgraph
-   # Update package.json, nuxt.config.ts, wrangler.toml
-   ```
+1. Update schemas (project.json, work-item.json)
+2. Regenerate collections with crouton-cli
+3. Run migrations
+4. Build dashboard page (project cards)
+5. Build project canvas page with `<CroutonFlow />`
+6. Build `WorkItemsNode.vue` (type icon, status badge, assignee, title)
+7. Build `WorkItemDetail.vue` (right panel with brief/output editing)
 
-2. **Generate collections**
-   ```bash
-   cd apps/thinkgraph
-   pnpm crouton config    # generates from crouton.config.js
-   pnpm run db:generate   # creates migration
-   ```
+### Phase 2: Work Dispatch (Pi.dev first)
 
-3. **Build `DecisionsNode.vue`** — Custom Vue Flow node
-   - Star toggle (top-left)
-   - Path type icon + color
-   - Content preview (truncated)
-   - Branch tag
-   - Version badge (v1/v2/parked)
-   - Parked nodes: dotted border, dimmed opacity
+**Goal:** Send work to Pi, get results back. Provider abstraction for future targets.
 
-4. **Build graph workspace page** (`admin/[team]/graph.vue`)
-   ```vue
-   <CroutonFlow
-     :rows="decisions"
-     collection="decisions"
-     parent-field="parentId"
-     label-field="content"
-     :flow-id="activeFlowId"
-     :saved-positions="positions"
-     minimap
-     @node-click="onNodeClick"
-     @node-dbl-click="openDetail"
-   />
-   ```
+8. Build `useWorkDispatch.ts` — provider abstraction with Pi.dev as first implementation
+9. Build dispatch API endpoint (`/api/teams/[id]/dispatch/index.post.ts`)
+10. Build webhook endpoint for results (`/api/teams/[id]/dispatch/webhook.post.ts`)
+11. Build `WorkDispatch.vue` — provider picker + dispatch button + status in node detail
+12. Auto-advance: when a node completes, queue the next node in the chain
 
-5. **Build sidebar** — Branch filter, version filter, starred filter, search
+### Phase 3: Client View
 
----
+**Goal:** Shareable project view with feedback.
 
-### Phase 2: Input & Context (what makes it ThinkGraph)
+13. Share token generation (on project model)
+14. Public project view page (`/project/[shareToken]`)
+15. `ClientFeedback.vue` — form that creates review nodes with client feedback
+16. Live preview embed (iframe of deployed app URL)
 
-**Goal:** Get decisions in, get context out.
+### Phase 4: Additional Providers
 
-6. **`useDecisionParser.ts`** — Parse `DECISION: {...}` blocks from pasted text
-   - Accepts raw AI output
-   - Extracts structured decision objects
-   - Returns array for review
+**Goal:** Dispatch to AI providers beyond Pi.
 
-7. **`QuickAdd.vue`** — Paste input component
-   - Textarea for pasting AI output
-   - Live preview of parsed decisions
-   - Add/edit/skip per decision
-   - Assigns to current branch
-
-8. **`PathTypeModal.vue`** — "What kind of path?"
-   - Select path type (diverge, deep dive, prototype, converge, validate, park)
-   - Select method (llm CLI, Claude, ChatGPT, Gemini, copy context)
-   - Generates appropriate context/command
-
-9. **`useContextGenerator.ts`** — Build portable context
-   - Walk the decision chain from root to selected node
-   - Include starred insights from other branches
-   - Format as prompt-ready markdown
-   - Template per path type (diverge → "Generate 5-10 approaches...", etc.)
-
-10. **`/api/teams/[id]/decisions/context/[decisionId].get.ts`** — Server-side context generation
-
----
-
-### Phase 3: Multi-select & Briefs
-
-**Goal:** Select across branches, generate actionable output.
-
-11. **Selection mode** — Shift+click to multi-select nodes across branches
-
-12. **`SelectionBar.vue`** — Floating bar showing selection
-    - Count + node labels
-    - "Generate brief" dropdown (Markdown, AI prompt, Lovable/Cursor brief, custom)
-    - "Start converge" — create a new convergence node from selection
-    - "Copy context" — portable context to clipboard
-
-13. **`/api/teams/[id]/briefs/generate.post.ts`** — Brief generation endpoint
-    - Accepts `{ ids: string[], format: string }`
-    - Builds context from selected decisions
-    - Returns formatted brief
-
----
-
-### Phase 4: Integrations
-
-**Goal:** Automatic capture from external tools.
-
-14. **llm CLI integration**
-    - `/api/teams/[id]/llm/import.get.ts` — Read `~/.llm/logs.db`, extract candidates
-    - Import UI: review, tag, assign to branch
-    - `log_decision` tool definition for `llm --functions`
-
-15. **Real-time sync** (already built into crouton-flow)
-    - Enable `sync` prop on `<CroutonFlow />`
-    - Configure CollabRoom Durable Object in wrangler.toml
-    - Multiple tabs/users editing the graph simultaneously
-
-16. **AI-assisted features** (via crouton-ai)
-    - Auto-summarize a branch into a brief
-    - Suggest path type based on conversation context
-    - "What's missing?" analysis across branches
-
----
+17. Flux/Replicate adapter — image generation from brand briefs
+18. OpenAI adapter — alternative code gen, DALL-E for images
+19. Anthropic adapter — Claude API for independent code review
+20. Competitive comparison UI — side-by-side output from two providers on same brief
 
 ### Phase 5: Polish
 
-17. **Visual refinement**
-    - Branch colors (consistent per branch name)
-    - Animated edges for active paths
-    - Transition when nodes are starred/parked
-    - Dark mode tuning
-
-18. **Keyboard shortcuts**
-    - `s` — star selected node
-    - `p` — park selected node
-    - `n` — new child node
-    - `q` — quick add (paste)
-    - `/` — search
-    - `Esc` — clear selection
-
-19. **Search & filter**
-    - Full-text search across content
-    - Filter by branch, version, path type, starred
-    - Highlight matching nodes on graph
+21. Dashboard status aggregation (count active/waiting/blocked per project)
+22. Keyboard shortcuts (N: new node, D: done, W: dispatch work)
+23. Node visual states (active = pulse, waiting = orange, done = green, blocked = red)
+24. Provider icon on nodes (Pi logo, OpenAI logo, Flux logo, human avatar)
+25. Real-time sync via crouton-collab
 
 ---
 
-## Input Methods
+## What Was Cut
 
-| Method | Friction | How it works |
-|---|---|---|
-| **Manual add** | Low | Click "+" on a node, type content |
-| **Paste (QuickAdd)** | Low | Paste AI output, parser extracts `DECISION:` blocks |
-| **llm CLI** | Auto | `llm` auto-logs to SQLite, ThinkGraph imports |
-| **llm tool** | Auto | AI calls `log_decision()` via `llm --functions` |
-| **MCP Server** | Auto | Cursor/Claude Code tool integration (v2) |
+| Old concept | Why it's gone |
+|---|---|
+| Decision nodes, insights, ideas | Not a thinking tool anymore |
+| Path types (diverge, converge, validate...) | PM doesn't need exploration modes |
+| Starring, parking, version tags | Complexity for the old use case |
+| `useDecisionParser`, QuickAdd paste | No more parsing AI output |
+| Context templates per path type | Pi gets skills, not prompt templates |
+| llm CLI integration | Pi.dev replaces this |
+| Claude responder auto-expansion | Pi.dev dispatch replaces this |
+| Research → story → task pipeline | Not a kanban — it's a skill chain pipeline |
+| Visual Designer app | Pivoted to skills (`/discover → /architect → /generate → /compose → /brand`) |
+| 10+ node types | 6 types mapped to skill chain stages |
+| 7 status values | 5 statuses: queued, active, waiting, done, blocked |
 
 ---
 
-## Context Generation Templates
+## Relationship to Strategy
 
-When starting a path from a node, generate a prompt like:
+### Atelier Vision
 
-```markdown
-You are continuing an exploration.
+ThinkGraph is the **professional interface** for the Atelier vision:
+- **Non-technical users** get the chat endpoint (describe → get app)
+- **You (the developer/agency)** get ThinkGraph (manage multiple client apps, see the pipeline, steer AI workers)
+- **Clients** get the shared view (see progress, give feedback)
 
-## Path so far
-D1: Version control for AI reasoning
-D2: Context pollution is the real pain
-D3: Decisions = compressed portable context
+Same skill chain, same CLI, same packages underneath. Different interfaces for different audiences.
 
-## Starred insights from other branches
-B2: Genetic algorithms for ideas (branch: breeding)
-C1: SQLite schema defined (branch: schema)
+### The Designer Pivot
 
-## Your task
-[Template varies by path type]
+The old "Designer app" (visual schema builder with kanban canvas) was replaced by conversational skills. ThinkGraph doesn't bring the designer back — it provides **visibility over skill execution**, not a visual builder. You see that `/architect` ran and produced 3 schemas, not a drag-drop schema editor.
 
-## Output format
-When you reach a key insight or decision, format it as:
-DECISION: {"content": "your insight", "type": "insight", "branch": "current_branch"}
-```
+### MCP Integration
 
-### Templates by path type
-
-| Path type | Task prompt |
-|---|---|
-| Diverge | "Generate 5-10 different approaches to: [node content]" |
-| Deep dive | "Go deep on: [node content]. Explore implications, edge cases, trade-offs." |
-| Prototype | "Create a working prototype for: [node content]. Be specific and practical." |
-| Converge | "Synthesize these insights into a unified approach: [selected nodes]" |
-| Validate | "Challenge and stress-test this decision: [node content]. Find holes." |
-| Park | (no AI prompt — just tags the node as parked) |
-
----
-
-## Bidirectional Claude Integration (Active)
-
-Real-time conversation between ThinkGraph UI and Claude Code. When a user adds a node in the graph, Claude reads the context and responds with new nodes via MCP — creating a live thinking dialogue.
-
-### Architecture
-
-```
-User creates node (source: 'manual')
-         │
-         ▼
-POST /api/teams/[id]/thinkgraph-decisions/
-         │
-         ▼
-claude-responder.ts (server utility)
-  1. Build graph context (ancestors, siblings, starred)
-  2. Spawn `claude` CLI with prompt + MCP instructions
-  3. Claude reads graph, creates child nodes via MCP (source: 'mcp')
-  4. signalCollectionChange → Yjs → UI updates live
-         │
-         ▼
-Loop guard: only trigger on source !== 'mcp'
-```
-
-### Key Design Decisions
-
-| Decision | Rationale |
-|---|---|
-| Spawn `claude` CLI (not API) | Has access to `.claude/skills/`, project context, MCP tools |
-| `source` field as loop guard | MCP-created nodes have `source: 'mcp'`, UI nodes have `source: 'manual'` — only trigger on manual |
-| Fire-and-forget spawning | Don't block the POST response; Claude works asynchronously |
-| Pass context in prompt | Faster than having Claude call MCP to read context first |
-| Use team slug for MCP | `signalCollectionChange` needs slug, not UUID |
-
-### Files
-
-| File | Purpose |
-|---|---|
-| `server/utils/claude-responder.ts` | Spawns Claude CLI with graph context |
-| `server/api/.../index.post.ts` | Modified to call responder for manual nodes |
-| `.claude/skills/think-aloud.md` | Skill for Claude's reasoning-as-nodes workflow |
-
-### Spawn Pattern
-
-```typescript
-spawn('claude', ['-p', prompt, '--no-session-persistence', '--permission-mode', 'bypassPermissions'], {
-  cwd: projectDir,
-  env: { ...process.env, CLAUDECODE: undefined }, // allow nested spawning
-  stdio: 'ignore',
-  detached: true
-}).unref()
-```
-
-### Future: Agent SDK
-
-When `@anthropic-ai/claude-agent-sdk` matures, replace CLI spawning with:
-```typescript
-import { ClaudeAgent } from '@anthropic-ai/claude-agent-sdk'
-const agent = new ClaudeAgent({ cwd: projectDir })
-for await (const event of agent.run(prompt)) { /* stream */ }
-```
-
----
-
-## V2 Features (Parked)
-
-| Feature | Description |
-|---|---|
-| MCP Server | Tool integration for Cursor, Claude Code |
-| AI recommendations | Track model performance per path type |
-| Team collaboration | Shared graphs, permissions, notifications |
-| llm-thinkgraph plugin | Native `llm` plugin |
-| Browser extension | Auto-capture from any AI web interface |
-| Export | Decision tree as documentation |
-| Templates | Reusable graph structures for common explorations |
-
----
-
-## Key Differences from Original Plan
-
-| Original plan | Revised |
-|---|---|
-| Build Vue Flow integration from scratch | Use `<CroutonFlow />` — already done |
-| Build Yjs sync (Phase 2) | Free — crouton-flow extends crouton-collab |
-| Manual CRUD endpoints | Generated by crouton-cli |
-| Raw SQL schema | crouton JSON schema format |
-| `/api/decisions` endpoints | `/api/teams/[id]/thinkgraph-decisions/` (team-scoped) |
-| Custom state management | `useCollectionQuery/Mutation` |
-| Auth is implicit | crouton-auth with team context |
-| 10 build phases | 5 focused phases |
+When crouton packages ship `server/mcp/` tools, ThinkGraph can expose them as context for Pi dispatch. "This project uses crouton-bookings and crouton-auth" → Pi gets the relevant MCP tools automatically.
 
 ---
 
 ## Success Criteria
 
-1. You use it for every project
-2. Ideas don't get lost
-3. V2 dreams stay parked until ready
-4. You never start from zero again
-5. Works with any AI (llm, web interfaces, or paste)
+1. You open it every morning and know where all client projects stand
+2. You can dispatch work to Pi with the right skill and context in one click
+3. Clients can see their project and leave feedback without you emailing screenshots
+4. Adding a new client project takes < 5 minutes
+5. The canvas shows the real pipeline: what was discovered, designed, generated, deployed, reviewed
+6. Feedback loops back into the pipeline — client says "change X" → new architect/generate cycle spawns
 
 ---
 
 ## Key Principles
 
-1. **Auto where possible, paste where not** — Multiple entry points, same destination
-2. **Unix philosophy** — Small tools that compose
-3. **Your thinking belongs to you** — Not trapped in any AI provider
-4. **Structured parking** — v2/v3 ideas are parked, not forgotten
-5. **Reduce friction incrementally** — Don't build perfect, build useful
+1. **One canvas per app** — Not per idea, not per sprint. Per client product.
+2. **Nodes are skill stages, not thoughts** — Every node maps to a concrete step in building a crouton app.
+3. **Pi does the work, you steer** — Dispatch skills, review output, route feedback.
+4. **Clients see progress** — Shared view is a first-class feature.
+5. **The pipeline is flexible** — Not every iteration needs all stages. Change a page? Just compose → deploy → review.
+6. **Skills are the engine, ThinkGraph is the dashboard** — Don't duplicate what skills do. Visualize and orchestrate.
