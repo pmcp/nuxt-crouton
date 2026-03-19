@@ -9,7 +9,7 @@
   - Collection name: thinkgraphWorkItems
   - API endpoint: /api/teams/[id]/thinkgraph-workitems
   - Columns composable: useThinkgraphWorkItems()
-  - Column fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, artifacts
+  - Column fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, retrospective, artifacts
 
   ## Common Modifications
   - Add column: Update columns array in composable

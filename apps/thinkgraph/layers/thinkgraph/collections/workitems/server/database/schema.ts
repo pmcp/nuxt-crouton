@@ -44,5 +44,6 @@ export const thinkgraphWorkItems = sqliteTable('thinkgraph_workitems', {
   worktree: text('worktree'),
   deployUrl: text('deployUrl'),
   skill: text('skill'),
+  retrospective: text('retrospective'),
   artifacts: jsonColumn('artifacts').$default(() => ({}))
 })

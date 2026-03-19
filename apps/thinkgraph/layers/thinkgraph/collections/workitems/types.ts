@@ -9,7 +9,7 @@
  * - Form data type: ThinkgraphWorkItemFormData
  * - New item type: NewThinkgraphWorkItem
  * - Form props: ThinkgraphWorkItemFormProps
- * - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, artifacts
+ * - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, retrospective, artifacts
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -40,6 +40,7 @@ export interface ThinkgraphWorkItem {
   worktree?: string
   deployUrl?: string
   skill?: string
+  retrospective?: string
   artifacts?: Record<string, any>
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'

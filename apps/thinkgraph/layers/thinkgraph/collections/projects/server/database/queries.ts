@@ -23,7 +23,7 @@ export async function getAllThinkgraphProjects(teamId: string) {
     .from(tables.thinkgraphProjects)
     .leftJoin(ownerUser, eq(tables.thinkgraphProjects.owner, ownerUser.id))
     .where(eq(tables.thinkgraphProjects.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphProjects.order))
+    .orderBy(desc(tables.thinkgraphProjects.createdAt))
 
   return projects
 }
@@ -51,7 +51,7 @@ export async function getThinkgraphProjectsByIds(teamId: string, projectIds: str
         inArray(tables.thinkgraphProjects.id, projectIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphProjects.order))
+    .orderBy(desc(tables.thinkgraphProjects.createdAt))
 
   return projects
 }
@@ -89,7 +89,7 @@ export async function updateThinkgraphProject(
     .update(tables.thinkgraphProjects)
     .set({
       ...updates,
-      // updatedBy: userId  // No metadata columns
+      updatedBy: userId
     })
     .where(and(...conditions))
     .returning()

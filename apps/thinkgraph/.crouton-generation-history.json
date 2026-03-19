@@ -8,6 +8,390 @@
       "status"
     ],
     "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:33:22.782Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:33:22.762Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:33:22.742Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "workitems",
+    "fields": [
+      "projectId",
+      "parentId",
+      "title",
+      "type",
+      "status",
+      "brief",
+      "output",
+      "assignee",
+      "provider",
+      "sessionId",
+      "worktree",
+      "deployUrl",
+      "skill",
+      "retrospective",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:33:22.722Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:33:22.699Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:44.951Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:44.930Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:44.909Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "workitems",
+    "fields": [
+      "projectId",
+      "parentId",
+      "title",
+      "type",
+      "status",
+      "brief",
+      "output",
+      "assignee",
+      "provider",
+      "sessionId",
+      "worktree",
+      "deployUrl",
+      "skill",
+      "retrospective",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:44.889Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:44.869Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:06.419Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:06.394Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:06.372Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "workitems",
+    "fields": [
+      "projectId",
+      "parentId",
+      "title",
+      "type",
+      "status",
+      "brief",
+      "output",
+      "assignee",
+      "provider",
+      "sessionId",
+      "worktree",
+      "deployUrl",
+      "skill",
+      "retrospective",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:06.352Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:32:06.329Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:31:05.860Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "nodes",
+    "fields": [
+      "canvasId",
+      "parentId",
+      "nodeType",
+      "status",
+      "title",
+      "brief",
+      "output",
+      "handoffType",
+      "handoffMeta",
+      "contextScope",
+      "contextNodeIds",
+      "notionTaskId",
+      "worktree",
+      "sendTarget",
+      "sendMode",
+      "injectMode",
+      "origin",
+      "stepIndex",
+      "skillVersion",
+      "tokenCount",
+      "userId"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:31:05.836Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "canvases",
+    "fields": [
+      "title",
+      "epicId",
+      "epicBrief",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:31:05.808Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "workitems",
+    "fields": [
+      "projectId",
+      "parentId",
+      "title",
+      "type",
+      "status",
+      "brief",
+      "output",
+      "assignee",
+      "provider",
+      "sessionId",
+      "worktree",
+      "deployUrl",
+      "skill",
+      "retrospective",
+      "artifacts"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:31:05.770Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "projects",
+    "fields": [
+      "name",
+      "appId",
+      "repoUrl",
+      "deployUrl",
+      "status",
+      "clientName",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-03-19T15:31:05.738Z",
+    "layer": "thinkgraph",
+    "gitSha": "3cc54d95"
+  },
+  {
+    "collection": "injectrequests",
+    "fields": [
+      "nodeId",
+      "fromUserId",
+      "content",
+      "status"
+    ],
+    "generator": "crouton-cli",
     "timestamp": "2026-03-19T10:01:48.318Z",
     "layer": "thinkgraph",
     "gitSha": "b43b2084"

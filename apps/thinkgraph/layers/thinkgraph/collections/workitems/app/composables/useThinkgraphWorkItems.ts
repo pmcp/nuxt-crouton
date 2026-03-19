@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/thinkgraph-workitems
  * - Form component: ThinkgraphWorkItemsForm
  * - List component: ThinkgraphWorkItemsList
- * - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, artifacts
+ * - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, retrospective, artifacts
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -28,7 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const thinkgraphWorkItemSchema = z.object({
   projectId: z.string().min(1, 'projectId is required'),
-  parentId: z.string().nullable().optional(),
+  parentId: z.string().optional(),
   title: z.string().min(1, 'title is required'),
   type: z.string().min(1, 'type is required'),
   status: z.string().min(1, 'status is required'),
@@ -40,7 +40,9 @@ export const thinkgraphWorkItemSchema = z.object({
   worktree: z.string().optional(),
   deployUrl: z.string().optional(),
   skill: z.string().optional(),
-  artifacts: z.record(z.string(), z.any()).optional()
+  retrospective: z.string().optional(),
+  artifacts: z.record(z.string(), z.any()).optional(),
+  parentId: z.string().nullable().optional()
 })
 
 export const thinkgraphWorkItemsColumns = [
@@ -57,6 +59,7 @@ export const thinkgraphWorkItemsColumns = [
   { accessorKey: 'worktree', header: 'Worktree' },
   { accessorKey: 'deployUrl', header: 'DeployUrl' },
   { accessorKey: 'skill', header: 'Skill' },
+  { accessorKey: 'retrospective', header: 'Retrospective' },
   { accessorKey: 'artifacts', header: 'Artifacts' }
 ]
 
@@ -80,7 +83,9 @@ const _thinkgraphWorkItemsConfig = {
     worktree: '',
     deployUrl: '',
     skill: '',
+    retrospective: '',
     artifacts: {},
+    parentId: null
   },
   columns: thinkgraphWorkItemsColumns,
   hierarchy: {
@@ -171,6 +176,12 @@ const _thinkgraphWorkItemsConfig = {
           "type": "string",
           "label": "Skill",
           "area": "sidebar"
+      },
+      {
+          "name": "retrospective",
+          "type": "text",
+          "label": "Retrospective",
+          "area": "main"
       },
       {
           "name": "artifacts",

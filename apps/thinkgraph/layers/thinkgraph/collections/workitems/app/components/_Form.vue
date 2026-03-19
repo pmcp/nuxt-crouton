@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/thinkgraph-workitems
   - Zod schema: useThinkgraphWorkItems() composable
-  - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, artifacts
+  - Fields: projectId, parentId, title, type, status, brief, output, assignee, provider, sessionId, worktree, deployUrl, skill, retrospective, artifacts
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -36,10 +36,11 @@
     :schema="schema"
     :state="state"
     @submit="handleSubmit"
+    @error="handleValidationError"
   >
-    <CroutonFormLayout>
-      <template #main>
-      <div class="flex flex-col gap-4 p-1">
+    <CroutonFormLayout :tabs="tabs" :navigation-items="navigationItems" :tab-errors="tabErrorCounts" v-model="activeSection">
+      <template #main="{ activeSection }">
+      <div v-show="!tabs || activeSection === 'details'" class="flex flex-col gap-4 p-1">
         <UFormField label="Title" name="title" class="not-last:pb-4">
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
@@ -48,6 +49,12 @@
         </UFormField>
         <UFormField label="Output" name="output" class="not-last:pb-4">
           <UTextarea v-model="state.output" class="w-full" size="xl" />
+        </UFormField>
+      </div>
+
+      <div v-show="!tabs || activeSection === 'output'" class="flex flex-col gap-4 p-1">
+        <UFormField label="Retrospective" name="retrospective" class="not-last:pb-4">
+          <UTextarea v-model="state.retrospective" class="w-full" size="xl" />
         </UFormField>
       </div>
       </template>
@@ -118,11 +125,19 @@
       </template>
 
       <template #footer>
+        <CroutonValidationErrorSummary
+          v-if="validationErrors.length > 0"
+          :tab-errors="tabErrorCounts"
+          :navigation-items="navigationItems"
+          @switch-tab="switchToTab"
+        />
+
         <CroutonFormActionButton
           :action="action"
           :collection="collection"
           :items="items"
           :loading="loading"
+          :has-validation-errors="validationErrors.length > 0"
         />
       </template>
     </CroutonFormLayout>
@@ -137,9 +152,48 @@ const props = defineProps<ThinkgraphWorkItemFormProps>()
 const { defaultValue, schema, collection } = useThinkgraphWorkItems()
 
 // Form layout configuration
-const tabs = ref(false)
+const navigationItems = [
+  { label: 'Details', value: 'details' },
+  { label: 'Output', value: 'output' }
+]
 
+const tabs = ref(true)
+const activeSection = ref('details')
 
+// Map field names to their tab groups for error tracking
+const fieldToGroup: Record<string, string> = {
+  'title': 'details',
+  'brief': 'details',
+  'output': 'details',
+  'retrospective': 'output'
+}
+
+// Track validation errors for tab indicators
+const validationErrors = ref<Array<{ name: string; message: string }>>([])
+
+// Handle form validation errors
+const handleValidationError = (event: any) => {
+  if (event?.errors) {
+    validationErrors.value = event.errors
+  }
+}
+
+// Compute errors per tab
+const tabErrorCounts = computed(() => {
+  const counts: Record<string, number> = {}
+
+  validationErrors.value.forEach(error => {
+    const tabName = fieldToGroup[error.name] || 'general'
+    counts[tabName] = (counts[tabName] || 0) + 1
+  })
+
+  return counts
+})
+
+// Switch to a specific tab (for clicking error links)
+const switchToTab = (tabValue: string) => {
+  activeSection.value = tabValue
+}
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
@@ -170,6 +224,9 @@ const handleSubmit = async () => {
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }
+
+    // Clear validation errors on successful submission
+    validationErrors.value = []
 
     close()
 

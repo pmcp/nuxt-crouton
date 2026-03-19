@@ -71,6 +71,13 @@
       "when": 1773914514666,
       "tag": "0009_grey_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1773934273398,
+      "tag": "0010_luxuriant_rafael_vega",
+      "breakpoints": true
     }
   ]
 }

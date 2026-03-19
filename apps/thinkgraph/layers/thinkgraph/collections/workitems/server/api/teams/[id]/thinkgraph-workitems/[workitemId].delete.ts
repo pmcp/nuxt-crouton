@@ -6,8 +6,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { workitemId } = getRouterParams(event)
-  const workItemId = workitemId
+  const { workItemId } = getRouterParams(event)
   if (!workItemId) {
     throw createError({ status: 400, statusText: 'Missing workitem ID' })
   }

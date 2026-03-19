@@ -62,6 +62,7 @@ collections/workitems/
 | worktree | string | No |
 | deployUrl | string | No |
 | skill | string | No |
+| retrospective | text | No |
 | artifacts | json | No |
 | createdAt | timestamp | Auto |
 | updatedAt | timestamp | Auto |

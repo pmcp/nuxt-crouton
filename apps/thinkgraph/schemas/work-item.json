@@ -126,6 +126,15 @@
       "group": "routing"
     }
   },
+  "retrospective": {
+    "type": "text",
+    "meta": {
+      "label": "Retrospective",
+      "description": "Agent lessons: what was difficult, what failed, what tools were missing, what could be optimised",
+      "area": "main",
+      "group": "output"
+    }
+  },
   "artifacts": {
     "type": "json",
     "meta": {
