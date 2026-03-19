@@ -532,8 +532,13 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
   }
 
   /**
-   * Composable closing instructions — selects which blocks to include
-   * based on node type. Replaces the monolithic retrospectiveFooter().
+   * Composable closing instructions — selects which blocks to include based on node type.
+   *
+   * Block matrix:
+   * - outputBlock:        all types
+   * - retrospectiveBlock: all types
+   * - learningsBlock:     discover, architect, compose, generate
+   * - questionsBlock:     discover, architect
    */
   private closingInstructions(nodeType: string): string {
     const blocks = [this.outputBlock(), this.retrospectiveBlock()]
@@ -548,7 +553,7 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
     return blocks.join('\n')
   }
 
-  /** Mandate the deliverable field — included for all types */
+  /** Mandate the deliverable field */
   private outputBlock(): string {
     return `
 
@@ -559,13 +564,13 @@ Use \`update_workitem\` to set ALL of these fields:
 1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)`
   }
 
-  /** Free-text session reflection — included for all types */
+  /** Free-text session reflection */
   private retrospectiveBlock(): string {
     return `
 2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)`
   }
 
-  /** Structured actionable learnings array — for discover, architect, compose, generate */
+  /** Structured actionable learnings array */
   private learningsBlock(): string {
     return `
 3. **learnings** — structured array of ONLY actionable items. Each learning becomes a task node for the human to triage. Only include things that should change — not things that went well.
@@ -584,20 +589,23 @@ Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken to
 `
   }
 
-  /** Surface open questions for human triage — for discover, architect only */
+  /** Surface open questions for human triage — discover & architect only */
   private questionsBlock(): string {
     return `
-4. **questions** — surface 2-3 open questions that need human input before the next phase. Each question becomes a "question" child node for triage.
+4. **questions** — surface 2-3 open questions that need human input before the next phase. These become "question" child nodes for the human to answer.
 
-Structure each question as an object with \`title\` and \`detail\`:
+Example questions:
 \`\`\`json
 [
-  { "title": "Which auth provider to integrate?", "detail": "The brief mentions SSO but doesn't specify a provider. Options: Auth0, Clerk, or built-in NuxtHub auth. This affects the architect phase significantly." },
-  { "title": "Should assets support video uploads?", "detail": "Current brief only mentions images. Video adds complexity (transcoding, storage costs, player component). Need confirmation before designing the data model." }
+  { "title": "Should groups support nesting?", "detail": "The current design assumes flat groups. If we need group-in-group hierarchy, the data model and drag logic change significantly. Need a decision before architect phase." },
+  { "title": "Authentication provider preference?", "detail": "Brief mentions auth but doesn't specify. Cloudflare Access, Lucia, or external OAuth? This affects the entire auth layer architecture." }
 ]
 \`\`\`
 
-**Question rules:** Ask only things that would change the architecture or approach. Don't ask about implementation details you can decide yourself.
+Each question should be:
+- **Specific** — not vague ("what about performance?") but pointed ("Should we cache at edge or origin?")
+- **Blocking** — something that genuinely blocks the next phase if unanswered
+- **Actionable** — the human can answer it in a sentence or two
 `
   }
 
