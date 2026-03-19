@@ -482,17 +482,7 @@ async function assistantRefresh() {
     try {
       const flow = await $fetch<any>(`/api/crouton-flow/teams/${teamId.value}/flows/${flowId.value}`)
       if (flow?.nodePositions) {
-        // Ensure ALL items have a position — dagre overrides if any node is at (0,0)
-        const positions = { ...flow.nodePositions }
-        for (const item of items.value) {
-          if (!positions[item.id]) {
-            // Give unpositioned nodes a default so dagre doesn't run
-            positions[item.id] = { x: 100, y: 100 }
-          }
-        }
-        savedPositions.value = positions
-        // Force re-mount with complete positions
-        flowKey.value++
+        savedPositions.value = { ...flow.nodePositions }
       }
     } catch { /* ignore */ }
   }

@@ -410,7 +410,21 @@ const positionedNodes = computed(() => {
 // Position cache: remembers node positions across data refreshes
 // When rows update (CRUD), nodes get recreated at (0,0) because collection
 // data has no position field. This cache preserves last known positions.
+// Seed from savedPositions so they survive data refreshes and dagre never overrides them.
 const positionCache = new Map<string, { x: number; y: number }>()
+if (props.savedPositions) {
+  for (const [id, pos] of Object.entries(props.savedPositions)) {
+    positionCache.set(id, { ...pos })
+  }
+}
+
+// Update position cache when savedPositions prop changes (e.g. assistant rearranged nodes)
+watch(() => props.savedPositions, (newPositions) => {
+  if (!newPositions) return
+  for (const [id, pos] of Object.entries(newPositions)) {
+    positionCache.set(id, { ...pos })
+  }
+}, { deep: true })
 
 const cachedNodes = computed(() => {
   return positionedNodes.value.map((node) => {
