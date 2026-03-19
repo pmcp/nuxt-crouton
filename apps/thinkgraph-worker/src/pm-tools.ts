@@ -73,10 +73,31 @@ export function createPMTools(
               const projectId = item?.projectId
 
               if (projectId) {
-                const lines = params.retrospective
-                  .split(/\n/)
-                  .map((l: string) => l.replace(/^[\s]*[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim())
-                  .filter((l: string) => l.length > 10)
+                // Only extract actionable learnings from "difficult" and "improve" sections
+                // Skip "what went well" (not actionable) and section headers
+                const SKIP_PATTERNS = [
+                  /^\*\*.*\*\*:?$/,           // Bold section headers like **What went well:**
+                  /^#{1,3}\s/,                 // Markdown headers
+                  /^(what went well|went well)/i,
+                  /^(the|all|no)\s.*\b(worked|confirmed|checked out|matched|straightforward)\b/i,
+                ]
+                // Only keep lines from "difficult" or "improve" sections
+                let inActionableSection = false
+                const lines: string[] = []
+                for (const rawLine of params.retrospective.split(/\n/)) {
+                  const lower = rawLine.toLowerCase()
+                  if (lower.includes('went well') || lower.includes('what worked')) {
+                    inActionableSection = false
+                  } else if (lower.includes('difficult') || lower.includes('improve') || lower.includes('could be')) {
+                    inActionableSection = true
+                    continue
+                  }
+                  if (!inActionableSection) continue
+                  const cleaned = rawLine.replace(/^[\s]*[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim()
+                  if (cleaned.length < 20) continue
+                  if (SKIP_PATTERNS.some(p => p.test(cleaned))) continue
+                  lines.push(cleaned)
+                }
 
                 for (const learning of lines) {
                   await ofetch(baseUrl, {
