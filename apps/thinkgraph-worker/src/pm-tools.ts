@@ -40,7 +40,14 @@ export function createPMTools(
       parameters: Type.Object({
         worktree: Type.Optional(Type.String({ description: 'Git branch name for this work item (e.g., thinkgraph/abc123)' })),
         output: Type.Optional(Type.String({ description: 'Output summary — what was produced (your deliverable)' })),
-        retrospective: Type.Optional(Type.String({ description: 'Lessons learned — what was difficult, what failed, what tools were missing, what prompts were unclear, what could be optimised' })),
+        retrospective: Type.Optional(Type.String({ description: 'Free-text reflection on this session — displayed on the node card' })),
+        learnings: Type.Optional(Type.Array(
+          Type.Object({
+            text: Type.String({ description: 'The learning — what should change, what was missing, what broke' }),
+            scope: Type.Optional(Type.String({ description: 'What this applies to: skill, prompt, tool, infra, or process' })),
+          }),
+          { description: 'Actionable learnings only — things that should change in skills, prompts, tools, or process. Do NOT include things that went well.' },
+        )),
         status: Type.Optional(Type.String({ description: 'Status: queued, active, waiting, done, blocked' })),
         deployUrl: Type.Optional(Type.String({ description: 'Preview deployment URL' })),
       }),
@@ -63,60 +70,38 @@ export function createPMTools(
             body: updates,
           })
 
-          // When a retrospective is written, parse it into learning nodes
+          // Create learning nodes from structured learnings array
           let learningCount = 0
-          if (params.retrospective) {
+          if (params.learnings && params.learnings.length > 0) {
             try {
-              // Get projectId from the work item
               const items = await ofetch(baseUrl, { headers, query: { ids: workItemId } })
               const item = Array.isArray(items) ? items[0] : null
               const projectId = item?.projectId
 
               if (projectId) {
-                // Only extract actionable learnings from "difficult" and "improve" sections
-                // Skip "what went well" (not actionable) and section headers
-                const SKIP_PATTERNS = [
-                  /^\*\*.*\*\*:?$/,           // Bold section headers like **What went well:**
-                  /^#{1,3}\s/,                 // Markdown headers
-                  /^(what went well|went well)/i,
-                  /^(the|all|no)\s.*\b(worked|confirmed|checked out|matched|straightforward)\b/i,
-                ]
-                // Only keep lines from "difficult" or "improve" sections
-                let inActionableSection = false
-                const lines: string[] = []
-                for (const rawLine of params.retrospective.split(/\n/)) {
-                  const lower = rawLine.toLowerCase()
-                  if (lower.includes('went well') || lower.includes('what worked')) {
-                    inActionableSection = false
-                  } else if (lower.includes('difficult') || lower.includes('improve') || lower.includes('could be')) {
-                    inActionableSection = true
-                    continue
-                  }
-                  if (!inActionableSection) continue
-                  const cleaned = rawLine.replace(/^[\s]*[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim()
-                  if (cleaned.length < 20) continue
-                  if (SKIP_PATTERNS.some(p => p.test(cleaned))) continue
-                  lines.push(cleaned)
-                }
+                for (const learning of params.learnings) {
+                  const title = learning.text.length > 80
+                    ? learning.text.slice(0, 77) + '...'
+                    : learning.text
+                  const scope = learning.scope || 'process'
 
-                for (const learning of lines) {
                   await ofetch(baseUrl, {
                     method: 'POST',
                     headers,
                     body: {
                       projectId,
                       parentId: workItemId,
-                      title: learning.length > 80 ? learning.slice(0, 77) + '...' : learning,
+                      title: `[${scope}] ${title}`,
                       type: 'review',
                       status: 'queued',
                       assignee: 'human',
-                      brief: learning,
+                      brief: learning.text,
                     },
                   })
                   learningCount++
                 }
                 if (learningCount > 0) {
-                  console.log(`[pm-tools] Created ${learningCount} learning node(s) from retrospective`)
+                  console.log(`[pm-tools] Created ${learningCount} learning node(s) from structured learnings`)
                 }
               }
             } catch (err: any) {

@@ -537,10 +537,21 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
 
 ## Before You Finish (MANDATORY)
 
-Use \`update_workitem\` to set BOTH of these fields:
+Use \`update_workitem\` to set ALL of these fields:
 
 1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)
-2. **retrospective** — honest reflection on this session: what was difficult, what failed, what tools were missing, what prompts were unclear, what could be optimised. This is how we improve agents, skills, and prompts over time. Be specific and candid.
+2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)
+3. **learnings** — structured array of ONLY actionable items. Each learning becomes a task node for the human to triage. Only include things that should change — not things that went well.
+
+Example learnings:
+\`\`\`json
+[
+  { "text": "Discover skill should detect when parent already has a brief and switch to validation mode", "scope": "skill" },
+  { "text": "Missing schemas for velo custom collections — architect phase needs to create them first", "scope": "process" }
+]
+\`\`\`
+
+Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken tool), \`prompt\` (unclear instructions), \`infra\` (infrastructure/config issue), \`process\` (workflow improvement).
 `
   }
 
