@@ -32,6 +32,8 @@ export interface DispatchPayload {
   nodeContent: string
   nodeType: string
   mode?: 'legacy' | 'rich'
+  callbackUrl?: string
+  skill?: string
 }
 
 interface ActiveSession {
@@ -43,6 +45,8 @@ interface ActiveSession {
   promptQueue: string[]
   isProcessing: boolean
   messageCounter: number
+  callbackUrl?: string
+  accumulatedOutput: string[]
 }
 
 export class AgentSessionManager {
@@ -123,6 +127,8 @@ export class AgentSessionManager {
         promptQueue: [],
         isProcessing: false,
         messageCounter: 0,
+        callbackUrl: payload.callbackUrl,
+        accumulatedOutput: [],
       }
       this.activeSessions.set(payload.nodeId, activeSession)
 
@@ -142,7 +148,7 @@ export class AgentSessionManager {
       await session.prompt(agentPrompt)
       activeSession.isProcessing = false
 
-      if (mode === 'rich') {
+      if (mode === 'rich' && !payload.callbackUrl) {
         // Rich sessions stay alive — mark as idle, wait for more prompts
         console.log(`[session-manager] Initial prompt done for ${payload.nodeId}, session stays alive`)
         ws.sendStatus('idle')
@@ -151,12 +157,13 @@ export class AgentSessionManager {
         // Process any queued prompts
         await this.processPromptQueue(payload.nodeId)
       } else {
-        // Legacy sessions complete after single prompt
+        // HTTP dispatch or legacy: complete and callback
         ws.sendDone('Agent session completed')
         await this.updateNodeStatus(payload.nodeId, 'done')
+        await this.sendCallback(activeSession, 'done')
         ws.close()
         this.activeSessions.delete(payload.nodeId)
-        console.log(`[session-manager] Legacy session ended for ${payload.nodeId}`)
+        console.log(`[session-manager] Session ended for ${payload.nodeId}`)
       }
     }
     catch (error) {
@@ -164,6 +171,7 @@ export class AgentSessionManager {
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
       ws.sendError(message)
       await this.updateNodeStatus(payload.nodeId, 'error')
+      await this.sendCallback(activeSession, 'error', message)
       ws.close()
       this.activeSessions.delete(payload.nodeId)
     }
@@ -310,6 +318,8 @@ export class AgentSessionManager {
         for (const item of content) {
           if (item.type === 'text' && item.text) {
             blocks.push({ type: 'text', text: item.text })
+            // Accumulate text output for callback
+            active.accumulatedOutput.push(item.text)
           }
           else if (item.type === 'tool_use') {
             blocks.push({
@@ -476,6 +486,32 @@ Use the \`create_node\` tool. Each node has three parts:
 - After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set:
   - \`brief\`: 1-line summary of what you explored
   - \`output\`: a short handoff summary (what was concluded, what to explore next)`
+  }
+
+  /** Send callback to ThinkGraph webhook when session completes */
+  private async sendCallback(session: ActiveSession, status: 'done' | 'error', error?: string): Promise<void> {
+    if (!session.callbackUrl) return
+
+    try {
+      const output = session.accumulatedOutput.join('\n\n').trim()
+      await ofetch(session.callbackUrl, {
+        method: 'POST',
+        headers: {
+          'Cookie': this.config.serviceToken,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          workItemId: session.nodeId,
+          status,
+          output: output || undefined,
+          error,
+        },
+      })
+      console.log(`[session-manager] Callback sent for ${session.nodeId} → ${status}`)
+    }
+    catch (err) {
+      console.error(`[session-manager] Callback failed for ${session.nodeId}:`, err instanceof Error ? err.message : err)
+    }
   }
 
   /** Abort all active sessions (for graceful shutdown) */

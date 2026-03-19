@@ -36,6 +36,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    piWorkerUrl: process.env.PI_WORKER_URL || 'https://pi.pmcp.dev', // Pi worker HTTP endpoint
     falApiKey: '',      // NUXT_FAL_API_KEY
     geminiApiKey: '',   // NUXT_GEMINI_API_KEY
     email: {

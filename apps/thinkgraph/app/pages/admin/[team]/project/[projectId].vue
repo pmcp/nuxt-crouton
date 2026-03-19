@@ -214,10 +214,13 @@ async function deleteItem(id: string) {
 }
 
 // ─── Dispatch ───
-function openDispatch(id: string) {
-  // For now, just mark as active — Pi.dev integration comes in Phase 2
-  updateItem(id, { status: 'active' })
-  toast.add({ title: 'Dispatch coming in Phase 2', description: 'Marked as active for now.', color: 'info' })
+const { dispatch: dispatchWork, dispatching } = useWorkDispatch()
+
+async function openDispatch(id: string) {
+  const item = items.value.find(n => n.id === id)
+  if (!item) return
+  await dispatchWork(item)
+  await refreshItems()
 }
 
 // Provide actions to WorkItemsNode
@@ -440,9 +443,10 @@ if (import.meta.client) {
           <!-- Actions -->
           <div class="flex gap-2 pt-4 border-t border-default">
             <UButton
-              v-if="selectedItem.status === 'queued'"
+              v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked'"
               icon="i-lucide-send"
               label="Dispatch"
+              :loading="dispatching"
               @click="openDispatch(selectedItem.id)"
             />
             <UButton

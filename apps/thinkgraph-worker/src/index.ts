@@ -101,11 +101,21 @@ async function main() {
     yjsClient.connect()
   }
 
-  // Health HTTP endpoint
+  // HTTP server — health + dispatch endpoints
   const startedAt = Date.now()
   const healthPort = parseInt(process.env.HEALTH_PORT || '8787', 10)
-  const healthServer = createServer((req, res) => {
-    if (req.url === '/health') {
+  const httpServer = createServer(async (req, res) => {
+    // CORS for Cloudflare Pages
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204)
+      res.end()
+      return
+    }
+
+    if (req.url === '/health' && req.method === 'GET') {
       const mem = process.memoryUsage()
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
@@ -120,13 +130,76 @@ async function main() {
           heapTotal: Math.round(mem.heapTotal / 1024 / 1024),
         },
       }))
-    } else {
-      res.writeHead(404)
-      res.end()
+      return
     }
+
+    // POST /dispatch — accept work item dispatch from ThinkGraph
+    if (req.url === '/dispatch' && req.method === 'POST') {
+      try {
+        const body = await new Promise<string>((resolve, reject) => {
+          let data = ''
+          req.on('data', (chunk: Buffer) => { data += chunk.toString() })
+          req.on('end', () => resolve(data))
+          req.on('error', reject)
+        })
+        const payload = JSON.parse(body)
+
+        // Validate required fields
+        if (!payload.workItemId || !payload.prompt) {
+          res.writeHead(400, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Missing workItemId or prompt' }))
+          return
+        }
+
+        // Check capacity
+        if (sessionManager.activeCount >= sessionManager.maxSessions) {
+          res.writeHead(503, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Max sessions reached', active: sessionManager.activeCount }))
+          return
+        }
+
+        // Map work item dispatch to the existing DispatchPayload format
+        const dispatchPayload = {
+          nodeId: payload.workItemId,
+          graphId: payload.projectId || '',
+          depth: 'thorough',
+          depthInstruction: 'Complete the task described in the brief.',
+          prompt: payload.prompt,
+          context: payload.context || '',
+          teamSlug: payload.teamSlug || '',
+          nodeContent: payload.prompt,
+          nodeType: payload.workItemType || 'generate',
+          mode: 'rich' as const,
+          callbackUrl: payload.callbackUrl || undefined,
+          skill: payload.skill || undefined,
+        }
+
+        // Start session (async — don't await completion)
+        console.log(`[http-dispatch] Starting session for work item ${payload.workItemId} (skill: ${payload.skill || 'none'})`)
+        sessionManager.startSession(dispatchPayload).catch(err => {
+          console.error(`[http-dispatch] Session failed for ${payload.workItemId}:`, err.message)
+        })
+
+        // Respond immediately — session runs in background
+        res.writeHead(202, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({
+          accepted: true,
+          workItemId: payload.workItemId,
+          skill: payload.skill,
+        }))
+      } catch (err: any) {
+        console.error('[http-dispatch] Error:', err.message)
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: err.message }))
+      }
+      return
+    }
+
+    res.writeHead(404)
+    res.end()
   })
-  healthServer.listen(healthPort, () => {
-    console.log(`Health endpoint: http://localhost:${healthPort}/health`)
+  httpServer.listen(healthPort, () => {
+    console.log(`HTTP server: http://localhost:${healthPort} (health + dispatch)`)
   })
 
   console.log()
@@ -136,7 +209,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = async () => {
     console.log('\nShutting down...')
-    healthServer.close()
+    httpServer.close()
     dispatchWatcher.stop()
     yjsClient.disconnect()
     await sessionManager.abortAll()
