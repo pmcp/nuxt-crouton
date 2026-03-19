@@ -75,9 +75,15 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
 
   /**
    * Apply dagre layout to nodes
-   * Returns new node array with updated positions
+   * Returns new node array with updated positions.
+   * Locked nodes (IDs in lockedIds) keep their existing position — dagre
+   * still includes them for edge routing, but the result is discarded.
+   *
+   * @param nodes - Current nodes
+   * @param edges - Current edges
+   * @param lockedIds - Set of node IDs whose positions must not be overridden
    */
-  const applyLayout = (nodes: Node[], edges: Edge[]): Node[] => {
+  const applyLayout = (nodes: Node[], edges: Edge[], lockedIds?: ReadonlySet<string>): Node[] => {
     if (nodes.length === 0) return []
 
     // Create a new dagre graph
@@ -112,6 +118,16 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
 
     // Apply calculated positions back to nodes
     return nodes.map((node) => {
+      // Locked nodes keep their current position
+      if (lockedIds?.has(node.id)) {
+        return {
+          ...node,
+          _needsLayout: undefined,
+          targetPosition: isHorizontal ? 'left' : 'top',
+          sourcePosition: isHorizontal ? 'right' : 'bottom'
+        } as Node
+      }
+
       const nodeWithPosition = dagreGraph.node(node.id)
 
       if (!nodeWithPosition) {
@@ -137,11 +153,14 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
   }
 
   /**
-   * Layout only nodes that need it, preserving existing positions
-   * This is useful when adding new nodes - we layout only the new ones
-   * and keep existing nodes where they are
+   * Layout only nodes that need it, preserving existing positions.
+   * Locked nodes are always preserved.
+   *
+   * @param nodes - Current nodes
+   * @param edges - Current edges
+   * @param lockedIds - Set of node IDs whose positions must not be overridden
    */
-  const applyLayoutToNew = (nodes: Node[], edges: Edge[]): Node[] => {
+  const applyLayoutToNew = (nodes: Node[], edges: Edge[], lockedIds?: ReadonlySet<string>): Node[] => {
     // Separate nodes that need layout from those that don't
     const nodesNeedingLayout: Node[] = []
     const positionedNodes: Node[] = []
@@ -149,8 +168,12 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
     for (const node of nodes) {
       const needsLayoutFlag = (node as Node & { _needsLayout?: boolean })._needsLayout
       const isAtOrigin = !node.position || (node.position.x === 0 && node.position.y === 0)
+      const isLocked = lockedIds?.has(node.id)
 
-      if (needsLayoutFlag || isAtOrigin) {
+      // Locked nodes are always treated as positioned — dagre must not move them
+      if (isLocked) {
+        positionedNodes.push(node)
+      } else if (needsLayoutFlag || isAtOrigin) {
         nodesNeedingLayout.push(node)
       } else {
         positionedNodes.push(node)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, resolveComponent, watch, markRaw } from 'vue'
+import { computed, nextTick, provide, ref, resolveComponent, watch, markRaw } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -147,6 +147,8 @@ const emit = defineEmits<{
   'update:rows': [rows: Record<string, unknown>[]]
   /** Emitted when selection changes (enables v-model:selected) */
   'update:selected': [selectedNodeIds: string[]]
+  /** Emitted when a node is unlocked (position lock removed) */
+  nodeUnlock: [nodeId: string]
 }>()
 
 // Validate props
@@ -412,9 +414,15 @@ const positionedNodes = computed(() => {
 // data has no position field. This cache preserves last known positions.
 // Seed from savedPositions so they survive data refreshes and dagre never overrides them.
 const positionCache = new Map<string, { x: number; y: number }>()
+
+// Locked node IDs: nodes with saved positions that dagre must never override.
+// Seeded from savedPositions; drag-stop also locks the node.
+const lockedNodeIds = ref<Set<string>>(new Set())
+
 if (props.savedPositions) {
   for (const [id, pos] of Object.entries(props.savedPositions)) {
     positionCache.set(id, { ...pos })
+    lockedNodeIds.value.add(id)
   }
 }
 
@@ -423,6 +431,7 @@ watch(() => props.savedPositions, (newPositions) => {
   if (!newPositions) return
   for (const [id, pos] of Object.entries(newPositions)) {
     positionCache.set(id, { ...pos })
+    lockedNodeIds.value.add(id)
   }
 }, { deep: true })
 
@@ -447,9 +456,10 @@ const initialLayoutApplied = ref(false)
 const layoutedNodes = computed(() => {
   const nodes = cachedNodes.value
   const edges = dataEdges.value
+  const locked = lockedNodeIds.value
 
   if (!initialLayoutApplied.value && needsLayout(nodes)) {
-    const result = applyLayout(nodes, edges)
+    const result = applyLayout(nodes, edges, locked)
     // Cache the layout positions
     for (const node of result) {
       if (node.position) positionCache.set(node.id, { ...node.position })
@@ -460,7 +470,7 @@ const layoutedNodes = computed(() => {
 
   // Check if any nodes are at (0,0) after initial layout — these are newly added nodes
   if (initialLayoutApplied.value && nodes.some(n => !n.position || (n.position.x === 0 && n.position.y === 0))) {
-    const result = applyLayoutToNew(nodes, edges)
+    const result = applyLayoutToNew(nodes, edges, locked)
     // Cache new positions
     for (const node of result) {
       if (node.position && !positionCache.has(node.id)) {
@@ -525,8 +535,8 @@ const finalNodes = computed(() => {
       const needsLayoutResult = needsLayout(nodes)
 
       if (needsLayoutResult && !layoutAppliedToYjs.value) {
-        // Initial layout — all nodes need positioning
-        const layoutedNodesResult = applyLayout(nodes, edges)
+        // Initial layout — all nodes need positioning (locked nodes keep theirs)
+        const layoutedNodesResult = applyLayout(nodes, edges, lockedNodeIds.value)
 
         nextTick(() => {
           for (const node of layoutedNodesResult) {
@@ -635,8 +645,9 @@ onNodeDragStop((event: NodeDragEvent) => {
     }
   }
 
-  // Update position cache so data refreshes don't reset this node
+  // Update position cache and lock the node so dagre never overrides it
   positionCache.set(node.id, { ...position })
+  lockedNodeIds.value.add(node.id)
 
   if (props.sync && syncState) {
     syncState.updatePosition(node.id, position)
@@ -717,10 +728,37 @@ const customNodeComponent = computed(() => {
   return null
 })
 
+// ============================================
+// LOCK / UNLOCK
+// ============================================
+
+/**
+ * Unlock a node: removes its saved position so dagre can re-layout it.
+ * Also removes the position from the position store (flow_configs).
+ */
+function unlockNode(nodeId: string) {
+  lockedNodeIds.value.delete(nodeId)
+  positionCache.delete(nodeId)
+  // Reset the node's position to (0,0) so the next layout pass picks it up
+  const node = findNode(nodeId)
+  if (node) {
+    node.position = { x: 0, y: 0 }
+  }
+  // Force a re-layout for the unlocked node
+  initialLayoutApplied.value = false
+  emit('nodeUnlock', nodeId)
+}
+
+// Provide lock state and unlock handler to child node components
+provide('croutonFlowLockedIds', lockedNodeIds)
+provide('croutonFlowUnlockNode', unlockNode)
+
 // Expose sync state and container detection for external access
 defineExpose({
   syncState,
   containerDetection,
+  lockedNodeIds,
+  unlockNode,
 })
 </script>
 
