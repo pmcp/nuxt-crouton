@@ -171,7 +171,10 @@ export class AgentSessionManager {
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
       ws.sendError(message)
       await this.updateNodeStatus(payload.nodeId, 'error')
-      await this.sendCallback(activeSession, 'error', message)
+      const failedSession = this.activeSessions.get(payload.nodeId)
+      if (failedSession) {
+        await this.sendCallback(failedSession, 'error', message)
+      }
       ws.close()
       this.activeSessions.delete(payload.nodeId)
     }
