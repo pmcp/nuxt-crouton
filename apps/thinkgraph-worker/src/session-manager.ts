@@ -756,6 +756,8 @@ git push -u origin ${branchName}
 
 Then use \`update_workitem\` to set \`worktree\` to "${branchName}".
 
+After pushing, use the \`create_pr\` tool to create a GitHub PR. Do NOT run \`gh pr create\` directly in bash — the tool handles shell quoting and updates the work item with the PR URL automatically.
+
 Finally, clean up the worktree:
 \`\`\`bash
 cd ~/nuxt-crouton
