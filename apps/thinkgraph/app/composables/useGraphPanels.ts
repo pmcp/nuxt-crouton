@@ -47,6 +47,15 @@ export function useGraphPanels(decisions: Ref<ThinkgraphDecision[]>) {
     showTerminal.value = true
   }
 
+  // Session panel state (rich Pi agent session)
+  const showSession = ref(false)
+  const sessionNodeId = ref<string | null>(null)
+
+  function openSession(nodeId: string) {
+    sessionNodeId.value = nodeId
+    showSession.value = true
+  }
+
   // Dispatch state
   const dispatchNodeId = ref<string | null>(null)
   const dispatchNodeIds = ref<string[]>([])
@@ -77,6 +86,7 @@ export function useGraphPanels(decisions: Ref<ThinkgraphDecision[]>) {
     showQuickAdd,
     showTerminal,
     showDispatch,
+    showSession,
     // Chat
     chatNodeId,
     chatNodeName,
@@ -88,6 +98,9 @@ export function useGraphPanels(decisions: Ref<ThinkgraphDecision[]>) {
     // Terminal
     terminalNodeId,
     openTerminal,
+    // Session
+    sessionNodeId,
+    openSession,
     // Dispatch
     dispatchNodeId,
     dispatchNodeIds,

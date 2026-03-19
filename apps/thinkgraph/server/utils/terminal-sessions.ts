@@ -10,18 +10,56 @@
  */
 import { updateThinkgraphDecision } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
 
+// ─── Agent Event Types (structured events from Pi coding agent) ───
+
+/** Content block within an agent message */
+export interface AgentContentBlock {
+  type: 'text' | 'tool_use' | 'tool_result' | 'thinking'
+  text?: string
+  name?: string // tool name
+  input?: Record<string, unknown> // tool input params
+  result?: string // tool result text
+  thinking?: string
+  toolCallId?: string
+}
+
+/** A structured message in the agent session */
+export interface AgentMessage {
+  id: string
+  role: 'assistant' | 'user' | 'system'
+  content: AgentContentBlock[]
+  timestamp: number
+  mode?: 'prompt' | 'steer' | 'follow_up' // for user messages
+}
+
+/** Extension UI request forwarded from Pi agent */
+export interface ExtensionUIRequest {
+  requestId: string
+  uiType: 'select' | 'confirm' | 'input' | 'editor' | 'notify'
+  title?: string
+  message?: string
+  options?: Array<{ label: string; value: string }>
+  defaultValue?: string
+}
+
+// ─── Terminal Session Types ───
+
 // Terminal output store: nodeId → { lines, listeners, status }
 export interface TerminalSession {
   nodeId: string
   lines: string[]
-  status: 'thinking' | 'working' | 'done' | 'error'
+  messages: AgentMessage[] // structured message history
+  status: 'thinking' | 'working' | 'done' | 'error' | 'idle' | 'waiting_input'
   startedAt: number
   listeners: Set<(event: TerminalEvent) => void>
+  pendingUIRequest?: ExtensionUIRequest
+  sessionMode: 'legacy' | 'rich' // legacy = text-only, rich = structured events
 }
 
 export interface TerminalEvent {
-  type: 'output' | 'status' | 'done' | 'error'
+  type: 'output' | 'status' | 'done' | 'error' | 'agent_event' | 'ui_request' | 'user_message'
   data: string
+  event?: AgentContentBlock | AgentMessage | ExtensionUIRequest // structured payload
   timestamp: number
 }
 
@@ -31,13 +69,15 @@ const terminalSessions = new Map<string, TerminalSession>()
 const activeWorkerConnections = new Map<string, { send: (data: string) => void }>()
 
 /** Create a new terminal session for a node */
-export function createTerminalSession(nodeId: string): TerminalSession {
+export function createTerminalSession(nodeId: string, mode: 'legacy' | 'rich' = 'legacy'): TerminalSession {
   const session: TerminalSession = {
     nodeId,
     lines: [],
+    messages: [],
     status: 'thinking',
     startedAt: Date.now(),
     listeners: new Set(),
+    sessionMode: mode,
   }
   terminalSessions.set(nodeId, session)
   return session
@@ -71,6 +111,22 @@ export function emitTerminalEvent(nodeId: string, event: TerminalEvent) {
     if (session.lines.length > 200) {
       session.lines.splice(0, session.lines.length - 200)
     }
+  }
+  if (event.type === 'agent_event' && event.event && 'role' in event.event) {
+    const msg = event.event as AgentMessage
+    session.messages.push(msg)
+    // Keep last 100 messages to avoid memory bloat
+    if (session.messages.length > 100) {
+      session.messages.splice(0, session.messages.length - 100)
+    }
+  }
+  if (event.type === 'user_message' && event.event && 'role' in event.event) {
+    const msg = event.event as AgentMessage
+    session.messages.push(msg)
+  }
+  if (event.type === 'ui_request' && event.event) {
+    session.pendingUIRequest = event.event as ExtensionUIRequest
+    session.status = 'waiting_input'
   }
   if (event.type === 'status') {
     session.status = event.data as TerminalSession['status']

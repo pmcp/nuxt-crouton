@@ -87,6 +87,7 @@ export class DispatchWatcher {
           teamSlug: handoff.teamSlug || this.config.teamId,
           nodeContent: handoff.nodeContent || node.title || node.content,
           nodeType: handoff.nodeType || node.nodeType,
+          mode: handoff.mode || 'legacy',
         }
 
         // Run in background — don't block the poll loop

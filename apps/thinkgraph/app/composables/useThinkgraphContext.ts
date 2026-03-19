@@ -8,6 +8,7 @@ export interface ThinkgraphContext {
   openChat: (nodeId: string) => void
   openDispatch: (nodeId: string) => void
   openTerminal: (nodeId: string) => void
+  openSession: (nodeId: string) => void
   togglePin: (nodeId: string) => void
   toggleStar: (nodeId: string) => void
   contextNodeIds: Ref<string[]>

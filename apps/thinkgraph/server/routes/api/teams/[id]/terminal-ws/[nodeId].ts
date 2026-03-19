@@ -9,6 +9,7 @@
  *
  * Auth: Service token issued by worker-auth endpoint.
  */
+import type { TerminalEvent, AgentMessage } from '~~/server/utils/terminal-sessions'
 import {
   broadcastToBrowsers,
   createTerminalSession,
@@ -91,22 +92,39 @@ export default defineWebSocketHandler({
     // Create or get terminal session
     const existing = getTerminalSession(nodeId)
     if (!existing) {
-      createTerminalSession(nodeId)
+      const mode = url.searchParams.get('mode') === 'rich' ? 'rich' : 'legacy'
+      createTerminalSession(nodeId, mode as 'legacy' | 'rich')
     }
 
     if (isWorker) {
-      // Pi worker connection — receives steer/abort, sends terminal events
+      // Pi worker connection — receives steer/abort/prompt, sends terminal events
       registerWorkerConnection(nodeId, peerData._peerSend)
       console.log(`[terminal-ws] Pi worker connected for node ${nodeId} in team ${teamId}`)
     } else {
-      // Browser connection — receives terminal events, sends steer/abort
+      // Browser connection — receives terminal events, sends steer/abort/prompt
       registerBrowserPeer(nodeId, peerData._peerSend)
-      // Send buffered lines to catch up
+      // Send buffered data to catch up
       const session = getTerminalSession(nodeId)
       if (session) {
+        // Send session mode so browser knows what to render
+        peer.send(JSON.stringify({ type: 'session_mode', data: session.sessionMode, timestamp: Date.now() }))
         peer.send(JSON.stringify({ type: 'status', data: session.status, timestamp: Date.now() }))
-        for (const line of session.lines) {
-          peer.send(JSON.stringify({ type: 'output', data: line, timestamp: Date.now() }))
+
+        if (session.sessionMode === 'rich' && session.messages.length > 0) {
+          // Send structured message history for rich sessions
+          for (const msg of session.messages) {
+            peer.send(JSON.stringify({ type: 'agent_event', data: '', event: msg, timestamp: Date.now() }))
+          }
+        } else {
+          // Legacy: send buffered text lines
+          for (const line of session.lines) {
+            peer.send(JSON.stringify({ type: 'output', data: line, timestamp: Date.now() }))
+          }
+        }
+
+        // Send pending UI request if any
+        if (session.pendingUIRequest) {
+          peer.send(JSON.stringify({ type: 'ui_request', data: '', event: session.pendingUIRequest, timestamp: Date.now() }))
         }
       }
       console.log(`[terminal-ws] Browser connected for node ${nodeId} in team ${teamId}`)
@@ -121,7 +139,7 @@ export default defineWebSocketHandler({
     if (!nodeId || !teamId) return
 
     // Parse message
-    let parsed: { type?: string; data?: string; message?: string } | undefined
+    let parsed: { type?: string; data?: string; message?: string; text?: string; requestId?: string; value?: string; event?: unknown; mode?: string } | undefined
     try {
       const text = typeof message === 'string'
         ? message
@@ -140,9 +158,10 @@ export default defineWebSocketHandler({
 
     if (isWorker) {
       // Pi worker sends terminal events → relay to browsers + SSE listeners
-      const event = {
-        type: parsed.type as 'output' | 'status' | 'done' | 'error',
+      const event: TerminalEvent = {
+        type: parsed.type as TerminalEvent['type'],
         data: parsed.data || '',
+        event: parsed.event as any,
         timestamp: Date.now(),
       }
 
@@ -152,19 +171,48 @@ export default defineWebSocketHandler({
       if (event.type === 'status' && (event.data === 'working' || event.data === 'thinking')) {
         updateNodeStatus(nodeId, teamId, event.data)
       }
+      else if (event.type === 'status' && event.data === 'idle') {
+        // Session idle (waiting for next prompt) — don't clean up
+        updateNodeStatus(nodeId, teamId, 'idle')
+      }
       else if (event.type === 'done') {
         updateNodeStatus(nodeId, teamId, 'done')
-        scheduleSessionCleanup(nodeId)
+        // Rich sessions stay alive longer (5 min) for potential follow-up
+        const session = getTerminalSession(nodeId)
+        const delay = session?.sessionMode === 'rich' ? 300_000 : 30_000
+        scheduleSessionCleanup(nodeId, delay)
       }
       else if (event.type === 'error') {
         updateNodeStatus(nodeId, teamId, 'error')
         scheduleSessionCleanup(nodeId)
       }
     } else {
-      // Browser sends steer/abort → forward to Pi worker
+      // Browser sends commands → forward to Pi worker
       const worker = getWorkerConnection(nodeId)
-      if (worker && (parsed.type === 'steer' || parsed.type === 'abort')) {
+      if (!worker) return
+
+      const allowedTypes = ['steer', 'abort', 'prompt', 'follow_up', 'ui_response']
+      if (allowedTypes.includes(parsed.type!)) {
         worker.send(JSON.stringify(parsed))
+
+        // Track user messages in session history for rich sessions
+        if (parsed.type === 'prompt' || parsed.type === 'follow_up' || parsed.type === 'steer') {
+          const userMsg: AgentMessage = {
+            id: `user-${Date.now()}`,
+            role: 'user',
+            content: [{ type: 'text', text: parsed.text || parsed.message || '' }],
+            timestamp: Date.now(),
+            mode: parsed.type === 'steer' ? 'steer' : parsed.type === 'follow_up' ? 'follow_up' : 'prompt',
+          }
+          const userEvent: TerminalEvent = {
+            type: 'user_message',
+            data: '',
+            event: userMsg,
+            timestamp: Date.now(),
+          }
+          emitTerminalEvent(nodeId, userEvent)
+          broadcastToBrowsers(nodeId, userEvent)
+        }
       }
     }
   },

@@ -325,6 +325,15 @@ function togglePin(event: Event) {
         <UIcon name="i-lucide-send" class="size-3.5" />
       </button>
 
+      <!-- Pi Agent session -->
+      <button
+        class="decision-node__action"
+        title="Open Pi session"
+        @click.stop="ctx.openSession(decision.id)"
+      >
+        <UIcon name="i-lucide-bot" class="size-3.5" />
+      </button>
+
       <!-- Copy context -->
       <button
         class="decision-node__action"

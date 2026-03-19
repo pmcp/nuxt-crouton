@@ -19,6 +19,13 @@ registerDispatchService({
       choices: ['concise', 'thorough', 'deep'],
       default: 'concise',
     },
+    {
+      key: 'mode',
+      label: 'Session mode',
+      type: 'select',
+      choices: ['legacy', 'rich'],
+      default: 'rich',
+    },
   ],
   execute: async (context: DispatchContext, _event: H3Event): Promise<DispatchResult> => {
     const meta = context._meta
@@ -50,6 +57,8 @@ registerDispatchService({
     )
 
     // Store handoff metadata on the node's artifacts for the Pi worker to read
+    const sessionMode = (context.options?.mode as string) || 'rich'
+
     const handoffMeta = {
       type: 'handoff' as const,
       service: 'pi-agent',
@@ -62,10 +71,11 @@ registerDispatchService({
       nodeId: meta.decisionId,
       nodeContent: targetNode.content,
       nodeType: targetNode.nodeType,
+      mode: sessionMode,
     }
 
     // Create terminal session so the UI can start showing status immediately
-    createTerminalSession(meta.decisionId)
+    createTerminalSession(meta.decisionId, sessionMode as 'legacy' | 'rich')
 
     // Update node: set status to 'dispatching' and store handoff metadata
     const existingArtifacts = Array.isArray(targetNode.artifacts) ? targetNode.artifacts : []

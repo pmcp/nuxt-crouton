@@ -1,8 +1,13 @@
 /**
- * Manages Pi agent sessions — create, steer, abort, track lifecycle.
+ * Manages Pi agent sessions — create, steer, abort, prompt, track lifecycle.
  *
- * Wraps the Pi coding agent SDK's createAgentSession() and maps
- * agent events to terminal events for relay via WebSocket.
+ * Supports two modes:
+ * - Legacy: single-prompt sessions dispatched from ThinkGraph (text-only terminal output)
+ * - Rich: long-lived interactive sessions with structured events (full pi.dev-in-browser)
+ *
+ * Rich sessions stay alive after prompt completion, waiting for follow-up prompts
+ * from the browser. They stream structured agent events (messages, tool calls, thinking)
+ * instead of flat text lines.
  */
 import {
   createAgentSession,
@@ -12,6 +17,7 @@ import {
 } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
 import { SessionWebSocket } from './session-ws.js'
+import type { AgentMessageEvent, AgentContentBlock } from './session-ws.js'
 import { createThinkGraphTools } from './pi-extension.js'
 import { ofetch } from 'ofetch'
 
@@ -25,6 +31,7 @@ export interface DispatchPayload {
   teamSlug: string
   nodeContent: string
   nodeType: string
+  mode?: 'legacy' | 'rich'
 }
 
 interface ActiveSession {
@@ -32,6 +39,10 @@ interface ActiveSession {
   ws: SessionWebSocket
   session: any // AgentSession from Pi SDK
   abort: () => Promise<void>
+  mode: 'legacy' | 'rich'
+  promptQueue: string[]
+  isProcessing: boolean
+  messageCounter: number
 }
 
 export class AgentSessionManager {
@@ -63,15 +74,19 @@ export class AgentSessionManager {
       return
     }
 
-    console.log(`[session-manager] Starting session for node ${payload.nodeId}`)
+    const mode = payload.mode || 'legacy'
+    console.log(`[session-manager] Starting ${mode} session for node ${payload.nodeId}`)
 
     // Open WebSocket to ThinkGraph for terminal streaming
     const ws = new SessionWebSocket(this.config, payload.nodeId, {
       onSteer: (message) => this.handleSteer(payload.nodeId, message),
       onAbort: () => this.handleAbort(payload.nodeId),
+      onPrompt: (text) => this.handlePrompt(payload.nodeId, text),
+      onFollowUp: (text) => this.handleFollowUp(payload.nodeId, text),
+      onUIResponse: (requestId, value) => this.handleUIResponse(payload.nodeId, requestId, value),
       onError: (err) => console.error(`[session-manager] WS error for ${payload.nodeId}:`, err.message),
       onClose: () => {},
-    })
+    }, mode)
     await ws.connect()
     ws.sendStatus('thinking')
 
@@ -80,7 +95,6 @@ export class AgentSessionManager {
 
     try {
       // Create ThinkGraph tools for this session
-      console.log(`[session-manager] Creating tools for ${payload.nodeId}`)
       const tools = createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
       // Build the prompt
@@ -98,7 +112,6 @@ export class AgentSessionManager {
         modelRegistry,
         customTools: tools,
       })
-      console.log(`[session-manager] Agent session created for ${payload.nodeId}`)
 
       // Track active session
       const activeSession: ActiveSession = {
@@ -106,42 +119,133 @@ export class AgentSessionManager {
         ws,
         session,
         abort: () => session.abort(),
+        mode,
+        promptQueue: [],
+        isProcessing: false,
+        messageCounter: 0,
       }
       this.activeSessions.set(payload.nodeId, activeSession)
 
-      // Subscribe to session events for terminal streaming
-      let eventCount = 0
+      // Subscribe to session events
       session.subscribe((event: any) => {
-        eventCount++
-        if (eventCount <= 10) {
-          console.log(`[session-manager] Event #${eventCount} for ${payload.nodeId}:`, event.type, JSON.stringify(event).slice(0, 300))
+        if (mode === 'rich') {
+          this.handleRichSessionEvent(payload.nodeId, event, ws, activeSession)
+        } else {
+          this.handleLegacySessionEvent(payload.nodeId, event, ws)
         }
-        this.handleSessionEvent(payload.nodeId, event, ws)
       })
 
       // Start the agent work
-      console.log(`[session-manager] Sending prompt for ${payload.nodeId}`)
-      console.log(`[session-manager] Prompt length: ${agentPrompt.length} chars`)
+      console.log(`[session-manager] Sending initial prompt for ${payload.nodeId}`)
       ws.sendStatus('working')
+      activeSession.isProcessing = true
       await session.prompt(agentPrompt)
-      console.log(`[session-manager] Prompt resolved for ${payload.nodeId}, events received: ${eventCount}`)
+      activeSession.isProcessing = false
 
-      // Session completed successfully
-      ws.sendDone('Agent session completed')
-      await this.updateNodeStatus(payload.nodeId, 'done')
+      if (mode === 'rich') {
+        // Rich sessions stay alive — mark as idle, wait for more prompts
+        console.log(`[session-manager] Initial prompt done for ${payload.nodeId}, session stays alive`)
+        ws.sendStatus('idle')
+        await this.updateNodeStatus(payload.nodeId, 'idle')
+
+        // Process any queued prompts
+        await this.processPromptQueue(payload.nodeId)
+      } else {
+        // Legacy sessions complete after single prompt
+        ws.sendDone('Agent session completed')
+        await this.updateNodeStatus(payload.nodeId, 'done')
+        ws.close()
+        this.activeSessions.delete(payload.nodeId)
+        console.log(`[session-manager] Legacy session ended for ${payload.nodeId}`)
+      }
     }
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      const stack = error instanceof Error ? error.stack : ''
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
-      if (stack) console.error(`[session-manager] Stack:`, stack)
       ws.sendError(message)
       await this.updateNodeStatus(payload.nodeId, 'error')
-    }
-    finally {
       ws.close()
       this.activeSessions.delete(payload.nodeId)
-      console.log(`[session-manager] Session ended for ${payload.nodeId}`)
+    }
+  }
+
+  /** Handle a new prompt from the browser (rich mode) */
+  private async handlePrompt(nodeId: string, text: string): Promise<void> {
+    const active = this.activeSessions.get(nodeId)
+    if (!active || active.mode !== 'rich') return
+
+    console.log(`[session-manager] Prompt for ${nodeId}: ${text.slice(0, 80)}`)
+
+    if (active.isProcessing) {
+      // Queue it as follow-up
+      active.promptQueue.push(text)
+      console.log(`[session-manager] Queued prompt for ${nodeId} (${active.promptQueue.length} in queue)`)
+    } else {
+      // Execute immediately
+      active.isProcessing = true
+      active.ws.sendStatus('working')
+      await this.updateNodeStatus(nodeId, 'working')
+
+      try {
+        await active.session.prompt(text)
+      } catch (err) {
+        console.error(`[session-manager] Prompt failed for ${nodeId}:`, err)
+        active.ws.sendOutput(`[error] Prompt failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+
+      active.isProcessing = false
+      active.ws.sendStatus('idle')
+      await this.updateNodeStatus(nodeId, 'idle')
+
+      // Process any queued prompts
+      await this.processPromptQueue(nodeId)
+    }
+  }
+
+  /** Handle a follow-up message from the browser */
+  private async handleFollowUp(nodeId: string, text: string): Promise<void> {
+    const active = this.activeSessions.get(nodeId)
+    if (!active) return
+
+    console.log(`[session-manager] Follow-up for ${nodeId}: ${text.slice(0, 80)}`)
+
+    if (active.isProcessing) {
+      // Use Pi SDK's followUp (queues after current)
+      try {
+        await active.session.followUp(text)
+      } catch (err) {
+        console.error(`[session-manager] Follow-up failed for ${nodeId}:`, err)
+      }
+    } else {
+      // Treat as prompt if idle
+      await this.handlePrompt(nodeId, text)
+    }
+  }
+
+  /** Process queued prompts */
+  private async processPromptQueue(nodeId: string): Promise<void> {
+    const active = this.activeSessions.get(nodeId)
+    if (!active || active.isProcessing) return
+
+    while (active.promptQueue.length > 0) {
+      const text = active.promptQueue.shift()!
+      active.isProcessing = true
+      active.ws.sendStatus('working')
+      await this.updateNodeStatus(nodeId, 'working')
+
+      try {
+        await active.session.prompt(text)
+      } catch (err) {
+        console.error(`[session-manager] Queued prompt failed for ${nodeId}:`, err)
+        active.ws.sendOutput(`[error] Prompt failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+
+      active.isProcessing = false
+    }
+
+    if (active.mode === 'rich') {
+      active.ws.sendStatus('idle')
+      await this.updateNodeStatus(nodeId, 'idle')
     }
   }
 
@@ -171,15 +275,110 @@ export class AgentSessionManager {
     }
   }
 
-  /** Map Pi agent events to terminal output */
-  private handleSessionEvent(nodeId: string, event: any, ws: SessionWebSocket): void {
-    // Map common event types to terminal output
+  /** Handle extension UI response from browser */
+  private async handleUIResponse(_nodeId: string, _requestId: string, _value: string): Promise<void> {
+    // TODO: Wire up to Pi SDK's extension UI system once we understand the callback mechanism
+    console.log(`[session-manager] UI response for ${_nodeId}: ${_requestId} = ${_value}`)
+  }
+
+  /** End a rich session (called when browser disconnects or explicitly closes) */
+  async endSession(nodeId: string): Promise<void> {
+    const active = this.activeSessions.get(nodeId)
+    if (!active) return
+
+    console.log(`[session-manager] Ending session for ${nodeId}`)
+    active.ws.sendDone('Session ended')
+    await this.updateNodeStatus(nodeId, 'done')
+    active.ws.close()
+    this.activeSessions.delete(nodeId)
+  }
+
+  // ─── Event handlers ───
+
+  /** Map Pi agent events to structured messages (rich mode) */
+  private handleRichSessionEvent(nodeId: string, event: any, ws: SessionWebSocket, active: ActiveSession): void {
     switch (event.type) {
-      case 'message_start':
-        // New assistant message starting
+      case 'message_start': {
+        // Start accumulating a new assistant message
         break
+      }
       case 'message_update': {
-        // Streaming text from the assistant
+        const content = event.message?.content
+        if (!Array.isArray(content)) break
+
+        const blocks: AgentContentBlock[] = []
+        for (const item of content) {
+          if (item.type === 'text' && item.text) {
+            blocks.push({ type: 'text', text: item.text })
+          }
+          else if (item.type === 'tool_use') {
+            blocks.push({
+              type: 'tool_use',
+              name: item.name,
+              input: item.input,
+              toolCallId: item.id,
+            })
+          }
+          else if (item.type === 'thinking') {
+            blocks.push({ type: 'thinking', thinking: item.thinking })
+          }
+        }
+
+        if (blocks.length > 0) {
+          const msg: AgentMessageEvent = {
+            id: `msg-${++active.messageCounter}`,
+            role: 'assistant',
+            content: blocks,
+            timestamp: Date.now(),
+          }
+          ws.sendAgentEvent(msg)
+          // Also send as legacy output for backwards compat
+          for (const block of blocks) {
+            if (block.type === 'text' && block.text) {
+              ws.sendOutput(block.text)
+            } else if (block.type === 'tool_use') {
+              ws.sendOutput(`🔧 ${block.name} ${JSON.stringify(block.input || {}).slice(0, 100)}`)
+            } else if (block.type === 'thinking' && block.thinking) {
+              ws.sendOutput(`💭 ${block.thinking.split('\n')[0].slice(0, 120)}`)
+            }
+          }
+        }
+        break
+      }
+      case 'tool_execution_end': {
+        if (event.result) {
+          const resultText = typeof event.result === 'string'
+            ? event.result.slice(0, 500)
+            : JSON.stringify(event.result).slice(0, 500)
+
+          const msg: AgentMessageEvent = {
+            id: `msg-${++active.messageCounter}`,
+            role: 'system',
+            content: [{
+              type: 'tool_result',
+              result: resultText,
+              toolCallId: event.toolCallId || event.tool_use_id,
+            }],
+            timestamp: Date.now(),
+          }
+          ws.sendAgentEvent(msg)
+          ws.sendOutput(`  ↳ ${resultText.slice(0, 120)}`)
+        }
+        break
+      }
+      case 'auto_compaction_start':
+        ws.sendOutput('⚙ Compacting conversation...')
+        break
+      case 'auto_retry_start':
+        ws.sendOutput(`⚙ Retrying (attempt ${event.attempt}/${event.maxAttempts})...`)
+        break
+    }
+  }
+
+  /** Map Pi agent events to text output (legacy mode) */
+  private handleLegacySessionEvent(nodeId: string, event: any, ws: SessionWebSocket): void {
+    switch (event.type) {
+      case 'message_update': {
         const content = event.message?.content
         if (Array.isArray(content)) {
           for (const item of content) {
@@ -202,11 +401,6 @@ export class AgentSessionManager {
         }
         break
       }
-      case 'message_end':
-        // Assistant message complete
-        break
-      case 'tool_execution_start':
-        break
       case 'tool_execution_end':
         if (event.result) {
           const result = typeof event.result === 'string'

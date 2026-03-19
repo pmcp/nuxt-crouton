@@ -48,6 +48,7 @@ const {
 const {
   showPath, showChat, showFilters, showInspector,
   showQuickAdd, showTerminal, showDispatch,
+  showSession, sessionNodeId, openSession,
   chatNodeId, chatNodeName, openChat, openGlobalChat,
   quickAddParentId, openQuickAdd,
   terminalNodeId, openTerminal,
@@ -179,8 +180,8 @@ const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNo
 })
 
 // Pause shortcuts when modals are open
-watch([showQuickAdd, showChat, showDispatch, showDigest, showTerminal], ([qa, ch, dp, dg, tm]) => {
-  if (qa || ch || dp || dg || tm) {
+watch([showQuickAdd, showChat, showDispatch, showDigest, showTerminal, showSession], ([qa, ch, dp, dg, tm, ss]) => {
+  if (qa || ch || dp || dg || tm || ss) {
     pause()
     connectMenu.value.show = false
   }
@@ -196,6 +197,7 @@ provideThinkgraphContext({
   openChat,
   openDispatch,
   openTerminal,
+  openSession,
   togglePin,
   toggleStar,
   contextNodeIds,
@@ -500,13 +502,22 @@ function exportGraph() {
     </template>
   </UModal>
 
-  <!-- Terminal Panel (Claude Code output) -->
+  <!-- Terminal Panel (Claude Code output — legacy) -->
   <TerminalPanel
     v-if="terminalNodeId"
     :node-id="terminalNodeId"
     :team-id="teamId || ''"
     :open="showTerminal"
     @update:open="showTerminal = $event"
+  />
+
+  <!-- Session Panel (Pi Agent — rich interactive session) -->
+  <SessionPanel
+    v-if="sessionNodeId"
+    :node-id="sessionNodeId"
+    :team-id="teamId || ''"
+    :open="showSession"
+    @update:open="showSession = $event"
   />
 
   <!-- Crouton modal/slideover for CRUD -->
