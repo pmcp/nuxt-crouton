@@ -519,6 +519,7 @@ Use the \`create_node\` tool. Each node has three parts:
         headers: {
           'Cookie': this.config.serviceToken,
           'Content-Type': 'application/json',
+          'X-Webhook-Secret': process.env.WEBHOOK_SECRET || '',
         },
         body: {
           workItemId: session.nodeId,

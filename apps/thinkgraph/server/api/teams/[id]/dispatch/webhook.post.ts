@@ -4,12 +4,22 @@ import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/worki
  * Webhook for receiving dispatch results from Pi.dev or other providers.
  *
  * POST /api/teams/[id]/dispatch/webhook
+ * Headers: X-Webhook-Secret: <shared secret>
  * Body: { workItemId, status, output?, artifacts?, error? }
  *
- * No auth required — this is a server-to-server callback.
- * The team ID in the URL path provides scoping.
+ * Authenticated via shared secret (not user session).
  */
 export default defineEventHandler(async (event) => {
+  // Verify webhook secret
+  const config = useRuntimeConfig()
+  const expectedSecret = config.webhookSecret || config.public?.webhookSecret
+  if (expectedSecret) {
+    const providedSecret = getHeader(event, 'x-webhook-secret')
+    if (providedSecret !== expectedSecret) {
+      throw createError({ status: 401, statusText: 'Invalid webhook secret' })
+    }
+  }
+
   const { id: teamId } = getRouterParams(event)
   if (!teamId) {
     throw createError({ status: 400, statusText: 'Missing team ID' })
