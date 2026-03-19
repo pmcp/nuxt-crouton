@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection canvases
  * @layer thinkgraph
- * @generated 2026-03-16
+ * @generated 2026-03-19
  *
  * ## AI Context
  * - Main interface: ThinkgraphCanvase

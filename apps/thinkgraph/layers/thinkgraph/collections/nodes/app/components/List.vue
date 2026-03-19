@@ -2,7 +2,7 @@
   @crouton-generated
   @collection nodes
   @layer thinkgraph
-  @generated 2026-03-16
+  @generated 2026-03-19
 
   ## AI Context
   - List component for nodes collection

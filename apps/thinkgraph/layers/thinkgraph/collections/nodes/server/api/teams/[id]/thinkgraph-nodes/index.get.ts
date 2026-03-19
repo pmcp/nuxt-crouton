@@ -20,8 +20,7 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const canvasId = query.canvasId ? String(query.canvasId) : undefined
-  const result = await getAllThinkgraphNodes(team.id, canvasId)
+  const result = await getAllThinkgraphNodes(team.id)
   dbTimer.end()
   return result
 })

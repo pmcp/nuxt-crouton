@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection nodes
  * @layer thinkgraph
- * @generated 2026-03-16
+ * @generated 2026-03-19
  *
  * ## AI Context
  * - Composable: useThinkgraphNodes
@@ -47,7 +47,8 @@ export const thinkgraphNodeSchema = z.object({
   stepIndex: z.number().optional(),
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
+  parentId: z.string().nullable().optional()
 })
 
 export const thinkgraphNodesColumns = [
@@ -101,7 +102,8 @@ const _thinkgraphNodesConfig = {
     stepIndex: 0,
     skillVersion: '',
     tokenCount: 0,
-    userId: ''
+    userId: '',
+    parentId: null
   },
   columns: thinkgraphNodesColumns,
   hierarchy: {

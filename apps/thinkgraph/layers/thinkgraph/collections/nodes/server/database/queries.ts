@@ -3,21 +3,20 @@ import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ThinkgraphNode, NewThinkgraphNode } from '../../types'
+import * as canvasesSchema from '../../../canvases/server/database/schema'
+import * as nodesSchema from '../../../nodes/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllThinkgraphNodes(teamId: string, canvasId?: string) {
+export async function getAllThinkgraphNodes(teamId: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
 
-  const conditions = [eq(tables.thinkgraphNodes.teamId, teamId)]
-  if (canvasId) {
-    conditions.push(eq(tables.thinkgraphNodes.canvasId, canvasId))
-  }
-
   const nodes = await (db as any)
     .select({
       ...tables.thinkgraphNodes,
+      canvasIdData: canvasesSchema.thinkgraphCanvases,
+      parentIdData: nodesSchema.thinkgraphNodes,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -26,9 +25,11 @@ export async function getAllThinkgraphNodes(teamId: string, canvasId?: string) {
       }
     } as any)
     .from(tables.thinkgraphNodes)
+    .leftJoin(canvasesSchema.thinkgraphCanvases, eq(tables.thinkgraphNodes.canvasId, canvasesSchema.thinkgraphCanvases.id))
+    .leftJoin(nodesSchema.thinkgraphNodes, eq(tables.thinkgraphNodes.parentId, nodesSchema.thinkgraphNodes.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphNodes.owner, ownerUser.id))
-    .where(and(...conditions))
-    .orderBy(desc(tables.thinkgraphNodes.order))
+    .where(eq(tables.thinkgraphNodes.teamId, teamId))
+    .orderBy(desc(tables.thinkgraphNodes.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
   nodes.forEach((item: any) => {
@@ -69,6 +70,8 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
   const nodes = await (db as any)
     .select({
       ...tables.thinkgraphNodes,
+      canvasIdData: canvasesSchema.thinkgraphCanvases,
+      parentIdData: nodesSchema.thinkgraphNodes,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -77,6 +80,8 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
       }
     } as any)
     .from(tables.thinkgraphNodes)
+    .leftJoin(canvasesSchema.thinkgraphCanvases, eq(tables.thinkgraphNodes.canvasId, canvasesSchema.thinkgraphCanvases.id))
+    .leftJoin(nodesSchema.thinkgraphNodes, eq(tables.thinkgraphNodes.parentId, nodesSchema.thinkgraphNodes.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphNodes.owner, ownerUser.id))
     .where(
       and(
@@ -84,7 +89,7 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
         inArray(tables.thinkgraphNodes.id, nodeIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphNodes.order))
+    .orderBy(desc(tables.thinkgraphNodes.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
   nodes.forEach((item: any) => {

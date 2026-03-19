@@ -26,6 +26,7 @@ const bodySchema = z.object({
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
   userId: z.string().optional(),
+  parentId: z.string().nullable().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
@@ -67,24 +68,5 @@ export default defineEventHandler(async (event) => {
     userId: body.userId
   }, { role: membership.role })
   dbTimer.end()
-
-  // Signal real-time update so connected browsers refresh
-  signalCollectionChange(team.id, 'thinkgraphNodes')
-
-  // Notion sync (fire-and-forget — never blocks the PATCH response)
-  if (body.status === 'idle' && !result.notionTaskId) {
-    createNotionTask(team.id, result).then(async (syncResult) => {
-      if (syncResult.success && syncResult.notionPageId) {
-        await updateThinkgraphNode(nodeId, team.id, user.id, {
-          notionTaskId: syncResult.notionPageId
-        }, { role: 'admin' })
-      }
-    }).catch(() => {})
-  }
-
-  if (body.status === 'done' && result.notionTaskId) {
-    updateNotionTaskStatus(team.id, result.notionTaskId, 'done').catch(() => {})
-  }
-
   return result
 })

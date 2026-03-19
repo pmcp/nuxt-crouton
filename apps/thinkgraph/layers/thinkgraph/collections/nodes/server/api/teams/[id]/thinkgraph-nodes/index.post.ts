@@ -27,6 +27,7 @@ const bodySchema = z.object({
   skillVersion: z.string().optional(),
   tokenCount: z.number().optional(),
   userId: z.string().optional(),
+  parentId: z.string().nullable().optional()
 }).strip()
 
 export default defineEventHandler(async (event) => {
@@ -69,9 +70,5 @@ export default defineEventHandler(async (event) => {
     updatedBy: user.id
   })
   dbTimer.end()
-
-  // Signal real-time update so connected browsers refresh
-  signalCollectionChange(team.id, 'thinkgraphNodes')
-
   return result
 })
