@@ -1,9 +1,11 @@
 import { streamText, tool } from 'ai'
 import { z } from 'zod/v3'
+import { eq, and } from 'drizzle-orm'
 import { getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 import { getAllThinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/queries'
 import { createThinkgraphWorkItem, updateThinkgraphWorkItem, deleteThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { flowConfigs } from '~~/server/db/schema'
 
 /**
  * Project assistant chat endpoint with tool calling.
@@ -167,7 +169,7 @@ BRIEF: <what the work item should do>
       }),
 
       arrangeNodes: tool({
-        description: 'Arrange nodes on the canvas by setting their positions. Use this to group related items, clean up layout, or organize by status.',
+        description: 'Arrange nodes on the canvas by setting their positions. Use this to group related items, clean up layout, or organize by status. Typical spacing: 300px horizontal, 200px vertical between nodes.',
         parameters: z.object({
           positions: z.array(z.object({
             id: z.string().describe('Work item ID'),
@@ -178,15 +180,28 @@ BRIEF: <what the work item should do>
         execute: async (params) => {
           if (!flowId) return { success: false, error: 'No flow ID available' }
 
-          const positions: Record<string, { x: number; y: number }> = {}
+          const db = useDB()
+
+          // Read existing positions
+          const [existing] = await (db as any)
+            .select({ nodePositions: flowConfigs.nodePositions })
+            .from(flowConfigs)
+            .where(and(eq(flowConfigs.id, flowId), eq(flowConfigs.teamId, team.id)))
+            .limit(1)
+
+          if (!existing) return { success: false, error: 'Flow config not found' }
+
+          const merged = {
+            ...(existing.nodePositions as Record<string, { x: number; y: number }> || {}),
+          }
           for (const p of params.positions) {
-            positions[p.id] = { x: Math.round(p.x), y: Math.round(p.y) }
+            merged[p.id] = { x: Math.round(p.x), y: Math.round(p.y) }
           }
 
-          await $fetch(`/api/crouton-flow/teams/${team.id}/flows/${flowId}/positions`, {
-            method: 'PATCH',
-            body: { positions },
-          })
+          await (db as any)
+            .update(flowConfigs)
+            .set({ nodePositions: merged })
+            .where(eq(flowConfigs.id, flowId))
 
           return { success: true, moved: params.positions.length }
         },
