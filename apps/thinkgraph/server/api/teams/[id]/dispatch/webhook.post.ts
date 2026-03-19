@@ -1,4 +1,4 @@
-import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -8,6 +8,9 @@ import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/worki
  * Body: { workItemId, status, output?, artifacts?, error? }
  *
  * Authenticated via shared secret (not user session).
+ *
+ * Auto-advance: when status is 'done', finds the next queued child work item
+ * and sets it to 'queued' (ready for dispatch).
  */
 export default defineEventHandler(async (event) => {
   // Verify webhook secret
@@ -63,5 +66,39 @@ export default defineEventHandler(async (event) => {
     { role: 'admin' },
   )
 
-  return { success: true, workItemId, status: updates.status }
+  // Auto-advance: when a work item completes, find the next queued child
+  let advancedItemId: string | null = null
+  if (updates.status === 'done') {
+    try {
+      const allItems = await getAllThinkgraphWorkItems(teamId)
+      // Find queued children of the completed item (ordered by creation)
+      const queuedChildren = allItems
+        .filter((item: any) => item.parentId === workItemId && item.status === 'queued')
+        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+
+      if (queuedChildren.length > 0) {
+        const nextItem = queuedChildren[0]
+        // Mark the next item as active (ready for dispatch)
+        await updateThinkgraphWorkItem(
+          nextItem.id,
+          teamId,
+          'system',
+          { status: 'active' },
+          { role: 'admin' },
+        )
+        advancedItemId = nextItem.id
+        console.log(`[webhook] Auto-advanced work item ${nextItem.id} ("${nextItem.title}") → active`)
+      }
+    } catch (err) {
+      // Auto-advance is best-effort — don't fail the webhook
+      console.error('[webhook] Auto-advance failed:', err)
+    }
+  }
+
+  return {
+    success: true,
+    workItemId,
+    status: updates.status,
+    advancedItemId,
+  }
 })
