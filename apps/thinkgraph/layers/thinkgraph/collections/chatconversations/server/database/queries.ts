@@ -23,7 +23,7 @@ export async function getAllThinkgraphChatConversations(teamId: string) {
     .from(tables.thinkgraphChatConversations)
     .leftJoin(ownerUser, eq(tables.thinkgraphChatConversations.owner, ownerUser.id))
     .where(eq(tables.thinkgraphChatConversations.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphChatConversations.createdAt))
+    .orderBy(desc(tables.thinkgraphChatConversations.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   chatConversations.forEach((item: any) => {
@@ -79,7 +79,7 @@ export async function getThinkgraphChatConversationsByIds(teamId: string, chatCo
         inArray(tables.thinkgraphChatConversations.id, chatConversationIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphChatConversations.createdAt))
+    .orderBy(desc(tables.thinkgraphChatConversations.order))
 
   // Post-query processing for JSON fields (repeater/json types)
   chatConversations.forEach((item: any) => {
