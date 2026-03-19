@@ -528,19 +528,51 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
         body = this.generateInstructions(payload); break
     }
 
-    return header + body + this.retrospectiveFooter()
+    return header + body + this.closingInstructions(payload.nodeType)
   }
 
-  /** Shared closing instruction for all PM prompts */
-  private retrospectiveFooter(): string {
+  /**
+   * Composable closing instructions — selects which blocks to include based on node type.
+   *
+   * Block matrix:
+   * - outputBlock:        all types
+   * - retrospectiveBlock: all types
+   * - learningsBlock:     discover, architect, compose, generate
+   * - questionsBlock:     discover, architect
+   */
+  private closingInstructions(nodeType: string): string {
+    const blocks = [this.outputBlock(), this.retrospectiveBlock()]
+
+    if (['discover', 'architect', 'compose', 'generate'].includes(nodeType)) {
+      blocks.push(this.learningsBlock())
+    }
+    if (['discover', 'architect'].includes(nodeType)) {
+      blocks.push(this.questionsBlock())
+    }
+
+    return blocks.join('\n')
+  }
+
+  /** Mandate the deliverable field */
+  private outputBlock(): string {
     return `
 
 ## Before You Finish (MANDATORY)
 
 Use \`update_workitem\` to set ALL of these fields:
 
-1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)
-2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)
+1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)`
+  }
+
+  /** Free-text session reflection */
+  private retrospectiveBlock(): string {
+    return `
+2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)`
+  }
+
+  /** Structured actionable learnings array */
+  private learningsBlock(): string {
+    return `
 3. **learnings** — structured array of ONLY actionable items. Each learning becomes a task node for the human to triage. Only include things that should change — not things that went well.
 
 Example learnings (pyramid style — title is the point, detail explains):
@@ -554,6 +586,26 @@ Example learnings (pyramid style — title is the point, detail explains):
 Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken tool), \`prompt\` (unclear instructions), \`infra\` (infrastructure/config issue), \`process\` (workflow improvement).
 
 **Title rules:** 5-10 words max. The point, not the explanation. Must be scannable at a glance.
+`
+  }
+
+  /** Surface open questions for human triage — discover & architect only */
+  private questionsBlock(): string {
+    return `
+4. **questions** — surface 2-3 open questions that need human input before the next phase. These become "question" child nodes for the human to answer.
+
+Example questions:
+\`\`\`json
+[
+  { "title": "Should groups support nesting?", "detail": "The current design assumes flat groups. If we need group-in-group hierarchy, the data model and drag logic change significantly. Need a decision before architect phase." },
+  { "title": "Authentication provider preference?", "detail": "Brief mentions auth but doesn't specify. Cloudflare Access, Lucia, or external OAuth? This affects the entire auth layer architecture." }
+]
+\`\`\`
+
+Each question should be:
+- **Specific** — not vague ("what about performance?") but pointed ("Should we cache at edge or origin?")
+- **Blocking** — something that genuinely blocks the next phase if unanswered
+- **Actionable** — the human can answer it in a sentence or two
 `
   }
 
