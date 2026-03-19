@@ -1,4 +1,3 @@
-import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 /**
@@ -7,10 +6,15 @@ import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/worki
  * POST /api/teams/[id]/dispatch/webhook
  * Body: { workItemId, status, output?, artifacts?, error? }
  *
- * Called by the Pi worker (or API provider callback) when work completes.
+ * No auth required — this is a server-to-server callback.
+ * The team ID in the URL path provides scoping.
  */
 export default defineEventHandler(async (event) => {
-  const { team, user, membership } = await resolveTeamAndCheckMembership(event)
+  const { id: teamId } = getRouterParams(event)
+  if (!teamId) {
+    throw createError({ status: 400, statusText: 'Missing team ID' })
+  }
+
   const body = await readBody(event)
 
   const { workItemId, status, output, artifacts, error } = body
@@ -43,10 +47,10 @@ export default defineEventHandler(async (event) => {
 
   await updateThinkgraphWorkItem(
     workItemId,
-    team.id,
-    user.id,
+    teamId,
+    'system',
     updates,
-    { role: membership.role },
+    { role: 'admin' },
   )
 
   return { success: true, workItemId, status: updates.status }
