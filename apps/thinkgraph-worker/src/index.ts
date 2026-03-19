@@ -92,8 +92,12 @@ async function main() {
     }
   })
 
-  // Start watching for dispatches
-  dispatchWatcher.start()
+  // Start watching for dispatches (legacy polling — disabled for PM flow, HTTP dispatch is primary)
+  if (process.env.ENABLE_POLL_WATCHER === 'true') {
+    dispatchWatcher.start()
+  } else {
+    console.log('[dispatch-watcher] Disabled — using HTTP dispatch. Set ENABLE_POLL_WATCHER=true to enable.')
+  }
 
   // Optional: connect Yjs for presence
   // Disabled by default until DO protocol compatibility is verified
