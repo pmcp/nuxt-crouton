@@ -37,6 +37,9 @@ const {
   },
 })
 
+// ─── State used by persistence and actions ───
+const createdActions = ref<Set<string>>(new Set())
+
 // ─── Persistence ────────────────────────────────────────────────
 const conversationId = ref<string | null>(null)
 const isLoadingConversation = ref(false)
@@ -148,8 +151,6 @@ const suggestedActions = computed(() => {
   }
   return actions
 })
-
-const createdActions = ref<Set<string>>(new Set())
 
 function createFromSuggestion(action: { type: string; title: string; brief: string; messageId: string }) {
   createdActions.value.add(action.messageId)
