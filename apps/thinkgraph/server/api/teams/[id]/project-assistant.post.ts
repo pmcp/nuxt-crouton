@@ -178,10 +178,15 @@ BRIEF: <what the work item should do>
           id: z.string().describe('Work item ID to dispatch'),
         }),
         execute: async (params) => {
+          console.log(`[assistant] Dispatching work item ${params.id}`)
           // Re-fetch to get items created during this conversation (not stale snapshot)
           const freshItems = await getAllThinkgraphWorkItems(team.id)
           const item = freshItems.find((i: any) => i.id === params.id)
-          if (!item) return { success: false, error: 'Work item not found' }
+          if (!item) {
+            console.log(`[assistant] Work item ${params.id} not found in ${freshItems.length} items`)
+            return { success: false, error: 'Work item not found' }
+          }
+          console.log(`[assistant] Found item: ${item.title} (status: ${item.status}, assignee: ${item.assignee})`)
           if (item.status !== 'queued') return { success: false, error: `Item is ${item.status}, not queued` }
           if (item.assignee !== 'pi') return { success: false, error: `Item assigned to ${item.assignee}, not pi` }
 
@@ -288,7 +293,7 @@ BRIEF: <what the work item should do>
         },
       }),
     },
-    maxSteps: 5,
+    maxSteps: 15,
   })
 
   return result.toDataStreamResponse()
