@@ -5,6 +5,7 @@ import { getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/work
 import { getAllThinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/queries'
 import { createThinkgraphWorkItem, updateThinkgraphWorkItem, deleteThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { buildNodeContext } from '~~/server/utils/context-builder'
 import { flowConfigs } from '~~/server/db/schema'
 
 /**
@@ -67,9 +68,12 @@ ${learnings.join('\n') || 'None'}
 ## Your Role
 You are a PM assistant with tools to take action. You can:
 - Create, update, and delete work items
+- Dispatch work items to Pi for execution (only queued, pi-assigned items)
 - Arrange nodes on the canvas (group related items, clean up layout)
 - Batch-dismiss learnings that aren't actionable
 - Promote learnings to tasks
+
+When the user asks to "dispatch all" or "run everything", create the items first, then dispatch each one sequentially.
 
 Keep answers concise. Use tools to take action when the user asks.
 When you take actions, briefly confirm what you did.
@@ -165,6 +169,81 @@ BRIEF: <what the work item should do>
             }
           }
           return { updated: results.filter(r => r.success).length, failed: results.filter(r => !r.success).length }
+        },
+      }),
+
+      dispatchWorkItem: tool({
+        description: 'Dispatch a work item to Pi for execution. Sets status to active and sends to the Pi worker. Only dispatch pi-assigned items that are queued.',
+        parameters: z.object({
+          id: z.string().describe('Work item ID to dispatch'),
+        }),
+        execute: async (params) => {
+          const item = projectItems.find((i: any) => i.id === params.id)
+          if (!item) return { success: false, error: 'Work item not found' }
+          if (item.status !== 'queued') return { success: false, error: `Item is ${item.status}, not queued` }
+          if (item.assignee !== 'pi') return { success: false, error: `Item assigned to ${item.assignee}, not pi` }
+
+          // Build context chain
+          const contextPayload = buildNodeContext(
+            allItems.map((i: any) => ({
+              id: i.id, parentId: i.parentId, title: i.title,
+              nodeType: i.type, status: i.status, brief: i.brief, output: i.output,
+            })),
+            params.id,
+          )
+
+          const handoffMeta = {
+            type: 'handoff' as const,
+            provider: 'pi',
+            skill: item.skill || item.type,
+            prompt: item.brief || item.title,
+            context: contextPayload.markdown,
+            contextTokens: contextPayload.tokenEstimate,
+            projectId: item.projectId,
+            workItemId: params.id,
+            workItemTitle: item.title,
+            workItemType: item.type,
+            teamId: team.id,
+            dispatchedBy: 'assistant',
+            dispatchedAt: new Date().toISOString(),
+          }
+
+          // Store handoff + set active
+          const existing = Array.isArray(item.artifacts) ? item.artifacts : []
+          const cleaned = existing.filter((a: any) => a?.type !== 'handoff')
+
+          await updateThinkgraphWorkItem(params.id, team.id, 'system', {
+            status: 'active',
+            artifacts: [...cleaned, handoffMeta],
+          }, { role: 'admin' })
+
+          // Send to Pi worker
+          const config = useRuntimeConfig()
+          const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
+          const host = getHeader(event, 'host') || 'localhost:3004'
+          let piAccepted = false
+
+          try {
+            const resp = await $fetch<{ accepted: boolean }>(`${piWorkerUrl}/dispatch`, {
+              method: 'POST',
+              body: {
+                workItemId: params.id,
+                projectId: item.projectId,
+                prompt: handoffMeta.prompt,
+                context: contextPayload.markdown,
+                skill: handoffMeta.skill,
+                workItemType: item.type,
+                teamId: team.id,
+                teamSlug: team.slug || team.id,
+                callbackUrl: `${config.public?.siteUrl || `http://${host}`}/api/teams/${team.id}/dispatch/webhook`,
+              },
+            })
+            piAccepted = resp?.accepted || false
+          } catch (err: any) {
+            return { success: true, id: params.id, piAccepted: false, warning: `Handoff stored but Pi not reachable: ${err.message}` }
+          }
+
+          return { success: true, id: params.id, piAccepted, skill: handoffMeta.skill }
         },
       }),
 
