@@ -220,7 +220,19 @@ async function openDispatch(id: string) {
   const item = items.value.find(n => n.id === id)
   if (!item) return
   await dispatchWork(item)
+  // Open terminal to watch the session
+  terminalNodeId.value = id
+  showTerminal.value = true
   await refreshItems()
+}
+
+// ─── Terminal panel ───
+const showTerminal = ref(false)
+const terminalNodeId = ref<string | null>(null)
+
+function openTerminal(id: string) {
+  terminalNodeId.value = id
+  showTerminal.value = true
 }
 
 // Provide actions to WorkItemsNode
@@ -233,6 +245,7 @@ provide('projectActions', {
     openCreate(undefined, parentId)
   },
   dispatch: openDispatch,
+  openTerminal,
 })
 
 // ─── Status summary ───
@@ -274,6 +287,9 @@ function handleKeydown(e: KeyboardEvent) {
       break
     case 'd': case 'D':
       if (selectedItemId.value) updateItem(selectedItemId.value, { status: 'done' })
+      break
+    case 't': case 'T':
+      if (selectedItemId.value) openTerminal(selectedItemId.value)
       break
     case 'Escape':
       if (showDetail.value) closeDetail()
@@ -509,5 +525,14 @@ if (import.meta.client) {
         </div>
       </template>
     </UModal>
+
+    <!-- Terminal panel -->
+    <TerminalPanel
+      v-if="terminalNodeId"
+      :node-id="terminalNodeId"
+      :team-id="teamId"
+      :open="showTerminal"
+      @update:open="(v) => { showTerminal = v; if (!v) terminalNodeId = null }"
+    />
   </div>
 </template>

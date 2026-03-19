@@ -21,6 +21,7 @@ const projectActions = inject<{
   openDetail: (id: string) => void
   addChild: (parentId: string) => void
   dispatch: (id: string) => void
+  openTerminal: (id: string) => void
 } | null>('projectActions', null)
 
 const isHovered = ref(false)
@@ -207,6 +208,17 @@ function handleDispatch(event: Event) {
     >
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
+
+    <!-- Terminal indicator (clickable, shows when active) -->
+    <button
+      v-if="isActive && projectActions"
+      class="mt-1.5 inline-flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 cursor-pointer transition-colors"
+      title="Watch terminal"
+      @click.stop="projectActions.openTerminal(item.id)"
+    >
+      <UIcon name="i-lucide-terminal" class="size-3 animate-pulse" />
+      <span>terminal</span>
+    </button>
 
     <!-- Node actions (hover on desktop, always visible on touch) -->
     <div class="work-item__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
