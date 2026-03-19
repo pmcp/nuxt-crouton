@@ -220,10 +220,20 @@ async function deleteItem(id: string) {
 
 async function onNodeDelete(nodeIds: string[]) {
   if (!teamId.value) return
-  for (const id of nodeIds) {
-    const children = items.value.filter(n => n.parentId === id)
-    if (children.length > 0) {
-      toast.add({ title: `Cannot delete "${items.value.find(n => n.id === id)?.title}" — has children`, color: 'warning' })
+  const deleteSet = new Set(nodeIds)
+
+  // Sort: deepest nodes first so children are deleted before parents
+  const sorted = [...nodeIds].sort((a, b) => {
+    const depthA = items.value.find(n => n.id === a)?.depth ?? 0
+    const depthB = items.value.find(n => n.id === b)?.depth ?? 0
+    return depthB - depthA
+  })
+
+  for (const id of sorted) {
+    // Check if remaining children exist (not counting ones we're also deleting)
+    const remainingChildren = items.value.filter(n => n.parentId === id && !deleteSet.has(n.id))
+    if (remainingChildren.length > 0) {
+      toast.add({ title: `Cannot delete "${items.value.find(n => n.id === id)?.title}" — has children outside selection`, color: 'warning' })
       continue
     }
     try {
