@@ -362,6 +362,7 @@ const newItemOptions = computed(() => [
 
 // ─── View mode ───
 const viewMode = ref<'canvas' | 'list'>('canvas')
+const showAssistant = ref(false)
 
 // ─── Filtered/sorted items for list view ───
 const STATUS_ORDER: Record<string, number> = { active: 0, waiting: 1, blocked: 2, queued: 3, done: 4 }
@@ -457,6 +458,9 @@ function handleKeydown(e: KeyboardEvent) {
     case 'v': case 'V':
       viewMode.value = viewMode.value === 'canvas' ? 'list' : 'canvas'
       break
+    case 'a': case 'A':
+      showAssistant.value = !showAssistant.value
+      break
     case 'Escape':
       if (showDetail.value) closeDetail()
       else if (showCreate.value) showCreate.value = false
@@ -512,6 +516,14 @@ if (import.meta.client) {
             <UIcon name="i-lucide-list" class="size-3.5" />
           </button>
         </div>
+
+        <UButton
+          icon="i-lucide-sparkles"
+          size="sm"
+          :variant="showAssistant ? 'solid' : 'soft'"
+          :color="showAssistant ? 'primary' : 'neutral'"
+          @click="showAssistant = !showAssistant"
+        />
 
         <UButton
           icon="i-lucide-share-2"
@@ -580,97 +592,114 @@ if (import.meta.client) {
     </div>
 
     <!-- List / triage view -->
-    <div v-else class="flex-1 overflow-y-auto">
-      <!-- Filter bar + bulk actions -->
-      <div class="sticky top-0 z-10 bg-default/80 backdrop-blur-sm border-b border-default px-4 py-2 flex items-center gap-2">
-        <button
-          v-for="s in [null, 'active', 'waiting', 'queued', 'blocked', 'done']"
-          :key="s || 'all'"
-          class="text-xs px-2 py-1 rounded-full transition-colors"
-          :class="listFilter === s
-            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-            : 'text-muted hover:text-default hover:bg-muted/50'"
-          @click="listFilter = s"
-        >
-          {{ s || 'all' }}
-          <span class="ml-0.5 opacity-60">{{ s ? items.filter(i => i.status === s).length : items.length }}</span>
-        </button>
-
-        <div v-if="selectedIds.size > 0" class="ml-auto flex items-center gap-1">
-          <span class="text-xs text-muted mr-1">{{ selectedIds.size }} selected</span>
-          <UButton size="xs" variant="soft" color="green" icon="i-lucide-check" label="Done" @click="bulkUpdateStatus('done')" />
-          <UButton size="xs" variant="soft" color="red" icon="i-lucide-trash-2" label="Delete" @click="bulkDelete" />
-        </div>
-      </div>
-
-      <!-- Items list -->
-      <div class="divide-y divide-default">
-        <div
-          v-for="item in filteredListItems"
-          :key="item.id"
-          class="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors cursor-pointer"
-          @click="onNodeClick(item.id)"
-        >
-          <!-- Checkbox -->
-          <input
-            type="checkbox"
-            :checked="selectedIds.has(item.id)"
-            class="mt-1 rounded border-neutral-300 dark:border-neutral-600"
-            @click.stop="toggleSelect(item.id)"
+    <div v-else class="flex-1 flex min-h-0">
+      <div class="flex-1 overflow-y-auto">
+        <!-- Filter bar + bulk actions -->
+        <div class="sticky top-0 z-10 bg-default/80 backdrop-blur-sm border-b border-default px-4 py-2 flex items-center gap-2">
+          <button
+            v-for="s in [null, 'active', 'waiting', 'queued', 'blocked', 'done']"
+            :key="s || 'all'"
+            class="text-xs px-2 py-1 rounded-full transition-colors"
+            :class="listFilter === s
+              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+              : 'text-muted hover:text-default hover:bg-muted/50'"
+            @click="listFilter = s"
           >
+            {{ s || 'all' }}
+            <span class="ml-0.5 opacity-60">{{ s ? items.filter(i => i.status === s).length : items.length }}</span>
+          </button>
 
-          <!-- Status icon -->
-          <UIcon
-            :name="STATUS_CONFIG_LIST[item.status]?.icon || 'i-lucide-circle-dashed'"
-            class="size-4 mt-0.5 shrink-0"
-            :class="STATUS_CONFIG_LIST[item.status]?.class || 'text-neutral-400'"
-          />
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span
-                class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'"
-              >
-                {{ item.type }}
-              </span>
-              <span class="text-sm font-medium truncate">{{ item.title }}</span>
-            </div>
-            <p v-if="item.brief" class="text-xs text-muted mt-0.5 line-clamp-1">{{ item.brief }}</p>
+          <div v-if="selectedIds.size > 0" class="ml-auto flex items-center gap-1">
+            <span class="text-xs text-muted mr-1">{{ selectedIds.size }} selected</span>
+            <UButton size="xs" variant="soft" color="green" icon="i-lucide-check" label="Done" @click="bulkUpdateStatus('done')" />
+            <UButton size="xs" variant="soft" color="red" icon="i-lucide-trash-2" label="Delete" @click="bulkDelete" />
           </div>
+        </div>
 
-          <!-- Assignee -->
-          <span class="text-[10px] text-muted shrink-0 mt-1">
-            {{ item.assignee || 'pi' }}
-          </span>
-
-          <!-- Promote action (for review/learning nodes) -->
-          <UDropdownMenu
-            v-if="item.type === 'review' && item.assignee === 'human'"
-            :items="[
-              [
-                { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
-                { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
-                { label: 'Promote to Compose', icon: 'i-lucide-layout', onSelect: () => promoteToTask(item.id, 'compose') },
-              ],
-            ]"
+        <!-- Items list -->
+        <div class="divide-y divide-default">
+          <div
+            v-for="item in filteredListItems"
+            :key="item.id"
+            class="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors cursor-pointer"
+            @click="onNodeClick(item.id)"
           >
-            <UButton
-              icon="i-lucide-arrow-up-right"
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              title="Promote to task"
-              @click.stop
+            <!-- Checkbox -->
+            <input
+              type="checkbox"
+              :checked="selectedIds.has(item.id)"
+              class="mt-1 rounded border-neutral-300 dark:border-neutral-600"
+              @click.stop="toggleSelect(item.id)"
+            >
+
+            <!-- Status icon -->
+            <UIcon
+              :name="STATUS_CONFIG_LIST[item.status]?.icon || 'i-lucide-circle-dashed'"
+              class="size-4 mt-0.5 shrink-0"
+              :class="STATUS_CONFIG_LIST[item.status]?.class || 'text-neutral-400'"
             />
-          </UDropdownMenu>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                  :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'"
+                >
+                  {{ item.type }}
+                </span>
+                <span class="text-sm font-medium truncate">{{ item.title }}</span>
+              </div>
+              <p v-if="item.brief" class="text-xs text-muted mt-0.5 line-clamp-1">{{ item.brief }}</p>
+            </div>
+
+            <!-- Assignee -->
+            <span class="text-[10px] text-muted shrink-0 mt-1">
+              {{ item.assignee || 'pi' }}
+            </span>
+
+            <!-- Promote action (for review/learning nodes) -->
+            <UDropdownMenu
+              v-if="item.type === 'review' && item.assignee === 'human'"
+              :items="[
+                [
+                  { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
+                  { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
+                  { label: 'Promote to Compose', icon: 'i-lucide-layout', onSelect: () => promoteToTask(item.id, 'compose') },
+                ],
+              ]"
+            >
+              <UButton
+                icon="i-lucide-arrow-up-right"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                title="Promote to task"
+                @click.stop
+              />
+            </UDropdownMenu>
+          </div>
+        </div>
+
+        <div v-if="!filteredListItems.length" class="py-12 text-center text-sm text-muted">
+          No items{{ listFilter ? ` with status "${listFilter}"` : '' }}
         </div>
       </div>
 
-      <div v-if="!filteredListItems.length" class="py-12 text-center text-sm text-muted">
-        No items{{ listFilter ? ` with status "${listFilter}"` : '' }}
-      </div>
+      <!-- Assistant panel (right side in list view) -->
+      <ProjectAssistant
+        v-if="showAssistant"
+        :project-id="projectId"
+        :project-name="project?.name"
+        class="w-[360px] shrink-0"
+        @close="showAssistant = false"
+        @create-item="(data) => {
+          createType = data.type
+          createTitle = data.title
+          createAssignee = 'pi'
+          showCreate = true
+        }"
+      />
     </div>
 
     <!-- Detail panel (slideover) -->
