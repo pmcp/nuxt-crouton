@@ -2,6 +2,7 @@
 const props = defineProps<{
   projectId: string
   projectName?: string
+  flowId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -22,6 +23,7 @@ const {
   api: `/api/teams/${teamId.value}/project-assistant`,
   body: computed(() => ({
     projectId: props.projectId,
+    flowId: props.flowId,
   })),
 })
 

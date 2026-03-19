@@ -703,6 +703,7 @@ if (import.meta.client) {
         v-if="showAssistant"
         :project-id="projectId"
         :project-name="project?.name"
+        :flow-id="flowId"
         class="w-[360px] shrink-0"
         @close="showAssistant = false"
         @create-item="assistantCreateItem"
