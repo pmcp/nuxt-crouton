@@ -247,7 +247,7 @@ Nodes on the canvas. Each represents a concrete unit of work.
     "meta": {
       "default": "pi",
       "label": "Assignee",
-      "description": "pi, human, client, or api:<provider> (e.g. api:flux, api:openai)",
+      "description": "Who is responsible: pi, human, client",
       "area": "sidebar",
       "group": "routing",
       "displayAs": "badge"
@@ -256,8 +256,8 @@ Nodes on the canvas. Each represents a concrete unit of work.
   "provider": {
     "type": "string",
     "meta": {
-      "label": "AI Provider",
-      "description": "Target provider for AI work (pi, flux, openai, anthropic, replicate)",
+      "label": "Provider",
+      "description": "What tool executes: codex, claude-code, flux, openai, anthropic",
       "area": "sidebar",
       "group": "routing"
     }
@@ -266,25 +266,7 @@ Nodes on the canvas. Each represents a concrete unit of work.
     "type": "string",
     "meta": {
       "label": "Session ID",
-      "description": "External session/job ID (Pi session, Replicate prediction, etc.)",
-      "area": "sidebar",
-      "group": "routing"
-    }
-  },
-  "worktree": {
-    "type": "string",
-    "meta": {
-      "label": "Worktree",
-      "description": "Git worktree branch for this work",
-      "area": "sidebar",
-      "group": "routing"
-    }
-  },
-  "deployUrl": {
-    "type": "string",
-    "meta": {
-      "label": "Preview URL",
-      "description": "Deployed preview for this work item",
+      "description": "External session/job ID for tracking dispatch results",
       "area": "sidebar",
       "group": "routing"
     }
@@ -451,28 +433,37 @@ Read-only. No auth required. Shows:
 
 ThinkGraph dispatches work to different providers. Pi.dev is the primary worker for code tasks, but any AI can be a target.
 
-### Providers
+### Assignees & Providers
 
-| Provider | Assignee | What it does | Use case |
-|---|---|---|---|
-| **Pi.dev** | `pi` | Coding agent with crouton skills | Schema design, code gen, deployment |
-| **Human** | `human` | Waits for you to act | Review, manual config, decisions |
-| **Client** | `client` | Waits for client input (shared view) | Feedback, approval |
-| **Flux/Replicate** | `api:flux` | Image generation API | Hero images, logos, brand assets |
-| **OpenAI** | `api:openai` | GPT/DALL-E/Codex API | Alternative code gen, image gen, comparison |
-| **Anthropic** | `api:anthropic` | Claude API | Alternative code review, documentation |
+**Assignees** (who is responsible):
+
+| Assignee | What happens |
+|---|---|
+| `pi` | Dispatched to Pi.dev with a skill to run |
+| `human` | Waits for you to act |
+| `client` | Waits for client input (shared view) |
+
+**Providers** (what tool executes):
+
+| Provider | What it does | Use case |
+|---|---|---|
+| `codex` | OpenAI Codex agent | Code generation, schema design |
+| `claude-code` | Claude Code CLI | Code generation, review |
+| `flux` | Flux/Replicate API | Hero images, logos, brand assets |
+| `openai` | OpenAI API | Alternative code gen, DALL-E images |
+| `anthropic` | Claude API | Independent code review, docs |
 
 ### Dispatch Flow
 
 From any work item node, "Dispatch" button:
 
-1. Determines provider from `assignee` field
-2. Builds context: node brief + project config + ancestor chain + previous artifacts
-3. **Pi**: dispatches via HTTP/RPC with the crouton skill to run
-4. **API providers**: HTTP call with brief + relevant artifacts (e.g. brand brief → Flux)
-5. **Human/client**: sets status to `waiting`, sends notification
-6. Stores `sessionId` on the node
-7. Node status → `active`
+1. Builds context: project brief + node brief + ancestor outputs
+2. Routes by assignee:
+   - **Pi**: dispatches via HTTP with skill + provider to use
+   - **API providers**: HTTP call to provider with brief + artifacts
+   - **Human/client**: sets status to `waiting`
+3. Stores `sessionId` on the node
+4. Node status → `active`
 
 ### Result Capture
 
@@ -484,14 +475,7 @@ When any provider completes:
 
 ### Context Building
 
-Every provider receives context assembled from the graph — that's ThinkGraph's unique value. No single AI has the full picture. ThinkGraph does:
-
-- Project description + app config
-- The work item brief
-- Previous artifacts in the chain (schemas from architect, images from Flux, etc.)
-- Feedback from review nodes
-- For Pi: the specific crouton skill to execute
-- For image gen: brand brief, color palette, style references from earlier nodes
+Each dispatched node receives: the project brief, its own brief, and ancestor node outputs. This is how context flows through the pipeline — each node's output becomes the next node's input. For long chains, a summarisation node can compress the ancestor chain.
 
 ### Skill Mapping (Pi.dev)
 
@@ -505,11 +489,7 @@ Every provider receives context assembled from the graph — that's ThinkGraph's
 
 ### Multi-AI Patterns
 
-**Competitive comparison**: Create two sibling nodes from a review — one assigned to Pi, one to `api:openai`. Both get the same brief. You review both outputs and pick the winner.
-
-**Pipeline with mixed providers**: architect (Pi) → generate (Pi) → compose (Pi) → brand assets (Flux) → deploy (Pi) → review (client). Each node targets the right tool for the job.
-
-**Challenger pattern**: After Pi completes a build node, optionally spawn a review node assigned to `api:anthropic` for an independent code review before human review.
+The assignee/provider split means multi-AI patterns emerge naturally from the graph — no special architecture needed. Two sibling nodes with the same brief but different providers (Codex vs Claude Code) enable comparison. Mixed pipelines (Pi for code, Flux for images) just use different providers per node. A review node targeting a different AI gives you an independent second opinion before human review.
 
 ---
 
@@ -614,27 +594,44 @@ export default {
 
 ## Build Phases
 
-### Phase 1: Foundation
+### Phase 1: Foundation ✅
 
 **Goal:** Projects + work items, basic graph view.
 
-1. Update schemas (project.json, work-item.json)
-2. Regenerate collections with crouton-cli
-3. Run migrations
-4. Build dashboard page (project cards)
-5. Build project canvas page with `<CroutonFlow />`
-6. Build `WorkItemsNode.vue` (type icon, status badge, assignee, title)
-7. Build `WorkItemDetail.vue` (right panel with brief/output editing)
+1. ✅ Update schemas (project.json, work-item.json)
+2. ✅ Regenerate collections with crouton-cli
+3. ✅ Run migrations
+4. ✅ Build dashboard page (project cards)
+5. ✅ Build project canvas page with `<CroutonFlow />`
+6. ✅ Build `WorkItemsNode.vue` (type icon, status badge, assignee, title)
+7. ✅ Work item detail panel (slideover with brief/output/status editing)
 
-### Phase 2: Work Dispatch (Pi.dev first)
+### Phase 2a: Work Dispatch ✅
 
-**Goal:** Send work to Pi, get results back. Provider abstraction for future targets.
+**Goal:** Send work to Pi, get results back.
 
-8. Build `useWorkDispatch.ts` — provider abstraction with Pi.dev as first implementation
-9. Build dispatch API endpoint (`/api/teams/[id]/dispatch/index.post.ts`)
-10. Build webhook endpoint for results (`/api/teams/[id]/dispatch/webhook.post.ts`)
-11. Build `WorkDispatch.vue` — provider picker + dispatch button + status in node detail
-12. Auto-advance: when a node completes, queue the next node in the chain
+8. ✅ `useWorkDispatch.ts` — composable for dispatch with toast notifications
+9. ✅ Dispatch API endpoint (`/api/teams/[id]/dispatch/work-item.post.ts`)
+10. ✅ Webhook endpoint for results (`/api/teams/[id]/dispatch/webhook.post.ts`)
+11. ✅ Pi worker HTTP dispatch endpoint (`/dispatch` on `pi-api.pmcp.dev`)
+12. ✅ Progressive output flush (3s interval PATCH to work item)
+13. ✅ Live output preview on node cards (last 200 chars with blinking cursor)
+14. ✅ Callback from Pi worker to webhook on session completion
+15. ✅ Terminal panel wired (WebSocket — works locally, needs DO relay for production)
+16. ✅ Quick-create menu on drag-to-empty from node handle
+
+### Phase 2b: Pi Agent Workflow (NEXT)
+
+**Goal:** Pi actually builds crouton apps, not just answers questions.
+
+17. Rewrite `buildAgentPrompt` per node type — different prompt for discover/architect/generate/compose/review/deploy
+18. Worktree management — Pi creates a git branch + worktree per generate/compose node (`git worktree add /tmp/workitem-{id} -b thinkgraph/{id}`)
+19. Skill execution — generate nodes run `/crouton` skill (crouton CLI), compose nodes build pages
+20. Git workflow — Pi commits in the worktree, pushes the branch, stores branch name in work item `worktree` field
+21. Fix output format — only keep final complete text, not progressive deltas
+22. Suppress `pi-extension` old tool errors (or disable for PM dispatch)
+23. Auto-advance — when a node completes, auto-queue the next node in the chain
+24. PR creation — optionally create a GitHub PR from the work item branch
 
 ### Phase 3: Client View
 
@@ -661,24 +658,6 @@ export default {
 23. Node visual states (active = pulse, waiting = orange, done = green, blocked = red)
 24. Provider icon on nodes (Pi logo, OpenAI logo, Flux logo, human avatar)
 25. Real-time sync via crouton-collab
-
----
-
-## What Was Cut
-
-| Old concept | Why it's gone |
-|---|---|
-| Decision nodes, insights, ideas | Not a thinking tool anymore |
-| Path types (diverge, converge, validate...) | PM doesn't need exploration modes |
-| Starring, parking, version tags | Complexity for the old use case |
-| `useDecisionParser`, QuickAdd paste | No more parsing AI output |
-| Context templates per path type | Pi gets skills, not prompt templates |
-| llm CLI integration | Pi.dev replaces this |
-| Claude responder auto-expansion | Pi.dev dispatch replaces this |
-| Research → story → task pipeline | Not a kanban — it's a skill chain pipeline |
-| Visual Designer app | Pivoted to skills (`/discover → /architect → /generate → /compose → /brand`) |
-| 10+ node types | 6 types mapped to skill chain stages |
-| 7 status values | 5 statuses: queued, active, waiting, done, blocked |
 
 ---
 
