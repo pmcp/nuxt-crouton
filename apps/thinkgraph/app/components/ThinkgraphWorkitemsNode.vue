@@ -99,6 +99,7 @@ const hasOutput = computed(() => !!item.value.output)
 const hasBrief = computed(() => !!item.value.brief)
 const hasWorktree = computed(() => !!item.value.worktree)
 const hasDeployUrl = computed(() => !!item.value.deployUrl)
+const hasRetrospective = computed(() => !!item.value.retrospective)
 
 // Live status from artifacts
 const handoff = computed(() => {
@@ -248,6 +249,11 @@ function handleDispatch(event: Event) {
       <span v-if="hasDeployUrl" class="inline-flex items-center gap-0.5 text-[10px] text-blue-500">
         <UIcon name="i-lucide-globe" class="size-3" />
         preview
+      </span>
+
+      <span v-if="hasRetrospective" class="inline-flex items-center gap-0.5 text-[10px] text-amber-500" title="Has retrospective">
+        <UIcon name="i-lucide-lightbulb" class="size-3" />
+        lessons
       </span>
 
       <span v-if="item.skill" class="inline-flex items-center gap-0.5 text-[10px] text-violet-400 ml-auto">

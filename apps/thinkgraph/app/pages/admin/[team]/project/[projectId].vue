@@ -487,6 +487,17 @@ if (import.meta.client) {
             />
           </UFormField>
 
+          <!-- Retrospective -->
+          <UFormField v-if="selectedItem.retrospective" label="Retrospective" class="mb-4">
+            <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
+              <div class="flex items-center gap-1.5 mb-2">
+                <UIcon name="i-lucide-lightbulb" class="size-4 text-amber-500" />
+                <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Agent Lessons</span>
+              </div>
+              <p class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap">{{ selectedItem.retrospective }}</p>
+            </div>
+          </UFormField>
+
           <!-- Metadata -->
           <div class="space-y-3 mb-6">
             <UFormField label="Skill">
