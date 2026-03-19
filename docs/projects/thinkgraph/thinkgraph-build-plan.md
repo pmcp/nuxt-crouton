@@ -630,8 +630,10 @@ export default {
 20. ✅ Git workflow — Pi commits in the worktree, pushes the branch, stores branch name in work item `worktree` field
 21. ✅ Fix output format — only keep final complete text, not progressive deltas
 22. ✅ Suppress `pi-extension` old tool errors — PM dispatches use dedicated PM tools (`update_workitem`, `get_workitem`) instead of legacy thinking graph tools
-23. Auto-advance — when a node completes, auto-queue the next node in the chain
+23. ✅ Auto-advance — when a node completes, webhook auto-sets next queued child to active
 24. PR creation — optionally create a GitHub PR from the work item branch
+25. ✅ Retrospective field — agents write lessons learned after each task, visible on node cards and detail panel
+26. ✅ Output capture fix — PM dispatches use tool-written output (not streaming deltas), callback only sends status
 
 ### Phase 3: Client View
 
