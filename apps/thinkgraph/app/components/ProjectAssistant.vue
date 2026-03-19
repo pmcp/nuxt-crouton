@@ -20,6 +20,9 @@ const {
   handleSubmit,
   isLoading,
   error,
+  clearMessages,
+  exportMessages,
+  importMessages,
 } = useChat({
   api: `/api/teams/${teamId.value}/project-assistant`,
   body: computed(() => ({
@@ -29,8 +32,97 @@ const {
   onFinish: () => {
     // Refresh parent after assistant may have taken actions (tool calls)
     emit('refresh')
+    // Save conversation after each AI response (fire-and-forget)
+    saveConversation()
   },
 })
+
+// ─── Persistence ────────────────────────────────────────────────
+const conversationId = ref<string | null>(null)
+const isLoadingConversation = ref(false)
+
+const apiBase = computed(() => `/api/teams/${teamId.value}/thinkgraph-chatconversations`)
+
+/**
+ * Load an existing conversation for the current projectId.
+ * Uses a `project:` prefix in the nodeId field to scope conversations.
+ */
+async function loadConversation(projectId: string) {
+  isLoadingConversation.value = true
+  conversationId.value = null
+  clearMessages()
+  createdActions.value = new Set()
+
+  try {
+    const lookupId = `project:${projectId}`
+    const result = await $fetch<any>(apiBase.value, {
+      query: { nodeId: lookupId },
+    })
+
+    if (result && result.id) {
+      conversationId.value = result.id
+      if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
+        importMessages(result.messages)
+      }
+    }
+  } catch {
+    // No existing conversation found — that's fine, start fresh
+  } finally {
+    isLoadingConversation.value = false
+  }
+}
+
+/**
+ * Save the current conversation — creates or updates.
+ * Fire-and-forget: does not block the UI.
+ */
+async function saveConversation() {
+  const exported = exportMessages()
+  if (!exported || exported.length === 0) return
+
+  const lookupId = `project:${props.projectId}`
+
+  try {
+    if (conversationId.value) {
+      // Update existing conversation
+      await $fetch(`${apiBase.value}/${conversationId.value}`, {
+        method: 'PATCH',
+        body: {
+          messages: exported,
+          messageCount: exported.length,
+          lastMessageAt: new Date().toISOString(),
+        },
+      })
+    } else {
+      // Create new conversation
+      const result = await $fetch<any>(apiBase.value, {
+        method: 'POST',
+        body: {
+          nodeId: lookupId,
+          title: props.projectName || 'Project Assistant',
+          messages: exported,
+          messageCount: exported.length,
+          lastMessageAt: new Date().toISOString(),
+        },
+      })
+      if (result && result.id) {
+        conversationId.value = result.id
+      }
+    }
+  } catch (e) {
+    // Silently fail — don't disrupt the chat experience
+    console.warn('Failed to save conversation:', e)
+  }
+}
+
+// Load conversation on mount and when projectId changes
+watch(() => props.projectId, async (newProjectId, oldProjectId) => {
+  // Save current conversation before switching (fire-and-forget)
+  if (oldProjectId && messages.value.length > 0) {
+    saveConversation()
+  }
+  await loadConversation(newProjectId)
+}, { immediate: true })
 
 function onSubmit() {
   if (input.value.trim()) {
@@ -88,7 +180,15 @@ watch(messages, () => {
 
     <!-- Messages -->
     <div ref="messagesEl" class="flex-1 overflow-y-auto p-4 space-y-3">
-      <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-muted">
+      <!-- Loading conversation indicator -->
+      <div
+        v-if="isLoadingConversation"
+        class="h-full flex items-center justify-center text-muted"
+      >
+        <UIcon name="i-lucide-loader-2" class="size-5 animate-spin" />
+      </div>
+
+      <div v-else-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-muted">
         <UIcon name="i-lucide-sparkles" class="size-8 mb-3 opacity-50" />
         <p class="text-sm text-center">Ask me what to do next</p>
         <div class="flex flex-wrap gap-1.5 mt-3 justify-center">
@@ -177,9 +277,10 @@ watch(messages, () => {
         :rows="1"
         autoresize
         class="flex-1"
+        :disabled="isLoadingConversation"
         @keydown.enter.exact.prevent="onSubmit"
       />
-      <UButton type="submit" icon="i-lucide-send" size="sm" :loading="isLoading" :disabled="!input.trim()" />
+      <UButton type="submit" icon="i-lucide-send" size="sm" :loading="isLoading" :disabled="!input.trim() || isLoadingConversation" />
     </form>
   </div>
 </template>
