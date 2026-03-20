@@ -187,13 +187,14 @@ export class AgentSessionManager {
         await this.processPromptQueue(payload.nodeId)
       } else {
         // HTTP dispatch or legacy: complete and callback
+        // Clean up session BEFORE callback so auto-dispatch can reuse the slot
         this.stopFlushTimer(payload.nodeId)
         ws.sendDone('Agent session completed')
         await this.updateNodeStatus(payload.nodeId, 'done')
-        await this.sendCallback(activeSession, 'done')
         ws.close()
         this.activeSessions.delete(payload.nodeId)
         console.log(`[session-manager] Session ended for ${payload.nodeId}`)
+        await this.sendCallback(activeSession, 'done')
       }
     }
     catch (error) {

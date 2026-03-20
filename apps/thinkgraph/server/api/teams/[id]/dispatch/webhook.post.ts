@@ -90,8 +90,7 @@ export default defineEventHandler(async (event) => {
           stageAdvanced = true
           console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
 
-          // Auto-dispatch to Pi worker (delay to let the previous session clean up)
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          // Auto-dispatch to Pi worker
           const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
           const [targetItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
           if (targetItem) {
