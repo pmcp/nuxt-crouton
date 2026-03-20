@@ -327,6 +327,17 @@ async function openDispatch(id: string) {
   await refreshItems()
 }
 
+/** Render basic markdown to HTML (bold, code, inline code, links) */
+function renderMd(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="text-xs bg-white/10 px-1 py-0.5 rounded">$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="underline" target="_blank">$1</a>')
+}
+
 // ─── Orange response (re-dispatch with human answer) ───
 const redispatching = ref(false)
 const orangeAnswers = ref<Record<number, string>>({})
@@ -1002,7 +1013,8 @@ if (import.meta.client) {
             <div v-if="parsedQuestions.length > 0" class="space-y-3 mb-4">
               <div v-for="(question, idx) in parsedQuestions" :key="idx">
                 <p class="text-sm text-amber-900 dark:text-amber-200 mb-1.5 leading-relaxed">
-                  <span class="font-medium">{{ idx + 1 }}.</span> {{ question }}
+                  <span class="font-medium">{{ idx + 1 }}.</span>
+                  <span v-html="renderMd(question)" />
                 </p>
                 <UInput
                   :model-value="orangeAnswers[idx] || ''"

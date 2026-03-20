@@ -36,21 +36,32 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, any> = {}
 
-  // Set status
-  if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
+  // Read current item state — the agent may have already set signal/status via update_workitem
+  const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+
+  // Set status — but respect the agent's signal
+  // If the agent set signal=orange (waiting for human) or signal=red (blocked),
+  // don't let the session callback override that with 'done'
+  if (status === 'done' && currentState?.signal === 'orange') {
+    // Agent signaled orange → keep status as waiting (agent already set it)
+    // Don't override with 'done' from session completion
+  }
+  else if (status === 'done' && currentState?.signal === 'red') {
+    // Agent signaled red → keep status as blocked
+  }
+  else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
     updates.status = status
   }
 
-  // Set output
-  if (output) {
+  // Set output — but don't overwrite agent-set output with empty callback output
+  if (output && !(currentState?.signal === 'orange' && currentState?.output)) {
     updates.output = output
   }
 
   // Merge new artifacts with existing ones (don't replace)
   if (artifacts) {
     const newArtifacts = Array.isArray(artifacts) ? artifacts : [artifacts]
-    const [existing] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-    const existingArtifacts = Array.isArray(existing?.artifacts) ? existing.artifacts : []
+    const existingArtifacts = Array.isArray(currentState?.artifacts) ? currentState.artifacts : []
     updates.artifacts = [...existingArtifacts, ...newArtifacts]
   }
 
@@ -60,7 +71,9 @@ export default defineEventHandler(async (event) => {
     updates.status = 'error'
   }
 
-  await updateThinkgraphWorkItem(workItemId, teamId, 'system', updates, { role: 'admin' })
+  if (Object.keys(updates).length > 0) {
+    await updateThinkgraphWorkItem(workItemId, teamId, 'system', updates, { role: 'admin' })
+  }
 
   // Pipeline stage progression
   const STAGE_ORDER = ['analyst', 'builder', 'launcher', 'reviewer', 'merger']

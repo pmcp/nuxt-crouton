@@ -536,6 +536,9 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
       case 'merger':
         body = this.mergerInstructions(payload)
         break
+      case 'optimizer':
+        body = this.optimizerInstructions(payload)
+        break
       default:
         body = this.builderInstructions(payload)
         break
@@ -560,22 +563,25 @@ Your job is to evaluate this work item BEFORE any real work begins. You are a ga
 
 **CRITICAL: You are an evaluator, NOT an executor.**
 - Do NOT create or modify any files
-- Do NOT run shell commands (no git, no code generation, no builds)
 - Do NOT create worktrees or branches
-- Your ONLY action is calling \`update_workitem\` to set your signal
+- Do NOT run builds, generators, or code modifications
+- You MAY run read-only shell commands: \`grep\`, \`find\`, \`cat\`, \`git log\`, \`git show\`, \`ls\`
+- Your ONLY write action is calling \`update_workitem\` to set your signal
 - Read the codebase to understand context, but change NOTHING
 
 ### Step 1: Read & Understand
 - Read the work item title, brief, and full ancestor context chain
+- **Search the codebase before asking questions.** If the brief mentions something you can't find (a skill, a tool, a component), grep for it broadly before concluding it doesn't exist. Check \`session-manager.ts\`, \`CLAUDE.md\` files, and package directories.
 - Understand what is being asked and why
 
 ### Step 2: Evaluate
 Check these criteria:
+- **Necessity**: Is this actually needed? Is there an existing solution, a simpler alternative, or a reason this work shouldn't be done? Be defensive — challenge the premise before greenlighting.
 - **Clarity**: Is the brief specific enough to act on? Would a builder know exactly what to do?
 - **Scope**: Is this reasonably scoped? Not too big, not too small?
-- **Duplication**: Does this duplicate work already done or in progress (check ancestor context)?
+- **Duplication**: Does this duplicate work already done or in progress? Search the codebase — don't just check ancestor context.
 - **Dependencies**: Are there unmet prerequisites that should be done first?
-- **Package mapping**: Which crouton packages/skills does this work belong to?
+- **Package mapping**: Which crouton packages/files does this work target? Be specific (file paths, not vague package names).
 
 ### Step 3: Signal
 
@@ -742,10 +748,55 @@ Use \`update_workitem\` to set your signal:
 - Set \`output\` to what went wrong`
   }
 
+  /** Optimizer — reviews accumulated meta learnings and proposes instruction improvements */
+  private optimizerInstructions(payload: DispatchPayload): string {
+    return `## Instructions — Pipeline Optimizer (Retro)
+
+Your job is to review the meta learnings accumulated across all pipeline stages for this work item and propose concrete improvements to the stage instructions.
+
+### Step 1: Gather All Learnings
+- Read the work item's output, retrospective, and all child work items
+- Focus on learnings with \`scope: "prompt"\` or \`scope: "process"\` — these are about the pipeline itself
+- Look at the stage output history in artifacts for context on what each stage did
+
+### Step 2: Analyze Patterns
+- Group learnings by stage (analyst, builder, reviewer, merger)
+- Identify recurring themes — what keeps going wrong?
+- Distinguish between one-off issues and systemic problems
+
+### Step 3: Propose Changes
+For each improvement, provide:
+- **Which file**: always \`apps/thinkgraph-worker/src/session-manager.ts\`
+- **Which method**: e.g., \`analystInstructions()\`, \`builderInstructions()\`, \`reviewerInstructions()\`
+- **What to change**: the specific instruction text to add, modify, or remove
+- **Why**: what problem this fixes, with evidence from the learnings
+
+### Step 4: Signal
+Use \`update_workitem\` to set your signal:
+
+**GREEN** (improvements identified and documented):
+- Set \`signal\` to \`"green"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to your proposed changes — formatted as clear diffs/instructions that a human can review and apply
+
+**ORANGE** (not enough data yet):
+- Set \`signal\` to \`"orange"\`
+- Set \`status\` to \`"waiting"\`
+- Set \`assignee\` to \`"human"\`
+- Set \`output\` to what you need — more pipeline runs, specific feedback, etc.
+
+**RED** (no actionable improvements found):
+- Set \`signal\` to \`"red"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to why — either the pipeline is working well or the learnings are too vague to act on
+
+Be specific and surgical. Small, targeted changes to instructions beat broad rewrites. Each improvement should be independently applicable.`
+  }
+
   /** Closing instructions for pipeline stages — includes signal reminder */
   private pipelineClosingInstructions(stage: string): string {
     if (stage === 'analyst' || stage === 'reviewer' || stage === 'merger') {
-      // Analyst and reviewer MUST set signal — that's their whole job
+      // Analyst, reviewer, merger MUST set signal — that's their whole job
       return `
 
 ## Before You Finish (MANDATORY)
@@ -756,11 +807,13 @@ You MUST use \`update_workitem\` to set:
 3. **status** — \`"done"\` for green, \`"waiting"\` for orange, \`"blocked"\` for red
 4. If orange: also set \`assignee\` to \`"human"\`
 5. Do NOT set \`stage\` — the system advances stages automatically based on your signal
+6. **learnings** — include any meta learnings about the ${stage} stage process itself (see below)
+${this.metaBlock(stage)}
 `
     }
 
     // Builder stage uses the existing closing instructions
-    return this.closingInstructions(stage === 'builder' ? 'generate' : stage)
+    return this.closingInstructions(stage === 'builder' ? 'generate' : stage, stage)
   }
 
   /**
@@ -772,7 +825,7 @@ You MUST use \`update_workitem\` to set:
    * - learningsBlock:     discover, architect, compose, generate
    * - questionsBlock:     discover, architect
    */
-  private closingInstructions(nodeType: string): string {
+  private closingInstructions(nodeType: string, stage?: string): string {
     const blocks = [this.outputBlock(), this.retrospectiveBlock()]
 
     if (['discover', 'architect', 'compose', 'generate'].includes(nodeType)) {
@@ -781,6 +834,8 @@ You MUST use \`update_workitem\` to set:
     if (['discover', 'architect'].includes(nodeType)) {
       blocks.push(this.questionsBlock())
     }
+    // Meta reflection on every stage
+    blocks.push(this.metaBlock(stage || nodeType))
 
     return blocks.join('\n')
   }
@@ -838,6 +893,25 @@ Each question should be:
 - **Specific** — not vague ("what about performance?") but pointed ("Should we cache at edge or origin?")
 - **Blocking** — something that genuinely blocks the next phase if unanswered
 - **Actionable** — the human can answer it in a sentence or two
+`
+  }
+
+  /** Meta reflection — process improvement learnings about the stage itself */
+  private metaBlock(stage: string): string {
+    const stageLabel = stage === 'builder' ? 'builder' : stage
+    return `
+5. **meta learnings** — reflect on the **process itself**, not the work output. What about your instructions, tools, or context made this ${stageLabel} stage harder than it needed to be? What would have helped you do a better job?
+
+Include these as additional entries in your \`learnings\` array with \`scope: "prompt"\` or \`scope: "process"\`:
+
+\`\`\`json
+[
+  { "title": "Analyst should grep before flagging missing items", "detail": "I signaled orange because I couldn't find 'discover skill' in .claude/skills/, but it actually exists in session-manager.ts. My instructions should tell me to search broadly before concluding something doesn't exist.", "scope": "prompt" },
+  { "title": "Builder needs CLAUDE.md context in prompt", "detail": "I didn't know the project uses Nuxt UI 4 (not v3) and made wrong component choices. Including the project CLAUDE.md in my context would prevent this.", "scope": "process" }
+]
+\`\`\`
+
+Be honest and specific. These meta learnings feed into an optimizer that improves stage instructions over time. Bad instructions → bad output. Help us fix the instructions.
 `
   }
 

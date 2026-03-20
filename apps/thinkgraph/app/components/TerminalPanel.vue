@@ -52,6 +52,15 @@ function connect() {
         status.value = 'done'
         lines.value.push('[system] Session completed')
         nextTick(() => scrollToBottom())
+        // Auto-reconnect after pipeline stage completion — the webhook may
+        // auto-advance to the next stage and start a new session
+        reconnectTimer = setTimeout(() => {
+          if (props.open) {
+            lines.value.push('[system] Checking for next pipeline stage...')
+            status.value = 'thinking'
+            connect()
+          }
+        }, 4000)
       }
       else if (data.type === 'error') {
         status.value = 'error'
