@@ -60,6 +60,8 @@ interface ActiveSession {
   teamId: string
   outputFlushTimer?: ReturnType<typeof setInterval>
   lastFlushedLength: number
+  /** Last signal set by the agent via update_workitem tool */
+  lastSignal?: string
 }
 
 export class AgentSessionManager {
@@ -136,8 +138,13 @@ export class AgentSessionManager {
     try {
       // Create tools — PM work items get PM tools, legacy gets thinking graph tools
       const isPM = payload.collectionPath === 'thinkgraph-workitems'
+      const activeSession = this.activeSessions.get(payload.nodeId)
       const tools = isPM
-        ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId)
+        ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
+          onSignal: (signal) => {
+            if (activeSession) activeSession.lastSignal = signal
+          },
+        })
         : createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
       // Build the prompt
@@ -1385,22 +1392,10 @@ Use the \`create_node\` tool. Each node has three parts:
         if (output) body.output = output
       }
 
-      // For PM work items: read the current signal from the API so the webhook
-      // doesn't need to read DB (avoids race with update_workitem PATCH)
-      if (isPM && status === 'done') {
-        try {
-          const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${session.teamId}/thinkgraph-workitems`
-          const items = await ofetch(baseUrl, {
-            headers: { Cookie: this.config.serviceToken },
-            query: { ids: session.nodeId },
-          })
-          const item = Array.isArray(items) ? items[0] : null
-          if (item?.signal) {
-            body.signal = item.signal
-          }
-        } catch {
-          // If we can't read it, webhook will fall back to DB read
-        }
+      // Forward the agent's signal directly — captured via onSignal callback
+      // when the agent calls update_workitem. No extra HTTP read needed.
+      if (isPM && session.lastSignal) {
+        body.signal = session.lastSignal
       }
 
       await ofetch(session.callbackUrl, {

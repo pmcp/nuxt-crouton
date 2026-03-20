@@ -24,6 +24,7 @@ export function createPMTools(
   config: WorkerConfig,
   workItemId: string,
   teamId: string,
+  options?: { onSignal?: (signal: string) => void },
 ): AnyToolDefinition[] {
   const baseUrl = `${config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-workitems`
 
@@ -63,7 +64,10 @@ export function createPMTools(
         if (params.status !== undefined) updates.status = params.status
         if (params.assignee !== undefined) updates.assignee = params.assignee
         if (params.stage !== undefined) updates.stage = params.stage
-        if (params.signal !== undefined) updates.signal = params.signal
+        if (params.signal !== undefined) {
+          updates.signal = params.signal
+          options?.onSignal?.(params.signal)
+        }
         if (params.deployUrl !== undefined) updates.deployUrl = params.deployUrl
 
         if (Object.keys(updates).length === 0) {
