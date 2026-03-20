@@ -152,10 +152,26 @@ Dispatch "Add nodeId filter to chatconversations GET endpoint"
 2. **Launcher stage** — inserted between builder and reviewer in STAGE_ORDER. CI webhook sets signal on work items at launcher stage: pass → green (auto-advance to reviewer), fail → reverts to builder with error details (auto-dispatches Pi to fix). LED strip updated to 5 dots (A B L R M).
 3. **Stage output accordion** — webhook stores each stage's output as `{ type: 'stage-output', stage, signal, output, timestamp }` artifact before advancing. Detail panel renders pipeline history as UAccordion with signal icons.
 
+### Built in session 3 (2026-03-20)
+
+1. **Per-question Q&A UI** — orange panel parses numbered questions (1., Q1:, ### Q1:, **1.**) into individual cards with input fields. Markdown rendered. Answers formatted as Q&A pairs.
+2. **Analyst coach mode** — "Help me unblock" button on red items re-dispatches analyst in coach mode to help rewrite the brief through Q&A.
+3. **Meta learnings** — every stage reflects on its own process. Learnings must be actionable and independent of current work item.
+4. **Optimizer stage** — reviews accumulated meta learnings and proposes concrete changes to stage instructions.
+5. **Smarter analyst** — can grep/search codebase (read-only), challenges necessity, signals red for vague briefs.
+6. **Signal forwarding** — Pi worker captures signal via onSignal callback and forwards in callback body. No race condition.
+7. **Detail panel redesign** — stage-aware output with signal colors, pipeline history always visible, metadata collapsed.
+8. **Delete confirmation** — modal confirmation before deleting work items.
+9. **Reset Pipeline button** — clears stage/signal/output back to analyst.
+10. **Dismiss button** — reject orange items with one click.
+11. **Stricter learnings** — no [scope] prefix in titles, learnings must be independent actionable work.
+
 ### What's NOT built yet
 
 - **Analyst screenshots** — analyst can take screenshot to verify UI state before evaluating
 - **Launcher preview deploy** — optional Cloudflare Pages preview with test script + URL (orange signal for human testing)
+- **Pipeline stages as accordion** — detail panel shows all 5 stages (A B L R M) as permanent accordion items with terminal per stage
+- **Optimizer auto-trigger** — run optimizer automatically after merger completes
 - Node-level pipeline preferences (pipelineConfig)
 - Group briefs
 - Designer/prototyper stage
