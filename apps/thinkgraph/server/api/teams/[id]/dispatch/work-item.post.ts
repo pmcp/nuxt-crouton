@@ -79,13 +79,22 @@ export default defineEventHandler(async (event) => {
   const existingArtifacts = Array.isArray(targetItem.artifacts) ? targetItem.artifacts : []
   const cleanedArtifacts = existingArtifacts.filter((a: any) => a?.type !== 'handoff')
 
+  // Action log entry for dispatch
+  const dispatchLog = {
+    type: 'action-log' as const,
+    action: 'dispatch',
+    detail: `Dispatched to ${provider} at stage ${stage}`,
+    timestamp: new Date().toISOString(),
+    actor: 'human' as const,
+  }
+
   await updateThinkgraphWorkItem(
     workItemId,
     team.id,
     user.id,
     {
       status: 'active',
-      artifacts: [...cleanedArtifacts, handoffMeta],
+      artifacts: [...cleanedArtifacts, handoffMeta, dispatchLog],
     },
     { role: membership.role },
   )

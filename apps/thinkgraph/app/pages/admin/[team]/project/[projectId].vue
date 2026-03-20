@@ -191,6 +191,21 @@ async function handleCreate() {
   }
 }
 
+// ─── Action log helper ───
+function createActionLog(action: string, detail: string, actor: 'pi' | 'human' | 'system' = 'human') {
+  return { type: 'action-log' as const, action, detail, timestamp: new Date().toISOString(), actor }
+}
+
+async function appendActionLog(id: string, action: string, detail: string, actor: 'pi' | 'human' | 'system' = 'human') {
+  const item = items.value.find(n => n.id === id)
+  if (!item) return
+  const existing = Array.isArray(item.artifacts) ? item.artifacts : []
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+    method: 'PATCH',
+    body: { artifacts: [...existing, createActionLog(action, detail, actor)] },
+  })
+}
+
 // ─── Update work item ───
 async function updateItem(id: string, data: Partial<ThinkgraphWorkItem>) {
   if (!teamId.value) return
@@ -430,6 +445,7 @@ async function respondAndRedispatch(id: string) {
   try {
     const formattedAnswers = formatAnswers()
     const updatedBrief = `${item.brief || item.title}\n\n---\n**Human answers:**\n${formattedAnswers}`
+    await appendActionLog(id, 'human-answer', `Answered ${Object.keys(orangeAnswers.value).length} question(s) and re-dispatched`)
     await updateItem(id, {
       brief: updatedBrief,
       status: 'queued',
@@ -724,6 +740,31 @@ const stageAccordionItems = computed(() => {
       value: `${so.stage}-${so.timestamp}`,
     }
   })
+})
+
+// ─── Action log (from artifacts) ───
+const ACTION_ICONS: Record<string, string> = {
+  'dispatch': 'i-lucide-send',
+  'stage-advance': 'i-lucide-arrow-right',
+  'signal-change': 'i-lucide-circle-dot',
+  'human-answer': 'i-lucide-message-circle',
+  'reset': 'i-lucide-rotate-ccw',
+  'pipeline-reset': 'i-lucide-refresh-ccw',
+  'dismiss': 'i-lucide-x-circle',
+}
+
+const ACTOR_LABEL: Record<string, string> = {
+  pi: 'Pi',
+  human: 'Human',
+  system: 'System',
+}
+
+const actionLogs = computed(() => {
+  if (!selectedItem.value?.artifacts) return []
+  const artifacts = Array.isArray(selectedItem.value.artifacts) ? selectedItem.value.artifacts : []
+  return artifacts
+    .filter((a: any) => a.type === 'action-log')
+    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 })
 
 // ─── Keyboard shortcuts ───
@@ -1085,7 +1126,7 @@ if (import.meta.client) {
                 size="sm"
                 variant="soft"
                 color="red"
-                @click="updateItem(selectedItem.id, { status: 'done' })"
+                @click="async () => { await appendActionLog(selectedItem!.id, 'dismiss', 'Rejected red signal'); updateItem(selectedItem!.id, { status: 'done' }) }"
               />
             </div>
           </div>
@@ -1134,7 +1175,7 @@ if (import.meta.client) {
                 variant="soft"
                 color="red"
                 size="sm"
-                @click="updateItem(selectedItem.id, { status: 'done', signal: 'red' })"
+                @click="async () => { await appendActionLog(selectedItem!.id, 'dismiss', 'Dismissed orange signal'); updateItem(selectedItem!.id, { status: 'done', signal: 'red' }) }"
               />
             </div>
           </div>
@@ -1146,6 +1187,29 @@ if (import.meta.client) {
               <UAccordion :items="stageAccordionItems" type="multiple" />
             </div>
             <p v-else class="text-xs text-muted/60 italic">No previous stages</p>
+          </div>
+
+          <!-- Action Log Timeline -->
+          <div v-if="actionLogs.length > 0" class="mb-4">
+            <p class="text-xs font-medium text-muted mb-2">Action Log</p>
+            <div class="space-y-0.5">
+              <div
+                v-for="(log, idx) in actionLogs"
+                :key="idx"
+                class="flex items-center gap-2 py-1 text-xs text-muted"
+              >
+                <UIcon
+                  :name="ACTION_ICONS[log.action] || 'i-lucide-activity'"
+                  class="size-3 shrink-0"
+                />
+                <span class="text-[10px] tabular-nums opacity-60 shrink-0">
+                  {{ new Date(log.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }}
+                  {{ new Date(log.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) }}
+                </span>
+                <span class="truncate">{{ log.detail }}</span>
+                <span class="text-[10px] opacity-40 shrink-0">{{ ACTOR_LABEL[log.actor] || log.actor }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Retrospective -->
@@ -1205,7 +1269,7 @@ if (import.meta.client) {
               label="Reset to Queued"
               variant="soft"
               color="warning"
-              @click="updateItem(selectedItem.id, { status: 'queued' })"
+              @click="async () => { await appendActionLog(selectedItem!.id, 'reset', 'Reset from active to queued'); updateItem(selectedItem!.id, { status: 'queued' }) }"
             />
             <UButton
               v-if="selectedItem.stage"
@@ -1213,7 +1277,7 @@ if (import.meta.client) {
               label="Reset Pipeline"
               variant="soft"
               color="neutral"
-              @click="updateItem(selectedItem.id, { status: 'queued', stage: 'analyst', signal: null, assignee: 'pi', output: null, retrospective: null })"
+              @click="async () => { await appendActionLog(selectedItem!.id, 'pipeline-reset', `Pipeline reset from ${selectedItem!.stage} to analyst`); updateItem(selectedItem!.id, { status: 'queued', stage: 'analyst', signal: null, assignee: 'pi', output: null, retrospective: null }) }"
             />
             <UButton
               v-if="selectedItem.status !== 'done'"
@@ -1221,7 +1285,7 @@ if (import.meta.client) {
               label="Mark Done"
               variant="soft"
               color="green"
-              @click="updateItem(selectedItem.id, { status: 'done' })"
+              @click="async () => { await appendActionLog(selectedItem!.id, 'dismiss', 'Manually marked as done'); updateItem(selectedItem!.id, { status: 'done' }) }"
             />
             <UButton
               icon="i-lucide-trash-2"
