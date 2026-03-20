@@ -399,9 +399,34 @@ function parseQuestions(output: string | undefined): string[] {
   return questions
 }
 
+/** Parse lettered options from a question string, e.g. "(a) Option text" */
+function parseOptions(question: string): { letter: string; text: string }[] {
+  const options: { letter: string; text: string }[] = []
+  // Match lines like: (a) text, (A) text, • (a) text, with optional leading whitespace/bullets
+  const regex = /^[\s•*-]*\(([a-zA-Z])\)\s+(.+)$/gm
+  let m: RegExpExecArray | null
+  while ((m = regex.exec(question)) !== null) {
+    options.push({ letter: m[1].toLowerCase(), text: m[2].trim() })
+  }
+  return options
+}
+
+/** Strip option lines from a question to avoid duplication when rendering */
+function stripOptions(question: string): string {
+  return question
+    .replace(/^[\s•*-]*\([a-zA-Z]\)\s+.+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 const parsedQuestions = computed(() => {
   if (!selectedItem.value?.output) return []
   return parseQuestions(selectedItem.value.output)
+})
+
+/** Parsed options per question index */
+const parsedOptions = computed(() => {
+  return parsedQuestions.value.map(q => parseOptions(q))
 })
 
 /** Check if any answer has been filled in */
@@ -1112,10 +1137,26 @@ if (import.meta.client) {
             <!-- Parsed questions with individual inputs -->
             <div v-if="parsedQuestions.length > 0" class="space-y-4 mb-4">
               <div v-for="(question, idx) in parsedQuestions" :key="idx" class="rounded-lg bg-amber-100/50 dark:bg-amber-900/20 p-3">
-                <div class="text-sm text-amber-900 dark:text-amber-200 mb-2 leading-relaxed" v-html="renderMd(`**${idx + 1}.** ${question}`)" />
+                <div class="text-sm text-amber-900 dark:text-amber-200 mb-2 leading-relaxed" v-html="renderMd(`**${idx + 1}.** ${parsedOptions[idx]?.length ? stripOptions(question) : question}`)" />
+
+                <!-- Option buttons when lettered options are detected -->
+                <div v-if="parsedOptions[idx]?.length" class="flex flex-wrap gap-2 mb-2">
+                  <UButton
+                    v-for="opt in parsedOptions[idx]"
+                    :key="opt.letter"
+                    size="sm"
+                    :variant="orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? 'solid' : 'soft'"
+                    :color="orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? 'primary' : 'warning'"
+                    @click="orangeAnswers[idx] = orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? '' : `(${opt.letter}) ${opt.text}`"
+                  >
+                    <span class="font-semibold mr-1">({{ opt.letter }})</span> {{ opt.text }}
+                  </UButton>
+                </div>
+
+                <!-- Text input: fallback when no options, or "Other..." when options exist -->
                 <UInput
-                  :model-value="orangeAnswers[idx] || ''"
-                  :placeholder="`Answer...`"
+                  :model-value="parsedOptions[idx]?.length && orangeAnswers[idx]?.match(/^\([a-zA-Z]\)\s/) ? '' : (orangeAnswers[idx] || '')"
+                  :placeholder="parsedOptions[idx]?.length ? 'Other (custom answer)...' : 'Answer...'"
                   class="w-full"
                   @update:model-value="(v: string) => orangeAnswers[idx] = v"
                 />
