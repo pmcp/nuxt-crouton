@@ -7,7 +7,6 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   canvasId: z.string().min(1, 'canvasId is required'),
-  parentId: z.string().optional(),
   nodeType: z.string().min(1, 'nodeType is required'),
   status: z.string().min(1, 'status is required'),
   title: z.string().min(1, 'title is required'),

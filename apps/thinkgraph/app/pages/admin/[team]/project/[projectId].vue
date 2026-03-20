@@ -328,23 +328,71 @@ async function openDispatch(id: string) {
 }
 
 // ─── Orange response (re-dispatch with human answer) ───
-const orangeResponse = ref('')
 const redispatching = ref(false)
+const orangeAnswers = ref<Record<number, string>>({})
+const orangeFreeform = ref('')
+
+/** Parse numbered questions from analyst output */
+function parseQuestions(output: string | undefined): string[] {
+  if (!output) return []
+  const lines = output.split('\n')
+  const questions: string[] = []
+  let currentQ = ''
+
+  for (const line of lines) {
+    // Match patterns like "1. **...**", "1. ", "- **...**"
+    const match = line.match(/^\d+\.\s+/)
+    if (match) {
+      if (currentQ) questions.push(currentQ.trim())
+      currentQ = line.replace(match[0], '')
+    }
+    else if (currentQ && line.trim() && !line.startsWith('**Questions')) {
+      currentQ += ' ' + line.trim()
+    }
+  }
+  if (currentQ) questions.push(currentQ.trim())
+  return questions
+}
+
+const parsedQuestions = computed(() => {
+  if (!selectedItem.value?.output) return []
+  return parseQuestions(selectedItem.value.output)
+})
+
+/** Check if any answer has been filled in */
+const hasAnyAnswer = computed(() => {
+  return Object.values(orangeAnswers.value).some(a => a?.trim()) || orangeFreeform.value.trim()
+})
+
+/** Format Q&A pairs for the brief */
+function formatAnswers(): string {
+  const parts: string[] = []
+  for (const [idx, answer] of Object.entries(orangeAnswers.value)) {
+    if (!answer?.trim()) continue
+    const q = parsedQuestions.value[Number(idx)]
+    if (q) parts.push(`Q: ${q}\nA: ${answer.trim()}`)
+  }
+  if (orangeFreeform.value.trim()) {
+    parts.push(`Additional context: ${orangeFreeform.value.trim()}`)
+  }
+  return parts.join('\n\n')
+}
 
 async function respondAndRedispatch(id: string) {
   const item = items.value.find(n => n.id === id)
-  if (!item || !orangeResponse.value.trim() || !teamId.value) return
+  if (!item || !hasAnyAnswer.value || !teamId.value) return
   redispatching.value = true
   try {
-    // Append human response to brief
-    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human response to analyst questions:**\n${orangeResponse.value.trim()}`
+    const formattedAnswers = formatAnswers()
+    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human answers:**\n${formattedAnswers}`
     await updateItem(id, {
       brief: updatedBrief,
       status: 'queued',
       assignee: 'pi',
       signal: null,
     })
-    orangeResponse.value = ''
+    orangeAnswers.value = {}
+    orangeFreeform.value = ''
     // Dispatch at current stage (re-run same stage with new context)
     const refreshed = items.value.find(n => n.id === id)
     if (refreshed) {
@@ -357,6 +405,12 @@ async function respondAndRedispatch(id: string) {
     redispatching.value = false
   }
 }
+
+// Reset answers when selecting a different item
+watch(selectedItemId, () => {
+  orangeAnswers.value = {}
+  orangeFreeform.value = ''
+})
 
 // ─── Terminal panel ───
 const showTerminal = ref(false)
@@ -944,31 +998,46 @@ if (import.meta.client) {
               </span>
             </div>
 
-            <!-- Show the questions (output field) -->
-            <div v-if="selectedItem.output" class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap mb-4 leading-relaxed">
+            <!-- Parsed questions with individual inputs -->
+            <div v-if="parsedQuestions.length > 0" class="space-y-3 mb-4">
+              <div v-for="(question, idx) in parsedQuestions" :key="idx">
+                <p class="text-sm text-amber-900 dark:text-amber-200 mb-1.5 leading-relaxed">
+                  <span class="font-medium">{{ idx + 1 }}.</span> {{ question }}
+                </p>
+                <UInput
+                  :model-value="orangeAnswers[idx] || ''"
+                  :placeholder="`Answer question ${idx + 1}...`"
+                  class="w-full"
+                  @update:model-value="(v: string) => orangeAnswers[idx] = v"
+                />
+              </div>
+            </div>
+
+            <!-- Fallback: show raw output if no questions parsed -->
+            <div v-else-if="selectedItem.output" class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap mb-4 leading-relaxed">
               {{ selectedItem.output }}
             </div>
 
-            <!-- Response textarea -->
+            <!-- Additional context (always shown) -->
             <UTextarea
-              v-model="orangeResponse"
-              placeholder="Type your response..."
-              :rows="3"
+              v-model="orangeFreeform"
+              :placeholder="parsedQuestions.length > 0 ? 'Additional context (optional)...' : 'Type your response...'"
+              :rows="2"
               class="w-full mb-3"
             />
 
-            <!-- Re-dispatch button -->
+            <!-- Actions -->
             <div class="flex items-center gap-2">
               <UButton
                 icon="i-lucide-send"
                 label="Respond & Re-dispatch"
                 :loading="redispatching"
-                :disabled="!orangeResponse.trim()"
+                :disabled="!hasAnyAnswer"
                 color="warning"
                 @click="respondAndRedispatch(selectedItem.id)"
               />
               <span class="text-xs text-amber-600 dark:text-amber-400">
-                Re-runs {{ selectedItem.stage || 'current stage' }} with your answer
+                Re-runs {{ selectedItem.stage || 'current stage' }} with your answers
               </span>
             </div>
           </div>
@@ -1034,6 +1103,14 @@ if (import.meta.client) {
               variant="soft"
               color="warning"
               @click="updateItem(selectedItem.id, { status: 'queued' })"
+            />
+            <UButton
+              v-if="selectedItem.stage"
+              icon="i-lucide-refresh-ccw"
+              label="Reset Pipeline"
+              variant="soft"
+              color="neutral"
+              @click="updateItem(selectedItem.id, { status: 'queued', stage: 'analyst', signal: null, assignee: 'pi', output: null, retrospective: null })"
             />
             <UButton
               v-if="selectedItem.status !== 'done'"
