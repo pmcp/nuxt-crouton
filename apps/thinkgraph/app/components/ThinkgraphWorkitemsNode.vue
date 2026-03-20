@@ -311,16 +311,18 @@ function handleDispatch(event: Event) {
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
 
-    <!-- Node actions (hover on desktop, always visible on touch) -->
+    <!-- Dispatch button — always visible on card -->
+    <button
+      v-if="!isDone"
+      class="work-item__dispatch"
+      title="Dispatch work"
+      @click.stop="handleDispatch"
+    >
+      <UIcon name="i-lucide-send" class="size-3" />
+    </button>
+
+    <!-- Secondary actions (hover) -->
     <div class="work-item__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
-      <button
-        v-if="!isDone"
-        class="work-item__action"
-        title="Dispatch work"
-        @click.stop="handleDispatch"
-      >
-        <UIcon name="i-lucide-send" class="size-3.5" />
-      </button>
       <button
         class="work-item__action"
         title="Add child"
@@ -376,8 +378,7 @@ function handleDispatch(event: Event) {
 }
 
 .work-item--done {
-  @apply opacity-30 scale-95;
-  filter: grayscale(0.5);
+  @apply opacity-70 scale-95;
 }
 
 .work-item--active {
@@ -497,6 +498,15 @@ function handleDispatch(event: Event) {
 
 .work-handle:hover {
   background-color: var(--color-primary-500);
+}
+
+.work-item__dispatch {
+  @apply absolute -bottom-2 -right-2 z-10;
+  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply bg-white/90 dark:bg-neutral-700/90 backdrop-blur-sm;
+  @apply shadow-sm cursor-pointer transition-all duration-150;
+  @apply text-neutral-400 hover:scale-110;
+  &:hover { color: var(--color-primary-500); }
 }
 
 .work-item__actions {

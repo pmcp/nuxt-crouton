@@ -578,9 +578,9 @@ Use \`update_workitem\` to set your signal:
 
 **GREEN** (brief is ready — advance to builder):
 - Set \`signal\` to \`"green"\`
-- Set \`stage\` to \`"builder"\`
 - Set \`status\` to \`"done"\`
 - Set \`output\` to a short analyst summary: what the work is, which package it targets, any notes for the builder
+- Do NOT set \`stage\` — the system handles stage advancement automatically
 
 **ORANGE** (has questions — pause for human):
 - Set \`signal\` to \`"orange"\`
@@ -748,9 +748,9 @@ Use \`update_workitem\` to set your signal:
 You MUST use \`update_workitem\` to set:
 1. **signal** — \`"green"\`, \`"orange"\`, or \`"red"\`
 2. **output** — your analysis/review summary
-3. If green: also set \`stage\` to the next stage and \`status\` to \`"done"\`
-4. If orange: also set \`status\` to \`"waiting"\` and \`assignee\` to \`"human"\`
-5. If red: also set \`status\` to \`"blocked"\`
+3. **status** — \`"done"\` for green, \`"waiting"\` for orange, \`"blocked"\` for red
+4. If orange: also set \`assignee\` to \`"human"\`
+5. Do NOT set \`stage\` — the system advances stages automatically based on your signal
 `
     }
 
