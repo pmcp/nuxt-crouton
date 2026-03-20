@@ -478,6 +478,18 @@ watch(selectedItemId, () => {
   orangeFreeform.value = ''
 })
 
+// ─── Turn learning into actionable brief ───
+async function turnIntoBrief(id: string) {
+  const item = items.value.find(n => n.id === id)
+  if (!item) return
+  await updateItem(id, {
+    type: 'compose',
+    assignee: 'pi',
+    status: 'queued',
+    brief: `${item.title}\n\n${item.brief || ''}\n\nRewrite this learning into a concrete implementation. Identify the target file(s), describe the specific change, and implement it.`,
+  })
+}
+
 // ─── Terminal panel ───
 const showTerminal = ref(false)
 const terminalNodeId = ref<string | null>(null)
@@ -1206,6 +1218,14 @@ if (import.meta.client) {
               variant="soft"
               color="warning"
               @click="updateItem(selectedItem.id, { status: 'queued' })"
+            />
+            <UButton
+              v-if="selectedItem.type === 'review' && selectedItem.assignee === 'human'"
+              icon="i-lucide-pencil-line"
+              label="Turn into brief"
+              variant="soft"
+              color="primary"
+              @click="turnIntoBrief(selectedItem.id)"
             />
             <UButton
               v-if="selectedItem.stage"
