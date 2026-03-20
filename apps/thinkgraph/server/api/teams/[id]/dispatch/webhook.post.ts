@@ -83,6 +83,49 @@ export default defineEventHandler(async (event) => {
       }, { role: 'admin' })
       stageAdvanced = true
       console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
+
+      // Auto-dispatch the stage-advanced item to Pi worker
+      try {
+        const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
+        const [targetItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+        if (targetItem) {
+          const { buildNodeContext } = await import('~~/server/utils/context-builder')
+          const allItems = await getAllThinkgraphWorkItems(teamId)
+          const contextPayload = buildNodeContext(
+            allItems.map((item: any) => ({
+              id: item.id,
+              parentId: item.parentId,
+              title: item.title,
+              nodeType: item.type,
+              status: item.status,
+              brief: item.brief,
+              output: item.output,
+            })),
+            workItemId,
+          )
+
+          await $fetch(`${piWorkerUrl}/dispatch`, {
+            method: 'POST',
+            body: {
+              workItemId,
+              projectId: targetItem.projectId,
+              prompt: targetItem.brief || targetItem.title,
+              context: contextPayload.markdown,
+              skill: targetItem.skill || targetItem.type,
+              workItemType: targetItem.type,
+              stage: nextStage,
+              teamId,
+              teamSlug: teamId,
+              callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
+            },
+          })
+          // Mark as active since we just dispatched
+          await updateThinkgraphWorkItem(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
+          console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${nextStage}`)
+        }
+      } catch (dispatchErr: any) {
+        console.warn(`[webhook] Auto-dispatch failed (item stays queued):`, dispatchErr.message)
+      }
     } catch (err) {
       console.error('[webhook] Stage advance failed:', err)
     }
