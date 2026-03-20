@@ -1389,7 +1389,7 @@ Use the \`create_node\` tool. Each node has three parts:
       // doesn't need to read DB (avoids race with update_workitem PATCH)
       if (isPM && status === 'done') {
         try {
-          const baseUrl = `${this.config.serverUrl}/api/teams/${session.teamId}/thinkgraph-workitems`
+          const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${session.teamId}/thinkgraph-workitems`
           const items = await ofetch(baseUrl, {
             headers: { Cookie: this.config.serviceToken },
             query: { ids: session.nodeId },
