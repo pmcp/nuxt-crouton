@@ -36,6 +36,11 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, any> = {}
 
+  // Brief delay to let any in-flight update_workitem PATCH complete before we read.
+  // The Pi worker calls update_workitem (sets signal/status) then immediately sends
+  // this callback — the PATCH may still be processing when we arrive.
+  await new Promise(resolve => setTimeout(resolve, 500))
+
   // Read current item state — the agent may have already set signal/status via update_workitem
   const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
 
