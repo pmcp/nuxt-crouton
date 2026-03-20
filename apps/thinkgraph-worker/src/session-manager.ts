@@ -601,7 +601,12 @@ Use \`update_workitem\` to set your signal:
 - Set \`signal\` to \`"orange"\`
 - Set \`status\` to \`"waiting"\`
 - Set \`assignee\` to \`"human"\`
-- Set \`output\` to your questions — be specific about what you need answered before proceeding
+- Set \`output\` to your questions — each question MUST be answerable:
+  - Always provide 2-4 concrete options the human can pick from (a, b, c, d)
+  - Never write statements disguised as questions — if you found a problem, propose solutions
+  - The human should be able to answer each question with a single letter or short phrase
+  - Bad: "useFlowContainerDetection only detects card-over-group overlap" (statement, not a question)
+  - Good: "Existing composable doesn't support card-on-card. Options: (a) extend useFlowContainerDetection, (b) new composable, (c) handle directly in project page?"
 
 **RED** (should not be done — reject it):
 - Set \`signal\` to \`"red"\`
