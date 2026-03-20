@@ -111,19 +111,21 @@ export default defineEventHandler(async (event) => {
     // If we just completed the launcher stage, trigger the main webhook to advance pipeline
     if (updates.signal === 'green') {
       try {
-        const siteUrl = config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`
+        const siteUrl = config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`
+        console.log(`[ci-webhook] Triggering pipeline advance at ${siteUrl}/api/teams/${teamId}/dispatch/webhook`)
         await $fetch(`${siteUrl}/api/teams/${teamId}/dispatch/webhook`, {
           method: 'POST',
           headers: expectedSecret ? { 'x-webhook-secret': expectedSecret } : {},
           body: {
             workItemId: workItem.id,
             status: 'done',
+            signal: 'green',
           },
         })
         console.log(`[ci-webhook] Triggered pipeline advance for ${workItem.id} → reviewer`)
       }
       catch (err: any) {
-        console.error('[ci-webhook] Failed to trigger pipeline advance:', err.message)
+        console.error('[ci-webhook] Failed to trigger pipeline advance:', err.message, err.data || '')
       }
     }
 
