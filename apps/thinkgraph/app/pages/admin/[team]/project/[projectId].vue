@@ -354,15 +354,15 @@ function parseQuestions(output: string | undefined): string[] {
   let inQuestion = false
 
   for (const line of lines) {
-    // Match numbered items: "1. ", "2. ", etc.
-    const match = line.match(/^\d+\.\s+/)
+    // Match numbered items: "1. ", "2. ", "Q1:", "Q1. ", "**1.**", etc.
+    const match = line.match(/^(?:\d+\.\s+|Q\d+[:.]\s*|\*\*\d+\.\*\*\s*)/)
     if (match) {
       if (currentQ) questions.push(currentQ.trim())
       currentQ = line.replace(match[0], '')
       inQuestion = true
     }
-    // Stop accumulating on section breaks or new headings
-    else if (inQuestion && (line.startsWith('---') || line.startsWith('##'))) {
+    // Stop accumulating on section breaks
+    else if (inQuestion && line.trim() === '---') {
       if (currentQ) questions.push(currentQ.trim())
       currentQ = ''
       inQuestion = false
