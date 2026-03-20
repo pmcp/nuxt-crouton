@@ -980,34 +980,47 @@ if (import.meta.client) {
             <UTextarea
               :model-value="selectedItem.brief || ''"
               placeholder="What needs to happen?"
-              :rows="4"
+              :rows="3"
               class="w-full"
               @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { brief: (e.target as HTMLTextAreaElement).value })"
             />
           </UFormField>
 
-          <!-- Output -->
-          <UFormField label="Output" class="mb-4">
-            <UTextarea
-              :model-value="selectedItem.output || ''"
-              placeholder="Result will appear here..."
-              :rows="4"
-              class="w-full"
-              @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { output: (e.target as HTMLTextAreaElement).value })"
+          <!-- Current stage output — the main content area -->
+          <div v-if="selectedItem.output" class="mb-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span
+                v-if="selectedItem.signal"
+                class="size-2.5 rounded-full"
+                :class="{
+                  'bg-green-400': selectedItem.signal === 'green',
+                  'bg-amber-400 animate-pulse': selectedItem.signal === 'orange',
+                  'bg-red-400': selectedItem.signal === 'red',
+                }"
+              />
+              <p class="text-sm font-medium text-muted">
+                {{ STAGE_LABEL[selectedItem.stage || ''] || 'Output' }}
+                <span v-if="selectedItem.signal" class="text-xs opacity-60">— {{ selectedItem.signal }}</span>
+              </p>
+            </div>
+            <div
+              class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
+              :class="{
+                'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': selectedItem.signal === 'red',
+                'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200': selectedItem.signal === 'orange',
+                'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-200': selectedItem.signal === 'green',
+                'border-default bg-muted/30 text-default': !selectedItem.signal,
+              }"
+              v-html="renderMd(selectedItem.output)"
             />
-          </UFormField>
+          </div>
 
           <!-- Orange response panel — when analyst/reviewer has questions -->
           <div
             v-if="selectedItem.signal === 'orange' && (selectedItem.status === 'waiting' || selectedItem.status === 'blocked')"
-            class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-4 mb-4"
+            class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 p-4 mb-4"
           >
-            <div class="flex items-center gap-2 mb-3">
-              <span class="size-2.5 rounded-full bg-amber-400 animate-pulse" />
-              <span class="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                {{ selectedItem.stage === 'analyst' ? 'Analyst' : selectedItem.stage === 'reviewer' ? 'Reviewer' : 'Pipeline' }} needs your input
-              </span>
-            </div>
+            <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3">Respond to {{ STAGE_LABEL[selectedItem.stage || ''] || 'stage' }}</p>
 
             <!-- Parsed questions with individual inputs -->
             <div v-if="parsedQuestions.length > 0" class="space-y-3 mb-4">
@@ -1025,12 +1038,7 @@ if (import.meta.client) {
               </div>
             </div>
 
-            <!-- Fallback: show raw output if no questions parsed -->
-            <div v-else-if="selectedItem.output" class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap mb-4 leading-relaxed">
-              {{ selectedItem.output }}
-            </div>
-
-            <!-- Additional context (always shown) -->
+            <!-- Additional context -->
             <UTextarea
               v-model="orangeFreeform"
               :placeholder="parsedQuestions.length > 0 ? 'Additional context (optional)...' : 'Type your response...'"
@@ -1038,14 +1046,14 @@ if (import.meta.client) {
               class="w-full mb-3"
             />
 
-            <!-- Actions -->
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
               <UButton
                 icon="i-lucide-send"
                 label="Respond & Re-dispatch"
                 :loading="redispatching"
                 :disabled="!hasAnyAnswer"
                 color="warning"
+                size="sm"
                 @click="respondAndRedispatch(selectedItem.id)"
               />
               <UButton
@@ -1053,58 +1061,62 @@ if (import.meta.client) {
                 label="Dismiss"
                 variant="soft"
                 color="red"
+                size="sm"
                 @click="updateItem(selectedItem.id, { status: 'done', signal: 'red' })"
               />
-              <span class="text-xs text-amber-600 dark:text-amber-400">
-                Re-runs {{ selectedItem.stage || 'current stage' }} with your answers
-              </span>
             </div>
           </div>
 
-          <!-- Stage output history (accordion) -->
-          <div v-if="stageAccordionItems.length > 0" class="mb-4">
-            <p class="text-sm font-medium text-muted mb-2">Pipeline History</p>
-            <UAccordion :items="stageAccordionItems" type="multiple" />
+          <!-- Pipeline history (always visible when stage is set) -->
+          <div v-if="selectedItem.stage" class="mb-4">
+            <p class="text-xs font-medium text-muted mb-2">Pipeline History</p>
+            <div v-if="stageAccordionItems.length > 0">
+              <UAccordion :items="stageAccordionItems" type="multiple" />
+            </div>
+            <p v-else class="text-xs text-muted/60 italic">No previous stages</p>
           </div>
 
           <!-- Retrospective -->
-          <UFormField v-if="selectedItem.retrospective" label="Retrospective" class="mb-4">
-            <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
+          <div v-if="selectedItem.retrospective" class="mb-4">
+            <div class="rounded-lg bg-neutral-100 dark:bg-neutral-800/50 border border-default p-3">
               <div class="flex items-center gap-1.5 mb-2">
-                <UIcon name="i-lucide-lightbulb" class="size-4 text-amber-500" />
-                <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Agent Lessons</span>
+                <UIcon name="i-lucide-lightbulb" class="size-3.5 text-muted" />
+                <span class="text-xs font-medium text-muted">Retrospective</span>
               </div>
-              <p class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap">{{ selectedItem.retrospective }}</p>
+              <p class="text-xs text-muted whitespace-pre-wrap">{{ selectedItem.retrospective }}</p>
             </div>
-          </UFormField>
-
-          <!-- Metadata -->
-          <div class="space-y-3 mb-6">
-            <UFormField label="Skill">
-              <UInput
-                :model-value="selectedItem.skill || ''"
-                placeholder="e.g. architect"
-                class="w-full"
-                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { skill: (e.target as HTMLInputElement).value })"
-              />
-            </UFormField>
-            <UFormField label="Worktree">
-              <UInput
-                :model-value="selectedItem.worktree || ''"
-                placeholder="e.g. feat/blog-collection"
-                class="w-full"
-                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { worktree: (e.target as HTMLInputElement).value })"
-              />
-            </UFormField>
-            <UFormField label="Preview URL">
-              <UInput
-                :model-value="selectedItem.deployUrl || ''"
-                placeholder="https://..."
-                class="w-full"
-                @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { deployUrl: (e.target as HTMLInputElement).value })"
-              />
-            </UFormField>
           </div>
+
+          <!-- Metadata (collapsed) -->
+          <details class="mb-6">
+            <summary class="text-xs font-medium text-muted cursor-pointer hover:text-default transition-colors">Metadata</summary>
+            <div class="space-y-3 mt-3">
+              <UFormField label="Skill">
+                <UInput
+                  :model-value="selectedItem.skill || ''"
+                  placeholder="e.g. architect"
+                  class="w-full"
+                  @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { skill: (e.target as HTMLInputElement).value })"
+                />
+              </UFormField>
+              <UFormField label="Worktree">
+                <UInput
+                  :model-value="selectedItem.worktree || ''"
+                  placeholder="e.g. feat/blog-collection"
+                  class="w-full"
+                  @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { worktree: (e.target as HTMLInputElement).value })"
+                />
+              </UFormField>
+              <UFormField label="Preview URL">
+                <UInput
+                  :model-value="selectedItem.deployUrl || ''"
+                  placeholder="https://..."
+                  class="w-full"
+                  @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { deployUrl: (e.target as HTMLInputElement).value })"
+                />
+              </UFormField>
+            </div>
+          </details>
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
