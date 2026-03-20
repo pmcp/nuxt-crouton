@@ -138,12 +138,9 @@ export class AgentSessionManager {
     try {
       // Create tools — PM work items get PM tools, legacy gets thinking graph tools
       const isPM = payload.collectionPath === 'thinkgraph-workitems'
-      const activeSession = this.activeSessions.get(payload.nodeId)
       const tools = isPM
         ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
-          onSignal: (signal) => {
-            if (activeSession) activeSession.lastSignal = signal
-          },
+          onSignal: (signal) => { earlySession.lastSignal = signal },
         })
         : createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
