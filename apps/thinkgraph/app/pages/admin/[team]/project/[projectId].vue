@@ -423,8 +423,6 @@ async function respondAndRedispatch(id: string) {
     const refreshed = items.value.find(n => n.id === id)
     if (refreshed) {
       await dispatchWork(refreshed)
-      terminalNodeId.value = id
-      showTerminal.value = true
     }
     await refreshItems()
   } finally {
@@ -448,8 +446,6 @@ async function unblockItem(id: string) {
       await dispatchWork(refreshed, {
         prompt: `COACH MODE: The analyst previously rejected this brief (signal red). The human wants help improving it. Your job is now to help write a better brief through questions.\n\nPrevious rejection reason:\n${item.output || '(none)'}\n\nDo NOT evaluate. Instead:\n1. Ask 3-5 specific questions that would clarify the brief enough for a builder\n2. Signal ORANGE with your questions\n3. When the human answers, rewrite the brief incorporating their answers and signal GREEN with the improved brief in the output field AND update the brief field with the rewritten version`,
       })
-      terminalNodeId.value = id
-      showTerminal.value = true
     }
     await refreshItems()
   } finally {
