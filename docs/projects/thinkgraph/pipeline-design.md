@@ -1,6 +1,6 @@
 # ThinkGraph Pipeline Design
 
-> Status: **MVP implemented** (2026-03-20). Analyst → Builder → Reviewer → Merger stages with traffic light signals. Launcher stage is parked.
+> Status: **MVP proven** (2026-03-20). Full pipeline ran end-to-end: Analyst → Builder → Reviewer → Merger. Real PR merged autonomously in ~3 minutes.
 
 ## Core Idea
 
@@ -8,7 +8,7 @@ A work item is not a single task — it's a **pipeline** that flows through stag
 
 ```
 ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-│ Analyst  │──▶│ Builder  │──▶│ Reviewer  │──▶│ Launcher │──▶│  Merger  │
+│ Analyst  │──▶│ Builder  │──▶│ Launcher │──▶│ Reviewer  │──▶│  Merger  │
 │  🟢🟠🔴  │   │  🟢🟠🔴  │   │  🟢🟠🔴  │   │  🟢🟠🔴  │   │  🟢🟠🔴  │
 └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘
 ```
@@ -18,8 +18,8 @@ A work item is not a single task — it's a **pipeline** that flows through stag
 | Signal | Meaning | What happens |
 |--------|---------|--------------|
 | 🟢 Green | All good | Auto-advance to next stage |
-| 🟠 Orange | Questions / needs input | Pause pipeline, surface to human. May spawn child nodes. |
-| 🔴 Red | Fail / stop | Block the pipeline. Requires human intervention to unblock or kill. |
+| 🟠 Orange | Questions / needs input | Pause pipeline, surface to human |
+| 🔴 Red | Fail / stop | Block the pipeline |
 
 ## Stages
 
@@ -33,192 +33,132 @@ The gatekeeper. Before any work starts:
 - **Who does it?** Pi, human, or client.
 - **Create the brief** — or stop the work entirely.
 
-Analyst can return:
-- 🟢 Brief is clear, proceed to builder
-- 🟠 Questions for the human before proceeding
-- 🔴 This shouldn't be done (duplicate, out of scope, blocked by something else)
+Evaluate only — no file modifications, no shell commands, no worktrees.
 
 ### 2. Builder
 
 The executor. Uses the right skills based on what the analyst decided:
 
-- Runs `/discover`, `/architect`, `/generate`, `/compose` as needed
-- Can use subagents (test-fixer, code-smell-detector, etc.)
+- Runs discover, architect, generate, compose as needed (routed by `nodeType`)
 - Works in a worktree (isolated branch)
+- Creates PR when done
 
-Builder can return:
-- 🟢 Work complete, passing to reviewer
-- 🟠 Hit a blocker, needs human input (API key missing, schema ambiguity, etc.)
-- 🔴 Failed (build errors, can't proceed)
+### 3. Launcher
 
-### 3. Reviewer
+CI gate + optional human testing:
+
+- Waits for GitHub Actions CI results (typecheck, tests, lint) via webhook
+- CI green → auto-advance to reviewer
+- CI red → auto-dispatch back to builder with failure details to fix
+- **Optional**: deploys preview branch to Cloudflare Pages, sets orange signal with test script + preview URL for human testing
+- Human tests, marks green → advances to reviewer
+- Skippable for backend-only changes (no preview needed)
+
+### 4. Reviewer
 
 Quality gate:
 
 - Code review (patterns, security, correctness)
-- Screenshot / visual review (if configured on node)
-- Test results
+- Screenshot / visual review (if configured)
 - Can use code-smell-detector, proactive-reviewer subagents
-
-Reviewer can return:
-- 🟢 Looks good, proceed to launch
-- 🟠 Needs changes (sends back to builder with feedback)
-- 🔴 Reject (fundamental issues, needs re-architecting → back to analyst)
-
-### 4. Launcher
-
-CI and preview:
-
-- Triggers GitHub Actions (build, test, lint, typecheck)
-- Deploys preview branch to Cloudflare Pages
-- Waits for CI callback via deploy webhook
-- Reports test results, build status, preview URL
-
-Launcher can return:
-- 🟢 CI green, preview live, proceed to merge
-- 🟠 Tests failing, needs fixes (back to builder)
-- 🔴 Build broken, infra issues
 
 ### 5. Merger
 
 Final step:
 
-- Creates PR (or updates existing)
-- Waits for approval (if configured)
-- Merges to main
-- Triggers production deploy
+- Merges origin/main into branch (not rebase — no force push)
+- Resolves conflicts if any (up to 3 attempts, then orange for human)
+- Squash-merges PR via `gh pr merge --squash --delete-branch`
+- Pulls main on Pi worker so it has latest code for next dispatch
 - Closes the pipeline
 
 ## Node-Level Preferences
 
-When creating a work item, you can configure which stages are active and what checks to require:
+When creating a work item, you can configure which stages are active:
 
 ```
 ☑ Analyst review (default: on)
-☑ Prototype first (designer stage before builder)
-☑ Branch preview required before merge
-☑ Screenshot review before push
+☐ Launcher/CI gate (default: off for backend, on for UI)
+☐ Human testing with preview URL (default: off)
+☐ Require human approval at reviewer stage (default: off)
 ☐ Auto-merge on green CI (default: off)
-☑ Require human approval at reviewer stage
 ```
-
-These become flags on the work item that the pipeline respects.
 
 ## One Node, Many Steps
 
-The current model creates separate nodes per step (discover node, architect node, generate node). The new model keeps everything on **one node** that progresses through stages:
+One node progresses through stages (not separate nodes per step):
 
 ```
-Node: "Add products collection to Velo"
-  Stage: analyst ✅ → builder 🔄 → reviewer ⏳ → launcher ⏳ → merger ⏳
-  Signal: 🟢
+Node: "Add nodeId filter to chatconversations"
+  Stage: analyst ✅ → builder ✅ → reviewer ✅ → merger ✅
+  Signal: 🟢 (all green, PR merged)
 ```
 
-The node card shows the current stage and signal. History of all stages is preserved in the node's artifacts.
+The node card shows LED-style indicators for each stage. Physical device aesthetic — designed for future hardware-inspired UI.
 
-## Child Nodes and Groups
+## Stage Output History
 
-- **Orange signals spawn child nodes** — Questions, blockers, feedback items become child nodes connected to the parent. The human triages them.
-- **Groups as composite briefs** — Drag multiple related cards into a group. The group gets a name and becomes a single brief. Starting the group starts the pipeline for all cards as one unit.
-- **Context flows down** — Child nodes inherit parent context. Group context is available to all cards in the group.
+Each stage's output is stored in the artifacts array (not overwriting `output`):
 
-## The Assistant's Role
-
-The ProjectAssistant chat panel is the **human interface** to the pipeline:
-
-- Gatekeeper: stops you before creating work that shouldn't exist
-- Shows orange signals front-and-center (not buried as child nodes)
-- Has full context of the crouton setup (CLAUDE.md, schemas, packages)
-- Can dispatch, pause, resume, and kill pipelines
-- Surfaces CI results, preview URLs, PR links
-
-## Data Model Changes
-
-Current work item fields stay, with additions:
-
-```typescript
-interface WorkItem {
-  // Existing
-  id, projectId, parentId, title, type, status, assignee, brief, output, ...
-
-  // New
-  stage: 'analyst' | 'builder' | 'reviewer' | 'launcher' | 'merger'
-  signal: 'green' | 'orange' | 'red' | null
-  pipelineConfig: {
-    requireAnalyst?: boolean
-    requirePrototype?: boolean
-    requireScreenshot?: boolean
-    requireBranchPreview?: boolean
-    autoMerge?: boolean
-    requireHumanReview?: boolean
-  }
-  stageHistory: Array<{
-    stage: string
-    signal: string
-    timestamp: string
-    summary: string
-  }>
-}
+```json
+[
+  { "type": "stage-output", "stage": "analyst", "signal": "green", "output": "...", "timestamp": "..." },
+  { "type": "stage-output", "stage": "builder", "signal": "green", "output": "...", "timestamp": "..." }
+]
 ```
+
+Rendered in the detail panel as an accordion — one section per completed stage.
 
 ## Implementation Status (MVP — 2026-03-20)
 
-### What's built
+### What's built and proven
 
-1. **`stage` and `signal` fields** on work items (schema, types, composable, PATCH endpoint, DB migration)
-2. **Traffic light UI** — node cards show current stage label + colored signal dot (green/amber/red)
-3. **Analyst gate** — session-manager routes by `stage` (not just `nodeType`), runs `analystInstructions()` first
-4. **Green auto-advance** — webhook detects `signal: 'green'` + `nextStage`, re-queues same item at next stage
-5. **Orange pause** — analyst sets `status: 'waiting'`, `assignee: 'human'`, questions in `output`
-6. **Red block** — analyst sets `status: 'blocked'`, reason in `output`
-7. **Builder routing** — delegates to existing type-specific instructions (discover/architect/generate/etc.)
-8. **Reviewer stage** — code review and quality gate with signal output
-9. **Merger stage** — merges branch into main (merge origin/main into branch, resolve conflicts, squash-merge PR, pull main)
-10. **pm-tools** — `update_workitem` tool accepts `stage`, `signal`, `assignee` params
+1. **`stage` and `signal` fields** on work items (schema, DB, API, composable)
+2. **LED-style pipeline UI** — 4 dots (A B R M) on every card, physical device aesthetic
+3. **Analyst gate** — evaluate-only, no file modifications, sets signal
+4. **Builder routing** — delegates to existing type-specific instructions
+5. **Reviewer stage** — code review and quality gate
+6. **Merger stage** — merge into main, resolve conflicts, squash-merge PR, pull main
+7. **Green auto-advance** — webhook reads signal from DB, advances stage, auto-dispatches to Pi
+8. **Session cleanup before callback** — prevents race condition on re-dispatch
+9. **Always-visible dispatch button** — disabled when active/done (for physical UI later)
 
-### Flow
+### Proven flow (tested 2026-03-20)
 
 ```
-Dispatch work item (no stage set)
-  → work-item.post.ts defaults stage to 'analyst'
-  → Pi worker receives stage in payload
-  → session-manager.buildPMPrompt() routes by stage
-  → Analyst runs, sets signal via update_workitem tool
-  → Session completes → sendCallback reads work item state
-  → Webhook receives signal + nextStage
-  → If green: re-queue same item at next stage (stage='builder', status='queued')
-  → If orange: item stays at 'waiting' (no re-dispatch)
-  → If red: item stays at 'blocked'
+Dispatch "Add nodeId filter to chatconversations GET endpoint"
+  → Analyst (17s): green — clear brief, identified target files
+  → Builder (72s): green — created branch, implemented nodeId filter, pushed PR
+  → Reviewer (45s): green — code looks good, matches brief
+  → Merger (35s): green — squash-merged PR #19, pulled main
+  Total: ~3 minutes, fully autonomous
 ```
 
 ### Key files
 
-| File | What changed |
+| File | What it does |
 |------|-------------|
-| `collections/workitems/types.ts` | Added `stage` and `signal` fields |
-| `collections/workitems/server/database/schema.ts` | Added `stage` and `signal` columns |
-| `collections/workitems/app/composables/useThinkgraphWorkItems.ts` | Schema, defaults, fields, columns |
-| `collections/workitems/server/api/.../[workitemId].patch.ts` | Added to ALLOWED_FIELDS |
-| `ThinkgraphWorkitemsNode.vue` | Traffic light dot + stage label |
-| `session-manager.ts` | Pipeline routing, analyst/builder/reviewer instructions, sendCallback reads signal |
+| `collections/workitems/types.ts` | `stage` and `signal` fields |
+| `collections/workitems/server/database/schema.ts` | DB columns |
+| `ThinkgraphWorkitemsNode.vue` | LED strip UI, dispatch button |
+| `session-manager.ts` | Stage routing, analyst/builder/reviewer/merger instructions |
 | `pm-tools.ts` | update_workitem accepts stage/signal/assignee |
-| `webhook.post.ts` | Stage progression on green signal |
-| `work-item.post.ts` | Defaults stage to 'analyst', passes through to Pi |
-| `index.ts` (worker) | Passes stage in dispatch payload |
+| `webhook.post.ts` | Reads signal from DB, stage progression, auto-dispatch |
+| `work-item.post.ts` | Defaults stage to 'analyst', passes to Pi |
 
 ### What's NOT built yet
 
-- Launcher stage (CI integration) — parked
-- Node-level pipeline preferences (pipelineConfig) — parked
-- Stage history tracking (stageHistory array) — parked
-- Group briefs — parked
-- Designer/prototyper stage — parked
-- Configurable auto-advance speed — parked
+- **Launcher stage** (CI integration + optional human testing) — next priority
+- **Stage output accordion** — store per-stage output in artifacts, render as accordion in detail panel
+- **Analyst screenshots** — analyst can take screenshot to verify UI state before evaluating
+- Node-level pipeline preferences (pipelineConfig)
+- Stage history tracking
+- Group briefs
+- Designer/prototyper stage
 
 ## Open Questions
 
 - Should the pipeline be configurable per-project or per-node? (Probably per-node with project defaults)
 - How does the human "answer" orange questions? Edit the brief? Chat reply? Child node?
-- Should green auto-advance be configurable speed? (Immediate vs. "show me first")
-- How do we handle pipeline loops? (Reviewer → Builder → Reviewer could cycle forever)
-- Do we need a "designer/prototyper" stage between analyst and builder?
+- How do we handle pipeline loops? (Reviewer → Builder → Reviewer could cycle forever — need a max iterations cap)
+- Stage order: should launcher always run, or be opt-in per work item?

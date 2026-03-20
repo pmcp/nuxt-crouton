@@ -59,9 +59,27 @@ The canvas had a work item to "replace thinkgraphDecisions with thinkgraphWorkIt
 
 ---
 
+### Pipeline proven end-to-end (final test)
+Full pipeline ran autonomously: Analyst (17s) → Builder (72s) → Reviewer (45s) → Merger (35s). Real PR #19 merged. "Add nodeId filter to chatconversations GET endpoint" — 2 files changed, clean implementation.
+
+### Race condition: session cleanup before callback
+sendCallback was called before activeSessions.delete(), so auto-dispatch from webhook hit "Session already running". Fix: delete session before sending callback.
+
+### Webhook reads signal from DB, not forwarded from worker
+Worker's sendCallback tried to GET the work item via HTTP to read signal — but no single-item GET endpoint exists. Fix: webhook reads signal directly from DB (local SQLite, fast and reliable). Removed fragile HTTP forwarding from worker.
+
+### Stage order should be: Analyst → Builder → Launcher → Reviewer → Merger
+Launcher (CI) should run between builder and reviewer. No point reviewing code that doesn't pass CI. If CI fails, auto-dispatch back to builder to fix — no human needed.
+
+### Launcher stage doubles as human testing gate
+After CI passes, optionally deploy preview to Cloudflare Pages. Set orange signal with test script + preview URL. Human tests, marks green. Skippable for backend-only changes.
+
+---
+
 ## Ideas for next session
 
-- Tighten analyst prompt: evaluate-only, no file modifications
-- Add "re-dispatch" button for orange items (human answers question → re-dispatch same stage)
-- Stage history in artifacts array (track all signals over time)
-- Bulk dispatch with pipeline awareness (respect maxSessions, queue intelligently)
+- **Launcher stage**: wire CI webhook to pipeline, auto-fix on failure, optional preview deploy
+- **Stage output accordion**: store per-stage output in artifacts array, render as Nuxt UI accordion in detail panel
+- **Analyst screenshots**: Pi takes screenshot of relevant page to ground evaluation in reality
+- **Re-dispatch button**: for orange items, human answers question → re-dispatch same stage
+- **Stage order update**: change STAGE_ORDER to [analyst, builder, launcher, reviewer, merger]
