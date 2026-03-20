@@ -5,10 +5,15 @@ import * as tables from './schema'
 import type { ThinkgraphChatConversation, NewThinkgraphChatConversation } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllThinkgraphChatConversations(teamId: string) {
+export async function getAllThinkgraphChatConversations(teamId: string, nodeId?: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
+
+  const conditions = [eq(tables.thinkgraphChatConversations.teamId, teamId)]
+  if (nodeId) {
+    conditions.push(eq(tables.thinkgraphChatConversations.nodeId, nodeId))
+  }
 
   const chatConversations = await (db as any)
     .select({
@@ -22,7 +27,7 @@ export async function getAllThinkgraphChatConversations(teamId: string) {
     } as any)
     .from(tables.thinkgraphChatConversations)
     .leftJoin(ownerUser, eq(tables.thinkgraphChatConversations.owner, ownerUser.id))
-    .where(eq(tables.thinkgraphChatConversations.teamId, teamId))
+    .where(and(...conditions))
     .orderBy(desc(tables.thinkgraphChatConversations.order))
 
   // Post-query processing for JSON fields (repeater/json types)

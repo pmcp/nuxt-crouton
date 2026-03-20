@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await getAllThinkgraphChatConversations(team.id)
+  const nodeId = query.nodeId ? String(query.nodeId) : undefined
+  const result = await getAllThinkgraphChatConversations(team.id, nodeId)
   dbTimer.end()
   return result
 })
