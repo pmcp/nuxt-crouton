@@ -599,12 +599,18 @@ Use \`update_workitem\` to set your signal:
 - Set \`assignee\` to \`"human"\`
 - Set \`output\` to your questions — be specific about what you need answered before proceeding
 
-**RED** (should not be done):
+**RED** (should not be done — reject it):
 - Set \`signal\` to \`"red"\`
 - Set \`status\` to \`"blocked"\`
-- Set \`output\` to the reason — duplicates existing work, out of scope, contradicts architecture, etc.
+- Set \`output\` to the reason — duplicates existing work, out of scope, contradicts architecture, vague brief with no clear action, etc.
+- Use red liberally. If the brief is vague and you'd be guessing, signal red with a clear explanation. The human can rewrite the brief and re-dispatch.
 
-Be decisive. If the brief is 80% clear, go green with notes. Only go orange if you genuinely can't determine what to build.`
+**IMPORTANT — learnings vs questions:**
+- If you have doubts, concerns, or questions about the work → signal **ORANGE** and ask the human. Do NOT create learnings with your doubts.
+- Learnings are ONLY for process improvements that apply to future pipeline runs (e.g., "analyst prompt should include X"). Never use learnings to express concerns about the current work item.
+- If you signal green, you are saying "this brief is ready for a builder." Do not signal green and then dump concerns into learnings — that defeats the purpose of the gate.
+- If the brief is vague, unclear, or references things that don't exist → signal **RED**, not green with caveats.
+- An empty learnings array is perfectly fine. Most analyst runs should have zero learnings.`
   }
 
   /** Builder stage — delegates to the type-specific instructions (discover/architect/generate/etc.) */
