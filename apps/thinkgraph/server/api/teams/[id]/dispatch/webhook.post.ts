@@ -29,25 +29,21 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  const { workItemId, status, output, artifacts, error } = body
+  const { workItemId, status, output, artifacts, error, signal: callbackSignal } = body
   if (!workItemId) {
     throw createError({ status: 400, statusText: 'Missing workItemId' })
   }
 
   const updates: Record<string, any> = {}
 
-  // Read current item state — the agent sets signal/status via update_workitem
-  // during execution, so by the time the callback arrives the DB should reflect it.
-  // We retry once if signal is missing (race condition with update_workitem PATCH).
-  let [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-  if (status === 'done' && !currentState?.signal) {
-    // Signal not yet written — retry once after a tick
-    await new Promise(resolve => setTimeout(resolve, 200))
-    ;[currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-  }
+  // Read current item state
+  const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+
+  // Use signal from callback body (forwarded by Pi worker) or fall back to DB
+  const agentSignal = callbackSignal || currentState?.signal
 
   // Respect the agent's signal — don't let session completion override it
-  if (status === 'done' && (currentState?.signal === 'orange' || currentState?.signal === 'red')) {
+  if (status === 'done' && (agentSignal === 'orange' || agentSignal === 'red')) {
     // Agent deliberately set a non-green signal — keep status as-is
   }
   else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
@@ -55,7 +51,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Don't overwrite agent-set output with empty callback output
-  if (output && !(currentState?.signal && currentState?.output)) {
+  if (output && !(agentSignal && currentState?.output)) {
     updates.output = output
   }
 
@@ -82,9 +78,8 @@ export default defineEventHandler(async (event) => {
   let advancedItemId: string | null = null
 
   if (updates.status === 'done') {
-    // Read the work item's current signal and stage directly from DB
+    // Re-read current item for stage/artifacts (already have signal from agentSignal)
     const [currentItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-    const itemSignal = currentItem?.signal
 
     // Store stage output as artifact before advancing
     if (currentItem?.stage && (output || currentItem?.output)) {
@@ -92,7 +87,7 @@ export default defineEventHandler(async (event) => {
       const stageOutputArtifact = {
         type: 'stage-output',
         stage: currentItem.stage,
-        signal: itemSignal || null,
+        signal: agentSignal || null,
         output: output || currentItem.output,
         timestamp: new Date().toISOString(),
       }
@@ -101,7 +96,7 @@ export default defineEventHandler(async (event) => {
       }, { role: 'admin' })
     }
 
-    if (itemSignal === 'green' && currentItem?.stage) {
+    if (agentSignal === 'green' && currentItem?.stage) {
       const currentIdx = STAGE_ORDER.indexOf(currentItem.stage)
       const nextStage = currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1
         ? STAGE_ORDER[currentIdx + 1]

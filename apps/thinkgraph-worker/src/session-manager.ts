@@ -1385,7 +1385,24 @@ Use the \`create_node\` tool. Each node has three parts:
         if (output) body.output = output
       }
 
-      // Note: signal/stage forwarding removed — the webhook reads directly from DB
+      // For PM work items: read the current signal from the API so the webhook
+      // doesn't need to read DB (avoids race with update_workitem PATCH)
+      if (isPM && status === 'done') {
+        try {
+          const baseUrl = `${this.config.serverUrl}/api/teams/${session.teamId}/thinkgraph-workitems`
+          const items = await ofetch(baseUrl, {
+            headers: { Cookie: this.config.serviceToken },
+            query: { ids: session.nodeId },
+          })
+          const item = Array.isArray(items) ? items[0] : null
+          if (item?.signal) {
+            body.signal = item.signal
+          }
+        } catch {
+          // If we can't read it, webhook will fall back to DB read
+        }
+      }
+
       await ofetch(session.callbackUrl, {
         method: 'POST',
         headers: {
