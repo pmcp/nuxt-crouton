@@ -158,7 +158,7 @@ export default defineEventHandler(async (event) => {
                   stage: nextStage,
                   teamId,
                   teamSlug: teamId,
-                  callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
+                  callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
                 },
               })
               await updateThinkgraphWorkItem(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })

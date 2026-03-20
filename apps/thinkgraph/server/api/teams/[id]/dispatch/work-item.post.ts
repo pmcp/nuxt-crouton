@@ -109,7 +109,7 @@ export default defineEventHandler(async (event) => {
           stage,
           teamId: team.id,
           teamSlug: team.slug || team.id,
-          callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${team.id}/dispatch/webhook`,
+          callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${team.id}/dispatch/webhook`,
         },
       })
       piAccepted = piResponse?.accepted || false
