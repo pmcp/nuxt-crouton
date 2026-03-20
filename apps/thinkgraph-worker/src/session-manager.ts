@@ -1283,31 +1283,7 @@ Use the \`create_node\` tool. Each node has three parts:
         if (output) body.output = output
       }
 
-      // For PM dispatches, fetch the work item's current state to get signal/stage
-      // (Pi sets these via update_workitem tool during the session)
-      if (isPM && status === 'done') {
-        try {
-          const teamId = session.teamId || this.config.teamId
-          const collection = session.collectionPath
-          const itemData = await ofetch(`${this.config.thinkgraphUrl}/api/teams/${teamId}/${collection}/${session.nodeId}`, {
-            headers: {
-              'Cookie': this.config.serviceToken,
-            },
-          })
-          if (itemData?.signal) body.signal = itemData.signal
-          if (itemData?.stage) {
-            // Determine nextStage from what the agent set
-            const STAGE_ORDER = ['analyst', 'builder', 'reviewer', 'merger']
-            const currentIdx = STAGE_ORDER.indexOf(itemData.stage)
-            if (currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1) {
-              body.nextStage = STAGE_ORDER[currentIdx + 1]
-            }
-          }
-        } catch {
-          // Best-effort — don't fail the callback if we can't read the item
-        }
-      }
-
+      // Note: signal/stage forwarding removed — the webhook reads directly from DB
       await ofetch(session.callbackUrl, {
         method: 'POST',
         headers: {
