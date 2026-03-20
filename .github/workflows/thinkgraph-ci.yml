@@ -29,14 +29,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build MCP Server
-        run: pnpm --filter @fyit/crouton-mcp build
-
-      - name: Type check MCP Server
+      - name: Typecheck
         id: typecheck
         continue-on-error: true
         run: |
-          pnpm --filter @fyit/crouton-mcp typecheck 2>&1 | tee /tmp/typecheck-output.txt
+          pnpm typecheck 2>&1 | tee /tmp/typecheck-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Report result to ThinkGraph
