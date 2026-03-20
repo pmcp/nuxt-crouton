@@ -355,6 +355,8 @@ function renderMd(text: string): string {
     .replace(/`([^`]+)`/g, '<code class="text-xs bg-white/10 px-1 py-0.5 rounded font-mono">$1</code>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="underline" target="_blank">$1</a>')
     .replace(/^- (.+)$/gm, '<span class="block pl-3">• $1</span>')
+    .replace(/\\n/g, '<br>')
+    .replace(/\n/g, '<br>')
 }
 
 // ─── Orange response (re-dispatch with human answer) ───
