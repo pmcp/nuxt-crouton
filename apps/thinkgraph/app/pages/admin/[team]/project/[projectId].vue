@@ -321,9 +321,6 @@ async function openDispatch(id: string) {
   const item = items.value.find(n => n.id === id)
   if (!item) return
   await dispatchWork(item)
-  // Open terminal to watch the session
-  terminalNodeId.value = id
-  showTerminal.value = true
   await refreshItems()
 }
 
@@ -354,16 +351,29 @@ function parseQuestions(output: string | undefined): string[] {
   const lines = output.split('\n')
   const questions: string[] = []
   let currentQ = ''
+  let inQuestion = false
 
   for (const line of lines) {
-    // Match patterns like "1. **...**", "1. ", "- **...**"
+    // Match numbered items: "1. ", "2. ", etc.
     const match = line.match(/^\d+\.\s+/)
     if (match) {
       if (currentQ) questions.push(currentQ.trim())
       currentQ = line.replace(match[0], '')
+      inQuestion = true
     }
-    else if (currentQ && line.trim() && !line.startsWith('**Questions')) {
-      currentQ += ' ' + line.trim()
+    // Stop accumulating on section breaks or new headings
+    else if (inQuestion && (line.startsWith('---') || line.startsWith('##'))) {
+      if (currentQ) questions.push(currentQ.trim())
+      currentQ = ''
+      inQuestion = false
+    }
+    // Continue accumulating content for the current question
+    else if (inQuestion && line.trim()) {
+      currentQ += '\n' + line
+    }
+    // Empty line within a question — keep it (paragraph break)
+    else if (inQuestion && !line.trim() && currentQ) {
+      currentQ += '\n'
     }
   }
   if (currentQ) questions.push(currentQ.trim())
@@ -1073,15 +1083,12 @@ if (import.meta.client) {
             <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3">Respond to {{ STAGE_LABEL[selectedItem.stage || ''] || 'stage' }}</p>
 
             <!-- Parsed questions with individual inputs -->
-            <div v-if="parsedQuestions.length > 0" class="space-y-3 mb-4">
-              <div v-for="(question, idx) in parsedQuestions" :key="idx">
-                <p class="text-sm text-amber-900 dark:text-amber-200 mb-1.5 leading-relaxed">
-                  <span class="font-medium">{{ idx + 1 }}.</span>
-                  <span v-html="renderMd(question)" />
-                </p>
+            <div v-if="parsedQuestions.length > 0" class="space-y-4 mb-4">
+              <div v-for="(question, idx) in parsedQuestions" :key="idx" class="rounded-lg bg-amber-100/50 dark:bg-amber-900/20 p-3">
+                <div class="text-sm text-amber-900 dark:text-amber-200 mb-2 leading-relaxed" v-html="renderMd(`**${idx + 1}.** ${question}`)" />
                 <UInput
                   :model-value="orangeAnswers[idx] || ''"
-                  :placeholder="`Answer question ${idx + 1}...`"
+                  :placeholder="`Answer...`"
                   class="w-full"
                   @update:model-value="(v: string) => orangeAnswers[idx] = v"
                 />
