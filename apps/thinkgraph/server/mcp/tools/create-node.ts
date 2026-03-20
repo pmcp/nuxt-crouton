@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createThinkgraphDecision, getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { createThinkgraphWorkItem, getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
@@ -23,14 +23,14 @@ export default defineMcpTool({
 
       // Validate parent exists if specified
       if (parentId) {
-        const all = await getAllThinkgraphDecisions(resolvedTeamId)
+        const all = await getAllThinkgraphWorkItems(resolvedTeamId)
         const parent = all.find((d: any) => d.id === parentId)
         if (!parent) {
           return { content: [{ type: 'text' as const, text: `Parent node "${parentId}" not found` }], isError: true }
         }
       }
 
-      const node = await createThinkgraphDecision({
+      const node = await createThinkgraphWorkItem({
         content,
         nodeType,
         pathType: '',
@@ -51,7 +51,7 @@ export default defineMcpTool({
       } as any)
 
       // Signal real-time update — use original slug/id since clients key rooms by slug
-      signalCollectionChange(teamId, 'thinkgraphDecisions')
+      signalCollectionChange(teamId, 'thinkgraphWorkItems')
 
       return {
         content: [{

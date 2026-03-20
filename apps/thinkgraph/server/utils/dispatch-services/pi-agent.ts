@@ -3,7 +3,7 @@ import { buildDispatchContext } from '../context-builder'
 import { createTerminalSession } from '../terminal-sessions'
 import type { DispatchContext, DispatchResult } from '../dispatch-registry'
 import type { H3Event } from 'h3'
-import { updateThinkgraphDecision } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 registerDispatchService({
   id: 'pi-agent',
@@ -33,9 +33,9 @@ registerDispatchService({
       throw createError({ status: 500, statusText: 'Pi Agent requires dispatch metadata' })
     }
 
-    const targetNode = meta.allDecisions.find((d: any) => d.id === meta.decisionId)
+    const targetNode = meta.allWorkItems.find((d: any) => d.id === meta.workItemId)
     if (!targetNode) {
-      throw createError({ status: 404, statusText: 'Decision not found' })
+      throw createError({ status: 404, statusText: 'Work item not found' })
     }
 
     const depth = (context.options?.depth as string) || 'concise'
@@ -48,12 +48,12 @@ registerDispatchService({
     // Build the full context for the Pi worker
     const builtContext = buildDispatchContext(
       {
-        id: meta.decisionId,
+        id: meta.workItemId,
         content: targetNode.content,
         nodeType: targetNode.nodeType,
         parentId: targetNode.parentId,
       },
-      meta.allDecisions,
+      meta.allWorkItems,
     )
 
     // Store handoff metadata on the node's artifacts for the Pi worker to read
@@ -68,22 +68,22 @@ registerDispatchService({
       context: builtContext,
       teamSlug: meta.teamSlug,
       graphId: meta.graphId,
-      nodeId: meta.decisionId,
+      nodeId: meta.workItemId,
       nodeContent: targetNode.content,
       nodeType: targetNode.nodeType,
       mode: sessionMode,
     }
 
     // Create terminal session so the UI can start showing status immediately
-    createTerminalSession(meta.decisionId, sessionMode as 'legacy' | 'rich')
+    createTerminalSession(meta.workItemId, sessionMode as 'legacy' | 'rich')
 
     // Update node: set status to 'dispatching' and store handoff metadata
     const existingArtifacts = Array.isArray(targetNode.artifacts) ? targetNode.artifacts : []
     // Remove any previous handoff artifacts
     const cleanedArtifacts = existingArtifacts.filter((a: any) => a?.type !== 'handoff')
 
-    await updateThinkgraphDecision(
-      meta.decisionId,
+    await updateThinkgraphWorkItem(
+      meta.workItemId,
       meta.teamId,
       'system',
       {
@@ -94,7 +94,7 @@ registerDispatchService({
     )
 
     // Signal change so Yjs broadcasts to Pi worker
-    signalCollectionChange(meta.teamId, 'thinkgraphDecisions')
+    signalCollectionChange(meta.teamId, 'thinkgraphWorkItems')
 
     // Signal async — Pi worker picks up via Yjs and creates nodes via HTTP API
     return {
@@ -105,3 +105,4 @@ registerDispatchService({
     } as DispatchResult & { _async: boolean }
   },
 })
+
