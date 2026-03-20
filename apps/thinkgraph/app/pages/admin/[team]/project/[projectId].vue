@@ -769,7 +769,7 @@ if (import.meta.client) {
           <UIcon name="i-lucide-arrow-left" class="size-4" />
         </NuxtLink>
         <div>
-          <h1 class="text-sm font-semibold">{{ project?.name || 'Project' }}</h1>
+          <h1 class="text-sm font-semibold">🔧 {{ project?.name || 'Project' }}</h1>
           <p v-if="project?.clientName" class="text-xs text-muted">{{ project.clientName }}</p>
         </div>
       </div>
