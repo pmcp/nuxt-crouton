@@ -860,19 +860,36 @@ Use \`update_workitem\` to set ALL of these fields:
   /** Structured actionable learnings array */
   private learningsBlock(): string {
     return `
-3. **learnings** — structured array of ONLY actionable items. Each learning becomes a task node for the human to triage. Only include things that should change — not things that went well.
+3. **learnings** — structured array of actionable improvements. Each learning becomes an independent work item node. CRITICAL RULES:
 
-Example learnings (pyramid style — title is the point, detail explains):
+**What IS a learning:**
+- A concrete change that benefits FUTURE pipeline runs or other work items
+- Something a builder could pick up and implement independently
+- Example: "Include CLAUDE.md in analyst context" — actionable, independent, improves the pipeline
+
+**What is NOT a learning:**
+- Observations about THIS work item ("the brief was vague") — that's a rejection reason, put it in output
+- Things that went well — skip entirely
+- Vague suggestions ("improve error handling") — be specific or don't include it
+
+If you have zero learnings, pass an empty array. Do NOT create learnings just to fill the field.
+
+Example learnings:
 \`\`\`json
 [
-  { "title": "Discover skill can't detect existing briefs", "detail": "When parent already has a brief, discover should switch to validation mode instead of generating from scratch. Currently always runs questionnaire.", "scope": "skill" },
-  { "title": "Missing schemas block generate phase", "detail": "Velo custom collections have no schemas in apps/velo/schemas/. Architect phase needs to create them before CLI generator can run.", "scope": "process" }
+  { "title": "Discover can't detect existing briefs", "detail": "When parent already has a brief, discover should switch to validation mode instead of generating from scratch. Currently always runs questionnaire.", "scope": "skill" },
+  { "title": "Schemas must exist before generate", "detail": "Velo custom collections have no schemas in apps/velo/schemas/. Architect phase needs to create them before CLI generator can run.", "scope": "process" }
 ]
 \`\`\`
 
-Scope values: \`skill\` (improve a skill prompt), \`tool\` (missing or broken tool), \`prompt\` (unclear instructions), \`infra\` (infrastructure/config issue), \`process\` (workflow improvement).
+Scope values: \`skill\` | \`tool\` | \`prompt\` | \`infra\` | \`process\` (stored as metadata, NOT shown in title).
 
-**Title rules:** 5-10 words max. The point, not the explanation. Must be scannable at a glance.
+**Title rules:**
+- 3-7 words. Short and punchy — these show as node cards on a canvas.
+- State the change plainly: "Schemas must exist before generate"
+- Do NOT prefix with scope, category, or brackets like "[process]"
+- Do NOT use filler words like "should", "needs to", "it would be better if"
+- Think of it as a sticky note: would you read this at a glance?
 `
   }
 
@@ -906,8 +923,8 @@ Include these as additional entries in your \`learnings\` array with \`scope: "p
 
 \`\`\`json
 [
-  { "title": "Analyst should grep before flagging missing items", "detail": "I signaled orange because I couldn't find 'discover skill' in .claude/skills/, but it actually exists in session-manager.ts. My instructions should tell me to search broadly before concluding something doesn't exist.", "scope": "prompt" },
-  { "title": "Builder needs CLAUDE.md context in prompt", "detail": "I didn't know the project uses Nuxt UI 4 (not v3) and made wrong component choices. Including the project CLAUDE.md in my context would prevent this.", "scope": "process" }
+  { "title": "Grep before flagging missing items", "detail": "I signaled orange because I couldn't find 'discover skill' in .claude/skills/, but it actually exists in session-manager.ts. My instructions should tell me to search broadly before concluding something doesn't exist.", "scope": "prompt" },
+  { "title": "Builder needs CLAUDE.md context", "detail": "I didn't know the project uses Nuxt UI 4 (not v3) and made wrong component choices. Including the project CLAUDE.md in my context would prevent this.", "scope": "process" }
 ]
 \`\`\`
 

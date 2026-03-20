@@ -95,7 +95,7 @@ export function createPMTools(
                     body: {
                       projectId,
                       parentId: workItemId,
-                      title: `[${scope}] ${learning.title}`,
+                      title: learning.title,
                       type: 'review',
                       status: 'queued',
                       assignee: 'human',

@@ -1039,7 +1039,7 @@ if (import.meta.client) {
             />
 
             <!-- Actions -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <UButton
                 icon="i-lucide-send"
                 label="Respond & Re-dispatch"
@@ -1047,6 +1047,13 @@ if (import.meta.client) {
                 :disabled="!hasAnyAnswer"
                 color="warning"
                 @click="respondAndRedispatch(selectedItem.id)"
+              />
+              <UButton
+                icon="i-lucide-x"
+                label="Dismiss"
+                variant="soft"
+                color="red"
+                @click="updateItem(selectedItem.id, { status: 'done', signal: 'red' })"
               />
               <span class="text-xs text-amber-600 dark:text-amber-400">
                 Re-runs {{ selectedItem.stage || 'current stage' }} with your answers
