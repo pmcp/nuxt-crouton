@@ -417,6 +417,31 @@ async function respondAndRedispatch(id: string) {
   }
 }
 
+// ─── Unblock (analyst coach mode) ───
+async function unblockItem(id: string) {
+  const item = items.value.find(n => n.id === id)
+  if (!item || !teamId.value) return
+  redispatching.value = true
+  try {
+    await updateItem(id, {
+      status: 'queued',
+      assignee: 'pi',
+      signal: null,
+    })
+    const refreshed = items.value.find(n => n.id === id)
+    if (refreshed) {
+      await dispatchWork(refreshed, {
+        prompt: `COACH MODE: The analyst previously rejected this brief (signal red). The human wants help improving it. Your job is now to help write a better brief through questions.\n\nPrevious rejection reason:\n${item.output || '(none)'}\n\nDo NOT evaluate. Instead:\n1. Ask 3-5 specific questions that would clarify the brief enough for a builder\n2. Signal ORANGE with your questions\n3. When the human answers, rewrite the brief incorporating their answers and signal GREEN with the improved brief in the output field AND update the brief field with the rewritten version`,
+      })
+      terminalNodeId.value = id
+      showTerminal.value = true
+    }
+    await refreshItems()
+  } finally {
+    redispatching.value = false
+  }
+}
+
 // Reset answers when selecting a different item
 watch(selectedItemId, () => {
   orangeAnswers.value = {}
@@ -1013,6 +1038,26 @@ if (import.meta.client) {
               }"
               v-html="renderMd(selectedItem.output)"
             />
+
+            <!-- Red state actions -->
+            <div v-if="selectedItem.signal === 'red'" class="flex items-center gap-2 mt-3">
+              <UButton
+                icon="i-lucide-message-circle-question"
+                label="Help me unblock"
+                size="sm"
+                color="warning"
+                :loading="redispatching"
+                @click="unblockItem(selectedItem.id)"
+              />
+              <UButton
+                icon="i-lucide-x"
+                label="Reject"
+                size="sm"
+                variant="soft"
+                color="red"
+                @click="updateItem(selectedItem.id, { status: 'done' })"
+              />
+            </div>
           </div>
 
           <!-- Orange response panel — when analyst/reviewer has questions -->
