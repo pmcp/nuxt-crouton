@@ -370,9 +370,11 @@ function parseQuestions(output: string | undefined): string[] {
   let currentQ = ''
   let inQuestion = false
 
-  for (const line of lines) {
-    // Match numbered items: "1. ", "2. ", "Q1:", "Q1. ", "**1.**", etc.
-    const match = line.match(/^(?:\d+\.\s+|Q\d+[:.]\s*|\*\*\d+\.\*\*\s*)/)
+  for (const rawLine of lines) {
+    // Strip markdown heading prefix for matching (### Q1: → Q1:)
+    const line = rawLine.replace(/^#{1,4}\s+/, '')
+    // Match numbered items: "1. ", "Q1:", "Q1. ", "**1.**", "**Q1:**", etc.
+    const match = line.match(/^(?:\*{0,2}\s*\d+[\.\)]\s*\*{0,2}\s*|(?:\*{0,2}\s*)?Q\d+[:.]\s*\*{0,2}\s*)/)
     if (match) {
       if (currentQ) questions.push(currentQ.trim())
       currentQ = line.replace(match[0], '')
