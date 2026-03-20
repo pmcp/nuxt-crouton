@@ -41,7 +41,9 @@ export const thinkgraphWorkItemSchema = z.object({
   deployUrl: z.string().optional(),
   skill: z.string().optional(),
   retrospective: z.string().optional(),
-  artifacts: z.record(z.string(), z.any()).optional()
+  artifacts: z.record(z.string(), z.any()).optional(),
+  stage: z.string().optional(),
+  signal: z.string().optional()
 })
 
 export const thinkgraphWorkItemsColumns = [
@@ -59,7 +61,9 @@ export const thinkgraphWorkItemsColumns = [
   { accessorKey: 'deployUrl', header: 'DeployUrl' },
   { accessorKey: 'skill', header: 'Skill' },
   { accessorKey: 'retrospective', header: 'Retrospective' },
-  { accessorKey: 'artifacts', header: 'Artifacts' }
+  { accessorKey: 'artifacts', header: 'Artifacts' },
+  { accessorKey: 'stage', header: 'Stage' },
+  { accessorKey: 'signal', header: 'Signal' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -84,6 +88,8 @@ const _thinkgraphWorkItemsConfig = {
     skill: '',
     retrospective: '',
     artifacts: {},
+    stage: '',
+    signal: '',
   },
   columns: thinkgraphWorkItemsColumns,
   hierarchy: {
@@ -186,6 +192,20 @@ const _thinkgraphWorkItemsConfig = {
           "type": "json",
           "label": "Artifacts",
           "area": "sidebar"
+      },
+      {
+          "name": "stage",
+          "type": "string",
+          "label": "Stage",
+          "area": "sidebar",
+          "displayAs": "badge"
+      },
+      {
+          "name": "signal",
+          "type": "string",
+          "label": "Signal",
+          "area": "sidebar",
+          "displayAs": "badge"
       }
   ],
 }

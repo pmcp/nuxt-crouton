@@ -42,6 +42,8 @@ export interface ThinkgraphWorkItem {
   skill?: string
   retrospective?: string
   artifacts?: Record<string, any>
+  stage?: 'analyst' | 'builder' | 'reviewer' | 'launcher' | 'merger'
+  signal?: 'green' | 'orange' | 'red' | null
   optimisticId?: string
   optimisticAction?: 'create' | 'update' | 'delete'
 }

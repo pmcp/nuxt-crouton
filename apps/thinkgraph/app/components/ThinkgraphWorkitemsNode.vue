@@ -76,8 +76,49 @@ const ASSIGNEE_CONFIG: Record<string, { icon: string; label: string }> = {
   client: { icon: 'i-lucide-users', label: 'Client' },
 }
 
+const PIPELINE_STAGES = ['analyst', 'builder', 'reviewer', 'merger'] as const
+
+const STAGE_LABELS: Record<string, string> = {
+  analyst: 'A',
+  builder: 'B',
+  reviewer: 'R',
+  merger: 'M',
+}
+
 const typeConfig = computed(() => TYPE_CONFIG[item.value.type] || TYPE_CONFIG.generate)
 const statusConfig = computed(() => STATUS_CONFIG[item.value.status] || STATUS_CONFIG.queued)
+
+// Pipeline stage tracking
+const currentStage = computed(() => item.value.stage || null)
+const currentSignal = computed(() => item.value.signal || null)
+const hasPipeline = computed(() => !!currentStage.value)
+const isWorking = computed(() => item.value.status === 'active')
+
+/** Get the visual state for each pipeline dot */
+const pipelineDots = computed(() => {
+  const stage = currentStage.value
+  const signal = currentSignal.value
+  if (!stage) return []
+
+  const currentIdx = PIPELINE_STAGES.indexOf(stage as any)
+
+  return PIPELINE_STAGES.map((s, idx) => {
+    // Past stages (before current) — completed green
+    if (idx < currentIdx) {
+      return { stage: s, label: STAGE_LABELS[s], state: 'done' as const }
+    }
+    // Current stage
+    if (idx === currentIdx) {
+      if (isWorking.value) return { stage: s, label: STAGE_LABELS[s], state: 'working' as const }
+      if (signal === 'green') return { stage: s, label: STAGE_LABELS[s], state: 'green' as const }
+      if (signal === 'orange') return { stage: s, label: STAGE_LABELS[s], state: 'orange' as const }
+      if (signal === 'red') return { stage: s, label: STAGE_LABELS[s], state: 'red' as const }
+      return { stage: s, label: STAGE_LABELS[s], state: 'current' as const }
+    }
+    // Future stages — dim
+    return { stage: s, label: STAGE_LABELS[s], state: 'pending' as const }
+  })
+})
 
 const assigneeConfig = computed(() => {
   const a = item.value.assignee || 'pi'
@@ -236,6 +277,17 @@ function handleDispatch(event: Event) {
       </span>
     </div>
 
+    <!-- Pipeline LEDs -->
+    <div v-if="hasPipeline" class="led-strip">
+      <div
+        v-for="dot in pipelineDots"
+        :key="dot.stage"
+        class="led"
+        :class="`led--${dot.state}`"
+        :title="`${dot.stage}: ${dot.state}`"
+      />
+    </div>
+
     <!-- Title -->
     <p class="text-xs font-medium leading-snug">
       {{ displayTitle }}
@@ -369,6 +421,71 @@ function handleDispatch(event: Event) {
 
 .animate-progress {
   animation: progress 2s ease-in-out infinite;
+}
+
+/* LED strip — physical device aesthetic */
+.led-strip {
+  @apply flex items-center gap-1.5 mb-1;
+}
+
+.led {
+  @apply size-2 rounded-full;
+  @apply transition-all duration-500;
+  /* Recessed bezel — looks like a physical LED housing */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0.5px 0 rgba(255,255,255,0.1);
+}
+
+/* Off — dark recessed, unlit */
+.led--pending {
+  background: rgba(0,0,0,0.2);
+}
+
+/* Current stage, no signal yet — faint warm idle glow */
+.led--current {
+  background: rgba(255,255,255,0.15);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(255,255,255,0.1);
+}
+
+/* Past stages — dim green, LED that's been on */
+.led--done {
+  background: #059669;
+  opacity: 0.5;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.2), 0 0 3px rgba(5,150,105,0.3);
+}
+
+/* Working — green pulse with bloom */
+.led--working {
+  background: #10b981;
+  animation: led-pulse 1.5s ease-in-out infinite;
+}
+
+/* Signal: green — solid lit LED with halo */
+.led--green {
+  background: #10b981;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4);
+}
+
+/* Signal: orange — amber lit LED with halo */
+.led--orange {
+  background: #f59e0b;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #f59e0b, 0 0 8px rgba(245,158,11,0.4);
+}
+
+/* Signal: red — red lit LED with halo */
+.led--red {
+  background: #ef4444;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,0.4);
+}
+
+@keyframes led-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(16,185,129,0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 6px #10b981, 0 0 12px rgba(16,185,129,0.5);
+  }
 }
 
 .work-handle {

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
   // Pick only valid columns to avoid SQLite binding errors
-  const ALLOWED_FIELDS = ['projectId', 'parentId', 'title', 'type', 'status', 'brief', 'output', 'assignee', 'provider', 'sessionId', 'worktree', 'deployUrl', 'skill', 'retrospective', 'artifacts'] as const
+  const ALLOWED_FIELDS = ['projectId', 'parentId', 'title', 'type', 'status', 'brief', 'output', 'assignee', 'provider', 'sessionId', 'worktree', 'deployUrl', 'skill', 'retrospective', 'artifacts', 'stage', 'signal'] as const
   const updates: Record<string, any> = {}
   for (const key of ALLOWED_FIELDS) {
     if (key in body) {

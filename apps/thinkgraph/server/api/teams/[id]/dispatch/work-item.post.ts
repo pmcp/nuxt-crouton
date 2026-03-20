@@ -42,6 +42,18 @@ export default defineEventHandler(async (event) => {
     workItemId,
   )
 
+  // Default stage to 'analyst' on first dispatch if not already set
+  const stage = targetItem.stage || 'analyst'
+  if (!targetItem.stage) {
+    await updateThinkgraphWorkItem(
+      workItemId,
+      team.id,
+      user.id,
+      { stage },
+      { role: membership.role },
+    )
+  }
+
   // Determine the assignee/provider
   const assignee = targetItem.assignee || 'pi'
   const provider = targetItem.provider || (assignee.startsWith('api:') ? assignee.replace('api:', '') : assignee)
@@ -94,6 +106,7 @@ export default defineEventHandler(async (event) => {
           context: contextPayload.markdown,
           skill: handoffMeta.skill,
           workItemType: targetItem.type,
+          stage,
           teamId: team.id,
           teamSlug: team.slug || team.id,
           callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${team.id}/dispatch/webhook`,

@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  const { workItemId, status, output, artifacts, error } = body
+  const { workItemId, status, output, artifacts, error, signal, nextStage } = body
   if (!workItemId) {
     throw createError({ status: 400, statusText: 'Missing workItemId' })
   }
@@ -70,9 +70,28 @@ export default defineEventHandler(async (event) => {
     { role: 'admin' },
   )
 
+  // Pipeline stage progression: when signal is green and nextStage is set,
+  // re-queue the same work item at the next stage
+  let stageAdvanced = false
+  if (updates.status === 'done' && signal === 'green' && nextStage) {
+    try {
+      await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+        stage: nextStage,
+        signal: null,       // Reset signal for next stage
+        status: 'queued',   // Ready for re-dispatch
+        assignee: 'pi',
+      }, { role: 'admin' })
+      stageAdvanced = true
+      console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
+    } catch (err) {
+      console.error('[webhook] Stage advance failed:', err)
+    }
+  }
+
   // Auto-advance: when a work item completes, find the next queued child
+  // Skip if we just stage-advanced (the same item will be re-dispatched)
   let advancedItemId: string | null = null
-  if (updates.status === 'done') {
+  if (updates.status === 'done' && !stageAdvanced) {
     try {
       const allItems = await getAllThinkgraphWorkItems(teamId)
       // Find queued children of the completed item (ordered by creation)
@@ -105,5 +124,6 @@ export default defineEventHandler(async (event) => {
     workItemId,
     status: updates.status,
     advancedItemId,
+    stageAdvanced,
   }
 })
