@@ -41,10 +41,11 @@ export default defineEventHandler(async (event) => {
 
   // Use signal from callback body (forwarded by Pi worker) or fall back to DB
   const agentSignal = callbackSignal || currentState?.signal
+  console.log(`[webhook] ${workItemId}: status=${status}, callbackSignal=${callbackSignal}, dbSignal=${currentState?.signal}, agentSignal=${agentSignal}`)
 
   // Respect the agent's signal — don't let session completion override it
   if (status === 'done' && (agentSignal === 'orange' || agentSignal === 'red')) {
-    // Agent deliberately set a non-green signal — keep status as-is
+    console.log(`[webhook] ${workItemId}: preserving ${agentSignal} signal, NOT setting status to done`)
   }
   else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
     updates.status = status

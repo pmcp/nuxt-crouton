@@ -201,13 +201,25 @@ async function updateItem(id: string, data: Partial<ThinkgraphWorkItem>) {
   await refreshItems()
 }
 
-async function deleteItem(id: string) {
-  if (!teamId.value) return
+const pendingDeleteId = ref<string | null>(null)
+const showDeleteConfirm = ref(false)
+
+function requestDelete(id: string) {
+  const item = items.value.find(n => n.id === id)
+  if (!item) return
   const children = items.value.filter(n => n.parentId === id)
   if (children.length > 0) {
     toast.add({ title: 'Cannot delete — has children. Delete children first.', color: 'warning' })
     return
   }
+  pendingDeleteId.value = id
+  showDeleteConfirm.value = true
+}
+
+async function confirmDelete() {
+  const id = pendingDeleteId.value
+  if (!id || !teamId.value) return
+  showDeleteConfirm.value = false
   try {
     await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
       method: 'DELETE',
@@ -217,13 +229,19 @@ async function deleteItem(id: string) {
   } catch (err: any) {
     toast.add({ title: 'Delete failed', description: err.message, color: 'error' })
   }
+  pendingDeleteId.value = null
 }
 
 async function onNodeDelete(nodeIds: string[]) {
-  if (!teamId.value) return
+  // Single node: use confirmation dialog
+  if (nodeIds.length === 1) {
+    requestDelete(nodeIds[0])
+    return
+  }
+  // Multi-node: confirm first
+  if (!teamId.value || !confirm(`Delete ${nodeIds.length} items?`)) return
   const deleteSet = new Set(nodeIds)
 
-  // Sort: deepest nodes first so children are deleted before parents
   const sorted = [...nodeIds].sort((a, b) => {
     const depthA = items.value.find(n => n.id === a)?.depth ?? 0
     const depthB = items.value.find(n => n.id === b)?.depth ?? 0
@@ -231,7 +249,6 @@ async function onNodeDelete(nodeIds: string[]) {
   })
 
   for (const id of sorted) {
-    // Check if remaining children exist (not counting ones we're also deleting)
     const remainingChildren = items.value.filter(n => n.parentId === id && !deleteSet.has(n.id))
     if (remainingChildren.length > 0) {
       toast.add({ title: `Cannot delete "${items.value.find(n => n.id === id)?.title}" — has children outside selection`, color: 'warning' })
@@ -715,7 +732,7 @@ function handleKeydown(e: KeyboardEvent) {
     case 'Backspace': case 'Delete':
       if (selectedItemId.value && !showCreate.value) {
         e.preventDefault()
-        deleteItem(selectedItemId.value)
+        requestDelete(selectedItemId.value)
       }
       break
     case 'd': case 'D':
@@ -1209,7 +1226,7 @@ if (import.meta.client) {
               variant="soft"
               color="red"
               class="ml-auto"
-              @click="deleteItem(selectedItem.id)"
+              @click="requestDelete(selectedItem.id)"
             />
           </div>
         </div>
@@ -1252,6 +1269,22 @@ if (import.meta.client) {
             >
               Create
             </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Delete confirmation -->
+    <UModal v-model:open="showDeleteConfirm">
+      <template #content="{ close }">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-2">Delete work item?</h3>
+          <p class="text-sm text-muted mb-4">
+            "{{ items.find(i => i.id === pendingDeleteId)?.title }}" will be permanently deleted.
+          </p>
+          <div class="flex justify-end gap-2">
+            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
+            <UButton color="red" @click="confirmDelete">Delete</UButton>
           </div>
         </div>
       </template>
