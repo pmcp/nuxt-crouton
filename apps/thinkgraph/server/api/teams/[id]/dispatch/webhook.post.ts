@@ -1,3 +1,4 @@
+// pipeline-version: 2
 import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems, getThinkgraphWorkItemsByIds } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 
 /**
