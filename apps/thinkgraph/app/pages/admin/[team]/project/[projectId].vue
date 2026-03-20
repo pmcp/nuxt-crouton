@@ -327,15 +327,20 @@ async function openDispatch(id: string) {
   await refreshItems()
 }
 
-/** Render basic markdown to HTML (bold, code, inline code, links) */
+/** Render basic markdown to HTML */
 function renderMd(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<p class="font-semibold text-sm mt-3 mb-1">$1</p>')
+    .replace(/^## (.+)$/gm, '<p class="font-bold text-base mt-4 mb-2">$1</p>')
+    .replace(/^# (.+)$/gm, '<p class="font-bold text-lg mt-4 mb-2">$1</p>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="text-xs bg-white/10 px-1 py-0.5 rounded">$1</code>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code class="text-xs bg-white/10 px-1 py-0.5 rounded font-mono">$1</code>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="underline" target="_blank">$1</a>')
+    .replace(/^- (.+)$/gm, '<span class="block pl-3">• $1</span>')
 }
 
 // ─── Orange response (re-dispatch with human answer) ───
