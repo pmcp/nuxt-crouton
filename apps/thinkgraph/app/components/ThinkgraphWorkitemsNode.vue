@@ -451,11 +451,10 @@ function handleDispatch(event: Event) {
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(255,255,255,0.1);
 }
 
-/* Past stages — dim green, LED that's been on */
+/* Past stages — same green as signal green */
 .led--done {
-  background: #059669;
-  opacity: 0.5;
-  box-shadow: inset 0 1px 1px rgba(0,0,0,0.2), 0 0 3px rgba(5,150,105,0.3);
+  background: #10b981;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4);
 }
 
 /* Working — green pulse with bloom */
