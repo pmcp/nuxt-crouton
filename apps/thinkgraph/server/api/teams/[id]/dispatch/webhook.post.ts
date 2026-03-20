@@ -36,30 +36,26 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, any> = {}
 
-  // Brief delay to let any in-flight update_workitem PATCH complete before we read.
-  // The Pi worker calls update_workitem (sets signal/status) then immediately sends
-  // this callback — the PATCH may still be processing when we arrive.
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  // Read current item state — the agent may have already set signal/status via update_workitem
-  const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-
-  // Set status — but respect the agent's signal
-  // If the agent set signal=orange (waiting for human) or signal=red (blocked),
-  // don't let the session callback override that with 'done'
-  if (status === 'done' && currentState?.signal === 'orange') {
-    // Agent signaled orange → keep status as waiting (agent already set it)
-    // Don't override with 'done' from session completion
+  // Read current item state — the agent sets signal/status via update_workitem
+  // during execution, so by the time the callback arrives the DB should reflect it.
+  // We retry once if signal is missing (race condition with update_workitem PATCH).
+  let [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+  if (status === 'done' && !currentState?.signal) {
+    // Signal not yet written — retry once after a tick
+    await new Promise(resolve => setTimeout(resolve, 200))
+    ;[currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
   }
-  else if (status === 'done' && currentState?.signal === 'red') {
-    // Agent signaled red → keep status as blocked
+
+  // Respect the agent's signal — don't let session completion override it
+  if (status === 'done' && (currentState?.signal === 'orange' || currentState?.signal === 'red')) {
+    // Agent deliberately set a non-green signal — keep status as-is
   }
   else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
     updates.status = status
   }
 
-  // Set output — but don't overwrite agent-set output with empty callback output
-  if (output && !(currentState?.signal === 'orange' && currentState?.output)) {
+  // Don't overwrite agent-set output with empty callback output
+  if (output && !(currentState?.signal && currentState?.output)) {
     updates.output = output
   }
 
