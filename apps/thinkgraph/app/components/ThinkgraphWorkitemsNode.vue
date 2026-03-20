@@ -98,7 +98,10 @@ const isWorking = computed(() => item.value.status === 'active')
 const pipelineDots = computed(() => {
   const stage = currentStage.value
   const signal = currentSignal.value
-  if (!stage) return []
+  if (!stage) {
+    // No pipeline started yet — all LEDs off
+    return PIPELINE_STAGES.map(s => ({ stage: s, label: STAGE_LABELS[s], state: 'pending' as const }))
+  }
 
   const currentIdx = PIPELINE_STAGES.indexOf(stage as any)
 
@@ -277,8 +280,8 @@ function handleDispatch(event: Event) {
       </span>
     </div>
 
-    <!-- Pipeline LEDs -->
-    <div v-if="hasPipeline" class="led-strip">
+    <!-- Pipeline LEDs — always visible -->
+    <div class="led-strip">
       <div
         v-for="dot in pipelineDots"
         :key="dot.stage"
@@ -311,10 +314,11 @@ function handleDispatch(event: Event) {
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
 
-    <!-- Dispatch button — always visible on card -->
+    <!-- Dispatch button — always visible, disabled when active/done -->
     <button
-      v-if="!isDone"
       class="work-item__dispatch"
+      :class="{ 'work-item__dispatch--disabled': isActive || isDone }"
+      :disabled="isActive || isDone"
       title="Dispatch work"
       @click.stop="handleDispatch"
     >
@@ -507,6 +511,11 @@ function handleDispatch(event: Event) {
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-400 hover:scale-110;
   &:hover { color: var(--color-primary-500); }
+}
+
+.work-item__dispatch--disabled {
+  @apply opacity-30 cursor-not-allowed;
+  &:hover { transform: none; color: inherit; }
 }
 
 .work-item__actions {
