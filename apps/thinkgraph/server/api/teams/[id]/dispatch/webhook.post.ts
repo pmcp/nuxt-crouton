@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
   await updateThinkgraphWorkItem(workItemId, teamId, 'system', updates, { role: 'admin' })
 
   // Pipeline stage progression
-  const STAGE_ORDER = ['analyst', 'builder', 'reviewer', 'merger']
+  const STAGE_ORDER = ['analyst', 'builder', 'launcher', 'reviewer', 'merger']
   let stageAdvanced = false
   let advancedItemId: string | null = null
 
@@ -71,6 +71,21 @@ export default defineEventHandler(async (event) => {
     // Read the work item's current signal and stage directly from DB
     const [currentItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
     const itemSignal = currentItem?.signal
+
+    // Store stage output as artifact before advancing
+    if (currentItem?.stage && (output || currentItem?.output)) {
+      const existingArtifacts = Array.isArray(currentItem.artifacts) ? currentItem.artifacts : []
+      const stageOutputArtifact = {
+        type: 'stage-output',
+        stage: currentItem.stage,
+        signal: itemSignal || null,
+        output: output || currentItem.output,
+        timestamp: new Date().toISOString(),
+      }
+      await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+        artifacts: [...existingArtifacts, stageOutputArtifact],
+      }, { role: 'admin' })
+    }
 
     if (itemSignal === 'green' && currentItem?.stage) {
       const currentIdx = STAGE_ORDER.indexOf(currentItem.stage)
@@ -80,52 +95,65 @@ export default defineEventHandler(async (event) => {
 
       if (nextStage) {
         try {
-          // Advance stage and re-queue
-          await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
-            stage: nextStage,
-            signal: null,
-            status: 'queued',
-            assignee: 'pi',
-          }, { role: 'admin' })
-          stageAdvanced = true
-          console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
+          if (nextStage === 'launcher') {
+            // Launcher stage: wait for CI results, don't dispatch to Pi
+            await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+              stage: 'launcher',
+              signal: null,
+              status: 'waiting',
+              assignee: 'ci',
+            }, { role: 'admin' })
+            stageAdvanced = true
+            console.log(`[webhook] Stage advanced: ${workItemId} → launcher (waiting for CI)`)
+          }
+          else {
+            // Normal stage: advance and dispatch to Pi
+            await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+              stage: nextStage,
+              signal: null,
+              status: 'queued',
+              assignee: 'pi',
+            }, { role: 'admin' })
+            stageAdvanced = true
+            console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
 
-          // Auto-dispatch to Pi worker
-          const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
-          const [targetItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
-          if (targetItem) {
-            const { buildNodeContext } = await import('~~/server/utils/context-builder')
-            const allItems = await getAllThinkgraphWorkItems(teamId)
-            const contextPayload = buildNodeContext(
-              allItems.map((item: any) => ({
-                id: item.id,
-                parentId: item.parentId,
-                title: item.title,
-                nodeType: item.type,
-                status: item.status,
-                brief: item.brief,
-                output: item.output,
-              })),
-              workItemId,
-            )
-
-            await $fetch(`${piWorkerUrl}/dispatch`, {
-              method: 'POST',
-              body: {
+            // Auto-dispatch to Pi worker
+            const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
+            const [targetItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+            if (targetItem) {
+              const { buildNodeContext } = await import('~~/server/utils/context-builder')
+              const allItems = await getAllThinkgraphWorkItems(teamId)
+              const contextPayload = buildNodeContext(
+                allItems.map((item: any) => ({
+                  id: item.id,
+                  parentId: item.parentId,
+                  title: item.title,
+                  nodeType: item.type,
+                  status: item.status,
+                  brief: item.brief,
+                  output: item.output,
+                })),
                 workItemId,
-                projectId: targetItem.projectId,
-                prompt: targetItem.brief || targetItem.title,
-                context: contextPayload.markdown,
-                skill: targetItem.skill || targetItem.type,
-                workItemType: targetItem.type,
-                stage: nextStage,
-                teamId,
-                teamSlug: teamId,
-                callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
-              },
-            })
-            await updateThinkgraphWorkItem(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
-            console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${nextStage}`)
+              )
+
+              await $fetch(`${piWorkerUrl}/dispatch`, {
+                method: 'POST',
+                body: {
+                  workItemId,
+                  projectId: targetItem.projectId,
+                  prompt: targetItem.brief || targetItem.title,
+                  context: contextPayload.markdown,
+                  skill: targetItem.skill || targetItem.type,
+                  workItemType: targetItem.type,
+                  stage: nextStage,
+                  teamId,
+                  teamSlug: teamId,
+                  callbackUrl: `${config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
+                },
+              })
+              await updateThinkgraphWorkItem(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
+              console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${nextStage}`)
+            }
           }
         } catch (err: any) {
           console.error('[webhook] Stage advance/dispatch failed:', err.message)

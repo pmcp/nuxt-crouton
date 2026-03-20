@@ -529,6 +529,10 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
       case 'reviewer':
         body = this.reviewerInstructions(payload)
         break
+      case 'launcher':
+        // Launcher stage is handled by CI webhook, not Pi — should not reach here
+        body = `## Launcher Stage\n\nThis stage is automated via CI. You should not be dispatched here. Use \`update_workitem\` to set signal to "green" and status to "done".`
+        break
       case 'merger':
         body = this.mergerInstructions(payload)
         break

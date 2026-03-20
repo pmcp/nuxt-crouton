@@ -152,6 +152,7 @@ const ASSIGNEES = [
   { value: 'pi', label: 'Pi.dev', icon: 'i-lucide-bot' },
   { value: 'human', label: 'You', icon: 'i-lucide-user' },
   { value: 'client', label: 'Client', icon: 'i-lucide-users' },
+  { value: 'ci', label: 'CI', icon: 'i-lucide-git-branch' },
 ]
 
 const createAssignee = ref('pi')
@@ -324,6 +325,37 @@ async function openDispatch(id: string) {
   terminalNodeId.value = id
   showTerminal.value = true
   await refreshItems()
+}
+
+// ─── Orange response (re-dispatch with human answer) ───
+const orangeResponse = ref('')
+const redispatching = ref(false)
+
+async function respondAndRedispatch(id: string) {
+  const item = items.value.find(n => n.id === id)
+  if (!item || !orangeResponse.value.trim() || !teamId.value) return
+  redispatching.value = true
+  try {
+    // Append human response to brief
+    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human response to analyst questions:**\n${orangeResponse.value.trim()}`
+    await updateItem(id, {
+      brief: updatedBrief,
+      status: 'queued',
+      assignee: 'pi',
+      signal: null,
+    })
+    orangeResponse.value = ''
+    // Dispatch at current stage (re-run same stage with new context)
+    const refreshed = items.value.find(n => n.id === id)
+    if (refreshed) {
+      await dispatchWork(refreshed)
+      terminalNodeId.value = id
+      showTerminal.value = true
+    }
+    await refreshItems()
+  } finally {
+    redispatching.value = false
+  }
 }
 
 // ─── Terminal panel ───
@@ -538,6 +570,41 @@ async function assistantRefresh() {
     } catch { /* ignore */ }
   }
 }
+
+// ─── Stage output history (extracted from artifacts) ───
+const STAGE_SIGNAL_ICON: Record<string, { icon: string; class: string }> = {
+  green: { icon: 'i-lucide-check-circle', class: 'text-green-500' },
+  orange: { icon: 'i-lucide-pause-circle', class: 'text-amber-500' },
+  red: { icon: 'i-lucide-alert-circle', class: 'text-red-500' },
+}
+
+const STAGE_LABEL: Record<string, string> = {
+  analyst: 'Analyst',
+  builder: 'Builder',
+  launcher: 'Launcher',
+  reviewer: 'Reviewer',
+  merger: 'Merger',
+}
+
+const stageOutputs = computed(() => {
+  if (!selectedItem.value?.artifacts) return []
+  const artifacts = Array.isArray(selectedItem.value.artifacts) ? selectedItem.value.artifacts : []
+  return artifacts
+    .filter((a: any) => a.type === 'stage-output')
+    .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+})
+
+const stageAccordionItems = computed(() => {
+  return stageOutputs.value.map((so: any) => {
+    const time = so.timestamp ? new Date(so.timestamp).toLocaleTimeString() : ''
+    return {
+      label: `${STAGE_LABEL[so.stage] || so.stage} — ${so.signal || 'done'}${time ? ` (${time})` : ''}`,
+      icon: STAGE_SIGNAL_ICON[so.signal]?.icon || 'i-lucide-circle',
+      content: so.output || '(no output)',
+      value: `${so.stage}-${so.timestamp}`,
+    }
+  })
+})
 
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
@@ -865,6 +932,53 @@ if (import.meta.client) {
             />
           </UFormField>
 
+          <!-- Orange response panel — when analyst/reviewer has questions -->
+          <div
+            v-if="selectedItem.signal === 'orange' && (selectedItem.status === 'waiting' || selectedItem.status === 'blocked')"
+            class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-4 mb-4"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="size-2.5 rounded-full bg-amber-400 animate-pulse" />
+              <span class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                {{ selectedItem.stage === 'analyst' ? 'Analyst' : selectedItem.stage === 'reviewer' ? 'Reviewer' : 'Pipeline' }} needs your input
+              </span>
+            </div>
+
+            <!-- Show the questions (output field) -->
+            <div v-if="selectedItem.output" class="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap mb-4 leading-relaxed">
+              {{ selectedItem.output }}
+            </div>
+
+            <!-- Response textarea -->
+            <UTextarea
+              v-model="orangeResponse"
+              placeholder="Type your response..."
+              :rows="3"
+              class="w-full mb-3"
+            />
+
+            <!-- Re-dispatch button -->
+            <div class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-send"
+                label="Respond & Re-dispatch"
+                :loading="redispatching"
+                :disabled="!orangeResponse.trim()"
+                color="warning"
+                @click="respondAndRedispatch(selectedItem.id)"
+              />
+              <span class="text-xs text-amber-600 dark:text-amber-400">
+                Re-runs {{ selectedItem.stage || 'current stage' }} with your answer
+              </span>
+            </div>
+          </div>
+
+          <!-- Stage output history (accordion) -->
+          <div v-if="stageAccordionItems.length > 0" class="mb-4">
+            <p class="text-sm font-medium text-muted mb-2">Pipeline History</p>
+            <UAccordion :items="stageAccordionItems" type="multiple" />
+          </div>
+
           <!-- Retrospective -->
           <UFormField v-if="selectedItem.retrospective" label="Retrospective" class="mb-4">
             <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
@@ -907,9 +1021,9 @@ if (import.meta.client) {
           <!-- Actions -->
           <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
             <UButton
-              v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked'"
+              v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked' || selectedItem.status === 'waiting'"
               icon="i-lucide-send"
-              label="Dispatch"
+              :label="selectedItem.status === 'waiting' ? 'Re-dispatch' : 'Dispatch'"
               :loading="dispatching"
               @click="openDispatch(selectedItem.id)"
             />

@@ -74,13 +74,15 @@ const ASSIGNEE_CONFIG: Record<string, { icon: string; label: string }> = {
   pi: { icon: 'i-lucide-bot', label: 'Pi' },
   human: { icon: 'i-lucide-user', label: 'You' },
   client: { icon: 'i-lucide-users', label: 'Client' },
+  ci: { icon: 'i-lucide-git-branch', label: 'CI' },
 }
 
-const PIPELINE_STAGES = ['analyst', 'builder', 'reviewer', 'merger'] as const
+const PIPELINE_STAGES = ['analyst', 'builder', 'launcher', 'reviewer', 'merger'] as const
 
 const STAGE_LABELS: Record<string, string> = {
   analyst: 'A',
   builder: 'B',
+  launcher: 'L',
   reviewer: 'R',
   merger: 'M',
 }

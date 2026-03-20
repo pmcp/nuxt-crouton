@@ -146,13 +146,17 @@ Dispatch "Add nodeId filter to chatconversations GET endpoint"
 | `webhook.post.ts` | Reads signal from DB, stage progression, auto-dispatch |
 | `work-item.post.ts` | Defaults stage to 'analyst', passes to Pi |
 
+### Built in session 2 (2026-03-20)
+
+1. **Orange response UI** — when analyst/reviewer signals orange, detail panel shows questions prominently with textarea + "Respond & Re-dispatch" button. Appends human answer to brief and re-runs same stage.
+2. **Launcher stage** — inserted between builder and reviewer in STAGE_ORDER. CI webhook sets signal on work items at launcher stage: pass → green (auto-advance to reviewer), fail → reverts to builder with error details (auto-dispatches Pi to fix). LED strip updated to 5 dots (A B L R M).
+3. **Stage output accordion** — webhook stores each stage's output as `{ type: 'stage-output', stage, signal, output, timestamp }` artifact before advancing. Detail panel renders pipeline history as UAccordion with signal icons.
+
 ### What's NOT built yet
 
-- **Launcher stage** (CI integration + optional human testing) — next priority
-- **Stage output accordion** — store per-stage output in artifacts, render as accordion in detail panel
 - **Analyst screenshots** — analyst can take screenshot to verify UI state before evaluating
+- **Launcher preview deploy** — optional Cloudflare Pages preview with test script + URL (orange signal for human testing)
 - Node-level pipeline preferences (pipelineConfig)
-- Stage history tracking
 - Group briefs
 - Designer/prototyper stage
 
