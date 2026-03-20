@@ -39,6 +39,10 @@ export interface DispatchPayload {
   collectionPath?: string
   /** Team ID from the dispatch request — used instead of config.teamId when present */
   teamId?: string
+  /** Pipeline stage — analyst, builder, reviewer, launcher, merger */
+  stage?: string
+  /** Traffic light signal from previous stage — green, orange, red */
+  signal?: string
 }
 
 interface ActiveSession {
@@ -493,8 +497,10 @@ export class AgentSessionManager {
     return this.buildLegacyPrompt(payload)
   }
 
-  /** Build PM prompt dispatched per nodeType */
+  /** Build PM prompt dispatched per nodeType, routed by pipeline stage */
   private buildPMPrompt(payload: DispatchPayload): string {
+    const stage = payload.stage || this.inferStage(payload.nodeType)
+
     const header = `You are a Pi agent working on a crouton app project. You have been dispatched a "${payload.nodeType}" work item from ThinkGraph.
 
 ## Project Context
@@ -505,30 +511,251 @@ ${payload.context}
 
 ID: ${payload.nodeId}
 Type: ${payload.nodeType}
+Stage: ${stage}
 Title: ${payload.nodeContent}
 ${payload.skill ? `Skill: ${payload.skill}` : ''}
 
 ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
 
     let body: string
-    switch (payload.nodeType) {
-      case 'discover':
-        body = this.discoverInstructions(payload); break
-      case 'architect':
-        body = this.architectInstructions(payload); break
-      case 'generate':
-        body = this.generateInstructions(payload); break
-      case 'compose':
-        body = this.composeInstructions(payload); break
-      case 'review':
-        body = this.reviewInstructions(payload); break
-      case 'deploy':
-        body = this.deployInstructions(payload); break
+    switch (stage) {
+      case 'analyst':
+        body = this.analystInstructions(payload)
+        break
+      case 'builder':
+        body = this.builderInstructions(payload)
+        break
+      case 'reviewer':
+        body = this.reviewerInstructions(payload)
+        break
+      case 'merger':
+        body = this.mergerInstructions(payload)
+        break
       default:
-        body = this.generateInstructions(payload); break
+        body = this.builderInstructions(payload)
+        break
     }
 
-    return header + body + this.closingInstructions(payload.nodeType)
+    return header + body + this.pipelineClosingInstructions(stage)
+  }
+
+  /** Map old nodeType to initial pipeline stage for backwards compat */
+  private inferStage(nodeType: string): string {
+    // All types start at analyst on first dispatch (gate before real work)
+    return 'analyst'
+  }
+
+  // ─── Pipeline stage instructions ───
+
+  /** Analyst gate — validates the brief before real work begins */
+  private analystInstructions(payload: DispatchPayload): string {
+    return `## Instructions — Analyst Gate
+
+Your job is to evaluate this work item BEFORE any real work begins. You are a gate — decide whether this brief is ready for the builder stage.
+
+**CRITICAL: You are an evaluator, NOT an executor.**
+- Do NOT create or modify any files
+- Do NOT run shell commands (no git, no code generation, no builds)
+- Do NOT create worktrees or branches
+- Your ONLY action is calling \`update_workitem\` to set your signal
+- Read the codebase to understand context, but change NOTHING
+
+### Step 1: Read & Understand
+- Read the work item title, brief, and full ancestor context chain
+- Understand what is being asked and why
+
+### Step 2: Evaluate
+Check these criteria:
+- **Clarity**: Is the brief specific enough to act on? Would a builder know exactly what to do?
+- **Scope**: Is this reasonably scoped? Not too big, not too small?
+- **Duplication**: Does this duplicate work already done or in progress (check ancestor context)?
+- **Dependencies**: Are there unmet prerequisites that should be done first?
+- **Package mapping**: Which crouton packages/skills does this work belong to?
+
+### Step 3: Signal
+
+Use \`update_workitem\` to set your signal:
+
+**GREEN** (brief is ready — advance to builder):
+- Set \`signal\` to \`"green"\`
+- Set \`stage\` to \`"builder"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to a short analyst summary: what the work is, which package it targets, any notes for the builder
+
+**ORANGE** (has questions — pause for human):
+- Set \`signal\` to \`"orange"\`
+- Set \`status\` to \`"waiting"\`
+- Set \`assignee\` to \`"human"\`
+- Set \`output\` to your questions — be specific about what you need answered before proceeding
+
+**RED** (should not be done):
+- Set \`signal\` to \`"red"\`
+- Set \`status\` to \`"blocked"\`
+- Set \`output\` to the reason — duplicates existing work, out of scope, contradicts architecture, etc.
+
+Be decisive. If the brief is 80% clear, go green with notes. Only go orange if you genuinely can't determine what to build.`
+  }
+
+  /** Builder stage — delegates to the type-specific instructions (discover/architect/generate/etc.) */
+  private builderInstructions(payload: DispatchPayload): string {
+    // Route to the existing type-specific instructions for the actual work
+    switch (payload.nodeType) {
+      case 'discover':
+        return this.discoverInstructions(payload)
+      case 'architect':
+        return this.architectInstructions(payload)
+      case 'generate':
+        return this.generateInstructions(payload)
+      case 'compose':
+        return this.composeInstructions(payload)
+      case 'review':
+        return this.reviewInstructions(payload)
+      case 'deploy':
+        return this.deployInstructions(payload)
+      default:
+        return this.generateInstructions(payload)
+    }
+  }
+
+  /** Reviewer stage — code review and quality gate */
+  private reviewerInstructions(payload: DispatchPayload): string {
+    return `## Instructions — Reviewer Gate
+
+Your job is to review the work produced in the builder stage and provide a quality signal.
+
+### Step 1: Gather Context
+- Read all ancestor work item outputs — understand the original brief and what was built
+- If a worktree branch exists in the context, check out and review the code:
+  \`\`\`bash
+  cd ~/nuxt-crouton
+  git fetch origin
+  # Look for the branch in ancestor context
+  \`\`\`
+
+### Step 2: Evaluate
+- **Requirements met?** Does the output match the original brief?
+- **Code quality**: Clean, follows crouton patterns, no obvious bugs?
+- **Completeness**: Are there missing pieces or half-finished work?
+- **Architecture**: Does it fit the crouton package structure?
+
+### Step 3: Signal
+
+Use \`update_workitem\` to set your signal:
+
+**GREEN** (work is good — ready to merge/deploy):
+- Set \`signal\` to \`"green"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to review verdict: what's good, any minor notes
+
+**ORANGE** (needs changes — send back to builder):
+- Set \`signal\` to \`"orange"\`
+- Set \`status\` to \`"waiting"\`
+- Set \`assignee\` to \`"human"\`
+- Set \`output\` to specific issues that need fixing, with file paths where applicable
+
+**RED** (fundamental problems — needs rethink):
+- Set \`signal\` to \`"red"\`
+- Set \`status\` to \`"blocked"\`
+- Set \`output\` to what's wrong and why this approach won't work`
+  }
+
+  /** Merger stage — rebase/merge branch into main, resolve conflicts, merge PR */
+  private mergerInstructions(payload: DispatchPayload): string {
+    return `## Instructions — Merger
+
+Your job is to merge the work item's branch into main. This involves updating the branch, resolving any conflicts, and merging the PR.
+
+### Step 1: Find the branch
+
+Look in the ancestor context for a \`worktree\` value — that's the branch name (e.g., \`thinkgraph/abc123\`).
+If no branch is found, signal red — there's nothing to merge.
+
+### Step 2: Update the branch
+
+\`\`\`bash
+cd ~/nuxt-crouton
+git fetch origin main
+git checkout <branch-name>
+git merge origin/main
+\`\`\`
+
+### Step 3: Resolve conflicts (if any)
+
+If git merge reports conflicts:
+
+1. Read each conflicted file to understand both sides
+2. Resolve the conflict — pick the correct combination of changes
+3. \`git add <resolved-file>\`
+4. Once all conflicts are resolved: \`git commit -m "merge: resolve conflicts with main"\`
+5. If you genuinely cannot resolve a conflict (ambiguous business logic, both sides changed the same thing in incompatible ways), signal orange with details about what's conflicting
+
+Most conflicts are mechanical (schema files, imports, lock files, generated code) — just fix them.
+You may attempt conflict resolution up to 3 times. If the merge still fails after 3 attempts, signal orange.
+
+### Step 4: Push and merge PR
+
+\`\`\`bash
+git push origin <branch-name>
+\`\`\`
+
+Check if a PR already exists:
+\`\`\`bash
+gh pr list --head <branch-name> --json number,url
+\`\`\`
+
+If no PR exists, create one using \`create_pr\` tool.
+If a PR exists, merge it:
+\`\`\`bash
+gh pr merge <number> --squash --delete-branch
+\`\`\`
+
+### Step 5: Update local main
+
+\`\`\`bash
+git checkout main
+git pull origin main
+\`\`\`
+
+### Step 6: Signal
+
+Use \`update_workitem\` to set your signal:
+
+**GREEN** (merged successfully):
+- Set \`signal\` to \`"green"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to merge summary: branch name, PR URL, whether conflicts were resolved, final commit SHA
+
+**ORANGE** (conflicts that need human help):
+- Set \`signal\` to \`"orange"\`
+- Set \`status\` to \`"waiting"\`
+- Set \`assignee\` to \`"human"\`
+- Set \`output\` to the specific conflicts and why you couldn't resolve them
+
+**RED** (can't merge — branch missing, PR checks failing, etc.):
+- Set \`signal\` to \`"red"\`
+- Set \`status\` to \`"blocked"\`
+- Set \`output\` to what went wrong`
+  }
+
+  /** Closing instructions for pipeline stages — includes signal reminder */
+  private pipelineClosingInstructions(stage: string): string {
+    if (stage === 'analyst' || stage === 'reviewer' || stage === 'merger') {
+      // Analyst and reviewer MUST set signal — that's their whole job
+      return `
+
+## Before You Finish (MANDATORY)
+
+You MUST use \`update_workitem\` to set:
+1. **signal** — \`"green"\`, \`"orange"\`, or \`"red"\`
+2. **output** — your analysis/review summary
+3. If green: also set \`stage\` to the next stage and \`status\` to \`"done"\`
+4. If orange: also set \`status\` to \`"waiting"\` and \`assignee\` to \`"human"\`
+5. If red: also set \`status\` to \`"blocked"\`
+`
+    }
+
+    // Builder stage uses the existing closing instructions
+    return this.closingInstructions(stage === 'builder' ? 'generate' : stage)
   }
 
   /**
@@ -1054,6 +1281,31 @@ Use the \`create_node\` tool. Each node has three parts:
         // Legacy: send accumulated streaming output as the result
         const output = (session.accumulatedOutput[0] || '').trim()
         if (output) body.output = output
+      }
+
+      // For PM dispatches, fetch the work item's current state to get signal/stage
+      // (Pi sets these via update_workitem tool during the session)
+      if (isPM && status === 'done') {
+        try {
+          const teamId = session.teamId || this.config.teamId
+          const collection = session.collectionPath
+          const itemData = await ofetch(`${this.config.thinkgraphUrl}/api/teams/${teamId}/${collection}/${session.nodeId}`, {
+            headers: {
+              'Cookie': this.config.serviceToken,
+            },
+          })
+          if (itemData?.signal) body.signal = itemData.signal
+          if (itemData?.stage) {
+            // Determine nextStage from what the agent set
+            const STAGE_ORDER = ['analyst', 'builder', 'reviewer', 'merger']
+            const currentIdx = STAGE_ORDER.indexOf(itemData.stage)
+            if (currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1) {
+              body.nextStage = STAGE_ORDER[currentIdx + 1]
+            }
+          }
+        } catch {
+          // Best-effort — don't fail the callback if we can't read the item
+        }
       }
 
       await ofetch(session.callbackUrl, {

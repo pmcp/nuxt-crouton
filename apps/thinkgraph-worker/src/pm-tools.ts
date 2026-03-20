@@ -50,6 +50,9 @@ export function createPMTools(
           { description: 'Actionable learnings only. Pyramid style: title is the point, detail is the explanation. Do NOT include things that went well.' },
         )),
         status: Type.Optional(Type.String({ description: 'Status: queued, active, waiting, done, blocked' })),
+        assignee: Type.Optional(Type.String({ description: 'Assignee: pi, human, client' })),
+        stage: Type.Optional(Type.String({ description: 'Pipeline stage: analyst, builder, reviewer, launcher, merger' })),
+        signal: Type.Optional(Type.String({ description: 'Traffic light signal: green, orange, red' })),
         deployUrl: Type.Optional(Type.String({ description: 'Preview deployment URL' })),
       }),
       execute: async (_toolCallId, params) => {
@@ -58,6 +61,9 @@ export function createPMTools(
         if (params.output !== undefined) updates.output = params.output
         if (params.retrospective !== undefined) updates.retrospective = params.retrospective
         if (params.status !== undefined) updates.status = params.status
+        if (params.assignee !== undefined) updates.assignee = params.assignee
+        if (params.stage !== undefined) updates.stage = params.stage
+        if (params.signal !== undefined) updates.signal = params.signal
         if (params.deployUrl !== undefined) updates.deployUrl = params.deployUrl
 
         if (Object.keys(updates).length === 0) {

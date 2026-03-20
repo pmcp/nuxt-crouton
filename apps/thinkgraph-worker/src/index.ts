@@ -181,6 +181,7 @@ async function main() {
           skill: payload.skill || undefined,
           collectionPath: 'thinkgraph-workitems',
           teamId: payload.teamId || undefined,
+          stage: payload.stage || undefined,
         }
 
         // Start session (async — don't await completion)
