@@ -139,6 +139,28 @@ vi.mock('../../../server/utils/useServerAuth', () => ({
 // Mock hubDatabase for D1
 vi.stubGlobal('hubDatabase', vi.fn())
 
+// Import schema tables for reference comparison in useDB mock
+import { organization, member as memberTableSchema } from '../../../server/database/schema/auth'
+
+// Configurable mock results for Drizzle queries
+let mockOrgRows: any[] = []
+let mockMemberRows: any[] = []
+
+// Mock useDB() — Nuxt auto-import that returns a Drizzle ORM instance
+vi.stubGlobal('useDB', () => ({
+  select: () => ({
+    from: (table: any) => ({
+      where: () => ({
+        limit: () => {
+          if (table === organization) return Promise.resolve(mockOrgRows)
+          if (table === memberTableSchema) return Promise.resolve(mockMemberRows)
+          return Promise.resolve([])
+        }
+      })
+    })
+  })
+}))
+
 describe('server/utils/auth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -146,6 +168,25 @@ describe('server/utils/auth', () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSessionResponse)
     vi.mocked(requireServerSession).mockResolvedValue(mockSessionResponse)
     vi.mocked(useServerAuth).mockReturnValue(mockAuthInstance)
+    // Default DB rows for useDB() mock
+    mockOrgRows = [{
+      id: 'team-1',
+      name: 'Test Team',
+      slug: 'test-team',
+      logo: null,
+      metadata: null,
+      personal: 0,
+      isDefault: 0,
+      ownerId: null,
+      createdAt: '2024-01-01T00:00:00.000Z'
+    }]
+    mockMemberRows = [{
+      id: 'member-1',
+      organizationId: 'team-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: '2024-01-01T00:00:00.000Z'
+    }]
   })
 
   afterEach(() => {
@@ -251,24 +292,6 @@ describe('server/utils/auth', () => {
   })
 
   describe('requireTeamMember', () => {
-    beforeEach(() => {
-      // Mock successful team resolution
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
-    })
-
     it('should return team context for valid member', async () => {
       const event = createMockEvent()
       const context = await requireTeamMember(event)
@@ -288,14 +311,14 @@ describe('server/utils/auth', () => {
     })
 
     it('should throw 403 when not a team member', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({ members: [] })
+      mockMemberRows = []
 
       const event = createMockEvent()
       await expect(requireTeamMember(event)).rejects.toThrow('Not a team member')
     })
 
     it('should throw 404 when team not found', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue(null)
+      mockOrgRows = []
 
       const event = createMockEvent()
       await expect(requireTeamMember(event)).rejects.toThrow('Team not found')
@@ -303,24 +326,10 @@ describe('server/utils/auth', () => {
   })
 
   describe('requireTeamAdmin', () => {
-    beforeEach(() => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-    })
-
     it('should return context for admin user', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'admin',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
@@ -329,14 +338,9 @@ describe('server/utils/auth', () => {
     })
 
     it('should return context for owner user', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'owner',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
@@ -345,39 +349,16 @@ describe('server/utils/auth', () => {
     })
 
     it('should throw 403 for regular member', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
-
       const event = createMockEvent()
       await expect(requireTeamAdmin(event)).rejects.toThrow('Requires admin role or higher')
     })
   })
 
   describe('requireTeamOwner', () => {
-    beforeEach(() => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-    })
-
     it('should return context for owner user', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'owner',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamOwner(event)
@@ -386,29 +367,15 @@ describe('server/utils/auth', () => {
     })
 
     it('should throw 403 for admin user', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'admin',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       await expect(requireTeamOwner(event)).rejects.toThrow('Requires owner role or higher')
     })
 
     it('should throw 403 for regular member', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{
-          id: 'member-1',
-          userId: 'user-1',
-          role: 'member',
-          createdAt: '2024-01-01T00:00:00.000Z'
-        }]
-      })
-
       const event = createMockEvent()
       await expect(requireTeamOwner(event)).rejects.toThrow('Requires owner role or higher')
     })

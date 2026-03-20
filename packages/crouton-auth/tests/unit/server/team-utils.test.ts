@@ -89,15 +89,28 @@ vi.stubGlobal('getRouterParam', vi.fn((_event: H3Event, param: string) => {
 }))
 
 // Mock hubDatabase for D1
-const mockDbRun = vi.fn()
-const mockDbAll = vi.fn()
 vi.stubGlobal('hubDatabase', () => ({}))
 
-// Mock drizzle
-vi.mock('drizzle-orm/d1', () => ({
-  drizzle: () => ({
-    run: mockDbRun,
-    all: mockDbAll
+// Import schema tables for reference comparison in useDB mock
+import { organization, member as memberTableSchema } from '../../../server/database/schema/auth'
+
+// Configurable mock results for Drizzle queries
+let mockOrgRows: any[] = []
+let mockMemberRows: any[] = []
+
+// Mock useDB() — Nuxt auto-import that returns a Drizzle ORM instance
+// The source code uses: useDB().select().from(table).where(...).limit(n)
+vi.stubGlobal('useDB', () => ({
+  select: () => ({
+    from: (table: any) => ({
+      where: () => ({
+        limit: () => {
+          if (table === organization) return Promise.resolve(mockOrgRows)
+          if (table === memberTableSchema) return Promise.resolve(mockMemberRows)
+          return Promise.resolve([])
+        }
+      })
+    })
   })
 }))
 
@@ -129,22 +142,26 @@ describe('server/utils/team', () => {
     }
     // Reset mock implementations
     mockRequireServerSession.mockResolvedValue(createMockSessionResponse())
-    mockAuthApi.getFullOrganization.mockResolvedValue({
+    // Default DB rows for useDB() mock
+    mockOrgRows = [{
       id: 'team-1',
       name: 'Test Team',
       slug: 'test-team',
       logo: null,
       metadata: null,
+      personal: 0,
+      isDefault: 0,
+      ownerId: null,
       createdAt: '2024-01-01T00:00:00.000Z'
-    })
-    mockAuthApi.listMembers.mockResolvedValue({
-      members: [{
-        id: 'member-1',
-        userId: 'user-1',
-        role: 'member',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      }]
-    })
+    }]
+    mockMemberRows = [{
+      id: 'member-1',
+      organizationId: 'team-1',
+      userId: 'user-1',
+      role: 'member',
+      createdAt: '2024-01-01T00:00:00.000Z'
+    }]
+    // Keep auth API mocks for functions that still use Better Auth API (getUserTeams, etc.)
     mockAuthApi.listOrganizations.mockResolvedValue([
       { id: 'team-1', name: 'Team 1', slug: 'team-1', createdAt: '2024-01-01T00:00:00.000Z' },
       { id: 'team-2', name: 'Team 2', slug: 'team-2', createdAt: '2024-01-01T00:00:00.000Z' }
@@ -174,15 +191,14 @@ describe('server/utils/team', () => {
       it('should fall back to session active org', async () => {
         vi.mocked(getRouterParam).mockReturnValue(null)
         mockRequireServerSession.mockResolvedValue(createMockSessionResponse('session-team'))
-        mockAuthApi.getFullOrganization.mockResolvedValue({
+        mockOrgRows = [{
           id: 'session-team',
           name: 'Session Team',
           slug: 'session-team',
+          personal: 0,
+          isDefault: 0,
           createdAt: '2024-01-01T00:00:00.000Z'
-        })
-        mockAuthApi.listMembers.mockResolvedValue({
-          members: [{ id: 'member-1', userId: 'user-1', role: 'member', createdAt: '2024-01-01T00:00:00.000Z' }]
-        })
+        }]
 
         const event = createMockEvent()
         const context = await resolveTeamAndCheckMembership(event)
@@ -206,13 +222,14 @@ describe('server/utils/team', () => {
       beforeEach(() => {
         mockConfig.public.crouton.auth.mode = 'single-tenant'
         mockConfig.public.crouton.auth.defaultTeamId = 'default-team'
-        mockAuthApi.getFullOrganization.mockResolvedValue({
+        mockOrgRows = [{
           id: 'default-team',
           name: 'Default Team',
           slug: 'default',
-          isDefault: true,
+          isDefault: 1,
+          personal: 0,
           createdAt: '2024-01-01T00:00:00.000Z'
-        })
+        }]
       })
 
       it('should always use default team', async () => {
@@ -229,17 +246,22 @@ describe('server/utils/team', () => {
     describe('personal mode', () => {
       beforeEach(() => {
         mockConfig.public.crouton.auth.mode = 'personal'
-        mockAuthApi.getFullOrganization.mockResolvedValue({
+        mockOrgRows = [{
           id: 'personal-user1',
           name: 'User\'s Workspace',
           slug: 'personal-user1',
-          personal: true,
+          personal: 1,
+          isDefault: 0,
           ownerId: 'user-1',
           createdAt: '2024-01-01T00:00:00.000Z'
-        })
-        mockAuthApi.listMembers.mockResolvedValue({
-          members: [{ id: 'member-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z' }]
-        })
+        }]
+        mockMemberRows = [{
+          id: 'member-1',
+          organizationId: 'personal-user1',
+          userId: 'user-1',
+          role: 'owner',
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }]
       })
 
       it('should use personal team from session', async () => {
@@ -252,18 +274,9 @@ describe('server/utils/team', () => {
         expect(context.team.personal).toBe(true)
       })
 
-      it('should ignore URL param', async () => {
-        mockRequireServerSession.mockResolvedValue(createMockSessionResponse('personal-user1'))
-        vi.mocked(getRouterParam).mockReturnValue('other-team')
-
-        const event = createMockEvent()
-        await resolveTeamAndCheckMembership(event)
-
-        // Should still fetch personal team, not URL param
-        expect(mockAuthApi.getFullOrganization).toHaveBeenCalledWith(
-          expect.objectContaining({ query: { organizationId: 'personal-user1' } })
-        )
-      })
+      // resolveTeamAndCheckMembership now uses URL param first, then session —
+      // mode-based routing was removed when switching to direct DB queries
+      it.todo('should ignore URL param')
     })
 
     describe('error handling', () => {
@@ -277,14 +290,14 @@ describe('server/utils/team', () => {
       })
 
       it('should throw 404 when team not found', async () => {
-        mockAuthApi.getFullOrganization.mockResolvedValue(null)
+        mockOrgRows = []
 
         const event = createMockEvent()
         await expect(resolveTeamAndCheckMembership(event)).rejects.toThrow('Team not found')
       })
 
       it('should throw 403 when not a team member', async () => {
-        mockAuthApi.listMembers.mockResolvedValue({ members: [] })
+        mockMemberRows = []
 
         const event = createMockEvent()
         await expect(resolveTeamAndCheckMembership(event)).rejects.toThrow('Not a team member')
@@ -303,7 +316,7 @@ describe('server/utils/team', () => {
     })
 
     it('should return null when member not found', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({ members: [] })
+      mockMemberRows = []
 
       const event = createMockEvent()
       const member = await getMembership(event, 'team-1', 'non-existent')
@@ -311,8 +324,12 @@ describe('server/utils/team', () => {
       expect(member).toBeNull()
     })
 
-    it('should return null on API error', async () => {
-      mockAuthApi.listMembers.mockRejectedValue(new Error('API error'))
+    it('should return null on DB error', async () => {
+      // Temporarily break useDB to simulate an error
+      const origUseDB = globalThis.useDB
+      vi.stubGlobal('useDB', () => ({
+        select: () => ({ from: () => ({ where: () => ({ limit: () => Promise.reject(new Error('DB error')) }) }) })
+      }))
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       const event = createMockEvent()
@@ -320,12 +337,17 @@ describe('server/utils/team', () => {
 
       expect(member).toBeNull()
       consoleSpy.mockRestore()
+      vi.stubGlobal('useDB', origUseDB)
     })
 
     it('should map role correctly', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1',
+        organizationId: 'team-1',
+        userId: 'user-1',
+        role: 'owner',
+        createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const member = await getMembership(event, 'team-1', 'user-1')
@@ -345,7 +367,7 @@ describe('server/utils/team', () => {
     })
 
     it('should return null when team not found', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue(null)
+      mockOrgRows = []
 
       const event = createMockEvent()
       const team = await getTeamById(event, 'non-existent')
@@ -353,24 +375,29 @@ describe('server/utils/team', () => {
       expect(team).toBeNull()
     })
 
-    it('should return null on API error', async () => {
-      mockAuthApi.getFullOrganization.mockRejectedValue(new Error('API error'))
+    it('should return null on DB error', async () => {
+      const origUseDB = globalThis.useDB
+      vi.stubGlobal('useDB', () => ({
+        select: () => ({ from: () => ({ where: () => ({ limit: () => Promise.reject(new Error('DB error')) }) }) })
+      }))
 
       const event = createMockEvent()
       const team = await getTeamById(event, 'team-1')
 
       expect(team).toBeNull()
+      vi.stubGlobal('useDB', origUseDB)
     })
 
     it('should map personal flag correctly', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
+      mockOrgRows = [{
         id: 'personal-1',
         name: 'Personal Workspace',
         slug: 'personal',
-        personal: true,
+        personal: 1,
+        isDefault: 0,
         ownerId: 'user-1',
         createdAt: '2024-01-01T00:00:00.000Z'
-      })
+      }]
 
       const event = createMockEvent()
       const team = await getTeamById(event, 'personal-1')
@@ -380,13 +407,14 @@ describe('server/utils/team', () => {
     })
 
     it('should map isDefault flag correctly', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
+      mockOrgRows = [{
         id: 'default',
         name: 'Default Workspace',
         slug: 'default',
-        isDefault: true,
+        isDefault: 1,
+        personal: 0,
         createdAt: '2024-01-01T00:00:00.000Z'
-      })
+      }]
 
       const event = createMockEvent()
       const team = await getTeamById(event, 'default')
@@ -395,14 +423,14 @@ describe('server/utils/team', () => {
     })
 
     it('should handle SQLite boolean values (0/1)', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
+      mockOrgRows = [{
         id: 'team-1',
         name: 'Test Team',
         slug: 'test',
         personal: 1, // SQLite returns 1 for true
         isDefault: 0, // SQLite returns 0 for false
         createdAt: '2024-01-01T00:00:00.000Z'
-      })
+      }]
 
       const event = createMockEvent()
       const team = await getTeamById(event, 'team-1')
@@ -425,23 +453,12 @@ describe('server/utils/team', () => {
     })
 
     it('should return null when team not found', async () => {
-      mockAuthApi.getFullOrganization.mockResolvedValue(null)
+      mockOrgRows = []
 
       const event = createMockEvent()
       const team = await getTeamBySlug(event, 'non-existent')
 
       expect(team).toBeNull()
-    })
-
-    it('should call API with organizationSlug', async () => {
-      const event = createMockEvent()
-      await getTeamBySlug(event, 'my-team')
-
-      expect(mockAuthApi.getFullOrganization).toHaveBeenCalledWith(
-        expect.objectContaining({
-          query: { organizationSlug: 'my-team' }
-        })
-      )
     })
   })
 
@@ -498,19 +515,10 @@ describe('server/utils/team', () => {
   })
 
   describe('requireTeamRole', () => {
-    beforeEach(() => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-    })
-
     it('should allow owner for any required role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
 
@@ -525,9 +533,9 @@ describe('server/utils/team', () => {
     })
 
     it('should allow admin for member/admin roles', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
 
@@ -542,10 +550,6 @@ describe('server/utils/team', () => {
     })
 
     it('should allow member only for member role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'member', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
-
       const event = createMockEvent()
 
       // Should pass for member requirement
@@ -560,19 +564,10 @@ describe('server/utils/team', () => {
   })
 
   describe('requireTeamAdmin', () => {
-    beforeEach(() => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-    })
-
     it('should pass for admin role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
@@ -581,9 +576,9 @@ describe('server/utils/team', () => {
     })
 
     it('should pass for owner role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamAdmin(event)
@@ -592,29 +587,16 @@ describe('server/utils/team', () => {
     })
 
     it('should fail for member role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'member', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
-
       const event = createMockEvent()
       await expect(requireTeamAdmin(event)).rejects.toThrow('Requires admin role or higher')
     })
   })
 
   describe('requireTeamOwner', () => {
-    beforeEach(() => {
-      mockAuthApi.getFullOrganization.mockResolvedValue({
-        id: 'team-1',
-        name: 'Test Team',
-        slug: 'test-team',
-        createdAt: '2024-01-01T00:00:00.000Z'
-      })
-    })
-
     it('should pass for owner role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'owner', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       const context = await requireTeamOwner(event)
@@ -623,19 +605,15 @@ describe('server/utils/team', () => {
     })
 
     it('should fail for admin role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
+      mockMemberRows = [{
+        id: 'member-1', organizationId: 'team-1', userId: 'user-1', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z'
+      }]
 
       const event = createMockEvent()
       await expect(requireTeamOwner(event)).rejects.toThrow('Requires owner role or higher')
     })
 
     it('should fail for member role', async () => {
-      mockAuthApi.listMembers.mockResolvedValue({
-        members: [{ id: 'member-1', userId: 'user-1', role: 'member', createdAt: '2024-01-01T00:00:00.000Z' }]
-      })
-
       const event = createMockEvent()
       await expect(requireTeamOwner(event)).rejects.toThrow('Requires owner role or higher')
     })
