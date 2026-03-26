@@ -731,6 +731,8 @@ async function assistantRefresh() {
 }
 
 // ─── Stage output history (extracted from artifacts) ───
+const PIPELINE_STAGES = ['analyst', 'builder', 'launcher', 'reviewer', 'merger'] as const
+
 const STAGE_SIGNAL_ICON: Record<string, { icon: string; class: string }> = {
   green: { icon: 'i-lucide-check-circle', class: 'text-green-500' },
   orange: { icon: 'i-lucide-pause-circle', class: 'text-amber-500' },
@@ -753,14 +755,57 @@ const stageOutputs = computed(() => {
     .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 })
 
+// Build a map of stage -> latest stage-output artifact for quick lookup
+const stageOutputMap = computed(() => {
+  const map: Record<string, any> = {}
+  for (const so of stageOutputs.value) {
+    map[so.stage] = so // last one wins (sorted by time)
+  }
+  return map
+})
+
+type StageState = 'completed' | 'active' | 'future'
+
 const stageAccordionItems = computed(() => {
-  return stageOutputs.value.map((so: any) => {
-    const time = so.timestamp ? new Date(so.timestamp).toLocaleTimeString() : ''
+  const item = selectedItem.value
+  if (!item?.stage) return []
+
+  const currentStage = item.stage as string
+  const currentIdx = PIPELINE_STAGES.indexOf(currentStage as any)
+
+  return PIPELINE_STAGES.map((stage, idx) => {
+    const output = stageOutputMap.value[stage]
+    let state: StageState = 'future'
+    if (idx < currentIdx) state = 'completed'
+    else if (idx === currentIdx) state = 'active'
+
+    // For completed stages that have no artifact but are before current, still mark completed
+    // For active stage, check if it has output (signal set) or is still running
+    const hasOutput = !!output
+    const signal = stage === currentStage ? item.signal : output?.signal
+    const signalInfo = signal ? STAGE_SIGNAL_ICON[signal] : null
+
+    let icon = 'i-lucide-circle'
+    if (state === 'completed' && hasOutput) icon = signalInfo?.icon || 'i-lucide-check-circle'
+    else if (state === 'completed') icon = 'i-lucide-check-circle'
+    else if (state === 'active' && signal) icon = signalInfo?.icon || 'i-lucide-loader'
+    else if (state === 'active') icon = 'i-lucide-loader'
+
+    let label = STAGE_LABEL[stage] || stage
+    if (state === 'active' && signal) label += ` — ${signal}`
+    else if (state === 'active') label += ' — running'
+    else if (state === 'completed' && output?.signal) label += ` — ${output.signal}`
+
     return {
-      label: `${STAGE_LABEL[so.stage] || so.stage} — ${so.signal || 'done'}${time ? ` (${time})` : ''}`,
-      icon: STAGE_SIGNAL_ICON[so.signal]?.icon || 'i-lucide-circle',
-      content: so.output || '(no output)',
-      value: `${so.stage}-${so.timestamp}`,
+      label,
+      icon,
+      value: stage,
+      disabled: state === 'future',
+      // Custom data for slot rendering
+      _state: state,
+      _signal: signal,
+      _output: state === 'active' ? item.output : output?.output,
+      _hasOutput: state === 'active' ? !!item.output : hasOutput,
     }
   })
 })
@@ -1080,54 +1125,7 @@ if (import.meta.client) {
             />
           </UFormField>
 
-          <!-- Current stage output — the main content area -->
-          <div v-if="selectedItem.output" class="mb-4">
-            <div class="flex items-center gap-2 mb-2">
-              <span
-                v-if="selectedItem.signal"
-                class="size-2.5 rounded-full"
-                :class="{
-                  'bg-green-400': selectedItem.signal === 'green',
-                  'bg-amber-400 animate-pulse': selectedItem.signal === 'orange',
-                  'bg-red-400': selectedItem.signal === 'red',
-                }"
-              />
-              <p class="text-sm font-medium text-muted">
-                {{ STAGE_LABEL[selectedItem.stage || ''] || 'Output' }}
-                <span v-if="selectedItem.signal" class="text-xs opacity-60">— {{ selectedItem.signal }}</span>
-              </p>
-            </div>
-            <div
-              class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
-              :class="{
-                'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': selectedItem.signal === 'red',
-                'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200': selectedItem.signal === 'orange',
-                'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-200': selectedItem.signal === 'green',
-                'border-default bg-muted/30 text-default': !selectedItem.signal,
-              }"
-              v-html="renderMd(selectedItem.output)"
-            />
-
-            <!-- Red state actions -->
-            <div v-if="selectedItem.signal === 'red'" class="flex items-center gap-2 mt-3">
-              <UButton
-                icon="i-lucide-message-circle-question"
-                label="Help me unblock"
-                size="sm"
-                color="warning"
-                :loading="redispatching"
-                @click="unblockItem(selectedItem.id)"
-              />
-              <UButton
-                icon="i-lucide-x"
-                label="Reject"
-                size="sm"
-                variant="soft"
-                color="red"
-                @click="updateItem(selectedItem.id, { status: 'done' })"
-              />
-            </div>
-          </div>
+          <!-- Stage output is now inside the pipeline accordion below -->
 
           <!-- Orange response panel — when analyst/reviewer has questions -->
           <div
@@ -1194,13 +1192,102 @@ if (import.meta.client) {
             </div>
           </div>
 
-          <!-- Pipeline history (always visible when stage is set) -->
+          <!-- Pipeline stages accordion (permanent, always visible when stage is set) -->
           <div v-if="selectedItem.stage" class="mb-4">
-            <p class="text-xs font-medium text-muted mb-2">Pipeline History</p>
-            <div v-if="stageAccordionItems.length > 0">
-              <UAccordion :items="stageAccordionItems" type="multiple" />
-            </div>
-            <p v-else class="text-xs text-muted/60 italic">No previous stages</p>
+            <p class="text-xs font-medium text-muted mb-2">Pipeline Stages</p>
+            <UAccordion
+              :items="stageAccordionItems"
+              type="multiple"
+              :default-value="[selectedItem.stage]"
+            >
+              <template #item="{ item }">
+                <div
+                  class="flex items-center gap-2 w-full"
+                  :class="{ 'opacity-40': (item as any)._state === 'future' }"
+                >
+                  <UIcon
+                    :name="item.icon || 'i-lucide-circle'"
+                    class="size-4 shrink-0"
+                    :class="{
+                      'text-green-500': (item as any)._signal === 'green',
+                      'text-amber-500': (item as any)._signal === 'orange',
+                      'text-red-500': (item as any)._signal === 'red',
+                      'text-muted animate-spin': (item as any)._state === 'active' && !(item as any)._signal,
+                      'text-muted': (item as any)._state === 'future' || ((item as any)._state === 'completed' && !(item as any)._signal),
+                    }"
+                  />
+                  <span class="text-sm" :class="{ 'font-semibold': (item as any)._state === 'active' }">
+                    {{ item.label }}
+                  </span>
+                </div>
+              </template>
+
+              <template #body="{ item }">
+                <!-- Future stage: empty -->
+                <div v-if="(item as any)._state === 'future'" class="px-3 py-2 text-xs text-muted/50 italic">
+                  Not yet reached
+                </div>
+
+                <!-- Active stage: running or output with signal -->
+                <div v-else-if="(item as any)._state === 'active'" class="px-3 py-2">
+                  <!-- Has output (signal set) -->
+                  <div v-if="(item as any)._hasOutput">
+                    <div
+                      class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
+                      :class="{
+                        'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': (item as any)._signal === 'red',
+                        'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200': (item as any)._signal === 'orange',
+                        'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-200': (item as any)._signal === 'green',
+                        'border-default bg-muted/30 text-default': !(item as any)._signal,
+                      }"
+                      v-html="renderMd((item as any)._output || '')"
+                    />
+
+                    <!-- Red state actions -->
+                    <div v-if="(item as any)._signal === 'red'" class="flex items-center gap-2 mt-3">
+                      <UButton
+                        icon="i-lucide-message-circle-question"
+                        label="Help me unblock"
+                        size="sm"
+                        color="warning"
+                        :loading="redispatching"
+                        @click="unblockItem(selectedItem!.id)"
+                      />
+                      <UButton
+                        icon="i-lucide-x"
+                        label="Reject"
+                        size="sm"
+                        variant="soft"
+                        color="red"
+                        @click="updateItem(selectedItem!.id, { status: 'done' })"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Still running (no output yet) -->
+                  <div v-else class="flex items-center gap-2 text-sm text-muted">
+                    <UIcon name="i-lucide-loader" class="size-4 animate-spin" />
+                    <span>Running...</span>
+                  </div>
+                </div>
+
+                <!-- Completed stage: show artifact output -->
+                <div v-else class="px-3 py-2">
+                  <div
+                    v-if="(item as any)._hasOutput"
+                    class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
+                    :class="{
+                      'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': (item as any)._signal === 'red',
+                      'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200': (item as any)._signal === 'orange',
+                      'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-200': (item as any)._signal === 'green',
+                      'border-default bg-muted/30 text-default': !(item as any)._signal,
+                    }"
+                    v-html="renderMd((item as any)._output || '')"
+                  />
+                  <p v-else class="text-xs text-muted/60 italic">No output recorded</p>
+                </div>
+              </template>
+            </UAccordion>
           </div>
 
           <!-- Retrospective -->
