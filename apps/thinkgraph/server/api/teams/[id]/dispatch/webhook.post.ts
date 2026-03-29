@@ -39,9 +39,22 @@ export default defineEventHandler(async (event) => {
   // Read current item state
   const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
 
+  // Helper to create action-log artifacts
+  function actionLog(action: string, detail: string) {
+    return { type: 'action-log' as const, action, detail, timestamp: new Date().toISOString(), actor: 'system' as const }
+  }
+
   // Use signal from callback body (forwarded by Pi worker) or fall back to DB
   const agentSignal = callbackSignal || currentState?.signal
   console.log(`[webhook] ${workItemId}: status=${status}, callbackSignal=${callbackSignal}, dbSignal=${currentState?.signal}, agentSignal=${agentSignal}`)
+
+  // Log signal change
+  if (callbackSignal && callbackSignal !== currentState?.signal) {
+    const existingArtifacts = Array.isArray(currentState?.artifacts) ? currentState.artifacts : []
+    await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+      artifacts: [...existingArtifacts, actionLog('signal-change', `Signal set to ${callbackSignal}`)],
+    }, { role: 'admin' })
+  }
 
   // Respect the agent's signal — don't let session completion override it
   if (status === 'done' && (agentSignal === 'orange' || agentSignal === 'red')) {
@@ -104,6 +117,13 @@ export default defineEventHandler(async (event) => {
         : null
 
       if (nextStage) {
+        // Log the stage advance
+        const [itemForLog] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+        const logArtifacts = Array.isArray(itemForLog?.artifacts) ? itemForLog.artifacts : []
+        await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+          artifacts: [...logArtifacts, actionLog('stage-advance', `${currentItem.stage} → ${nextStage}`)],
+        }, { role: 'admin' })
+
         try {
           if (nextStage === 'launcher') {
             // Launcher stage: wait for CI results, don't dispatch to Pi
