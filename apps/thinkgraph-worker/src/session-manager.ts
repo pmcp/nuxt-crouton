@@ -140,7 +140,7 @@ export class AgentSessionManager {
       const isPM = payload.collectionPath === 'thinkgraph-workitems'
       const tools = isPM
         ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
-          onSignal: (signal) => { earlySession.lastSignal = signal },
+          onSignal: (signal) => { console.log(`[session-manager] onSignal captured: ${signal} for ${payload.nodeId}`); earlySession.lastSignal = signal },
         })
         : createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
@@ -1396,6 +1396,7 @@ Use the \`create_node\` tool. Each node has three parts:
 
       // Forward the agent's signal directly — captured via onSignal callback
       // when the agent calls update_workitem. No extra HTTP read needed.
+      console.log(`[session-manager] sendCallback for ${session.nodeId}: lastSignal=${session.lastSignal}`)
       if (isPM && session.lastSignal) {
         body.signal = session.lastSignal
       }
