@@ -1,5 +1,3 @@
-import { thinkgraphDecisionsConfig } from '../layers/thinkgraph/collections/decisions/app/composables/useThinkgraphDecisions'
-
 import {thinkgraphChatConversationsConfig} from '../layers/thinkgraph/collections/chatconversations/app/composables/useThinkgraphChatConversations';
 
 import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTranslationsUi';
@@ -14,11 +12,8 @@ import {thinkgraphInjectRequestsConfig} from '../layers/thinkgraph/collections/i
 
 import {thinkgraphProjectsConfig} from '../layers/thinkgraph/collections/projects/app/composables/useThinkgraphProjects';
 
-import {thinkgraphWorkItemsConfig} from '../layers/thinkgraph/collections/workitems/app/composables/useThinkgraphWorkItems';
-
 export default defineAppConfig({
   croutonCollections: {
-    thinkgraphDecisions: thinkgraphDecisionsConfig,
     thinkgraphChatConversations: thinkgraphChatConversationsConfig,
     translationsUi: translationsUiConfig,
     thinkgraphGraphs: thinkgraphGraphsConfig,
@@ -26,7 +21,6 @@ export default defineAppConfig({
     thinkgraphNodes: thinkgraphNodesConfig,
     thinkgraphInjectRequests: thinkgraphInjectRequestsConfig,
     thinkgraphProjects: thinkgraphProjectsConfig,
-    thinkgraphWorkItems: thinkgraphWorkItemsConfig
   },
 
   croutonApps: {

@@ -13,14 +13,12 @@ export default defineNuxtConfig({
     ]
   },
   extends: [
-    './collections/decisions',
     './collections/chatconversations',
     './collections/graphs',
     './collections/canvases',
     './collections/nodes',
     './collections/injectrequests',
     './collections/projects',
-    './collections/workitems'
   ],
   i18n: {
     locales: [
