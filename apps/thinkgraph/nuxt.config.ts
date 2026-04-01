@@ -56,6 +56,12 @@ export default defineNuxtConfig({
 
   ogImage: { enabled: false },
 
+  vite: {
+    server: {
+      allowedHosts: ['.trycloudflare.com']
+    }
+  },
+
   // Cloudflare Pages deployment
   nitro: {
     alias: {
