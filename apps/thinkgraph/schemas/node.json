@@ -1,10 +1,10 @@
 {
-  "canvasId": {
+  "projectId": {
     "type": "string",
-    "refTarget": "canvases",
+    "refTarget": "projects",
     "meta": {
       "required": true,
-      "label": "Canvas",
+      "label": "Project",
       "area": "sidebar",
       "group": "structure"
     }
@@ -19,27 +19,24 @@
       "group": "structure"
     }
   },
-  "nodeType": {
+  "template": {
     "type": "string",
     "meta": {
-      "required": true,
-      "label": "Type",
-      "description": "epic | user_story | task | milestone | question | decision | remark | fork | send",
+      "label": "Template",
+      "default": "idea",
+      "description": "idea | research | task | feature | meta",
       "area": "sidebar",
       "group": "classification",
       "displayAs": "badge"
     }
   },
-  "status": {
-    "type": "string",
+  "steps": {
+    "type": "json",
     "meta": {
-      "required": true,
-      "default": "idle",
-      "label": "Status",
-      "description": "draft | idle | thinking | working | needs_attention | done | error",
+      "label": "Steps",
+      "description": "Configurable pipeline step sequence (JSON array of step names)",
       "area": "sidebar",
-      "group": "classification",
-      "displayAs": "badge"
+      "group": "pipeline"
     }
   },
   "title": {
@@ -51,11 +48,19 @@
       "area": "main"
     }
   },
+  "summary": {
+    "type": "string",
+    "meta": {
+      "label": "Summary",
+      "description": "AI-generated one-liner (~50 tokens) for context assembly",
+      "area": "main"
+    }
+  },
   "brief": {
     "type": "text",
     "meta": {
       "label": "Brief",
-      "description": "Input. What needs to happen here.",
+      "description": "Input: what needs to happen",
       "area": "main"
     }
   },
@@ -63,26 +68,91 @@
     "type": "text",
     "meta": {
       "label": "Output",
-      "description": "The handoff brief. Produced when node is done.",
+      "description": "Result: what was produced",
       "area": "main"
     }
   },
-  "handoffType": {
+  "status": {
     "type": "string",
     "meta": {
-      "label": "Handoff Type",
-      "description": "task | claude_code | human_review | child_nodes | send | close",
+      "required": true,
+      "default": "idle",
+      "label": "Status",
+      "description": "idle | draft | queued | active | working | waiting | blocked | done | error",
       "area": "sidebar",
-      "group": "handoff"
+      "group": "classification",
+      "displayAs": "badge"
     }
   },
-  "handoffMeta": {
-    "type": "json",
+  "assignee": {
+    "type": "string",
     "meta": {
-      "label": "Handoff Meta",
-      "description": "Worktree path, send target, assignee, etc.",
+      "label": "Assignee",
+      "default": "human",
+      "description": "pi | human | client",
       "area": "sidebar",
-      "group": "handoff"
+      "group": "routing",
+      "displayAs": "badge"
+    }
+  },
+  "provider": {
+    "type": "string",
+    "meta": {
+      "label": "Provider",
+      "description": "claude-code | codex | flux | openai | anthropic",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "stage": {
+    "type": "string",
+    "meta": {
+      "label": "Stage",
+      "description": "Current pipeline step being executed",
+      "area": "sidebar",
+      "group": "pipeline",
+      "displayAs": "badge"
+    }
+  },
+  "signal": {
+    "type": "string",
+    "meta": {
+      "label": "Signal",
+      "description": "green | orange | red",
+      "area": "sidebar",
+      "group": "pipeline",
+      "displayAs": "badge"
+    }
+  },
+  "starred": {
+    "type": "boolean",
+    "meta": {
+      "default": false,
+      "label": "Starred",
+      "description": "Marked as important — always included in context",
+      "area": "sidebar",
+      "group": "classification"
+    }
+  },
+  "pinned": {
+    "type": "boolean",
+    "meta": {
+      "default": false,
+      "label": "Pinned",
+      "description": "Always include full content in AI context",
+      "area": "sidebar",
+      "group": "classification"
+    }
+  },
+  "origin": {
+    "type": "string",
+    "meta": {
+      "label": "Origin",
+      "default": "human",
+      "description": "human | ai | mcp | notion",
+      "area": "sidebar",
+      "group": "provenance",
+      "displayAs": "badge"
     }
   },
   "contextScope": {
@@ -95,104 +165,58 @@
       "group": "context"
     }
   },
-  "contextNodeIds": {
-    "type": "json",
-    "meta": {
-      "label": "Manual Context Nodes",
-      "description": "Node IDs for contextScope: manual",
-      "area": "sidebar",
-      "group": "context"
-    }
-  },
-  "notionTaskId": {
-    "type": "string",
-    "meta": {
-      "label": "Notion Task ID",
-      "description": "Set when task is written to Notion",
-      "area": "sidebar",
-      "group": "notion"
-    }
-  },
   "worktree": {
     "type": "string",
     "meta": {
       "label": "Worktree",
-      "description": "Git worktree branch for task/fork nodes",
+      "description": "Git worktree branch for this node's work",
       "area": "sidebar",
       "group": "execution"
     }
   },
-  "sendTarget": {
+  "deployUrl": {
     "type": "string",
     "meta": {
-      "label": "Send Target",
-      "description": "claude | gpt | gemini | flux | human:{userId}",
+      "label": "Preview URL",
+      "description": "Deployed preview for this work",
       "area": "sidebar",
       "group": "execution"
     }
   },
-  "sendMode": {
+  "skill": {
     "type": "string",
     "meta": {
-      "label": "Send Mode",
-      "description": "block | async | fire_and_forget",
+      "label": "Skill",
+      "description": "Which crouton skill to run",
+      "area": "sidebar",
+      "group": "routing"
+    }
+  },
+  "sessionId": {
+    "type": "string",
+    "meta": {
+      "label": "Session ID",
+      "description": "External session/job ID",
       "area": "sidebar",
       "group": "execution"
     }
   },
-  "injectMode": {
-    "type": "string",
+  "retrospective": {
+    "type": "text",
     "meta": {
-      "label": "Inject Mode",
-      "default": "queue",
-      "description": "direct | queue | fork",
-      "area": "sidebar",
-      "group": "collaboration"
+      "label": "Retrospective",
+      "description": "Agent reflection on this session",
+      "area": "main",
+      "group": "output"
     }
   },
-  "origin": {
-    "type": "string",
+  "artifacts": {
+    "type": "json",
     "meta": {
-      "label": "Origin",
-      "description": "human | ai | notion_sync",
+      "label": "Artifacts",
+      "description": "References to outputs — PR URLs, deploy URLs, screenshots, generated files",
       "area": "sidebar",
-      "group": "provenance",
-      "displayAs": "badge"
-    }
-  },
-  "stepIndex": {
-    "type": "integer",
-    "meta": {
-      "label": "Step",
-      "description": "Creation order within canvas",
-      "area": "sidebar",
-      "group": "structure"
-    }
-  },
-  "skillVersion": {
-    "type": "string",
-    "meta": {
-      "label": "Skill Version",
-      "description": "Which skill version ran on this node",
-      "area": "sidebar",
-      "group": "provenance"
-    }
-  },
-  "tokenCount": {
-    "type": "integer",
-    "meta": {
-      "label": "Token Count",
-      "description": "Total tokens consumed by this node",
-      "area": "sidebar",
-      "group": "cost"
-    }
-  },
-  "userId": {
-    "type": "string",
-    "meta": {
-      "label": "Created By",
-      "area": "sidebar",
-      "group": "provenance"
+      "group": "output"
     }
   }
 }
