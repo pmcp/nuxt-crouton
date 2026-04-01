@@ -18,18 +18,14 @@ const props = withDefaults(defineProps<Props>(), {
   collection: ''
 })
 
+// Support both canvas and project view actions
 const canvasActions = inject<{
   openCreate: (template: string, parentId?: string) => void
   openDetail: (nodeId: string) => void
-  openPathType: (parentId?: string) => void
   openTerminal: (nodeId: string) => void
-  setStatus: (nodeId: string, status: string) => Promise<void>
-  deleteNode: (nodeId: string) => Promise<void>
-  copyContext: (nodeId: string) => Promise<void>
   openContextMenu: (nodeId: string, event: MouseEvent) => void
 } | null>('canvasActions', null)
 
-// Also support project view actions (injected from project page)
 const projectActions = inject<{
   openDetail: (id: string) => void
   addChild: (parentId: string) => void
@@ -38,17 +34,17 @@ const projectActions = inject<{
 } | null>('projectActions', null)
 
 const isHovered = ref(false)
-
 const node = computed(() => props.data as unknown as ThinkgraphNode)
 
 const templateStyle = computed(() => getTemplateConfig(node.value.template || 'idea'))
-const templateBadge = computed(() => getTemplateBadge(node.value.template || 'idea'))
 const statusConfig = computed(() => STATUS_CONFIG[node.value.status] || STATUS_CONFIG.idle)
 
-const isDraft = computed(() => node.value.status === 'draft')
-const isDone = computed(() => node.value.status === 'done')
-const isWorking = computed(() => node.value.status === 'working' || node.value.status === 'active')
-const isThinking = computed(() => node.value.status === 'thinking')
+const ASSIGNEE_CONFIG: Record<string, { icon: string; label: string }> = {
+  pi: { icon: 'i-lucide-bot', label: 'Pi' },
+  human: { icon: 'i-lucide-user', label: 'You' },
+  client: { icon: 'i-lucide-users', label: 'Client' },
+  ci: { icon: 'i-lucide-git-branch', label: 'CI' },
+}
 
 // Pipeline — adapts to whatever steps the node has
 const nodeSteps = computed(() => {
@@ -58,6 +54,8 @@ const nodeSteps = computed(() => {
 const hasPipeline = computed(() => nodeSteps.value.length > 0)
 const currentStage = computed(() => node.value.stage || null)
 const currentSignal = computed(() => node.value.signal || null)
+const isWorking = computed(() => node.value.status === 'active' || node.value.status === 'working')
+const isDone = computed(() => node.value.status === 'done')
 
 const pipelineDots = computed(() => {
   const steps = nodeSteps.value
@@ -82,33 +80,43 @@ const pipelineDots = computed(() => {
   })
 })
 
+const assigneeConfig = computed(() => {
+  const a = node.value.assignee || 'human'
+  return ASSIGNEE_CONFIG[a] || ASSIGNEE_CONFIG.human
+})
+
 const displayTitle = computed(() => {
   const title = node.value.title || ''
   return title.length > 60 ? title.slice(0, 57) + '...' : title
 })
 
-const hasOutput = computed(() => !!node.value.output)
-const hasBrief = computed(() => !!node.value.brief)
-const hasWorktree = computed(() => !!node.value.worktree)
+// Glanceable tags
+const arts = computed(() => {
+  const a = node.value.artifacts
+  return Array.isArray(a) ? a : []
+})
+const hasPR = computed(() => arts.value.some((a: any) => a?.type === 'pr'))
+const ciStatus = computed(() => (arts.value.find((a: any) => a?.type === 'ci') as any)?.status || null)
+const isWaitingHuman = computed(() => node.value.status === 'waiting' && node.value.assignee === 'human')
 
-// Depth-based left accent color
-const DEPTH_COLORS = ['#f43f5e', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899']
-const depthAccent = computed(() => {
-  const depth = (node.value as any).depth ?? 0
-  return DEPTH_COLORS[depth % DEPTH_COLORS.length]
+const tags = computed(() => {
+  const t: Array<{ emoji: string; title: string }> = []
+  if (hasPR.value) t.push({ emoji: '\u{1F500}', title: 'Has PR' })
+  if (node.value.worktree) t.push({ emoji: '\u{1F527}', title: 'Worktree set' })
+  if (ciStatus.value === 'pass') t.push({ emoji: '\u2705', title: 'CI passed' })
+  if (ciStatus.value === 'fail') t.push({ emoji: '\u274C', title: 'CI failed' })
+  if (isWaitingHuman.value) t.push({ emoji: '\u{1F440}', title: 'Waiting for you' })
+  if (node.value.starred) t.push({ emoji: '\u2B50', title: 'Starred' })
+  return t
 })
 
-const originIcon = computed(() => {
-  switch (node.value.origin) {
-    case 'ai': return 'i-lucide-sparkles'
-    case 'human': return 'i-lucide-user'
-    case 'mcp': return 'i-lucide-plug'
-    case 'notion': return 'i-lucide-arrow-down-circle'
-    default: return null
-  }
-})
+// Touch device detection
+const isTouchDevice = ref(false)
+if (import.meta.client) {
+  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+}
 
-function handleEdit(event: Event) {
+function handleDetail(event: Event) {
   event.stopPropagation()
   if (node.value.id) {
     canvasActions?.openDetail(node.value.id)
@@ -124,6 +132,11 @@ function handleAddChild(event: Event) {
   }
 }
 
+function handleDispatch(event: Event) {
+  event.stopPropagation()
+  if (node.value.id) projectActions?.dispatch(node.value.id)
+}
+
 function handleContextMenu(event: MouseEvent | Event) {
   event.preventDefault()
   event.stopPropagation()
@@ -135,77 +148,36 @@ function handleContextMenu(event: MouseEvent | Event) {
     canvasActions.openContextMenu(node.value.id, mouseEvent)
   }
 }
-
-function handleDispatch(event: Event) {
-  event.stopPropagation()
-  if (node.value.id) projectActions?.dispatch(node.value.id)
-}
-
-// Touch device detection for always-visible action buttons
-const isTouchDevice = ref(false)
-if (import.meta.client) {
-  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-}
 </script>
 
 <template>
   <div
-    class="work-node group"
+    class="node-card group"
     :class="[
-      {
-        'work-node--selected': selected,
-        'work-node--dragging': dragging,
-      },
+      `node-card--${node.template || 'idea'}`,
+      { 'node-card--selected': selected, 'node-card--dragging': dragging, 'node-card--done': isDone },
       statusConfig.class,
     ]"
-    :style="{ borderLeftColor: depthAccent, borderLeftWidth: '3px' }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="handleContextMenu"
   >
-    <Handle type="target" :position="Position.Top" class="work-handle" />
+    <Handle type="target" :position="Position.Top" class="node-handle" />
 
-    <!-- Header: template badge + status + origin -->
-    <div class="flex items-center gap-1.5 mb-1.5">
-      <span
-        class="text-[10px] font-medium px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5"
-        :class="templateBadge"
-      >
-        <UIcon :name="templateStyle.icon" class="size-3" />
-        {{ node.template || 'idea' }}
-      </span>
-
-      <span v-if="statusConfig.icon" class="inline-flex items-center">
-        <UIcon
-          :name="statusConfig.icon"
-          class="size-3.5"
-          :class="{
-            'text-neutral-400 dark:text-neutral-500': node.status === 'draft',
-            'text-blue-400 animate-pulse': node.status === 'thinking',
-            'text-primary-500 animate-spin': isWorking,
-            'text-orange-500': node.status === 'needs_attention' || node.status === 'waiting',
-            'text-green-500': node.status === 'done',
-            'text-red-500': node.status === 'error',
-          }"
-        />
-      </span>
-
+    <!-- Header: status + assignee -->
+    <div class="flex items-center gap-1 mb-1 opacity-70">
+      <UIcon :name="templateStyle.icon" class="size-3" />
       <UIcon
-        v-if="originIcon"
-        :name="originIcon"
-        class="size-3 ml-auto"
-        :class="{
-          'text-violet-400': node.origin === 'ai',
-          'text-blue-400': node.origin === 'human',
-          'text-neutral-400': node.origin === 'notion' || node.origin === 'mcp',
-        }"
+        :name="statusConfig.icon || 'i-lucide-circle'"
+        class="size-3"
+        :class="{ 'animate-spin': isWorking }"
       />
-
-      <!-- Starred indicator -->
-      <span v-if="node.starred" class="text-[10px] ml-auto">&#x2B50;</span>
+      <span class="ml-auto">
+        <UIcon :name="assigneeConfig.icon" class="size-3" />
+      </span>
     </div>
 
-    <!-- Pipeline LEDs — adapts to node's step count -->
+    <!-- Pipeline LEDs — adapts to node's step count (1 dot, 3 dots, 5 dots) -->
     <div v-if="hasPipeline" class="led-strip">
       <div
         v-for="dot in pipelineDots"
@@ -217,58 +189,33 @@ if (import.meta.client) {
     </div>
 
     <!-- Title -->
-    <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-snug">
+    <p class="text-xs font-medium leading-snug">
       {{ displayTitle }}
     </p>
 
-    <!-- Brief preview (when no output yet) -->
-    <p
-      v-if="hasBrief && !hasOutput"
-      class="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2"
-    >
-      {{ node.brief }}
-    </p>
-
-    <!-- Bottom indicators -->
-    <div class="mt-2 flex items-center gap-1.5 flex-wrap">
-      <span v-if="hasWorktree" class="inline-flex items-center gap-0.5 text-[10px] text-teal-500">
-        <UIcon name="i-lucide-git-branch" class="size-3" />
-        worktree
-      </span>
-      <span v-if="hasOutput" class="inline-flex items-center gap-0.5 text-[10px] text-green-500">
-        <UIcon name="i-lucide-file-check" class="size-3" />
-        output
-      </span>
-      <span v-if="node.assignee && node.assignee !== 'human'" class="inline-flex items-center gap-0.5 text-[10px] text-neutral-400 ml-auto">
-        <UIcon name="i-lucide-bot" class="size-3" />
-        {{ node.assignee }}
-      </span>
+    <!-- Glanceable tags -->
+    <div v-if="tags.length" class="flex items-center gap-0.5 mt-1">
+      <span
+        v-for="tag in tags"
+        :key="tag.emoji"
+        :title="tag.title"
+        class="text-[10px] leading-none select-none cursor-default"
+      >{{ tag.emoji }}</span>
     </div>
 
-    <!-- Progress bar for working status -->
+    <!-- Progress bar (active only) -->
     <div
-      v-if="isWorking || isThinking"
-      class="mt-2 h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
+      v-if="isWorking"
+      class="mt-1.5 h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
     >
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
 
-    <!-- Terminal indicator -->
-    <button
-      v-if="(isWorking || isThinking) && (canvasActions || projectActions)"
-      class="mt-1.5 inline-flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 cursor-pointer transition-colors"
-      title="Watch terminal"
-      @click.stop="(canvasActions || projectActions)?.openTerminal(node.id)"
-    >
-      <UIcon name="i-lucide-terminal" class="size-3 animate-pulse" />
-      <span>terminal</span>
-    </button>
-
     <!-- Dispatch button — only for nodes with pipeline steps -->
     <button
       v-if="hasPipeline && projectActions"
-      class="work-node__dispatch"
-      :class="{ 'work-node__dispatch--disabled': isWorking || isDone }"
+      class="node-card__dispatch"
+      :class="{ 'node-card__dispatch--disabled': isWorking || isDone }"
       :disabled="isWorking || isDone"
       title="Dispatch work"
       @click.stop="handleDispatch"
@@ -276,103 +223,178 @@ if (import.meta.client) {
       <UIcon name="i-lucide-send" class="size-3" />
     </button>
 
-    <!-- Node actions (hover on desktop, always visible on touch) -->
-    <div class="work-node__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
-      <button class="work-node__action" title="Add child" @click.stop="handleAddChild">
+    <!-- Secondary actions (hover) -->
+    <div class="node-card__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
+      <button class="node-card__action" title="Add child" @click.stop="handleAddChild">
         <UIcon name="i-lucide-plus" class="size-3.5" />
       </button>
-      <button class="work-node__action" title="Open detail" @click.stop="handleEdit">
+      <button class="node-card__action" title="Open detail" @click.stop="handleDetail">
         <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
       </button>
-      <button v-if="canvasActions" class="work-node__action" title="More actions" @click.stop="handleContextMenu">
+      <button v-if="canvasActions" class="node-card__action" title="More" @click.stop="handleContextMenu">
         <UIcon name="i-lucide-ellipsis" class="size-3.5" />
       </button>
     </div>
 
-    <Handle type="source" :position="Position.Bottom" class="work-handle" />
+    <Handle type="source" :position="Position.Bottom" class="node-handle" />
   </div>
 </template>
 
 <style scoped>
 @reference "tailwindcss";
 
-.work-node {
-  @apply px-3 py-2.5 rounded-lg border bg-white dark:bg-neutral-900;
-  @apply border-neutral-200 dark:border-neutral-700;
-  @apply shadow-sm transition-all duration-150;
-  @apply min-w-[180px] max-w-[260px];
+.node-card {
+  @apply px-3 py-2.5 rounded-md transition-all duration-150;
+  @apply min-w-[160px] max-w-[220px];
   @apply relative;
+  @apply border-0 shadow-none;
 }
 
-.work-node--selected {
-  @apply ring-2;
-  border-color: var(--color-primary-500);
-  --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+/* Post-it colors per template */
+.node-card--idea { background: #f3e8ff; color: #581c87; }
+.node-card--research { background: #dbeafe; color: #1e3a5f; }
+.node-card--task { background: #fef3c7; color: #78350f; }
+.node-card--feature { background: #cffafe; color: #164e63; }
+.node-card--meta { background: #ffe4e6; color: #881337; }
+
+:root.dark .node-card--idea { background: #3b0764; color: #e9d5ff; }
+:root.dark .node-card--research { background: #1e3a5f; color: #bfdbfe; }
+:root.dark .node-card--task { background: #451a03; color: #fde68a; }
+:root.dark .node-card--feature { background: #164e63; color: #a5f3fc; }
+:root.dark .node-card--meta { background: #4c0519; color: #fecdd3; }
+
+.node-card--selected {
+  @apply ring-2 ring-offset-1;
+  --tw-ring-color: var(--color-primary-500);
 }
 
-.work-node--dragging { @apply shadow-lg scale-105 cursor-grabbing; }
-.work-node--draft { @apply border-dashed opacity-75; }
-.work-node--done { @apply border-green-300 dark:border-green-700; }
-.work-node--queued { @apply opacity-70; }
-.work-node--thinking { animation: pulse-slow 2s ease-in-out infinite; }
+.node-card--dragging {
+  @apply shadow-lg scale-105 cursor-grabbing;
+}
+
+.node-card--done {
+  @apply opacity-70 scale-95;
+}
+
+/* Status-based animations */
 .work-node--working {
-  animation: pulse-work 1.5s ease-in-out infinite;
-  border-color: var(--color-primary-400);
+  animation: pulse-node 2s ease-in-out infinite;
+  @apply shadow-md scale-105;
 }
-.work-node--blocked { @apply border-neutral-400 dark:border-neutral-500 opacity-80; }
-.work-node--attention { animation: glow-attention 2s ease-in-out infinite; }
+
+.work-node--attention {
+  @apply shadow-sm;
+  outline: 2px dashed rgba(251, 146, 60, 0.6);
+  outline-offset: 2px;
+}
+
+.work-node--blocked {
+  @apply opacity-40;
+  background: #fecaca !important;
+  color: #7f1d1d !important;
+  text-decoration: line-through;
+}
+
+:root.dark .work-node--blocked {
+  background: #450a0a !important;
+  color: #fca5a5 !important;
+}
+
+.work-node--queued {
+  @apply opacity-70;
+}
+
 .work-node--error {
   animation: pulse-error 1.5s ease-in-out infinite;
-  @apply border-red-400 dark:border-red-600;
 }
 
-@keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-@keyframes pulse-work {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary-500) 30%, transparent); }
-  50% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-primary-500) 15%, transparent); }
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(99, 102, 241, 0.15); }
 }
-@keyframes glow-attention {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0); }
-  50% { box-shadow: 0 0 12px 2px rgba(251, 146, 60, 0.3); }
-}
+
 @keyframes pulse-error {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
   50% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.2); }
 }
+
 @keyframes progress {
   0% { width: 0%; margin-left: 0; }
   50% { width: 60%; margin-left: 20%; }
   100% { width: 0%; margin-left: 100%; }
 }
 
-.animate-progress { animation: progress 2s ease-in-out infinite; }
+.animate-progress {
+  animation: progress 2s ease-in-out infinite;
+}
 
 /* LED strip — physical device aesthetic */
-.led-strip { @apply flex items-center gap-1.5 mb-1; }
+.led-strip {
+  @apply flex items-center gap-1.5 mb-1;
+}
+
 .led {
-  @apply size-2 rounded-full transition-all duration-500;
+  @apply size-2 rounded-full;
+  @apply transition-all duration-500;
+  /* Recessed bezel — looks like a physical LED housing */
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0.5px 0 rgba(255,255,255,0.1);
 }
+
 .led--pending { background: rgba(0,0,0,0.2); }
-.led--current { background: rgba(255,255,255,0.15); }
-.led--done { background: #10b981; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981; }
-.led--working { background: #10b981; animation: led-pulse 1.5s ease-in-out infinite; }
-.led--green { background: #10b981; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981; }
-.led--orange { background: #f59e0b; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #f59e0b; }
-.led--red { background: #ef4444; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #ef4444; }
+
+.led--current {
+  background: rgba(255,255,255,0.15);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(255,255,255,0.1);
+}
+
+.led--done {
+  background: #10b981;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4);
+}
+
+.led--working {
+  background: #10b981;
+  animation: led-pulse 1.5s ease-in-out infinite;
+}
+
+.led--green {
+  background: #10b981;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4);
+}
+
+.led--orange {
+  background: #f59e0b;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #f59e0b, 0 0 8px rgba(245,158,11,0.4);
+}
+
+.led--red {
+  background: #ef4444;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,0.4);
+}
 
 @keyframes led-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 6px #10b981; }
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(16,185,129,0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 6px #10b981, 0 0 12px rgba(16,185,129,0.5);
+  }
 }
 
-.work-handle {
-  @apply w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-500;
-  @apply border border-white dark:border-neutral-800 transition-colors;
+.node-handle {
+  @apply w-2 h-2 rounded-full;
+  @apply bg-neutral-400/50;
+  @apply border border-white/50 dark:border-neutral-800/50;
+  @apply transition-colors;
 }
-.work-handle:hover { background-color: var(--color-primary-500); }
 
-.work-node__dispatch {
+.node-handle:hover {
+  background-color: var(--color-primary-500);
+}
+
+.node-card__dispatch {
   @apply absolute -bottom-2 -right-2 z-10;
   @apply w-5 h-5 rounded-full flex items-center justify-center;
   @apply bg-white/90 dark:bg-neutral-700/90 backdrop-blur-sm;
@@ -380,15 +402,19 @@ if (import.meta.client) {
   @apply text-neutral-400 hover:scale-110;
   &:hover { color: var(--color-primary-500); }
 }
-.work-node__dispatch--disabled {
+
+.node-card__dispatch--disabled {
   @apply opacity-30 cursor-not-allowed;
   &:hover { transform: none; color: inherit; }
 }
 
-.work-node__actions { @apply absolute -top-2 -right-2 flex gap-1 z-10; }
-.work-node__action {
-  @apply w-6 h-6 rounded-full flex items-center justify-center;
-  @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600;
+.node-card__actions {
+  @apply absolute -top-2 -right-2 flex gap-1 z-10;
+}
+
+.node-card__action {
+  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm;
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-500 hover:scale-110;
   &:hover { color: var(--color-primary-500); }

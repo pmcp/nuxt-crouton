@@ -23,7 +23,7 @@ export async function getAllThinkgraphCanvases(teamId: string) {
     .from(tables.thinkgraphCanvases)
     .leftJoin(ownerUser, eq(tables.thinkgraphCanvases.owner, ownerUser.id))
     .where(eq(tables.thinkgraphCanvases.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphCanvases.createdAt))
+    .orderBy(desc(tables.thinkgraphCanvases.order))
 
   return canvases
 }
@@ -51,7 +51,7 @@ export async function getThinkgraphCanvasesByIds(teamId: string, canvaseIds: str
         inArray(tables.thinkgraphCanvases.id, canvaseIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphCanvases.createdAt))
+    .orderBy(desc(tables.thinkgraphCanvases.order))
 
   return canvases
 }

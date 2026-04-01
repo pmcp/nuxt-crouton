@@ -3,10 +3,10 @@ import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/type
 import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
 
 // Explicitly register so CroutonFlow's resolveComponent() can find it
+// CroutonFlow: "thinkgraphNodes" → PascalCase "ThinkgraphNodes" + "Node" → "ThinkgraphNodesNode"
 const app = useNuxtApp().vueApp
-// CroutonFlow resolves collection "nodes" → PascalCase "NodesNode"
-if (!app.component('NodesNode')) {
-  app.component('NodesNode', ThinkgraphNodesNodeComponent)
+if (!app.component('ThinkgraphNodesNode')) {
+  app.component('ThinkgraphNodesNode', ThinkgraphNodesNodeComponent)
 }
 definePageMeta({ layout: 'admin' })
 
@@ -1049,14 +1049,14 @@ if (import.meta.client) {
             <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
           </div>
 
-          <!-- Type & Status -->
+          <!-- Template & Status -->
           <div class="grid grid-cols-2 gap-3 mb-6">
-            <UFormField label="Type">
+            <UFormField label="Template">
               <USelectMenu
-                :model-value="selectedItem.type"
+                :model-value="selectedItem.template || 'idea'"
                 :items="NODE_TEMPLATES.map(t => t.value)"
                 class="w-full"
-                @update:model-value="(v: string) => updateItem(selectedItem!.id, { type: v })"
+                @update:model-value="(v: string) => updateItem(selectedItem!.id, { template: v, steps: TEMPLATE_STEPS[v] || [] })"
               />
             </UFormField>
             <UFormField label="Status">
@@ -1312,15 +1312,15 @@ if (import.meta.client) {
     <UModal v-model:open="showCreate">
       <template #content="{ close }">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">New Work Item</h3>
+          <h3 class="text-lg font-semibold mb-4">New Node</h3>
           <div class="flex flex-col gap-4">
             <UFormField label="Title" required>
               <UInput v-model="createTitle" placeholder="e.g. Design blog collection schema" class="w-full" />
             </UFormField>
             <div class="grid grid-cols-2 gap-3">
-              <UFormField label="Type">
+              <UFormField label="Template">
                 <USelectMenu
-                  v-model="createType"
+                  v-model="createTemplate"
                   :items="NODE_TEMPLATES.map(t => t.value)"
                   class="w-full"
                 />

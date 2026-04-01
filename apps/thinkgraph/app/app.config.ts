@@ -33,11 +33,6 @@ export default defineAppConfig({
           path: '/projects',
           label: 'Projects',
           icon: 'i-lucide-folder-kanban'
-        },
-        {
-          path: '/canvases',
-          label: 'Canvases',
-          icon: 'i-lucide-layout-dashboard'
         }
       ],
       dashboardRoutes: [],
