@@ -46,6 +46,7 @@ export default defineNuxtConfig({
     },
     public: {
       collabWorkerUrl: process.env.NUXT_PUBLIC_COLLAB_WORKER_URL || '',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
     },
   },
 

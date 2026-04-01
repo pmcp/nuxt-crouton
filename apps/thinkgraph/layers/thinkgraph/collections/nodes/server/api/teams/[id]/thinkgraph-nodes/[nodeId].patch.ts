@@ -13,13 +13,13 @@ const bodySchema = z.object({
   summary: z.string().optional(),
   status: z.string().optional(),
   brief: z.string().optional(),
-  output: z.string().optional(),
-  retrospective: z.string().optional(),
+  output: z.string().nullable().optional(),
+  retrospective: z.string().nullable().optional(),
   assignee: z.string().optional(),
   provider: z.string().optional(),
   skill: z.string().optional(),
   sessionId: z.string().optional(),
-  stage: z.string().optional(),
+  stage: z.string().nullable().optional(),
   signal: z.string().nullable().optional(),
   starred: z.boolean().optional(),
   pinned: z.boolean().optional(),
@@ -50,6 +50,10 @@ export default defineEventHandler(async (event) => {
     if (value !== undefined) {
       updates[key] = value
     }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { ok: true, noChanges: true }
   }
 
   const dbTimer = timing.start('db')
