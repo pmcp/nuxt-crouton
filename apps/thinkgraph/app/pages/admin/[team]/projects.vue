@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
+import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 
 definePageMeta({ layout: 'admin' })
 
@@ -9,14 +9,14 @@ const { items: projects, pending: loading, refresh } = await useCollectionQuery(
 const { create } = useCollectionMutation('thinkgraphProjects')
 
 // Fetch all work items for status counts
-const { data: workItems } = await useFetch<ThinkgraphWorkItem[]>(
-  () => `/api/teams/${teamId.value}/thinkgraph-workitems`,
+const { data: nodes } = await useFetch<ThinkgraphNode[]>(
+  () => `/api/teams/${teamId.value}/thinkgraph-nodes`,
 )
 
 // Group status counts by projectId
 const statusCountsByProject = computed(() => {
   const map: Record<string, Record<string, number>> = {}
-  for (const item of workItems.value || []) {
+  for (const item of nodes.value || []) {
     if (!item.projectId) continue
     if (!map[item.projectId]) map[item.projectId] = {}
     map[item.projectId][item.status] = (map[item.projectId][item.status] || 0) + 1

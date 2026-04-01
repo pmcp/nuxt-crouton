@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ThinkgraphDecision } from '../../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../../layers/thinkgraph/collections/nodes/types'
 
 definePageMeta({ layout: 'admin' })
 
@@ -40,7 +40,7 @@ async function handleCreate() {
 }
 
 // ─── Decisions for selected graph ───
-const decisions = ref<ThinkgraphDecision[]>([])
+const decisions = ref<ThinkgraphNode[]>([])
 const decisionsLoading = ref(false)
 
 async function refreshDecisions() {
@@ -50,7 +50,7 @@ async function refreshDecisions() {
   }
   decisionsLoading.value = true
   try {
-    const result = await $fetch<ThinkgraphDecision[]>(`/api/teams/${teamId.value}/thinkgraph-decisions`, {
+    const result = await $fetch<ThinkgraphNode[]>(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       query: { graphId: selectedGraphId.value },
     })
     decisions.value = result || []
@@ -61,12 +61,12 @@ async function refreshDecisions() {
   }
 }
 
-// Auto-refresh when any thinkgraphDecisions mutation happens (local or remote)
+// Auto-refresh when any thinkgraphNodes mutation happens (local or remote)
 nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
-  if (collection === 'thinkgraphDecisions') refreshDecisions()
+  if (collection === 'thinkgraphNodes') refreshDecisions()
 })
 nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
-  if (collection === 'thinkgraphDecisions') refreshDecisions()
+  if (collection === 'thinkgraphNodes') refreshDecisions()
 })
 
 // ─── Graph change watcher ───

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
-import ThinkgraphWorkitemsNodeComponent from '~/components/ThinkgraphWorkitemsNode.vue'
+import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
+import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
 
 // Explicitly register so CroutonFlow's resolveComponent() can find it
 const app = useNuxtApp().vueApp
-// CroutonFlow resolves collection "workItems" → PascalCase "WorkItemsNode"
-if (!app.component('WorkItemsNode')) {
-  app.component('WorkItemsNode', ThinkgraphWorkitemsNodeComponent)
+// CroutonFlow resolves collection "nodes" → PascalCase "NodesNode"
+if (!app.component('NodesNode')) {
+  app.component('NodesNode', ThinkgraphNodesNodeComponent)
 }
 definePageMeta({ layout: 'admin' })
 
@@ -35,7 +35,7 @@ async function ensureFlowConfig() {
 
   try {
     const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
-      query: { collection: 'thinkgraphWorkItems', name: flowName },
+      query: { collection: 'thinkgraphNodes', name: flowName },
     })
     const existing = flows?.find((f: any) => f.name === flowName)
     if (existing) {
@@ -50,7 +50,7 @@ async function ensureFlowConfig() {
       method: 'POST',
       body: {
         name: flowName,
-        collection: 'thinkgraphWorkItems',
+        collection: 'thinkgraphNodes',
         labelField: 'title',
         parentField: 'parentId',
       },
@@ -62,7 +62,7 @@ async function ensureFlowConfig() {
 }
 
 // ─── Work items ───
-const items = ref<ThinkgraphWorkItem[]>([])
+const items = ref<ThinkgraphNode[]>([])
 const itemsLoading = ref(false)
 
 async function refreshItems() {
@@ -72,8 +72,8 @@ async function refreshItems() {
   }
   itemsLoading.value = true
   try {
-    const result = await $fetch<ThinkgraphWorkItem[]>(
-      `/api/teams/${teamId.value}/thinkgraph-workitems`,
+    const result = await $fetch<ThinkgraphNode[]>(
+      `/api/teams/${teamId.value}/thinkgraph-nodes`,
       { query: { projectId: projectId.value } },
     )
     items.value = result || []
@@ -92,10 +92,10 @@ onMounted(async () => {
 
 // Auto-refresh on mutations
 nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
-  if (collection === 'thinkgraphWorkItems') refreshItems()
+  if (collection === 'thinkgraphNodes') refreshItems()
 })
 nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
-  if (collection === 'thinkgraphWorkItems') refreshItems()
+  if (collection === 'thinkgraphNodes') refreshItems()
 })
 
 // Poll while any item is active (Pi agent working)
@@ -135,18 +135,25 @@ function closeDetail() {
 // ─── Create work item ───
 const showCreate = ref(false)
 const createTitle = ref('')
-const createType = ref('generate')
+const createTemplate = ref('task')
 const createParentId = ref<string | undefined>()
 const createPending = ref(false)
 
-const WORK_TYPES = [
-  { value: 'discover', label: 'Discover', icon: 'i-lucide-search' },
-  { value: 'architect', label: 'Architect', icon: 'i-lucide-pencil-ruler' },
-  { value: 'generate', label: 'Generate', icon: 'i-lucide-hammer' },
-  { value: 'compose', label: 'Compose', icon: 'i-lucide-layout' },
-  { value: 'review', label: 'Review', icon: 'i-lucide-eye' },
-  { value: 'deploy', label: 'Deploy', icon: 'i-lucide-rocket' },
+const NODE_TEMPLATES = [
+  { value: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb' },
+  { value: 'research', label: 'Research', icon: 'i-lucide-search' },
+  { value: 'task', label: 'Task', icon: 'i-lucide-hammer' },
+  { value: 'feature', label: 'Feature', icon: 'i-lucide-rocket' },
+  { value: 'meta', label: 'Meta', icon: 'i-lucide-brain-circuit' },
 ]
+
+const TEMPLATE_STEPS: Record<string, string[]> = {
+  idea: [],
+  research: ['analyse'],
+  task: ['analyst', 'builder', 'reviewer', 'merger'],
+  feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
+  meta: ['analyst', 'builder', 'reviewer', 'merger'],
+}
 
 const ASSIGNEES = [
   { value: 'pi', label: 'Pi.dev', icon: 'i-lucide-bot' },
@@ -157,11 +164,11 @@ const ASSIGNEES = [
 
 const createAssignee = ref('pi')
 
-function openCreate(type?: string, parentId?: string) {
-  createType.value = type || 'generate'
+function openCreate(template?: string, parentId?: string) {
+  createTemplate.value = template || 'task'
   createParentId.value = parentId
   createTitle.value = ''
-  createAssignee.value = type === 'review' ? 'human' : 'pi'
+  createAssignee.value = 'pi'
   showCreate.value = true
 }
 
@@ -169,17 +176,16 @@ async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
   createPending.value = true
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+    const steps = TEMPLATE_STEPS[createTemplate.value] || []
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       method: 'POST',
       body: {
         projectId: projectId.value,
         title: createTitle.value.trim(),
-        type: createType.value,
-        status: 'queued',
+        template: createTemplate.value,
+        steps,
+        status: steps.length > 0 ? 'queued' : 'idle',
         assignee: createAssignee.value,
-        skill: ['discover', 'architect', 'generate', 'compose'].includes(createType.value)
-          ? createType.value
-          : undefined,
         ...(createParentId.value ? { parentId: createParentId.value } : {}),
       },
     })
@@ -192,9 +198,9 @@ async function handleCreate() {
 }
 
 // ─── Update work item ───
-async function updateItem(id: string, data: Partial<ThinkgraphWorkItem>) {
+async function updateItem(id: string, data: Partial<ThinkgraphNode>) {
   if (!teamId.value) return
-  await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, {
     method: 'PATCH',
     body: data,
   })
@@ -221,7 +227,7 @@ async function confirmDelete() {
   if (!id || !teamId.value) return
   showDeleteConfirm.value = false
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, {
       method: 'DELETE',
     })
     if (selectedItemId.value === id) closeDetail()
@@ -255,7 +261,7 @@ async function onNodeDelete(nodeIds: string[]) {
       continue
     }
     try {
-      await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, {
         method: 'DELETE',
       })
     } catch { /* skip failed deletes */ }
@@ -274,19 +280,20 @@ function onConnectEnd(event: { sourceNodeId: string; position: { x: number; y: n
   showQuickCreate.value = true
 }
 
-async function handleQuickCreate(type: string) {
+async function handleQuickCreate(template: string) {
   if (!teamId.value || !quickCreateParentId.value) return
   showQuickCreate.value = false
+  const steps = TEMPLATE_STEPS[template] || []
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       method: 'POST',
       body: {
         projectId: projectId.value,
-        title: `New ${type}`,
-        type,
-        status: 'queued',
-        assignee: type === 'review' ? 'human' : 'pi',
-        skill: ['discover', 'architect', 'generate', 'compose'].includes(type) ? type : undefined,
+        title: `New ${template}`,
+        template,
+        steps,
+        status: steps.length > 0 ? 'queued' : 'idle',
+        assignee: 'pi',
         parentId: quickCreateParentId.value,
       },
     })
@@ -510,7 +517,8 @@ async function turnIntoBrief(id: string) {
   const item = items.value.find(n => n.id === id)
   if (!item) return
   await updateItem(id, {
-    type: 'compose',
+    template: 'task',
+    steps: TEMPLATE_STEPS.task,
     assignee: 'pi',
     status: 'queued',
     brief: `${item.title}\n\n${item.brief || ''}\n\nRewrite this learning into a concrete implementation. Identify the target file(s), describe the specific change, and implement it.`,
@@ -566,13 +574,12 @@ const STATUS_CONFIG_LIST: Record<string, { icon: string; class: string }> = {
   blocked: { icon: 'i-lucide-alert-circle', class: 'text-red-500' },
 }
 
-const TYPE_BADGE: Record<string, string> = {
-  discover: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-  architect: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  generate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  compose: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-  review: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  deploy: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+const TEMPLATE_BADGE: Record<string, string> = {
+  idea: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  research: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  task: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  feature: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  meta: 'bg-rose-100 text-rose-700 dark:bg-rose-100/30 dark:text-rose-400',
 }
 
 // ─── Kanban config ───
@@ -596,7 +603,7 @@ function onKanbanSelect(item: any) {
 
 // ─── New item dropdown ───
 const newItemOptions = computed(() => [
-  WORK_TYPES.map(t => ({
+  NODE_TEMPLATES.map(t => ({
     label: t.label,
     icon: t.icon,
     onSelect: () => openCreate(t.value),
@@ -649,7 +656,7 @@ function selectAll() {
 async function bulkUpdateStatus(status: string) {
   if (!teamId.value || selectedIds.value.size === 0) return
   const promises = [...selectedIds.value].map(id =>
-    $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, {
+    $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, {
       method: 'PATCH',
       body: { status },
     }),
@@ -668,17 +675,18 @@ async function bulkDelete() {
     return
   }
   const promises = ids.map(id =>
-    $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems/${id}`, { method: 'DELETE' }),
+    $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, { method: 'DELETE' }),
   )
   await Promise.all(promises)
   selectedIds.value = new Set()
   await refreshItems()
 }
 
-async function promoteToTask(id: string, type: string) {
+async function promoteToTask(id: string, template: string) {
   const item = items.value.find(i => i.id === id)
   if (!item || !teamId.value) return
-  await updateItem(id, { type, assignee: 'pi', status: 'queued' })
+  const steps = TEMPLATE_STEPS[template] || []
+  await updateItem(id, { template, steps, assignee: 'pi', status: 'queued' })
 }
 
 // ─── Flow ref for programmatic control ───
@@ -687,20 +695,22 @@ const flowRef = ref<any>(null)
 // ─── Assistant actions ───
 async function assistantCreateItem(data: { title: string; type: string; brief: string }) {
   if (!teamId.value) return
+  const template = data.type || 'task'
+  const steps = TEMPLATE_STEPS[template] || []
   try {
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-workitems`, {
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       method: 'POST',
       body: {
         projectId: projectId.value,
         title: data.title,
-        type: data.type,
-        status: 'queued',
+        template,
+        steps,
+        status: steps.length > 0 ? 'queued' : 'idle',
         assignee: 'pi',
         brief: data.brief,
-        skill: ['discover', 'architect', 'generate', 'compose'].includes(data.type) ? data.type : undefined,
       },
     })
-    toast.add({ title: 'Work item created', description: data.title, color: 'success' })
+    toast.add({ title: 'Node created', description: data.title, color: 'success' })
     await refreshItems()
   } catch (err: any) {
     toast.add({ title: 'Failed to create', description: err.message, color: 'error' })
@@ -900,7 +910,7 @@ if (import.meta.client) {
           :key="flowKey"
           ref="flowRef"
           :rows="items"
-          collection="thinkgraphWorkItems"
+          collection="thinkgraphNodes"
           parent-field="parentId"
           label-field="title"
           :flow-id="flowId || undefined"
@@ -919,7 +929,7 @@ if (import.meta.client) {
         >
           <p class="text-xs text-muted px-2 py-1 mb-1">Add connected node</p>
           <button
-            v-for="t in WORK_TYPES"
+            v-for="t in NODE_TEMPLATES"
             :key="t.value"
             class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 cursor-pointer"
             @click="handleQuickCreate(t.value)"
@@ -934,7 +944,7 @@ if (import.meta.client) {
       <div v-else-if="viewMode === 'kanban'" class="flex-1 overflow-hidden">
         <CroutonKanban
           :rows="items"
-          collection="thinkgraphWorkItems"
+          collection="thinkgraphNodes"
           group-field="status"
           :columns="kanbanColumns"
           :show-counts="true"
@@ -989,8 +999,8 @@ if (import.meta.client) {
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full" :class="TYPE_BADGE[item.type] || 'bg-neutral-100 text-neutral-600'">
-                  {{ item.type }}
+                <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full" :class="TEMPLATE_BADGE[item.template] || 'bg-neutral-100 text-neutral-600'">
+                  {{ item.template }}
                 </span>
                 <span class="text-sm font-medium truncate">{{ item.title }}</span>
               </div>
@@ -998,7 +1008,7 @@ if (import.meta.client) {
             </div>
             <span class="text-[10px] text-muted shrink-0 mt-1">{{ item.assignee || 'pi' }}</span>
             <UDropdownMenu
-              v-if="item.type === 'review' && item.assignee === 'human'"
+              v-if="item.template === 'research' && item.assignee === 'human'"
               :items="[[
                 { label: 'Promote to Architect', icon: 'i-lucide-pencil-ruler', onSelect: () => promoteToTask(item.id, 'architect') },
                 { label: 'Promote to Generate', icon: 'i-lucide-hammer', onSelect: () => promoteToTask(item.id, 'generate') },
@@ -1044,7 +1054,7 @@ if (import.meta.client) {
             <UFormField label="Type">
               <USelectMenu
                 :model-value="selectedItem.type"
-                :items="WORK_TYPES.map(t => t.value)"
+                :items="NODE_TEMPLATES.map(t => t.value)"
                 class="w-full"
                 @update:model-value="(v: string) => updateItem(selectedItem!.id, { type: v })"
               />
@@ -1311,7 +1321,7 @@ if (import.meta.client) {
               <UFormField label="Type">
                 <USelectMenu
                   v-model="createType"
-                  :items="WORK_TYPES.map(t => t.value)"
+                  :items="NODE_TEMPLATES.map(t => t.value)"
                   class="w-full"
                 />
               </UFormField>
