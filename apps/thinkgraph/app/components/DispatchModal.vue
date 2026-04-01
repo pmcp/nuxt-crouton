@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Artifact } from '../../layers/thinkgraph/collections/decisions/types'
+import type { Artifact } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface DispatchServiceInfo {
   id: string
@@ -43,7 +43,7 @@ const error = ref<string | null>(null)
 
 // Fetch available services (lazy — triggered when modal opens)
 const { data: services, execute: fetchServices } = useLazyFetch<DispatchServiceInfo[]>(
-  () => `/api/teams/${teamId.value}/thinkgraph-decisions/dispatch/services`,
+  () => `/api/teams/${teamId.value}/thinkgraph-nodes/dispatch/services`,
   { immediate: false, default: () => [] }
 )
 
@@ -116,7 +116,7 @@ async function dispatch() {
     if (isMulti.value) {
       // Multi-node dispatch
       response = await $fetch<any>(
-        `/api/teams/${teamId.value}/thinkgraph-decisions/dispatch-multi`,
+        `/api/teams/${teamId.value}/thinkgraph-nodes/dispatch-multi`,
         {
           method: 'POST',
           body: {
@@ -131,7 +131,7 @@ async function dispatch() {
     } else {
       // Single-node dispatch
       response = await $fetch<any>(
-        `/api/teams/${teamId.value}/thinkgraph-decisions/${props.decisionId}/dispatch`,
+        `/api/teams/${teamId.value}/thinkgraph-nodes/${props.decisionId}/dispatch`,
         {
           method: 'POST',
           body: {

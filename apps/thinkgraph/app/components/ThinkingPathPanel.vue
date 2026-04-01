@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface Props {
   nodeId: string | null
-  decisions: ThinkgraphDecision[]
+  decisions: ThinkgraphNode[]
   graphId: string | null
 }
 

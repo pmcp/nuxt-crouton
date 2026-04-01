@@ -24,7 +24,7 @@ const {
   exportMessages,
   importMessages,
 } = useChat({
-  api: `/api/teams/${teamId.value}/thinkgraph-decisions/chat`,
+  api: `/api/teams/${teamId.value}/thinkgraph-nodes/chat`,
   body: computed(() => ({
     nodeId: props.nodeId,
     graphId: graphId.value || '',

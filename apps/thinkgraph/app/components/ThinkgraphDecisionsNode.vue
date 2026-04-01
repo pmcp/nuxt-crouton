@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface Props {
   data: Record<string, unknown>
@@ -23,7 +23,7 @@ const { open } = useCrouton()
 const isHovered = ref(false)
 const showExpandMenu = ref(false)
 
-const decision = computed(() => props.data as unknown as ThinkgraphDecision)
+const decision = computed(() => props.data as unknown as ThinkgraphNode)
 const isExpanding = computed(() => ctx.expanding.value === decision.value.id)
 
 const isParked = computed(() => decision.value.versionTag === 'parked')
@@ -186,7 +186,7 @@ function togglePin(event: Event) {
           :name="nodeTypeStyle.icon"
           class="size-3"
         />
-        {{ decision.nodeType }}
+        {{ decision.template }}
       </span>
 
       <!-- Status indicator -->

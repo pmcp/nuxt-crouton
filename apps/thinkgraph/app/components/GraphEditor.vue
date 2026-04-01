@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import ThinkgraphDecisionsNode from '~/components/ThinkgraphDecisionsNode.vue'
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 import { CONNECT_NODE_TYPES } from '~/utils/thinkgraph-config'
 
 interface Props {
   graphId: string
   graphName: string
-  decisions: ThinkgraphDecision[]
+  decisions: ThinkgraphNode[]
   decisionsLoading: boolean
 }
 
@@ -28,7 +28,7 @@ if (!nuxtApp.vueApp.component('ThinkgraphDecisionsNode')) {
   nuxtApp.vueApp.component('ThinkgraphDecisionsNode', ThinkgraphDecisionsNode)
 }
 
-const { create, update, deleteItems } = useCollectionMutation('thinkgraphDecisions')
+const { create, update, deleteItems } = useCollectionMutation('thinkgraphNodes')
 const decisionsRef = computed(() => props.decisions)
 const graphIdRef = computed(() => props.graphId)
 
@@ -145,23 +145,23 @@ async function onDispatched() {
 }
 
 function addRootDecision() {
-  open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId })
+  open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId })
 }
 
 const newNodeItems = computed(() => [
   [
-    { label: 'Idea', icon: 'i-lucide-lightbulb', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'idea' }) },
-    { label: 'Question', icon: 'i-lucide-help-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'question' }) },
-    { label: 'Decision', icon: 'i-lucide-check-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'decision' }) },
+    { label: 'Idea', icon: 'i-lucide-lightbulb', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'idea' }) },
+    { label: 'Question', icon: 'i-lucide-help-circle', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'question' }) },
+    { label: 'Decision', icon: 'i-lucide-check-circle', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'decision' }) },
   ],
   [
-    { label: 'Epic', icon: 'i-lucide-mountain', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'epic' }) },
-    { label: 'User Story', icon: 'i-lucide-user', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'user_story' }) },
-    { label: 'Task', icon: 'i-lucide-square-check', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'task', status: 'draft' }) },
+    { label: 'Epic', icon: 'i-lucide-mountain', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'epic' }) },
+    { label: 'User Story', icon: 'i-lucide-user', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'user_story' }) },
+    { label: 'Task', icon: 'i-lucide-square-check', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'task', status: 'draft' }) },
   ],
   [
-    { label: 'Milestone', icon: 'i-lucide-flag', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'milestone' }) },
-    { label: 'Remark', icon: 'i-lucide-message-circle', onSelect: () => open('create', 'thinkgraphDecisions', [], undefined, { graphId: props.graphId, nodeType: 'remark' }) },
+    { label: 'Milestone', icon: 'i-lucide-flag', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'milestone' }) },
+    { label: 'Remark', icon: 'i-lucide-message-circle', onSelect: () => open('create', 'thinkgraphNodes', [], undefined, { graphId: props.graphId, nodeType: 'remark' }) },
   ],
 ])
 
@@ -169,7 +169,7 @@ const newNodeItems = computed(() => [
 const { showHelp, pause, resume } = useGraphShortcuts(selectedNodeId, selectedNodes, {
   toggleStar,
   togglePark,
-  addChild: (nodeId: string) => open('create', 'thinkgraphDecisions', [], undefined, { parentId: nodeId, graphId: props.graphId }),
+  addChild: (nodeId: string) => open('create', 'thinkgraphNodes', [], undefined, { parentId: nodeId, graphId: props.graphId }),
   openQuickAdd,
   openSearch: () => { showFilters.value = true },
   clearSelection,
@@ -359,7 +359,7 @@ function exportGraph() {
           v-if="decisions?.length && flowId"
           :key="layoutKey"
           :rows="visibleDecisions"
-          collection="thinkgraphDecisions"
+          collection="thinkgraphNodes"
           parent-field="parentId"
           label-field="content"
           :flow-id="flowId"
@@ -410,8 +410,8 @@ function exportGraph() {
         @open-chat="openChat"
         @expand="(id: string, mode?: string) => expandWithAI(id, mode)"
         @dispatch="openDispatch"
-        @edit="(id: string) => open('update', 'thinkgraphDecisions', [id])"
-        @add-child="(id: string) => open('create', 'thinkgraphDecisions', [], undefined, { parentId: id, graphId })"
+        @edit="(id: string) => open('update', 'thinkgraphNodes', [id])"
+        @add-child="(id: string) => open('create', 'thinkgraphNodes', [], undefined, { parentId: id, graphId })"
         @toggle-star="toggleStar"
         @delete-node="(id: string) => onNodeDelete([id])"
         @create-node="async (data: { content: string; nodeType: string; parentId: string }) => {

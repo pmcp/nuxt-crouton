@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface Props {
   nodeId: string
-  decisions: ThinkgraphDecision[]
+  decisions: ThinkgraphNode[]
 }
 
 const props = defineProps<Props>()
@@ -50,7 +50,7 @@ function getNodeTypeStyle(nodeType: string) {
   return getNodeTypeBadge(nodeType)
 }
 
-function getParentContent(node: ThinkgraphDecision): string {
+function getParentContent(node: ThinkgraphNode): string {
   if (!node.parentId) return 'root'
   const parent = getNodeById(node.parentId)
   return parent ? truncate(parent.content, 30) : 'unknown'
