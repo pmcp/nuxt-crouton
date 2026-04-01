@@ -179,7 +179,7 @@ async function main() {
           mode: 'rich' as const,
           callbackUrl: payload.callbackUrl || undefined,
           skill: payload.skill || undefined,
-          collectionPath: 'thinkgraph-workitems',
+          collectionPath: 'thinkgraph-nodes',
           teamId: payload.teamId || undefined,
           stage: payload.stage || undefined,
         }
