@@ -9,7 +9,7 @@ export default defineMcpTool({
   async handler({ teamId }) {
     try {
       const result = await $fetch<{ briefing: string; stats: Record<string, number> }>(
-        `/api/teams/${teamId}/thinkgraph-decisions/resume`,
+        `/api/teams/${teamId}/thinkgraph-nodes/resume`,
       )
 
       return {

@@ -1,62 +1,68 @@
 import { z } from 'zod'
-import { createThinkgraphDecision, getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { createThinkgraphNode, getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
-  description: 'Create a new node in the thinking graph. Supports thinking nodes (idea, insight, decision, question), planning nodes (epic, user_story, task), and execution nodes (milestone, remark, fork, send). Use search-graph first to find the right parent.',
+  description: 'Create a new node in ThinkGraph. Nodes have templates (idea, research, task, feature, meta) and optional pipeline steps. Use search-graph first to find the right parent.',
   inputSchema: {
     teamId: z.string().describe('Team ID or slug'),
-    graphId: z.string().describe('Graph ID this node belongs to'),
-    content: z.string().describe('Node content (the idea, decision, question, or insight)'),
-    nodeType: z.enum(['idea', 'insight', 'decision', 'question', 'epic', 'user_story', 'task', 'milestone', 'remark', 'fork', 'send']).default('idea').describe('Type of node'),
+    projectId: z.string().describe('Project ID this node belongs to'),
+    title: z.string().describe('Short post-it headline (5-10 words max)'),
+    template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).default('idea').describe('Node template'),
     parentId: z.string().optional().describe('Parent node ID (omit for root node)'),
     starred: z.boolean().optional().default(false).describe('Star this node as important'),
-    status: z.enum(['idle', 'draft', 'thinking', 'working', 'blocked', 'needs_attention', 'done', 'error']).optional().default('idle').describe('Node status for visual state'),
+    status: z.enum(['idle', 'draft', 'queued', 'active', 'working', 'waiting', 'blocked', 'done', 'error']).optional().default('idle').describe('Node status'),
     origin: z.enum(['notion', 'ai', 'human', 'mcp']).optional().default('mcp').describe('Where this node originated'),
     brief: z.string().optional().describe('Handoff brief — the context payload for child nodes'),
     contextScope: z.enum(['full', 'branch', 'manual']).optional().describe('How this node gathers context from ancestors'),
-    notionId: z.string().optional().describe('Notion page ID if synced from Notion'),
+    steps: z.array(z.string()).optional().describe('Pipeline step sequence (defaults from template)'),
+    assignee: z.enum(['pi', 'human', 'client']).optional().describe('Who is responsible'),
   },
-  async handler({ teamId, graphId, content, nodeType, parentId, starred, status, origin, brief, contextScope, notionId }) {
+  async handler({ teamId, projectId, title, template, parentId, starred, status, origin, brief, contextScope, steps, assignee }) {
     try {
       const resolvedTeamId = await resolveTeamId(teamId)
 
       // Validate parent exists if specified
       if (parentId) {
-        const all = await getAllThinkgraphDecisions(resolvedTeamId)
+        const all = await getAllThinkgraphNodes(resolvedTeamId, projectId)
         const parent = all.find((d: any) => d.id === parentId)
         if (!parent) {
           return { content: [{ type: 'text' as const, text: `Parent node "${parentId}" not found` }], isError: true }
         }
       }
 
-      const node = await createThinkgraphDecision({
-        content,
-        nodeType,
-        pathType: '',
-        graphId,
+      // Default steps from template if not provided
+      const TEMPLATE_STEPS: Record<string, string[]> = {
+        idea: [],
+        research: ['analyse'],
+        task: ['analyst', 'builder', 'reviewer', 'merger'],
+        feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
+        meta: ['analyst', 'builder', 'reviewer', 'merger'],
+      }
+      const nodeSteps = steps || TEMPLATE_STEPS[template] || []
+
+      const node = await createThinkgraphNode({
+        projectId,
+        title,
+        template,
+        steps: nodeSteps,
         parentId: parentId || '',
-        source: 'mcp',
-        model: '',
         starred: starred || false,
-        branchName: '',
-        versionTag: '',
         teamId: resolvedTeamId,
         owner: 'mcp',
         status: status || 'idle',
         origin: origin || 'mcp',
         brief: brief || '',
         contextScope: contextScope || 'branch',
-        notionId: notionId || '',
+        assignee: assignee || 'human',
       } as any)
 
-      // Signal real-time update — use original slug/id since clients key rooms by slug
-      signalCollectionChange(teamId, 'thinkgraphDecisions')
+      signalCollectionChange(teamId, 'thinkgraphNodes')
 
       return {
         content: [{
           type: 'text' as const,
-          text: JSON.stringify({ created: true, id: node.id, content: node.content, nodeType: node.nodeType, status: node.status, origin: node.origin }, null, 2)
+          text: JSON.stringify({ created: true, id: node.id, title: node.title, template: node.template, status: node.status, origin: node.origin }, null, 2)
         }]
       }
     } catch (error: any) {

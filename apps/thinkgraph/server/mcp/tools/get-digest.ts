@@ -9,7 +9,7 @@ export default defineMcpTool({
   async handler({ teamId }) {
     try {
       const event = useEvent()
-      const data = await $fetch(`/api/teams/${teamId}/thinkgraph-decisions/digest`, {
+      const data = await $fetch(`/api/teams/${teamId}/thinkgraph-nodes/digest`, {
         method: 'POST',
         headers: event.headers,
       })

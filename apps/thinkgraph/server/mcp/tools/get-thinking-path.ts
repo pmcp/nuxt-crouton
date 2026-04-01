@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getAllThinkgraphDecisions } from '~~/layers/thinkgraph/collections/decisions/server/database/queries'
+import { getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
@@ -12,7 +12,7 @@ export default defineMcpTool({
   async handler({ teamId, graphId, nodeId }) {
     try {
       const resolvedTeamId = await resolveTeamId(teamId)
-      const all = await getAllThinkgraphDecisions(resolvedTeamId, graphId)
+      const all = await getAllThinkgraphNodes(resolvedTeamId, graphId)
       const target = all.find((d: any) => d.id === nodeId)
 
       if (!target) {
