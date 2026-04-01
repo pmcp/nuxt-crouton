@@ -47,7 +47,7 @@ export function useGraphCanvas(teamId: Ref<string | undefined>, selectedGraphId:
 
     try {
       const flows = await $fetch<any[]>(`/api/crouton-flow/teams/${teamId.value}/flows`, {
-        query: { collection: 'thinkgraphDecisions', name: flowName },
+        query: { collection: 'thinkgraphNodes', name: flowName },
       })
       const existing = flows?.find((f: any) => f.name === flowName)
       if (existing) {
@@ -62,7 +62,7 @@ export function useGraphCanvas(teamId: Ref<string | undefined>, selectedGraphId:
         method: 'POST',
         body: {
           name: flowName,
-          collection: 'thinkgraphDecisions',
+          collection: 'thinkgraphNodes',
           labelField: 'content',
           parentField: 'parentId',
         },

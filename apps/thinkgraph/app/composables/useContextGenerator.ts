@@ -1,6 +1,6 @@
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
-export function useContextGenerator(decisions: Ref<ThinkgraphDecision[]> | ComputedRef<ThinkgraphDecision[]>) {
+export function useContextGenerator(decisions: Ref<ThinkgraphNode[]> | ComputedRef<ThinkgraphNode[]>) {
   const { copy } = useClipboard()
   const { getNodeById, getAncestorChain, getStarredOutsidePath, getPinnedOutsidePath } = useDecisionGraph(decisions)
 

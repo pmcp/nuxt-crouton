@@ -1,4 +1,4 @@
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 export interface GraphFilterState {
   search: string
@@ -10,7 +10,7 @@ export interface GraphFilterState {
   versionTags: string[]
 }
 
-export function useGraphFilters(decisions: Ref<ThinkgraphDecision[]>) {
+export function useGraphFilters(decisions: Ref<ThinkgraphNode[]>) {
   const filters = ref<GraphFilterState>({
     search: '',
     branches: [],

@@ -1,4 +1,4 @@
-import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
+import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 
 interface DispatchResult {
   success: boolean
@@ -9,7 +9,7 @@ interface DispatchResult {
 }
 
 /**
- * Composable for dispatching work items to Pi.dev or other providers.
+ * Composable for dispatching nodes to Pi.dev or other providers.
  *
  * Handles the dispatch API call, optimistic status update, and toast notifications.
  */
@@ -19,7 +19,7 @@ export function useWorkDispatch() {
   const dispatching = ref(false)
 
   async function dispatch(
-    workItem: ThinkgraphWorkItem,
+    node: ThinkgraphNode,
     options?: { prompt?: string },
   ): Promise<DispatchResult | null> {
     if (!teamId.value) return null
@@ -31,7 +31,7 @@ export function useWorkDispatch() {
         {
           method: 'POST',
           body: {
-            workItemId: workItem.id,
+            workItemId: node.id,
             prompt: options?.prompt,
           },
         },
@@ -39,7 +39,7 @@ export function useWorkDispatch() {
 
       toast.add({
         title: 'Work dispatched',
-        description: `${workItem.title} → ${result.provider} (/${result.skill})`,
+        description: `${node.title} → ${result.provider}`,
         color: 'success',
       })
 

@@ -1,8 +1,8 @@
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface GraphActionDeps {
   teamId: Ref<string | undefined>
-  decisions: Ref<ThinkgraphDecision[]>
+  decisions: Ref<ThinkgraphNode[]>
   selectedGraphId: Ref<string | null>
   expanding: Ref<string | null>
   contextMode: Ref<'path' | 'selection'>
@@ -34,7 +34,7 @@ export function useGraphActions(deps: GraphActionDeps) {
 
     try {
       if (contextMode.value === 'selection' && contextNodeIds.value.length > 0) {
-        await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/expand-with-context`, {
+        await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/expand-with-context`, {
           method: 'POST',
           body: {
             nodeId: decisionId,
@@ -45,7 +45,7 @@ export function useGraphActions(deps: GraphActionDeps) {
           },
         })
       } else {
-        await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/${decisionId}/expand`, {
+        await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${decisionId}/expand`, {
           method: 'POST',
           body: { mode: mode || 'default', graphId: selectedGraphId.value || '' },
         })
@@ -89,7 +89,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     synthesizing.value = true
 
     try {
-      await $fetch(`/api/teams/${teamId.value}/thinkgraph-decisions/synthesize`, {
+      await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/synthesize`, {
         method: 'POST',
         body: { nodeIds: Array.from(selectedNodes.value), graphId: selectedGraphId.value || '' },
       })
@@ -109,7 +109,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     if (resuming.value) return
     resuming.value = true
     try {
-      const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/resume`, {
+      const result = await $fetch<{ briefing: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes/resume`, {
         query: { graphId: selectedGraphId.value || '' },
       })
       if (result?.briefing) {
@@ -133,7 +133,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     if (digestLoading.value) return
     digestLoading.value = true
     try {
-      const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/digest`, {
+      const result = await $fetch<{ digest: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes/digest`, {
         method: 'POST',
         body: { graphId: selectedGraphId.value || '' },
       })
@@ -156,7 +156,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     generatingBrief.value = true
 
     try {
-      const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-decisions/brief`, {
+      const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes/brief`, {
         method: 'POST',
         body: { ids: Array.from(selectedNodes.value), format, graphId: selectedGraphId.value || '' },
       })
@@ -236,7 +236,7 @@ export function useGraphActions(deps: GraphActionDeps) {
 
     const newest = decisions.value?.find(d => d.parentId === sourceNodeId && !d.content)
     if (newest) {
-      open('update', 'thinkgraphDecisions', [newest.id])
+      open('update', 'thinkgraphNodes', [newest.id])
     }
   }
 
@@ -257,7 +257,7 @@ export function useGraphActions(deps: GraphActionDeps) {
   async function exportGraph(selectedGraph: { name: string; description?: string } | undefined) {
     if (!decisions.value?.length || !selectedGraph) return
 
-    function renderNode(node: ThinkgraphDecision, depth: number): string {
+    function renderNode(node: ThinkgraphNode, depth: number): string {
       const indent = '  '.repeat(depth)
       const star = node.starred ? ' *' : ''
       const type = node.nodeType || 'idea'

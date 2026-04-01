@@ -1,9 +1,9 @@
-import type { ThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/types'
+import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
 
 /**
  * Panel visibility and panel-specific state.
  */
-export function useGraphPanels(decisions: Ref<ThinkgraphDecision[]>) {
+export function useGraphPanels(decisions: Ref<ThinkgraphNode[]>) {
   // Panel visibility
   const showPath = ref(true)
   const showChat = ref(false)
