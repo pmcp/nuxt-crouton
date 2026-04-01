@@ -32,24 +32,44 @@ export const thinkgraphNodes = sqliteTable('thinkgraph_nodes', {
   path: text('path').notNull().$default(() => '/'),
   depth: integer('depth').notNull().$default(() => 0),
   order: integer('order').notNull().$default(() => 0),
-  canvasId: text('canvasId').notNull(),
-  nodeType: text('nodeType').notNull(),
-  status: text('status').notNull(),
+
+  // Structure
+  projectId: text('projectId').notNull(),
+
+  // Classification
+  template: text('template').$default(() => 'idea'),
+  steps: jsonColumn('steps'),
   title: text('title').notNull(),
+  summary: text('summary'),
+  status: text('status').notNull().$default(() => 'idle'),
+
+  // Content
   brief: text('brief'),
   output: text('output'),
-  handoffType: text('handoffType'),
-  handoffMeta: jsonColumn('handoffMeta').$default(() => ({})),
-  contextScope: text('contextScope'),
-  contextNodeIds: jsonColumn('contextNodeIds').$default(() => ({})),
-  notionTaskId: text('notionTaskId'),
+  retrospective: text('retrospective'),
+
+  // Routing
+  assignee: text('assignee').$default(() => 'human'),
+  provider: text('provider'),
+  skill: text('skill'),
+  sessionId: text('sessionId'),
+
+  // Pipeline
+  stage: text('stage'),
+  signal: text('signal'),
+
+  // Flags
+  starred: integer('starred', { mode: 'boolean' }).$default(() => false),
+  pinned: integer('pinned', { mode: 'boolean' }).$default(() => false),
+
+  // Provenance
+  origin: text('origin').$default(() => 'human'),
+  contextScope: text('contextScope').$default(() => 'branch'),
+
+  // Execution
   worktree: text('worktree'),
-  sendTarget: text('sendTarget'),
-  sendMode: text('sendMode'),
-  injectMode: text('injectMode'),
-  origin: text('origin'),
-  stepIndex: text('stepIndex'),
-  skillVersion: text('skillVersion'),
-  tokenCount: text('tokenCount'),
-  userId: text('userId')
+  deployUrl: text('deployUrl'),
+
+  // Output
+  artifacts: jsonColumn('artifacts').$default(() => ({})),
 })

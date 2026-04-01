@@ -6,27 +6,29 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import { z } from 'zod'
 
 const bodySchema = z.object({
-  canvasId: z.string().min(1, 'canvasId is required'),
-  nodeType: z.string().min(1, 'nodeType is required'),
-  status: z.string().min(1, 'status is required'),
+  projectId: z.string().min(1, 'projectId is required'),
+  parentId: z.string().nullable().optional(),
+  template: z.string().optional(),
+  steps: z.array(z.string()).optional(),
   title: z.string().min(1, 'title is required'),
+  summary: z.string().optional(),
+  status: z.string().optional().default('idle'),
   brief: z.string().optional(),
   output: z.string().optional(),
-  handoffType: z.string().optional(),
-  handoffMeta: z.record(z.string(), z.any()).optional(),
-  contextScope: z.string().optional(),
-  contextNodeIds: z.record(z.string(), z.any()).optional(),
-  notionTaskId: z.string().optional(),
-  worktree: z.string().optional(),
-  sendTarget: z.string().optional(),
-  sendMode: z.string().optional(),
-  injectMode: z.string().optional(),
+  retrospective: z.string().optional(),
+  assignee: z.string().optional(),
+  provider: z.string().optional(),
+  skill: z.string().optional(),
+  sessionId: z.string().optional(),
+  stage: z.string().optional(),
+  signal: z.string().optional(),
+  starred: z.boolean().optional(),
+  pinned: z.boolean().optional(),
   origin: z.string().optional(),
-  stepIndex: z.number().optional(),
-  skillVersion: z.string().optional(),
-  tokenCount: z.number().optional(),
-  userId: z.string().optional(),
-  parentId: z.string().nullable().optional()
+  contextScope: z.string().optional(),
+  worktree: z.string().optional(),
+  deployUrl: z.string().optional(),
+  artifacts: z.any().optional(),
 }).strip()
 
 export default defineEventHandler(async (event) => {
@@ -39,7 +41,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, bodySchema.parse)
 
   // Exclude id field (we generate it for path calculation)
-  const { id, ...dataWithoutId } = body
+  const { id, ...dataWithoutId } = body as any
 
   // Generate ID upfront for correct path calculation
   const recordId = nanoid()
@@ -63,11 +65,8 @@ export default defineEventHandler(async (event) => {
     path,
     depth,
     teamId: team.id,
-    userId: user.id,
     owner: user.id,
-    createdBy: user.id,
-    updatedBy: user.id
-  })
+  } as any)
   dbTimer.end()
   return result
 })

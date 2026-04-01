@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await getAllThinkgraphNodes(team.id)
+  const projectId = query.projectId ? String(query.projectId) : undefined
+  const result = await getAllThinkgraphNodes(team.id, projectId)
   dbTimer.end()
   return result
 })

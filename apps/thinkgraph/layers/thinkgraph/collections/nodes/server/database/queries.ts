@@ -3,20 +3,23 @@ import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ThinkgraphNode, NewThinkgraphNode } from '../../types'
-import * as canvasesSchema from '../../../canvases/server/database/schema'
-import * as nodesSchema from '../../../nodes/server/database/schema'
+import * as projectsSchema from '../../../projects/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllThinkgraphNodes(teamId: string) {
+export async function getAllThinkgraphNodes(teamId: string, projectId?: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
 
+  const conditions = [eq(tables.thinkgraphNodes.teamId, teamId)]
+  if (projectId) {
+    conditions.push(eq(tables.thinkgraphNodes.projectId, projectId))
+  }
+
   const nodes = await (db as any)
     .select({
       ...tables.thinkgraphNodes,
-      canvasIdData: canvasesSchema.thinkgraphCanvases,
-      parentIdData: nodesSchema.thinkgraphNodes,
+      projectIdData: projectsSchema.thinkgraphProjects,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -25,38 +28,19 @@ export async function getAllThinkgraphNodes(teamId: string) {
       }
     } as any)
     .from(tables.thinkgraphNodes)
-    .leftJoin(canvasesSchema.thinkgraphCanvases, eq(tables.thinkgraphNodes.canvasId, canvasesSchema.thinkgraphCanvases.id))
-    .leftJoin(nodesSchema.thinkgraphNodes, eq(tables.thinkgraphNodes.parentId, nodesSchema.thinkgraphNodes.id))
+    .leftJoin(projectsSchema.thinkgraphProjects, eq(tables.thinkgraphNodes.projectId, projectsSchema.thinkgraphProjects.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphNodes.owner, ownerUser.id))
-    .where(eq(tables.thinkgraphNodes.teamId, teamId))
-    .orderBy(desc(tables.thinkgraphNodes.createdAt))
+    .where(and(...conditions))
+    .orderBy(asc(tables.thinkgraphNodes.order))
 
-  // Post-query processing for JSON fields (repeater/json types)
+  // Post-query processing for JSON fields
   nodes.forEach((item: any) => {
-      // Parse handoffMeta from JSON string
-      if (typeof item.handoffMeta === 'string') {
-        try {
-          item.handoffMeta = JSON.parse(item.handoffMeta)
-        } catch (e) {
-          console.error('Error parsing handoffMeta:', e)
-          item.handoffMeta = null
-        }
-      }
-      if (item.handoffMeta === null || item.handoffMeta === undefined) {
-        item.handoffMeta = null
-      }
-      // Parse contextNodeIds from JSON string
-      if (typeof item.contextNodeIds === 'string') {
-        try {
-          item.contextNodeIds = JSON.parse(item.contextNodeIds)
-        } catch (e) {
-          console.error('Error parsing contextNodeIds:', e)
-          item.contextNodeIds = null
-        }
-      }
-      if (item.contextNodeIds === null || item.contextNodeIds === undefined) {
-        item.contextNodeIds = null
-      }
+    if (typeof item.steps === 'string') {
+      try { item.steps = JSON.parse(item.steps) } catch { item.steps = null }
+    }
+    if (typeof item.artifacts === 'string') {
+      try { item.artifacts = JSON.parse(item.artifacts) } catch { item.artifacts = null }
+    }
   })
 
   return nodes
@@ -70,8 +54,7 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
   const nodes = await (db as any)
     .select({
       ...tables.thinkgraphNodes,
-      canvasIdData: canvasesSchema.thinkgraphCanvases,
-      parentIdData: nodesSchema.thinkgraphNodes,
+      projectIdData: projectsSchema.thinkgraphProjects,
       ownerUser: {
         id: ownerUser.id,
         name: ownerUser.name,
@@ -80,8 +63,7 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
       }
     } as any)
     .from(tables.thinkgraphNodes)
-    .leftJoin(canvasesSchema.thinkgraphCanvases, eq(tables.thinkgraphNodes.canvasId, canvasesSchema.thinkgraphCanvases.id))
-    .leftJoin(nodesSchema.thinkgraphNodes, eq(tables.thinkgraphNodes.parentId, nodesSchema.thinkgraphNodes.id))
+    .leftJoin(projectsSchema.thinkgraphProjects, eq(tables.thinkgraphNodes.projectId, projectsSchema.thinkgraphProjects.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphNodes.owner, ownerUser.id))
     .where(
       and(
@@ -89,34 +71,16 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
         inArray(tables.thinkgraphNodes.id, nodeIds)
       )
     )
-    .orderBy(desc(tables.thinkgraphNodes.createdAt))
+    .orderBy(asc(tables.thinkgraphNodes.order))
 
-  // Post-query processing for JSON fields (repeater/json types)
+  // Post-query processing for JSON fields
   nodes.forEach((item: any) => {
-      // Parse handoffMeta from JSON string
-      if (typeof item.handoffMeta === 'string') {
-        try {
-          item.handoffMeta = JSON.parse(item.handoffMeta)
-        } catch (e) {
-          console.error('Error parsing handoffMeta:', e)
-          item.handoffMeta = null
-        }
-      }
-      if (item.handoffMeta === null || item.handoffMeta === undefined) {
-        item.handoffMeta = null
-      }
-      // Parse contextNodeIds from JSON string
-      if (typeof item.contextNodeIds === 'string') {
-        try {
-          item.contextNodeIds = JSON.parse(item.contextNodeIds)
-        } catch (e) {
-          console.error('Error parsing contextNodeIds:', e)
-          item.contextNodeIds = null
-        }
-      }
-      if (item.contextNodeIds === null || item.contextNodeIds === undefined) {
-        item.contextNodeIds = null
-      }
+    if (typeof item.steps === 'string') {
+      try { item.steps = JSON.parse(item.steps) } catch { item.steps = null }
+    }
+    if (typeof item.artifacts === 'string') {
+      try { item.artifacts = JSON.parse(item.artifacts) } catch { item.artifacts = null }
+    }
   })
 
   return nodes
@@ -153,10 +117,7 @@ export async function updateThinkgraphNode(
 
   const [node] = await (db as any)
     .update(tables.thinkgraphNodes)
-    .set({
-      ...updates,
-      updatedBy: userId
-    })
+    .set(updates)
     .where(and(...conditions))
     .returning()
 
@@ -203,7 +164,6 @@ export async function deleteThinkgraphNode(
 }
 
 // Tree hierarchy queries (auto-generated when hierarchy: true)
-// Type: ThinkgraphNode with hierarchy fields
 
 interface TreeItem {
   id: string
@@ -309,7 +269,6 @@ export async function updatePositionThinkgraphNode(
 
   // Update all descendants' paths if the path changed
   if (oldPath !== newPath) {
-    // Get all descendants
     const descendants = await (db as any)
       .select()
       .from(tables.thinkgraphNodes)
@@ -320,7 +279,6 @@ export async function updatePositionThinkgraphNode(
         )
       ) as TreeItem[]
 
-    // Update each descendant's path and depth
     for (const descendant of descendants) {
       const descendantNewPath = descendant.path.replace(oldPath, newPath)
       const depthDiff = newDepth - current.depth

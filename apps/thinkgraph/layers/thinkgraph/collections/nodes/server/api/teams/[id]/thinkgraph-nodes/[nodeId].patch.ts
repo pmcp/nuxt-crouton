@@ -5,28 +5,30 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import { z } from 'zod'
 
 const bodySchema = z.object({
-  canvasId: z.string().min(1, 'canvasId is required'),
+  projectId: z.string().optional(),
   parentId: z.string().nullable().optional(),
-  nodeType: z.string().min(1, 'nodeType is required'),
-  status: z.string().min(1, 'status is required'),
-  title: z.string().min(1, 'title is required'),
+  template: z.string().optional(),
+  steps: z.array(z.string()).optional(),
+  title: z.string().optional(),
+  summary: z.string().optional(),
+  status: z.string().optional(),
   brief: z.string().optional(),
   output: z.string().optional(),
-  handoffType: z.string().optional(),
-  handoffMeta: z.record(z.string(), z.any()).optional(),
-  contextScope: z.string().optional(),
-  contextNodeIds: z.record(z.string(), z.any()).optional(),
-  notionTaskId: z.string().optional(),
-  worktree: z.string().optional(),
-  sendTarget: z.string().optional(),
-  sendMode: z.string().optional(),
-  injectMode: z.string().optional(),
+  retrospective: z.string().optional(),
+  assignee: z.string().optional(),
+  provider: z.string().optional(),
+  skill: z.string().optional(),
+  sessionId: z.string().optional(),
+  stage: z.string().optional(),
+  signal: z.string().nullable().optional(),
+  starred: z.boolean().optional(),
+  pinned: z.boolean().optional(),
   origin: z.string().optional(),
-  stepIndex: z.number().optional(),
-  skillVersion: z.string().optional(),
-  tokenCount: z.number().optional(),
-  userId: z.string().optional(),
-}).partial().strip()
+  contextScope: z.string().optional(),
+  worktree: z.string().optional(),
+  deployUrl: z.string().optional(),
+  artifacts: z.any().optional(),
+}).strip()
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
@@ -42,30 +44,16 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
+  // Only include defined fields in the update
+  const updates: Record<string, any> = {}
+  for (const [key, value] of Object.entries(body)) {
+    if (value !== undefined) {
+      updates[key] = value
+    }
+  }
+
   const dbTimer = timing.start('db')
-  const result = await updateThinkgraphNode(nodeId, team.id, user.id, {
-    canvasId: body.canvasId,
-    parentId: body.parentId,
-    nodeType: body.nodeType,
-    status: body.status,
-    title: body.title,
-    brief: body.brief,
-    output: body.output,
-    handoffType: body.handoffType,
-    handoffMeta: body.handoffMeta,
-    contextScope: body.contextScope,
-    contextNodeIds: body.contextNodeIds,
-    notionTaskId: body.notionTaskId,
-    worktree: body.worktree,
-    sendTarget: body.sendTarget,
-    sendMode: body.sendMode,
-    injectMode: body.injectMode,
-    origin: body.origin,
-    stepIndex: body.stepIndex,
-    skillVersion: body.skillVersion,
-    tokenCount: body.tokenCount,
-    userId: body.userId
-  }, { role: membership.role })
+  const result = await updateThinkgraphNode(nodeId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })
