@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Pipeline stage progression
-  const STAGE_ORDER = ['analyst', 'builder', 'launcher', 'reviewer', 'merger']
+  const DEFAULT_STAGE_ORDER = ['analyst', 'builder', 'launcher', 'reviewer', 'merger']
   let stageAdvanced = false
   let advancedItemId: string | null = null
 
@@ -98,13 +98,93 @@ export default defineEventHandler(async (event) => {
     }
 
     if (agentSignal === 'green' && currentItem?.stage) {
-      const currentIdx = STAGE_ORDER.indexOf(currentItem.stage)
-      const nextStage = currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1
-        ? STAGE_ORDER[currentIdx + 1]
-        : null
+      // Read stage-meta artifact for verdict/skipTo
+      const artifacts = Array.isArray(currentItem.artifacts) ? currentItem.artifacts : []
+      const stageMeta = artifacts.find((a: any) => a?.type === 'stage-meta') || {}
+      const verdict = stageMeta.verdict as string | undefined
+      const skipTo = stageMeta.skipTo as string | undefined
 
-      if (nextStage) {
+      // Use node's configured steps array, fall back to default order
+      const nodeSteps: string[] = Array.isArray(currentItem.steps) && currentItem.steps.length > 0
+        ? currentItem.steps
+        : DEFAULT_STAGE_ORDER
+
+      // Determine next stage based on current stage, verdict, and skipTo
+      let nextStage: string | null = null
+
+      if (currentItem.stage === 'reviewer' && verdict) {
+        // Structured review verdicts
+        switch (verdict) {
+          case 'APPROVE':
+            // Advance to merger (next in sequence after reviewer)
+            nextStage = getNextInSteps(nodeSteps, 'reviewer')
+            console.log(`[webhook] Reviewer verdict APPROVE → ${nextStage}`)
+            break
+          case 'REVISE': {
+            // Check loop counter — max 3 builder↔reviewer cycles
+            const loopCount = countLoopIterations(artifacts, 'builder', 'reviewer')
+            if (loopCount >= 3) {
+              // Max iterations reached — orange signal for human
+              await updateThinkgraphNode(workItemId, teamId, 'system', {
+                signal: 'orange',
+                status: 'waiting',
+                assignee: 'human',
+                output: `Loop limit reached (${loopCount} builder↔reviewer cycles). Human intervention needed.\n\nLatest reviewer feedback:\n${currentItem.output || output || '(none)'}`,
+              }, { role: 'admin' })
+              console.log(`[webhook] Loop limit reached for ${workItemId} after ${loopCount} cycles`)
+              stageAdvanced = true // prevent child auto-advance
+              break
+            }
+            // Route back to builder with reviewer feedback
+            nextStage = 'builder'
+            // Store loop iteration marker
+            const loopArtifact = { type: 'loop-iteration', from: 'reviewer', to: 'builder', iteration: loopCount + 1, timestamp: new Date().toISOString() }
+            const currentArtifacts = Array.isArray(currentItem.artifacts) ? currentItem.artifacts : []
+            await updateThinkgraphNode(workItemId, teamId, 'system', {
+              artifacts: [...currentArtifacts, loopArtifact],
+            }, { role: 'admin' })
+            console.log(`[webhook] Reviewer verdict REVISE → builder (iteration ${loopCount + 1}/3)`)
+            break
+          }
+          case 'RETHINK':
+            // Route back to analyst — the approach needs changing
+            nextStage = 'analyst'
+            console.log(`[webhook] Reviewer verdict RETHINK → analyst`)
+            break
+          case 'UNAVAILABLE':
+            // Orange signal for human intervention
+            await updateThinkgraphNode(workItemId, teamId, 'system', {
+              signal: 'orange',
+              status: 'waiting',
+              assignee: 'human',
+            }, { role: 'admin' })
+            console.log(`[webhook] Reviewer verdict UNAVAILABLE → orange signal`)
+            stageAdvanced = true
+            break
+        }
+      }
+      else if (currentItem.stage === 'analyst' && skipTo) {
+        // Analyst recommended skipping to a specific stage
+        if (nodeSteps.includes(skipTo)) {
+          nextStage = skipTo
+          console.log(`[webhook] Analyst skipTo → ${skipTo}`)
+        } else {
+          // Invalid skipTo target, fall through to normal progression
+          nextStage = getNextInSteps(nodeSteps, currentItem.stage)
+          console.log(`[webhook] Analyst skipTo "${skipTo}" not in steps, falling through to ${nextStage}`)
+        }
+      }
+      else {
+        // Normal linear progression using node's steps array
+        nextStage = getNextInSteps(nodeSteps, currentItem.stage)
+      }
+
+      if (nextStage && !stageAdvanced) {
         try {
+          // Clean up stage-meta artifact before advancing (verdict/skipTo consumed)
+          const latestArtifacts = Array.isArray(currentItem.artifacts) ? currentItem.artifacts : []
+          const cleanedArtifacts = latestArtifacts.filter((a: any) => a?.type !== 'stage-meta')
+
           if (nextStage === 'launcher') {
             // Launcher stage: wait for CI results, don't dispatch to Pi
             await updateThinkgraphNode(workItemId, teamId, 'system', {
@@ -112,6 +192,7 @@ export default defineEventHandler(async (event) => {
               signal: null,
               status: 'waiting',
               assignee: 'ci',
+              artifacts: cleanedArtifacts,
             }, { role: 'admin' })
             stageAdvanced = true
             console.log(`[webhook] Stage advanced: ${workItemId} → launcher (waiting for CI)`)
@@ -123,47 +204,13 @@ export default defineEventHandler(async (event) => {
               signal: null,
               status: 'queued',
               assignee: 'pi',
+              artifacts: cleanedArtifacts,
             }, { role: 'admin' })
             stageAdvanced = true
             console.log(`[webhook] Stage advanced: ${workItemId} → ${nextStage} (queued)`)
 
             // Auto-dispatch to Pi worker
-            const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
-            const [targetItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
-            if (targetItem) {
-              const { buildNodeContext } = await import('~~/server/utils/context-builder')
-              const allItems = await getAllThinkgraphNodes(teamId)
-              const contextPayload = buildNodeContext(
-                allItems.map((item: any) => ({
-                  id: item.id,
-                  parentId: item.parentId,
-                  title: item.title,
-                  nodeType: item.template,
-                  status: item.status,
-                  brief: item.brief,
-                  output: item.output,
-                })),
-                workItemId,
-              )
-
-              await $fetch(`${piWorkerUrl}/dispatch`, {
-                method: 'POST',
-                body: {
-                  workItemId,
-                  projectId: targetItem.projectId,
-                  prompt: targetItem.brief || targetItem.title,
-                  context: contextPayload.markdown,
-                  skill: targetItem.skill || targetItem.template,
-                  workItemType: targetItem.template,
-                  stage: nextStage,
-                  teamId,
-                  teamSlug: teamId,
-                  callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
-                },
-              })
-              await updateThinkgraphNode(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
-              console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${nextStage}`)
-            }
+            await dispatchToWorker(event, config, teamId, workItemId, nextStage)
           }
         } catch (err: any) {
           console.error('[webhook] Stage advance/dispatch failed:', err.message)
@@ -199,3 +246,60 @@ export default defineEventHandler(async (event) => {
     stageAdvanced,
   }
 })
+
+/** Get the next stage in the node's steps array */
+function getNextInSteps(steps: string[], currentStage: string): string | null {
+  const idx = steps.indexOf(currentStage)
+  if (idx >= 0 && idx < steps.length - 1) {
+    return steps[idx + 1]
+  }
+  return null
+}
+
+/** Count completed builder↔reviewer loop iterations from artifacts */
+function countLoopIterations(artifacts: any[], from: string, to: string): number {
+  if (!Array.isArray(artifacts)) return 0
+  return artifacts.filter(
+    (a: any) => a?.type === 'loop-iteration' && a.from === to && a.to === from,
+  ).length
+}
+
+/** Dispatch a work item to the Pi worker */
+async function dispatchToWorker(event: any, config: any, teamId: string, workItemId: string, stage: string) {
+  const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
+  const [targetItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
+  if (!targetItem) return
+
+  const { buildNodeContext } = await import('~~/server/utils/context-builder')
+  const allItems = await getAllThinkgraphNodes(teamId)
+  const contextPayload = buildNodeContext(
+    allItems.map((item: any) => ({
+      id: item.id,
+      parentId: item.parentId,
+      title: item.title,
+      nodeType: item.template,
+      status: item.status,
+      brief: item.brief,
+      output: item.output,
+    })),
+    workItemId,
+  )
+
+  await $fetch(`${piWorkerUrl}/dispatch`, {
+    method: 'POST',
+    body: {
+      workItemId,
+      projectId: targetItem.projectId,
+      prompt: targetItem.brief || targetItem.title,
+      context: contextPayload.markdown,
+      skill: targetItem.skill || targetItem.template,
+      workItemType: targetItem.template,
+      stage,
+      teamId,
+      teamSlug: teamId,
+      callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
+    },
+  })
+  await updateThinkgraphNode(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
+  console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${stage}`)
+}

@@ -106,6 +106,37 @@ jobs:
           BETTER_AUTH_SECRET: prerender-placeholder
           NUXT_PUBLIC_COLLAB_WORKER_URL: https://thinkgraph-collab.cloudflare-e53.workers.dev
 
+      - name: Run typecheck
+        id: typecheck
+        continue-on-error: true
+        run: npx nuxt typecheck
+        working-directory: apps/thinkgraph
+
+      - name: Notify ThinkGraph CI webhook
+        if: always() && steps.typecheck.outcome != 'skipped'
+        continue-on-error: true
+        env:
+          THINKGRAPH_URL: ${{ secrets.THINKGRAPH_URL }}
+          THINKGRAPH_TEAM_ID: ${{ secrets.THINKGRAPH_TEAM_ID }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          STATUS=${{ steps.typecheck.outcome == 'success' && '"pass"' || '"fail"' }}
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          if [ -n "$THINKGRAPH_URL" ] && [ -n "$THINKGRAPH_TEAM_ID" ]; then
+            curl -s -X POST \
+              "${THINKGRAPH_URL}/api/teams/${THINKGRAPH_TEAM_ID}/dispatch/ci-webhook" \
+              -H "Content-Type: application/json" \
+              -H "X-Webhook-Secret: ${WEBHOOK_SECRET}" \
+              -d "{\"branch\":\"${BRANCH}\",\"status\":${STATUS},\"check\":\"typecheck\",\"runUrl\":\"${RUN_URL}\"}" \
+              || echo "CI webhook notification failed (non-fatal)"
+          fi
+
+      - name: Fail if typecheck failed
+        if: steps.typecheck.outcome == 'failure'
+        run: exit 1
+
       - name: Strip env from redirected wrangler config
         run: |
           CONFIG="dist/_worker.js/wrangler.json"
