@@ -33,6 +33,19 @@ const STATUS_PILL: Record<string, string> = {
 
 const STATUS_ORDER = ['active', 'waiting', 'blocked', 'done'] as const
 
+// Group template counts by projectId
+const templateCountsByProject = computed(() => {
+  const map: Record<string, Record<string, number>> = {}
+  for (const item of nodes.value || []) {
+    if (!item.projectId || !item.template) continue
+    if (!map[item.projectId]) map[item.projectId] = {}
+    map[item.projectId][item.template] = (map[item.projectId][item.template] || 0) + 1
+  }
+  return map
+})
+
+const TEMPLATE_ORDER = ['idea', 'research', 'task', 'feature', 'meta'] as const
+
 const isCreateOpen = ref(false)
 const createForm = reactive({ name: '', clientName: '', appId: '', description: '' })
 const createPending = ref(false)
@@ -146,6 +159,19 @@ const statusStyle = (status: string) => {
             :class="STATUS_PILL[status]"
           >
             {{ statusCountsByProject[project.id]?.[status] }} {{ status }}
+          </span>
+        </div>
+
+        <!-- Template counts -->
+        <div v-if="templateCountsByProject[project.id]" class="flex items-center gap-1 mt-1">
+          <span
+            v-for="template in TEMPLATE_ORDER"
+            :key="template"
+            v-show="templateCountsByProject[project.id]?.[template]"
+            class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+            :class="TEMPLATE_BADGE[template]"
+          >
+            {{ templateCountsByProject[project.id]?.[template] }} {{ template }}
           </span>
         </div>
       </NuxtLink>
