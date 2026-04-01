@@ -8,7 +8,7 @@
  * Status lifecycle: thinking → working → done/error
  * Terminal output: streamed to browser clients via SSE (terminal.get.ts)
  */
-import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 
 // ─── Agent Event Types (structured events from Pi coding agent) ───
 
@@ -208,8 +208,8 @@ export async function updateNodeStatus(
 ) {
   const workItemStatus = TERMINAL_TO_WORKITEM_STATUS[status] || 'active'
   try {
-    await updateThinkgraphWorkItem(nodeId, teamId, 'system', { status: workItemStatus } as any, { role: 'admin' })
-    signalCollectionChange(teamId, 'thinkgraphWorkItems')
+    await updateThinkgraphNode(nodeId, teamId, 'system', { status: workItemStatus } as any, { role: 'admin' })
+    signalCollectionChange(teamId, 'thinkgraphNodes')
   }
   catch (err) {
     console.error(`[terminal-sessions] Failed to update node status to "${status}" (→ ${workItemStatus}):`, err)

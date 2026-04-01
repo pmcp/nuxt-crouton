@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import type { Artifact } from '../../layers/thinkgraph/collections/decisions/types'
+import type { Artifact } from '../../layers/thinkgraph/collections/nodes/types'
 
 export interface DispatchContext {
   nodeContent: string

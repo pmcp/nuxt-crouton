@@ -1,5 +1,5 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { getAllThinkgraphWorkItems, updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { getAllThinkgraphNodes, updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildNodeContext } from '~~/server/utils/context-builder'
 
 /**
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Load all work items for this team to build context chain
-  const allItems = await getAllThinkgraphWorkItems(team.id)
+  const allItems = await getAllThinkgraphNodes(team.id)
   const targetItem = allItems.find((item: any) => item.id === workItemId)
 
   if (!targetItem) {
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       id: item.id,
       parentId: item.parentId,
       title: item.title,
-      nodeType: item.type,
+      nodeType: item.template,
       status: item.status,
       brief: item.brief,
       output: item.output,
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   // Default stage to 'analyst' on first dispatch if not already set
   const stage = targetItem.stage || 'analyst'
   if (!targetItem.stage) {
-    await updateThinkgraphWorkItem(
+    await updateThinkgraphNode(
       workItemId,
       team.id,
       user.id,
@@ -62,14 +62,14 @@ export default defineEventHandler(async (event) => {
   const handoffMeta = {
     type: 'handoff' as const,
     provider,
-    skill: targetItem.skill || targetItem.type,
+    skill: targetItem.skill || targetItem.template,
     prompt: prompt || targetItem.brief || '',
     context: contextPayload.markdown,
     contextTokens: contextPayload.tokenEstimate,
     projectId: targetItem.projectId,
     workItemId,
     workItemTitle: targetItem.title,
-    workItemType: targetItem.type,
+    workItemType: targetItem.template,
     teamId: team.id,
     dispatchedBy: user.id,
     dispatchedAt: new Date().toISOString(),
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
   const existingArtifacts = Array.isArray(targetItem.artifacts) ? targetItem.artifacts : []
   const cleanedArtifacts = existingArtifacts.filter((a: any) => a?.type !== 'handoff')
 
-  await updateThinkgraphWorkItem(
+  await updateThinkgraphNode(
     workItemId,
     team.id,
     user.id,
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
           prompt: handoffMeta.prompt || targetItem.brief || targetItem.title,
           context: contextPayload.markdown,
           skill: handoffMeta.skill,
-          workItemType: targetItem.type,
+          workItemType: targetItem.template,
           stage,
           teamId: team.id,
           teamSlug: team.slug || team.id,

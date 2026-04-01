@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { updateThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
-import * as tables from '~~/layers/thinkgraph/collections/workitems/server/database/schema'
+import { updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import * as tables from '~~/layers/thinkgraph/collections/nodes/server/database/schema'
 
 /**
  * Deploy Webhook for receiving Cloudflare Pages preview URLs from GitHub Actions.
@@ -42,11 +42,11 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   const [workItem] = await (db as any)
     .select()
-    .from(tables.thinkgraphWorkItems)
+    .from(tables.thinkgraphNodes)
     .where(
       and(
-        eq(tables.thinkgraphWorkItems.teamId, teamId),
-        eq(tables.thinkgraphWorkItems.worktree, branch),
+        eq(tables.thinkgraphNodes.teamId, teamId),
+        eq(tables.thinkgraphNodes.worktree, branch),
       ),
     )
     .limit(1)
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  await updateThinkgraphWorkItem(
+  await updateThinkgraphNode(
     workItem.id,
     teamId,
     'system',

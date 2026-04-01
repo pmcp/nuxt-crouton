@@ -3,7 +3,7 @@ import { z } from 'zod/v3'
 import { registerDispatchService } from '../dispatch-registry'
 import type { DispatchContext, DispatchResult } from '../dispatch-registry'
 import type { H3Event } from 'h3'
-import { createThinkgraphDecision } from '../../layers/thinkgraph/collections/decisions/server/database/queries'
+import { createThinkgraphDecision } from '../../layers/thinkgraph/collections/nodes/server/database/queries'
 
 const nodeSchema: z.ZodType<any> = z.lazy(() =>
   z.object({

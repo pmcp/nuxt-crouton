@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm'
-import { updateThinkgraphWorkItem, createThinkgraphWorkItem, getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
-import * as tables from '~~/layers/thinkgraph/collections/workitems/server/database/schema'
+import { updateThinkgraphNode, createThinkgraphNode, getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import * as tables from '~~/layers/thinkgraph/collections/nodes/server/database/schema'
 
 /**
  * CI Webhook for receiving typecheck/CI results from GitHub Actions.
@@ -49,11 +49,11 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   const [workItem] = await (db as any)
     .select()
-    .from(tables.thinkgraphWorkItems)
+    .from(tables.thinkgraphNodes)
     .where(
       and(
-        eq(tables.thinkgraphWorkItems.teamId, teamId),
-        eq(tables.thinkgraphWorkItems.worktree, branch),
+        eq(tables.thinkgraphNodes.teamId, teamId),
+        eq(tables.thinkgraphNodes.worktree, branch),
       ),
     )
     .limit(1)
@@ -100,7 +100,7 @@ export default defineEventHandler(async (event) => {
       console.log(`[ci-webhook] Launcher gate passed for ${workItem.id} (${check})`)
     }
 
-    await updateThinkgraphWorkItem(
+    await updateThinkgraphNode(
       workItem.id,
       teamId,
       'system',
@@ -151,7 +151,7 @@ export default defineEventHandler(async (event) => {
         : `${check} failed (no error output captured)`
 
       // Set signal red and revert to builder stage
-      await updateThinkgraphWorkItem(
+      await updateThinkgraphNode(
         workItem.id,
         teamId,
         'system',
@@ -172,13 +172,13 @@ export default defineEventHandler(async (event) => {
         const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
         const siteUrl = config.public?.siteUrl || `http://${getHeader(event, 'host') || 'localhost:3004'}`
         const { buildNodeContext } = await import('~~/server/utils/context-builder')
-        const allItems = await getAllThinkgraphWorkItems(teamId)
+        const allItems = await getAllThinkgraphNodes(teamId)
         const contextPayload = buildNodeContext(
           allItems.map((item: any) => ({
             id: item.id,
             parentId: item.parentId,
             title: item.title,
-            nodeType: item.type,
+            nodeType: item.template,
             status: item.status,
             brief: item.brief,
             output: item.output,
@@ -193,15 +193,15 @@ export default defineEventHandler(async (event) => {
             projectId: workItem.projectId,
             prompt: `CI ${check} failed. Fix the errors and push to the branch.\n\n\`\`\`\n${truncatedError}\n\`\`\``,
             context: contextPayload.markdown,
-            skill: workItem.skill || workItem.type,
-            workItemType: workItem.type,
+            skill: workItem.skill || workItem.template,
+            workItemType: workItem.template,
             stage: 'builder',
             teamId,
             teamSlug: teamId,
             callbackUrl: `${siteUrl}/api/teams/${teamId}/dispatch/webhook`,
           },
         })
-        await updateThinkgraphWorkItem(workItem.id, teamId, 'system', { status: 'active' }, { role: 'admin' })
+        await updateThinkgraphNode(workItem.id, teamId, 'system', { status: 'active' }, { role: 'admin' })
         console.log(`[ci-webhook] Auto-dispatched ${workItem.id} back to builder to fix ${check}`)
       }
       catch (err: any) {
@@ -221,7 +221,7 @@ export default defineEventHandler(async (event) => {
       ? (errorOutput.length > 4000 ? errorOutput.slice(-4000) : errorOutput)
       : 'Typecheck failed (no error output captured)'
 
-    const childWorkItem = await createThinkgraphWorkItem({
+    const childWorkItem = await createThinkgraphNode({
       id: crypto.randomUUID().replace(/-/g, '').slice(0, 21),
       teamId,
       projectId: workItem.projectId,
@@ -244,7 +244,7 @@ export default defineEventHandler(async (event) => {
     } as any)
 
     // Also update the parent's artifacts with the failure
-    await updateThinkgraphWorkItem(
+    await updateThinkgraphNode(
       workItem.id,
       teamId,
       'system',

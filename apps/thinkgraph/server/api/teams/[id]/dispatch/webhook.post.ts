@@ -1,4 +1,4 @@
-import { updateThinkgraphWorkItem, getAllThinkgraphWorkItems, getThinkgraphWorkItemsByIds } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { updateThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const updates: Record<string, any> = {}
 
   // Read current item state
-  const [currentState] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+  const [currentState] = await getThinkgraphNodesByIds(teamId, [workItemId])
 
   // Use signal from callback body (forwarded by Pi worker) or fall back to DB
   const agentSignal = callbackSignal || currentState?.signal
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (Object.keys(updates).length > 0) {
-    await updateThinkgraphWorkItem(workItemId, teamId, 'system', updates, { role: 'admin' })
+    await updateThinkgraphNode(workItemId, teamId, 'system', updates, { role: 'admin' })
   }
 
   // Pipeline stage progression
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
 
   if (updates.status === 'done') {
     // Re-read current item for stage/artifacts (already have signal from agentSignal)
-    const [currentItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+    const [currentItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
 
     // Store stage output as artifact before advancing
     if (currentItem?.stage && (output || currentItem?.output)) {
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
         output: output || currentItem.output,
         timestamp: new Date().toISOString(),
       }
-      await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+      await updateThinkgraphNode(workItemId, teamId, 'system', {
         artifacts: [...existingArtifacts, stageOutputArtifact],
       }, { role: 'admin' })
     }
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
         try {
           if (nextStage === 'launcher') {
             // Launcher stage: wait for CI results, don't dispatch to Pi
-            await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+            await updateThinkgraphNode(workItemId, teamId, 'system', {
               stage: 'launcher',
               signal: null,
               status: 'waiting',
@@ -118,7 +118,7 @@ export default defineEventHandler(async (event) => {
           }
           else {
             // Normal stage: advance and dispatch to Pi
-            await updateThinkgraphWorkItem(workItemId, teamId, 'system', {
+            await updateThinkgraphNode(workItemId, teamId, 'system', {
               stage: nextStage,
               signal: null,
               status: 'queued',
@@ -129,16 +129,16 @@ export default defineEventHandler(async (event) => {
 
             // Auto-dispatch to Pi worker
             const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
-            const [targetItem] = await getThinkgraphWorkItemsByIds(teamId, [workItemId])
+            const [targetItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
             if (targetItem) {
               const { buildNodeContext } = await import('~~/server/utils/context-builder')
-              const allItems = await getAllThinkgraphWorkItems(teamId)
+              const allItems = await getAllThinkgraphNodes(teamId)
               const contextPayload = buildNodeContext(
                 allItems.map((item: any) => ({
                   id: item.id,
                   parentId: item.parentId,
                   title: item.title,
-                  nodeType: item.type,
+                  nodeType: item.template,
                   status: item.status,
                   brief: item.brief,
                   output: item.output,
@@ -153,15 +153,15 @@ export default defineEventHandler(async (event) => {
                   projectId: targetItem.projectId,
                   prompt: targetItem.brief || targetItem.title,
                   context: contextPayload.markdown,
-                  skill: targetItem.skill || targetItem.type,
-                  workItemType: targetItem.type,
+                  skill: targetItem.skill || targetItem.template,
+                  workItemType: targetItem.template,
                   stage: nextStage,
                   teamId,
                   teamSlug: teamId,
                   callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
                 },
               })
-              await updateThinkgraphWorkItem(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
+              await updateThinkgraphNode(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })
               console.log(`[webhook] Auto-dispatched ${workItemId} at stage ${nextStage}`)
             }
           }
@@ -174,14 +174,14 @@ export default defineEventHandler(async (event) => {
     // Auto-advance children: when done and no stage progression, find next queued child
     if (!stageAdvanced) {
       try {
-        const allItems = await getAllThinkgraphWorkItems(teamId)
+        const allItems = await getAllThinkgraphNodes(teamId)
         const queuedChildren = allItems
           .filter((item: any) => item.parentId === workItemId && item.status === 'queued' && item.assignee === 'pi')
           .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
 
         if (queuedChildren.length > 0) {
           const nextItem = queuedChildren[0]
-          await updateThinkgraphWorkItem(nextItem.id, teamId, 'system', { status: 'active' }, { role: 'admin' })
+          await updateThinkgraphNode(nextItem.id, teamId, 'system', { status: 'active' }, { role: 'admin' })
           advancedItemId = nextItem.id
           console.log(`[webhook] Auto-advanced work item ${nextItem.id} ("${nextItem.title}") → active`)
         }
