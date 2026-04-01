@@ -900,7 +900,7 @@ if (import.meta.client) {
           :key="flowKey"
           ref="flowRef"
           :rows="items"
-          collection="workItems"
+          collection="thinkgraphWorkItems"
           parent-field="parentId"
           label-field="title"
           :flow-id="flowId || undefined"

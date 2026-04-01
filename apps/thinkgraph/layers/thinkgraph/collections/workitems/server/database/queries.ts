@@ -6,10 +6,15 @@ import type { ThinkgraphWorkItem, NewThinkgraphWorkItem } from '../../types'
 import * as projectsSchema from '../../../projects/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllThinkgraphWorkItems(teamId: string) {
+export async function getAllThinkgraphWorkItems(teamId: string, projectId?: string) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
+
+  const conditions = [eq(tables.thinkgraphWorkItems.teamId, teamId)]
+  if (projectId) {
+    conditions.push(eq(tables.thinkgraphWorkItems.projectId, projectId))
+  }
 
   const workItems = await (db as any)
     .select({
@@ -25,7 +30,7 @@ export async function getAllThinkgraphWorkItems(teamId: string) {
     .from(tables.thinkgraphWorkItems)
     .leftJoin(projectsSchema.thinkgraphProjects, eq(tables.thinkgraphWorkItems.projectId, projectsSchema.thinkgraphProjects.id))
     .leftJoin(ownerUser, eq(tables.thinkgraphWorkItems.owner, ownerUser.id))
-    .where(eq(tables.thinkgraphWorkItems.teamId, teamId))
+    .where(and(...conditions))
     .orderBy(desc(tables.thinkgraphWorkItems.order))
 
   // Post-query processing for JSON fields (repeater/json types)
