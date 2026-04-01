@@ -26,7 +26,7 @@ export function createPMTools(
   teamId: string,
   options?: { onSignal?: (signal: string) => void },
 ): AnyToolDefinition[] {
-  const baseUrl = `${config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-workitems`
+  const baseUrl = `${config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
 
   const headers = {
     'Cookie': config.serviceToken,

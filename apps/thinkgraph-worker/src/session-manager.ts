@@ -35,7 +35,7 @@ export interface DispatchPayload {
   mode?: 'legacy' | 'rich'
   callbackUrl?: string
   skill?: string
-  /** API collection path — 'thinkgraph-workitems' for PM work items, 'thinkgraph-nodes' for legacy */
+  /** API collection path — always 'thinkgraph-nodes' (unified collection) */
   collectionPath?: string
   /** Team ID from the dispatch request — used instead of config.teamId when present */
   teamId?: string
@@ -136,9 +136,9 @@ export class AgentSessionManager {
     await this.updateNodeStatus(payload.nodeId, 'working')
 
     try {
-      // Create tools — PM work items get PM tools, legacy gets thinking graph tools
-      const isPM = payload.collectionPath === 'thinkgraph-workitems'
-      const tools = isPM
+      // Create tools — nodes with pipeline stages get PM tools, others get thinking graph tools
+      const hasPipeline = !!payload.stage
+      const tools = hasPipeline
         ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
           onSignal: (signal) => { earlySession.lastSignal = signal },
         })
@@ -493,8 +493,8 @@ export class AgentSessionManager {
 
   /** Build the prompt for the Pi agent based on work item type */
   private buildAgentPrompt(payload: DispatchPayload): string {
-    // PM work items get type-specific prompts
-    if (payload.collectionPath === 'thinkgraph-workitems') {
+    // Nodes with pipeline stages get stage-specific prompts
+    if (payload.stage) {
       return this.buildPMPrompt(payload)
     }
 
@@ -622,25 +622,11 @@ Use \`update_workitem\` to set your signal:
 - An empty learnings array is perfectly fine. Most analyst runs should have zero learnings.`
   }
 
-  /** Builder stage — delegates to the type-specific instructions (discover/architect/generate/etc.) */
+  /** Builder stage — the brief drives instructions, not the template type */
   private builderInstructions(payload: DispatchPayload): string {
-    // Route to the existing type-specific instructions for the actual work
-    switch (payload.nodeType) {
-      case 'discover':
-        return this.discoverInstructions(payload)
-      case 'architect':
-        return this.architectInstructions(payload)
-      case 'generate':
-        return this.generateInstructions(payload)
-      case 'compose':
-        return this.composeInstructions(payload)
-      case 'review':
-        return this.reviewInstructions(payload)
-      case 'deploy':
-        return this.deployInstructions(payload)
-      default:
-        return this.generateInstructions(payload)
-    }
+    // In v2, the brief is the contract. The builder follows whatever the brief says.
+    // Fall back to generate instructions as the general-purpose builder prompt.
+    return this.generateInstructions(payload)
   }
 
   /** Reviewer stage — code review and quality gate */
@@ -1347,7 +1333,7 @@ Use the \`create_node\` tool. Each node has three parts:
     active.lastFlushedLength = currentOutput.length
     const collection = active.collectionPath || 'thinkgraph-nodes'
     const teamId = active.teamId || this.config.teamId
-    const isPM = collection === 'thinkgraph-workitems'
+    const isPM = collection === 'thinkgraph-nodes'
 
     try {
       await ofetch(`${this.config.thinkgraphUrl}/api/teams/${teamId}/${collection}/${nodeId}`, {
@@ -1380,7 +1366,7 @@ Use the \`create_node\` tool. Each node has three parts:
     if (!session.callbackUrl) return
 
     try {
-      const isPM = session.collectionPath === 'thinkgraph-workitems'
+      const isPM = session.collectionPath === 'thinkgraph-nodes'
       // PM dispatches: Pi writes output deliberately via update_workitem tool.
       // Don't overwrite it with streaming text. Only send status + error.
       const body: Record<string, unknown> = {
