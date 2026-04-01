@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { thinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/schema'
-import { getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 
 /**
  * Public project view — no auth required.
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Fetch work items for this project (uses team-scoped query)
-  const allItems = await getAllThinkgraphWorkItems(project.teamId)
+  const allItems = await getAllThinkgraphNodes(project.teamId)
   const workItems = allItems
     .filter((item: any) => item.projectId === project.id)
     .map((item: any) => ({

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { thinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/schema'
-import { getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
-import { createThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import { createThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 
 /**
  * Public feedback endpoint — no auth required.
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Find the last completed work item to use as parent
-  const allItems = await getAllThinkgraphWorkItems(project.teamId)
+  const allItems = await getAllThinkgraphNodes(project.teamId)
   const projectItems = allItems
     .filter((item: any) => item.projectId === project.id)
 
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
   const parentId = doneItems.length > 0 ? doneItems[0].id : null
 
-  const workItem = await createThinkgraphWorkItem({
+  const workItem = await createThinkgraphNode({
     teamId: project.teamId,
     owner: 'system',
     projectId: project.id,

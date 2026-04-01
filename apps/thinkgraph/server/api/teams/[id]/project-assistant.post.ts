@@ -1,9 +1,8 @@
 import { streamText, tool } from 'ai'
 import { z } from 'zod/v3'
 import { eq, and } from 'drizzle-orm'
-import { getAllThinkgraphWorkItems } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
+import { getAllThinkgraphNodes, createThinkgraphNode, updateThinkgraphNode, deleteThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { getAllThinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/queries'
-import { createThinkgraphWorkItem, updateThinkgraphWorkItem, deleteThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/server/database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { buildNodeContext } from '~~/server/utils/context-builder'
 import { flowConfigs } from '~~/server/db/schema'
@@ -27,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   // Build project context
   const [allItems, allProjects] = await Promise.all([
-    getAllThinkgraphWorkItems(team.id),
+    getAllThinkgraphNodes(team.id),
     getAllThinkgraphProjects(team.id),
   ])
 
@@ -127,7 +126,7 @@ BRIEF: <what the work item should do>
           status: z.enum(['queued', 'active', 'waiting', 'done', 'blocked']).default('queued'),
         }),
         execute: async (params) => {
-          const item = await createThinkgraphWorkItem({
+          const item = await createThinkgraphNode({
             teamId: team.id,
             owner: 'system',
             projectId,
@@ -161,7 +160,7 @@ BRIEF: <what the work item should do>
           }
           if (Object.keys(filtered).length === 0) return { success: false, error: 'No updates' }
 
-          await updateThinkgraphWorkItem(id, team.id, 'system', filtered, { role: 'admin' })
+          await updateThinkgraphNode(id, team.id, 'system', filtered, { role: 'admin' })
           return { success: true, id, updated: Object.keys(filtered) }
         },
       }),
@@ -175,7 +174,7 @@ BRIEF: <what the work item should do>
           const hasChildren = projectItems.some((i: any) => i.parentId === params.id)
           if (hasChildren) return { success: false, error: 'Cannot delete item with children' }
 
-          await deleteThinkgraphWorkItem(params.id, team.id, 'system', { role: 'admin' })
+          await deleteThinkgraphNode(params.id, team.id, 'system', { role: 'admin' })
           return { success: true, id: params.id }
         },
       }),
@@ -190,7 +189,7 @@ BRIEF: <what the work item should do>
           const results = []
           for (const id of params.ids) {
             try {
-              await updateThinkgraphWorkItem(id, team.id, 'system', { status: params.status }, { role: 'admin' })
+              await updateThinkgraphNode(id, team.id, 'system', { status: params.status }, { role: 'admin' })
               results.push({ id, success: true })
             } catch (err: any) {
               results.push({ id, success: false, error: err.message })
@@ -208,7 +207,7 @@ BRIEF: <what the work item should do>
         execute: async (params) => {
           console.log(`[assistant] Dispatching work item ${params.id}`)
           // Re-fetch to get items created during this conversation (not stale snapshot)
-          const freshItems = await getAllThinkgraphWorkItems(team.id)
+          const freshItems = await getAllThinkgraphNodes(team.id)
           const item = freshItems.find((i: any) => i.id === params.id)
           if (!item) {
             console.log(`[assistant] Work item ${params.id} not found in ${freshItems.length} items`)
@@ -247,7 +246,7 @@ BRIEF: <what the work item should do>
           const existing = Array.isArray(item.artifacts) ? item.artifacts : []
           const cleaned = existing.filter((a: any) => a?.type !== 'handoff')
 
-          await updateThinkgraphWorkItem(params.id, team.id, 'system', {
+          await updateThinkgraphNode(params.id, team.id, 'system', {
             status: 'active',
             artifacts: [...cleaned, handoffMeta],
           }, { role: 'admin' })
@@ -276,7 +275,7 @@ BRIEF: <what the work item should do>
             piAccepted = resp?.accepted || false
           } catch (err: any) {
             // Pi rejected or unreachable — reset to queued so it can be dispatched later
-            await updateThinkgraphWorkItem(params.id, team.id, 'system', {
+            await updateThinkgraphNode(params.id, team.id, 'system', {
               status: 'queued',
             }, { role: 'admin' })
             return { success: false, id: params.id, error: `Pi unavailable: ${err.message}. Item reset to queued.` }
