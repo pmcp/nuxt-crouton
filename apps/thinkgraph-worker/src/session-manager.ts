@@ -136,11 +136,12 @@ export class AgentSessionManager {
     await this.updateNodeStatus(payload.nodeId, 'working')
 
     try {
-      // Create tools — nodes with pipeline stages get PM tools, others get thinking graph tools
+      // Create tools — nodes with pipeline stages get PM tools (scoped by stage), others get thinking graph tools
       const hasPipeline = !!payload.stage
       const tools = hasPipeline
         ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
           onSignal: (signal) => { earlySession.lastSignal = signal },
+          stage: payload.stage,
         })
         : createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
 
@@ -596,6 +597,7 @@ Use \`update_workitem\` to set your signal:
 - Set \`status\` to \`"done"\`
 - Set \`output\` to a short analyst summary: what the work is, which package it targets, any notes for the builder
 - Do NOT set \`stage\` — the system handles stage advancement automatically
+- **Optional: \`skipTo\`** — if this is a trivial fix that doesn't need all stages (e.g., skip reviewer, go straight to merger), set \`skipTo\` to the target stage name. Only skip when genuinely trivial (typo fix, config change, single-line fix). When in doubt, don't skip.
 
 **ORANGE** (has questions — pause for human):
 - Set \`signal\` to \`"orange"\`
@@ -629,11 +631,11 @@ Use \`update_workitem\` to set your signal:
     return this.generateInstructions(payload)
   }
 
-  /** Reviewer stage — code review and quality gate */
+  /** Reviewer stage — code review and quality gate with structured verdicts */
   private reviewerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Reviewer Gate
 
-Your job is to review the work produced in the builder stage and provide a quality signal.
+Your job is to review the work produced in the builder stage and provide a structured verdict.
 
 ### Step 1: Gather Context
 - Read all ancestor work item outputs — understand the original brief and what was built
@@ -650,25 +652,35 @@ Your job is to review the work produced in the builder stage and provide a quali
 - **Completeness**: Are there missing pieces or half-finished work?
 - **Architecture**: Does it fit the crouton package structure?
 
-### Step 3: Signal
+### Step 3: Verdict
 
-Use \`update_workitem\` to set your signal:
+Use \`update_workitem\` to set your **verdict** and signal. You MUST set the \`verdict\` field.
 
-**GREEN** (work is good — ready to merge/deploy):
+**APPROVE** (work is good — advance to merger):
+- Set \`verdict\` to \`"APPROVE"\`
 - Set \`signal\` to \`"green"\`
 - Set \`status\` to \`"done"\`
-- Set \`output\` to review verdict: what's good, any minor notes
+- Set \`output\` to review summary: what's good, any minor notes
 
-**ORANGE** (needs changes — send back to builder):
+**REVISE** (code needs fixes — send back to builder with feedback):
+- Set \`verdict\` to \`"REVISE"\`
+- Set \`signal\` to \`"green"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to specific issues that need fixing, with file paths where applicable
+- The system will automatically route back to the builder with your feedback
+
+**RETHINK** (the brief/approach was wrong — send back to analyst):
+- Set \`verdict\` to \`"RETHINK"\`
+- Set \`signal\` to \`"green"\`
+- Set \`status\` to \`"done"\`
+- Set \`output\` to what's fundamentally wrong and why the approach needs rethinking
+
+**UNAVAILABLE** (can't review — surface to human):
+- Set \`verdict\` to \`"UNAVAILABLE"\`
 - Set \`signal\` to \`"orange"\`
 - Set \`status\` to \`"waiting"\`
 - Set \`assignee\` to \`"human"\`
-- Set \`output\` to specific issues that need fixing, with file paths where applicable
-
-**RED** (fundamental problems — needs rethink):
-- Set \`signal\` to \`"red"\`
-- Set \`status\` to \`"blocked"\`
-- Set \`output\` to what's wrong and why this approach won't work`
+- Set \`output\` to why you can't review (missing context, can't access code, etc.)`
   }
 
   /** Merger stage — rebase/merge branch into main, resolve conflicts, merge PR */

@@ -19,25 +19,34 @@ function textResult(text: string): AgentToolResult<unknown> {
   return { content: [{ type: 'text', text }], details: undefined }
 }
 
-/** Create PM tools for a work item dispatch session */
+/** Stage-specific descriptions for update_workitem */
+const STAGE_UPDATE_DESCRIPTIONS: Record<string, string> = {
+  analyst: 'Set your evaluation signal and output. You can set: signal (green/orange/red), status, output, assignee, learnings, retrospective. Do NOT set worktree, stage, or deployUrl.',
+  builder: 'Update the current work item in ThinkGraph. Use this to set the worktree branch name after creating a git worktree, store output summaries, or update status.',
+  reviewer: 'Set your review verdict signal and output. You can set: signal (green/orange/red), status, output, assignee, learnings, retrospective, verdict. Do NOT set worktree, stage, or deployUrl.',
+  merger: 'Update the work item after merging. You can set: signal (green/orange/red), status, output, learnings, retrospective.',
+}
+
+/** Create PM tools for a work item dispatch session, scoped to the pipeline stage */
 export function createPMTools(
   config: WorkerConfig,
   workItemId: string,
   teamId: string,
-  options?: { onSignal?: (signal: string) => void },
+  options?: { onSignal?: (signal: string) => void; stage?: string },
 ): AnyToolDefinition[] {
   const baseUrl = `${config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
+  const stage = options?.stage || 'builder'
 
   const headers = {
     'Cookie': config.serviceToken,
     'Content-Type': 'application/json',
   }
 
-  return [
-    {
+  // Build the full tool catalog, then filter by stage
+  const updateWorkitemTool: AnyToolDefinition = {
       name: 'update_workitem',
       label: 'Update Work Item',
-      description: 'Update the current work item in ThinkGraph. Use this to set the worktree branch name after creating a git worktree, store output summaries, or update status.',
+      description: STAGE_UPDATE_DESCRIPTIONS[stage] || STAGE_UPDATE_DESCRIPTIONS.builder,
       parameters: Type.Object({
         worktree: Type.Optional(Type.String({ description: 'Git branch name for this work item (e.g., thinkgraph/abc123)' })),
         output: Type.Optional(Type.String({ description: 'Output summary — what was produced (your deliverable)' })),
@@ -54,6 +63,8 @@ export function createPMTools(
         assignee: Type.Optional(Type.String({ description: 'Assignee: pi, human, client' })),
         stage: Type.Optional(Type.String({ description: 'Pipeline stage: analyst, builder, reviewer, launcher, merger' })),
         signal: Type.Optional(Type.String({ description: 'Traffic light signal: green, orange, red' })),
+        verdict: Type.Optional(Type.String({ description: 'Review verdict: APPROVE, REVISE, RETHINK, UNAVAILABLE (reviewer stage only)' })),
+        skipTo: Type.Optional(Type.String({ description: 'Skip ahead to this stage (analyst stage only, e.g., "builder", "merger")' })),
         deployUrl: Type.Optional(Type.String({ description: 'Preview deployment URL' })),
       }),
       execute: async (_toolCallId, params) => {
@@ -69,17 +80,34 @@ export function createPMTools(
           options?.onSignal?.(params.signal)
         }
         if (params.deployUrl !== undefined) updates.deployUrl = params.deployUrl
+        // Store verdict and skipTo as artifact metadata (not DB columns)
+        const extraMeta: Record<string, unknown> = {}
+        if (params.verdict !== undefined) extraMeta.verdict = params.verdict
+        if (params.skipTo !== undefined) extraMeta.skipTo = params.skipTo
 
-        if (Object.keys(updates).length === 0) {
+        if (Object.keys(updates).length === 0 && Object.keys(extraMeta).length === 0) {
           return textResult(JSON.stringify({ ok: false, error: 'No fields to update' }))
         }
 
         try {
-          await ofetch(`${baseUrl}/${workItemId}`, {
-            method: 'PATCH',
-            headers,
-            body: updates,
-          })
+          // Store verdict/skipTo as a stage-meta artifact so webhook can read them
+          if (Object.keys(extraMeta).length > 0) {
+            const items = await ofetch(baseUrl, { headers, query: { ids: workItemId } })
+            const item = Array.isArray(items) ? items[0] : null
+            const existingArtifacts = Array.isArray(item?.artifacts) ? item.artifacts : []
+            // Remove previous stage-meta artifacts, keep only latest
+            const cleaned = existingArtifacts.filter((a: any) => a?.type !== 'stage-meta')
+            cleaned.push({ type: 'stage-meta', ...extraMeta, timestamp: new Date().toISOString() })
+            updates.artifacts = cleaned
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await ofetch(`${baseUrl}/${workItemId}`, {
+              method: 'PATCH',
+              headers,
+              body: updates,
+            })
+          }
 
           // Create learning nodes from structured learnings array
           let learningCount = 0
@@ -123,8 +151,9 @@ export function createPMTools(
           return textResult(JSON.stringify({ ok: false, error: err.message }))
         }
       },
-    },
-    {
+    }
+
+  const getWorkitemTool: AnyToolDefinition = {
       name: 'get_workitem',
       label: 'Get Work Item',
       description: 'Get the current work item details including brief, output, ancestors, and artifacts.',
@@ -155,8 +184,9 @@ export function createPMTools(
           return textResult(JSON.stringify({ ok: false, error: err.message }))
         }
       },
-    },
-    {
+    }
+
+  const createPrTool: AnyToolDefinition = {
       name: 'create_pr',
       label: 'Create Pull Request',
       description: 'Create a GitHub PR from the current work item\'s worktree branch. Runs `gh pr create` in the worktree directory and updates the work item with the PR URL. The branch must be pushed first.',
@@ -215,6 +245,26 @@ export function createPMTools(
           return textResult(JSON.stringify({ ok: false, error: err.message }))
         }
       },
-    },
-  ]
+    }
+
+  // Stage-scoped tool sets:
+  // - Analyst:  read-only + signal (get_workitem, update_workitem for signal/output only)
+  // - Builder:  full write (update_workitem, get_workitem, create_pr)
+  // - Reviewer: read + signal (get_workitem, update_workitem for signal/output/verdict)
+  // - Merger:   write, no PR creation (update_workitem, get_workitem)
+  const STAGE_TOOLS: Record<string, string[]> = {
+    analyst: ['get_workitem', 'update_workitem'],
+    builder: ['get_workitem', 'update_workitem', 'create_pr'],
+    reviewer: ['get_workitem', 'update_workitem'],
+    merger: ['get_workitem', 'update_workitem'],
+  }
+
+  const allTools: Record<string, AnyToolDefinition> = {
+    update_workitem: updateWorkitemTool,
+    get_workitem: getWorkitemTool,
+    create_pr: createPrTool,
+  }
+
+  const allowedNames = STAGE_TOOLS[stage] || STAGE_TOOLS.builder
+  return allowedNames.map(name => allTools[name])
 }
