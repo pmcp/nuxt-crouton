@@ -5,6 +5,9 @@ import { getAllThinkgraphNodes, createThinkgraphNode, updateThinkgraphNode, dele
 import { getAllThinkgraphProjects } from '~~/layers/thinkgraph/collections/projects/server/database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { buildNodeContext } from '~~/server/utils/context-builder'
+import { extractItemsFromText } from '~~/server/utils/extract-items'
+import { detectTemplate } from '~~/server/utils/template-detector'
+import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
 import { flowConfigs } from '~~/server/db/schema'
 
 /**
@@ -105,6 +108,10 @@ When the user asks to "dispatch all" or "run everything", create the items first
 
 Keep answers concise. Use tools to take action when the user asks.
 When you take actions, briefly confirm what you did.
+
+When the user pastes a meeting transcript, notes, or any block of raw text, use the ingestText tool to extract and create work items from it. Explain what you extracted and let the user refine (delete, modify, reclassify).
+
+When the user shares feedback or ideas about ThinkGraph itself (the tool, pipeline, MCP, session manager), those should become meta nodes — the ingestText tool handles this automatically via template detection.
 
 When suggesting a next action without using tools, format as:
 ACTION: <type> — <title>
@@ -396,6 +403,50 @@ BRIEF: <what the work item should do>
             .where(eq(flowConfigs.id, flowId))
 
           return { success: true, moved: params.positions.length }
+        },
+      }),
+
+      ingestText: tool({
+        description: 'Extract structured work items from raw text (meeting transcripts, notes, brainstorming, any pasted content). Creates nodes in batch. Use when the user pastes long text or asks to ingest/import content.',
+        parameters: z.object({
+          text: z.string().describe('Raw text to extract items from'),
+          parentId: z.string().optional().describe('Parent node ID for all created items'),
+        }),
+        execute: async (params) => {
+          const items = await extractItemsFromText(params.text)
+          if (items.length === 0) {
+            return { success: true, created: 0, message: 'No actionable items found in the text' }
+          }
+
+          const created = []
+          for (const item of items) {
+            const detected = detectTemplate(item.title, item.brief)
+            const template = detected.template !== 'idea' ? detected.template : item.template
+            const steps = detected.template !== 'idea' ? detected.steps : item.steps
+
+            const node = await createThinkgraphNode({
+              teamId: team.id,
+              owner: 'system',
+              projectId,
+              title: item.title,
+              template,
+              steps,
+              brief: item.brief,
+              status: 'idle',
+              origin: 'ai',
+              contextScope: 'branch',
+              assignee: template === 'meta' ? 'pi' : 'human',
+              ...(params.parentId ? { parentId: params.parentId } : {}),
+            } as any)
+
+            if (item.brief && node?.id) {
+              generateNodeSummaryAsync(node.id, team.id, item.brief)
+            }
+
+            created.push({ id: node.id, title: item.title, template })
+          }
+
+          return { success: true, created: created.length, items: created }
         },
       }),
     },

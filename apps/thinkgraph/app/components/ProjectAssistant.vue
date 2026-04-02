@@ -42,6 +42,7 @@ const {
 
 // ─── State used by persistence and actions ───
 const createdActions = ref<Set<string>>(new Set())
+const showIngestModal = ref(false)
 
 // ─── Persistence ────────────────────────────────────────────────
 const conversationId = ref<string | null>(null)
@@ -134,6 +135,11 @@ function onSubmit() {
   if (input.value.trim()) {
     handleSubmit()
   }
+}
+
+function handleIngest(text: string) {
+  input.value = `Please ingest this text and extract work items from it:\n\n${text}`
+  onSubmit()
 }
 
 // Parse ACTION: blocks from assistant messages
@@ -237,6 +243,12 @@ watch(messages, () => {
               Status summary
             </button>
             <button
+              class="text-xs px-2 py-1 rounded-full bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-400 transition-colors"
+              @click="showIngestModal = true"
+            >
+              Ingest text
+            </button>
+            <button
               class="text-xs px-2 py-1 rounded-full bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 transition-colors"
               @click="input = 'Reset all stuck active items back to queued'; onSubmit()"
             >
@@ -315,5 +327,8 @@ watch(messages, () => {
       />
       <UButton type="submit" icon="i-lucide-send" size="sm" :loading="isLoading" :disabled="!input.trim() || isLoadingConversation" />
     </form>
+
+    <!-- Ingest Modal -->
+    <IngestModal v-model:open="showIngestModal" @submit="handleIngest" />
   </div>
 </template>
