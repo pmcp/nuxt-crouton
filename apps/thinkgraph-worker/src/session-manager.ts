@@ -564,8 +564,7 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
         body = this.reviewerInstructions(payload)
         break
       case 'launcher':
-        // Launcher stage is handled by CI webhook, not Pi — should not reach here
-        body = `## Launcher Stage\n\nThis stage is automated via CI. You should not be dispatched here. Use \`update_workitem\` to set signal to "green" and status to "done".`
+        body = this.launcherInstructions()
         break
       case 'merger':
         body = this.mergerInstructions(payload)
@@ -604,6 +603,7 @@ Your job is to evaluate this work item BEFORE any real work begins. You are a ga
 - Read the codebase to understand context, but change NOTHING
 
 ### Step 1: Read & Understand
+- Read the project conventions first: \`cat ~/nuxt-crouton/CLAUDE.md\`
 - Read the work item title, brief, and full ancestor context chain
 - **Search the codebase before asking questions.** If the brief mentions something you can't find (a skill, a tool, a component), grep for it broadly before concluding it doesn't exist. Check \`session-manager.ts\`, \`CLAUDE.md\` files, and package directories.
 - Understand what is being asked and why
@@ -653,70 +653,123 @@ Use \`update_workitem\` to set your signal:
 - An empty learnings array is perfectly fine. Most analyst runs should have zero learnings.`
   }
 
-  /** Builder stage — the brief drives instructions, not the template type */
+  /** Builder stage — reads project skills from disk for up-to-date conventions */
   private builderInstructions(payload: DispatchPayload): string {
-    // In v2, the brief is the contract. The builder follows whatever the brief says.
-    // Fall back to generate instructions as the general-purpose builder prompt.
-    return this.generateInstructions(payload)
+    return this.worktreeInstructions(payload) + `## Instructions — Builder
+
+Your job is to execute the work described in the brief. The brief is your contract.
+
+### Step 1: Read Project Conventions (MANDATORY — do this first)
+
+Before writing any code, read these files from the project root:
+
+\`\`\`bash
+cat ~/nuxt-crouton/CLAUDE.md
+cat ~/nuxt-crouton/.claude/skills/commit/SKILL.md
+cat ~/nuxt-crouton/.claude/skills/sync-docs/SKILL.md
+\`\`\`
+
+These contain the project's coding conventions, commit format, and documentation sync rules. Follow them exactly.
+
+If your work involves .vue files with user-visible text:
+\`\`\`bash
+cat ~/nuxt-crouton/.claude/skills/i18n-check/SKILL.md
+\`\`\`
+
+If your brief involves creating/modifying CRUD collections or schemas:
+\`\`\`bash
+cat ~/nuxt-crouton/.claude/skills/crouton.md
+\`\`\`
+
+### Step 2: Execute the Work
+
+Follow the brief. Use the conventions from the files you just read.
+
+### Step 3: Pre-Commit Checks
+
+Before committing:
+1. **i18n** — if you touched .vue files, check for hardcoded strings (per i18n-check skill)
+2. **Docs sync** — if you changed public API (composables, components, endpoints), update the relevant CLAUDE.md (per sync-docs skill)
+3. **Commit format** — follow the commit conventions from the commit skill
+
+### Step 4: Commit, Push, Create PR
+
+Follow the worktree instructions above to commit, push, and create a PR.
+Use \`update_workitem\` to set worktree, output, and signal.
+`
   }
 
-  /** Reviewer stage — code review and quality gate with structured verdicts */
+  /** Reviewer stage — reads review skills from disk for structured code review */
   private reviewerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Reviewer Gate
 
-Your job is to review the work produced in the builder stage and provide a structured verdict.
+Your job is to review the work produced in the builder stage using the project's review checklist, then provide a structured verdict.
 
-### Step 1: Gather Context
-- Read all ancestor work item outputs — understand the original brief and what was built
-- If a worktree branch exists in the context, check out and review the code:
+### Step 1: Read Review Standards (MANDATORY — do this first)
+
+\`\`\`bash
+cat ~/nuxt-crouton/CLAUDE.md
+cat ~/nuxt-crouton/.claude/skills/review/SKILL.md
+cat ~/nuxt-crouton/.claude/prompts/boundary-audit.md
+\`\`\`
+
+These contain the project's coding conventions and the full review checklist (security, correctness, project patterns, package boundaries, dead code). Use them as your review criteria.
+
+### Step 2: Gather the Diff
+
+- Read all ancestor work item outputs — understand the original brief
+- Check out and review the code:
   \`\`\`bash
   cd ~/nuxt-crouton
   git fetch origin
-  # Look for the branch in ancestor context
+  # Look for the worktree branch in ancestor context
+  git diff main...<branch-name> --stat
+  git diff main...<branch-name>
   \`\`\`
+- Read the FULL changed files, not just the diff — you need surrounding context for unused imports, broken references, duplicated logic
 
-### Step 2: Evaluate
-- **Requirements met?** Does the output match the original brief?
-- **Code quality**: Clean, follows crouton patterns, no obvious bugs?
-- **Completeness**: Are there missing pieces or half-finished work?
-- **Architecture**: Does it fit the crouton package structure?
+### Step 3: Run the Review Checklist
 
-### Step 3: Verdict
+Apply the checklist from \`review/SKILL.md\` to every changed file. Check boundary rules from \`boundary-audit.md\`. Categorize findings:
+- 🔴 **Critical** — security hole, data loss risk, crash
+- 🟡 **Warning** — bug likely, pattern violation, missing validation
+- 🔵 **Note** — minor issue, potential improvement
+
+### Step 4: Verdict
 
 Use \`update_workitem\` to set your **verdict** and signal. You MUST set the \`verdict\` field.
 
-**APPROVE** (work is good — advance to merger):
-- Set \`verdict\` to \`"APPROVE"\`
-- Set \`signal\` to \`"green"\`
-- Set \`status\` to \`"done"\`
-- Set \`output\` to review summary: what's good, any minor notes
+**APPROVE** (no critical/warning findings):
+- Set \`verdict\` to \`"APPROVE"\`, \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to review summary with any 🔵 notes
 
-**REVISE** (code needs fixes — send back to builder with feedback):
-- Set \`verdict\` to \`"REVISE"\`
-- Set \`signal\` to \`"green"\`
-- Set \`status\` to \`"done"\`
-- Set \`output\` to specific issues that need fixing, with file paths where applicable
+**REVISE** (has critical or warning findings — send back to builder):
+- Set \`verdict\` to \`"REVISE"\`, \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to specific issues with file paths and how to fix
 - The system will automatically route back to the builder with your feedback
 
-**RETHINK** (the brief/approach was wrong — send back to analyst):
-- Set \`verdict\` to \`"RETHINK"\`
-- Set \`signal\` to \`"green"\`
-- Set \`status\` to \`"done"\`
-- Set \`output\` to what's fundamentally wrong and why the approach needs rethinking
+**RETHINK** (the brief/approach was fundamentally wrong):
+- Set \`verdict\` to \`"RETHINK"\`, \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to what's wrong and why the approach needs rethinking
 
-**UNAVAILABLE** (can't review — surface to human):
-- Set \`verdict\` to \`"UNAVAILABLE"\`
-- Set \`signal\` to \`"orange"\`
-- Set \`status\` to \`"waiting"\`
-- Set \`assignee\` to \`"human"\`
-- Set \`output\` to why you can't review (missing context, can't access code, etc.)`
+**UNAVAILABLE** (can't review — missing context, can't access code):
+- Set \`verdict\` to \`"UNAVAILABLE"\`, \`signal\` to \`"orange"\`, \`status\` to \`"waiting"\`
+- Set \`assignee\` to \`"human"\`, \`output\` to why you can't review`
   }
 
-  /** Merger stage — rebase/merge branch into main, resolve conflicts, merge PR */
+  /** Merger stage — reads commit skill from disk, merges branch */
   private mergerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Merger
 
 Your job is to merge the work item's branch into main. This involves updating the branch, resolving any conflicts, and merging the PR.
+
+### Step 0: Read Commit Conventions
+
+\`\`\`bash
+cat ~/nuxt-crouton/.claude/skills/commit/SKILL.md
+\`\`\`
+
+Follow these conventions for any commits you make during the merge process.
 
 ### Step 1: Find the branch
 
@@ -802,48 +855,105 @@ Use \`update_workitem\` to set your signal:
   }
 
   /** Optimizer — reviews accumulated meta learnings and proposes instruction improvements */
+  /** Launcher stage — deploy preflight checks using deploy skill knowledge */
+  private launcherInstructions(): string {
+    return `## Instructions — Launcher
+
+The launcher stage normally waits for CI results automatically. If you've been dispatched here, it means the automated CI path didn't trigger. Run deploy preflight checks instead.
+
+### Step 1: Read Deploy Knowledge
+
+\`\`\`bash
+cat ~/nuxt-crouton/.claude/skills/deploy/SKILL.md
+\`\`\`
+
+### Step 2: Run Preflight Checks
+
+Follow the preflight checks from the deploy skill:
+- Check \`wrangler.toml\` for TODO placeholders
+- Check CF stubs exist in \`server/utils/_cf-stubs/\`
+- Check \`nuxt.config.ts\` has nitro aliases for papaparse and passkey stubs
+- Verify the Pages project exists
+
+### Step 3: Signal
+
+If preflight passes:
+- Set \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to preflight summary
+
+If preflight fails:
+- Set \`signal\` to \`"orange"\`, \`status\` to \`"waiting"\`, \`assignee\` to \`"human"\`
+- Set \`output\` to what failed and how to fix it`
+  }
+
   private optimizerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Pipeline Optimizer (Retro)
 
-Your job is to review the meta learnings accumulated across all pipeline stages for this work item and propose concrete improvements to the stage instructions.
+Your job is to review the meta learnings accumulated across all pipeline stages, propose concrete improvements, and create meta task nodes to implement them.
+
+### Step 0: Read Current Skills and Instructions
+
+\`\`\`bash
+cat ~/nuxt-crouton/CLAUDE.md
+ls ~/nuxt-crouton/.claude/skills/
+cat ~/nuxt-crouton/.claude/mcp-ideas.md
+\`\`\`
+
+Understand what the pipeline already knows so you don't propose changes that already exist.
 
 ### Step 1: Gather All Learnings
 - Read the work item's output, retrospective, and all child work items
 - Focus on learnings with \`scope: "prompt"\` or \`scope: "process"\` — these are about the pipeline itself
 - Look at the stage output history in artifacts for context on what each stage did
 
-### Step 2: Analyze Patterns
-- Group learnings by stage (analyst, builder, reviewer, merger)
-- Identify recurring themes — what keeps going wrong?
-- Distinguish between one-off issues and systemic problems
+### Step 2: Analyze & Categorize
 
-### Step 3: Propose Changes
-For each improvement, provide:
-- **Which file**: always \`apps/thinkgraph-worker/src/session-manager.ts\`
-- **Which method**: e.g., \`analystInstructions()\`, \`builderInstructions()\`, \`reviewerInstructions()\`
-- **What to change**: the specific instruction text to add, modify, or remove
-- **Why**: what problem this fixes, with evidence from the learnings
+Group each learning into one of these categories:
+
+**A. Stage instruction improvements** (target: \`session-manager.ts\` or \`.claude/skills/*.md\`)
+- A stage prompt is missing knowledge that caused a mistake
+- A stage prompt has wrong or outdated instructions
+- A stage prompt should reference a skill file it doesn't know about
+
+**B. Skill file improvements** (target: \`.claude/skills/*.md\`)
+- A skill checklist is missing a check that would have caught an issue
+- A skill workflow has a gap or wrong step
+
+**C. MCP tool opportunities** (target: \`.claude/mcp-ideas.md\`)
+- Repetitive work that an MCP tool could automate
+- Information the agent had to hunt for that a resource could provide
+
+### Step 3: Create Meta Nodes
+
+For each actionable improvement, create a child learning node. But for \`scope: "prompt"\` or \`scope: "process"\` learnings that are concrete enough to implement, **also create a meta task node** using \`update_workitem\` with structured learnings:
+
+\`\`\`json
+{
+  "title": "Reviewer: add i18n check to checklist",
+  "detail": "The reviewer missed hardcoded labels in .vue files. Add instruction to read .claude/skills/i18n-check/SKILL.md when reviewing .vue file changes.",
+  "scope": "prompt"
+}
+\`\`\`
+
+These learning nodes will be promoted to meta task nodes by the human (or automatically if flagged as high-confidence).
+
+For MCP ideas, append them to \`.claude/mcp-ideas.md\` directly if you have write access, or include them in your output.
 
 ### Step 4: Signal
-Use \`update_workitem\` to set your signal:
 
-**GREEN** (improvements identified and documented):
-- Set \`signal\` to \`"green"\`
-- Set \`status\` to \`"done"\`
-- Set \`output\` to your proposed changes — formatted as clear diffs/instructions that a human can review and apply
+**GREEN** (improvements identified and meta nodes created):
+- Set \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to: summary of improvements proposed, meta nodes created, MCP ideas captured
 
 **ORANGE** (not enough data yet):
-- Set \`signal\` to \`"orange"\`
-- Set \`status\` to \`"waiting"\`
-- Set \`assignee\` to \`"human"\`
-- Set \`output\` to what you need — more pipeline runs, specific feedback, etc.
+- Set \`signal\` to \`"orange"\`, \`status\` to \`"waiting"\`, \`assignee\` to \`"human"\`
+- Set \`output\` to what you need
 
 **RED** (no actionable improvements found):
-- Set \`signal\` to \`"red"\`
-- Set \`status\` to \`"done"\`
-- Set \`output\` to why — either the pipeline is working well or the learnings are too vague to act on
+- Set \`signal\` to \`"red"\`, \`status\` to \`"done"\`
+- Set \`output\` to why — pipeline is working well or learnings are too vague
 
-Be specific and surgical. Small, targeted changes to instructions beat broad rewrites. Each improvement should be independently applicable.`
+Be specific and surgical. Small, targeted changes beat broad rewrites.`
   }
 
   /** Closing instructions for pipeline stages — includes signal reminder */
