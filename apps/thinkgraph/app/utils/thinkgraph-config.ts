@@ -74,6 +74,16 @@ export const STAGE_LABELS: Record<string, string> = {
   optimizer: 'O',
 }
 
+// ─── Connect-to-create node types ───
+// Shown in the floating menu when dragging a connection to empty space
+export const CONNECT_NODE_TYPES = [
+  { id: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb', color: 'text-violet-500' },
+  { id: 'research', label: 'Research', icon: 'i-lucide-search', color: 'text-blue-500' },
+  { id: 'task', label: 'Task', icon: 'i-lucide-hammer', color: 'text-amber-500' },
+  { id: 'feature', label: 'Feature', icon: 'i-lucide-rocket', color: 'text-cyan-500' },
+  { id: 'meta', label: 'Meta', icon: 'i-lucide-brain-circuit', color: 'text-rose-500' },
+]
+
 // ─── Legacy compatibility ───
 // These are kept for components that still reference the old API during migration
 

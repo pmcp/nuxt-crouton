@@ -239,74 +239,35 @@ export function useGraphActions(deps: GraphActionDeps) {
     }
   }
 
-  async function createFromConnect(nodeType: string) {
+  async function createFromConnect(template: string) {
     const { sourceNodeId } = connectMenu.value
     connectMenu.value.show = false
 
     if (!selectedGraphId.value) return
 
-    await create({
-      content: '',
-      nodeType,
-      pathType: '',
-      graphId: selectedGraphId.value,
+    // Look up default steps for this template
+    const { TEMPLATE_STEPS } = await import('~/utils/thinkgraph-config')
+    const steps = TEMPLATE_STEPS[template] || []
+
+    const node = await create({
+      title: '',
+      template,
+      steps,
+      status: 'idle',
+      projectId: selectedGraphId.value,
       parentId: sourceNodeId,
-      source: 'manual',
-      starred: false,
-      branchName: '',
-      versionTag: 'v1',
-      model: '',
+      origin: 'human',
     })
 
     await refreshDecisions()
 
-    const newest = decisions.value?.find(d => d.parentId === sourceNodeId && !d.content)
-    if (newest) {
-      open('update', 'thinkgraphNodes', [newest.id])
+    if (node?.id) {
+      open('update', 'thinkgraphNodes', [node.id])
     }
   }
 
   function closeConnectMenu() {
     connectMenu.value.show = false
-  }
-
-  // ─── Handle-to-handle connections (supports fan-in) ───
-  async function onConnect(event: { source: string; target: string }) {
-    // Yjs parentId is updated automatically by CroutonFlow in sync mode.
-    // Here we persist to collection DB and handle fan-in (multiple inputs).
-    const targetNode = decisions.value?.find(d => d.id === event.target)
-
-    if (targetNode?.parentId && targetNode.parentId !== event.source) {
-      // Target already has a parent — this is a fan-in connection.
-      // Move existing parentId into contextNodeIds and add the new source.
-      const existing = Array.isArray(targetNode.contextNodeIds) ? [...targetNode.contextNodeIds] : []
-      if (!existing.includes(targetNode.parentId)) existing.push(targetNode.parentId)
-      if (!existing.includes(event.source)) existing.push(event.source)
-      await update(event.target, {
-        contextScope: 'manual',
-        contextNodeIds: existing,
-        parentId: event.source,
-      })
-    } else {
-      await update(event.target, { parentId: event.source })
-    }
-  }
-
-  async function onEdgeRemove(event: { source: string; target: string; edgeId: string }) {
-    const targetNode = decisions.value?.find(d => d.id === event.target)
-    const contextIds = Array.isArray(targetNode?.contextNodeIds) ? [...targetNode!.contextNodeIds!] : []
-
-    if (event.edgeId.startsWith('e-synth-') || contextIds.includes(event.source)) {
-      // Remove from contextNodeIds (fan-in edge)
-      const updated = contextIds.filter(id => id !== event.source)
-      await update(event.target, {
-        contextNodeIds: updated.length > 0 ? updated : [],
-        ...(updated.length === 0 && { contextScope: 'branch' }),
-      })
-    } else {
-      // Remove primary parent edge
-      await update(event.target, { parentId: null })
-    }
   }
 
   // ─── Node delete ───
@@ -380,9 +341,7 @@ export function useGraphActions(deps: GraphActionDeps) {
     copySelectedContext,
     onChatAddToGraph,
     connectMenu,
-    onConnect,
     onConnectEnd,
-    onEdgeRemove,
     createFromConnect,
     closeConnectMenu,
     onNodeDelete,

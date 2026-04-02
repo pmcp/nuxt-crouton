@@ -384,13 +384,14 @@ function handleContextMenu(event: MouseEvent | Event) {
 }
 
 .node-handle {
-  @apply w-2 h-2 rounded-full;
-  @apply bg-neutral-400/50;
-  @apply border border-white/50 dark:border-neutral-800/50;
-  @apply transition-colors;
+  @apply w-3 h-3 rounded-full;
+  @apply bg-neutral-400/60;
+  @apply border border-white dark:border-neutral-800;
+  @apply transition-all duration-150;
 }
 
 .node-handle:hover {
+  @apply w-4 h-4;
   background-color: var(--color-primary-500);
 }
 
