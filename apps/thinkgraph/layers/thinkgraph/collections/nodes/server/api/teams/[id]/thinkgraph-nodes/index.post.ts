@@ -27,6 +27,7 @@ const bodySchema = z.object({
   pinned: z.boolean().optional(),
   origin: z.string().optional(),
   contextScope: z.string().optional(),
+  contextNodeIds: z.array(z.string()).nullable().optional(),
   worktree: z.string().optional(),
   deployUrl: z.string().optional(),
   artifacts: z.any().optional(),

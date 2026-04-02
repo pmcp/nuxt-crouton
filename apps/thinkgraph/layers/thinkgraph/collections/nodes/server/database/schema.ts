@@ -65,6 +65,7 @@ export const thinkgraphNodes = sqliteTable('thinkgraph_nodes', {
   // Provenance
   origin: text('origin').$default(() => 'human'),
   contextScope: text('contextScope').$default(() => 'branch'),
+  contextNodeIds: jsonColumn('contextNodeIds').$default(() => []),
 
   // Execution
   worktree: text('worktree'),

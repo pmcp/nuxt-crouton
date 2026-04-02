@@ -99,6 +99,7 @@ export interface ThinkgraphNode {
   // Provenance
   origin?: ThinkgraphNodeOrigin
   contextScope?: ThinkgraphContextScope
+  contextNodeIds?: string[]
 
   // Execution
   worktree?: string
