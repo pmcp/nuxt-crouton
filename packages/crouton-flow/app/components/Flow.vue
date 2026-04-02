@@ -5,7 +5,7 @@ import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import type { Node, NodeDragEvent, OnConnectStartParams } from '@vue-flow/core'
+import type { Node, NodeDragEvent, OnConnectStartParams, Connection } from '@vue-flow/core'
 import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
@@ -141,6 +141,10 @@ const emit = defineEmits<{
   nodeContainerChange: [event: ContainerChangeEvent]
   /** Emitted when nodes are deleted (keyboard delete or programmatic removal) */
   nodeDelete: [nodeIds: string[]]
+  /** Emitted when a connection is made between two nodes (handle-to-handle) */
+  connect: [event: { source: string; target: string }]
+  /** Emitted when an edge is removed (node disconnected) */
+  edgeRemove: [event: { source: string; target: string; edgeId: string }]
   /** Emitted when a connection drag ends without connecting to a target handle */
   connectEnd: [event: { sourceNodeId: string; sourceHandleType: string; position: FlowPosition; mouseEvent: MouseEvent }]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
@@ -212,6 +216,7 @@ const {
   onNodeDoubleClick,
   onEdgeClick,
   onNodesChange,
+  onEdgesChange,
   onConnect,
   onConnectStart,
   onConnectEnd,
@@ -286,8 +291,18 @@ onConnectStart(({ nodeId, handleType }: OnConnectStartParams) => {
   }
 })
 
-onConnect(() => {
+onConnect((connection: Connection) => {
   connectionCompleted = true
+
+  if (!connection.source || !connection.target) return
+
+  // In sync mode: update the target node's parentId in Yjs
+  if (props.sync && syncState) {
+    syncState.updateNode(connection.target, { parentId: connection.source })
+  }
+
+  // Always emit so consumers can persist the connection
+  emit('connect', { source: connection.source, target: connection.target })
 })
 
 onConnectEnd((event: MouseEvent | TouchEvent | undefined) => {
@@ -710,6 +725,27 @@ onNodeDoubleClick(({ node }) => {
 // Handle edge click
 onEdgeClick(({ edge }) => {
   emit('edgeClick', edge.id)
+})
+
+// Handle edge removal — clear parentId when an edge is deleted
+// Snapshot current edges before the removal so we can look up source/target
+onEdgesChange((changes) => {
+  const removedIds = changes
+    .filter(c => c.type === 'remove')
+    .map(c => c.id)
+  if (removedIds.length === 0) return
+
+  for (const edgeId of removedIds) {
+    const edge = finalEdges.value.find(e => e.id === edgeId)
+    if (!edge) continue
+
+    // In sync mode: clear the target node's parentId in Yjs
+    if (props.sync && syncState) {
+      syncState.updateNode(edge.target, { parentId: null })
+    }
+
+    emit('edgeRemove', { source: edge.source, target: edge.target, edgeId })
+  }
 })
 
 // ============================================
