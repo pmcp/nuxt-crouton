@@ -85,8 +85,12 @@ When working on app features (in `apps/`), do NOT touch `packages/` code without
 If a feature genuinely requires a package change:
 1. **Stop and explain** what you need to change and why
 2. **Wait for explicit approval** before proceeding
-3. **Scope the change minimally** — only what the feature requires
-4. **Run `pnpm typecheck`** across all apps after the change to catch ripple effects
+3. **Unlock the package**: `echo 'package-name' >> .claude/.package-edit-approved`
+4. **Make your edits** — scoped minimally to what the feature requires
+5. **Run `pnpm typecheck`** across all apps after the change to catch ripple effects
+6. **Remove approval when done**: `rm .claude/.package-edit-approved`
+
+The approval file is gitignored and session-scoped. Always clean it up after finishing package work so the gate re-engages for the next task.
 
 This applies to all agents, including Pi worker and sub-agents.
 

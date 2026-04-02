@@ -87,3 +87,4 @@ apps/*/.wrangler/deploy/
 
 # Claude Code projects
 .claude/projects/
+.claude/.package-edit-approved
