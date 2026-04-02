@@ -133,6 +133,13 @@ onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 const selectedItemId = ref<string | null>(null)
 const showDetail = ref(false)
 
+// Canvas multi-select (for SelectionBar synthesis/brief actions)
+const canvasSelectedIds = ref<string[]>([])
+
+function onSelectionChange(ids: string[]) {
+  canvasSelectedIds.value = ids
+}
+
 const selectedItem = computed(() =>
   items.value.find(n => n.id === selectedItemId.value),
 )
@@ -327,6 +334,76 @@ if (import.meta.client) {
       showQuickCreate.value = false
     }
   })
+}
+
+// ─── Canvas multi-select actions ───
+async function canvasSynthesize() {
+  if (canvasSelectedIds.value.length < 2 || !teamId.value) return
+  const nodeIds = canvasSelectedIds.value
+  const titles = nodeIds
+    .map(id => items.value.find(n => n.id === id)?.title)
+    .filter(Boolean)
+
+  try {
+    const steps = ['synthesize']
+    const node = await $fetch<any>(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+      method: 'POST',
+      body: {
+        projectId: projectId.value,
+        title: `Synthesis: ${titles.slice(0, 3).join(', ')}${titles.length > 3 ? '...' : ''}`,
+        template: 'research',
+        steps,
+        status: 'queued',
+        assignee: 'pi',
+        origin: 'human',
+        contextScope: 'manual',
+        contextNodeIds: nodeIds,
+        parentId: nodeIds[0],
+      },
+    })
+    canvasSelectedIds.value = []
+    await refreshItems()
+
+    // Auto-dispatch
+    if (node?.id) {
+      await $fetch(`/api/teams/${teamId.value}/dispatch/work-item`, {
+        method: 'POST',
+        body: { workItemId: node.id },
+      })
+      toast.add({ title: 'Synthesis created & dispatched', color: 'success' })
+    }
+  } catch (err: any) {
+    toast.add({ title: 'Synthesis failed', description: err?.message, color: 'error' })
+  }
+}
+
+async function canvasGenerateBrief(format: string) {
+  if (canvasSelectedIds.value.length === 0 || !teamId.value) return
+  try {
+    const result = await $fetch<{ brief: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes/brief`, {
+      method: 'POST',
+      body: { ids: canvasSelectedIds.value, format, graphId: projectId.value },
+    })
+    if (result?.brief) {
+      await navigator.clipboard.writeText(result.brief)
+      toast.add({ title: 'Brief copied to clipboard', color: 'success' })
+    }
+  } catch (err: any) {
+    toast.add({ title: 'Brief failed', description: err?.message, color: 'error' })
+  }
+}
+
+async function canvasCopyContext() {
+  const texts = canvasSelectedIds.value
+    .map(id => items.value.find(n => n.id === id))
+    .filter(Boolean)
+    .map(n => `## ${n!.title}\n${n!.brief || n!.output || ''}`)
+  await navigator.clipboard.writeText(texts.join('\n\n'))
+  toast.add({ title: 'Context copied', color: 'success' })
+}
+
+function canvasDeselect(id: string) {
+  canvasSelectedIds.value = canvasSelectedIds.value.filter(i => i !== id)
 }
 
 // ─── Dispatch ───
@@ -783,6 +860,9 @@ const STAGE_LABEL: Record<string, string> = {
   launcher: 'Launcher',
   reviewer: 'Reviewer',
   merger: 'Merger',
+  analyse: 'Analyse',
+  synthesize: 'Synthesize',
+  optimizer: 'Optimizer',
 }
 
 const stageOutputs = computed(() => {
@@ -968,6 +1048,7 @@ if (import.meta.client) {
           @node-click="onNodeClick"
           @connect-end="onConnectEnd"
           @node-delete="onNodeDelete"
+          @selection-change="onSelectionChange"
         />
 
         <!-- Quick create menu (appears on drag-to-empty) -->
@@ -987,6 +1068,18 @@ if (import.meta.client) {
             {{ t.label }}
           </button>
         </div>
+
+        <!-- Canvas multi-select bar -->
+        <SelectionBar
+          :selected-ids="canvasSelectedIds"
+          :nodes="items"
+          @synthesize="canvasSynthesize"
+          @generate-brief="canvasGenerateBrief"
+          @copy-context="canvasCopyContext"
+          @use-as-context="() => {}"
+          @clear="canvasSelectedIds = []"
+          @deselect="canvasDeselect"
+        />
       </div>
 
       <!-- Kanban view -->
