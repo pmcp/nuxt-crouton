@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, provide, ref, resolveComponent, watch, markRaw } from 'vue'
+import { computed, nextTick, provide, reactive, ref, resolveComponent, watch, markRaw } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -141,10 +141,6 @@ const emit = defineEmits<{
   nodeContainerChange: [event: ContainerChangeEvent]
   /** Emitted when nodes are deleted (keyboard delete or programmatic removal) */
   nodeDelete: [nodeIds: string[]]
-  /** Emitted when a connection is made between two nodes (handle-to-handle) */
-  connect: [event: { source: string; target: string }]
-  /** Emitted when an edge is removed (node disconnected) */
-  edgeRemove: [event: { source: string; target: string; edgeId: string }]
   /** Emitted when a connection drag ends without connecting to a target handle */
   connectEnd: [event: { sourceNodeId: string; sourceHandleType: string; position: FlowPosition; mouseEvent: MouseEvent }]
   /** Emitted in ephemeral mode when nodes change (enables v-model:rows) */
@@ -215,11 +211,13 @@ const {
   onNodeClick,
   onNodeDoubleClick,
   onEdgeClick,
+  onEdgeDoubleClick,
   onNodesChange,
   onEdgesChange,
   onConnect,
   onConnectStart,
   onConnectEnd,
+  getSelectedEdges,
   screenToFlowCoordinate,
   getSelectedNodes,
   addSelectedNodes,
@@ -284,53 +282,115 @@ watch(() => props.selected, (newSelected) => {
 const pendingConnection = ref<{ nodeId: string; handleType: string } | null>(null)
 let connectionCompleted = false
 
-onConnectStart(({ nodeId, handleType }: OnConnectStartParams) => {
-  if (nodeId) {
-    pendingConnection.value = { nodeId, handleType: handleType || 'source' }
-    connectionCompleted = false
+// Connection persistence — PATCH target node via collection API
+async function patchNode(nodeId: string, body: Record<string, unknown>) {
+  try {
+    const collections = useCollections()
+    const config = collections.getConfig(props.collection)
+    if (!config) return
+
+    const apiPath = config.apiPath || props.collection
+    const { getTeamId } = useTeamContext()
+    const route = useRoute()
+    let basePath: string
+    if (route.path.includes('/super-admin/')) {
+      basePath = `/api/super-admin/${apiPath}`
+    } else {
+      const teamId = getTeamId()
+      if (!teamId) return
+      basePath = `/api/teams/${teamId}/${apiPath}`
+    }
+
+    await $fetch(`${basePath}/${nodeId}`, {
+      method: 'PATCH',
+      body,
+      credentials: 'include',
+    })
+  } catch (e) {
+    console.error('[CroutonFlow] patchNode FAILED', nodeId, body, e)
   }
+}
+
+// Native pointer events to detect connection drag start/end
+// Vue Flow's connect-start/end events don't fire through <ClientOnly>
+watch(containerRef, (container) => {
+  if (!container) return
+
+  container.addEventListener('pointerdown', (e: PointerEvent) => {
+    const handle = (e.target as HTMLElement)?.closest('.vue-flow__handle')
+    if (!handle) return
+    const nodeEl = handle.closest('.vue-flow__node')
+    const nodeId = nodeEl?.getAttribute('data-id')
+    const handleType = handle.classList.contains('source') ? 'source' : 'target'
+    if (nodeId) {
+      pendingConnection.value = { nodeId, handleType }
+      connectionCompleted = false
+    }
+  }, { capture: true })
+
+  document.addEventListener('pointerup', (e: PointerEvent) => {
+    if (!pendingConnection.value || connectionCompleted) {
+      pendingConnection.value = null
+      return
+    }
+
+    const targetHandle = (e.target as HTMLElement)?.closest('.vue-flow__handle')
+    if (targetHandle) {
+      pendingConnection.value = null
+      return
+    }
+
+    const flowPosition = screenToFlowCoordinate({ x: e.clientX, y: e.clientY })
+    emit('connectEnd', {
+      sourceNodeId: pendingConnection.value.nodeId,
+      sourceHandleType: pendingConnection.value.handleType,
+      position: { x: Math.round(flowPosition.x), y: Math.round(flowPosition.y) },
+      mouseEvent: e as unknown as MouseEvent,
+    })
+
+    pendingConnection.value = null
+  })
 })
 
-onConnect((connection: Connection) => {
+
+
+// Handle new connection from @connect on VueFlow template
+function onNewConnection(connection: Connection) {
   connectionCompleted = true
 
   if (!connection.source || !connection.target) return
 
-  // In sync mode: update the target node's parentId in Yjs
-  if (props.sync && syncState) {
-    syncState.updateNode(connection.target, { parentId: connection.source })
-  }
+  // Add edge to v-model ref
+  finalEdges.value = [...finalEdges.value, {
+    id: `e-${connection.source}-${connection.target}`,
+    source: connection.source,
+    target: connection.target,
+  }]
 
-  // Always emit so consumers can persist the connection
-  emit('connect', { source: connection.source, target: connection.target })
+  // Persist to DB
+  const targetRow = (props.rows || []).find(r => (r as any).id === connection.target)
+  const existingParent = targetRow?.[props.parentField] as string | null | undefined
+
+  if (existingParent && existingParent !== connection.source) {
+    // Fan-in: target already has a parent
+    const existing = Array.isArray((targetRow as any)?.contextNodeIds) ? [...(targetRow as any).contextNodeIds] : []
+    if (!existing.includes(existingParent)) existing.push(existingParent)
+    if (!existing.includes(connection.source)) existing.push(connection.source)
+    patchNode(connection.target, {
+      [props.parentField]: connection.source,
+      contextScope: 'manual',
+      contextNodeIds: existing,
+    })
+  } else {
+    patchNode(connection.target, { [props.parentField]: connection.source })
+  }
+}
+
+// Keep onConnect hook for connectEnd logic (tracks connectionCompleted flag)
+onConnect(() => {
+  connectionCompleted = true
 })
 
-onConnectEnd((event: MouseEvent | TouchEvent | undefined) => {
-  if (connectionCompleted || !pendingConnection.value || !event) {
-    pendingConnection.value = null
-    return
-  }
-
-  // Connection ended without hitting a target handle
-  const mouseEvent = event instanceof MouseEvent ? event : (event as TouchEvent).changedTouches?.[0]
-  if (!mouseEvent) {
-    pendingConnection.value = null
-    return
-  }
-
-  const clientX = 'clientX' in mouseEvent ? mouseEvent.clientX : 0
-  const clientY = 'clientY' in mouseEvent ? mouseEvent.clientY : 0
-  const flowPosition = screenToFlowCoordinate({ x: clientX, y: clientY })
-
-  emit('connectEnd', {
-    sourceNodeId: pendingConnection.value.nodeId,
-    sourceHandleType: pendingConnection.value.handleType,
-    position: { x: Math.round(flowPosition.x), y: Math.round(flowPosition.y) },
-    mouseEvent: event instanceof MouseEvent ? event : new MouseEvent('mouseup', { clientX, clientY }),
-  })
-
-  pendingConnection.value = null
-})
 
 // ============================================
 // DRAG & DROP (external items onto canvas)
@@ -428,7 +488,7 @@ const positionedNodes = computed(() => {
 // When rows update (CRUD), nodes get recreated at (0,0) because collection
 // data has no position field. This cache preserves last known positions.
 // Seed from savedPositions so they survive data refreshes and dagre never overrides them.
-const positionCache = new Map<string, { x: number; y: number }>()
+const positionCache = reactive(new Map<string, { x: number; y: number }>())
 
 // Locked node IDs: nodes with saved positions that dagre must never override.
 // Seeded from savedPositions; drag-stop also locks the node.
@@ -605,17 +665,44 @@ const finalNodes = computed(() => {
 const edgeType = computed(() => props.flowConfig?.edgeType || 'default')
 const defaultEdgeOptions = computed(() => ({ type: edgeType.value }))
 
-const finalEdges = computed(() => {
-  if (props.dataMode === 'ephemeral') {
-    return []
-  }
-  const rawEdges = (props.sync && syncState) ? syncEdges.value : dataEdges.value
-  const extra = props.additionalEdges || []
-  const allEdges = extra.length > 0 ? [...rawEdges, ...extra] : rawEdges
-  // Apply current edge type to all edges
-  const type = edgeType.value
-  return allEdges.map(e => e.type === type ? e : { ...e, type })
-})
+// Edges ref — v-model:edges lets Vue Flow manage connect/delete directly
+const finalEdges = ref<Array<{ id: string; source: string; target: string; type?: string }>>([])
+
+// Sync data-derived edges into the ref when rows change
+// Merges with current state: adds new data edges, removes stale data edges, keeps user edges
+let lastDataEdgeIds = new Set<string>()
+
+watch(
+  [dataEdges, syncEdges, () => props.additionalEdges, () => props.dataMode],
+  () => {
+    if (props.dataMode === 'ephemeral') {
+      finalEdges.value = []
+      lastDataEdgeIds = new Set()
+      return
+    }
+    const rawEdges = (props.sync && syncState) ? syncEdges.value : dataEdges.value
+    const extra = props.additionalEdges || []
+    const type = edgeType.value
+    const dataEdgeList = [...rawEdges, ...extra].map(e => e.type === type ? e : { ...e, type })
+    const newDataIds = new Set(dataEdgeList.map(e => e.id))
+
+    // Edges that were removed from data since last sync
+    const removedFromData = new Set([...lastDataEdgeIds].filter(id => !newDataIds.has(id)))
+    // Edges that are new in data
+    const addedInData = dataEdgeList.filter(e => !lastDataEdgeIds.has(e.id))
+
+    // Current edges minus removed, plus newly added
+    const currentIds = new Set(finalEdges.value.map(e => e.id))
+    const kept = finalEdges.value.filter(e => !removedFromData.has(e.id))
+    const toAdd = addedInData.filter(e => !currentIds.has(e.id))
+
+    console.log('[CroutonFlow] edge sync:', { dataCount: dataEdgeList.length, removed: [...removedFromData], added: toAdd.map(e => e.id), kept: kept.length, finalCount: kept.length + toAdd.length })
+
+    finalEdges.value = [...kept, ...toAdd]
+    lastDataEdgeIds = newDataIds
+  },
+  { immediate: true, deep: true },
+)
 
 // ============================================
 // EVENT HANDLERS
@@ -727,8 +814,12 @@ onEdgeClick(({ edge }) => {
   emit('edgeClick', edge.id)
 })
 
-// Handle edge removal — clear parentId when an edge is deleted
-// Snapshot current edges before the removal so we can look up source/target
+// Handle edge double-click — delete the connection
+onEdgeDoubleClick(({ edge }) => {
+  deleteEdge(edge)
+})
+
+// Handle edge removal via keyboard (select + backspace/delete) or v-model
 onEdgesChange((changes) => {
   const removedIds = changes
     .filter(c => c.type === 'remove')
@@ -737,16 +828,26 @@ onEdgesChange((changes) => {
 
   for (const edgeId of removedIds) {
     const edge = finalEdges.value.find(e => e.id === edgeId)
-    if (!edge) continue
-
-    // In sync mode: clear the target node's parentId in Yjs
-    if (props.sync && syncState) {
-      syncState.updateNode(edge.target, { parentId: null })
-    }
-
-    emit('edgeRemove', { source: edge.source, target: edge.target, edgeId })
+    if (edge) deleteEdge(edge)
   }
 })
+
+function deleteEdge(edge: { id: string; source: string; target: string }) {
+  const targetRow = (props.rows || []).find(r => (r as any).id === edge.target)
+  const isParentEdge = targetRow?.[props.parentField] === edge.source
+
+  if (isParentEdge) {
+    patchNode(edge.target, { [props.parentField]: null })
+  } else {
+    const contextIds = Array.isArray((targetRow as any)?.contextNodeIds) ? [...(targetRow as any).contextNodeIds] : []
+    const currentParent = targetRow?.[props.parentField] as string | null
+    const updated = contextIds.filter((id: string) => id !== edge.source && id !== currentParent)
+    patchNode(edge.target, {
+      contextNodeIds: updated.length > 0 ? updated : [],
+      ...(updated.length === 0 && { contextScope: 'branch' }),
+    })
+  }
+}
 
 // ============================================
 // CUSTOM NODE RESOLUTION
@@ -808,9 +909,7 @@ defineExpose({
 
 <template>
   <ClientOnly>
-  <div
-    ref="containerRef"
-    class="crouton-flow-container"
+  <div ref="containerRef" class="crouton-flow-container"
     :class="{ 'crouton-flow-drop-target': isDragOver, 'crouton-flow-dark': isDark }"
     @dragover="handleDragOver"
     @dragleave="handleDragLeave"
@@ -866,13 +965,16 @@ defineExpose({
 
     <VueFlow
       :nodes="finalNodes"
-      :edges="finalEdges"
+      v-model:edges="finalEdges"
       :node-types="nodeTypes"
       :default-edge-options="defaultEdgeOptions"
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
+      connection-mode="loose"
+      :connect-on-click="false"
       class="crouton-vue-flow"
+      @connect="onNewConnection"
     >
       <!-- Custom or default node template -->
       <template #node-default="nodeProps">
