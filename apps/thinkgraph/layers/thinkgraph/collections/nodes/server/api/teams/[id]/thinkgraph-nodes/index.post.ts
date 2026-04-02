@@ -4,6 +4,7 @@ import { createThinkgraphNode, getThinkgraphNodesByIds } from '../../../../datab
 import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { z } from 'zod'
+import { detectTemplate } from '~~/server/utils/template-detector'
 
 const bodySchema = z.object({
   projectId: z.string().min(1, 'projectId is required'),
@@ -39,6 +40,15 @@ export default defineEventHandler(async (event) => {
   authTimer.end()
 
   const body = await readValidatedBody(event, bodySchema.parse)
+
+  // Auto-detect template from title + brief if not explicitly provided
+  if (!body.template) {
+    const detected = detectTemplate(body.title, body.brief || undefined)
+    body.template = detected.template
+    if (!body.steps) {
+      body.steps = detected.steps
+    }
+  }
 
   // Exclude id field (we generate it for path calculation)
   const { id, ...dataWithoutId } = body as any

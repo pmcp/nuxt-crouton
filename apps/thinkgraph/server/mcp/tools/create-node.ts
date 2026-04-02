@@ -2,14 +2,15 @@ import { z } from 'zod'
 import { createThinkgraphNode, getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { resolveTeamId } from '../utils/resolve-team'
 import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
+import { detectTemplate } from '~~/server/utils/template-detector'
 
 export default defineMcpTool({
-  description: 'Create a new node in ThinkGraph. Nodes have templates (idea, research, task, feature, meta) and optional pipeline steps. Use search-graph first to find the right parent.',
+  description: 'Create a new node in ThinkGraph. Template is auto-detected from the title and brief — you can omit it. Use search-graph first to find the right parent.',
   inputSchema: {
     teamId: z.string().describe('Team ID or slug'),
     projectId: z.string().describe('Project ID this node belongs to'),
     title: z.string().describe('Short post-it headline (5-10 words max)'),
-    template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).default('idea').describe('Node template'),
+    template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).optional().describe('Node template (auto-detected from title+brief if omitted)'),
     parentId: z.string().optional().describe('Parent node ID (omit for root node)'),
     starred: z.boolean().optional().default(false).describe('Star this node as important'),
     status: z.enum(['idle', 'draft', 'queued', 'active', 'working', 'waiting', 'blocked', 'done', 'error']).optional().default('idle').describe('Node status'),
@@ -32,20 +33,15 @@ export default defineMcpTool({
         }
       }
 
-      // Default steps from template if not provided
-      const TEMPLATE_STEPS: Record<string, string[]> = {
-        idea: [],
-        research: ['analyse'],
-        task: ['analyst', 'builder', 'reviewer', 'merger'],
-        feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
-        meta: ['analyst', 'builder', 'reviewer', 'merger'],
-      }
-      const nodeSteps = steps || TEMPLATE_STEPS[template] || []
+      // Auto-detect template from content if not explicitly provided
+      const detected = detectTemplate(title, brief)
+      const resolvedTemplate = template || detected.template
+      const nodeSteps = steps || detected.steps
 
       const node = await createThinkgraphNode({
         projectId,
         title,
-        template,
+        template: resolvedTemplate,
         steps: nodeSteps,
         parentId: parentId || '',
         starred: starred || false,
