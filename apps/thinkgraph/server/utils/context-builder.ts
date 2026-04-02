@@ -417,20 +417,24 @@ export function buildNodeContext(
   // Build entries with layer assignment
   const chain: NodeContextEntry[] = []
   let usedTokens = 0
+  const isManualScope = scope === 'manual'
 
   // First ancestor (root / project brief) — full layer
   if (contextNodes.length > 0 && contextNodes[0].id !== targetId) {
     const root = contextNodes[0]
-    const entry = buildFullEntry(root)
+    // Manual scope: connected nodes get expanded layer (brief + output)
+    const entry = isManualScope ? buildExpandedEntry(root) : buildFullEntry(root)
     usedTokens += estimateEntryTokens(entry)
     chain.push(entry)
   }
 
-  // Middle ancestors — index layer (summary or title fallback)
+  // Middle context nodes
   for (let i = 1; i < contextNodes.length - 1; i++) {
     const node = contextNodes[i]
     if (node.id === targetId) continue
-    const entry = buildIndexEntry(node)
+    // Manual scope: all connected nodes get expanded layer for synthesis
+    // Branch scope: middle ancestors get index layer (summary or title fallback)
+    const entry = isManualScope ? buildExpandedEntry(node) : buildIndexEntry(node)
     usedTokens += estimateEntryTokens(entry)
     if (usedTokens > MAX_CONTEXT_TOKENS) break
     chain.push(entry)
@@ -467,6 +471,20 @@ function buildIndexEntry(node: ContextInputNode): NodeContextEntry {
     status: node.status,
     summary: node.summary || undefined,
     layer: 'index',
+  }
+}
+
+/** Build an expanded-layer entry (~500 tokens): brief + output included */
+function buildExpandedEntry(node: ContextInputNode): NodeContextEntry {
+  return {
+    id: node.id,
+    title: node.title,
+    nodeType: node.nodeType,
+    status: node.status,
+    summary: node.summary || undefined,
+    brief: node.brief || undefined,
+    output: node.output || undefined,
+    layer: 'expanded' as const,
   }
 }
 

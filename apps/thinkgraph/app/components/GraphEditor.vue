@@ -66,7 +66,7 @@ const {
   generatingBrief, generateBrief,
   copySelectedContext,
   onChatAddToGraph,
-  connectMenu, onConnectEnd, createFromConnect, closeConnectMenu,
+  connectMenu, onConnect, onConnectEnd, onEdgeRemove, createFromConnect, closeConnectMenu,
   onNodeDelete,
   exportGraph: exportGraphAction,
 } = useGraphActions({
@@ -94,16 +94,26 @@ const visibleDecisions = computed(() => {
   return props.decisions.filter(d => filteredIds.value!.has(d.id))
 })
 
-// ─── Additional edges (synthesis artifacts) ───
+// ─── Additional edges (fan-in contextNodeIds + synthesis artifacts) ───
 const additionalEdges = computed(() => {
   if (!props.decisions) return []
   const edges: Array<{ id: string; source: string; target: string }> = []
   for (const d of props.decisions) {
+    // Fan-in edges from contextNodeIds
+    if (Array.isArray(d.contextNodeIds)) {
+      for (const srcId of d.contextNodeIds) {
+        // Skip if already rendered as the primary parentId edge
+        if (srcId !== d.parentId) {
+          edges.push({ id: `e-ctx-${srcId}-${d.id}`, source: srcId, target: d.id })
+        }
+      }
+    }
+    // Legacy synthesis artifact edges
     if (!Array.isArray(d.artifacts)) continue
     for (const a of d.artifacts) {
       if (a.type === 'synthesis' && Array.isArray((a as any).sourceNodeIds)) {
         for (const srcId of (a as any).sourceNodeIds) {
-          if (srcId !== d.parentId) {
+          if (srcId !== d.parentId && !(d.contextNodeIds || []).includes(srcId)) {
             edges.push({ id: `e-synth-${srcId}-${d.id}`, source: srcId, target: d.id })
           }
         }
@@ -373,7 +383,9 @@ function exportGraph() {
           @node-click="onNodeClick"
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
+          @connect="onConnect"
           @connect-end="onConnectEnd"
+          @edge-remove="onEdgeRemove"
         />
         <div
           v-else

@@ -96,6 +96,7 @@ The user is asking about THIS specific node. Help them decide what to do with it
 You are a PM assistant with tools to take action. You can:
 - Create, update, and delete work items
 - Dispatch work items to Pi for execution (only queued, pi-assigned items)
+- Synthesize multiple nodes into a unified brief (fan-in: combine related ideas/research into one)
 - Arrange nodes on the canvas (group related items, clean up layout)
 - Batch-dismiss learnings that aren't actionable
 - Promote learnings to tasks
@@ -283,6 +284,79 @@ BRIEF: <what the work item should do>
           }
 
           return { success: true, id: params.id, piAccepted, skill: handoffMeta.skill }
+        },
+      }),
+
+      synthesizeNodes: tool({
+        description: 'Create a synthesis node that combines multiple nodes into a unified brief. Sets contextNodeIds to the selected nodes and optionally dispatches the synthesize step.',
+        parameters: z.object({
+          nodeIds: z.array(z.string()).min(2).describe('IDs of nodes to synthesize (at least 2)'),
+          title: z.string().optional().describe('Custom title for the synthesis node'),
+          autoDispatch: z.boolean().default(false).describe('Whether to immediately dispatch the synthesize step'),
+        }),
+        execute: async (params) => {
+          const titles = params.nodeIds
+            .map(id => projectItems.find((i: any) => i.id === id)?.title)
+            .filter(Boolean)
+          const synthTitle = params.title || `Synthesis: ${titles.slice(0, 3).join(', ')}${titles.length > 3 ? '...' : ''}`
+
+          const node = await createThinkgraphNode({
+            teamId: team.id,
+            owner: 'system',
+            projectId,
+            title: synthTitle,
+            template: 'research',
+            steps: ['synthesize'],
+            status: params.autoDispatch ? 'queued' : 'idle',
+            assignee: params.autoDispatch ? 'pi' : 'human',
+            origin: 'ai',
+            contextScope: 'manual',
+            contextNodeIds: params.nodeIds,
+            parentId: params.nodeIds[0],
+          } as any)
+
+          if (params.autoDispatch && node?.id) {
+            try {
+              const config = useRuntimeConfig()
+              const piWorkerUrl = config.piWorkerUrl || 'https://pi-api.pmcp.dev'
+              const host = getHeader(event, 'host') || 'localhost:3004'
+
+              const freshItems = await getAllThinkgraphNodes(team.id)
+              const contextPayload = buildNodeContext(
+                freshItems.map((i: any) => ({
+                  id: i.id, parentId: i.parentId, title: i.title,
+                  nodeType: i.template, status: i.status, summary: i.summary,
+                  brief: i.brief, output: i.output, pinned: i.pinned,
+                  contextScope: i.contextScope, contextNodeIds: i.contextNodeIds,
+                })),
+                node.id,
+              )
+
+              await $fetch(`${piWorkerUrl}/dispatch`, {
+                method: 'POST',
+                body: {
+                  workItemId: node.id,
+                  projectId,
+                  prompt: `Synthesize these ${params.nodeIds.length} connected nodes into a unified brief.`,
+                  context: contextPayload.markdown,
+                  skill: 'synthesize',
+                  workItemType: 'research',
+                  stage: 'synthesize',
+                  teamId: team.id,
+                  teamSlug: team.slug || team.id,
+                  callbackUrl: `${config.public?.siteUrl || `http://${host}`}/api/teams/${team.id}/dispatch/webhook`,
+                  contextNodeIds: params.nodeIds,
+                },
+              })
+
+              await updateThinkgraphNode(node.id, team.id, 'system', { status: 'active' }, { role: 'admin' })
+              return { success: true, id: node.id, title: synthTitle, dispatched: true }
+            } catch (err: any) {
+              return { success: true, id: node.id, title: synthTitle, dispatched: false, dispatchError: err.message }
+            }
+          }
+
+          return { success: true, id: node.id, title: synthTitle, dispatched: false }
         },
       }),
 

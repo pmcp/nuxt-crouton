@@ -328,6 +328,8 @@ async function dispatchToWorker(event: any, config: any, teamId: string, workIte
       brief: item.brief,
       output: item.output,
       pinned: item.pinned,
+      contextScope: item.contextScope,
+      contextNodeIds: item.contextNodeIds,
     })),
     workItemId,
   )
@@ -345,6 +347,8 @@ async function dispatchToWorker(event: any, config: any, teamId: string, workIte
       teamId,
       teamSlug: teamId,
       callbackUrl: `${config.public?.siteUrl || `https://${getHeader(event, 'host') || 'localhost:3004'}`}/api/teams/${teamId}/dispatch/webhook`,
+      // Fan-in: include contextNodeIds so the worker can read connected nodes
+      ...(targetItem.contextNodeIds && { contextNodeIds: targetItem.contextNodeIds }),
     },
   })
   await updateThinkgraphNode(workItemId, teamId, 'system', { status: 'active' }, { role: 'admin' })

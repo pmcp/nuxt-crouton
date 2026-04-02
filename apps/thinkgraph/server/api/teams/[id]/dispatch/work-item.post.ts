@@ -40,12 +40,17 @@ export default defineEventHandler(async (event) => {
       brief: item.brief,
       output: item.output,
       pinned: item.pinned,
+      contextScope: item.contextScope,
+      contextNodeIds: item.contextNodeIds,
     })),
     workItemId,
   )
 
-  // Default stage to 'analyst' on first dispatch if not already set
-  const stage = targetItem.stage || 'analyst'
+  // Default stage to first step in node's steps array, or 'analyst' fallback
+  const defaultStage = Array.isArray(targetItem.steps) && targetItem.steps.length > 0
+    ? targetItem.steps[0]
+    : 'analyst'
+  const stage = targetItem.stage || defaultStage
   if (!targetItem.stage) {
     await updateThinkgraphNode(
       workItemId,

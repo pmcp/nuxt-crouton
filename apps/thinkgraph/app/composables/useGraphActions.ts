@@ -84,20 +84,46 @@ export function useGraphActions(deps: GraphActionDeps) {
 
   // ─── Synthesis ───
   const synthesizing = ref(false)
-  async function synthesizeSelected() {
+  async function synthesizeSelected(autoDispatch = false) {
     if (selectedNodes.value.size < 2 || synthesizing.value) return
     synthesizing.value = true
 
+    const nodeIds = Array.from(selectedNodes.value)
+    const titles = nodeIds
+      .map(id => decisions.value?.find(d => d.id === id)?.title)
+      .filter(Boolean)
+
     try {
-      await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/synthesize`, {
-        method: 'POST',
-        body: { nodeIds: Array.from(selectedNodes.value), graphId: selectedGraphId.value || '' },
+      // Create a synthesis node with contextNodeIds pointing to selected nodes
+      const node = await create({
+        projectId: selectedGraphId.value || '',
+        title: `Synthesis: ${titles.slice(0, 3).join(', ')}${titles.length > 3 ? '...' : ''}`,
+        template: 'research',
+        steps: ['synthesize'],
+        status: autoDispatch ? 'queued' : 'idle',
+        assignee: autoDispatch ? 'pi' : 'human',
+        origin: 'human',
+        contextScope: 'manual',
+        contextNodeIds: nodeIds,
+        parentId: nodeIds[0], // Use first selected as primary parent for tree positioning
       })
+
       selectedNodes.value = new Set()
       await refreshDecisions()
+
+      if (autoDispatch && node?.id && teamId.value) {
+        // Dispatch to Pi worker
+        await $fetch(`/api/teams/${teamId.value}/dispatch/work-item`, {
+          method: 'POST',
+          body: { workItemId: node.id },
+        })
+        toast.add({ title: 'Synthesis node created and dispatched', color: 'success' })
+      } else {
+        toast.add({ title: 'Synthesis node created', color: 'success' })
+      }
     } catch (error: any) {
       console.error('Synthesis failed:', error)
-      toast.add({ title: 'Synthesis failed', description: error?.message || 'Could not synthesize selected nodes', color: 'error' })
+      toast.add({ title: 'Synthesis failed', description: error?.message || 'Could not create synthesis node', color: 'error' })
     } finally {
       synthesizing.value = false
     }
@@ -244,6 +270,45 @@ export function useGraphActions(deps: GraphActionDeps) {
     connectMenu.value.show = false
   }
 
+  // ─── Handle-to-handle connections (supports fan-in) ───
+  async function onConnect(event: { source: string; target: string }) {
+    // Yjs parentId is updated automatically by CroutonFlow in sync mode.
+    // Here we persist to collection DB and handle fan-in (multiple inputs).
+    const targetNode = decisions.value?.find(d => d.id === event.target)
+
+    if (targetNode?.parentId && targetNode.parentId !== event.source) {
+      // Target already has a parent — this is a fan-in connection.
+      // Move existing parentId into contextNodeIds and add the new source.
+      const existing = Array.isArray(targetNode.contextNodeIds) ? [...targetNode.contextNodeIds] : []
+      if (!existing.includes(targetNode.parentId)) existing.push(targetNode.parentId)
+      if (!existing.includes(event.source)) existing.push(event.source)
+      await update(event.target, {
+        contextScope: 'manual',
+        contextNodeIds: existing,
+        parentId: event.source,
+      })
+    } else {
+      await update(event.target, { parentId: event.source })
+    }
+  }
+
+  async function onEdgeRemove(event: { source: string; target: string; edgeId: string }) {
+    const targetNode = decisions.value?.find(d => d.id === event.target)
+    const contextIds = Array.isArray(targetNode?.contextNodeIds) ? [...targetNode!.contextNodeIds!] : []
+
+    if (event.edgeId.startsWith('e-synth-') || contextIds.includes(event.source)) {
+      // Remove from contextNodeIds (fan-in edge)
+      const updated = contextIds.filter(id => id !== event.source)
+      await update(event.target, {
+        contextNodeIds: updated.length > 0 ? updated : [],
+        ...(updated.length === 0 && { contextScope: 'branch' }),
+      })
+    } else {
+      // Remove primary parent edge
+      await update(event.target, { parentId: null })
+    }
+  }
+
   // ─── Node delete ───
   async function onNodeDelete(nodeIds: string[]) {
     await deleteItems(nodeIds)
@@ -315,7 +380,9 @@ export function useGraphActions(deps: GraphActionDeps) {
     copySelectedContext,
     onChatAddToGraph,
     connectMenu,
+    onConnect,
     onConnectEnd,
+    onEdgeRemove,
     createFromConnect,
     closeConnectMenu,
     onNodeDelete,
