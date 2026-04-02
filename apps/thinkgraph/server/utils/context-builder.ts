@@ -324,7 +324,7 @@ function summarizeArtifacts(_node: ContextNode): string {
   return ''
 }
 
-// ─── New execution canvas context model ───
+// ─── Progressive context disclosure (3-layer system) ───
 
 export interface NodeContextPayload {
   nodeId: string
@@ -338,16 +338,49 @@ export interface NodeContextEntry {
   title: string
   nodeType: string
   status: string
+  /** Index layer: ~50 token AI-generated summary */
+  summary?: string
+  /** Expanded layer: full brief + output */
   brief?: string
   output?: string
+  /** Which layer was used for this entry */
+  layer: 'index' | 'expanded' | 'full'
+}
+
+/** Input node shape accepted by buildNodeContext */
+export type ContextInputNode = {
+  id: string
+  parentId?: string
+  title: string
+  nodeType: string
+  status: string
+  summary?: string
+  brief?: string
+  output?: string
+  pinned?: boolean
+  contextScope?: string
+  contextNodeIds?: Record<string, unknown> | string[] | null
 }
 
 /**
- * Build context payload for the new canvas node model (title/brief/output).
- * Walks the parentId chain respecting the node's contextScope setting.
+ * Build context payload with progressive disclosure.
+ *
+ * 3-layer system:
+ * - Index (~50 tokens): summary one-liner. Used for connected/ancestor nodes.
+ * - Expanded (~500 tokens): full brief + output. Fetched via expand_node tool.
+ * - Full (~2000+ tokens): step history, artifacts. On-demand only.
+ *
+ * Budget allocation (~12K tokens max):
+ * - Current node: always full
+ * - Pinned nodes: always full
+ * - First ancestor (project brief / root): always full
+ * - Other ancestors: index layer (summary or title fallback)
+ * - Manual context nodes: index layer
+ *
+ * Backwards-compatible: nodes without summaries fall back to truncated title.
  */
 export function buildNodeContext(
-  allNodes: Array<{ id: string; parentId?: string; title: string; nodeType: string; status: string; brief?: string; output?: string; contextScope?: string; contextNodeIds?: Record<string, unknown> | string[] | null }>,
+  allNodes: ContextInputNode[],
   targetId: string,
 ): NodeContextPayload {
   const nodeMap = new Map(allNodes.map(n => [n.id, n]))
@@ -358,7 +391,7 @@ export function buildNodeContext(
   }
 
   const scope = target.contextScope || 'branch'
-  let contextNodes: typeof allNodes
+  let contextNodes: ContextInputNode[]
 
   if (scope === 'manual' && target.contextNodeIds) {
     const ids = Array.isArray(target.contextNodeIds)
@@ -368,39 +401,134 @@ export function buildNodeContext(
   }
   else {
     // Walk ancestor chain (root first)
-    const chain: typeof allNodes = []
-    let current = target
+    const chain: ContextInputNode[] = []
+    let current: ContextInputNode | undefined = target
     while (current) {
       chain.unshift(current)
-      current = current.parentId ? nodeMap.get(current.parentId)! : undefined!
+      current = current.parentId ? nodeMap.get(current.parentId) : undefined
     }
     contextNodes = chain
   }
 
-  const chain: NodeContextEntry[] = contextNodes.map(n => ({
-    id: n.id,
-    title: n.title,
-    nodeType: n.nodeType,
-    status: n.status,
-    brief: n.brief || undefined,
-    output: n.output || undefined,
-  }))
+  // Collect pinned nodes not already in the chain
+  const chainIds = new Set(contextNodes.map(n => n.id))
+  const pinnedNodes = allNodes.filter(n => n.pinned && !chainIds.has(n.id))
 
-  const markdown = formatNodeContextMarkdown(chain, targetId)
+  // Build entries with layer assignment
+  const chain: NodeContextEntry[] = []
+  let usedTokens = 0
+
+  // First ancestor (root / project brief) — full layer
+  if (contextNodes.length > 0 && contextNodes[0].id !== targetId) {
+    const root = contextNodes[0]
+    const entry = buildFullEntry(root)
+    usedTokens += estimateEntryTokens(entry)
+    chain.push(entry)
+  }
+
+  // Middle ancestors — index layer (summary or title fallback)
+  for (let i = 1; i < contextNodes.length - 1; i++) {
+    const node = contextNodes[i]
+    if (node.id === targetId) continue
+    const entry = buildIndexEntry(node)
+    usedTokens += estimateEntryTokens(entry)
+    if (usedTokens > MAX_CONTEXT_TOKENS) break
+    chain.push(entry)
+  }
+
+  // Pinned nodes — full layer
+  for (const pinned of pinnedNodes) {
+    const entry = buildFullEntry(pinned)
+    const entryTokens = estimateEntryTokens(entry)
+    if (usedTokens + entryTokens > MAX_CONTEXT_TOKENS) break
+    usedTokens += entryTokens
+    chain.push({ ...entry, title: `📌 ${entry.title}` })
+  }
+
+  // Current node — always full
+  if (target) {
+    const entry = buildFullEntry(target)
+    usedTokens += estimateEntryTokens(entry)
+    chain.push(entry)
+  }
+
+  const markdown = formatProgressiveContextMarkdown(chain, targetId)
   const tokenEstimate = estimateTokens(markdown)
 
   return { nodeId: targetId, chain, tokenEstimate, markdown }
 }
 
-function formatNodeContextMarkdown(chain: NodeContextEntry[], targetId: string): string {
+/** Build an index-layer entry (~50 tokens): summary or title fallback */
+function buildIndexEntry(node: ContextInputNode): NodeContextEntry {
+  return {
+    id: node.id,
+    title: node.title,
+    nodeType: node.nodeType,
+    status: node.status,
+    summary: node.summary || undefined,
+    layer: 'index',
+  }
+}
+
+/** Build a full-layer entry: all content included */
+function buildFullEntry(node: ContextInputNode): NodeContextEntry {
+  return {
+    id: node.id,
+    title: node.title,
+    nodeType: node.nodeType,
+    status: node.status,
+    summary: node.summary || undefined,
+    brief: node.brief || undefined,
+    output: node.output || undefined,
+    layer: 'full',
+  }
+}
+
+/** Estimate tokens for a single context entry */
+function estimateEntryTokens(entry: NodeContextEntry): number {
+  const content = entry.layer === 'index'
+    ? (entry.summary || entry.title)
+    : (entry.output || entry.brief || entry.title)
+  return estimateTokens(`${entry.title}\n${content}`)
+}
+
+/**
+ * Build an expanded-layer payload for a specific node.
+ * Used by the expand_node MCP tool when an agent needs more than index-level detail.
+ */
+export function buildExpandedNodeContext(
+  node: ContextInputNode,
+): { id: string; title: string; brief?: string; output?: string; tokenEstimate: number } {
+  const brief = node.brief || undefined
+  const output = node.output || undefined
+  const content = [node.title, brief, output].filter(Boolean).join('\n')
+  return {
+    id: node.id,
+    title: node.title,
+    brief,
+    output,
+    tokenEstimate: estimateTokens(content),
+  }
+}
+
+function formatProgressiveContextMarkdown(chain: NodeContextEntry[], targetId: string): string {
   if (chain.length === 0) return ''
 
   const lines = chain.map((entry, i) => {
     const isCurrent = entry.id === targetId
     const prefix = isCurrent ? '→ [CURRENT]' : `${i + 1}.`
-    const content = entry.output || entry.brief || entry.title
     const meta = [nodeTypeLabel(entry.nodeType), entry.status !== 'idle' ? entry.status : ''].filter(Boolean).join(', ')
-    return `${prefix} **${entry.title}**${meta ? ` (${meta})` : ''}\n   ${content}`
+    const header = `${prefix} **${entry.title}**${meta ? ` (${meta})` : ''}`
+
+    if (entry.layer === 'index') {
+      // Index layer: summary one-liner or title only
+      const summary = entry.summary || entry.title
+      return `${header}\n   ${summary}`
+    }
+
+    // Full layer: include all content
+    const content = entry.output || entry.brief || entry.title
+    return `${header}\n   ${content}`
   })
 
   return `## Context chain\n\n${lines.join('\n\n')}`

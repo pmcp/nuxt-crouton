@@ -1,4 +1,6 @@
 import { updateThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
+import { buildNodeMarkdown, extractStageOutputs } from '~~/server/utils/node-markdown'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -95,6 +97,46 @@ export default defineEventHandler(async (event) => {
       await updateThinkgraphNode(workItemId, teamId, 'system', {
         artifacts: [...existingArtifacts, stageOutputArtifact],
       }, { role: 'admin' })
+
+      // Auto-generate summary from latest output (non-blocking)
+      const summaryContent = output || currentItem?.output || currentItem?.brief
+      if (summaryContent) {
+        generateNodeSummaryAsync(workItemId, teamId, summaryContent)
+      }
+
+      // Generate node markdown and store as artifact for worker to commit
+      const [freshItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
+      if (freshItem) {
+        const allArtifacts = Array.isArray(freshItem.artifacts) ? freshItem.artifacts : []
+        const stageOutputs = extractStageOutputs(allArtifacts)
+        const conversationLogs = allArtifacts
+          .filter((a: any) => a?.type === 'conversation-log')
+          .map((a: any) => ({ stage: a.stage, log: a.log }))
+
+        const markdown = buildNodeMarkdown({
+          id: freshItem.id,
+          title: freshItem.title,
+          summary: freshItem.summary || undefined,
+          template: freshItem.template || undefined,
+          steps: Array.isArray(freshItem.steps) ? freshItem.steps : undefined,
+          signal: agentSignal || freshItem.signal || undefined,
+          brief: freshItem.brief || undefined,
+          stageOutputs,
+          conversationLogs,
+        })
+
+        // Replace existing node-markdown artifact with updated version
+        const cleanedForMd = allArtifacts.filter((a: any) => a?.type !== 'node-markdown')
+        cleanedForMd.push({
+          type: 'node-markdown',
+          path: `.thinkgraph/nodes/${freshItem.id}.md`,
+          content: markdown,
+          timestamp: new Date().toISOString(),
+        })
+        await updateThinkgraphNode(workItemId, teamId, 'system', {
+          artifacts: cleanedForMd,
+        }, { role: 'admin' })
+      }
     }
 
     if (agentSignal === 'green' && currentItem?.stage) {
@@ -279,8 +321,10 @@ async function dispatchToWorker(event: any, config: any, teamId: string, workIte
       title: item.title,
       nodeType: item.template,
       status: item.status,
+      summary: item.summary,
       brief: item.brief,
       output: item.output,
+      pinned: item.pinned,
     })),
     workItemId,
   )

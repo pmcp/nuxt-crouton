@@ -180,8 +180,10 @@ export default defineEventHandler(async (event) => {
             title: item.title,
             nodeType: item.template,
             status: item.status,
+            summary: item.summary,
             brief: item.brief,
             output: item.output,
+            pinned: item.pinned,
           })),
           workItem.id,
         )

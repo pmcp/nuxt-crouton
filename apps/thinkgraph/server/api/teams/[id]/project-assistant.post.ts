@@ -221,7 +221,8 @@ BRIEF: <what the work item should do>
           const contextPayload = buildNodeContext(
             freshItems.map((i: any) => ({
               id: i.id, parentId: i.parentId, title: i.title,
-              nodeType: i.type, status: i.status, brief: i.brief, output: i.output,
+              nodeType: i.type, status: i.status, summary: i.summary,
+              brief: i.brief, output: i.output, pinned: i.pinned,
             })),
             params.id,
           )

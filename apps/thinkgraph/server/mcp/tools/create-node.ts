@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { createThinkgraphNode, getAllThinkgraphNodes } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { resolveTeamId } from '../utils/resolve-team'
+import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
 
 export default defineMcpTool({
   description: 'Create a new node in ThinkGraph. Nodes have templates (idea, research, task, feature, meta) and optional pipeline steps. Use search-graph first to find the right parent.',
@@ -58,6 +59,11 @@ export default defineMcpTool({
       } as any)
 
       signalCollectionChange(teamId, 'thinkgraphNodes')
+
+      // Auto-generate summary when brief is provided (non-blocking)
+      if (brief && node.id) {
+        generateNodeSummaryAsync(node.id, resolvedTeamId, brief)
+      }
 
       return {
         content: [{

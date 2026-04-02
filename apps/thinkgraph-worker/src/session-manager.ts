@@ -62,6 +62,12 @@ interface ActiveSession {
   lastFlushedLength: number
   /** Last signal set by the agent via update_workitem tool */
   lastSignal?: string
+  /** Full conversation log for compression — captures key events */
+  conversationLog: string[]
+  /** Pipeline stage for this session */
+  stage?: string
+  /** Accumulated token usage from session events */
+  tokenUsage: { inputTokens: number; outputTokens: number }
 }
 
 export class AgentSessionManager {
@@ -124,6 +130,9 @@ export class AgentSessionManager {
       collectionPath: payload.collectionPath || 'thinkgraph-nodes',
       teamId: payload.teamId || this.config.teamId,
       lastFlushedLength: 0,
+      conversationLog: [],
+      stage: payload.stage,
+      tokenUsage: { inputTokens: 0, outputTokens: 0 },
     }
     this.activeSessions.set(payload.nodeId, earlySession)
 
@@ -348,9 +357,19 @@ export class AgentSessionManager {
     switch (event.type) {
       case 'message_start': {
         // Start accumulating a new assistant message
+        // Capture token usage if available
+        if (event.message?.usage) {
+          active.tokenUsage.inputTokens += event.message.usage.input_tokens || 0
+        }
         break
       }
       case 'message_update': {
+        // Capture token usage from message updates
+        if (event.message?.usage) {
+          const usage = event.message.usage
+          active.tokenUsage.inputTokens = Math.max(active.tokenUsage.inputTokens, usage.input_tokens || 0)
+          active.tokenUsage.outputTokens = Math.max(active.tokenUsage.outputTokens, usage.output_tokens || 0)
+        }
         const content = event.message?.content
         if (!Array.isArray(content)) break
 
@@ -386,8 +405,13 @@ export class AgentSessionManager {
           for (const block of blocks) {
             if (block.type === 'text' && block.text) {
               ws.sendOutput(block.text)
+              // Capture text for conversation log (keep decisions, skip noise)
+              if (block.text.length > 20) {
+                active.conversationLog.push(`[assistant] ${block.text.slice(0, 500)}`)
+              }
             } else if (block.type === 'tool_use') {
               ws.sendOutput(`🔧 ${block.name} ${JSON.stringify(block.input || {}).slice(0, 100)}`)
+              active.conversationLog.push(`[tool] ${block.name}`)
             } else if (block.type === 'thinking' && block.thinking) {
               ws.sendOutput(`💭 ${block.thinking.split('\n')[0].slice(0, 120)}`)
             }
@@ -437,6 +461,10 @@ export class AgentSessionManager {
               ws.sendOutput(item.text)
               // Store latest complete text (replaces previous — not incremental)
               if (active) active.accumulatedOutput = [item.text]
+              // Capture for conversation log
+              if (active && item.text.length > 20) {
+                active.conversationLog.push(`[assistant] ${item.text.slice(0, 500)}`)
+              }
             }
             else if (item.type === 'tool_use') {
               const inputSummary = Object.entries(item.input || {})
@@ -445,6 +473,7 @@ export class AgentSessionManager {
                 .slice(0, 3)
                 .join(' ')
               ws.sendOutput(`🔧 ${item.name} ${inputSummary}`)
+              if (active) active.conversationLog.push(`[tool] ${item.name}`)
             }
             else if (item.type === 'thinking') {
               const thought = (item.thinking || '').split('\n')[0].slice(0, 120)
@@ -738,6 +767,17 @@ gh pr merge <number> --squash --delete-branch
 \`\`\`bash
 git checkout main
 git pull origin main
+\`\`\`
+
+### Step 5.5: Update Node Markdown
+
+Check if there's a \`node-markdown\` artifact on the work item (via \`get_workitem\`). If found, write its \`content\` to the \`path\` specified (usually \`.thinkgraph/nodes/{nodeId}.md\`). Create the directory if needed. Commit and push to main:
+\`\`\`bash
+mkdir -p .thinkgraph/nodes
+# write the markdown file
+git add .thinkgraph/nodes/
+git commit -m "docs(thinkgraph): update node markdown for {nodeId}"
+git push origin main
 \`\`\`
 
 ### Step 6: Signal
@@ -1146,6 +1186,10 @@ git push -u origin ${branchName}
 
 Then use \`update_workitem\` to set \`worktree\` to "${branchName}".
 
+### Node Markdown File
+
+Before committing, check if there's a \`node-markdown\` artifact on the work item (via \`get_workitem\`). If the artifacts include one with \`type: "node-markdown"\`, write its \`content\` to the path specified in its \`path\` field (usually \`.thinkgraph/nodes/{nodeId}.md\`). Create the directory if needed (\`mkdir -p .thinkgraph/nodes\`). This file tracks the node's progress in the repo.
+
 After pushing, use the \`create_pr\` tool to create a GitHub PR. Do NOT run \`gh pr create\` directly in bash — the tool handles shell quoting and updates the work item with the PR URL automatically.
 
 Finally, clean up the worktree:
@@ -1398,6 +1442,39 @@ Use the \`create_node\` tool. Each node has three parts:
         body.signal = session.lastSignal
       }
 
+      // Include artifacts: conversation log + token usage
+      if (isPM && session.stage) {
+        const artifacts: Record<string, unknown>[] = []
+
+        // Compressed conversation log for markdown generation
+        if (session.conversationLog.length > 0) {
+          const compressed = compressConversationLog(session.conversationLog)
+          if (compressed) {
+            artifacts.push({
+              type: 'conversation-log',
+              stage: session.stage,
+              log: compressed,
+              timestamp: new Date().toISOString(),
+            })
+          }
+        }
+
+        // Token usage tracking per stage
+        if (session.tokenUsage.inputTokens > 0 || session.tokenUsage.outputTokens > 0) {
+          artifacts.push({
+            type: 'token-usage',
+            stage: session.stage,
+            inputTokens: session.tokenUsage.inputTokens,
+            outputTokens: session.tokenUsage.outputTokens,
+            timestamp: new Date().toISOString(),
+          })
+        }
+
+        if (artifacts.length > 0) {
+          body.artifacts = artifacts
+        }
+      }
+
       await ofetch(session.callbackUrl, {
         method: 'POST',
         headers: {
@@ -1421,4 +1498,42 @@ Use the \`create_node\` tool. Each node has three parts:
     })
     await Promise.allSettled(promises)
   }
+}
+
+/**
+ * Compress a conversation log for storage in markdown.
+ * Strips tool call noise, keeps assistant text and key decisions.
+ * Target: ~500 tokens max.
+ */
+function compressConversationLog(log: string[]): string {
+  if (log.length === 0) return ''
+
+  // Keep assistant messages, summarize tool calls into a single line
+  const compressed: string[] = []
+  let toolBatch: string[] = []
+
+  const flushTools = () => {
+    if (toolBatch.length > 0) {
+      compressed.push(`Used tools: ${toolBatch.join(', ')}`)
+      toolBatch = []
+    }
+  }
+
+  for (const entry of log) {
+    if (entry.startsWith('[tool] ')) {
+      toolBatch.push(entry.slice(7))
+    }
+    else {
+      flushTools()
+      compressed.push(entry)
+    }
+  }
+  flushTools()
+
+  // Truncate to ~500 tokens (~2000 chars)
+  let result = compressed.join('\n')
+  if (result.length > 2000) {
+    result = result.slice(0, 2000) + '\n\n[...truncated]'
+  }
+  return result
 }
