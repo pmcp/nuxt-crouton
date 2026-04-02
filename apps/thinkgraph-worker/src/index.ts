@@ -20,42 +20,32 @@ import { YjsClient } from './yjs-client.js'
 
 const WORKER_VERSION = 'pm-2'
 
-async function main() {
-  console.log(`=== ThinkGraph Pi Worker (${WORKER_VERSION}) ===`)
-  console.log()
+/** Authenticate with ThinkGraph server, retrying with exponential backoff on failure */
+async function authenticateWithRetry(config: { thinkgraphUrl: string; serviceToken: string }): Promise<string> {
+  const email = process.env.THINKGRAPH_EMAIL
+  const password = process.env.THINKGRAPH_PASSWORD
+  if (!email || !password) {
+    console.error('THINKGRAPH_SERVICE_TOKEN or THINKGRAPH_EMAIL + THINKGRAPH_PASSWORD required')
+    process.exit(1)
+  }
 
-  const config = loadConfig()
-  console.log(`Server:     ${config.thinkgraphUrl}`)
-  console.log(`Team:       ${config.teamId}`)
-  console.log(`Work dir:   ${config.workDir}`)
-  console.log(`Max sessions: ${config.maxSessions}`)
-  console.log()
+  const { ofetch } = await import('ofetch')
+  const MAX_RETRIES = 50 // ~2 hours with max backoff
+  const MAX_BACKOFF_MS = 120_000 // 2 minutes max between retries
 
-  // Authenticate and get service token if not provided
-  if (!config.serviceToken) {
-    console.log('No service token provided. Authenticating...')
-    const { ofetch } = await import('ofetch')
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Sign in via Better Auth
-      const email = process.env.THINKGRAPH_EMAIL
-      const password = process.env.THINKGRAPH_PASSWORD
-      if (!email || !password) {
-        throw new Error('THINKGRAPH_SERVICE_TOKEN or THINKGRAPH_EMAIL + THINKGRAPH_PASSWORD required')
-      }
+      console.log(`[auth] Attempt ${attempt}/${MAX_RETRIES} — connecting to ${config.thinkgraphUrl}`)
 
-      // Sign in — capture the full session cookie from set-cookie header
-      // On Cloudflare, cookie name is __Secure-better-auth.session_token
-      // In dev, it's better_auth_session
-      // Origin header required for CSRF protection
-      let sessionCookie = '' // Full "name=value" pair for the Cookie header
+      let sessionCookie = ''
       await ofetch(`${config.thinkgraphUrl}/api/auth/sign-in/email`, {
         method: 'POST',
         headers: { 'Origin': config.thinkgraphUrl },
         body: { email, password },
+        timeout: 10_000, // 10s timeout per attempt
         onResponse({ response }) {
           const cookies = (response.headers as any).getSetCookie?.() || []
           for (const cookie of cookies) {
-            // Match either cookie name pattern (Cloudflare secure or dev)
             const match = cookie.match(/((?:__Secure-)?better[_-]auth[._]session(?:_token)?)=([^;]+)/)
             if (match) {
               sessionCookie = `${match[1]}=${match[2]}`
@@ -69,16 +59,46 @@ async function main() {
         throw new Error('Sign-in succeeded but no session cookie in response headers')
       }
 
-      // Store the full cookie string (name=value) for use in Cookie headers
-      config.serviceToken = sessionCookie
-      console.log('Session cookie captured:', sessionCookie.split('=')[0] + '=...')
-
-      console.log('Authentication successful')
+      console.log(`[auth] Authenticated successfully (attempt ${attempt})`)
+      console.log(`[auth] Cookie: ${sessionCookie.split('=')[0]}=...`)
+      return sessionCookie
     }
     catch (err) {
-      console.error('Authentication failed:', err instanceof Error ? err.message : err)
-      process.exit(1)
+      const message = err instanceof Error ? err.message : String(err)
+      const isNetworkError = message.includes('fetch failed') || message.includes('ECONNREFUSED') || message.includes('no response') || message.includes('timeout')
+
+      if (!isNetworkError) {
+        // Real auth error (wrong credentials, etc.) — don't retry
+        console.error(`[auth] Authentication failed (not retryable): ${message}`)
+        process.exit(1)
+      }
+
+      // Network error — server unreachable, retry with backoff
+      const backoff = Math.min(MAX_BACKOFF_MS, 5_000 * Math.pow(1.5, attempt - 1))
+      console.warn(`[auth] Server unreachable: ${message}`)
+      console.warn(`[auth] Retrying in ${Math.round(backoff / 1000)}s (attempt ${attempt}/${MAX_RETRIES})`)
+      await new Promise(resolve => setTimeout(resolve, backoff))
     }
+  }
+
+  console.error(`[auth] Failed to connect after ${MAX_RETRIES} attempts. Exiting.`)
+  process.exit(1)
+}
+
+async function main() {
+  console.log(`=== ThinkGraph Pi Worker (${WORKER_VERSION}) ===`)
+  console.log()
+
+  const config = loadConfig()
+  console.log(`Server:     ${config.thinkgraphUrl}`)
+  console.log(`Team:       ${config.teamId}`)
+  console.log(`Work dir:   ${config.workDir}`)
+  console.log(`Max sessions: ${config.maxSessions}`)
+  console.log()
+
+  // Authenticate and get service token — retry with backoff if server is unreachable
+  if (!config.serviceToken) {
+    config.serviceToken = await authenticateWithRetry(config)
   }
 
   // Initialize components
