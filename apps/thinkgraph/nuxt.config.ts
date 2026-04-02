@@ -59,7 +59,7 @@ export default defineNuxtConfig({
 
   vite: {
     server: {
-      allowedHosts: ['.trycloudflare.com']
+      allowedHosts: ['.pmcp.dev']
     }
   },
 
