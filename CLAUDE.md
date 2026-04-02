@@ -75,6 +75,20 @@ When starting or resuming: read `/docs/PROGRESS_TRACKER.md` first. Check git sta
 - ✅ ALWAYS use TodoWrite for 3+ step tasks
 - ❌ NEVER batch multiple tasks in one commit
 - ❌ NEVER use `git add .`
+- ❌ NEVER modify files in `packages/` without explicit user approval
+
+### Packages Boundary (HARD GATE)
+**`packages/` is shared code — changes ripple across all consuming apps.**
+
+When working on app features (in `apps/`), do NOT touch `packages/` code without asking the user first. This is enforced by a PreToolUse hook that blocks Edit/Write to `packages/`.
+
+If a feature genuinely requires a package change:
+1. **Stop and explain** what you need to change and why
+2. **Wait for explicit approval** before proceeding
+3. **Scope the change minimally** — only what the feature requires
+4. **Run `pnpm typecheck`** across all apps after the change to catch ripple effects
+
+This applies to all agents, including Pi worker and sub-agents.
 
 ### Context Clearing Between Tasks
 After each task: announce completion, say the code word, STOP. User runs `/clear`. Fresh agent reads PROGRESS_TRACKER.md and continues.
