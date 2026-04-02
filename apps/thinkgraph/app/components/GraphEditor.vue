@@ -66,7 +66,7 @@ const {
   generatingBrief, generateBrief,
   copySelectedContext,
   onChatAddToGraph,
-  connectMenu, onConnect, onConnectEnd, onEdgeRemove, createFromConnect, closeConnectMenu,
+  connectMenu, onConnectEnd, createFromConnect, closeConnectMenu,
   onNodeDelete,
   exportGraph: exportGraphAction,
 } = useGraphActions({
@@ -96,13 +96,12 @@ const visibleDecisions = computed(() => {
 
 // ─── Additional edges (fan-in contextNodeIds + synthesis artifacts) ───
 const additionalEdges = computed(() => {
-  if (!props.decisions) return []
   const edges: Array<{ id: string; source: string; target: string }> = []
+  if (!props.decisions) return edges
   for (const d of props.decisions) {
     // Fan-in edges from contextNodeIds
     if (Array.isArray(d.contextNodeIds)) {
       for (const srcId of d.contextNodeIds) {
-        // Skip if already rendered as the primary parentId edge
         if (srcId !== d.parentId) {
           edges.push({ id: `e-ctx-${srcId}-${d.id}`, source: srcId, target: d.id })
         }
@@ -371,7 +370,7 @@ function exportGraph() {
           :rows="visibleDecisions"
           collection="thinkgraphNodes"
           parent-field="parentId"
-          label-field="content"
+          label-field="title"
           :flow-id="flowId"
           :saved-positions="savedPositions"
           :flow-config="flowConfig"
@@ -383,9 +382,7 @@ function exportGraph() {
           @node-click="onNodeClick"
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
-          @connect="onConnect"
           @connect-end="onConnectEnd"
-          @edge-remove="onEdgeRemove"
         />
         <div
           v-else

@@ -65,6 +65,21 @@ async function ensureFlowConfig() {
 const items = ref<ThinkgraphNode[]>([])
 const itemsLoading = ref(false)
 
+// ─── Additional edges (fan-in contextNodeIds) ───
+const additionalEdges = computed(() => {
+  const edges: Array<{ id: string; source: string; target: string }> = []
+  for (const d of items.value) {
+    if (Array.isArray(d.contextNodeIds)) {
+      for (const srcId of d.contextNodeIds) {
+        if (srcId !== d.parentId) {
+          edges.push({ id: `e-ctx-${srcId}-${d.id}`, source: srcId, target: d.id })
+        }
+      }
+    }
+  }
+  return edges
+})
+
 async function refreshItems() {
   if (!projectId.value || !teamId.value) {
     items.value = []
@@ -303,10 +318,14 @@ async function handleQuickCreate(template: string) {
   }
 }
 
-// Close quick create on click anywhere
+// Close quick create on click anywhere (but not the click from the connection drag release)
+const quickCreateOpenedAt = ref(0)
+watch(showQuickCreate, (v) => { if (v) quickCreateOpenedAt.value = Date.now() })
 if (import.meta.client) {
   useEventListener(document, 'click', () => {
-    if (showQuickCreate.value) showQuickCreate.value = false
+    if (showQuickCreate.value && Date.now() - quickCreateOpenedAt.value > 100) {
+      showQuickCreate.value = false
+    }
   })
 }
 
@@ -944,6 +963,7 @@ if (import.meta.client) {
           label-field="title"
           :flow-id="flowId || undefined"
           :saved-positions="savedPositions || undefined"
+          :additional-edges="additionalEdges"
           minimap
           @node-click="onNodeClick"
           @connect-end="onConnectEnd"
