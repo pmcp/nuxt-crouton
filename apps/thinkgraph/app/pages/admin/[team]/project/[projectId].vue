@@ -411,14 +411,22 @@ function parseQuestions(output: string | undefined): string[] {
   return questions
 }
 
-/** Parse lettered options from a question string, e.g. "(a) Option text" */
+/** Parse lettered options from a question string, e.g. "(a) Option text" or "**(a)**" */
 function parseOptions(question: string): { letter: string; text: string }[] {
   const options: { letter: string; text: string }[] = []
-  // Match lines like: (a) text, (A) text, • (a) text, with optional leading whitespace/bullets
-  const regex = /^[\s•*-]*\(([a-zA-Z])\)\s+(.+)$/gm
+  // Match lines like: (a) text, **(a)** text, • **(a)** text, with optional markdown bold/bullets
+  const regex = /^[\s•*-]*\*{0,2}\(([a-zA-Z])\)\*{0,2}\s+(.+)$/gm
   let m: RegExpExecArray | null
   while ((m = regex.exec(question)) !== null) {
-    options.push({ letter: m[1].toLowerCase(), text: m[2].trim() })
+    // Capture multi-line option text: collect continuation lines until next option or end
+    let text = m[2].trim()
+    const afterMatch = question.slice(m.index + m[0].length)
+    const continuationMatch = afterMatch.match(/^(\n(?![\s•*-]*\*{0,2}\([a-zA-Z]\))(.+))+/)
+    if (continuationMatch) {
+      const extraLines = continuationMatch[0].split('\n').filter(l => l.trim()).map(l => l.trim())
+      if (extraLines.length) text += ' ' + extraLines.join(' ')
+    }
+    options.push({ letter: m[1].toLowerCase(), text })
   }
   return options
 }
@@ -426,7 +434,7 @@ function parseOptions(question: string): { letter: string; text: string }[] {
 /** Strip option lines from a question to avoid duplication when rendering */
 function stripOptions(question: string): string {
   return question
-    .replace(/^[\s•*-]*\([a-zA-Z]\)\s+.+$/gm, '')
+    .replace(/^[\s•*-]*\*{0,2}\([a-zA-Z]\)\*{0,2}\s+.+$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }

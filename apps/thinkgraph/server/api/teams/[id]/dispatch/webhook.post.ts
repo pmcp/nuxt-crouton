@@ -47,7 +47,10 @@ export default defineEventHandler(async (event) => {
 
   // Respect the agent's signal — don't let session completion override it
   if (status === 'done' && (agentSignal === 'orange' || agentSignal === 'red')) {
-    console.log(`[webhook] ${workItemId}: preserving ${agentSignal} signal, NOT setting status to done`)
+    // Orange = questions for human, Red = rejection — both need human attention
+    updates.status = 'waiting'
+    updates.assignee = 'human'
+    console.log(`[webhook] ${workItemId}: ${agentSignal} signal → status='waiting' (not done), assignee='human'`)
   }
   else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
     updates.status = status
