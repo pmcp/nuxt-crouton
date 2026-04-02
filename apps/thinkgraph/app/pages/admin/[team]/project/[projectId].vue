@@ -338,6 +338,9 @@ async function generateShareLink() {
   }
 }
 
+// ─── Worker health ───
+const { health: workerHealth, check: checkWorker } = useWorkerHealth()
+
 // ─── Dispatch ───
 const { dispatch: dispatchWork, dispatching } = useWorkDispatch()
 
@@ -824,6 +827,24 @@ if (import.meta.client) {
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Worker status indicator -->
+        <button
+          class="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full transition-colors mr-1"
+          :class="workerHealth.online
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
+          :title="workerHealth.online
+            ? `Worker v${workerHealth.version} — ${workerHealth.activeSessions}/${workerHealth.maxSessions} sessions — up ${Math.round((workerHealth.uptime || 0) / 60)}m`
+            : `Worker offline: ${workerHealth.error || 'unreachable'}`"
+          @click="checkWorker"
+        >
+          <span
+            class="size-1.5 rounded-full"
+            :class="workerHealth.online ? 'bg-emerald-500' : 'bg-red-500'"
+          />
+          {{ workerHealth.online ? 'Worker' : 'Offline' }}
+        </button>
+
         <!-- Status summary pills -->
         <div class="flex items-center gap-1 mr-2">
           <span
