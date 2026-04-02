@@ -159,6 +159,57 @@ const ancestors = computed(() => {
 const children = computed(() =>
   props.nodes.filter(n => n.parentId === props.node.id),
 )
+
+// ─── Token usage from artifacts ───
+interface TokenUsageArtifact {
+  type: 'token-usage'
+  stage: string
+  inputTokens: number
+  outputTokens: number
+  timestamp: string
+}
+
+function formatTokenCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`
+  return count.toString()
+}
+
+const tokenUsageArtifacts = computed<TokenUsageArtifact[]>(() => {
+  const artifacts = props.node.artifacts
+  if (!artifacts || !Array.isArray(artifacts)) return []
+  return artifacts.filter(
+    (a): a is TokenUsageArtifact =>
+      a?.type === 'token-usage'
+      && typeof a.inputTokens === 'number'
+      && typeof a.outputTokens === 'number',
+  )
+})
+
+const tokenUsageTotals = computed(() => {
+  const items = tokenUsageArtifacts.value
+  if (!items.length) return null
+  const input = items.reduce((sum, a) => sum + a.inputTokens, 0)
+  const output = items.reduce((sum, a) => sum + a.outputTokens, 0)
+  return { input, output, total: input + output }
+})
+
+const tokenUsageByStage = computed(() => {
+  const items = tokenUsageArtifacts.value
+  if (!items.length) return []
+  // Group by stage, summing tokens (a stage can appear multiple times in loops)
+  const map = new Map<string, { input: number; output: number }>()
+  for (const a of items) {
+    const existing = map.get(a.stage) || { input: 0, output: 0 }
+    existing.input += a.inputTokens
+    existing.output += a.outputTokens
+    map.set(a.stage, existing)
+  }
+  return Array.from(map.entries()).map(([stage, tokens]) => ({
+    stage,
+    ...tokens,
+  }))
+})
 </script>
 
 <template>
@@ -471,6 +522,36 @@ const children = computed(() =>
         </div>
       </div>
 
+      <!-- Token Usage per Stage -->
+      <div v-if="tokenUsageByStage.length" class="px-4 py-3 border-b border-default">
+        <p class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
+          Token Usage
+        </p>
+        <div class="space-y-2">
+          <div
+            v-for="entry in tokenUsageByStage"
+            :key="entry.stage"
+            class="flex items-center justify-between text-sm"
+          >
+            <span class="text-muted capitalize">{{ entry.stage }}</span>
+            <span class="inline-flex items-center gap-1.5 font-mono text-xs">
+              <span class="text-primary-500">{{ formatTokenCount(entry.input) }} in</span>
+              <span class="text-muted">/</span>
+              <span class="text-green-500">{{ formatTokenCount(entry.output) }} out</span>
+            </span>
+          </div>
+          <!-- Total row -->
+          <div v-if="tokenUsageTotals && tokenUsageByStage.length > 1" class="flex items-center justify-between text-sm pt-1.5 border-t border-default">
+            <span class="text-muted font-medium">Total</span>
+            <span class="inline-flex items-center gap-1.5 font-mono text-xs font-medium">
+              <span class="text-primary-500">{{ formatTokenCount(tokenUsageTotals.input) }} in</span>
+              <span class="text-muted">/</span>
+              <span class="text-green-500">{{ formatTokenCount(tokenUsageTotals.output) }} out</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Metadata -->
       <div class="px-4 py-3">
         <p class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">Details</p>
@@ -483,7 +564,20 @@ const children = computed(() =>
             <span class="text-muted">Worktree</span>
             <span class="font-mono text-xs">{{ node.worktree }}</span>
           </div>
-          <div v-if="node.tokenCount" class="flex items-center justify-between">
+          <div v-if="tokenUsageTotals" class="flex items-center justify-between">
+            <span class="text-muted">Tokens</span>
+            <span class="inline-flex items-center gap-1.5">
+              <UBadge size="sm" variant="subtle" color="primary">
+                <UIcon name="i-lucide-arrow-down" class="size-3" />
+                {{ formatTokenCount(tokenUsageTotals.input) }} in
+              </UBadge>
+              <UBadge size="sm" variant="subtle" color="success">
+                <UIcon name="i-lucide-arrow-up" class="size-3" />
+                {{ formatTokenCount(tokenUsageTotals.output) }} out
+              </UBadge>
+            </span>
+          </div>
+          <div v-else-if="node.tokenCount" class="flex items-center justify-between">
             <span class="text-muted">Tokens</span>
             <span>{{ node.tokenCount.toLocaleString() }}</span>
           </div>
