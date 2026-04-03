@@ -945,19 +945,8 @@ if (import.meta.client) {
           <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
         </div>
 
-        <div v-else-if="!items.length" class="absolute inset-0 flex items-center justify-center">
-          <div class="text-center">
-            <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-              <UIcon name="i-lucide-git-branch" class="size-8 text-muted" />
-            </div>
-            <h3 class="text-lg font-semibold mb-2">Empty canvas</h3>
-            <p class="text-sm text-muted mb-4">Start by adding your first work item.</p>
-            <UButton icon="i-lucide-plus" label="Add work item" @click="openCreate()" />
-          </div>
-        </div>
-
         <CroutonFlow
-          v-else
+          v-if="!itemsLoading || items.length"
           :key="flowKey"
           ref="flowRef"
           :rows="items"
@@ -973,6 +962,17 @@ if (import.meta.client) {
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
         />
+
+        <!-- Empty canvas hint -->
+        <div
+          v-if="!itemsLoading && !items.length"
+          class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+        >
+          <div class="text-center pointer-events-auto">
+            <p class="text-sm text-muted mb-3">Click <strong>+ New</strong> to start thinking</p>
+            <UButton icon="i-lucide-plus" label="Add first node" size="sm" variant="soft" @click="openCreate()" />
+          </div>
+        </div>
 
         <!-- Quick create menu (appears on drag-to-empty) -->
         <div
