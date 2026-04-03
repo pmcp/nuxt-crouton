@@ -470,80 +470,19 @@ const redispatching = ref(false)
 const orangeAnswers = ref<Record<number, string>>({})
 const orangeFreeform = ref('')
 
-/** Parse numbered questions from analyst output */
-function parseQuestions(output: string | undefined): string[] {
-  if (!output) return []
-  const lines = output.split('\n')
-  const questions: string[] = []
-  let currentQ = ''
-  let inQuestion = false
-
-  for (const rawLine of lines) {
-    // Strip markdown heading prefix for matching (### Q1: → Q1:)
-    const line = rawLine.replace(/^#{1,4}\s+/, '')
-    // Match numbered items: "1. ", "Q1:", "Q1. ", "**1.**", "**Q1:**", etc.
-    const match = line.match(/^(?:\*{0,2}\s*\d+[\.\)]\s*\*{0,2}\s*|(?:\*{0,2}\s*)?Q\d+[:.]\s*\*{0,2}\s*)/)
-    if (match) {
-      if (currentQ) questions.push(currentQ.trim())
-      currentQ = line.replace(match[0], '')
-      inQuestion = true
-    }
-    // Stop accumulating on section breaks
-    else if (inQuestion && line.trim() === '---') {
-      if (currentQ) questions.push(currentQ.trim())
-      currentQ = ''
-      inQuestion = false
-    }
-    // Continue accumulating content for the current question
-    else if (inQuestion && line.trim()) {
-      currentQ += '\n' + line
-    }
-    // Empty line within a question — keep it (paragraph break)
-    else if (inQuestion && !line.trim() && currentQ) {
-      currentQ += '\n'
-    }
-  }
-  if (currentQ) questions.push(currentQ.trim())
-  return questions
+/** Read structured questions from the 'questions' artifact (set by webhook post-processing) */
+interface StructuredQuestion {
+  question: string
+  options: { key: string; label: string }[]
 }
-
-/** Parse lettered options from a question string, e.g. "(a) Option text" or "**(a)**" */
-function parseOptions(question: string): { letter: string; text: string }[] {
-  const options: { letter: string; text: string }[] = []
-  // Match lines like: (a) text, **(a)** text, • **(a)** text, with optional markdown bold/bullets
-  const regex = /^[\s•*-]*\*{0,2}\(([a-zA-Z])\)\*{0,2}\s+(.+)$/gm
-  let m: RegExpExecArray | null
-  while ((m = regex.exec(question)) !== null) {
-    // Capture multi-line option text: collect continuation lines until next option or end
-    let text = m[2].trim()
-    const afterMatch = question.slice(m.index + m[0].length)
-    const continuationMatch = afterMatch.match(/^(\n(?![\s•*-]*\*{0,2}\([a-zA-Z]\))(.+))+/)
-    if (continuationMatch) {
-      const extraLines = continuationMatch[0].split('\n').filter(l => l.trim()).map(l => l.trim())
-      if (extraLines.length) text += ' ' + extraLines.join(' ')
-    }
-    options.push({ letter: m[1].toLowerCase(), text })
-  }
-  return options
-}
-
-/** Strip option lines from a question to avoid duplication when rendering */
-function stripOptions(question: string): string {
-  return question
-    .replace(/^[\s•*-]*\*{0,2}\([a-zA-Z]\)\*{0,2}\s+.+$/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
-const parsedQuestions = computed(() => {
-  if (!selectedItem.value?.output) return []
-  return parseQuestions(selectedItem.value.output)
+const questionsArtifact = computed(() => {
+  const artifacts = selectedItem.value?.artifacts
+  if (!Array.isArray(artifacts)) return null
+  return artifacts.find((a: any) => a?.type === 'questions') as { type: 'questions'; research: string; questions: StructuredQuestion[] } | undefined ?? null
 })
 
-/** Parsed options per question index */
-const parsedOptions = computed(() => {
-  return parsedQuestions.value.map(q => parseOptions(q))
-})
+const structuredQuestions = computed(() => questionsArtifact.value?.questions ?? [])
+const researchContent = computed(() => questionsArtifact.value?.research ?? '')
 
 /** Check if any answer has been filled in */
 const hasAnyAnswer = computed(() => {
@@ -555,8 +494,8 @@ function formatAnswers(): string {
   const parts: string[] = []
   for (const [idx, answer] of Object.entries(orangeAnswers.value)) {
     if (!answer?.trim()) continue
-    const q = parsedQuestions.value[Number(idx)]
-    if (q) parts.push(`Q: ${q}\nA: ${answer.trim()}`)
+    const q = structuredQuestions.value[Number(idx)]
+    if (q) parts.push(`Q: ${q.question}\nA: ${answer.trim()}`)
   }
   if (orangeFreeform.value.trim()) {
     parts.push(`Additional context: ${orangeFreeform.value.trim()}`)
@@ -1249,7 +1188,19 @@ if (import.meta.client) {
                 <span v-if="selectedItem.signal" class="text-xs opacity-60">— {{ selectedItem.signal }}</span>
               </p>
             </div>
+
+            <!-- When orange with structured questions: research in collapsible accordion -->
+            <UAccordion
+              v-if="selectedItem.signal === 'orange' && structuredQuestions.length > 0 && researchContent"
+              :items="[{ label: STAGE_LABEL[selectedItem.stage || ''] || 'Research', icon: 'i-lucide-file-text', value: 'research' }]"
+            >
+              <template #body>
+                <div class="text-sm whitespace-pre-wrap leading-relaxed" v-html="renderMd(researchContent)" />
+              </template>
+            </UAccordion>
+            <!-- Default: show full output -->
             <div
+              v-else
               class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
               :class="{
                 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': selectedItem.signal === 'red',
@@ -1281,48 +1232,47 @@ if (import.meta.client) {
             </div>
           </div>
 
-          <!-- Orange response panel — when analyst/reviewer has questions -->
+          <!-- Orange response panel — structured questions with inline answers -->
           <div
             v-if="selectedItem.signal === 'orange' && (selectedItem.status === 'waiting' || selectedItem.status === 'blocked')"
-            class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 p-4 mb-4"
+            class="mb-4 space-y-3"
           >
-            <p class="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3">Respond to {{ STAGE_LABEL[selectedItem.stage || ''] || 'stage' }}</p>
+            <!-- Structured questions from artifact -->
+            <template v-if="structuredQuestions.length > 0">
+              <UCard v-for="(q, idx) in structuredQuestions" :key="idx" variant="outline">
+                <template #header>
+                  <p class="text-sm font-medium leading-relaxed">{{ idx + 1 }}. {{ q.question }}</p>
+                </template>
 
-            <!-- Parsed questions with individual inputs -->
-            <div v-if="parsedQuestions.length > 0" class="space-y-4 mb-4">
-              <div v-for="(question, idx) in parsedQuestions" :key="idx" class="rounded-lg bg-amber-100/50 dark:bg-amber-900/20 p-3">
-                <div class="text-sm text-amber-900 dark:text-amber-200 mb-2 leading-relaxed" v-html="renderMd(`**${idx + 1}.** ${parsedOptions[idx]?.length ? stripOptions(question) : question}`)" />
-
-                <!-- Option buttons when lettered options are detected -->
-                <div v-if="parsedOptions[idx]?.length" class="flex flex-wrap gap-2 mb-2">
-                  <UButton
-                    v-for="opt in parsedOptions[idx]"
-                    :key="opt.letter"
-                    size="sm"
-                    :variant="orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? 'solid' : 'soft'"
-                    :color="orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? 'primary' : 'warning'"
-                    @click="orangeAnswers[idx] = orangeAnswers[idx] === `(${opt.letter}) ${opt.text}` ? '' : `(${opt.letter}) ${opt.text}`"
-                  >
-                    <span class="font-semibold mr-1">({{ opt.letter }})</span> {{ opt.text }}
-                  </UButton>
-                </div>
-
-                <!-- Text input: fallback when no options, or "Other..." when options exist -->
-                <UInput
-                  :model-value="parsedOptions[idx]?.length && orangeAnswers[idx]?.match(/^\([a-zA-Z]\)\s/) ? '' : (orangeAnswers[idx] || '')"
-                  :placeholder="parsedOptions[idx]?.length ? 'Other (custom answer)...' : 'Answer...'"
-                  class="w-full"
+                <!-- RadioGroup for options -->
+                <URadioGroup
+                  v-if="q.options.length > 0"
+                  :model-value="orangeAnswers[idx]"
+                  :items="q.options.map(opt => ({ label: opt.label, value: `(${opt.key}) ${opt.label}` }))"
+                  variant="card"
+                  size="sm"
+                  color="warning"
                   @update:model-value="(v: string) => orangeAnswers[idx] = v"
                 />
-              </div>
-            </div>
 
-            <!-- Additional context -->
+                <!-- Text input for custom answer -->
+                <UInput
+                  :model-value="q.options.length && orangeAnswers[idx]?.match(/^\([a-zA-Z]\)\s/) ? '' : (orangeAnswers[idx] || '')"
+                  :placeholder="q.options.length ? 'Other (custom answer)...' : 'Answer...'"
+                  class="w-full"
+                  :class="{ 'mt-2': q.options.length }"
+                  size="sm"
+                  @update:model-value="(v: string) => orangeAnswers[idx] = v"
+                />
+              </UCard>
+            </template>
+
+            <!-- Freeform fallback when no structured questions yet -->
             <UTextarea
               v-model="orangeFreeform"
-              :placeholder="parsedQuestions.length > 0 ? 'Additional context (optional)...' : 'Type your response...'"
+              :placeholder="structuredQuestions.length > 0 ? 'Additional context (optional)...' : 'Type your response...'"
               :rows="2"
-              class="w-full mb-3"
+              class="w-full"
             />
 
             <div class="flex items-center gap-2">

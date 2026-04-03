@@ -633,7 +633,7 @@ Use \`update_workitem\` to set your signal:
 - Set \`status\` to \`"waiting"\`
 - Set \`assignee\` to \`"human"\`
 - Set \`output\` to your questions — each question MUST be answerable:
-  - Always provide 2-4 concrete options the human can pick from (a, b, c, d)
+  - Provide concrete lettered options the human can pick from — as many as make sense (typically 2-6)
   - Never write statements disguised as questions — if you found a problem, propose solutions
   - The human should be able to answer each question with a single letter or short phrase
   - Bad: "useFlowContainerDetection only detects card-over-group overlap" (statement, not a question)

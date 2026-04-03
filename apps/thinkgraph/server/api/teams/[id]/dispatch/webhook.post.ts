@@ -1,6 +1,7 @@
 import { updateThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
 import { buildNodeMarkdown, extractStageOutputs } from '~~/server/utils/node-markdown'
+import { extractStructuredQuestions } from '~~/server/utils/question-extractor'
 
 /**
  * Webhook for receiving dispatch results from Pi.dev or other providers.
@@ -77,6 +78,27 @@ export default defineEventHandler(async (event) => {
   if (Object.keys(updates).length > 0) {
     await updateThinkgraphNode(workItemId, teamId, 'system', updates, { role: 'admin' })
     signalCollectionChange(teamId, 'thinkgraphNodes')
+  }
+
+  // Extract structured questions for orange signals (non-blocking)
+  if (agentSignal === 'orange') {
+    const rawOutput = currentState?.output || output
+    if (rawOutput) {
+      extractStructuredQuestions(rawOutput).then(async (structured) => {
+        if (!structured) return
+        const [freshItem] = await getThinkgraphNodesByIds(teamId, [workItemId])
+        const existingArtifacts = Array.isArray(freshItem?.artifacts) ? freshItem.artifacts : []
+        // Replace any previous questions artifact
+        const cleaned = existingArtifacts.filter((a: any) => a?.type !== 'questions')
+        await updateThinkgraphNode(workItemId, teamId, 'system', {
+          artifacts: [...cleaned, { type: 'questions', ...structured }],
+        }, { role: 'admin' })
+        signalCollectionChange(teamId, 'thinkgraphNodes')
+        console.log(`[webhook] ${workItemId}: extracted ${structured.questions.length} structured questions`)
+      }).catch(err => {
+        console.error(`[webhook] ${workItemId}: question extraction failed:`, err)
+      })
+    }
   }
 
   // Pipeline stage progression
