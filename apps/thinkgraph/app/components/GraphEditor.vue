@@ -65,7 +65,6 @@ const {
   generatingBrief, generateBrief,
   copySelectedContext,
   onChatAddToGraph,
-  classifyAndAct, setupAutoClassify,
   connectMenu, onConnectEnd, createFromConnect, closeConnectMenu,
   onNodeDelete,
   exportGraph: exportGraphAction,
@@ -85,9 +84,6 @@ const {
   deleteItems,
   copyContext,
 })
-
-// Auto-classify nodes when created/updated with substantial content
-setupAutoClassify()
 
 // ─── Filters ───
 const { filters: graphFilters, filteredIds, activeFilterCount, availableBranches, availableVersionTags, clearFilters } = useGraphFilters(decisionsRef)

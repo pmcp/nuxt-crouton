@@ -191,8 +191,6 @@ function openCreate(_template?: string, parentId?: string) {
   showCreate.value = true
 }
 
-const classifyingNodeId = ref<string | null>(null)
-
 async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
   createPending.value = true
@@ -210,47 +208,25 @@ async function handleCreate() {
     showCreate.value = false
     await refreshItems()
 
-    // Auto-classify: AI determines template + action (decompose/dispatch/idle)
     if (created?.id) {
+      // Open detail panel for the new node
+      selectedItemId.value = created.id
+      showDetail.value = true
+
+      // Classify in background — just sets the right template, no auto-actions
       const content = [createTitle.value.trim(), createBrief.value.trim()].filter(Boolean).join(' ')
       if (content.length >= 50) {
-        classifyingNodeId.value = created.id
-        toast.add({ title: 'Classifying...', description: 'AI is analyzing your node', icon: 'i-lucide-brain', color: 'info' })
-        try {
-          const result = await $fetch<any>(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
-            method: 'POST',
-          })
+        $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
+          method: 'POST',
+        }).then(async () => {
           await refreshItems()
-
-          if (result?.action === 'decompose') {
-            toast.add({ title: 'Decomposing plan...', icon: 'i-lucide-git-branch', color: 'info' })
-            await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/expand`, {
-              method: 'POST',
-              body: { mode: 'decompose', graphId: projectId.value },
-            })
-            toast.add({ title: 'Plan decomposed into tasks', color: 'success' })
-            await refreshItems()
-          } else if (result?.action === 'dispatch') {
-            await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}`, {
-              method: 'PATCH',
-              body: { status: 'queued', assignee: 'pi' },
-            })
-            await $fetch(`/api/teams/${teamId.value}/dispatch/work-item`, {
-              method: 'POST',
-              body: { workItemId: created.id },
-            })
-            toast.add({ title: 'Dispatched to Pi', color: 'success' })
-            await refreshItems()
-          } else {
-            toast.add({ title: `Classified as ${result?.template}`, color: 'neutral' })
-          }
-        } catch (err: any) {
+        }).catch((err: any) => {
           console.error('Auto-classify failed:', err)
-          toast.add({ title: 'Classification failed', description: err?.message, color: 'error' })
-        } finally {
-          classifyingNodeId.value = null
-        }
+        })
       }
+
+      // Open assistant focused on this node
+      showAssistant.value = true
     }
   }
   finally {
