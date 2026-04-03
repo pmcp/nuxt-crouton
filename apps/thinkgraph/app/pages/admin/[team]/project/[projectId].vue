@@ -157,7 +157,7 @@ function closeDetail() {
 // ─── Create work item ───
 const showCreate = ref(false)
 const createTitle = ref('')
-const createTemplate = ref('task')
+const createBrief = ref('')
 const createParentId = ref<string | undefined>()
 const createPending = ref(false)
 
@@ -184,13 +184,10 @@ const ASSIGNEES = [
   { value: 'ci', label: 'CI', icon: 'i-lucide-git-branch' },
 ]
 
-const createAssignee = ref('pi')
-
-function openCreate(template?: string, parentId?: string) {
-  createTemplate.value = template || 'task'
+function openCreate(_template?: string, parentId?: string) {
   createParentId.value = parentId
   createTitle.value = ''
-  createAssignee.value = 'pi'
+  createBrief.value = ''
   showCreate.value = true
 }
 
@@ -198,16 +195,14 @@ async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
   createPending.value = true
   try {
-    const steps = TEMPLATE_STEPS[createTemplate.value] || []
+    // Create with idea template — auto-classify will detect the right template + action
     await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       method: 'POST',
       body: {
         projectId: projectId.value,
         title: createTitle.value.trim(),
-        template: createTemplate.value,
-        steps,
-        status: steps.length > 0 ? 'queued' : 'idle',
-        assignee: createAssignee.value,
+        brief: createBrief.value.trim() || undefined,
+        origin: 'human',
         ...(createParentId.value ? { parentId: createParentId.value } : {}),
       },
     })
@@ -647,14 +642,7 @@ function onKanbanSelect(item: any) {
   showDetail.value = true
 }
 
-// ─── New item dropdown ───
-const newItemOptions = computed(() => [
-  NODE_TEMPLATES.map(t => ({
-    label: t.label,
-    icon: t.icon,
-    onSelect: () => openCreate(t.value),
-  })),
-])
+// ─── New item button ───
 
 // ─── View mode ───
 const viewMode = ref<'canvas' | 'list' | 'kanban'>('canvas')
@@ -945,9 +933,7 @@ if (import.meta.client) {
           :loading="shareLoading"
           @click="generateShareLink"
         />
-        <UDropdownMenu :items="newItemOptions">
-          <UButton icon="i-lucide-plus" size="sm" label="New" variant="soft" />
-        </UDropdownMenu>
+        <UButton icon="i-lucide-plus" size="sm" label="New" variant="soft" @click="openCreate()" />
       </div>
     </div>
 
@@ -966,9 +952,7 @@ if (import.meta.client) {
             </div>
             <h3 class="text-lg font-semibold mb-2">Empty canvas</h3>
             <p class="text-sm text-muted mb-4">Start by adding your first work item.</p>
-            <UDropdownMenu :items="newItemOptions">
-              <UButton icon="i-lucide-plus" label="Add work item" />
-            </UDropdownMenu>
+            <UButton icon="i-lucide-plus" label="Add work item" @click="openCreate()" />
           </div>
         </div>
 
@@ -996,15 +980,12 @@ if (import.meta.client) {
           class="fixed z-50 bg-default border border-default rounded-lg shadow-lg p-2 min-w-[160px]"
           :style="{ left: quickCreatePos.x + 'px', top: quickCreatePos.y + 'px' }"
         >
-          <p class="text-xs text-muted px-2 py-1 mb-1">Add connected node</p>
           <button
-            v-for="t in NODE_TEMPLATES"
-            :key="t.value"
             class="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 cursor-pointer"
-            @click="handleQuickCreate(t.value)"
+            @click="handleQuickCreate('idea')"
           >
-            <UIcon :name="t.icon" class="size-4" />
-            {{ t.label }}
+            <UIcon name="i-lucide-plus" class="size-4 text-muted" />
+            New node
           </button>
         </div>
 
@@ -1407,26 +1388,14 @@ if (import.meta.client) {
           <h3 class="text-lg font-semibold mb-4">New Node</h3>
           <div class="flex flex-col gap-4">
             <UFormField label="Title" required>
-              <UInput v-model="createTitle" placeholder="e.g. Design blog collection schema" class="w-full" />
+              <UInput v-model="createTitle" placeholder="What are you thinking about?" class="w-full" />
             </UFormField>
-            <div class="grid grid-cols-2 gap-3">
-              <UFormField label="Template">
-                <USelectMenu
-                  v-model="createTemplate"
-                  :items="NODE_TEMPLATES.map(t => t.value)"
-                  class="w-full"
-                />
-              </UFormField>
-              <UFormField label="Assignee">
-                <USelectMenu
-                  v-model="createAssignee"
-                  :items="ASSIGNEES.map(a => a.value)"
-                  class="w-full"
-                />
-              </UFormField>
-            </div>
+            <UFormField label="Brief">
+              <UTextarea v-model="createBrief" placeholder="Add context, paste a plan, or leave empty..." :rows="4" class="w-full" />
+            </UFormField>
           </div>
-          <div class="flex justify-end gap-2 mt-6">
+          <p class="text-xs text-muted mt-3">AI will determine the type and next action based on your content.</p>
+          <div class="flex justify-end gap-2 mt-4">
             <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
             <UButton
               :loading="createPending"
