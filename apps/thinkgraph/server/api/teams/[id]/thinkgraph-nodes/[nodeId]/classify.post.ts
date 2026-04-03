@@ -1,5 +1,4 @@
-import { generateObject } from 'ai'
-import { z } from 'zod'
+import { generateText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { getThinkgraphNodesByIds, updateThinkgraphNode } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 
@@ -11,15 +10,8 @@ const TEMPLATE_STEPS: Record<string, string[]> = {
   meta: ['analyst', 'builder', 'reviewer', 'merger'],
 }
 
-const classifySchema = z.object({
-  template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).describe(
-    'The type of node. idea = raw thought/brainstorm. research = needs investigation. task = concrete work item. feature = multi-step deliverable. meta = about the graph/process itself.',
-  ),
-  action: z.enum(['decompose', 'dispatch', 'idle']).describe(
-    'What to do next. decompose = content is a structured plan/brief that should be broken into child nodes. dispatch = ready to send to an AI worker for execution. idle = just store it, user will decide.',
-  ),
-  reasoning: z.string().describe('One sentence explaining why you chose this template and action.'),
-})
+const VALID_TEMPLATES = ['idea', 'research', 'task', 'feature', 'meta'] as const
+const VALID_ACTIONS = ['decompose', 'dispatch', 'idle'] as const
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -43,40 +35,53 @@ export default defineEventHandler(async (event) => {
 
   const ai = createAIProvider(event)
 
-  let object: { template: 'idea' | 'research' | 'task' | 'feature' | 'meta'; action: 'decompose' | 'dispatch' | 'idle'; reasoning: string }
-  try {
-    const result = await generateObject({
-      model: ai.model(ai.getDefaultModel()),
-      schema: classifySchema,
-      system: `You classify ThinkGraph nodes. Given a node's title and brief, determine:
-1. The appropriate template (idea/research/task/feature/meta)
-2. The recommended next action:
-   - "decompose" if the content is a structured plan, brief, or document with multiple actionable items that should become separate child nodes (phases, features, tasks, steps)
-   - "dispatch" if it's a single focused item ready for AI execution (research question, task description, feature spec)
-   - "idle" if it's a raw thought, question, or note that doesn't need immediate action
+  const { text } = await generateText({
+    model: ai.model('claude-haiku-4-5-20251001'),
+    system: `You classify nodes. Respond with ONLY a JSON object, no other text.
 
-Prefer "decompose" when the content has clear structure (headers, lists, phases, numbered items).
-Prefer "dispatch" for focused, single-purpose items.
-Prefer "idle" for short thoughts, questions, or incomplete ideas.`,
-      prompt: content,
-    })
-    object = result.object
-  } catch (err: any) {
-    console.error('AI classify failed:', err?.message || err)
-    throw createError({ status: 500, statusText: `AI classify failed: ${err?.message || 'Unknown error'}` })
+Given a node's title and brief, return:
+{
+  "template": "idea" | "research" | "task" | "feature" | "meta",
+  "action": "decompose" | "dispatch" | "idle",
+  "reasoning": "one sentence"
+}
+
+Templates: idea = raw thought. research = needs investigation. task = concrete work. feature = multi-step deliverable. meta = about the process itself.
+
+Actions:
+- "decompose" = content is a structured plan with multiple actionable items that should become child nodes
+- "dispatch" = single focused item ready for AI execution
+- "idle" = raw thought or note, no immediate action needed
+
+Prefer decompose when content has structure (headers, lists, phases). Prefer dispatch for focused items. Prefer idle for short thoughts.`,
+    prompt: content,
+  })
+
+  // Parse response
+  let parsed: { template: string; action: string; reasoning: string }
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON found')
+    parsed = JSON.parse(jsonMatch[0])
+  } catch {
+    // Fallback
+    return { template: node.template || 'idea', action: 'idle', reasoning: 'Failed to parse AI response' }
   }
 
+  const template = VALID_TEMPLATES.includes(parsed.template as any) ? parsed.template : 'idea'
+  const action = VALID_ACTIONS.includes(parsed.action as any) ? parsed.action : 'idle'
+
   // Update the node with detected template + steps
-  const steps = TEMPLATE_STEPS[object.template] || []
+  const steps = TEMPLATE_STEPS[template] || []
   await updateThinkgraphNode(team.id, nodeId, {
-    template: object.template,
+    template,
     steps,
   } as any)
 
   return {
-    template: object.template,
+    template,
     steps,
-    action: object.action,
-    reasoning: object.reasoning,
+    action,
+    reasoning: parsed.reasoning || '',
   }
 })

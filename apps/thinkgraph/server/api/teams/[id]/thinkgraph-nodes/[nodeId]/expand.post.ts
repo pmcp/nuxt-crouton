@@ -1,5 +1,4 @@
-import { streamText, generateObject } from 'ai'
-import { z } from 'zod'
+import { streamText, generateText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'
@@ -11,6 +10,8 @@ const TEMPLATE_STEPS: Record<string, string[]> = {
   feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
   meta: ['analyst', 'builder', 'reviewer', 'merger'],
 }
+
+const VALID_TEMPLATES = new Set(['idea', 'research', 'task', 'feature', 'meta'])
 
 const modeConfig: Record<string, { system: string; count: number }> = {
   diverge: {
@@ -49,24 +50,14 @@ Respond ONLY with valid JSON array. Each item: {"content": "...", "nodeType": ".
   }
 }
 
-// ─── Decompose mode: structured object generation ───
+// ─── Decompose mode types ───
 
-const decomposeItemSchema = z.object({
-  title: z.string().describe('Short, actionable title for this child node'),
-  brief: z.string().describe('2-4 sentence description of what this item involves'),
-  template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).describe(
-    'The type: task = concrete work, feature = multi-step deliverable, research = needs investigation, idea = brainstorm, meta = process/tooling',
-  ),
-  children: z.array(z.object({
-    title: z.string(),
-    brief: z.string(),
-    template: z.enum(['idea', 'research', 'task', 'feature', 'meta']),
-  })).optional().describe('Optional sub-items if this item has clear sub-tasks'),
-})
-
-const decomposeSchema = z.object({
-  items: z.array(decomposeItemSchema).min(1).max(15).describe('The actionable items extracted from the content'),
-})
+interface DecomposeItem {
+  title: string
+  brief: string
+  template: string
+  children?: DecomposeItem[]
+}
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -93,38 +84,44 @@ export default defineEventHandler(async (event) => {
   if (mode === 'decompose') {
     const content = [targetDecision.content || targetDecision.title, targetDecision.brief].filter(Boolean).join('\n\n')
 
-    const { object } = await generateObject({
-      model: ai.model(ai.getDefaultModel()),
-      schema: decomposeSchema,
-      system: `You decompose structured plans, briefs, and documents into actionable child nodes.
+    const { text } = await generateText({
+      model: ai.model('claude-haiku-4-5-20251001'),
+      system: `You decompose structured plans into actionable child nodes. Respond with ONLY a JSON object, no other text.
 
-Extract each distinct actionable item as a separate node. Assign the right template:
-- "task" for concrete work items (build X, fix Y, configure Z)
-- "feature" for multi-step deliverables that need their own pipeline
-- "research" for items that need investigation before action
-- "idea" for thoughts that need further exploration
-- "meta" for process/tooling improvements
+Return: { "items": [ { "title": "...", "brief": "...", "template": "...", "children": [...] }, ... ] }
 
-Preserve the natural hierarchy — if the content has phases/sections with sub-items, use the children field.
-Keep titles short and actionable. Briefs should capture the essential what/why in 2-4 sentences.
+Templates: task = concrete work, feature = multi-step deliverable, research = needs investigation, idea = brainstorm, meta = process/tooling.
+Children field is optional — use for sub-items within a phase/section.
+Keep titles short and actionable. Briefs: 2-4 sentences of what/why.
 Do NOT include time estimates or deadlines.
-Do NOT include items that are just context/background — only actionable items.`,
+Do NOT include context/background — only actionable items.`,
       prompt: content,
     })
+
+    let items: DecomposeItem[]
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error('No JSON found')
+      const parsed = JSON.parse(jsonMatch[0])
+      items = Array.isArray(parsed.items) ? parsed.items : []
+    } catch {
+      throw createError({ status: 500, statusText: 'AI returned invalid decompose response' })
+    }
 
     // Create nodes recursively
     const created: any[] = []
 
     async function createDecomposeNodes(
-      items: Array<{ title: string; brief: string; template: string; children?: Array<{ title: string; brief: string; template: string }> }>,
+      nodeItems: DecomposeItem[],
       parentId: string,
     ) {
-      for (const item of items) {
-        const steps = TEMPLATE_STEPS[item.template] || []
+      for (const item of nodeItems) {
+        const tmpl = VALID_TEMPLATES.has(item.template) ? item.template : 'idea'
+        const steps = TEMPLATE_STEPS[tmpl] || []
         const node = await createThinkgraphNode({
           title: item.title,
           brief: item.brief,
-          template: item.template,
+          template: tmpl,
           steps,
           graphId: (targetDecision as any).graphId || '',
           parentId,
@@ -144,7 +141,7 @@ Do NOT include items that are just context/background — only actionable items.
       }
     }
 
-    await createDecomposeNodes(object.items, nodeId)
+    await createDecomposeNodes(items, nodeId)
     return created
   }
 
