@@ -88,19 +88,46 @@ export default defineEventHandler(async (event) => {
 
     const { text } = await generateText({
       model: ai.model('claude-haiku-4-5-20251001'),
-      system: `You decompose plans into a focused, sequential set of actionable nodes. Respond with ONLY a JSON object, no other text.
+      system: `You decompose plans into sequential phases. Respond with ONLY a JSON object, no other text.
 
-Return: { "items": [ { "title": "...", "brief": "...", "template": "...", "children": [...] }, ... ] }
+CRITICAL: The output is a CHAIN, not a flat list. Each phase is nested inside the previous one as a child. Parallel work items within a phase are siblings.
+
+Return format:
+{
+  "items": [{
+    "title": "Phase 1 title",
+    "brief": "...",
+    "template": "research",
+    "children": [
+      { "title": "parallel task A", "brief": "...", "template": "task" },
+      { "title": "parallel task B", "brief": "...", "template": "task" },
+      {
+        "title": "Phase 2 title",
+        "brief": "...",
+        "template": "feature",
+        "children": [
+          { "title": "parallel task C", "brief": "...", "template": "task" },
+          {
+            "title": "Phase 3 title",
+            "brief": "...",
+            "template": "task"
+          }
+        ]
+      }
+    ]
+  }]
+}
+
+The last child of each phase is the next phase — this creates a chain where each phase blocks the next.
+Parallel tasks within a phase are siblings of the next phase.
 
 Rules:
-- Keep it focused: 3-7 top-level items max. Fewer is better.
-- Order matters: items are sequential phases. Early items block later ones.
-- Use children for sub-tasks within a phase (2-4 children max).
-- Templates: research = needs investigation first, task = concrete work, feature = multi-step deliverable, idea = needs more thinking, meta = process/tooling.
+- 3-5 phases max. Each phase has 1-3 parallel tasks plus the next phase as last child.
+- Templates: research = needs investigation, task = concrete work, feature = multi-step deliverable, idea = needs thinking.
 - Start with research/discovery if requirements are vague.
 - Keep titles short and actionable. Briefs: 1-2 sentences.
-- Do NOT include time estimates, deadlines, or generic items like "testing" and "deployment" unless specifically requested.
-- Do NOT over-decompose. A simple project needs 3-5 items, not 15.`,
+- Do NOT include time estimates or generic phases like "testing" and "deployment" unless requested.
+- The top-level items array should have exactly 1 item (the first phase). Everything else is nested.`,
       prompt: content,
     })
 
