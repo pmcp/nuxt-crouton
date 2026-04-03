@@ -76,6 +76,7 @@ export default defineEventHandler(async (event) => {
 
   if (Object.keys(updates).length > 0) {
     await updateThinkgraphNode(workItemId, teamId, 'system', updates, { role: 'admin' })
+    signalCollectionChange(teamId, 'thinkgraphNodes')
   }
 
   // Pipeline stage progression

@@ -101,9 +101,9 @@ nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   if (collection === 'thinkgraphNodes') refreshNodes()
 })
 
-// Poll for updates while any node is dispatching/working (Pi agent creates nodes via HTTP API)
+// Poll for updates while any node is active (Pi agent creates nodes via HTTP API)
 const hasActiveDispatch = computed(() =>
-  nodes.value.some(n => n.status === 'dispatching' || n.status === 'working')
+  nodes.value.some(n => n.status === 'dispatching' || n.status === 'working' || n.status === 'active')
 )
 let pollTimer: ReturnType<typeof setInterval> | null = null
 watch(hasActiveDispatch, (active) => {
