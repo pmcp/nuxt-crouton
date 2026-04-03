@@ -161,6 +161,50 @@ const createBrief = ref('')
 const createParentId = ref<string | undefined>()
 const createPending = ref(false)
 
+// ─── Inline create (empty canvas) ───
+const inlineCreateTitle = ref('')
+const inlineCreateBrief = ref('')
+const inlineCreatePending = ref(false)
+
+async function handleInlineCreate() {
+  if (!inlineCreateTitle.value.trim() || !teamId.value) return
+  inlineCreatePending.value = true
+  const title = inlineCreateTitle.value.trim()
+  const brief = inlineCreateBrief.value.trim()
+  try {
+    const created = await $fetch<{ id: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+      method: 'POST',
+      body: {
+        projectId: projectId.value,
+        title,
+        brief: brief || undefined,
+        origin: 'human',
+      },
+    })
+    inlineCreateTitle.value = ''
+    inlineCreateBrief.value = ''
+    await refreshItems()
+
+    if (created?.id) {
+      selectedItemId.value = created.id
+      showDetail.value = true
+
+      // Classify in background
+      const content = [title, brief].filter(Boolean).join(' ')
+      if (content.length >= 50) {
+        $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
+          method: 'POST',
+        }).then(() => refreshItems()).catch((err: any) => {
+          console.error('Auto-classify failed:', err)
+        })
+      }
+    }
+  }
+  finally {
+    inlineCreatePending.value = false
+  }
+}
+
 const NODE_TEMPLATES = [
   { value: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb' },
   { value: 'research', label: 'Research', icon: 'i-lucide-search' },
@@ -1075,14 +1119,47 @@ if (import.meta.client) {
           @selection-change="onSelectionChange"
         />
 
-        <!-- Empty canvas hint -->
+        <!-- Empty canvas — inline "What are you thinking about?" input -->
         <div
           v-if="!itemsLoading && !items.length"
           class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
         >
-          <div class="text-center pointer-events-auto">
-            <p class="text-sm text-muted mb-3">Click <strong>+ New</strong> to start thinking</p>
-            <UButton icon="i-lucide-plus" label="Add first node" size="sm" variant="soft" @click="openCreate()" />
+          <div class="pointer-events-auto w-full max-w-lg px-6">
+            <div class="text-center mb-6">
+              <div class="inline-flex items-center justify-center size-12 rounded-2xl bg-primary-50 dark:bg-primary-900/20 mb-3">
+                <UIcon name="i-lucide-lightbulb" class="size-6 text-primary-500" />
+              </div>
+              <h2 class="text-lg font-semibold text-default mb-1">Start thinking</h2>
+              <p class="text-sm text-muted">Describe an idea, task, or question to create your first node.</p>
+            </div>
+            <form class="space-y-3" @submit.prevent="handleInlineCreate">
+              <UInput
+                v-model="inlineCreateTitle"
+                placeholder="What are you thinking about?"
+                size="xl"
+                autofocus
+                :ui="{ base: 'text-center' }"
+                class="w-full"
+                @keydown.enter.prevent="handleInlineCreate"
+              />
+              <UTextarea
+                v-model="inlineCreateBrief"
+                placeholder="Add context, paste a plan, or just press Enter..."
+                :rows="3"
+                class="w-full"
+              />
+              <div class="flex justify-center">
+                <UButton
+                  type="submit"
+                  icon="i-lucide-sparkles"
+                  label="Create"
+                  :loading="inlineCreatePending"
+                  :disabled="!inlineCreateTitle.trim()"
+                  size="lg"
+                />
+              </div>
+            </form>
+            <p class="text-xs text-muted text-center mt-4">AI will determine the type and next steps automatically.</p>
           </div>
         </div>
 
