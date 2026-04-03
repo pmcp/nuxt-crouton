@@ -82,7 +82,8 @@ export default defineEventHandler(async (event) => {
 
   // ─── Decompose mode: structured extraction ───
   if (mode === 'decompose') {
-    const content = [targetDecision.content || targetDecision.title, targetDecision.brief].filter(Boolean).join('\n\n')
+    const parentProjectId = (targetDecision as any).projectId || targetGraphId || ''
+    const content = [(targetDecision as any).title || targetDecision.content, (targetDecision as any).brief].filter(Boolean).join('\n\n')
 
     const { text } = await generateText({
       model: ai.model('claude-haiku-4-5-20251001'),
@@ -123,13 +124,11 @@ Do NOT include context/background — only actionable items.`,
           brief: item.brief,
           template: tmpl,
           steps,
-          graphId: (targetDecision as any).graphId || '',
+          projectId: parentProjectId,
           parentId,
           status: 'idle',
           origin: 'ai',
           starred: false,
-          branchName: '',
-          versionTag: '',
           teamId: team.id,
           owner: user.id,
         } as any)

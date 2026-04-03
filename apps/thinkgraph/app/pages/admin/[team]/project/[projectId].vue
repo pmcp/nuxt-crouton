@@ -191,6 +191,8 @@ function openCreate(_template?: string, parentId?: string) {
   showCreate.value = true
 }
 
+const classifyingNodeId = ref<string | null>(null)
+
 async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
   createPending.value = true
@@ -212,15 +214,22 @@ async function handleCreate() {
     if (created?.id) {
       const content = [createTitle.value.trim(), createBrief.value.trim()].filter(Boolean).join(' ')
       if (content.length >= 50) {
-        $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
-          method: 'POST',
-        }).then(async (result: any) => {
+        classifyingNodeId.value = created.id
+        toast.add({ title: 'Classifying...', description: 'AI is analyzing your node', icon: 'i-lucide-brain', color: 'info' })
+        try {
+          const result = await $fetch<any>(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
+            method: 'POST',
+          })
+          await refreshItems()
+
           if (result?.action === 'decompose') {
+            toast.add({ title: 'Decomposing plan...', icon: 'i-lucide-git-branch', color: 'info' })
             await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/expand`, {
               method: 'POST',
               body: { mode: 'decompose', graphId: projectId.value },
             })
             toast.add({ title: 'Plan decomposed into tasks', color: 'success' })
+            await refreshItems()
           } else if (result?.action === 'dispatch') {
             await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}`, {
               method: 'PATCH',
@@ -231,11 +240,16 @@ async function handleCreate() {
               body: { workItemId: created.id },
             })
             toast.add({ title: 'Dispatched to Pi', color: 'success' })
+            await refreshItems()
+          } else {
+            toast.add({ title: `Classified as ${result?.template}`, color: 'neutral' })
           }
-          await refreshItems()
-        }).catch((err: any) => {
+        } catch (err: any) {
           console.error('Auto-classify failed:', err)
-        })
+          toast.add({ title: 'Classification failed', description: err?.message, color: 'error' })
+        } finally {
+          classifyingNodeId.value = null
+        }
       }
     }
   }
@@ -254,10 +268,9 @@ async function updateItem(id: string, data: Partial<ThinkgraphNode>) {
   await refreshItems()
 }
 
-const pendingDeleteId = ref<string | null>(null)
-const showDeleteConfirm = ref(false)
+const deletingId = ref<string | null>(null)
 
-function requestDelete(id: string) {
+async function deleteNode(id: string) {
   const item = items.value.find(n => n.id === id)
   if (!item) return
   const children = items.value.filter(n => n.parentId === id)
@@ -265,14 +278,8 @@ function requestDelete(id: string) {
     toast.add({ title: 'Cannot delete — has children. Delete children first.', color: 'warning' })
     return
   }
-  pendingDeleteId.value = id
-  showDeleteConfirm.value = true
-}
-
-async function confirmDelete() {
-  const id = pendingDeleteId.value
-  if (!id || !teamId.value) return
-  showDeleteConfirm.value = false
+  if (!teamId.value) return
+  deletingId.value = id
   try {
     await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}`, {
       method: 'DELETE',
@@ -282,13 +289,15 @@ async function confirmDelete() {
   } catch (err: any) {
     toast.add({ title: 'Delete failed', description: err.message, color: 'error' })
   }
-  pendingDeleteId.value = null
+  deletingId.value = null
 }
 
 async function onNodeDelete(nodeIds: string[]) {
-  // Single node: use confirmation dialog
+  // Single node: select it and open detail panel (user can delete from there)
   if (nodeIds.length === 1) {
-    requestDelete(nodeIds[0])
+    selectedItemId.value = nodeIds[0]
+    showDetail.value = true
+    await refreshItems() // Restore the node that Vue Flow visually removed
     return
   }
   // Multi-node: confirm first
@@ -850,7 +859,7 @@ function handleKeydown(e: KeyboardEvent) {
     case 'Backspace': case 'Delete':
       if (selectedItemId.value && !showCreate.value) {
         e.preventDefault()
-        requestDelete(selectedItemId.value)
+        deleteNode(selectedItemId.value)
       }
       break
     case 'd': case 'D':
@@ -1395,12 +1404,13 @@ if (import.meta.client) {
               color="green"
               @click="updateItem(selectedItem.id, { status: 'done' })"
             />
-            <UButton
+            <CroutonConfirmButton
+              label="Delete"
+              confirm-label="Sure?"
               icon="i-lucide-trash-2"
-              variant="soft"
-              color="red"
+              :loading="deletingId === selectedItem.id"
               class="ml-auto"
-              @click="requestDelete(selectedItem.id)"
+              @confirm="deleteNode(selectedItem.id)"
             />
           </div>
         </div>
@@ -1436,21 +1446,6 @@ if (import.meta.client) {
       </template>
     </UModal>
 
-    <!-- Delete confirmation -->
-    <UModal v-model:open="showDeleteConfirm">
-      <template #content="{ close }">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold mb-2">Delete work item?</h3>
-          <p class="text-sm text-muted mb-4">
-            "{{ items.find(i => i.id === pendingDeleteId)?.title }}" will be permanently deleted.
-          </p>
-          <div class="flex justify-end gap-2">
-            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
-            <UButton color="red" @click="confirmDelete">Delete</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
 
     <!-- Terminal panel -->
     <TerminalPanel
