@@ -912,6 +912,62 @@ const stageAccordionItems = computed(() => {
   })
 })
 
+// ─── Detail panel status bar ───
+const DETAIL_PIPELINE_STAGES = ['analyst', 'builder', 'launcher', 'reviewer', 'merger'] as const
+const DETAIL_STAGE_LABELS: Record<string, string> = { analyst: 'A', builder: 'B', launcher: 'L', reviewer: 'R', merger: 'M' }
+
+const detailPipelineDots = computed(() => {
+  const si = selectedItem.value
+  if (!si?.stage) return DETAIL_PIPELINE_STAGES.map(s => ({ stage: s, label: DETAIL_STAGE_LABELS[s], state: 'pending' as const }))
+  const currentIdx = DETAIL_PIPELINE_STAGES.indexOf(si.stage as any)
+  const isWorking = si.status === 'active'
+  return DETAIL_PIPELINE_STAGES.map((s, idx) => {
+    if (idx < currentIdx) return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'done' as const }
+    if (idx === currentIdx) {
+      if (isWorking) return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'working' as const }
+      if (si.signal === 'green') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'green' as const }
+      if (si.signal === 'orange') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'orange' as const }
+      if (si.signal === 'red') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'red' as const }
+      return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'current' as const }
+    }
+    return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'pending' as const }
+  })
+})
+
+const detailTags = computed(() => {
+  const si = selectedItem.value
+  if (!si) return []
+  const arts = Array.isArray(si.artifacts) ? si.artifacts : []
+  const hasPR = arts.some((a: any) => a?.type === 'pr')
+  const ciArt = arts.find((a: any) => a?.type === 'ci') as any
+  const ciStatus = ciArt?.status || null
+  const hasWorktree = !!si.worktree
+  const isWaitingHuman = si.status === 'waiting' && si.assignee === 'human'
+  const t: Array<{ emoji: string; title: string }> = []
+  if (hasPR) t.push({ emoji: '🔀', title: 'Has PR' })
+  if (hasWorktree) t.push({ emoji: '🔧', title: 'Worktree set' })
+  if (ciStatus === 'pass') t.push({ emoji: '✅', title: 'CI passed' })
+  if (ciStatus === 'fail') t.push({ emoji: '❌', title: 'CI failed' })
+  if (isWaitingHuman) t.push({ emoji: '👀', title: 'Waiting for you' })
+  return t
+})
+
+const DETAIL_TEMPLATE_CONFIG: Record<string, { icon: string; label: string; class: string }> = {
+  idea: { icon: 'i-lucide-lightbulb', label: 'Idea', class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  research: { icon: 'i-lucide-search', label: 'Research', class: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
+  task: { icon: 'i-lucide-hammer', label: 'Task', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  feature: { icon: 'i-lucide-rocket', label: 'Feature', class: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' },
+  meta: { icon: 'i-lucide-brain-circuit', label: 'Meta', class: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
+}
+
+const DETAIL_STATUS_CONFIG: Record<string, { icon: string; label: string; class: string }> = {
+  queued: { icon: 'i-lucide-circle-dashed', label: 'Queued', class: 'text-neutral-400' },
+  active: { icon: 'i-lucide-loader-2', label: 'Active', class: 'text-blue-500' },
+  waiting: { icon: 'i-lucide-pause-circle', label: 'Waiting', class: 'text-amber-500' },
+  done: { icon: 'i-lucide-check-circle', label: 'Done', class: 'text-green-500' },
+  blocked: { icon: 'i-lucide-alert-circle', label: 'Blocked', class: 'text-red-500' },
+}
+
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -1239,9 +1295,62 @@ if (import.meta.client) {
     <USlideover v-model:open="showDetail" side="right" :ui="{ width: 'max-w-md' }">
       <template #content>
         <div v-if="selectedItem" class="p-6 h-full overflow-y-auto">
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
             <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
+          </div>
+
+          <!-- Compact status bar -->
+          <div class="flex items-center gap-2 flex-wrap mb-4 px-2 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700/50">
+            <!-- Template badge -->
+            <span
+              v-if="DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea']"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+              :class="DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].class"
+            >
+              <UIcon :name="DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].icon" class="size-3" />
+              {{ DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].label }}
+            </span>
+            <!-- Status -->
+            <span
+              class="inline-flex items-center gap-1 text-[10px] font-medium"
+              :class="DETAIL_STATUS_CONFIG[selectedItem.status]?.class || 'text-neutral-400'"
+            >
+              <UIcon
+                :name="DETAIL_STATUS_CONFIG[selectedItem.status]?.icon || 'i-lucide-circle-dashed'"
+                class="size-3"
+                :class="{ 'animate-spin': selectedItem.status === 'active' }"
+              />
+              {{ DETAIL_STATUS_CONFIG[selectedItem.status]?.label || selectedItem.status }}
+            </span>
+            <!-- Pipeline dots -->
+            <div class="flex items-center gap-1">
+              <div
+                v-for="dot in detailPipelineDots"
+                :key="dot.stage"
+                class="detail-led"
+                :class="`detail-led--${dot.state}`"
+                :title="`${dot.stage}: ${dot.state}`"
+              />
+            </div>
+            <!-- Signal dot -->
+            <span
+              v-if="selectedItem.signal"
+              class="size-2.5 rounded-full shrink-0"
+              :class="{
+                'bg-green-400 shadow-[0_0_4px_rgba(16,185,129,0.5)]': selectedItem.signal === 'green',
+                'bg-amber-400 shadow-[0_0_4px_rgba(245,158,11,0.5)] animate-pulse': selectedItem.signal === 'orange',
+                'bg-red-400 shadow-[0_0_4px_rgba(239,68,68,0.5)]': selectedItem.signal === 'red',
+              }"
+              :title="`Signal: ${selectedItem.signal}`"
+            />
+            <!-- Glanceable tags -->
+            <span
+              v-for="tag in detailTags"
+              :key="tag.emoji"
+              :title="tag.title"
+              class="text-xs leading-none select-none cursor-default"
+            >{{ tag.emoji }}</span>
           </div>
 
           <!-- Brief -->
@@ -1572,3 +1681,24 @@ if (import.meta.client) {
     />
   </div>
 </template>
+
+<style scoped>
+@reference "tailwindcss";
+
+.detail-led {
+  @apply size-2 rounded-full transition-all duration-500;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0.5px 0 rgba(255,255,255,0.1);
+}
+.detail-led--pending { background: rgba(0,0,0,0.15); }
+.detail-led--current { background: rgba(255,255,255,0.15); box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(255,255,255,0.1); }
+.detail-led--done { background: #10b981; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4); }
+.detail-led--working { background: #10b981; animation: detail-led-pulse 1.5s ease-in-out infinite; }
+.detail-led--green { background: #10b981; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.4); }
+.detail-led--orange { background: #f59e0b; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #f59e0b, 0 0 8px rgba(245,158,11,0.4); }
+.detail-led--red { background: #ef4444; box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 0 0 4px #ef4444, 0 0 8px rgba(239,68,68,0.4); }
+
+@keyframes detail-led-pulse {
+  0%, 100% { opacity: 0.5; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(16,185,129,0.2); }
+  50% { opacity: 1; box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 6px #10b981, 0 0 12px rgba(16,185,129,0.5); }
+}
+</style>

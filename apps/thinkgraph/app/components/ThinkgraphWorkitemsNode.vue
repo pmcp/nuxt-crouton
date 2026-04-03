@@ -138,7 +138,7 @@ const isDone = computed(() => item.value.status === 'done')
 
 const displayTitle = computed(() => {
   const title = item.value.title || ''
-  return title.length > 60 ? title.slice(0, 57) + '...' : title
+  return title.length > 35 ? title.slice(0, 32) + '...' : title
 })
 
 const hasOutput = computed(() => !!item.value.output)
@@ -270,15 +270,15 @@ function handleDispatch(event: Event) {
     <Handle type="target" :position="Position.Top" class="work-handle" />
 
     <!-- Header: status + assignee -->
-    <div class="flex items-center gap-1 mb-1 opacity-70">
-      <UIcon :name="typeConfig.icon" class="size-3" />
+    <div class="flex items-center gap-0.5 mb-0.5 opacity-70">
+      <UIcon :name="typeConfig.icon" class="size-2.5" />
       <UIcon
         :name="statusConfig.icon"
-        class="size-3"
+        class="size-2.5"
         :class="{ 'animate-spin': item.status === 'active' }"
       />
       <span class="ml-auto">
-        <UIcon :name="assigneeConfig.icon" class="size-3" />
+        <UIcon :name="assigneeConfig.icon" class="size-2.5" />
       </span>
     </div>
 
@@ -294,29 +294,29 @@ function handleDispatch(event: Event) {
     </div>
 
     <!-- Title -->
-    <p class="text-xs font-medium leading-snug">
+    <p class="text-[10px] font-medium leading-tight">
       {{ displayTitle }}
     </p>
 
     <!-- Live activity text (while worker is running) -->
-    <p v-if="isActive && activityText" class="text-[10px] leading-tight opacity-70 mt-0.5 truncate">
+    <p v-if="isActive && activityText" class="text-[9px] leading-tight opacity-70 mt-0.5 truncate">
       {{ activityText }}
     </p>
 
     <!-- Glanceable tags -->
-    <div v-if="tags.length" class="flex items-center gap-0.5 mt-1">
+    <div v-if="tags.length" class="flex items-center gap-0.5 mt-0.5">
       <span
         v-for="tag in tags"
         :key="tag.emoji"
         :title="tag.title"
-        class="text-[10px] leading-none select-none cursor-default"
+        class="text-[9px] leading-none select-none cursor-default"
       >{{ tag.emoji }}</span>
     </div>
 
     <!-- Progress bar (active only) -->
     <div
       v-if="isActive"
-      class="mt-1.5 h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
+      class="mt-1 h-px w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden"
     >
       <div class="h-full bg-primary-500 rounded-full animate-progress" />
     </div>
@@ -329,7 +329,7 @@ function handleDispatch(event: Event) {
       title="Dispatch work"
       @click.stop="handleDispatch"
     >
-      <UIcon name="i-lucide-send" class="size-3" />
+      <UIcon name="i-lucide-send" class="size-2.5" />
     </button>
 
     <!-- Secondary actions (hover) -->
@@ -339,14 +339,14 @@ function handleDispatch(event: Event) {
         title="Add child"
         @click.stop="handleAddChild"
       >
-        <UIcon name="i-lucide-plus" class="size-3.5" />
+        <UIcon name="i-lucide-plus" class="size-3" />
       </button>
       <button
         class="work-item__action"
         title="Open detail"
         @click.stop="handleDetail"
       >
-        <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
+        <UIcon name="i-lucide-panel-right-open" class="size-3" />
       </button>
     </div>
 
@@ -358,8 +358,8 @@ function handleDispatch(event: Event) {
 @reference "tailwindcss";
 
 .work-item {
-  @apply px-3 py-2.5 rounded-md transition-all duration-150;
-  @apply min-w-[160px] max-w-[220px];
+  @apply px-2 py-1.5 rounded-md transition-all duration-150;
+  @apply min-w-[110px] max-w-[150px];
   @apply relative;
   @apply border-0 shadow-none;
 }
@@ -437,11 +437,11 @@ function handleDispatch(event: Event) {
 
 /* LED strip — physical device aesthetic */
 .led-strip {
-  @apply flex items-center gap-1.5 mb-1;
+  @apply flex items-center gap-1 mb-0.5;
 }
 
 .led {
-  @apply size-2 rounded-full;
+  @apply size-1.5 rounded-full;
   @apply transition-all duration-500;
   /* Recessed bezel — looks like a physical LED housing */
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0.5px 0 rgba(255,255,255,0.1);
@@ -511,8 +511,8 @@ function handleDispatch(event: Event) {
 }
 
 .work-item__dispatch {
-  @apply absolute -bottom-2 -right-2 z-10;
-  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply absolute -bottom-1.5 -right-1.5 z-10;
+  @apply w-4 h-4 rounded-full flex items-center justify-center;
   @apply bg-white/90 dark:bg-neutral-700/90 backdrop-blur-sm;
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-400 hover:scale-110;
@@ -525,11 +525,11 @@ function handleDispatch(event: Event) {
 }
 
 .work-item__actions {
-  @apply absolute -top-2 -right-2 flex gap-1 z-10;
+  @apply absolute -top-1.5 -right-1.5 flex gap-0.5 z-10;
 }
 
 .work-item__action {
-  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply w-4 h-4 rounded-full flex items-center justify-center;
   @apply bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm;
   @apply shadow-sm cursor-pointer transition-all duration-150;
   @apply text-neutral-500 hover:scale-110;
