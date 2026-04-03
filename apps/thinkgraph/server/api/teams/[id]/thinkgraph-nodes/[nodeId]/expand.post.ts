@@ -1,7 +1,16 @@
-import { streamText } from 'ai'
+import { streamText, generateObject } from 'ai'
+import { z } from 'zod/v3'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'
+
+const TEMPLATE_STEPS: Record<string, string[]> = {
+  idea: [],
+  research: ['analyse'],
+  task: ['analyst', 'builder', 'reviewer', 'merger'],
+  feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
+  meta: ['analyst', 'builder', 'reviewer', 'merger'],
+}
 
 const modeConfig: Record<string, { system: string; count: number }> = {
   diverge: {
@@ -40,6 +49,25 @@ Respond ONLY with valid JSON array. Each item: {"content": "...", "nodeType": ".
   }
 }
 
+// ─── Decompose mode: structured object generation ───
+
+const decomposeItemSchema = z.object({
+  title: z.string().describe('Short, actionable title for this child node'),
+  brief: z.string().describe('2-4 sentence description of what this item involves'),
+  template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).describe(
+    'The type: task = concrete work, feature = multi-step deliverable, research = needs investigation, idea = brainstorm, meta = process/tooling',
+  ),
+  children: z.array(z.object({
+    title: z.string(),
+    brief: z.string(),
+    template: z.enum(['idea', 'research', 'task', 'feature', 'meta']),
+  })).optional().describe('Optional sub-items if this item has clear sub-tasks'),
+})
+
+const decomposeSchema = z.object({
+  items: z.array(decomposeItemSchema).min(1).max(15).describe('The actionable items extracted from the content'),
+})
+
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
   const nodeId = getRouterParam(event, 'nodeId')
@@ -50,7 +78,6 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event).catch(() => ({}))
   const mode = (body?.mode as string) || 'default'
-  const config = modeConfig[mode] || modeConfig.default
 
   const targetGraphId = body?.graphId ? String(body.graphId) : undefined
   const allDecisions = await getAllThinkgraphNodes(team.id, targetGraphId)
@@ -60,14 +87,76 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Decision not found' })
   }
 
+  const ai = createAIProvider(event)
+
+  // ─── Decompose mode: structured extraction ───
+  if (mode === 'decompose') {
+    const content = [targetDecision.content || targetDecision.title, targetDecision.brief].filter(Boolean).join('\n\n')
+
+    const { object } = await generateObject({
+      model: ai.model(ai.getDefaultModel()),
+      schema: decomposeSchema,
+      system: `You decompose structured plans, briefs, and documents into actionable child nodes.
+
+Extract each distinct actionable item as a separate node. Assign the right template:
+- "task" for concrete work items (build X, fix Y, configure Z)
+- "feature" for multi-step deliverables that need their own pipeline
+- "research" for items that need investigation before action
+- "idea" for thoughts that need further exploration
+- "meta" for process/tooling improvements
+
+Preserve the natural hierarchy — if the content has phases/sections with sub-items, use the children field.
+Keep titles short and actionable. Briefs should capture the essential what/why in 2-4 sentences.
+Do NOT include time estimates or deadlines.
+Do NOT include items that are just context/background — only actionable items.`,
+      prompt: content,
+    })
+
+    // Create nodes recursively
+    const created: any[] = []
+
+    async function createDecomposeNodes(
+      items: Array<{ title: string; brief: string; template: string; children?: Array<{ title: string; brief: string; template: string }> }>,
+      parentId: string,
+    ) {
+      for (const item of items) {
+        const steps = TEMPLATE_STEPS[item.template] || []
+        const node = await createThinkgraphNode({
+          title: item.title,
+          brief: item.brief,
+          template: item.template,
+          steps,
+          graphId: (targetDecision as any).graphId || '',
+          parentId,
+          status: 'idle',
+          origin: 'ai',
+          starred: false,
+          branchName: '',
+          versionTag: '',
+          teamId: team.id,
+          owner: user.id,
+        } as any)
+        created.push(node)
+
+        if (item.children?.length) {
+          await createDecomposeNodes(item.children, node.id)
+        }
+      }
+    }
+
+    await createDecomposeNodes(object.items, nodeId)
+    return created
+  }
+
+  // ─── Standard expand modes ───
+  const config = modeConfig[mode] || modeConfig.default
+
   const ancestors = buildAncestorChain(allDecisions, nodeId)
   const ancestorIds = new Set(ancestors.map((a: any) => a.id))
   const siblings = allDecisions.filter((d: any) => d.parentId === targetDecision.parentId && d.id !== nodeId)
   const children = allDecisions.filter((d: any) => d.parentId === nodeId)
   const starred = allDecisions.filter((d: any) => d.starred && d.id !== nodeId)
   const pinned = allDecisions.filter((d: any) => d.pinned && d.id !== nodeId && !ancestorIds.has(d.id))
-
-  const ai = createAIProvider(event)
 
   const result = await streamText({
     model: ai.model(ai.getDefaultModel()),

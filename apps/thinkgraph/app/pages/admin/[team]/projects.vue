@@ -75,7 +75,7 @@ const statusStyle = (status: string) => {
     <div class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold">Projects</h1>
-        <p class="text-sm text-muted mt-1">One project per crouton app. Pi.dev builds, you steer.</p>
+        <p class="text-sm text-muted mt-1">Think, plan, and build. One project per initiative.</p>
       </div>
       <UButton icon="i-lucide-plus" label="New Project" @click="isCreateOpen = true" />
     </div>
@@ -91,7 +91,7 @@ const statusStyle = (status: string) => {
         <UIcon name="i-lucide-folder-kanban" class="size-8 text-muted" />
       </div>
       <h3 class="text-lg font-semibold mb-2">No projects yet</h3>
-      <p class="text-sm text-muted mb-6">Create your first project to start managing a crouton app.</p>
+      <p class="text-sm text-muted mb-6">Create your first project to start thinking.</p>
       <UButton icon="i-lucide-plus" label="New Project" @click="isCreateOpen = true" />
     </div>
 
@@ -158,17 +158,29 @@ const statusStyle = (status: string) => {
           <h3 class="text-lg font-semibold mb-4">New Project</h3>
           <div class="flex flex-col gap-4">
             <UFormField label="Project Name" required>
-              <UInput v-model="createForm.name" placeholder="e.g. Velo Bike Rental" class="w-full" />
-            </UFormField>
-            <UFormField label="Client Name">
-              <UInput v-model="createForm.clientName" placeholder="e.g. Velo BV" class="w-full" />
-            </UFormField>
-            <UFormField label="App Directory">
-              <UInput v-model="createForm.appId" placeholder="e.g. velo (from apps/velo)" class="w-full" />
+              <UInput v-model="createForm.name" placeholder="e.g. ThinkGraph Convergence" class="w-full" />
             </UFormField>
             <UFormField label="Description">
-              <UTextarea v-model="createForm.description" placeholder="What does this app do?" :rows="3" class="w-full" />
+              <UTextarea v-model="createForm.description" placeholder="What is this project about?" :rows="3" class="w-full" />
             </UFormField>
+            <UCollapsible>
+              <UButton variant="link" color="neutral" size="xs" class="px-0">
+                <template #leading>
+                  <UIcon name="i-lucide-settings-2" class="size-3" />
+                </template>
+                Advanced
+              </UButton>
+              <template #content>
+                <div class="flex flex-col gap-4 pt-3">
+                  <UFormField label="Client Name">
+                    <UInput v-model="createForm.clientName" placeholder="e.g. Velo BV" class="w-full" />
+                  </UFormField>
+                  <UFormField label="App Directory">
+                    <UInput v-model="createForm.appId" placeholder="e.g. velo (from apps/velo)" class="w-full" />
+                  </UFormField>
+                </div>
+              </template>
+            </UCollapsible>
           </div>
           <div class="flex justify-end gap-2 mt-6">
             <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>

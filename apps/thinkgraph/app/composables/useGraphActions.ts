@@ -224,6 +224,69 @@ export function useGraphActions(deps: GraphActionDeps) {
     await refreshDecisions()
   }
 
+  // ─── Auto-classify ───
+  // Track nodes we've already classified to avoid loops
+  const classifiedNodeIds = new Set<string>()
+
+  async function classifyAndAct(nodeId: string) {
+    if (!teamId.value || classifiedNodeIds.has(nodeId)) return
+    classifiedNodeIds.add(nodeId)
+
+    try {
+      const result = await $fetch<{ template: string; steps: string[]; action: string; reasoning: string }>(
+        `/api/teams/${teamId.value}/thinkgraph-nodes/${nodeId}/classify`,
+        { method: 'POST' },
+      )
+
+      if (result.action === 'decompose') {
+        expanding.value = nodeId
+        try {
+          await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${nodeId}/expand`, {
+            method: 'POST',
+            body: { mode: 'decompose', graphId: selectedGraphId.value || '' },
+          })
+          toast.add({ title: 'Node decomposed', description: result.reasoning, color: 'success' })
+        } finally {
+          expanding.value = null
+        }
+      } else if (result.action === 'dispatch') {
+        // Auto-dispatch: set to queued for Pi
+        await update(nodeId, { status: 'queued', assignee: 'pi' })
+        await $fetch(`/api/teams/${teamId.value}/dispatch/work-item`, {
+          method: 'POST',
+          body: { workItemId: nodeId },
+        })
+        toast.add({ title: 'Node dispatched', description: result.reasoning, color: 'success' })
+      }
+      // 'idle' — do nothing, node is stored
+
+      await refreshDecisions()
+    } catch (error: any) {
+      console.error('Auto-classify failed:', error)
+      // Non-blocking — node was already created, classify is a bonus
+    }
+  }
+
+  // Listen for mutations to auto-classify on create/update
+  function setupAutoClassify() {
+    const nuxtApp = useNuxtApp()
+    nuxtApp.hook('crouton:mutation' as any, async ({ operation, collection, itemId }: { operation: string; collection: string; itemId?: string }) => {
+      if (collection !== 'thinkgraphNodes' || !itemId) return
+      if (operation !== 'create' && operation !== 'update') return
+
+      // Find the node to check if it has substantial content
+      const node = decisions.value?.find(d => d.id === itemId)
+      if (!node) return
+
+      // Only classify human-origin nodes with substantial content
+      if (node.origin && node.origin !== 'human') return
+      const content = [node.title, node.brief].filter(Boolean).join(' ')
+      if (content.length < 100) return
+
+      await classifyAndAct(itemId)
+    })
+  }
+
   // ─── Connect-to-create ───
   const connectMenu = ref<{ show: boolean; x: number; y: number; sourceNodeId: string; position: { x: number; y: number } }>({
     show: false, x: 0, y: 0, sourceNodeId: '', position: { x: 0, y: 0 },
@@ -239,20 +302,16 @@ export function useGraphActions(deps: GraphActionDeps) {
     }
   }
 
-  async function createFromConnect(template: string) {
+  async function createFromConnect() {
     const { sourceNodeId } = connectMenu.value
     connectMenu.value.show = false
 
     if (!selectedGraphId.value) return
 
-    // Look up default steps for this template
-    const { TEMPLATE_STEPS } = await import('~/utils/thinkgraph-config')
-    const steps = TEMPLATE_STEPS[template] || []
-
     const node = await create({
       title: '',
-      template,
-      steps,
+      template: 'idea',
+      steps: [],
       status: 'idle',
       projectId: selectedGraphId.value,
       parentId: sourceNodeId,
@@ -340,6 +399,8 @@ export function useGraphActions(deps: GraphActionDeps) {
     generateBrief,
     copySelectedContext,
     onChatAddToGraph,
+    classifyAndAct,
+    setupAutoClassify,
     connectMenu,
     onConnectEnd,
     createFromConnect,

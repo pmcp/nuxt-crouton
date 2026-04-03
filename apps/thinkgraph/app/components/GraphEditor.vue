@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import ThinkgraphDecisionsNode from '~/components/ThinkgraphDecisionsNode.vue'
 import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
-import { CONNECT_NODE_TYPES } from '~/utils/thinkgraph-config'
 
 interface Props {
   graphId: string
@@ -66,6 +65,7 @@ const {
   generatingBrief, generateBrief,
   copySelectedContext,
   onChatAddToGraph,
+  classifyAndAct, setupAutoClassify,
   connectMenu, onConnectEnd, createFromConnect, closeConnectMenu,
   onNodeDelete,
   exportGraph: exportGraphAction,
@@ -85,6 +85,9 @@ const {
   deleteItems,
   copyContext,
 })
+
+// Auto-classify nodes when created/updated with substantial content
+setupAutoClassify()
 
 // ─── Filters ───
 const { filters: graphFilters, filteredIds, activeFilterCount, availableBranches, availableVersionTags, clearFilters } = useGraphFilters(decisionsRef)
@@ -532,7 +535,7 @@ function exportGraph() {
   <!-- Crouton modal/slideover for CRUD -->
   <CroutonForm />
 
-  <!-- Connect-to-create floating menu -->
+  <!-- Connect-to-create: directly create node, no template picker -->
   <Teleport to="body">
     <div
       v-if="connectMenu.show"
@@ -541,20 +544,15 @@ function exportGraph() {
       @contextmenu.prevent="closeConnectMenu"
     >
       <div
-        class="absolute w-48 py-1.5 bg-default border border-default rounded-xl shadow-lg"
+        class="absolute w-44 py-1.5 bg-default border border-default rounded-xl shadow-lg"
         :style="{ left: `${connectMenu.x}px`, top: `${connectMenu.y}px` }"
       >
-        <p class="px-3 py-1.5 text-[10px] font-semibold text-muted uppercase tracking-wider">
-          Create node
-        </p>
         <button
-          v-for="nt in CONNECT_NODE_TYPES"
-          :key="nt.id"
           class="flex items-center gap-2.5 w-full px-3 py-2 text-left text-sm text-default hover:bg-elevated transition-colors cursor-pointer"
-          @click="createFromConnect(nt.id)"
+          @click="createFromConnect()"
         >
-          <UIcon :name="nt.icon" class="size-4" :class="nt.color" />
-          {{ nt.label }}
+          <UIcon name="i-lucide-plus" class="size-4 text-muted" />
+          New node
         </button>
       </div>
     </div>
