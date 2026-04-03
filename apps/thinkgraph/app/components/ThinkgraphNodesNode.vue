@@ -90,6 +90,14 @@ const displayTitle = computed(() => {
   return title.length > 60 ? title.slice(0, 57) + '...' : title
 })
 
+// Live status (activity text from worker)
+const liveStatus = computed(() => {
+  const a = node.value.artifacts
+  if (!Array.isArray(a)) return null
+  return a.find((art: any) => art?.type === 'liveStatus') || null
+})
+const activityText = computed(() => liveStatus.value?.activity || null)
+
 // Glanceable tags
 const arts = computed(() => {
   const a = node.value.artifacts
@@ -191,6 +199,11 @@ function handleContextMenu(event: MouseEvent | Event) {
     <!-- Title -->
     <p class="text-xs font-medium leading-snug">
       {{ displayTitle }}
+    </p>
+
+    <!-- Live activity text (while worker is running) -->
+    <p v-if="isWorking && activityText" class="text-[10px] leading-tight opacity-70 mt-0.5 truncate">
+      {{ activityText }}
     </p>
 
     <!-- Glanceable tags -->
