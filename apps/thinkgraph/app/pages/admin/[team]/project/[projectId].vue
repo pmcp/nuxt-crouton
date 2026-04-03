@@ -209,8 +209,10 @@ async function handleCreate() {
     await refreshItems()
 
     if (created?.id) {
-      // Open detail panel for the new node
+      // Select the new node and open detail
       selectedItemId.value = created.id
+      // Wait a tick for selectedItem computed to resolve
+      await nextTick()
       showDetail.value = true
 
       // Classify in background — just sets the right template, no auto-actions
@@ -224,9 +226,6 @@ async function handleCreate() {
           console.error('Auto-classify failed:', err)
         })
       }
-
-      // Open assistant focused on this node
-      showAssistant.value = true
     }
   }
   finally {

@@ -87,7 +87,7 @@ const assigneeConfig = computed(() => {
 
 const displayTitle = computed(() => {
   const title = node.value.title || ''
-  return title.length > 60 ? title.slice(0, 57) + '...' : title
+  return title.length > 40 ? title.slice(0, 37) + '...' : title
 })
 
 // Live status (activity text from worker)
@@ -197,7 +197,7 @@ function handleContextMenu(event: MouseEvent | Event) {
     </div>
 
     <!-- Title -->
-    <p class="text-xs font-medium leading-snug">
+    <p class="text-[10px] font-medium leading-snug line-clamp-2">
       {{ displayTitle }}
     </p>
 
@@ -257,8 +257,8 @@ function handleContextMenu(event: MouseEvent | Event) {
 @reference "tailwindcss";
 
 .node-card {
-  @apply px-3 py-2.5 rounded-md transition-all duration-150;
-  @apply min-w-[160px] max-w-[220px];
+  @apply px-2.5 py-2 rounded-md transition-all duration-150;
+  @apply min-w-[120px] max-w-[180px];
   @apply relative;
   @apply border-0 shadow-none;
 }
