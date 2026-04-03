@@ -195,8 +195,7 @@ async function handleCreate() {
   if (!createTitle.value.trim() || !teamId.value) return
   createPending.value = true
   try {
-    // Create with idea template — auto-classify will detect the right template + action
-    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
+    const created = await $fetch<{ id: string }>(`/api/teams/${teamId.value}/thinkgraph-nodes`, {
       method: 'POST',
       body: {
         projectId: projectId.value,
@@ -208,6 +207,37 @@ async function handleCreate() {
     })
     showCreate.value = false
     await refreshItems()
+
+    // Auto-classify: AI determines template + action (decompose/dispatch/idle)
+    if (created?.id) {
+      const content = [createTitle.value.trim(), createBrief.value.trim()].filter(Boolean).join(' ')
+      if (content.length >= 50) {
+        $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
+          method: 'POST',
+        }).then(async (result: any) => {
+          if (result?.action === 'decompose') {
+            await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/expand`, {
+              method: 'POST',
+              body: { mode: 'decompose', graphId: projectId.value },
+            })
+            toast.add({ title: 'Plan decomposed into tasks', color: 'success' })
+          } else if (result?.action === 'dispatch') {
+            await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}`, {
+              method: 'PATCH',
+              body: { status: 'queued', assignee: 'pi' },
+            })
+            await $fetch(`/api/teams/${teamId.value}/dispatch/work-item`, {
+              method: 'POST',
+              body: { workItemId: created.id },
+            })
+            toast.add({ title: 'Dispatched to Pi', color: 'success' })
+          }
+          await refreshItems()
+        }).catch((err: any) => {
+          console.error('Auto-classify failed:', err)
+        })
+      }
+    }
   }
   finally {
     createPending.value = false
@@ -1111,36 +1141,6 @@ if (import.meta.client) {
             <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
           </div>
 
-          <!-- Template & Status -->
-          <div class="grid grid-cols-2 gap-3 mb-6">
-            <UFormField label="Template">
-              <USelectMenu
-                :model-value="selectedItem.template || 'idea'"
-                :items="NODE_TEMPLATES.map(t => t.value)"
-                class="w-full"
-                @update:model-value="(v: string) => updateItem(selectedItem!.id, { template: v, steps: TEMPLATE_STEPS[v] || [] })"
-              />
-            </UFormField>
-            <UFormField label="Status">
-              <USelectMenu
-                :model-value="selectedItem.status"
-                :items="['queued', 'active', 'waiting', 'done', 'blocked']"
-                class="w-full"
-                @update:model-value="(v: string) => updateItem(selectedItem!.id, { status: v })"
-              />
-            </UFormField>
-          </div>
-
-          <!-- Assignee -->
-          <UFormField label="Assignee" class="mb-4">
-            <USelectMenu
-              :model-value="selectedItem.assignee || 'pi'"
-              :items="ASSIGNEES.map(a => a.value)"
-              class="w-full"
-              @update:model-value="(v: string) => updateItem(selectedItem!.id, { assignee: v })"
-            />
-          </UFormField>
-
           <!-- Brief -->
           <UFormField label="Brief" class="mb-4">
             <UTextarea
@@ -1301,6 +1301,32 @@ if (import.meta.client) {
           <details class="mb-6">
             <summary class="text-xs font-medium text-muted cursor-pointer hover:text-default transition-colors">Metadata</summary>
             <div class="space-y-3 mt-3">
+              <div class="grid grid-cols-2 gap-3">
+                <UFormField label="Template">
+                  <USelectMenu
+                    :model-value="selectedItem.template || 'idea'"
+                    :items="NODE_TEMPLATES.map(t => t.value)"
+                    class="w-full"
+                    @update:model-value="(v: string) => updateItem(selectedItem!.id, { template: v, steps: TEMPLATE_STEPS[v] || [] })"
+                  />
+                </UFormField>
+                <UFormField label="Status">
+                  <USelectMenu
+                    :model-value="selectedItem.status"
+                    :items="['idle', 'queued', 'active', 'waiting', 'done', 'blocked']"
+                    class="w-full"
+                    @update:model-value="(v: string) => updateItem(selectedItem!.id, { status: v })"
+                  />
+                </UFormField>
+              </div>
+              <UFormField label="Assignee">
+                <USelectMenu
+                  :model-value="selectedItem.assignee || 'pi'"
+                  :items="ASSIGNEES.map(a => a.value)"
+                  class="w-full"
+                  @update:model-value="(v: string) => updateItem(selectedItem!.id, { assignee: v })"
+                />
+              </UFormField>
               <UFormField label="Skill">
                 <UInput
                   :model-value="selectedItem.skill || ''"
