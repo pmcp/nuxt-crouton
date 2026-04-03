@@ -501,24 +501,16 @@ async function dispatchToPiAgent(nodeId: string) {
   if (!node) return
 
   try {
-    await updateNode(nodeId, {
-      status: 'dispatching',
-      handoffMeta: {
-        type: 'handoff',
-        service: 'pi-agent',
-        depth: 'concise',
-        depthInstruction: '1-2 child nodes, each 1-2 sentences. Be brief and atomic.',
-        prompt: '',
-        context: '',
-        nodeId: node.id,
-        nodeContent: node.title,
-        nodeType: node.nodeType,
-        graphId: canvasId.value,
-      },
+    const result = await $fetch<{ success: boolean; piAccepted: boolean }>(`/api/teams/${teamId.value}/dispatch/work-item`, {
+      method: 'POST',
+      body: { workItemId: nodeId },
     })
-    toast.add({ title: 'Dispatched to Pi Agent', color: 'success' })
+    if (result.piAccepted) {
+      toast.add({ title: 'Dispatched to Pi Agent', color: 'success' })
+    } else {
+      toast.add({ title: 'Dispatch queued (worker not reachable)', color: 'warning' })
+    }
     openTerminal(nodeId)
-    // Delay refresh to let context menu DOM clean up first
     setTimeout(() => refreshNodes(), 300)
   }
   catch (err) {
