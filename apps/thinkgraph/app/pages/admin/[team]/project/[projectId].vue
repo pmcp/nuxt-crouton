@@ -464,6 +464,28 @@ async function dispatchNode(id: string) {
   await openDispatch(id)
 }
 
+// ─── Decompose on demand ───
+const decomposing = ref<string | null>(null)
+
+async function decomposeNode(id: string) {
+  if (!teamId.value || decomposing.value) return
+  decomposing.value = id
+  try {
+    toast.add({ title: 'Breaking down...', icon: 'i-lucide-git-branch', color: 'info' })
+    await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${id}/expand`, {
+      method: 'POST',
+      body: { mode: 'decompose', graphId: projectId.value },
+    })
+    toast.add({ title: 'Broken down into tasks', color: 'success' })
+    await refreshItems()
+  } catch (err: any) {
+    console.error('Decompose failed:', err)
+    toast.add({ title: 'Decompose failed', description: err?.message, color: 'error' })
+  } finally {
+    decomposing.value = null
+  }
+}
+
 /** Render basic markdown to HTML */
 function renderMd(text: string): string {
   return text
@@ -1364,6 +1386,15 @@ if (import.meta.client) {
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
+            <!-- Break down: decompose into child nodes based on output/brief -->
+            <UButton
+              v-if="(selectedItem.output || selectedItem.brief) && !items.some(n => n.parentId === selectedItem!.id)"
+              icon="i-lucide-git-branch"
+              label="Break down"
+              variant="soft"
+              :loading="decomposing === selectedItem.id"
+              @click="decomposeNode(selectedItem.id)"
+            />
             <!-- Primary: Send to Pi (for nodes not yet active/done) -->
             <UButton
               v-if="selectedItem.brief && !['active', 'working', 'done'].includes(selectedItem.status)"

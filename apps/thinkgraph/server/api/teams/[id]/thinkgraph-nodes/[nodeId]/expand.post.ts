@@ -84,7 +84,8 @@ export default defineEventHandler(async (event) => {
   // ─── Decompose mode: structured extraction ───
   if (mode === 'decompose') {
     const parentProjectId = (targetDecision as any).projectId || targetGraphId || ''
-    const content = [(targetDecision as any).title || targetDecision.content, (targetDecision as any).brief].filter(Boolean).join('\n\n')
+    // Use output (analyst analysis) + brief + title as context for decomposition
+    const content = [(targetDecision as any).output, (targetDecision as any).brief, (targetDecision as any).title || targetDecision.content].filter(Boolean).join('\n\n')
 
     const { text } = await generateText({
       model: ai.model('claude-haiku-4-5-20251001'),
