@@ -776,6 +776,24 @@ Follow these conventions for any commits you make during the merge process.
 Look in the ancestor context for a \`worktree\` value — that's the branch name (e.g., \`thinkgraph/abc123\`).
 If no branch is found, signal red — there's nothing to merge.
 
+### Step 1.5: Check for commits ahead of main
+
+Before updating or merging, check if the branch actually has any commits:
+
+\`\`\`bash
+cd ~/nuxt-crouton
+git fetch origin main <branch-name>
+git rev-list --count origin/main..origin/<branch-name>
+\`\`\`
+
+If the count is **0** (no commits ahead of main):
+1. Log: \`echo "[merger] Branch <branch-name> has no commits ahead of main — skipping PR creation (work item: ${payload.nodeId})"\`
+2. Delete the remote branch: \`git push origin --delete <branch-name>\`
+3. Use \`update_workitem\` to signal **green** with \`status: "done"\` and \`output: "Empty branch <branch-name> — no commits ahead of main. Branch cleaned up, nothing to merge."\`
+4. **STOP here** — do NOT proceed to Step 2 or attempt PR creation/merge.
+
+If the count is greater than 0, proceed normally to Step 2.
+
 ### Step 2: Update the branch
 
 \`\`\`bash
@@ -799,6 +817,8 @@ Most conflicts are mechanical (schema files, imports, lock files, generated code
 You may attempt conflict resolution up to 3 times. If the merge still fails after 3 attempts, signal orange.
 
 ### Step 4: Push and merge PR
+
+> **Note:** This step is only reached if the branch has commits ahead of main (Step 1.5 short-circuits otherwise).
 
 \`\`\`bash
 git push origin <branch-name>
