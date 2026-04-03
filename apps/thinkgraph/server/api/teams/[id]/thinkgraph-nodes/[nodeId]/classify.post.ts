@@ -14,7 +14,7 @@ const VALID_TEMPLATES = ['idea', 'research', 'task', 'feature', 'meta'] as const
 const VALID_ACTIONS = ['decompose', 'dispatch', 'idle'] as const
 
 export default defineEventHandler(async (event) => {
-  const { team } = await resolveTeamAndCheckMembership(event)
+  const { team, user } = await resolveTeamAndCheckMembership(event)
   const nodeId = getRouterParam(event, 'nodeId')
 
   if (!nodeId) {
@@ -73,10 +73,10 @@ Prefer decompose when content has structure (headers, lists, phases). Prefer dis
 
   // Update the node with detected template + steps
   const steps = TEMPLATE_STEPS[template] || []
-  await updateThinkgraphNode(team.id, nodeId, {
+  await updateThinkgraphNode(nodeId, team.id, user.id, {
     template,
     steps,
-  } as any)
+  } as any, { role: 'admin' })
 
   return {
     template,
