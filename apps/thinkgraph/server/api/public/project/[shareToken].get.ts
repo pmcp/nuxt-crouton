@@ -42,6 +42,8 @@ export default defineEventHandler(async (event) => {
       deployUrl: item.deployUrl,
       retrospective: item.retrospective,
       order: item.order,
+      summary: item.summary,
+      template: item.template,
     }))
 
   return {

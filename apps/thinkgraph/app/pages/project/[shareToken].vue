@@ -12,7 +12,8 @@ const project = computed(() => data.value?.project)
 const workItems = computed(() => data.value?.workItems || [])
 
 // ─── View toggle ───
-const viewMode = ref<'progress' | 'preview'>('progress')
+const viewMode = ref<'progress' | 'preview' | 'docs'>('progress')
+const searchQuery = ref('')
 
 // ─── Work item tree ───
 interface TreeNode {
@@ -26,21 +27,51 @@ interface TreeNode {
   assignee?: string
   deployUrl?: string
   retrospective?: string
+  summary?: string
+  template?: string
   children: TreeNode[]
 }
 
+// ─── Search filtering ───
+function matchesSearch(item: any, q: string): boolean {
+  return (item.title?.toLowerCase().includes(q))
+    || (item.brief?.toLowerCase().includes(q))
+    || (item.output?.toLowerCase().includes(q))
+    || (item.summary?.toLowerCase().includes(q))
+}
+
+const filteredIds = computed((): Set<string> | null => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q) return null
+  const items = workItems.value as any[]
+  const ids = new Set<string>()
+  for (const item of items) {
+    if (matchesSearch(item, q)) {
+      ids.add(item.id)
+      // Walk up parent chain to keep tree coherent
+      let cur = item
+      while (cur.parentId) {
+        ids.add(cur.parentId)
+        cur = items.find((i: any) => i.id === cur.parentId)
+        if (!cur) break
+      }
+    }
+  }
+  return ids
+})
+
 const tree = computed((): TreeNode[] => {
   const items = workItems.value as any[]
+  const ids = filteredIds.value
+  const filtered = ids ? items.filter((i: any) => ids.has(i.id)) : items
   const map = new Map<string, TreeNode>()
   const roots: TreeNode[] = []
 
-  // Build map
-  for (const item of items) {
+  for (const item of filtered) {
     map.set(item.id, { ...item, children: [] })
   }
 
-  // Build tree
-  for (const item of items) {
+  for (const item of filtered) {
     const node = map.get(item.id)!
     if (item.parentId && map.has(item.parentId)) {
       map.get(item.parentId)!.children.push(node)
@@ -50,6 +81,18 @@ const tree = computed((): TreeNode[] => {
   }
 
   return roots
+})
+
+// ─── Docs items (completed nodes with output) ───
+const docsItems = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  return (workItems.value as any[])
+    .filter((item: any) => {
+      if (item.status !== 'done' || !item.output) return false
+      if (!q) return true
+      return matchesSearch(item, q)
+    })
+    .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
 })
 
 // ─── Status config ───
@@ -160,8 +203,8 @@ useHead({
             </div>
           </div>
 
-          <!-- View toggle (only if deployUrl exists) -->
-          <div v-if="project.deployUrl" class="mt-4 flex gap-2">
+          <!-- View toggle -->
+          <div class="mt-4 flex gap-2">
             <UButton
               :variant="viewMode === 'progress' ? 'solid' : 'ghost'"
               size="sm"
@@ -170,6 +213,14 @@ useHead({
               @click="viewMode = 'progress'"
             />
             <UButton
+              :variant="viewMode === 'docs' ? 'solid' : 'ghost'"
+              size="sm"
+              icon="i-lucide-file-text"
+              label="Docs"
+              @click="viewMode = 'docs'"
+            />
+            <UButton
+              v-if="project.deployUrl"
               :variant="viewMode === 'preview' ? 'solid' : 'ghost'"
               size="sm"
               icon="i-lucide-globe"
@@ -182,6 +233,17 @@ useHead({
 
       <!-- Main content -->
       <main class="max-w-4xl mx-auto px-6 py-8">
+        <!-- Search -->
+        <div class="mb-6">
+          <UInput
+            v-model="searchQuery"
+            icon="i-lucide-search"
+            placeholder="Search across all content..."
+            size="lg"
+            class="w-full"
+          />
+        </div>
+
         <!-- Live preview iframe -->
         <div v-if="viewMode === 'preview' && project.deployUrl" class="mb-8">
           <div class="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-white dark:bg-neutral-900">
@@ -203,10 +265,9 @@ useHead({
 
         <!-- Progress view -->
         <div v-if="viewMode === 'progress'">
-          <!-- Work item tree -->
           <div class="space-y-3">
             <template v-for="node in tree" :key="node.id">
-              <WorkItemTreeNode :node="node" :depth="0" :type-config="TYPE_CONFIG" :status-config="STATUS_CONFIG" />
+              <WorkItemTreeNode :node="node" :depth="0" :type-config="TYPE_CONFIG" :status-config="STATUS_CONFIG" :search-query="searchQuery" />
             </template>
           </div>
 
@@ -214,6 +275,16 @@ useHead({
             <UIcon name="i-lucide-clock" class="size-8 text-neutral-300 mb-3" />
             <p class="text-muted">No tasks yet — work will appear here soon.</p>
           </div>
+
+          <div v-if="workItems.length && !tree.length" class="text-center py-12">
+            <UIcon name="i-lucide-search-x" class="size-8 text-neutral-300 mb-3" />
+            <p class="text-muted">No results matching "{{ searchQuery }}"</p>
+          </div>
+        </div>
+
+        <!-- Docs view -->
+        <div v-if="viewMode === 'docs'">
+          <ProjectDocs :work-items="docsItems" :search-query="searchQuery" />
         </div>
 
         <!-- Feedback section -->

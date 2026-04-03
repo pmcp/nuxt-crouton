@@ -24,10 +24,24 @@ const props = defineProps<{
   depth: number
   typeConfig: Record<string, { icon: string; color: string }>
   statusConfig: Record<string, StatusConfig>
+  searchQuery?: string
 }>()
 
 const expanded = ref(props.node.status === 'active' || props.node.status === 'done')
 const hasChildren = computed(() => props.node.children.length > 0)
+
+// Auto-expand when searching
+watch(() => props.searchQuery, (q) => {
+  if (q && hasChildren.value) expanded.value = true
+})
+
+const isMatch = computed(() => {
+  if (!props.searchQuery) return false
+  const q = props.searchQuery.toLowerCase()
+  return (props.node.title?.toLowerCase().includes(q))
+    || (props.node.brief?.toLowerCase().includes(q))
+    || (props.node.output?.toLowerCase().includes(q))
+})
 
 const typeConf = computed(() => props.typeConfig[props.node.type] || { icon: 'i-lucide-circle', color: 'text-neutral-500' })
 const statusConf = computed(() => props.statusConfig[props.node.status] || props.statusConfig.queued)
@@ -40,6 +54,7 @@ const statusConf = computed(() => props.statusConfig[props.node.status] || props
       :class="{
         'border-green-300 dark:border-green-700': node.status === 'done',
         'border-primary-300 dark:border-primary-700 shadow-sm': node.status === 'active',
+        'ring-2 ring-primary-300 dark:ring-primary-600': isMatch,
       }"
     >
       <div class="flex items-center gap-3">
@@ -100,6 +115,7 @@ const statusConf = computed(() => props.statusConfig[props.node.status] || props
         :depth="depth + 1"
         :type-config="typeConfig"
         :status-config="statusConfig"
+        :search-query="searchQuery"
       />
     </div>
   </div>
