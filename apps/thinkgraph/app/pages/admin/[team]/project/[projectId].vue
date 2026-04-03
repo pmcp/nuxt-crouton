@@ -209,10 +209,8 @@ async function handleCreate() {
     await refreshItems()
 
     if (created?.id) {
-      // Select the new node and open detail
+      // Select the new node — detail opens once selectedItem resolves
       selectedItemId.value = created.id
-      // Wait a tick for selectedItem computed to resolve
-      await nextTick()
       showDetail.value = true
 
       // Classify in background — just sets the right template, no auto-actions
@@ -220,9 +218,7 @@ async function handleCreate() {
       if (content.length >= 50) {
         $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${created.id}/classify`, {
           method: 'POST',
-        }).then(async () => {
-          await refreshItems()
-        }).catch((err: any) => {
+        }).then(() => refreshItems()).catch((err: any) => {
           console.error('Auto-classify failed:', err)
         })
       }
@@ -1117,9 +1113,9 @@ if (import.meta.client) {
     </div>
 
     <!-- Detail panel (slideover) -->
-    <USlideover v-if="showDetail && selectedItem" v-model:open="showDetail" side="right" :ui="{ width: 'max-w-md' }">
+    <USlideover v-model:open="showDetail" side="right" :ui="{ width: 'max-w-md' }">
       <template #content>
-        <div class="p-6 h-full overflow-y-auto">
+        <div v-if="selectedItem" class="p-6 h-full overflow-y-auto">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
             <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
