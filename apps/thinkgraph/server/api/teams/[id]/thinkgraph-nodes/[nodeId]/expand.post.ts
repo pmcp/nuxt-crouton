@@ -1,6 +1,7 @@
 import { streamText, generateText } from 'ai'
+import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
+import { createThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'
 
 const TEMPLATE_STEPS: Record<string, string[]> = {
@@ -87,15 +88,19 @@ export default defineEventHandler(async (event) => {
 
     const { text } = await generateText({
       model: ai.model('claude-haiku-4-5-20251001'),
-      system: `You decompose structured plans into actionable child nodes. Respond with ONLY a JSON object, no other text.
+      system: `You decompose plans into a focused, sequential set of actionable nodes. Respond with ONLY a JSON object, no other text.
 
 Return: { "items": [ { "title": "...", "brief": "...", "template": "...", "children": [...] }, ... ] }
 
-Templates: task = concrete work, feature = multi-step deliverable, research = needs investigation, idea = brainstorm, meta = process/tooling.
-Children field is optional — use for sub-items within a phase/section.
-Keep titles short and actionable. Briefs: 2-4 sentences of what/why.
-Do NOT include time estimates or deadlines.
-Do NOT include context/background — only actionable items.`,
+Rules:
+- Keep it focused: 3-7 top-level items max. Fewer is better.
+- Order matters: items are sequential phases. Early items block later ones.
+- Use children for sub-tasks within a phase (2-4 children max).
+- Templates: research = needs investigation first, task = concrete work, feature = multi-step deliverable, idea = needs more thinking, meta = process/tooling.
+- Start with research/discovery if requirements are vague.
+- Keep titles short and actionable. Briefs: 1-2 sentences.
+- Do NOT include time estimates, deadlines, or generic items like "testing" and "deployment" unless specifically requested.
+- Do NOT over-decompose. A simple project needs 3-5 items, not 15.`,
       prompt: content,
     })
 
@@ -109,23 +114,41 @@ Do NOT include context/background — only actionable items.`,
       throw createError({ status: 500, statusText: 'AI returned invalid decompose response' })
     }
 
-    // Create nodes recursively
+    // Build a path/depth cache so we can calculate for each new node
+    const pathCache = new Map<string, { path: string; depth: number }>()
+    // Seed with the target node's path/depth
+    pathCache.set(nodeId, {
+      path: (targetDecision as any).path || `/${nodeId}/`,
+      depth: (targetDecision as any).depth ?? 0,
+    })
+
     const created: any[] = []
 
     async function createDecomposeNodes(
       nodeItems: DecomposeItem[],
       parentId: string,
     ) {
+      const parent = pathCache.get(parentId)
+      const parentPath = parent?.path || `/${parentId}/`
+      const parentDepth = parent?.depth ?? 0
+
       for (const item of nodeItems) {
         const tmpl = VALID_TEMPLATES.has(item.template) ? item.template : 'idea'
         const steps = TEMPLATE_STEPS[tmpl] || []
+        const recordId = nanoid()
+        const path = `${parentPath}${recordId}/`
+        const depth = parentDepth + 1
+
         const node = await createThinkgraphNode({
+          id: recordId,
           title: item.title,
           brief: item.brief,
           template: tmpl,
           steps,
           projectId: parentProjectId,
           parentId,
+          path,
+          depth,
           status: 'idle',
           origin: 'ai',
           starred: false,
@@ -134,8 +157,11 @@ Do NOT include context/background — only actionable items.`,
         } as any)
         created.push(node)
 
+        // Cache for children
+        pathCache.set(recordId, { path, depth })
+
         if (item.children?.length) {
-          await createDecomposeNodes(item.children, node.id)
+          await createDecomposeNodes(item.children, recordId)
         }
       }
     }
