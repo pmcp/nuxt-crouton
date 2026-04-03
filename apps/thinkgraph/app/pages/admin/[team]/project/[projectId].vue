@@ -452,6 +452,18 @@ async function openDispatch(id: string) {
   await refreshItems()
 }
 
+async function dispatchNode(id: string) {
+  if (!teamId.value) return
+  // Ensure the node has steps and is queued before dispatching
+  const item = items.value.find(n => n.id === id)
+  if (!item) return
+  const steps = Array.isArray(item.steps) && item.steps.length > 0
+    ? item.steps
+    : TEMPLATE_STEPS[item.template || 'task'] || ['analyst', 'builder', 'reviewer', 'merger']
+  await updateItem(id, { status: 'queued', assignee: 'pi', steps })
+  await openDispatch(id)
+}
+
 /** Render basic markdown to HTML */
 function renderMd(text: string): string {
   return text
@@ -1336,6 +1348,22 @@ if (import.meta.client) {
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
+            <!-- Primary: Send to Pi (for idle/draft nodes with content) -->
+            <UButton
+              v-if="selectedItem.status === 'idle' && selectedItem.brief"
+              icon="i-lucide-send"
+              label="Send to Pi"
+              @click="dispatchNode(selectedItem.id)"
+              :loading="dispatching"
+            />
+            <!-- Add child node -->
+            <UButton
+              icon="i-lucide-plus"
+              label="Add child"
+              variant="soft"
+              @click="openCreate(undefined, selectedItem.id)"
+            />
+            <!-- Re-dispatch for queued/waiting/blocked -->
             <UButton
               v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked' || selectedItem.status === 'waiting'"
               icon="i-lucide-send"
@@ -1350,14 +1378,6 @@ if (import.meta.client) {
               variant="soft"
               color="warning"
               @click="updateItem(selectedItem.id, { status: 'queued' })"
-            />
-            <UButton
-              v-if="selectedItem.type === 'review' && selectedItem.assignee === 'human'"
-              icon="i-lucide-pencil-line"
-              label="Turn into brief"
-              variant="soft"
-              color="primary"
-              @click="turnIntoBrief(selectedItem.id)"
             />
             <UButton
               v-if="selectedItem.stage"
