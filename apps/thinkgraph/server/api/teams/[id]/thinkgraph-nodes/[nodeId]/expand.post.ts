@@ -1,5 +1,5 @@
 import { streamText, generateObject } from 'ai'
-import { z } from 'zod/v3'
+import { z } from 'zod'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'

@@ -1,5 +1,5 @@
 import { generateObject } from 'ai'
-import { z } from 'zod/v3'
+import { z } from 'zod'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { getThinkgraphNodesByIds, updateThinkgraphNode } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 
@@ -43,10 +43,12 @@ export default defineEventHandler(async (event) => {
 
   const ai = createAIProvider(event)
 
-  const { object } = await generateObject({
-    model: ai.model(ai.getDefaultModel()),
-    schema: classifySchema,
-    system: `You classify ThinkGraph nodes. Given a node's title and brief, determine:
+  let object: { template: 'idea' | 'research' | 'task' | 'feature' | 'meta'; action: 'decompose' | 'dispatch' | 'idle'; reasoning: string }
+  try {
+    const result = await generateObject({
+      model: ai.model(ai.getDefaultModel()),
+      schema: classifySchema,
+      system: `You classify ThinkGraph nodes. Given a node's title and brief, determine:
 1. The appropriate template (idea/research/task/feature/meta)
 2. The recommended next action:
    - "decompose" if the content is a structured plan, brief, or document with multiple actionable items that should become separate child nodes (phases, features, tasks, steps)
@@ -56,8 +58,13 @@ export default defineEventHandler(async (event) => {
 Prefer "decompose" when the content has clear structure (headers, lists, phases, numbered items).
 Prefer "dispatch" for focused, single-purpose items.
 Prefer "idle" for short thoughts, questions, or incomplete ideas.`,
-    prompt: content,
-  })
+      prompt: content,
+    })
+    object = result.object
+  } catch (err: any) {
+    console.error('AI classify failed:', err?.message || err)
+    throw createError({ status: 500, statusText: `AI classify failed: ${err?.message || 'Unknown error'}` })
+  }
 
   // Update the node with detected template + steps
   const steps = TEMPLATE_STEPS[object.template] || []
