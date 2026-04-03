@@ -12,8 +12,10 @@
 import type { TerminalEvent, AgentMessage } from '~~/server/utils/terminal-sessions'
 import {
   broadcastToBrowsers,
+  clearLiveStatus,
   createTerminalSession,
   emitTerminalEvent,
+  extractActivity,
   getTerminalSession,
   getWorkerConnection,
   registerBrowserPeer,
@@ -21,6 +23,7 @@ import {
   scheduleSessionCleanup,
   unregisterBrowserPeer,
   unregisterWorkerConnection,
+  updateLiveStatus,
   updateNodeStatus,
 } from '~~/server/utils/terminal-sessions'
 
@@ -168,6 +171,14 @@ export default defineWebSocketHandler({
       emitTerminalEvent(nodeId, event)
       broadcastToBrowsers(nodeId, event)
 
+      // Extract activity text from agent events for canvas card display
+      if (event.type === 'agent_event' && event.event && 'role' in event.event) {
+        const activity = extractActivity(event.event as AgentMessage)
+        if (activity) {
+          updateLiveStatus(nodeId, teamId, activity)
+        }
+      }
+
       if (event.type === 'status' && (event.data === 'working' || event.data === 'thinking')) {
         updateNodeStatus(nodeId, teamId, event.data)
       }
@@ -177,6 +188,7 @@ export default defineWebSocketHandler({
       }
       else if (event.type === 'done') {
         updateNodeStatus(nodeId, teamId, 'done')
+        clearLiveStatus(nodeId, teamId)
         // Rich sessions stay alive longer (5 min) for potential follow-up
         const session = getTerminalSession(nodeId)
         const delay = session?.sessionMode === 'rich' ? 300_000 : 30_000
@@ -184,6 +196,7 @@ export default defineWebSocketHandler({
       }
       else if (event.type === 'error') {
         updateNodeStatus(nodeId, teamId, 'error')
+        clearLiveStatus(nodeId, teamId)
         scheduleSessionCleanup(nodeId)
       }
     } else {
@@ -240,6 +253,7 @@ export default defineWebSocketHandler({
         broadcastToBrowsers(nodeId, errorEvent)
         if (teamId) {
           updateNodeStatus(nodeId, teamId, 'error')
+          clearLiveStatus(nodeId, teamId)
         }
         scheduleSessionCleanup(nodeId)
       }

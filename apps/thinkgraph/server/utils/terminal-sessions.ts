@@ -191,6 +191,116 @@ export function broadcastToBrowsers(nodeId: string, event: TerminalEvent) {
   }
 }
 
+// ─── Live Status (activity text on canvas cards) ───
+
+/** Debounce timers for liveStatus updates per node */
+const liveStatusTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/**
+ * Extract a short activity description from an agent message.
+ * Returns null if no useful activity can be extracted.
+ */
+export function extractActivity(msg: AgentMessage): string | null {
+  if (msg.role !== 'assistant') return null
+  for (const block of msg.content) {
+    if (block.type === 'tool_use' && block.name) {
+      // Humanize tool names: "Read" → "Reading file", "Bash" → "Running command", etc.
+      const toolLabels: Record<string, string> = {
+        Read: 'Reading file',
+        Write: 'Writing file',
+        Edit: 'Editing file',
+        Bash: 'Running command',
+        Grep: 'Searching code',
+        Glob: 'Finding files',
+        Agent: 'Delegating task',
+        WebSearch: 'Searching web',
+        WebFetch: 'Fetching page',
+      }
+      return toolLabels[block.name] || `Using ${block.name}`
+    }
+    if (block.type === 'thinking' && block.thinking) {
+      return 'Thinking...'
+    }
+    if (block.type === 'text' && block.text) {
+      // First 60 chars of text output
+      const snippet = block.text.trim().split('\n')[0].slice(0, 60)
+      if (snippet.length > 0) return snippet
+    }
+  }
+  return null
+}
+
+/**
+ * Update the liveStatus artifact on a node (debounced to avoid DB thrash).
+ * Called from terminal-ws when agent events arrive.
+ */
+export function updateLiveStatus(
+  nodeId: string,
+  teamId: string,
+  activity: string,
+  model?: string,
+) {
+  // Clear existing timer
+  const existing = liveStatusTimers.get(nodeId)
+  if (existing) clearTimeout(existing)
+
+  // Debounce: write at most once per 2 seconds
+  const timer = setTimeout(async () => {
+    liveStatusTimers.delete(nodeId)
+    try {
+      const { getAllThinkgraphNodes } = await import('~~/layers/thinkgraph/collections/nodes/server/database/queries')
+      const items = await getAllThinkgraphNodes(teamId)
+      const node = items.find((i: any) => i.id === nodeId)
+      if (!node) return
+
+      const arts = Array.isArray(node.artifacts) ? node.artifacts : []
+      const filtered = arts.filter((a: any) => a?.type !== 'liveStatus')
+      const liveStatus = { type: 'liveStatus', activity, model: model || null, updatedAt: new Date().toISOString() }
+
+      await updateThinkgraphNode(nodeId, teamId, 'system', {
+        artifacts: [...filtered, liveStatus],
+      } as any, { role: 'admin' })
+      signalCollectionChange(teamId, 'thinkgraphNodes')
+    }
+    catch (err) {
+      console.error(`[terminal-sessions] Failed to update liveStatus for ${nodeId}:`, err)
+    }
+  }, 2000)
+
+  liveStatusTimers.set(nodeId, timer)
+}
+
+/**
+ * Clear liveStatus artifact when session ends.
+ */
+export async function clearLiveStatus(nodeId: string, teamId: string) {
+  // Cancel pending debounce
+  const timer = liveStatusTimers.get(nodeId)
+  if (timer) {
+    clearTimeout(timer)
+    liveStatusTimers.delete(nodeId)
+  }
+
+  try {
+    const { getAllThinkgraphNodes } = await import('~~/layers/thinkgraph/collections/nodes/server/database/queries')
+    const items = await getAllThinkgraphNodes(teamId)
+    const node = items.find((i: any) => i.id === nodeId)
+    if (!node) return
+
+    const arts = Array.isArray(node.artifacts) ? node.artifacts : []
+    const filtered = arts.filter((a: any) => a?.type !== 'liveStatus')
+    if (filtered.length !== arts.length) {
+      await updateThinkgraphNode(nodeId, teamId, 'system', {
+        artifacts: filtered,
+      } as any, { role: 'admin' })
+      signalCollectionChange(teamId, 'thinkgraphNodes')
+    }
+  }
+  catch (err) {
+    console.error(`[terminal-sessions] Failed to clear liveStatus for ${nodeId}:`, err)
+  }
+}
+
 /** Map terminal statuses to work item statuses */
 const TERMINAL_TO_WORKITEM_STATUS: Record<string, string> = {
   thinking: 'active',

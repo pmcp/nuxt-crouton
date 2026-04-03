@@ -298,6 +298,11 @@ function handleDispatch(event: Event) {
       {{ displayTitle }}
     </p>
 
+    <!-- Live activity text (while worker is running) -->
+    <p v-if="isActive && activityText" class="text-[10px] leading-tight opacity-70 mt-0.5 truncate">
+      {{ activityText }}
+    </p>
+
     <!-- Glanceable tags -->
     <div v-if="tags.length" class="flex items-center gap-0.5 mt-1">
       <span
