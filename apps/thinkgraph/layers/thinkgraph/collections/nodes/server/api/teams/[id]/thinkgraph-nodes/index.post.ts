@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { detectTemplate } from '~~/server/utils/template-detector'
 
 const bodySchema = z.object({
-  projectId: z.string().min(1, 'projectId is required'),
+  projectId: z.string().min(1).optional(),
   parentId: z.string().nullable().optional(),
   template: z.string().optional(),
   steps: z.array(z.string()).optional(),
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   // Generate ID upfront for correct path calculation
   const recordId = nanoid()
 
-  // Calculate path based on parentId
+  // Calculate path based on parentId + inherit projectId if missing
   let path = `/${recordId}/`
   let depth = 0
 
@@ -66,7 +66,15 @@ export default defineEventHandler(async (event) => {
     if (parent) {
       path = `${parent.path}${recordId}/`
       depth = (parent.depth || 0) + 1
+      // Inherit projectId from parent if not provided
+      if (!dataWithoutId.projectId && parent.projectId) {
+        dataWithoutId.projectId = parent.projectId
+      }
     }
+  }
+
+  if (!dataWithoutId.projectId) {
+    throw createError({ status: 400, statusText: 'projectId is required (provide it directly or via parentId)' })
   }
 
   const dbTimer = timing.start('db')
