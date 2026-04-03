@@ -761,9 +761,11 @@ async function assistantCreateItem(data: { title: string; type: string; brief: s
         title: data.title,
         template,
         steps,
-        status: steps.length > 0 ? 'queued' : 'idle',
+        status: 'idle',
         assignee: 'pi',
         brief: data.brief,
+        origin: 'ai',
+        ...(selectedItemId.value ? { parentId: selectedItemId.value } : {}),
       },
     })
     toast.add({ title: 'Node created', description: data.title, color: 'success' })
@@ -822,13 +824,23 @@ const stageOutputs = computed(() => {
     .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 })
 
+function formatStageOutput(text: string): string {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code class="text-[11px] bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">$1</code>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" class="text-primary underline">$1</a>')
+    .replace(/(^|\n)- /g, '$1• ')
+    .replace(/\n/g, '<br>')
+}
+
 const stageAccordionItems = computed(() => {
   return stageOutputs.value.map((so: any) => {
     const time = so.timestamp ? new Date(so.timestamp).toLocaleTimeString() : ''
     return {
       label: `${STAGE_LABEL[so.stage] || so.stage} — ${so.signal || 'done'}${time ? ` (${time})` : ''}`,
       icon: STAGE_SIGNAL_ICON[so.signal]?.icon || 'i-lucide-circle',
-      content: so.output || '(no output)',
+      content: so.output ? formatStageOutput(so.output) : '(no output)',
       value: `${so.stage}-${so.timestamp}`,
     }
   })
@@ -1273,7 +1285,11 @@ if (import.meta.client) {
           <div v-if="selectedItem.stage" class="mb-4">
             <p class="text-xs font-medium text-muted mb-2">Pipeline History</p>
             <div v-if="stageAccordionItems.length > 0">
-              <UAccordion :items="stageAccordionItems" type="multiple" />
+              <UAccordion :items="stageAccordionItems" type="multiple">
+                <template #body="{ item }">
+                  <div class="text-xs text-muted leading-relaxed" v-html="item.content" />
+                </template>
+              </UAccordion>
             </div>
             <p v-else class="text-xs text-muted/60 italic">No previous stages</p>
           </div>
@@ -1348,13 +1364,13 @@ if (import.meta.client) {
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-2 pt-4 border-t border-default">
-            <!-- Primary: Send to Pi (for idle/draft nodes with content) -->
+            <!-- Primary: Send to Pi (for nodes not yet active/done) -->
             <UButton
-              v-if="selectedItem.status === 'idle' && selectedItem.brief"
+              v-if="selectedItem.brief && !['active', 'working', 'done'].includes(selectedItem.status)"
               icon="i-lucide-send"
               label="Send to Pi"
-              @click="dispatchNode(selectedItem.id)"
               :loading="dispatching"
+              @click="dispatchNode(selectedItem.id)"
             />
             <!-- Add child node -->
             <UButton
