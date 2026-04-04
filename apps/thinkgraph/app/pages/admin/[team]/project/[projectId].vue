@@ -1815,7 +1815,7 @@ if (import.meta.client) {
               :node-id="selectedItem.id"
               :node-name="selectedItem.title"
               @break-down="decomposeNode(selectedItem.id)"
-              @send-to-pi="dispatchNode(selectedItem.id)"
+              @send-to-pi="sendToPi(selectedItem.id)"
             />
           </div>
 
