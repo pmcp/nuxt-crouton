@@ -7,8 +7,8 @@
 
 interface ChatCallbacks {
   clearMessages: () => void
-  exportMessages: () => any[]
-  importMessages: (messages: any[]) => void
+  exportMessages: () => AIMessage[]
+  importMessages: (messages: AIMessage[]) => void
 }
 
 interface UseChatPersistenceOptions {
@@ -50,8 +50,13 @@ export function useChatPersistence(options: UseChatPersistenceOptions) {
         }
       }
     }
-    catch {
-      // No existing conversation — start fresh
+    catch (e: unknown) {
+      // 404 is expected (no existing conversation) — start fresh
+      const status = (e as { status?: number; statusCode?: number })?.status
+        ?? (e as { status?: number; statusCode?: number })?.statusCode
+      if (status !== 404) {
+        console.warn('Failed to load conversation:', e)
+      }
     }
     finally {
       isLoadingConversation.value = false
@@ -99,7 +104,6 @@ export function useChatPersistence(options: UseChatPersistenceOptions) {
   }
 
   return {
-    conversationId,
     isLoadingConversation,
     loadConversation,
     saveConversation,
