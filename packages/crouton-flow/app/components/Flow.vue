@@ -423,6 +423,7 @@ const {
   labelField: props.labelField,
   parentField: props.parentField,
   positionField: props.positionField,
+  savedPositions: computed(() => props.savedPositions),
   localGhostNode,
   stopGhostCleanup
 })

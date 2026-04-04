@@ -13,6 +13,8 @@ interface UseFlowSyncBridgeOptions {
   labelField: string
   parentField: string
   positionField: string
+  /** Saved positions from flow_configs — used as fallback during Yjs seeding when rows lack position data */
+  savedPositions?: Ref<Record<string, { x: number; y: number }> | null | undefined>
   localGhostNode: Ref<Node | null>
   stopGhostCleanup: () => void
 }
@@ -23,7 +25,7 @@ interface UseFlowSyncBridgeOptions {
  * ghost node cleanup, and remote user presence.
  */
 export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
-  const { syncState, rows, labelField, parentField, positionField, localGhostNode, stopGhostCleanup } = options
+  const { syncState, rows, labelField, parentField, positionField, savedPositions, localGhostNode, stopGhostCleanup } = options
 
   /** Parse a raw position value (string JSON, object, or undefined) into FlowPosition */
   function parsePosition(rawPosition: unknown): FlowPosition | null {
@@ -69,6 +71,8 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
           const title = String(row[labelField] || 'Untitled')
           const parentId = row[parentField] as string | null | undefined
           const position = parsePosition(row[positionField])
+            || savedPositions?.value?.[id]
+            || null
 
           syncState.createNode({
             id,
