@@ -862,6 +862,21 @@ const STATUS_PILL: Record<string, string> = {
 // ─── List view config (from shared utils) ───
 const STATUS_CONFIG_LIST = STATUS_DISPLAY
 
+const TEMPLATE_BADGE: Record<string, string> = {
+  idea: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  discover: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  architect: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  generate: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  compose: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  review: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  deploy: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  meta: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  // Legacy aliases
+  research: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  task: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  feature: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+}
+
 // ─── Kanban config ───
 const kanbanColumns = [
   { value: 'queued', label: 'Queued', color: 'neutral', icon: 'i-lucide-circle-dashed' },
