@@ -359,6 +359,9 @@ async function dispatchToWorker(event: any, config: any, teamId: string, workIte
 
   await $fetch(`${piWorkerUrl}/dispatch`, {
     method: 'POST',
+    headers: {
+      ...(config.piDispatchSecret ? { Authorization: `Bearer ${config.piDispatchSecret}` } : {}),
+    },
     body: {
       workItemId,
       projectId: targetItem.projectId,

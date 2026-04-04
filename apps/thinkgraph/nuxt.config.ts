@@ -42,6 +42,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     piWorkerUrl: process.env.PI_WORKER_URL || 'https://pi-api.pmcp.dev', // Pi worker HTTP endpoint
+    piDispatchSecret: process.env.PI_DISPATCH_SECRET || '', // Shared secret for authenticating dispatch requests to Pi worker
     webhookSecret: process.env.WEBHOOK_SECRET || '', // Shared secret for Pi worker callbacks
     falApiKey: '',      // NUXT_FAL_API_KEY
     geminiApiKey: '',   // NUXT_GEMINI_API_KEY

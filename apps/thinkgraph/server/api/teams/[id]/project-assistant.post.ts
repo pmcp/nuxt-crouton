@@ -269,6 +269,9 @@ BRIEF: <what the work item should do>
           try {
             const resp = await $fetch<{ accepted: boolean }>(`${piWorkerUrl}/dispatch`, {
               method: 'POST',
+              headers: {
+                ...(config.piDispatchSecret ? { Authorization: `Bearer ${config.piDispatchSecret}` } : {}),
+              },
               body: {
                 workItemId: params.id,
                 projectId: item.projectId,
@@ -341,6 +344,9 @@ BRIEF: <what the work item should do>
 
               await $fetch(`${piWorkerUrl}/dispatch`, {
                 method: 'POST',
+                headers: {
+                  ...(config.piDispatchSecret ? { Authorization: `Bearer ${config.piDispatchSecret}` } : {}),
+                },
                 body: {
                   workItemId: node.id,
                   projectId,

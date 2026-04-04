@@ -106,6 +106,9 @@ export default defineEventHandler(async (event) => {
     try {
       const piResponse = await $fetch<{ accepted: boolean }>(`${piWorkerUrl}/dispatch`, {
         method: 'POST',
+        headers: {
+          ...(config.piDispatchSecret ? { Authorization: `Bearer ${config.piDispatchSecret}` } : {}),
+        },
         body: {
           workItemId,
           projectId: targetItem.projectId,

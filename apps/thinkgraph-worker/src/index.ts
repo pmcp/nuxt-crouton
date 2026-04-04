@@ -93,6 +93,7 @@ async function main() {
   console.log(`Work dir:     ${config.workDir}`)
   console.log(`Max sessions: ${config.maxSessions}`)
   console.log(`Collab:       ${config.collabWorkerUrl || 'same-origin (dev)'}`)
+  console.log(`Dispatch auth: ${config.dispatchSecret ? 'enabled' : 'DISABLED (set DISPATCH_SECRET to secure)'}`)
   console.log(`Yjs pool:     on-demand (connects per canvas on dispatch)`)
   console.log()
 
@@ -163,6 +164,17 @@ async function main() {
 
     // POST /dispatch — accept work item dispatch from ThinkGraph
     if (req.url === '/dispatch' && req.method === 'POST') {
+      // Auth check — require DISPATCH_SECRET as Bearer token
+      if (config.dispatchSecret) {
+        const authHeader = req.headers.authorization || ''
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+        if (token !== config.dispatchSecret) {
+          res.writeHead(401, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Unauthorized' }))
+          return
+        }
+      }
+
       try {
         const body = await new Promise<string>((resolve, reject) => {
           let data = ''

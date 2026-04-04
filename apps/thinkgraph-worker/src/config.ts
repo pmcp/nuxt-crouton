@@ -22,6 +22,8 @@ export interface WorkerConfig {
   collabWorkerUrl: string
   /** BETTER_AUTH_SECRET shared with collab worker for HMAC token signing */
   betterAuthSecret: string
+  /** Shared secret for authenticating dispatch requests */
+  dispatchSecret: string
 }
 
 export function loadConfig(): WorkerConfig {
@@ -53,5 +55,6 @@ export function loadConfig(): WorkerConfig {
     model: process.env.PI_MODEL || 'claude-sonnet-4-20250514',
     collabWorkerUrl: process.env.COLLAB_WORKER_URL || '',
     betterAuthSecret: process.env.BETTER_AUTH_SECRET || '',
+    dispatchSecret: process.env.DISPATCH_SECRET || '',
   }
 }
