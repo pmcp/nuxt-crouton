@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
+import NodeChatPanel from '~/components/NodeChatPanel.vue'
 
 // Explicitly register so CroutonFlow's resolveComponent() can find it
 // CroutonFlow: "thinkgraphNodes" → PascalCase "ThinkgraphNodes" + "Node" → "ThinkgraphNodesNode"
@@ -508,7 +509,16 @@ async function dispatchNode(id: string) {
   const steps = Array.isArray(item.steps) && item.steps.length > 0
     ? item.steps
     : TEMPLATE_STEPS[item.template || 'task'] || ['analyst', 'builder', 'reviewer', 'merger']
-  await updateItem(id, { status: 'queued', assignee: 'pi', steps })
+
+  // Include conversation history in the brief when dispatching
+  const chatHistory = getChatHistory()
+  const updates: Partial<ThinkgraphNode> = { status: 'queued', assignee: 'pi', steps }
+  if (chatHistory) {
+    const existingBrief = item.brief || item.title
+    updates.brief = `${existingBrief}\n\n---\n**Conversation context:**\n${chatHistory}`
+  }
+
+  await updateItem(id, updates)
   await openDispatch(id)
 }
 
@@ -578,7 +588,9 @@ async function respondAndRedispatch(id: string) {
   redispatching.value = true
   try {
     const formattedAnswers = formatAnswers()
-    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human answers:**\n${formattedAnswers}`
+    const chatHistory = getChatHistory()
+    const chatSection = chatHistory ? `\n\n---\n**Conversation context:**\n${chatHistory}` : ''
+    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human answers:**\n${formattedAnswers}${chatSection}`
     await updateItem(id, {
       brief: updatedBrief,
       status: 'queued',
@@ -805,6 +817,19 @@ async function promoteToTask(id: string, template: string) {
 
 // ─── Flow ref for programmatic control ───
 const flowRef = ref<any>(null)
+
+// ─── Node chat panel ref ───
+const nodeChatPanelRef = ref<InstanceType<typeof NodeChatPanel> | null>(null)
+
+function getChatHistory(): string {
+  if (!nodeChatPanelRef.value) return ''
+  const history = nodeChatPanelRef.value.getConversationHistory()
+  if (!history?.length) return ''
+  return history
+    .map((m: any) => `[${m.role}]: ${m.content}`)
+    .slice(-20) // Last 20 messages max
+    .join('\n')
+}
 
 // ─── Assistant actions ───
 async function assistantCreateItem(data: { title: string; type: string; brief: string }) {
@@ -1497,6 +1522,17 @@ if (import.meta.client) {
               </UAccordion>
             </div>
             <p v-else class="text-xs text-muted/60 italic">No previous stages</p>
+          </div>
+
+          <!-- Per-node chat -->
+          <div class="mb-4">
+            <NodeChatPanel
+              ref="nodeChatPanelRef"
+              :node-id="selectedItem.id"
+              :node-name="selectedItem.title"
+              @break-down="decomposeNode(selectedItem.id)"
+              @send-to-pi="dispatchNode(selectedItem.id)"
+            />
           </div>
 
           <!-- Retrospective -->
