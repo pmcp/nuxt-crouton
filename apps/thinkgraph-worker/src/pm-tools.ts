@@ -8,6 +8,8 @@
 import { Type } from '@sinclair/typebox'
 import { ofetch } from 'ofetch'
 import { execFileSync } from 'node:child_process'
+import { readFile, unlink } from 'node:fs/promises'
+import { basename } from 'node:path'
 import type { ToolDefinition, AgentToolResult } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
 
@@ -247,15 +249,84 @@ export function createPMTools(
       },
     }
 
+  const uploadScreenshotTool: AnyToolDefinition = {
+    name: 'upload_screenshot',
+    label: 'Upload Screenshot',
+    description: 'Upload a screenshot or image file to cloud storage and attach it as an artifact on the work item. Use this after taking a Playwright screenshot to make it part of your deliverable. The file is deleted locally after upload.',
+    parameters: Type.Object({
+      filePath: Type.String({ description: 'Absolute path to the image file (e.g., /path/to/screenshot.png)' }),
+      label: Type.Optional(Type.String({ description: 'Short label describing the screenshot (e.g., "homepage-after-fix", "mobile-nav-broken")' })),
+    }),
+    execute: async (_toolCallId, params) => {
+      try {
+        // Read the file
+        const fileBuffer = await readFile(params.filePath)
+        const fileName = params.label
+          ? `${params.label.replace(/[^a-z0-9-_]/gi, '-')}.png`
+          : basename(params.filePath)
+
+        // Upload via ThinkGraph's upload-image endpoint (multipart form)
+        const formData = new FormData()
+        const blob = new Blob([fileBuffer], { type: 'image/png' })
+        formData.append('file', blob, fileName)
+
+        const uploadResult = await ofetch(`${config.thinkgraphUrl}/api/upload-image`, {
+          method: 'POST',
+          headers: {
+            'Cookie': config.serviceToken,
+          },
+          body: formData,
+        })
+
+        // Build the public URL for the uploaded image
+        const imageUrl = `${config.thinkgraphUrl}/images/${uploadResult.pathname}`
+
+        // Attach as artifact on the work item
+        const items = await ofetch(baseUrl, { headers, query: { ids: workItemId } })
+        const item = Array.isArray(items) ? items[0] : null
+        const existingArtifacts = Array.isArray(item?.artifacts) ? item.artifacts : []
+        existingArtifacts.push({
+          type: 'screenshot',
+          url: imageUrl,
+          pathname: uploadResult.pathname,
+          label: params.label || fileName,
+          createdAt: new Date().toISOString(),
+          stage,
+        })
+
+        await ofetch(`${baseUrl}/${workItemId}`, {
+          method: 'PATCH',
+          headers,
+          body: { artifacts: existingArtifacts },
+        })
+
+        // Clean up local file
+        await unlink(params.filePath).catch(() => {})
+
+        console.log(`[pm-tools] Screenshot uploaded: ${imageUrl} (attached to ${workItemId})`)
+        return textResult(JSON.stringify({
+          ok: true,
+          url: imageUrl,
+          pathname: uploadResult.pathname,
+          label: params.label || fileName,
+          workItemId,
+        }))
+      } catch (err: any) {
+        console.error(`[pm-tools] upload_screenshot failed:`, err.message)
+        return textResult(JSON.stringify({ ok: false, error: err.message }))
+      }
+    },
+  }
+
   // Stage-scoped tool sets:
   // - Analyst:  read-only + signal (get_workitem, update_workitem for signal/output only)
-  // - Builder:  full write (update_workitem, get_workitem, create_pr)
-  // - Reviewer: read + signal (get_workitem, update_workitem for signal/output/verdict)
+  // - Builder:  full write (update_workitem, get_workitem, create_pr, upload_screenshot)
+  // - Reviewer: read + signal + screenshots (get_workitem, update_workitem, upload_screenshot)
   // - Merger:   write, no PR creation (update_workitem, get_workitem)
   const STAGE_TOOLS: Record<string, string[]> = {
     analyst: ['get_workitem', 'update_workitem'],
-    builder: ['get_workitem', 'update_workitem', 'create_pr'],
-    reviewer: ['get_workitem', 'update_workitem'],
+    builder: ['get_workitem', 'update_workitem', 'create_pr', 'upload_screenshot'],
+    reviewer: ['get_workitem', 'update_workitem', 'upload_screenshot'],
     merger: ['get_workitem', 'update_workitem'],
   }
 
@@ -263,6 +334,7 @@ export function createPMTools(
     update_workitem: updateWorkitemTool,
     get_workitem: getWorkitemTool,
     create_pr: createPrTool,
+    upload_screenshot: uploadScreenshotTool,
   }
 
   const allowedNames = STAGE_TOOLS[stage] || STAGE_TOOLS.builder

@@ -687,14 +687,21 @@ These contain the project's coding conventions and the full review checklist (se
   \`\`\`
 - Read the FULL changed files, not just the diff — you need surrounding context for unused imports, broken references, duplicated logic
 
-### Step 3: Run the Review Checklist
+### Step 3: Screenshot Issues (if visual)
+
+If you spot visual issues or want to show before/after states:
+1. Use Playwright to take a screenshot
+2. Use \`upload_screenshot\` to attach it to the work item with a descriptive label
+3. Reference the screenshot in your review output
+
+### Step 4: Run the Review Checklist
 
 Apply the checklist from \`review/SKILL.md\` to every changed file. Check boundary rules from \`boundary-audit.md\`. Categorize findings:
 - 🔴 **Critical** — security hole, data loss risk, crash
 - 🟡 **Warning** — bug likely, pattern violation, missing validation
 - 🔵 **Note** — minor issue, potential improvement
 
-### Step 4: Verdict
+### Step 5: Verdict
 
 Use \`update_workitem\` to set your **verdict** and signal. You MUST set the \`verdict\` field.
 
