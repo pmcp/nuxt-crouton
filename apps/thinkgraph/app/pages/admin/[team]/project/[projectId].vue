@@ -149,6 +149,46 @@ function onNodeClick(nodeId: string) {
   selectedItemId.value = nodeId
 }
 
+// ─── Search & filter (canvas view) ───
+const searchQuery = ref('')
+const filterStatus = ref<string | undefined>()
+const filterType = ref<string | undefined>()
+const showSearch = ref(false)
+const searchInput = useTemplateRef<{ inputRef?: HTMLInputElement }>('searchInput')
+
+const searchMatchIds = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  const status = filterStatus.value
+  const type = filterType.value
+  if (!q && !status && !type) return null
+  return new Set(
+    items.value
+      .filter((n) => {
+        if (q && !n.title.toLowerCase().includes(q)) return false
+        if (status && n.status !== status) return false
+        if (type && n.template !== type) return false
+        return true
+      })
+      .map(n => n.id),
+  )
+})
+
+const statusFilterItems = computed(() => [
+  [{ label: 'All statuses', onSelect: () => { filterStatus.value = undefined } }],
+  ...['idle', 'queued', 'active', 'waiting', 'done', 'blocked'].map(s => [{
+    label: s.replace('_', ' '),
+    onSelect: () => { filterStatus.value = s },
+  }]),
+])
+
+const typeFilterItems = computed(() => [
+  [{ label: 'All types', onSelect: () => { filterType.value = undefined } }],
+  ...[...new Set(items.value.map(n => n.template).filter(Boolean))].map(t => [{
+    label: (t as string).replace('_', ' '),
+    onSelect: () => { filterType.value = t },
+  }]),
+])
+
 function onNodeDblClick(nodeId: string) {
   selectedItemId.value = nodeId
   showDetail.value = true
@@ -1055,8 +1095,24 @@ function handleKeydown(e: KeyboardEvent) {
     case 'a': case 'A':
       showAssistant.value = !showAssistant.value
       break
+    case 'w': case 'W':
+      if (selectedItemId.value) updateItem(selectedItemId.value, { status: 'active' })
+      break
+    case 'l': case 'L':
+      e.preventDefault()
+      flowRef.value?.relayoutAll()
+      break
+    case '/':
+      if (viewMode.value === 'canvas') {
+        e.preventDefault()
+        showSearch.value = true
+        nextTick(() => (searchInput.value as any)?.inputRef?.focus())
+      }
+      break
     case 'Escape':
-      if (showDetail.value) closeDetail()
+      if (showSearch.value) { showSearch.value = false; searchQuery.value = ''; filterStatus.value = undefined; filterType.value = undefined }
+      else if (showNodeContextMenu.value) closeContextMenu()
+      else if (showDetail.value) closeDetail()
       else if (showCreate.value) showCreate.value = false
       break
   }
@@ -1112,6 +1168,60 @@ if (import.meta.client) {
         </div>
 
         <!-- View toggle -->
+        <!-- Search (canvas view only) -->
+        <template v-if="viewMode === 'canvas'">
+          <div v-if="showSearch" class="flex items-center gap-1.5">
+            <UInput
+              ref="searchInput"
+              v-model="searchQuery"
+              size="sm"
+              placeholder="Search nodes..."
+              icon="i-lucide-search"
+              class="w-48"
+              @keydown.escape="showSearch = false; searchQuery = ''"
+            />
+            <UDropdownMenu :items="statusFilterItems">
+              <UButton
+                size="xs"
+                variant="outline"
+                color="neutral"
+                :label="filterStatus ? filterStatus.replace('_', ' ') : 'Status'"
+              />
+            </UDropdownMenu>
+            <UDropdownMenu :items="typeFilterItems">
+              <UButton
+                size="xs"
+                variant="outline"
+                color="neutral"
+                :label="filterType ? filterType.replace('_', ' ') : 'Type'"
+              />
+            </UDropdownMenu>
+            <UButton
+              icon="i-lucide-x"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              @click="showSearch = false; searchQuery = ''; filterStatus = undefined; filterType = undefined"
+            />
+          </div>
+          <UButton
+            v-else
+            icon="i-lucide-search"
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            @click="showSearch = true; nextTick(() => (searchInput as any)?.inputRef?.focus())"
+          />
+          <UButton
+            icon="i-lucide-layout-grid"
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            title="Re-layout all nodes (L)"
+            @click="flowRef?.relayoutAll()"
+          />
+        </template>
+
         <div class="flex items-center border border-default rounded-lg overflow-hidden mr-1">
           <button
             class="px-2 py-1 text-xs transition-colors"
@@ -1183,7 +1293,9 @@ if (import.meta.client) {
           @connect-end="onConnectEnd"
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
-        />
+        >
+          <CanvasHighlight :selected-node-id="selectedItemId" :nodes="items" :search-match-ids="searchMatchIds" />
+        </CroutonFlow>
 
         <!-- Empty canvas — inline "What are you thinking about?" input -->
         <div
