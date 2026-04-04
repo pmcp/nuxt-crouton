@@ -146,6 +146,10 @@ const selectedItem = computed(() =>
 
 function onNodeClick(nodeId: string) {
   selectedItemId.value = nodeId
+}
+
+function onNodeDblClick(nodeId: string) {
+  selectedItemId.value = nodeId
   showDetail.value = true
 }
 
@@ -1096,6 +1100,7 @@ if (import.meta.client) {
           :additional-edges="additionalEdges"
           minimap
           @node-click="onNodeClick"
+          @node-dbl-click="onNodeDblClick"
           @connect-end="onConnectEnd"
           @node-delete="onNodeDelete"
           @selection-change="onSelectionChange"
