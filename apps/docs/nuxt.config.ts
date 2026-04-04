@@ -42,6 +42,9 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/'],
       crawlLinks: true
+    },
+    alias: {
+      'playwright-core': 'unenv/runtime/mock/noop'
     }
   },
 
