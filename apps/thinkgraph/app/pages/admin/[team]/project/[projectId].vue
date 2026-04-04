@@ -92,7 +92,21 @@ async function refreshItems() {
       `/api/teams/${teamId.value}/thinkgraph-nodes`,
       { query: { projectId: projectId.value } },
     )
-    items.value = result || []
+    const incoming = result || []
+    // Smart merge: preserve object identity for unchanged items to avoid
+    // VueFlow unmounting/remounting all node components (emitsOptions null error)
+    const oldById = new Map(items.value.map(n => [n.id, n]))
+    const merged = incoming.map((n) => {
+      const old = oldById.get(n.id)
+      if (old && JSON.stringify(old) === JSON.stringify(n)) return old
+      return n
+    })
+    items.value = merged
+
+    // Clear selected item if it was removed from the list
+    if (selectedItemId.value && !merged.some(n => n.id === selectedItemId.value)) {
+      closeDetail()
+    }
   }
   catch {
     items.value = []
@@ -130,9 +144,16 @@ watch(hasActiveWork, (active) => {
 }, { immediate: true })
 onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
-// ─── Selection ───
-const selectedItemId = ref<string | null>(null)
-const showDetail = ref(false)
+// ─── Selection (synced with ?node= URL param) ───
+const selectedItemId = ref<string | null>(route.query.node as string || null)
+const showDetail = ref(!!selectedItemId.value)
+
+watch(selectedItemId, (id) => {
+  const query = { ...route.query }
+  if (id) query.node = id
+  else delete query.node
+  navigateTo({ query }, { replace: true })
+})
 
 // Canvas multi-select (for SelectionBar synthesis/brief actions)
 const canvasSelectedIds = ref<string[]>([])
@@ -1496,8 +1517,17 @@ if (import.meta.client) {
       <template #content>
         <div v-if="selectedItem" class="p-6 h-full overflow-y-auto">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
-            <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
+              <button
+                class="text-[10px] font-mono text-muted hover:text-default transition-colors"
+                title="Copy node ID"
+                @click="navigator.clipboard.writeText(selectedItem!.id); toast.add({ title: 'Node ID copied', color: 'success' })"
+              >
+                {{ selectedItem.id }}
+              </button>
+            </div>
+            <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" class="shrink-0" @click="closeDetail" />
           </div>
 
           <!-- Compact status bar -->
