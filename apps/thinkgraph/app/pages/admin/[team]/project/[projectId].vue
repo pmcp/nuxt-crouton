@@ -661,6 +661,12 @@ provide('projectActions', {
   },
   dispatch: openDispatch,
   openTerminal,
+  selectSubtree: (nodeId: string) => {
+    flowRef.value?.selectSubtree(nodeId)
+  },
+  layoutSubtree: (nodeId: string) => {
+    flowRef.value?.layoutSubtree(nodeId)
+  },
 })
 
 // ─── Status summary ───

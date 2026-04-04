@@ -33,6 +33,8 @@ const projectActions = inject<{
   addChild: (parentId: string) => void
   dispatch: (id: string) => void
   openTerminal: (id: string) => void
+  selectSubtree?: (nodeId: string) => void
+  layoutSubtree?: (nodeId: string) => void
 } | null>('projectActions', null)
 
 const isHovered = ref(false)
@@ -149,12 +151,18 @@ function handleDispatch(event: Event) {
 
 function handleSelectSubtree(event: Event) {
   event.stopPropagation()
-  if (node.value.id) canvasActions?.selectSubtree(node.value.id)
+  if (node.value.id) {
+    canvasActions?.selectSubtree(node.value.id)
+    projectActions?.selectSubtree?.(node.value.id)
+  }
 }
 
 function handleLayoutSubtree(event: Event) {
   event.stopPropagation()
-  if (node.value.id) canvasActions?.layoutSubtree(node.value.id)
+  if (node.value.id) {
+    canvasActions?.layoutSubtree(node.value.id)
+    projectActions?.layoutSubtree?.(node.value.id)
+  }
 }
 
 function handleContextMenu(event: MouseEvent | Event) {
@@ -250,10 +258,10 @@ function handleContextMenu(event: MouseEvent | Event) {
 
     <!-- Secondary actions (hover) -->
     <div class="node-card__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
-      <button v-if="canvasActions" class="node-card__action" title="Select subtree" @click.stop="handleSelectSubtree">
+      <button class="node-card__action" title="Select subtree" @click.stop="handleSelectSubtree">
         <UIcon name="i-lucide-git-fork" class="size-3.5" />
       </button>
-      <button v-if="canvasActions" class="node-card__action" title="Layout subtree" @click.stop="handleLayoutSubtree">
+      <button class="node-card__action" title="Layout subtree" @click.stop="handleLayoutSubtree">
         <UIcon name="i-lucide-layout-grid" class="size-3.5" />
       </button>
       <button class="node-card__action" title="Add child" @click.stop="handleAddChild">
@@ -310,7 +318,7 @@ function handleContextMenu(event: MouseEvent | Event) {
 /* Status-based animations */
 .work-node--working {
   animation: pulse-node 2s ease-in-out infinite;
-  @apply shadow-md scale-105;
+  @apply shadow-md;
 }
 
 .work-node--attention {
