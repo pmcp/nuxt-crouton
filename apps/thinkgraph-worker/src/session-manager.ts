@@ -579,6 +579,18 @@ Check these criteria:
 - **Dependencies**: Are there unmet prerequisites that should be done first?
 - **Package mapping**: Which crouton packages/files does this work target? Be specific (file paths, not vague package names).
 
+### Step 2b: Recognize Question Briefs
+
+**IMPORTANT**: Not every brief is a work item. Some briefs are **exploratory questions** — "what are my options?", "how should we handle X?", "what's the best approach for Y?". These are valid and valuable.
+
+If the brief is a question or exploration request:
+- Do NOT reject it as "not actionable" — that kills a legitimate ask
+- **Do the research** — read the codebase, understand the context, identify concrete options
+- Signal **ORANGE** with your analysis and lettered options for the human to pick
+- The human can then either pick an option (which becomes the actionable brief) or close the item satisfied with the answer
+
+A question brief answered well is a completed task. A question brief rejected as "not actionable" is a broken gate.
+
 ### Step 3: Signal
 
 Use \`update_workitem\` to set your signal:
@@ -590,28 +602,31 @@ Use \`update_workitem\` to set your signal:
 - Do NOT set \`stage\` — the system handles stage advancement automatically
 - **Optional: \`skipTo\`** — if this is a trivial fix that doesn't need all stages (e.g., skip reviewer, go straight to merger), set \`skipTo\` to the target stage name. Only skip when genuinely trivial (typo fix, config change, single-line fix). When in doubt, don't skip.
 
-**ORANGE** (has questions — pause for human):
+**ORANGE** (has questions or answering a question brief — pause for human):
 - Set \`signal\` to \`"orange"\`
 - Set \`status\` to \`"waiting"\`
 - Set \`assignee\` to \`"human"\`
-- Set \`output\` to your questions — each question MUST be answerable:
+- Set \`output\` to your questions or analysis — each question MUST be answerable:
   - Provide concrete lettered options the human can pick from — as many as make sense (typically 2-6)
   - Never write statements disguised as questions — if you found a problem, propose solutions
   - The human should be able to answer each question with a single letter or short phrase
   - Bad: "useFlowContainerDetection only detects card-over-group overlap" (statement, not a question)
   - Good: "Existing composable doesn't support card-on-card. Options: (a) extend useFlowContainerDetection, (b) new composable, (c) handle directly in project page?"
+- For question briefs: include your research, recommendation, and lettered options. The human picks one or closes the item.
 
 **RED** (should not be done — reject it):
 - Set \`signal\` to \`"red"\`
 - Set \`status\` to \`"blocked"\`
-- Set \`output\` to the reason — duplicates existing work, out of scope, contradicts architecture, vague brief with no clear action, etc.
-- Use red liberally. If the brief is vague and you'd be guessing, signal red with a clear explanation. The human can rewrite the brief and re-dispatch.
+- Set \`output\` to the reason — duplicates existing work, out of scope, contradicts architecture, etc.
+- RED is for work that **should not happen** — not for questions you can answer. If you can research the answer, do it and signal ORANGE.
+- Still use red for: duplicated work, contradicts architecture, references things that genuinely don't exist after thorough search.
 
 **IMPORTANT — learnings vs questions:**
 - If you have doubts, concerns, or questions about the work → signal **ORANGE** and ask the human. Do NOT create learnings with your doubts.
 - Learnings are ONLY for process improvements that apply to future pipeline runs (e.g., "analyst prompt should include X"). Never use learnings to express concerns about the current work item.
 - If you signal green, you are saying "this brief is ready for a builder." Do not signal green and then dump concerns into learnings — that defeats the purpose of the gate.
-- If the brief is vague, unclear, or references things that don't exist → signal **RED**, not green with caveats.
+- If the brief is genuinely unclear AND you can't resolve it by reading the codebase → signal **ORANGE** with clarifying questions, not RED.
+- Only signal RED when the work genuinely should not be done — not when the brief is a question you can answer.
 - An empty learnings array is perfectly fine. Most analyst runs should have zero learnings.`
   }
 
