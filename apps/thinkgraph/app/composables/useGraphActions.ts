@@ -15,13 +15,14 @@ interface GraphActionDeps {
   update: (id: string, data: Record<string, unknown>) => Promise<any>
   deleteItems: (ids: string[]) => Promise<any>
   copyContext: (nodeId: string) => Promise<void>
+  focusInPath?: (nodeId: string) => void
 }
 
 /**
  * Node operations: expand, star, pin, park, synthesize, resume, digest, brief, export, delete.
  */
 export function useGraphActions(deps: GraphActionDeps) {
-  const { teamId, decisions, selectedGraphId, expanding, contextMode, contextNodeIds, selectedNodes, chatNodeId, selectedNodeId, refreshDecisions, create, update, deleteItems, copyContext } = deps
+  const { teamId, decisions, selectedGraphId, expanding, contextMode, contextNodeIds, selectedNodes, chatNodeId, selectedNodeId, refreshDecisions, create, update, deleteItems, copyContext, focusInPath } = deps
 
   const { open } = useCrouton()
   const toast = useToast()
@@ -51,6 +52,8 @@ export function useGraphActions(deps: GraphActionDeps) {
         })
       }
       await refreshDecisions()
+      // Open the thinking path panel so the user can review suggestions
+      focusInPath?.(decisionId)
     } catch (error: any) {
       console.error('AI expand failed:', error)
       toast.add({ title: 'Expand failed', description: error?.message || 'Could not expand node', color: 'error' })

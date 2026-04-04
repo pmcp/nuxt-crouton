@@ -83,6 +83,10 @@ const {
   update,
   deleteItems,
   copyContext,
+  focusInPath: (nodeId: string) => {
+    selectedNodeId.value = nodeId
+    showPath.value = true
+  },
 })
 
 // ─── Filters ───
@@ -424,6 +428,13 @@ function exportGraph() {
         @delete-node="(id: string) => onNodeDelete([id])"
         @create-node="async (data: { content: string; nodeType: string; parentId: string }) => {
           await create({ ...data, graphId: graphId || '', pathType: '', source: 'manual', starred: false, branchName: '', versionTag: 'v1', model: '' })
+          emit('refresh-decisions')
+        }"
+        @dismiss-suggestions="async (nodeId: string) => {
+          const node = decisions.find(d => d.id === nodeId)
+          if (!node) return
+          const existing = Array.isArray(node.artifacts) ? node.artifacts.filter((a: any) => a?.type !== 'suggested-nodes') : []
+          await update(nodeId, { artifacts: existing })
           emit('refresh-decisions')
         }"
       />
