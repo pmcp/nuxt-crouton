@@ -35,6 +35,27 @@ Fast, opinionated code review for a solo dev shipping quickly. Catches real prob
 | 🟡 **Warning** | Bug likely, pattern violation, missing validation | Should fix soon |
 | 🔵 **Note** | Minor issue, potential improvement | Fix when convenient |
 
+## Fast-Path for Non-Code Changes
+
+When the diff contains **only** documentation and config files (`.md`, `.yml`, `.yaml`, `.json`, `.toml`, `.txt`) and **no** code files (`.ts`, `.vue`, `.css`, `.scss`, `.js`, `.mjs`), skip the full checklist and use this shortened review:
+
+**Check:**
+- [ ] Content is accurate and not misleading
+- [ ] No typos or grammar issues
+- [ ] Links and references are valid (file paths, URLs, anchors)
+- [ ] Formatting is consistent with surrounding content
+- [ ] No secrets, tokens, or credentials in the content
+
+**Skip:** Security, correctness, project patterns, package boundaries, dead code, API endpoints, Vue components — these don't apply to non-code changes.
+
+**Detection:**
+```bash
+# If this returns nothing, it's a doc-only diff → use fast-path
+git diff --name-only <base>..<branch> | grep -E '\.(ts|vue|css|scss|js|mjs)$'
+```
+
+Produce the same structured report format, just with the shorter checklist.
+
 ## Workflow
 
 ### Step 1: Gather the diff
