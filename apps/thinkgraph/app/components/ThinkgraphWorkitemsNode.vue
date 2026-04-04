@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
+import {
+  WORKITEM_TYPE_CONFIG,
+  WORKITEM_STATUS_CONFIG,
+  ASSIGNEE_CONFIG,
+  PIPELINE_STAGES,
+  computePipelineStages,
+} from '~/utils/thinkgraph-config'
 import type { ThinkgraphWorkItem } from '~~/layers/thinkgraph/collections/workitems/types'
 
 interface Props {
@@ -28,102 +35,16 @@ const isHovered = ref(false)
 
 const item = computed(() => props.data as unknown as ThinkgraphWorkItem)
 
-// Type config
-const TYPE_CONFIG: Record<string, { icon: string; color: string; badge: string }> = {
-  discover: {
-    icon: 'i-lucide-search',
-    color: 'text-violet-500',
-    badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-  },
-  architect: {
-    icon: 'i-lucide-pencil-ruler',
-    color: 'text-blue-500',
-    badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-  },
-  generate: {
-    icon: 'i-lucide-hammer',
-    color: 'text-amber-500',
-    badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-  },
-  compose: {
-    icon: 'i-lucide-layout',
-    color: 'text-cyan-500',
-    badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400'
-  },
-  review: {
-    icon: 'i-lucide-eye',
-    color: 'text-green-500',
-    badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-  },
-  deploy: {
-    icon: 'i-lucide-rocket',
-    color: 'text-rose-500',
-    badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-  },
-}
-
-const STATUS_CONFIG: Record<string, { icon: string; class: string }> = {
-  queued: { icon: 'i-lucide-circle-dashed', class: 'work-item--queued' },
-  active: { icon: 'i-lucide-loader-2', class: 'work-item--active' },
-  waiting: { icon: 'i-lucide-pause-circle', class: 'work-item--waiting' },
-  done: { icon: 'i-lucide-check-circle', class: 'work-item--done' },
-  blocked: { icon: 'i-lucide-alert-circle', class: 'work-item--blocked' },
-}
-
-const ASSIGNEE_CONFIG: Record<string, { icon: string; label: string }> = {
-  pi: { icon: 'i-lucide-bot', label: 'Pi' },
-  human: { icon: 'i-lucide-user', label: 'You' },
-  client: { icon: 'i-lucide-users', label: 'Client' },
-  ci: { icon: 'i-lucide-git-branch', label: 'CI' },
-}
-
-const PIPELINE_STAGES = ['analyst', 'builder', 'launcher', 'reviewer', 'merger'] as const
-
-const STAGE_LABELS: Record<string, string> = {
-  analyst: 'A',
-  builder: 'B',
-  launcher: 'L',
-  reviewer: 'R',
-  merger: 'M',
-}
-
-const typeConfig = computed(() => TYPE_CONFIG[item.value.type] || TYPE_CONFIG.generate)
-const statusConfig = computed(() => STATUS_CONFIG[item.value.status] || STATUS_CONFIG.queued)
+const typeConfig = computed(() => WORKITEM_TYPE_CONFIG[item.value.type] || WORKITEM_TYPE_CONFIG.generate)
+const statusConfig = computed(() => WORKITEM_STATUS_CONFIG[item.value.status] || WORKITEM_STATUS_CONFIG.queued)
 
 // Pipeline stage tracking
-const currentStage = computed(() => item.value.stage || null)
-const currentSignal = computed(() => item.value.signal || null)
-const hasPipeline = computed(() => !!currentStage.value)
-const isWorking = computed(() => item.value.status === 'active')
+const hasPipeline = computed(() => !!item.value.stage)
 
 /** Get the visual state for each pipeline dot */
-const pipelineDots = computed(() => {
-  const stage = currentStage.value
-  const signal = currentSignal.value
-  if (!stage) {
-    // No pipeline started yet — all LEDs off
-    return PIPELINE_STAGES.map(s => ({ stage: s, label: STAGE_LABELS[s], state: 'pending' as const }))
-  }
-
-  const currentIdx = PIPELINE_STAGES.indexOf(stage as any)
-
-  return PIPELINE_STAGES.map((s, idx) => {
-    // Past stages (before current) — completed green
-    if (idx < currentIdx) {
-      return { stage: s, label: STAGE_LABELS[s], state: 'done' as const }
-    }
-    // Current stage
-    if (idx === currentIdx) {
-      if (isWorking.value) return { stage: s, label: STAGE_LABELS[s], state: 'working' as const }
-      if (signal === 'green') return { stage: s, label: STAGE_LABELS[s], state: 'green' as const }
-      if (signal === 'orange') return { stage: s, label: STAGE_LABELS[s], state: 'orange' as const }
-      if (signal === 'red') return { stage: s, label: STAGE_LABELS[s], state: 'red' as const }
-      return { stage: s, label: STAGE_LABELS[s], state: 'current' as const }
-    }
-    // Future stages — dim
-    return { stage: s, label: STAGE_LABELS[s], state: 'pending' as const }
-  })
-})
+const pipelineDots = computed(() =>
+  computePipelineStages(item.value.stage, item.value.status, item.value.signal, PIPELINE_STAGES)
+)
 
 const assigneeConfig = computed(() => {
   const a = item.value.assignee || 'pi'
