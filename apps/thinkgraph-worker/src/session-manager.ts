@@ -856,6 +856,8 @@ gh pr merge <number> --squash --delete-branch
 ### Step 5: Update local main
 
 \`\`\`bash
+# Clean up any merge state left by branch deletion before switching
+git reset --hard HEAD 2>/dev/null || true
 git checkout main
 git pull origin main
 \`\`\`
