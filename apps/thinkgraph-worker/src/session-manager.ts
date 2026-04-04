@@ -16,7 +16,8 @@ import {
   ModelRegistry,
 } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
-import type { YjsFlowClient, AgentLogEntry } from './yjs-client.js'
+import type { YjsFlowClient } from './yjs-client.js'
+import type { YjsFlowPool } from './yjs-pool.js'
 import { createThinkGraphTools } from './pi-extension.js'
 import { createPMTools } from './pm-tools.js'
 import { ofetch } from 'ofetch'
@@ -66,21 +67,23 @@ interface ActiveSession {
   stage?: string
   /** Accumulated token usage from session events */
   tokenUsage: { inputTokens: number; outputTokens: number }
+  /** Yjs client for this session's canvas */
+  yjsClient: YjsFlowClient | null
+  /** Canvas/flow ID for pool release */
+  graphId: string
 }
 
 export class AgentSessionManager {
   private activeSessions = new Map<string, ActiveSession>()
-  private yjsClient: YjsFlowClient | null = null
+  private yjsPool: YjsFlowPool | null = null
 
   constructor(private config: WorkerConfig) {}
 
-  /** Set the Yjs client — called from index.ts after connection */
-  setYjsClient(client: YjsFlowClient): void {
-    this.yjsClient = client
-
-    // Wire up bidirectional control from Yjs observations
-    // These fire when browser writes to node.data.userPrompt/userAbort/userSteer
+  /** Set the Yjs pool — called from index.ts */
+  setYjsPool(pool: YjsFlowPool): void {
+    this.yjsPool = pool
   }
+
 
   get activeCount(): number {
     return this.activeSessions.size
@@ -109,12 +112,22 @@ export class AgentSessionManager {
     const mode = payload.mode || 'legacy'
     console.log(`[session-manager] Starting ${mode} session for node ${payload.nodeId}`)
 
+    // Acquire a Yjs client for this canvas (graphId = canvasId)
+    let yjsClient: YjsFlowClient | null = null
+    if (this.yjsPool && payload.graphId) {
+      try {
+        yjsClient = await this.yjsPool.acquire(payload.graphId)
+      } catch (err) {
+        console.warn(`[session-manager] Yjs acquire failed for canvas ${payload.graphId}: ${err instanceof Error ? err.message : err}`)
+      }
+    }
+
     // Update presence — Pi agent is now working on this node
-    this.yjsClient?.sendAwareness('thinking', payload.nodeId)
+    yjsClient?.sendAwareness('thinking', payload.nodeId)
 
     // Set agent status on the node via Yjs
-    this.yjsClient?.setAgentStatus(payload.nodeId, 'thinking')
-    this.yjsClient?.appendAgentLog(payload.nodeId, {
+    yjsClient?.setAgentStatus(payload.nodeId, 'thinking')
+    yjsClient?.appendAgentLog(payload.nodeId, {
       type: 'status',
       text: 'Session started',
     })
@@ -136,6 +149,8 @@ export class AgentSessionManager {
       conversationLog: [],
       stage: payload.stage,
       tokenUsage: { inputTokens: 0, outputTokens: 0 },
+      yjsClient,
+      graphId: payload.graphId,
     }
     this.activeSessions.set(payload.nodeId, activeSession)
 
@@ -155,8 +170,8 @@ export class AgentSessionManager {
           onSignal: (signal) => { activeSession.lastSignal = signal },
           stage: payload.stage,
         })
-        : this.yjsClient
-          ? createThinkGraphTools(this.yjsClient, payload.graphId, payload.nodeId)
+        : yjsClient
+          ? createThinkGraphTools(yjsClient, payload.graphId, payload.nodeId)
           : [] // No Yjs client — tools won't work but session can still run
 
       // Build the prompt
@@ -186,8 +201,8 @@ export class AgentSessionManager {
 
       // Start the agent work
       console.log(`[session-manager] Sending initial prompt for ${payload.nodeId}`)
-      this.yjsClient?.setAgentStatus(payload.nodeId, 'working')
-      this.yjsClient?.sendAwareness('working', payload.nodeId)
+      yjsClient?.setAgentStatus(payload.nodeId, 'working')
+      yjsClient?.sendAwareness('working', payload.nodeId)
       activeSession.isProcessing = true
       await session.prompt(agentPrompt)
       activeSession.isProcessing = false
@@ -195,8 +210,8 @@ export class AgentSessionManager {
       if (mode === 'rich' && !payload.callbackUrl) {
         // Rich sessions stay alive — mark as idle, wait for more prompts
         console.log(`[session-manager] Initial prompt done for ${payload.nodeId}, session stays alive`)
-        this.yjsClient?.setAgentStatus(payload.nodeId, 'idle')
-        this.yjsClient?.sendAwareness('idle', payload.nodeId)
+        yjsClient?.setAgentStatus(payload.nodeId, 'idle')
+        yjsClient?.sendAwareness('idle', payload.nodeId)
         await this.updateNodeStatus(payload.nodeId, 'idle')
 
         // Process any queued prompts
@@ -204,14 +219,14 @@ export class AgentSessionManager {
       } else {
         // HTTP dispatch or legacy: complete and callback
         this.stopFlushTimer(payload.nodeId)
-        this.yjsClient?.setAgentStatus(payload.nodeId, 'done')
-        this.yjsClient?.appendAgentLog(payload.nodeId, {
+        yjsClient?.setAgentStatus(payload.nodeId, 'done')
+        yjsClient?.appendAgentLog(payload.nodeId, {
           type: 'status',
           text: 'Session completed',
         })
-        this.yjsClient?.sendAwareness('idle', null)
+        yjsClient?.sendAwareness('idle', null)
         await this.updateNodeStatus(payload.nodeId, 'done')
-        this.activeSessions.delete(payload.nodeId)
+        this.cleanupSession(payload.nodeId)
         console.log(`[session-manager] Session ended for ${payload.nodeId}`)
         await this.sendCallback(activeSession, 'done')
       }
@@ -219,19 +234,19 @@ export class AgentSessionManager {
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
-      this.yjsClient?.setAgentStatus(payload.nodeId, 'error')
-      this.yjsClient?.appendAgentLog(payload.nodeId, {
+      yjsClient?.setAgentStatus(payload.nodeId, 'error')
+      yjsClient?.appendAgentLog(payload.nodeId, {
         type: 'error',
         text: message,
       })
-      this.yjsClient?.sendAwareness('error', payload.nodeId)
+      yjsClient?.sendAwareness('error', payload.nodeId)
       this.stopFlushTimer(payload.nodeId)
       await this.updateNodeStatus(payload.nodeId, 'error')
       const failedSession = this.activeSessions.get(payload.nodeId)
       if (failedSession) {
         await this.sendCallback(failedSession, 'error', message)
       }
-      this.activeSessions.delete(payload.nodeId)
+      this.cleanupSession(payload.nodeId)
     }
   }
 
@@ -246,23 +261,22 @@ export class AgentSessionManager {
       active.promptQueue.push(text)
       console.log(`[session-manager] Queued prompt for ${nodeId} (${active.promptQueue.length} in queue)`)
     } else {
-      // Execute immediately
       active.isProcessing = true
-      this.yjsClient?.setAgentStatus(nodeId, 'working')
-      this.yjsClient?.sendAwareness('working', nodeId)
+      active.yjsClient?.setAgentStatus(nodeId, 'working')
+      active.yjsClient?.sendAwareness('working', nodeId)
       this.updateNodeStatus(nodeId, 'working')
 
       active.session.prompt(text)
         .then(() => {
           active.isProcessing = false
-          this.yjsClient?.setAgentStatus(nodeId, 'idle')
-          this.yjsClient?.sendAwareness('idle', nodeId)
+          active.yjsClient?.setAgentStatus(nodeId, 'idle')
+          active.yjsClient?.sendAwareness('idle', nodeId)
           this.updateNodeStatus(nodeId, 'idle')
           this.processPromptQueue(nodeId)
         })
         .catch((err: Error) => {
           console.error(`[session-manager] Prompt failed for ${nodeId}:`, err)
-          this.yjsClient?.appendAgentLog(nodeId, {
+          active.yjsClient?.appendAgentLog(nodeId, {
             type: 'error',
             text: `Prompt failed: ${err.message}`,
           })
@@ -295,15 +309,15 @@ export class AgentSessionManager {
     while (active.promptQueue.length > 0) {
       const text = active.promptQueue.shift()!
       active.isProcessing = true
-      this.yjsClient?.setAgentStatus(nodeId, 'working')
-      this.yjsClient?.sendAwareness('working', nodeId)
+      active.yjsClient?.setAgentStatus(nodeId, 'working')
+      active.yjsClient?.sendAwareness('working', nodeId)
       await this.updateNodeStatus(nodeId, 'working')
 
       try {
         await active.session.prompt(text)
       } catch (err) {
         console.error(`[session-manager] Queued prompt failed for ${nodeId}:`, err)
-        this.yjsClient?.appendAgentLog(nodeId, {
+        active.yjsClient?.appendAgentLog(nodeId, {
           type: 'error',
           text: `Prompt failed: ${err instanceof Error ? err.message : String(err)}`,
         })
@@ -313,8 +327,8 @@ export class AgentSessionManager {
     }
 
     if (active.mode === 'rich') {
-      this.yjsClient?.setAgentStatus(nodeId, 'idle')
-      this.yjsClient?.sendAwareness('idle', nodeId)
+      active.yjsClient?.setAgentStatus(nodeId, 'idle')
+      active.yjsClient?.sendAwareness('idle', nodeId)
       await this.updateNodeStatus(nodeId, 'idle')
     }
   }
@@ -345,13 +359,24 @@ export class AgentSessionManager {
     if (!active) return
 
     console.log(`[session-manager] Ending session for ${nodeId}`)
-    this.yjsClient?.setAgentStatus(nodeId, 'done')
-    this.yjsClient?.appendAgentLog(nodeId, {
+    active.yjsClient?.setAgentStatus(nodeId, 'done')
+    active.yjsClient?.appendAgentLog(nodeId, {
       type: 'status',
       text: 'Session ended',
     })
-    this.yjsClient?.sendAwareness('idle', null)
+    active.yjsClient?.sendAwareness('idle', null)
     await this.updateNodeStatus(nodeId, 'done')
+    this.cleanupSession(nodeId)
+  }
+
+  /** Remove session and release pool reference */
+  private cleanupSession(nodeId: string): void {
+    const active = this.activeSessions.get(nodeId)
+    if (!active) return
+    // Release the canvas room reference back to the pool
+    if (this.yjsPool && active.graphId) {
+      this.yjsPool.release(active.graphId)
+    }
     this.activeSessions.delete(nodeId)
   }
 
@@ -359,6 +384,7 @@ export class AgentSessionManager {
 
   /** Map Pi agent events to Yjs node data updates */
   private handleSessionEvent(nodeId: string, event: any, active: ActiveSession): void {
+    const yjs = active.yjsClient
     switch (event.type) {
       case 'message_start': {
         if (event.message?.usage) {
@@ -377,20 +403,17 @@ export class AgentSessionManager {
 
         for (const item of content) {
           if (item.type === 'text' && item.text) {
-            // Store latest complete text
             active.accumulatedOutput = [item.text]
-            // Write to Yjs agent log
-            this.yjsClient?.appendAgentLog(nodeId, {
+            yjs?.appendAgentLog(nodeId, {
               type: 'text',
               text: item.text,
             })
-            // Capture for conversation log
             if (item.text.length > 20) {
               active.conversationLog.push(`[assistant] ${item.text.slice(0, 500)}`)
             }
           }
           else if (item.type === 'tool_use') {
-            this.yjsClient?.appendAgentLog(nodeId, {
+            yjs?.appendAgentLog(nodeId, {
               type: 'tool_use',
               name: item.name,
               input: item.input,
@@ -398,7 +421,7 @@ export class AgentSessionManager {
             active.conversationLog.push(`[tool] ${item.name}`)
           }
           else if (item.type === 'thinking') {
-            this.yjsClient?.appendAgentLog(nodeId, {
+            yjs?.appendAgentLog(nodeId, {
               type: 'thinking',
               text: (item.thinking || '').split('\n')[0].slice(0, 200),
             })
@@ -412,7 +435,7 @@ export class AgentSessionManager {
             ? event.result.slice(0, 500)
             : JSON.stringify(event.result).slice(0, 500)
 
-          this.yjsClient?.appendAgentLog(nodeId, {
+          yjs?.appendAgentLog(nodeId, {
             type: 'tool_result',
             result: resultText,
           })
@@ -420,13 +443,13 @@ export class AgentSessionManager {
         break
       }
       case 'auto_compaction_start':
-        this.yjsClient?.appendAgentLog(nodeId, {
+        yjs?.appendAgentLog(nodeId, {
           type: 'status',
           text: 'Compacting conversation...',
         })
         break
       case 'auto_retry_start':
-        this.yjsClient?.appendAgentLog(nodeId, {
+        yjs?.appendAgentLog(nodeId, {
           type: 'status',
           text: `Retrying (attempt ${event.attempt}/${event.maxAttempts})...`,
         })
@@ -613,14 +636,23 @@ cat ~/nuxt-crouton/.claude/skills/crouton.md
 
 Follow the brief. Use the conventions from the files you just read.
 
-### Step 3: Pre-Commit Checks
+### Step 3: Screenshot Your Work
+
+After completing visual changes, take screenshots and upload them as deliverables:
+1. Use Playwright to take a screenshot of the result
+2. Use \`upload_screenshot\` to upload it — this attaches it to your work item as an artifact
+3. Include a descriptive label (e.g., "homepage-after-fix", "new-sidebar-layout")
+
+This is especially valuable for UI work — the reviewer and human can see what you built without running the code.
+
+### Step 4: Pre-Commit Checks
 
 Before committing:
 1. **i18n** — if you touched .vue files, check for hardcoded strings (per i18n-check skill)
 2. **Docs sync** — if you changed public API (composables, components, endpoints), update the relevant CLAUDE.md (per sync-docs skill)
 3. **Commit format** — follow the commit conventions from the commit skill
 
-### Step 4: Commit, Push, Create PR
+### Step 5: Commit, Push, Create PR
 
 Follow the worktree instructions above to commit, push, and create a PR.
 Use \`update_workitem\` to set worktree, output, and signal.

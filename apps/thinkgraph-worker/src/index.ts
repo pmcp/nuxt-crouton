@@ -16,7 +16,7 @@ import { createServer } from 'node:http'
 import { loadConfig } from './config.js'
 import { AgentSessionManager } from './session-manager.js'
 import { DispatchWatcher } from './dispatch-watcher.js'
-import { YjsFlowClient } from './yjs-client.js'
+import { YjsFlowPool } from './yjs-pool.js'
 
 const WORKER_VERSION = 'yjs-1'
 
@@ -93,6 +93,7 @@ async function main() {
   console.log(`Work dir:     ${config.workDir}`)
   console.log(`Max sessions: ${config.maxSessions}`)
   console.log(`Collab:       ${config.collabWorkerUrl || 'same-origin (dev)'}`)
+  console.log(`Yjs pool:     on-demand (connects per canvas on dispatch)`)
   console.log()
 
   // Authenticate and get service token
@@ -103,15 +104,9 @@ async function main() {
   // Initialize session manager
   const sessionManager = new AgentSessionManager(config)
 
-  // Resolve the flow ID for the team's main canvas
-  // In production this would be fetched from the team config;
-  // for now use env var or default to team ID
-  const flowId = process.env.THINKGRAPH_FLOW_ID || config.teamId
-
-  // Connect to the flow room via Yjs
-  const yjsClient = new YjsFlowClient({
-    config,
-    flowId,
+  // Yjs flow pool — manages per-canvas connections on demand
+  // No connection at startup — connections are established when dispatches arrive
+  const yjsPool = new YjsFlowPool(config, {
     onUserPrompt: (nodeId, prompt) => {
       sessionManager.handlePrompt(nodeId, prompt)
     },
@@ -122,26 +117,8 @@ async function main() {
       sessionManager.handleSteer(nodeId, message)
     },
   })
-
-  // Connect Yjs — retry on failure
-  try {
-    await yjsClient.connect()
-    sessionManager.setYjsClient(yjsClient)
-    console.log('[yjs-flow] Connected and synced')
-  } catch (err) {
-    console.warn(`[yjs-flow] Initial connection failed: ${err instanceof Error ? err.message : err}`)
-    console.warn('[yjs-flow] Will retry in background — sessions will use HTTP fallback until connected')
-    // Retry in background
-    setTimeout(async () => {
-      try {
-        await yjsClient.connect()
-        sessionManager.setYjsClient(yjsClient)
-        console.log('[yjs-flow] Connected and synced (retry)')
-      } catch {
-        console.error('[yjs-flow] Retry failed — running without Yjs')
-      }
-    }, 5000)
-  }
+  sessionManager.setYjsPool(yjsPool)
+  console.log('[yjs-pool] Ready — canvas rooms connect on demand')
 
   // Optional: dispatch watcher (legacy polling)
   const dispatchWatcher = new DispatchWatcher(config, sessionManager)
@@ -174,8 +151,7 @@ async function main() {
         uptime: Math.floor((Date.now() - startedAt) / 1000),
         activeSessions: sessionManager.activeCount,
         maxSessions: sessionManager.maxSessions,
-        yjsConnected: yjsClient.isConnected,
-        yjsSynced: yjsClient.isSynced,
+        yjsCanvases: yjsPool.getStatus(),
         memory: {
           rss: Math.round(mem.rss / 1024 / 1024),
           heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
@@ -237,7 +213,7 @@ async function main() {
           version: WORKER_VERSION,
           workItemId: payload.workItemId,
           skill: payload.skill,
-          yjsConnected: yjsClient.isConnected,
+          yjsCanvases: yjsPool.size,
         }))
       } catch (err: any) {
         console.error('[http-dispatch] Error:', err.message)
@@ -263,7 +239,7 @@ async function main() {
     console.log('\nShutting down...')
     httpServer.close()
     dispatchWatcher.stop()
-    yjsClient.disconnect()
+    yjsPool.disconnectAll()
     await sessionManager.abortAll()
     console.log('Goodbye.')
     process.exit(0)
