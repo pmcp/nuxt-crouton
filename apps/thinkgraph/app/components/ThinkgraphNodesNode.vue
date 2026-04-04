@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
-import { STATUS_CONFIG, getTemplateConfig, getTemplateBadge, STAGE_LABELS } from '~/utils/thinkgraph-config'
+import { STATUS_CONFIG, ASSIGNEE_CONFIG, getTemplateConfig, getTemplateBadge, STAGE_LABELS, computePipelineStages } from '~/utils/thinkgraph-config'
 
 interface Props {
   data: Record<string, unknown>
@@ -35,45 +35,19 @@ const node = computed(() => props.data as unknown as ThinkgraphNode)
 const templateStyle = computed(() => getTemplateConfig(node.value.template || 'idea'))
 const statusConfig = computed(() => STATUS_CONFIG[node.value.status] || STATUS_CONFIG.idle)
 
-const ASSIGNEE_CONFIG: Record<string, { icon: string; label: string }> = {
-  pi: { icon: 'i-lucide-bot', label: 'Pi' },
-  human: { icon: 'i-lucide-user', label: 'You' },
-  client: { icon: 'i-lucide-users', label: 'Client' },
-  ci: { icon: 'i-lucide-git-branch', label: 'CI' },
-}
-
 // Pipeline — adapts to whatever steps the node has
 const nodeSteps = computed(() => {
   const steps = node.value.steps
   return Array.isArray(steps) && steps.length > 0 ? steps : []
 })
 const hasPipeline = computed(() => nodeSteps.value.length > 0)
-const currentStage = computed(() => node.value.stage || null)
-const currentSignal = computed(() => node.value.signal || null)
 const isWorking = computed(() => node.value.status === 'active' || node.value.status === 'working')
 const isDone = computed(() => node.value.status === 'done')
 
 const pipelineDots = computed(() => {
   const steps = nodeSteps.value
   if (steps.length === 0) return []
-  const stage = currentStage.value
-  const signal = currentSignal.value
-  if (!stage) {
-    return steps.map(s => ({ stage: s, label: STAGE_LABELS[s] || s[0].toUpperCase(), state: 'pending' as const }))
-  }
-  const currentIdx = steps.indexOf(stage)
-  return steps.map((s, idx) => {
-    const label = STAGE_LABELS[s] || s[0].toUpperCase()
-    if (currentIdx >= 0 && idx < currentIdx) return { stage: s, label, state: 'done' as const }
-    if (idx === currentIdx) {
-      if (isWorking.value) return { stage: s, label, state: 'working' as const }
-      if (signal === 'green') return { stage: s, label, state: 'green' as const }
-      if (signal === 'orange') return { stage: s, label, state: 'orange' as const }
-      if (signal === 'red') return { stage: s, label, state: 'red' as const }
-      return { stage: s, label, state: 'current' as const }
-    }
-    return { stage: s, label, state: 'pending' as const }
-  })
+  return computePipelineStages(node.value.stage, node.value.status, node.value.signal, steps)
 })
 
 const assigneeConfig = computed(() => {

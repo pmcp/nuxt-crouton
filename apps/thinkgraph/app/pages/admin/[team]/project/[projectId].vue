@@ -2,6 +2,14 @@
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
 import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
 import NodeChatPanel from '~/components/NodeChatPanel.vue'
+import {
+  TEMPLATE_BADGE,
+  STATUS_DISPLAY,
+  DETAIL_TEMPLATE_CONFIG,
+  DETAIL_STATUS_CONFIG,
+  PIPELINE_STAGES,
+  computePipelineStages,
+} from '~/utils/thinkgraph-config'
 
 // Explicitly register so CroutonFlow's resolveComponent() can find it
 // CroutonFlow: "thinkgraphNodes" → PascalCase "ThinkgraphNodes" + "Node" → "ThinkgraphNodesNode"
@@ -851,22 +859,8 @@ const STATUS_PILL: Record<string, string> = {
   blocked: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
-// ─── List view config ───
-const STATUS_CONFIG_LIST: Record<string, { icon: string; class: string }> = {
-  queued: { icon: 'i-lucide-circle-dashed', class: 'text-neutral-400' },
-  active: { icon: 'i-lucide-loader-2', class: 'text-primary-500 animate-spin' },
-  waiting: { icon: 'i-lucide-pause-circle', class: 'text-amber-500' },
-  done: { icon: 'i-lucide-check-circle', class: 'text-green-500' },
-  blocked: { icon: 'i-lucide-alert-circle', class: 'text-red-500' },
-}
-
-const TEMPLATE_BADGE: Record<string, string> = {
-  idea: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-  research: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  task: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  feature: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-  meta: 'bg-rose-100 text-rose-700 dark:bg-rose-100/30 dark:text-rose-400',
-}
+// ─── List view config (from shared utils) ───
+const STATUS_CONFIG_LIST = STATUS_DISPLAY
 
 // ─── Kanban config ───
 const kanbanColumns = [
@@ -1088,25 +1082,9 @@ const stageAccordionItems = computed(() => {
 })
 
 // ─── Detail panel status bar ───
-const DETAIL_PIPELINE_STAGES = ['analyst', 'builder', 'launcher', 'reviewer', 'merger'] as const
-const DETAIL_STAGE_LABELS: Record<string, string> = { analyst: 'A', builder: 'B', launcher: 'L', reviewer: 'R', merger: 'M' }
-
 const detailPipelineDots = computed(() => {
   const si = selectedItem.value
-  if (!si?.stage) return DETAIL_PIPELINE_STAGES.map(s => ({ stage: s, label: DETAIL_STAGE_LABELS[s], state: 'pending' as const }))
-  const currentIdx = DETAIL_PIPELINE_STAGES.indexOf(si.stage as any)
-  const isWorking = si.status === 'active'
-  return DETAIL_PIPELINE_STAGES.map((s, idx) => {
-    if (idx < currentIdx) return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'done' as const }
-    if (idx === currentIdx) {
-      if (isWorking) return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'working' as const }
-      if (si.signal === 'green') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'green' as const }
-      if (si.signal === 'orange') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'orange' as const }
-      if (si.signal === 'red') return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'red' as const }
-      return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'current' as const }
-    }
-    return { stage: s, label: DETAIL_STAGE_LABELS[s], state: 'pending' as const }
-  })
+  return computePipelineStages(si?.stage, si?.status, si?.signal, PIPELINE_STAGES)
 })
 
 const detailTags = computed(() => {
@@ -1137,21 +1115,7 @@ const backlinks = computed(() => {
   })
 })
 
-const DETAIL_TEMPLATE_CONFIG: Record<string, { icon: string; label: string; class: string }> = {
-  idea: { icon: 'i-lucide-lightbulb', label: 'Idea', class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-  research: { icon: 'i-lucide-search', label: 'Research', class: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
-  task: { icon: 'i-lucide-hammer', label: 'Task', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  feature: { icon: 'i-lucide-rocket', label: 'Feature', class: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' },
-  meta: { icon: 'i-lucide-brain-circuit', label: 'Meta', class: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
-}
-
-const DETAIL_STATUS_CONFIG: Record<string, { icon: string; label: string; class: string }> = {
-  queued: { icon: 'i-lucide-circle-dashed', label: 'Queued', class: 'text-neutral-400' },
-  active: { icon: 'i-lucide-loader-2', label: 'Active', class: 'text-blue-500' },
-  waiting: { icon: 'i-lucide-pause-circle', label: 'Waiting', class: 'text-amber-500' },
-  done: { icon: 'i-lucide-check-circle', label: 'Done', class: 'text-green-500' },
-  blocked: { icon: 'i-lucide-alert-circle', label: 'Blocked', class: 'text-red-500' },
-}
+// DETAIL_TEMPLATE_CONFIG and DETAIL_STATUS_CONFIG imported from ~/utils/thinkgraph-config
 
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
