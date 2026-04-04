@@ -717,14 +717,31 @@ These contain the project's coding conventions and the full review checklist (se
   Alternatively, run \`git checkout <branch-name>\` to switch — but note this changes the worktree state for any concurrent workers.
 - Read the FULL changed files, not just the diff — you need surrounding context for unused imports, broken references, duplicated logic
 
-### Step 3: Screenshot Issues (if visual)
+### Step 3: Fast-Path for Non-Code Changes
+
+Before running the full checklist, check if the diff is **doc-only** — meaning every changed file is a documentation or config file (\`.md\`, \`.yml\`, \`.yaml\`, \`.json\`, \`.toml\`, \`.txt\`) with **no** code files (\`.ts\`, \`.vue\`, \`.css\`, \`.scss\`, \`.js\`, \`.mjs\`).
+
+\`\`\`bash
+git diff main...<branch-name> --name-only | grep -E '\\.(ts|vue|css|scss|js|mjs)$'
+\`\`\`
+
+If that returns **nothing** (no code files changed), use this shortened checklist instead of the full one:
+- [ ] Content is accurate and not misleading
+- [ ] No typos or grammar issues
+- [ ] Links/references are valid (file paths, URLs, anchors)
+- [ ] Formatting is consistent with surrounding content
+- [ ] No secrets, tokens, or credentials in the content
+
+Skip all code-specific categories (security, API patterns, Vue components, package boundaries, dead code). Proceed directly to Step 6 (Verdict) with findings from this shortened checklist.
+
+### Step 4: Screenshot Issues (if visual)
 
 If you spot visual issues or want to show before/after states:
 1. Use Playwright to take a screenshot
 2. Use \`upload_screenshot\` to attach it to the work item with a descriptive label
 3. Reference the screenshot in your review output
 
-### Step 4: Run the Review Checklist
+### Step 5: Run the Full Review Checklist
 
 **Do NOT run \`pnpm typecheck\` locally** — it exceeds available memory. Typecheck runs automatically in CI on every PR. If you need the result, check the CI status:
 \`\`\`bash
@@ -737,7 +754,7 @@ Apply the checklist from \`review/SKILL.md\` to every changed file. Check bounda
 - 🟡 **Warning** — bug likely, pattern violation, missing validation
 - 🔵 **Note** — minor issue, potential improvement
 
-### Step 5: Verdict
+### Step 6: Verdict
 
 Use \`update_workitem\` to set your **verdict** and signal. You MUST set the \`verdict\` field.
 
