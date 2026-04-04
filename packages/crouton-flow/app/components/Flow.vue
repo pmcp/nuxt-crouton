@@ -457,7 +457,7 @@ const layoutOptions = computed(() => ({
   nodeHeight: props.flowConfig?.nodeHeight ?? 36,
 }))
 
-const { applyLayout, applyLayoutToNew, needsLayout } = useFlowLayout(layoutOptions.value)
+const { applyLayout, applyLayoutToNew, applySubtreeLayout, getSubtreeIds, needsLayout } = useFlowLayout(layoutOptions.value)
 
 // Position persistence strategy:
 // 1. sync + ephemeral → Yjs position-only sync (real-time multiplayer)
@@ -898,12 +898,85 @@ function unlockNode(nodeId: string) {
 provide('croutonFlowLockedIds', lockedNodeIds)
 provide('croutonFlowUnlockNode', unlockNode)
 
+// ============================================
+// PUBLIC LAYOUT METHODS
+// ============================================
+
+/**
+ * Re-layout all nodes using dagre, clearing all locked positions.
+ */
+function relayoutAll() {
+  lockedNodeIds.value.clear()
+  positionCache.clear()
+  initialLayoutApplied.value = false
+
+  const nodes = finalNodes.value.filter(n => n.type !== 'ghost')
+  const edges = finalEdges.value
+  const result = applyLayout(nodes, edges)
+
+  for (const node of result) {
+    if (node.position) {
+      positionCache.set(node.id, { ...node.position })
+      lockedNodeIds.value.add(node.id)
+      if (syncState) {
+        syncState.updatePosition(node.id, node.position)
+      } else {
+        debouncedUpdate(node.id, node.position)
+      }
+    }
+  }
+  initialLayoutApplied.value = true
+}
+
+/**
+ * Layout only the subtree rooted at rootId using dagre.
+ * Root keeps its current position; children are re-arranged below.
+ */
+function layoutSubtree(rootId: string) {
+  const nodes = finalNodes.value.filter(n => n.type !== 'ghost')
+  const edges = finalEdges.value
+  const result = applySubtreeLayout(rootId, nodes, edges)
+
+  // Persist new positions for subtree nodes
+  const subtreeIds = getSubtreeIds(rootId, edges)
+  for (const node of result) {
+    if (subtreeIds.has(node.id) && node.position) {
+      positionCache.set(node.id, { ...node.position })
+      lockedNodeIds.value.add(node.id)
+      if (syncState) {
+        syncState.updatePosition(node.id, node.position)
+      } else {
+        debouncedUpdate(node.id, node.position)
+      }
+    }
+  }
+}
+
+/**
+ * Select a node and all its descendants.
+ * Returns the set of selected IDs.
+ */
+function selectSubtree(rootId: string): string[] {
+  const edges = finalEdges.value
+  const ids = getSubtreeIds(rootId, edges)
+  const nodeObjs = [...ids]
+    .map(id => findNode(id))
+    .filter(Boolean) as Node[]
+  addSelectedNodes(nodeObjs)
+  const selectedIds = [...ids]
+  emit('update:selected', selectedIds)
+  return selectedIds
+}
+
 // Expose sync state and container detection for external access
 defineExpose({
   syncState,
   containerDetection,
   lockedNodeIds,
   unlockNode,
+  relayoutAll,
+  layoutSubtree,
+  selectSubtree,
 })
 </script>
 

@@ -256,9 +256,104 @@ export function useFlowLayout(options: UseFlowLayoutOptions = {}) {
     })
   }
 
+  /**
+   * Layout only the subtree rooted at a given node.
+   * The root keeps its current position; children are laid out below it using dagre.
+   */
+  const applySubtreeLayout = (rootId: string, nodes: Node[], edges: Edge[]): Node[] => {
+    // Collect all descendant IDs via BFS
+    const childMap = new Map<string, string[]>()
+    for (const edge of edges) {
+      const children = childMap.get(edge.source) || []
+      children.push(edge.target)
+      childMap.set(edge.source, children)
+    }
+
+    const subtreeIds = new Set<string>()
+    const queue = [rootId]
+    while (queue.length > 0) {
+      const id = queue.shift()!
+      subtreeIds.add(id)
+      for (const child of childMap.get(id) || []) {
+        if (!subtreeIds.has(child)) queue.push(child)
+      }
+    }
+
+    if (subtreeIds.size <= 1) return nodes
+
+    const subtreeNodes = nodes.filter(n => subtreeIds.has(n.id))
+    const subtreeEdges = edges.filter(e => subtreeIds.has(e.source) && subtreeIds.has(e.target))
+
+    const dagreGraph = new dagre.graphlib.Graph()
+    dagreGraph.setDefaultEdgeLabel(() => ({}))
+    const isHorizontal = direction === 'LR' || direction === 'RL'
+    dagreGraph.setGraph({
+      rankdir: direction,
+      nodesep: nodeSpacing,
+      ranksep: rankSpacing,
+      marginx: 20,
+      marginy: 20,
+    })
+
+    for (const node of subtreeNodes) {
+      dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight })
+    }
+    for (const edge of subtreeEdges) {
+      dagreGraph.setEdge(edge.source, edge.target)
+    }
+    dagre.layout(dagreGraph)
+
+    // Offset so root stays at its current position
+    const rootNode = nodes.find(n => n.id === rootId)
+    const dagreRoot = dagreGraph.node(rootId)
+    if (!rootNode || !dagreRoot) return nodes
+
+    const offsetX = rootNode.position.x - (dagreRoot.x - nodeWidth / 2)
+    const offsetY = rootNode.position.y - (dagreRoot.y - nodeHeight / 2)
+
+    return nodes.map((node) => {
+      if (!subtreeIds.has(node.id)) return node
+      const pos = dagreGraph.node(node.id)
+      if (!pos) return node
+      return {
+        ...node,
+        position: {
+          x: pos.x - nodeWidth / 2 + offsetX,
+          y: pos.y - nodeHeight / 2 + offsetY,
+        },
+        targetPosition: isHorizontal ? 'left' : 'top',
+        sourcePosition: isHorizontal ? 'right' : 'bottom',
+      } as Node
+    })
+  }
+
+  /**
+   * Collect all descendant node IDs of a given root (inclusive).
+   */
+  const getSubtreeIds = (rootId: string, edges: Edge[]): Set<string> => {
+    const childMap = new Map<string, string[]>()
+    for (const edge of edges) {
+      const children = childMap.get(edge.source) || []
+      children.push(edge.target)
+      childMap.set(edge.source, children)
+    }
+    const ids = new Set<string>()
+    const queue = [rootId]
+    while (queue.length > 0) {
+      const id = queue.shift()!
+      ids.add(id)
+      for (const child of childMap.get(id) || []) {
+        if (!ids.has(child)) queue.push(child)
+      }
+    }
+    return ids
+  }
+
   return {
     applyLayout,
     applyLayoutToNew,
+    applySubtreeLayout,
+    getSubtreeIds,
     needsLayout
   }
 }
