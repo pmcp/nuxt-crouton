@@ -1553,6 +1553,32 @@ if (import.meta.client) {
             >{{ tag.emoji }}</span>
           </div>
 
+          <!-- Blocked by dependencies -->
+          <div v-if="selectedItem.dependsOn?.length" class="mb-4">
+            <p class="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">Blocked by</p>
+            <div class="flex flex-col gap-1.5">
+              <button
+                v-for="depId in selectedItem.dependsOn"
+                :key="depId"
+                class="flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-colors"
+                :class="items.find(n => n.id === depId)?.status === 'done'
+                  ? 'border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-950/20'
+                  : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-950/20 hover:border-red-300 dark:hover:border-red-700'"
+                @click="selectedItemId = depId; showDetail = true"
+              >
+                <UIcon
+                  :name="items.find(n => n.id === depId)?.status === 'done' ? 'i-lucide-check-circle' : 'i-lucide-alert-circle'"
+                  class="size-3.5 shrink-0"
+                  :class="items.find(n => n.id === depId)?.status === 'done' ? 'text-green-500' : 'text-red-400'"
+                />
+                <span class="text-sm truncate flex-1">
+                  {{ items.find(n => n.id === depId)?.title || depId }}
+                </span>
+                <UIcon name="i-lucide-arrow-right" class="size-3 text-muted shrink-0" />
+              </button>
+            </div>
+          </div>
+
           <!-- Brief -->
           <UFormField label="Brief" class="mb-4">
             <UTextarea
