@@ -2,10 +2,10 @@
  * ThinkGraph Pi Worker — entry point.
  *
  * Standalone Node.js service that:
- * 1. Connects to ThinkGraph's Yjs rooms for presence (optional, future)
- * 2. Polls for dispatch triggers (nodes with 'dispatching' status)
+ * 1. Connects to ThinkGraph's Yjs flow room as a collaborator (presence + real-time ops)
+ * 2. Polls for dispatch triggers (optional, disabled by default)
  * 3. Runs Pi agent sessions for dispatched nodes
- * 4. Streams terminal output via WebSocket to ThinkGraph
+ * 4. All real-time output flows through Yjs (no separate terminal WebSocket)
  *
  * Usage:
  *   pnpm dev     # Development with hot reload
@@ -16,9 +16,9 @@ import { createServer } from 'node:http'
 import { loadConfig } from './config.js'
 import { AgentSessionManager } from './session-manager.js'
 import { DispatchWatcher } from './dispatch-watcher.js'
-import { YjsClient } from './yjs-client.js'
+import { YjsFlowClient } from './yjs-client.js'
 
-const WORKER_VERSION = 'pm-2'
+const WORKER_VERSION = 'yjs-1'
 
 /** Authenticate with ThinkGraph server, retrying with exponential backoff on failure */
 async function authenticateWithRetry(config: { thinkgraphUrl: string; serviceToken: string }): Promise<string> {
@@ -30,8 +30,8 @@ async function authenticateWithRetry(config: { thinkgraphUrl: string; serviceTok
   }
 
   const { ofetch } = await import('ofetch')
-  const MAX_RETRIES = 50 // ~2 hours with max backoff
-  const MAX_BACKOFF_MS = 120_000 // 2 minutes max between retries
+  const MAX_RETRIES = 50
+  const MAX_BACKOFF_MS = 120_000
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -42,7 +42,7 @@ async function authenticateWithRetry(config: { thinkgraphUrl: string; serviceTok
         method: 'POST',
         headers: { 'Origin': config.thinkgraphUrl },
         body: { email, password },
-        timeout: 10_000, // 10s timeout per attempt
+        timeout: 10_000,
         onResponse({ response }) {
           const cookies = (response.headers as any).getSetCookie?.() || []
           for (const cookie of cookies) {
@@ -68,12 +68,10 @@ async function authenticateWithRetry(config: { thinkgraphUrl: string; serviceTok
       const isNetworkError = message.includes('fetch failed') || message.includes('ECONNREFUSED') || message.includes('no response') || message.includes('timeout')
 
       if (!isNetworkError) {
-        // Real auth error (wrong credentials, etc.) — don't retry
         console.error(`[auth] Authentication failed (not retryable): ${message}`)
         process.exit(1)
       }
 
-      // Network error — server unreachable, retry with backoff
       const backoff = Math.min(MAX_BACKOFF_MS, 5_000 * Math.pow(1.5, attempt - 1))
       console.warn(`[auth] Server unreachable: ${message}`)
       console.warn(`[auth] Retrying in ${Math.round(backoff / 1000)}s (attempt ${attempt}/${MAX_RETRIES})`)
@@ -90,41 +88,67 @@ async function main() {
   console.log()
 
   const config = loadConfig()
-  console.log(`Server:     ${config.thinkgraphUrl}`)
-  console.log(`Team:       ${config.teamId}`)
-  console.log(`Work dir:   ${config.workDir}`)
+  console.log(`Server:       ${config.thinkgraphUrl}`)
+  console.log(`Team:         ${config.teamId}`)
+  console.log(`Work dir:     ${config.workDir}`)
   console.log(`Max sessions: ${config.maxSessions}`)
+  console.log(`Collab:       ${config.collabWorkerUrl || 'same-origin (dev)'}`)
   console.log()
 
-  // Authenticate and get service token — retry with backoff if server is unreachable
+  // Authenticate and get service token
   if (!config.serviceToken) {
     config.serviceToken = await authenticateWithRetry(config)
   }
 
-  // Initialize components
+  // Initialize session manager
   const sessionManager = new AgentSessionManager(config)
-  const dispatchWatcher = new DispatchWatcher(config, sessionManager)
 
-  // Optional: Yjs client for presence and real-time signals
-  const yjsClient = new YjsClient(config, (collection, version) => {
-    if (collection === 'thinkgraphDecisions') {
-      console.log(`[yjs] thinkgraphDecisions version ${version} — triggering poll`)
-      // The dispatch watcher will pick up changes on next poll
-      // Future: trigger immediate poll here
-    }
+  // Resolve the flow ID for the team's main canvas
+  // In production this would be fetched from the team config;
+  // for now use env var or default to team ID
+  const flowId = process.env.THINKGRAPH_FLOW_ID || config.teamId
+
+  // Connect to the flow room via Yjs
+  const yjsClient = new YjsFlowClient({
+    config,
+    flowId,
+    onUserPrompt: (nodeId, prompt) => {
+      sessionManager.handlePrompt(nodeId, prompt)
+    },
+    onUserAbort: (nodeId) => {
+      sessionManager.handleAbort(nodeId)
+    },
+    onUserSteer: (nodeId, message) => {
+      sessionManager.handleSteer(nodeId, message)
+    },
   })
 
-  // Start watching for dispatches (legacy polling — disabled for PM flow, HTTP dispatch is primary)
+  // Connect Yjs — retry on failure
+  try {
+    await yjsClient.connect()
+    sessionManager.setYjsClient(yjsClient)
+    console.log('[yjs-flow] Connected and synced')
+  } catch (err) {
+    console.warn(`[yjs-flow] Initial connection failed: ${err instanceof Error ? err.message : err}`)
+    console.warn('[yjs-flow] Will retry in background — sessions will use HTTP fallback until connected')
+    // Retry in background
+    setTimeout(async () => {
+      try {
+        await yjsClient.connect()
+        sessionManager.setYjsClient(yjsClient)
+        console.log('[yjs-flow] Connected and synced (retry)')
+      } catch {
+        console.error('[yjs-flow] Retry failed — running without Yjs')
+      }
+    }, 5000)
+  }
+
+  // Optional: dispatch watcher (legacy polling)
+  const dispatchWatcher = new DispatchWatcher(config, sessionManager)
   if (process.env.ENABLE_POLL_WATCHER === 'true') {
     dispatchWatcher.start()
   } else {
     console.log('[dispatch-watcher] Disabled — using HTTP dispatch. Set ENABLE_POLL_WATCHER=true to enable.')
-  }
-
-  // Optional: connect Yjs for presence
-  // Disabled by default until DO protocol compatibility is verified
-  if (process.env.ENABLE_YJS === 'true') {
-    yjsClient.connect()
   }
 
   // HTTP server — health + dispatch endpoints
@@ -150,7 +174,8 @@ async function main() {
         uptime: Math.floor((Date.now() - startedAt) / 1000),
         activeSessions: sessionManager.activeCount,
         maxSessions: sessionManager.maxSessions,
-        yjsConnected: process.env.ENABLE_YJS === 'true' ? yjsClient.isConnected : false,
+        yjsConnected: yjsClient.isConnected,
+        yjsSynced: yjsClient.isSynced,
         memory: {
           rss: Math.round(mem.rss / 1024 / 1024),
           heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
@@ -171,21 +196,18 @@ async function main() {
         })
         const payload = JSON.parse(body)
 
-        // Validate required fields
         if (!payload.workItemId || !payload.prompt) {
           res.writeHead(400, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ error: 'Missing workItemId or prompt' }))
           return
         }
 
-        // Check capacity
         if (sessionManager.activeCount >= sessionManager.maxSessions) {
           res.writeHead(503, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ error: 'Max sessions reached', active: sessionManager.activeCount }))
           return
         }
 
-        // Map work item dispatch to the existing DispatchPayload format
         const dispatchPayload = {
           nodeId: payload.workItemId,
           graphId: payload.projectId || '',
@@ -204,19 +226,18 @@ async function main() {
           stage: payload.stage || undefined,
         }
 
-        // Start session (async — don't await completion)
         console.log(`[http-dispatch] Starting session for work item ${payload.workItemId} (skill: ${payload.skill || 'none'})`)
         sessionManager.startSession(dispatchPayload).catch(err => {
           console.error(`[http-dispatch] Session failed for ${payload.workItemId}:`, err.message)
         })
 
-        // Respond immediately — session runs in background
         res.writeHead(202, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({
           accepted: true,
           version: WORKER_VERSION,
           workItemId: payload.workItemId,
           skill: payload.skill,
+          yjsConnected: yjsClient.isConnected,
         }))
       } catch (err: any) {
         console.error('[http-dispatch] Error:', err.message)

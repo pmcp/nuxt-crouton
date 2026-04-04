@@ -18,6 +18,10 @@ export interface WorkerConfig {
   sessionDir: string
   /** LLM model to use */
   model: string
+  /** Collab worker URL for direct Yjs connection (production) */
+  collabWorkerUrl: string
+  /** BETTER_AUTH_SECRET shared with collab worker for HMAC token signing */
+  betterAuthSecret: string
 }
 
 export function loadConfig(): WorkerConfig {
@@ -47,5 +51,7 @@ export function loadConfig(): WorkerConfig {
     maxSessions: parseInt(process.env.PI_MAX_SESSIONS || '3', 10),
     sessionDir: process.env.PI_SESSION_DIR || './sessions',
     model: process.env.PI_MODEL || 'claude-sonnet-4-20250514',
+    collabWorkerUrl: process.env.COLLAB_WORKER_URL || '',
+    betterAuthSecret: process.env.BETTER_AUTH_SECRET || '',
   }
 }

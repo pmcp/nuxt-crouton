@@ -1,17 +1,19 @@
 /**
  * ThinkGraph tools for Pi agent sessions.
  *
- * These tools allow the Pi agent to interact with ThinkGraph:
- * create nodes, update nodes, get graph context, store artifacts, etc.
+ * These tools allow the Pi agent to interact with the ThinkGraph canvas
+ * via Yjs — the Pi worker is "just another collaborator", same as a browser.
  *
- * Tools call ThinkGraph's HTTP API — the Pi worker is "just another user."
+ * Write operations (create_node, update_node) go through the Y.Map and appear
+ * instantly on all connected browsers. Read operations (get_graph_overview,
+ * search_graph, get_thinking_path) read from the local Yjs doc.
  *
- * Uses the Pi SDK's ToolDefinition interface with TypeBox parameter schemas.
+ * store_artifact still uses HTTP — artifacts are stored server-side and not
+ * part of the Yjs flow node schema.
  */
 import { Type } from '@sinclair/typebox'
-import { ofetch } from 'ofetch'
 import type { ToolDefinition, AgentToolResult } from '@mariozechner/pi-coding-agent'
-import type { WorkerConfig } from './config.js'
+import type { YjsFlowClient, YjsFlowNode } from './yjs-client.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyToolDefinition = ToolDefinition<any, any>
@@ -23,17 +25,10 @@ function textResult(text: string): AgentToolResult<unknown> {
 
 /** Create the set of ThinkGraph tools for a Pi agent session */
 export function createThinkGraphTools(
-  config: WorkerConfig,
+  yjsClient: YjsFlowClient,
   graphId: string,
   parentNodeId: string,
 ): AnyToolDefinition[] {
-  const baseUrl = `${config.thinkgraphUrl}/api/teams/${config.teamId}`
-
-  const headers = {
-    'Cookie': config.serviceToken,
-    'Content-Type': 'application/json',
-  }
-
   return [
     {
       name: 'create_node',
@@ -47,27 +42,57 @@ export function createThinkGraphTools(
         starred: Type.Optional(Type.Boolean({ description: 'Star important insights' })),
       }),
       execute: async (_toolCallId, params) => {
-        const body = {
-          canvasId: graphId,
-          title: params.title,
-          nodeType: params.nodeType || 'idea',
-          parentId: params.parentId || parentNodeId,
-          starred: params.starred || false,
-          brief: params.brief || '',
-          status: 'idle',
-          origin: 'ai',
-          source: 'pi-agent',
-          contextScope: 'branch',
-        }
+        const nodeId = crypto.randomUUID()
+        const parentNode = yjsClient.getNode(params.parentId || parentNodeId)
+
+        // Position near parent with offset
+        const parentPos = parentNode?.position || { x: 0, y: 0 }
+        const siblings = yjsClient.getAllNodes().filter(
+          n => n.parentId === (params.parentId || parentNodeId),
+        )
+        const offsetY = siblings.length * 120
+
         try {
-          const result = await ofetch(`${baseUrl}/thinkgraph-nodes`, {
-            method: 'POST',
-            headers,
-            body,
+          yjsClient.createNode({
+            id: nodeId,
+            title: params.title,
+            parentId: params.parentId || parentNodeId,
+            position: {
+              x: parentPos.x + 300,
+              y: parentPos.y + offsetY,
+            },
+            nodeType: params.nodeType || 'idea',
+            data: {
+              canvasId: graphId,
+              brief: params.brief || '',
+              starred: params.starred || false,
+              status: 'idle',
+              origin: 'ai',
+              source: 'pi-agent',
+              contextScope: 'branch',
+            },
           })
-          return textResult(JSON.stringify({ ok: true, nodeId: result.id, title: body.title }))
+
+          // Also persist to DB via HTTP so it survives beyond the Yjs session
+          yjsClient.httpPost({
+            id: nodeId,
+            canvasId: graphId,
+            title: params.title,
+            nodeType: params.nodeType || 'idea',
+            parentId: params.parentId || parentNodeId,
+            starred: params.starred || false,
+            brief: params.brief || '',
+            status: 'idle',
+            origin: 'ai',
+            source: 'pi-agent',
+            contextScope: 'branch',
+          }).catch(err => {
+            console.error(`[pi-extension] DB persist for create_node failed:`, err.message)
+          })
+
+          return textResult(JSON.stringify({ ok: true, nodeId, title: params.title }))
         } catch (err: any) {
-          console.error(`[pi-extension] create_node failed:`, err.message, err.data || '')
+          console.error(`[pi-extension] create_node failed:`, err.message)
           return textResult(JSON.stringify({ ok: false, error: err.message }))
         }
       },
@@ -86,11 +111,33 @@ export function createThinkGraphTools(
       }),
       execute: async (_toolCallId, params) => {
         const { nodeId, ...updates } = params
-        await ofetch(`${baseUrl}/thinkgraph-nodes/${nodeId}`, {
-          method: 'PATCH',
-          headers,
-          body: updates,
+        const existing = yjsClient.getNode(nodeId)
+        if (!existing) {
+          return textResult(JSON.stringify({ ok: false, error: 'Node not found in Yjs doc' }))
+        }
+
+        // Update data bag fields
+        const dataUpdates: Record<string, unknown> = {}
+        if (updates.content !== undefined) dataUpdates.content = updates.content
+        if (updates.status !== undefined) dataUpdates.status = updates.status
+        if (updates.brief !== undefined) dataUpdates.brief = updates.brief
+        if (updates.starred !== undefined) dataUpdates.starred = updates.starred
+
+        // Update top-level fields
+        const nodeUpdates: Partial<YjsFlowNode> = {}
+        if (updates.nodeType !== undefined) nodeUpdates.nodeType = updates.nodeType
+        if (updates.content !== undefined) nodeUpdates.title = updates.content.slice(0, 80)
+
+        yjsClient.updateNode(nodeId, {
+          ...nodeUpdates,
+          data: { ...existing.data, ...dataUpdates },
         })
+
+        // Persist to DB
+        yjsClient.httpPatch(nodeId, updates).catch(err => {
+          console.error(`[pi-extension] DB persist for update_node failed:`, err.message)
+        })
+
         return textResult(JSON.stringify({ ok: true, nodeId, updated: Object.keys(updates) }))
       },
     },
@@ -102,12 +149,14 @@ export function createThinkGraphTools(
         starredOnly: Type.Optional(Type.Boolean({ description: 'Only show starred nodes' })),
       }),
       execute: async (_toolCallId, params) => {
-        const query = new URLSearchParams({ graphId })
-        if (params.starredOnly) query.set('starred', 'true')
-        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?${query}`, { headers })
-        const nodes = Array.isArray(result) ? result : result.data || []
-        const lines = nodes.map((n: any) =>
-          `${n.starred ? '* ' : '  '}[${n.nodeType}] ${n.content?.slice(0, 80)} (${n.id.slice(0, 8)}...)${n.status !== 'idle' ? ` [${n.status}]` : ''}`
+        let nodes = yjsClient.getAllNodes()
+
+        if (params.starredOnly) {
+          nodes = nodes.filter(n => n.data.starred)
+        }
+
+        const lines = nodes.map((n) =>
+          `${n.data.starred ? '* ' : '  '}[${n.nodeType || n.data.nodeType || 'idea'}] ${(n.title || n.data.content as string || '').slice(0, 80)} (${n.id.slice(0, 8)}...)${n.data.status && n.data.status !== 'idle' ? ` [${n.data.status}]` : ''}`,
         )
         return textResult(lines.join('\n') || 'Empty graph')
       },
@@ -120,37 +169,38 @@ export function createThinkGraphTools(
         nodeId: Type.String({ description: 'The node ID to get the thinking path for' }),
       }),
       execute: async (_toolCallId, params) => {
-        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?graphId=${graphId}`, { headers })
-        const nodes = Array.isArray(result) ? result : result.data || []
-        const target = nodes.find((n: any) => n.id === params.nodeId)
+        const nodes = yjsClient.getAllNodes()
+        const target = nodes.find(n => n.id === params.nodeId)
         if (!target) return textResult('Node not found')
 
-        const chain: any[] = []
-        let current = target
+        const chain: YjsFlowNode[] = []
+        let current: YjsFlowNode | undefined = target
         while (current?.parentId) {
-          const parent = nodes.find((n: any) => n.id === current.parentId)
+          const parent = nodes.find(n => n.id === current!.parentId)
           if (!parent) break
           chain.unshift(parent)
           current = parent
         }
 
-        const siblings = nodes.filter((n: any) => n.parentId === target.parentId && n.id !== target.id)
-        const children = nodes.filter((n: any) => n.parentId === target.id)
+        const siblings = nodes.filter(n => n.parentId === target.parentId && n.id !== target.id)
+        const children = nodes.filter(n => n.parentId === target.id)
+
+        const label = (n: YjsFlowNode) => n.title || (n.data.content as string) || 'Untitled'
 
         let path = 'Thinking path:\n'
         chain.forEach((a, i) => {
-          path += `${'  '.repeat(i)}-> ${a.content?.slice(0, 80)} (${a.nodeType})\n`
+          path += `${'  '.repeat(i)}-> ${label(a).slice(0, 80)} (${a.nodeType || 'idea'})\n`
         })
-        path += `${'  '.repeat(chain.length)}-> [CURRENT] ${target.content}\n\n`
+        path += `${'  '.repeat(chain.length)}-> [CURRENT] ${label(target)}\n\n`
 
         if (siblings.length > 0) {
           path += `Siblings (${siblings.length}):\n`
-          siblings.forEach((s: any) => { path += `  - ${s.content?.slice(0, 80)}\n` })
+          siblings.forEach(s => { path += `  - ${label(s).slice(0, 80)}\n` })
           path += '\n'
         }
         if (children.length > 0) {
           path += `Children (${children.length}):\n`
-          children.forEach((c: any) => { path += `  - ${c.content?.slice(0, 80)}\n` })
+          children.forEach(c => { path += `  - ${label(c).slice(0, 80)}\n` })
         }
         return textResult(path)
       },
@@ -167,14 +217,25 @@ export function createThinkGraphTools(
         prompt: Type.Optional(Type.String({ description: 'The prompt that generated this artifact' })),
       }),
       execute: async (_toolCallId, params) => {
+        // Artifacts use HTTP — they're stored server-side, not in Yjs
         const { nodeId, ...artifact } = params
         ;(artifact as any).provider = 'pi-agent'
-        await ofetch(`${baseUrl}/thinkgraph-nodes/${nodeId}/artifacts`, {
-          method: 'POST',
-          headers,
-          body: artifact,
-        })
-        return textResult(JSON.stringify({ ok: true, nodeId, artifactType: params.type }))
+        try {
+          const teamId = yjsClient['config'].teamId
+          const baseUrl = `${yjsClient['config'].thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
+          await ofetch(`${baseUrl}/${nodeId}/artifacts`, {
+            method: 'POST',
+            headers: {
+              'Cookie': yjsClient['config'].serviceToken,
+              'Content-Type': 'application/json',
+            },
+            body: artifact,
+          })
+          return textResult(JSON.stringify({ ok: true, nodeId, artifactType: params.type }))
+        } catch (err: any) {
+          console.error(`[pi-extension] store_artifact failed:`, err.message)
+          return textResult(JSON.stringify({ ok: false, error: err.message }))
+        }
       },
     },
     {
@@ -186,18 +247,25 @@ export function createThinkGraphTools(
         limit: Type.Optional(Type.Number({ description: 'Max results (default: 10)' })),
       }),
       execute: async (_toolCallId, params) => {
-        const query = new URLSearchParams({
-          graphId,
-          search: params.query,
-          limit: String(params.limit || 10),
-        })
-        const result = await ofetch(`${baseUrl}/thinkgraph-nodes?${query}`, { headers })
-        const nodes = Array.isArray(result) ? result : result.data || []
-        if (nodes.length === 0) return textResult('No matching nodes found')
-        return textResult(nodes.map((n: any) =>
-          `[${n.nodeType}] ${n.content?.slice(0, 100)} (id: ${n.id.slice(0, 8)}...)`
+        const query = params.query.toLowerCase()
+        const limit = params.limit || 10
+        const nodes = yjsClient.getAllNodes()
+
+        const matches = nodes.filter(n => {
+          const title = (n.title || '').toLowerCase()
+          const content = ((n.data.content as string) || '').toLowerCase()
+          const brief = ((n.data.brief as string) || '').toLowerCase()
+          return title.includes(query) || content.includes(query) || brief.includes(query)
+        }).slice(0, limit)
+
+        if (matches.length === 0) return textResult('No matching nodes found')
+        return textResult(matches.map(n =>
+          `[${n.nodeType || n.data.nodeType || 'idea'}] ${(n.title || n.data.content as string || '').slice(0, 100)} (id: ${n.id.slice(0, 8)}...)`,
         ).join('\n'))
       },
     },
   ]
 }
+
+// Re-export ofetch for store_artifact (used via dynamic import path)
+import { ofetch } from 'ofetch'

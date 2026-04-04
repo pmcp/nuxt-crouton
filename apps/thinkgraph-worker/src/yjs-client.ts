@@ -1,126 +1,254 @@
 /**
- * Yjs client for connecting to ThinkGraph's collaboration rooms.
+ * Yjs flow room client for the Pi worker.
  *
- * Uses the collection sync signal system to detect dispatch triggers
- * in real-time (complementing the HTTP polling in dispatch-watcher).
+ * Connects directly to the CollabRoom Durable Object (via the collab worker
+ * in production, or same-origin crossws in dev) and operates as a full Yjs
+ * collaborator — same as a browser tab.
  *
- * Also provides presence awareness — shows "Pi Worker" in the canvas.
+ * Capabilities:
+ * - Full Y.Map<YjsFlowNode> CRUD (create/update/delete nodes)
+ * - Presence awareness (shows "Pi Agent" on the canvas)
+ * - Observes node changes for bidirectional control (steer, prompt, abort)
+ * - Agent output written to node data fields (no separate terminal stream)
  *
- * NOTE: This is a future enhancement. The current implementation uses
- * HTTP polling via dispatch-watcher.ts. Yjs client will be added once
- * the Durable Object WebSocket protocol compatibility is verified.
+ * Wire protocol (matches CollabRoom DO):
+ * - Binary messages: Yjs updates (Uint8Array)
+ * - JSON messages: awareness, ping/pong
  */
 import WebSocket from 'ws'
 import * as Y from 'yjs'
+import { createHmac } from 'node:crypto'
+import { ofetch } from 'ofetch'
 import type { WorkerConfig } from './config.js'
 
-export class YjsClient {
+/** Mirrors YjsFlowNode from crouton-flow/app/types/yjs.ts */
+export interface YjsFlowNode {
+  id: string
+  title: string
+  position: { x: number; y: number }
+  parentId: string | null
+  data: Record<string, unknown>
+  createdAt: number
+  updatedAt: number
+  nodeType?: string
+  containerId?: string | null
+  dimensions?: { width: number; height: number }
+  style?: Record<string, string>
+}
+
+/** Agent log entry stored on node.data.agentLog */
+export interface AgentLogEntry {
+  type: 'thinking' | 'text' | 'tool_use' | 'tool_result' | 'status' | 'error'
+  text?: string
+  name?: string
+  input?: Record<string, unknown>
+  result?: string
+  ts: number
+}
+
+/** Awareness state for the Pi agent presence */
+export interface PiAgentAwareness {
+  user: {
+    id: string
+    name: string
+    color: string
+  }
+  cursor: null
+  selectedNodeId: string | null
+  agentStatus?: 'idle' | 'thinking' | 'working' | 'done' | 'error'
+}
+
+export interface YjsFlowClientOptions {
+  config: WorkerConfig
+  flowId: string
+  /** Called when a node's data.userPrompt changes (bidirectional control) */
+  onUserPrompt?: (nodeId: string, prompt: string) => void
+  /** Called when a node's data.userAbort is set */
+  onUserAbort?: (nodeId: string) => void
+  /** Called when a node's data.userSteer changes */
+  onUserSteer?: (nodeId: string, message: string) => void
+}
+
+export class YjsFlowClient {
   private ws: WebSocket | null = null
   private doc: Y.Doc
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private pingTimer: ReturnType<typeof setInterval> | null = null
   private connected = false
+  private synced = false
+  private config: WorkerConfig
+  private flowId: string
+  private onUserPrompt?: (nodeId: string, prompt: string) => void
+  private onUserAbort?: (nodeId: string) => void
+  private onUserSteer?: (nodeId: string, message: string) => void
+  private intentionalClose = false
+  /** Track userPrompt values we've already processed to avoid re-firing */
+  private processedPrompts = new Map<string, string>()
 
-  constructor(
-    private config: WorkerConfig,
-    private onCollectionChanged?: (collection: string, version: number) => void,
-  ) {
+  constructor(options: YjsFlowClientOptions) {
+    this.config = options.config
+    this.flowId = options.flowId
+    this.onUserPrompt = options.onUserPrompt
+    this.onUserAbort = options.onUserAbort
+    this.onUserSteer = options.onUserSteer
     this.doc = new Y.Doc()
-  }
 
-  /** Connect to the team's sync room */
-  connect(): void {
-    const wsUrl = this.config.thinkgraphUrl.replace(/^http/, 'ws')
-    const roomId = `team:${this.config.teamId}:sync`
-    const url = `${wsUrl}/api/collab/${roomId}/ws?type=sync&teamId=${this.config.teamId}`
+    // Observe the nodes map for bidirectional control fields
+    this.nodesMap.observe((event) => {
+      for (const [nodeId, change] of event.changes.keys) {
+        if (change.action === 'update' || change.action === 'add') {
+          const node = this.nodesMap.get(nodeId)
+          if (!node) continue
 
-    console.log(`[yjs-client] Connecting to sync room: ${roomId}`)
+          const data = node.data || {}
 
-    this.ws = new WebSocket(url, {
-      headers: {
-        // Forward auth cookie or service token
-        'Cookie': `better_auth_session=${this.config.serviceToken}`,
-      },
-    })
-
-    this.ws.binaryType = 'arraybuffer'
-
-    this.ws.on('open', () => {
-      this.connected = true
-      console.log('[yjs-client] Connected to sync room')
-
-      // Send presence awareness
-      this.sendAwareness()
-    })
-
-    this.ws.on('message', (data) => {
-      if (data instanceof ArrayBuffer) {
-        // Binary Yjs update
-        const update = new Uint8Array(data)
-        // Check if it's JSON
-        if (update[0] === 123 || update[0] === 91) {
-          this.handleJsonMessage(new TextDecoder().decode(update))
-        } else {
-          Y.applyUpdate(this.doc, update)
-        }
-      } else if (typeof data === 'string') {
-        this.handleJsonMessage(data)
-      }
-    })
-
-    this.ws.on('close', () => {
-      this.connected = false
-      console.log('[yjs-client] Disconnected from sync room')
-      // Reconnect after 5s
-      this.reconnectTimer = setTimeout(() => this.connect(), 5000)
-    })
-
-    this.ws.on('error', (err) => {
-      console.error('[yjs-client] WebSocket error:', err.message)
-    })
-
-    // Watch the versions map for changes
-    const versionsMap = this.doc.getMap<number>('versions')
-    versionsMap.observe((event) => {
-      if (event.transaction.origin === 'remote' || event.transaction.origin === null) {
-        for (const [collection, change] of event.changes.keys) {
-          if (change.action === 'update' || change.action === 'add') {
-            const version = versionsMap.get(collection)
-            if (version !== undefined && this.onCollectionChanged) {
-              this.onCollectionChanged(collection, version)
+          // Check for user prompt
+          if (data.userPrompt && typeof data.userPrompt === 'string') {
+            const prev = this.processedPrompts.get(nodeId)
+            if (prev !== data.userPrompt) {
+              this.processedPrompts.set(nodeId, data.userPrompt)
+              this.onUserPrompt?.(nodeId, data.userPrompt)
+              // Clear the prompt field after processing
+              this.updateNodeData(nodeId, { userPrompt: null })
             }
+          }
+
+          // Check for abort signal
+          if (data.userAbort === true) {
+            this.onUserAbort?.(nodeId)
+            this.updateNodeData(nodeId, { userAbort: null })
+          }
+
+          // Check for steer message
+          if (data.userSteer && typeof data.userSteer === 'string') {
+            this.onUserSteer?.(nodeId, data.userSteer)
+            this.updateNodeData(nodeId, { userSteer: null })
           }
         }
       }
     })
   }
 
-  private handleJsonMessage(text: string): void {
-    try {
-      const msg = JSON.parse(text)
-      if (msg.type === 'pong') return
-      // Handle awareness messages if needed
-    } catch {}
+  /** The Y.Map that holds all flow nodes — same as browser's useFlowSync */
+  get nodesMap(): Y.Map<YjsFlowNode> {
+    return this.doc.getMap<YjsFlowNode>('nodes')
   }
 
-  private sendAwareness(): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
-    this.ws.send(JSON.stringify({
-      type: 'awareness',
-      userId: 'pi-worker',
-      state: {
-        user: {
-          id: 'pi-worker',
-          name: 'Pi Worker',
-          color: '#10b981', // Green
-        },
-        cursor: null,
-        selection: null,
-      },
-    }))
+  get isConnected(): boolean {
+    return this.connected
   }
 
-  /** Disconnect from the sync room */
+  get isSynced(): boolean {
+    return this.synced
+  }
+
+  // ── Connection ──────────────────────────────────────────────
+
+  /**
+   * Connect to the flow room.
+   * Returns a promise that resolves when the initial Yjs state is synced.
+   */
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.intentionalClose = false
+      const url = this.buildWsUrl()
+
+      console.log(`[yjs-flow] Connecting to flow room: ${this.flowId}`)
+
+      this.ws = new WebSocket(url, { headers: this.buildHeaders() })
+      this.ws.binaryType = 'arraybuffer'
+
+      let resolved = false
+
+      this.ws.on('open', () => {
+        this.connected = true
+        console.log('[yjs-flow] Connected')
+
+        // Start ping keepalive
+        this.pingTimer = setInterval(() => {
+          if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ type: 'ping' }))
+          }
+        }, 25_000)
+
+        // Send initial awareness
+        this.sendAwareness('idle', null)
+      })
+
+      this.ws.on('message', (data) => {
+        if (data instanceof ArrayBuffer) {
+          const update = new Uint8Array(data)
+
+          // CollabRoom sends initial state as first binary message
+          if (!this.synced) {
+            Y.applyUpdate(this.doc, update, 'remote')
+            this.synced = true
+            console.log(`[yjs-flow] Synced — ${this.nodesMap.size} nodes in room`)
+            if (!resolved) {
+              resolved = true
+              resolve()
+            }
+            return
+          }
+
+          // Subsequent binary messages are incremental Yjs updates
+          Y.applyUpdate(this.doc, update, 'remote')
+        } else if (typeof data === 'string') {
+          this.handleJsonMessage(data)
+        } else if (Buffer.isBuffer(data)) {
+          const update = new Uint8Array(data)
+          if (!this.synced) {
+            Y.applyUpdate(this.doc, update, 'remote')
+            this.synced = true
+            console.log(`[yjs-flow] Synced — ${this.nodesMap.size} nodes in room`)
+            if (!resolved) {
+              resolved = true
+              resolve()
+            }
+            return
+          }
+          Y.applyUpdate(this.doc, update, 'remote')
+        }
+      })
+
+      this.ws.on('close', () => {
+        this.connected = false
+        this.synced = false
+        this.clearPing()
+        console.log('[yjs-flow] Disconnected')
+
+        if (!resolved) {
+          resolved = true
+          reject(new Error('WebSocket closed before sync'))
+        }
+
+        if (!this.intentionalClose) {
+          this.reconnectTimer = setTimeout(() => this.connect(), 5000)
+        }
+      })
+
+      this.ws.on('error', (err) => {
+        console.error('[yjs-flow] WebSocket error:', err.message)
+        if (!resolved) {
+          resolved = true
+          reject(err)
+        }
+      })
+
+      // Broadcast local Yjs changes to the server
+      this.doc.on('update', (update: Uint8Array, origin: unknown) => {
+        // Only send updates that originated locally (not from remote)
+        if (origin === 'remote') return
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(update)
+        }
+      })
+    })
+  }
+
   disconnect(): void {
+    this.intentionalClose = true
+    this.clearPing()
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
@@ -130,9 +258,243 @@ export class YjsClient {
       this.ws = null
     }
     this.connected = false
+    this.synced = false
   }
 
-  get isConnected(): boolean {
-    return this.connected
+  // ── Node Operations (write to Y.Map → synced to all clients) ──
+
+  /** Create a new node on the canvas */
+  createNode(node: Partial<YjsFlowNode> & { id: string; title: string }): string {
+    const now = Date.now()
+    const full: YjsFlowNode = {
+      position: { x: 0, y: 0 },
+      parentId: null,
+      data: {},
+      createdAt: now,
+      updatedAt: now,
+      ...node,
+    }
+    this.nodesMap.set(node.id, full)
+    return node.id
+  }
+
+  /** Update an existing node (merges fields) */
+  updateNode(nodeId: string, updates: Partial<YjsFlowNode>): void {
+    const existing = this.nodesMap.get(nodeId)
+    if (!existing) {
+      console.warn(`[yjs-flow] Node ${nodeId} not found for update`)
+      return
+    }
+    this.nodesMap.set(nodeId, {
+      ...existing,
+      ...updates,
+      updatedAt: Date.now(),
+    })
+  }
+
+  /** Update only the data bag on a node (merges into existing data) */
+  updateNodeData(nodeId: string, dataUpdates: Record<string, unknown>): void {
+    const existing = this.nodesMap.get(nodeId)
+    if (!existing) return
+    this.nodesMap.set(nodeId, {
+      ...existing,
+      data: { ...existing.data, ...dataUpdates },
+      updatedAt: Date.now(),
+    })
+  }
+
+  /** Delete a node from the canvas */
+  deleteNode(nodeId: string): void {
+    this.nodesMap.delete(nodeId)
+  }
+
+  /** Get a node by ID */
+  getNode(nodeId: string): YjsFlowNode | undefined {
+    return this.nodesMap.get(nodeId)
+  }
+
+  /** Get all nodes as an array */
+  getAllNodes(): YjsFlowNode[] {
+    return Array.from(this.nodesMap.values())
+  }
+
+  // ── Agent Output (written to node data fields) ──
+
+  /** Append an entry to a node's agent log */
+  appendAgentLog(nodeId: string, entry: Omit<AgentLogEntry, 'ts'>): void {
+    const existing = this.nodesMap.get(nodeId)
+    if (!existing) return
+
+    const log = Array.isArray(existing.data.agentLog)
+      ? existing.data.agentLog as AgentLogEntry[]
+      : []
+
+    // Keep log bounded — trim old entries if over 200
+    const trimmed = log.length >= 200 ? log.slice(-150) : log
+    trimmed.push({ ...entry, ts: Date.now() })
+
+    this.nodesMap.set(nodeId, {
+      ...existing,
+      data: {
+        ...existing.data,
+        agentLog: trimmed,
+      },
+      updatedAt: Date.now(),
+    })
+  }
+
+  /** Set the agent status on a node */
+  setAgentStatus(nodeId: string, status: string): void {
+    this.updateNodeData(nodeId, { agentStatus: status })
+  }
+
+  /** Clear agent log and status (e.g., on session end) */
+  clearAgentState(nodeId: string): void {
+    this.updateNodeData(nodeId, { agentStatus: null })
+    // Keep agentLog for history
+  }
+
+  // ── Presence ──────────────────────────────────────────────
+
+  /** Send awareness update — shows Pi agent on the canvas */
+  sendAwareness(agentStatus: PiAgentAwareness['agentStatus'], selectedNodeId: string | null): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    this.ws.send(JSON.stringify({
+      type: 'awareness',
+      userId: 'pi-agent',
+      state: {
+        user: {
+          id: 'pi-agent',
+          name: 'Pi Agent',
+          color: '#10b981', // Emerald green
+        },
+        cursor: null,
+        selectedNodeId,
+        agentStatus,
+      } satisfies PiAgentAwareness,
+    }))
+  }
+
+  // ── HTTP Fallback (for operations that need server-side logic) ──
+
+  /**
+   * HTTP API call to ThinkGraph — used for operations that must trigger
+   * server-side logic (stage progression, webhook callbacks, artifact storage).
+   */
+  async httpPatch(nodeId: string, updates: Record<string, unknown>): Promise<void> {
+    const teamId = this.config.teamId
+    const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
+    await ofetch(`${baseUrl}/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Cookie': this.config.serviceToken,
+        'Content-Type': 'application/json',
+      },
+      body: updates,
+    })
+  }
+
+  async httpPost(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const teamId = this.config.teamId
+    const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
+    return await ofetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Cookie': this.config.serviceToken,
+        'Content-Type': 'application/json',
+      },
+      body,
+    })
+  }
+
+  async httpGet(query?: Record<string, string>): Promise<unknown[]> {
+    const teamId = this.config.teamId
+    const baseUrl = `${this.config.thinkgraphUrl}/api/teams/${teamId}/thinkgraph-nodes`
+    const result = await ofetch(baseUrl, {
+      headers: { 'Cookie': this.config.serviceToken },
+      query,
+    })
+    return Array.isArray(result) ? result : (result as any).data || []
+  }
+
+  // ── Private ──────────────────────────────────────────────
+
+  private buildWsUrl(): string {
+    const { collabWorkerUrl, thinkgraphUrl, teamId } = this.config
+    const flowId = this.flowId
+    const roomType = 'flow'
+
+    const params = new URLSearchParams({
+      type: roomType,
+      roomId: flowId,
+      teamId,
+    })
+
+    if (collabWorkerUrl) {
+      // Production: connect directly to the collab worker
+      // Worker expects: /{roomKey}/{action}?{params}
+      const roomKey = encodeURIComponent(`${roomType}:${flowId}`)
+      const wsUrl = collabWorkerUrl.replace(/^https?:/, 'wss:')
+
+      // Generate HMAC token (same algorithm as /api/collab/token)
+      const token = this.generateCollabToken()
+      if (token) {
+        params.set('token', token)
+      }
+
+      return `${wsUrl}/${roomKey}/ws?${params.toString()}`
+    }
+
+    // Dev: connect to same-origin Nitro crossws handler
+    const wsUrl = thinkgraphUrl.replace(/^http/, 'ws')
+    return `${wsUrl}/api/collab/${flowId}/ws?${params.toString()}`
+  }
+
+  private buildHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {}
+    // For dev mode (same-origin), pass the session cookie
+    if (!this.config.collabWorkerUrl && this.config.serviceToken) {
+      headers['Cookie'] = this.config.serviceToken
+    }
+    return headers
+  }
+
+  /**
+   * Generate an HMAC-signed collab token — mirrors /api/collab/token.get.ts
+   * Token format: base64(JSON payload).base64(HMAC signature)
+   */
+  private generateCollabToken(): string | null {
+    const secret = this.config.betterAuthSecret
+    if (!secret) return null
+
+    const payload = JSON.stringify({
+      userId: 'pi-agent',
+      exp: Date.now() + 60_000, // 60 seconds
+    })
+
+    const payloadB64 = Buffer.from(payload).toString('base64')
+    const signature = createHmac('sha256', secret)
+      .update(payload)
+      .digest('base64')
+
+    return `${payloadB64}.${signature}`
+  }
+
+  private handleJsonMessage(text: string): void {
+    try {
+      const msg = JSON.parse(text)
+      if (msg.type === 'pong') return
+      // Awareness broadcasts from other users — we could track them but
+      // the Pi worker doesn't need to react to browser presence
+    } catch {
+      // Ignore non-JSON
+    }
+  }
+
+  private clearPing(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer)
+      this.pingTimer = null
+    }
   }
 }

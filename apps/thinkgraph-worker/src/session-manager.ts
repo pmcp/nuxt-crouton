@@ -1,13 +1,13 @@
 /**
  * Manages Pi agent sessions — create, steer, abort, prompt, track lifecycle.
  *
- * Supports two modes:
- * - Legacy: single-prompt sessions dispatched from ThinkGraph (text-only terminal output)
- * - Rich: long-lived interactive sessions with structured events (full pi.dev-in-browser)
+ * All real-time communication flows through Yjs:
+ * - Agent status/output → written to node data fields in Y.Map
+ * - Bidirectional control (steer, prompt, abort) → observed from Y.Map changes
+ * - Presence → Pi agent shows as a collaborator on the canvas
  *
- * Rich sessions stay alive after prompt completion, waiting for follow-up prompts
- * from the browser. They stream structured agent events (messages, tool calls, thinking)
- * instead of flat text lines.
+ * HTTP webhook callback is kept for stage progression (analyst→builder→reviewer etc.)
+ * which triggers server-side logic that Yjs can't handle.
  */
 import {
   createAgentSession,
@@ -16,8 +16,7 @@ import {
   ModelRegistry,
 } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
-import { SessionWebSocket } from './session-ws.js'
-import type { AgentMessageEvent, AgentContentBlock } from './session-ws.js'
+import type { YjsFlowClient, AgentLogEntry } from './yjs-client.js'
 import { createThinkGraphTools } from './pi-extension.js'
 import { createPMTools } from './pm-tools.js'
 import { ofetch } from 'ofetch'
@@ -47,7 +46,6 @@ export interface DispatchPayload {
 
 interface ActiveSession {
   nodeId: string
-  ws: SessionWebSocket
   session: any // AgentSession from Pi SDK
   abort: () => Promise<void>
   mode: 'legacy' | 'rich'
@@ -72,8 +70,17 @@ interface ActiveSession {
 
 export class AgentSessionManager {
   private activeSessions = new Map<string, ActiveSession>()
+  private yjsClient: YjsFlowClient | null = null
 
   constructor(private config: WorkerConfig) {}
+
+  /** Set the Yjs client — called from index.ts after connection */
+  setYjsClient(client: YjsFlowClient): void {
+    this.yjsClient = client
+
+    // Wire up bidirectional control from Yjs observations
+    // These fire when browser writes to node.data.userPrompt/userAbort/userSteer
+  }
 
   get activeCount(): number {
     return this.activeSessions.size
@@ -102,23 +109,19 @@ export class AgentSessionManager {
     const mode = payload.mode || 'legacy'
     console.log(`[session-manager] Starting ${mode} session for node ${payload.nodeId}`)
 
-    // Open WebSocket to ThinkGraph for terminal streaming
-    const ws = new SessionWebSocket(this.config, payload.nodeId, {
-      onSteer: (message) => this.handleSteer(payload.nodeId, message),
-      onAbort: () => this.handleAbort(payload.nodeId),
-      onPrompt: (text) => this.handlePrompt(payload.nodeId, text),
-      onFollowUp: (text) => this.handleFollowUp(payload.nodeId, text),
-      onUIResponse: (requestId, value) => this.handleUIResponse(payload.nodeId, requestId, value),
-      onError: (err) => console.error(`[session-manager] WS error for ${payload.nodeId}:`, err.message),
-      onClose: () => {},
-    }, mode)
-    await ws.connect()
-    ws.sendStatus('thinking')
+    // Update presence — Pi agent is now working on this node
+    this.yjsClient?.sendAwareness('thinking', payload.nodeId)
 
-    // Register early so updateNodeStatus can find collectionPath and teamId
-    const earlySession: ActiveSession = {
+    // Set agent status on the node via Yjs
+    this.yjsClient?.setAgentStatus(payload.nodeId, 'thinking')
+    this.yjsClient?.appendAgentLog(payload.nodeId, {
+      type: 'status',
+      text: 'Session started',
+    })
+
+    // Register session
+    const activeSession: ActiveSession = {
       nodeId: payload.nodeId,
-      ws,
       session: null,
       abort: async () => {},
       mode,
@@ -134,25 +137,27 @@ export class AgentSessionManager {
       stage: payload.stage,
       tokenUsage: { inputTokens: 0, outputTokens: 0 },
     }
-    this.activeSessions.set(payload.nodeId, earlySession)
+    this.activeSessions.set(payload.nodeId, activeSession)
 
-    // Flush output to ThinkGraph every 3 seconds so the UI shows progress
-    earlySession.outputFlushTimer = setInterval(() => {
+    // Flush output to ThinkGraph every 3 seconds (DB persistence for _liveOutput)
+    activeSession.outputFlushTimer = setInterval(() => {
       this.flushOutput(payload.nodeId)
     }, 3000)
 
-    // Update node status to 'working' via HTTP API
+    // Update node status to 'working' via HTTP API (for DB persistence)
     await this.updateNodeStatus(payload.nodeId, 'working')
 
     try {
-      // Create tools — nodes with pipeline stages get PM tools (scoped by stage), others get thinking graph tools
+      // Create tools — nodes with pipeline stages get PM tools, others get thinking graph tools
       const hasPipeline = !!payload.stage
       const tools = hasPipeline
         ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
-          onSignal: (signal) => { earlySession.lastSignal = signal },
+          onSignal: (signal) => { activeSession.lastSignal = signal },
           stage: payload.stage,
         })
-        : createThinkGraphTools(this.config, payload.graphId, payload.nodeId)
+        : this.yjsClient
+          ? createThinkGraphTools(this.yjsClient, payload.graphId, payload.nodeId)
+          : [] // No Yjs client — tools won't work but session can still run
 
       // Build the prompt
       const agentPrompt = this.buildAgentPrompt(payload)
@@ -170,23 +175,19 @@ export class AgentSessionManager {
         customTools: tools,
       })
 
-      // Update the early session entry with the real agent session
-      const activeSession = this.activeSessions.get(payload.nodeId)!
+      // Update the session entry with the real agent session
       activeSession.session = session
       activeSession.abort = () => session.abort()
 
-      // Subscribe to session events
+      // Subscribe to session events — write to Yjs instead of WebSocket
       session.subscribe((event: any) => {
-        if (mode === 'rich') {
-          this.handleRichSessionEvent(payload.nodeId, event, ws, activeSession)
-        } else {
-          this.handleLegacySessionEvent(payload.nodeId, event, ws)
-        }
+        this.handleSessionEvent(payload.nodeId, event, activeSession)
       })
 
       // Start the agent work
       console.log(`[session-manager] Sending initial prompt for ${payload.nodeId}`)
-      ws.sendStatus('working')
+      this.yjsClient?.setAgentStatus(payload.nodeId, 'working')
+      this.yjsClient?.sendAwareness('working', payload.nodeId)
       activeSession.isProcessing = true
       await session.prompt(agentPrompt)
       activeSession.isProcessing = false
@@ -194,18 +195,22 @@ export class AgentSessionManager {
       if (mode === 'rich' && !payload.callbackUrl) {
         // Rich sessions stay alive — mark as idle, wait for more prompts
         console.log(`[session-manager] Initial prompt done for ${payload.nodeId}, session stays alive`)
-        ws.sendStatus('idle')
+        this.yjsClient?.setAgentStatus(payload.nodeId, 'idle')
+        this.yjsClient?.sendAwareness('idle', payload.nodeId)
         await this.updateNodeStatus(payload.nodeId, 'idle')
 
         // Process any queued prompts
         await this.processPromptQueue(payload.nodeId)
       } else {
         // HTTP dispatch or legacy: complete and callback
-        // Clean up session BEFORE callback so auto-dispatch can reuse the slot
         this.stopFlushTimer(payload.nodeId)
-        ws.sendDone('Agent session completed')
+        this.yjsClient?.setAgentStatus(payload.nodeId, 'done')
+        this.yjsClient?.appendAgentLog(payload.nodeId, {
+          type: 'status',
+          text: 'Session completed',
+        })
+        this.yjsClient?.sendAwareness('idle', null)
         await this.updateNodeStatus(payload.nodeId, 'done')
-        ws.close()
         this.activeSessions.delete(payload.nodeId)
         console.log(`[session-manager] Session ended for ${payload.nodeId}`)
         await this.sendCallback(activeSession, 'done')
@@ -214,68 +219,71 @@ export class AgentSessionManager {
     catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       console.error(`[session-manager] Session error for ${payload.nodeId}:`, message)
-      ws.sendError(message)
+      this.yjsClient?.setAgentStatus(payload.nodeId, 'error')
+      this.yjsClient?.appendAgentLog(payload.nodeId, {
+        type: 'error',
+        text: message,
+      })
+      this.yjsClient?.sendAwareness('error', payload.nodeId)
       this.stopFlushTimer(payload.nodeId)
       await this.updateNodeStatus(payload.nodeId, 'error')
       const failedSession = this.activeSessions.get(payload.nodeId)
       if (failedSession) {
         await this.sendCallback(failedSession, 'error', message)
       }
-      ws.close()
       this.activeSessions.delete(payload.nodeId)
     }
   }
 
-  /** Handle a new prompt from the browser (rich mode) */
-  private async handlePrompt(nodeId: string, text: string): Promise<void> {
+  /** Handle a new prompt from the browser (via Yjs observation) */
+  handlePrompt(nodeId: string, text: string): void {
     const active = this.activeSessions.get(nodeId)
     if (!active || active.mode !== 'rich') return
 
     console.log(`[session-manager] Prompt for ${nodeId}: ${text.slice(0, 80)}`)
 
     if (active.isProcessing) {
-      // Queue it as follow-up
       active.promptQueue.push(text)
       console.log(`[session-manager] Queued prompt for ${nodeId} (${active.promptQueue.length} in queue)`)
     } else {
       // Execute immediately
       active.isProcessing = true
-      active.ws.sendStatus('working')
-      await this.updateNodeStatus(nodeId, 'working')
+      this.yjsClient?.setAgentStatus(nodeId, 'working')
+      this.yjsClient?.sendAwareness('working', nodeId)
+      this.updateNodeStatus(nodeId, 'working')
 
-      try {
-        await active.session.prompt(text)
-      } catch (err) {
-        console.error(`[session-manager] Prompt failed for ${nodeId}:`, err)
-        active.ws.sendOutput(`[error] Prompt failed: ${err instanceof Error ? err.message : String(err)}`)
-      }
-
-      active.isProcessing = false
-      active.ws.sendStatus('idle')
-      await this.updateNodeStatus(nodeId, 'idle')
-
-      // Process any queued prompts
-      await this.processPromptQueue(nodeId)
+      active.session.prompt(text)
+        .then(() => {
+          active.isProcessing = false
+          this.yjsClient?.setAgentStatus(nodeId, 'idle')
+          this.yjsClient?.sendAwareness('idle', nodeId)
+          this.updateNodeStatus(nodeId, 'idle')
+          this.processPromptQueue(nodeId)
+        })
+        .catch((err: Error) => {
+          console.error(`[session-manager] Prompt failed for ${nodeId}:`, err)
+          this.yjsClient?.appendAgentLog(nodeId, {
+            type: 'error',
+            text: `Prompt failed: ${err.message}`,
+          })
+          active.isProcessing = false
+        })
     }
   }
 
   /** Handle a follow-up message from the browser */
-  private async handleFollowUp(nodeId: string, text: string): Promise<void> {
+  handleFollowUp(nodeId: string, text: string): void {
     const active = this.activeSessions.get(nodeId)
     if (!active) return
 
     console.log(`[session-manager] Follow-up for ${nodeId}: ${text.slice(0, 80)}`)
 
     if (active.isProcessing) {
-      // Use Pi SDK's followUp (queues after current)
-      try {
-        await active.session.followUp(text)
-      } catch (err) {
+      active.session.followUp(text).catch((err: Error) => {
         console.error(`[session-manager] Follow-up failed for ${nodeId}:`, err)
-      }
+      })
     } else {
-      // Treat as prompt if idle
-      await this.handlePrompt(nodeId, text)
+      this.handlePrompt(nodeId, text)
     }
   }
 
@@ -287,84 +295,78 @@ export class AgentSessionManager {
     while (active.promptQueue.length > 0) {
       const text = active.promptQueue.shift()!
       active.isProcessing = true
-      active.ws.sendStatus('working')
+      this.yjsClient?.setAgentStatus(nodeId, 'working')
+      this.yjsClient?.sendAwareness('working', nodeId)
       await this.updateNodeStatus(nodeId, 'working')
 
       try {
         await active.session.prompt(text)
       } catch (err) {
         console.error(`[session-manager] Queued prompt failed for ${nodeId}:`, err)
-        active.ws.sendOutput(`[error] Prompt failed: ${err instanceof Error ? err.message : String(err)}`)
+        this.yjsClient?.appendAgentLog(nodeId, {
+          type: 'error',
+          text: `Prompt failed: ${err instanceof Error ? err.message : String(err)}`,
+        })
       }
 
       active.isProcessing = false
     }
 
     if (active.mode === 'rich') {
-      active.ws.sendStatus('idle')
+      this.yjsClient?.setAgentStatus(nodeId, 'idle')
+      this.yjsClient?.sendAwareness('idle', nodeId)
       await this.updateNodeStatus(nodeId, 'idle')
     }
   }
 
-  /** Handle a steering message from the browser */
-  private async handleSteer(nodeId: string, message: string): Promise<void> {
+  /** Handle a steering message from the browser (via Yjs observation) */
+  handleSteer(nodeId: string, message: string): void {
     const active = this.activeSessions.get(nodeId)
     if (!active) return
     console.log(`[session-manager] Steering ${nodeId}: ${message.slice(0, 80)}`)
-    try {
-      await active.session.steer(message)
-    }
-    catch (err) {
+    active.session.steer(message).catch((err: Error) => {
       console.error(`[session-manager] Steer failed for ${nodeId}:`, err)
-    }
+    })
   }
 
-  /** Handle an abort command from the browser */
-  private async handleAbort(nodeId: string): Promise<void> {
+  /** Handle an abort command from the browser (via Yjs observation) */
+  handleAbort(nodeId: string): void {
     const active = this.activeSessions.get(nodeId)
     if (!active) return
     console.log(`[session-manager] Aborting ${nodeId}`)
-    try {
-      await active.abort()
-    }
-    catch (err) {
+    active.abort().catch((err: Error) => {
       console.error(`[session-manager] Abort failed for ${nodeId}:`, err)
-    }
+    })
   }
 
-  /** Handle extension UI response from browser */
-  private async handleUIResponse(_nodeId: string, _requestId: string, _value: string): Promise<void> {
-    // TODO: Wire up to Pi SDK's extension UI system once we understand the callback mechanism
-    console.log(`[session-manager] UI response for ${_nodeId}: ${_requestId} = ${_value}`)
-  }
-
-  /** End a rich session (called when browser disconnects or explicitly closes) */
+  /** End a rich session */
   async endSession(nodeId: string): Promise<void> {
     const active = this.activeSessions.get(nodeId)
     if (!active) return
 
     console.log(`[session-manager] Ending session for ${nodeId}`)
-    active.ws.sendDone('Session ended')
+    this.yjsClient?.setAgentStatus(nodeId, 'done')
+    this.yjsClient?.appendAgentLog(nodeId, {
+      type: 'status',
+      text: 'Session ended',
+    })
+    this.yjsClient?.sendAwareness('idle', null)
     await this.updateNodeStatus(nodeId, 'done')
-    active.ws.close()
     this.activeSessions.delete(nodeId)
   }
 
-  // ─── Event handlers ───
+  // ─── Event handler ───
 
-  /** Map Pi agent events to structured messages (rich mode) */
-  private handleRichSessionEvent(nodeId: string, event: any, ws: SessionWebSocket, active: ActiveSession): void {
+  /** Map Pi agent events to Yjs node data updates */
+  private handleSessionEvent(nodeId: string, event: any, active: ActiveSession): void {
     switch (event.type) {
       case 'message_start': {
-        // Start accumulating a new assistant message
-        // Capture token usage if available
         if (event.message?.usage) {
           active.tokenUsage.inputTokens += event.message.usage.input_tokens || 0
         }
         break
       }
       case 'message_update': {
-        // Capture token usage from message updates
         if (event.message?.usage) {
           const usage = event.message.usage
           active.tokenUsage.inputTokens = Math.max(active.tokenUsage.inputTokens, usage.input_tokens || 0)
@@ -373,48 +375,33 @@ export class AgentSessionManager {
         const content = event.message?.content
         if (!Array.isArray(content)) break
 
-        const blocks: AgentContentBlock[] = []
         for (const item of content) {
           if (item.type === 'text' && item.text) {
-            blocks.push({ type: 'text', text: item.text })
-            // Store latest complete text (replaces previous — not incremental)
+            // Store latest complete text
             active.accumulatedOutput = [item.text]
+            // Write to Yjs agent log
+            this.yjsClient?.appendAgentLog(nodeId, {
+              type: 'text',
+              text: item.text,
+            })
+            // Capture for conversation log
+            if (item.text.length > 20) {
+              active.conversationLog.push(`[assistant] ${item.text.slice(0, 500)}`)
+            }
           }
           else if (item.type === 'tool_use') {
-            blocks.push({
+            this.yjsClient?.appendAgentLog(nodeId, {
               type: 'tool_use',
               name: item.name,
               input: item.input,
-              toolCallId: item.id,
             })
+            active.conversationLog.push(`[tool] ${item.name}`)
           }
           else if (item.type === 'thinking') {
-            blocks.push({ type: 'thinking', thinking: item.thinking })
-          }
-        }
-
-        if (blocks.length > 0) {
-          const msg: AgentMessageEvent = {
-            id: `msg-${++active.messageCounter}`,
-            role: 'assistant',
-            content: blocks,
-            timestamp: Date.now(),
-          }
-          ws.sendAgentEvent(msg)
-          // Also send as legacy output for backwards compat
-          for (const block of blocks) {
-            if (block.type === 'text' && block.text) {
-              ws.sendOutput(block.text)
-              // Capture text for conversation log (keep decisions, skip noise)
-              if (block.text.length > 20) {
-                active.conversationLog.push(`[assistant] ${block.text.slice(0, 500)}`)
-              }
-            } else if (block.type === 'tool_use') {
-              ws.sendOutput(`🔧 ${block.name} ${JSON.stringify(block.input || {}).slice(0, 100)}`)
-              active.conversationLog.push(`[tool] ${block.name}`)
-            } else if (block.type === 'thinking' && block.thinking) {
-              ws.sendOutput(`💭 ${block.thinking.split('\n')[0].slice(0, 120)}`)
-            }
+            this.yjsClient?.appendAgentLog(nodeId, {
+              type: 'thinking',
+              text: (item.thinking || '').split('\n')[0].slice(0, 200),
+            })
           }
         }
         break
@@ -425,84 +412,30 @@ export class AgentSessionManager {
             ? event.result.slice(0, 500)
             : JSON.stringify(event.result).slice(0, 500)
 
-          const msg: AgentMessageEvent = {
-            id: `msg-${++active.messageCounter}`,
-            role: 'system',
-            content: [{
-              type: 'tool_result',
-              result: resultText,
-              toolCallId: event.toolCallId || event.tool_use_id,
-            }],
-            timestamp: Date.now(),
-          }
-          ws.sendAgentEvent(msg)
-          ws.sendOutput(`  ↳ ${resultText.slice(0, 120)}`)
+          this.yjsClient?.appendAgentLog(nodeId, {
+            type: 'tool_result',
+            result: resultText,
+          })
         }
         break
       }
       case 'auto_compaction_start':
-        ws.sendOutput('⚙ Compacting conversation...')
+        this.yjsClient?.appendAgentLog(nodeId, {
+          type: 'status',
+          text: 'Compacting conversation...',
+        })
         break
       case 'auto_retry_start':
-        ws.sendOutput(`⚙ Retrying (attempt ${event.attempt}/${event.maxAttempts})...`)
+        this.yjsClient?.appendAgentLog(nodeId, {
+          type: 'status',
+          text: `Retrying (attempt ${event.attempt}/${event.maxAttempts})...`,
+        })
         break
     }
   }
 
-  /** Map Pi agent events to text output (legacy mode) */
-  private handleLegacySessionEvent(nodeId: string, event: any, ws: SessionWebSocket): void {
-    const active = this.activeSessions.get(nodeId)
-    switch (event.type) {
-      case 'message_update': {
-        const content = event.message?.content
-        if (Array.isArray(content)) {
-          for (const item of content) {
-            if (item.type === 'text' && item.text) {
-              ws.sendOutput(item.text)
-              // Store latest complete text (replaces previous — not incremental)
-              if (active) active.accumulatedOutput = [item.text]
-              // Capture for conversation log
-              if (active && item.text.length > 20) {
-                active.conversationLog.push(`[assistant] ${item.text.slice(0, 500)}`)
-              }
-            }
-            else if (item.type === 'tool_use') {
-              const inputSummary = Object.entries(item.input || {})
-                .filter(([_, v]) => typeof v === 'string' && (v as string).length < 80)
-                .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-                .slice(0, 3)
-                .join(' ')
-              ws.sendOutput(`🔧 ${item.name} ${inputSummary}`)
-              if (active) active.conversationLog.push(`[tool] ${item.name}`)
-            }
-            else if (item.type === 'thinking') {
-              const thought = (item.thinking || '').split('\n')[0].slice(0, 120)
-              if (thought) ws.sendOutput(`💭 ${thought}`)
-            }
-          }
-        }
-        break
-      }
-      case 'tool_execution_end':
-        if (event.result) {
-          const result = typeof event.result === 'string'
-            ? event.result.slice(0, 120)
-            : JSON.stringify(event.result).slice(0, 120)
-          ws.sendOutput(`  ↳ ${result}`)
-        }
-        break
-      case 'auto_compaction_start':
-        ws.sendOutput('⚙ Compacting conversation...')
-        break
-      case 'auto_retry_start':
-        ws.sendOutput(`⚙ Retrying (attempt ${event.attempt}/${event.maxAttempts})...`)
-        break
-    }
-  }
-
-  /** Update node status via ThinkGraph HTTP API */
+  /** Update node status via ThinkGraph HTTP API (DB persistence) */
   private async updateNodeStatus(nodeId: string, status: string): Promise<void> {
-    // Determine the correct API path and team based on the active session
     const active = this.activeSessions.get(nodeId)
     const collection = active?.collectionPath || 'thinkgraph-nodes'
     const teamId = active?.teamId || this.config.teamId
@@ -523,12 +456,9 @@ export class AgentSessionManager {
 
   /** Build the prompt for the Pi agent based on work item type */
   private buildAgentPrompt(payload: DispatchPayload): string {
-    // Nodes with pipeline stages get stage-specific prompts
     if (payload.stage) {
       return this.buildPMPrompt(payload)
     }
-
-    // Legacy thinking graph prompt (kept for backwards compat)
     return this.buildLegacyPrompt(payload)
   }
 
@@ -581,14 +511,13 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
   }
 
   /** Map old nodeType to initial pipeline stage for backwards compat */
-  private inferStage(nodeType: string): string {
-    // All types start at analyst on first dispatch (gate before real work)
+  private inferStage(_nodeType: string): string {
     return 'analyst'
   }
 
   // ─── Pipeline stage instructions ───
+  // (kept exactly as before — these are prompt templates, not transport)
 
-  /** Analyst gate — validates the brief before real work begins */
   private analystInstructions(payload: DispatchPayload): string {
     return `## Instructions — Analyst Gate
 
@@ -653,7 +582,6 @@ Use \`update_workitem\` to set your signal:
 - An empty learnings array is perfectly fine. Most analyst runs should have zero learnings.`
   }
 
-  /** Builder stage — reads project skills from disk for up-to-date conventions */
   private builderInstructions(payload: DispatchPayload): string {
     return this.worktreeInstructions(payload) + `## Instructions — Builder
 
@@ -699,7 +627,6 @@ Use \`update_workitem\` to set worktree, output, and signal.
 `
   }
 
-  /** Reviewer stage — reads review skills from disk for structured code review */
   private reviewerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Reviewer Gate
 
@@ -757,7 +684,6 @@ Use \`update_workitem\` to set your **verdict** and signal. You MUST set the \`v
 - Set \`assignee\` to \`"human"\`, \`output\` to why you can't review`
   }
 
-  /** Merger stage — reads commit skill from disk, merges branch */
   private mergerInstructions(payload: DispatchPayload): string {
     return `## Instructions — Merger
 
@@ -874,8 +800,6 @@ Use \`update_workitem\` to set your signal:
 - Set \`output\` to what went wrong`
   }
 
-  /** Optimizer — reviews accumulated meta learnings and proposes instruction improvements */
-  /** Launcher stage — deploy preflight checks using deploy skill knowledge */
   private launcherInstructions(): string {
     return `## Instructions — Launcher
 
@@ -976,10 +900,8 @@ For MCP ideas, append them to \`.claude/mcp-ideas.md\` directly if you have writ
 Be specific and surgical. Small, targeted changes beat broad rewrites.`
   }
 
-  /** Closing instructions for pipeline stages — includes signal reminder */
   private pipelineClosingInstructions(stage: string): string {
     if (stage === 'analyst' || stage === 'reviewer' || stage === 'merger') {
-      // Analyst, reviewer, merger MUST set signal — that's their whole job
       return `
 
 ## Before You Finish (MANDATORY)
@@ -995,19 +917,9 @@ ${this.metaBlock(stage)}
 `
     }
 
-    // Builder stage uses the existing closing instructions
     return this.closingInstructions(stage === 'builder' ? 'generate' : stage, stage)
   }
 
-  /**
-   * Composable closing instructions — selects which blocks to include based on node type.
-   *
-   * Block matrix:
-   * - outputBlock:        all types
-   * - retrospectiveBlock: all types
-   * - learningsBlock:     discover, architect, compose, generate
-   * - questionsBlock:     discover, architect
-   */
   private closingInstructions(nodeType: string, stage?: string): string {
     const blocks = [this.outputBlock(), this.retrospectiveBlock()]
 
@@ -1017,13 +929,11 @@ ${this.metaBlock(stage)}
     if (['discover', 'architect'].includes(nodeType)) {
       blocks.push(this.questionsBlock())
     }
-    // Meta reflection on every stage
     blocks.push(this.metaBlock(stage || nodeType))
 
     return blocks.join('\n')
   }
 
-  /** Mandate the deliverable field */
   private outputBlock(): string {
     return `
 
@@ -1034,13 +944,11 @@ Use \`update_workitem\` to set ALL of these fields:
 1. **output** — your deliverable (the brief, schemas, summary of changes, review verdict, deploy URL, etc.)`
   }
 
-  /** Free-text session reflection */
   private retrospectiveBlock(): string {
     return `
 2. **retrospective** — free-text reflection on the session (displayed on the node card for humans to read)`
   }
 
-  /** Structured actionable learnings array */
   private learningsBlock(): string {
     return `
 3. **learnings** — structured array of actionable improvements. Each learning becomes an independent work item node. CRITICAL RULES:
@@ -1076,7 +984,6 @@ Scope values: \`skill\` | \`tool\` | \`prompt\` | \`infra\` | \`process\` (store
 `
   }
 
-  /** Surface open questions for human triage — discover & architect only */
   private questionsBlock(): string {
     return `
 4. **questions** — surface 2-3 open questions that need human input before the next phase. These become "question" child nodes for the human to answer.
@@ -1096,7 +1003,6 @@ Each question should be:
 `
   }
 
-  /** Meta reflection — process improvement learnings about the stage itself */
   private metaBlock(stage: string): string {
     const stageLabel = stage === 'builder' ? 'builder' : stage
     return `
@@ -1115,26 +1021,15 @@ Be honest and specific. These meta learnings feed into an optimizer that improve
 `
   }
 
-  /**
-   * Detect whether ancestor context contains a substantive brief or output.
-   * Looks for non-current entries in the context chain that have content beyond just a title.
-   */
   private hasParentBrief(payload: DispatchPayload): boolean {
     if (!payload.context) return false
-    // Context chain format: numbered entries like "1. **Title** (type, status)\n   content"
-    // Current node is marked with "→ [CURRENT]"
-    // If there are ancestor entries with real content (not just titles), parent has a brief
     const lines = payload.context.split('\n')
     let hasAncestorContent = false
     for (const line of lines) {
-      // Skip the current node and its content
       if (line.includes('→ [CURRENT]')) break
-      // Check for numbered entries with content that looks like a brief/output (multi-word content lines)
       if (/^\d+\.\s+\*\*/.test(line.trim())) {
-        // This is an ancestor entry header — check if context has substantive content
         continue
       }
-      // Content lines under ancestor entries (indented with 3 spaces)
       if (/^\s{3}\S/.test(line) && line.trim().length > 50) {
         hasAncestorContent = true
         break
@@ -1150,10 +1045,6 @@ Be honest and specific. These meta learnings feed into an optimizer that improve
     return this.discoverQuestionnaireMode(payload)
   }
 
-  /**
-   * Mode A: Fresh discovery — no parent context exists.
-   * Uses a structured questionnaire template to gather requirements.
-   */
   private discoverQuestionnaireMode(_payload: DispatchPayload): string {
     return `## Instructions — Discovery (Questionnaire Mode)
 
@@ -1205,10 +1096,6 @@ No parent context was found, so your job is to build a comprehensive brief from 
 Fill in as much as you can infer from the work item description. For anything you cannot determine, note it explicitly in Open Questions. Be specific and practical — this brief feeds directly into the architect phase.`
   }
 
-  /**
-   * Mode B: Validation mode — parent context already contains a brief.
-   * Verify assumptions, flag gaps, and refine the existing brief.
-   */
   private discoverValidationMode(_payload: DispatchPayload): string {
     return `## Instructions — Discovery (Validation Mode)
 
@@ -1505,16 +1392,13 @@ Use the \`create_node\` tool. Each node has three parts:
   - \`output\`: a short handoff summary (what was concluded, what to explore next)`
   }
 
-  /** Flush accumulated output to ThinkGraph work item (progressive updates).
-   *  For PM dispatches, writes to `_liveOutput` so it doesn't clobber the real
-   *  `output` field that Pi sets deliberately via update_workitem tool.
-   *  For legacy dispatches, writes directly to `output`. */
+  /** Flush accumulated output to ThinkGraph work item (progressive updates) */
   private async flushOutput(nodeId: string): Promise<void> {
     const active = this.activeSessions.get(nodeId)
     if (!active || active.accumulatedOutput.length === 0) return
 
     const currentOutput = active.accumulatedOutput[0] || ''
-    if (currentOutput.length === active.lastFlushedLength) return // No new output
+    if (currentOutput.length === active.lastFlushedLength) return
 
     active.lastFlushedLength = currentOutput.length
     const collection = active.collectionPath || 'thinkgraph-nodes'
@@ -1528,8 +1412,6 @@ Use the \`create_node\` tool. Each node has three parts:
           'Cookie': this.config.serviceToken,
           'Content-Type': 'application/json',
         },
-        // PM: preview in _liveOutput, don't clobber tool-written output
-        // Legacy: write directly to output
         body: isPM ? { _liveOutput: currentOutput } : { output: currentOutput },
       })
     }
@@ -1553,30 +1435,23 @@ Use the \`create_node\` tool. Each node has three parts:
 
     try {
       const isPM = session.collectionPath === 'thinkgraph-nodes'
-      // PM dispatches: Pi writes output deliberately via update_workitem tool.
-      // Don't overwrite it with streaming text. Only send status + error.
       const body: Record<string, unknown> = {
         workItemId: session.nodeId,
         status,
       }
       if (error) body.error = error
       if (!isPM) {
-        // Legacy: send accumulated streaming output as the result
         const output = (session.accumulatedOutput[0] || '').trim()
         if (output) body.output = output
       }
 
-      // Forward the agent's signal directly — captured via onSignal callback
-      // when the agent calls update_workitem. No extra HTTP read needed.
       if (isPM && session.lastSignal) {
         body.signal = session.lastSignal
       }
 
-      // Include artifacts: conversation log + token usage
       if (isPM && session.stage) {
         const artifacts: Record<string, unknown>[] = []
 
-        // Compressed conversation log for markdown generation
         if (session.conversationLog.length > 0) {
           const compressed = compressConversationLog(session.conversationLog)
           if (compressed) {
@@ -1589,7 +1464,6 @@ Use the \`create_node\` tool. Each node has three parts:
           }
         }
 
-        // Token usage tracking per stage
         if (session.tokenUsage.inputTokens > 0 || session.tokenUsage.outputTokens > 0) {
           artifacts.push({
             type: 'token-usage',
@@ -1632,13 +1506,10 @@ Use the \`create_node\` tool. Each node has three parts:
 
 /**
  * Compress a conversation log for storage in markdown.
- * Strips tool call noise, keeps assistant text and key decisions.
- * Target: ~500 tokens max.
  */
 function compressConversationLog(log: string[]): string {
   if (log.length === 0) return ''
 
-  // Keep assistant messages, summarize tool calls into a single line
   const compressed: string[] = []
   let toolBatch: string[] = []
 
@@ -1660,7 +1531,6 @@ function compressConversationLog(log: string[]): string {
   }
   flushTools()
 
-  // Truncate to ~500 tokens (~2000 chars)
   let result = compressed.join('\n')
   if (result.length > 2000) {
     result = result.slice(0, 2000) + '\n\n[...truncated]'
