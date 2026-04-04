@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
+import type { ValidationIssue } from '~~/server/utils/validate-graph'
 import { STATUS_CONFIG, getTemplateConfig, getTemplateBadge, STAGE_LABELS } from '~/utils/thinkgraph-config'
 
 interface Props {
@@ -29,8 +30,23 @@ const projectActions = inject<{
   openContextMenu?: (nodeId: string, event: MouseEvent) => void
 } | null>('projectActions', null)
 
+// Validation issues map — provided by parent canvas (keyed by nodeId)
+const validationIssuesMap = inject<Ref<Map<string, ValidationIssue[]>> | null>('validationIssues', null)
+
 const isHovered = ref(false)
 const node = computed(() => props.data as unknown as ThinkgraphNode)
+
+// Validation state for this node
+const nodeIssues = computed(() => {
+  if (!validationIssuesMap?.value) return []
+  return validationIssuesMap.value.get(node.value.id) || []
+})
+const hasErrors = computed(() => nodeIssues.value.some(i => i.severity === 'error'))
+const hasWarnings = computed(() => nodeIssues.value.length > 0)
+const validationTooltip = computed(() => {
+  if (nodeIssues.value.length === 0) return ''
+  return nodeIssues.value.map(i => `${i.severity === 'error' ? '❌' : '⚠️'} ${i.message}`).join('\n')
+})
 
 const templateStyle = computed(() => getTemplateConfig(node.value.template || 'idea'))
 const statusConfig = computed(() => STATUS_CONFIG[node.value.status] || STATUS_CONFIG.idle)
@@ -163,6 +179,7 @@ function handleContextMenu(event: MouseEvent | Event) {
     :class="[
       `node-card--${node.template || 'idea'}`,
       { 'node-card--selected': selected, 'node-card--dragging': dragging, 'node-card--done': isDone },
+      { 'node-card--validation-error': hasErrors, 'node-card--validation-warning': hasWarnings && !hasErrors },
       statusConfig.class,
     ]"
     @mouseenter="isHovered = true"
@@ -170,6 +187,16 @@ function handleContextMenu(event: MouseEvent | Event) {
     @contextmenu="handleContextMenu"
   >
     <Handle type="target" :position="Position.Top" class="node-handle" />
+
+    <!-- Validation badge -->
+    <div
+      v-if="hasWarnings"
+      class="node-card__validation-badge"
+      :class="{ 'node-card__validation-badge--error': hasErrors }"
+      :title="validationTooltip"
+    >
+      <UIcon :name="hasErrors ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3" />
+    </div>
 
     <!-- Header: status + assignee -->
     <div class="flex items-center gap-1 mb-1 opacity-70">
@@ -430,6 +457,29 @@ function handleContextMenu(event: MouseEvent | Event) {
 .node-card__dispatch--disabled {
   @apply opacity-30 cursor-not-allowed;
   &:hover { transform: none; color: inherit; }
+}
+
+/* Validation indicators */
+.node-card--validation-error {
+  outline: 2px solid rgba(239, 68, 68, 0.7);
+  outline-offset: 1px;
+}
+
+.node-card--validation-warning {
+  outline: 2px dashed rgba(245, 158, 11, 0.6);
+  outline-offset: 1px;
+}
+
+.node-card__validation-badge {
+  @apply absolute -top-2 -left-2 z-20;
+  @apply w-5 h-5 rounded-full flex items-center justify-center;
+  @apply bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300;
+  @apply shadow-sm cursor-help;
+  @apply transition-transform duration-150 hover:scale-110;
+}
+
+.node-card__validation-badge--error {
+  @apply bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300;
 }
 
 .node-card__actions {
