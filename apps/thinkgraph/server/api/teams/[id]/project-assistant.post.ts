@@ -8,6 +8,7 @@ import { buildNodeContext } from '~~/server/utils/context-builder'
 import { extractItemsFromText } from '~~/server/utils/extract-items'
 import { detectTemplate } from '~~/server/utils/template-detector'
 import { generateNodeSummaryAsync } from '~~/server/utils/summary-generator'
+import { NODE_TYPE_STEPS, NODE_TYPE_SKILLS, normalizeNodeType, type ThinkgraphNodeType } from '~~/layers/thinkgraph/collections/nodes/types'
 import { flowConfigs } from '~~/server/db/schema'
 
 /**
@@ -134,19 +135,21 @@ BRIEF: <what the work item should do>
           status: z.enum(['queued', 'active', 'waiting', 'done', 'blocked']).default('queued'),
         }),
         execute: async (params) => {
+          const nodeType = params.type as ThinkgraphNodeType
           const item = await createThinkgraphNode({
             teamId: team.id,
             owner: 'system',
             projectId,
             title: params.title,
-            type: params.type,
+            template: nodeType,
+            steps: NODE_TYPE_STEPS[nodeType] || [],
             brief: params.brief || '',
             assignee: params.assignee,
             parentId: params.parentId,
             status: params.status,
-            skill: ['discover', 'architect', 'generate', 'compose'].includes(params.type) ? params.type : undefined,
+            skill: NODE_TYPE_SKILLS[nodeType] || undefined,
           } as any)
-          return { success: true, id: item.id, title: params.title }
+          return { success: true, id: item.id, title: params.title, type: nodeType }
         },
       }),
 
@@ -225,11 +228,18 @@ BRIEF: <what the work item should do>
           if (item.status !== 'queued') return { success: false, error: `Item is ${item.status}, not queued` }
           if (item.assignee !== 'pi') return { success: false, error: `Item assigned to ${item.assignee}, not pi` }
 
+          // Normalize type and validate it's dispatchable
+          const nodeType = normalizeNodeType(item.template)
+          const skill = NODE_TYPE_SKILLS[nodeType]
+          if (!skill) {
+            return { success: false, error: `Node type '${nodeType}' is not dispatchable. Set a type like discover/compose/architect first.` }
+          }
+
           // Build context chain (use fresh items)
           const contextPayload = buildNodeContext(
             freshItems.map((i: any) => ({
               id: i.id, parentId: i.parentId, title: i.title,
-              nodeType: i.type, status: i.status, summary: i.summary,
+              nodeType: normalizeNodeType(i.template), status: i.status, summary: i.summary,
               brief: i.brief, output: i.output, pinned: i.pinned,
             })),
             params.id,
@@ -238,14 +248,14 @@ BRIEF: <what the work item should do>
           const handoffMeta = {
             type: 'handoff' as const,
             provider: 'pi',
-            skill: item.skill || item.type,
+            skill,
             prompt: item.brief || item.title,
             context: contextPayload.markdown,
             contextTokens: contextPayload.tokenEstimate,
             projectId: item.projectId,
             workItemId: params.id,
             workItemTitle: item.title,
-            workItemType: item.type,
+            workItemType: nodeType,
             teamId: team.id,
             dispatchedBy: 'assistant',
             dispatchedAt: new Date().toISOString(),
@@ -278,7 +288,7 @@ BRIEF: <what the work item should do>
                 prompt: handoffMeta.prompt,
                 context: contextPayload.markdown,
                 skill: handoffMeta.skill,
-                workItemType: item.type,
+                workItemType: nodeType,
                 teamId: team.id,
                 teamSlug: team.slug || team.id,
                 callbackUrl: `${config.public?.siteUrl || `http://${host}`}/api/teams/${team.id}/dispatch/webhook`,

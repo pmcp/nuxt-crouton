@@ -1,56 +1,60 @@
 /**
- * Auto-detect the appropriate node template from title + brief content.
+ * Auto-detect the appropriate node type from title + brief content.
  *
+ * Uses the unified type system (idea/discover/architect/generate/compose/review/deploy/meta).
  * Keeps users from having to manually classify nodes.
- * Returns the template and its default steps.
  */
 
-const TEMPLATE_STEPS: Record<string, string[]> = {
-  idea: [],
-  research: ['analyse'],
-  task: ['analyst', 'builder', 'reviewer', 'merger'],
-  feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
-  meta: ['analyst', 'builder', 'reviewer', 'merger'],
-}
+import { NODE_TYPE_STEPS, type ThinkgraphNodeType, type ThinkgraphStep } from '~~/layers/thinkgraph/collections/nodes/types'
 
-/** Keywords that signal each template (checked against lowercased title + brief) */
-const TEMPLATE_SIGNALS: Array<{ template: string; keywords: RegExp }> = [
+/** Keywords that signal each type (checked against lowercased title + brief) */
+const TYPE_SIGNALS: Array<{ type: ThinkgraphNodeType; keywords: RegExp }> = [
   // Meta — targets ThinkGraph/pipeline itself
   {
-    template: 'meta',
+    type: 'meta',
     keywords: /\b(thinkgraph|pipeline|stage instruction|session-manager|\.claude\/|skill file|mcp.?tool|optimizer|meta node)\b/i,
   },
-  // Feature — involves CI/deploy/launch
+  // Deploy — involves CI/deploy/launch
   {
-    template: 'feature',
+    type: 'deploy',
     keywords: /\b(deploy|ci\/cd|launch|preview|cloudflare pages|staging|production environment|github actions)\b/i,
   },
-  // Research — investigation, no code changes
+  // Generate — scaffold via crouton CLI
   {
-    template: 'research',
+    type: 'generate',
+    keywords: /\b(scaffold|crouton|collection|crud|generate collection|crouton config)\b/i,
+  },
+  // Architect — design, plan, structure
+  {
+    type: 'architect',
+    keywords: /\b(design|architecture|schema|data model|plan structure|system design|wireframe|blueprint|erd|entity relationship)\b/i,
+  },
+  // Discover — investigation, no code changes
+  {
+    type: 'discover',
     keywords: /\b(research|investigate|explore|compare|analyse|analyze|evaluate|study|audit|review options|spike|proof of concept|poc)\b/i,
   },
-  // Task — code work (most common, broadest match)
+  // Compose — code work (most common, broadest match)
   {
-    template: 'task',
+    type: 'compose',
     keywords: /\b(fix|add|implement|create|build|update|refactor|remove|delete|migrate|change|modify|replace|move|rename|extract|split|merge|wire|hook|connect|integrate|setup|configure)\b/i,
   },
 ]
 
 export interface DetectedTemplate {
-  template: string
-  steps: string[]
+  template: ThinkgraphNodeType
+  steps: ThinkgraphStep[]
 }
 
 /**
- * Detect template from node content. Falls back to 'idea' if no signals match.
+ * Detect node type from content. Falls back to 'idea' if no signals match.
  */
 export function detectTemplate(title: string, brief?: string): DetectedTemplate {
   const text = `${title} ${brief || ''}`.toLowerCase()
 
-  for (const { template, keywords } of TEMPLATE_SIGNALS) {
+  for (const { type, keywords } of TYPE_SIGNALS) {
     if (keywords.test(text)) {
-      return { template, steps: TEMPLATE_STEPS[template] }
+      return { template: type, steps: NODE_TYPE_STEPS[type] }
     }
   }
 

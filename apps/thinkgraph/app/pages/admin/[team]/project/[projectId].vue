@@ -292,18 +292,29 @@ async function handleInlineCreate() {
 
 const NODE_TEMPLATES = [
   { value: 'idea', label: 'Idea', icon: 'i-lucide-lightbulb' },
-  { value: 'research', label: 'Research', icon: 'i-lucide-search' },
-  { value: 'task', label: 'Task', icon: 'i-lucide-hammer' },
-  { value: 'feature', label: 'Feature', icon: 'i-lucide-rocket' },
+  { value: 'discover', label: 'Discover', icon: 'i-lucide-search' },
+  { value: 'architect', label: 'Architect', icon: 'i-lucide-drafting-compass' },
+  { value: 'generate', label: 'Generate', icon: 'i-lucide-wand-sparkles' },
+  { value: 'compose', label: 'Compose', icon: 'i-lucide-hammer' },
+  { value: 'review', label: 'Review', icon: 'i-lucide-eye' },
+  { value: 'deploy', label: 'Deploy', icon: 'i-lucide-rocket' },
   { value: 'meta', label: 'Meta', icon: 'i-lucide-brain-circuit' },
 ]
 
+// Import from types — but keep a local copy for template reactivity
 const TEMPLATE_STEPS: Record<string, string[]> = {
   idea: [],
+  discover: ['analyse'],
+  architect: ['analyst'],
+  generate: ['analyst', 'builder', 'reviewer', 'merger'],
+  compose: ['analyst', 'builder', 'reviewer', 'merger'],
+  review: [],
+  deploy: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
+  meta: ['analyst', 'builder', 'reviewer', 'merger'],
+  // Legacy aliases
   research: ['analyse'],
   task: ['analyst', 'builder', 'reviewer', 'merger'],
   feature: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
-  meta: ['analyst', 'builder', 'reviewer', 'merger'],
 }
 
 const ASSIGNEES = [
@@ -590,24 +601,18 @@ const { health: workerHealth, check: checkWorker } = useWorkerHealth()
 // ─── Dispatch ───
 const { dispatch: dispatchWork, dispatching } = useWorkDispatch()
 
-async function openDispatch(id: string) {
-  const item = items.value.find(n => n.id === id)
-  if (!item) return
-  await dispatchWork(item)
-  await refreshItems()
-}
-
-async function dispatchNode(id: string) {
+async function sendToPi(id: string) {
   if (!teamId.value) return
-  // Ensure the node has steps and is queued before dispatching
   const item = items.value.find(n => n.id === id)
   if (!item) return
+
+  // Ensure the node has steps and is queued before dispatching
   const steps = Array.isArray(item.steps) && item.steps.length > 0
     ? item.steps
-    : TEMPLATE_STEPS[item.template || 'task'] || ['analyst', 'builder', 'reviewer', 'merger']
+    : TEMPLATE_STEPS[item.template || 'compose'] || ['analyst', 'builder', 'reviewer', 'merger']
 
-  // Include conversation history in the brief when dispatching
-  const chatHistory = getChatHistory()
+  // Include conversation history in the brief when dispatching (only on first send)
+  const chatHistory = item.status !== 'queued' ? getChatHistory() : undefined
   const updates: Partial<ThinkgraphNode> = { status: 'queued', assignee: 'pi', steps }
   if (chatHistory) {
     const existingBrief = stripAppendedSections(item.brief || item.title)
@@ -615,8 +620,12 @@ async function dispatchNode(id: string) {
   }
 
   await updateItem(id, updates)
-  await openDispatch(id)
+  await dispatchWork(item)
+  await refreshItems()
 }
+
+// Keep openDispatch as alias for internal callers (graph actions, context menu)
+const openDispatch = sendToPi
 
 // ─── Decompose on demand ───
 const decomposing = ref<string | null>(null)
@@ -1912,13 +1921,13 @@ if (import.meta.client) {
               :loading="decomposing === selectedItem.id"
               @click="decomposeNode(selectedItem.id)"
             />
-            <!-- Primary: Send to Pi (for nodes not yet active/done) -->
+            <!-- Send to Pi: unified dispatch button for all non-active/done states -->
             <UButton
               v-if="selectedItem.brief && !['active', 'working', 'done'].includes(selectedItem.status)"
               icon="i-lucide-send"
               label="Send to Pi"
               :loading="dispatching"
-              @click="dispatchNode(selectedItem.id)"
+              @click="sendToPi(selectedItem.id)"
             />
             <!-- Add child node -->
             <UButton
@@ -1926,14 +1935,6 @@ if (import.meta.client) {
               label="Add child"
               variant="soft"
               @click="openCreate(undefined, selectedItem.id)"
-            />
-            <!-- Re-dispatch for queued/waiting/blocked -->
-            <UButton
-              v-if="selectedItem.status === 'queued' || selectedItem.status === 'blocked' || selectedItem.status === 'waiting'"
-              icon="i-lucide-send"
-              :label="selectedItem.status === 'waiting' ? 'Re-dispatch' : 'Dispatch'"
-              :loading="dispatching"
-              @click="openDispatch(selectedItem.id)"
             />
             <UButton
               v-if="selectedItem.status === 'active'"
@@ -2041,7 +2042,7 @@ if (import.meta.client) {
         <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
           <UIcon name="i-lucide-copy" class="size-4" /> Copy context
         </button>
-        <button class="ctx-item" @click="dispatchNode(contextMenuNode!.id); closeContextMenu()">
+        <button class="ctx-item" @click="sendToPi(contextMenuNode!.id); closeContextMenu()">
           <UIcon name="i-lucide-cpu" class="size-4 text-green-500" /> Send to Pi
         </button>
         <button

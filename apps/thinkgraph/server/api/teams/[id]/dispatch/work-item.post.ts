@@ -1,6 +1,8 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { getAllThinkgraphNodes, updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildNodeContext } from '~~/server/utils/context-builder'
+import { detectTemplate } from '~~/server/utils/template-detector'
+import { NODE_TYPE_SKILLS, NODE_TYPE_STEPS, normalizeNodeType } from '~~/layers/thinkgraph/collections/nodes/types'
 
 /**
  * Dispatch a work item to Pi.dev or another provider.
@@ -28,13 +30,45 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Work item not found' })
   }
 
+  // Validate and normalize node type before dispatch
+  let nodeType = normalizeNodeType(targetItem.template)
+
+  // Auto-classify if still an idea
+  if (nodeType === 'idea') {
+    const detected = detectTemplate(targetItem.title, targetItem.brief || undefined)
+    if (detected.template !== 'idea') {
+      nodeType = detected.template
+      await updateThinkgraphNode(workItemId, team.id, user.id, {
+        template: nodeType,
+        steps: detected.steps,
+      } as any, { role: membership.role })
+    }
+  }
+
+  // Check if this type is dispatchable
+  const skill = NODE_TYPE_SKILLS[nodeType]
+  if (!skill) {
+    throw createError({
+      status: 400,
+      statusText: `Node type '${nodeType}' is not dispatchable. Classify as discover/architect/generate/compose/deploy first.`,
+    })
+  }
+
+  // Ensure steps are set
+  const steps = (Array.isArray(targetItem.steps) && targetItem.steps.length > 0)
+    ? targetItem.steps
+    : NODE_TYPE_STEPS[nodeType]
+  if (steps.length > 0 && (!Array.isArray(targetItem.steps) || targetItem.steps.length === 0)) {
+    await updateThinkgraphNode(workItemId, team.id, user.id, { steps } as any, { role: membership.role })
+  }
+
   // Build context chain from ancestor work items
   const contextPayload = buildNodeContext(
     allItems.map((item: any) => ({
       id: item.id,
       parentId: item.parentId,
       title: item.title,
-      nodeType: item.template,
+      nodeType: normalizeNodeType(item.template),
       status: item.status,
       summary: item.summary,
       brief: item.brief,
@@ -46,10 +80,8 @@ export default defineEventHandler(async (event) => {
     workItemId,
   )
 
-  // Default stage to first step in node's steps array, or 'analyst' fallback
-  const defaultStage = Array.isArray(targetItem.steps) && targetItem.steps.length > 0
-    ? targetItem.steps[0]
-    : 'analyst'
+  // Default stage to first step in node's steps array
+  const defaultStage = steps.length > 0 ? steps[0] : 'analyst'
   const stage = targetItem.stage || defaultStage
   if (!targetItem.stage) {
     await updateThinkgraphNode(
@@ -69,14 +101,14 @@ export default defineEventHandler(async (event) => {
   const handoffMeta = {
     type: 'handoff' as const,
     provider,
-    skill: targetItem.skill || targetItem.template,
+    skill,
     prompt: prompt || targetItem.brief || '',
     context: contextPayload.markdown,
     contextTokens: contextPayload.tokenEstimate,
     projectId: targetItem.projectId,
     workItemId,
     workItemTitle: targetItem.title,
-    workItemType: targetItem.template,
+    workItemType: nodeType,
     teamId: team.id,
     dispatchedBy: user.id,
     dispatchedAt: new Date().toISOString(),
@@ -115,7 +147,7 @@ export default defineEventHandler(async (event) => {
           prompt: handoffMeta.prompt || targetItem.brief || targetItem.title,
           context: contextPayload.markdown,
           skill: handoffMeta.skill,
-          workItemType: targetItem.template,
+          workItemType: nodeType,
           stage,
           teamId: team.id,
           teamSlug: team.slug || team.id,
