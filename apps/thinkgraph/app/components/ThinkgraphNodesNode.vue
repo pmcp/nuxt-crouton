@@ -24,6 +24,8 @@ const canvasActions = inject<{
   openDetail: (nodeId: string) => void
   openTerminal: (nodeId: string) => void
   openContextMenu: (nodeId: string, event: MouseEvent) => void
+  selectSubtree: (nodeId: string) => void
+  layoutSubtree: (nodeId: string) => void
 } | null>('canvasActions', null)
 
 const projectActions = inject<{
@@ -145,6 +147,16 @@ function handleDispatch(event: Event) {
   if (node.value.id) projectActions?.dispatch(node.value.id)
 }
 
+function handleSelectSubtree(event: Event) {
+  event.stopPropagation()
+  if (node.value.id) canvasActions?.selectSubtree(node.value.id)
+}
+
+function handleLayoutSubtree(event: Event) {
+  event.stopPropagation()
+  if (node.value.id) canvasActions?.layoutSubtree(node.value.id)
+}
+
 function handleContextMenu(event: MouseEvent | Event) {
   event.preventDefault()
   event.stopPropagation()
@@ -238,6 +250,12 @@ function handleContextMenu(event: MouseEvent | Event) {
 
     <!-- Secondary actions (hover) -->
     <div class="node-card__actions" :class="{ 'opacity-0 group-hover:opacity-100': !isTouchDevice }">
+      <button v-if="canvasActions" class="node-card__action" title="Select subtree" @click.stop="handleSelectSubtree">
+        <UIcon name="i-lucide-git-fork" class="size-3.5" />
+      </button>
+      <button v-if="canvasActions" class="node-card__action" title="Layout subtree" @click.stop="handleLayoutSubtree">
+        <UIcon name="i-lucide-layout-grid" class="size-3.5" />
+      </button>
       <button class="node-card__action" title="Add child" @click.stop="handleAddChild">
         <UIcon name="i-lucide-plus" class="size-3.5" />
       </button>

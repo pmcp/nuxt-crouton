@@ -153,8 +153,12 @@ function onNodeClick(nodeId: string, _data: Record<string, unknown>, event?: Mou
     }
     return
   }
-  // Single select
+  // Single click = select only (no slideover)
   multiSelectedIds.value = []
+  selectedNodeId.value = nodeId
+}
+
+function onNodeDblClick(nodeId: string) {
   selectedNodeId.value = nodeId
   showDetail.value = true
 }
@@ -221,6 +225,9 @@ if (import.meta.client) {
   })
 }
 
+// CroutonFlow ref for layout/selection methods
+const flowRef = ref<{ relayoutAll: () => void; layoutSubtree: (id: string) => void; selectSubtree: (id: string) => string[] } | null>(null)
+
 // Provide actions to child components (ThinkgraphNodesNode)
 provide('canvasActions', {
   openCreate,
@@ -228,6 +235,13 @@ provide('canvasActions', {
   openPathType,
   openContextMenu,
   openTerminal,
+  selectSubtree: (nodeId: string) => {
+    const ids = flowRef.value?.selectSubtree(nodeId)
+    if (ids) multiSelectedIds.value = ids
+  },
+  layoutSubtree: (nodeId: string) => {
+    flowRef.value?.layoutSubtree(nodeId)
+  },
   setStatus: async (nodeId: string, status: string) => {
     await updateNode(nodeId, { status })
     await refreshNodes()
@@ -623,6 +637,13 @@ onKeyStroke('t', (e) => {
   }
 })
 
+onKeyStroke('l', (e) => {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  e.preventDefault()
+  flowRef.value?.relayoutAll()
+})
+
 onKeyStroke('Escape', () => {
   if (showTerminal.value) { closeTerminal(); return }
   if (showShortcuts.value) { showShortcuts.value = false; return }
@@ -719,6 +740,14 @@ watch(showCreate, async (open) => {
         />
 
         <UButton
+          icon="i-lucide-layout-grid"
+          size="sm"
+          variant="ghost"
+          color="neutral"
+          title="Re-layout all nodes"
+          @click="flowRef?.relayoutAll()"
+        />
+        <UButton
           icon="i-lucide-clipboard-paste"
           label="Quick Add"
           size="sm"
@@ -751,6 +780,7 @@ watch(showCreate, async (open) => {
       <!-- Graph -->
       <div class="flex-1 relative">
         <CroutonFlow
+          ref="flowRef"
           v-if="nodes.length && flowId"
           :rows="nodes"
           collection="thinkgraphNodes"
@@ -762,6 +792,7 @@ watch(showCreate, async (open) => {
           sync
           minimap
           @node-click="onNodeClick"
+          @node-dbl-click="onNodeDblClick"
         >
           <CanvasHighlight :selected-node-id="selectedNodeId" :nodes="nodes" :search-match-ids="searchMatchIds" />
         </CroutonFlow>
