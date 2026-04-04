@@ -33,8 +33,19 @@ export interface ValidationResult {
   }
 }
 
-/** 24 hours in milliseconds — used for stale node detection */
-const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000
+/** Shape of a node row returned by getAllThinkgraphNodes (with joined fields) */
+interface GraphNode {
+  id: string
+  title?: string
+  content?: string
+  parentId?: string
+  depth?: number
+  projectId?: string
+  status?: string
+  sessionId?: string
+  contextNodeIds?: string[] | string | null
+  dependsOn?: string[] | string | null
+}
 
 /**
  * Validate graph integrity for a team/project.
@@ -44,12 +55,12 @@ export async function validateGraph(
   teamId: string,
   projectId?: string,
 ): Promise<ValidationResult> {
-  const allNodes = await getAllThinkgraphNodes(teamId, projectId)
-  const nodeIds = new Set(allNodes.map((n: any) => n.id))
+  const allNodes = await getAllThinkgraphNodes(teamId, projectId) as GraphNode[]
+  const nodeIds = new Set(allNodes.map(n => n.id))
+  const nodeById = new Map(allNodes.map(n => [n.id, n]))
   const issues: ValidationIssue[] = []
 
-  for (const node of allNodes) {
-    const n = node as any
+  for (const n of allNodes) {
     const title = n.title || n.content || '(untitled)'
 
     // 1. Broken contextNodeIds
@@ -96,10 +107,7 @@ export async function validateGraph(
     // 4. Stale active status
     // No updatedAt column — use sessionId presence as a heuristic:
     // if status is active/working but no sessionId, it's likely stale.
-    // Also check nodes that are active/working with no pipeline progress.
     if (n.status === 'active' || n.status === 'working') {
-      // We can't do time-based detection without timestamps.
-      // Use heuristic: active nodes without a sessionId are likely stale dispatches.
       if (!n.sessionId) {
         issues.push({
           severity: 'warning',
@@ -114,8 +122,7 @@ export async function validateGraph(
 
   // 5. Duplicate titles at same depth (batch check)
   const byDepthAndTitle = new Map<string, string[]>()
-  for (const node of allNodes) {
-    const n = node as any
+  for (const n of allNodes) {
     const key = `${n.projectId}:${n.depth ?? 0}:${(n.title || '').toLowerCase().trim()}`
     if (!byDepthAndTitle.has(key)) {
       byDepthAndTitle.set(key, [])
@@ -127,7 +134,7 @@ export async function validateGraph(
     if (ids.length > 1) {
       const title = key.split(':').slice(2).join(':')
       for (const id of ids) {
-        const n = allNodes.find((node: any) => node.id === id) as any
+        const n = nodeById.get(id)
         issues.push({
           severity: 'warning',
           nodeId: id,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
+import type { ValidationIssue } from '~~/server/utils/validate-graph'
 import ThinkgraphNodesNodeComponent from '~/components/ThinkgraphNodesNode.vue'
 import NodeChatPanel from '~/components/NodeChatPanel.vue'
 
@@ -120,8 +121,34 @@ async function refreshItems() {
   }
 }
 
+// ─── Graph validation ───
+const validationIssues = ref<Map<string, ValidationIssue[]>>(new Map())
+
+async function refreshValidation() {
+  if (!teamId.value || !projectId.value) return
+  try {
+    const result = await $fetch<{ issues: ValidationIssue[] }>(`/api/teams/${teamId.value}/thinkgraph-nodes/validate`, {
+      query: { projectId: projectId.value },
+    })
+    const grouped = new Map<string, ValidationIssue[]>()
+    for (const issue of result.issues) {
+      const existing = grouped.get(issue.nodeId) || []
+      existing.push(issue)
+      grouped.set(issue.nodeId, existing)
+    }
+    validationIssues.value = grouped
+  }
+  catch {
+    validationIssues.value = new Map()
+  }
+}
+
+provide('validationIssues', validationIssues)
+
 onMounted(async () => {
   await Promise.all([ensureFlowConfig(), refreshItems()])
+  // Run validation after items are loaded (non-blocking)
+  refreshValidation()
 })
 
 // Auto-refresh on mutations

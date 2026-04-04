@@ -189,14 +189,14 @@ function handleContextMenu(event: MouseEvent | Event) {
     <Handle type="target" :position="Position.Top" class="node-handle" />
 
     <!-- Validation badge -->
-    <div
-      v-if="hasWarnings"
-      class="node-card__validation-badge"
-      :class="{ 'node-card__validation-badge--error': hasErrors }"
-      :title="validationTooltip"
-    >
-      <UIcon :name="hasErrors ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3" />
-    </div>
+    <UTooltip v-if="hasWarnings" :text="validationTooltip">
+      <div
+        class="node-card__validation-badge"
+        :class="{ 'node-card__validation-badge--error': hasErrors }"
+      >
+        <UIcon :name="hasErrors ? 'i-lucide-alert-circle' : 'i-lucide-alert-triangle'" class="size-3" />
+      </div>
+    </UTooltip>
 
     <!-- Header: status + assignee -->
     <div class="flex items-center gap-1 mb-1 opacity-70">
