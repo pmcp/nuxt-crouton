@@ -176,39 +176,39 @@ export class YjsFlowClient {
       })
 
       this.ws.on('message', (data) => {
+        // Normalize to Uint8Array or string
+        let bytes: Uint8Array | null = null
         if (data instanceof ArrayBuffer) {
-          const update = new Uint8Array(data)
-
-          // CollabRoom sends initial state as first binary message
-          if (!this.synced) {
-            Y.applyUpdate(this.doc, update, 'remote')
-            this.synced = true
-            console.log(`[yjs-flow] Synced — ${this.nodesMap.size} nodes in room`)
-            if (!resolved) {
-              resolved = true
-              resolve()
-            }
-            return
-          }
-
-          // Subsequent binary messages are incremental Yjs updates
-          Y.applyUpdate(this.doc, update, 'remote')
+          bytes = new Uint8Array(data)
+        } else if (Buffer.isBuffer(data)) {
+          bytes = new Uint8Array(data)
         } else if (typeof data === 'string') {
           this.handleJsonMessage(data)
-        } else if (Buffer.isBuffer(data)) {
-          const update = new Uint8Array(data)
-          if (!this.synced) {
-            Y.applyUpdate(this.doc, update, 'remote')
-            this.synced = true
-            console.log(`[yjs-flow] Synced — ${this.nodesMap.size} nodes in room`)
-            if (!resolved) {
-              resolved = true
-              resolve()
-            }
-            return
-          }
-          Y.applyUpdate(this.doc, update, 'remote')
+          return
         }
+
+        if (!bytes) return
+
+        // Check if the binary message is actually JSON (awareness, pong, etc.)
+        // JSON starts with { (123) or [ (91)
+        if (bytes[0] === 123 || bytes[0] === 91) {
+          this.handleJsonMessage(new TextDecoder().decode(bytes))
+          return
+        }
+
+        // Binary Yjs update
+        if (!this.synced) {
+          Y.applyUpdate(this.doc, bytes, 'remote')
+          this.synced = true
+          console.log(`[yjs-flow] Synced — ${this.nodesMap.size} nodes in room`)
+          if (!resolved) {
+            resolved = true
+            resolve()
+          }
+          return
+        }
+
+        Y.applyUpdate(this.doc, bytes, 'remote')
       })
 
       this.ws.on('close', () => {
