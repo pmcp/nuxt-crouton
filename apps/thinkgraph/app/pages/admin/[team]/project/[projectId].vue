@@ -530,24 +530,6 @@ async function decomposeNode(id: string) {
   }
 }
 
-/** Render basic markdown to HTML */
-function renderMd(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/^### (.+)$/gm, '<p class="font-semibold text-sm mt-3 mb-1">$1</p>')
-    .replace(/^## (.+)$/gm, '<p class="font-bold text-base mt-4 mb-2">$1</p>')
-    .replace(/^# (.+)$/gm, '<p class="font-bold text-lg mt-4 mb-2">$1</p>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code class="text-xs bg-white/10 px-1 py-0.5 rounded font-mono">$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="underline" target="_blank">$1</a>')
-    .replace(/^- (.+)$/gm, '<span class="block pl-3">• $1</span>')
-    .replace(/\\n/g, '<br>')
-    .replace(/\n/g, '<br>')
-}
-
 // ─── Orange response (re-dispatch with human answer) ───
 const redispatching = ref(false)
 const orangeAnswers = ref<Record<number, string>>({})
@@ -1388,21 +1370,24 @@ if (import.meta.client) {
               :items="[{ label: STAGE_LABEL[selectedItem.stage || ''] || 'Research', icon: 'i-lucide-file-text', value: 'research' }]"
             >
               <template #body>
-                <div class="text-sm whitespace-pre-wrap leading-relaxed" v-html="renderMd(researchContent)" />
+                <div class="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                  <MDC :value="researchContent" tag="div" />
+                </div>
               </template>
             </UAccordion>
             <!-- Default: show full output -->
             <div
               v-else
-              class="rounded-lg border p-3 text-sm whitespace-pre-wrap leading-relaxed"
+              class="rounded-lg border p-3 text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none"
               :class="{
                 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-200': selectedItem.signal === 'red',
                 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200': selectedItem.signal === 'orange',
                 'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-200': selectedItem.signal === 'green',
                 'border-default bg-muted/30 text-default': !selectedItem.signal,
               }"
-              v-html="renderMd(selectedItem.output)"
-            />
+            >
+              <MDC :value="selectedItem.output" tag="div" />
+            </div>
 
             <!-- Red state actions -->
             <div v-if="selectedItem.signal === 'red'" class="flex items-center gap-2 mt-3">

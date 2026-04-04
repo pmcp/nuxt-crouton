@@ -65,7 +65,9 @@ const groupedItems = computed(() => {
       >
         <h3 class="text-base font-semibold mb-1">{{ item.title }}</h3>
         <p v-if="item.summary" class="text-sm text-muted mb-3 italic">{{ item.summary }}</p>
-        <div class="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">{{ item.output }}</div>
+        <div class="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed">
+          <MDC :value="item.output" tag="div" />
+        </div>
       </article>
     </section>
   </div>

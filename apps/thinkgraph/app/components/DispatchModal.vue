@@ -410,7 +410,7 @@ watch(open, (isOpen) => {
             <!-- Text result -->
             <div v-else-if="artifact.type === 'text' && artifact.content" class="space-y-2">
               <div class="p-4 rounded-lg bg-elevated text-sm prose dark:prose-invert max-h-80 overflow-y-auto">
-                {{ artifact.content }}
+                <MDC :value="artifact.content" tag="div" />
               </div>
               <UButton
                 icon="i-lucide-copy"

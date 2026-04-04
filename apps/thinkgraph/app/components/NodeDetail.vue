@@ -299,9 +299,9 @@ const tokenUsageByStage = computed(() => {
             <UButton size="xs" variant="ghost" color="neutral" @click="editingBrief = false">Cancel</UButton>
           </div>
         </div>
-        <p v-else-if="node.brief" class="text-sm text-default whitespace-pre-wrap">
-          {{ node.brief }}
-        </p>
+        <div v-else-if="node.brief" class="text-sm text-default prose prose-sm dark:prose-invert max-w-none">
+          <MDC :value="node.brief" tag="div" />
+        </div>
         <p v-else class="text-sm text-muted italic">No brief yet</p>
       </div>
 
@@ -330,8 +330,8 @@ const tokenUsageByStage = computed(() => {
             <UButton size="xs" variant="ghost" color="neutral" @click="editingOutput = false">Cancel</UButton>
           </div>
         </div>
-        <div v-else-if="node.output" class="text-sm text-default whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
-          {{ node.output }}
+        <div v-else-if="node.output" class="text-sm text-default prose prose-sm dark:prose-invert max-w-none">
+          <MDC :value="node.output" tag="div" />
         </div>
         <p v-else class="text-sm text-muted italic">No output yet</p>
       </div>

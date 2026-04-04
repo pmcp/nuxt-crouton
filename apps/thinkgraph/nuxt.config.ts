@@ -21,8 +21,13 @@ export default defineNuxtConfig({
   ],
 
   modules: [
-    '@fyit/crouton'
+    '@fyit/crouton',
+    '@nuxtjs/mdc',
   ],
+
+  mdc: {
+    highlight: false, // Skip Shiki to keep bundle small
+  },
 
   crouton: {
     mcpToolkit: true,
