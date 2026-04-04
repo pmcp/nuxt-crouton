@@ -488,12 +488,28 @@ async function canvasGenerateBrief(format: string) {
 }
 
 async function canvasCopyContext() {
-  const texts = canvasSelectedIds.value
-    .map(id => items.value.find(n => n.id === id))
-    .filter(Boolean)
-    .map(n => `## ${n!.title}\n${n!.brief || n!.output || ''}`)
-  await navigator.clipboard.writeText(texts.join('\n\n'))
-  toast.add({ title: 'Context copied', color: 'success' })
+  const { buildContext } = useNodeContext(nodesRef)
+  const contexts = canvasSelectedIds.value
+    .map(id => buildContext(id))
+    .filter(c => c.markdown)
+  if (contexts.length === 0) return
+  await navigator.clipboard.writeText(contexts.map(c => c.markdown).join('\n\n---\n\n'))
+  toast.add({ title: `Context for ${contexts.length} nodes copied`, color: 'success' })
+}
+
+async function canvasUseAsContext() {
+  if (canvasSelectedIds.value.length < 2 || !teamId.value) return
+  const targetId = canvasSelectedIds.value[canvasSelectedIds.value.length - 1]
+  const contextIds = canvasSelectedIds.value.slice(0, -1)
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${targetId}`, {
+    method: 'PATCH',
+    body: { contextScope: 'manual', contextNodeIds: contextIds },
+  })
+  toast.add({ title: `Set ${contextIds.length} nodes as manual context`, color: 'success' })
+  canvasSelectedIds.value = []
+  selectedItemId.value = targetId
+  showDetail.value = true
+  await refreshItems()
 }
 
 function canvasDeselect(id: string) {
@@ -1363,7 +1379,7 @@ if (import.meta.client) {
           @synthesize="canvasSynthesize"
           @generate-brief="canvasGenerateBrief"
           @copy-context="canvasCopyContext"
-          @use-as-context="() => {}"
+          @use-as-context="canvasUseAsContext"
           @clear="canvasSelectedIds = []"
           @deselect="canvasDeselect"
         />
