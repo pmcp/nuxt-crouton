@@ -32,6 +32,8 @@ jobs:
       - name: Typecheck
         id: typecheck
         continue-on-error: true
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
         run: |
           pnpm typecheck 2>&1 | tee /tmp/typecheck-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
