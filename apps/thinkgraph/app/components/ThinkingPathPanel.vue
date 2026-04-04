@@ -20,6 +20,7 @@ const emit = defineEmits<{
   'toggle-star': [nodeId: string]
   'delete-node': [nodeId: string]
   'create-node': [data: { content: string; nodeType: string; parentId: string }]
+  'dismiss-suggestions': [nodeId: string]
 }>()
 
 const decisionsRef = computed(() => props.decisions)
@@ -121,6 +122,17 @@ function createFromSuggestion(suggestion: SuggestedNode) {
     nodeType: suggestion.nodeType || 'idea',
     parentId: props.nodeId,
   })
+}
+
+function acceptAllSuggestions() {
+  for (const suggestion of suggestedNodes.value) {
+    createFromSuggestion(suggestion)
+  }
+}
+
+function dismissSuggestions() {
+  if (!props.nodeId) return
+  emit('dismiss-suggestions', props.nodeId)
 }
 </script>
 
@@ -323,9 +335,28 @@ function createFromSuggestion(suggestion: SuggestedNode) {
 
       <!-- Suggested Nodes -->
       <div v-if="suggestedNodes.length" class="px-3 pt-2 pb-1">
-        <p class="text-[10px] font-semibold text-muted uppercase tracking-wider px-1 mb-2">
-          Suggested Nodes
-        </p>
+        <div class="flex items-center justify-between px-1 mb-2">
+          <p class="text-[10px] font-semibold text-muted uppercase tracking-wider">
+            Suggested Nodes
+          </p>
+          <div class="flex items-center gap-1">
+            <button
+              class="text-[10px] text-primary hover:text-primary/80 font-medium transition-colors"
+              title="Accept all suggestions"
+              @click="acceptAllSuggestions"
+            >
+              Accept all
+            </button>
+            <span class="text-muted text-[10px]">·</span>
+            <button
+              class="text-[10px] text-muted hover:text-default font-medium transition-colors"
+              title="Dismiss suggestions"
+              @click="dismissSuggestions"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
         <div class="space-y-1.5">
           <button
             v-for="(suggestion, i) in suggestedNodes"

@@ -706,6 +706,12 @@ If you spot visual issues or want to show before/after states:
 
 ### Step 4: Run the Review Checklist
 
+**Do NOT run \`pnpm typecheck\` locally** — it exceeds available memory. Typecheck runs automatically in CI on every PR. If you need the result, check the CI status:
+\`\`\`bash
+cd ~/nuxt-crouton
+gh run list --branch <branch-name> --workflow thinkgraph-ci.yml --limit 1
+\`\`\`
+
 Apply the checklist from \`review/SKILL.md\` to every changed file. Check boundary rules from \`boundary-audit.md\`. Categorize findings:
 - 🔴 **Critical** — security hole, data loss risk, crash
 - 🟡 **Warning** — bug likely, pattern violation, missing validation

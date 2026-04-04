@@ -1,6 +1,6 @@
 import { streamText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
+import { getAllThinkgraphNodes, updateThinkgraphNode } from '../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 
 export default defineEventHandler(async (event) => {
   const { team, user } = await resolveTeamAndCheckMembership(event)
@@ -48,22 +48,26 @@ Respond with a JSON object: {"content": "your synthesis (2-3 sentences)", "nodeT
     throw createError({ status: 500, statusText: 'AI returned invalid response' })
   }
 
-  const decision = await createThinkgraphNode({
-    content: synthesis.content,
+  // Store as suggested node on the first selected node — user accepts from the slideout
+  const suggestedNode = {
+    title: synthesis.content,
     nodeType: synthesis.nodeType || 'decision',
+    brief: `Synthesis of ${selectedNodes.length} nodes`,
     pathType: 'chosen',
-    graphId: (selectedNodes[0] as any)?.graphId || '',
-    parentId: nodeIds[0],
-    source: 'ai',
-    model: ai.getDefaultModel(),
-    starred: true, // Syntheses are auto-starred
-    branchName: '',
-    versionTag: '',
-    teamId: team.id,
-    owner: user.id,
-    artifacts: [{ type: 'synthesis', sourceNodeIds: nodeIds }],
-  } as any)
+  }
 
-  return decision
+  const primaryNode = selectedNodes[0] as any
+  const existingArtifacts = Array.isArray(primaryNode.artifacts)
+    ? primaryNode.artifacts.filter((a: any) => a?.type !== 'suggested-nodes')
+    : []
+
+  await updateThinkgraphNode(nodeIds[0], team.id, user.id, {
+    artifacts: [
+      ...existingArtifacts,
+      { type: 'suggested-nodes', nodes: [suggestedNode], createdAt: new Date().toISOString() },
+    ],
+  } as any, { role: 'admin' })
+
+  return { suggestions: [suggestedNode] }
 })
 

@@ -1,6 +1,6 @@
 import { streamText } from 'ai'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
+import { getAllThinkgraphNodes, updateThinkgraphNode } from '../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildSelectedBranchContext } from '~~/server/utils/context-builder'
 
 const modeConfig: Record<string, { system: string; count: number }> = {
@@ -109,24 +109,24 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 500, statusText: 'AI returned invalid response' })
   }
 
-  const created = []
-  for (const p of perspectives) {
-    const decision = await createThinkgraphNode({
-      content: p.content,
-      nodeType: p.nodeType || 'idea',
-      pathType: p.pathType || 'explored',
-      graphId: graphId || (targetDecision as any).graphId || '',
-      parentId: nodeId,
-      source: 'ai',
-      model: ai.getDefaultModel(),
-      starred: false,
-      branchName: '',
-      versionTag: '',
-      teamId: team.id,
-      owner: user.id,
-    } as any)
-    created.push(decision)
-  }
+  // Store as suggested nodes on the parent — user accepts from the slideout
+  const suggestedNodes = perspectives.map(p => ({
+    title: p.content,
+    nodeType: p.nodeType || 'idea',
+    brief: '',
+    pathType: p.pathType || 'explored',
+  }))
 
-  return created
+  const existingArtifacts = Array.isArray((targetDecision as any).artifacts)
+    ? (targetDecision as any).artifacts.filter((a: any) => a?.type !== 'suggested-nodes')
+    : []
+
+  await updateThinkgraphNode(nodeId, team.id, user.id, {
+    artifacts: [
+      ...existingArtifacts,
+      { type: 'suggested-nodes', nodes: suggestedNodes, createdAt: new Date().toISOString() },
+    ],
+  } as any, { role: 'admin' })
+
+  return { suggestions: suggestedNodes }
 })
