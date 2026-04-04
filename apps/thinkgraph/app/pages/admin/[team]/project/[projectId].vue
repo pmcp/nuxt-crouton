@@ -92,7 +92,21 @@ async function refreshItems() {
       `/api/teams/${teamId.value}/thinkgraph-nodes`,
       { query: { projectId: projectId.value } },
     )
-    items.value = result || []
+    const incoming = result || []
+    // Smart merge: preserve object identity for unchanged items to avoid
+    // VueFlow unmounting/remounting all node components (emitsOptions null error)
+    const oldById = new Map(items.value.map(n => [n.id, n]))
+    const merged = incoming.map((n) => {
+      const old = oldById.get(n.id)
+      if (old && JSON.stringify(old) === JSON.stringify(n)) return old
+      return n
+    })
+    items.value = merged
+
+    // Clear selected item if it was removed from the list
+    if (selectedItemId.value && !merged.some(n => n.id === selectedItemId.value)) {
+      closeDetail()
+    }
   }
   catch {
     items.value = []
@@ -130,9 +144,16 @@ watch(hasActiveWork, (active) => {
 }, { immediate: true })
 onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 
-// ─── Selection ───
-const selectedItemId = ref<string | null>(null)
-const showDetail = ref(false)
+// ─── Selection (synced with ?node= URL param) ───
+const selectedItemId = ref<string | null>(route.query.node as string || null)
+const showDetail = ref(!!selectedItemId.value)
+
+watch(selectedItemId, (id) => {
+  const query = { ...route.query }
+  if (id) query.node = id
+  else delete query.node
+  navigateTo({ query }, { replace: true })
+})
 
 // Canvas multi-select (for SelectionBar synthesis/brief actions)
 const canvasSelectedIds = ref<string[]>([])
@@ -1496,8 +1517,17 @@ if (import.meta.client) {
       <template #content>
         <div v-if="selectedItem" class="p-6 h-full overflow-y-auto">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
-            <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="closeDetail" />
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold">{{ selectedItem.title }}</h2>
+              <button
+                class="text-[10px] font-mono text-muted hover:text-default transition-colors"
+                title="Copy node ID"
+                @click="navigator.clipboard.writeText(selectedItem!.id); toast.add({ title: 'Node ID copied', color: 'success' })"
+              >
+                {{ selectedItem.id }}
+              </button>
+            </div>
+            <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" class="shrink-0" @click="closeDetail" />
           </div>
 
           <!-- Compact status bar -->
@@ -1511,18 +1541,27 @@ if (import.meta.client) {
               <UIcon :name="DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].icon" class="size-3" />
               {{ DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].label }}
             </span>
-            <!-- Status -->
-            <span
-              class="inline-flex items-center gap-1 text-[10px] font-medium"
-              :class="DETAIL_STATUS_CONFIG[selectedItem.status]?.class || 'text-neutral-400'"
+            <!-- Status (clickable to change) -->
+            <UDropdownMenu
+              :items="['idle', 'queued', 'active', 'waiting', 'done', 'blocked'].map(s => ({
+                label: DETAIL_STATUS_CONFIG[s]?.label || s,
+                icon: DETAIL_STATUS_CONFIG[s]?.icon || 'i-lucide-circle-dashed',
+                disabled: s === selectedItem.status,
+                onSelect: () => updateItem(selectedItem!.id, { status: s }),
+              }))"
             >
-              <UIcon
-                :name="DETAIL_STATUS_CONFIG[selectedItem.status]?.icon || 'i-lucide-circle-dashed'"
-                class="size-3"
-                :class="{ 'animate-spin': selectedItem.status === 'active' }"
-              />
-              {{ DETAIL_STATUS_CONFIG[selectedItem.status]?.label || selectedItem.status }}
-            </span>
+              <button
+                class="inline-flex items-center gap-1 text-[10px] font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                :class="DETAIL_STATUS_CONFIG[selectedItem.status]?.class || 'text-neutral-400'"
+              >
+                <UIcon
+                  :name="DETAIL_STATUS_CONFIG[selectedItem.status]?.icon || 'i-lucide-circle-dashed'"
+                  class="size-3"
+                  :class="{ 'animate-spin': selectedItem.status === 'active' }"
+                />
+                {{ DETAIL_STATUS_CONFIG[selectedItem.status]?.label || selectedItem.status }}
+              </button>
+            </UDropdownMenu>
             <!-- Pipeline dots -->
             <div class="flex items-center gap-1">
               <div
@@ -1551,6 +1590,32 @@ if (import.meta.client) {
               :title="tag.title"
               class="text-xs leading-none select-none cursor-default"
             >{{ tag.emoji }}</span>
+          </div>
+
+          <!-- Blocked by dependencies -->
+          <div v-if="selectedItem.dependsOn?.length" class="mb-4">
+            <p class="text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">Blocked by</p>
+            <div class="flex flex-col gap-1.5">
+              <button
+                v-for="depId in selectedItem.dependsOn"
+                :key="depId"
+                class="flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-colors"
+                :class="items.find(n => n.id === depId)?.status === 'done'
+                  ? 'border-green-200 dark:border-green-800/50 bg-green-50/50 dark:bg-green-950/20'
+                  : 'border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-950/20 hover:border-red-300 dark:hover:border-red-700'"
+                @click="selectedItemId = depId; showDetail = true"
+              >
+                <UIcon
+                  :name="items.find(n => n.id === depId)?.status === 'done' ? 'i-lucide-check-circle' : 'i-lucide-alert-circle'"
+                  class="size-3.5 shrink-0"
+                  :class="items.find(n => n.id === depId)?.status === 'done' ? 'text-green-500' : 'text-red-400'"
+                />
+                <span class="text-sm truncate flex-1">
+                  {{ items.find(n => n.id === depId)?.title || depId }}
+                </span>
+                <UIcon name="i-lucide-arrow-right" class="size-3 text-muted shrink-0" />
+              </button>
+            </div>
           </div>
 
           <!-- Brief -->

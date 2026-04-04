@@ -44,7 +44,8 @@ export default defineNuxtConfig({
       crawlLinks: true
     },
     alias: {
-      'playwright-core': 'unenv/runtime/mock/noop'
+      'playwright-core': 'unenv/runtime/mock/noop',
+      'playwright': 'unenv/runtime/mock/noop'
     }
   },
 

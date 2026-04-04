@@ -44,6 +44,9 @@ export async function getAllThinkgraphNodes(teamId: string, projectId?: string) 
     if (typeof item.contextNodeIds === 'string') {
       try { item.contextNodeIds = JSON.parse(item.contextNodeIds) } catch { item.contextNodeIds = [] }
     }
+    if (typeof item.dependsOn === 'string') {
+      try { item.dependsOn = JSON.parse(item.dependsOn) } catch { item.dependsOn = [] }
+    }
   })
 
   return nodes
@@ -86,6 +89,9 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
     }
     if (typeof item.contextNodeIds === 'string') {
       try { item.contextNodeIds = JSON.parse(item.contextNodeIds) } catch { item.contextNodeIds = [] }
+    }
+    if (typeof item.dependsOn === 'string') {
+      try { item.dependsOn = JSON.parse(item.dependsOn) } catch { item.dependsOn = [] }
     }
   })
 
@@ -164,6 +170,30 @@ export async function deleteThinkgraphNode(
       status: 404,
       statusText: 'ThinkgraphNode not found or unauthorized'
     })
+  }
+
+  // Clean up dependsOn references in sibling nodes
+  const dependents = await (db as any)
+    .select({ id: tables.thinkgraphNodes.id, dependsOn: tables.thinkgraphNodes.dependsOn })
+    .from(tables.thinkgraphNodes)
+    .where(
+      and(
+        eq(tables.thinkgraphNodes.teamId, teamId),
+        sql`json_array_length(${tables.thinkgraphNodes.dependsOn}) > 0`,
+      ),
+    )
+
+  for (const dep of dependents) {
+    const deps: string[] = typeof dep.dependsOn === 'string'
+      ? JSON.parse(dep.dependsOn)
+      : (dep.dependsOn || [])
+    if (deps.includes(recordId)) {
+      const updated = deps.filter((id: string) => id !== recordId)
+      await (db as any)
+        .update(tables.thinkgraphNodes)
+        .set({ dependsOn: JSON.stringify(updated) })
+        .where(eq(tables.thinkgraphNodes.id, dep.id))
+    }
   }
 
   return { success: true }
