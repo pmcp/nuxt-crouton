@@ -53,66 +53,13 @@ const {
 })
 
 // ─── Persistence ───
-const conversationId = ref<string | null>(null)
-const isLoadingConversation = ref(false)
-const apiBase = computed(() => `/api/teams/${teamId.value}/thinkgraph-chatconversations`)
+const { isLoadingConversation, loadConversation, saveConversation: _saveConversation } = useChatPersistence({
+  teamId,
+  callbacks: { clearMessages, exportMessages, importMessages },
+})
 
-async function loadConversation(nodeId: string) {
-  isLoadingConversation.value = true
-  conversationId.value = null
-  clearMessages()
-  try {
-    const result = await $fetch<any>(apiBase.value, {
-      query: { nodeId },
-    })
-    if (result?.id) {
-      conversationId.value = result.id
-      if (Array.isArray(result.messages) && result.messages.length > 0) {
-        importMessages(result.messages)
-      }
-    }
-  }
-  catch {
-    // No conversation yet — that's fine
-  }
-  finally {
-    isLoadingConversation.value = false
-  }
-}
-
-async function saveConversation() {
-  const exported = exportMessages()
-  if (!exported?.length) return
-  try {
-    if (conversationId.value) {
-      await $fetch(`${apiBase.value}/${conversationId.value}`, {
-        method: 'PATCH',
-        body: {
-          messages: exported,
-          messageCount: exported.length,
-          lastMessageAt: new Date().toISOString(),
-        },
-      })
-    }
-    else {
-      const result = await $fetch<any>(apiBase.value, {
-        method: 'POST',
-        body: {
-          nodeId: props.nodeId,
-          title: props.nodeName || 'Chat',
-          messages: exported,
-          messageCount: exported.length,
-          lastMessageAt: new Date().toISOString(),
-        },
-      })
-      if (result?.id) {
-        conversationId.value = result.id
-      }
-    }
-  }
-  catch (e) {
-    console.warn('Failed to save conversation:', e)
-  }
+function saveConversation() {
+  return _saveConversation(props.nodeId, props.nodeName || 'Chat')
 }
 
 // ─── Slash commands ───
