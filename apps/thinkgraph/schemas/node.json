@@ -144,6 +144,15 @@
       "group": "classification"
     }
   },
+  "dependsOn": {
+    "type": "json",
+    "meta": {
+      "label": "Depends On",
+      "description": "Node IDs that must be done before this node can be dispatched",
+      "area": "sidebar",
+      "group": "dependencies"
+    }
+  },
   "origin": {
     "type": "string",
     "meta": {

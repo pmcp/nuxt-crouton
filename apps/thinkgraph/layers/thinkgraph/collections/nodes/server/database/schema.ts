@@ -62,6 +62,9 @@ export const thinkgraphNodes = sqliteTable('thinkgraph_nodes', {
   starred: integer('starred', { mode: 'boolean' }).$default(() => false),
   pinned: integer('pinned', { mode: 'boolean' }).$default(() => false),
 
+  // Dependencies — node IDs that must be 'done' before this node can dispatch
+  dependsOn: jsonColumn('dependsOn').$default(() => []),
+
   // Provenance
   origin: text('origin').$default(() => 'human'),
   contextScope: text('contextScope').$default(() => 'branch'),

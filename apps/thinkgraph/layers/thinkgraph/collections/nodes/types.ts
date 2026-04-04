@@ -96,6 +96,9 @@ export interface ThinkgraphNode {
   starred?: boolean
   pinned?: boolean
 
+  // Dependencies
+  dependsOn?: string[]
+
   // Provenance
   origin?: ThinkgraphNodeOrigin
   contextScope?: ThinkgraphContextScope

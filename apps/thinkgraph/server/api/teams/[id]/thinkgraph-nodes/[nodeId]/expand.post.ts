@@ -1,7 +1,7 @@
 import { streamText, generateText } from 'ai'
 import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
+import { createThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds, updateThinkgraphNode } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { buildAncestorChain, buildPrompt } from '~~/server/utils/context-builder'
 
 const TEMPLATE_STEPS: Record<string, string[]> = {
@@ -57,6 +57,7 @@ interface DecomposeItem {
   title: string
   brief: string
   template: string
+  dependsOn?: number[]
   children?: DecomposeItem[]
 }
 
@@ -89,50 +90,34 @@ export default defineEventHandler(async (event) => {
 
     const { text } = await generateText({
       model: ai.model('claude-haiku-4-5-20251001'),
-      system: `You decompose plans into sequential phases. Respond with ONLY a JSON object, no other text.
+      system: `You decompose plans into work items with dependencies. Respond with ONLY a JSON object, no other text.
 
-CRITICAL: The output is a CHAIN, not a flat list. Each phase is nested inside the previous one as a child. Parallel work items within a phase are siblings.
+Return a FLAT list of items. Each item has a zero-based index. Use "dependsOn" to reference which items must complete before this one can start.
 
 Return format:
 {
-  "items": [{
-    "title": "Phase 1 title",
-    "brief": "...",
-    "template": "research",
-    "children": [
-      { "title": "parallel task A", "brief": "...", "template": "task" },
-      { "title": "parallel task B", "brief": "...", "template": "task" },
-      {
-        "title": "Phase 2 title",
-        "brief": "...",
-        "template": "feature",
-        "children": [
-          { "title": "parallel task C", "brief": "...", "template": "task" },
-          {
-            "title": "Phase 3 title",
-            "brief": "...",
-            "template": "task"
-          }
-        ]
-      }
-    ]
-  }]
+  "items": [
+    { "index": 0, "title": "Research auth providers", "brief": "...", "template": "research", "dependsOn": [] },
+    { "index": 1, "title": "Design DB schema", "brief": "...", "template": "task", "dependsOn": [0] },
+    { "index": 2, "title": "Build login API", "brief": "...", "template": "task", "dependsOn": [1] },
+    { "index": 3, "title": "Build signup UI", "brief": "...", "template": "feature", "dependsOn": [1] },
+    { "index": 4, "title": "Integration tests", "brief": "...", "template": "task", "dependsOn": [2, 3] }
+  ]
 }
 
-The last child of each phase is the next phase — this creates a chain where each phase blocks the next.
-Parallel tasks within a phase are siblings of the next phase.
-
 Rules:
-- 3-5 phases max. Each phase has 1-3 parallel tasks plus the next phase as last child.
+- 3-8 items. Keep it practical.
+- dependsOn references other items by index. Items with no dependencies use [].
+- Items with no dependsOn can run in parallel.
 - Templates: research = needs investigation, task = concrete work, feature = multi-step deliverable, idea = needs thinking.
 - Start with research/discovery if requirements are vague.
 - Keep titles short and actionable. Briefs: 1-2 sentences.
 - Do NOT include time estimates or generic phases like "testing" and "deployment" unless requested.
-- The top-level items array should have exactly 1 item (the first phase). Everything else is nested.`,
+- The dependency graph must be a DAG (no circular dependencies).`,
       prompt: content,
     })
 
-    let items: DecomposeItem[]
+    let items: (DecomposeItem & { index: number })[]
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error('No JSON found')
@@ -142,59 +127,57 @@ Rules:
       throw createError({ status: 500, statusText: 'AI returned invalid decompose response' })
     }
 
-    // Build a path/depth cache so we can calculate for each new node
-    const pathCache = new Map<string, { path: string; depth: number }>()
-    // Seed with the target node's path/depth
-    pathCache.set(nodeId, {
-      path: (targetDecision as any).path || `/${nodeId}/`,
-      depth: (targetDecision as any).depth ?? 0,
-    })
+    const parentPath = (targetDecision as any).path || `/${nodeId}/`
+    const parentDepth = (targetDecision as any).depth ?? 0
 
+    // First pass: create all nodes, track index → real ID
+    const indexToId = new Map<number, string>()
     const created: any[] = []
 
-    async function createDecomposeNodes(
-      nodeItems: DecomposeItem[],
-      parentId: string,
-    ) {
-      const parent = pathCache.get(parentId)
-      const parentPath = parent?.path || `/${parentId}/`
-      const parentDepth = parent?.depth ?? 0
+    for (const item of items) {
+      const tmpl = VALID_TEMPLATES.has(item.template) ? item.template : 'idea'
+      const steps = TEMPLATE_STEPS[tmpl] || []
+      const recordId = nanoid()
+      const path = `${parentPath}${recordId}/`
+      const depth = parentDepth + 1
 
-      for (const item of nodeItems) {
-        const tmpl = VALID_TEMPLATES.has(item.template) ? item.template : 'idea'
-        const steps = TEMPLATE_STEPS[tmpl] || []
-        const recordId = nanoid()
-        const path = `${parentPath}${recordId}/`
-        const depth = parentDepth + 1
+      const node = await createThinkgraphNode({
+        id: recordId,
+        title: item.title,
+        brief: item.brief,
+        template: tmpl,
+        steps,
+        projectId: parentProjectId,
+        parentId: nodeId,
+        path,
+        depth,
+        status: 'idle',
+        origin: 'ai',
+        starred: false,
+        dependsOn: [],
+        teamId: team.id,
+        owner: user.id,
+      } as any)
+      created.push(node)
+      indexToId.set(item.index ?? items.indexOf(item), recordId)
+    }
 
-        const node = await createThinkgraphNode({
-          id: recordId,
-          title: item.title,
-          brief: item.brief,
-          template: tmpl,
-          steps,
-          projectId: parentProjectId,
-          parentId,
-          path,
-          depth,
-          status: 'idle',
-          origin: 'ai',
-          starred: false,
-          teamId: team.id,
-          owner: user.id,
-        } as any)
-        created.push(node)
+    // Second pass: resolve dependsOn indices → real IDs and update
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      const deps = (item.dependsOn || [])
+        .map(idx => indexToId.get(idx))
+        .filter(Boolean) as string[]
 
-        // Cache for children
-        pathCache.set(recordId, { path, depth })
-
-        if (item.children?.length) {
-          await createDecomposeNodes(item.children, recordId)
-        }
+      if (deps.length > 0) {
+        const nodeRealId = indexToId.get(item.index ?? i)!
+        await updateThinkgraphNode(nodeRealId, team.id, user.id, { dependsOn: deps } as any, { role: 'admin' })
+        // Update the created array too so the response reflects deps
+        const createdNode = created.find(n => n.id === nodeRealId)
+        if (createdNode) createdNode.dependsOn = deps
       }
     }
 
-    await createDecomposeNodes(items, nodeId)
     return created
   }
 

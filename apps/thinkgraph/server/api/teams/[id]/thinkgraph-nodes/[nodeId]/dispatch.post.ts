@@ -1,5 +1,5 @@
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { createThinkgraphNode, getAllThinkgraphNodes } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
+import { createThinkgraphNode, getAllThinkgraphNodes, getThinkgraphNodesByIds } from '../../../../../../layers/thinkgraph/collections/nodes/server/database/queries'
 import { getDispatchService, isServiceAvailable, ensureServicesLoaded } from '~~/server/utils/dispatch-registry'
 import { buildDispatchContext } from '~~/server/utils/context-builder'
 
@@ -40,6 +40,20 @@ export default defineEventHandler(async (event) => {
 
   if (!targetDecision) {
     throw createError({ status: 404, statusText: 'Decision not found' })
+  }
+
+  // Dependency gate: check all dependsOn nodes are done
+  const dependsOn = (targetDecision as any).dependsOn as string[] | undefined
+  if (dependsOn?.length) {
+    const depNodes = await getThinkgraphNodesByIds(dependsOn)
+    const blocking = depNodes.filter((n: any) => n.status !== 'done')
+    if (blocking.length > 0) {
+      const blockingTitles = blocking.map((n: any) => n.title).join(', ')
+      throw createError({
+        status: 409,
+        statusText: `Blocked by unfinished dependencies: ${blockingTitles}`,
+      })
+    }
   }
 
   const derivedGraphId = (targetDecision as any).graphId || ''
