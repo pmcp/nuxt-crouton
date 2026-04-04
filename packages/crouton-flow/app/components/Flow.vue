@@ -625,29 +625,24 @@ const finalNodes = computed(() => {
 
         baseNodes = layoutedNodesResult
       } else {
-        // Position new nodes below their parent instead of at (0,0)
-        const positioned = nodes.map(node => {
-          if (node.position.x === 0 && node.position.y === 0 && node.data?.parentId) {
-            const parent = nodes.find(n => n.id === node.data.parentId)
-            if (parent && (parent.position.x !== 0 || parent.position.y !== 0)) {
-              // Find existing siblings to offset horizontally
-              const siblings = nodes.filter(n =>
-                n.data?.parentId === node.data.parentId && n.id !== node.id &&
-                (n.position.x !== 0 || n.position.y !== 0)
-              )
-              const offsetX = siblings.length * 200
-              const newPos = {
-                x: parent.position.x + offsetX,
-                y: parent.position.y + 150
+        // Use dagre incremental layout for new nodes arriving at (0,0)
+        const hasNewNodes = nodes.some(n => n.position.x === 0 && n.position.y === 0)
+        if (hasNewNodes) {
+          const result = applyLayoutToNew(nodes, edges, lockedNodeIds.value)
+          // Persist new positions to Yjs
+          nextTick(() => {
+            for (const node of result) {
+              const original = nodes.find(n => n.id === node.id)
+              if (original && original.position.x === 0 && original.position.y === 0
+                && node.position && (node.position.x !== 0 || node.position.y !== 0)) {
+                syncState.updatePosition(node.id, node.position)
               }
-              // Persist to Yjs
-              nextTick(() => syncState.updatePosition(node.id, newPos))
-              return { ...node, position: newPos }
             }
-          }
-          return node
-        })
-        baseNodes = positioned
+          })
+          baseNodes = result
+        } else {
+          baseNodes = nodes
+        }
       }
     }
   } else {
