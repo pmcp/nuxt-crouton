@@ -570,7 +570,7 @@ async function dispatchNode(id: string) {
   const chatHistory = getChatHistory()
   const updates: Partial<ThinkgraphNode> = { status: 'queued', assignee: 'pi', steps }
   if (chatHistory) {
-    const existingBrief = item.brief || item.title
+    const existingBrief = stripAppendedSections(item.brief || item.title)
     updates.brief = `${existingBrief}\n\n---\n**Conversation context:**\n${chatHistory}`
   }
 
@@ -646,7 +646,8 @@ async function respondAndRedispatch(id: string) {
     const formattedAnswers = formatAnswers()
     const chatHistory = getChatHistory()
     const chatSection = chatHistory ? `\n\n---\n**Conversation context:**\n${chatHistory}` : ''
-    const updatedBrief = `${item.brief || item.title}\n\n---\n**Human answers:**\n${formattedAnswers}${chatSection}`
+    const existingBrief = stripAppendedSections(item.brief || item.title)
+    const updatedBrief = `${existingBrief}\n\n---\n**Human answers:**\n${formattedAnswers}${chatSection}`
     await updateItem(id, {
       brief: updatedBrief,
       status: 'queued',
@@ -923,6 +924,11 @@ const flowRef = ref<any>(null)
 
 // ─── Node chat panel ref ───
 const nodeChatPanelRef = ref<InstanceType<typeof NodeChatPanel> | null>(null)
+
+/** Strip previously appended Conversation context / Human answers sections from a brief */
+function stripAppendedSections(brief: string): string {
+  return brief.replace(/\n\n---\n\*\*(?:Conversation context|Human answers):\*\*[\s\S]*/g, '')
+}
 
 function getChatHistory(): string {
   if (!nodeChatPanelRef.value) return ''
