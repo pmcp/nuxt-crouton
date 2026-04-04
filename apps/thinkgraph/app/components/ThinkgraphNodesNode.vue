@@ -35,6 +35,7 @@ const projectActions = inject<{
   openTerminal: (id: string) => void
   selectSubtree?: (nodeId: string) => void
   layoutSubtree?: (nodeId: string) => void
+  openContextMenu?: (nodeId: string, event: MouseEvent) => void
 } | null>('projectActions', null)
 
 const isHovered = ref(false)
@@ -168,13 +169,13 @@ function handleLayoutSubtree(event: Event) {
 function handleContextMenu(event: MouseEvent | Event) {
   event.preventDefault()
   event.stopPropagation()
-  if (node.value.id && canvasActions) {
-    const mouseEvent = 'clientX' in event ? event as MouseEvent : {
-      clientX: (event.target as HTMLElement)?.getBoundingClientRect().right ?? 0,
-      clientY: (event.target as HTMLElement)?.getBoundingClientRect().top ?? 0,
-    } as MouseEvent
-    canvasActions.openContextMenu(node.value.id, mouseEvent)
-  }
+  if (!node.value.id) return
+  const mouseEvent = 'clientX' in event ? event as MouseEvent : {
+    clientX: (event.target as HTMLElement)?.getBoundingClientRect().right ?? 0,
+    clientY: (event.target as HTMLElement)?.getBoundingClientRect().top ?? 0,
+  } as MouseEvent
+  canvasActions?.openContextMenu(node.value.id, mouseEvent)
+  projectActions?.openContextMenu?.(node.value.id, mouseEvent)
 }
 </script>
 

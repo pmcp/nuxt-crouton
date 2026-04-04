@@ -661,6 +661,52 @@ function openTerminal(id: string) {
   showTerminal.value = true
 }
 
+// ─── Right-click context menu ───
+const contextMenuNodeId = ref<string | null>(null)
+const contextMenuPos = ref({ x: 0, y: 0 })
+const showNodeContextMenu = ref(false)
+
+const contextMenuNode = computed(() =>
+  contextMenuNodeId.value ? items.value.find(n => n.id === contextMenuNodeId.value) : null,
+)
+
+function openContextMenu(nodeId: string, event: MouseEvent) {
+  contextMenuNodeId.value = nodeId
+  contextMenuPos.value = { x: event.clientX, y: event.clientY }
+  showNodeContextMenu.value = true
+  selectedItemId.value = nodeId
+}
+
+function closeContextMenu() {
+  showNodeContextMenu.value = false
+  contextMenuNodeId.value = null
+}
+
+if (import.meta.client) {
+  useEventListener(document, 'click', closeContextMenu)
+}
+
+// ─── Context generator ───
+const nodesRef = computed(() => items.value)
+const { copyPrompt } = useNodeContextGenerator(nodesRef)
+
+async function deleteContextMenuNode() {
+  if (!contextMenuNodeId.value || !teamId.value) return
+  const node = contextMenuNode.value
+  const children = items.value.filter(n => n.parentId === contextMenuNodeId.value)
+  if (children.length > 0) {
+    toast.add({ title: `Cannot delete "${node?.title}" — has children`, color: 'warning' })
+    return
+  }
+  await $fetch(`/api/teams/${teamId.value}/thinkgraph-nodes/${contextMenuNodeId.value}`, { method: 'DELETE' })
+  if (selectedItemId.value === contextMenuNodeId.value) {
+    selectedItemId.value = null
+    showDetail.value = false
+  }
+  closeContextMenu()
+  await refreshItems()
+}
+
 // Provide actions to WorkItemsNode
 provide('projectItems', items)
 provide('projectActions', {
@@ -679,6 +725,7 @@ provide('projectActions', {
   layoutSubtree: (nodeId: string) => {
     flowRef.value?.layoutSubtree(nodeId)
   },
+  openContextMenu,
 })
 
 // ─── Status summary ───
@@ -1704,6 +1751,51 @@ if (import.meta.client) {
     </UModal>
 
 
+    <!-- Right-click context menu -->
+    <Transition name="fade">
+      <div
+        v-if="showNodeContextMenu && contextMenuNode"
+        class="fixed z-[100] min-w-[180px] py-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl"
+        :style="{ left: contextMenuPos.x + 'px', top: contextMenuPos.y + 'px' }"
+        @click.stop
+      >
+        <button class="ctx-item" @click="selectedItemId = contextMenuNode!.id; showDetail = true; closeContextMenu()">
+          <UIcon name="i-lucide-panel-right-open" class="size-4" /> Open detail
+        </button>
+        <button class="ctx-item" @click="openCreate(undefined, contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-plus" class="size-4" /> Add child
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item" @click="updateItem(contextMenuNode!.id, { status: 'done' }); closeContextMenu()">
+          <UIcon name="i-lucide-check-circle-2" class="size-4 text-green-500" /> Mark done
+        </button>
+        <button class="ctx-item" @click="updateItem(contextMenuNode!.id, { status: 'active' }); closeContextMenu()">
+          <UIcon name="i-lucide-loader-2" class="size-4 text-primary-500" /> Mark active
+        </button>
+        <button class="ctx-item" @click="updateItem(contextMenuNode!.id, { status: 'idle' }); closeContextMenu()">
+          <UIcon name="i-lucide-circle" class="size-4" /> Mark idle
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">
+          <UIcon name="i-lucide-copy" class="size-4" /> Copy context
+        </button>
+        <button class="ctx-item" @click="dispatchNode(contextMenuNode!.id); closeContextMenu()">
+          <UIcon name="i-lucide-cpu" class="size-4 text-green-500" /> Send to Pi
+        </button>
+        <button
+          v-if="contextMenuNode?.status === 'active' || contextMenuNode?.status === 'working'"
+          class="ctx-item"
+          @click="openTerminal(contextMenuNode!.id); closeContextMenu()"
+        >
+          <UIcon name="i-lucide-terminal" class="size-4 text-green-400" /> Watch terminal
+        </button>
+        <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
+        <button class="ctx-item ctx-item--danger" @click="deleteContextMenuNode()">
+          <UIcon name="i-lucide-trash-2" class="size-4" /> Delete
+        </button>
+      </div>
+    </Transition>
+
     <!-- Terminal panel -->
     <TerminalPanel
       v-if="terminalNodeId"
@@ -1734,4 +1826,20 @@ if (import.meta.client) {
   0%, 100% { opacity: 0.5; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 0 2px rgba(16,185,129,0.2); }
   50% { opacity: 1; box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 0 6px #10b981, 0 0 12px rgba(16,185,129,0.5); }
 }
+</style>
+
+<style>
+/* Context menu (unscoped — fixed position outside component tree) */
+.ctx-item {
+  @apply w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-left;
+  @apply text-neutral-700 dark:text-neutral-300;
+  @apply hover:bg-neutral-100 dark:hover:bg-neutral-800;
+  @apply transition-colors cursor-pointer;
+}
+.ctx-item--danger {
+  @apply text-red-600 dark:text-red-400;
+  @apply hover:bg-red-50 dark:hover:bg-red-900/20;
+}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
