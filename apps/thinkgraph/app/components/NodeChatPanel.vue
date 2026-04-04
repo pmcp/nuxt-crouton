@@ -21,6 +21,16 @@ const emit = defineEmits<{
 
 const { teamId } = useTeamContext()
 
+// ─── Context scope toggle ───
+type ContextScope = 'node' | 'branch' | 'tree' | 'canvas'
+const contextScope = ref<ContextScope>('branch')
+const scopeOptions: { value: ContextScope; label: string; icon: string }[] = [
+  { value: 'node', label: 'Node', icon: 'i-lucide-circle-dot' },
+  { value: 'branch', label: 'Branch', icon: 'i-lucide-git-branch' },
+  { value: 'tree', label: 'Tree', icon: 'i-lucide-git-fork' },
+  { value: 'canvas', label: 'Canvas', icon: 'i-lucide-layout-dashboard' },
+]
+
 const {
   messages,
   input,
@@ -35,6 +45,7 @@ const {
   body: computed(() => ({
     nodeId: props.nodeId,
     graphId: '',
+    contextScope: contextScope.value,
   })),
   onFinish: () => {
     saveConversation()
@@ -161,14 +172,21 @@ defineExpose({
         <span class="text-xs font-medium">Chat</span>
       </div>
       <div class="flex items-center gap-1">
-        <UButton
-          icon="i-lucide-git-branch"
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          title="Break down"
-          @click="emit('break-down')"
-        />
+        <!-- Context scope toggle -->
+        <div class="flex items-center rounded-md border border-default overflow-hidden">
+          <button
+            v-for="opt in scopeOptions"
+            :key="opt.value"
+            :title="`Context: ${opt.label}`"
+            class="px-1.5 py-0.5 transition-colors"
+            :class="contextScope === opt.value
+              ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400'
+              : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'"
+            @click="contextScope = opt.value"
+          >
+            <UIcon :name="opt.icon" class="size-3" />
+          </button>
+        </div>
         <UButton
           icon="i-lucide-send"
           size="xs"
