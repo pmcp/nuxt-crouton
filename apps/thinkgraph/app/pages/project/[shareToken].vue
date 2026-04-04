@@ -111,6 +111,7 @@ const STATUS_CONFIG: Record<string, { icon: string; label: string; class: string
   waiting: { icon: 'i-lucide-pause-circle', label: 'Waiting', class: 'text-amber-500' },
   done: { icon: 'i-lucide-check-circle', label: 'Done', class: 'text-green-500' },
   blocked: { icon: 'i-lucide-alert-circle', label: 'Blocked', class: 'text-red-500' },
+  rejected: { icon: 'i-lucide-ban', label: 'Rejected', class: 'text-neutral-400' },
 }
 
 // ─── Feedback ───

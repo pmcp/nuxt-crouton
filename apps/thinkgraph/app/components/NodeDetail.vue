@@ -11,6 +11,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
   refresh: []
+  navigate: [nodeId: string]
 }>()
 
 const { teamId } = useTeamContext()
@@ -55,13 +56,14 @@ async function saveOutput() {
 
 // ─── Status transitions ───
 const statusTransitions: Record<string, string[]> = {
-  draft: ['idle'],
-  idle: ['thinking', 'working'],
+  draft: ['idle', 'rejected'],
+  idle: ['thinking', 'working', 'rejected'],
   thinking: ['working', 'needs_attention', 'error'],
   working: ['done', 'needs_attention', 'error'],
-  needs_attention: ['idle', 'working'],
-  error: ['idle'],
+  needs_attention: ['idle', 'working', 'rejected'],
+  error: ['idle', 'rejected'],
   done: [],
+  rejected: [],
 }
 
 const availableTransitions = computed(() =>
@@ -131,6 +133,15 @@ async function removeContextNode(nodeId: string) {
   await update(props.node.id, { contextNodeIds: ids })
   emit('refresh')
 }
+
+// ─── Backlinks (nodes that reference this node via contextNodeIds) ───
+const backlinks = computed(() =>
+  props.nodes.filter((n) => {
+    if (n.id === props.node.id) return false
+    const ctxIds = Array.isArray(n.contextNodeIds) ? n.contextNodeIds : []
+    return ctxIds.includes(props.node.id)
+  }),
+)
 
 // ─── Context preview ───
 const showContextPreview = ref(false)
@@ -466,6 +477,26 @@ const tokenUsageByStage = computed(() => {
             <pre class="text-xs whitespace-pre-wrap font-mono text-default leading-relaxed">{{ contextPayload.markdown }}</pre>
           </div>
         </template>
+      </div>
+
+      <!-- Backlinks (nodes that reference this node) -->
+      <div v-if="backlinks.length" class="px-4 py-3 border-b border-default">
+        <p class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
+          Referenced by
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono ml-1">{{ backlinks.length }}</span>
+        </p>
+        <div class="flex flex-col gap-1">
+          <button
+            v-for="bl in backlinks"
+            :key="bl.id"
+            class="flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm hover:bg-muted/50 transition-colors"
+            @click="$emit('navigate', bl.id)"
+          >
+            <UIcon :name="getNodeTypeConfig(bl.template || 'idea').icon" class="size-3.5 shrink-0" />
+            <span class="truncate flex-1">{{ bl.title }}</span>
+            <UIcon name="i-lucide-arrow-right" class="size-3 text-muted shrink-0" />
+          </button>
+        </div>
       </div>
 
       <!-- Ancestor chain -->

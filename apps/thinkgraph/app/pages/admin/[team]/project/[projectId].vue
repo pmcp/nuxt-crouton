@@ -94,14 +94,18 @@ async function refreshItems() {
     )
     const incoming = result || []
     // Smart merge: preserve object identity for unchanged items to avoid
-    // VueFlow unmounting/remounting all node components (emitsOptions null error)
+    // VueFlow unmounting/remounting all node components (parentNode null error)
     const oldById = new Map(items.value.map(n => [n.id, n]))
     const merged = incoming.map((n) => {
       const old = oldById.get(n.id)
       if (old && JSON.stringify(old) === JSON.stringify(n)) return old
       return n
     })
-    items.value = merged
+    // Only update if items actually changed — avoids VueFlow re-render on identical poll data
+    const hasChanges = merged.length !== items.value.length || merged.some((n, i) => n !== items.value[i])
+    if (hasChanges) {
+      items.value = merged
+    }
 
     // Clear selected item if it was removed from the list
     if (selectedItemId.value && !merged.some(n => n.id === selectedItemId.value)) {
@@ -169,6 +173,21 @@ const selectedItem = computed(() =>
 function onNodeClick(nodeId: string) {
   selectedItemId.value = nodeId
 }
+
+// ─── Wiki link navigation (for [[wiki link]] in MDC content) ───
+function navigateToNode(nodeId: string) {
+  selectedItemId.value = nodeId
+  showDetail.value = true
+}
+
+function resolveNodeTitle(title: string): string | null {
+  const lower = title.toLowerCase().trim()
+  const match = items.value.find(n => n.title.toLowerCase().trim() === lower)
+  return match?.id || null
+}
+
+provide('navigateToNode', navigateToNode)
+provide('resolveNodeTitle', resolveNodeTitle)
 
 // ─── Search & filter (canvas view) ───
 const searchQuery = ref('')
@@ -1099,6 +1118,16 @@ const detailTags = computed(() => {
   return t
 })
 
+// ─── Backlinks (nodes that reference selected node via contextNodeIds) ───
+const backlinks = computed(() => {
+  if (!selectedItemId.value) return []
+  return items.value.filter((n) => {
+    if (n.id === selectedItemId.value) return false
+    const ctxIds = Array.isArray(n.contextNodeIds) ? n.contextNodeIds : []
+    return ctxIds.includes(selectedItemId.value!)
+  })
+})
+
 const DETAIL_TEMPLATE_CONFIG: Record<string, { icon: string; label: string; class: string }> = {
   idea: { icon: 'i-lucide-lightbulb', label: 'Idea', class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
   research: { icon: 'i-lucide-search', label: 'Research', class: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
@@ -1792,6 +1821,29 @@ if (import.meta.client) {
             </div>
           </div>
 
+          <!-- Backlinks (nodes referencing this node) -->
+          <div v-if="backlinks.length" class="mb-4">
+            <p class="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+              Referenced by
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono ml-1">{{ backlinks.length }}</span>
+            </p>
+            <div class="flex flex-col gap-1">
+              <button
+                v-for="bl in backlinks"
+                :key="bl.id"
+                class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-default text-left transition-colors hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/20"
+                @click="selectedItemId = bl.id; showDetail = true"
+              >
+                <UIcon
+                  :name="DETAIL_TEMPLATE_CONFIG[bl.template || 'idea']?.icon || 'i-lucide-box'"
+                  class="size-3.5 shrink-0"
+                />
+                <span class="text-sm truncate flex-1">{{ bl.title }}</span>
+                <UIcon name="i-lucide-arrow-right" class="size-3 text-muted shrink-0" />
+              </button>
+            </div>
+          </div>
+
           <!-- Metadata (collapsed) -->
           <details class="mb-6">
             <summary class="text-xs font-medium text-muted cursor-pointer hover:text-default transition-colors">Metadata</summary>
@@ -1907,6 +1959,14 @@ if (import.meta.client) {
               color="green"
               @click="updateItem(selectedItem.id, { status: 'done' })"
             />
+            <UButton
+              v-if="selectedItem.status !== 'done' && selectedItem.status !== 'rejected'"
+              icon="i-lucide-ban"
+              label="Reject"
+              variant="soft"
+              color="neutral"
+              @click="updateItem(selectedItem.id, { status: 'rejected' })"
+            />
             <CroutonConfirmButton
               label="Delete"
               confirm-label="Sure?"
@@ -1973,6 +2033,9 @@ if (import.meta.client) {
         </button>
         <button class="ctx-item" @click="updateItem(contextMenuNode!.id, { status: 'idle' }); closeContextMenu()">
           <UIcon name="i-lucide-circle" class="size-4" /> Mark idle
+        </button>
+        <button class="ctx-item" @click="updateItem(contextMenuNode!.id, { status: 'rejected' }); closeContextMenu()">
+          <UIcon name="i-lucide-ban" class="size-4 text-neutral-400" /> Reject
         </button>
         <div class="border-t border-neutral-100 dark:border-neutral-800 my-1" />
         <button class="ctx-item" @click="copyPrompt(contextMenuNode!.id); toast.add({ title: 'Context copied', color: 'success' }); closeContextMenu()">

@@ -27,6 +27,11 @@ export default defineNuxtConfig({
 
   mdc: {
     highlight: false, // Skip Shiki to keep bundle small
+    remarkPlugins: {
+      'remark-wiki-links': {
+        src: resolve(__dirname, 'app/utils/remark-wiki-links.ts'),
+      },
+    },
   },
 
   crouton: {

@@ -76,4 +76,8 @@ export const thinkgraphNodes = sqliteTable('thinkgraph_nodes', {
 
   // Output
   artifacts: jsonColumn('artifacts').$default(() => ({})),
+
+  // Timestamps
+  createdAt: text('createdAt').$default(() => new Date().toISOString()),
+  updatedAt: text('updatedAt').$default(() => new Date().toISOString()),
 })

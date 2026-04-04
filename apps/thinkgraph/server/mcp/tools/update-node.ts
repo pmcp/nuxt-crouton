@@ -10,7 +10,7 @@ export default defineMcpTool({
     content: z.string().optional().describe('Updated node content'),
     nodeType: z.enum(['idea', 'insight', 'decision', 'question', 'epic', 'user_story', 'task', 'milestone', 'remark', 'fork', 'send']).optional().describe('Change the node type'),
     starred: z.boolean().optional().describe('Star or unstar the node'),
-    status: z.enum(['idle', 'draft', 'thinking', 'working', 'blocked', 'needs_attention', 'done', 'error']).optional().describe('Update the visual status'),
+    status: z.enum(['idle', 'draft', 'thinking', 'working', 'blocked', 'needs_attention', 'done', 'error', 'rejected']).optional().describe('Update the visual status'),
     brief: z.string().optional().describe('Set or update the handoff brief'),
     contextScope: z.enum(['full', 'branch', 'manual']).optional().describe('Change context scope'),
     origin: z.enum(['notion', 'ai', 'human', 'mcp']).optional().describe('Change the origin'),

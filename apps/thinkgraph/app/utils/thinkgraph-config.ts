@@ -58,6 +58,7 @@ export const STATUS_CONFIG: Record<string, { class: string; icon: string }> = {
   blocked: { class: 'work-node--blocked', icon: 'i-lucide-pause-circle' },
   needs_attention: { class: 'work-node--attention', icon: 'i-lucide-alert-triangle' },
   done: { class: 'work-node--done', icon: 'i-lucide-check-circle-2' },
+  rejected: { class: 'work-node--rejected', icon: 'i-lucide-ban' },
   error: { class: 'work-node--error', icon: 'i-lucide-x-circle' },
 }
 

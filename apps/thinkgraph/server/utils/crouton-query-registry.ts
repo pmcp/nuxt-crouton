@@ -8,7 +8,6 @@
  * Generated: 2026-04-01
  *
  * ## Registered Collections
- * - thinkgraphCanvases (thinkgraph/canvases)
  * - thinkgraphChatconversations (thinkgraph/chatconversations)
  * - thinkgraphGraphs (thinkgraph/graphs)
  * - thinkgraphInjectrequests (thinkgraph/injectrequests)
@@ -20,12 +19,6 @@ export const queryRegistry: Record<string, {
   getAll: () => Promise<(teamId: string) => Promise<any[]>>
   getByIds: () => Promise<(teamId: string, ids: string[]) => Promise<any[]>>
 }> = {
-  thinkgraphCanvases: {
-    getAll: () => import('~~/layers/thinkgraph/collections/canvases/server/database/queries')
-      .then(m => m.getAllThinkgraphCanvases),
-    getByIds: () => import('~~/layers/thinkgraph/collections/canvases/server/database/queries')
-      .then(m => m.getThinkgraphCanvasesByIds),
-  },
   thinkgraphChatconversations: {
     getAll: () => import('~~/layers/thinkgraph/collections/chatconversations/server/database/queries')
       .then(m => m.getAllThinkgraphChatconversations),

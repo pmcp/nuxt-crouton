@@ -129,7 +129,7 @@ export async function updateThinkgraphNode(
 
   const [node] = await (db as any)
     .update(tables.thinkgraphNodes)
-    .set(updates)
+    .set({ ...updates, updatedAt: new Date().toISOString() })
     .where(and(...conditions))
     .returning()
 

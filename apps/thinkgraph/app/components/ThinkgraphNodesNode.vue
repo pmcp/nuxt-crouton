@@ -326,6 +326,11 @@ function handleContextMenu(event: MouseEvent | Event) {
   animation: pulse-error 1.5s ease-in-out infinite;
 }
 
+.work-node--rejected {
+  @apply opacity-40;
+  text-decoration: line-through;
+}
+
 @keyframes pulse-node {
   0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
   50% { box-shadow: 0 0 8px 2px rgba(99, 102, 241, 0.15); }

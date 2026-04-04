@@ -20,13 +20,64 @@
 import type { z } from 'zod'
 import type { thinkgraphNodeSchema } from './app/composables/useThinkgraphNodes'
 
-// Node templates — sensible defaults for step sequences, not rigid types
-export type ThinkgraphTemplate = 'idea' | 'research' | 'task' | 'feature' | 'meta'
+// Unified node types — action-oriented, drives both pipeline steps and skills
+export type ThinkgraphNodeType =
+  | 'idea'       // Raw thought, no action
+  | 'discover'   // Research, investigate
+  | 'architect'  // Design, plan structure
+  | 'generate'   // Scaffold via crouton CLI
+  | 'compose'    // Write/fix code
+  | 'review'     // Human triage, awaits human
+  | 'deploy'     // CI/deploy
+  | 'meta'       // About ThinkGraph itself
+
+// Legacy alias — DB column is still called `template`
+export type ThinkgraphTemplate = ThinkgraphNodeType | 'research' | 'task' | 'feature'
 
 // Pipeline step names
 export type ThinkgraphStep =
   | 'analyst' | 'builder' | 'reviewer' | 'launcher' | 'merger'
   | 'analyse' | 'synthesize' | 'optimizer'
+
+// Default pipeline steps per node type
+export const NODE_TYPE_STEPS: Record<ThinkgraphNodeType, ThinkgraphStep[]> = {
+  idea: [],
+  discover: ['analyse'],
+  architect: ['analyst'],
+  generate: ['analyst', 'builder', 'reviewer', 'merger'],
+  compose: ['analyst', 'builder', 'reviewer', 'merger'],
+  review: [],
+  deploy: ['analyst', 'builder', 'launcher', 'reviewer', 'merger'],
+  meta: ['analyst', 'builder', 'reviewer', 'merger'],
+}
+
+// Skill sent to Pi per node type (null = not dispatchable)
+export const NODE_TYPE_SKILLS: Record<ThinkgraphNodeType, string | null> = {
+  idea: null,
+  discover: 'discover',
+  architect: 'architect',
+  generate: 'generate',
+  compose: 'compose',
+  review: null,
+  deploy: 'deploy',
+  meta: 'compose',
+}
+
+// Map legacy template values to unified types
+const LEGACY_TYPE_MAP: Record<string, ThinkgraphNodeType> = {
+  research: 'discover',
+  task: 'compose',
+  feature: 'deploy',
+}
+
+/** Normalize a legacy template value to a unified node type */
+export function normalizeNodeType(template: string | undefined | null): ThinkgraphNodeType {
+  if (!template) return 'idea'
+  if (template in LEGACY_TYPE_MAP) return LEGACY_TYPE_MAP[template]
+  // Already a valid unified type
+  if (template in NODE_TYPE_STEPS) return template as ThinkgraphNodeType
+  return 'idea'
+}
 
 // Traffic light signals
 export type ThinkgraphSignal = 'green' | 'orange' | 'red'
@@ -34,7 +85,7 @@ export type ThinkgraphSignal = 'green' | 'orange' | 'red'
 // Node status — unified from both legacy and PM statuses
 export type ThinkgraphNodeStatus =
   | 'idle' | 'draft' | 'queued' | 'active' | 'working'
-  | 'waiting' | 'blocked' | 'done' | 'error'
+  | 'waiting' | 'blocked' | 'done' | 'error' | 'rejected'
 
 // Node origin
 export type ThinkgraphNodeOrigin = 'human' | 'ai' | 'mcp' | 'notion'
@@ -121,6 +172,10 @@ export interface ThinkgraphNode {
 
   // Output
   artifacts?: Artifact[] | Record<string, any>
+
+  // Timestamps
+  createdAt?: string
+  updatedAt?: string
 
   // Optimistic UI
   optimisticId?: string

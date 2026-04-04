@@ -13,7 +13,7 @@ export default defineMcpTool({
     template: z.enum(['idea', 'research', 'task', 'feature', 'meta']).optional().describe('Node template (auto-detected from title+brief if omitted)'),
     parentId: z.string().optional().describe('Parent node ID (omit for root node)'),
     starred: z.boolean().optional().default(false).describe('Star this node as important'),
-    status: z.enum(['idle', 'draft', 'queued', 'active', 'working', 'waiting', 'blocked', 'done', 'error']).optional().default('idle').describe('Node status'),
+    status: z.enum(['idle', 'draft', 'queued', 'active', 'working', 'waiting', 'blocked', 'done', 'error', 'rejected']).optional().default('idle').describe('Node status'),
     origin: z.enum(['notion', 'ai', 'human', 'mcp']).optional().default('mcp').describe('Where this node originated'),
     brief: z.string().optional().describe('Handoff brief — the context payload for child nodes'),
     contextScope: z.enum(['full', 'branch', 'manual']).optional().describe('How this node gathers context from ancestors'),
