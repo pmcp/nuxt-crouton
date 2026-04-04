@@ -9,6 +9,7 @@
 import { YjsFlowClient } from './yjs-client.js'
 import type { YjsFlowClientOptions } from './yjs-client.js'
 import type { WorkerConfig } from './config.js'
+import { ofetch } from 'ofetch'
 
 interface PoolEntry {
   client: YjsFlowClient
@@ -30,6 +31,8 @@ export class YjsFlowPool {
   private entries = new Map<string, PoolEntry>()
   private config: WorkerConfig
   private callbacks: YjsFlowPoolCallbacks
+  /** Cache projectId → flowId to avoid repeated lookups */
+  private flowIdCache = new Map<string, string>()
 
   constructor(config: WorkerConfig, callbacks: YjsFlowPoolCallbacks) {
     this.config = config
@@ -37,7 +40,41 @@ export class YjsFlowPool {
   }
 
   /**
-   * Get or create a connected YjsFlowClient for a canvas.
+   * Resolve a projectId to the Yjs flow room ID.
+   *
+   * The browser creates flow_configs named "project-{projectId}" and uses
+   * the config's ID as the Yjs room key. We need to look that up so we
+   * join the same room.
+   */
+  async resolveFlowId(projectId: string, teamId: string): Promise<string | null> {
+    // Check cache first
+    const cached = this.flowIdCache.get(projectId)
+    if (cached) return cached
+
+    try {
+      const flowName = `project-${projectId}`
+      const flows = await ofetch<any[]>(
+        `${this.config.thinkgraphUrl}/api/crouton-flow/teams/${teamId}/flows`,
+        {
+          headers: { 'Cookie': this.config.serviceToken },
+          query: { collection: 'thinkgraphNodes', name: flowName },
+        },
+      )
+      const existing = flows?.find((f: any) => f.name === flowName)
+      if (existing?.id) {
+        this.flowIdCache.set(projectId, existing.id)
+        return existing.id
+      }
+      console.warn(`[yjs-pool] No flow config found for project ${projectId} (name: ${flowName})`)
+      return null
+    } catch (err) {
+      console.warn(`[yjs-pool] Flow config lookup failed for project ${projectId}: ${err instanceof Error ? err.message : err}`)
+      return null
+    }
+  }
+
+  /**
+   * Get or create a connected YjsFlowClient for a flow room.
    * Increments the reference count. Call `release(flowId)` when the session ends.
    */
   async acquire(flowId: string): Promise<YjsFlowClient> {

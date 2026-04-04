@@ -112,13 +112,23 @@ export class AgentSessionManager {
     const mode = payload.mode || 'legacy'
     console.log(`[session-manager] Starting ${mode} session for node ${payload.nodeId}`)
 
-    // Acquire a Yjs client for this canvas (graphId = canvasId)
+    // Acquire a Yjs client for this project's flow room
     let yjsClient: YjsFlowClient | null = null
+    let resolvedFlowId: string | null = null
     if (this.yjsPool && payload.graphId) {
       try {
-        yjsClient = await this.yjsPool.acquire(payload.graphId)
+        // Resolve projectId → flow config ID (the browser's Yjs room key)
+        resolvedFlowId = await this.yjsPool.resolveFlowId(
+          payload.graphId,
+          payload.teamId || this.config.teamId,
+        )
+        if (resolvedFlowId) {
+          yjsClient = await this.yjsPool.acquire(resolvedFlowId)
+        } else {
+          console.warn(`[session-manager] No flow room for project ${payload.graphId} — Yjs disabled for this session`)
+        }
       } catch (err) {
-        console.warn(`[session-manager] Yjs acquire failed for canvas ${payload.graphId}: ${err instanceof Error ? err.message : err}`)
+        console.warn(`[session-manager] Yjs acquire failed for project ${payload.graphId}: ${err instanceof Error ? err.message : err}`)
       }
     }
 
@@ -150,7 +160,7 @@ export class AgentSessionManager {
       stage: payload.stage,
       tokenUsage: { inputTokens: 0, outputTokens: 0 },
       yjsClient,
-      graphId: payload.graphId,
+      graphId: resolvedFlowId || payload.graphId,
     }
     this.activeSessions.set(payload.nodeId, activeSession)
 
