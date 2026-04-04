@@ -12,12 +12,7 @@ export default {
         parentField: 'parentId'
       }
     },
-    // Legacy collections (kept for migration reference only — not actively used)
-    {
-      name: 'canvases',
-      fieldsFile: './schemas/canvas.json'
-    },
-    {
+{
       name: 'injectRequests',
       fieldsFile: './schemas/inject-request.json'
     }
@@ -26,7 +21,7 @@ export default {
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['projects', 'nodes', 'canvases', 'injectRequests']
+      collections: ['projects', 'nodes', 'injectRequests']
     }
   ],
 

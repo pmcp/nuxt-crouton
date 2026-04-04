@@ -1957,6 +1957,7 @@ if (import.meta.client) {
 </style>
 
 <style>
+@reference "tailwindcss";
 /* Context menu (unscoped — fixed position outside component tree) */
 .ctx-item {
   @apply w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-left;

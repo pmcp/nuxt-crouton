@@ -13,7 +13,6 @@
  * knows the return type is BlogPost[] without requiring explicit generics.
  *
  * ## Registered Collections
- * - thinkgraphCanvases: ThinkgraphCanvase
  * - thinkgraphChatconversations: ThinkgraphChatconversation
  * - thinkgraphGraphs: ThinkgraphGraph
  * - thinkgraphInjectrequests: ThinkgraphInjectrequest
@@ -21,7 +20,7 @@
  * - thinkgraphProjects: ThinkgraphProject
  */
 
-import type { ThinkgraphCanvase, ThinkgraphCanvaseFormData, NewThinkgraphCanvase } from './layers/thinkgraph/collections/canvases/types'
+
 import type { ThinkgraphChatconversation, ThinkgraphChatconversationFormData, NewThinkgraphChatconversation } from './layers/thinkgraph/collections/chatconversations/types'
 import type { ThinkgraphGraph, ThinkgraphGraphFormData, NewThinkgraphGraph } from './layers/thinkgraph/collections/graphs/types'
 import type { ThinkgraphInjectrequest, ThinkgraphInjectrequestFormData, NewThinkgraphInjectrequest } from './layers/thinkgraph/collections/injectrequests/types'
@@ -30,11 +29,6 @@ import type { ThinkgraphProject, ThinkgraphProjectFormData, NewThinkgraphProject
 
 declare module '#crouton/types' {
   interface CollectionTypeMap {
-    thinkgraphCanvases: {
-      Item: ThinkgraphCanvase
-      FormData: ThinkgraphCanvaseFormData
-      NewItem: NewThinkgraphCanvase
-    }
     thinkgraphChatconversations: {
       Item: ThinkgraphChatconversation
       FormData: ThinkgraphChatconversationFormData

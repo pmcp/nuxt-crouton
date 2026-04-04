@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   extends: [
     './collections/chatconversations',
     './collections/graphs',
-    './collections/canvases',
+
     './collections/nodes',
     './collections/injectrequests',
     './collections/projects',

@@ -4,7 +4,6 @@ import {translationsUiConfig} from '@fyit/crouton-i18n/app/composables/useTransl
 
 import {thinkgraphGraphsConfig} from '../layers/thinkgraph/collections/graphs/app/composables/useThinkgraphGraphs';
 
-import {thinkgraphCanvasesConfig} from '../layers/thinkgraph/collections/canvases/app/composables/useThinkgraphCanvases';
 
 import {thinkgraphNodesConfig} from '../layers/thinkgraph/collections/nodes/app/composables/useThinkgraphNodes';
 
@@ -17,7 +16,7 @@ export default defineAppConfig({
     thinkgraphChatConversations: thinkgraphChatConversationsConfig,
     translationsUi: translationsUiConfig,
     thinkgraphGraphs: thinkgraphGraphsConfig,
-    thinkgraphCanvases: thinkgraphCanvasesConfig,
+
     thinkgraphNodes: thinkgraphNodesConfig,
     thinkgraphInjectRequests: thinkgraphInjectRequestsConfig,
     thinkgraphProjects: thinkgraphProjectsConfig,

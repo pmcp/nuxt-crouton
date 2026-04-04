@@ -19,15 +19,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Support both canvas and project view actions
-const canvasActions = inject<{
-  openCreate: (template: string, parentId?: string) => void
-  openDetail: (nodeId: string) => void
-  openTerminal: (nodeId: string) => void
-  openContextMenu: (nodeId: string, event: MouseEvent) => void
-  selectSubtree: (nodeId: string) => void
-  layoutSubtree: (nodeId: string) => void
-} | null>('canvasActions', null)
-
 const projectActions = inject<{
   openDetail: (id: string) => void
   addChild: (parentId: string) => void
@@ -131,18 +122,12 @@ if (import.meta.client) {
 
 function handleDetail(event: Event) {
   event.stopPropagation()
-  if (node.value.id) {
-    canvasActions?.openDetail(node.value.id)
-    projectActions?.openDetail(node.value.id)
-  }
+  if (node.value.id) projectActions?.openDetail(node.value.id)
 }
 
 function handleAddChild(event: Event) {
   event.stopPropagation()
-  if (node.value.id) {
-    canvasActions?.openCreate('idea', node.value.id)
-    projectActions?.addChild(node.value.id)
-  }
+  if (node.value.id) projectActions?.addChild(node.value.id)
 }
 
 function handleDispatch(event: Event) {
@@ -152,18 +137,12 @@ function handleDispatch(event: Event) {
 
 function handleSelectSubtree(event: Event) {
   event.stopPropagation()
-  if (node.value.id) {
-    canvasActions?.selectSubtree(node.value.id)
-    projectActions?.selectSubtree?.(node.value.id)
-  }
+  if (node.value.id) projectActions?.selectSubtree?.(node.value.id)
 }
 
 function handleLayoutSubtree(event: Event) {
   event.stopPropagation()
-  if (node.value.id) {
-    canvasActions?.layoutSubtree(node.value.id)
-    projectActions?.layoutSubtree?.(node.value.id)
-  }
+  if (node.value.id) projectActions?.layoutSubtree?.(node.value.id)
 }
 
 function handleContextMenu(event: MouseEvent | Event) {
@@ -174,7 +153,6 @@ function handleContextMenu(event: MouseEvent | Event) {
     clientX: (event.target as HTMLElement)?.getBoundingClientRect().right ?? 0,
     clientY: (event.target as HTMLElement)?.getBoundingClientRect().top ?? 0,
   } as MouseEvent
-  canvasActions?.openContextMenu(node.value.id, mouseEvent)
   projectActions?.openContextMenu?.(node.value.id, mouseEvent)
 }
 </script>
@@ -271,7 +249,7 @@ function handleContextMenu(event: MouseEvent | Event) {
       <button class="node-card__action" title="Open detail" @click.stop="handleDetail">
         <UIcon name="i-lucide-panel-right-open" class="size-3.5" />
       </button>
-      <button v-if="canvasActions" class="node-card__action" title="More" @click.stop="handleContextMenu">
+      <button class="node-card__action" title="More" @click.stop="handleContextMenu">
         <UIcon name="i-lucide-ellipsis" class="size-3.5" />
       </button>
     </div>
