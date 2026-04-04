@@ -527,7 +527,7 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
         body = this.reviewerInstructions(payload)
         break
       case 'launcher':
-        body = this.launcherInstructions()
+        body = this.launcherInstructions(payload)
         break
       case 'merger':
         body = this.mergerInstructions(payload)
@@ -892,10 +892,30 @@ Use \`update_workitem\` to set your signal:
 - Set \`output\` to what went wrong`
   }
 
-  private launcherInstructions(): string {
+  private launcherInstructions(payload: DispatchPayload): string {
+    const branchName = `thinkgraph/${payload.nodeId}`
     return `## Instructions — Launcher
 
-The launcher stage normally waits for CI results automatically. If you've been dispatched here, it means the automated CI path didn't trigger.
+### Step 0: Check if CI Already Ran
+
+Before running any manual checks, see if CI has already completed for this branch:
+
+\`\`\`bash
+cd ~/nuxt-crouton
+gh run list --branch ${branchName} --workflow thinkgraph-ci.yml --limit 1
+\`\`\`
+
+**If CI passed** (status: completed, conclusion: success):
+- Set \`signal\` to \`"green"\`, \`status\` to \`"done"\`
+- Set \`output\` to the CI run summary (run ID, URL, conclusion)
+- You're done — no need for manual preflight.
+
+**If CI failed** (status: completed, conclusion: failure):
+- Set \`signal\` to \`"orange"\`, \`status\` to \`"waiting"\`, \`assignee\` to \`"human"\`
+- Set \`output\` to the failure details (run URL, failed jobs)
+- You're done — no need for manual preflight.
+
+**If no CI runs found** for this branch, continue to Step 1 below.
 
 ### Step 1: Determine if app code was changed
 
@@ -927,7 +947,9 @@ Read the deploy skill and run full preflight checks:
 cat ~/nuxt-crouton/.claude/skills/deploy/SKILL.md
 \`\`\`
 
-Follow the preflight checks from the deploy skill:
+### Step 2: Run Manual Preflight Checks
+
+CI hasn't run for this branch yet. Run preflight checks manually:
 - Check \`wrangler.toml\` for TODO placeholders
 - Check CF stubs exist in \`server/utils/_cf-stubs/\`
 - Check \`nuxt.config.ts\` has nitro aliases for papaparse and passkey stubs
