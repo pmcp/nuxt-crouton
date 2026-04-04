@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ThinkgraphNode } from '../../layers/thinkgraph/collections/nodes/types'
+import type { ThinkgraphNode, SuggestedNode, SuggestedNodesArtifact } from '../../layers/thinkgraph/collections/nodes/types'
 
 interface Props {
   nodeId: string | null
@@ -89,6 +89,39 @@ const quickAddTypes = [
   { value: 'decision', icon: 'i-lucide-check-circle', color: 'text-purple-500' },
   { value: 'question', icon: 'i-lucide-help-circle', color: 'text-amber-500' },
 ] as const
+
+// ─── Output display + text selection ───
+const showOutput = ref(true)
+const outputRef = ref<HTMLElement | null>(null)
+const { selectedText, selectionRect, hasSelection, clearSelection } = useTextSelection(outputRef)
+
+function createFromSelection() {
+  if (!selectedText.value || !props.nodeId) return
+  emit('create-node', {
+    content: selectedText.value,
+    nodeType: 'idea',
+    parentId: props.nodeId,
+  })
+  clearSelection()
+}
+
+// ─── Suggested nodes from artifacts ───
+const suggestedNodes = computed<SuggestedNode[]>(() => {
+  const node = selectedNode.value
+  if (!node?.artifacts) return []
+  const artifacts = Array.isArray(node.artifacts) ? node.artifacts : []
+  const artifact = artifacts.find((a): a is SuggestedNodesArtifact => a?.type === 'suggested-nodes')
+  return artifact?.nodes || []
+})
+
+function createFromSuggestion(suggestion: SuggestedNode) {
+  if (!props.nodeId) return
+  emit('create-node', {
+    content: suggestion.title,
+    nodeType: suggestion.nodeType || 'idea',
+    parentId: props.nodeId,
+  })
+}
 </script>
 
 <template>
@@ -250,6 +283,67 @@ const quickAddTypes = [
               class="absolute left-[15px] -bottom-1 w-px h-2 bg-stone-200 dark:bg-stone-600"
             />
           </div>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div v-if="selectedNode?.output" class="px-3 pt-2 pb-1">
+        <button
+          class="flex items-center gap-1 w-full text-left px-1 mb-2"
+          @click="showOutput = !showOutput"
+        >
+          <UIcon
+            :name="showOutput ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+            class="size-3 text-muted"
+          />
+          <p class="text-[10px] font-semibold text-muted uppercase tracking-wider">Output</p>
+        </button>
+
+        <div v-if="showOutput" ref="outputRef" class="relative px-1">
+          <div class="text-sm prose prose-sm dark:prose-invert max-w-none">
+            <MDC :value="selectedNode.output" tag="div" />
+          </div>
+
+          <!-- Floating "New node" button on text selection -->
+          <div
+            v-if="hasSelection && selectionRect"
+            class="absolute z-10"
+            :style="{ top: `${selectionRect.top}px`, left: `${selectionRect.left}px` }"
+          >
+            <button
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-medium shadow-lg hover:bg-primary-600 transition-colors"
+              @mousedown.prevent="createFromSelection"
+            >
+              <UIcon name="i-lucide-plus" class="size-3.5" />
+              New node
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggested Nodes -->
+      <div v-if="suggestedNodes.length" class="px-3 pt-2 pb-1">
+        <p class="text-[10px] font-semibold text-muted uppercase tracking-wider px-1 mb-2">
+          Suggested Nodes
+        </p>
+        <div class="space-y-1.5">
+          <button
+            v-for="(suggestion, i) in suggestedNodes"
+            :key="i"
+            class="w-full text-left px-2.5 py-2 rounded-lg border border-dashed border-default hover:border-primary/50 hover:bg-primary-50/50 dark:hover:bg-primary-950/20 transition-all group cursor-pointer"
+            @click="createFromSuggestion(suggestion)"
+          >
+            <div class="flex items-start gap-2">
+              <UIcon name="i-lucide-plus-circle" class="size-4 mt-0.5 shrink-0 text-muted group-hover:text-primary transition-colors" />
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <span class="text-[10px] font-medium text-muted">{{ suggestion.nodeType }}</span>
+                </div>
+                <p class="text-xs text-default leading-snug">{{ suggestion.title }}</p>
+                <p v-if="suggestion.brief" class="text-[11px] text-muted mt-0.5 line-clamp-2">{{ suggestion.brief }}</p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 

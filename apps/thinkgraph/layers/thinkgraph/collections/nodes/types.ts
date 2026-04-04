@@ -56,6 +56,17 @@ export interface Artifact {
   [key: string]: unknown
 }
 
+export interface SuggestedNode {
+  title: string
+  nodeType: string
+  brief?: string
+}
+
+export interface SuggestedNodesArtifact extends Artifact {
+  type: 'suggested-nodes'
+  nodes: SuggestedNode[]
+}
+
 export interface ThinkgraphNode {
   id: string
   teamId: string
