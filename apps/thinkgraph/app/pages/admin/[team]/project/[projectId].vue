@@ -1541,18 +1541,27 @@ if (import.meta.client) {
               <UIcon :name="DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].icon" class="size-3" />
               {{ DETAIL_TEMPLATE_CONFIG[selectedItem.template || 'idea'].label }}
             </span>
-            <!-- Status -->
-            <span
-              class="inline-flex items-center gap-1 text-[10px] font-medium"
-              :class="DETAIL_STATUS_CONFIG[selectedItem.status]?.class || 'text-neutral-400'"
+            <!-- Status (clickable to change) -->
+            <UDropdownMenu
+              :items="['idle', 'queued', 'active', 'waiting', 'done', 'blocked'].map(s => ({
+                label: DETAIL_STATUS_CONFIG[s]?.label || s,
+                icon: DETAIL_STATUS_CONFIG[s]?.icon || 'i-lucide-circle-dashed',
+                disabled: s === selectedItem.status,
+                onSelect: () => updateItem(selectedItem!.id, { status: s }),
+              }))"
             >
-              <UIcon
-                :name="DETAIL_STATUS_CONFIG[selectedItem.status]?.icon || 'i-lucide-circle-dashed'"
-                class="size-3"
-                :class="{ 'animate-spin': selectedItem.status === 'active' }"
-              />
-              {{ DETAIL_STATUS_CONFIG[selectedItem.status]?.label || selectedItem.status }}
-            </span>
+              <button
+                class="inline-flex items-center gap-1 text-[10px] font-medium cursor-pointer hover:opacity-80 transition-opacity"
+                :class="DETAIL_STATUS_CONFIG[selectedItem.status]?.class || 'text-neutral-400'"
+              >
+                <UIcon
+                  :name="DETAIL_STATUS_CONFIG[selectedItem.status]?.icon || 'i-lucide-circle-dashed'"
+                  class="size-3"
+                  :class="{ 'animate-spin': selectedItem.status === 'active' }"
+                />
+                {{ DETAIL_STATUS_CONFIG[selectedItem.status]?.label || selectedItem.status }}
+              </button>
+            </UDropdownMenu>
             <!-- Pipeline dots -->
             <div class="flex items-center gap-1">
               <div
