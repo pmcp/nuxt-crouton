@@ -1,6 +1,5 @@
 import { registerDispatchService } from '../dispatch-registry'
 import { buildDispatchContext } from '../context-builder'
-import { createTerminalSession } from '../terminal-sessions'
 import type { DispatchContext, DispatchResult } from '../dispatch-registry'
 import type { H3Event } from 'h3'
 import { updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
@@ -73,9 +72,6 @@ registerDispatchService({
       nodeType: targetNode.nodeType,
       mode: sessionMode,
     }
-
-    // Create terminal session so the UI can start showing status immediately
-    createTerminalSession(meta.nodeId, sessionMode as 'legacy' | 'rich')
 
     // Update node: set status to 'dispatching' and store handoff metadata
     const existingArtifacts = Array.isArray(targetNode.artifacts) ? targetNode.artifacts : []
