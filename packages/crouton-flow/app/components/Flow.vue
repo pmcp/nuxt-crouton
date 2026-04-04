@@ -782,15 +782,14 @@ onNodeClick(({ node, event }) => {
     emit('nodeClick', node.id, node.data as Record<string, unknown>, event)
   } else if (props.sync && syncState) {
     const syncNode = syncState.getNode(node.id)
-    if (syncNode) {
-      syncState.selectNode(node.id)
-      emit('nodeClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title }, event)
-    }
+    syncState.selectNode(node.id)
+    const data = syncNode
+      ? { ...syncNode.data, id: syncNode.id, title: syncNode.title }
+      : node.data as Record<string, unknown>
+    emit('nodeClick', node.id, data, event)
   } else {
     const item = getItem(node.id)
-    if (item) {
-      emit('nodeClick', node.id, item, event)
-    }
+    emit('nodeClick', node.id, item ?? node.data as Record<string, unknown>, event)
   }
 })
 
@@ -798,14 +797,13 @@ onNodeClick(({ node, event }) => {
 onNodeDoubleClick(({ node }) => {
   if (props.sync && syncState) {
     const syncNode = syncState.getNode(node.id)
-    if (syncNode) {
-      emit('nodeDblClick', node.id, { ...syncNode.data, id: syncNode.id, title: syncNode.title })
-    }
+    const data = syncNode
+      ? { ...syncNode.data, id: syncNode.id, title: syncNode.title }
+      : node.data as Record<string, unknown>
+    emit('nodeDblClick', node.id, data)
   } else {
     const item = getItem(node.id)
-    if (item) {
-      emit('nodeDblClick', node.id, item)
-    }
+    emit('nodeDblClick', node.id, item ?? node.data as Record<string, unknown>)
   }
 })
 
