@@ -710,6 +710,11 @@ These contain the project's coding conventions and the full review checklist (se
   git diff main...<branch-name> --stat
   git diff main...<branch-name>
   \`\`\`
+- **Important**: The worktree is typically checked out to \`main\`, not the review branch. If you read files directly (via \`Read\` tool or \`cat\`), you'll see the \`main\` versions, not the branch changes. To read branch file contents without switching branches:
+  \`\`\`bash
+  git show origin/<branch-name>:path/to/file
+  \`\`\`
+  Alternatively, run \`git checkout <branch-name>\` to switch — but note this changes the worktree state for any concurrent workers.
 - Read the FULL changed files, not just the diff — you need surrounding context for unused imports, broken references, duplicated logic
 
 ### Step 3: Screenshot Issues (if visual)
