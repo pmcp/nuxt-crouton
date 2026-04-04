@@ -895,15 +895,37 @@ Use \`update_workitem\` to set your signal:
   private launcherInstructions(): string {
     return `## Instructions — Launcher
 
-The launcher stage normally waits for CI results automatically. If you've been dispatched here, it means the automated CI path didn't trigger. Run deploy preflight checks instead.
+The launcher stage normally waits for CI results automatically. If you've been dispatched here, it means the automated CI path didn't trigger.
 
-### Step 1: Read Deploy Knowledge
+### Step 1: Determine if app code was changed
+
+Check which files were modified on this branch:
+
+\`\`\`bash
+git diff main..HEAD --stat
+\`\`\`
+
+Look at the output. If **no files under \`apps/\`** were modified (e.g., only \`packages/\`, config files, or agent code changed), go to **Step 2A (fast path)**. If files under \`apps/\` were modified, go to **Step 2B (deploy preflight)**.
+
+### Step 2A: Fast path — no app changes
+
+No deploy checks are needed. Just verify CI passed:
+
+\`\`\`bash
+gh run list --branch "$(git branch --show-current)" --workflow thinkgraph-ci.yml --limit 3 --json status,conclusion,headBranch
+\`\`\`
+
+- If the latest run shows \`conclusion: "success"\` → signal **green**, set \`status\` to \`"done"\`, set \`output\` to "No app changes — CI passed"
+- If the latest run shows \`conclusion: "failure"\` → signal **red**, set \`status\` to \`"blocked"\`, set \`output\` to the failure details
+- If no CI run exists or it's still in progress → signal **orange**, set \`status\` to \`"waiting"\`, set \`output\` to "CI not yet complete — waiting for results"
+
+### Step 2B: Deploy preflight — app changes detected
+
+Read the deploy skill and run full preflight checks:
 
 \`\`\`bash
 cat ~/nuxt-crouton/.claude/skills/deploy/SKILL.md
 \`\`\`
-
-### Step 2: Run Preflight Checks
 
 Follow the preflight checks from the deploy skill:
 - Check \`wrangler.toml\` for TODO placeholders
@@ -913,7 +935,7 @@ Follow the preflight checks from the deploy skill:
 
 ### Step 3: Signal
 
-If preflight passes:
+If preflight passes (or fast path CI passed):
 - Set \`signal\` to \`"green"\`, \`status\` to \`"done"\`
 - Set \`output\` to preflight summary
 
