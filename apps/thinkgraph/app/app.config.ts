@@ -11,15 +11,20 @@ import {thinkgraphInjectRequestsConfig} from '../layers/thinkgraph/collections/i
 
 import {thinkgraphProjectsConfig} from '../layers/thinkgraph/collections/projects/app/composables/useThinkgraphProjects';
 
+import {thinkgraphWatchedReposConfig} from '../layers/thinkgraph/collections/watchedrepos/app/composables/useThinkgraphWatchedRepos';
+
+import {thinkgraphWatchReportsConfig} from '../layers/thinkgraph/collections/watchreports/app/composables/useThinkgraphWatchReports';
+
 export default defineAppConfig({
   croutonCollections: {
     thinkgraphChatConversations: thinkgraphChatConversationsConfig,
     translationsUi: translationsUiConfig,
     thinkgraphGraphs: thinkgraphGraphsConfig,
-
     thinkgraphNodes: thinkgraphNodesConfig,
     thinkgraphInjectRequests: thinkgraphInjectRequestsConfig,
     thinkgraphProjects: thinkgraphProjectsConfig,
+    thinkgraphWatchedRepos: thinkgraphWatchedReposConfig,
+    thinkgraphWatchReports: thinkgraphWatchReportsConfig
   },
 
   croutonApps: {

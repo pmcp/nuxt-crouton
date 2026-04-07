@@ -15,10 +15,11 @@ export default defineNuxtConfig({
   extends: [
     './collections/chatconversations',
     './collections/graphs',
-
     './collections/nodes',
     './collections/injectrequests',
     './collections/projects',
+    './collections/watchedrepos',
+    './collections/watchreports'
   ],
   i18n: {
     locales: [

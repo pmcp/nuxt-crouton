@@ -1,5 +1,33 @@
 [
   {
+    "collection": "watchreports",
+    "fields": [
+      "repoId",
+      "runDate",
+      "summary",
+      "commitsSinceLast",
+      "createdNodeIds"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-04-07T09:14:37.314Z",
+    "layer": "thinkgraph",
+    "gitSha": "09e3931e"
+  },
+  {
+    "collection": "watchedrepos",
+    "fields": [
+      "repo",
+      "branch",
+      "lastCheckedSha",
+      "notes",
+      "active"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-04-07T09:11:48.276Z",
+    "layer": "thinkgraph",
+    "gitSha": "09e3931e"
+  },
+  {
     "collection": "projects",
     "fields": [
       "name",

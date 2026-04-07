@@ -12,16 +12,24 @@ export default {
         parentField: 'parentId'
       }
     },
-{
+    {
       name: 'injectRequests',
       fieldsFile: './schemas/inject-request.json'
+    },
+    {
+      name: 'watchedRepos',
+      fieldsFile: './schemas/watched-repo.json'
+    },
+    {
+      name: 'watchReports',
+      fieldsFile: './schemas/watch-report.json'
     }
   ],
 
   targets: [
     {
       layer: 'thinkgraph',
-      collections: ['projects', 'nodes', 'injectRequests']
+      collections: ['projects', 'nodes', 'injectRequests', 'watchedRepos', 'watchReports']
     }
   ],
 

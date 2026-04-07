@@ -15,3 +15,5 @@ export { thinkgraphProjects } from '../../layers/thinkgraph/collections/projects
 // Legacy collections removed in v2 Phase 0:
 // - thinkgraphDecisions (merged into thinkgraphNodes)
 // - thinkgraphWorkItems (merged into thinkgraphNodes)
+export { thinkgraphWatchedRepos } from '../../layers/thinkgraph/collections/watchedrepos/server/database/schema'
+export { thinkgraphWatchReports } from '../../layers/thinkgraph/collections/watchreports/server/database/schema'
