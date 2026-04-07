@@ -11,6 +11,21 @@ interface UseTableDataOptions {
   paginationData?: PaginationData | null
 }
 
+function filterRowsBySearch(rows: any[], term: string): any[] {
+  if (!term) return rows
+  const needle = term.toLowerCase()
+  try {
+    return rows.filter((row) => {
+      return Object.values(row).some((value) => {
+        return String(value).toLowerCase().includes(needle)
+      })
+    })
+  } catch (error) {
+    console.error('Error filtering rows:', error)
+    return rows
+  }
+}
+
 export function useTableData(options: UseTableDataOptions) {
   const {
     rows,
@@ -23,20 +38,7 @@ export function useTableData(options: UseTableDataOptions) {
   } = options
 
   // Filtered rows based on search
-  const searchedRows = computed(() => {
-    if (search.value === '') return rows.value
-
-    try {
-      return rows.value.filter((row) => {
-        return Object.values(row).some((value) => {
-          return String(value).toLowerCase().includes(search.value.toLowerCase())
-        })
-      })
-    } catch (error) {
-      console.error('Error filtering rows:', error)
-      return rows.value
-    }
-  })
+  const searchedRows = computed(() => filterRowsBySearch(rows.value, search.value))
 
   // Calculate pagination totals
   const itemCountFromServer = computed(() => {
@@ -76,19 +78,7 @@ export function useTableData(options: UseTableDataOptions) {
     // For server pagination, use rows directly (already paginated from server)
     if (serverPagination) {
       // When searching locally on server-paginated data
-      if (search.value !== '') {
-        try {
-          return rows.value.filter((row) => {
-            return Object.values(row).some((value) => {
-              return String(value).toLowerCase().includes(search.value.toLowerCase())
-            })
-          })
-        } catch (error) {
-          console.error('Error filtering server rows:', error)
-          return rows.value
-        }
-      }
-      return rows.value
+      return filterRowsBySearch(rows.value, search.value)
     }
 
     // For client-side pagination
