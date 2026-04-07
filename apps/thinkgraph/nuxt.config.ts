@@ -50,6 +50,8 @@ export default defineNuxtConfig({
     piDispatchSecret: process.env.PI_DISPATCH_SECRET || '', // Shared secret for authenticating dispatch requests to Pi worker
     webhookSecret: process.env.WEBHOOK_SECRET || '', // Shared secret for Pi worker callbacks
     adminBackfillSecret: '', // NUXT_ADMIN_BACKFILL_SECRET — gates /api/admin/backfill-embeddings
+    githubToken: process.env.GITHUB_TOKEN || '', // GitHub PAT for repo watch + changelog sync
+    watchReposCronSecret: process.env.WATCH_REPOS_CRON_SECRET || '', // Shared secret for cron-triggered watch runs
     falApiKey: '',      // NUXT_FAL_API_KEY
     geminiApiKey: '',   // NUXT_GEMINI_API_KEY
     email: {
