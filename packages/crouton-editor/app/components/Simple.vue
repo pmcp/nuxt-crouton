@@ -10,6 +10,14 @@
 import { useEventListener } from '@vueuse/core'
 import type { EditorToolbarItem } from '@nuxt/ui'
 import type { Editor } from '@tiptap/vue-3'
+import {
+  undoRedoGroup,
+  blockTypesGroup,
+  marksGroup,
+  linkGroup,
+  bubbleTurnIntoFull,
+  marksGroup as bubbleMarksFull
+} from '../utils/toolbarPresets'
 
 /**
  * Translation context for AI-powered translation suggestions
@@ -150,39 +158,44 @@ async function translateSelectedText() {
   }
 }
 
-// Image upload handler
+/**
+ * Upload a single image file and insert it into the given editor.
+ * Centralizes the upload + insert logic shared by toolbar button, paste, and drop handlers.
+ */
+async function uploadAndInsertImage(editor: Editor, file: File) {
+  isUploadingImage.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const result = await $fetch<{ pathname: string }>('/api/upload-image', {
+      method: 'POST',
+      body: formData
+    })
+
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: `/images/${result.pathname}`, alt: file.name })
+      .run()
+  } catch (err) {
+    console.error('Image upload failed:', err)
+  } finally {
+    isUploadingImage.value = false
+  }
+}
+
+// Image upload handler — opens file picker
 async function handleImageUpload() {
   if (!editorInstance.value) return
 
-  // Create file input and trigger it
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
   input.onchange = async () => {
     const file = input.files?.[0]
-    if (!file) return
-
-    isUploadingImage.value = true
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const result = await $fetch<{ pathname: string }>('/api/upload-image', {
-        method: 'POST',
-        body: formData
-      })
-
-      // Insert image into editor
-      editorInstance.value
-        ?.chain()
-        .focus()
-        .setImage({ src: `/images/${result.pathname}`, alt: file.name })
-        .run()
-    } catch (err) {
-      console.error('Image upload failed:', err)
-    } finally {
-      isUploadingImage.value = false
-    }
+    if (!file || !editorInstance.value) return
+    await uploadAndInsertImage(editorInstance.value, file)
   }
   input.click()
 }
@@ -204,27 +217,7 @@ function handleEditorCreate(event: { editor: Editor }) {
           e.preventDefault()
           const file = item.getAsFile()
           if (!file) continue
-
-          isUploadingImage.value = true
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const result = await $fetch<{ pathname: string }>('/api/upload-image', {
-              method: 'POST',
-              body: formData
-            })
-
-            event.editor
-              .chain()
-              .focus()
-              .setImage({ src: `/images/${result.pathname}`, alt: file.name })
-              .run()
-          } catch (err) {
-            console.error('Image paste upload failed:', err)
-          } finally {
-            isUploadingImage.value = false
-          }
+          await uploadAndInsertImage(event.editor, file)
           break
         }
       }
@@ -239,77 +232,19 @@ function handleEditorCreate(event: { editor: Editor }) {
       if (!imageFile) return
 
       e.preventDefault()
-      isUploadingImage.value = true
-      try {
-        const formData = new FormData()
-        formData.append('file', imageFile)
-
-        const result = await $fetch<{ pathname: string }>('/api/upload-image', {
-          method: 'POST',
-          body: formData
-        })
-
-        event.editor
-          .chain()
-          .focus()
-          .setImage({ src: `/images/${result.pathname}`, alt: imageFile.name })
-          .run()
-      } catch (err) {
-        console.error('Image drop upload failed:', err)
-      } finally {
-        isUploadingImage.value = false
-      }
+      await uploadAndInsertImage(event.editor, imageFile)
     })
   }
 
   emit('create', event)
 }
 
-// Base toolbar items (always visible at top)
+// Base toolbar items (always visible at top) — composed from shared presets
 const baseToolbarItems: EditorToolbarItem[][] = [
-  // Undo/Redo
-  [
-    { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
-    { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
-  ],
-  // Block types
-  [
-    {
-      icon: 'i-lucide-heading',
-      tooltip: { text: 'Headings' },
-      content: { align: 'start' },
-      items: [
-        { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
-        { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
-        { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
-      ]
-    },
-    {
-      icon: 'i-lucide-list',
-      tooltip: { text: 'Lists' },
-      content: { align: 'start' },
-      items: [
-        { kind: 'bulletList', icon: 'i-lucide-list', label: 'Bullet List' },
-        { kind: 'orderedList', icon: 'i-lucide-list-ordered', label: 'Ordered List' }
-      ]
-    },
-    { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
-    { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code' } },
-    { kind: 'horizontalRule', icon: 'i-lucide-separator-horizontal', tooltip: { text: 'Divider' } }
-  ],
-  // Text formatting
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
-    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strike' } },
-    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } },
-    { kind: 'mark', mark: 'highlight', icon: 'i-lucide-highlighter', tooltip: { text: 'Highlight' } } as EditorToolbarItem
-  ],
-  // Link
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-  ]
+  undoRedoGroup,
+  blockTypesGroup,
+  marksGroup,
+  linkGroup
 ]
 
 // Computed toolbar items with optional image upload and AI translation buttons
@@ -341,43 +276,11 @@ const toolbarItems = computed<EditorToolbarItem[][]>(() => {
   return items
 })
 
-// Bubble toolbar items (appears on text selection)
+// Bubble toolbar items (appears on text selection) — composed from shared presets
 const bubbleToolbarItems: EditorToolbarItem[][] = [
-  // Turn into dropdown
-  [
-    {
-      label: 'Turn into',
-      trailingIcon: 'i-lucide-chevron-down',
-      activeColor: 'neutral',
-      activeVariant: 'ghost',
-      content: { align: 'start' },
-      ui: { label: 'text-xs' },
-      items: [
-        { type: 'label', label: 'Turn into' },
-        { kind: 'paragraph', label: 'Paragraph', icon: 'i-lucide-type' },
-        { kind: 'heading', level: 1, label: 'Heading 1', icon: 'i-lucide-heading-1' },
-        { kind: 'heading', level: 2, label: 'Heading 2', icon: 'i-lucide-heading-2' },
-        { kind: 'heading', level: 3, label: 'Heading 3', icon: 'i-lucide-heading-3' },
-        { kind: 'bulletList', label: 'Bullet List', icon: 'i-lucide-list' },
-        { kind: 'orderedList', label: 'Ordered List', icon: 'i-lucide-list-ordered' },
-        { kind: 'blockquote', label: 'Quote', icon: 'i-lucide-text-quote' },
-        { kind: 'codeBlock', label: 'Code', icon: 'i-lucide-square-code' }
-      ]
-    }
-  ],
-  // Text formatting
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
-    { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strike' } },
-    { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } },
-    { kind: 'mark', mark: 'highlight', icon: 'i-lucide-highlighter', tooltip: { text: 'Highlight' } } as EditorToolbarItem
-  ],
-  // Link
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-  ]
+  bubbleTurnIntoFull,
+  bubbleMarksFull,
+  linkGroup
 ]
 </script>
 

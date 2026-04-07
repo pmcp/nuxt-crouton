@@ -25,6 +25,14 @@ import { ref, computed, onMounted, onUnmounted, watch, markRaw } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import type { EditorSuggestionMenuItem, EditorToolbarItem } from '@nuxt/ui'
 import type * as Y from 'yjs'
+import {
+  undoRedoGroup,
+  blockTypesGroup,
+  marksGroup,
+  linkGroup,
+  bubbleTurnIntoSlim,
+  bubbleMarksSlim
+} from '../utils/toolbarPresets'
 
 export interface BlockSuggestionItem {
   /** Block type name (e.g., 'heroBlock') */
@@ -444,82 +452,20 @@ const toolbarItems = computed<EditorToolbarItem[][]>(() => {
 
   // Only include undo/redo when NOT in collab mode
   if (!isCollabMode.value) {
-    items.push([
-      { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
-      { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
-    ])
+    items.push(undoRedoGroup)
   }
 
-  // Formatting items (always shown)
-  items.push(
-    [
-      {
-        icon: 'i-lucide-heading',
-        tooltip: { text: 'Headings' },
-        content: { align: 'start' },
-        items: [
-          { kind: 'heading', level: 1, icon: 'i-lucide-heading-1', label: 'Heading 1' },
-          { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', label: 'Heading 2' },
-          { kind: 'heading', level: 3, icon: 'i-lucide-heading-3', label: 'Heading 3' }
-        ]
-      },
-      {
-        icon: 'i-lucide-list',
-        tooltip: { text: 'Lists' },
-        content: { align: 'start' },
-        items: [
-          { kind: 'bulletList', icon: 'i-lucide-list', label: 'Bullet List' },
-          { kind: 'orderedList', icon: 'i-lucide-list-ordered', label: 'Ordered List' }
-        ]
-      },
-      { kind: 'blockquote', icon: 'i-lucide-text-quote', tooltip: { text: 'Quote' } },
-      { kind: 'codeBlock', icon: 'i-lucide-square-code', tooltip: { text: 'Code' } },
-      { kind: 'horizontalRule', icon: 'i-lucide-separator-horizontal', tooltip: { text: 'Divider' } }
-    ],
-    [
-      { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-      { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-      { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
-      { kind: 'mark', mark: 'strike', icon: 'i-lucide-strikethrough', tooltip: { text: 'Strike' } },
-      { kind: 'mark', mark: 'code', icon: 'i-lucide-code', tooltip: { text: 'Code' } },
-      { kind: 'mark', mark: 'highlight', icon: 'i-lucide-highlighter', tooltip: { text: 'Highlight' } } as EditorToolbarItem
-    ],
-    [
-      { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-    ]
-  )
+  // Formatting groups (always shown) — composed from shared presets
+  items.push(blockTypesGroup, marksGroup, linkGroup)
 
   return items
 })
 
-// Bubble toolbar items
+// Bubble toolbar items — composed from shared presets
 const bubbleToolbarItems: EditorToolbarItem[][] = [
-  [
-    {
-      label: 'Turn into',
-      trailingIcon: 'i-lucide-chevron-down',
-      activeColor: 'neutral',
-      activeVariant: 'ghost',
-      content: { align: 'start' },
-      ui: { label: 'text-xs' },
-      items: [
-        { type: 'label', label: 'Turn into' },
-        { kind: 'paragraph', label: 'Paragraph', icon: 'i-lucide-type' },
-        { kind: 'heading', level: 1, label: 'Heading 1', icon: 'i-lucide-heading-1' },
-        { kind: 'heading', level: 2, label: 'Heading 2', icon: 'i-lucide-heading-2' },
-        { kind: 'heading', level: 3, label: 'Heading 3', icon: 'i-lucide-heading-3' }
-      ]
-    }
-  ],
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } },
-    { kind: 'mark', mark: 'highlight', icon: 'i-lucide-highlighter', tooltip: { text: 'Highlight' } } as EditorToolbarItem
-  ],
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-  ]
+  bubbleTurnIntoSlim,
+  bubbleMarksSlim,
+  linkGroup
 ]
 
 // Expose editor instance and utilities

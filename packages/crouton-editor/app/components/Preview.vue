@@ -226,16 +226,12 @@ const props = withDefaults(defineProps<Props>(), {
 const thumbnailInnerWidth = computed(() => props.thumbnailWidth / props.thumbnailScale)
 
 /**
- * Get sample values from variable definitions
+ * Get sample values from variable definitions (delegates to useEditorVariables)
  */
+const { getSampleValues } = useEditorVariables()
 const sampleValues = computed(() => {
   if (!props.variables?.length) return {}
-
-  const samples: Record<string, string> = {}
-  for (const variable of props.variables) {
-    samples[variable.name] = variable.sample || `[${variable.label}]`
-  }
-  return samples
+  return getSampleValues(props.variables)
 })
 
 /**
