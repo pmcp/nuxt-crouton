@@ -60,7 +60,47 @@ Work items can spawn children of different kinds, each with different triage beh
 
 The crouton-cli generator creates `createdAt`/`updatedAt` NOT NULL columns in DB migrations but doesn't add them to the drizzle schema when `useMetadata: false`. Causes insert failures. Hit twice (chatconversations and workitems).
 
-**Decision needed for v2:** flip to `useMetadata: true` or fix the generator.
+**Investigation 2026-04-07 (do not patch packages/ until confirmed in a fresh repro):**
+
+Audited the cli generators directly. The schema generator at `packages/crouton-cli/lib/generators/database-schema.ts:216` already gates `createdAt`/`updatedAt`/`createdBy`/`updatedBy` on `useMetadata` — when `false`, the metadata block is empty and nothing is emitted into the drizzle TS schema. `database-queries.ts:277,542` and `api-endpoints.ts:54,105` also gate every reference to those columns on the same flag. There is no code path in the cli that writes its own `.sql` migration file: `generate-collection.ts:394` shells out to `npx nuxt db generate` and lets drizzle-kit produce the SQL from the schema diff.
+
+So **the bug is not in the schema/queries/api generators as currently written.** Three remaining suspects, ordered by likelihood:
+
+1. **Stale drizzle-kit snapshots in `apps/thinkgraph/server/db/migrations/sqlite/meta/`.** drizzle-kit diffs the new schema against the previous snapshot. If a collection was first generated when `useMetadata: true` (or was hand-edited at some point) and then re-generated with `useMetadata: false`, the snapshot still records the columns as `notNull: true`. Confirmed for `thinkgraph_chatconversations` in `meta/0012_snapshot.json:1710` — `createdAt` is `notNull: true` in the snapshot AND the live schema (`apps/thinkgraph/layers/thinkgraph/collections/chatconversations/server/database/schema.ts:40-41`) also has `.notNull().$default(...)`. So the live `chatconversations` collection is *not currently broken*: someone (the generator on an earlier flag setting, or a hand edit) supplied the columns. The bug as described would manifest only if someone re-generated the collection today and accepted whatever drizzle-kit produced.
+
+2. **Duplicate/orphan SQL migration files** (see "Migration Filename Collisions" below). The orphan files were never journaled but they're still on disk and could mislead anyone diffing migration history.
+
+3. **Drizzle-kit producing a CREATE TABLE with `notNull` for legacy non-metadata columns** that happen to be named `createdAt`/`updatedAt`. Unlikely but worth confirming.
+
+**Recommended next step (next session):**
+- Reproduce in a throwaway dir: `crouton init test-app && cd test-app`, add a single collection with `useMetadata: false`, run `pnpm crouton config` and `pnpm db:generate`. Inspect the generated `.sql` and compare against the drizzle TS schema. If they agree, the bug is fully a snapshot-drift issue and the fix is "blow away `meta/` and let drizzle-kit re-snapshot from the current schema." If they disagree, the root cause is in `database-schema.ts` after all and requires a code fix scoped to the metadata block.
+- Either way, the fix lives in `packages/crouton-cli/` (or in the thinkgraph snapshots), not in the consuming app — so wait for explicit `packages/` approval before patching.
+
+### Migration Filename Collisions (2026-04-07)
+
+`apps/thinkgraph/server/db/migrations/sqlite/` contains two pairs of files at the same migration number:
+
+- `0004_add_pinned.sql` — journaled at `idx: 4` in `meta/_journal.json`. Adds `pinned` column to `thinkgraph_decisions`.
+- `0004_first_ironclad.sql` — **NOT in the journal.** Creates `thinkgraph_graphs`, adds `graphId` to `thinkgraph_decisions`, drops audit columns from `thinkgraph_chatconversations`.
+- `0009_add_user_role.sql` — **NOT in the journal.** Adds `role` column to `user`.
+- `0009_grey_bruce_banner.sql` — journaled at `idx: 9`. Creates `thinkgraph_projects` and `thinkgraph_workitems`, adds `notion_settings` to `team_settings`, AND adds `role` to `user`.
+
+The original audit task assumed both files in each pair were journaled and could be safely renumbered. They are not — only one of each pair is journaled, and the other is an **orphan SQL file that the drizzle migrator never executes**.
+
+**What this means in practice:**
+- On a fresh local DB (`pnpm db:migrate`), only the journaled files run. Apply order is well-defined; there is no "undefined order" risk in production.
+- The orphan files are dead code at the SQL level, but they confused the human auditor and they reference `thinkgraph_decisions` (the legacy collection that Phase 0 replaced).
+- The `thinkgraph_graphs` table that `0004_first_ironclad.sql` would create *is* present in snapshot `0005_snapshot.json` and beyond, so historically the file was applied to some database somewhere — likely an older deploy where it was journaled, before the journal was rewritten.
+
+**Why I did not delete or renumber the orphan files in this pass:**
+- The task's renumbering procedure assumed the files were journaled. For orphans, renumbering is meaningless — the journal does not reference them, so renaming changes nothing.
+- Deleting them is *probably* safe (no current execution path), but the fact that `thinkgraph_graphs` exists in production via a non-current journal entry suggests history has been mutated before and there may be deployed environments whose journal state differs from what's in git. Deleting the orphan SQL would prevent any future "re-add to journal" recovery path.
+- This is the "Migration Snapshot Drift" gotcha referenced earlier in this file, biting us at the file level instead of the column level.
+
+**Recommended next step:**
+1. Verify production D1 journal state matches `meta/_journal.json` in git (use `wrangler d1 execute --remote -- "SELECT * FROM __drizzle_migrations"`).
+2. If they match, delete both orphan files (`0004_first_ironclad.sql`, `0009_add_user_role.sql`) in a dedicated commit with a clear message.
+3. If they diverge, write a recovery migration first that brings prod's journal in line with git, then delete the orphans.
 
 ### Dagre vs Saved Positions
 
@@ -146,4 +186,10 @@ v1 had two collections:
 
 v2 kills `thinkgraphDecisions`. One collection (`nodes`), one model. The confusion is over.
 
-MCP tools (`create-node`, `update-node`, `store-artifact`) currently reference the decisions collection and will need updating in Phase 0.
+**Update 2026-04-07:** The Phase 0 migration shipped as `0013_phase0_unified_nodes.sql` and the MCP tools (`create-node`, `update-node`, `store-artifact`, `expand-node`, `get-digest`, `get-thinking-path`, `resume-graph`, `search-graph`) in `apps/thinkgraph/server/mcp/tools/` were rewritten to reference `thinkgraph_nodes`. `apps/thinkgraph/server/db/schema.ts` no longer exports `thinkgraphDecisions` or `thinkgraphWorkItems`.
+
+**What still hasn't been cleaned up** (audit 2026-04-07):
+- `apps/thinkgraph/layers/thinkgraph/collections/decisions/` and `.../workitems/` folders are still on disk.
+- `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/` has 11 endpoints (`claude.post.ts`, `chat.post.ts`, `brief.post.ts`, `digest.post.ts`, `dispatch-multi.post.ts`, `expand-with-context.post.ts`, `synthesize.post.ts`, `resume.get.ts`, plus per-decision `dispatch.post.ts`, `expand.post.ts`, `context.get.ts`) that import `getAllThinkgraphDecisions` and `createThinkgraphDecision` from `~~/layers/thinkgraph/collections/decisions/server/database/queries`. These need to be migrated to `thinkgraph_nodes` (or confirmed dead and deleted) before the `decisions/` collection folder can be removed.
+- `apps/thinkgraph/app/components/ThinkgraphWorkitemsNode.vue` is the only file that still imports from `workitems/` — and it has no consumers itself, so it's likely dead too. Confirm with a wider grep across the app shell before removing.
+- The legacy database tables (`thinkgraph_decisions`, `thinkgraph_workitems`) still exist in production. Dropping them is a separate decision and a separate migration; code-level cleanup must come first.

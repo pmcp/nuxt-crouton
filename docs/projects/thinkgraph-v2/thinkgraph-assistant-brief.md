@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-04
 **Status:** Draft
-**Builds on:** [ThinkGraph v2 brief](../projects/thinkgraph-v2/brief.md), [Convergence brief](thinkgraph-convergence-brief.md)
+**Builds on:** [ThinkGraph v2 brief](brief.md), [Convergence brief](thinkgraph-convergence-brief.md)
 **Research inputs:** Honcho (Plastic Labs), Mem0, Letta — agent memory systems
 
 ---
