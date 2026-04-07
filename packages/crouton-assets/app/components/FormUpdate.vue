@@ -15,7 +15,7 @@ const state = ref({
 })
 
 const isImage = props.item.contentType?.startsWith('image/')
-const generatingAlt = ref(false)
+const { generating: generatingAlt, generate: generateAlt } = useAltTextGenerator()
 const { hasApp } = useCroutonApps()
 const hasAI = hasApp('ai')
 
@@ -34,24 +34,19 @@ const isCropped = computed(() => currentPathname.value !== originalPathname.valu
 
 const generateAltText = async () => {
   if (!isImage || !props.item.pathname) return
-  generatingAlt.value = true
-  try {
-    const image = await urlToBase64(`/images/${props.item.pathname}`)
-    const { alt } = await $fetch<{ alt: string }>('/api/assets/generate-alt-text', {
-      method: 'POST',
-      body: { image, mimeType: props.item.contentType }
-    })
-    state.value.alt = alt
-    // Also set the English translation so CroutonI18nInput picks it up
-    if (hasMultipleLocales.value) {
-      state.value.translations = {
-        ...state.value.translations,
-        en: { ...state.value.translations?.en, alt },
-      }
+
+  const image = await urlToBase64(`/images/${props.item.pathname}`)
+  const alt = await generateAlt({ image, mimeType: props.item.contentType })
+  if (!alt) return
+
+  state.value.alt = alt
+  // Also set the English translation so CroutonI18nInput picks it up
+  if (hasMultipleLocales.value) {
+    state.value.translations = {
+      ...state.value.translations,
+      en: { ...state.value.translations?.en, alt },
     }
   }
-  catch { /* ignore */ }
-  finally { generatingAlt.value = false }
 }
 
 const startCrop = async () => {

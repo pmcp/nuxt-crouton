@@ -146,32 +146,22 @@ const pendingFile = ref<File | null>(null)
 const previewUrl = ref<string>()
 const showCropStep = ref(false)
 const metadata = ref<{ alt: string, translations: Record<string, { alt?: string }> }>({ alt: '', translations: {} })
-const generatingAlt = ref(false)
+const { generating: generatingAlt, generate: generateAlt } = useAltTextGenerator()
 
 const generateAltText = async () => {
   if (!selectedFile.value || !isImageFile(selectedFile.value)) return
 
-  generatingAlt.value = true
-  try {
-    const image = await fileToBase64(selectedFile.value)
-    const { alt } = await $fetch<{ alt: string }>('/api/assets/generate-alt-text', {
-      method: 'POST',
-      body: { image, mimeType: selectedFile.value.type }
-    })
-    metadata.value.alt = alt
-    // Also set the English translation so CroutonI18nInput picks it up
-    if (hasMultipleLocales.value) {
-      metadata.value.translations = {
-        ...metadata.value.translations,
-        en: { ...metadata.value.translations?.en, alt },
-      }
+  const image = await fileToBase64(selectedFile.value)
+  const alt = await generateAlt({ image, mimeType: selectedFile.value.type })
+  if (!alt) return
+
+  metadata.value.alt = alt
+  // Also set the English translation so CroutonI18nInput picks it up
+  if (hasMultipleLocales.value) {
+    metadata.value.translations = {
+      ...metadata.value.translations,
+      en: { ...metadata.value.translations?.en, alt },
     }
-  }
-  catch (error) {
-    console.error('Failed to generate alt text:', error)
-  }
-  finally {
-    generatingAlt.value = false
   }
 }
 
