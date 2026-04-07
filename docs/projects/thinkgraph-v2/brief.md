@@ -4,6 +4,51 @@
 
 Canvas for thinking with AI. Nodes in, briefs out, pipeline ships.
 
+> Read order: see [README.md](README.md). Implementation notes (deploy, bugs, ops) live in [implementation-notes.md](implementation-notes.md).
+
+---
+
+## Status as of 2026-04-07
+
+This is the audit snapshot — what's actually live in `apps/thinkgraph` versus what the rest of this brief still describes as future work. Update this section, not the phase list below, when things ship.
+
+### Convergence brief (`thinkgraph-convergence-brief.md`)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1A — MDC rendering | ✅ **SHIPPED** | Commit `074ebe56`. `@nuxtjs/mdc` installed, NodeDetail renders output via `<MDCRenderer>`. |
+| Phase 1B — Graph validation (`thinkgraph check`) | ⛔ **NOT STARTED** | No `validateGraph` server util, no `check-graph` MCP tool. |
+| Phase 1C — Wiki-link cross-references | ✅ **SHIPPED** | Commit `46d09824`. See `apps/thinkgraph/server/utils/wiki-links.ts` and `validate-wiki-links.ts`. Backlinks display in NodeDetail. |
+| Phase 2A — Repo watchlist + daily digest | ⛔ **NOT STARTED** | The `sync-changelogs` GitHub Action is still active in `apps/docs`. No `watched_repos`/`watch_reports` collections exist. |
+| Phase 2B — Semantic search (Vectorize) | ⛔ **NOT STARTED** | No Vectorize index, no embedding hook, no `search-similar` MCP tool. |
+| Phase 2C — Pipeline formalization | ⛔ **NOT STARTED** | Steps still stored as a JSON array on the node. No `pipeline_steps` config. |
+
+### v2 brief phases (this document, "Build Phases" section below)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 0 — Unify (kill `decisions`, single `nodes` collection) | 🟡 **PARTIAL** | Migration `0013_phase0_unified_nodes.sql` shipped. `thinkgraph_nodes` is the runtime source of truth. MCP tools updated (`apps/thinkgraph/server/mcp/tools/*-node.ts`). **BUT** legacy `decisions/` and `workitems/` collection folders still exist on disk and `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/` has 11 endpoints still importing from `decisions/server/database/queries`. Cleanup pending — see [convergence brief](thinkgraph-convergence-brief.md) and the open-debt note below. |
+| Phase 1 — Flexible pipeline | ⛔ **NOT STARTED** | Configurable step sequences exist in the schema (`steps` JSON), but stage-scoped MCP tools, structured review verdicts, and skippable steps are not implemented. |
+| Phase 2 — Context & Content | 🟡 **PARTIAL** | Summary auto-generation, progressive disclosure, and per-step token tracking shipped (commit `96f5933e`). Markdown file generation by worker NOT shipped. |
+| Phase 3 — Fan-in & Synthesis | ✅ **SHIPPED** | Fan-in via `contextNodeIds`, `synthesize`/`analyse` step types, multi-select synthesis flow (commits `6aa06e7e`, `dbb6c5a5`). |
+| Phase 4 — Ingestion | 🟡 **PARTIAL** | Project-level text ingestion shipped (commit `7954b503`). Meeting transcript flow and meta-node workflow not yet built. |
+| Phase 5 — Output Layer | 🟡 **PARTIAL** | Public project docs tab shipped (commit `93aad7c0`). No Nuxt Content prototype. |
+
+### Assistant brief (`thinkgraph-assistant-brief.md`)
+
+| Step | Status | Notes |
+|------|--------|-------|
+| Step 1 — Node conversations | ✅ **SHIPPED** | Per-node chat panel (commit `2b56dfec`, enriched in `365b1d60`). **Decision #1 in the assistant brief was decided differently than proposed:** instead of a new `node_messages` table, the existing `chatconversations` collection holds the messages. The `nodeId` foreign key on `thinkgraph_chatconversations` scopes a conversation to a node, and `NodeChatPanel.vue` is the UI. Reasoning: the collection already existed, has the right shape, and zero-migration was preferred over a new table. |
+| Step 2 — Ask the graph (dialectic) | ⛔ **NOT STARTED** | Blocked on Phase 2B (semantic search). |
+| Step 3 — Canvas presence | ⛔ **NOT STARTED** | **Now harder than the brief assumed:** terminal streaming infrastructure was deleted in commit `9f21a9e8`, so the WebSocket relay this would have built on top of is gone. Pi worker would need a fresh Yjs client implementation. |
+| Step 4 — Background reflection | ⛔ **NOT STARTED** | Depends on Steps 2 + 3. |
+
+### Open cleanup debt (audit findings, 2026-04-07)
+
+- **Legacy collection folders not deleted.** `apps/thinkgraph/layers/thinkgraph/collections/decisions/` and `.../workitems/` still exist on disk. `decisions` has 11 live consumers in `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/*` that import `getAllThinkgraphDecisions` from the collection's `queries.ts`. `workitems` is referenced only by `apps/thinkgraph/app/components/ThinkgraphWorkitemsNode.vue`, which itself appears to be unreferenced. Safe deletion requires first migrating those endpoints (or confirming they too are dead) — not done in this pass.
+- **Dispatch services audited (2026-04-07), see [dispatch-services-audit.md](./dispatch-services-audit.md).** All 17 services in `apps/thinkgraph/server/utils/dispatch-services/` are registered and surfaced through one generic `DispatchModal` (no per-provider UIs ever existed). Of the 17, only `pi-agent` is on the v2 critical path — the v2 `thinkgraph_nodes` table has zero artifacts produced by any of the other 16. `research-agent` is **broken**: it imports `createThinkgraphDecision` which no longer exists in the codebase (orphaned by the Phase 0 unification). Verdicts: 1 KEEP (`pi-agent`), 1 INVESTIGATE (`research-agent`), 15 KEEP-DORMANT.
+- **Migration filename collisions.** `0004_add_pinned.sql` / `0004_first_ironclad.sql` and `0009_add_user_role.sql` / `0009_grey_bruce_banner.sql` coexist. The journal (`meta/_journal.json`) references only `0004_add_pinned` and `0009_grey_bruce_banner`; the other two are orphan files not in the journal and never run by the migrator. Investigated but not deleted in this pass — see [implementation-notes.md](implementation-notes.md#migration-filename-collisions-2026-04-07) for the detailed write-up.
+
 ---
 
 ## What ThinkGraph Is
@@ -35,6 +80,10 @@ A node has:
 | **Assignee** | Who is responsible: `pi`, `human`, `client`. Only pi-assigned nodes auto-dispatch; human/client wait for triage. |
 | **Provider** | What tool executes: `claude-code`, `codex`, `flux`, `openai`, `anthropic`. Decoupled from assignee — one node assigned to Pi could use different providers. Enables comparison (same brief, different providers). |
 | **Artifacts** | References to outputs — PR URLs, deploy URLs, screenshots, generated files. |
+| **Status** | Lifecycle state. Includes `idle`, `active`, `done`, `rejected`. `rejected` was added with the wiki-links work and lets a node be filed away without being deleted. |
+| **Flags** | `pinned` keeps a node in context assembly even when out of scope; `starred` marks human favorites; `retrospective` is markdown written after a step completes. |
+| **Dependencies** | `dependsOn` is an array of node IDs that must be `done` before this node can dispatch. Surfaced as clickable cards in the detail panel. |
+| **Execution metadata** | `worktree` (git worktree path used by Pi for this node) and `deployUrl` (preview deploy if the launcher step ran) live on the node itself. |
 
 ### Node Templates
 
@@ -263,8 +312,8 @@ From the previous plan, these are explicitly removed:
 
 - **6 rigid node types** (discover/architect/generate/compose/review/deploy) — replaced by templates + configurable steps
 - **Skill mapping per node type** — brief drives instructions, not type
-- **thinkgraphDecisions collection** — killed. One collection, one node model
-- **Dedicated provider adapter UIs** (Flux/OpenAI/Anthropic) — multi-provider dispatch exists, dedicated UIs aren't needed
+- **thinkgraphDecisions collection** — runtime is killed (Phase 0 migration shipped, `thinkgraph_nodes` is the source of truth), but the legacy collection folder and 11 server endpoints under `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/` are still on disk. See "Open cleanup debt" in the status section above
+- **Dedicated provider adapter UIs** (Flux/OpenAI/Anthropic) — never built. A single generic `DispatchModal` lists all registered backend services from `server/utils/dispatch-services/` (17 files). Of these, only `pi-agent` is on the v2 critical path; the other 16 are dormant brainstorming/prototype services from the pre-v2 era — registered and clickable, but the v2 nodes table has zero artifacts produced by any of them. They are kept for now (provider variety, no maintenance cost) but should not be considered v2 features. `research-agent` is currently broken (imports a deleted `createThinkgraphDecision` symbol) and needs to be fixed or removed in Phase 1. See [dispatch-services-audit.md](./dispatch-services-audit.md) for the full breakdown
 - **Designer/prototyper stage** — not earned yet
 - **Competitive comparison UI** — cool but premature
 
