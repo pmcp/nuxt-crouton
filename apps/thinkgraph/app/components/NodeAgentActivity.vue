@@ -2,9 +2,13 @@
 /**
  * Renders Pi agent live activity for a single node, sourced directly from Yjs.
  *
- * Pi worker writes to node.data.agentStatus and node.data.agentLog via
- * `apps/thinkgraph-worker/src/yjs-client.ts`. This component subscribes to the
- * same flow room (via useFlowSync) and renders the live state.
+ * Pi worker writes to node.ephemeral.agentStatus and node.ephemeral.agentLog
+ * via `apps/thinkgraph-worker/src/yjs-client.ts`. The `ephemeral` namespace
+ * is a sibling of `data` at the Yjs level — see packages/crouton-flow/CLAUDE.md.
+ * It survives row refetches because useFlowSyncBridge never touches it.
+ *
+ * This component subscribes to the same flow room (via useFlowSync) and
+ * renders the live state.
  *
  * Note: this opens a SECOND WebSocket to the same flow room (CroutonFlow has
  * its own). Acceptable because the component only mounts while the detail
@@ -36,12 +40,12 @@ const liveNode = computed(() =>
 )
 
 const agentStatus = computed<string | null>(() => {
-  const s = liveNode.value?.data?.agentStatus
+  const s = liveNode.value?.ephemeral?.agentStatus
   return typeof s === 'string' ? s : null
 })
 
 const agentLog = computed<AgentLogEntry[]>(() => {
-  const log = liveNode.value?.data?.agentLog
+  const log = liveNode.value?.ephemeral?.agentLog
   return Array.isArray(log) ? log as AgentLogEntry[] : []
 })
 

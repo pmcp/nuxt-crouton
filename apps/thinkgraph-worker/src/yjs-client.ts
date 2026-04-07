@@ -27,7 +27,10 @@ export interface YjsFlowNode {
   title: string
   position: { x: number; y: number }
   parentId: string | null
+  /** Row mirror — managed by useFlowSyncBridge from the DB row. Do NOT write Yjs-only state here. */
   data: Record<string, unknown>
+  /** Yjs-only ephemeral state (agent activity, control signals). Survives row refetches. */
+  ephemeral?: Record<string, unknown>
   createdAt: number
   updatedAt: number
   nodeType?: string
@@ -36,7 +39,7 @@ export interface YjsFlowNode {
   style?: Record<string, string>
 }
 
-/** Agent log entry stored on node.data.agentLog */
+/** Agent log entry stored on node.ephemeral.agentLog */
 export interface AgentLogEntry {
   type: 'thinking' | 'text' | 'tool_use' | 'tool_result' | 'status' | 'error'
   text?: string
@@ -93,36 +96,38 @@ export class YjsFlowClient {
     this.onUserSteer = options.onUserSteer
     this.doc = new Y.Doc()
 
-    // Observe the nodes map for bidirectional control fields
+    // Observe the nodes map for bidirectional control fields.
+    // Control signals live on `node.ephemeral` (Yjs-only namespace), not on
+    // `node.data` (DB row mirror that gets stomped on row refetches).
     this.nodesMap.observe((event) => {
       for (const [nodeId, change] of event.changes.keys) {
         if (change.action === 'update' || change.action === 'add') {
           const node = this.nodesMap.get(nodeId)
           if (!node) continue
 
-          const data = node.data || {}
+          const eph = node.ephemeral || {}
 
           // Check for user prompt
-          if (data.userPrompt && typeof data.userPrompt === 'string') {
+          if (eph.userPrompt && typeof eph.userPrompt === 'string') {
             const prev = this.processedPrompts.get(nodeId)
-            if (prev !== data.userPrompt) {
-              this.processedPrompts.set(nodeId, data.userPrompt)
-              this.onUserPrompt?.(nodeId, data.userPrompt)
+            if (prev !== eph.userPrompt) {
+              this.processedPrompts.set(nodeId, eph.userPrompt)
+              this.onUserPrompt?.(nodeId, eph.userPrompt)
               // Clear the prompt field after processing
-              this.updateNodeData(nodeId, { userPrompt: null })
+              this.updateEphemeral(nodeId, { userPrompt: null })
             }
           }
 
           // Check for abort signal
-          if (data.userAbort === true) {
+          if (eph.userAbort === true) {
             this.onUserAbort?.(nodeId)
-            this.updateNodeData(nodeId, { userAbort: null })
+            this.updateEphemeral(nodeId, { userAbort: null })
           }
 
           // Check for steer message
-          if (data.userSteer && typeof data.userSteer === 'string') {
-            this.onUserSteer?.(nodeId, data.userSteer)
-            this.updateNodeData(nodeId, { userSteer: null })
+          if (eph.userSteer && typeof eph.userSteer === 'string') {
+            this.onUserSteer?.(nodeId, eph.userSteer)
+            this.updateEphemeral(nodeId, { userSteer: null })
           }
         }
       }
@@ -303,6 +308,21 @@ export class YjsFlowClient {
     })
   }
 
+  /**
+   * Merge a patch into the Yjs-only `ephemeral` bag.
+   * Use this for any field that doesn't have a DB column to mirror against —
+   * agent activity, control signals, anything ephemeral. Survives row refetches.
+   */
+  updateEphemeral(nodeId: string, patch: Record<string, unknown>): void {
+    const existing = this.nodesMap.get(nodeId)
+    if (!existing) return
+    this.nodesMap.set(nodeId, {
+      ...existing,
+      ephemeral: { ...(existing.ephemeral || {}), ...patch },
+      updatedAt: Date.now(),
+    })
+  }
+
   /** Delete a node from the canvas */
   deleteNode(nodeId: string): void {
     this.nodesMap.delete(nodeId)
@@ -320,13 +340,14 @@ export class YjsFlowClient {
 
   // ── Agent Output (written to node data fields) ──
 
-  /** Append an entry to a node's agent log */
+  /** Append an entry to a node's agent log (stored under node.ephemeral.agentLog) */
   appendAgentLog(nodeId: string, entry: Omit<AgentLogEntry, 'ts'>): void {
     const existing = this.nodesMap.get(nodeId)
     if (!existing) return
 
-    const log = Array.isArray(existing.data.agentLog)
-      ? existing.data.agentLog as AgentLogEntry[]
+    const eph = existing.ephemeral || {}
+    const log = Array.isArray(eph.agentLog)
+      ? eph.agentLog as AgentLogEntry[]
       : []
 
     // Keep log bounded — trim old entries if over 200
@@ -335,22 +356,22 @@ export class YjsFlowClient {
 
     this.nodesMap.set(nodeId, {
       ...existing,
-      data: {
-        ...existing.data,
+      ephemeral: {
+        ...eph,
         agentLog: trimmed,
       },
       updatedAt: Date.now(),
     })
   }
 
-  /** Set the agent status on a node */
+  /** Set the agent status on a node (stored under node.ephemeral.agentStatus) */
   setAgentStatus(nodeId: string, status: string): void {
-    this.updateNodeData(nodeId, { agentStatus: status })
+    this.updateEphemeral(nodeId, { agentStatus: status })
   }
 
   /** Clear agent log and status (e.g., on session end) */
   clearAgentState(nodeId: string): void {
-    this.updateNodeData(nodeId, { agentStatus: null })
+    this.updateEphemeral(nodeId, { agentStatus: null })
     // Keep agentLog for history
   }
 

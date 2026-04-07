@@ -68,16 +68,23 @@ const liveStatus = computed(() => {
 })
 const activityText = computed(() => liveStatus.value?.activity || null)
 
-// Live agent activity from Pi worker — written to Yjs node.data.{agentStatus, agentLog}
+// Live agent activity from Pi worker — written to Yjs node.ephemeral.{agentStatus, agentLog}
 // by apps/thinkgraph-worker/src/yjs-client.ts. The data arrives here via
-// useFlowSyncBridge.ts:154-159 which spreads node.data into the Vue Flow data prop.
+// useFlowSyncBridge.ts which surfaces node.ephemeral as data.ephemeral on the Vue Flow
+// data prop (Vue Flow only forwards `data` to custom node components, so the ephemeral
+// namespace lives inside the data prop even though it's a true sibling at the Yjs level).
+const ephemeral = computed<Record<string, unknown>>(() => {
+  const e = (props.data as any).ephemeral
+  return e && typeof e === 'object' ? e : {}
+})
+
 const agentStatus = computed<string | null>(() => {
-  const s = (props.data as any).agentStatus
+  const s = ephemeral.value.agentStatus
   return typeof s === 'string' ? s : null
 })
 
 const agentLogEntries = computed<Array<{ type: string, text?: string, name?: string, result?: string, ts: number }>>(() => {
-  const log = (props.data as any).agentLog
+  const log = ephemeral.value.agentLog
   return Array.isArray(log) ? log : []
 })
 
