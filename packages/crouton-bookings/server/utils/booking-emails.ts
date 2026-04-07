@@ -162,28 +162,6 @@ export function formatBookingEmailDate(date: Date | string | null, locale?: stri
 }
 
 /**
- * Build email variables from a booking with relations
- */
-export function buildBookingEmailVariables(
-  booking: BookingWithEmailContext,
-  teamName: string = 'Your Team',
-  locale?: string
-): BookingEmailVariables {
-  return {
-    customer_name: booking.ownerUser?.name || 'Customer',
-    customer_email: booking.ownerUser?.email || '',
-    booking_date: formatBookingEmailDate(booking.date, locale),
-    booking_slot: booking.slot?.join(', ') || 'Not specified',
-    booking_reference: booking.id,
-    location_name: booking.locationData?.name || 'Location',
-    location_address: booking.locationData?.address || '',
-    team_name: teamName,
-    team_email: '',
-    team_phone: ''
-  }
-}
-
-/**
  * Abstract interface for email service integration
  * Consuming apps should implement this or use the default crouton-email integration
  */
