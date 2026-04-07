@@ -4,6 +4,10 @@
  * Provides access to configured AI providers and their available models.
  * Useful for building provider/model selector UIs.
  *
+ * Backed by the shared AI provider registry in `shared/utils/ai-providers.ts`
+ * — the same definitions the server uses, so client and server can never
+ * drift out of sync.
+ *
  * @example
  * ```ts
  * const { defaultProvider, defaultModel, providers } = useAIProvider()
@@ -16,72 +20,41 @@
 
 import { computed } from 'vue'
 import { useRuntimeConfig } from '#imports'
+import {
+  AI_PROVIDERS as SHARED_AI_PROVIDERS,
+  detectProviderFromModel,
+  getModelById,
+  getProviderById
+} from '../../shared/utils/ai-providers'
+import type { AIModelInfo, AIProviderInfo } from '../../shared/types/ai-providers'
 import type { AIProvider, AIModel } from '../types'
 
 /**
- * Static provider definitions with available models
- * Note: API key availability is checked server-side
+ * Static provider definitions, projected from the shared registry.
+ *
+ * The client `AIProvider` shape is `{ id, name, models: string[] }`, while
+ * the shared `AIProviderInfo` shape carries full `AIModelInfo[]`. We project
+ * down here so existing consumers of `AI_PROVIDERS` keep working.
  */
-export const AI_PROVIDERS: AIProvider[] = [
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1', 'o1-mini']
-  },
-  {
-    id: 'anthropic',
-    name: 'Anthropic',
-    models: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-3-5-sonnet-20241022']
-  }
-]
+export const AI_PROVIDERS: AIProvider[] = Object.values(SHARED_AI_PROVIDERS).map(
+  (info: AIProviderInfo): AIProvider => ({
+    id: info.id,
+    name: info.name,
+    models: info.models.map(m => m.id)
+  })
+)
 
 /**
- * Detailed model information
+ * Detailed model information by ID, projected from the shared registry.
  */
-export const AI_MODELS: Record<string, AIModel> = {
-  // OpenAI models
-  'gpt-4o': {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    description: 'Most capable OpenAI model, great for complex tasks'
-  },
-  'gpt-4o-mini': {
-    id: 'gpt-4o-mini',
-    name: 'GPT-4o Mini',
-    description: 'Fast and cost-effective for simpler tasks'
-  },
-  'gpt-4-turbo': {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    description: 'High capability with larger context window'
-  },
-  'o1': {
-    id: 'o1',
-    name: 'o1',
-    description: 'Advanced reasoning model for complex problems'
-  },
-  'o1-mini': {
-    id: 'o1-mini',
-    name: 'o1 Mini',
-    description: 'Fast reasoning model'
-  },
-  // Anthropic models
-  'claude-sonnet-4-20250514': {
-    id: 'claude-sonnet-4-20250514',
-    name: 'Claude Sonnet 4',
-    description: 'Balanced performance and speed'
-  },
-  'claude-opus-4-20250514': {
-    id: 'claude-opus-4-20250514',
-    name: 'Claude Opus 4',
-    description: 'Most capable Anthropic model'
-  },
-  'claude-3-5-sonnet-20241022': {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
-    description: 'Previous generation, reliable performance'
-  }
-}
+export const AI_MODELS: Record<string, AIModel> = Object.fromEntries(
+  Object.values(SHARED_AI_PROVIDERS).flatMap(provider =>
+    provider.models.map((model: AIModelInfo) => [
+      model.id,
+      { id: model.id, name: model.name, description: model.description }
+    ])
+  )
+)
 
 /**
  * Composable for accessing AI provider configuration
@@ -100,10 +73,10 @@ export function useAIProvider() {
     /** The default model from runtime config */
     defaultModel: computed(() => defaults.defaultModel),
 
-    /** List of all available providers */
+    /** List of all available providers (projected from shared registry) */
     providers: AI_PROVIDERS,
 
-    /** Detailed model information by ID */
+    /** Detailed model information by ID (projected from shared registry) */
     models: AI_MODELS,
 
     /**
@@ -114,7 +87,8 @@ export function useAIProvider() {
     },
 
     /**
-     * Get model information by ID
+     * Get model information by ID — uses shared registry directly so
+     * descriptions stay rich (contextWindow, maxOutput available via getModelById).
      */
     getModel: (modelId: string): AIModel | undefined => {
       return AI_MODELS[modelId]
@@ -124,25 +98,33 @@ export function useAIProvider() {
      * Get all models for a specific provider
      */
     getModelsForProvider: (providerId: string): AIModel[] => {
-      const provider = AI_PROVIDERS.find(p => p.id === providerId)
+      const provider = getProviderById(providerId)
       if (!provider) return []
-      return provider.models
-        .map(modelId => AI_MODELS[modelId])
-        .filter((model): model is AIModel => model !== undefined)
+      return provider.models.map(m => ({
+        id: m.id,
+        name: m.name,
+        description: m.description
+      }))
     },
 
     /**
      * Check if a model belongs to a specific provider
      */
     isModelFromProvider: (modelId: string, providerId: string): boolean => {
-      const provider = AI_PROVIDERS.find(p => p.id === providerId)
-      return provider?.models.includes(modelId) || false
+      const provider = getProviderById(providerId)
+      return provider?.models.some(m => m.id === modelId) || false
     },
 
     /**
      * Detect provider from model ID (delegates to shared util)
      */
-    detectProviderFromModel
+    detectProviderFromModel,
+
+    /**
+     * Get full server-side model info (id + name + description + contextWindow + maxOutput).
+     * Use this when you need richer metadata than the projected `AIModel`.
+     */
+    getModelInfo: getModelById
   }
 }
 
