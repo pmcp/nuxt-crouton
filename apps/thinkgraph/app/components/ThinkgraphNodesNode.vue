@@ -242,18 +242,32 @@ function handleContextMenu(event: MouseEvent | Event) {
   @apply border-0 shadow-none;
 }
 
-/* Post-it colors per template */
+/* Post-it colors per template (unified type system) */
 .node-card--idea { background: #f3e8ff; color: #581c87; }
+.node-card--discover { background: #dbeafe; color: #1e3a5f; }
+.node-card--architect { background: #e0e7ff; color: #312e81; }
+.node-card--generate { background: #fef3c7; color: #78350f; }
+.node-card--compose { background: #cffafe; color: #164e63; }
+.node-card--review { background: #d1fae5; color: #064e3b; }
+.node-card--deploy { background: #ffe4e6; color: #881337; }
+.node-card--meta { background: #ffe4e6; color: #881337; }
+/* Legacy aliases */
 .node-card--research { background: #dbeafe; color: #1e3a5f; }
 .node-card--task { background: #fef3c7; color: #78350f; }
 .node-card--feature { background: #cffafe; color: #164e63; }
-.node-card--meta { background: #ffe4e6; color: #881337; }
 
 :root.dark .node-card--idea { background: #3b0764; color: #e9d5ff; }
+:root.dark .node-card--discover { background: #1e3a5f; color: #bfdbfe; }
+:root.dark .node-card--architect { background: #312e81; color: #c7d2fe; }
+:root.dark .node-card--generate { background: #451a03; color: #fde68a; }
+:root.dark .node-card--compose { background: #164e63; color: #a5f3fc; }
+:root.dark .node-card--review { background: #064e3b; color: #a7f3d0; }
+:root.dark .node-card--deploy { background: #4c0519; color: #fecdd3; }
+:root.dark .node-card--meta { background: #4c0519; color: #fecdd3; }
+/* Legacy aliases */
 :root.dark .node-card--research { background: #1e3a5f; color: #bfdbfe; }
 :root.dark .node-card--task { background: #451a03; color: #fde68a; }
 :root.dark .node-card--feature { background: #164e63; color: #a5f3fc; }
-:root.dark .node-card--meta { background: #4c0519; color: #fecdd3; }
 
 .node-card--selected {
   @apply ring-2 ring-offset-1;
