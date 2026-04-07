@@ -15,28 +15,35 @@ An actionable implementation plan for ThinkGraph's next evolution. Four external
 
 ---
 
+> **Status note (2026-04-07 PM re-audit):** The "What ThinkGraph Has Today" / "What's Missing" sections below were written at the *start* of the convergence brief and are now stale. For current code state see the status table in [brief.md](brief.md#status-as-of-2026-04-07-re-audited-end-of-day). Short version: most "missing" items are now ✅ shipped or 🟡 partial. The phase descriptions further down are still useful as design references.
+
 ## What ThinkGraph Has Today
 
 | Capability | Implementation |
 |-----------|---------------|
-| Unified node model | `thinkgraph_nodes` — template (idea/research/task/feature/meta), steps, status, brief, output, artifacts |
+| Unified node model | `thinkgraph_nodes` — template (idea/research/task/feature/meta), steps, status, brief, output, artifacts. Phase 0 cleanup complete (commit `b10beff6`). |
 | Visual graph | Vue Flow canvas with tree hierarchy + context edges (fan-in from contextNodeIds, synthesis artifacts) |
 | AI expand | 5 modes: diverge, deep_dive, prototype, converge, validate |
-| Dispatch services | 17 services (DALL-E, Flux, Lovable, v0, code, text, Mermaid, Gemini, business-canvas, user-stories, pitch, SWOT, technical-spec, UI prototype, research agent, Excalidraw, Pi agent) |
-| MCP tools | 8 tools: create-node, update-node, search-graph, expand-node, get-digest, resume-graph, store-artifact, get-thinking-path |
-| Context assembly | 3 scopes (full/branch/manual), progressive disclosure (index→expanded→full), 12K token budget |
+| Dispatch services | **16 services** (was 17 — `research-agent` removed in commits `22f6f452`/`a98189bc`). Only `pi-agent` is on the v2 critical path; the other 15 are dormant. |
+| MCP tools | **11 tools** (was 8): create-node, update-node, search-graph, expand-node, get-digest, resume-graph, store-artifact, get-thinking-path, **check-graph** (Phase 1B), **search-similar** (Phase 2B), **get-graph-overview**. All unscoped — Pi receives the full set regardless of pipeline stage. |
+| Context assembly | 3 scopes (full/branch/manual), progressive disclosure (index→expanded→full), 12K token budget. Per-step token usage tracked in worker. |
 | Multi-select | Shift+click selection, synthesizeSelected(), brief generation, export |
-| Integrations | Notion sync, project sharing (public shareToken), graph digest, real-time collab (Yjs) |
-| External input | InjectRequest collection (context injection only — no automated feeds) |
+| Integrations | Notion sync, project sharing (public shareToken), graph digest, real-time collab (Yjs). **Pi worker is now a full Yjs participant** via `apps/thinkgraph-worker/src/yjs-{client,pool}.ts` — writes `appendAgentLog`/`setAgentStatus` to per-canvas Y.Docs in real time (no UI consumer yet). |
+| External input | InjectRequest collection + Phase 2A `watchedrepos`/`watchreports` collections + cron runner `apps/thinkgraph/server/api/cron/watch-repos.post.ts`. No canvas inbox UI yet. |
+| Graph validation | `validateGraph` server util at `apps/thinkgraph/server/utils/validate-graph.ts` — 7 checks including `stuck-worker` for Pi-stranded nodes (commit `4be788b2`). Exposed via `check-graph` MCP tool and `GET /api/teams/[id]/thinkgraph-nodes/validate`. |
+| Semantic search | Cloudflare Vectorize index (1536 dims, OpenAI `text-embedding-3-small`). `embeddings.ts` + `search-similar.ts` + admin backfill (`apps/thinkgraph/server/api/admin/backfill-embeddings.post.ts`). **Auto-indexing on node create/update is NOT wired** — relies on manual backfill. |
 
-## What's Missing
+## What's Missing (re-audited 2026-04-07 PM)
 
-1. **No graph validation** — broken contextNodeIds, orphaned nodes, stale references go undetected
-2. **No rich output rendering** — node output is plain text, no interactive components
-3. **No cross-referencing syntax** — context managed by IDs, not human-readable `[[wiki links]]`
-4. **No semantic search** — can't "find nodes similar to this one"
-5. **No external signal ingestion** — no repo watching, RSS, or automated feed infrastructure
-6. **No pipeline formalization** — steps are JSON arrays, not schema-driven or validated
+1. ~~No graph validation~~ → ✅ shipped (Phase 1B), but no scheduled runner and no canvas visual indicators on invalid nodes.
+2. **No rich output rendering** — `@nuxtjs/mdc` installed and `<MDC>` used in `NodeDetail.vue`, but no custom ThinkGraph MDC components built and dispatch services don't emit MDC syntax.
+3. **No live cross-referencing on save** — wiki-link parser/resolver/validator all exist, but no node mutation calls `resolveWikiLinksForNode()` and there's no clickable wiki-link rendering in `NodeDetail.vue`.
+4. ~~No semantic search~~ → ✅ infrastructure shipped (Phase 2B), but no auto-index hook on write and no "Find similar" UI button.
+5. ~~No external signal ingestion~~ → 🟡 collections + cron runner shipped (Phase 2A), but no canvas inbox-zone UI and the legacy `sync-changelogs` action is still parallel to it.
+6. **No pipeline formalization** — Phase 2C still untouched. Steps are still hardcoded in `NODE_TYPE_STEPS`.
+7. **No conversation context in dispatch (NEW critical gap)** — dispatch flow at `work-item.post.ts` doesn't include `chatconversations` messages in the Pi context payload. The premise of "conversation as the most valuable execution context" is broken in practice.
+8. **No UI rendering of agent activity (NEW critical gap)** — Pi worker writes `agentLog`/`agentStatus` to Yjs in real time but no Vue component subscribes. Smallest gap with the highest visible payoff.
+9. **No durable worker→app delivery layer** — Apr 7 502 storm exposed this. Patched at the *detection* level via `stuck-worker` validator + one-shot reconciliation, but no outbox / retry / idempotency story. Tracked separately.
 
 ---
 

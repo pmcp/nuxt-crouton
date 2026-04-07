@@ -255,10 +255,12 @@ v1 had two collections:
 
 v2 kills `thinkgraphDecisions`. One collection (`nodes`), one model. The confusion is over.
 
-**Update 2026-04-07:** The Phase 0 migration shipped as `0013_phase0_unified_nodes.sql` and the MCP tools (`create-node`, `update-node`, `store-artifact`, `expand-node`, `get-digest`, `get-thinking-path`, `resume-graph`, `search-graph`) in `apps/thinkgraph/server/mcp/tools/` were rewritten to reference `thinkgraph_nodes`. `apps/thinkgraph/server/db/schema.ts` no longer exports `thinkgraphDecisions` or `thinkgraphWorkItems`.
+**Update 2026-04-07 (morning):** The Phase 0 migration shipped as `0013_phase0_unified_nodes.sql` and the MCP tools (`create-node`, `update-node`, `store-artifact`, `expand-node`, `get-digest`, `get-thinking-path`, `resume-graph`, `search-graph`) in `apps/thinkgraph/server/mcp/tools/` were rewritten to reference `thinkgraph_nodes`. `apps/thinkgraph/server/db/schema.ts` no longer exports `thinkgraphDecisions` or `thinkgraphWorkItems`.
 
-**What still hasn't been cleaned up** (audit 2026-04-07):
-- `apps/thinkgraph/layers/thinkgraph/collections/decisions/` and `.../workitems/` folders are still on disk.
-- `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/` has 11 endpoints (`claude.post.ts`, `chat.post.ts`, `brief.post.ts`, `digest.post.ts`, `dispatch-multi.post.ts`, `expand-with-context.post.ts`, `synthesize.post.ts`, `resume.get.ts`, plus per-decision `dispatch.post.ts`, `expand.post.ts`, `context.get.ts`) that import `getAllThinkgraphDecisions` and `createThinkgraphDecision` from `~~/layers/thinkgraph/collections/decisions/server/database/queries`. These need to be migrated to `thinkgraph_nodes` (or confirmed dead and deleted) before the `decisions/` collection folder can be removed.
-- `apps/thinkgraph/app/components/ThinkgraphWorkitemsNode.vue` is the only file that still imports from `workitems/` — and it has no consumers itself, so it's likely dead too. Confirm with a wider grep across the app shell before removing.
-- The legacy database tables (`thinkgraph_decisions`, `thinkgraph_workitems`) still exist in production. Dropping them is a separate decision and a separate migration; code-level cleanup must come first.
+**Update 2026-04-07 (PM, commit `b10beff6`):** Code-level cleanup completed.
+- ✅ `apps/thinkgraph/layers/thinkgraph/collections/decisions/` deleted.
+- ✅ `apps/thinkgraph/layers/thinkgraph/collections/workitems/` deleted.
+- ✅ `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/` (all 11 endpoints) deleted. They were dead duplicates of the active `thinkgraph-nodes/*` paths — no callers anywhere.
+- ✅ `apps/thinkgraph/app/components/ThinkgraphWorkitemsNode.vue` deleted. Confirmed unreferenced.
+
+**Residual debt:** the `thinkgraph_decisions` and `thinkgraph_workitems` DB tables still physically exist in production D1 (created by migrations 0000/0007, never explicitly DROPped). They're abandoned and consume schema slots but cause no runtime issues. Dropping them needs a deliberate migration step and a backup confirmation — not done in this pass.

@@ -1,8 +1,10 @@
 # Dispatch Services Audit
 
 **Date:** 2026-04-07
-**Scope:** `apps/thinkgraph/server/utils/dispatch-services/` (17 files)
+**Scope:** `apps/thinkgraph/server/utils/dispatch-services/` (17 files at audit time → 16 after cleanup)
 **Trigger:** brief.md "What's Cut" section claims dedicated provider UIs were removed, but the backend service files are still present. This audit determines what's wired up vs. dead code.
+
+> **Status update (2026-04-07 PM):** `research-agent.ts` was deleted in commits `22f6f452` and `a98189bc`. The "INVESTIGATE" verdict in the table below is now resolved. Service count: **16 remaining**, all categorized as KEEP-DORMANT except `pi-agent` (KEEP). The follow-up to "fix or delete" is closed. The other follow-ups (gating `DispatchModal`, removing the empty `provider` column on `thinkgraph_nodes`) remain open.
 
 ## Method
 

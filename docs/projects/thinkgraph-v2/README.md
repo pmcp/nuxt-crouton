@@ -10,8 +10,10 @@ Read these in order. The first three describe the design; the fourth is operatio
 | 4 | [implementation-notes.md](implementation-notes.md) | Operational knowledge: proven patterns, known bugs, deployment specifics, useMetadata investigation. |
 | 5 | [external-research-2026-04-07.md](external-research-2026-04-07.md) | ⚠️ **Research only — not on the build queue.** Six external projects evaluated, three workflow proposals, one hardware decision. The "not building" banner inside the doc stays. Don't mistake this for a roadmap. |
 
-## TL;DR for someone landing here cold
+## TL;DR for someone landing here cold (re-audited 2026-04-07 PM)
 
-- **Shipped:** Phase 0 (unified node model), Phase 1A (MDC rendering), Phase 1C (wiki-links + backlinks), Assistant Step 1 (per-node chat via `chatconversations`).
-- **Not started:** Phase 1B (graph validation), Phase 2A (repo watchlist), Phase 2B (semantic search/Vectorize), Phase 2C (pipeline formalization), Assistant Steps 2–4.
-- **Open cleanup debt:** legacy `decisions/` and `workitems/` collection folders still on disk with live consumers in `apps/thinkgraph/server/api/teams/[id]/thinkgraph-decisions/`. See the status section in `brief.md` for details.
+- **Shipped end-to-end:** Phase 0 (unified node model + cleanup), Phase 1B (graph validation incl. `stuck-worker` for Pi-stranded nodes), Phase 2B (Vectorize semantic search infra), Phase 3 (fan-in / synthesis), Assistant Step 1 storage+UI.
+- **Partial — infra shipped, integration missing:** Phase 1A (MDC renders, no custom components, services don't emit MDC), Phase 1C (wiki-link parser/validator exists, not wired to save flow, no clickable rendering), Phase 2A (collections + cron + runner exist, no canvas inbox UI, legacy `sync-changelogs` not removed), Phase 1 of v2 brief (structured verdicts + skippable steps shipped, stage-scoped MCP tools missing), Phase 2 of v2 brief (markdown built but worker git-commit step is a TODO), Step 2 (Phase 2B unblocks it but no dialectic endpoint), Step 3 (Yjs client/pool/agent-log all live; **no UI renders them** — biggest visual win for smallest effort).
+- **Critical gap not in any phase:** dispatch flow does **not** include conversation history when sending nodes to Pi. Decision #2 of the assistant brief was implicitly answered "no." This breaks the load-bearing premise of the per-node-chat feature.
+- **Not started:** Phase 2C (pipeline formalization), Phase 4 meeting/transcript flow, Phase 5 Nuxt Content, Step 4 (background reflection), Pi worker durability outbox.
+- **Cleanup status:** Phase 0 fully complete (commit `b10beff6`). `research-agent` removed. **Still open:** legacy DB tables (`thinkgraph_decisions`/`thinkgraph_workitems`) physically in D1, 2 orphaned migration files, 15 dormant dispatch services, `sync-changelogs` parallel to Phase 2A runner. See `brief.md` status section for the full list.

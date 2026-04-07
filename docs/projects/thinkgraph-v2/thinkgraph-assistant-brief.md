@@ -115,30 +115,35 @@ The assistant takes actions on the canvas that you can see happening in real-tim
 
 ## Infrastructure (what exists vs. what's needed)
 
+> **Re-audit 2026-04-07 PM:** sections below were written before Phase 2B and the worker Yjs client landed. Updated to reflect actual code state. For canonical status see [brief.md status section](brief.md#status-as-of-2026-04-07-re-audited-end-of-day).
+
 ### Already built
-- **Yjs presence** — CroutonFlow has cursors, user list, CollabRoom Durable Object
-- **Context assembly** — 3 scopes, progressive disclosure, 12K token budget
-- **MCP tools** — 8 tools for graph manipulation
-- **Pi dispatch** — HTTP dispatch to worker via `pi-api.pmcp.dev`
-- **Search** — `search-graph` MCP tool (keyword-based today)
+- **Yjs presence (full)** — CroutonFlow cursors, user list, CollabRoom Durable Object **AND** Pi worker is now a Yjs participant via `apps/thinkgraph-worker/src/yjs-{client,pool}.ts`. Worker connects per-canvas on dispatch, sends `appendAgentLog`/`setAgentStatus`/`sendAwareness`, disconnects after a 60s grace period.
+- **Context assembly** — 3 scopes, progressive disclosure, 12K token budget. Per-step token usage tracked.
+- **MCP tools** — **11 tools** (was 8): create-node, update-node, search-graph, expand-node, get-digest, resume-graph, store-artifact, get-thinking-path, **check-graph** (Phase 1B), **search-similar** (Phase 2B), get-graph-overview. All unscoped.
+- **Pi dispatch** — HTTP dispatch to worker via `pi-api.pmcp.dev`.
+- **Keyword search** — `search-graph` MCP tool.
+- **Semantic search** — Cloudflare Vectorize index (Phase 2B, commit `4bccb0e3`). 1536 dims, OpenAI `text-embedding-3-small`. Server util `embeddings.ts`, `search-similar.ts`, MCP tool, admin backfill. **Auto-indexing on node write is not wired** — manual backfill only.
+- **Per-node chat (Step 1)** — `chatconversations.nodeId` FK + `NodeChatPanel.vue` (279 lines, slash commands `/break-down`, `/send-to-pi`) + streaming chat endpoint at `chat.post.ts`.
+- **Graph validation** — `validateGraph` server util with 7 checks including `stuck-worker` for Pi-stranded nodes (commit `4be788b2`).
 
-### Needed for conversations (Mode 1)
-- `node_messages` storage (D1 table or collection)
-- Chat UI in node detail panel
-- Context builder includes conversation when dispatching
-- Message-aware MCP tool or extend `get-thinking-path`
+### Needed for conversations (Mode 1) — *almost done, one critical gap*
+- ~~`node_messages` storage~~ → ✅ used `chatconversations.nodeId` instead (Decision #1)
+- ~~Chat UI in node detail panel~~ → ✅ `NodeChatPanel.vue`
+- **Context builder includes conversation when dispatching** → ❌ **NOT DONE.** `work-item.post.ts` does not read `chatconversations`. Decision #2 was never made; implicit answer is "the conversation is dropped on dispatch." This is the load-bearing gap that breaks the whole premise of node-level chat as execution context.
+- **Message-aware MCP tool or extend `get-thinking-path`** → ❌ not done.
 
-### Needed for dialectic (Mode 2)
-- Semantic search via Vectorize (convergence brief Phase 2B)
-- Dialectic endpoint: `POST /api/teams/[id]/thinkgraph/ask`
-- Intensity auto-selector (query complexity → model choice)
-- Response includes source node references (clickable)
+### Needed for dialectic (Mode 2) — *unblocked, not built*
+- ~~Semantic search via Vectorize~~ → ✅ Phase 2B shipped.
+- **Dialectic endpoint `POST /api/teams/[id]/thinkgraph/ask`** → ❌ not built. Chat endpoint handles per-node and contextScope queries but is single-intensity (always Sonnet) and doesn't call `search-similar`.
+- **Intensity auto-selector (query complexity → model choice)** → ❌ not built.
+- **Response includes source node references (clickable)** → ❌ not built.
+- **Canvas-level query UI (command palette / floating input)** → ❌ not built.
 
-### Needed for canvas actions (Mode 3)
-- Pi worker connects to Yjs room as WebSocket client
-- Cursor/selection state synced via awareness protocol
-- Action queue: assistant announces intent before executing
-- Activity feed: log of what the assistant did and why
+### Needed for canvas actions (Mode 3) — *infra shipped, UI invisible*
+- ~~Pi worker connects to Yjs room as WebSocket client~~ → ✅ `yjs-client.ts` (500 lines), `yjs-pool.ts` (188 lines), wired in `index.ts:110-122`. Pool connects per-canvas on dispatch.
+- ~~Cursor/selection state synced via awareness protocol~~ → ✅ `sendAwareness()` called from `session-manager.ts`.
+- **Action queue / activity feed** → 🟡 **data side shipped, UI side missing.** `appendAgentLog` is called 14 times across `session-manager.ts`. The Y.Doc receives `node.data.agentLog` and `node.data.agentStatus` updates in real time. **But:** grep for these fields in `apps/thinkgraph/app` returns zero matches. No Vue component subscribes. The data lands and is dropped on the floor. This is the smallest gap with the highest visible payoff in the entire roadmap.
 
 ---
 
@@ -192,13 +197,13 @@ This is additive to the convergence brief phases, not a replacement.
 
 ---
 
-## Key Decisions (make before building)
+## Key Decisions (status as of 2026-04-07 PM re-audit)
 
-1. **Message storage** — new D1 table `thinkgraph_node_messages` vs. store in `artifacts` JSON? Table is cleaner, artifacts is zero-migration.
-2. **Conversation in dispatch** — full history or AI-compressed summary? Full is more context but costs tokens. Suggest: compress if >20 messages.
-3. **Dialectic endpoint** — standalone route or extend existing MCP `search-graph`? Suggest: new endpoint, search-graph stays for simple lookups.
-4. **Canvas presence scope** — always connected to Yjs, or only when actively working on a node? Always-on feels alive but costs a WebSocket connection.
-5. **Agency boundaries** — can the assistant create nodes unprompted (e.g., "I noticed a gap")? Suggest: yes, but as "suggested" nodes (dashed border, user confirms).
+1. **Message storage** — ✅ **DECIDED differently than proposed.** Used the existing `chatconversations` collection with a `nodeId` FK instead of a new `node_messages` table. Reasoning: zero migration, the collection already had the right shape. See `apps/thinkgraph/layers/thinkgraph/collections/chatconversations/server/database/schema.ts:31`.
+2. **Conversation in dispatch** — ❌ **NEVER ANSWERED, implicit answer is "neither."** `apps/thinkgraph/server/api/teams/[id]/dispatch/work-item.post.ts` does not read `chatconversations` at all. The `buildNodeContext()` helper has no message awareness. **This is the biggest gap in the assistant brief — Step 1 is structurally incomplete until this is wired.** Recommended decision: **rolling summary on the conversation** (one new field on `chatconversations`, updated incrementally as messages are added; dispatch sends `summary + last K messages` once total > 20 messages, full history otherwise). Aligns with the Honcho "Representations" pattern this brief explicitly takes inspiration from.
+3. **Dialectic endpoint** — ❌ **NOT YET DECIDED.** No standalone `/ask` endpoint exists. The chat endpoint at `chat.post.ts` partially fills the role for per-node and contextScope queries, but lacks graduated intensity, source-node references, and integration with `search-similar`. Decision still open.
+4. **Canvas presence scope** — ✅ **DECIDED implicitly: on-demand.** `apps/thinkgraph-worker/src/yjs-pool.ts` connects when a dispatch arrives and disconnects after a 60s grace period. Cost-efficient — Pi's WebSocket only opens during active work.
+5. **Agency boundaries** — 🟡 **DECIDED implicitly, restrictively.** Pi worker's tool set does not include `create-node`. The MCP server exposes `create-node`, but the worker's session-manager doesn't pass it to the agent. So today the assistant cannot create nodes unprompted — it can only `update_workitem` on existing ones. The original proposal ("yes, as suggested nodes with dashed border") is unbuilt and would require both adding the tool and a UI affordance for the dashed-border state.
 
 ---
 
