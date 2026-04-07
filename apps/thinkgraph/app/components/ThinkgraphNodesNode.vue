@@ -60,13 +60,51 @@ const displayTitle = computed(() => {
   return title.length > 40 ? title.slice(0, 37) + '...' : title
 })
 
-// Live status (activity text from worker)
+// Live status (activity text from worker — DB artifacts path, slow)
 const liveStatus = computed(() => {
   const a = node.value.artifacts
   if (!Array.isArray(a)) return null
   return a.find((art: any) => art?.type === 'liveStatus') || null
 })
 const activityText = computed(() => liveStatus.value?.activity || null)
+
+// Live agent activity from Pi worker — written to Yjs node.data.{agentStatus, agentLog}
+// by apps/thinkgraph-worker/src/yjs-client.ts. The data arrives here via
+// useFlowSyncBridge.ts:154-159 which spreads node.data into the Vue Flow data prop.
+const agentStatus = computed<string | null>(() => {
+  const s = (props.data as any).agentStatus
+  return typeof s === 'string' ? s : null
+})
+
+const agentLogEntries = computed<Array<{ type: string, text?: string, name?: string, result?: string, ts: number }>>(() => {
+  const log = (props.data as any).agentLog
+  return Array.isArray(log) ? log : []
+})
+
+const latestAgentLine = computed<string | null>(() => {
+  const entries = agentLogEntries.value
+  if (entries.length === 0) return null
+  const last = entries[entries.length - 1]!
+  switch (last.type) {
+    case 'tool_use': return last.name ? `▸ ${last.name}` : '▸ tool'
+    case 'tool_result': return last.result ? `✓ ${last.result.slice(0, 40)}` : '✓ done'
+    case 'thinking': return last.text ? `… ${last.text.slice(0, 40)}` : '… thinking'
+    case 'text': return last.text ? last.text.slice(0, 50) : null
+    case 'status': return last.text || null
+    case 'error': return last.text ? `! ${last.text.slice(0, 40)}` : '! error'
+    default: return null
+  }
+})
+
+const agentStatusVisual = computed(() => {
+  switch (agentStatus.value) {
+    case 'thinking': return { color: 'bg-violet-400', label: 'Pi:thinking', pulse: true }
+    case 'working': return { color: 'bg-emerald-400', label: 'Pi:working', pulse: true }
+    case 'done': return { color: 'bg-emerald-500', label: 'Pi:done', pulse: false }
+    case 'error': return { color: 'bg-red-500', label: 'Pi:error', pulse: false }
+    default: return null
+  }
+})
 
 // Glanceable tags
 const arts = computed(() => {
@@ -145,7 +183,7 @@ function handleContextMenu(event: MouseEvent | Event) {
   >
     <Handle type="target" :position="Position.Top" class="node-handle" />
 
-    <!-- Header: status + assignee -->
+    <!-- Header: status + Pi pill + assignee -->
     <div class="flex items-center gap-1 mb-1 opacity-70">
       <UIcon :name="templateStyle.icon" class="size-3" />
       <UIcon
@@ -153,6 +191,17 @@ function handleContextMenu(event: MouseEvent | Event) {
         class="size-3"
         :class="{ 'animate-spin': isWorking }"
       />
+      <span
+        v-if="agentStatusVisual"
+        class="inline-flex items-center gap-1 text-[8px] font-semibold leading-none"
+        :title="`Pi agent: ${agentStatus}`"
+      >
+        <span
+          class="size-1.5 rounded-full"
+          :class="[agentStatusVisual.color, { 'animate-pulse': agentStatusVisual.pulse }]"
+        />
+        {{ agentStatusVisual.label }}
+      </span>
       <span class="ml-auto">
         <UIcon :name="assigneeConfig.icon" class="size-3" />
       </span>
@@ -177,6 +226,15 @@ function handleContextMenu(event: MouseEvent | Event) {
     <!-- Live activity text (while worker is running) -->
     <p v-if="isWorking && activityText" class="text-[10px] leading-tight opacity-70 mt-0.5 truncate">
       {{ activityText }}
+    </p>
+
+    <!-- Pi agent latest log line (live from Yjs) -->
+    <p
+      v-if="latestAgentLine"
+      class="text-[10px] leading-tight opacity-80 mt-0.5 truncate font-mono text-emerald-700 dark:text-emerald-300"
+      :title="latestAgentLine"
+    >
+      {{ latestAgentLine }}
     </p>
 
     <!-- Glanceable tags -->

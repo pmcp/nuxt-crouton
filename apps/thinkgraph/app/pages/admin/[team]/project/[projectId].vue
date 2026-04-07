@@ -1686,6 +1686,13 @@ if (import.meta.client) {
             </div>
           </div>
 
+          <!-- Pi agent live activity (from Yjs) -->
+          <NodeAgentActivity
+            v-if="flowId && selectedItemId"
+            :flow-id="flowId"
+            :node-id="selectedItemId"
+          />
+
           <!-- Brief -->
           <UFormField label="Brief" class="mb-4">
             <UTextarea
