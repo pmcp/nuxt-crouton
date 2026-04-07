@@ -98,12 +98,17 @@ The user is asking about THIS specific node. Help them decide what to do with it
 
 ## Your Role
 You are a PM assistant with tools to take action. You can:
-- Create, update, and delete work items
+- Create, update, and delete work items (use createWorkItem when the user explicitly asks you to create something)
+- Propose child nodes on a parent without creating them — the user reviews and accepts (use proposeChildNodes when surfacing follow-ups, ideas, or branches the user hasn't explicitly asked for)
 - Dispatch work items to Pi for execution (only queued, pi-assigned items)
 - Synthesize multiple nodes into a unified brief (fan-in: combine related ideas/research into one)
 - Arrange nodes on the canvas (group related items, clean up layout)
 - Batch-dismiss learnings that aren't actionable
 - Promote learnings to tasks
+
+**When to create vs propose:**
+- The user says "add", "create", "make a node for X" → use createWorkItem
+- You're suggesting follow-ups, alternatives, or breakdowns the user didn't explicitly ask for → use proposeChildNodes (these land in the parent's suggested-nodes slideout for the user to accept)
 
 When the user asks to "dispatch all" or "run everything", create the items first, then dispatch each one sequentially.
 
@@ -150,6 +155,58 @@ BRIEF: <what the work item should do>
             skill: NODE_TYPE_SKILLS[nodeType] || undefined,
           } as any)
           return { success: true, id: item.id, title: params.title, type: nodeType }
+        },
+      }),
+
+      proposeChildNodes: tool({
+        description: 'Propose one or more child nodes on a parent without creating them. The proposals appear in the parent\'s "suggested nodes" slideout — the user must accept each one to materialize it on the canvas. Use this when surfacing follow-ups, alternatives, or breakdowns the user has NOT explicitly asked you to create. Append-mode: multiple calls on the same parent grow the suggestion list.',
+        parameters: z.object({
+          parentId: z.string().describe('Parent node ID — the node these proposals attach to'),
+          proposals: z.array(z.object({
+            title: z.string().describe('Short post-it headline (5-10 words)'),
+            nodeType: z.enum(['idea', 'research', 'task', 'feature', 'meta', 'question', 'observation', 'insight', 'decision']).default('idea'),
+            brief: z.string().optional().describe('One-line rationale for this proposal'),
+          })).min(1).describe('One or more child node proposals'),
+        }),
+        execute: async (params) => {
+          const parent = projectItems.find((i: any) => i.id === params.parentId)
+          if (!parent) return { success: false, error: `Parent node "${params.parentId}" not found` }
+
+          const newSuggestions = params.proposals.map(p => ({
+            title: p.title,
+            nodeType: p.nodeType || 'idea',
+            brief: p.brief || '',
+          }))
+
+          const existingArtifacts = Array.isArray((parent as any).artifacts) ? (parent as any).artifacts : []
+          const existingIdx = existingArtifacts.findIndex((a: any) => a?.type === 'suggested-nodes')
+
+          let nextArtifacts: any[]
+          if (existingIdx >= 0) {
+            const existing = existingArtifacts[existingIdx]
+            const existingNodes = Array.isArray(existing?.nodes) ? existing.nodes : []
+            nextArtifacts = [
+              ...existingArtifacts.slice(0, existingIdx),
+              { ...existing, nodes: [...existingNodes, ...newSuggestions], updatedAt: new Date().toISOString() },
+              ...existingArtifacts.slice(existingIdx + 1),
+            ]
+          } else {
+            nextArtifacts = [
+              ...existingArtifacts,
+              { type: 'suggested-nodes', nodes: newSuggestions, createdAt: new Date().toISOString() },
+            ]
+          }
+
+          await updateThinkgraphNode(params.parentId, team.id, 'system', {
+            artifacts: nextArtifacts,
+          } as any, { role: 'admin' })
+
+          return {
+            success: true,
+            parentId: params.parentId,
+            proposed: newSuggestions.length,
+            note: 'Proposals added to parent\'s suggested-nodes slideout. User must accept to materialize.',
+          }
         },
       }),
 
