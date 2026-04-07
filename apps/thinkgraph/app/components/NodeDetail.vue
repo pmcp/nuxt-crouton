@@ -27,10 +27,28 @@ const nodesRef = computed(() => props.nodes)
 const { buildContext } = useNodeContext(nodesRef)
 
 // ─── Editable fields ───
+const editingTitle = ref(false)
+const titleDraft = ref('')
 const editingBrief = ref(false)
 const briefDraft = ref('')
 const editingOutput = ref(false)
 const outputDraft = ref('')
+
+function startEditTitle() {
+  titleDraft.value = props.node.title || ''
+  editingTitle.value = true
+}
+
+async function saveTitle() {
+  const trimmed = titleDraft.value.trim()
+  if (!trimmed) {
+    editingTitle.value = false
+    return
+  }
+  await update(props.node.id, { title: trimmed })
+  editingTitle.value = false
+  emit('refresh')
+}
 
 function startEditBrief() {
   briefDraft.value = props.node.brief || ''
@@ -251,7 +269,29 @@ const tokenUsageByStage = computed(() => {
             }"
           />
         </span>
-        <span class="text-sm font-medium truncate">{{ node.title }}</span>
+        <template v-if="!editingTitle">
+          <span class="text-sm font-medium truncate">{{ node.title }}</span>
+          <UButton
+            icon="i-lucide-pencil"
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            class="shrink-0"
+            @click="startEditTitle"
+          />
+        </template>
+        <template v-else>
+          <UInput
+            v-model="titleDraft"
+            size="xs"
+            autofocus
+            class="flex-1 min-w-0"
+            @keydown.enter.prevent="saveTitle"
+            @keydown.escape.prevent="editingTitle = false"
+          />
+          <UButton size="xs" class="shrink-0" @click="saveTitle">Save</UButton>
+          <UButton size="xs" variant="ghost" color="neutral" class="shrink-0" @click="editingTitle = false">Cancel</UButton>
+        </template>
       </div>
       <UButton
         icon="i-lucide-x"
