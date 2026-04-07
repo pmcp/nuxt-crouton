@@ -46,12 +46,32 @@ export default defineEventHandler(async (event) => {
   const agentSignal = callbackSignal || currentState?.signal
   console.log(`[webhook] ${workItemId}: status=${status}, callbackSignal=${callbackSignal}, dbSignal=${currentState?.signal}, agentSignal=${agentSignal}`)
 
+  // Detect analyst-red → coach auto-trigger (handled after main update below)
+  // Cap auto-triggers to avoid runaway loops on items the user has abandoned.
+  const MAX_COACH_AUTO_RUNS = 2
+  const existingCoachRuns = Array.isArray(currentState?.artifacts)
+    ? currentState.artifacts.filter((a: any) => a?.type === 'coach-proposal').length
+    : 0
+  const shouldAutoCoach
+    = status === 'done'
+    && agentSignal === 'red'
+    && currentState?.stage === 'analyst'
+    && existingCoachRuns < MAX_COACH_AUTO_RUNS
+
   // Respect the agent's signal — don't let session completion override it
   if (status === 'done' && (agentSignal === 'orange' || agentSignal === 'red')) {
-    // Orange = questions for human, Red = rejection — both need human attention
-    updates.status = 'waiting'
-    updates.assignee = 'human'
-    console.log(`[webhook] ${workItemId}: ${agentSignal} signal → status='waiting' (not done), assignee='human'`)
+    if (shouldAutoCoach) {
+      // Set status='done' so the stage-progression block runs (where coach dispatch lives).
+      // The coach dispatch then overwrites status/stage/assignee in the same block.
+      updates.status = 'done'
+      console.log(`[webhook] ${workItemId}: analyst red → will auto-dispatch coach (run ${existingCoachRuns + 1}/${MAX_COACH_AUTO_RUNS})`)
+    }
+    else {
+      // Orange = questions for human, Red = rejection — both need human attention
+      updates.status = 'waiting'
+      updates.assignee = 'human'
+      console.log(`[webhook] ${workItemId}: ${agentSignal} signal → status='waiting' (not done), assignee='human'`)
+    }
   }
   else if (status === 'done' || status === 'error' || status === 'blocked' || status === 'waiting') {
     updates.status = status
@@ -283,6 +303,54 @@ export default defineEventHandler(async (event) => {
         } catch (err: any) {
           console.error('[webhook] Stage advance/dispatch failed:', err.message)
         }
+      }
+    }
+
+    // Auto-dispatch coach when analyst rejected the brief
+    if (shouldAutoCoach && !stageAdvanced) {
+      try {
+        const [latest] = await getThinkgraphNodesByIds(teamId, [workItemId])
+        const latestArtifacts = Array.isArray(latest?.artifacts) ? latest.artifacts : []
+        // Strip stage-meta so coach starts fresh, keep everything else (including analyst's stage-output)
+        const cleanedArtifacts = latestArtifacts.filter((a: any) => a?.type !== 'stage-meta')
+
+        await updateThinkgraphNode(workItemId, teamId, 'system', {
+          stage: 'coach',
+          signal: null,
+          status: 'queued',
+          assignee: 'pi',
+          artifacts: cleanedArtifacts,
+        }, { role: 'admin' })
+        stageAdvanced = true
+        console.log(`[webhook] ${workItemId}: dispatching coach stage`)
+        await dispatchToWorker(event, config, teamId, workItemId, 'coach')
+      } catch (err: any) {
+        console.error(`[webhook] Coach auto-dispatch failed:`, err.message)
+        // Fall back to waiting/human if coach can't be dispatched
+        await updateThinkgraphNode(workItemId, teamId, 'system', {
+          status: 'waiting',
+          assignee: 'human',
+        }, { role: 'admin' })
+      }
+    }
+
+    // Coach stage completed → store proposal artifact (already merged via artifacts merge above),
+    // park as waiting/human regardless of signal so the picker UI can take over.
+    if (
+      !stageAdvanced
+      && currentState?.stage === 'coach'
+      && status === 'done'
+    ) {
+      try {
+        await updateThinkgraphNode(workItemId, teamId, 'system', {
+          status: 'waiting',
+          assignee: 'human',
+          signal: null, // clear so card doesn't render as red/orange
+        }, { role: 'admin' })
+        stageAdvanced = true // prevent child auto-advance below
+        console.log(`[webhook] ${workItemId}: coach done → waiting for human pick`)
+      } catch (err: any) {
+        console.error(`[webhook] Coach completion handler failed:`, err.message)
       }
     }
 

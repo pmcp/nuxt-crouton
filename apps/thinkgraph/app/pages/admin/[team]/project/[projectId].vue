@@ -724,6 +724,57 @@ async function respondAndRedispatch(id: string) {
   }
 }
 
+// ─── Coach proposals (analyst red → coach stage → human picks candidate) ───
+const coachProposal = computed(() => {
+  const item = selectedItem.value
+  if (!item) return null
+  const artifacts = Array.isArray(item.artifacts) ? item.artifacts : []
+  // Most recent coach-proposal artifact (no selectedIndex yet means it's pending pick)
+  const proposals = artifacts.filter((a: any) => a?.type === 'coach-proposal')
+  if (proposals.length === 0) return null
+  return proposals[proposals.length - 1]
+})
+
+const isCoachInFlight = computed(() => {
+  const item = selectedItem.value
+  return item?.stage === 'coach' && (item?.status === 'active' || item?.status === 'queued')
+})
+
+async function acceptCoachCandidate(id: string, candidateIdx: number) {
+  const item = items.value.find(n => n.id === id)
+  if (!item || !teamId.value) return
+  const proposal = coachProposal.value
+  if (!proposal) return
+  const candidate = proposal.candidates?.[candidateIdx]
+  if (!candidate) return
+
+  redispatching.value = true
+  try {
+    // Mark this proposal as selected on the artifact (for history)
+    const artifacts = Array.isArray(item.artifacts) ? [...item.artifacts] : []
+    const updatedArtifacts = artifacts.map((a: any) => {
+      if (a === proposal) return { ...a, selectedIndex: candidateIdx }
+      return a
+    })
+    await updateItem(id, {
+      title: candidate.title || item.title,
+      brief: candidate.brief,
+      stage: 'analyst',
+      signal: null,
+      status: 'queued',
+      assignee: 'pi',
+      artifacts: updatedArtifacts as any,
+    })
+    const refreshed = items.value.find(n => n.id === id)
+    if (refreshed) {
+      await dispatchWork(refreshed)
+    }
+    await refreshItems()
+  } finally {
+    redispatching.value = false
+  }
+}
+
 // ─── Unblock (analyst coach mode) ───
 async function unblockItem(id: string) {
   const item = items.value.find(n => n.id === id)
@@ -1689,8 +1740,11 @@ if (import.meta.client) {
               <MDC :value="selectedItem.output" tag="div" />
             </div>
 
-            <!-- Red state actions -->
-            <div v-if="selectedItem.signal === 'red'" class="flex items-center gap-2 mt-3">
+            <!-- Red state actions (only when no coach proposal in flight or pending) -->
+            <div
+              v-if="selectedItem.signal === 'red' && !coachProposal && !isCoachInFlight"
+              class="flex items-center gap-2 mt-3"
+            >
               <UButton
                 icon="i-lucide-message-circle-question"
                 label="Help me unblock"
@@ -1704,6 +1758,103 @@ if (import.meta.client) {
                 label="Reject"
                 size="sm"
                 variant="soft"
+                color="red"
+                @click="updateItem(selectedItem.id, { status: 'done' })"
+              />
+            </div>
+          </div>
+
+          <!-- Coach in flight: investigating the codebase -->
+          <div
+            v-if="isCoachInFlight"
+            class="mb-4 rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-3"
+          >
+            <div class="flex items-center gap-2 text-sm text-blue-900 dark:text-blue-200">
+              <UIcon name="i-lucide-loader-2" class="animate-spin" />
+              <span>Coach is investigating the codebase to propose concrete fixes…</span>
+            </div>
+          </div>
+
+          <!-- Coach proposals: pick a candidate -->
+          <div
+            v-if="coachProposal && !isCoachInFlight"
+            class="mb-4 space-y-3"
+          >
+            <div class="flex items-center gap-2 text-sm font-medium text-default">
+              <UIcon name="i-lucide-message-circle-question" class="text-amber-500" />
+              <span>Pick a fix to send to the builder</span>
+            </div>
+
+            <UCard
+              v-for="(candidate, idx) in coachProposal.candidates || []"
+              :key="idx"
+              variant="outline"
+              :class="{
+                'ring-2 ring-primary-500': coachProposal.selectedIndex === idx,
+              }"
+            >
+              <template #header>
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold">{{ candidate.scope }}</p>
+                  <span v-if="coachProposal.selectedIndex === idx" class="text-xs text-primary-600 dark:text-primary-400">
+                    Selected
+                  </span>
+                </div>
+                <p v-if="candidate.title" class="text-xs text-muted mt-1">{{ candidate.title }}</p>
+              </template>
+
+              <div class="space-y-2 text-sm">
+                <p class="leading-relaxed whitespace-pre-wrap">{{ candidate.brief }}</p>
+                <p class="text-xs text-muted italic">{{ candidate.rationale }}</p>
+                <div v-if="candidate.files?.length" class="flex flex-wrap gap-1 mt-2">
+                  <code
+                    v-for="(file, fIdx) in candidate.files"
+                    :key="fIdx"
+                    class="text-xs px-1.5 py-0.5 rounded bg-muted text-muted font-mono"
+                  >
+                    {{ file }}
+                  </code>
+                </div>
+              </div>
+
+              <template #footer>
+                <UButton
+                  icon="i-lucide-check"
+                  label="Use this"
+                  size="sm"
+                  color="primary"
+                  :loading="redispatching"
+                  :disabled="coachProposal.selectedIndex !== undefined"
+                  @click="acceptCoachCandidate(selectedItem.id, idx)"
+                />
+              </template>
+            </UCard>
+
+            <!-- Divergent questions, if any -->
+            <div v-if="coachProposal.questions?.length" class="rounded-lg border border-default bg-muted/30 p-3 space-y-2">
+              <p class="text-xs font-medium text-muted">Open questions where candidates diverge:</p>
+              <ul class="list-disc list-inside text-sm space-y-1">
+                <li v-for="(q, qIdx) in coachProposal.questions" :key="qIdx">
+                  {{ q.question }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Fallback: regenerate or reject -->
+            <div v-if="coachProposal.selectedIndex === undefined" class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-refresh-cw"
+                label="Regenerate"
+                size="xs"
+                variant="ghost"
+                :loading="redispatching"
+                @click="unblockItem(selectedItem.id)"
+              />
+              <UButton
+                icon="i-lucide-x"
+                label="Reject item"
+                size="xs"
+                variant="ghost"
                 color="red"
                 @click="updateItem(selectedItem.id, { status: 'done' })"
               />

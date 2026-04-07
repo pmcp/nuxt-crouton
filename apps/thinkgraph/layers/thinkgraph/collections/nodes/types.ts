@@ -37,6 +37,7 @@ export type ThinkgraphTemplate = ThinkgraphNodeType | 'research' | 'task' | 'fea
 // Pipeline step names
 export type ThinkgraphStep =
   | 'analyst' | 'builder' | 'reviewer' | 'launcher' | 'merger'
+  | 'coach'
   | 'analyse' | 'synthesize' | 'optimizer'
 
 // Default pipeline steps per node type
@@ -116,6 +117,29 @@ export interface SuggestedNode {
 export interface SuggestedNodesArtifact extends Artifact {
   type: 'suggested-nodes'
   nodes: SuggestedNode[]
+}
+
+export interface CoachCandidate {
+  /** Short label like "Minimal", "Standard", "With validation" */
+  scope: string
+  /** Rewritten title (optional, falls back to original) */
+  title?: string
+  /** Rewritten brief — concrete, references real files where possible */
+  brief: string
+  /** One-line explanation of why this scope was chosen */
+  rationale: string
+  /** Optional file paths the candidate touches, e.g. ["NodeCard.vue:42"] */
+  files?: string[]
+}
+
+export interface CoachProposalArtifact extends Artifact {
+  type: 'coach-proposal'
+  candidates: CoachCandidate[]
+  /** Optional clarifying questions where candidates diverge */
+  questions?: Array<{ question: string; affectsCandidates?: number[] }>
+  /** Set when the human picks one — index into candidates */
+  selectedIndex?: number
+  generatedAt: string
 }
 
 export interface ThinkgraphNode {
