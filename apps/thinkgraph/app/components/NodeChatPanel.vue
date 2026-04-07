@@ -9,6 +9,9 @@
  * - Exports conversation history for dispatch context
  */
 
+import { useDropZone } from '@vueuse/core'
+import { uploadedFileToMarkdown, insertAtCursor } from '~/composables/useNodeFileUpload'
+
 const props = defineProps<{
   nodeId: string
   nodeName?: string
@@ -134,6 +137,33 @@ function onSubmit() {
   handleSubmit()
 }
 
+// ─── File drop on chat input ───
+const { uploadFile, uploading: uploadingFile } = useNodeFileUpload()
+const chatDropRef = ref<HTMLElement | null>(null)
+
+useDropZone(chatDropRef, {
+  dataTypes: types => types.some(t => t === 'Files'),
+  onDrop: async (files) => {
+    if (!files || !files.length) return
+    const textarea = chatDropRef.value?.querySelector('textarea') as HTMLTextAreaElement | null
+    for (const file of files) {
+      const uploaded = await uploadFile(file)
+      if (!uploaded) continue
+      const md = uploadedFileToMarkdown(uploaded)
+      if (textarea) {
+        const { value, cursor } = insertAtCursor(textarea, input.value, md)
+        input.value = value
+        await nextTick()
+        textarea.focus()
+        textarea.setSelectionRange(cursor, cursor)
+      }
+      else {
+        input.value = `${input.value}\n${md}\n`
+      }
+    }
+  },
+})
+
 // ─── Format helper ───
 function formatContent(content: string): string {
   return content.replace(/DECISION:\s*\{[^}]+\}/g, '').trim()
@@ -256,16 +286,28 @@ defineExpose({
       class="flex items-end gap-1.5 px-3 py-2 border-t border-default shrink-0"
       @submit.prevent="onSubmit"
     >
-      <UTextarea
-        v-model="input"
-        placeholder="Ask about this node… or /break-down, /send-to-pi"
-        :rows="1"
-        autoresize
-        class="flex-1"
-        size="xs"
-        :disabled="isLoadingConversation"
-        @keydown.enter.exact.prevent="onSubmit"
-      />
+      <div
+        ref="chatDropRef"
+        class="flex-1 relative"
+      >
+        <UTextarea
+          v-model="input"
+          placeholder="Ask about this node… or /break-down, /send-to-pi (drop files to attach)"
+          :rows="1"
+          autoresize
+          class="w-full"
+          size="xs"
+          :disabled="isLoadingConversation"
+          @keydown.enter.exact.prevent="onSubmit"
+        />
+        <span
+          v-if="uploadingFile"
+          class="absolute -top-5 left-0 text-[10px] text-muted inline-flex items-center gap-1"
+        >
+          <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+          Uploading…
+        </span>
+      </div>
       <UButton
         type="submit"
         icon="i-lucide-arrow-up"

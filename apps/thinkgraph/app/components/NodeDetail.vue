@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import type { ThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/types'
+import { useDropZone } from '@vueuse/core'
 import { getNodeTypeConfig, getNodeTypeBadge, STATUS_CONFIG } from '~/utils/thinkgraph-config'
+import { uploadedFileToMarkdown, insertAtCursor } from '~/composables/useNodeFileUpload'
 
 interface Props {
   node: ThinkgraphNode
@@ -17,6 +20,7 @@ const emit = defineEmits<{
 const { teamId } = useTeamContext()
 const { update } = useCollectionMutation('thinkgraphNodes')
 const toast = useToast()
+const { uploadFile, uploading } = useNodeFileUpload()
 
 const nodeTypeStyle = computed(() => getNodeTypeConfig(props.node.nodeType))
 const nodeTypeBadge = computed(() => getNodeTypeBadge(props.node.nodeType))
@@ -70,6 +74,141 @@ async function saveOutput() {
   await update(props.node.id, { output: outputDraft.value })
   editingOutput.value = false
   emit('refresh')
+}
+
+// ─── Attachments ───
+function getCurrentArtifacts(): any[] {
+  return Array.isArray(props.node.artifacts) ? [...props.node.artifacts] : []
+}
+
+async function appendArtifact(file: { url: string, pathname: string, filename: string, contentType: string, size: number }, field: string) {
+  const artifacts = getCurrentArtifacts()
+  artifacts.push({
+    type: 'attachment',
+    url: file.url,
+    pathname: file.pathname,
+    filename: file.filename,
+    contentType: file.contentType,
+    size: file.size,
+    uploadedAt: new Date().toISOString(),
+    uploadedBy: 'human',
+    field,
+  })
+  await update(props.node.id, { artifacts })
+}
+
+async function handleDroppedFiles(
+  files: File[],
+  field: 'brief' | 'output' | 'node' | 'attachments',
+  draft?: Ref<string>,
+  textareaEl?: HTMLTextAreaElement | null,
+) {
+  if (!files.length) return
+  for (const file of files) {
+    const uploaded = await uploadFile(file)
+    if (!uploaded) continue
+    const md = uploadedFileToMarkdown(uploaded)
+    if (draft && textareaEl) {
+      const { value, cursor } = insertAtCursor(textareaEl, draft.value, md)
+      draft.value = value
+      await nextTick()
+      textareaEl.focus()
+      textareaEl.setSelectionRange(cursor, cursor)
+    }
+    else if (draft) {
+      draft.value = `${draft.value}\n${md}\n`
+    }
+    await appendArtifact(uploaded, field)
+  }
+  emit('refresh')
+}
+
+// Drop zones via VueUse — handles preventDefault correctly and works with v-if'd refs
+const briefDropRef = ref<HTMLElement | null>(null)
+const outputDropRef = ref<HTMLElement | null>(null)
+const attachmentsDropRef = ref<HTMLElement | null>(null)
+
+useDropZone(briefDropRef, {
+  dataTypes: types => types.some(t => t === 'Files'),
+  onDrop: (files) => {
+    if (!files) return
+    const ta = briefDropRef.value?.querySelector('textarea') as HTMLTextAreaElement | null
+    handleDroppedFiles(files, 'brief', briefDraft, ta)
+  },
+})
+
+useDropZone(outputDropRef, {
+  dataTypes: types => types.some(t => t === 'Files'),
+  onDrop: (files) => {
+    if (!files) return
+    const ta = outputDropRef.value?.querySelector('textarea') as HTMLTextAreaElement | null
+    handleDroppedFiles(files, 'output', outputDraft, ta)
+  },
+})
+
+const { isOverDropZone: isOverAttachmentsDropZone } = useDropZone(attachmentsDropRef, {
+  dataTypes: types => types.some(t => t === 'Files'),
+  onDrop: (files) => {
+    if (!files) return
+    handleDroppedFiles(files, 'attachments')
+  },
+})
+
+interface NormalizedAttachment {
+  _index: number
+  type: string
+  url: string
+  pathname: string
+  filename: string
+  contentType: string
+  size: number
+  isImage: boolean
+  uploadedAt?: string
+  field?: string
+}
+
+const attachments = computed<NormalizedAttachment[]>(() => {
+  const arr = Array.isArray(props.node.artifacts) ? props.node.artifacts : []
+  return arr
+    .map((a: any, i: number): NormalizedAttachment | null => {
+      if (!a || (a.type !== 'attachment' && a.type !== 'screenshot')) return null
+      const contentType = a.contentType || (a.type === 'screenshot' ? 'image/png' : '')
+      return {
+        _index: i,
+        type: a.type,
+        url: a.url || '',
+        pathname: a.pathname || '',
+        filename: a.filename || a.label || 'untitled',
+        contentType,
+        size: a.size || 0,
+        isImage: contentType.startsWith('image/') || a.type === 'screenshot',
+        uploadedAt: a.uploadedAt || a.createdAt,
+        field: a.field || a.stage,
+      }
+    })
+    .filter((a: NormalizedAttachment | null): a is NormalizedAttachment => a !== null)
+})
+
+async function removeAttachment(index: number) {
+  const artifacts = getCurrentArtifacts()
+  artifacts.splice(index, 1)
+  await update(props.node.id, { artifacts })
+  emit('refresh')
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function fileIconFor(contentType: string): string {
+  if (contentType.startsWith('image/')) return 'i-lucide-image'
+  if (contentType === 'application/pdf') return 'i-lucide-file-text'
+  if (contentType.startsWith('video/')) return 'i-lucide-video'
+  if (contentType.startsWith('audio/')) return 'i-lucide-music'
+  return 'i-lucide-file'
 }
 
 // ─── Status transitions ───
@@ -242,7 +381,7 @@ const tokenUsageByStage = computed(() => {
 </script>
 
 <template>
-  <div class="w-[400px] border-l border-default flex-shrink-0 flex flex-col bg-default overflow-hidden">
+  <div class="w-[400px] border-l border-default flex-shrink-0 flex flex-col bg-default overflow-hidden relative">
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-default shrink-0">
       <div class="flex items-center gap-2 min-w-0">
@@ -339,15 +478,21 @@ const tokenUsageByStage = computed(() => {
           />
         </div>
         <div v-if="editingBrief">
-          <UTextarea
-            v-model="briefDraft"
-            :rows="4"
-            placeholder="What needs to happen here?"
-            class="w-full mb-2"
-          />
-          <div class="flex gap-2">
+          <div ref="briefDropRef" class="relative mb-2">
+            <UTextarea
+              v-model="briefDraft"
+              :rows="4"
+              placeholder="What needs to happen here? (drop files to attach)"
+              class="w-full"
+            />
+          </div>
+          <div class="flex gap-2 items-center">
             <UButton size="xs" @click="saveBrief">Save</UButton>
             <UButton size="xs" variant="ghost" color="neutral" @click="editingBrief = false">Cancel</UButton>
+            <span v-if="uploading" class="text-[10px] text-muted inline-flex items-center gap-1">
+              <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+              Uploading…
+            </span>
           </div>
         </div>
         <div v-else-if="node.brief" class="text-sm text-default prose prose-sm dark:prose-invert max-w-none">
@@ -370,21 +515,108 @@ const tokenUsageByStage = computed(() => {
           />
         </div>
         <div v-if="editingOutput">
-          <UTextarea
-            v-model="outputDraft"
-            :rows="6"
-            placeholder="Handoff brief — what was done, key decisions, artifacts, open items"
-            class="w-full mb-2"
-          />
-          <div class="flex gap-2">
+          <div ref="outputDropRef" class="relative mb-2">
+            <UTextarea
+              v-model="outputDraft"
+              :rows="6"
+              placeholder="Handoff brief — what was done, key decisions, artifacts, open items (drop files to attach)"
+              class="w-full"
+            />
+          </div>
+          <div class="flex gap-2 items-center">
             <UButton size="xs" @click="saveOutput">Save</UButton>
             <UButton size="xs" variant="ghost" color="neutral" @click="editingOutput = false">Cancel</UButton>
+            <span v-if="uploading" class="text-[10px] text-muted inline-flex items-center gap-1">
+              <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+              Uploading…
+            </span>
           </div>
         </div>
         <div v-else-if="node.output" class="text-sm text-default prose prose-sm dark:prose-invert max-w-none">
           <MDC :value="node.output" tag="div" />
         </div>
         <p v-else class="text-sm text-muted italic">No output yet</p>
+      </div>
+
+      <!-- Attachments -->
+      <div class="px-4 py-3 border-b border-default">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-[11px] font-semibold text-muted uppercase tracking-wider">
+            Attachments
+            <span v-if="attachments.length" class="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono ml-1">
+              {{ attachments.length }}
+            </span>
+          </p>
+        </div>
+
+        <ul v-if="attachments.length" class="space-y-1.5 mb-2">
+          <li
+            v-for="att in attachments"
+            :key="att._index"
+            class="group flex items-center gap-2 p-1.5 rounded-md border border-default hover:border-primary/50 transition-colors"
+          >
+            <a
+              v-if="att.isImage"
+              :href="att.url"
+              target="_blank"
+              rel="noopener"
+              class="shrink-0"
+            >
+              <img
+                :src="att.url"
+                :alt="att.filename"
+                class="size-10 object-cover rounded border border-default"
+              >
+            </a>
+            <div
+              v-else
+              class="shrink-0 size-10 rounded border border-default flex items-center justify-center bg-neutral-50 dark:bg-neutral-900"
+            >
+              <UIcon :name="fileIconFor(att.contentType)" class="size-5 text-muted" />
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <a
+                :href="att.url"
+                target="_blank"
+                rel="noopener"
+                :download="att.isImage ? undefined : att.filename"
+                class="block text-xs font-medium truncate hover:underline"
+              >
+                {{ att.filename }}
+              </a>
+              <p class="text-[10px] text-muted">
+                <span v-if="att.size">{{ formatBytes(att.size) }}</span>
+                <span v-if="att.field" class="ml-1">· {{ att.field }}</span>
+              </p>
+            </div>
+
+            <UButton
+              icon="i-lucide-x"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              class="opacity-0 group-hover:opacity-100 transition-opacity"
+              @click="removeAttachment(att._index)"
+            />
+          </li>
+        </ul>
+
+        <div
+          ref="attachmentsDropRef"
+          class="border-2 border-dashed rounded-md p-3 text-center transition-colors"
+          :class="isOverAttachmentsDropZone
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/30'
+            : 'border-default hover:border-primary/50'"
+        >
+          <UIcon name="i-lucide-upload-cloud" class="size-5 text-muted mx-auto mb-1" />
+          <p class="text-[11px] text-muted">
+            <span class="font-medium">Drop files here</span> to attach to this node
+          </p>
+          <p class="text-[10px] text-muted mt-0.5 opacity-70">
+            Or drop into the brief / output to insert inline
+          </p>
+        </div>
       </div>
 
       <!-- Handoff -->
@@ -658,6 +890,15 @@ const tokenUsageByStage = computed(() => {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Uploading overlay -->
+    <div
+      v-if="uploading"
+      class="absolute top-2 right-2 z-50 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-900/80 text-white text-[11px]"
+    >
+      <UIcon name="i-lucide-loader-2" class="size-3 animate-spin" />
+      Uploading…
     </div>
   </div>
 </template>
