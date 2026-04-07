@@ -81,6 +81,36 @@ npx wrangler d1 execute <DB_NAME> --local \
 The `server/db/schema.ts` file in this package is what NuxtHub scans to include
 `flow_configs` in migrations. It re-exports from `server/database/schema.ts`.
 
+## Yjs node shape: `data` vs `ephemeral`
+
+`YjsFlowNode` has two distinct namespaces for fields, and they must not be confused:
+
+| Field | Owner | Lifecycle | Used for |
+|-------|-------|-----------|----------|
+| `node.data` | DB row mirror | Overwritten by `useFlowSyncBridge` on every row refetch | Whatever columns the consuming app's collection schema defines (status, brief, template, artifacts, etc.) |
+| `node.ephemeral` | Yjs collaborators | Never touched by the bridge — survives row refetches | Live agent activity from workers, transient control signals, anything Yjs-only |
+
+**Why the split exists:** the bridge's row-sync watcher does `data: { ...row }`, which silently wipes anything a collaborator wrote into the same bag. Before this split, Pi worker writes to `agentLog`/`agentStatus` would disappear whenever the DB row refetched. Now they live on `node.ephemeral` and survive.
+
+**Writing to ephemeral:** use `useFlowSync().updateEphemeral(nodeId, patch)` from the browser, or the equivalent `updateEphemeral` method on the Pi worker's `YjsFlowClient`. Never write Yjs-only state into `node.data` — the next row refetch will clobber it.
+
+**Reading from ephemeral in custom node components:** Vue Flow only forwards `data`, `selected`, `dragging`, `label` to custom node components. So at the Vue Flow boundary, the bridge surfaces `node.ephemeral` as `data.ephemeral` (namespaced inside the data prop):
+
+```vue
+<script setup lang="ts">
+defineProps<{
+  data: Record<string, unknown>
+  selected: boolean
+}>()
+
+// Read live agent state written by a worker collaborator
+const ephemeral = computed(() => (props.data as any).ephemeral || {})
+const agentStatus = computed(() => ephemeral.value.agentStatus)
+</script>
+```
+
+The boundary stays honest at the Yjs layer (`node.ephemeral` is a true sibling of `node.data`); the namespacing inside the Vue Flow data prop is purely a forwarding-mechanism workaround.
+
 ## Dependencies
 
 - **Extends**: `@fyit/crouton-collab` (for collaboration infrastructure)

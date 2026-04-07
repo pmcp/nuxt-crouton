@@ -17,7 +17,27 @@ export interface YjsFlowNode {
   title: string
   position: { x: number, y: number }
   parentId: string | null
-  data: Record<string, unknown> // Additional collection fields
+  /**
+   * Row mirror — fields the bridge keeps in sync with the DB row.
+   * Whatever the consuming app's collection schema defines lives here.
+   * `useFlowSyncBridge` overwrites this on every row refetch, so do NOT
+   * write Yjs-only state into this bag — use `ephemeral` instead.
+   */
+  data: Record<string, unknown>
+  /**
+   * Yjs-only ephemeral state — fields owned by collaborators in the room
+   * that have no DB column to mirror against (e.g., live agent activity
+   * from a worker, transient control signals from the browser).
+   *
+   * The row-sync watcher in `useFlowSyncBridge` never reads or writes this
+   * field, so updates here survive row refetches. This is the namespace
+   * for things like:
+   *   - `agentLog`, `agentStatus` (worker → browser)
+   *   - `userPrompt`, `userAbort`, `userSteer` (browser → worker)
+   *
+   * Use `useFlowSync().updateEphemeral(nodeId, patch)` to write here.
+   */
+  ephemeral?: Record<string, unknown>
   createdAt: number
   updatedAt: number
   /** Visual node type — 'group', 'card', 'default', etc. */

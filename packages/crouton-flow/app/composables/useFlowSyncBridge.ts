@@ -122,6 +122,12 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
             !== JSON.stringify({ ...row, [positionField]: undefined })
 
           if (titleChanged || parentChanged || dataChanged) {
+            // NOTE: this overwrites `data` with the row contents but does NOT
+            // touch `node.ephemeral`. updateNode merges via spread, so any
+            // ephemeral fields written by collaborators (e.g. live agent
+            // activity from a worker) survive row refetches. This is the
+            // whole reason `ephemeral` exists as a sibling of `data` —
+            // see types/yjs.ts and packages/crouton-flow/CLAUDE.md.
             syncState.updateNode(id, {
               title,
               parentId: parentId || null,
@@ -155,7 +161,15 @@ export function useFlowSyncBridge(options: UseFlowSyncBridgeOptions) {
           ...node.data,
           id: node.id,
           title: node.title,
-          parentId: node.parentId
+          parentId: node.parentId,
+          // Yjs-only namespace surfaced under `data.ephemeral` so consuming
+          // node components can read live collaborator state (e.g. agent
+          // activity) via `props.data.ephemeral.<key>`. Vue Flow only
+          // forwards `data` to custom node components, so a top-level
+          // sibling field would not reach them — we namespace inside data
+          // instead. The boundary stays honest at the Yjs layer where
+          // `node.ephemeral` is a true sibling of `node.data`.
+          ephemeral: node.ephemeral || {}
         },
         label: node.title
       }

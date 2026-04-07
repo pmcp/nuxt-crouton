@@ -646,6 +646,129 @@ describe('useFlowSyncBridge', () => {
       )
     })
 
+    it('preserves node.ephemeral when row data updates', async () => {
+      // Regression test for the bug where row refetches stomped Yjs-only state
+      // (agentLog, agentStatus, userPrompt, etc.). After Option C, ephemeral
+      // is a sibling of data and the row-sync watcher never touches it.
+      const initialNode: YjsFlowNode = {
+        id: 'node-1',
+        title: 'Original Title',
+        position: { x: 0, y: 0 },
+        parentId: null,
+        data: { id: 'node-1', title: 'Original Title', parentId: null, status: 'idle' },
+        ephemeral: {
+          agentStatus: 'working',
+          agentLog: [{ type: 'thinking', text: 'planning', ts: 1000 }]
+        },
+        createdAt: 1000,
+        updatedAt: 1000
+      }
+
+      const mock = createMockSyncState({
+        synced: true,
+        initialNodes: [initialNode]
+      })
+
+      const rows = ref<Record<string, unknown>[] | undefined>([
+        { id: 'node-1', title: 'Original Title', parentId: null, status: 'idle' }
+      ])
+
+      useFlowSyncBridge(createDefaultBridgeOptions({
+        syncState: mock.state,
+        rows
+      }))
+
+      await nextTick()
+
+      // Simulate a row refetch with updated DB-side fields (status changed)
+      rows.value = [
+        { id: 'node-1', title: 'Updated Title', parentId: null, status: 'working' }
+      ]
+      await nextTick()
+
+      // The bridge should call updateNode with new title/data BUT NOT pass an
+      // ephemeral field, so updateNode's spread merge preserves the existing
+      // ephemeral bag. This is the whole point of Option C.
+      const updateCalls = mock.state.updateNode.mock.calls
+      expect(updateCalls.length).toBeGreaterThan(0)
+
+      // None of the bridge's updateNode calls should pass an `ephemeral` field —
+      // that field is owned by collaborators (workers, browsers), not the bridge.
+      for (const call of updateCalls) {
+        const updates = call[1] as Partial<YjsFlowNode>
+        expect(updates).not.toHaveProperty('ephemeral')
+      }
+
+      // And the resulting node in the mock store should still have its
+      // ephemeral bag intact (the mock's updateNode does spread merge,
+      // matching the real useFlowSync.updateNode behavior).
+      const liveNode = mock._nodesRef.value.find(n => n.id === 'node-1')
+      expect(liveNode?.ephemeral).toEqual({
+        agentStatus: 'working',
+        agentLog: [{ type: 'thinking', text: 'planning', ts: 1000 }]
+      })
+    })
+
+    it('surfaces node.ephemeral as data.ephemeral on the Vue Flow node', () => {
+      // Vue Flow only forwards `data` to custom node components, so we
+      // namespace ephemeral inside the data prop. Consumers read
+      // `props.data.ephemeral.<key>`.
+      const yjsNode: YjsFlowNode = {
+        id: 'node-1',
+        title: 'Test',
+        position: { x: 0, y: 0 },
+        parentId: null,
+        data: { status: 'idle' },
+        ephemeral: { agentStatus: 'working', agentLog: [{ type: 'text', text: 'hi', ts: 1 }] },
+        createdAt: 1000,
+        updatedAt: 1000
+      }
+
+      const mock = createMockSyncState({
+        synced: true,
+        initialNodes: [yjsNode]
+      })
+
+      const { syncNodes } = useFlowSyncBridge(createDefaultBridgeOptions({
+        syncState: mock.state,
+        rows: ref([{ id: 'node-1', title: 'Test', parentId: null, status: 'idle' }])
+      }))
+
+      const vfNode = syncNodes.value[0]
+      expect(vfNode.data).toHaveProperty('ephemeral')
+      expect((vfNode.data as Record<string, unknown>).ephemeral).toEqual({
+        agentStatus: 'working',
+        agentLog: [{ type: 'text', text: 'hi', ts: 1 }]
+      })
+    })
+
+    it('surfaces empty ephemeral object when node has no ephemeral state', () => {
+      const yjsNode: YjsFlowNode = {
+        id: 'node-1',
+        title: 'Test',
+        position: { x: 0, y: 0 },
+        parentId: null,
+        data: {},
+        // ephemeral intentionally omitted
+        createdAt: 1000,
+        updatedAt: 1000
+      }
+
+      const mock = createMockSyncState({
+        synced: true,
+        initialNodes: [yjsNode]
+      })
+
+      const { syncNodes } = useFlowSyncBridge(createDefaultBridgeOptions({
+        syncState: mock.state,
+        rows: ref([{ id: 'node-1', title: 'Test', parentId: null }])
+      }))
+
+      // Defensive default — components reading data.ephemeral.X should never
+      // hit a TypeError just because no collaborator has written ephemeral yet.
+      expect((syncNodes.value[0].data as Record<string, unknown>).ephemeral).toEqual({})
+    })
+
     it('deletes Yjs nodes when rows are removed', async () => {
       const initialNode: YjsFlowNode = {
         id: 'row-1',

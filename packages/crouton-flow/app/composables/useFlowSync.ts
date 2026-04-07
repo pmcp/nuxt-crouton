@@ -111,6 +111,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
       data: data.data || {},
       createdAt: now,
       updatedAt: now,
+      ...(data.ephemeral && { ephemeral: data.ephemeral }),
       ...(data.nodeType && { nodeType: data.nodeType }),
       ...(data.containerId !== undefined && { containerId: data.containerId }),
       ...(data.dimensions && { dimensions: data.dimensions }),
@@ -159,6 +160,31 @@ export function useFlowSync(options: UseFlowSyncOptions) {
 
   const updateDimensions = (id: string, dimensions: { width: number, height: number }): void => {
     updateNode(id, { dimensions })
+  }
+
+  /**
+   * Merge a patch into a node's `ephemeral` bag — the Yjs-only namespace
+   * for state that has no DB column to mirror against.
+   *
+   * Use this for live agent activity, transient control signals, or any
+   * other field that should survive row refetches. The bridge's row-sync
+   * watcher never touches `node.ephemeral`, so writes here are durable
+   * across DB row updates.
+   */
+  const updateEphemeral = (id: string, patch: Record<string, unknown>): void => {
+    if (!nodesMap) return
+
+    const existing = nodesMap.get(id)
+    if (!existing) {
+      console.warn(`[useFlowSync] Node ${id} not found for ephemeral update`)
+      return
+    }
+
+    nodesMap.set(id, {
+      ...existing,
+      ephemeral: { ...(existing.ephemeral || {}), ...patch },
+      updatedAt: Date.now()
+    })
   }
 
   const deleteNode = (id: string): void => {
@@ -217,6 +243,7 @@ export function useFlowSync(options: UseFlowSyncOptions) {
     updatePosition,
     updateContainer,
     updateDimensions,
+    updateEphemeral,
     deleteNode,
     getNode,
 
