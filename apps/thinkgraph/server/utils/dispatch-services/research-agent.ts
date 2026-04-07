@@ -1,24 +1,78 @@
-import { generateObject } from 'ai'
-import { z } from 'zod/v3'
+import { generateText } from 'ai'
 import { registerDispatchService } from '../dispatch-registry'
 import type { DispatchContext, DispatchResult } from '../dispatch-registry'
 import type { H3Event } from 'h3'
-import { createThinkgraphDecision } from '../../layers/thinkgraph/collections/nodes/server/database/queries'
 
-const nodeSchema: z.ZodType<any> = z.lazy(() =>
-  z.object({
-    content: z.string().describe('The content of this node (1-3 sentences)'),
-    nodeType: z.enum(['insight', 'idea', 'decision', 'question']).describe('Type of thinking'),
-    children: z.array(nodeSchema).max(5).optional().describe('Child nodes (max 5)'),
-  }),
-)
+type NodeType = 'insight' | 'idea' | 'decision' | 'question'
 
-const researchTreeSchema = z.object({
-  summary: z.string().describe('One-sentence summary of the entire analysis'),
-  nodes: z.array(nodeSchema).min(2).max(6).describe('Top-level branches of analysis'),
-})
+interface NodeTree {
+  content: string
+  nodeType: NodeType
+  children?: NodeTree[]
+}
 
-type NodeTree = z.infer<typeof nodeSchema>
+interface ResearchTree {
+  summary: string
+  nodes: NodeTree[]
+}
+
+const VALID_NODE_TYPES: readonly NodeType[] = ['insight', 'idea', 'decision', 'question']
+
+function validateNode(raw: unknown, path: string): NodeTree {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`${path}: expected object, got ${typeof raw}`)
+  }
+  const obj = raw as Record<string, unknown>
+  if (typeof obj.content !== 'string' || !obj.content.trim()) {
+    throw new Error(`${path}.content: expected non-empty string`)
+  }
+  if (typeof obj.nodeType !== 'string' || !VALID_NODE_TYPES.includes(obj.nodeType as NodeType)) {
+    throw new Error(`${path}.nodeType: expected one of ${VALID_NODE_TYPES.join('|')}, got ${obj.nodeType}`)
+  }
+  const children = obj.children
+  let validatedChildren: NodeTree[] | undefined
+  if (children !== undefined && children !== null) {
+    if (!Array.isArray(children)) {
+      throw new Error(`${path}.children: expected array`)
+    }
+    validatedChildren = children
+      .slice(0, 5)
+      .map((child, i) => validateNode(child, `${path}.children[${i}]`))
+  }
+  return {
+    content: obj.content,
+    nodeType: obj.nodeType as NodeType,
+    children: validatedChildren,
+  }
+}
+
+function validateTree(raw: unknown): ResearchTree {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`tree: expected object, got ${typeof raw}`)
+  }
+  const obj = raw as Record<string, unknown>
+  if (typeof obj.summary !== 'string' || !obj.summary.trim()) {
+    throw new Error('tree.summary: expected non-empty string')
+  }
+  if (!Array.isArray(obj.nodes) || obj.nodes.length < 2) {
+    throw new Error('tree.nodes: expected array with at least 2 entries')
+  }
+  return {
+    summary: obj.summary,
+    nodes: obj.nodes.slice(0, 6).map((n, i) => validateNode(n, `tree.nodes[${i}]`)),
+  }
+}
+
+function extractJson(text: string): string {
+  // Strip ```json ... ``` fences if present
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenced) return fenced[1].trim()
+  // Otherwise grab from first { to last }
+  const first = text.indexOf('{')
+  const last = text.lastIndexOf('}')
+  if (first !== -1 && last > first) return text.slice(first, last + 1)
+  return text.trim()
+}
 
 registerDispatchService({
   id: 'research-agent',
@@ -81,9 +135,19 @@ registerDispatchService({
 - Overall risk score and recommendation`,
     }
 
-    const result = await generateObject({
+    const jsonShape = `{
+  "summary": "one-sentence summary of the entire analysis",
+  "nodes": [
+    {
+      "content": "1-3 sentences",
+      "nodeType": "insight" | "idea" | "decision" | "question",
+      "children": [ /* same shape, optional, max 5 */ ]
+    }
+  ]
+}`
+
+    const result = await generateText({
       model: ai.model(model),
-      schema: researchTreeSchema,
       system: `You are a senior strategist and researcher. Given an idea and its thinking context, produce a structured analysis tree.
 
 ${focusInstructions[focus] || focusInstructions['full-analysis']}
@@ -92,15 +156,27 @@ Rules:
 - Each node should contain 1-3 sentences of specific, actionable content.
 - Use real company names, real numbers, and real technologies where possible.
 - Maximum tree depth: ${maxDepth} levels.
-- Maximum 5 children per node, 6 top-level branches.
+- Maximum 5 children per node, 2-6 top-level branches.
 - Be opinionated — make recommendations, don't just list options.
-- Mark nodes as "decision" when they represent a fork/choice, "question" for unknowns, "idea" for opportunities, "insight" for analysis.`,
+- Mark nodes as "decision" when they represent a fork/choice, "question" for unknowns, "idea" for opportunities, "insight" for analysis.
+
+Output format: Respond with ONLY a JSON object matching this shape (no prose, no markdown fences):
+
+${jsonShape}`,
       prompt: `Analyze this idea:\n\n${context.prompt || context.nodeContent}\n\nThinking context:\n${context.thinkingPath}`,
     })
 
-    const tree = result.object
+    let tree: ResearchTree
+    try {
+      const parsed = JSON.parse(extractJson(result.text))
+      tree = validateTree(parsed)
+    } catch (err) {
+      throw createError({
+        status: 502,
+        statusText: `research-agent: model returned invalid JSON tree (${(err as Error).message})`,
+      })
+    }
 
-    // Count total nodes for the summary
     function countNodes(nodes: NodeTree[]): number {
       return nodes.reduce((acc, n) => acc + 1 + (n.children ? countNodes(n.children) : 0), 0)
     }
