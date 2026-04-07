@@ -48,7 +48,7 @@ So "registered" effectively means "shown to the user in DispatchModal as a tile 
 |---|---|---|
 | `synthesis` | — | 2 |
 | `prototype` | `ui-prototype` | 1 |
-| `text` | `research-agent` | 1 |
+| `text` | `research-agent` (deleted 2026-04-07) | 1 |
 
 So in the entire history of both tables, only **2 of the 16 non-`pi-agent` services have ever produced an artifact**, and both lived in the legacy table.
 
@@ -68,7 +68,7 @@ The `thinkgraph_nodes.provider` column exists but is empty across all 149 rows.
 | `mermaid` | yes | no | no | `1fc46b68` (4w ago) | KEEP-DORMANT |
 | `pi-agent` | yes | yes² | indirect³ | `9f21a9e8` (3d ago) | **KEEP** |
 | `pitch` | yes | no | no | `87daa66b` (4w ago) | KEEP-DORMANT |
-| `research-agent` | yes | no | 1× (legacy decisions table) | `a7af06c5` (6d ago) | **INVESTIGATE** |
+| ~~`research-agent`~~ | **deleted** | — | — | — | **DELETED** (2026-04-07) |
 | `swot` | yes | no | no | `87daa66b` (4w ago) | KEEP-DORMANT |
 | `technical-spec` | yes | no | no | `87daa66b` (4w ago) | KEEP-DORMANT |
 | `text` | yes | no | no | `96a015b0` (4w ago) | KEEP-DORMANT |
@@ -84,15 +84,9 @@ The `thinkgraph_nodes.provider` column exists but is empty across all 149 rows.
 
 ³ `pi-agent` doesn't appear as a `provider` value in artifacts — it pushes work into the Pi worker pipeline which then writes `handoff` / `conversation-log` / `pr` / `stage-output` artifacts (provider `pi` or unset). The 49 `handoff:pi` artifacts in the v2 nodes table are downstream of `pi-agent` dispatches.
 
-### Why `research-agent` is INVESTIGATE
+### `research-agent` — DELETED (2026-04-07)
 
-`research-agent.ts:6` imports `createThinkgraphDecision` from `../../layers/thinkgraph/collections/nodes/server/database/queries`. **That symbol does not exist anywhere in the codebase** (grep returns nothing). The function it's trying to call is part of the killed `thinkgraphDecisions` collection (Phase 0 removed it).
-
-This means `research-agent` will crash on import — or at minimum on first invocation — under the v2 schema. It's either:
-- (a) silently broken since the Phase 0 unification, kept registered but non-functional, or
-- (b) supposed to have been migrated to `createThinkgraphNode` and the migration was missed.
-
-Last commit on the file (`a7af06c5`, 6 days ago) is titled *"refactor(thinkgraph): update dispatch infrastructure for unified nodes"* which suggests (b): the migration was attempted but the import wasn't fixed. Needs a human call: fix the import to use the v2 query, or delete the service.
+Originally flagged INVESTIGATE because `research-agent.ts:6` imported `createThinkgraphDecision` (a symbol killed by Phase 0). That dead import was removed in `dde6c5cb`, but the service still had near-zero usage (1 artifact ever, in the legacy decisions table) and no near-term use case. Per the audit's "leaning dormant" verdict, the file and its registry entry in `dispatch-registry.ts` were deleted on 2026-04-07. The v2 nodes dispatch endpoint's `_tree` handling (in `thinkgraph-nodes/[nodeId]/dispatch.post.ts`) is preserved — it's still used by `user-stories.ts`.
 
 ## Recommendation for brief.md "What's Cut"
 
@@ -102,10 +96,45 @@ The current line in brief.md reads:
 
 This is **technically accurate** at the UI layer — there is no per-provider screen, just one generic `DispatchModal` that lists every registered service. But it understates what's still in the tree. Suggested replacement:
 
-> - **Dedicated provider adapter UIs** (Flux/OpenAI/Anthropic) — never built. A single generic `DispatchModal` lists all registered backend services from `server/utils/dispatch-services/` (17 files). Of these, only `pi-agent` is on the v2 critical path; the other 16 are dormant brainstorming/prototype services from the pre-v2 era — registered and clickable, but the v2 nodes table has zero artifacts produced by any of them. They are kept for now (provider variety, no maintenance cost) but should not be considered v2 features. `research-agent` is currently broken (imports a deleted `createThinkgraphDecision` symbol) and needs to be fixed or removed in Phase 1.
+> - **Dedicated provider adapter UIs** (Flux/OpenAI/Anthropic) — never built. A single generic `DispatchModal` lists all registered backend services from `server/utils/dispatch-services/` (16 files after `research-agent` was deleted on 2026-04-07). Of these, only `pi-agent` is on the v2 critical path; the other 15 are dormant brainstorming/prototype services from the pre-v2 era — registered and clickable, but the v2 nodes table has zero artifacts produced by any of them. They are kept for now (provider variety, no maintenance cost) but should not be considered v2 features.
 
 ## Follow-ups (not part of this audit)
 
-- Fix or delete `research-agent.ts` — it imports a symbol that no longer exists
+- ~~Fix or delete `research-agent.ts`~~ — **done 2026-04-07**: deleted (file + registry entry)
 - Decide whether `DispatchModal` should be hidden / gated until the dormant services are either revived or removed
-- The `provider` column on `thinkgraph_nodes` is empty across all 149 rows — confirm whether it's still needed
+- ~~The `provider` column on `thinkgraph_nodes` is empty across all 149 rows — confirm whether it's still needed~~ — investigated, see addendum below
+
+---
+
+## Addendum: `thinkgraph_nodes.provider` column (2026-04-07)
+
+**Verdict: wired but unused. KEEP for now; aggressive removal possible but requires a destructive migration.**
+
+The column at `nodes/server/database/schema.ts:53` is referenced from:
+
+| File | Line | Role |
+|---|---|---|
+| `nodes/server/database/schema.ts` | 53 | Column definition |
+| `nodes/types.ts` | 102, 173 | TS type fields |
+| `nodes/server/api/.../index.post.ts` | 21 | POST accepts as optional |
+| `nodes/server/api/.../[nodeId].patch.ts` | 20 | PATCH accepts as optional |
+| `nodes/app/composables/useThinkgraphNodes.ts` | 36, 80, 113 | Form schema, default `''`, sidebar field |
+| **`server/api/teams/[id]/dispatch/work-item.post.ts`** | **98** | **The only live read** |
+
+The dispatch endpoint reads it like this:
+
+```ts
+const assignee = targetItem.assignee || 'pi'
+const provider = targetItem.provider || (assignee.startsWith('api:') ? assignee.replace('api:', '') : assignee)
+```
+
+So `provider` is a **per-node override** of the assignee→provider mapping. When set, it goes into the `handoff` artifact's `provider` field — which is what produces the `handoff:pi` rows the main audit found in the artifact aggregate.
+
+Across all 149 rows in the local DB, **no node has ever had a non-null `provider` value**. Every `handoff:pi` artifact reached its provider via the fallback (`|| assignee`, where assignee defaults to `'pi'`). The override column is a no-op in current usage.
+
+Removing it would require:
+1. A schema migration (`ALTER TABLE thinkgraph_nodes DROP COLUMN provider`)
+2. Deleting the read on `work-item.post.ts:98` and simplifying the dispatch fallback to just use `assignee`
+3. Removing the field from `nodes/types.ts`, both API endpoints, and `useThinkgraphNodes.ts` (form + sidebar config)
+
+Mechanical but touches 7 files and a destructive migration — not worth doing speculatively. Revisit if/when the dispatch model is simplified further (e.g. if `assignee` and `provider` get merged into one routing concept).
