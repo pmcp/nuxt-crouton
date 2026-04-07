@@ -34,6 +34,10 @@ layers/[layer]/
           │   │   └── _Form.vue          # Create/edit form
           │   └── composables/
           │       └── use[Layer][Collection].ts # Validation, columns, defaults (e.g., useShopProducts.ts)
+          ├── server/
+          │   ├── api/                   # CRUD endpoints
+          │   ├── database/              # Drizzle schema
+          │   └── utils/                 # Server-side helpers
           └── types.ts                   # TypeScript types
 ```
 
