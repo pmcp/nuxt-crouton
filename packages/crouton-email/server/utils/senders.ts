@@ -1,3 +1,4 @@
+import type { Component } from 'vue'
 import { useEmailService } from './email'
 import { renderEmailTemplate, getEmailBrandConfig } from './template-renderer'
 import type {
@@ -7,7 +8,8 @@ import type {
   PasswordResetEmailOptions,
   TeamInviteEmailOptions,
   WelcomeEmailOptions,
-  SendEmailResult
+  SendEmailResult,
+  EmailContentOverrides
 } from '../../types'
 
 // Import email templates
@@ -18,6 +20,70 @@ import PasswordResetEmail from '../emails/PasswordReset.vue'
 import TeamInviteEmail from '../emails/TeamInvite.vue'
 import WelcomeEmail from '../emails/Welcome.vue'
 
+type OverrideKey = keyof EmailContentOverrides
+
+/**
+ * Pick only the truthy override fields onto a template props object.
+ * Avoids spreading `undefined` over template defaults.
+ */
+function pickOverrides(
+  overrides: EmailContentOverrides | undefined,
+  keys: OverrideKey[]
+): Partial<EmailContentOverrides> {
+  if (!overrides) return {}
+  const out: Partial<EmailContentOverrides> = {}
+  for (const key of keys) {
+    if (overrides[key]) (out as any)[key] = overrides[key]
+  }
+  return out
+}
+
+/**
+ * Resolve runtime config + brand config + expiry minutes shared by every sender.
+ */
+function resolveEmailContext(
+  brandName: string | undefined,
+  expiryOverride: number | undefined,
+  expiryConfigPath: 'verification.codeExpiry' | 'magicLink.expiry' | null,
+  event: any
+) {
+  if (!event) { try { event = useEvent() } catch {} }
+  const brandConfig = getEmailBrandConfig()
+  if (brandName) brandConfig.brandName = brandName
+
+  let expiryMinutes = expiryOverride
+  if (!expiryMinutes && expiryConfigPath) {
+    const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
+    const publicConfig = (config.public as any)?.crouton?.email
+    const [section, key] = expiryConfigPath.split('.') as [string, string]
+    expiryMinutes = publicConfig?.[section]?.[key] || 10
+  }
+
+  return { event, brandConfig, expiryMinutes: expiryMinutes ?? 10 }
+}
+
+/**
+ * Render a Vue Email template and send it via the configured email service.
+ * Handles subject + fromName overrides uniformly across all sender wrappers.
+ */
+async function sendTemplatedEmail(args: {
+  event: any
+  template: Component
+  templateProps: Record<string, any>
+  to: string | string[]
+  subject: string
+  fromNameOverride?: string
+}): Promise<SendEmailResult> {
+  const { html, text } = await renderEmailTemplate(args.template, args.templateProps)
+  return useEmailService(args.event).send({
+    to: args.to,
+    subject: args.subject,
+    html,
+    text,
+    ...(args.fromNameOverride && { fromName: args.fromNameOverride })
+  })
+}
+
 /**
  * Send a verification code email
  */
@@ -25,33 +91,22 @@ export async function sendVerificationEmail(
   options: VerificationEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  if (!event) { try { event = useEvent() } catch {} }
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
-  const publicConfig = (config.public as any)?.crouton?.email
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
-  const expiryMinutes = options.expiryMinutes
-    || publicConfig?.verification?.codeExpiry
-    || 10
+  const ctx = resolveEmailContext(options.brandName, options.expiryMinutes, 'verification.codeExpiry', event)
 
-  const { html, text } = await renderEmailTemplate(VerificationEmail, {
-    code: options.code,
-    name: options.name,
-    expiryMinutes,
-    preview: `Your verification code is ${options.code}`,
-    ...brandConfig,
-    // Content overrides from team settings
-    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: VerificationEmail,
+    templateProps: {
+      code: options.code,
+      name: options.name,
+      expiryMinutes: ctx.expiryMinutes,
+      preview: `Your verification code is ${options.code}`,
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['greeting', 'body', 'footer'])
+    },
     to: options.to,
     subject: options.overrides?.subject || `Your verification code is ${options.code}`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    fromNameOverride: options.overrides?.fromName
   })
 }
 
@@ -62,33 +117,22 @@ export async function sendVerificationLink(
   options: VerificationLinkEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  if (!event) { try { event = useEvent() } catch {} }
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
-  const publicConfig = (config.public as any)?.crouton?.email
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
-  const expiryMinutes = options.expiryMinutes
-    || publicConfig?.verification?.codeExpiry
-    || 10
+  const ctx = resolveEmailContext(options.brandName, options.expiryMinutes, 'verification.codeExpiry', event)
 
-  const { html, text } = await renderEmailTemplate(VerificationLinkEmail, {
-    link: options.link,
-    name: options.name,
-    expiryMinutes,
-    preview: 'Verify your email address',
-    ...brandConfig,
-    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: VerificationLinkEmail,
+    templateProps: {
+      link: options.link,
+      name: options.name,
+      expiryMinutes: ctx.expiryMinutes,
+      preview: 'Verify your email address',
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['greeting', 'body', 'buttonText', 'footer'])
+    },
     to: options.to,
-    subject: options.overrides?.subject || `Verify your ${brandConfig.brandName} email`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    subject: options.overrides?.subject || `Verify your ${ctx.brandConfig.brandName} email`,
+    fromNameOverride: options.overrides?.fromName
   })
 }
 
@@ -99,33 +143,22 @@ export async function sendMagicLink(
   options: MagicLinkEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  if (!event) { try { event = useEvent() } catch {} }
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
-  const publicConfig = (config.public as any)?.crouton?.email
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
-  const expiryMinutes = options.expiryMinutes
-    || publicConfig?.magicLink?.expiry
-    || 10
+  const ctx = resolveEmailContext(options.brandName, options.expiryMinutes, 'magicLink.expiry', event)
 
-  const { html, text } = await renderEmailTemplate(MagicLinkEmail, {
-    link: options.link,
-    name: options.name,
-    expiryMinutes,
-    preview: 'Click to sign in to your account',
-    ...brandConfig,
-    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: MagicLinkEmail,
+    templateProps: {
+      link: options.link,
+      name: options.name,
+      expiryMinutes: ctx.expiryMinutes,
+      preview: 'Click to sign in to your account',
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['greeting', 'body', 'buttonText', 'footer'])
+    },
     to: options.to,
-    subject: options.overrides?.subject || `Sign in to ${brandConfig.brandName}`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    subject: options.overrides?.subject || `Sign in to ${ctx.brandConfig.brandName}`,
+    fromNameOverride: options.overrides?.fromName
   })
 }
 
@@ -136,33 +169,22 @@ export async function sendPasswordReset(
   options: PasswordResetEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  if (!event) { try { event = useEvent() } catch {} }
-  const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
-  const publicConfig = (config.public as any)?.crouton?.email
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
-  const expiryMinutes = options.expiryMinutes
-    || publicConfig?.verification?.codeExpiry
-    || 10
+  const ctx = resolveEmailContext(options.brandName, options.expiryMinutes, 'verification.codeExpiry', event)
 
-  const { html, text } = await renderEmailTemplate(PasswordResetEmail, {
-    link: options.link,
-    name: options.name,
-    expiryMinutes,
-    preview: 'Reset your password',
-    ...brandConfig,
-    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: PasswordResetEmail,
+    templateProps: {
+      link: options.link,
+      name: options.name,
+      expiryMinutes: ctx.expiryMinutes,
+      preview: 'Reset your password',
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['greeting', 'body', 'buttonText', 'footer'])
+    },
     to: options.to,
-    subject: options.overrides?.subject || `Reset your ${brandConfig.brandName} password`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    subject: options.overrides?.subject || `Reset your ${ctx.brandConfig.brandName} password`,
+    fromNameOverride: options.overrides?.fromName
   })
 }
 
@@ -173,27 +195,23 @@ export async function sendTeamInvite(
   options: TeamInviteEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
+  const ctx = resolveEmailContext(options.brandName, undefined, null, event)
 
-  const { html, text } = await renderEmailTemplate(TeamInviteEmail, {
-    link: options.link,
-    inviterName: options.inviterName,
-    teamName: options.teamName,
-    role: options.role,
-    preview: `${options.inviterName} invited you to join ${options.teamName}`,
-    ...brandConfig,
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: TeamInviteEmail,
+    templateProps: {
+      link: options.link,
+      inviterName: options.inviterName,
+      teamName: options.teamName,
+      role: options.role,
+      preview: `${options.inviterName} invited you to join ${options.teamName}`,
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['body', 'buttonText', 'footer'])
+    },
     to: options.to,
-    subject: options.overrides?.subject || `Join ${options.teamName} on ${brandConfig.brandName}`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    subject: options.overrides?.subject || `Join ${options.teamName} on ${ctx.brandConfig.brandName}`,
+    fromNameOverride: options.overrides?.fromName
   })
 }
 
@@ -204,25 +222,20 @@ export async function sendWelcome(
   options: WelcomeEmailOptions,
   event?: any
 ): Promise<SendEmailResult> {
-  const brandConfig = getEmailBrandConfig()
-  if (options.brandName) brandConfig.brandName = options.brandName
+  const ctx = resolveEmailContext(options.brandName, undefined, null, event)
 
-  const { html, text } = await renderEmailTemplate(WelcomeEmail, {
-    name: options.name,
-    getStartedLink: options.getStartedLink,
-    preview: `Welcome to ${brandConfig.brandName}!`,
-    ...brandConfig,
-    ...(options.overrides?.greeting && { greeting: options.overrides.greeting }),
-    ...(options.overrides?.body && { body: options.overrides.body }),
-    ...(options.overrides?.buttonText && { buttonText: options.overrides.buttonText }),
-    ...(options.overrides?.footer && { footer: options.overrides.footer })
-  })
-
-  return useEmailService(event).send({
+  return sendTemplatedEmail({
+    event: ctx.event,
+    template: WelcomeEmail,
+    templateProps: {
+      name: options.name,
+      getStartedLink: options.getStartedLink,
+      preview: `Welcome to ${ctx.brandConfig.brandName}!`,
+      ...ctx.brandConfig,
+      ...pickOverrides(options.overrides, ['greeting', 'body', 'buttonText', 'footer'])
+    },
     to: options.to,
-    subject: options.overrides?.subject || `Welcome to ${brandConfig.brandName}!`,
-    html,
-    text,
-    ...(options.overrides?.fromName && { fromName: options.overrides.fromName })
+    subject: options.overrides?.subject || `Welcome to ${ctx.brandConfig.brandName}!`,
+    fromNameOverride: options.overrides?.fromName
   })
 }
