@@ -15,6 +15,7 @@ export type ValidationCode =
   | 'orphan-node'
   | 'duplicate-title-at-depth'
   | 'stuck-active'
+  | 'stuck-worker'
   | 'broken-wiki-link'
 
 export interface ValidationError {
@@ -26,6 +27,7 @@ export interface ValidationError {
 }
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const STUCK_WORKER_MS = 30 * 60 * 1000
 
 /**
  * Validate a single project's graph.
@@ -152,6 +154,28 @@ export async function validateGraph(
         code: 'stuck-active',
         message: `Node has been 'active' since ${node.updatedAt} (>24h)`,
         details: { updatedAt: node.updatedAt },
+      })
+    }
+  }
+
+  // 4b. stuck-worker — status='working'|'dispatching', assignee='pi', updatedAt > 30min ago.
+  // Catches the Apr 7 failure mode: Pi worker dispatched a session, the worker→app
+  // callback failed (e.g. 502 storm), the in-memory ActiveSession was deleted, and the
+  // node is now stranded with no recovery path. Severity is 'error' because (unlike
+  // stuck-active, which can mean "human is slow") this state implies dropped delivery.
+  for (const node of nodes) {
+    if (node.status !== 'working' && node.status !== 'dispatching') continue
+    if (node.assignee !== 'pi') continue
+    if (!node.updatedAt) continue
+    const updatedMs = Date.parse(node.updatedAt)
+    if (Number.isNaN(updatedMs)) continue
+    if (now - updatedMs > STUCK_WORKER_MS) {
+      errors.push({
+        nodeId: node.id,
+        severity: 'error',
+        code: 'stuck-worker',
+        message: `Pi-assigned node stuck in '${node.status}' since ${node.updatedAt} (>30min). Likely dropped worker→app delivery.`,
+        details: { updatedAt: node.updatedAt, status: node.status, stage: node.stage },
       })
     }
   }
