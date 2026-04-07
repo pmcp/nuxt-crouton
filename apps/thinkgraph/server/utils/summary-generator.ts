@@ -8,6 +8,7 @@
  */
 import { generateText } from 'ai'
 import { updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import { indexNodeAsync } from './embeddings'
 
 /**
  * Generate an AI summary for a node and store it in the summary field.
@@ -36,6 +37,9 @@ export async function generateNodeSummary(
     const summary = text.trim()
     if (summary) {
       await updateThinkgraphNode(nodeId, teamId, 'system', { summary }, { role: 'admin' })
+      // Phase 2B: keep the Vectorize index in sync whenever node text changes.
+      // Fire-and-forget — same fail-soft semantics as summary generation.
+      indexNodeAsync(nodeId, teamId)
     }
   }
   catch (err) {

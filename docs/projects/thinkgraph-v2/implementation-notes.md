@@ -4,6 +4,75 @@ Operational knowledge carried forward from v1. These are proven patterns, known 
 
 ---
 
+## Phase 2B — Vectorize semantic search (2026-04-07)
+
+### Setup
+
+One-time provisioning per environment (run from `apps/thinkgraph`):
+
+```bash
+# Create the production index (1536 dims for text-embedding-3-small)
+npx wrangler vectorize create thinkgraph-nodes --dimensions=1536 --metric=cosine
+
+# Optional: a separate preview index for the preview branch
+npx wrangler vectorize create thinkgraph-nodes-preview --dimensions=1536 --metric=cosine
+
+# Set the admin backfill secret (gates /api/admin/backfill-embeddings)
+npx wrangler pages secret put NUXT_ADMIN_BACKFILL_SECRET
+```
+
+The binding lives in `apps/thinkgraph/wrangler.toml`:
+
+```toml
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "thinkgraph-nodes"
+```
+
+OpenAI key: `NUXT_OPENAI_API_KEY` must be set on the Pages project (already used by other crouton-ai features). The embedding model is `text-embedding-3-small` (constants in `server/utils/embeddings.ts`).
+
+### How it works
+
+- `server/utils/embeddings.ts` — `embedText`, `indexNode`, `indexNodeAsync`, `deleteNodeVector`. Reads the binding from `event.context.cloudflare.env.VECTORIZE` and falls back to `globalThis.VECTORIZE` / `process.env.VECTORIZE` for other Nitro presets. Local dev (no wrangler) returns `{ indexed: false, reason: 'no-binding' }` and logs a single warning per process.
+- `server/utils/search-similar.ts` — `searchSimilar(teamId, query, { limit, projectId? })`. Embeds the query, queries Vectorize with `filter: { teamId, projectId? }`, returns `{ hits, unavailable }`.
+- `POST /api/teams/[id]/thinkgraph-nodes/search-similar` — auth-gated endpoint that hydrates hits via `getThinkgraphNodesByIds` and preserves Vectorize ranking.
+- `server/mcp/tools/search-similar.ts` — MCP tool mirroring the endpoint, registered automatically alongside the other `*-node` tools.
+
+### Indexing hooks
+
+Two touchpoints keep the index in sync without a write trigger on the SQLite table:
+
+1. `summary-generator.ts` — after the AI summary is written, `indexNodeAsync` runs. This covers the dispatch webhook (output → summary regen) and `project-assistant` (brief → summary on create).
+2. `mcp/tools/update-node.ts` — when `content` or `brief` is updated via MCP, `indexNodeAsync` runs. This is the path the Pi worker uses for in-flight edits.
+
+Both hooks are fire-and-forget; failures only log. Vectors are keyed by `nodeId` and tagged with `{ teamId, projectId, status }` so the query filter can scope by team and (optionally) project.
+
+### Backfill
+
+`apps/thinkgraph/scripts/backfill-embeddings.ts` is a thin wrapper that calls `POST /api/admin/backfill-embeddings`. The endpoint walks `thinkgraph_nodes` (optionally filtered by `teamId`) and indexes each row through the same `indexNode` path used by the live hooks — so re-running it is safe and idempotent.
+
+```bash
+# Local
+THINKGRAPH_URL=http://localhost:3004 \
+ADMIN_SECRET=... \
+npx tsx apps/thinkgraph/scripts/backfill-embeddings.ts
+
+# Production (one team)
+THINKGRAPH_URL=https://thinkgraph.pages.dev \
+ADMIN_SECRET=... \
+npx tsx apps/thinkgraph/scripts/backfill-embeddings.ts <teamId>
+```
+
+The endpoint refuses to start unless `NUXT_ADMIN_BACKFILL_SECRET` is set on the server, so it can't accidentally be left publicly callable.
+
+### Out of scope (Phase 2B)
+
+- UI surface for semantic search — endpoint and MCP tool only.
+- Dialectic loop / "ask the graph" — that's Step 2 of the assistant brief and now unblocked.
+- Re-indexing on `status` change — metadata is captured at write time; if status filtering needs to track moves precisely, run the backfill or add a status-change hook.
+
+---
+
 ## Proven Patterns (carry forward)
 
 ### Session Cleanup Order

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { getAllThinkgraphNodes, updateThinkgraphNode } from '~~/layers/thinkgraph/collections/nodes/server/database/queries'
+import { indexNodeAsync } from '~~/server/utils/embeddings'
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
@@ -55,6 +56,12 @@ export default defineMcpTool({
       }
 
       const result = await updateThinkgraphNode(nodeId, resolvedTeamId, 'mcp', updates, { role: 'admin' })
+
+      // Phase 2B: re-index when content/brief changes (summary path is hooked
+      // separately in summary-generator.ts).
+      if (updates.content !== undefined || updates.brief !== undefined) {
+        indexNodeAsync(nodeId, resolvedTeamId)
+      }
 
       // Signal real-time update — use original slug/id since clients key rooms by slug
       signalCollectionChange(teamId, 'thinkgraphNodes')
