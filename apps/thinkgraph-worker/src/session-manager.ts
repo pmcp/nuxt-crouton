@@ -818,18 +818,32 @@ If the count is greater than 0, proceed normally to Step 2.
 cd ~/nuxt-crouton
 git fetch origin main
 git checkout <branch-name>
+# Verify checkout succeeded — must print <branch-name>, not "main"
+git branch --show-current
 git merge origin/main
 \`\`\`
 
+If \`git branch --show-current\` does not match \`<branch-name>\` (e.g., reports \`main\`), the checkout failed — do NOT run \`git merge\`. Signal orange with the actual branch state and stop.
+
 ### Step 3: Resolve conflicts (if any)
 
-If git merge reports conflicts:
+**Before touching any file**, re-verify branch state — a failed checkout in Step 2 can leave you on \`main\` with merge markers, which is the exact bug this guard prevents:
+
+\`\`\`bash
+git branch --show-current   # must be <branch-name>, NOT main
+git status                  # must show "You have unmerged paths" on <branch-name>
+\`\`\`
+
+If \`git branch --show-current\` reports \`main\`, do NOT proceed — signal orange with the branch state and the output of \`git status\`. The conflict resolution context has been lost.
+
+If git merge reports conflicts and the branch state is correct:
 
 1. Read each conflicted file to understand both sides
 2. Resolve the conflict — pick the correct combination of changes
 3. \`git add <resolved-file>\`
 4. Once all conflicts are resolved: \`git commit -m "merge: resolve conflicts with main"\`
-5. If you genuinely cannot resolve a conflict (ambiguous business logic, both sides changed the same thing in incompatible ways), signal orange with details about what's conflicting
+5. After committing, run \`git branch --show-current\` once more to confirm you're still on \`<branch-name>\` before pushing
+6. If you genuinely cannot resolve a conflict (ambiguous business logic, both sides changed the same thing in incompatible ways), signal orange with details about what's conflicting
 
 Most conflicts are mechanical (schema files, imports, lock files, generated code) — just fix them.
 You may attempt conflict resolution up to 3 times. If the merge still fails after 3 attempts, signal orange.
