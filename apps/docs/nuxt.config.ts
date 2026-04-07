@@ -6,7 +6,6 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/ui',
     '@nuxt/content',
-    'nuxt-og-image',
     'nuxt-llms',
     '@nuxtjs/mcp-toolkit'
   ],
@@ -42,10 +41,6 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/'],
       crawlLinks: true
-    },
-    alias: {
-      'playwright-core': 'unenv/runtime/mock/noop',
-      'playwright': 'unenv/runtime/mock/noop'
     }
   },
 
