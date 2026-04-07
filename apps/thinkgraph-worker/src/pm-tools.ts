@@ -27,6 +27,7 @@ const STAGE_UPDATE_DESCRIPTIONS: Record<string, string> = {
   builder: 'Update the current work item in ThinkGraph. Use this to set the worktree branch name after creating a git worktree, store output summaries, or update status.',
   reviewer: 'Set your review verdict signal and output. You can set: signal (green/orange/red), status, output, assignee, learnings, retrospective, verdict. Do NOT set worktree, stage, or deployUrl.',
   merger: 'Update the work item after merging. You can set: signal (green/orange/red), status, output, learnings, retrospective.',
+  coach: 'Set status/output for the coach session. Use propose_brief to store candidate rewrites — do not store proposals via output.',
 }
 
 /** Create PM tools for a work item dispatch session, scoped to the pipeline stage */
@@ -318,13 +319,66 @@ export function createPMTools(
     },
   }
 
+  const proposeBriefTool: AnyToolDefinition = {
+    name: 'propose_brief',
+    label: 'Propose Brief Rewrites',
+    description: 'Coach stage only. Store 2-4 candidate brief rewrites for the human to pick from. Each candidate must be grounded in the actual codebase — reference real files and line numbers. After calling this, also call update_workitem with status=done and signal=green (the system will park the item as waiting for human selection).',
+    parameters: Type.Object({
+      candidates: Type.Array(
+        Type.Object({
+          scope: Type.String({ description: 'Short label for this scope, e.g. "Minimal", "Standard", "With validation"' }),
+          title: Type.Optional(Type.String({ description: 'Optional rewritten title — falls back to original if omitted' })),
+          brief: Type.String({ description: 'Concrete rewritten brief. Must reference real files (e.g. "wire @dblclick on NodeCard.vue:42 → swap to UInput → call updateThinkgraphNode()"). Builder will execute this verbatim.' }),
+          rationale: Type.String({ description: 'One sentence: why this scope was chosen. What it covers, what it leaves out.' }),
+          files: Type.Optional(Type.Array(Type.String(), { description: 'File paths this candidate touches, e.g. ["app/components/NodeCard.vue:42"]' })),
+        }),
+        { description: '2-4 candidates at increasing scope. First should be the smallest viable fix.' },
+      ),
+      questions: Type.Optional(Type.Array(
+        Type.Object({
+          question: Type.String({ description: 'A clarifying question — only include if the candidates genuinely diverge on this point' }),
+          affectsCandidates: Type.Optional(Type.Array(Type.Number(), { description: 'Indices of candidates this question affects' })),
+        }),
+        { description: 'Optional. Only ask questions where candidates fork. If all candidates handle a concern the same way, do not ask about it.' },
+      )),
+    }),
+    execute: async (_toolCallId, params) => {
+      try {
+        const items = await ofetch(baseUrl, { headers, query: { ids: workItemId } })
+        const item = Array.isArray(items) ? items[0] : null
+        if (!item) {
+          return textResult(JSON.stringify({ ok: false, error: 'Work item not found' }))
+        }
+        const existingArtifacts = Array.isArray(item.artifacts) ? item.artifacts : []
+        const artifact = {
+          type: 'coach-proposal',
+          candidates: params.candidates,
+          questions: params.questions || [],
+          generatedAt: new Date().toISOString(),
+        }
+        await ofetch(`${baseUrl}/${workItemId}`, {
+          method: 'PATCH',
+          headers,
+          body: { artifacts: [...existingArtifacts, artifact] },
+        })
+        console.log(`[pm-tools] Stored coach-proposal with ${params.candidates.length} candidates for ${workItemId}`)
+        return textResult(JSON.stringify({ ok: true, candidateCount: params.candidates.length }))
+      } catch (err: any) {
+        console.error(`[pm-tools] propose_brief failed:`, err.message)
+        return textResult(JSON.stringify({ ok: false, error: err.message }))
+      }
+    },
+  }
+
   // Stage-scoped tool sets:
   // - Analyst:  read-only + signal (get_workitem, update_workitem for signal/output only)
+  // - Coach:    read-only + signal + propose_brief (no write to source — investigates and proposes)
   // - Builder:  full write (update_workitem, get_workitem, create_pr, upload_screenshot)
   // - Reviewer: read + signal + screenshots (get_workitem, update_workitem, upload_screenshot)
   // - Merger:   write, no PR creation (update_workitem, get_workitem)
   const STAGE_TOOLS: Record<string, string[]> = {
     analyst: ['get_workitem', 'update_workitem'],
+    coach: ['get_workitem', 'update_workitem', 'propose_brief'],
     builder: ['get_workitem', 'update_workitem', 'create_pr', 'upload_screenshot'],
     reviewer: ['get_workitem', 'update_workitem', 'upload_screenshot'],
     merger: ['get_workitem', 'update_workitem'],
@@ -335,6 +389,7 @@ export function createPMTools(
     get_workitem: getWorkitemTool,
     create_pr: createPrTool,
     upload_screenshot: uploadScreenshotTool,
+    propose_brief: proposeBriefTool,
   }
 
   const allowedNames = STAGE_TOOLS[stage] || STAGE_TOOLS.builder

@@ -520,6 +520,9 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
       case 'analyst':
         body = this.analystInstructions(payload)
         break
+      case 'coach':
+        body = this.coachInstructions(payload)
+        break
       case 'builder':
         body = this.builderInstructions(payload)
         break
@@ -1053,6 +1056,21 @@ Be specific and surgical. Small, targeted changes beat broad rewrites.`
   }
 
   private pipelineClosingInstructions(stage: string): string {
+    if (stage === 'coach') {
+      return `
+
+## Before You Finish (MANDATORY)
+
+1. Call \`propose_brief\` with 2-4 candidate rewrites. Each candidate MUST reference real files and line numbers from your investigation. Generic proposals are useless.
+2. Call \`update_workitem\` with:
+   - **status**: \`"done"\`
+   - **signal**: \`"green"\` (signals the system to park the item as waiting for human pick)
+   - **output**: a one-paragraph summary of what you found in the codebase and why you chose these scopes
+3. Do NOT set \`stage\` — the system handles stage transitions automatically.
+4. Do NOT modify any source files. Coach is read-only.
+`
+    }
+
     if (stage === 'analyst' || stage === 'reviewer' || stage === 'merger') {
       return `
 
@@ -1070,6 +1088,65 @@ ${this.metaBlock(stage)}
     }
 
     return this.closingInstructions(stage === 'builder' ? 'generate' : stage, stage)
+  }
+
+  private coachInstructions(_payload: DispatchPayload): string {
+    return `## Instructions — Coach (Brief Repair)
+
+The analyst rejected this brief as too vague to act on. Your job is **NOT** to ask the human questions — your job is to **read the actual codebase** and propose 2-4 concrete rewrites the human can pick from with one click.
+
+**CRITICAL: You are an investigator, NOT an executor.**
+- Do NOT create or modify any files
+- Do NOT create worktrees, branches, or commits
+- Do NOT run builds or generators
+- You MAY (and SHOULD) read files extensively: \`grep\`, \`find\`, \`cat\`, \`ls\`, \`git log\`, \`git show\`
+- Your ONLY write actions are \`propose_brief\` and \`update_workitem\`
+
+### Step 1: Understand Why It Was Rejected
+
+Read the analyst's rejection reason in the work item output. The previous \`stage-output\` artifact has the analyst's full reasoning. Don't repeat their mistakes.
+
+### Step 2: Investigate the Codebase
+
+This is the bulk of your work. The brief is vague — your job is to make it concrete by reading code.
+
+- Read the project conventions: \`cat ~/nuxt-crouton/CLAUDE.md\`
+- Identify keywords from the brief and **grep aggressively** for matching components, composables, endpoints, types
+- Read the files you find. Understand:
+  - What currently exists for the feature in question
+  - What's missing or broken (the actual root cause of the bug, not just the symptom)
+  - Which file(s) and line(s) a fix would touch
+  - Whether infrastructure already exists (e.g., the PATCH endpoint already accepts the field) or needs adding
+- Walk parent components, related composables, the API layer. Trace the data flow.
+
+If after thorough investigation you genuinely can't find anything related, that's also useful — your proposals can be "create the missing X" rather than "edit the existing Y".
+
+### Step 3: Generate Grounded Proposals
+
+Call \`propose_brief\` with 2-4 candidates at increasing scope. The first should always be the **smallest viable fix**.
+
+**Each candidate MUST:**
+- Reference real file paths (and line numbers when you have them)
+- Describe the actual change in concrete terms — not "add editing support" but "wire @dblclick on NodeCard.vue:42, swap title to UInput, call updateThinkgraphNode()"
+- Have a one-sentence rationale explaining what's in scope and what's out
+- Be actionable by a builder reading nothing else
+
+**Bad candidate (rejected):**
+> "Make node titles editable inline"
+
+**Good candidate (accepted):**
+> "In \`apps/thinkgraph/app/components/NodeCard.vue:42\` the title renders as static text. Add \`@dblclick\` to enter edit mode, swap to \`<UInput v-model="editing">\`, call existing \`updateThinkgraphNode()\` on blur. ~15 lines, 1 file."
+
+### Step 4: Only Ask Questions Where Candidates Fork
+
+If candidates A, B, C all handle persistence the same way, **don't ask** about persistence. Only ask questions where the choice between candidates genuinely depends on the answer.
+
+In most cases, you should ask **zero** questions. Good proposals are the answer. Open-ended questions are a fallback for when you genuinely couldn't decide between two equally valid interpretations.
+
+### Step 5: Signal Done
+
+After \`propose_brief\`, call \`update_workitem\` with \`status: "done"\`, \`signal: "green"\`, and a short \`output\` summarizing what you found in the codebase. The system will park the item as waiting for the human to pick a candidate.
+`
   }
 
   private closingInstructions(nodeType: string, stage?: string): string {
