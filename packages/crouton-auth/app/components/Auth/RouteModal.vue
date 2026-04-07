@@ -24,6 +24,15 @@ const isOpen = computed({
   }
 })
 
+// Explicit exit: user chooses to leave the protected route entirely.
+// The modal is non-dismissable (outside-click / Esc / X all disabled) because
+// the page behind it requires auth — so the only way out is to succeed or to
+// deliberately navigate away.
+async function handleGoHome() {
+  state.value.open = false
+  await navigateTo('/')
+}
+
 // Auth capabilities
 const {
   login,
@@ -279,10 +288,23 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
   <UModal
     v-model:open="isOpen"
     :title="modalTitle"
+    :dismissible="false"
+    :close="false"
     :ui="{ overlay: 'z-[60]', content: 'z-[60] sm:max-w-md', title: 'sr-only' }"
   >
     <template #content>
       <div class="p-6">
+        <div class="mb-2 flex justify-end">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            icon="i-lucide-arrow-left"
+            @click="handleGoHome"
+          >
+            Go home
+          </UButton>
+        </div>
         <Transition
           mode="out-in"
           enter-active-class="transition-all duration-200 ease-out"
