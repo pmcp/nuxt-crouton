@@ -248,7 +248,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [x] **crouton-admin** — `useAdminDb()` — not just a null check: also centralizes schema re-exports from crouton-auth for all 13 admin API endpoints (load-bearing)
 - [x] ✅ **crouton-ai** — ~~`AITranslateButton.vue` — 16 props covering two unrelated modes~~ → trimmed to smart-mode only (10 props): owns the API call, confirmation modal, and context selector. Controlled-mode (parent-driven block-editor flow) extracted to new `crouton-i18n/components/BlockTranslateTrigger.vue` (4 props). Stub in `crouton-i18n/stubs/AITranslateButton.vue` and the 7 controlled-mode call sites in `Input.vue` updated.
 - [x] **crouton-ai** — `useAIProvider.ts` — zero consumers inside monorepo; public API for consumer apps to build provider/model selectors
-- [ ] **crouton-mcp** — `inferLayerFromName()` — hardcoded name-to-layer dictionary
+- [x] ✅ **crouton-mcp** — ~~`inferLayerFromName()` — hardcoded name-to-layer dictionary~~ → replaced with `suggestLayerForCollection()` that scans the real `layers/` directory via `scanLayers()`. Strategy: (1) reuse layer if a collection with the same name already exists, (2) first non-`core` layer alphabetically, (3) `core` fallback. `handleDesignSchema` is now async — `registerTool` already awaits handlers so no plumbing changes. Removes the English-keyword guesswork that only knew about `shop`/`blog`/`auth`/`cms`/`crm`. 32 mcp tests pass.
 
 ---
 

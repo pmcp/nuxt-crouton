@@ -5,6 +5,7 @@
 
 import { z } from 'zod'
 import { FIELD_TYPES, getFieldTypeReference } from '../utils/field-types.js'
+import { scanLayers } from '../utils/fs.js'
 
 export interface DesignSchemaInput {
   collectionName: string
@@ -21,37 +22,43 @@ export interface DesignSchemaResult {
   fieldTypeReference: string
 }
 
-/**
- * Heuristic mapping of collection-name keywords to common layer names.
- *
- * This is a fallback used only when the AI caller does not pass an explicit
- * `layer` argument to `design_schema`. It is intentionally conservative and
- * lives at module scope so it is easy to find and extend without touching
- * the inference logic itself.
- */
-const LAYER_KEYWORD_MAP: Record<string, string[]> = {
-  shop: ['product', 'order', 'cart', 'payment', 'customer', 'inventory'],
-  blog: ['post', 'article', 'comment', 'author', 'category', 'tag'],
-  auth: ['user', 'role', 'permission', 'session', 'token'],
-  cms: ['page', 'content', 'media', 'template', 'block'],
-  crm: ['contact', 'lead', 'deal', 'company', 'activity']
-}
-
 const DEFAULT_LAYER = 'core'
 
 /**
- * Infer a layer name from a collection name (fallback heuristic).
+ * Suggest a layer for a new collection by scanning the real `layers/`
+ * directory of the current project.
+ *
+ * Strategy (in priority order):
+ * 1. If any existing layer already contains a collection with the requested
+ *    name → reuse that layer (treats the call as a regenerate/edit case).
+ * 2. Otherwise, return the first non-`core` layer alphabetically — apps
+ *    typically have a domain layer like `shop` or `blog` and that's a more
+ *    useful default than dumping everything in `core`.
+ * 3. Fall back to `core` when no layers exist.
  */
-function inferLayerFromName(collectionName: string): string {
-  const lowerName = collectionName.toLowerCase()
-
-  for (const [layer, keywords] of Object.entries(LAYER_KEYWORD_MAP)) {
-    if (keywords.some(kw => lowerName.includes(kw))) {
-      return layer
-    }
+async function suggestLayerForCollection(
+  collectionName: string,
+  projectRoot: string
+): Promise<string> {
+  let layers
+  try {
+    layers = await scanLayers(projectRoot)
+  } catch {
+    return DEFAULT_LAYER
   }
 
-  return DEFAULT_LAYER
+  if (layers.length === 0) {
+    return DEFAULT_LAYER
+  }
+
+  const existing = layers.find(l => l.collections.includes(collectionName))
+  if (existing) {
+    return existing.name
+  }
+
+  const sorted = [...layers].sort((a, b) => a.name.localeCompare(b.name))
+  const nonCore = sorted.find(l => l.name !== DEFAULT_LAYER)
+  return (nonCore ?? sorted[0]!).name
 }
 
 /**
@@ -71,10 +78,10 @@ function generateSchemaTemplate(): Record<string, unknown> {
 /**
  * Handle design_schema tool call
  */
-export function handleDesignSchema(input: DesignSchemaInput): DesignSchemaResult {
+export async function handleDesignSchema(input: DesignSchemaInput): Promise<DesignSchemaResult> {
   const { collectionName, description, layer } = input
 
-  const suggestedLayer = layer || inferLayerFromName(collectionName)
+  const suggestedLayer = layer || await suggestLayerForCollection(collectionName, process.cwd())
 
   const instructions = `Based on the description "${description}", design a schema for the "${collectionName}" collection.
 
