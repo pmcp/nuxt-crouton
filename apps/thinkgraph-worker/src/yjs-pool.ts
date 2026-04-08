@@ -5,9 +5,14 @@
  * connected client or creates a new one. Reference counting tracks how many
  * active sessions use each canvas — when the last session ends, the client
  * is disconnected after a grace period.
+ *
+ * The companion `YjsPagePool` (also exported below) manages per-(team, node)
+ * page room clients used by `pi.appendBlock` to write into the slideover's
+ * Notion-style block editor.
  */
 import { YjsFlowClient } from './yjs-client.js'
 import type { YjsFlowClientOptions } from './yjs-client.js'
+import { YjsPageClient } from './yjs-page-client.js'
 import type { WorkerConfig } from './config.js'
 import { ofetch } from 'ofetch'
 
@@ -180,6 +185,130 @@ export class YjsFlowPool {
         connected: entry.client.isConnected,
         synced: entry.client.isSynced,
         refs: entry.refCount,
+      }
+    }
+    return status
+  }
+}
+
+// ── Page room pool ─────────────────────────────────────────
+
+interface PageEntry {
+  client: YjsPageClient
+  /** Last time the client was used — used by the idle sweep */
+  lastUsedAt: number
+  closeTimer: ReturnType<typeof setTimeout> | null
+}
+
+/** Idle period after which an unused page room is disconnected. */
+const PAGE_IDLE_CLOSE_MS = 30_000
+
+/**
+ * Pool of YjsPageClient connections keyed by `${teamId}::${nodeId}`.
+ *
+ * Page rooms are short-lived: a Pi skill calls `pi.appendBlock(nodeId, ...)`
+ * a handful of times during a session, the writes flush to the room, and
+ * we can let the connection drop. We keep an idle timer rather than refcounts
+ * because there's no clear "session ends" event for an arbitrary tool call —
+ * the same Pi run may write to many different nodes, and each call should
+ * extend the lease on its target room.
+ */
+export class YjsPagePool {
+  private entries = new Map<string, PageEntry>()
+  private config: WorkerConfig
+
+  constructor(config: WorkerConfig) {
+    this.config = config
+  }
+
+  private key(teamId: string, nodeId: string): string {
+    return `${teamId}::${nodeId}`
+  }
+
+  /**
+   * Get or create a connected page client for `(teamId, nodeId)`.
+   * Resolves only once the room has finished its initial Yjs sync, so the
+   * caller's first append doesn't race the empty initial state.
+   */
+  async acquire(teamId: string, nodeId: string): Promise<YjsPageClient> {
+    const k = this.key(teamId, nodeId)
+    const existing = this.entries.get(k)
+
+    if (existing) {
+      this.touch(k)
+      // Reconnect if we lost the socket since last use
+      if (!existing.client.isConnected) {
+        try {
+          await existing.client.connect()
+        } catch (err) {
+          console.warn(`[yjs-page-pool] Reconnect failed for ${k}: ${err instanceof Error ? err.message : err}`)
+        }
+      }
+      await existing.client.awaitSynced()
+      return existing.client
+    }
+
+    const client = new YjsPageClient({ config: this.config, teamId, nodeId })
+    const entry: PageEntry = {
+      client,
+      lastUsedAt: Date.now(),
+      closeTimer: null,
+    }
+    this.entries.set(k, entry)
+
+    try {
+      await client.connect()
+      console.log(`[yjs-page-pool] Connected to page room ${k}`)
+    } catch (err) {
+      console.warn(`[yjs-page-pool] Connection failed for ${k}: ${err instanceof Error ? err.message : err}`)
+      // Drop the entry so the next call retries from scratch
+      this.entries.delete(k)
+      throw err
+    }
+
+    this.touch(k)
+    return client
+  }
+
+  /**
+   * Mark the entry as recently used and reset its idle close timer.
+   * Should be called by the tool implementation after each successful append.
+   */
+  touch(teamIdOrKey: string, nodeId?: string): void {
+    const k = nodeId ? this.key(teamIdOrKey, nodeId) : teamIdOrKey
+    const entry = this.entries.get(k)
+    if (!entry) return
+    entry.lastUsedAt = Date.now()
+    if (entry.closeTimer) clearTimeout(entry.closeTimer)
+    entry.closeTimer = setTimeout(() => {
+      const current = this.entries.get(k)
+      if (!current) return
+      console.log(`[yjs-page-pool] Disconnecting idle page room ${k}`)
+      current.client.disconnect()
+      this.entries.delete(k)
+    }, PAGE_IDLE_CLOSE_MS)
+  }
+
+  disconnectAll(): void {
+    for (const [, entry] of this.entries) {
+      if (entry.closeTimer) clearTimeout(entry.closeTimer)
+      entry.client.disconnect()
+    }
+    this.entries.clear()
+  }
+
+  get size(): number {
+    return this.entries.size
+  }
+
+  getStatus(): Record<string, { connected: boolean; synced: boolean; idleMs: number }> {
+    const status: Record<string, { connected: boolean; synced: boolean; idleMs: number }> = {}
+    const now = Date.now()
+    for (const [k, entry] of this.entries) {
+      status[k] = {
+        connected: entry.client.isConnected,
+        synced: entry.client.isSynced,
+        idleMs: now - entry.lastUsedAt,
       }
     }
     return status

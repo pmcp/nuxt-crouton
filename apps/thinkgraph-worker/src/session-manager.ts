@@ -17,9 +17,10 @@ import {
 } from '@mariozechner/pi-coding-agent'
 import type { WorkerConfig } from './config.js'
 import type { YjsFlowClient } from './yjs-client.js'
-import type { YjsFlowPool } from './yjs-pool.js'
+import type { YjsFlowPool, YjsPagePool } from './yjs-pool.js'
 import { createThinkGraphTools } from './pi-extension.js'
 import { createPMTools } from './pm-tools.js'
+import { createPageTools } from './page-tools.js'
 import { ofetch } from 'ofetch'
 
 export interface DispatchPayload {
@@ -76,12 +77,18 @@ interface ActiveSession {
 export class AgentSessionManager {
   private activeSessions = new Map<string, ActiveSession>()
   private yjsPool: YjsFlowPool | null = null
+  private pagePool: YjsPagePool | null = null
 
   constructor(private config: WorkerConfig) {}
 
-  /** Set the Yjs pool — called from index.ts */
+  /** Set the Yjs flow pool — called from index.ts */
   setYjsPool(pool: YjsFlowPool): void {
     this.yjsPool = pool
+  }
+
+  /** Set the Yjs page pool — called from index.ts */
+  setPagePool(pool: YjsPagePool): void {
+    this.pagePool = pool
   }
 
 
@@ -175,14 +182,23 @@ export class AgentSessionManager {
     try {
       // Create tools — nodes with pipeline stages get PM tools, others get thinking graph tools
       const hasPipeline = !!payload.stage
-      const tools = hasPipeline
-        ? createPMTools(this.config, payload.nodeId, payload.teamId || this.config.teamId, {
+      const sessionTeamId = payload.teamId || this.config.teamId
+      const baseTools = hasPipeline
+        ? createPMTools(this.config, payload.nodeId, sessionTeamId, {
           onSignal: (signal) => { activeSession.lastSignal = signal },
           stage: payload.stage,
         })
         : yjsClient
           ? createThinkGraphTools(yjsClient, payload.graphId, payload.nodeId)
           : [] // No Yjs client — tools won't work but session can still run
+
+      // PR 2: page-room tools — Pi can append blocks/buttons into the slideover editor.
+      // These are injected alongside the existing tool sets so any skill (PM stage or
+      // thinking graph) can write into the per-node Notion-style editor.
+      const pageTools = this.pagePool
+        ? createPageTools(this.pagePool, sessionTeamId, payload.nodeId)
+        : []
+      const tools = [...baseTools, ...pageTools]
 
       // Build the prompt
       const agentPrompt = this.buildAgentPrompt(payload)

@@ -22,6 +22,9 @@
  * tabs receive remote updates via Yjs and would otherwise duplicate writes.
  */
 import type { Editor } from '@tiptap/vue-3'
+import { markRaw } from 'vue'
+import ActionButton from '../extensions/action-button'
+import { provideNodeActionHandlers } from '../composables/useNodeActionHandlers'
 
 interface Props {
   nodeId: string
@@ -36,6 +39,20 @@ const collab = useCollabEditor({
   roomType: 'page',
   field: 'content'
 })
+
+// PR 2: register the action-handler registry for this slideover instance.
+// Vue's provide/inject carries this scope into the TipTap NodeView so the
+// ActionButtonBlock click handlers see the right (nodeId, teamId) without
+// any global state. Multiple slideovers in different tabs each get their
+// own registry — clicks never cross-fire.
+provideNodeActionHandlers({
+  nodeId: props.nodeId,
+  teamId: props.teamId,
+})
+
+// PR 2: action button TipTap extension. markRaw because the editor consumes
+// it as a raw object — wrapping in Vue reactivity confuses TipTap's internals.
+const editorExtensions = [markRaw(ActionButton)]
 
 // Slash menu items. Each `command` must be a zero-arg method on editor.commands
 // (CroutonEditorBlocks invokes them as `editor.commands[command]()`). For
@@ -121,6 +138,7 @@ function handleUpdate({ editor }: { editor: Editor }) {
       :collab-provider="provider"
       :collab-user="collabUser"
       :suggestion-items="suggestionItems"
+      :extensions="editorExtensions"
       placeholder="Type / for blocks, or # ## ### for headings..."
       content-type="json"
       class="min-h-[12rem]"

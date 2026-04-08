@@ -16,7 +16,7 @@ import { createServer } from 'node:http'
 import { loadConfig } from './config.js'
 import { AgentSessionManager } from './session-manager.js'
 import { DispatchWatcher } from './dispatch-watcher.js'
-import { YjsFlowPool } from './yjs-pool.js'
+import { YjsFlowPool, YjsPagePool } from './yjs-pool.js'
 
 const WORKER_VERSION = 'yjs-1'
 
@@ -121,6 +121,13 @@ async function main() {
   sessionManager.setYjsPool(yjsPool)
   console.log('[yjs-pool] Ready — canvas rooms connect on demand')
 
+  // Yjs page pool — manages per-node block-editor rooms for pi.appendBlock.
+  // Connections are opened lazily by `append_block` / `append_action_button`
+  // tool calls and idle out after 30s of no use.
+  const pagePool = new YjsPagePool(config)
+  sessionManager.setPagePool(pagePool)
+  console.log('[yjs-page-pool] Ready — page rooms connect on demand')
+
   // Optional: dispatch watcher (legacy polling)
   const dispatchWatcher = new DispatchWatcher(config, sessionManager)
   if (process.env.ENABLE_POLL_WATCHER === 'true') {
@@ -153,6 +160,7 @@ async function main() {
         activeSessions: sessionManager.activeCount,
         maxSessions: sessionManager.maxSessions,
         yjsCanvases: yjsPool.getStatus(),
+        yjsPageRooms: pagePool.getStatus(),
         memory: {
           rss: Math.round(mem.rss / 1024 / 1024),
           heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
@@ -252,6 +260,7 @@ async function main() {
     httpServer.close()
     dispatchWatcher.stop()
     yjsPool.disconnectAll()
+    pagePool.disconnectAll()
     await sessionManager.abortAll()
     console.log('Goodbye.')
     process.exit(0)
