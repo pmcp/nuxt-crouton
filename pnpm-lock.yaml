@@ -789,6 +789,9 @@ importers:
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3
+      pluralize:
+        specifier: ^8.0.0
+        version: 8.0.0
       sortablejs:
         specifier: ^1.15.6
         version: 1.15.6
@@ -799,6 +802,9 @@ importers:
       '@types/papaparse':
         specifier: ^5.5.2
         version: 5.5.2
+      '@types/pluralize':
+        specifier: ^0.0.33
+        version: 0.0.33
       '@types/sortablejs':
         specifier: ^1.15.8
         version: 1.15.9
@@ -6284,6 +6290,9 @@ packages:
 
   '@types/pg@8.16.0':
     resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
+
+  '@types/pluralize@0.0.33':
+    resolution: {integrity: sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -21692,6 +21701,8 @@ snapshots:
       '@types/node': 22.19.7
       pg-protocol: 1.11.0
       pg-types: 2.2.0
+
+  '@types/pluralize@0.0.33': {}
 
   '@types/resolve@1.20.2': {}
 

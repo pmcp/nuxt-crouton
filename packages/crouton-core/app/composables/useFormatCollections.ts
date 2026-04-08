@@ -1,3 +1,5 @@
+import pluralize from 'pluralize'
+
 export function useFormatCollections() {
   // Get layer prefixes from croutonCollections registry
   const appConfig = useAppConfig()
@@ -38,45 +40,12 @@ export function useFormatCollections() {
   const collectionWithCapitalSingular = (val: string): string => {
     if (!val) return ''
     const stripped = stripLayerPrefix(val)
-
-    // Proper singularization rules
-    let singular = stripped
-
-    // Handle -ies → -y (e.g., "categories" → "category")
-    if (stripped.endsWith('ies') && stripped.length > 3) {
-      singular = stripped.slice(0, -3) + 'y'
-    }
-    // Handle -es after sibilants: x, ch, sh, ss (e.g., "boxes" → "box", "watches" → "watch")
-    else if (stripped.endsWith('xes') || stripped.endsWith('ches')
-      || stripped.endsWith('shes') || stripped.endsWith('sses')) {
-      singular = stripped.slice(0, -2)
-    }
-    // Handle doubled z + es (e.g., "quizzes" → "quiz", "fizzes" → "fiz")
-    else if (stripped.endsWith('zzes')) {
-      singular = stripped.slice(0, -3)
-    }
-    // Handle single z + es (e.g., "sizes" → "size", "prizes" → "prize")
-    else if (stripped.endsWith('zes')) {
-      singular = stripped.slice(0, -1)
-    }
-    // Handle -oes → -o (e.g., "heroes" → "hero", "tomatoes" → "tomato")
-    else if (stripped.endsWith('oes') && stripped.length > 3) {
-      const beforeOes = stripped.slice(0, -3)
-      // Check if the character before "oes" is a vowel
-      const lastChar = beforeOes[beforeOes.length - 1]
-      if (lastChar && 'aeiou'.includes(lastChar.toLowerCase())) {
-        // Vowel + oe + s pattern: just remove 's' (e.g., "shoes" → "shoe", "canoes" → "canoe")
-        singular = stripped.slice(0, -1)
-      } else {
-        // Consonant + o + es pattern: remove 'es' (e.g., "heroes" → "hero", "echoes" → "echo")
-        singular = stripped.slice(0, -2)
-      }
-    }
-    // Default: just remove trailing 's' (e.g., "articles" → "article", "users" → "user")
-    else if (stripped.endsWith('s') && stripped.length > 1) {
-      singular = stripped.slice(0, -1)
-    }
-
+    // Only singularize when the word actually looks plural. This avoids
+    // pluralize's Latin-style conversions for collection names like
+    // "data" → "datum" or "media" → "medium" that read wrong in UI labels.
+    const singular = stripped.endsWith('s') && stripped.length > 1
+      ? pluralize.singular(stripped)
+      : stripped
     return camelToTitleCase(singular)
   }
 

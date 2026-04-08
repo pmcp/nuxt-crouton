@@ -169,9 +169,9 @@ describe('useFormatCollections', () => {
         expect(collectionWithCapitalSingular('quizzes')).toBe('Quiz')
       })
 
-      it('converts fizzes to Fiz', () => {
+      it('converts fizzes to Fizz', () => {
         const { collectionWithCapitalSingular } = useFormatCollections()
-        expect(collectionWithCapitalSingular('fizzes')).toBe('Fiz')
+        expect(collectionWithCapitalSingular('fizzes')).toBe('Fizz')
       })
     })
 

@@ -216,7 +216,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [ ] **crouton-triage** — 307-line custom metrics collector (`server/utils/metrics.ts`) — use OpenTelemetry
 - [ ] **crouton-triage** — 213-line `securityCheck.ts` — move to CI or startup plugin
 - [x] ✅ **crouton-cli** — ~~`pascal()`, `toSnakeCase()`, `toKebabCase()` in `helpers.ts`~~ — replaced with `scule` imports (`pascalCase`, `snakeCase`, `kebabCase`); 251 tests pass
-- [ ] **crouton-core** — hand-rolled English singularization in `useFormatCollections.ts` — use `pluralize` npm package
+- [x] ✅ **crouton-core** — ~~hand-rolled English singularization in `useFormatCollections.ts`~~ → replaced 40 lines of suffix rules with `pluralize.singular()`. Gated on `endsWith('s') && length > 1` so non-plural collection names like `data`/`media` aren't Latin-converted. Also fixed a hand-rolled bug: `fizzes` was returning `Fiz` (dropped a letter) instead of `Fizz`. 668 tests pass.
 - [x] ✅ **crouton-events** — ~~hand-rolled `relativeTime` in `CroutonEventDetail.vue`~~ — replaced with VueUse's `useTimeAgo()` (reactive, auto-updates)
 - [x] ✅ **crouton-admin** — ~~`formatDate()` duplicated in `UserList.vue` and `TeamList.vue`~~ — extracted to `app/utils/format.ts`, auto-imported via layer config
 
