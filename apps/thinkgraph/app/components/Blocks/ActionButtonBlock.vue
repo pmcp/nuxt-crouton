@@ -19,7 +19,8 @@ interface ActionButtonAttrs {
   label: string
   icon: string
   kind: string
-  payload: Record<string, unknown>
+  /** null = no payload — handlers see {} via the `payloadObject` computed below */
+  payload: Record<string, unknown> | null
   consumed: boolean
   result: Record<string, unknown> | null
 }
@@ -45,13 +46,22 @@ const isReady = computed(() => {
   return Boolean(registry.handlers[attrs.value.kind])
 })
 
-const consumedLabel = computed(() => {
-  const result = attrs.value.result
-  if (result && typeof result === 'object' && 'createdTitle' in result) {
-    const title = (result as Record<string, unknown>).createdTitle
-    if (typeof title === 'string') return `Created: ${title}`
+const iconName = computed(() => {
+  if (attrs.value.consumed) return 'i-lucide-check-circle-2'
+  return attrs.value.icon || 'i-lucide-plus'
+})
+
+const buttonLabel = computed(() => {
+  if (running.value) return 'Working…'
+  if (attrs.value.consumed) {
+    const result = attrs.value.result
+    if (result && typeof result === 'object' && 'createdTitle' in result) {
+      const title = (result as Record<string, unknown>).createdTitle
+      if (typeof title === 'string') return `Created: ${title}`
+    }
+    return 'Done'
   }
-  return 'Done'
+  return attrs.value.label || 'Action'
 })
 
 const consumedNodeId = computed(() => {
@@ -78,9 +88,13 @@ async function handleClick() {
 
   running.value = true
   try {
+    // Coerce null/missing payload to {} so handlers can index into it freely.
+    const payload = (attrs.value.payload && typeof attrs.value.payload === 'object')
+      ? attrs.value.payload
+      : {}
     await handler(
       registry.ctx,
-      attrs.value.payload ?? {},
+      payload,
       {
         markConsumed: (extra) => {
           props.updateAttributes({
@@ -102,33 +116,31 @@ async function handleClick() {
     data-type="action-button"
     :class="{ 'ring-1 ring-primary/40 rounded-lg': selected }"
   >
-    <div
-      class="inline-flex items-center gap-2 rounded-lg border border-default bg-elevated px-3 py-2 transition-colors"
+    <!--
+      Stable single <button> root — no v-if element swaps inside the
+      NodeView. Switching between element types (button↔span) inside a
+      TipTap NodeView while a Yjs update is in flight can put Vue's
+      patcher in an inconsistent state, so consumed and active states
+      both render via the same <button>, with `disabled` and label text
+      driven by computed values.
+    -->
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 rounded-lg border border-default bg-elevated px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed"
       :class="{
-        'opacity-70': attrs.consumed,
+        'opacity-70 text-muted': attrs.consumed,
+        'text-default hover:border-primary hover:text-primary': !attrs.consumed,
       }"
+      :disabled="!isReady"
+      @click="handleClick"
     >
       <UIcon
-        :name="attrs.consumed ? 'i-lucide-check-circle-2' : (attrs.icon || 'i-lucide-plus')"
-        class="size-4"
+        :name="iconName"
+        class="size-4 shrink-0"
         :class="attrs.consumed ? 'text-success' : 'text-primary'"
       />
-
-      <button
-        v-if="!attrs.consumed"
-        type="button"
-        class="text-sm font-medium text-default hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="!isReady"
-        @click="handleClick"
-      >
-        <span v-if="running">Working…</span>
-        <span v-else>{{ attrs.label || 'Action' }}</span>
-      </button>
-
-      <span v-else class="text-sm font-medium text-muted">
-        {{ consumedLabel }}
-        <span v-if="consumedNodeId" class="text-xs text-muted/80"> · {{ consumedNodeId.slice(0, 8) }}</span>
-      </span>
-    </div>
+      <span>{{ buttonLabel }}</span>
+      <span v-if="consumedNodeId" class="text-xs text-muted/80">· {{ consumedNodeId.slice(0, 8) }}</span>
+    </button>
   </NodeViewWrapper>
 </template>

@@ -22,7 +22,6 @@
  * tabs receive remote updates via Yjs and would otherwise duplicate writes.
  */
 import type { Editor } from '@tiptap/vue-3'
-import { markRaw } from 'vue'
 import ActionButton from '../extensions/action-button'
 import { provideNodeActionHandlers } from '../composables/useNodeActionHandlers'
 
@@ -50,9 +49,10 @@ provideNodeActionHandlers({
   teamId: props.teamId,
 })
 
-// PR 2: action button TipTap extension. markRaw because the editor consumes
-// it as a raw object — wrapping in Vue reactivity confuses TipTap's internals.
-const editorExtensions = [markRaw(ActionButton)]
+// PR 2: action button TipTap extension. Plain TipTap Node — no markRaw,
+// because the underlying class instance isn't reactive Vue state and TipTap
+// already handles its own extension lifecycle.
+const editorExtensions = [ActionButton]
 
 // Slash menu items. Each `command` must be a zero-arg method on editor.commands
 // (CroutonEditorBlocks invokes them as `editor.commands[command]()`). For
