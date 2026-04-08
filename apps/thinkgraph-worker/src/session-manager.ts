@@ -826,8 +826,11 @@ git rev-list --count origin/main..origin/<branch-name>
 If the count is **0** (no commits ahead of main):
 1. Log: \`echo "[merger] Branch <branch-name> has no commits ahead of main — skipping PR creation (work item: ${payload.nodeId})"\`
 2. Delete the remote branch: \`git push origin --delete <branch-name>\`
-3. Use \`update_workitem\` to signal **green** with \`status: "done"\` and \`output: "Empty branch <branch-name> — no commits ahead of main. Branch cleaned up, nothing to merge."\`
-4. **STOP here** — do NOT proceed to Step 2 or attempt PR creation/merge.
+3. Switch to main: \`git checkout main\`
+4. Delete the local branch (if it exists): \`git branch -D <branch-name>\`
+5. Remove the worktree (if it exists): \`git worktree remove /tmp/thinkgraph/${payload.nodeId} --force\`
+6. Use \`update_workitem\` to signal **green** with \`status: "done"\` and \`output: "Empty branch <branch-name> — no commits ahead of main. Branch cleaned up, nothing to merge."\`
+7. **STOP here** — do NOT proceed to Step 2 or attempt PR creation/merge.
 
 If the count is greater than 0, proceed normally to Step 2.
 
