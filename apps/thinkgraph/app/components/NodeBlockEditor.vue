@@ -64,7 +64,13 @@ const suggestionItems = [
   { type: 'orderedList', label: 'Numbered list', icon: 'i-lucide-list-ordered', category: 'Lists', command: 'toggleOrderedList' },
   { type: 'blockquote', label: 'Quote', icon: 'i-lucide-quote', category: 'Basic', command: 'toggleBlockquote' },
   { type: 'codeBlock', label: 'Code block', icon: 'i-lucide-code', category: 'Basic', command: 'toggleCodeBlock' },
-  { type: 'horizontalRule', label: 'Divider', icon: 'i-lucide-minus', category: 'Basic', command: 'setHorizontalRule' }
+  { type: 'horizontalRule', label: 'Divider', icon: 'i-lucide-minus', category: 'Basic', command: 'setHorizontalRule' },
+  // PR 2 dev affordance: lets you exercise the action-button NodeView, click
+  // handler, and create-child action without running the worker. Stripped from
+  // production builds via the import.meta.dev guard below.
+  ...(import.meta.dev
+    ? [{ type: 'actionButton', label: 'Action button (dev)', icon: 'i-lucide-mouse-pointer-click', category: 'Debug', command: 'insertActionButtonDebug' }]
+    : [])
 ]
 
 // Top-level destructure so the template can access reactive values directly

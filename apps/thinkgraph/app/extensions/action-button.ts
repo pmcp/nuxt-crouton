@@ -34,6 +34,13 @@ declare module '@tiptap/core' {
     actionButton: {
       /** Insert an action button at the current selection. */
       insertActionButton: (attrs: Partial<ActionButtonAttrs>) => ReturnType
+      /**
+       * Insert a hard-coded debug action button. Zero-arg variant used by the
+       * dev-only slash menu entry in NodeBlockEditor — the slash menu in
+       * CroutonEditorBlocks only invokes commands as `editor.commands[name]()`,
+       * so a parameterised insert can't be wired through it directly.
+       */
+      insertActionButtonDebug: () => ReturnType
       /** Mark a button as consumed (used by the click handler). */
       consumeActionButton: (extra?: Record<string, unknown>) => ReturnType
     }
@@ -132,6 +139,24 @@ export const ActionButton = Node.create({
               consumed: false,
               result: null,
               ...attrs,
+            },
+          })
+        },
+      insertActionButtonDebug:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: 'actionButton',
+            attrs: {
+              label: 'Create child: Debug button',
+              icon: 'i-lucide-plus',
+              kind: 'create-child',
+              payload: {
+                title: 'Debug child node',
+                brief: 'Inserted via the dev-only slash menu for PR 2 testing.',
+              },
+              consumed: false,
+              result: null,
             },
           })
         },
