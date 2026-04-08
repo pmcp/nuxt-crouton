@@ -16,54 +16,50 @@ export interface SystemOperation {
   metadata?: Record<string, any>
 }
 
-class SystemOperationStore {
-  private operations: SystemOperation[] = []
-  private readonly maxSize = 500
+const MAX_SIZE = 500
+let operations: SystemOperation[] = []
 
-  add(operation: SystemOperation): void {
-    this.operations.unshift(operation)
-    if (this.operations.length > this.maxSize) {
-      this.operations = this.operations.slice(0, this.maxSize)
-    }
-  }
-
-  getAll(filters?: { type?: string, source?: string, since?: number }): SystemOperation[] {
-    let filtered = this.operations
-
-    if (filters?.type) {
-      filtered = filtered.filter(op => op.type === filters.type || op.type.startsWith(`${filters.type}:`))
-    }
-
-    if (filters?.source) {
-      filtered = filtered.filter(op => op.source === filters.source)
-    }
-
-    if (filters?.since) {
-      filtered = filtered.filter(op => op.timestamp >= filters.since!)
-    }
-
-    return filtered
-  }
-
-  clear(): void {
-    this.operations = []
-  }
-
-  getStats() {
-    const ops = this.operations
-
-    const byType = ops.reduce((acc, op) => {
-      acc[op.type] = (acc[op.type] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-
-    const bySource = ops.reduce((acc, op) => {
-      acc[op.source] = (acc[op.source] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-
-    return { total: ops.length, byType, bySource }
+function add(operation: SystemOperation): void {
+  operations.unshift(operation)
+  if (operations.length > MAX_SIZE) {
+    operations = operations.slice(0, MAX_SIZE)
   }
 }
 
-export const systemOperationStore = new SystemOperationStore()
+function getAll(filters?: { type?: string, source?: string, since?: number }): SystemOperation[] {
+  let filtered = operations
+
+  if (filters?.type) {
+    filtered = filtered.filter(op => op.type === filters.type || op.type.startsWith(`${filters.type}:`))
+  }
+
+  if (filters?.source) {
+    filtered = filtered.filter(op => op.source === filters.source)
+  }
+
+  if (filters?.since) {
+    filtered = filtered.filter(op => op.timestamp >= filters.since!)
+  }
+
+  return filtered
+}
+
+function clear(): void {
+  operations = []
+}
+
+function getStats() {
+  const byType = operations.reduce((acc, op) => {
+    acc[op.type] = (acc[op.type] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const bySource = operations.reduce((acc, op) => {
+    acc[op.source] = (acc[op.source] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  return { total: operations.length, byType, bySource }
+}
+
+export const systemOperationStore = { add, getAll, clear, getStats }

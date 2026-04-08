@@ -239,7 +239,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 - [x] ✅ **crouton-devtools** — ~~`client.ts` — 34,000+ token inline HTML string with Vue+Tailwind from CDN~~ → extracted to `src/runtime/client/{template.html,styles.css,app.js,tailwind.config.js}`. `client.ts` is now a small handler that reads the files at module load and substitutes placeholders. Build copies the dir into dist alongside pages.
 - [x] ✅ **crouton-devtools** — ~~`eventsHealth.ts` — loads ALL events into memory for stats~~ → replaced with parallel Drizzle SQL aggregates (count + groupBy + asc/desc limit 1). Schema-loader fallback chain unchanged.
-- [ ] **crouton-devtools** — `OperationStore`/`SystemOperationStore` classes — should be plain module-scoped closures
+- [x] ✅ **crouton-devtools** — ~~`OperationStore`/`SystemOperationStore` classes — should be plain module-scoped closures~~ → both classes converted to module-scoped state + exported `{add, getAll, clear, getStats}` objects. Same export name and shape so all 7 call sites work unchanged. No more `this`, no more accidental class instantiation, single source of truth via module scope.
 - [x] **crouton-cli** — `manifest-bridge.ts` — not a passthrough: jiti interop adapter enabling .mjs→.ts runtime imports (load-bearing, 3 consumers)
 - [x] ✅ **crouton-mcp** — ~~8 identical tool registration wrappers in `index.ts`~~ → collapsed into a `registerTool` helper (commit `8d907ecb`).
 - [x] **crouton-core** — `useCroutonMutate.ts` — provides action-dispatch convenience + id guard; 2 production consumers + 14 tests; low ROI to remove
