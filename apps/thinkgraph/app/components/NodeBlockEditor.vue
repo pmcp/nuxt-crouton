@@ -37,6 +37,19 @@ const collab = useCollabEditor({
   field: 'content'
 })
 
+// Slash menu items. Each `command` must be a zero-arg method on editor.commands
+// (CroutonEditorBlocks invokes them as `editor.commands[command]()`). For
+// headings, users get markdown shortcuts from TipTap StarterKit: typing `# `,
+// `## `, `### ` at line start creates H1/H2/H3 — so we don't need to register
+// custom no-arg heading commands here.
+const suggestionItems = [
+  { type: 'bulletList', label: 'Bullet list', icon: 'i-lucide-list', category: 'Lists', command: 'toggleBulletList' },
+  { type: 'orderedList', label: 'Numbered list', icon: 'i-lucide-list-ordered', category: 'Lists', command: 'toggleOrderedList' },
+  { type: 'blockquote', label: 'Quote', icon: 'i-lucide-quote', category: 'Basic', command: 'toggleBlockquote' },
+  { type: 'codeBlock', label: 'Code block', icon: 'i-lucide-code', category: 'Basic', command: 'toggleCodeBlock' },
+  { type: 'horizontalRule', label: 'Divider', icon: 'i-lucide-minus', category: 'Basic', command: 'setHorizontalRule' }
+]
+
 // Top-level destructure so the template can access reactive values directly
 const yxmlFragment = collab.yxmlFragment
 const provider = collab.provider
@@ -95,7 +108,8 @@ function handleUpdate({ editor }: { editor: Editor }) {
       :yxml-fragment="yxmlFragment"
       :collab-provider="provider"
       :collab-user="collabUser"
-      placeholder="Type / to insert a block..."
+      :suggestion-items="suggestionItems"
+      placeholder="Type / for blocks, or # ## ### for headings..."
       content-type="json"
       class="min-h-[12rem]"
       @create="handleCreate"
