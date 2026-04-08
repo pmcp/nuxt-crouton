@@ -411,10 +411,19 @@ export class AgentSessionManager {
         const content = event.message?.content
         if (!Array.isArray(content)) break
 
-        for (const item of content) {
+        // Stable per-message id so streaming text/thinking items collapse to
+        // one entry per content slot instead of one per delta event.
+        const messageId: string = event.message?.id || `msg-${nodeId}`
+
+        for (let i = 0; i < content.length; i++) {
+          const item = content[i]
           if (item.type === 'text' && item.text) {
             active.accumulatedOutput = [item.text]
-            yjs?.appendAgentLog(nodeId, {
+            // Upsert by (messageId, slot index) so subsequent message_update
+            // events for the same message overwrite this entry instead of
+            // appending. Without this, a 200-token text reply produces ~200
+            // duplicate log entries with the same timestamp.
+            yjs?.upsertAgentLog(nodeId, `${messageId}:text:${i}`, {
               type: 'text',
               text: item.text,
             })
@@ -423,6 +432,8 @@ export class AgentSessionManager {
             }
           }
           else if (item.type === 'tool_use') {
+            // tool_use is one-shot per content slot — appears once when the
+            // model commits to the call. Plain append is correct.
             yjs?.appendAgentLog(nodeId, {
               type: 'tool_use',
               name: item.name,
@@ -431,9 +442,12 @@ export class AgentSessionManager {
             active.conversationLog.push(`[tool] ${item.name}`)
           }
           else if (item.type === 'thinking') {
-            yjs?.appendAgentLog(nodeId, {
+            // Same upsert pattern as text — thinking blocks stream too.
+            // Keep the full thought (truncated to 500 chars), not just the
+            // first line.
+            yjs?.upsertAgentLog(nodeId, `${messageId}:thinking:${i}`, {
               type: 'thinking',
-              text: (item.thinking || '').split('\n')[0].slice(0, 200),
+              text: (item.thinking || '').slice(0, 500),
             })
           }
         }
@@ -441,9 +455,11 @@ export class AgentSessionManager {
       }
       case 'tool_execution_end': {
         if (event.result) {
-          const resultText = typeof event.result === 'string'
-            ? event.result.slice(0, 500)
-            : JSON.stringify(event.result).slice(0, 500)
+          // event.result follows Anthropic's content-block shape:
+          //   { content: [{ type: 'text', text: '...' }, ...] }
+          // Extract the inner text instead of stringifying the whole envelope,
+          // which produces unreadable raw JSON in the log feed.
+          const resultText = extractToolResultText(event.result)
 
           yjs?.appendAgentLog(nodeId, {
             type: 'tool_result',
@@ -1736,6 +1752,40 @@ Use the \`create_node\` tool. Each node has three parts:
 /**
  * Compress a conversation log for storage in markdown.
  */
+/**
+ * Extract a human-readable preview from a Pi `tool_execution_end` result.
+ *
+ * Pi's tool result follows Anthropic's content-block shape:
+ *   { content: [{ type: 'text', text: '...' }, { type: 'image', ... }, ...] }
+ *
+ * Without this, the log feed shows the raw JSON envelope (`{"content":[{...`)
+ * which is unreadable. We pull out the text blocks and join them, falling back
+ * to a stringified preview only when the shape is unrecognized.
+ */
+function extractToolResultText(result: unknown): string {
+  if (typeof result === 'string') {
+    return result.slice(0, 500)
+  }
+  if (result && typeof result === 'object') {
+    const obj = result as Record<string, unknown>
+    const content = obj.content
+    if (Array.isArray(content)) {
+      const texts = content
+        .map((b: any) => {
+          if (b && typeof b === 'object' && b.type === 'text' && typeof b.text === 'string') {
+            return b.text
+          }
+          return null
+        })
+        .filter((t): t is string => t !== null)
+      if (texts.length > 0) {
+        return texts.join('\n').slice(0, 500)
+      }
+    }
+  }
+  return JSON.stringify(result).slice(0, 500)
+}
+
 function compressConversationLog(log: string[]): string {
   if (log.length === 0) return ''
 

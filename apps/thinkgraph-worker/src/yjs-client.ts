@@ -47,6 +47,13 @@ export interface AgentLogEntry {
   input?: Record<string, unknown>
   result?: string
   ts: number
+  /**
+   * Optional stable identity for in-progress streaming entries (text, thinking).
+   * Lets `upsertAgentLog` replace the entry on subsequent `message_update` events
+   * carrying the same accumulating content, instead of pushing duplicates.
+   * Internal — consumers ignore this field.
+   */
+  streamKey?: string
 }
 
 /** Awareness state for the Pi agent presence */
@@ -353,6 +360,48 @@ export class YjsFlowClient {
     // Keep log bounded — trim old entries if over 200
     const trimmed = log.length >= 200 ? log.slice(-150) : log
     trimmed.push({ ...entry, ts: Date.now() })
+
+    this.nodesMap.set(nodeId, {
+      ...existing,
+      ephemeral: {
+        ...eph,
+        agentLog: trimmed,
+      },
+      updatedAt: Date.now(),
+    })
+  }
+
+  /**
+   * Upsert a streaming agent log entry, identified by `streamKey`.
+   *
+   * For events that fire repeatedly during one model output (like Pi's
+   * `message_update` carrying the accumulating text/thinking content),
+   * `appendAgentLog` would push 5–20 near-duplicate entries per chunk.
+   * This method instead replaces the existing entry with the same `streamKey`
+   * if found, otherwise appends a new one. Net effect: one entry per
+   * streaming chunk, growing in place as the model produces tokens.
+   */
+  upsertAgentLog(nodeId: string, streamKey: string, entry: Omit<AgentLogEntry, 'ts' | 'streamKey'>): void {
+    const existing = this.nodesMap.get(nodeId)
+    if (!existing) return
+
+    const eph = existing.ephemeral || {}
+    const log = Array.isArray(eph.agentLog)
+      ? [...eph.agentLog as AgentLogEntry[]]
+      : []
+
+    const idx = log.findIndex(e => e.streamKey === streamKey)
+    const next: AgentLogEntry = { ...entry, streamKey, ts: Date.now() }
+
+    if (idx >= 0) {
+      log[idx] = next
+    }
+    else {
+      log.push(next)
+    }
+
+    // Keep log bounded — trim old entries if over 200
+    const trimmed = log.length >= 200 ? log.slice(-150) : log
 
     this.nodesMap.set(nodeId, {
       ...existing,
