@@ -88,7 +88,10 @@ function formatEntry(entry: AgentLogEntry): { icon: string, iconClass: string, t
     case 'tool_use':
       return { icon: 'i-lucide-wrench', iconClass: 'text-amber-400', text: entry.name || 'tool' }
     case 'tool_result':
-      return { icon: 'i-lucide-check', iconClass: 'text-emerald-400', text: truncate(entry.result || '', 80) }
+      // Worker already caps tool results at 500 chars in extractToolResultText().
+      // Render as much as fits — the log feed has max-h-64 + overflow-y-auto so
+      // long entries wrap and scroll instead of getting cut mid-word.
+      return { icon: 'i-lucide-check', iconClass: 'text-emerald-400', text: entry.result || '' }
     case 'status':
       return { icon: 'i-lucide-info', iconClass: 'text-neutral-400', text: entry.text || '' }
     case 'error':
@@ -100,10 +103,6 @@ function formatEntry(entry: AgentLogEntry): { icon: string, iconClass: string, t
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString(undefined, { hour12: false })
-}
-
-function truncate(s: string, max: number): string {
-  return s.length > max ? s.slice(0, max - 1) + '…' : s
 }
 </script>
 
