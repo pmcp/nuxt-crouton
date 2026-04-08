@@ -1,18 +1,9 @@
 import type { ProjectConfig, SeedDataMap } from '../types/schema'
 import type { CollectionWithFields } from './useCollectionEditor'
+import { formatCollectionsForPrompt } from '../utils/promptFormatting'
 
 function buildCollectionsSchema(collections: CollectionWithFields[]): string {
-  if (collections.length === 0) return '  (no collections)'
-  return collections.map(col => {
-    const fieldLines = col.fields.map(f => {
-      const ref = f.refTarget ? ` → ${f.refTarget}` : ''
-      const options = (f.meta as any)?.options?.length
-        ? ` [${(f.meta as any).options.join('|')}]`
-        : ''
-      return `    - ${f.name}: ${f.type}${ref}${options}`
-    }).join('\n')
-    return `  ${col.name}:\n${fieldLines || '    (no fields)'}`
-  }).join('\n')
+  return formatCollectionsForPrompt(collections, { includeOptions: true })
 }
 
 function buildCurrentSeedData(seedData: SeedDataMap): string {

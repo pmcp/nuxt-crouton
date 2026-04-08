@@ -1,3 +1,4 @@
+import type { CroutonManifestAppConfig, ManifestModuleEntry } from '@fyit/crouton-core/shared/manifest'
 import type { DesignerCollection, DesignerField, DisplayConfig, PackageExtensionPoint } from '../types/schema'
 
 // --- Extension collection naming convention ---
@@ -41,22 +42,11 @@ export interface PackageCollectionEntry {
   extensionCollectionId: string | undefined
 }
 
-interface ModuleAIContext {
-  collections?: Array<{ name: string; description: string; schema?: Record<string, any> }>
-}
-
-interface ModuleEntry {
-  alias: string
-  description: string
-  extensionPoints?: PackageExtensionPoint[]
-  layer?: { name: string }
-  ai?: ModuleAIContext
-}
-
 export function useCollectionEditor(projectId: Ref<string>, packages?: Ref<string[]>) {
   const { buildApiUrl } = useTeamContext()
   const appConfig = useAppConfig()
-  const allModules = ((appConfig.crouton as any)?.modules ?? []) as ModuleEntry[]
+  const crouton = (appConfig.crouton as CroutonManifestAppConfig | undefined) ?? {}
+  const allModules: ManifestModuleEntry[] = crouton.modules ?? []
 
   const collections = ref<DesignerCollection[]>([])
   const fields = ref<DesignerField[]>([])

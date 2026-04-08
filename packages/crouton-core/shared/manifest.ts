@@ -142,7 +142,12 @@ export interface ManifestModuleEntry {
   extensionPoints?: ManifestExtensionPoint[]
   configuration?: Record<string, ManifestConfigOption>
   ai?: {
-    collections?: Array<{ name: string; description: string }>
+    /**
+     * Package-provided collection summaries surfaced to AI tooling.
+     * `schema` is optional rich metadata used by the designer to render
+     * extension points alongside the package's own fields.
+     */
+    collections?: Array<{ name: string; description: string; schema?: Record<string, any> }>
     composables?: string[]
     components?: string[]
   }

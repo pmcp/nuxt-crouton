@@ -1,15 +1,9 @@
 import type { ProjectConfig } from '../types/schema'
 import type { CollectionWithFields } from './useCollectionEditor'
+import { formatCollectionsForPrompt } from '../utils/promptFormatting'
 
 function buildCollectionsSchema(collections: CollectionWithFields[]): string {
-  if (collections.length === 0) return '  (no collections)'
-  return collections.map(col => {
-    const fieldLines = col.fields.map(f => {
-      const ref = f.refTarget ? ` → ${f.refTarget}` : ''
-      return `    - ${f.name}: ${f.type}${ref}`
-    }).join('\n')
-    return `  ${col.name}:\n${fieldLines || '    (no fields)'}`
-  }).join('\n')
+  return formatCollectionsForPrompt(collections)
 }
 
 /**

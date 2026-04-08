@@ -1,6 +1,7 @@
 import type { ProjectConfig } from '../types/schema'
 import type { CollectionWithFields } from './useCollectionEditor'
 import type { CroutonManifestAppConfig, ManifestModuleEntry } from '@fyit/crouton-core/shared/manifest'
+import { formatCollectionsForPrompt } from '../utils/promptFormatting'
 
 /**
  * Builds the system prompt for Phase 2 (Collection Design)
@@ -76,18 +77,12 @@ ${blocks.join('\n\n')}
   }
 
   function buildCollectionsContext(collections: CollectionWithFields[]): string {
-    if (collections.length === 0) return '  (no collections yet)'
-    return collections.map(col => {
-      const displayLine = col.display
-        ? `    display: ${JSON.stringify(col.display)}`
-        : '    display: (not set)'
-      const fieldLines = col.fields.map(f => {
-        const meta = f.meta ? ` meta: ${JSON.stringify(f.meta)}` : ''
-        const ref = f.refTarget ? ` → ${f.refTarget}` : ''
-        return `    - ${f.name}: ${f.type}${ref}${meta} (id: ${f.id})`
-      }).join('\n')
-      return `  ${col.name} (id: ${col.id}):\n${displayLine}\n${fieldLines || '    (no fields)'}`
-    }).join('\n')
+    return formatCollectionsForPrompt(collections, {
+      includeDisplay: true,
+      includeMeta: true,
+      includeFieldIds: true,
+      emptyText: '  (no collections yet)'
+    })
   }
 
   function buildCompactFieldTypeRef(): string {
