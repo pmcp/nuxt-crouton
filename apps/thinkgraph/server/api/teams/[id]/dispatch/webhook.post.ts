@@ -418,6 +418,7 @@ async function dispatchToWorker(event: any, config: any, teamId: string, workIte
       summary: item.summary,
       brief: item.brief,
       output: item.output,
+      worktree: item.worktree,
       pinned: item.pinned,
       contextScope: item.contextScope,
       contextNodeIds: item.contextNodeIds,

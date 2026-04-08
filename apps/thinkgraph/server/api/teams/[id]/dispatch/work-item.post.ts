@@ -74,6 +74,7 @@ export default defineEventHandler(async (event) => {
       summary: item.summary,
       brief: item.brief,
       output: item.output,
+      worktree: item.worktree,
       pinned: item.pinned,
       contextScope: item.contextScope,
       contextNodeIds: item.contextNodeIds,

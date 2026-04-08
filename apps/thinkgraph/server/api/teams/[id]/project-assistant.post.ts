@@ -297,7 +297,7 @@ BRIEF: <what the work item should do>
             freshItems.map((i: any) => ({
               id: i.id, parentId: i.parentId, title: i.title,
               nodeType: normalizeNodeType(i.template), status: i.status, summary: i.summary,
-              brief: i.brief, output: i.output, pinned: i.pinned,
+              brief: i.brief, output: i.output, worktree: i.worktree, pinned: i.pinned,
             })),
             params.id,
           )
@@ -403,7 +403,7 @@ BRIEF: <what the work item should do>
                 freshItems.map((i: any) => ({
                   id: i.id, parentId: i.parentId, title: i.title,
                   nodeType: i.template, status: i.status, summary: i.summary,
-                  brief: i.brief, output: i.output, pinned: i.pinned,
+                  brief: i.brief, output: i.output, worktree: i.worktree, pinned: i.pinned,
                   contextScope: i.contextScope, contextNodeIds: i.contextNodeIds,
                 })),
                 node.id,

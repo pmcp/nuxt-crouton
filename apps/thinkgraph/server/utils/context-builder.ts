@@ -343,6 +343,8 @@ export interface NodeContextEntry {
   /** Expanded layer: full brief + output */
   brief?: string
   output?: string
+  /** Branch name set by builder/merger via update_workitem (e.g. `thinkgraph/abc123`) */
+  worktree?: string
   /** Which layer was used for this entry */
   layer: 'index' | 'expanded' | 'full'
 }
@@ -357,6 +359,7 @@ export type ContextInputNode = {
   summary?: string
   brief?: string
   output?: string
+  worktree?: string
   pinned?: boolean
   contextScope?: string
   contextNodeIds?: Record<string, unknown> | string[] | null
@@ -470,6 +473,7 @@ function buildIndexEntry(node: ContextInputNode): NodeContextEntry {
     nodeType: node.nodeType,
     status: node.status,
     summary: node.summary || undefined,
+    worktree: node.worktree || undefined,
     layer: 'index',
   }
 }
@@ -484,6 +488,7 @@ function buildExpandedEntry(node: ContextInputNode): NodeContextEntry {
     summary: node.summary || undefined,
     brief: node.brief || undefined,
     output: node.output || undefined,
+    worktree: node.worktree || undefined,
     layer: 'expanded' as const,
   }
 }
@@ -498,6 +503,7 @@ function buildFullEntry(node: ContextInputNode): NodeContextEntry {
     summary: node.summary || undefined,
     brief: node.brief || undefined,
     output: node.output || undefined,
+    worktree: node.worktree || undefined,
     layer: 'full',
   }
 }
@@ -537,16 +543,17 @@ function formatProgressiveContextMarkdown(chain: NodeContextEntry[], targetId: s
     const prefix = isCurrent ? '→ [CURRENT]' : `${i + 1}.`
     const meta = [nodeTypeLabel(entry.nodeType), entry.status !== 'idle' ? entry.status : ''].filter(Boolean).join(', ')
     const header = `${prefix} **${entry.title}**${meta ? ` (${meta})` : ''}`
+    const worktreeLine = entry.worktree ? `\n   worktree: \`${entry.worktree}\`` : ''
 
     if (entry.layer === 'index') {
       // Index layer: summary one-liner or title only
       const summary = entry.summary || entry.title
-      return `${header}\n   ${summary}`
+      return `${header}\n   ${summary}${worktreeLine}`
     }
 
     // Full layer: include all content
     const content = entry.output || entry.brief || entry.title
-    return `${header}\n   ${content}`
+    return `${header}\n   ${content}${worktreeLine}`
   })
 
   return `## Context chain\n\n${lines.join('\n\n')}`
