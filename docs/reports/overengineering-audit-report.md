@@ -115,8 +115,8 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: ~~Shared `parseSlots()` util, shared availability core~~ Done. Remaining: single email variables builder
 
 #### crouton-editor
-- [ ] Toolbar configs — defined in `Simple.vue`, `Blocks.vue`, `WithPreview.vue`
-- [ ] Image upload logic — repeated 3 times in `Simple.vue`
+- [x] ✅ ~~Toolbar configs — defined in `Simple.vue`, `Blocks.vue`, `WithPreview.vue`~~ → `Simple.vue` and `Blocks.vue` were extracted to `app/utils/toolbarPresets.ts` in commit `13eede93`; `WithPreview.vue` was missed at the time and still had its own inline toolbar — now also imports from the presets. Added two small presets (`marksMinimal`, `listsFlat`) for WithPreview's slimmer email-template-style toolbar.
+- [x] ✅ ~~Image upload logic — repeated 3 times in `Simple.vue`~~ → extracted into a single `uploadAndInsertImage(editor, file)` helper called from the toolbar button, paste handler, and drop handler (commit `13eede93`).
 - [x] ✅ ~~`useEditorVariables` composable exists but `Preview.vue` reimplements inline~~ → added optional `fallback` param to `interpolate()` so Preview can pass its styled-placeholder behavior; switched `variableCount` to `extractVariables()`. Removed ~10 lines of duplicate regex/match code. Also fixes a subtle bug: the old `variableCount` counted raw matches (so `{{ name }}` and `{{name}}` were 2), now correctly deduped by canonical name.
 - **Fix**: Extract `toolbarDefaults.ts`, `uploadAndInsertImage()` helper, use the composable
 

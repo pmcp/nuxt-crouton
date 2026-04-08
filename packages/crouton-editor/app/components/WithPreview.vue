@@ -85,29 +85,14 @@ import type { Editor } from '@tiptap/vue-3'
 import type { EditorToolbarItem } from '@nuxt/ui'
 import type { EditorVariable } from '../types/editor'
 import CroutonEditorPreview from './Preview.vue'
+import { marksMinimal, linkGroup, listsFlat, undoRedoGroup } from '../utils/toolbarPresets'
 
-// Default toolbar items for basic formatting
+// Slim toolbar for the email-template editor — composed from shared presets.
 const toolbarItems: EditorToolbarItem[][] = [
-  // Text formatting
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
-    { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } }
-  ],
-  // Links
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
-  ],
-  // Lists
-  [
-    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Bullet List' } },
-    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Numbered List' } }
-  ],
-  // Undo/Redo
-  [
-    { kind: 'undo', icon: 'i-lucide-undo', tooltip: { text: 'Undo' } },
-    { kind: 'redo', icon: 'i-lucide-redo', tooltip: { text: 'Redo' } }
-  ]
+  marksMinimal,
+  linkGroup,
+  listsFlat,
+  undoRedoGroup
 ]
 
 interface Props {

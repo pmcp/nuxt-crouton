@@ -46,8 +46,27 @@ export const marksGroup: EditorToolbarItem[] = [
   { kind: 'mark', mark: 'highlight', icon: 'i-lucide-highlighter', tooltip: { text: 'Highlight' } } as EditorToolbarItem
 ]
 
+/**
+ * Minimal marks (bold/italic/underline) — used by toolbars where strike/code/highlight
+ * would be noise (e.g. CroutonEditorWithPreview's email-template-style toolbar).
+ */
+export const marksMinimal: EditorToolbarItem[] = [
+  { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Bold' } },
+  { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Italic' } },
+  { kind: 'mark', mark: 'underline', icon: 'i-lucide-underline', tooltip: { text: 'Underline' } }
+]
+
 export const linkGroup: EditorToolbarItem[] = [
   { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } }
+]
+
+/**
+ * Flat lists buttons — alternative to the dropdown form in `blockTypesGroup` for
+ * toolbars that prefer surfacing lists as top-level buttons.
+ */
+export const listsFlat: EditorToolbarItem[] = [
+  { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Bullet List' } },
+  { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Numbered List' } }
 ]
 
 /**
