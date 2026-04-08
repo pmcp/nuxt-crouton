@@ -39,81 +39,18 @@ const {
 })
 
 // ─── Persistence ────────────────────────────────────────────────
-const conversationId = ref<string | null>(null)
-const isLoadingConversation = ref(false)
+const { isLoadingConversation, loadConversation: _loadConversation, saveConversation: _saveConversation } = useChatPersistence({
+  teamId,
+  callbacks: { clearMessages, exportMessages, importMessages },
+  onClear: () => { addedIds.value = new Set() },
+})
 
-const apiBase = computed(() => `/api/teams/${teamId.value}/thinkgraph-chatconversations`)
-
-/**
- * Load an existing conversation for the current nodeId.
- * If no nodeId is provided, we use a special "global" key.
- */
-async function loadConversation(nodeId: string | null | undefined) {
-  isLoadingConversation.value = true
-  conversationId.value = null
-  clearMessages()
-  addedIds.value = new Set()
-
-  try {
-    const lookupId = nodeId || '__global__'
-    const result = await $fetch<any>(apiBase.value, {
-      query: { nodeId: lookupId },
-    })
-
-    if (result && result.id) {
-      conversationId.value = result.id
-      if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
-        importMessages(result.messages)
-      }
-    }
-  } catch {
-    // No existing conversation found — that's fine, start fresh
-  } finally {
-    isLoadingConversation.value = false
-  }
+function loadConversation(nodeId: string | null | undefined) {
+  return _loadConversation(nodeId || '__global__')
 }
 
-/**
- * Save the current conversation — creates or updates.
- * Fire-and-forget: does not block the UI.
- */
-async function saveConversation() {
-  const exported = exportMessages()
-  if (!exported || exported.length === 0) return
-
-  const nodeIdValue = props.nodeId || '__global__'
-
-  try {
-    if (conversationId.value) {
-      // Update existing conversation
-      await $fetch(`${apiBase.value}/${conversationId.value}`, {
-        method: 'PATCH',
-        body: {
-          messages: exported,
-          messageCount: exported.length,
-          lastMessageAt: new Date().toISOString(),
-        },
-      })
-    } else {
-      // Create new conversation
-      const result = await $fetch<any>(apiBase.value, {
-        method: 'POST',
-        body: {
-          nodeId: nodeIdValue,
-          title: props.nodeName || 'Chat',
-          messages: exported,
-          messageCount: exported.length,
-          lastMessageAt: new Date().toISOString(),
-        },
-      })
-      if (result && result.id) {
-        conversationId.value = result.id
-      }
-    }
-  } catch (e) {
-    // Silently fail — don't disrupt the chat experience
-    console.warn('Failed to save conversation:', e)
-  }
+function saveConversation() {
+  return _saveConversation(props.nodeId || '__global__', props.nodeName || 'Chat')
 }
 
 // ─── Decision Extraction ────────────────────────────────────────
