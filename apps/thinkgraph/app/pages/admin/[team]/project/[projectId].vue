@@ -132,17 +132,31 @@ onMounted(async () => {
   await Promise.all([ensureFlowConfig(), refreshItems()])
 })
 
-// Auto-refresh on mutations
-nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
+// Auto-refresh on mutations. Capture the unhook functions so we can clean
+// up on navigation away — without this, every page visit accumulates a
+// new listener that keeps firing for the old projectId on later pages.
+const unhookMutation = nuxtApp.hook('crouton:mutation', ({ collection }: any) => {
   if (collection === 'thinkgraphNodes') refreshItems()
 })
-nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
+const unhookRemote = nuxtApp.hook('crouton:remoteChange' as any, ({ collection }: any) => {
   if (collection === 'thinkgraphNodes') refreshItems()
+})
+onUnmounted(() => {
+  unhookMutation()
+  unhookRemote()
 })
 
-// Poll while any item is active (Pi agent working)
+// Poll while any item is actively running. The dispatch endpoint sets
+// `active`, then Pi's worker flips it to `working` via httpPatch within
+// 1-2s. Without `working` in this set, polling stopped right after
+// dispatch and the slideover stayed stale until manual reload — the
+// bug visible in the 2026-04-08 verification screenshots.
+// `queued` and `waiting` are stable states (can sit for hours), so we
+// don't poll for them — refreshes for those land via the
+// `crouton:remoteChange` hook instead.
+const IN_FLIGHT_STATUSES = new Set(['active', 'working'])
 const hasActiveWork = computed(() =>
-  items.value.some(n => n.status === 'active'),
+  items.value.some(n => IN_FLIGHT_STATUSES.has(n.status)),
 )
 let pollTimer: ReturnType<typeof setInterval> | null = null
 watch(hasActiveWork, (active) => {
