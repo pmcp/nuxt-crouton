@@ -87,9 +87,13 @@ vi.stubGlobal('useTeam', () => {
 // Import composables after mocking
 import useCrouton from '../useCrouton'
 import useCollections from '../useCollections'
+import { useCroutonPagination } from '../useCroutonPagination'
 
 // Also stub useCollections
 vi.stubGlobal('useCollections', useCollections)
+
+// Stub useCroutonPagination so useCrouton can destructure it via auto-import
+vi.stubGlobal('useCroutonPagination', useCroutonPagination)
 
 // And useTeamContext needs to be imported after mocks
 import { useTeamContext } from '../useTeamContext'

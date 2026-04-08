@@ -2,7 +2,10 @@
 /**
  * useCrouton - Modal and form state management
  *
- * NOTE: This composable now only manages modal/form UI state.
+ * NOTE: This composable manages modal/form UI state. Pagination state was
+ * extracted into `useCroutonPagination()` — the methods are still surfaced
+ * here for backward compat with consumers that grab everything off useCrouton.
+ *
  * For data operations, use:
  * - useCollectionQuery() for fetching data
  * - useCollectionMutation() for create/update/delete
@@ -24,37 +27,13 @@ export interface CroutonState {
   isExpanded?: boolean // Track expand state for slideovers
 }
 
-interface PaginationState {
-  currentPage: number
-  pageSize: number
-  sortBy: string
-  sortDirection: 'asc' | 'desc'
-  totalItems?: number
-  totalPages?: number
-}
-
-interface PaginationMap {
-  [collection: string]: PaginationState
-}
-
-interface PaginatedResponse<T = any> {
-  items: T[]
-  pagination: PaginationState
-}
-
-// Default pagination settings for all collections
-const DEFAULT_PAGINATION: PaginationState = {
-  currentPage: 1,
-  pageSize: 10,
-  sortBy: 'createdAt',
-  sortDirection: 'desc'
-}
-
 export default function () {
   const route = useRoute()
   const { getTeamId } = useTeamContext()
 
-  const pagination = useState<PaginationMap>('pagination', () => ({}))
+  // Pagination methods are owned by useCroutonPagination — re-exposed here
+  // for backward compat with existing call sites that destructure them off useCrouton().
+  const { pagination, setPagination, getPagination, getDefaultPagination } = useCroutonPagination()
 
   // useState - now using array of states for multiple slideovers
   const croutonStates = useState<CroutonState[]>('croutonStates', () => [])
@@ -213,37 +192,6 @@ export default function () {
   // Reset function for navigation scenarios
   const reset = (): void => {
     croutonStates.value = []
-  }
-
-  // Function to update pagination for a collection
-  function setPagination(collection: string, paginationData: Partial<PaginationState>) {
-    pagination.value[collection] = {
-      ...DEFAULT_PAGINATION,
-      ...pagination.value[collection],
-      ...paginationData
-    }
-  }
-
-  // Function to get pagination for a collection
-  function getPagination(collection: string): PaginationState {
-    return pagination.value[collection] || {
-      currentPage: 1,
-      pageSize: 10,
-      sortBy: 'createdAt',
-      sortDirection: 'desc',
-      totalItems: 0,
-      totalPages: 0
-    }
-  }
-
-  // Function to get default pagination for a collection
-  function getDefaultPagination(collection: string): PaginationState {
-    // Try to get collection-specific defaults first
-    const collections = useCollections()
-    const config = collections.getConfig?.(collection)
-
-    // Return collection-specific defaults or global defaults
-    return config?.defaultPagination || DEFAULT_PAGINATION
   }
 
   return {
