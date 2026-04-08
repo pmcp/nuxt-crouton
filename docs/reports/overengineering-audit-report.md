@@ -154,15 +154,15 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 
 #### crouton-designer / crouton-atelier
 - [x] Entire scaffold infrastructure duplicated between packages — ~~server 7-step pipeline + client types/utils~~ → extracted to `crouton-core/server/utils/scaffold-pipeline.ts` + `crouton-core/shared/types/scaffold.ts` + `crouton-core/shared/utils/scaffold.ts`
-- [ ] `ModuleEntry`/`ModuleAIContext` — defined 3 times in designer (internal, not cross-package)
+- [x] ✅ ~~`ModuleEntry`/`ModuleAIContext` — defined 3 times in designer~~ → unified into `CroutonManifestAppConfig`/`ManifestModuleEntry` in `crouton-core/shared/manifest.ts`; all 4 composables use the shared types (see also entry under section 14).
 - [x] `CATEGORY_ICONS` — ~~duplicated between packages~~ → `SCAFFOLD_CATEGORY_ICONS` in `crouton-core/shared/utils/scaffold.ts`
-- [ ] `buildCollectionsContext` — 3 near-identical implementations (internal to designer, not cross-package)
+- [x] ✅ ~~`buildCollectionsContext` — 3 near-identical implementations~~ → extracted to `app/utils/promptFormatting.ts::formatCollectionsForPrompt()`; `useCollectionDesignPrompt`, `useSeedDataPrompt`, and `useReviewPrompt` all import the shared formatter. The remaining `buildCollectionsContext` in `useCollectionDesignPrompt.ts` is a 6-line named wrapper that calls the shared formatter with specific options — documentation aid, not duplication.
 - **Fix**: ~~Extract shared scaffold utility to crouton-core~~ Scaffold pipeline, types, and client utils extracted; both endpoints now thin wrappers
 
 #### crouton-email
-- [ ] 6 sender functions with identical pattern (render template, call send)
-- [ ] Options vs Props interfaces share ~90% fields
-- **Fix**: Single `sendTemplatedEmail()` helper, use `Pick<>`/`Omit<>` for type dedup
+- [x] ✅ ~~6 sender functions with identical pattern~~ → extracted `resolveEmailContext` + `sendTemplatedEmail` helpers (commit `fdf5966d`); each sender is now a ~20-line declarative template-prop shape.
+- [x] ✅ ~~Options vs Props interfaces share ~90% fields~~ → extracted `BaseEmailOptions` (server) and `BaseEmailTemplateProps`/`ContentOverrideProps`/`BasicContentOverrideProps` (templates) in `server/emails/template-props.ts`. All 6 server `*EmailOptions` types and all 6 template `Props` interfaces now extend the bases — adding a new branding field is a 1-line edit instead of a 6-file edit.
+- **Fix**: ~~Single `sendTemplatedEmail()` helper, use `Pick<>`/`Omit<>` for type dedup~~ Done
 
 ### 7. Composables That Aren't Composables (No Reactive State)
 

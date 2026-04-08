@@ -1,21 +1,12 @@
 <script setup lang="ts">
 import { EText, EButton, ESection } from 'vue-email'
 import BaseLayout from './BaseLayout.vue'
+import type { BaseEmailTemplateProps, ContentOverrideProps } from './template-props'
 
-interface Props {
+interface Props extends BaseEmailTemplateProps, ContentOverrideProps {
   link: string
   name?: string
   expiryMinutes: number
-  preview?: string
-  brandName?: string
-  logoUrl?: string
-  primaryColor?: string
-  appUrl?: string
-  // Content overrides (admin-editable)
-  greeting?: string
-  body?: string
-  buttonText?: string
-  footer?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {

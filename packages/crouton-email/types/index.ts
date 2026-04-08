@@ -83,17 +83,11 @@ export interface SendEmailResult {
 }
 
 /**
- * Verification email options
+ * Fields shared by every transactional email sender.
  */
-export interface VerificationEmailOptions {
+export interface BaseEmailOptions {
   /** Recipient email */
   to: string
-  /** Verification code or link */
-  code: string
-  /** User's name (optional) */
-  name?: string
-  /** Custom expiry time in minutes */
-  expiryMinutes?: number
   /** Override brand name (e.g. resolved from custom domain) */
   brandName?: string
   /** Admin-configured content overrides */
@@ -101,65 +95,57 @@ export interface VerificationEmailOptions {
 }
 
 /**
+ * Verification email options (code-based)
+ */
+export interface VerificationEmailOptions extends BaseEmailOptions {
+  /** Verification code */
+  code: string
+  /** User's name (optional) */
+  name?: string
+  /** Custom expiry time in minutes */
+  expiryMinutes?: number
+}
+
+/**
  * Verification link email options (link-based, for Better Auth)
  */
-export interface VerificationLinkEmailOptions {
-  /** Recipient email */
-  to: string
+export interface VerificationLinkEmailOptions extends BaseEmailOptions {
   /** Verification link URL */
   link: string
   /** User's name (optional) */
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
-  /** Override brand name (e.g. resolved from custom domain) */
-  brandName?: string
-  /** Admin-configured content overrides */
-  overrides?: EmailContentOverrides
 }
 
 /**
  * Magic link email options
  */
-export interface MagicLinkEmailOptions {
-  /** Recipient email */
-  to: string
+export interface MagicLinkEmailOptions extends BaseEmailOptions {
   /** Magic link URL */
   link: string
   /** User's name (optional) */
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
-  /** Override brand name (e.g. resolved from custom domain) */
-  brandName?: string
-  /** Admin-configured content overrides */
-  overrides?: EmailContentOverrides
 }
 
 /**
  * Password reset email options
  */
-export interface PasswordResetEmailOptions {
-  /** Recipient email */
-  to: string
+export interface PasswordResetEmailOptions extends BaseEmailOptions {
   /** Reset link URL */
   link: string
   /** User's name (optional) */
   name?: string
   /** Custom expiry time in minutes */
   expiryMinutes?: number
-  /** Override brand name (e.g. resolved from custom domain) */
-  brandName?: string
-  /** Admin-configured content overrides */
-  overrides?: EmailContentOverrides
 }
 
 /**
  * Team invite email options
  */
-export interface TeamInviteEmailOptions {
-  /** Recipient email */
-  to: string
+export interface TeamInviteEmailOptions extends BaseEmailOptions {
   /** Accept invitation link */
   link: string
   /** Inviter's name */
@@ -168,26 +154,16 @@ export interface TeamInviteEmailOptions {
   teamName: string
   /** Optional role being invited to */
   role?: string
-  /** Override brand name (e.g. resolved from custom domain) */
-  brandName?: string
-  /** Admin-configured content overrides */
-  overrides?: EmailContentOverrides
 }
 
 /**
  * Welcome email options
  */
-export interface WelcomeEmailOptions {
-  /** Recipient email */
-  to: string
+export interface WelcomeEmailOptions extends BaseEmailOptions {
   /** User's name */
   name: string
   /** Optional getting started link */
   getStartedLink?: string
-  /** Override brand name (e.g. resolved from custom domain) */
-  brandName?: string
-  /** Admin-configured content overrides */
-  overrides?: EmailContentOverrides
 }
 
 /**

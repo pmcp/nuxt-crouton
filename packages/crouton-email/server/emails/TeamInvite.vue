@@ -1,21 +1,14 @@
 <script setup lang="ts">
 import { EText, EButton, ESection } from 'vue-email'
 import BaseLayout from './BaseLayout.vue'
+import type { BaseEmailTemplateProps, ContentOverrideProps } from './template-props'
 
-interface Props {
+// TeamInvite has no greeting (the greeting is dynamic from inviter/team).
+interface Props extends BaseEmailTemplateProps, Omit<ContentOverrideProps, 'greeting'> {
   link: string
   inviterName: string
   teamName: string
   role?: string
-  preview?: string
-  brandName?: string
-  logoUrl?: string
-  primaryColor?: string
-  appUrl?: string
-  // Content overrides (admin-editable)
-  body?: string
-  buttonText?: string
-  footer?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
