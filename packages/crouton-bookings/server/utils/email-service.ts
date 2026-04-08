@@ -133,7 +133,11 @@ export async function getActiveTemplatesForTrigger(
 }
 
 /**
- * Build email variables from booking context
+ * Build email variables from booking context.
+ *
+ * Returns all template variables (basic + location parts) — the previous
+ * `buildExtendedEmailVariables` split was a vestige; the only production
+ * caller always wanted the full set.
  */
 export function buildEmailVariables(
   booking: BookingEmailContext,
@@ -159,39 +163,14 @@ export function buildEmailVariables(
       || (Array.isArray(booking.slot) ? booking.slot.join(', ') : booking.slot || 'Not specified'),
     booking_reference: booking.id,
     location_name: locationData?.name || 'Location',
-    location_address: locationAddress,
-    team_name: booking.teamName || 'Your Team',
-    team_email: booking.teamEmail || '',
-    team_phone: booking.teamPhone || ''
-  }
-}
-
-/**
- * Extended variables with location parts for template compatibility
- */
-export interface ExtendedEmailVariables extends BookingEmailVariables {
-  location_title: string
-  location_street: string
-  location_city: string
-  location_content: string
-}
-
-/**
- * Build extended email variables with individual location fields
- */
-export function buildExtendedEmailVariables(
-  booking: BookingEmailContext,
-  locale?: string
-): ExtendedEmailVariables {
-  const base = buildEmailVariables(booking, locale)
-  const locationData = booking.locationData
-
-  return {
-    ...base,
     location_title: locationData?.title || locationData?.name || 'Location',
     location_street: locationData?.street || '',
     location_city: locationData?.city || '',
-    location_content: locationData?.content || ''
+    location_address: locationAddress,
+    location_content: locationData?.content || '',
+    team_name: booking.teamName || 'Your Team',
+    team_email: booking.teamEmail || '',
+    team_phone: booking.teamPhone || ''
   }
 }
 
@@ -462,7 +441,7 @@ export async function sendBookingEmails(
   }
 
   // Build email variables (locale-aware date formatting)
-  const variables = buildExtendedEmailVariables(booking, locale)
+  const variables = buildEmailVariables(booking, locale)
 
   const results: SendBookingEmailsResult = {
     success: true,

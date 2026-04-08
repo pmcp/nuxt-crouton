@@ -178,25 +178,15 @@ export function useBookingEmailVariables() {
   ]
 
   /**
-   * Get demo preview values with realistic data
+   * Get demo preview values, derived from the sample value on each variable
+   * definition above. Adding a new variable to `variables` automatically
+   * surfaces it here — no second list to keep in sync.
    */
   function getPreviewValues(): Record<string, string> {
-    return {
-      customer_name: demoBookingData.customer.name,
-      customer_email: demoBookingData.customer.email,
-      booking_date: demoBookingData.booking.date,
-      booking_slot: demoBookingData.booking.slot,
-      booking_reference: demoBookingData.booking.reference,
-      location_name: demoBookingData.location.name,
-      location_title: demoBookingData.location.title,
-      location_street: demoBookingData.location.street,
-      location_city: demoBookingData.location.city,
-      location_address: demoBookingData.location.address,
-      location_content: demoBookingData.location.content,
-      team_name: demoBookingData.team.name,
-      team_email: demoBookingData.team.email,
-      team_phone: demoBookingData.team.phone
-    }
+    return variables.reduce<Record<string, string>>((acc, v) => {
+      acc[v.name] = v.sample ?? ''
+      return acc
+    }, {})
   }
 
   return {

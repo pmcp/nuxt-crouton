@@ -111,7 +111,7 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 #### crouton-bookings
 - [x] Availability logic — ~~duplicated between `useBookingAvailability` and `useBookingCart`~~ → useBookingCart now composes useBookingAvailability
 - [x] JSON slot parsing — ~~repeated in 4 places~~ → shared `parseLocationSlots()` exported from `useBookingSlots.ts`
-- [ ] `buildEmailVariables` — 2 near-identical implementations
+- [x] ✅ ~~`buildEmailVariables` — 2 near-identical implementations~~ → merged `buildEmailVariables` and `buildExtendedEmailVariables` into a single function returning all 14 fields. The basic 10-field version was an internal helper with one caller (the extended one). Updated `BookingEmailVariables` interface to match. Also fixed the related client-side duplication: `useBookingEmailVariables.getPreviewValues()` now derives from the `variables[]` registry via `.reduce()` instead of repeating all 14 keys verbatim.
 - **Fix**: ~~Shared `parseSlots()` util, shared availability core~~ Done. Remaining: single email variables builder
 
 #### crouton-editor

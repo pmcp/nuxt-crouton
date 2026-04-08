@@ -89,7 +89,11 @@ export interface BookingEmailVariables {
   booking_slot: string
   booking_reference: string
   location_name: string
+  location_title: string
+  location_street: string
+  location_city: string
   location_address: string
+  location_content: string
   team_name: string
   team_email: string
   team_phone: string
