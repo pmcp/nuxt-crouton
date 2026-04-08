@@ -1,4 +1,5 @@
 import { defineEventHandler } from 'h3'
+import { asc, count, desc, gte } from 'drizzle-orm'
 
 /**
  * Get events health statistics
@@ -37,55 +38,53 @@ export default defineEventHandler(async () => {
 
       for (const schemaLoader of possibleSchemas) {
         try {
-          const schema = await schemaLoader()
+          const schema = await schemaLoader() as any
           const table = schema.eventsCollectionEvents || schema.collectionEvents || schema.croutonEvents
 
           if (table) {
-            // Get all events for statistics
-            const allEvents = await db.select().from(table)
-            totalEvents = allEvents.length
-
-            // Calculate date-based counts
             const now = new Date()
             const today = new Date(now)
             today.setHours(0, 0, 0, 0)
-
             const weekAgo = new Date(now)
             weekAgo.setDate(weekAgo.getDate() - 7)
 
-            for (const evt of allEvents as any[]) {
-              const timestamp = new Date(evt.timestamp)
+            // Run all aggregates in parallel — SQL does the heavy lifting
+            const [
+              totalRows,
+              todayRows,
+              weekRows,
+              oldestRows,
+              newestRows,
+              operationGroups,
+              collectionGroups
+            ] = await Promise.all([
+              db.select({ n: count() }).from(table),
+              db.select({ n: count() }).from(table).where(gte(table.timestamp, today)),
+              db.select({ n: count() }).from(table).where(gte(table.timestamp, weekAgo)),
+              db.select({ ts: table.timestamp }).from(table).orderBy(asc(table.timestamp)).limit(1),
+              db.select({ ts: table.timestamp }).from(table).orderBy(desc(table.timestamp)).limit(1),
+              db.select({ operation: table.operation, n: count() }).from(table).groupBy(table.operation),
+              db.select({ collectionName: table.collectionName, n: count() }).from(table).groupBy(table.collectionName)
+            ])
 
-              // Today count
-              if (timestamp >= today) {
-                todayEvents++
-              }
+            totalEvents = Number(totalRows[0]?.n ?? 0)
+            todayEvents = Number(todayRows[0]?.n ?? 0)
+            thisWeekEvents = Number(weekRows[0]?.n ?? 0)
+            oldestEvent = oldestRows[0]?.ts ? new Date(oldestRows[0].ts as any) : null
+            newestEvent = newestRows[0]?.ts ? new Date(newestRows[0].ts as any) : null
 
-              // This week count
-              if (timestamp >= weekAgo) {
-                thisWeekEvents++
-              }
-
-              // Operation breakdown
-              if (evt.operation && byOperation.hasOwnProperty(evt.operation)) {
-                byOperation[evt.operation]++
-              }
-
-              // Collection breakdown
-              if (evt.collectionName) {
-                byCollection[evt.collectionName] = (byCollection[evt.collectionName] || 0) + 1
-              }
-
-              // Track oldest/newest
-              if (!oldestEvent || timestamp < oldestEvent) {
-                oldestEvent = timestamp
-              }
-              if (!newestEvent || timestamp > newestEvent) {
-                newestEvent = timestamp
+            for (const row of operationGroups as Array<{ operation: string, n: number }>) {
+              if (row.operation && Object.prototype.hasOwnProperty.call(byOperation, row.operation)) {
+                byOperation[row.operation] = Number(row.n)
               }
             }
 
-            // Get unique collections
+            for (const row of collectionGroups as Array<{ collectionName: string, n: number }>) {
+              if (row.collectionName) {
+                byCollection[row.collectionName] = Number(row.n)
+              }
+            }
+
             collections = Object.keys(byCollection).sort()
 
             break
