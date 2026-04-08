@@ -194,7 +194,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 ### 9. Non-Vue/Non-Nuxt Patterns
 
 - [x] **crouton-i18n** — `DevModeToggle.vue:139-160` — `document.querySelectorAll('*')` DOM scan — acceptable for dev-only tool (scans DOM for `[missing.key]` patterns)
-- [ ] **crouton-maps** — `MapBlockView.vue:65-69` — `document.dispatchEvent(CustomEvent)` instead of emit/inject
+- [x] **crouton-maps** — `MapBlockView.vue:65-69` — `document.dispatchEvent(CustomEvent)` — **won't fix**: pragmatic given Tiptap's `VueNodeViewRenderer` boundary, which doesn't reliably propagate `provide`/`inject`. The pattern is shared across ~25 block views in 6 packages (crouton-pages, crouton-bookings, crouton-triage, crouton-charts, crouton-editor, crouton-maps), scoped via `editorId` for multi-editor pages, and consumed by a single listener in `crouton-editor/Blocks.vue:254`. The "smell" is cosmetic; replacing it would require either prop drilling through extension storage or a fragile inject-through-NodeView setup. Consistency wins.
 - [x] ✅ **crouton-maps** — ~~`useMarkerColor.ts` — creates temp DOM element to read CSS variable~~ — cleaned up DOM probe code. Note: temp element still required because `useCssVar` returns raw OKLCH strings; the probe forces browser resolution to RGB for Mapbox hex colors
 - [ ] **crouton-flow** — `Flow.vue:380-383` — `resolveComponent()` usage — genuinely needed for dynamic custom node component resolution (not optional-package detection)
 - [ ] **crouton-core** — `component-warmup.client.ts` — `vueApp._context.components` — architectural, needs separate design work
@@ -246,7 +246,7 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 - [ ] **crouton-core** — `useCrouton.ts` — mixed concerns (modal state + pagination state)
 - [x] ✅ **crouton-auth** — ~~`useAuthConfig.ts` — deprecated `useAuthMode()` and `useIsMultiTenant()`~~ — removed (zero production callers). Core `useAuthConfig()` and `useAuthRedirects()` retained (9 and 3 callers respectively)
 - [x] **crouton-admin** — `useAdminDb()` — not just a null check: also centralizes schema re-exports from crouton-auth for all 13 admin API endpoints (load-bearing)
-- [ ] **crouton-ai** — `AITranslateButton.vue` — 16 props covering two unrelated modes
+- [x] ✅ **crouton-ai** — ~~`AITranslateButton.vue` — 16 props covering two unrelated modes~~ → trimmed to smart-mode only (10 props): owns the API call, confirmation modal, and context selector. Controlled-mode (parent-driven block-editor flow) extracted to new `crouton-i18n/components/BlockTranslateTrigger.vue` (4 props). Stub in `crouton-i18n/stubs/AITranslateButton.vue` and the 7 controlled-mode call sites in `Input.vue` updated.
 - [x] **crouton-ai** — `useAIProvider.ts` — zero consumers inside monorepo; public API for consumer apps to build provider/model selectors
 - [ ] **crouton-mcp** — `inferLayerFromName()` — hardcoded name-to-layer dictionary
 

@@ -6,45 +6,27 @@ import { useNotify } from '#imports'
 /**
  * AI Translate Button
  *
- * A button that triggers AI translation. Can be used in two modes:
+ * Smart translate button: handles the API call internally and emits the
+ * resulting text. Optionally shows a confirmation modal when the target
+ * already has content, and a context-language selector popup.
  *
- * 1. **Simple mode** (with sourceText): Handles translation internally
- * 2. **Controlled mode** (without sourceText): Just emits click, parent handles translation
+ * For block-editor or other parent-controlled translation flows, use a
+ * plain trigger button (e.g. `<CroutonI18nBlockTranslateTrigger />`) and
+ * handle translation in the parent.
  *
- * @example Simple mode - component handles translation
+ * @example
  * <AITranslateButton
  *   :source-text="englishText"
  *   source-language="en"
  *   target-language="nl"
- *   @translate="(text) => myValue = text"
- * />
- *
- * @example Controlled mode - parent handles translation
- * <AITranslateButton
- *   :loading="isTranslating"
- *   :disabled="!hasContent"
- *   tooltip="Translate from EN"
- *   @click="handleTranslate"
- * />
- *
- * @example With confirmation when target has content
- * <AITranslateButton
- *   :source-text="englishText"
  *   :target-has-content="!!targetText"
- *   @translate="(text) => myValue = text"
- * />
- *
- * @example With context language selector
- * <AITranslateButton
- *   :source-text="englishText"
- *   :available-translations="{ en: 'Hello', fr: 'Bonjour', de: 'Hallo' }"
+ *   :available-translations="{ en: 'Hello', fr: 'Bonjour' }"
  *   @translate="(text) => myValue = text"
  * />
  */
 
 const props = defineProps<{
-  // === Simple mode props (component handles translation) ===
-  /** The text to translate (enables simple mode) */
+  /** The text to translate */
   sourceText?: string
   /** Source language code (e.g., 'en') */
   sourceLanguage?: string
@@ -54,59 +36,36 @@ const props = defineProps<{
   fieldType?: string
   /** Existing translations for consistency */
   existingTranslations?: Record<string, string>
-
-  // === Controlled mode props (parent handles translation) ===
-  /** Loading state (controlled mode) */
-  loading?: boolean
-  /** Disabled state */
-  disabled?: boolean
-  /** Custom tooltip text */
-  tooltip?: string
-
-  // === Confirmation props ===
   /** Whether the target field already has content (triggers confirmation) */
   targetHasContent?: boolean
-
-  // === Context selector props ===
   /** All available translations for context selection UI */
   availableTranslations?: Record<string, string>
-
-  // === Shared props ===
   /** Button label override */
   label?: string
   /** Button size */
   size?: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  /** Whether this is for block editor content */
-  isBlockEditor?: boolean
   /** Show only icon (no label) */
   iconOnly?: boolean
 }>()
 
 const emit = defineEmits<{
-  /** Emitted on click (controlled mode) or when translation completes (simple mode) */
+  /** Emitted when translation completes */
   translate: [text: string]
-  /** Emitted on button click */
-  click: []
-  /** Emitted when translation fails (simple mode only) */
+  /** Emitted when translation fails */
   error: [error: Error]
 }>()
 
 const notify = useNotify()
 
-// Internal loading state for simple mode
 const internalLoading = ref(false)
 
-// Confirmation modal state
 const [showConfirmModal, toggleConfirmModal] = useToggle(false)
-
-// Context selector state
 const [showContextSelector, toggleContextSelector] = useToggle(false)
 const selectedContextLocales = reactive(new Set<string>())
 
 // Initialize selected locales when availableTranslations changes
 watch(() => props.availableTranslations, (translations) => {
   if (translations) {
-    // Select all locales by default (except target)
     selectedContextLocales.clear()
     Object.keys(translations)
       .filter(locale => locale !== props.targetLanguage)
@@ -114,7 +73,6 @@ watch(() => props.availableTranslations, (translations) => {
   }
 }, { immediate: true })
 
-// Also update when target language changes
 watch(() => props.targetLanguage, () => {
   if (props.availableTranslations) {
     selectedContextLocales.clear()
@@ -124,7 +82,6 @@ watch(() => props.targetLanguage, () => {
   }
 })
 
-// Computed: available context locales (all except target)
 const contextLocales = computed(() => {
   if (!props.availableTranslations) return []
   return Object.entries(props.availableTranslations)
@@ -135,13 +92,11 @@ const contextLocales = computed(() => {
     }))
 })
 
-// Check if all contexts are selected
 const allContextsSelected = computed(() => {
   return contextLocales.value.length > 0 &&
     selectedContextLocales.size === contextLocales.value.length
 })
 
-// Toggle a locale in the context selection
 function toggleContextLocale(locale: string) {
   if (selectedContextLocales.has(locale)) {
     selectedContextLocales.delete(locale)
@@ -150,7 +105,6 @@ function toggleContextLocale(locale: string) {
   }
 }
 
-// Get filtered translations based on selection
 function getFilteredTranslations(): Record<string, string> {
   if (!props.existingTranslations) return {}
   const filtered: Record<string, string> = {}
@@ -162,29 +116,15 @@ function getFilteredTranslations(): Record<string, string> {
   return filtered
 }
 
-// Determine if we're in simple mode (component handles translation)
-const isSimpleMode = computed(() => !!props.sourceText)
-
-// Combined loading state
-const isLoading = computed(() => props.loading || internalLoading.value)
-
-// Check if there's content to translate (simple mode)
 const hasSourceContent = computed(() => {
-  if (!isSimpleMode.value) return true // In controlled mode, parent decides
-  return props.sourceText && props.sourceText.trim().length > 0
+  return !!(props.sourceText && props.sourceText.trim().length > 0)
 })
 
-// Don't translate to same language
 const canTranslate = computed(() => {
-  if (props.disabled) return false
-  if (!isSimpleMode.value) return !props.disabled
   return hasSourceContent.value && props.sourceLanguage !== props.targetLanguage
 })
 
-// Tooltip text
 const tooltipText = computed(() => {
-  if (props.tooltip) return props.tooltip
-  if (!isSimpleMode.value) return 'Translate with AI'
   if (!hasSourceContent.value) {
     return `No ${props.sourceLanguage?.toUpperCase() || ''} content to translate`
   }
@@ -194,40 +134,27 @@ const tooltipText = computed(() => {
   return `Translate from ${props.sourceLanguage?.toUpperCase()} to ${props.targetLanguage?.toUpperCase()}`
 })
 
-// Button label
 const buttonLabel = computed(() => {
   if (props.iconOnly) return ''
-  if (props.label) return props.label
-  return props.isBlockEditor ? 'Translate blocks' : 'Translate'
+  return props.label || 'Translate'
 })
 
 async function handleClick() {
-  if (!canTranslate.value || isLoading.value) return
+  if (!canTranslate.value || internalLoading.value) return
 
-  // Check if we need confirmation (target has content)
-  if (props.targetHasContent && isSimpleMode.value) {
+  if (props.targetHasContent) {
     showConfirmModal.value = true
     return
   }
 
-  // Proceed with translation
-  await proceedWithTranslation()
+  await doTranslation()
 }
 
-// Called after confirmation or when no confirmation needed
 async function proceedWithTranslation() {
   showConfirmModal.value = false
-
-  // Always emit click for controlled mode consumers
-  emit('click')
-
-  // If in simple mode, also do the translation
-  if (isSimpleMode.value) {
-    await doTranslation()
-  }
+  await doTranslation()
 }
 
-// Cancel confirmation
 function cancelConfirmation() {
   showConfirmModal.value = false
 }
@@ -238,7 +165,6 @@ async function doTranslation() {
   internalLoading.value = true
 
   try {
-    // Use filtered translations based on context selection
     const translations = props.availableTranslations
       ? getFilteredTranslations()
       : props.existingTranslations
@@ -291,7 +217,7 @@ async function doTranslation() {
         variant="ghost"
         color="neutral"
         class="opacity-40 hover:opacity-100 transition-opacity"
-        :loading="isLoading"
+        :loading="internalLoading"
         :disabled="!canTranslate"
         @click="handleClick"
       >
@@ -299,9 +225,9 @@ async function doTranslation() {
       </UButton>
     </UTooltip>
 
-    <!-- Context selector button (only in simple mode with available translations) -->
+    <!-- Context selector button -->
     <UPopover
-      v-if="isSimpleMode && contextLocales.length > 0"
+      v-if="contextLocales.length > 0"
       v-model:open="showContextSelector"
     >
       <UTooltip text="Select context languages">
@@ -313,7 +239,6 @@ async function doTranslation() {
           :disabled="!canTranslate"
           class="relative opacity-40 hover:opacity-100 transition-opacity"
         >
-          <!-- Indicator when not all contexts selected -->
           <span
             v-if="!allContextsSelected && selectedContextLocales.size > 0"
             class="absolute -top-0.5 -right-0.5 size-2 bg-primary rounded-full"

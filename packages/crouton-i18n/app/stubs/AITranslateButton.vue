@@ -17,19 +17,16 @@ defineProps<{
   targetLanguage?: string
   fieldType?: string
   existingTranslations?: Record<string, string>
-  loading?: boolean
-  disabled?: boolean
-  tooltip?: string
+  targetHasContent?: boolean
+  availableTranslations?: Record<string, string>
   label?: string
   size?: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  isBlockEditor?: boolean
   iconOnly?: boolean
 }>()
 
 // Emit nothing - this is a stub
 defineEmits<{
   translate: [text: string]
-  click: []
   error: [error: Error]
 }>()
 </script>

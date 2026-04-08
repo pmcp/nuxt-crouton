@@ -201,13 +201,11 @@ function previewText(field: string, locale: string): string {
                   <div v-for="field in group.fields" :key="`narrow-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
                     <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
                       <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
-                      <AITranslateButton
+                      <CroutonI18nBlockTranslateTrigger
                         v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                         :loading="isFieldTranslating(field, narrowLocaleTab)"
                         :tooltip="getTranslateTooltip(field, narrowLocaleTab)"
                         size="2xs"
-                        icon-only
-                        is-block-editor
                         @click="confirmBlockTranslation(field, narrowLocaleTab)"
                       />
                     </div>
@@ -324,13 +322,11 @@ function previewText(field: string, locale: string): string {
                 @translate="(text) => updateFieldValue(field, text, narrowLocaleTab)"
               />
               <!-- Block editor translation (controlled mode) -->
-              <AITranslateButton
+              <CroutonI18nBlockTranslateTrigger
                 v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, narrowLocaleTab)"
                 :loading="isFieldTranslating(field, narrowLocaleTab)"
                 :tooltip="getTranslateTooltip(field, narrowLocaleTab)"
                 size="2xs"
-                icon-only
-                is-block-editor
                 @click="confirmBlockTranslation(field, narrowLocaleTab)"
               />
             </div>
@@ -482,13 +478,11 @@ function previewText(field: string, locale: string): string {
                     <div v-for="field in group.fields" :key="`primary-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
                       <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
                         <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
-                        <AITranslateButton
+                        <CroutonI18nBlockTranslateTrigger
                           v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                           :loading="isFieldTranslating(field, primaryEditingLocale)"
                           :tooltip="getTranslateTooltip(field, primaryEditingLocale)"
                           size="2xs"
-                          icon-only
-                          is-block-editor
                           @click="confirmBlockTranslation(field, primaryEditingLocale)"
                         />
                       </div>
@@ -607,13 +601,11 @@ function previewText(field: string, locale: string): string {
                   @translate="(text) => updateFieldValue(field, text, primaryEditingLocale)"
                 />
                 <!-- Block editor translation for primary locale -->
-                <AITranslateButton
+                <CroutonI18nBlockTranslateTrigger
                   v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, primaryEditingLocale)"
                   :loading="isFieldTranslating(field, primaryEditingLocale)"
                   :tooltip="getTranslateTooltip(field, primaryEditingLocale)"
                   size="2xs"
-                  icon-only
-                  is-block-editor
                   @click="confirmBlockTranslation(field, primaryEditingLocale)"
                 />
               </div>
@@ -741,13 +733,11 @@ function previewText(field: string, locale: string): string {
                     <div v-for="field in group.fields" :key="`secondary-g-${field}`" class="flex-1 flex flex-col gap-1 min-h-0">
                       <div v-if="group.fields.length > 1 || showAiTranslate" class="flex items-center justify-between h-5 shrink-0">
                         <label v-if="group.fields.length > 1" class="text-xs font-medium text-muted uppercase tracking-wide">{{ field }}</label>
-                        <AITranslateButton
+                        <CroutonI18nBlockTranslateTrigger
                           v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                           :loading="isFieldTranslating(field, secondaryEditingLocale)"
                           :tooltip="getTranslateTooltip(field, secondaryEditingLocale)"
                           size="2xs"
-                          icon-only
-                          is-block-editor
                           @click="confirmBlockTranslation(field, secondaryEditingLocale)"
                         />
                       </div>
@@ -865,13 +855,11 @@ function previewText(field: string, locale: string): string {
                   @translate="(text) => updateFieldValue(field, text, secondaryEditingLocale)"
                 />
                 <!-- Block editor translation (controlled mode) -->
-                <AITranslateButton
+                <CroutonI18nBlockTranslateTrigger
                   v-if="showAiTranslate && isBlockEditorField(field) && hasSourceContent(field, secondaryEditingLocale)"
                   :loading="isFieldTranslating(field, secondaryEditingLocale)"
                   :tooltip="getTranslateTooltip(field, secondaryEditingLocale)"
                   size="2xs"
-                  icon-only
-                  is-block-editor
                   @click="confirmBlockTranslation(field, secondaryEditingLocale)"
                 />
               </div>
@@ -1100,12 +1088,11 @@ function previewText(field: string, locale: string): string {
               @translate="(text) => updateFieldValue(field, text, editingLocale)"
             />
             <!-- Block editor translation (controlled mode) -->
-            <AITranslateButton
+            <CroutonI18nBlockTranslateTrigger
               v-if="showAiTranslate && isBlockEditorField(field)"
               :loading="isFieldTranslating(field, editingLocale)"
               :disabled="!hasSourceContent(field, editingLocale)"
               :tooltip="getTranslateTooltip(field, editingLocale)"
-              is-block-editor
               @click="confirmBlockTranslation(field, editingLocale)"
             />
           </div>
