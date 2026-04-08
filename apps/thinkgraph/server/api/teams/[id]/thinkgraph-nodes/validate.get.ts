@@ -5,15 +5,7 @@ export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
 
   const query = getQuery(event)
-  const projectId = query.projectId ? String(query.projectId) : ''
+  const projectId = query.projectId ? String(query.projectId) : undefined
 
-  if (!projectId) {
-    throw createError({
-      status: 400,
-      statusText: 'projectId query parameter is required',
-    })
-  }
-
-  const errors = await validateGraph(team.id, projectId)
-  return errors
+  return await validateGraph(team.id, projectId)
 })

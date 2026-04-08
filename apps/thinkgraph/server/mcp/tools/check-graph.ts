@@ -1,49 +1,58 @@
 import { z } from 'zod'
-import { validateGraph } from '~~/server/utils/validate-graph'
+import { validateGraph, type ValidationItem } from '~~/server/utils/validate-graph'
 import { resolveTeamId } from '../utils/resolve-team'
 
 export default defineMcpTool({
-  description: 'Check a project graph for integrity issues: broken context references, orphan nodes, duplicate sibling titles, nodes stuck in active state, and unresolved wiki links. Returns a human-readable report grouped by severity.',
+  description: 'Check a project graph for integrity issues: broken context references, broken/cyclic dependsOn, orphan nodes, duplicate sibling titles, nodes stuck in active or working state, unknown pipeline step types, and unresolved wiki links. Returns a human-readable report grouped by severity.',
   inputSchema: {
     teamId: z.string().describe('Team ID or slug'),
-    projectId: z.string().describe('Project ID to validate'),
-    severity: z.enum(['error', 'warning']).optional().describe('Filter by severity (defaults to all)'),
+    projectId: z.string().optional().describe('Project ID to validate (omit to check the whole team)'),
+    severity: z.enum(['error', 'warning', 'info']).optional().describe('Filter by severity (defaults to all)'),
   },
   async handler({ teamId, projectId, severity }) {
     try {
       const resolvedTeamId = await resolveTeamId(teamId)
-      const allErrors = await validateGraph(resolvedTeamId, projectId)
-      const errors = severity ? allErrors.filter(e => e.severity === severity) : allErrors
+      const report = await validateGraph(resolvedTeamId, projectId)
 
-      if (errors.length === 0) {
+      const buckets: Array<['error' | 'warning' | 'info', ValidationItem[]]> = [
+        ['error', report.errors],
+        ['warning', report.warnings],
+        ['info', report.info],
+      ]
+      const visible = severity ? buckets.filter(([s]) => s === severity) : buckets
+      const total = visible.reduce((sum, [, items]) => sum + items.length, 0)
+
+      const scope = projectId ? `project "${projectId}"` : `team "${teamId}"`
+      if (total === 0) {
         return {
           content: [{
             type: 'text' as const,
-            text: `Graph check passed: no ${severity ?? 'integrity'} issues found in project "${projectId}".`,
+            text: `Graph check passed: no ${severity ?? 'integrity'} issues found in ${scope}.`,
           }],
         }
       }
 
-      const errorCount = errors.filter(e => e.severity === 'error').length
-      const warningCount = errors.filter(e => e.severity === 'warning').length
+      const counts = `${report.errors.length} error(s), ${report.warnings.length} warning(s), ${report.info.length} info`
+      let text = `Graph check for ${scope}: ${counts}\n\n`
 
-      const byCode = new Map<string, typeof errors>()
-      for (const err of errors) {
-        const list = byCode.get(err.code) || []
-        list.push(err)
-        byCode.set(err.code, list)
-      }
-
-      let report = `Graph check for project "${projectId}": ${errorCount} error(s), ${warningCount} warning(s)\n\n`
-      for (const [code, items] of byCode) {
-        report += `## ${code} (${items.length})\n`
+      for (const [sev, items] of visible) {
+        if (items.length === 0) continue
+        const byKind = new Map<string, ValidationItem[]>()
         for (const item of items) {
-          report += `- [${item.severity}] node ${item.nodeId}: ${item.message}\n`
+          const list = byKind.get(item.kind) || []
+          list.push(item)
+          byKind.set(item.kind, list)
         }
-        report += '\n'
+        for (const [kind, group] of byKind) {
+          text += `## ${kind} (${group.length}, ${sev})\n`
+          for (const item of group) {
+            text += `- node ${item.nodeId}: ${item.message}\n`
+          }
+          text += '\n'
+        }
       }
 
-      return { content: [{ type: 'text' as const, text: report.trim() }] }
+      return { content: [{ type: 'text' as const, text: text.trim() }] }
     } catch (error: any) {
       return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }], isError: true }
     }
