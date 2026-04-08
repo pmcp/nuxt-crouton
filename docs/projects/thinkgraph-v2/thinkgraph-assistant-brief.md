@@ -123,7 +123,7 @@ The assistant takes actions on the canvas that you can see happening in real-tim
 - **MCP tools** — **11 tools** (was 8): create-node, update-node, search-graph, expand-node, get-digest, resume-graph, store-artifact, get-thinking-path, **check-graph** (Phase 1B), **search-similar** (Phase 2B), get-graph-overview. All unscoped.
 - **Pi dispatch** — HTTP dispatch to worker via `pi-api.pmcp.dev`.
 - **Keyword search** — `search-graph` MCP tool.
-- **Semantic search** — Cloudflare Vectorize index (Phase 2B, commit `4bccb0e3`). 1536 dims, OpenAI `text-embedding-3-small`. Server util `embeddings.ts`, `search-similar.ts`, MCP tool, admin backfill. **Auto-indexing on node write is not wired** — manual backfill only.
+- **Semantic search** — Cloudflare Vectorize index (Phase 2B, commit `4bccb0e3`). 1536 dims, OpenAI `text-embedding-3-small`. Server util `embeddings.ts`, `search-similar.ts`, MCP tool, admin backfill. Auto-indexing **is wired** via `summary-generator.ts` (post-summary regen) and `mcp/tools/update-node.ts` (Pi worker edits).
 - **Per-node chat (Step 1)** — `chatconversations.nodeId` FK + `NodeChatPanel.vue` (279 lines, slash commands `/break-down`, `/send-to-pi`) + streaming chat endpoint at `chat.post.ts`.
 - **Graph validation** — `validateGraph` server util with 7 checks including `stuck-worker` for Pi-stranded nodes (commit `4be788b2`).
 

@@ -31,15 +31,15 @@ An actionable implementation plan for ThinkGraph's next evolution. Four external
 | Integrations | Notion sync, project sharing (public shareToken), graph digest, real-time collab (Yjs). **Pi worker is now a full Yjs participant** via `apps/thinkgraph-worker/src/yjs-{client,pool}.ts` — writes `appendAgentLog`/`setAgentStatus` to per-canvas Y.Docs in real time (no UI consumer yet). |
 | External input | InjectRequest collection + Phase 2A `watchedrepos`/`watchreports` collections + cron runner `apps/thinkgraph/server/api/cron/watch-repos.post.ts`. No canvas inbox UI yet. |
 | Graph validation | `validateGraph` server util at `apps/thinkgraph/server/utils/validate-graph.ts` — 7 checks including `stuck-worker` for Pi-stranded nodes (commit `4be788b2`). Exposed via `check-graph` MCP tool and `GET /api/teams/[id]/thinkgraph-nodes/validate`. |
-| Semantic search | Cloudflare Vectorize index (1536 dims, OpenAI `text-embedding-3-small`). `embeddings.ts` + `search-similar.ts` + admin backfill (`apps/thinkgraph/server/api/admin/backfill-embeddings.post.ts`). **Auto-indexing on node create/update is NOT wired** — relies on manual backfill. |
+| Semantic search | Cloudflare Vectorize index (1536 dims, OpenAI `text-embedding-3-small`). `embeddings.ts` + `search-similar.ts` + admin backfill (`apps/thinkgraph/server/api/admin/backfill-embeddings.post.ts`). Auto-indexing **is wired** via `summary-generator.ts` (post-summary regen) and `mcp/tools/update-node.ts` (Pi worker edits). |
 
 ## What's Missing (re-audited 2026-04-07 PM)
 
 1. ~~No graph validation~~ → ✅ shipped (Phase 1B), but no scheduled runner and no canvas visual indicators on invalid nodes.
 2. **No rich output rendering** — `@nuxtjs/mdc` installed and `<MDC>` used in `NodeDetail.vue`, but no custom ThinkGraph MDC components built and dispatch services don't emit MDC syntax.
 3. **No live cross-referencing on save** — wiki-link parser/resolver/validator all exist, but no node mutation calls `resolveWikiLinksForNode()` and there's no clickable wiki-link rendering in `NodeDetail.vue`.
-4. ~~No semantic search~~ → ✅ infrastructure shipped (Phase 2B), but no auto-index hook on write and no "Find similar" UI button.
-5. ~~No external signal ingestion~~ → 🟡 collections + cron runner shipped (Phase 2A), but no canvas inbox-zone UI and the legacy `sync-changelogs` action is still parallel to it.
+4. ~~No semantic search~~ → ✅ infrastructure shipped (Phase 2B), auto-indexing wired via `summary-generator.ts` and `mcp/tools/update-node.ts`. Remaining gap: no "Find similar" UI button.
+5. ~~No external signal ingestion~~ → 🟡 collections + cron runner shipped (Phase 2A), but **D1 migration for the new tables was never generated** (runner is dead code until that's fixed), no scheduled trigger, no `watched_repos` seed, no canvas inbox-zone UI, and the legacy `sync-changelogs` action is still parallel to it.
 6. **No pipeline formalization** — Phase 2C still untouched. Steps are still hardcoded in `NODE_TYPE_STEPS`.
 7. **No conversation context in dispatch (NEW critical gap)** — dispatch flow at `work-item.post.ts` doesn't include `chatconversations` messages in the Pi context payload. The premise of "conversation as the most valuable execution context" is broken in practice.
 8. **No UI rendering of agent activity (NEW critical gap)** — Pi worker writes `agentLog`/`agentStatus` to Yjs in real time but no Vue component subscribes. Smallest gap with the highest visible payoff.
@@ -157,6 +157,8 @@ Requires new infrastructure (Vectorize, GitHub API, pipeline schemas).
 ---
 
 #### 2B. Semantic Search (Workers AI + Vectorize)
+
+> **Shipped differently than designed (2026-04-07).** The actual implementation uses **OpenAI `text-embedding-3-small` (1536 dims)** instead of Workers AI `bge-base-en-v1.5` (768 dims). Cost shape and API surface are similar; the rest of this section remains useful as design context but is not the as-built description. For as-built details see `implementation-notes.md` Phase 2B section.
 
 **What:** Embed node content at write time, store vectors, query by similarity. "Find nodes like this one."
 
