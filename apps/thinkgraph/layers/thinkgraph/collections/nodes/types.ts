@@ -167,6 +167,8 @@ export interface ThinkgraphNode {
   brief?: string
   output?: string
   retrospective?: string
+  // Block editor doc (TipTap JSON) — Notion-style slideover content
+  content?: unknown | null
 
   // Routing
   assignee?: ThinkgraphAssignee

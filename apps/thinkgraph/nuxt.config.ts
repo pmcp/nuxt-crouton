@@ -13,6 +13,7 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-flow',
+    '@fyit/crouton-editor',
     '@fyit/crouton-ai',
     '@fyit/crouton-mcp-toolkit',
     '@fyit/crouton-email',

@@ -47,6 +47,8 @@ export const thinkgraphNodes = sqliteTable('thinkgraph_nodes', {
   brief: text('brief'),
   output: text('output'),
   retrospective: text('retrospective'),
+  // Block editor doc (TipTap JSON) — Notion-style slideover content. PR 1 of multi-PR series.
+  content: jsonColumn('content'),
 
   // Routing
   assignee: text('assignee').$default(() => 'human'),

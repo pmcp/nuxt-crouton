@@ -1200,6 +1200,8 @@ const backlinks = computed(() => {
 // ─── Keyboard shortcuts ───
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  // Also bail when focus is inside a contenteditable surface (TipTap block editor in the slideover)
+  if ((e.target as HTMLElement | null)?.isContentEditable) return
   switch (e.key) {
     case 'n': case 'N': showCreate.value = true; break
     case 'Backspace': case 'Delete':
@@ -1715,6 +1717,16 @@ if (import.meta.client) {
               :rows="3"
               class="w-full"
               @blur="(e: FocusEvent) => updateItem(selectedItem!.id, { brief: (e.target as HTMLTextAreaElement).value })"
+            />
+          </UFormField>
+
+          <!-- Notion-style block editor (PR 1 of notion-slideover-brief) -->
+          <UFormField v-if="teamId" label="Content" class="mb-4">
+            <NodeBlockEditor
+              :key="selectedItem.id"
+              :node-id="selectedItem.id"
+              :team-id="teamId"
+              :initial-content="selectedItem.content ?? null"
             />
           </UFormField>
 

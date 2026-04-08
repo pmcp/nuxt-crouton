@@ -16,6 +16,7 @@ const bodySchema = z.object({
   brief: z.string().optional(),
   output: z.string().nullable().optional(),
   retrospective: z.string().nullable().optional(),
+  content: z.any().nullable().optional(),
   assignee: z.string().optional(),
   provider: z.string().optional(),
   skill: z.string().optional(),

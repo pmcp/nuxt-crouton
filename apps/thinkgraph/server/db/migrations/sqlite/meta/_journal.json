@@ -120,6 +120,13 @@
       "when": 1775865600000,
       "tag": "0016_phase2a_watch_collections",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1776124800000,
+      "tag": "0017_add_node_content",
+      "breakpoints": true
     }
   ]
 }

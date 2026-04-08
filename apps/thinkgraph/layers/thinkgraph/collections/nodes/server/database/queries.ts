@@ -47,6 +47,9 @@ export async function getAllThinkgraphNodes(teamId: string, projectId?: string) 
     if (typeof item.dependsOn === 'string') {
       try { item.dependsOn = JSON.parse(item.dependsOn) } catch { item.dependsOn = [] }
     }
+    if (typeof item.content === 'string') {
+      try { item.content = JSON.parse(item.content) } catch { item.content = null }
+    }
   })
 
   return nodes
@@ -92,6 +95,9 @@ export async function getThinkgraphNodesByIds(teamId: string, nodeIds: string[])
     }
     if (typeof item.dependsOn === 'string') {
       try { item.dependsOn = JSON.parse(item.dependsOn) } catch { item.dependsOn = [] }
+    }
+    if (typeof item.content === 'string') {
+      try { item.content = JSON.parse(item.content) } catch { item.content = null }
     }
   })
 
