@@ -54,6 +54,10 @@ const suggestionItems = [
 const yxmlFragment = collab.yxmlFragment
 const provider = collab.provider
 const collabUser = computed(() => collab.user.value ?? undefined)
+const connected = collab.connected
+const synced = collab.synced
+const error = collab.error
+const otherUsers = collab.otherUsers
 
 const editorInstance = ref<Editor | null>(null)
 const seeded = ref(false)
@@ -104,6 +108,14 @@ function handleUpdate({ editor }: { editor: Editor }) {
 
 <template>
   <div class="rounded-lg border border-default overflow-hidden bg-default">
+    <div class="flex items-center justify-end gap-2 px-3 py-1.5 border-b border-default bg-muted/30">
+      <CollabIndicator
+        :connected="connected"
+        :synced="synced"
+        :error="error"
+        :users="otherUsers"
+      />
+    </div>
     <CroutonEditorBlocks
       :yxml-fragment="yxmlFragment"
       :collab-provider="provider"
