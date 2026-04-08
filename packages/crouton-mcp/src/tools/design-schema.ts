@@ -22,26 +22,36 @@ export interface DesignSchemaResult {
 }
 
 /**
- * Infer a layer name from a collection name
+ * Heuristic mapping of collection-name keywords to common layer names.
+ *
+ * This is a fallback used only when the AI caller does not pass an explicit
+ * `layer` argument to `design_schema`. It is intentionally conservative and
+ * lives at module scope so it is easy to find and extend without touching
+ * the inference logic itself.
+ */
+const LAYER_KEYWORD_MAP: Record<string, string[]> = {
+  shop: ['product', 'order', 'cart', 'payment', 'customer', 'inventory'],
+  blog: ['post', 'article', 'comment', 'author', 'category', 'tag'],
+  auth: ['user', 'role', 'permission', 'session', 'token'],
+  cms: ['page', 'content', 'media', 'template', 'block'],
+  crm: ['contact', 'lead', 'deal', 'company', 'activity']
+}
+
+const DEFAULT_LAYER = 'core'
+
+/**
+ * Infer a layer name from a collection name (fallback heuristic).
  */
 function inferLayerFromName(collectionName: string): string {
-  const layerMappings: Record<string, string[]> = {
-    shop: ['product', 'order', 'cart', 'payment', 'customer', 'inventory'],
-    blog: ['post', 'article', 'comment', 'author', 'category', 'tag'],
-    auth: ['user', 'role', 'permission', 'session', 'token'],
-    cms: ['page', 'content', 'media', 'template', 'block'],
-    crm: ['contact', 'lead', 'deal', 'company', 'activity']
-  }
-
   const lowerName = collectionName.toLowerCase()
 
-  for (const [layer, keywords] of Object.entries(layerMappings)) {
+  for (const [layer, keywords] of Object.entries(LAYER_KEYWORD_MAP)) {
     if (keywords.some(kw => lowerName.includes(kw))) {
       return layer
     }
   }
 
-  return 'core'
+  return DEFAULT_LAYER
 }
 
 /**

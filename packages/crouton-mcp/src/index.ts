@@ -48,160 +48,47 @@ const server = new McpServer({
   version: '1.0.0'
 })
 
-// Register tools with Zod schemas
-server.tool(
-  designSchemaToolDefinition.name,
-  designSchemaToolDefinition.description,
-  designSchemaInputSchema,
-  async (args) => {
-    const result = handleDesignSchema(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
+/**
+ * Wrap a tool handler with the MCP response envelope.
+ * Every tool returns the same `{ content: [{ type: 'text', text: JSON }] }` shape,
+ * so this helper centralizes the boilerplate. Handler can be sync or async; arg-less
+ * handlers (like list_layers) work because the wrapper just ignores the arg.
+ */
+function registerTool<TInput>(
+  definition: { name: string; description: string },
+  inputSchema: any,
+  handler: (args: TInput) => unknown | Promise<unknown>
+) {
+  server.tool(
+    definition.name,
+    definition.description,
+    inputSchema,
+    async (args: TInput) => {
+      const result = await handler(args)
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(result, null, 2)
+          }
+        ]
+      }
     }
-  }
-)
+  )
+}
 
-server.tool(
-  validateSchemaToolDefinition.name,
-  validateSchemaToolDefinition.description,
-  validateSchemaInputSchema,
-  async (args) => {
-    const result = handleValidateSchema(args as Parameters<typeof handleValidateSchema>[0])
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  generateCollectionToolDefinition.name,
-  generateCollectionToolDefinition.description,
-  generateCollectionInputSchema,
-  async (args) => {
-    const result = await handleGenerateCollection(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  listCollectionsToolDefinition.name,
-  listCollectionsToolDefinition.description,
-  listCollectionsInputSchema,
-  async (args) => {
-    const result = await handleListCollections(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  listLayersToolDefinition.name,
-  listLayersToolDefinition.description,
-  listLayersInputSchema,
-  async () => {
-    const result = await handleListLayers()
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
+// Schema & generation tools
+registerTool(designSchemaToolDefinition, designSchemaInputSchema, handleDesignSchema)
+registerTool(validateSchemaToolDefinition, validateSchemaInputSchema, handleValidateSchema as (args: unknown) => unknown)
+registerTool(generateCollectionToolDefinition, generateCollectionInputSchema, handleGenerateCollection)
+registerTool(listCollectionsToolDefinition, listCollectionsInputSchema, handleListCollections)
+registerTool(listLayersToolDefinition, listLayersInputSchema, () => handleListLayers())
 
 // CLI integration tools
-server.tool(
-  cliHelpToolDefinition.name,
-  cliHelpToolDefinition.description,
-  cliHelpInputSchema,
-  async (args) => {
-    const result = await handleCliHelp(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  dryRunToolDefinition.name,
-  dryRunToolDefinition.description,
-  dryRunInputSchema,
-  async (args) => {
-    const result = await handleDryRun(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  rollbackToolDefinition.name,
-  rollbackToolDefinition.description,
-  rollbackInputSchema,
-  async (args) => {
-    const result = await handleRollback(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
-
-server.tool(
-  initSchemaToolDefinition.name,
-  initSchemaToolDefinition.description,
-  initSchemaInputSchema,
-  async (args) => {
-    const result = handleInitSchema(args)
-    return {
-      content: [
-        {
-          type: 'text' as const,
-          text: JSON.stringify(result, null, 2)
-        }
-      ]
-    }
-  }
-)
+registerTool(cliHelpToolDefinition, cliHelpInputSchema, handleCliHelp)
+registerTool(dryRunToolDefinition, dryRunInputSchema, handleDryRun)
+registerTool(rollbackToolDefinition, rollbackInputSchema, handleRollback)
+registerTool(initSchemaToolDefinition, initSchemaInputSchema, handleInitSchema)
 
 // Register resources
 server.resource('crouton://field-types', 'Field Types Reference', async () => {
