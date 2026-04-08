@@ -22,7 +22,8 @@ export interface ActionButtonAttrs {
   label: string
   icon: string
   kind: string
-  payload: Record<string, unknown>
+  /** null = no payload (NodeView handlers must treat null as `{}`) */
+  payload: Record<string, unknown> | null
   consumed: boolean
   /** Optional metadata set after a successful click — e.g. createdNodeId */
   result: Record<string, unknown> | null
@@ -74,12 +75,16 @@ export const ActionButton = Node.create({
         renderHTML: attrs => ({ 'data-kind': String(attrs.kind ?? '') }),
       },
       payload: {
-        default: () => ({}),
+        // TipTap stores `default` as-is, so a function default would be stored
+        // as the literal function value. Use null for "no payload" — the
+        // NodeView treats null and missing keys as an empty object.
+        default: null,
         // y-prosemirror feeds attribute values back as the raw string from the
         // Y.XmlElement. Parse the JSON envelope so the NodeView gets a real object.
-        parseHTML: el => parseJsonAttr<Record<string, unknown>>(el.getAttribute('data-payload'), {}),
+        parseHTML: el => parseJsonAttr<Record<string, unknown> | null>(el.getAttribute('data-payload'), null),
         renderHTML: (attrs) => {
-          const payload = attrs.payload ?? {}
+          const payload = attrs.payload
+          if (payload == null) return {}
           return { 'data-payload': typeof payload === 'string' ? payload : JSON.stringify(payload) }
         },
       },
@@ -123,7 +128,7 @@ export const ActionButton = Node.create({
               label: 'Action',
               icon: 'i-lucide-plus',
               kind: '',
-              payload: {},
+              payload: null,
               consumed: false,
               result: null,
               ...attrs,
