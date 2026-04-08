@@ -237,13 +237,13 @@ Uses `statusCode`/`statusMessage` instead of `status`/`statusText` (Nitro v3):
 
 ### 12. Overengineered Infrastructure
 
-- [ ] **crouton-devtools** — `client.ts` — 34,000+ token inline HTML string with Vue+Tailwind from CDN
-- [ ] **crouton-devtools** — `eventsHealth.ts` — loads ALL events into memory for stats (use SQL aggregates)
+- [x] ✅ **crouton-devtools** — ~~`client.ts` — 34,000+ token inline HTML string with Vue+Tailwind from CDN~~ → extracted to `src/runtime/client/{template.html,styles.css,app.js,tailwind.config.js}`. `client.ts` is now a small handler that reads the files at module load and substitutes placeholders. Build copies the dir into dist alongside pages.
+- [x] ✅ **crouton-devtools** — ~~`eventsHealth.ts` — loads ALL events into memory for stats~~ → replaced with parallel Drizzle SQL aggregates (count + groupBy + asc/desc limit 1). Schema-loader fallback chain unchanged.
 - [ ] **crouton-devtools** — `OperationStore`/`SystemOperationStore` classes — should be plain module-scoped closures
 - [x] **crouton-cli** — `manifest-bridge.ts` — not a passthrough: jiti interop adapter enabling .mjs→.ts runtime imports (load-bearing, 3 consumers)
-- [ ] **crouton-mcp** — 8 identical tool registration wrappers in `index.ts`
+- [x] ✅ **crouton-mcp** — ~~8 identical tool registration wrappers in `index.ts`~~ → collapsed into a `registerTool` helper (commit `8d907ecb`).
 - [x] **crouton-core** — `useCroutonMutate.ts` — provides action-dispatch convenience + id guard; 2 production consumers + 14 tests; low ROI to remove
-- [ ] **crouton-core** — `useCrouton.ts` — mixed concerns (modal state + pagination state)
+- [x] ✅ **crouton-core** — ~~`useCrouton.ts` — mixed concerns (modal state + pagination state)~~ → pagination state split into its own composable (commit `e084e0d1`).
 - [x] ✅ **crouton-auth** — ~~`useAuthConfig.ts` — deprecated `useAuthMode()` and `useIsMultiTenant()`~~ — removed (zero production callers). Core `useAuthConfig()` and `useAuthRedirects()` retained (9 and 3 callers respectively)
 - [x] **crouton-admin** — `useAdminDb()` — not just a null check: also centralizes schema re-exports from crouton-auth for all 13 admin API endpoints (load-bearing)
 - [x] ✅ **crouton-ai** — ~~`AITranslateButton.vue` — 16 props covering two unrelated modes~~ → trimmed to smart-mode only (10 props): owns the API call, confirmation modal, and context selector. Controlled-mode (parent-driven block-editor flow) extracted to new `crouton-i18n/components/BlockTranslateTrigger.vue` (4 props). Stub in `crouton-i18n/stubs/AITranslateButton.vue` and the 7 controlled-mode call sites in `Input.vue` updated.
