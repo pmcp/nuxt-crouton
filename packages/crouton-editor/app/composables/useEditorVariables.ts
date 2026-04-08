@@ -13,17 +13,25 @@ export function useEditorVariables() {
   /**
    * Interpolate variables in content
    *
-   * Replaces {{variable_name}} with actual values
+   * Replaces {{variable_name}} with actual values. When a variable has no
+   * value, the optional `fallback` function is invoked — by default the
+   * original `{{name}}` placeholder is returned unchanged.
    *
    * @param content - Content with variable placeholders
    * @param values - Map of variable names to values
+   * @param fallback - Called for unknown variables; receives the raw match
+   *   (e.g. "{{name}}") and the variable name. Defaults to returning the match.
    * @returns Content with variables replaced
    */
-  function interpolate(content: string, values: Record<string, string>): string {
+  function interpolate(
+    content: string,
+    values: Record<string, string>,
+    fallback: (match: string, varName: string) => string = match => match
+  ): string {
     if (!content) return ''
 
     return content.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, varName) => {
-      return values[varName] ?? match
+      return values[varName] ?? fallback(match, varName)
     })
   }
 

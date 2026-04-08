@@ -117,7 +117,7 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 #### crouton-editor
 - [ ] Toolbar configs — defined in `Simple.vue`, `Blocks.vue`, `WithPreview.vue`
 - [ ] Image upload logic — repeated 3 times in `Simple.vue`
-- [ ] `useEditorVariables` composable exists but `Preview.vue` reimplements inline
+- [x] ✅ ~~`useEditorVariables` composable exists but `Preview.vue` reimplements inline~~ → added optional `fallback` param to `interpolate()` so Preview can pass its styled-placeholder behavior; switched `variableCount` to `extractVariables()`. Removed ~10 lines of duplicate regex/match code. Also fixes a subtle bug: the old `variableCount` counted raw matches (so `{{ name }}` and `{{name}}` were 2), now correctly deduped by canonical name.
 - **Fix**: Extract `toolbarDefaults.ts`, `uploadAndInsertImage()` helper, use the composable
 
 #### crouton-core

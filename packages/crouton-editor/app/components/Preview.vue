@@ -226,9 +226,9 @@ const props = withDefaults(defineProps<Props>(), {
 const thumbnailInnerWidth = computed(() => props.thumbnailWidth / props.thumbnailScale)
 
 /**
- * Get sample values from variable definitions (delegates to useEditorVariables)
+ * Variable utilities (interpolation, extraction, sample values)
  */
-const { getSampleValues } = useEditorVariables()
+const { getSampleValues, interpolate, extractVariables } = useEditorVariables()
 const sampleValues = computed(() => {
   if (!props.variables?.length) return {}
   return getSampleValues(props.variables)
@@ -255,6 +255,12 @@ function decodeEntities(content: string): string {
 }
 
 /**
+ * Render undefined variables as a styled warning placeholder.
+ */
+const undefinedVarPlaceholder = (match: string) =>
+  `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-warning/20 text-warning text-xs font-mono">${match}</span>`
+
+/**
  * Interpolate variables in content
  */
 const renderedContent = computed(() => {
@@ -266,22 +272,10 @@ const renderedContent = computed(() => {
     return sanitizeHtml(renderTipTapToHtml(tiptapDoc))
   }
 
-  // Decode HTML entities first
-  let result = decodeEntities(props.content as string)
-
-  // Replace variables with values or styled placeholders
-  // Match {{variable_name}} with optional whitespace
-  result = result.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, varName) => {
-    const value = mergedValues.value[varName]
-
-    if (value !== undefined) {
-      // Has a value - return it
-      return value
-    }
-
-    // No value - show styled placeholder
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-warning/20 text-warning text-xs font-mono">${match}</span>`
-  })
+  // Decode HTML entities first, then interpolate variables (with styled
+  // placeholder fallback for undefined ones)
+  const decoded = decodeEntities(props.content as string)
+  let result = interpolate(decoded, mergedValues.value, undefinedVarPlaceholder)
 
   // If content doesn't have block-level HTML tags, convert line breaks to <br>
   // This handles plain text content or content with only inline formatting
@@ -294,14 +288,11 @@ const renderedContent = computed(() => {
 })
 
 /**
- * Count variables in content
+ * Count unique variables in content
  */
 const variableCount = computed(() => {
   if (!props.content || typeof props.content !== 'string') return 0
-
-  const decoded = decodeEntities(props.content)
-  const matches = decoded.match(/\{\{\s*\w+\s*\}\}/g)
-  return matches ? new Set(matches).size : 0
+  return extractVariables(decodeEntities(props.content)).length
 })
 </script>
 
