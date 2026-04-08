@@ -42,6 +42,8 @@ export default defineBuildConfig({
     'build:done': () => {
       // Copy Vue pages to dist (they can't be transformed by mkdist)
       cpSync('src/runtime/pages', 'dist/runtime/pages', { recursive: true })
+      // Copy raw client assets (HTML/CSS/JS) served by the devtools handler
+      cpSync('src/runtime/client', 'dist/runtime/client', { recursive: true })
     }
   }
 })
