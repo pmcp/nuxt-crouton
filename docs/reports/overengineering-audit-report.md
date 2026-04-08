@@ -96,10 +96,10 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 - **Fix**: ~~Single source of truth in `shared/` directory~~ Created `shared/utils/ai-providers.ts` and `shared/utils/language-names.ts`
 
 #### crouton-triage
-- [ ] `calculateSimilarity` — 3 separate implementations (2 prefix-based, 1 Levenshtein)
-- [ ] Field-mapping logic — nearly identical in client composable and server util
-- [ ] `parseEmail`/`parseEmailAsync` — share 90% of code
-- **Fix**: Shared utils, single function with async option flag
+- [x] ✅ ~~`calculateSimilarity` — 3 separate implementations~~ → consolidated into `shared/utils/field-mapping.ts` (refactor 14a)
+- [x] ✅ ~~Field-mapping logic — nearly identical in client composable and server util~~ → unified in `shared/utils/field-mapping.ts` (refactor 14a)
+- [x] ✅ ~~`parseEmail`/`parseEmailAsync` — share 90% of code~~ → extracted `prepareEmailContext`, `extractFileKey`, `buildParsedEmail` shared helpers; `parseEmail`/`parseEmailAsync` are now thin wrappers (refactor 14b, 71 tests pass)
+- **Fix**: ~~Shared utils, single function with async option flag~~ Done
 
 #### crouton-events
 - [x] `EventChange`/`CroutonEvent` interfaces — ~~defined in 5+ files~~ → centralized in `app/types/events.ts`
@@ -123,7 +123,7 @@ All of these manually manage `loading`, `error`, `data` refs around `$fetch` cal
 #### crouton-core
 - [x] `slugify` — ~~duplicated in `app/utils/slugify.ts` and `server/utils/slug.ts`~~ → canonical in `shared/utils/slugify.ts`, removed re-exports from both (fixed "Duplicated imports" warning)
 - [x] `generateCorrelationId` — ~~duplicated in `useTreeMutation.ts` and `useCollectionMutation.ts`~~ → extracted to `app/utils/correlationId.ts`
-- [ ] Search filtering logic — duplicated within `useTableData.ts`
+- [x] ✅ ~~Search filtering logic — duplicated within `useTableData.ts`~~ → `slicedRows` now reuses the memoized `searchedRows` computed instead of calling `filterRowsBySearch` a second time. 26 tests pass.
 - **Fix**: Move to shared utils
 
 #### crouton-collab

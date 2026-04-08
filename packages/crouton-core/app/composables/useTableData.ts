@@ -75,10 +75,10 @@ export function useTableData(options: UseTableDataOptions) {
 
   // Sliced rows for pagination
   const slicedRows = computed(() => {
-    // For server pagination, use rows directly (already paginated from server)
+    // For server pagination, rows are already paginated from the server.
+    // searchedRows handles the local-search-on-server-paginated-data case.
     if (serverPagination) {
-      // When searching locally on server-paginated data
-      return filterRowsBySearch(rows.value, search.value)
+      return searchedRows.value
     }
 
     // For client-side pagination
