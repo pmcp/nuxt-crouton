@@ -715,7 +715,8 @@ Before committing:
 ### Step 5: Commit, Push, Create PR
 
 Follow the worktree instructions above to commit, push, and create a PR.
-Use \`update_workitem\` to set worktree, output, and signal.
+
+**MANDATORY**: Use \`update_workitem\` to set \`worktree\` to the branch name (e.g., \`thinkgraph/abc123\`) along with \`output\` and \`signal\`. The merger stage depends on the \`worktree\` field to find the branch — if you skip this, the merge will fail.
 `
   }
 
@@ -737,11 +738,11 @@ These contain the project's coding conventions and the full review checklist (se
 ### Step 2: Gather the Diff
 
 - Read all ancestor work item outputs — understand the original brief
+- Find the branch: use \`get_workitem\` to check the current work item's \`worktree\` field. If empty, fall back to ancestor context.
 - Check out and review the code:
   \`\`\`bash
   cd ~/nuxt-crouton
   git fetch origin
-  # Look for the worktree branch in ancestor context
   git diff main...<branch-name> --stat
   git diff main...<branch-name>
   \`\`\`
@@ -826,8 +827,9 @@ Follow these conventions for any commits you make during the merge process.
 
 ### Step 1: Find the branch
 
-Look in the ancestor context for a \`worktree\` value — that's the branch name (e.g., \`thinkgraph/abc123\`).
-If no branch is found, signal red — there's nothing to merge.
+Use \`get_workitem\` to check the current work item's \`worktree\` field — that's the branch name (e.g., \`thinkgraph/abc123\`).
+If the \`worktree\` field is empty or null, fall back to checking ancestor context for a worktree value.
+If no branch is found in either location, signal red — there's nothing to merge.
 
 ### Step 1.5: Check for commits ahead of main
 
