@@ -1413,7 +1413,7 @@ if (import.meta.client) {
           :flow-id="flowId || undefined"
           :saved-positions="savedPositions || undefined"
           :additional-edges="additionalEdges"
-          sync
+          :sync="!!flowId"
           minimap
           @node-click="onNodeClick"
           @node-dbl-click="onNodeDblClick"
