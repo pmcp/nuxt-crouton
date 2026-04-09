@@ -768,6 +768,32 @@ If the brief is a question or exploration request:
 
 A question brief answered well is a completed task. A question brief rejected as "not actionable" is a broken gate.
 
+### Step 2c: Anchor passage-level findings as comments
+
+Use the \`open_comment\` tool to pin any finding that **references a specific phrase or sentence in the brief** directly onto that passage. This gives the human spatial context — the callout lives next to the sentence it's about, and they can reply with Pi on that thread independently without re-running the whole stage.
+
+**Use \`open_comment\` for:**
+- A phrase in the brief that does not exist in the codebase after thorough search ("the \`/api/search\` endpoint")
+- An assumption baked into one sentence that you think is wrong or worth challenging ("60 req/min per IP" — too strict behind shared NAT?)
+- A specific technical choice that has a clear alternative ("KV counters" — why not Durable Objects?)
+- A term or reference you needed to look up and have context about, worth leaving as a note for the human
+
+**Do NOT use \`open_comment\` for:**
+- Global questions that aren't tied to any one phrase ("Which provider should we use?")
+- Multiple-choice decisions the human must pick before the pipeline can advance — those belong in the structured \`output\` of \`update_workitem\` so they render in the sidebar questionnaire
+- Signaling — comments do NOT replace GREEN/ORANGE/RED, they complement ORANGE findings that have natural anchors
+
+**How to call it:**
+- \`quote\` must be a verbatim snippet from the brief — 5-15 words is ideal, pick something distinctive so the anchor is unambiguous
+- \`body\` is the question or observation — keep it focused, conversational, 1-3 sentences
+- \`authorLabel\` defaults to "Pi" — leave it
+- You can open multiple comments in one run; each will get its own thread the human can reply on
+
+**Relationship to ORANGE output:**
+Comments are additive. If you open comments AND signal ORANGE, the structured options in \`output\` handle the atomic pipeline decisions, and the comments handle the passage-level detail. The human answers comments via "Reply with Pi" on each thread; they answer the structured options via "Respond & Re-dispatch" in the sidebar. These are two different decision surfaces for two different kinds of question.
+
+If you can express a finding as a comment AND it doesn't block the pipeline, prefer the comment — it keeps the sidebar questionnaire focused on genuinely global decisions.
+
 ### Step 3: Signal
 
 Use \`update_workitem\` to set your signal:
