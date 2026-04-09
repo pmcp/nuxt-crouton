@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "get": "cd ~/nuxt-crouton && git pull && cd apps/thinkgraph-worker && pnpm build && sudo systemctl restart thinkgraph-worker && journalctl -u thinkgraph-worker -f -n 100"
   },
   "dependencies": {
     "@mariozechner/pi-coding-agent": "^0.58.4",

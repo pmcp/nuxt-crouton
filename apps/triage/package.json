@@ -11,7 +11,8 @@
     "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
-    "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote"
+    "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote",
+    "tunnel": "cloudflared tunnel --config ~/.cloudflared/triage-dev.yml run triage-dev"
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
