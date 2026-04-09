@@ -46,7 +46,12 @@ export default defineNuxtConfig({
 
   vite: {
     server: {
-      allowedHosts: ['.trycloudflare.com']
+      allowedHosts: ['.trycloudflare.com', 'triage-dev.pmcp.dev'],
+      hmr: {
+        protocol: 'wss',
+        clientPort: 443,
+        host: 'triage-dev.pmcp.dev'
+      }
     }
   },
 
