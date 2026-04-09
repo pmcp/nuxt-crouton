@@ -23,7 +23,10 @@
  */
 import type { Editor } from '@tiptap/vue-3'
 import ActionButton from '../extensions/action-button'
+import CommentAnchor from '../extensions/comment-anchor'
 import { provideNodeActionHandlers } from '../composables/useNodeActionHandlers'
+import { provideNodeComments } from '../composables/useNodeComments'
+import CommentSlideout from './CommentSlideout.vue'
 
 interface Props {
   nodeId: string
@@ -52,7 +55,11 @@ provideNodeActionHandlers({
 // PR 2: action button TipTap extension. Plain TipTap Node — no markRaw,
 // because the underlying class instance isn't reactive Vue state and TipTap
 // already handles its own extension lifecycle.
-const editorExtensions = [ActionButton]
+// PR 3: commentAnchor mark — inline highlight for anchored comment threads.
+// The visual binding loop lives in `useNodeComments`, which observes the
+// shared Y.Map<CommentThread> and applies/removes this mark to keep
+// highlights in sync with the source-of-truth thread store.
+const editorExtensions = [ActionButton, CommentAnchor]
 
 // Slash menu items. Each `command` must be a zero-arg method on editor.commands
 // (CroutonEditorBlocks invokes them as `editor.commands[command]()`). For
@@ -81,12 +88,38 @@ const connected = collab.connected
 const synced = collab.synced
 const error = collab.error
 const otherUsers = collab.otherUsers
+const ydoc = collab.ydoc
 
 const editorInstance = ref<Editor | null>(null)
 const seeded = ref(false)
 
+// PR 3: provide the comment store + mark sync loop. Uses the same Y.Doc as
+// the editor (so commentsMap rides on the same page room as the content
+// fragment). Children — primarily CommentSlideout — read state and dispatch
+// actions via `useNodeComments()`.
+const comments = provideNodeComments({
+  editor: editorInstance,
+  ydoc,
+  humanLabel: () => collab.user.value?.name ?? 'You',
+})
+
 function handleCreate({ editor }: { editor: Editor }) {
   editorInstance.value = editor
+}
+
+// PR 3: DOM delegation — when the user clicks anywhere inside the editor
+// surface, check if the click landed on a `commentAnchor` mark span and
+// focus the corresponding thread in the slideout. Going through the DOM
+// instead of a TipTap plugin keeps the mark itself passive and lets us
+// handle clicks without ProseMirror plugin lifecycle juggling.
+function handleEditorClick(event: MouseEvent) {
+  const target = event.target
+  if (!(target instanceof HTMLElement)) return
+  const span = target.closest('[data-comment-thread-id]') as HTMLElement | null
+  if (!span) return
+  const threadId = span.getAttribute('data-comment-thread-id')
+  if (!threadId) return
+  comments.focusThread(threadId)
 }
 
 // Cold-start seed: when the room is fresh but the row has content, import the
@@ -139,17 +172,20 @@ function handleUpdate({ editor }: { editor: Editor }) {
         :users="otherUsers"
       />
     </div>
-    <CroutonEditorBlocks
-      :yxml-fragment="yxmlFragment"
-      :collab-provider="provider"
-      :collab-user="collabUser"
-      :suggestion-items="suggestionItems"
-      :extensions="editorExtensions"
-      placeholder="Type / for blocks, or # ## ### for headings..."
-      content-type="json"
-      class="min-h-[12rem]"
-      @create="handleCreate"
-      @update="handleUpdate"
-    />
+    <div @click="handleEditorClick">
+      <CroutonEditorBlocks
+        :yxml-fragment="yxmlFragment"
+        :collab-provider="provider"
+        :collab-user="collabUser"
+        :suggestion-items="suggestionItems"
+        :extensions="editorExtensions"
+        placeholder="Type / for blocks, or # ## ### for headings..."
+        content-type="json"
+        class="min-h-[12rem]"
+        @create="handleCreate"
+        @update="handleUpdate"
+      />
+    </div>
+    <CommentSlideout />
   </div>
 </template>

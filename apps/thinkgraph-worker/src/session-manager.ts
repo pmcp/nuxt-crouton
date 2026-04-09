@@ -21,6 +21,7 @@ import type { YjsFlowPool, YjsPagePool } from './yjs-pool.js'
 import { createThinkGraphTools } from './pi-extension.js'
 import { createPMTools } from './pm-tools.js'
 import { createPageTools } from './page-tools.js'
+import { createCommentTools } from './comment-tools.js'
 import { ofetch } from 'ofetch'
 
 export interface DispatchPayload {
@@ -198,7 +199,13 @@ export class AgentSessionManager {
       const pageTools = this.pagePool
         ? createPageTools(this.pagePool, sessionTeamId, payload.nodeId)
         : []
-      const tools = [...baseTools, ...pageTools]
+      // PR 3: comment-thread tools — Pi can open / reply to / resolve anchored
+      // comment threads on the same per-node page room. Shares the page pool with
+      // page-tools so an open + reply pair reuses the same socket.
+      const commentTools = this.pagePool
+        ? createCommentTools(this.pagePool, sessionTeamId, payload.nodeId)
+        : []
+      const tools = [...baseTools, ...pageTools, ...commentTools]
 
       // Build the prompt
       const agentPrompt = this.buildAgentPrompt(payload)

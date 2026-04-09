@@ -34,6 +34,45 @@ export interface ActionButtonInsert {
   payload?: Record<string, unknown>
 }
 
+// ── Comment thread types (PR 3) ────────────────────────────
+//
+// Comment threads live in a Y.Map<CommentThread> on the same Y.Doc as the
+// editor's Y.XmlFragment. Threads are stored as plain JS objects (not nested
+// Y types) because Y.Map.set serialises values as JSON updates — appending a
+// message replaces the whole entry. Append-only semantics + 1-user-1-Pi
+// concurrency in practice means last-write-wins is acceptable for v1.
+
+export type CommentAuthor = 'human' | 'pi'
+
+export interface CommentMessage {
+  id: string
+  /** Coarse author kind. Display label is derived from this on the browser. */
+  author: CommentAuthor
+  /** Optional human-readable label, e.g. "Pi", "Alice". Falls back to author kind. */
+  authorLabel?: string
+  body: string
+  createdAt: number
+}
+
+export interface CommentAnchor {
+  /** Verbatim quote of the editor text the thread is anchored to. */
+  quote: string
+  /**
+   * Which match of `quote` to anchor to (0-indexed). Defaults to 0 — the first
+   * occurrence wins. Pi should pick distinctive quotes to avoid ambiguity.
+   */
+  occurrence?: number
+}
+
+export interface CommentThread {
+  id: string
+  anchor: CommentAnchor
+  status: 'open' | 'resolved'
+  createdAt: number
+  createdBy: CommentAuthor
+  messages: CommentMessage[]
+}
+
 export interface YjsPageClientOptions {
   config: WorkerConfig
   /** Team id used in the room name and the team membership query param */
@@ -58,6 +97,7 @@ export class YjsPageClient {
   private readonly roomId: string
   private readonly roomType = 'page'
   private readonly fragmentName = 'content'
+  private readonly commentsMapName = 'comments'
 
   constructor(options: YjsPageClientOptions) {
     this.config = options.config
@@ -70,6 +110,15 @@ export class YjsPageClient {
   /** The Y.XmlFragment that holds the editor content — same as the browser's `useCollabEditor` */
   get fragment(): Y.XmlFragment {
     return this.doc.getXmlFragment(this.fragmentName)
+  }
+
+  /**
+   * Y.Map storage for comment threads (PR 3). Lives on the same Y.Doc as the
+   * editor fragment, so a single page room round-trips both content and
+   * discussion. Browser uses the same map name in `useNodeComments`.
+   */
+  get commentsMap(): Y.Map<CommentThread> {
+    return this.doc.getMap<CommentThread>(this.commentsMapName)
   }
 
   get isConnected(): boolean {
@@ -234,6 +283,88 @@ export class YjsPageClient {
     node.setAttribute('payload', JSON.stringify(button.payload ?? {}))
     node.setAttribute('consumed', 'false')
     this.fragment.insert(this.fragment.length, [node])
+  }
+
+  // ── Comment thread operations (PR 3) ─────────────────────
+
+  /**
+   * Open a new comment thread anchored to a quoted snippet.
+   *
+   * The thread is stored in `commentsMap` keyed by `threadId`. The browser's
+   * `useNodeComments` observer fires within the next Yjs update cycle and
+   * applies the visual `commentAnchor` mark to the matching range.
+   *
+   * Returns the threadId for the caller's records.
+   */
+  openComment(
+    threadId: string,
+    anchor: CommentAnchor,
+    message: { body: string; author?: CommentAuthor; authorLabel?: string },
+  ): string {
+    const author: CommentAuthor = message.author ?? 'pi'
+    const now = Date.now()
+    const thread: CommentThread = {
+      id: threadId,
+      anchor: {
+        quote: anchor.quote,
+        occurrence: anchor.occurrence ?? 0,
+      },
+      status: 'open',
+      createdAt: now,
+      createdBy: author,
+      messages: [
+        {
+          id: `${threadId}-m0`,
+          author,
+          authorLabel: message.authorLabel,
+          body: message.body,
+          createdAt: now,
+        },
+      ],
+    }
+    this.commentsMap.set(threadId, thread)
+    return threadId
+  }
+
+  /**
+   * Append a message to an existing thread. No-ops if the thread doesn't
+   * exist (caller can check the return value to detect that case).
+   *
+   * Concurrency note: two writers replying to the same thread at the same
+   * instant will collide on a Y.Map.set — last write wins, the loser's
+   * message is dropped. Acceptable for v1 (1 user + Pi typical case).
+   */
+  replyToComment(
+    threadId: string,
+    message: { body: string; author?: CommentAuthor; authorLabel?: string },
+  ): boolean {
+    const existing = this.commentsMap.get(threadId)
+    if (!existing) return false
+    const author: CommentAuthor = message.author ?? 'pi'
+    const next: CommentThread = {
+      ...existing,
+      messages: [
+        ...existing.messages,
+        {
+          id: `${threadId}-m${existing.messages.length}`,
+          author,
+          authorLabel: message.authorLabel,
+          body: message.body,
+          createdAt: Date.now(),
+        },
+      ],
+    }
+    this.commentsMap.set(threadId, next)
+    return true
+  }
+
+  /** Mark a thread as resolved. Idempotent; no-op if already resolved or missing. */
+  resolveComment(threadId: string): boolean {
+    const existing = this.commentsMap.get(threadId)
+    if (!existing) return false
+    if (existing.status === 'resolved') return true
+    this.commentsMap.set(threadId, { ...existing, status: 'resolved' })
+    return true
   }
 
   // ── Private ──────────────────────────────────────────────
