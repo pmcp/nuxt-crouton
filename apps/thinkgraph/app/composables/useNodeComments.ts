@@ -80,6 +80,16 @@ interface NodeCommentsContext {
   }) => string | null
   replyToComment: (threadId: string, params: { body: string; authorLabel?: string }) => boolean
   resolveComment: (threadId: string) => boolean
+  /**
+   * PR 5 — set of thread ids currently waiting on a Pi reply dispatch.
+   * Local UI state only (never written to Yjs). Threads are added via
+   * `markPendingPi` when the slideout fires a comment-reply dispatch, and
+   * cleared automatically by the commentsMap observer the moment a new
+   * `pi`-authored message lands on the thread.
+   */
+  pendingPiThreads: ComputedRef<Set<string>>
+  markPendingPi: (threadId: string) => void
+  clearPendingPi: (threadId: string) => void
 }
 
 const KEY: InjectionKey<NodeCommentsContext> = Symbol('NodeCommentsContext')
@@ -230,6 +240,25 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
     }
   }
 
+  // PR 5 — local-only pending-Pi-reply set. We re-assign the ref to a fresh
+  // Set on every mutation so Vue's reactivity picks up the change (matching
+  // the same "rebuild snapshot on change" shape used by threadSnapshot).
+  const pendingPiThreadsRef = ref<Set<string>>(new Set())
+
+  function markPendingPi(threadId: string) {
+    if (pendingPiThreadsRef.value.has(threadId)) return
+    const next = new Set(pendingPiThreadsRef.value)
+    next.add(threadId)
+    pendingPiThreadsRef.value = next
+  }
+
+  function clearPendingPi(threadId: string) {
+    if (!pendingPiThreadsRef.value.has(threadId)) return
+    const next = new Set(pendingPiThreadsRef.value)
+    next.delete(threadId)
+    pendingPiThreadsRef.value = next
+  }
+
   let observer: ((event: Y.YMapEvent<CommentThread>) => void) | null = null
   let observedMap: Y.Map<CommentThread> | null = null
 
@@ -245,6 +274,29 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
       const next = snapshotThreads(map)
       threadSnapshot.value = next
       syncMarks(next)
+      // PR 5 — observer-driven clear of pending-Pi flags. The moment a
+      // `pi`-authored message lands on a thread we were waiting on, drop
+      // the pending flag so the "Pi is thinking…" placeholder disappears.
+      // Ground truth is "a Pi reply arrived", not a timeout — if the
+      // worker dies mid-session, the placeholder sticks until the user
+      // retries (or clears via the error-path toast), which is the
+      // correct failure mode.
+      if (pendingPiThreadsRef.value.size > 0) {
+        let mutated = false
+        let nextPending = pendingPiThreadsRef.value
+        for (const thread of next) {
+          if (!nextPending.has(thread.id)) continue
+          const last = thread.messages[thread.messages.length - 1]
+          if (last && last.author === 'pi') {
+            if (!mutated) {
+              nextPending = new Set(nextPending)
+              mutated = true
+            }
+            nextPending.delete(thread.id)
+          }
+        }
+        if (mutated) pendingPiThreadsRef.value = nextPending
+      }
     }
     map.observe(observer)
   }
@@ -448,6 +500,8 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
     return true
   }
 
+  const pendingPiThreads = computed(() => pendingPiThreadsRef.value)
+
   const ctx: NodeCommentsContext = {
     threads,
     openThreads,
@@ -458,6 +512,9 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
     openCommentOnSelection,
     replyToComment,
     resolveComment,
+    pendingPiThreads,
+    markPendingPi,
+    clearPendingPi,
   }
   provide(KEY, ctx)
   return ctx

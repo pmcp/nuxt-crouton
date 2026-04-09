@@ -24,6 +24,7 @@
  */
 import { computed, ref } from 'vue'
 import { useNodeComments } from '../composables/useNodeComments'
+import { useNodeActionHandlers } from '../composables/useNodeActionHandlers'
 
 const {
   openThreads,
@@ -32,7 +33,17 @@ const {
   focusThread,
   replyToComment,
   resolveComment,
+  pendingPiThreads,
+  markPendingPi,
+  clearPendingPi,
 } = useNodeComments()
+
+// PR 5 — reuse the action-handler registry from NodeBlockEditor so the
+// slideout knows which (nodeId, teamId) scope it lives in. We don't add a
+// new provide; provideNodeActionHandlers is already called one level up for
+// every slideover instance.
+const actionRegistry = useNodeActionHandlers()
+const toast = useToast()
 
 // Per-thread reply input state. Keyed by threadId so unrelated reply drafts
 // don't collide when the user toggles between threads. Cleared on submit.
@@ -58,6 +69,68 @@ function handleReply(threadId: string) {
   if (!body) return
   const ok = replyToComment(threadId, { body })
   if (ok) replyBodies.value[threadId] = ''
+}
+
+/**
+ * PR 5 — "Reply with Pi" click handler.
+ *
+ * Order matters:
+ *   1. Post the human's reply locally via the existing replyToComment path
+ *      so it lands in the Y.Map immediately (and syncs to other tabs).
+ *   2. Read the updated thread state AFTER step 1 so the history we send
+ *      to Pi includes the just-typed message.
+ *   3. Mark the thread pending so the button disables + the "Pi is thinking"
+ *      row appears.
+ *   4. POST the focused dispatch to the Nitro endpoint. On network/worker
+ *      failure, clear pending and toast the error — but do NOT roll back
+ *      the human's reply (it's already in the thread; the user can retry).
+ */
+async function handleReplyWithPi(threadId: string) {
+  const body = (replyBodies.value[threadId] ?? '').trim()
+  if (!body) return
+  if (!actionRegistry) {
+    console.error('[CommentSlideout] Reply with Pi: no NodeActionContext available')
+    return
+  }
+  if (pendingPiThreads.value.has(threadId)) return
+
+  const ok = replyToComment(threadId, { body })
+  if (!ok) return
+  replyBodies.value[threadId] = ''
+
+  // Re-read the focused thread after the local reply so `history` includes
+  // the human's just-typed message. The computed `focusedThread` is reactive
+  // to the Y.Map observer, so we grab it from `openThreads` here directly
+  // to avoid any template-only reactivity gap.
+  const updated = openThreads.value.find(t => t.id === threadId)
+  const history = (updated?.messages ?? []).map(m => ({
+    author: m.author,
+    body: m.body,
+    authorLabel: m.authorLabel,
+    createdAt: m.createdAt,
+  }))
+
+  markPendingPi(threadId)
+
+  try {
+    await $fetch(`/api/teams/${actionRegistry.ctx.teamId}/dispatch/comment-reply`, {
+      method: 'POST',
+      body: {
+        nodeId: actionRegistry.ctx.nodeId,
+        threadId,
+        history,
+      },
+    })
+  } catch (err: any) {
+    clearPendingPi(threadId)
+    console.error('[CommentSlideout] Reply with Pi dispatch failed', err)
+    toast.add({
+      title: 'Pi reply failed',
+      description: err?.data?.statusMessage || err?.message || 'Could not reach the Pi worker. Try again.',
+      color: 'error',
+      icon: 'i-lucide-alert-triangle',
+    })
+  }
 }
 
 function handleResolve(threadId: string) {
@@ -145,6 +218,18 @@ function formatTime(ts: number) {
             <p class="text-default whitespace-pre-wrap">{{ msg.body }}</p>
           </div>
 
+          <!-- PR 5: local-only "Pi is thinking…" placeholder while a
+               comment-reply dispatch is in flight for this thread. The
+               commentsMap observer clears it the moment a pi-authored
+               message lands, so no timeout is needed. -->
+          <div
+            v-if="pendingPiThreads.has(thread.id)"
+            class="flex items-center gap-2 text-xs italic text-muted"
+          >
+            <UIcon name="i-lucide-loader-2" class="w-3 h-3 animate-spin" />
+            <span>Pi is thinking…</span>
+          </div>
+
           <div class="space-y-2 pt-2">
             <UTextarea
               v-model="replyBodies[thread.id]"
@@ -163,14 +248,26 @@ function formatTime(ts: number) {
               >
                 Resolve
               </UButton>
-              <UButton
-                size="xs"
-                color="primary"
-                :disabled="!(replyBodies[thread.id] ?? '').trim()"
-                @click="handleReply(thread.id)"
-              >
-                Reply
-              </UButton>
+              <div class="flex items-center gap-2">
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="soft"
+                  :disabled="!(replyBodies[thread.id] ?? '').trim()"
+                  @click="handleReply(thread.id)"
+                >
+                  Reply
+                </UButton>
+                <UButton
+                  size="xs"
+                  color="primary"
+                  icon="i-lucide-sparkles"
+                  :disabled="!(replyBodies[thread.id] ?? '').trim() || pendingPiThreads.has(thread.id)"
+                  @click="handleReplyWithPi(thread.id)"
+                >
+                  Reply with Pi
+                </UButton>
+              </div>
             </div>
           </div>
         </div>

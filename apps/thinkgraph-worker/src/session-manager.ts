@@ -48,6 +48,25 @@ export interface DispatchPayload {
   signal?: string
 }
 
+/**
+ * PR 5 — payload shape for a thread-scoped comment-reply dispatch. This is
+ * a side session that reuses PR 3's `reply_to_comment` tool on the same
+ * per-node page room; no work-item state, no stage routing, no artifacts.
+ */
+export interface CommentReplyDispatchPayload {
+  nodeId: string
+  threadId: string
+  history: Array<{
+    author: 'human' | 'pi'
+    body: string
+    authorLabel?: string
+    createdAt?: number
+  }>
+  teamId: string
+  teamSlug?: string
+  callbackUrl?: string
+}
+
 interface ActiveSession {
   nodeId: string
   session: any // AgentSession from Pi SDK
@@ -78,6 +97,13 @@ interface ActiveSession {
 
 export class AgentSessionManager {
   private activeSessions = new Map<string, ActiveSession>()
+  /**
+   * PR 5 — disjoint key space for thread-scoped comment-reply sessions.
+   * Keyed by `${nodeId}#thread:${threadId}` so a comment-reply can run
+   * concurrently with a full-node dispatch on the same node without the
+   * two fighting over a shared nodeId lock.
+   */
+  private activeCommentSessions = new Set<string>()
   private yjsPool: YjsFlowPool | null = null
   private pagePool: YjsPagePool | null = null
 
@@ -96,6 +122,11 @@ export class AgentSessionManager {
 
   get activeCount(): number {
     return this.activeSessions.size
+  }
+
+  /** PR 5 — total active sessions including comment-reply side sessions. */
+  get totalActiveCount(): number {
+    return this.activeSessions.size + this.activeCommentSessions.size
   }
 
   get maxSessions(): number {
@@ -407,6 +438,103 @@ export class AgentSessionManager {
     active.yjsClient?.sendAwareness('idle', null)
     await this.updateNodeStatus(nodeId, 'done')
     this.cleanupSession(nodeId)
+  }
+
+  /**
+   * PR 5 — start a focused Pi session that replies once to a comment thread.
+   *
+   * Runs on a disjoint session-lock key (`${nodeId}#thread:${threadId}`) so
+   * it doesn't collide with a full-node dispatch already running on the
+   * same node. Injects only the PR 3 comment tools — no page-tools, no
+   * file-diff tools, no PM tools, no ThinkGraph tools. The prompt is a
+   * tiny template instructing Pi to call `reply_to_comment` once and exit.
+   *
+   * Thread state is NOT written back to the DB. Comment replies are
+   * decoupled from the node lifecycle — they land in the page room's
+   * `commentsMap` via the existing Yjs round-trip from PR 3, the browser
+   * slideout's observer renders them, and that's it.
+   */
+  async startCommentReplySession(payload: CommentReplyDispatchPayload): Promise<void> {
+    const lockKey = `${payload.nodeId}#thread:${payload.threadId}`
+
+    if (this.activeCommentSessions.has(lockKey)) {
+      console.warn(`[session-manager] Comment-reply session already running for ${lockKey}`)
+      return
+    }
+
+    if (this.totalActiveCount >= this.config.maxSessions) {
+      console.warn(`[session-manager] Max sessions reached (${this.config.maxSessions}), skipping comment-reply ${lockKey}`)
+      return
+    }
+
+    if (!this.pagePool) {
+      console.error(`[session-manager] No page pool set — comment-reply ${lockKey} cannot run`)
+      return
+    }
+
+    this.activeCommentSessions.add(lockKey)
+    console.log(`[session-manager] Starting comment-reply session ${lockKey}`)
+
+    try {
+      // Inject only the comment tools. The prompt asks Pi to call
+      // `reply_to_comment` once and exit — no page writes, no file diffs,
+      // no work-item status updates. Constraining the tool surface keeps
+      // the prompt honest.
+      const commentTools = createCommentTools(this.pagePool, payload.teamId, payload.nodeId)
+
+      const authStorage = AuthStorage.create()
+      const modelRegistry = new ModelRegistry(authStorage)
+
+      const { session } = await createAgentSession({
+        cwd: this.config.workDir,
+        sessionManager: PiSessionManager.inMemory(),
+        authStorage,
+        modelRegistry,
+        customTools: commentTools,
+      })
+
+      const prompt = this.buildCommentReplyPrompt(payload)
+      console.log(`[session-manager] Running comment-reply prompt for ${lockKey}`)
+      await session.prompt(prompt)
+      console.log(`[session-manager] Comment-reply session completed for ${lockKey}`)
+    }
+    catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`[session-manager] Comment-reply session error for ${lockKey}: ${message}`)
+    }
+    finally {
+      this.activeCommentSessions.delete(lockKey)
+    }
+  }
+
+  /**
+   * PR 5 — build the focused prompt for a comment-reply session.
+   * Template-only, no stage routing, no closing instructions. Formats the
+   * thread conversation as `Human:` / `Pi:` prefixed lines (or custom
+   * authorLabel if provided) and instructs Pi to call `reply_to_comment`
+   * exactly once with the given threadId.
+   */
+  private buildCommentReplyPrompt(payload: CommentReplyDispatchPayload): string {
+    const formattedHistory = payload.history
+      .map((msg) => {
+        const label = msg.authorLabel || (msg.author === 'pi' ? 'Pi' : 'Human')
+        return `${label}: ${msg.body}`
+      })
+      .join('\n\n')
+
+    return `You are Pi, replying to a comment thread on a ThinkGraph node.
+
+## Context
+Node ID: ${payload.nodeId}
+Thread ID: ${payload.threadId}
+
+## Conversation so far
+${formattedHistory}
+
+## Your task
+Reply to the most recent human message ONCE, calling reply_to_comment with threadId="${payload.threadId}". Do not call any other tools. Do not open new threads. Do not append blocks or file diffs. Keep your reply focused and conversational — this is a chat, not a deliverable. Two to four sentences is typical.
+
+After your reply lands, exit the session.`
   }
 
   /** Remove session and release pool reference */

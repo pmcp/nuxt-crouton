@@ -192,6 +192,56 @@ async function main() {
         })
         const payload = JSON.parse(body)
 
+        // PR 5 — comment-reply dispatches are a focused side-session that
+        // reuses PR 3's reply_to_comment tool on the same page room. They
+        // carry a different payload shape than work-item dispatches; branch
+        // before the workItemId/prompt validation so we don't reject them.
+        if (payload.mode === 'comment-reply') {
+          if (!payload.nodeId || typeof payload.nodeId !== 'string') {
+            res.writeHead(400, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ error: 'Missing nodeId' }))
+            return
+          }
+          if (!payload.threadId || typeof payload.threadId !== 'string') {
+            res.writeHead(400, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ error: 'Missing threadId' }))
+            return
+          }
+          if (!Array.isArray(payload.history) || payload.history.length === 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ error: 'Missing or empty history' }))
+            return
+          }
+
+          if (sessionManager.totalActiveCount >= sessionManager.maxSessions) {
+            res.writeHead(503, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ error: 'Max sessions reached', active: sessionManager.totalActiveCount }))
+            return
+          }
+
+          console.log(`[http-dispatch] Starting comment-reply session for node ${payload.nodeId} thread ${payload.threadId}`)
+          sessionManager.startCommentReplySession({
+            nodeId: payload.nodeId,
+            threadId: payload.threadId,
+            history: payload.history,
+            teamId: payload.teamId || config.teamId,
+            teamSlug: payload.teamSlug || '',
+            callbackUrl: payload.callbackUrl || undefined,
+          }).catch(err => {
+            console.error(`[http-dispatch] Comment-reply session failed for ${payload.nodeId}#${payload.threadId}:`, err.message)
+          })
+
+          res.writeHead(202, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({
+            accepted: true,
+            version: WORKER_VERSION,
+            mode: 'comment-reply',
+            nodeId: payload.nodeId,
+            threadId: payload.threadId,
+          }))
+          return
+        }
+
         if (!payload.workItemId || !payload.prompt) {
           res.writeHead(400, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ error: 'Missing workItemId or prompt' }))
