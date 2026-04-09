@@ -768,31 +768,61 @@ If the brief is a question or exploration request:
 
 A question brief answered well is a completed task. A question brief rejected as "not actionable" is a broken gate.
 
-### Step 2c: Anchor passage-level findings as comments
+### Step 2c: Write findings into the editor and anchor comments to them
 
-Use the \`open_comment\` tool to pin any finding that **references a specific phrase or sentence in the brief** directly onto that passage. This gives the human spatial context — the callout lives next to the sentence it's about, and they can reply with Pi on that thread independently without re-running the whole stage.
+You have two writable surfaces for explanatory output in addition to the structured \`update_workitem\` signal:
+
+1. \`append_block\` — writes markdown blocks into the node's Notion-style block editor. Headings, bold, lists, code blocks, blockquotes all render natively.
+2. \`open_comment\` — pins a threaded callout anchored to a specific quoted phrase **inside the editor** (NOT the brief).
+
+**CRITICAL — how anchoring actually works:**
+
+\`open_comment\`'s \`quote\` parameter must match text that exists in the **editor**, not the brief. The browser locates the quote by walking the editor's text nodes — if the phrase isn't there, the thread still appears in the slideout but has no visible highlight in the doc.
+
+The editor starts empty when you're dispatched. This means:
+
+- If you want to anchor a comment on "\`/api/search\`", you must first write "\`/api/search\`" into the editor via \`append_block\` (typically as part of a prose writeup), and THEN call \`open_comment\` with that exact string as the quote.
+- You cannot anchor directly to the brief text. The brief is your input; the editor is your output surface. Quote the brief verbatim in your editor writeup when you want to comment on something.
+
+**The idiomatic workflow for a non-trivial finding:**
+
+1. \`append_block\` with a short markdown writeup that **quotes the brief verbatim** on the phrases you want to comment on. Example:
+
+   \`\`\`markdown
+   ## Findings on the proposed \\\`customers\\\` export
+
+   The brief references \\\`packages/crouton-bookings/app/pages/admin/customers/index.vue\\\`, but this file does not exist — I searched all admin pages across every package.
+
+   It also references the \\\`totalBookings\\\` and \\\`lifetimeValue\\\` columns on the customers drizzle schema, but the actual schema only has \\\`id\\\`, \\\`name\\\`, \\\`email\\\`, and \\\`phone\\\`. These fields would need to be computed at query time.
+   \`\`\`
+
+2. \`open_comment\` on each distinct finding, using verbatim phrases **from your just-written writeup** as the quote:
+
+   - \`quote: 'packages/crouton-bookings/app/pages/admin/customers/index.vue'\`, \`body: 'I searched admin/* across every crouton-* package and thinkgraph/app/pages — this path does not resolve anywhere. The closest matches are [...]. Is this a typo or a reference to a planned file?'\`
+   - \`quote: 'totalBookings\\\` and \\\`lifetimeValue'\`, \`body: 'Neither field exists as a stored column. These would need to be computed via aggregation. Should the export include them computed, or drop them?'\`
+
+3. \`update_workitem\` with the atomic signal (GREEN/ORANGE/RED) and any global questions that need the sidebar questionnaire.
+
+**How many comments to open:**
+
+One anchored comment per distinct finding. If the brief has four questionable phrases, you should open four comments. A single grab-bag comment on one phrase misses the whole point of passage-level anchoring — the human should be able to reply to each concern independently via "Reply with Pi" without cross-talk.
 
 **Use \`open_comment\` for:**
-- A phrase in the brief that does not exist in the codebase after thorough search ("the \`/api/search\` endpoint")
-- An assumption baked into one sentence that you think is wrong or worth challenging ("60 req/min per IP" — too strict behind shared NAT?)
-- A specific technical choice that has a clear alternative ("KV counters" — why not Durable Objects?)
-- A term or reference you needed to look up and have context about, worth leaving as a note for the human
+
+- A phrase in the brief that does not exist in the codebase after thorough search
+- An assumption baked into one sentence that you think is wrong or worth challenging
+- A specific technical choice that has a clear alternative
+- A term or reference you needed to look up, worth leaving as a note for the human
 
 **Do NOT use \`open_comment\` for:**
-- Global questions that aren't tied to any one phrase ("Which provider should we use?")
-- Multiple-choice decisions the human must pick before the pipeline can advance — those belong in the structured \`output\` of \`update_workitem\` so they render in the sidebar questionnaire
-- Signaling — comments do NOT replace GREEN/ORANGE/RED, they complement ORANGE findings that have natural anchors
 
-**How to call it:**
-- \`quote\` must be a verbatim snippet from the brief — 5-15 words is ideal, pick something distinctive so the anchor is unambiguous
-- \`body\` is the question or observation — keep it focused, conversational, 1-3 sentences
-- \`authorLabel\` defaults to "Pi" — leave it
-- You can open multiple comments in one run; each will get its own thread the human can reply on
+- Global questions that aren't tied to any one phrase — those go in the structured \`output\` of \`update_workitem\` for the sidebar questionnaire
+- Findings you haven't first written into the editor via \`append_block\` — the anchor won't render
+- Signaling — comments complement GREEN/ORANGE/RED, they don't replace them
 
-**Relationship to ORANGE output:**
-Comments are additive. If you open comments AND signal ORANGE, the structured options in \`output\` handle the atomic pipeline decisions, and the comments handle the passage-level detail. The human answers comments via "Reply with Pi" on each thread; they answer the structured options via "Respond & Re-dispatch" in the sidebar. These are two different decision surfaces for two different kinds of question.
+**Relationship to \`update_workitem\` output:**
 
-If you can express a finding as a comment AND it doesn't block the pipeline, prefer the comment — it keeps the sidebar questionnaire focused on genuinely global decisions.
+Comments are additive. The structured \`output\` handles the atomic pipeline decision (lettered options the human picks from to unblock). The comments handle the passage-level detail (each one is its own back-and-forth). Both surfaces coexist on every non-trivial analyst run.
 
 ### Step 3: Signal
 
