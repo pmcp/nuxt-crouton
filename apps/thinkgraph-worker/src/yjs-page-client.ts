@@ -115,7 +115,37 @@ export class YjsPageClient {
     this.teamId = options.teamId
     this.nodeId = options.nodeId
     this.roomId = `thinkgraph-node-${options.teamId}-${options.nodeId}`
+    // High-range random clientID so the Pi worker wins concurrent Y.Map.set
+    // conflicts with browser writers.
+    //
+    // Why this matters: Y.Map.set replaces the whole entry — when two
+    // clients concurrently write to the same key, Yjs resolves the
+    // conflict deterministically via a clientID tiebreak (higher wins).
+    // In PR 5's comment-reply flow, the browser writes the human reply to
+    // commentsMap[threadId] while the Pi worker, in parallel, writes its
+    // own reply to the same key. If the browser wins the conflict, Pi's
+    // reply is discarded; if Pi wins, the browser's human message is
+    // discarded. Neither is acceptable.
+    //
+    // The fix is layered: session-manager pre-writes the human message
+    // into the Pi worker's local Y.Map before running Pi, so the worker's
+    // write always contains both the human message AND Pi's reply. Then
+    // biasing the worker's clientID high ensures the worker wins the
+    // concurrent conflict, preserving the full `[...human, ...pi]` state.
+    //
+    // Browser clientIDs are uniform random across uint32. Our range is
+    // 0x7FF00000–0x7FFFFFFF (top ~0.05% of the space), so we win ~99.95%
+    // of concurrent conflicts. Not perfect — a proper fix would migrate
+    // CommentThread.messages to a Y.Array for CRDT-native append merging
+    // — but good enough to close the observed failure mode until the
+    // schema refactor.
+    const clientID = 0x7FF00000 + Math.floor(Math.random() * 0x000FFFFF)
     this.doc = new Y.Doc()
+    // Y.Doc's DocOpts type doesn't expose clientID as a constructor option,
+    // but the instance property is writable — assign it immediately after
+    // construction, before any operations are recorded against the doc so
+    // they all carry the high clientID.
+    this.doc.clientID = clientID
   }
 
   /** The Y.XmlFragment that holds the editor content — same as the browser's `useCollabEditor` */

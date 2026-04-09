@@ -72,7 +72,7 @@ function handleReply(threadId: string) {
 }
 
 /**
- * PR 5 — "Reply with Pi" click handler.
+ * PR 5 — "Ask Pi" click handler.
  *
  * Order matters:
  *   1. Post the human's reply locally via the existing replyToComment path
@@ -85,11 +85,11 @@ function handleReply(threadId: string) {
  *      failure, clear pending and toast the error — but do NOT roll back
  *      the human's reply (it's already in the thread; the user can retry).
  */
-async function handleReplyWithPi(threadId: string) {
+async function handleAskPi(threadId: string) {
   const body = (replyBodies.value[threadId] ?? '').trim()
   if (!body) return
   if (!actionRegistry) {
-    console.error('[CommentSlideout] Reply with Pi: no NodeActionContext available')
+    console.error('[CommentSlideout] Ask Pi: no NodeActionContext available')
     return
   }
   if (pendingPiThreads.value.has(threadId)) return
@@ -123,9 +123,9 @@ async function handleReplyWithPi(threadId: string) {
     })
   } catch (err: any) {
     clearPendingPi(threadId)
-    console.error('[CommentSlideout] Reply with Pi dispatch failed', err)
+    console.error('[CommentSlideout] Ask Pi dispatch failed', err)
     toast.add({
-      title: 'Pi reply failed',
+      title: 'Ask Pi failed',
       description: err?.data?.statusMessage || err?.message || 'Could not reach the Pi worker. Try again.',
       color: 'error',
       icon: 'i-lucide-alert-triangle',
@@ -263,9 +263,9 @@ function formatTime(ts: number) {
                   color="primary"
                   icon="i-lucide-sparkles"
                   :disabled="!(replyBodies[thread.id] ?? '').trim() || pendingPiThreads.has(thread.id)"
-                  @click="handleReplyWithPi(thread.id)"
+                  @click="handleAskPi(thread.id)"
                 >
-                  Reply with Pi
+                  Ask Pi
                 </UButton>
               </div>
             </div>

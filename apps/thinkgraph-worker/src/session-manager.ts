@@ -476,6 +476,57 @@ export class AgentSessionManager {
     console.log(`[session-manager] Starting comment-reply session ${lockKey}`)
 
     try {
+      // Pre-write the human reply into the worker's local Y.Map before
+      // running Pi. This closes a Y.Map.set concurrent-write race where
+      // the browser's optimistic write of the human message (sent over
+      // the collab WebSocket) hasn't propagated to the worker yet by the
+      // time Pi's reply_to_comment tool runs. Without this, Pi reads a
+      // stale state (`[..., pi_analyst]` — no human message), appends
+      // its reply, and writes `[..., pi_analyst, pi_reply]`. That write
+      // is concurrent with the browser's `[..., pi_analyst, human]`
+      // write, and whichever loses the Yjs clientID tiebreak has its
+      // entire messages array discarded — typically the human message.
+      //
+      // Pre-writing the human message via `replyToComment(author:
+      // 'human', ...)` ensures the worker's local state contains the
+      // human message before Pi's tool runs, so Pi's reply is built on
+      // `[..., pi_analyst, human]` → `[..., pi_analyst, human, pi_reply]`.
+      // Combined with YjsPageClient's high-clientID bias (see comment in
+      // yjs-page-client.ts), the worker's write also wins any concurrent
+      // conflict with the browser's original write, preserving the full
+      // conversation.
+      //
+      // Skipped gracefully if: (a) the thread doesn't exist yet in the
+      // worker's view (browser race is so fast that the open_comment
+      // hasn't been received), (b) the last message in the payload isn't
+      // human-authored (no pre-write needed), or (c) the message is
+      // already present in the local state (fast path — browser's update
+      // arrived before us). The skip is a no-op, not an error.
+      const client = await this.pagePool.acquire(payload.teamId, payload.nodeId)
+      const lastHumanMsg = [...payload.history]
+        .reverse()
+        .find(m => m.author === 'human')
+      if (lastHumanMsg) {
+        const thread = client.commentsMap.get(payload.threadId)
+        if (thread) {
+          const alreadyPresent = thread.messages.some(
+            m => m.author === 'human' && m.body === lastHumanMsg.body,
+          )
+          if (!alreadyPresent) {
+            const ok = client.replyToComment(payload.threadId, {
+              body: lastHumanMsg.body,
+              author: 'human',
+              authorLabel: lastHumanMsg.authorLabel,
+            })
+            if (ok) {
+              console.log(`[session-manager] Pre-wrote human reply into ${lockKey}`)
+            }
+          }
+        } else {
+          console.warn(`[session-manager] Thread ${payload.threadId} not yet visible on worker — skipping pre-write; Pi may not see the human message until the update arrives`)
+        }
+      }
+
       // Inject only the comment tools. The prompt asks Pi to call
       // `reply_to_comment` once and exit — no page writes, no file diffs,
       // no work-item status updates. Constraining the tool surface keeps
