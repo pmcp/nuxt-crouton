@@ -22,6 +22,7 @@ import { createThinkGraphTools } from './pi-extension.js'
 import { createPMTools } from './pm-tools.js'
 import { createPageTools } from './page-tools.js'
 import { createCommentTools } from './comment-tools.js'
+import { createFileDiffTools } from './file-diff-tools.js'
 import { ofetch } from 'ofetch'
 
 export interface DispatchPayload {
@@ -205,7 +206,13 @@ export class AgentSessionManager {
       const commentTools = this.pagePool
         ? createCommentTools(this.pagePool, sessionTeamId, payload.nodeId)
         : []
-      const tools = [...baseTools, ...pageTools, ...commentTools]
+      // PR 4: file-diff tool — Pi can append inline read-only unified diffs
+      // into the same per-node page room. Shares the page pool with the other
+      // page-writing tools so a single Pi run reuses the same socket.
+      const fileDiffTools = this.pagePool
+        ? createFileDiffTools(this.pagePool, sessionTeamId, payload.nodeId)
+        : []
+      const tools = [...baseTools, ...pageTools, ...commentTools, ...fileDiffTools]
 
       // Build the prompt
       const agentPrompt = this.buildAgentPrompt(payload)

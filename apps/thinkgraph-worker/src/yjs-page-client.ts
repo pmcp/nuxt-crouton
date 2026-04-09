@@ -34,6 +34,17 @@ export interface ActionButtonInsert {
   payload?: Record<string, unknown>
 }
 
+export interface FileDiffInsert {
+  /** Path of the file the diff applies to, used as the panel header. */
+  filePath: string
+  /** Unified diff text — standard +/−/@@ prefixes. Newlines preserved verbatim. */
+  diff: string
+  /** Optional language hint for the browser to render a badge / pick a highlighter. */
+  language?: string
+  /** Initial collapsed state. Defaults to false. */
+  collapsed?: boolean
+}
+
 // ── Comment thread types (PR 3) ────────────────────────────
 //
 // Comment threads live in a Y.Map<CommentThread> on the same Y.Doc as the
@@ -282,6 +293,28 @@ export class YjsPageClient {
     // parsed back to an object on the browser side.
     node.setAttribute('payload', JSON.stringify(button.payload ?? {}))
     node.setAttribute('consumed', 'false')
+    this.fragment.insert(this.fragment.length, [node])
+  }
+
+  /**
+   * Append a read-only file-diff block at the end of the editor content.
+   * Like action buttons, file diffs are leaf TipTap nodes — no inner content,
+   * all data lives on string attributes. The browser's `fileDiff` extension
+   * parses these attributes back into the FileDiffBlock NodeView which renders
+   * the unified diff with +/− line coloring.
+   *
+   * Note on size: the `diff` string can be kilobytes for large changes. Y.Xml
+   * attribute storage handles arbitrary-length strings fine (it's just a string
+   * value in the Yjs update stream), so the diff is passed verbatim without
+   * chunking or base64 encoding.
+   */
+  appendFileDiff(fileDiff: FileDiffInsert): void {
+    const node = new Y.XmlElement('fileDiff')
+    node.setAttribute('filePath', fileDiff.filePath)
+    node.setAttribute('diff', fileDiff.diff)
+    node.setAttribute('language', fileDiff.language ?? '')
+    // Yjs attributes are string-only; encode the boolean as 'true'/'false'.
+    node.setAttribute('collapsed', fileDiff.collapsed ? 'true' : 'false')
     this.fragment.insert(this.fragment.length, [node])
   }
 

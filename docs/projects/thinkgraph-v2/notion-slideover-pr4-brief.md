@@ -1,6 +1,6 @@
 ---
 title: PR 4 — FileDiffBlock + pi.appendFileDiff
-status: 🟡 ready for dispatch
+status: ✅ shipped
 created: 2026-04-09
 parent: notion-slideover-brief.md
 related:

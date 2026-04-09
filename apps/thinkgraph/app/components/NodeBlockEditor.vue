@@ -24,6 +24,7 @@
 import type { Editor } from '@tiptap/vue-3'
 import ActionButton from '../extensions/action-button'
 import CommentAnchor from '../extensions/comment-anchor'
+import FileDiff from '../extensions/file-diff'
 import { provideNodeActionHandlers } from '../composables/useNodeActionHandlers'
 import { provideNodeComments } from '../composables/useNodeComments'
 import CommentSlideout from './CommentSlideout.vue'
@@ -59,7 +60,10 @@ provideNodeActionHandlers({
 // The visual binding loop lives in `useNodeComments`, which observes the
 // shared Y.Map<CommentThread> and applies/removes this mark to keep
 // highlights in sync with the source-of-truth thread store.
-const editorExtensions = [ActionButton, CommentAnchor]
+// PR 4: fileDiff leaf node — inline read-only file diff panels. Pi appends
+// these via `pi.appendFileDiff`; the NodeView renders the unified diff text
+// with +/− coloring and a collapse toggle.
+const editorExtensions = [ActionButton, CommentAnchor, FileDiff]
 
 // Slash menu items. Each `command` must be a zero-arg method on editor.commands
 // (CroutonEditorBlocks invokes them as `editor.commands[command]()`). For
@@ -75,8 +79,13 @@ const suggestionItems = [
   // PR 2 dev affordance: lets you exercise the action-button NodeView, click
   // handler, and create-child action without running the worker. Stripped from
   // production builds via the import.meta.dev guard below.
+  // PR 4 dev affordance: same idea — inserts a hard-coded sample diff so the
+  // FileDiffBlock NodeView can be exercised without dispatching Pi.
   ...(import.meta.dev
-    ? [{ type: 'actionButton', label: 'Action button (dev)', icon: 'i-lucide-mouse-pointer-click', category: 'Debug', command: 'insertActionButtonDebug' }]
+    ? [
+        { type: 'actionButton', label: 'Action button (dev)', icon: 'i-lucide-mouse-pointer-click', category: 'Debug', command: 'insertActionButtonDebug' },
+        { type: 'fileDiff', label: 'File diff (dev)', icon: 'i-lucide-file-diff', category: 'Debug', command: 'insertFileDiffDebug' },
+      ]
     : [])
 ]
 

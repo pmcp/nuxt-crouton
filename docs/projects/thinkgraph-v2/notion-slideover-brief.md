@@ -1,13 +1,13 @@
 ---
 title: Notion-style block editor in node slideover
-status: 🟢 PR 1, 2, 3 shipped — PR 4 pending dispatch
+status: 🟢 PR 1, 2, 3, 4 shipped — series complete
 created: 2026-04-08
 related:
   - brief.md (Step 1, Step 3)
   - thinkgraph-assistant-brief.md (Step 1 — Node conversations)
   - thinkgraph-convergence-brief.md (Phase 1A — MDC rendering)
   - notion-slideover-pr2-brief.md (PR 2 brief — shipped)
-  - notion-slideover-pr4-brief.md (PR 4 brief — pending)
+  - notion-slideover-pr4-brief.md (PR 4 brief — shipped)
 ---
 
 # Notion-style block editor in node slideover
@@ -75,7 +75,7 @@ the existing one and adding new block types in later PRs.
 | **PR 1** (this brief) | ✅ shipped | Embed `BlockEditor` in slideover, add `content` field to `thinkgraph_nodes`, no Pi writes, no new blocks |
 | PR 2 | ✅ shipped | `ActionButtonBlock` + `pi.appendBlock` worker tool + `create-child` action handler |
 | PR 3 | ✅ shipped | `commentAnchor` mark + `pi.openComment` / `pi.replyToComment` / `pi.resolveComment` tools + `CommentSlideout` panel + text-selection composer |
-| PR 4 | 🟡 pending | `FileDiffBlock` (collapsible, syntax-highlighted) — see `notion-slideover-pr4-brief.md` |
+| PR 4 | ✅ shipped | `FileDiffBlock` + `pi.appendFileDiff` worker tool — collapsible inline unified diffs in the per-node editor; read-only (apply pathway deferred). See `notion-slideover-pr4-brief.md` |
 | PR 5 | ⚪ planned | Polish + RichTextBlock streaming flow for Pi prose |
 | (later) | ⚪ deferred | `TerminalBlock` — needs a PTY relay (currently no `TerminalRoom` DO exists in the codebase; check before scoping) |
 
