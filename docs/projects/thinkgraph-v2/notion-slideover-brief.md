@@ -1,11 +1,13 @@
 ---
 title: Notion-style block editor in node slideover
-status: 🟡 PR 1 ready for dispatch
+status: 🟢 PR 1, 2, 3 shipped — PR 4 pending dispatch
 created: 2026-04-08
 related:
   - brief.md (Step 1, Step 3)
   - thinkgraph-assistant-brief.md (Step 1 — Node conversations)
   - thinkgraph-convergence-brief.md (Phase 1A — MDC rendering)
+  - notion-slideover-pr2-brief.md (PR 2 brief — shipped)
+  - notion-slideover-pr4-brief.md (PR 4 brief — pending)
 ---
 
 # Notion-style block editor in node slideover
@@ -68,14 +70,49 @@ the existing one and adding new block types in later PRs.
 
 ## PR plan
 
-| PR | Scope | Estimate |
+| PR | Status | Scope |
 |---|---|---|
-| **PR 1** (this brief) | Embed `BlockEditor` in slideover, add `content` field to `thinkgraph_nodes`, no Pi writes, no new blocks | ~half day |
-| PR 2 | `ActionButtonBlock` + `pi.appendBlock` worker tool + `create-child` action handler | ~half day |
-| PR 3 | `CommentBlock` (anchored, threaded, resolvable) + `pi.openComment` / `pi.replyToComment` tools | ~half day |
-| PR 4 | `FileDiffBlock` (collapsible, syntax-highlighted) | ~half day |
-| PR 5 | Polish + RichTextBlock streaming flow for Pi prose | ~half day |
-| (later) | `TerminalBlock` — needs a PTY relay (currently no `TerminalRoom` DO exists in the codebase; check before scoping) | ~1 day |
+| **PR 1** (this brief) | ✅ shipped | Embed `BlockEditor` in slideover, add `content` field to `thinkgraph_nodes`, no Pi writes, no new blocks |
+| PR 2 | ✅ shipped | `ActionButtonBlock` + `pi.appendBlock` worker tool + `create-child` action handler |
+| PR 3 | ✅ shipped | `commentAnchor` mark + `pi.openComment` / `pi.replyToComment` / `pi.resolveComment` tools + `CommentSlideout` panel + text-selection composer |
+| PR 4 | 🟡 pending | `FileDiffBlock` (collapsible, syntax-highlighted) — see `notion-slideover-pr4-brief.md` |
+| PR 5 | ⚪ planned | Polish + RichTextBlock streaming flow for Pi prose |
+| (later) | ⚪ deferred | `TerminalBlock` — needs a PTY relay (currently no `TerminalRoom` DO exists in the codebase; check before scoping) |
+
+### What landed in PR 3
+
+PR 3 took a slightly different shape than the table line implies — comments
+are an inline **mark**, not a block. The reason: comments anchor to spans of
+text inside other blocks (a sentence inside a paragraph), so a block-level
+`CommentBlock` would have been the wrong structural unit. The actual surface:
+
+- **`commentAnchor` TipTap mark** — inline highlight on the anchored span
+- **`Y.Map<CommentThread>` on the same page room** — single source of truth
+  for thread records, observed by the browser to apply/remove marks
+- **Worker tools `open_comment` / `reply_to_comment` / `resolve_comment`** —
+  Pi creates threads via `comment-tools.ts`, mirroring the page-tools pattern
+- **`useNodeComments` composable** — Y.Map observer, mark sync loop, and
+  human action API (`openComment`, `replyToComment`, `resolveComment`,
+  `openCommentOnSelection`)
+- **`CommentSlideout.vue`** — collapsible threads panel beneath the editor
+  (NOT a USlideover — the parent project page is already inside one, so
+  stacking would overlap; an inline panel keeps doc + discussion in view
+  together)
+- **Text-selection composer** — header "Comment" button that captures the
+  current editor selection, opens a UModal with the quoted text + a body
+  field, and writes the thread on submit. Mark is applied first to avoid
+  the cross-tab observer racing for the wrong occurrence on duplicate text
+
+Schema for `CommentThread` is duplicated between worker (`yjs-page-client.ts`)
+and browser (`useNodeComments.ts`) — there's no shared package between the
+two. Comments in both files flag the duplication so future schema changes
+update both sides.
+
+Known v1 trade-offs documented in code comments:
+- Inline-only selections (multi-block selections rejected — newlines in
+  the quote can't be matched by the observer's text-node walk)
+- The chat panel (`chatconversations`) still ships in parallel; migration
+  into comment threads is a separate cleanup pass after PR 4 lands
 
 Each PR is independently shippable. The slideover after PR 1 is
 already better than today's even without the rest, because users get

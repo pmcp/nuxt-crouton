@@ -64,6 +64,20 @@ interface NodeCommentsContext {
   focusedThreadId: Ref<string | null>
   focusThread: (threadId: string | null) => void
   openComment: (params: { quote: string; body: string; authorLabel?: string; occurrence?: number }) => string | null
+  /**
+   * Open a comment from a captured editor selection. Used by the toolbar
+   * "Comment" composer — accepts the selection range explicitly because the
+   * editor's live selection collapses the moment a modal/popover takes focus.
+   * Applies the highlight mark immediately, then writes the thread, so the
+   * commentsMap observer sees an existing mark and skips its quote-finding
+   * step. Returns null if the range is empty, the body is blank, or the
+   * selection spans multiple blocks (inline-only in v1).
+   */
+  openCommentOnSelection: (params: {
+    range: { from: number; to: number }
+    body: string
+    authorLabel?: string
+  }) => string | null
   replyToComment: (threadId: string, params: { body: string; authorLabel?: string }) => boolean
   resolveComment: (threadId: string) => boolean
 }
@@ -304,6 +318,98 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
     return threadId
   }
 
+  /**
+   * Compute the occurrence index for a quote at a given doc position. Walks
+   * the same text-node table as findQuoteRange so the index matches the
+   * observer's quote-search math. Used so cross-tab observers anchor a
+   * human-created thread to the right occurrence when the selected text is
+   * not unique in the doc.
+   */
+  function computeOccurrence(editor: Editor, quote: string, fromPos: number): number {
+    let absText = ''
+    const offsets: Array<{ absStart: number; pos: number; len: number }> = []
+    editor.state.doc.descendants((node, pos) => {
+      if (node.isText && node.text) {
+        offsets.push({ absStart: absText.length, pos, len: node.text.length })
+        absText += node.text
+      }
+    })
+    let absFrom = -1
+    for (const o of offsets) {
+      if (fromPos >= o.pos && fromPos <= o.pos + o.len) {
+        absFrom = o.absStart + (fromPos - o.pos)
+        break
+      }
+    }
+    if (absFrom < 0) return 0
+    let count = 0
+    let idx = 0
+    while (true) {
+      const found = absText.indexOf(quote, idx)
+      if (found === -1 || found >= absFrom) break
+      count++
+      idx = found + 1
+    }
+    return count
+  }
+
+  function openCommentOnSelection(params: {
+    range: { from: number; to: number }
+    body: string
+    authorLabel?: string
+  }): string | null {
+    const editor = editorRef.value
+    const doc = docRef.value
+    if (!editor || !doc) return null
+    if (!params.body.trim()) return null
+    const { from, to } = params.range
+    if (from === to) return null
+    // Use a space joiner so the quote doesn't accidentally contain block
+    // separators that won't appear in the observer's text-node walk.
+    const quote = editor.state.doc.textBetween(from, to, '\n', ' ').trim()
+    if (!quote) return null
+    // v1: inline-only selections. Multi-block selections would produce a
+    // quote with newlines that the observer's findQuoteRange can't match
+    // (it concatenates text nodes without separators). Reject upfront so
+    // the cross-tab anchor works reliably.
+    if (quote.includes('\n')) return null
+
+    const occurrence = computeOccurrence(editor, quote, from)
+    const threadId = `comment-${crypto.randomUUID()}`
+
+    // Apply the mark FIRST. The next line's commentsMap.set fires the
+    // observer synchronously; with the mark already on the doc the observer
+    // takes its `existingRange` short-circuit and skips findQuoteRange,
+    // avoiding any wrong-occurrence races for ambiguous quotes.
+    editor
+      .chain()
+      .setTextSelection({ from, to })
+      .setMark('commentAnchor', { threadId })
+      .setTextSelection(from)
+      .run()
+
+    const map = doc.getMap<CommentThread>(COMMENTS_MAP_NAME)
+    const now = Date.now()
+    const thread: CommentThread = {
+      id: threadId,
+      anchor: { quote, occurrence },
+      status: 'open',
+      createdAt: now,
+      createdBy: 'human',
+      messages: [
+        {
+          id: `${threadId}-m0`,
+          author: 'human',
+          authorLabel: params.authorLabel ?? humanLabel(),
+          body: params.body.trim(),
+          createdAt: now,
+        },
+      ],
+    }
+    map.set(threadId, thread)
+    return threadId
+  }
+
   function replyToComment(
     threadId: string,
     params: { body: string; authorLabel?: string },
@@ -349,6 +455,7 @@ export function provideNodeComments(options: ProvideOptions): NodeCommentsContex
     focusedThreadId,
     focusThread,
     openComment,
+    openCommentOnSelection,
     replyToComment,
     resolveComment,
   }

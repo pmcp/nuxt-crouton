@@ -103,8 +103,52 @@ const comments = provideNodeComments({
   humanLabel: () => collab.user.value?.name ?? 'You',
 })
 
+// PR 3 polish: text-selection composer state. The header "Comment" button
+// captures the current editor selection (range + verbatim quote) into these
+// refs and opens a modal — capturing matters because the modal grabs focus
+// the moment it mounts, collapsing the editor's live selection. Submit
+// hands the captured range to `openCommentOnSelection`.
+const hasSelection = ref(false)
+const composerOpen = ref(false)
+const capturedRange = ref<{ from: number; to: number } | null>(null)
+const capturedQuote = ref('')
+const composerBody = ref('')
+
 function handleCreate({ editor }: { editor: Editor }) {
   editorInstance.value = editor
+  // Reactive selection tracking — the Comment button is disabled until the
+  // user has at least a single non-empty inline selection. We use TipTap's
+  // selectionUpdate event because the editor itself is not Vue-reactive.
+  editor.on('selectionUpdate', ({ editor }) => {
+    hasSelection.value = !editor.state.selection.empty
+  })
+}
+
+function startCommentCompose() {
+  const editor = editorInstance.value
+  if (!editor) return
+  const { from, to } = editor.state.selection
+  if (from === to) return
+  const quote = editor.state.doc.textBetween(from, to, '\n', ' ').trim()
+  if (!quote || quote.includes('\n')) return
+  capturedRange.value = { from, to }
+  capturedQuote.value = quote
+  composerBody.value = ''
+  composerOpen.value = true
+}
+
+function submitCompose(close: () => void) {
+  if (!capturedRange.value) return
+  if (!composerBody.value.trim()) return
+  const id = comments.openCommentOnSelection({
+    range: capturedRange.value,
+    body: composerBody.value,
+  })
+  if (id) comments.focusThread(id)
+  capturedRange.value = null
+  capturedQuote.value = ''
+  composerBody.value = ''
+  close()
 }
 
 // PR 3: DOM delegation — when the user clicks anywhere inside the editor
@@ -164,7 +208,17 @@ function handleUpdate({ editor }: { editor: Editor }) {
 
 <template>
   <div class="rounded-lg border border-default overflow-hidden bg-default">
-    <div class="flex items-center justify-end gap-2 px-3 py-1.5 border-b border-default bg-muted/30">
+    <div class="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-default bg-muted/30">
+      <UButton
+        size="xs"
+        color="neutral"
+        variant="ghost"
+        icon="i-lucide-message-square-plus"
+        :disabled="!hasSelection"
+        @click="startCommentCompose"
+      >
+        Comment
+      </UButton>
       <CollabIndicator
         :connected="connected"
         :synced="synced"
@@ -187,5 +241,34 @@ function handleUpdate({ editor }: { editor: Editor }) {
       />
     </div>
     <CommentSlideout />
+
+    <UModal v-model:open="composerOpen">
+      <template #content="{ close }">
+        <div class="p-6 space-y-4">
+          <h3 class="text-lg font-semibold text-default">Add comment</h3>
+          <div class="text-sm text-muted italic border-l-2 border-primary-500 pl-3 py-1">
+            "{{ capturedQuote }}"
+          </div>
+          <UTextarea
+            v-model="composerBody"
+            :rows="4"
+            placeholder="Write your comment…"
+            class="w-full"
+            @keydown.enter.meta.prevent="submitCompose(close)"
+            @keydown.enter.ctrl.prevent="submitCompose(close)"
+          />
+          <div class="flex justify-end gap-2">
+            <UButton color="neutral" variant="ghost" @click="close">Cancel</UButton>
+            <UButton
+              color="primary"
+              :disabled="!composerBody.trim()"
+              @click="submitCompose(close)"
+            >
+              Comment
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
