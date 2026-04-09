@@ -269,6 +269,13 @@ export class YjsPageClient {
    * Append a paragraph block at the end of the editor content.
    * y-prosemirror maps `<paragraph>text</paragraph>` to a Y.XmlElement named
    * `paragraph` containing a single Y.XmlText with the prose.
+   *
+   * This is the raw-text primitive — it writes the string verbatim with no
+   * markdown interpretation. Most callers should use `appendMarkdown` instead,
+   * which parses headings, bold/italic, lists, code blocks, etc. into proper
+   * TipTap nodes. `appendParagraph` is still useful for cases where the
+   * caller knows the content is plain text and wants to avoid parser
+   * surprises (e.g. strings containing literal `*` or `#` characters).
    */
   appendParagraph(text: string): void {
     const paragraph = new Y.XmlElement('paragraph')
@@ -276,6 +283,48 @@ export class YjsPageClient {
     xmlText.insert(0, text)
     paragraph.insert(0, [xmlText])
     this.fragment.insert(this.fragment.length, [paragraph])
+  }
+
+  /**
+   * Append one or more blocks parsed from a markdown string.
+   *
+   * Why this exists: Pi's default output style is markdown (# headings,
+   * **bold**, `- lists`, fenced code blocks). The old `appendParagraph` wrote
+   * these as literal text, so `**Finding:**` would land in the editor as
+   * five asterisks instead of a bold run. This method parses the markdown
+   * with a minimal hand-rolled parser (no new dependency) and emits the
+   * resulting blocks as Y.XmlElements matching the TipTap StarterKit schema:
+   *
+   *   - `# heading` → `<heading level="1">`
+   *   - `**bold**` → inline `{ bold: true }` format on Y.XmlText
+   *   - `*italic*` / `_italic_` → `{ italic: true }`
+   *   - `` `code` `` → `{ code: true }`
+   *   - `~~strike~~` → `{ strike: true }`
+   *   - `- item` / `* item` → `<bulletList><listItem><paragraph>`
+   *   - `1. item` → `<orderedList><listItem><paragraph>`
+   *   - `> quote` → `<blockquote>` (recursively parsed)
+   *   - ``` ```lang\ncode\n``` ``` → `<codeBlock language="lang">`
+   *   - `---` / `***` → `<horizontalRule>`
+   *   - blank-line-separated → separate paragraph blocks
+   *
+   * Edge cases it does NOT handle (acceptable v1 trade-offs):
+   *   - Nested marks across mark boundaries (`**bold *italic*** bold`) — the
+   *     inline tokenizer toggles flags, so ambiguous cases may produce
+   *     unexpected runs. Pi rarely nests marks.
+   *   - Setext-style headings (`text\n===`) — use ATX (`# text`) instead.
+   *     Pi's default is ATX.
+   *   - Reference-style links, tables, images, HTML passthrough — not in the
+   *     TipTap StarterKit schema anyway.
+   *   - Hard line breaks within a paragraph — consecutive non-blank lines
+   *     are joined with a space.
+   *
+   * The raw `appendParagraph` stays available for plain-text insertion.
+   */
+  appendMarkdown(markdown: string): void {
+    const blocks = parseMarkdownBlocks(markdown)
+    const elements = blocks.map(blockToXmlElement)
+    if (elements.length === 0) return
+    this.fragment.insert(this.fragment.length, elements)
   }
 
   /**
@@ -474,4 +523,296 @@ export class YjsPageClient {
       this.pingTimer = null
     }
   }
+}
+
+// ── Markdown → TipTap Y.Xml node parser ───────────────────────
+//
+// Minimal hand-rolled parser scoped to the markdown subset Pi typically
+// emits and the TipTap StarterKit nodes the browser editor renders. Lives
+// in this file (not a separate module) because it's an implementation
+// detail of `appendMarkdown` and nothing else needs it.
+
+interface InlineMarks {
+  bold?: true
+  italic?: true
+  code?: true
+  strike?: true
+}
+
+interface InlineRun {
+  text: string
+  marks: InlineMarks
+}
+
+type MdBlock =
+  | { type: 'paragraph'; runs: InlineRun[] }
+  | { type: 'heading'; level: number; runs: InlineRun[] }
+  | { type: 'codeBlock'; code: string; language?: string }
+  | { type: 'bulletList'; items: MdBlock[][] }
+  | { type: 'orderedList'; items: MdBlock[][] }
+  | { type: 'blockquote'; children: MdBlock[] }
+  | { type: 'horizontalRule' }
+
+const BULLET_RE = /^[-*+]\s+/
+const ORDERED_RE = /^\d+\.\s+/
+const HEADING_RE = /^(#{1,6})\s+(.*)$/
+const HR_RE = /^(---|\*\*\*|___)\s*$/
+const FENCE_RE = /^```\s*(\S*)\s*$/
+const QUOTE_RE = /^>\s?/
+
+function parseMarkdownBlocks(markdown: string): MdBlock[] {
+  const lines = markdown.replace(/\r\n/g, '\n').split('\n')
+  const blocks: MdBlock[] = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // Blank line — paragraph separator
+    if (line.trim() === '') {
+      i++
+      continue
+    }
+
+    // Fenced code block
+    const fenceMatch = line.match(FENCE_RE)
+    if (fenceMatch) {
+      const language = fenceMatch[1] || ''
+      const codeLines: string[] = []
+      i++
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
+        codeLines.push(lines[i])
+        i++
+      }
+      if (i < lines.length) i++ // consume closing fence
+      blocks.push({ type: 'codeBlock', code: codeLines.join('\n'), language })
+      continue
+    }
+
+    // Horizontal rule
+    if (HR_RE.test(line)) {
+      blocks.push({ type: 'horizontalRule' })
+      i++
+      continue
+    }
+
+    // ATX heading
+    const headingMatch = line.match(HEADING_RE)
+    if (headingMatch) {
+      blocks.push({
+        type: 'heading',
+        level: headingMatch[1].length,
+        runs: parseInline(headingMatch[2]),
+      })
+      i++
+      continue
+    }
+
+    // Bullet list
+    if (BULLET_RE.test(line)) {
+      const items: MdBlock[][] = []
+      while (i < lines.length && BULLET_RE.test(lines[i])) {
+        const itemText = lines[i].replace(BULLET_RE, '')
+        items.push([{ type: 'paragraph', runs: parseInline(itemText) }])
+        i++
+      }
+      blocks.push({ type: 'bulletList', items })
+      continue
+    }
+
+    // Ordered list
+    if (ORDERED_RE.test(line)) {
+      const items: MdBlock[][] = []
+      while (i < lines.length && ORDERED_RE.test(lines[i])) {
+        const itemText = lines[i].replace(ORDERED_RE, '')
+        items.push([{ type: 'paragraph', runs: parseInline(itemText) }])
+        i++
+      }
+      blocks.push({ type: 'orderedList', items })
+      continue
+    }
+
+    // Blockquote — collect contiguous `> ` lines and recurse
+    if (QUOTE_RE.test(line)) {
+      const quoteLines: string[] = []
+      while (i < lines.length && QUOTE_RE.test(lines[i])) {
+        quoteLines.push(lines[i].replace(QUOTE_RE, ''))
+        i++
+      }
+      blocks.push({
+        type: 'blockquote',
+        children: parseMarkdownBlocks(quoteLines.join('\n')),
+      })
+      continue
+    }
+
+    // Paragraph — gather consecutive non-blank, non-special lines
+    const paraLines: string[] = [line]
+    i++
+    while (i < lines.length) {
+      const next = lines[i]
+      if (next.trim() === '') break
+      if (
+        HEADING_RE.test(next) ||
+        FENCE_RE.test(next) ||
+        HR_RE.test(next) ||
+        BULLET_RE.test(next) ||
+        ORDERED_RE.test(next) ||
+        QUOTE_RE.test(next)
+      ) break
+      paraLines.push(next)
+      i++
+    }
+    blocks.push({ type: 'paragraph', runs: parseInline(paraLines.join(' ')) })
+  }
+
+  return blocks
+}
+
+/**
+ * Inline tokenizer. Toggles bold/italic/strike marks on open/close markers
+ * and treats `` ` `` as a non-parseable code span. Simple toggle model —
+ * doesn't try to track paired open/close, so truly malformed input (a lone
+ * `**` with no closer) will turn everything after it bold. Acceptable for
+ * Pi-generated output which is usually well-formed.
+ */
+function parseInline(text: string): InlineRun[] {
+  const runs: InlineRun[] = []
+  const marks: InlineMarks = {}
+  let current = ''
+
+  function flush() {
+    if (current) {
+      runs.push({ text: current, marks: { ...marks } })
+      current = ''
+    }
+  }
+
+  let i = 0
+  while (i < text.length) {
+    const ch = text[i]
+    const next = text[i + 1]
+
+    // Inline code — highest precedence, no nested parsing
+    if (ch === '`') {
+      flush()
+      const end = text.indexOf('`', i + 1)
+      if (end === -1) {
+        current += ch
+        i++
+      } else {
+        runs.push({ text: text.slice(i + 1, end), marks: { code: true } })
+        i = end + 1
+      }
+      continue
+    }
+
+    // Strikethrough ~~...~~
+    if (ch === '~' && next === '~') {
+      flush()
+      if (marks.strike) delete marks.strike
+      else marks.strike = true
+      i += 2
+      continue
+    }
+
+    // Bold **...** or __...__
+    if ((ch === '*' && next === '*') || (ch === '_' && next === '_')) {
+      flush()
+      if (marks.bold) delete marks.bold
+      else marks.bold = true
+      i += 2
+      continue
+    }
+
+    // Italic *...* or _..._
+    if (ch === '*' || ch === '_') {
+      flush()
+      if (marks.italic) delete marks.italic
+      else marks.italic = true
+      i++
+      continue
+    }
+
+    current += ch
+    i++
+  }
+
+  flush()
+  return runs
+}
+
+function blockToXmlElement(block: MdBlock): Y.XmlElement {
+  switch (block.type) {
+    case 'paragraph': {
+      const el = new Y.XmlElement('paragraph')
+      const xmlText = runsToXmlText(block.runs)
+      if (xmlText) el.insert(0, [xmlText])
+      return el
+    }
+    case 'heading': {
+      const el = new Y.XmlElement('heading')
+      el.setAttribute('level', String(block.level))
+      const xmlText = runsToXmlText(block.runs)
+      if (xmlText) el.insert(0, [xmlText])
+      return el
+    }
+    case 'codeBlock': {
+      const el = new Y.XmlElement('codeBlock')
+      if (block.language) el.setAttribute('language', block.language)
+      const xmlText = new Y.XmlText()
+      xmlText.insert(0, block.code)
+      el.insert(0, [xmlText])
+      return el
+    }
+    case 'horizontalRule': {
+      return new Y.XmlElement('horizontalRule')
+    }
+    case 'blockquote': {
+      const el = new Y.XmlElement('blockquote')
+      if (block.children.length > 0) {
+        el.insert(0, block.children.map(blockToXmlElement))
+      }
+      return el
+    }
+    case 'bulletList':
+    case 'orderedList': {
+      const el = new Y.XmlElement(block.type)
+      el.insert(
+        0,
+        block.items.map((itemBlocks) => {
+          const li = new Y.XmlElement('listItem')
+          li.insert(0, itemBlocks.map(blockToXmlElement))
+          return li
+        }),
+      )
+      return el
+    }
+  }
+}
+
+/**
+ * Collapse an array of inline runs into a single Y.XmlText with y-prosemirror
+ * format attributes for marks. Returns null if the runs are empty — caller
+ * should skip inserting a child in that case.
+ */
+function runsToXmlText(runs: InlineRun[]): Y.XmlText | null {
+  if (runs.length === 0) return null
+  const xmlText = new Y.XmlText()
+  let pos = 0
+  for (const run of runs) {
+    if (!run.text) continue
+    const attrs: Record<string, true> = {}
+    if (run.marks.bold) attrs.bold = true
+    if (run.marks.italic) attrs.italic = true
+    if (run.marks.code) attrs.code = true
+    if (run.marks.strike) attrs.strike = true
+    if (Object.keys(attrs).length > 0) {
+      xmlText.insert(pos, run.text, attrs)
+    } else {
+      xmlText.insert(pos, run.text)
+    }
+    pos += run.text.length
+  }
+  return pos === 0 ? null : xmlText
 }

@@ -37,16 +37,16 @@ export function createPageTools(
     {
       name: 'append_block',
       label: 'Append Block',
-      description: 'Append a paragraph block to the live Notion-style editor on a ThinkGraph node. Use this to write prose, observations, or reasoning into the node\'s document — it appears in real time in any open browser slideover for that node and persists across reloads. Prefer one paragraph per logical thought; chain multiple calls for multi-paragraph passages.',
+      description: 'Append markdown content to the live Notion-style editor on a ThinkGraph node. Use this to write prose, observations, or reasoning into the node\'s document — it appears in real time in any open browser slideover for that node and persists across reloads. Markdown is parsed into TipTap blocks: `# heading` → headings (levels 1-6), `**bold**` / `*italic*` / `` `code` `` / `~~strike~~` → inline marks, `- item` / `1. item` → bullet/ordered lists, `> quote` → blockquote, ``` ```lang\\ncode\\n``` ``` → code block with optional language, `---` → horizontal rule, blank lines separate paragraphs. You can send multi-block passages in a single call (e.g. a heading followed by several paragraphs and a list) — the parser emits one call per block. Prefer one call per logical section; a full analyst writeup is fine as one call.',
       parameters: Type.Object({
-        text: Type.String({ description: 'Plain-text paragraph to append. Newlines inside the text are kept as-is by the editor; for multiple paragraphs make multiple calls.' }),
+        text: Type.String({ description: 'Markdown content to append. Use standard markdown: `# heading`, `**bold**`, `*italic*`, `` `code` ``, `- list items`, `> blockquote`, fenced code blocks with triple backticks. Blank lines separate paragraphs. One call can contain multiple blocks.' }),
         nodeId: Type.Optional(Type.String({ description: 'Target node id. Defaults to the dispatched node.' })),
       }),
       execute: async (_toolCallId, params) => {
         const nodeId = params.nodeId || defaultNodeId
         try {
           const client = await pagePool.acquire(teamId, nodeId)
-          client.appendParagraph(params.text)
+          client.appendMarkdown(params.text)
           pagePool.touch(teamId, nodeId)
           return textResult(JSON.stringify({ ok: true, nodeId, length: params.text.length }))
         } catch (err: any) {
