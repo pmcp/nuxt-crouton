@@ -29,7 +29,7 @@
  * `apps/thinkgraph-worker/src/yjs-page-client.ts` if either side changes.
  */
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
-import { computed, inject, isRef, onScopeDispose, provide, ref, watch } from 'vue'
+import { computed, inject, isRef, onScopeDispose, provide, ref, shallowRef, watch } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import type * as Y from 'yjs'
 
@@ -177,9 +177,12 @@ function findMarkRange(editor: Editor, threadId: string): { from: number; to: nu
 
 export function provideNodeComments(options: ProvideOptions): NodeCommentsContext {
   const editorRef = options.editor
+  // shallowRef — never deep-proxy a Y.Doc. Vue's reactive() wraps every
+  // nested Yjs type in a Proxy, which breaks Y.Map.observe callbacks and
+  // prevents the comment thread snapshot from updating reactively.
   const docRef: Ref<Y.Doc | null> = isRef(options.ydoc)
     ? options.ydoc
-    : (ref(options.ydoc) as Ref<Y.Doc | null>)
+    : (shallowRef(options.ydoc) as Ref<Y.Doc | null>)
   const humanLabel = options.humanLabel ?? (() => 'You')
 
   // Reactive snapshot of all threads in the Y.Map. Rebuilt on every change
