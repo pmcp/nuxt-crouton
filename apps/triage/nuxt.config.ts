@@ -43,6 +43,8 @@ export default defineNuxtConfig({
   //   - Resend webhook: flat `resendApiToken`, `resendWebhookSigningSecret`
   // We define ALL paths so both dev (process.env) and prod (NUXT_* secrets) work.
   runtimeConfig: {
+    // Encryption key for token storage (from NUXT_ENCRYPTION_KEY secret)
+    encryptionKey: process.env.NUXT_ENCRYPTION_KEY || '',
     // Flat keys — read by OAuth install.get.ts + callback.get.ts
     // Client ID is hardcoded (not sensitive — visible in every OAuth URL).
     // Client Secret must come from env/secrets at runtime.
