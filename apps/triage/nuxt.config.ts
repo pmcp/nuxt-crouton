@@ -43,6 +43,9 @@ export default defineNuxtConfig({
     // Hardcoded: Nitro's env parser truncates this 26-digit number.
     // Not sensitive — visible in every OAuth URL.
     slackClientId: '6917477961058.9867346699728',
+    public: {
+      baseUrl: process.env.BASE_URL || 'https://triage.friendlyinter.net',
+    },
   },
 
   hub: {
