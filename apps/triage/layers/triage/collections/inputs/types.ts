@@ -31,6 +31,7 @@ export interface TriageInput {
   sourceType: string
   name: string
   apiToken?: string
+  accountId?: string
   webhookUrl?: string
   webhookSecret?: string
   emailAddress?: string

@@ -59,6 +59,15 @@
       "group": "config"
     }
   },
+  "accountId": {
+    "type": "string",
+    "meta": {
+      "label": "Connected Account",
+      "description": "Reference to a connected account for centralized token resolution",
+      "area": "main",
+      "group": "credentials"
+    }
+  },
   "active": {
     "type": "boolean",
     "meta": {

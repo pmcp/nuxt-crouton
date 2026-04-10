@@ -32,6 +32,7 @@ export const triageInputs = sqliteTable('triage_inputs', {
   sourceType: text('sourceType').notNull(),
   name: text('name').notNull(),
   apiToken: text('apiToken'),
+  accountId: text('accountId'),
   webhookUrl: text('webhookUrl'),
   webhookSecret: text('webhookSecret'),
   emailAddress: text('emailAddress'),

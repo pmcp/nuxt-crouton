@@ -30,6 +30,7 @@ export interface TriageOutput {
   flowId: string
   outputType: string
   name: string
+  accountId?: string
   domainFilter?: string[]
   isDefault?: boolean
   outputConfig?: Record<string, any>

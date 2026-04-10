@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     sourceType: body.sourceType,
     name: body.name,
     apiToken: body.apiToken,
+    accountId: body.accountId,
     webhookUrl: body.webhookUrl,
     webhookSecret: body.webhookSecret,
     emailAddress: body.emailAddress,

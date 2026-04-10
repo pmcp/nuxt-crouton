@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     flowId: body.flowId,
     outputType: body.outputType,
     name: body.name,
+    accountId: body.accountId,
     domainFilter: body.domainFilter,
     isDefault: body.isDefault,
     outputConfig: body.outputConfig,
