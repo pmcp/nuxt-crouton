@@ -36,11 +36,17 @@ export default defineNuxtConfig({
     }
   },
 
-  // Map plain env var names to crouton-triage runtime config so you don't
-  // need the NUXT_CROUTON_TRIAGE_* prefix for dev work.
-  // Note: Slack uses nested `croutonTriage.slack.*` but Resend uses flat
-  // top-level `resend*` keys — that's what the respective handlers read.
+  // Runtime config for crouton-triage handlers.
+  // The handlers read from INCONSISTENT paths (pre-existing):
+  //   - OAuth install/callback: flat `slackClientId`, `slackClientSecret`
+  //   - Slack webhook: nested `croutonTriage.slack.signingSecret`
+  //   - Resend webhook: flat `resendApiToken`, `resendWebhookSigningSecret`
+  // We define ALL paths so both dev (process.env) and prod (NUXT_* secrets) work.
   runtimeConfig: {
+    // Flat keys — read by OAuth install.get.ts + callback.get.ts
+    slackClientId: process.env.SLACK_CLIENT_ID || '',
+    slackClientSecret: process.env.SLACK_CLIENT_SECRET || '',
+    // Nested keys — read by Slack webhook handler
     croutonTriage: {
       slack: {
         clientId: process.env.SLACK_CLIENT_ID || '',
@@ -48,8 +54,13 @@ export default defineNuxtConfig({
         signingSecret: process.env.SLACK_SIGNING_SECRET || '',
       },
     },
+    // Flat keys — read by Resend webhook handler
     resendApiToken: process.env.RESEND_API_TOKEN || '',
     resendWebhookSigningSecret: process.env.RESEND_WEBHOOK_SIGNING_SECRET || '',
+    // Public config — read by OAuth handlers for redirect URIs
+    public: {
+      baseUrl: process.env.BASE_URL || '',
+    },
   },
 
   hub: {
