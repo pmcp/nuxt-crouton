@@ -36,6 +36,22 @@ export default defineNuxtConfig({
     }
   },
 
+  // Map plain env var names to crouton-triage runtime config so you don't
+  // need the NUXT_CROUTON_TRIAGE_* prefix for dev work.
+  // Note: Slack uses nested `croutonTriage.slack.*` but Resend uses flat
+  // top-level `resend*` keys — that's what the respective handlers read.
+  runtimeConfig: {
+    croutonTriage: {
+      slack: {
+        clientId: process.env.SLACK_CLIENT_ID || '',
+        clientSecret: process.env.SLACK_CLIENT_SECRET || '',
+        signingSecret: process.env.SLACK_SIGNING_SECRET || '',
+      },
+    },
+    resendApiToken: process.env.RESEND_API_TOKEN || '',
+    resendWebhookSigningSecret: process.env.RESEND_WEBHOOK_SIGNING_SECRET || '',
+  },
+
   hub: {
     db: 'sqlite',
     kv: true
