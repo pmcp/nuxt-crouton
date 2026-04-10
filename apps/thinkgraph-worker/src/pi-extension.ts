@@ -4,9 +4,10 @@
  * These tools allow the Pi agent to interact with the ThinkGraph canvas
  * via Yjs — the Pi worker is "just another collaborator", same as a browser.
  *
- * Write operations (create_node, update_node) go through the Y.Map and appear
- * instantly on all connected browsers. Read operations (get_graph_overview,
- * search_graph, get_thinking_path) read from the local Yjs doc.
+ * Write operations (update_node) go through the Y.Map and appear instantly on
+ * all connected browsers. Read operations (get_graph_overview, search_graph,
+ * get_thinking_path) read from the local Yjs doc. Node creation is intentionally
+ * omitted — Pi suggests follow-ups via comments, the human promotes to nodes.
  *
  * store_artifact still uses HTTP — artifacts are stored server-side and not
  * part of the Yjs flow node schema.
@@ -26,77 +27,10 @@ function textResult(text: string): AgentToolResult<unknown> {
 /** Create the set of ThinkGraph tools for a Pi agent session */
 export function createThinkGraphTools(
   yjsClient: YjsFlowClient,
-  graphId: string,
-  parentNodeId: string,
+  _graphId: string,
+  _parentNodeId: string,
 ): AnyToolDefinition[] {
   return [
-    {
-      name: 'create_node',
-      label: 'Create Node',
-      description: 'Create a new node in the ThinkGraph thinking canvas. Use this to add child thoughts, insights, questions, or decisions.',
-      parameters: Type.Object({
-        title: Type.String({ description: 'Short post-it headline (5-10 words max)' }),
-        brief: Type.Optional(Type.String({ description: 'The actual thought — 1-2 sentences explaining the idea' })),
-        nodeType: Type.Optional(Type.String({ description: 'Node type: idea, insight, question, decision', default: 'idea' })),
-        parentId: Type.Optional(Type.String({ description: 'Parent node ID. Defaults to the dispatched node.' })),
-        starred: Type.Optional(Type.Boolean({ description: 'Star important insights' })),
-      }),
-      execute: async (_toolCallId, params) => {
-        const nodeId = crypto.randomUUID()
-        const parentNode = yjsClient.getNode(params.parentId || parentNodeId)
-
-        // Position near parent with offset
-        const parentPos = parentNode?.position || { x: 0, y: 0 }
-        const siblings = yjsClient.getAllNodes().filter(
-          n => n.parentId === (params.parentId || parentNodeId),
-        )
-        const offsetY = siblings.length * 120
-
-        try {
-          yjsClient.createNode({
-            id: nodeId,
-            title: params.title,
-            parentId: params.parentId || parentNodeId,
-            position: {
-              x: parentPos.x + 300,
-              y: parentPos.y + offsetY,
-            },
-            nodeType: params.nodeType || 'idea',
-            data: {
-              canvasId: graphId,
-              brief: params.brief || '',
-              starred: params.starred || false,
-              status: 'idle',
-              origin: 'ai',
-              source: 'pi-agent',
-              contextScope: 'branch',
-            },
-          })
-
-          // Also persist to DB via HTTP so it survives beyond the Yjs session
-          yjsClient.httpPost({
-            id: nodeId,
-            canvasId: graphId,
-            title: params.title,
-            nodeType: params.nodeType || 'idea',
-            parentId: params.parentId || parentNodeId,
-            starred: params.starred || false,
-            brief: params.brief || '',
-            status: 'idle',
-            origin: 'ai',
-            source: 'pi-agent',
-            contextScope: 'branch',
-          }).catch(err => {
-            console.error(`[pi-extension] DB persist for create_node failed:`, err.message)
-          })
-
-          return textResult(JSON.stringify({ ok: true, nodeId, title: params.title }))
-        } catch (err: any) {
-          console.error(`[pi-extension] create_node failed:`, err.message)
-          return textResult(JSON.stringify({ ok: false, error: err.message }))
-        }
-      },
-    },
     {
       name: 'update_node',
       label: 'Update Node',

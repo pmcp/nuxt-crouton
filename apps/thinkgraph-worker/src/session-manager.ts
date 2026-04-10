@@ -1884,30 +1884,30 @@ Content: ${payload.nodeContent}
 ${payload.prompt ? `## User Instructions\n\n${payload.prompt}\n\n` : ''}## Instructions
 
 1. Read the context above carefully
-2. Create child nodes under node "${payload.nodeId}" that advance the thinking
+2. Write your analysis into the node's editor using \`append_block\` (markdown)
 3. ${payload.depthInstruction}
-4. Each node should be ONE discrete, atomic thought — something the user can branch from
-5. Use appropriate node types: idea, insight, question, or decision
-6. Go deep rather than broad — follow the most promising thread
+4. For each follow-up idea, leave an anchored comment using \`open_comment\` on the relevant passage — the human decides which ones become child nodes
+5. Go deep rather than broad — follow the most promising thread
 
-## How to Create Nodes
+## How to Respond
 
-Use the \`create_node\` tool. Each node has three parts:
-- **title**: Short post-it label (5-10 words max, like a sticky note headline)
-- **brief**: The actual thought (1-2 sentences explaining the idea)
-- **nodeType**: one of "idea", "insight", "question", "decision"
-- **parentId**: defaults to the dispatched node, or use a previously created node's ID to chain deeper
+**Write analysis** into the editor with \`append_block\`:
+- Use markdown: headings, lists, bold, code blocks
+- Structure your reasoning clearly — one call per logical section is fine
+
+**Suggest follow-ups** with \`open_comment\`:
+- Anchor each comment on the relevant passage you just wrote
+- The \`quote\` must match text you wrote via append_block exactly
+- Keep the comment body concise: what the follow-up is and why it matters
+- Do NOT create child nodes directly — the human promotes comments to nodes
 
 ## Rules
 
-- Title = short headline (post-it style). Brief = the explanation.
-- Each node = ONE atomic thought the user can branch from
-- Star important insights with starred: true
 - Be substantive — no filler
 - Reference specific details from the context when relevant
-- After creating all child nodes, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set:
-  - \`brief\`: 1-line summary of what you explored
-  - \`output\`: a short handoff summary (what was concluded, what to explore next)`
+- Each comment = ONE discrete follow-up the user might branch into
+- After writing your analysis, use \`update_node\` on the dispatched node (ID: "${payload.nodeId}") to set:
+  - \`brief\`: 1-line summary of what you explored`
   }
 
   /** Flush accumulated output to ThinkGraph work item (progressive updates) */
