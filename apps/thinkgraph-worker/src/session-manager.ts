@@ -742,6 +742,9 @@ ${payload.prompt ? `## Brief\n\n${payload.prompt}\n\n` : ''}`
 
     let body: string
     switch (stage) {
+      case 'analyse':
+        body = this.discoverInstructions(payload)
+        break
       case 'analyst':
         body = this.analystInstructions(payload)
         break
