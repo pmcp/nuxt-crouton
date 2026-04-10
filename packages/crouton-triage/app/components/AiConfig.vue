@@ -28,6 +28,7 @@ const DEFAULT_DOMAINS = ['design', 'frontend', 'backend', 'product', 'infrastruc
 
 // Form state initialized from flow (anthropicApiKey is never returned from server)
 const formState = ref({
+  name: props.flow?.name || '',
   aiSummaryPrompt: props.flow?.aiSummaryPrompt || '',
   aiTaskPrompt: props.flow?.aiTaskPrompt || '',
   replyPersonality: props.flow?.replyPersonality || '',
@@ -45,6 +46,7 @@ const newApiKey = ref('')
 watch(() => props.flow, (flow) => {
   if (flow) {
     formState.value = {
+      name: flow.name || '',
       aiSummaryPrompt: flow.aiSummaryPrompt || '',
       aiTaskPrompt: flow.aiTaskPrompt || '',
       replyPersonality: flow.replyPersonality || '',
@@ -253,6 +255,7 @@ async function handleSave() {
       method: 'PATCH',
       body: {
         aiEnabled: true,
+        name: formState.value.name?.trim() || undefined,
         // Only send API key when user is setting a new one
         ...(newApiKey.value && { anthropicApiKey: newApiKey.value }),
         aiSummaryPrompt: formState.value.aiSummaryPrompt || undefined,
@@ -283,9 +286,19 @@ async function handleSave() {
 </script>
 
 <template>
-  <CroutonTriageConfigPanel v-model="isOpen" title="AI Configuration" mode="modal">
+  <CroutonTriageConfigPanel v-model="isOpen" title="Triage Settings" mode="modal">
     <template #default="{ close }">
       <div class="space-y-8">
+        <!-- Flow Name -->
+        <UFormField label="Flow Name" help="A human-readable name for this triage flow, shown in the pipeline diagram and flow list.">
+          <UInput
+            v-model="formState.name"
+            placeholder="e.g. Engineering Triage"
+            size="sm"
+            class="w-full"
+          />
+        </UFormField>
+
         <!-- API Key -->
         <div>
           <div v-if="hasExistingKey && !isChangingKey" class="flex items-center gap-2">

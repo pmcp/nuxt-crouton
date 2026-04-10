@@ -147,10 +147,9 @@ function isInputConnected(input: FlowInput): boolean {
 
 function getWorkspaceName(input: FlowInput): string | null {
   if (input.sourceType === 'slack') {
-    return input.sourceMetadata?.slackWorkspaceName || null
+    return input.name || input.sourceMetadata?.slackWorkspaceName || null
   }
-  if (input.emailSlug) return input.emailSlug
-  return null
+  return input.name || input.emailSlug || null
 }
 
 // AI is properly configured when enabled AND has an API key (use hint since key is never returned)
