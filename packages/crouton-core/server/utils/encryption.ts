@@ -8,7 +8,12 @@
  */
 
 async function getEncryptionKey(): Promise<CryptoKey> {
-  const config = useRuntimeConfig()
+  // useEvent() gets the current H3 event from async context.
+  // Passing it to useRuntimeConfig ensures CF Worker env bindings
+  // (secrets) are applied — without it, the config returns the
+  // module-initialization snapshot where secrets aren't yet available.
+  const event = useEvent()
+  const config = useRuntimeConfig(event)
   const keyBase64 = config.encryptionKey as string
 
   if (!keyBase64) {
