@@ -81,11 +81,11 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
   // snapshot where CF secrets aren't yet available. Fall back to process.env
   // for API keys since Nitro copies worker bindings to process.env per-request.
   const config = useRuntimeConfig(event)
-  const anthropicKey = (anthropicKey as string)
+  const anthropicKey = (config.anthropicApiKey as string)
     || process.env.NUXT_ANTHROPIC_API_KEY
     || process.env.NITRO_ANTHROPIC_API_KEY
     || ''
-  const openaiKey = (openaiKey as string)
+  const openaiKey = (config.openaiApiKey as string)
     || process.env.NUXT_OPENAI_API_KEY
     || process.env.NITRO_OPENAI_API_KEY
     || ''
