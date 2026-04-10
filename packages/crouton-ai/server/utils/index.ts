@@ -77,7 +77,18 @@ export interface AIProviderFactory {
  * ```
  */
 export function createAIProvider(event?: H3Event): AIProviderFactory {
+  // On CF Workers, useRuntimeConfig() without event returns the module-init
+  // snapshot where CF secrets aren't yet available. Fall back to process.env
+  // for API keys since Nitro copies worker bindings to process.env per-request.
   const config = useRuntimeConfig(event)
+  const anthropicKey = (anthropicKey as string)
+    || process.env.NUXT_ANTHROPIC_API_KEY
+    || process.env.NITRO_ANTHROPIC_API_KEY
+    || ''
+  const openaiKey = (openaiKey as string)
+    || process.env.NUXT_OPENAI_API_KEY
+    || process.env.NITRO_OPENAI_API_KEY
+    || ''
 
   // Cache provider instances
   let openaiInstance: ReturnType<typeof createOpenAI> | null = null
@@ -85,7 +96,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
 
   return {
     openai: () => {
-      if (!config.openaiApiKey) {
+      if (!openaiKey) {
         throw new Error(
           '@fyit/crouton-ai: OpenAI API key not configured. '
           + 'Set NUXT_OPENAI_API_KEY environment variable or configure runtimeConfig.openaiApiKey'
@@ -94,7 +105,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
 
       if (!openaiInstance) {
         openaiInstance = createOpenAI({
-          apiKey: config.openaiApiKey as string
+          apiKey: openaiKey as string
         })
       }
 
@@ -102,7 +113,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
     },
 
     anthropic: () => {
-      if (!config.anthropicApiKey) {
+      if (!anthropicKey) {
         throw new Error(
           '@fyit/crouton-ai: Anthropic API key not configured. '
           + 'Set NUXT_ANTHROPIC_API_KEY environment variable or configure runtimeConfig.anthropicApiKey'
@@ -111,7 +122,7 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
 
       if (!anthropicInstance) {
         anthropicInstance = createAnthropic({
-          apiKey: config.anthropicApiKey as string
+          apiKey: anthropicKey as string
         })
       }
 
@@ -141,8 +152,8 @@ export function createAIProvider(event?: H3Event): AIProviderFactory {
       if (croutonAIConfig?.defaultModel) return croutonAIConfig.defaultModel
 
       // Auto-detect based on available API keys (prefer Anthropic)
-      if (config.anthropicApiKey) return 'claude-sonnet-4-20250514'
-      if (config.openaiApiKey) return 'gpt-4o-mini'
+      if (anthropicKey) return 'claude-sonnet-4-20250514'
+      if (openaiKey) return 'gpt-4o-mini'
 
       throw new Error(
         '@fyit/crouton-ai: No AI API key configured. '
