@@ -152,17 +152,17 @@ function getWorkspaceName(input: FlowInput): string | null {
   return input.name || input.emailSlug || null
 }
 
-// AI is properly configured when enabled AND has an API key (use hint since key is never returned)
+// AI is configured when enabled AND has either a per-flow key or the global server key
 const isAiConfigured = computed(() => {
-  return !!props.flow?.aiEnabled && !!props.flow?.anthropicApiKeyHint
+  return !!props.flow?.aiEnabled
 })
 
 // AI status helpers
 function getAiStatusLabel(): string {
   if (!props.flow) return 'Not configured'
   if (!props.flow.aiEnabled) return 'Disabled'
-  if (!props.flow.anthropicApiKeyHint) return 'Missing API key'
-  return 'Enabled'
+  if (props.flow.anthropicApiKeyHint) return 'Flow API key'
+  return 'Server API key'
 }
 
 // Preset info (label, icon, description)
@@ -211,7 +211,6 @@ function getInputMissing(input: FlowInput): string[] {
 function getAiMissing(): string[] {
   const missing: string[] = []
   if (!props.flow?.aiEnabled) missing.push('Enable AI analysis')
-  if (!props.flow?.anthropicApiKeyHint) missing.push('Add API key')
   return missing
 }
 

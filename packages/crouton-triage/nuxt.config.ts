@@ -45,26 +45,35 @@ export default defineNuxtConfig({
     }
   },
 
-  // Runtime config for triage features
+  // Runtime config for triage features.
+  // Handlers read from BOTH nested and flat paths (legacy inconsistency).
+  // All paths must be defined here so Nitro maps NUXT_* env vars at runtime.
   runtimeConfig: {
-    // Server-only config
+    // Nested paths — read by Slack webhook handler + AI service
     croutonTriage: {
       anthropicApiKey: '',
       slack: {
         clientId: '',
         clientSecret: '',
-        signingSecret: ''
+        signingSecret: '',
       },
       resend: {
-        apiKey: ''
-      }
+        apiKey: '',
+      },
     },
+    // Flat paths — read by OAuth install/callback handlers
+    slackClientId: '',
+    slackClientSecret: '',
+    // Flat paths — read by Resend webhook handler
+    resendApiToken: '',
+    resendWebhookSigningSecret: '',
     // Public config
     public: {
       croutonTriage: {
-        enabled: true
-      }
-    }
+        enabled: true,
+      },
+      baseUrl: '',
+    },
   },
 
   // i18n configuration - translations auto-merge when this layer is extended
