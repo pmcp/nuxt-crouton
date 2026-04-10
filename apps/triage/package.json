@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote",
-    "tunnel": "cloudflared tunnel --config ~/.cloudflared/triage-dev.yml run triage-dev"
+    "tunnel": "cloudflared tunnel --config ~/.cloudflared/triage-dev.yml run triage-dev",
+    "logs": "npx wrangler pages deployment tail --project-name triage"
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
