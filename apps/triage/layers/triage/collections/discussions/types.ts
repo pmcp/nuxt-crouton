@@ -56,7 +56,7 @@ export interface TriageDiscussion {
 }
 
 export type TriageDiscussionFormData = z.infer<typeof triageDiscussionSchema>
-export type NewTriageDiscussion = Omit<TriageDiscussion, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type NewTriageDiscussion = Omit<TriageDiscussion, 'id' | 'createdAt' | 'updatedAt'>
 
 // Props type for the Form component
 export interface TriageDiscussionFormProps {

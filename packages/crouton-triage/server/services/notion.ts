@@ -239,22 +239,68 @@ async function notionRequest(
 }
 
 /**
+ * Cache of databaseId → title property name.
+ *
+ * Every Notion database has exactly one property of type `title`, but its name
+ * varies (could be "Name", "Task", "Title", etc.). We fetch the database schema
+ * once per databaseId and cache the title property name to avoid hardcoding
+ * "Name" (which fails for any database that uses a different name).
+ */
+const titlePropertyCache = new Map<string, string>()
+
+/**
+ * Look up the title property name for a Notion database.
+ * Returns the property name (cached after first fetch). Falls back to "Name"
+ * if the lookup fails so we still attempt the insert.
+ */
+async function getTitlePropertyName(apiKey: string, databaseId: string): Promise<string> {
+  const cached = titlePropertyCache.get(databaseId)
+  if (cached) return cached
+
+  try {
+    const database: any = await notionRequest(`databases/${databaseId}`, {
+      method: 'GET',
+      apiKey,
+    })
+
+    const properties = database?.properties || {}
+    const titleEntry = Object.entries(properties).find(
+      ([, prop]: [string, any]) => prop?.type === 'title',
+    )
+
+    const titleName = titleEntry?.[0] || 'Name'
+    titlePropertyCache.set(databaseId, titleName)
+    logger.debug('Resolved Notion title property', { databaseId, titleName })
+    return titleName
+  }
+  catch (error) {
+    logger.warn('Failed to fetch Notion database schema — falling back to "Name"', {
+      databaseId,
+      error: (error as Error).message,
+    })
+    return 'Name'
+  }
+}
+
+/**
  * Build Notion properties from task data
  *
- * Strategy: Use "Name" (title) property + apply field mappings for other properties.
+ * Strategy: Use the database's title property + apply field mappings for other properties.
  * Field mappings allow smart population of Notion database properties like Priority, Assignee, etc.
  *
  * @param task - Detected task with AI-generated fields
+ * @param titlePropertyName - Name of the database's title property (varies per DB)
  * @param fieldMapping - Optional field mapping configuration from config.notionFieldMapping
  * @param userMappings - Optional map of source user IDs to Notion user IDs for assignee field
  */
 async function buildTaskProperties(
   task: DetectedTask,
+  titlePropertyName: string,
   fieldMapping?: Record<string, any>,
   userMappings?: Map<string, string>,
 ): Promise<Record<string, any>> {
   const properties: Record<string, any> = {
-    Name: {
+    [titlePropertyName]: {
       title: [
         {
           text: { content: task.title.substring(0, 2000) },
@@ -860,7 +906,8 @@ export async function createNotionTask(
   })
 
   const apiKey = getNotionApiKey(config.apiKey)
-  const properties = await buildTaskProperties(task, fieldMapping, userMappings)
+  const titlePropertyName = await getTitlePropertyName(apiKey, config.databaseId)
+  const properties = await buildTaskProperties(task, titlePropertyName, fieldMapping, userMappings)
   const children = buildTaskContent(task, thread, aiSummary, config, userMentions, sourceMetadata)
 
   const startTime = Date.now()

@@ -74,6 +74,11 @@ const selectedInputType = ref<'slack' | 'figma' | 'email'>('slack')
 const editingInput = ref<FlowInput | null>(null)
 const deletingInput = ref<FlowInput | null>(null)
 
+// Template refs to AccountPicker instances — used to refresh the account list
+// after OAuth completes so newly-connected accounts appear immediately.
+const addAccountPickerRef = ref<{ fetchAccounts: () => Promise<void> } | null>(null)
+const editAccountPickerRef = ref<{ fetchAccounts: () => Promise<void> } | null>(null)
+
 const notify = useNotify()
 
 // ============================================================================
@@ -84,10 +89,10 @@ const slackWorkspace = ref('')
 
 const inputFormState = ref({
   sourceType: 'slack',
+  name: '',
   apiToken: '',
   accountId: undefined as string | undefined,
   emailAddress: '',
-  emailSlug: '',
   sourceMetadata: {} as Record<string, any>,
   active: true,
 })
@@ -97,24 +102,25 @@ const inputFormState = ref({
 // ============================================================================
 
 const slackInputSchema = z.object({
-  apiToken: z.string().min(1, 'OAuth is required for Slack inputs'),
+  accountId: z.string().optional(),
+  apiToken: z.string().optional(),
   sourceMetadata: z.object({
-    slackTeamId: z.string().min(1, 'Slack Team ID is required'),
+    slackTeamId: z.string().optional(),
     slackWorkspaceName: z.string().optional(),
-  }),
-})
+  }).optional(),
+}).refine(
+  data => !!data.accountId || !!data.apiToken,
+  { message: 'Either select a connected account or authenticate with OAuth' },
+)
 
 const figmaInputSchema = z.object({
-  emailSlug: z.string()
-    .min(3, 'Email slug must be at least 3 characters')
-    .regex(/^[a-z0-9-]+$/, 'Email slug must be lowercase alphanumeric with hyphens'),
+  name: z.string().min(1, 'Name is required'),
   emailAddress: z.string().email('Invalid email address'),
+  apiToken: z.string().min(1, 'Figma Personal Access Token is required'),
 })
 
 const emailInputSchema = z.object({
-  emailSlug: z.string()
-    .min(3, 'Email slug must be at least 3 characters')
-    .regex(/^[a-z0-9-]+$/, 'Email slug must be lowercase alphanumeric with hyphens'),
+  name: z.string().min(1, 'Name is required'),
   emailAddress: z.string().email('Invalid email address'),
 })
 
@@ -134,11 +140,24 @@ const { openOAuthPopup, waitingForOAuth } = useTriageOAuth({
   slackTeam: slackWorkspace, // Pass workspace name to pre-select during OAuth
   provider: 'slack',
   onSuccess: async (credentials) => {
-    // Update form state with OAuth credentials
-    inputFormState.value.apiToken = credentials.apiToken
-    inputFormState.value.sourceMetadata = {
-      ...inputFormState.value.sourceMetadata,
-      ...credentials.sourceMetadata,
+    // New account-based flow: OAuth callback creates/updates a triageAccount
+    // and returns its ID. Select it in the form and refresh the picker so
+    // the account appears in the dropdown.
+    if (credentials.accountId) {
+      inputFormState.value.accountId = credentials.accountId
+      await Promise.all([
+        addAccountPickerRef.value?.fetchAccounts(),
+        editAccountPickerRef.value?.fetchAccounts(),
+      ])
+    }
+
+    // Legacy inline-token flow (kept for backward compatibility)
+    if (credentials.apiToken) {
+      inputFormState.value.apiToken = credentials.apiToken
+      inputFormState.value.sourceMetadata = {
+        ...inputFormState.value.sourceMetadata,
+        ...credentials.sourceMetadata,
+      }
     }
 
     notify.success('Slack Connected', { description: 'OAuth credentials received successfully.' })
@@ -194,10 +213,10 @@ function openEditModal(input: FlowInput) {
   // Populate form with input data
   inputFormState.value = {
     sourceType: input.sourceType,
+    name: input.name || '',
     apiToken: input.apiToken || '',
     accountId: input.accountId,
     emailAddress: input.emailAddress || '',
-    emailSlug: input.emailSlug || '',
     sourceMetadata: input.sourceMetadata || {},
     active: input.active,
   }
@@ -219,10 +238,10 @@ function openDeleteDialog(input: FlowInput) {
 function resetForm() {
   inputFormState.value = {
     sourceType: 'slack',
+    name: '',
     apiToken: '',
     accountId: undefined,
     emailAddress: '',
-    emailSlug: '',
     sourceMetadata: {},
     active: true,
   }
@@ -238,15 +257,22 @@ async function saveNewInput() {
     // Validate form
     const validatedData = inputSchema.value.parse(inputFormState.value)
 
+    // For Slack the name field isn't in the form — derive from workspace metadata.
+    // For Figma/Email the user fills in the Name field directly.
+    const inputName = inputFormState.value.name
+      || inputFormState.value.sourceMetadata?.slackWorkspaceName
+      || slackWorkspace.value
+      || `${selectedInputType.value.charAt(0).toUpperCase() + selectedInputType.value.slice(1)} Input`
+
     // Create new input object
     const newInput: FlowInput = {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       sourceType: selectedInputType.value,
+      name: inputName,
       apiToken: inputFormState.value.apiToken || undefined,
       accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
-      emailSlug: inputFormState.value.emailSlug || undefined,
       sourceMetadata: inputFormState.value.sourceMetadata,
       webhookUrl: generateWebhookUrl(selectedInputType.value),
       active: true,
@@ -302,10 +328,10 @@ async function updateInput() {
     // Update input object
     const updatedInput: FlowInput = {
       ...editingInput.value,
+      name: inputFormState.value.name || editingInput.value.name,
       apiToken: inputFormState.value.apiToken || undefined,
       accountId: inputFormState.value.accountId,
       emailAddress: inputFormState.value.emailAddress || undefined,
-      emailSlug: inputFormState.value.emailSlug || undefined,
       sourceMetadata: inputFormState.value.sourceMetadata,
       active: inputFormState.value.active,
     }
@@ -629,6 +655,7 @@ watch(isEditModalOpen, (open) => {
               <!-- Connected Account Picker -->
               <UFormField label="Connected Account" name="accountId">
                 <CroutonTriageFlowsAccountPicker
+                  ref="addAccountPickerRef"
                   v-model="inputFormState.accountId"
                   provider="slack"
                   :team-id="teamId"
@@ -681,11 +708,10 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Figma/Email-specific fields -->
             <template v-if="selectedInputType !== 'slack'">
-              <UFormField label="Email Slug" name="emailSlug" required>
+              <UFormField label="Name" name="name" required>
                 <UInput
-                  v-model="inputFormState.emailSlug"
-                  placeholder="e.g., figma-comments"
-                  help="Lowercase alphanumeric with hyphens"
+                  v-model="inputFormState.name"
+                  placeholder="e.g., Design Team Figma"
                   class="w-full"
                 />
               </UFormField>
@@ -694,8 +720,23 @@ watch(isEditModalOpen, (open) => {
                 <UInput
                   v-model="inputFormState.emailAddress"
                   type="email"
-                  placeholder="e.g., figma-comments@triage.app"
-                  help="This will be generated based on your slug"
+                  placeholder="e.g., figma-comments@messages.yourdomain.com"
+                  help="The inbound address Figma notifications are forwarded to"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField
+                v-if="selectedInputType === 'figma'"
+                label="Figma Personal Access Token"
+                name="apiToken"
+                required
+                help="Create at figma.com/settings → Personal access tokens. Needs file_comments:read + file_comments:write scopes."
+              >
+                <UInput
+                  v-model="inputFormState.apiToken"
+                  type="password"
+                  placeholder="figd_..."
                   class="w-full"
                 />
               </UFormField>
@@ -739,6 +780,7 @@ watch(isEditModalOpen, (open) => {
               <!-- Connected Account Picker -->
               <UFormField label="Connected Account" name="accountId">
                 <CroutonTriageFlowsAccountPicker
+                  ref="editAccountPickerRef"
                   v-model="inputFormState.accountId"
                   provider="slack"
                   :team-id="teamId"
@@ -783,10 +825,10 @@ watch(isEditModalOpen, (open) => {
 
             <!-- Figma/Email-specific fields -->
             <template v-if="selectedInputType !== 'slack'">
-              <UFormField label="Email Slug" name="emailSlug" required>
+              <UFormField label="Name" name="name" required>
                 <UInput
-                  v-model="inputFormState.emailSlug"
-                  placeholder="e.g., figma-comments"
+                  v-model="inputFormState.name"
+                  placeholder="e.g., Design Team Figma"
                   class="w-full"
                 />
               </UFormField>
@@ -795,7 +837,22 @@ watch(isEditModalOpen, (open) => {
                 <UInput
                   v-model="inputFormState.emailAddress"
                   type="email"
-                  placeholder="e.g., figma-comments@triage.app"
+                  placeholder="e.g., figma-comments@messages.yourdomain.com"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField
+                v-if="selectedInputType === 'figma'"
+                label="Figma Personal Access Token"
+                name="apiToken"
+                required
+                help="Create at figma.com/settings → Personal access tokens."
+              >
+                <UInput
+                  v-model="inputFormState.apiToken"
+                  type="password"
+                  :placeholder="editingInput?.apiToken ? '•••••• (leave blank to keep existing)' : 'figd_...'"
                   class="w-full"
                 />
               </UFormField>

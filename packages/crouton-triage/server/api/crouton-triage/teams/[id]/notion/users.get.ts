@@ -18,10 +18,10 @@ export default defineEventHandler(async (event): Promise<any> => {
 
 
   try {
-    // Get parameters from query
+    // Get parameters — teamId comes from the route path, not the query string
     const query = getQuery(event)
     let notionToken = query.notionToken as string
-    const teamId = query.teamId as string
+    const teamId = getRouterParam(event, 'id') as string
     const accountId = query.accountId as string
 
     if (!teamId) {
@@ -33,9 +33,8 @@ export default defineEventHandler(async (event): Promise<any> => {
 
     // Resolve token from account if accountId provided
     if (accountId && !notionToken) {
-      const routeTeamId = (getRouterParam(event, 'id') || teamId) as string
       const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
-      notionToken = await resolveAccountToken(accountId, routeTeamId)
+      notionToken = await resolveAccountToken(accountId, teamId)
     }
 
     // Validate required parameters

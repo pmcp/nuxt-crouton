@@ -42,24 +42,23 @@ export default defineEventHandler(async (event) => {
   await requireAuth(event)
 
   try {
-    // Get parameters from query
+    // Get parameters — teamId comes from the route path, not the query string
     const query = getQuery(event)
     let slackToken = query.slackToken as string
-    const teamId = query.teamId as string
+    const teamId = getRouterParam(event, 'id') as string
     const accountId = query.accountId as string
 
     if (!teamId) {
       throw createError({
-        statusCode: 422,
-        statusMessage: 'Missing required parameter: teamId'
+        status: 422,
+        statusText: 'Missing required parameter: teamId'
       })
     }
 
     // Resolve token from account if accountId provided
     if (accountId && !slackToken) {
-      const routeTeamId = getRouterParam(event, 'id') || teamId
       const { resolveAccountToken } = await import('../../../../../utils/tokenResolver')
-      slackToken = await resolveAccountToken(accountId, routeTeamId)
+      slackToken = await resolveAccountToken(accountId, teamId)
     }
 
     // Validate required parameters
@@ -84,8 +83,9 @@ export default defineEventHandler(async (event) => {
 
     do {
       // Build URL with cursor for pagination
+      // Note: don't pass `team_id` — that's only needed for Enterprise Grid org tokens.
+      // Workspace bot tokens (xoxb-) are already scoped to a single workspace.
       const url = new URL('https://slack.com/api/users.list')
-      url.searchParams.set('team_id', teamId)
       if (cursor) {
         url.searchParams.set('cursor', cursor)
       }

@@ -41,7 +41,9 @@ export default defineEventHandler(async (event) => {
     })
 
     // 2. Extract discussion ID from route parameter
-    const discussionId = getRouterParam(event, 'id')
+    // Route is /teams/[id]/discussions/[discussionId]/retry — two params,
+    // so we need 'discussionId' explicitly (not 'id' which is the team id).
+    const discussionId = getRouterParam(event, 'discussionId')
 
     if (!discussionId) {
       throw createError({

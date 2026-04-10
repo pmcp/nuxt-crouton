@@ -526,6 +526,8 @@ async function saveDiscussion(
   const discussion = await createTriageDiscussion({
     teamId: actualTeamId, // Use actual team ID from config, not source identifier
     owner: SYSTEM_USER_ID,
+    createdBy: SYSTEM_USER_ID,
+    updatedBy: SYSTEM_USER_ID,
     sourceType: parsed.sourceType,
     sourceThreadId: parsed.sourceThreadId,
     sourceUrl: parsed.sourceUrl,
@@ -1321,6 +1323,8 @@ export async function processDiscussion(
       const job = await createTriageJob({
         teamId: actualTeamId,
         owner: SYSTEM_USER_ID,
+        createdBy: SYSTEM_USER_ID,
+        updatedBy: SYSTEM_USER_ID,
         discussionId: '', // Will update after discussion is created
         flowInputId: flowData ? flowData.matchedInput.id : (config?.id || ''),
         status: 'processing',

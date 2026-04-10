@@ -348,6 +348,8 @@ export interface FlowInput {
   flowId: string
   /** Source type (e.g., 'slack', 'figma', 'email') */
   sourceType: string
+  /** Human-readable label for this input (e.g., Slack workspace name, email slug) */
+  name?: string
   /** Source API token/key (legacy — prefer accountId) */
   apiToken?: string
   /** Connected account ID for centralized token resolution */
@@ -384,6 +386,8 @@ export interface FlowOutput {
   flowId: string
   /** Output type (e.g., 'notion', 'github', 'linear') */
   outputType: string
+  /** Human-readable label for this output (e.g., Notion database title) */
+  name?: string
   /** Domain filter - tasks matching these domains will be routed here */
   domainFilter?: string[]
   /** Whether this is the default output (for tasks with no/null domain) */

@@ -421,11 +421,17 @@ async function saveNewOutput() {
     }
     // Future: Add GitHub, Linear configs
 
+    // Derive a human-readable name: prefer the Notion database title,
+    // fall back to a generic label based on output type.
+    const outputName = notionSchema.value?.databaseTitle
+      || `${selectedOutputType.value.charAt(0).toUpperCase() + selectedOutputType.value.slice(1)} Output`
+
     // Create new output object
     const newOutput: FlowOutput = {
       id: `temp-${Date.now()}`, // Temporary ID, will be replaced by DB
       flowId: props.flowId,
       outputType: selectedOutputType.value,
+      name: outputName,
       domainFilter: outputFormState.value.domainFilter.length > 0 && !isAllDomainsSelected(outputFormState.value.domainFilter)
         ? outputFormState.value.domainFilter
         : undefined,

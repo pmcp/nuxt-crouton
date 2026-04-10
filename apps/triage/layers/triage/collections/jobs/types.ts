@@ -49,7 +49,7 @@ export interface TriageJob {
 }
 
 export type TriageJobFormData = z.infer<typeof triageJobSchema>
-export type NewTriageJob = Omit<TriageJob, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type NewTriageJob = Omit<TriageJob, 'id' | 'createdAt' | 'updatedAt'>
 
 // Props type for the Form component
 export interface TriageJobFormProps {
