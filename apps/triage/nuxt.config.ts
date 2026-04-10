@@ -44,7 +44,9 @@ export default defineNuxtConfig({
   // We define ALL paths so both dev (process.env) and prod (NUXT_* secrets) work.
   runtimeConfig: {
     // Flat keys — read by OAuth install.get.ts + callback.get.ts
-    slackClientId: process.env.SLACK_CLIENT_ID || '',
+    // Client ID is hardcoded (not sensitive — visible in every OAuth URL).
+    // Client Secret must come from env/secrets at runtime.
+    slackClientId: '6917477961058.9867346699728',
     slackClientSecret: process.env.SLACK_CLIENT_SECRET || '',
     // Nested keys — read by Slack webhook handler
     croutonTriage: {
