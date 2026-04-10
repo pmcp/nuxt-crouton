@@ -8,13 +8,14 @@
  */
 
 async function getEncryptionKey(): Promise<CryptoKey> {
-  // useEvent() gets the current H3 event from async context.
-  // Passing it to useRuntimeConfig ensures CF Worker env bindings
-  // (secrets) are applied — without it, the config returns the
-  // module-initialization snapshot where secrets aren't yet available.
-  const event = useEvent()
-  const config = useRuntimeConfig(event)
-  const keyBase64 = config.encryptionKey as string
+  // On Cloudflare Workers, useRuntimeConfig() without an event returns the
+  // module-initialization snapshot where CF secrets aren't yet available.
+  // useEvent() isn't available on non-Node.js runtimes (no AsyncLocalStorage).
+  // Read directly from process.env as a primary source — Nitro's CF preset
+  // copies worker env bindings to process.env before handling each request.
+  const keyBase64 = process.env.NUXT_ENCRYPTION_KEY
+    || process.env.NITRO_ENCRYPTION_KEY
+    || (useRuntimeConfig().encryptionKey as string)
 
   if (!keyBase64) {
     throw new Error('NUXT_ENCRYPTION_KEY is not set. Generate one with: openssl rand -base64 32')
