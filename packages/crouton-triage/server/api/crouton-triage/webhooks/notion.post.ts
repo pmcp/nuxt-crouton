@@ -1,13 +1,14 @@
 /**
  * Notion Webhook Endpoint
  *
- * Receives Notion webhook events and handles task completion notifications.
+ * Receives Notion webhook events and posts status updates back to the
+ * original discussion source (Slack/Figma).
  *
  * Flow:
- * 1. Notion webhook received (task status changed to "Done")
+ * 1. Notion webhook received (task status changed)
  * 2. Query triage database for task by notionPageId
  * 3. Load discussion and flow input for adapter config
- * 4. Post completion message to original Slack/Figma thread
+ * 4. Post status update to original Slack/Figma thread
  *
  * @see https://developers.notion.com/reference/webhooks
  */
@@ -89,18 +90,18 @@ export default defineEventHandler(async (event) => {
 
     logger.debug('[Notion Webhook] Processing page', { notionPageId })
 
-    // Check if status is "Done" (case-insensitive)
-    // Note: Notion webhook payloads may not always include full property data
-    // If status is missing, we'll query Notion API to get current status
+    // Extract status from webhook payload
     const status = body.data?.properties?.Status?.status?.name
 
-    if (status && status.toLowerCase() !== 'done') {
-      logger.debug('[Notion Webhook] Status is not Done, ignoring', { status })
+    if (!status) {
+      logger.debug('[Notion Webhook] No status in payload, ignoring')
       return {
         success: true,
-        message: `Status "${status}" is not Done - ignored`,
+        message: 'No status in payload - ignored',
       }
     }
+
+    logger.debug('[Notion Webhook] Status change detected', { status })
 
     // ============================================================================
     // QUERY TASK BY NOTION PAGE ID
@@ -202,13 +203,14 @@ export default defineEventHandler(async (event) => {
     // ============================================================================
     const adapter = getAdapter(discussion.sourceType)
 
-    // Build completion message
-    const completionMessage = `✅ Task completed in Notion!\n\n**${task.title}**\n${task.notionPageUrl}`
+    // Build status update message
+    const completionMessage = `Status updated to "${status}": ${task.title}\n${task.notionPageUrl}`
 
-    logger.debug('[Notion Webhook] Posting completion message to thread', {
+    logger.debug('[Notion Webhook] Posting status update to thread', {
       sourceType: discussion.sourceType,
       sourceThreadId: discussion.sourceThreadId,
       taskTitle: task.title,
+      status,
     })
 
     const success = await adapter.postReply(
@@ -218,37 +220,41 @@ export default defineEventHandler(async (event) => {
     )
 
     if (success) {
-      logger.info('[Notion Webhook] ✅ Completion message posted successfully', {
+      logger.info('[Notion Webhook] ✅ Status update posted successfully', {
         taskId: task.id,
         notionPageId: task.notionPageId,
         sourceThreadId: discussion.sourceThreadId,
         sourceType: discussion.sourceType,
+        status,
       })
 
       return {
         success: true,
-        message: 'Completion notification posted to source thread',
+        message: `Status "${status}" posted to source thread`,
         task: {
           id: task.id,
           title: task.title,
           notionPageUrl: task.notionPageUrl,
         },
+        status,
         sourceThreadId: discussion.sourceThreadId,
         timestamp: new Date().toISOString(),
       }
     } else {
-      logger.error('[Notion Webhook] ❌ Failed to post completion message', undefined, {
+      logger.error('[Notion Webhook] ❌ Failed to post status update', undefined, {
         taskId: task.id,
         sourceThreadId: discussion.sourceThreadId,
+        status,
       })
 
       return {
         success: false,
-        error: 'Failed to post completion message to source thread',
+        error: 'Failed to post status update to source thread',
         task: {
           id: task.id,
           title: task.title,
         },
+        status,
       }
     }
 
