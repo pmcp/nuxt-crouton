@@ -138,6 +138,74 @@ function handleResolve(threadId: string) {
   if (focusedThreadId.value === threadId) focusThread(null)
 }
 
+/**
+ * Promote a comment thread to a child node on the canvas.
+ *
+ * Concatenates all messages in the thread into a brief, derives a title
+ * from the first ~60 characters, POSTs to the existing thinkgraph-nodes
+ * endpoint, resolves the thread, and fires crouton:mutation so the
+ * project page's auto-refresh picks up the new node.
+ */
+const creatingNodeForThread = ref<Set<string>>(new Set())
+
+async function handleCreateNode(threadId: string) {
+  if (!actionRegistry) {
+    console.error('[CommentSlideout] Create node: no NodeActionContext available')
+    return
+  }
+  if (creatingNodeForThread.value.has(threadId)) return
+
+  const thread = openThreads.value.find(t => t.id === threadId)
+    ?? resolvedThreads.value.find(t => t.id === threadId)
+  if (!thread || thread.messages.length === 0) return
+
+  // Build brief from all messages in the thread
+  const brief = thread.messages
+    .map(m => `**${m.authorLabel ?? (m.author === 'pi' ? 'Pi' : 'You')}:** ${m.body}`)
+    .join('\n\n')
+
+  // Title: first ~60 chars of the first message body
+  const firstBody = thread.messages[0]!.body
+  const title = firstBody.length > 60 ? `${firstBody.slice(0, 57)}...` : firstBody
+
+  creatingNodeForThread.value.add(threadId)
+
+  try {
+    await $fetch(`/api/teams/${actionRegistry.ctx.teamId}/thinkgraph-nodes`, {
+      method: 'POST',
+      body: {
+        parentId: actionRegistry.ctx.nodeId,
+        title,
+        brief,
+      },
+    })
+
+    // Resolve the thread now that it's been promoted
+    resolveComment(threadId)
+    if (focusedThreadId.value === threadId) focusThread(null)
+
+    // Trigger canvas refresh
+    useNuxtApp().callHook('crouton:mutation', { collection: 'thinkgraphNodes' })
+
+    toast.add({
+      title: 'Node created',
+      description: `"${title}" added as a child node.`,
+      color: 'success',
+      icon: 'i-lucide-git-branch-plus',
+    })
+  } catch (err: any) {
+    console.error('[CommentSlideout] Create node failed', err)
+    toast.add({
+      title: 'Create node failed',
+      description: err?.data?.statusMessage || err?.message || 'Could not create child node.',
+      color: 'error',
+      icon: 'i-lucide-alert-triangle',
+    })
+  } finally {
+    creatingNodeForThread.value.delete(threadId)
+  }
+}
+
 function formatTime(ts: number) {
   try {
     return new Date(ts).toLocaleString(undefined, {
@@ -239,15 +307,27 @@ function formatTime(ts: number) {
               @keydown.enter.meta.prevent="handleReply(thread.id)"
             />
             <div class="flex items-center justify-between gap-2">
-              <UButton
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-check"
-                @click="handleResolve(thread.id)"
-              >
-                Resolve
-              </UButton>
+              <div class="flex items-center gap-1">
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-lucide-check"
+                  @click="handleResolve(thread.id)"
+                >
+                  Resolve
+                </UButton>
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-lucide-git-branch-plus"
+                  :loading="creatingNodeForThread.has(thread.id)"
+                  @click="handleCreateNode(thread.id)"
+                >
+                  Create node
+                </UButton>
+              </div>
               <div class="flex items-center gap-2">
                 <UButton
                   size="xs"

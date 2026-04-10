@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "alexdeforce",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/alexdeforce", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/docs", "dev"],
+      "port": 3002
+    },
+    {
+      "name": "sintlukas",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/sintlukas", "dev"],
+      "port": 3003
+    },
+    {
+      "name": "thinkgraph",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/thinkgraph", "dev"],
+      "port": 3004
+    },
+    {
+      "name": "triage",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/triage", "dev"],
+      "port": 3005
+    },
+    {
+      "name": "velo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/velo", "dev"],
+      "port": 3006
+    }
+  ]
+}
