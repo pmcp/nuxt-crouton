@@ -7,6 +7,8 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   claude:
@@ -29,6 +31,33 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: "--max-turns 25"
+
+  code-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          direct_prompt: |
+            Review the changes in this PR. Focus on:
+            - Bugs, logic errors, and security issues
+            - TypeScript type safety
+            - Nuxt/Vue patterns (Composition API, Nuxt UI v4 component names)
+            - Missing error handling for async operations
+            - Any changes to packages/ that should have been flagged
+
+            Be concise. Only comment on things that matter — skip style nits.
+            If the PR looks good, say so briefly.
+          claude_args: "--max-turns 10"
 
 permissions:
   contents: read
