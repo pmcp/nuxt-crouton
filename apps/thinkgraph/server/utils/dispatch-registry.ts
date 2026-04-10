@@ -71,21 +71,6 @@ export async function ensureServicesLoaded() {
   _loaded = false
   // Import all service files — each calls registerDispatchService() at top level
   await Promise.all([
-    import('./dispatch-services/dalle3'),
-    import('./dispatch-services/flux'),
-    import('./dispatch-services/lovable'),
-    import('./dispatch-services/v0'),
-    import('./dispatch-services/code'),
-    import('./dispatch-services/text'),
-    import('./dispatch-services/mermaid'),
-    import('./dispatch-services/gemini'),
-    import('./dispatch-services/business-canvas'),
-    import('./dispatch-services/user-stories'),
-    import('./dispatch-services/pitch'),
-    import('./dispatch-services/swot'),
-    import('./dispatch-services/technical-spec'),
-    import('./dispatch-services/ui-prototype'),
-    import('./dispatch-services/excalidraw'),
     import('./dispatch-services/pi-agent'),
   ])
   _loaded = true
