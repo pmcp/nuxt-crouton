@@ -36,35 +36,13 @@ export default defineNuxtConfig({
     }
   },
 
-  // Runtime config for crouton-triage handlers.
-  // The handlers read from INCONSISTENT paths (pre-existing):
-  //   - OAuth install/callback: flat `slackClientId`, `slackClientSecret`
-  //   - Slack webhook: nested `croutonTriage.slack.signingSecret`
-  //   - Resend webhook: flat `resendApiToken`, `resendWebhookSigningSecret`
-  // We define ALL paths so both dev (process.env) and prod (NUXT_* secrets) work.
+  // Only override what layers can't handle.
+  // All other keys come from crouton-core/crouton-triage layers and are
+  // populated at runtime via NUXT_* CF Pages secrets.
   runtimeConfig: {
-    // Encryption key for token storage (from NUXT_ENCRYPTION_KEY secret)
-    encryptionKey: process.env.NUXT_ENCRYPTION_KEY || '',
-    // Flat keys — read by OAuth install.get.ts + callback.get.ts
-    // Client ID is hardcoded (not sensitive — visible in every OAuth URL).
-    // Client Secret must come from env/secrets at runtime.
+    // Hardcoded: Nitro's env parser truncates this 26-digit number.
+    // Not sensitive — visible in every OAuth URL.
     slackClientId: '6917477961058.9867346699728',
-    slackClientSecret: process.env.SLACK_CLIENT_SECRET || '',
-    // Nested keys — read by Slack webhook handler
-    croutonTriage: {
-      slack: {
-        clientId: process.env.SLACK_CLIENT_ID || '',
-        clientSecret: process.env.SLACK_CLIENT_SECRET || '',
-        signingSecret: process.env.SLACK_SIGNING_SECRET || '',
-      },
-    },
-    // Flat keys — read by Resend webhook handler
-    resendApiToken: process.env.RESEND_API_TOKEN || '',
-    resendWebhookSigningSecret: process.env.RESEND_WEBHOOK_SIGNING_SECRET || '',
-    // Public config — read by OAuth handlers for redirect URIs
-    public: {
-      baseUrl: process.env.BASE_URL || '',
-    },
   },
 
   hub: {
