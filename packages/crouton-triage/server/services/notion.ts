@@ -467,6 +467,7 @@ function buildTaskContent(
   userMentions?: Map<string, string>,
   sourceMetadata?: SourceMetadata,
 ): any[] {
+  const NOTION_MAX_TOGGLE_CHILDREN = 100
   const blocks: any[] = []
 
   // AI Summary callout (concise, task-focused)
@@ -737,7 +738,6 @@ function buildTaskContent(
   }
 
   // Notion limits toggle children to 100. Truncate and add a note if needed.
-  const NOTION_MAX_TOGGLE_CHILDREN = 100
   const truncatedMessages = threadMessages.length > NOTION_MAX_TOGGLE_CHILDREN
     ? [
         ...threadMessages.slice(0, NOTION_MAX_TOGGLE_CHILDREN - 1),
