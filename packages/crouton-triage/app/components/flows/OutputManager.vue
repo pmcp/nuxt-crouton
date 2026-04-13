@@ -195,7 +195,7 @@ const {
  * { notionProperty: string, propertyType: string, valueMap: Record<string, string> }
  */
 function updateFieldMapping(aiField: string, propertyName: string | null) {
-  if (!propertyName) {
+  if (!propertyName || propertyName === '(none)') {
     // Clear the mapping if property is deselected
     delete outputFormState.value.fieldMapping[aiField]
     return
@@ -212,6 +212,21 @@ function updateFieldMapping(aiField: string, propertyName: string | null) {
       : {}
   }
 }
+
+/**
+ * Notion property names with a "(none)" option prepended for clearing
+ */
+const notionPropertyOptions = computed(() => {
+  const props = Object.keys(notionSchema.value?.properties || {})
+  return ['(none)', ...props]
+})
+
+/**
+ * Whether we have existing field mappings (even without schema loaded)
+ */
+const hasExistingMappings = computed(() => {
+  return Object.keys(outputFormState.value.fieldMapping).length > 0
+})
 
 /**
  * Get the currently mapped Notion property name for an AI field
@@ -955,21 +970,33 @@ watch(isEditModalOpen, (open) => {
                 :title="schemaError"
               />
 
+              <!-- Existing Mapping Summary (when schema not loaded) -->
+              <div v-if="!notionSchema && hasExistingMappings" class="space-y-2 pt-4 border-t">
+                <h5 class="font-semibold text-sm">Active Field Mappings</h5>
+                <div class="text-sm text-[var(--ui-text-muted)] space-y-1">
+                  <div v-if="getMappedProperty('priority')">Priority &rarr; {{ getMappedProperty('priority') }}</div>
+                  <div v-if="getMappedProperty('type')">Type &rarr; {{ getMappedProperty('type') }}</div>
+                  <div v-if="getMappedProperty('assignee')">Assignee &rarr; {{ getMappedProperty('assignee') }}</div>
+                </div>
+                <p class="text-xs text-[var(--ui-text-dimmed)]">Fetch schema to edit mappings.</p>
+              </div>
+
               <!-- Field Mapping (if schema loaded) -->
               <div v-if="notionSchema" class="space-y-3 pt-4 border-t">
                 <h5 class="font-semibold text-sm">Field Mapping</h5>
+                <p class="text-xs text-[var(--ui-text-dimmed)]">Select "None" to prevent the bot from setting a field.</p>
 
                 <!-- Priority Mapping -->
                 <UFormField label="Priority Field" name="priority">
                   <USelectMenu
-                    :model-value="getMappedProperty('priority')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('priority') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
@@ -986,14 +1013,14 @@ watch(isEditModalOpen, (open) => {
                 <!-- Type Mapping -->
                 <UFormField label="Type Field" name="type">
                   <USelectMenu
-                    :model-value="getMappedProperty('type')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('type') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
@@ -1010,14 +1037,14 @@ watch(isEditModalOpen, (open) => {
                 <!-- Assignee Mapping -->
                 <UFormField label="Assignee Field" name="assignee">
                   <USelectMenu
-                    :model-value="getMappedProperty('assignee')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('assignee') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
@@ -1169,21 +1196,33 @@ watch(isEditModalOpen, (open) => {
                 :title="schemaError"
               />
 
+              <!-- Existing Mapping Summary (when schema not loaded) -->
+              <div v-if="!notionSchema && hasExistingMappings" class="space-y-2 pt-4 border-t">
+                <h5 class="font-semibold text-sm">Active Field Mappings</h5>
+                <div class="text-sm text-[var(--ui-text-muted)] space-y-1">
+                  <div v-if="getMappedProperty('priority')">Priority &rarr; {{ getMappedProperty('priority') }}</div>
+                  <div v-if="getMappedProperty('type')">Type &rarr; {{ getMappedProperty('type') }}</div>
+                  <div v-if="getMappedProperty('assignee')">Assignee &rarr; {{ getMappedProperty('assignee') }}</div>
+                </div>
+                <p class="text-xs text-[var(--ui-text-dimmed)]">Fetch schema to edit mappings.</p>
+              </div>
+
               <!-- Field Mapping (if schema loaded) -->
               <div v-if="notionSchema" class="space-y-3 pt-4 border-t">
                 <h5 class="font-semibold text-sm">Field Mapping</h5>
+                <p class="text-xs text-[var(--ui-text-dimmed)]">Select "None" to prevent the bot from setting a field.</p>
 
                 <!-- Priority Mapping -->
                 <UFormField label="Priority Field" name="priority">
                   <USelectMenu
-                    :model-value="getMappedProperty('priority')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('priority') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('priority', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
@@ -1200,14 +1239,14 @@ watch(isEditModalOpen, (open) => {
                 <!-- Type Mapping -->
                 <UFormField label="Type Field" name="type">
                   <USelectMenu
-                    :model-value="getMappedProperty('type')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('type') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('type', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
@@ -1224,14 +1263,14 @@ watch(isEditModalOpen, (open) => {
                 <!-- Assignee Mapping -->
                 <UFormField label="Assignee Field" name="assignee">
                   <USelectMenu
-                    :model-value="getMappedProperty('assignee')"
-                    :items="Object.keys(notionSchema.properties || {})"
-                    placeholder="Select property..."
+                    :model-value="getMappedProperty('assignee') || '(none)'"
+                    :items="notionPropertyOptions"
                     class="w-full"
                     @update:model-value="updateFieldMapping('assignee', $event)"
                   >
                     <template #item="{ item }">
-                      <div class="flex items-center gap-2">
+                      <div v-if="item === '(none)'" class="text-[var(--ui-text-dimmed)] italic">None</div>
+                      <div v-else class="flex items-center gap-2">
                         <span>{{ item }}</span>
                         <UBadge
                           :color="getPropertyTypeColor(notionSchema.properties[item!]?.type ?? '') as BadgeColor"
