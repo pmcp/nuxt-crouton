@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     const signingSecret = runtimeConfig?.croutonTriage?.slack?.signingSecret as string | undefined
     if (signingSecret) {
       const headers = getHeaders(event)
-      if (!verifySlackSignature(rawBody, headers, signingSecret)) {
+      if (!await verifySlackSignature(rawBody, headers, signingSecret)) {
         logger.warn('[Slack Webhook] Invalid signature — request rejected')
         throw createError({ status: 401, statusText: 'Invalid Slack signature' })
       }

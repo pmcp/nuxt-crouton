@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
     if (signingKey && payload.signature) {
       const { timestamp, token, signature } = payload.signature
 
-      if (!verifyMailgunSignature(timestamp, token, signature, signingKey)) {
+      if (!await verifyMailgunSignature(timestamp, token, signature, signingKey)) {
         logger.warn('[Mailgun Webhook] Invalid signature detected')
         throw createError({
           statusCode: 401,

@@ -7,18 +7,54 @@
  * - Request validation helpers
  *
  * Security measures:
- * - HMAC signature verification using crypto
+ * - HMAC signature verification using Web Crypto API (CF Workers compatible)
  * - Configurable timestamp tolerance (default 5 minutes)
  * - Constant-time comparison to prevent timing attacks
  */
 
-import crypto from 'node:crypto'
 import { logger } from '../utils/logger'
 
 /**
  * Replay attack prevention window (5 minutes)
  */
 const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000
+
+/**
+ * Compute HMAC-SHA256 using Web Crypto API.
+ * Returns the digest as a hex string.
+ */
+async function hmacSha256Hex(secret: string, message: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Uses XOR comparison over equal-length byte arrays.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+  const encoder = new TextEncoder()
+  const bufA = encoder.encode(a)
+  const bufB = encoder.encode(b)
+  let result = 0
+  for (let i = 0; i < bufA.length; i++) {
+    result |= bufA[i]! ^ bufB[i]!
+  }
+  return result === 0
+}
 
 /**
  * Verify Slack webhook signature
@@ -39,23 +75,12 @@ const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000
  * @returns true if signature is valid, false otherwise
  *
  * @see https://api.slack.com/authentication/verifying-requests-from-slack
- *
- * @example
- * ```ts
- * const rawBody = await readRawBody(event)
- * const headers = getHeaders(event)
- * const signingSecret = useRuntimeConfig().slackSigningSecret
- *
- * if (!verifySlackSignature(rawBody, headers, signingSecret)) {
- *   throw createError({ statusCode: 401, statusMessage: 'Invalid signature' })
- * }
- * ```
  */
-export function verifySlackSignature(
+export async function verifySlackSignature(
   rawBody: string,
   headers: Record<string, string | string[] | undefined>,
   signingSecret: string,
-): boolean {
+): Promise<boolean> {
   try {
     // 1. Extract headers (normalize to lowercase)
     const timestamp = (headers['x-slack-request-timestamp'] || headers['X-Slack-Request-Timestamp']) as string | undefined
@@ -82,16 +107,10 @@ export function verifySlackSignature(
 
     // 3. Compute expected signature
     const baseString = `v0:${timestamp}:${rawBody}`
-    const expectedSignature = `v0=${crypto
-      .createHmac('sha256', signingSecret)
-      .update(baseString)
-      .digest('hex')}`
+    const expectedSignature = `v0=${await hmacSha256Hex(signingSecret, baseString)}`
 
     // 4. Compare using constant-time comparison (prevent timing attacks)
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'utf8'),
-      Buffer.from(expectedSignature, 'utf8'),
-    )
+    return timingSafeEqual(signature, expectedSignature)
   }
   catch (error) {
     logger.error('[Webhook Security] Error verifying Slack signature:', error)
@@ -118,26 +137,13 @@ export function verifySlackSignature(
  * @returns true if signature is valid, false otherwise
  *
  * @see https://documentation.mailgun.com/en/latest/user_manual.html#webhooks
- *
- * @example
- * ```ts
- * const body = await readBody(event)
- * const signingKey = useRuntimeConfig().mailgunSigningKey
- *
- * if (body.signature) {
- *   const { timestamp, token, signature } = body.signature
- *   if (!verifyMailgunSignature(timestamp, token, signature, signingKey)) {
- *     throw createError({ statusCode: 401, statusMessage: 'Invalid signature' })
- *   }
- * }
- * ```
  */
-export function verifyMailgunSignature(
+export async function verifyMailgunSignature(
   timestamp: string | number,
   token: string,
   signature: string,
   signingKey: string,
-): boolean {
+): Promise<boolean> {
   try {
     // 1. Validate timestamp (prevent replay attacks)
     const requestTime = typeof timestamp === 'string' ? Number.parseInt(timestamp, 10) * 1000 : timestamp * 1000
@@ -155,16 +161,10 @@ export function verifyMailgunSignature(
 
     // 2. Compute expected signature
     const data = `${timestamp}${token}`
-    const expectedSignature = crypto
-      .createHmac('sha256', signingKey)
-      .update(data)
-      .digest('hex')
+    const expectedSignature = await hmacSha256Hex(signingKey, data)
 
     // 3. Compare using constant-time comparison (prevent timing attacks)
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'utf8'),
-      Buffer.from(expectedSignature, 'utf8'),
-    )
+    return timingSafeEqual(signature, expectedSignature)
   }
   catch (error) {
     logger.error('[Webhook Security] Error verifying Mailgun signature:', error)
@@ -206,25 +206,11 @@ export function validateTimestamp(
  * Timing-safe string comparison
  *
  * Prevents timing attacks by using constant-time comparison.
- * Wrapper around crypto.timingSafeEqual with automatic buffer conversion.
  *
  * @param a - First string
  * @param b - Second string
  * @returns true if strings match, false otherwise
  */
 export function safeCompare(a: string, b: string): boolean {
-  try {
-    // Ensure strings are same length for timingSafeEqual
-    if (a.length !== b.length) {
-      return false
-    }
-
-    return crypto.timingSafeEqual(
-      Buffer.from(a, 'utf8'),
-      Buffer.from(b, 'utf8'),
-    )
-  }
-  catch {
-    return false
-  }
+  return timingSafeEqual(a, b)
 }
