@@ -531,7 +531,7 @@ function buildTaskContent(
             annotations: { bold: true },
           },
         ],
-        children: aiSummary.keyPoints.map(point => ({
+        children: aiSummary.keyPoints.slice(0, NOTION_MAX_TOGGLE_CHILDREN).map(point => ({
           object: 'block',
           type: 'bulleted_list_item',
           bulleted_list_item: {
@@ -736,6 +736,25 @@ function buildTaskContent(
     })
   }
 
+  // Notion limits toggle children to 100. Truncate and add a note if needed.
+  const NOTION_MAX_TOGGLE_CHILDREN = 100
+  const truncatedMessages = threadMessages.length > NOTION_MAX_TOGGLE_CHILDREN
+    ? [
+        ...threadMessages.slice(0, NOTION_MAX_TOGGLE_CHILDREN - 1),
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [{
+              type: 'text',
+              text: { content: `… ${threadMessages.length - NOTION_MAX_TOGGLE_CHILDREN + 1} more messages truncated (Notion limit: ${NOTION_MAX_TOGGLE_CHILDREN})` },
+              annotations: { italic: true, color: 'gray' },
+            }],
+          },
+        },
+      ]
+    : threadMessages
+
   blocks.push({
     object: 'block',
     type: 'toggle',
@@ -747,7 +766,7 @@ function buildTaskContent(
           annotations: { bold: true },
         },
       ],
-      children: threadMessages,
+      children: truncatedMessages,
     },
   })
 
