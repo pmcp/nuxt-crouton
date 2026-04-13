@@ -18,12 +18,18 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<Partial<TriageInput>>(event)
 
+  // Encrypt apiToken if provided as plaintext (not already encrypted)
+  let apiToken = body.apiToken
+  if (apiToken && !isEncryptedSecret(apiToken)) {
+    apiToken = await encryptSecret(apiToken)
+  }
+
   const dbTimer = timing.start('db')
   const result = await updateTriageInput(inputId, team.id, user.id, {
     flowId: body.flowId,
     sourceType: body.sourceType,
     name: body.name,
-    apiToken: body.apiToken,
+    apiToken,
     accountId: body.accountId,
     webhookUrl: body.webhookUrl,
     webhookSecret: body.webhookSecret,

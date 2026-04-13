@@ -15,6 +15,11 @@ export default defineEventHandler(async (event) => {
   // Exclude id field to let the database generate it
   const { id, ...dataWithoutId } = body
 
+  // Encrypt apiToken if provided as plaintext
+  if (dataWithoutId.apiToken && !isEncryptedSecret(dataWithoutId.apiToken)) {
+    dataWithoutId.apiToken = await encryptSecret(dataWithoutId.apiToken)
+  }
+
   const dbTimer = timing.start('db')
   const result = await createTriageInput({
     ...dataWithoutId,
