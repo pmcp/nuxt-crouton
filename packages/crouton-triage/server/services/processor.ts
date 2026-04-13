@@ -1243,7 +1243,10 @@ export async function processDiscussion(
         } as AdapterConfig
       : config
 
-    if (initialReactionConfig) {
+    // Skip early reaction for sources where threadId isn't fully resolved yet
+    // (e.g. email-sourced Figma discussions only have fileKey, not fileKey:commentId)
+    // Stage 3 will add the reaction after thread building enriches the threadId
+    if (initialReactionConfig && parsed.sourceThreadId.includes(':')) {
       try {
         const { getAdapter } = await import('../adapters')
         const adapter = getAdapter(parsed.sourceType)
