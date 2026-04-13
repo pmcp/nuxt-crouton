@@ -220,6 +220,8 @@ export interface NotionTaskConfig {
 export interface NotionTaskResult {
   /** Notion page ID */
   id: string
+  /** Task title */
+  title: string
   /** Public URL to the Notion page */
   url: string
   /** Creation timestamp */

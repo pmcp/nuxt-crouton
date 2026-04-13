@@ -966,6 +966,7 @@ export async function createNotionTask(
 
   return {
     id: page.id,
+    title: task.title,
     url: page.url,
     createdAt: new Date(),
   }

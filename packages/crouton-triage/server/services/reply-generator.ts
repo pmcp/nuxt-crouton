@@ -20,6 +20,14 @@ import type { NotionTaskResult } from '../../app/types'
 import { logger } from '../utils/logger'
 
 /**
+ * Format a task as a Slack-friendly link: <url|title>
+ * Falls back to just the URL if title is missing.
+ */
+function formatTaskLink(t: NotionTaskResult): string {
+  return t.title ? `<${t.url}|${t.title}>` : t.url
+}
+
+/**
  * Preset personality definitions
  */
 export const PERSONALITY_PRESETS = {
@@ -28,9 +36,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Formal, clear, minimal',
     templates: {
       noTasks: '✅ Discussion processed (no tasks created)',
-      singleTask: (url: string) => `✅ Task created in Notion\n🔗 ${url}`,
+      singleTask: (task: NotionTaskResult) => `✅ Task created in Notion\n🔗 ${formatTaskLink(task)}`,
       multipleTasks: (tasks: NotionTaskResult[]) => {
-        const taskList = tasks.map((t, i) => `${i + 1}. ${t.url}`).join('\n')
+        const taskList = tasks.map((t, i) => `${i + 1}. ${formatTaskLink(t)}`).join('\n')
         return `✅ Created ${tasks.length} tasks in Notion:\n${taskList}`
       },
       bootstrap: (userCount: number) =>
@@ -44,9 +52,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Warm, encouraging',
     templates: {
       noTasks: 'Got it! 👍 I\'ve noted this discussion, but no specific tasks were needed.',
-      singleTask: (url: string) => `Nice catch! 🎯 I've logged this as a task for you:\n${url}`,
+      singleTask: (task: NotionTaskResult) => `Nice catch! 🎯 I've logged this as a task for you:\n${formatTaskLink(task)}`,
       multipleTasks: (tasks: NotionTaskResult[]) => {
-        const taskList = tasks.map((t, i) => `${i + 1}. ${t.url}`).join('\n')
+        const taskList = tasks.map((t, i) => `${i + 1}. ${formatTaskLink(t)}`).join('\n')
         return `Great discussion! 🙌 I've created ${tasks.length} tasks:\n${taskList}`
       },
       bootstrap: (userCount: number) =>
@@ -60,9 +68,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Ultra-brief',
     templates: {
       noTasks: '✓ Noted',
-      singleTask: (url: string) => `Done → ${url}`,
+      singleTask: (task: NotionTaskResult) => `Done → ${formatTaskLink(task)}`,
       multipleTasks: (tasks: NotionTaskResult[]) =>
-        `${tasks.length} tasks → ${tasks.map(t => t.url).join(' ')}`,
+        `${tasks.length} tasks → ${tasks.map(t => formatTaskLink(t)).join(' ')}`,
       bootstrap: (userCount: number) => userCount > 0 ? `${userCount} users found` : 'No users found',
     },
   },
@@ -71,9 +79,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Arrr!',
     templates: {
       noTasks: 'Ahoy! ⚓ I\'ve scanned the horizon but found no treasure (tasks) to log!',
-      singleTask: (url: string) => `Arrr! ⚓ Task be logged in ye Notion seas!\n🗺️ ${url}`,
+      singleTask: (task: NotionTaskResult) => `Arrr! ⚓ Task be logged in ye Notion seas!\n🗺️ ${formatTaskLink(task)}`,
       multipleTasks: (tasks: NotionTaskResult[]) => {
-        const taskList = tasks.map((t, i) => `${i + 1}. ${t.url}`).join('\n')
+        const taskList = tasks.map((t, i) => `${i + 1}. ${formatTaskLink(t)}`).join('\n')
         return `Shiver me timbers! ☠️ ${tasks.length} treasures have been charted:\n${taskList}`
       },
       bootstrap: (userCount: number) =>
@@ -87,9 +95,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Beep boop',
     templates: {
       noTasks: 'SCAN_COMPLETE. TASKS_DETECTED: 0. STATUS: ACKNOWLEDGED.',
-      singleTask: (url: string) => `TASK_CREATED: SUCCESS.\nDATA_LINK: ${url}\nSTATUS: OPERATIONAL.`,
+      singleTask: (task: NotionTaskResult) => `TASK_CREATED: SUCCESS.\nDATA_LINK: ${formatTaskLink(task)}\nSTATUS: OPERATIONAL.`,
       multipleTasks: (tasks: NotionTaskResult[]) => {
-        const taskList = tasks.map((t, i) => `[${i + 1}] ${t.url}`).join('\n')
+        const taskList = tasks.map((t, i) => `[${i + 1}] ${formatTaskLink(t)}`).join('\n')
         return `BATCH_PROCESS: COMPLETE.\nTASKS_GENERATED: ${tasks.length}\n${taskList}\nEND_TRANSMISSION.`
       },
       bootstrap: (userCount: number) =>
@@ -103,9 +111,9 @@ export const PERSONALITY_PRESETS = {
     description: 'Calm, mindful',
     templates: {
       noTasks: '🧘 The discussion flows like water. No tasks arise from this moment.',
-      singleTask: (url: string) => `🧘 A task has found its home. Peace follows action.\n${url}`,
+      singleTask: (task: NotionTaskResult) => `🧘 A task has found its home. Peace follows action.\n${formatTaskLink(task)}`,
       multipleTasks: (tasks: NotionTaskResult[]) => {
-        const taskList = tasks.map((t, i) => `${i + 1}. ${t.url}`).join('\n')
+        const taskList = tasks.map((t, i) => `${i + 1}. ${formatTaskLink(t)}`).join('\n')
         return `🧘 ${tasks.length} intentions have been set. Each step brings clarity.\n${taskList}`
       },
       bootstrap: (userCount: number) =>
@@ -174,7 +182,7 @@ export async function generateReplyMessage(
     }
 
     if (tasks.length === 1 && tasks[0]) {
-      return prefixIcon(preset.templates.singleTask(tasks[0].url))
+      return prefixIcon(preset.templates.singleTask(tasks[0]))
     }
 
     return prefixIcon(preset.templates.multipleTasks(tasks))
@@ -256,8 +264,8 @@ async function generateCustomReply(
     const taskContext = tasks.length === 0
       ? 'No tasks were created from this discussion.'
       : tasks.length === 1
-        ? `One task was created: ${tasks[0]?.url}`
-        : `${tasks.length} tasks were created:\n${tasks.map((t, i) => `${i + 1}. ${t.url}`).join('\n')}`
+        ? `One task was created: "${tasks[0]?.title}" (${tasks[0]?.url})`
+        : `${tasks.length} tasks were created:\n${tasks.map((t, i) => `${i + 1}. "${t.title}" (${t.url})`).join('\n')}`
 
     const response = await $fetch<{ content: Array<{ text: string }> }>('https://api.anthropic.com/v1/messages', {
       method: 'POST',
