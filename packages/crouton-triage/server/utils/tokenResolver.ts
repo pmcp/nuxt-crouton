@@ -25,8 +25,12 @@ export async function resolveInputToken(
     return resolveAccountToken(input.accountId, teamId)
   }
 
-  // Fall back to inline token (backward compatible)
-  return input.apiToken || ''
+  // Fall back to inline token — decrypt if stored encrypted
+  const token = input.apiToken || ''
+  if (token && isEncryptedSecret(token)) {
+    return decryptSecret(token)
+  }
+  return token
 }
 
 /**
@@ -45,9 +49,13 @@ export async function resolveOutputToken(
     return resolveAccountToken(output.accountId, teamId)
   }
 
-  // Fall back to inline token (backward compatible)
+  // Fall back to inline token — decrypt if stored encrypted
   const config = output.outputConfig as NotionOutputConfig
-  return config?.notionToken || ''
+  const token = config?.notionToken || ''
+  if (token && isEncryptedSecret(token)) {
+    return decryptSecret(token)
+  }
+  return token
 }
 
 /**
