@@ -68,9 +68,31 @@ export function findBestMatch(
 }
 
 /**
+ * Synonyms for common priority and type naming conventions.
+ * Used as a fallback when fuzzy name matching fails (e.g. AI says "urgent"
+ * but Notion uses "P1" — no name similarity, but they mean the same thing).
+ */
+const VALUE_SYNONYMS: Record<string, Record<string, string[]>> = {
+  priority: {
+    urgent: ['p1', 'p0', 'critical', 'blocker', 'highest'],
+    high: ['p2', 'important'],
+    medium: ['p3', 'normal', 'standard', 'default'],
+    low: ['p4', 'p5', 'minor', 'lowest', 'nice to have'],
+  },
+  type: {
+    bug: ['defect', 'issue', 'error', 'fix'],
+    feature: ['story', 'enhancement', 'new', 'epic'],
+    question: ['q&a', 'inquiry', 'discussion'],
+    improvement: ['refactor', 'chore', 'optimization', 'enhancement'],
+  },
+}
+
+/**
  * Generate value mapping for select fields
  *
- * Maps AI values (low/medium/high or bug/feature/etc) to Notion options using fuzzy matching.
+ * Maps AI values (low/medium/high or bug/feature/etc) to Notion options using:
+ * 1. Exact/fuzzy name match (e.g. "high" → "High")
+ * 2. Synonym fallback (e.g. "urgent" → "P1", "medium" → "P3")
  */
 export function generateValueMapping(
   aiFieldType: string,
@@ -84,13 +106,28 @@ export function generateValueMapping(
     ? ['low', 'medium', 'high', 'urgent']
     : ['bug', 'feature', 'question', 'improvement']
 
+  const synonymsForField = VALUE_SYNONYMS[aiFieldType] || {}
+
   for (const aiValue of aiValues) {
     let bestMatch: { name: string; score: number } | null = null
 
+    // Try fuzzy name match first (e.g. "high" matches "High" or "Highish")
     for (const option of notionOptions) {
       const score = calculateSimilarity(aiValue, option.name)
       if (score > threshold && (!bestMatch || score > bestMatch.score)) {
         bestMatch = { name: option.name, score }
+      }
+    }
+
+    // Fallback to synonyms (e.g. "urgent" matches "P1" via synonym list)
+    if (!bestMatch) {
+      const synonyms = synonymsForField[aiValue] || []
+      for (const option of notionOptions) {
+        const optionLower = option.name.toLowerCase().trim()
+        if (synonyms.some(syn => syn === optionLower)) {
+          bestMatch = { name: option.name, score: 1 }
+          break
+        }
       }
     }
 
