@@ -7,6 +7,10 @@ interface TranslationOptions {
   [key: string]: any // Allow named params as shorthand
 }
 
+// Module-level dedup (client modules are singletons per browser tab; server re-imports per request)
+let _clientWatchActive = false
+let _pendingLoad: Promise<void> | null = null
+
 /**
  * Translation composable with team override support and dev mode editing
  *
@@ -53,56 +57,79 @@ export function useT() {
   const teamTranslations = useState<Record<string, any>>('teamTranslations', () => ({}))
   const teamTranslationsLoaded = useState<boolean>('teamTranslationsLoaded', () => false)
 
-  // Load team translations if not already loaded
+  // Load team translations if not already loaded (deduped — concurrent calls share one fetch)
   const loadTeamTranslations = async () => {
     if (!teamSlugFromRoute.value || reservedPrefixes.includes(teamSlugFromRoute.value) || teamSlugFromRoute.value.includes('.') || teamTranslationsLoaded.value) {
       return
     }
 
-    try {
-      const data = await $fetch(`/api/teams/${teamSlugFromRoute.value}/translations-ui/with-system`, {
-        query: { locale: locale.value }
-      })
-
-      if (data && Array.isArray(data)) {
-        // Build a map of keyPath to values for quick lookup
-        const translationMap: Record<string, string> = {}
-
-        for (const item of data) {
-          // Use team override if available, otherwise use system values
-          const values = (item as any).teamValues || (item as any).systemValues
-          if (values && values[locale.value]) {
-            translationMap[item.keyPath] = values[locale.value]
-          }
-        }
-
-        teamTranslations.value = translationMap
-        teamTranslationsLoaded.value = true
-      }
-    } catch (error) {
-      console.error('[useT] Failed to load team translations:', error)
+    // If a request is already in-flight, piggyback on it
+    if (_pendingLoad) {
+      await _pendingLoad
+      return
     }
+
+    const team = teamSlugFromRoute.value
+    const loc = locale.value
+
+    _pendingLoad = (async () => {
+      try {
+        // Re-check after winning the race — another caller may have finished first
+        if (teamTranslationsLoaded.value) return
+
+        const data = await $fetch(`/api/teams/${team}/translations-ui/with-system`, {
+          query: { locale: loc }
+        })
+
+        if (data && Array.isArray(data)) {
+          // Build a map of keyPath to values for quick lookup
+          const translationMap: Record<string, string> = {}
+
+          for (const item of data) {
+            // Use team override if available, otherwise use system values
+            const values = (item as any).teamValues || (item as any).systemValues
+            if (values && values[loc]) {
+              translationMap[item.keyPath] = values[loc]
+            }
+          }
+
+          teamTranslations.value = translationMap
+          teamTranslationsLoaded.value = true
+        }
+      } catch (error) {
+        console.error('[useT] Failed to load team translations:', error)
+      } finally {
+        _pendingLoad = null
+      }
+    })()
+
+    await _pendingLoad
   }
 
-  // Watch for team or locale changes and reload translations
-  // Only run with immediate: true on client or when we have a valid SSR request context
-  // During unexpected SSR (e.g., refreshNuxtData triggers), we may not have proper context
-  watch([teamSlugFromRoute, locale], () => {
-    teamTranslationsLoaded.value = false
-    teamTranslations.value = {}
-    if (import.meta.client) {
-      loadTeamTranslations()
-    } else if (import.meta.server) {
-      try {
-        const event = useRequestEvent()
-        if (event) {
-          loadTeamTranslations()
+  // Watch for team or locale changes and reload translations.
+  // Client: singleton watch (module-level guard) — all useT() calls share one watcher.
+  // Server: always create (module re-imports per request, so guard is fresh).
+  if (import.meta.server || !_clientWatchActive) {
+    if (import.meta.client) _clientWatchActive = true
+
+    watch([teamSlugFromRoute, locale], () => {
+      teamTranslationsLoaded.value = false
+      teamTranslations.value = {}
+      _pendingLoad = null
+      if (import.meta.client) {
+        loadTeamTranslations()
+      } else if (import.meta.server) {
+        try {
+          const event = useRequestEvent()
+          if (event) {
+            loadTeamTranslations()
+          }
+        } catch {
+          // No request context available - skip loading on server
         }
-      } catch {
-        // No request context available - skip loading on server
       }
-    }
-  }, { immediate: true })
+    }, { immediate: true })
+  }
 
   /**
    * Enhanced translation function
