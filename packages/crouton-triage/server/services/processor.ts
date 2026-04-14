@@ -1977,7 +1977,7 @@ export async function processDiscussion(
         ? await decryptSecret(encryptedConfirmKey)
         : (config as any)?.anthropicApiKey
       const personalityIcon = flowData?.flow.personalityIcon || undefined
-      const confirmationMessage = await generateReplyMessage(notionTasks, replyPersonality, anthropicApiKey, personalityIcon)
+      const confirmationMessage = await generateReplyMessage(notionTasks, replyPersonality, anthropicApiKey, personalityIcon, parsed.sourceType)
 
       // Post reply to the thread
       await adapter.postReply(parsed.sourceThreadId, confirmationMessage, threadBuildConfig)
