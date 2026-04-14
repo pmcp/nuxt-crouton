@@ -412,8 +412,8 @@ Result:
       "Update button colors to meet WCAG AA contrast ratio (4.5:1)",
       "Test with screen reader to verify button announcement"
     ],
-    "priority": "medium",
-    "type": "improvement",
+    "priority": null,
+    "type": null,
     "domain": "design"
   }]
 }
@@ -433,8 +433,8 @@ Result:
         "Implement localStorage to save user preference",
         "Add 6 primary navigation items with icons"
       ],
-      "priority": "high",
-      "type": "feature",
+      "priority": null,
+      "type": null,
       "domain": "frontend"
     },
     {
@@ -446,8 +446,8 @@ Result:
         "Add 2px focus ring with high contrast colors",
         "Test tooltip accessibility with screen readers"
       ],
-      "priority": "high",
-      "type": "improvement",
+      "priority": null,
+      "type": null,
       "domain": "frontend"
     },
     {
@@ -459,8 +459,8 @@ Result:
         "Test touch interactions and gestures",
         "Validate localStorage persistence across sessions"
       ],
-      "priority": "medium",
-      "type": "improvement",
+      "priority": null,
+      "type": null,
       "domain": null
     }
   ]
@@ -471,26 +471,28 @@ Result:
 
 <field_rules>
 ### Confidence Rules (CRITICAL)
-- ONLY fill fields if you are confident in the value
-- If uncertain about priority, type, assignee, or other fields, return null
+- ONLY fill priority, type, and assignee if EXPLICITLY stated in the conversation
+- Do NOT infer or guess these fields from context — return null unless someone said it
 - Better to return null than guess incorrectly
 - This maintains data quality and prevents incorrect field mappings
 
 ### Priority
 Use ONLY: "low" | "medium" | "high" | "urgent" | null
+- Set ONLY when someone explicitly states priority (e.g., "this is urgent", "high priority", "not a priority")
 - "urgent": Blocking issue, must be done immediately
 - "high": Important work, should be done soon
 - "medium": Normal priority work
 - "low": Nice to have, can wait
-- null: If uncertain
+- null: DEFAULT — use when priority is not explicitly mentioned
 
 ### Type
 Use ONLY: "bug" | "feature" | "question" | "improvement" | null
+- Set ONLY when the type is explicitly stated (e.g., "this is a bug", "feature request", "question about...")
 - "bug": Something is broken and needs fixing
 - "feature": New functionality or capability
 - "question": Needs clarification or investigation
 - "improvement": Enhancement to existing functionality
-- null: If uncertain
+- null: DEFAULT — use when type is not explicitly mentioned
 
 ### Assignee
 Extract the Notion user ID from mentions in format "@Name (notion-uuid)"
