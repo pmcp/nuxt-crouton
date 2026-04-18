@@ -1,6 +1,25 @@
 {
-  "lastSyncedAt": "2026-04-17T06:36:05.499Z",
+  "lastSyncedAt": "2026-04-18T06:24:44.971Z",
   "releases": [
+    {
+      "id": "vercel/ai:310509498",
+      "packageName": "ai",
+      "packageRepo": "vercel/ai",
+      "packagePriority": "high",
+      "tagName": "@ai-sdk/voyage@1.0.0",
+      "name": "@ai-sdk/voyage@1.0.0",
+      "body": "### Major Changes\n\n-   c136e16: add voyage ai provider with embedding and reranking support on v6\n",
+      "htmlUrl": "https://github.com/vercel/ai/releases/tag/%40ai-sdk/voyage%401.0.0",
+      "publishedAt": "2026-04-17T18:54:33Z",
+      "isPrerelease": false,
+      "summary": "AI summary unavailable. See full release notes.",
+      "breakingChanges": [],
+      "newFeatures": [],
+      "importance": "minor",
+      "relevanceScore": 50,
+      "processedAt": "2026-04-18T06:24:24.070Z",
+      "model": "claude-3-5-haiku-20241022"
+    },
     {
       "id": "vercel/ai:310158232",
       "packageName": "ai",
@@ -1880,25 +1899,6 @@
       "importance": "minor",
       "relevanceScore": 50,
       "processedAt": "2026-03-31T06:27:16.868Z",
-      "model": "claude-3-5-haiku-20241022"
-    },
-    {
-      "id": "drizzle-team/drizzle-orm:302473379",
-      "packageName": "drizzle-orm",
-      "packageRepo": "drizzle-team/drizzle-orm",
-      "packagePriority": "critical",
-      "tagName": "v1.0.0-beta.20",
-      "name": "1.0.0-beta.20",
-      "body": "- Fixed `sql.identifier()`, `sql.as()` escaping issues. Previously all the values passed to this functions were not properly escaped\r\ncausing a possible SQL Injection (CWE-89) vulnerability\r\n\r\nThanks to @EthanKim88, @0x90sh and @wgoodall01 for reaching out to us with a reproduction and suggested fix\r\n",
-      "htmlUrl": "https://github.com/drizzle-team/drizzle-orm/releases/tag/v1.0.0-beta.20",
-      "publishedAt": "2026-03-27T17:17:34Z",
-      "isPrerelease": true,
-      "summary": "AI summary unavailable. See full release notes.",
-      "breakingChanges": [],
-      "newFeatures": [],
-      "importance": "minor",
-      "relevanceScore": 50,
-      "processedAt": "2026-03-28T06:19:10.479Z",
       "model": "claude-3-5-haiku-20241022"
     }
   ]
