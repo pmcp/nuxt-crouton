@@ -1,6 +1,25 @@
 {
-  "lastSyncedAt": "2026-04-21T06:36:04.121Z",
+  "lastSyncedAt": "2026-04-22T06:36:01.072Z",
   "releases": [
+    {
+      "id": "better-auth/better-auth:311848762",
+      "packageName": "better-auth",
+      "packageRepo": "better-auth/better-auth",
+      "packagePriority": "critical",
+      "tagName": "v1.6.6",
+      "name": "v1.6.6",
+      "body": "## `better-auth`\n\n### Bug Fixes\n\n- Fixed preservation of the `Partitioned` attribute when forwarding `Set-Cookie` headers ([#9235](https://github.com/better-auth/better-auth/pull/9235))\n- Fixed boolean coercion for the `disableRefresh` query parameter in custom session validation ([#9214](https://github.com/better-auth/better-auth/pull/9214))\n- Fixed incorrect inference of team additional fields in the organization plugin ([#9266](https://github.com/better-auth/better-auth/pull/9266))\n- Added support for removing a phone number via `updateUser({ phoneNumber: null })` ([#9219](https://github.com/better-auth/better-auth/pull/9219))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/better-auth/CHANGELOG.md)\n\n## `@better-auth/core`\n\n### Features\n\n- Added `mapConcurrent`, a bounded-concurrency async utility, at `@better-auth/core/utils/async` ([#9227](https://github.com/better-auth/better-auth/pull/9227))\n\n### Bug Fixes\n\n- Made `@opentelemetry/api` an optional peer dependency ([#9111](https://github.com/better-auth/better-auth/pull/9111))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/core/CHANGELOG.md)\n\n## `@better-auth/api-key`\n\n### Bug Fixes\n\n- Improved performance by running secondary-storage API key lookups in parallel ([#9187](https://github.com/better-auth/better-auth/pull/9187))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/api-key/CHANGELOG.md)\n\n## `@better-auth/expo`\n\n### Bug Fixes\n\n- Fixed session loading to read cached data from `SecureStore` on app startup, eliminating the login screen flash for returning users ([#8953](https://github.com/better-auth/better-auth/pull/8953))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/expo/CHANGELOG.md)\n\n## `@better-auth/oauth-provider`\n\n### Bug Fixes\n\n- Fixed several SSRF vulnerabilities by unifying host classification and closing loopback bypass vectors across packages ([#9226](https://github.com/better-auth/better-auth/pull/9226))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/oauth-provider/CHANGELOG.md)\n\n## `@better-auth/sso`\n\n### Bug Fixes\n\n- Fixed an ESM/CJS compatibility issue when loading samlify ([#9262](https://github.com/better-auth/better-auth/pull/9262))\n\nFor detailed changes, see [`CHANGELOG`](https://github.com/better-auth/better-auth/blob/029007776025f314bac5cb9c400ff2ce5494e54e/packages/sso/CHANGELOG.md)\n\n## Contributors\n\nThanks to everyone who contributed to this release:\n\n@bytaesu, @gustavovalverde, @jonathansamines, @ping-maxwell, @terijaki\n\n**Full changelog:** [`v1.6.5...v1.6.6`](https://github.com/better-auth/better-auth/compare/v1.6.5...v1.6.6)\n",
+      "htmlUrl": "https://github.com/better-auth/better-auth/releases/tag/v1.6.6",
+      "publishedAt": "2026-04-21T16:44:41Z",
+      "isPrerelease": false,
+      "summary": "AI summary unavailable. See full release notes.",
+      "breakingChanges": [],
+      "newFeatures": [],
+      "importance": "minor",
+      "relevanceScore": 50,
+      "processedAt": "2026-04-22T06:35:33.975Z",
+      "model": "claude-3-5-haiku-20241022"
+    },
     {
       "id": "vercel/ai:310509498",
       "packageName": "ai",
@@ -1880,25 +1899,6 @@
       "importance": "minor",
       "relevanceScore": 50,
       "processedAt": "2026-03-31T06:27:17.466Z",
-      "model": "claude-3-5-haiku-20241022"
-    },
-    {
-      "id": "vercel/ai:303358425",
-      "packageName": "ai",
-      "packageRepo": "vercel/ai",
-      "packagePriority": "high",
-      "tagName": "@ai-sdk/xai@3.0.75",
-      "name": "@ai-sdk/xai@3.0.75",
-      "body": "### Patch Changes\n\n-   5d61547: fix(provider/xai): correct finish reason for tool calls\n",
-      "htmlUrl": "https://github.com/vercel/ai/releases/tag/%40ai-sdk/xai%403.0.75",
-      "publishedAt": "2026-03-30T18:56:15Z",
-      "isPrerelease": false,
-      "summary": "AI summary unavailable. See full release notes.",
-      "breakingChanges": [],
-      "newFeatures": [],
-      "importance": "minor",
-      "relevanceScore": 50,
-      "processedAt": "2026-03-31T06:27:16.868Z",
       "model": "claude-3-5-haiku-20241022"
     }
   ]
