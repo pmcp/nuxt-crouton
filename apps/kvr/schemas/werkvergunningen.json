@@ -1,0 +1,175 @@
+{
+  "sblNumber": {
+    "type": "string",
+    "meta": {
+      "label": "Nummer SBL",
+      "required": true,
+      "maxLength": 10,
+      "area": "main",
+      "group": "meta"
+    }
+  },
+  "datum": {
+    "type": "date",
+    "meta": {
+      "label": "Datum",
+      "required": true,
+      "area": "main",
+      "group": "meta"
+    }
+  },
+
+  "workType": {
+    "type": "string",
+    "meta": {
+      "label": "A. Uit te voeren werk",
+      "options": ["laagspanningslas", "hoogspanningslas"],
+      "displayAs": "optionsSelect",
+      "required": true,
+      "area": "main",
+      "group": "werk"
+    }
+  },
+
+  "cables": {
+    "type": "repeater",
+    "meta": {
+      "label": "B1. Buitengebruikstelling van de installatie",
+      "addLabel": "Kabel toevoegen",
+      "sortable": true,
+      "area": "main",
+      "group": "consignatie",
+      "help": "Max. 4 kabels. Per kabel: referentienummer verdeeldoos/cabine van vertrek en aankomst.",
+      "properties": {
+        "van": { "type": "string", "label": "Van (vertrek)" },
+        "naar": { "type": "string", "label": "Naar (aankomst)" },
+        "buitenSpanningGeaard": { "type": "boolean", "label": "Buiten spanning en geaard" },
+        "losgekoppeld": { "type": "boolean", "label": "Losgekoppeld maar niet geaard" },
+        "sleufGeidentificeerd": { "type": "boolean", "label": "In de sleuf geïdentificeerde kabel" }
+      }
+    }
+  },
+
+  "straat": {
+    "type": "string",
+    "meta": { "label": "Straat", "required": true, "area": "main", "group": "adres" }
+  },
+  "huisnummer": {
+    "type": "string",
+    "meta": { "label": "Nr.", "required": true, "area": "main", "group": "adres" }
+  },
+  "postcode": {
+    "type": "string",
+    "meta": { "label": "Postcode", "required": true, "area": "main", "group": "adres" }
+  },
+  "gemeente": {
+    "type": "string",
+    "meta": { "label": "Gemeente", "required": true, "area": "main", "group": "adres" }
+  },
+
+  "ploegLeden": {
+    "type": "text",
+    "meta": {
+      "label": "Ploeg leden",
+      "area": "main",
+      "group": "begin",
+      "help": "De personen die het werk onder verantwoordelijkheid van de werkverantwoordelijke uitvoeren."
+    }
+  },
+  "plaats": {
+    "type": "string",
+    "meta": { "label": "Opgemaakt te", "area": "main", "group": "begin" }
+  },
+  "opgemaaktOp": {
+    "type": "date",
+    "meta": { "label": "Datum & uur opmaak", "area": "main", "group": "begin" }
+  },
+
+  "werkverantwoordelijkeNaam": {
+    "type": "string",
+    "meta": { "label": "Naam", "area": "main", "group": "werkverantwoordelijke" }
+  },
+  "werkverantwoordelijkeVoornaam": {
+    "type": "string",
+    "meta": { "label": "Voornaam", "area": "main", "group": "werkverantwoordelijke" }
+  },
+  "werkverantwoordelijkeHoedanigheid": {
+    "type": "string",
+    "meta": { "label": "Hoedanigheid", "area": "main", "group": "werkverantwoordelijke" }
+  },
+  "werkverantwoordelijkeAannemer": {
+    "type": "string",
+    "meta": { "label": "De aannemer", "area": "main", "group": "werkverantwoordelijke" }
+  },
+  "werkverantwoordelijkeHandtekening": {
+    "type": "json",
+    "meta": {
+      "label": "Handtekening werkverantwoordelijke",
+      "component": "SignaturePad",
+      "area": "main",
+      "group": "werkverantwoordelijke"
+    }
+  },
+
+  "schakelbevoegdeNaam": {
+    "type": "string",
+    "meta": { "label": "Naam", "area": "main", "group": "schakelbevoegde" }
+  },
+  "schakelbevoegdeVoornaam": {
+    "type": "string",
+    "meta": { "label": "Voornaam", "area": "main", "group": "schakelbevoegde" }
+  },
+  "schakelbevoegdeHandtekening": {
+    "type": "json",
+    "meta": {
+      "label": "Handtekening schakelbevoegde",
+      "component": "SignaturePad",
+      "area": "main",
+      "group": "schakelbevoegde"
+    }
+  },
+
+  "photos": {
+    "type": "repeater",
+    "meta": {
+      "label": "Foto's",
+      "addLabel": "Foto toevoegen",
+      "sortable": true,
+      "area": "main",
+      "group": "fotos",
+      "help": "Sleep meerdere foto's in het uploader-veld, of voeg ze één voor één toe.",
+      "properties": {
+        "assetId": { "type": "image", "label": "Foto" },
+        "caption": { "type": "string", "label": "Omschrijving" }
+      }
+    }
+  },
+
+  "recipientEmail": {
+    "type": "string",
+    "meta": {
+      "label": "Versturen naar",
+      "displayAs": "optionsSelect",
+      "optionsCollection": "kvrSettings",
+      "optionsField": "recipients",
+      "optionsValueField": "email",
+      "optionsLabelField": "label",
+      "creatable": true,
+      "required": true,
+      "area": "sidebar",
+      "group": "verzenden",
+      "help": "Kies uit de beheerde lijst of typ een nieuw e-mailadres."
+    }
+  },
+  "emailStatus": {
+    "type": "string",
+    "meta": {
+      "label": "E-mail status",
+      "options": ["pending", "sent", "failed"],
+      "displayAs": "optionsSelect",
+      "default": "pending",
+      "area": "sidebar",
+      "group": "verzenden"
+    }
+  }
+}

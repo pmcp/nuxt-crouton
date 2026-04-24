@@ -1,0 +1,18 @@
+{
+  "recipients": {
+    "type": "repeater",
+    "meta": {
+      "label": "E-mail ontvangers",
+      "addLabel": "Ontvanger toevoegen",
+      "sortable": true,
+      "area": "main",
+      "group": "email",
+      "help": "Lijst van e-mailadressen waar ingediende werkvergunningen naartoe gestuurd kunnen worden.",
+      "properties": {
+        "label": { "type": "string", "required": true, "label": "Naam / rol" },
+        "email": { "type": "string", "required": true, "label": "E-mailadres" },
+        "isDefault": { "type": "boolean", "label": "Standaard" }
+      }
+    }
+  }
+}

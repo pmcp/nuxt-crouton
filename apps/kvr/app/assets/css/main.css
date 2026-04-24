@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Scan Nuxt Crouton layers for Tailwind classes */
+@source "../../../../node_modules/@fyit/crouton*/app/**/*.{vue,js,ts}";
+
+/* Sibelga palette (matches werkvergunning.html) */
+@theme {
+  --color-sibelga-purple: #5b1f4a;
+  --color-sibelga-purple-light: #7a3668;
+  --color-sibelga-green: #5a8b5c;
+  --color-sibelga-orange: #d97a3c;
+  --color-sibelga-red: #c8102e;
+}
