@@ -15,9 +15,11 @@ Map integration layer for Nuxt Crouton with Mapbox GL JS. Provides map component
 | `app/components/Marker.vue` | Map marker component |
 | `app/components/Popup.vue` | Popup component |
 | `app/components/Preview.vue` | Location preview thumbnail with modal |
+| `app/components/CurrentLocationButton.vue` | "Use my location" button — geolocation + reverse-geocode in one click |
 | `app/composables/useMapConfig.ts` | Reads Mapbox config, returns `isConfigured` flag |
 | `app/composables/useMap.ts` | Map management |
 | `app/composables/useGeocode.ts` | Geocoding (address ↔ coords), no-ops when unconfigured |
+| `app/composables/useCurrentLocation.ts` | Browser geolocation + reverse-geocode in one call |
 | `app/composables/useMarkerColor.ts` | Derives marker color from CSS `--ui-primary` |
 | `app/composables/useMapboxStyles.ts` | Style presets |
 
@@ -125,6 +127,51 @@ runtimeConfig: {
 </CroutonMapPopup>
 ```
 
+### CroutonMapsCurrentLocationButton
+
+One-click "use my location" button — asks the browser for the user's current
+position, reverse-geocodes it, and emits a structured `GeocodeResult`.
+
+```vue
+<CroutonMapsCurrentLocationButton
+  label="Use my location"
+  icon="i-lucide-map-pin"
+  color="neutral"
+  variant="outline"
+  @located="onLocated"
+  @failed="onFailed"
+/>
+```
+
+Event payload (`@located`):
+```typescript
+{
+  coordinates: [lng, lat],
+  address: 'Full place name',
+  placeName: 'Short name',
+  context?: { postcode?, place?, region?, country? }
+}
+```
+
+Use it to autofill a multi-field address form:
+
+```typescript
+function onLocated(r: GeocodeResult) {
+  state.lng = r.coordinates[0]
+  state.lat = r.coordinates[1]
+  state.postcode = r.context?.postcode ?? state.postcode
+  state.gemeente = r.context?.place ?? state.gemeente
+  // Mapbox doesn't always split street/number — first part of `address` is usually street.
+  const [streetWithNumber] = r.address.split(',')
+  state.straat = streetWithNumber?.replace(/\s+\d+\w*$/, '').trim() ?? state.straat
+  const num = streetWithNumber?.match(/\s+(\d+\w*)$/)?.[1]
+  if (num) state.huisnummer = num
+}
+```
+
+The button shows a graceful warning toast on permission-denied / timeout
+(disable with `:notify-on-error="false"` if you want to handle it yourself).
+
 ## Composables
 
 ```typescript
@@ -135,6 +182,10 @@ const { map, isLoaded, initialize, destroy } = useMap()
 const { geocode, reverseGeocode, loading, error } = useGeocode()
 const coords = await geocode('1600 Amphitheatre Parkway')
 const address = await reverseGeocode([-122.0840575, 37.4220656])
+
+// Browser geolocation → reverse-geocode in one call
+const { getCurrentLocation, loading, error } = useCurrentLocation()
+const result = await getCurrentLocation()  // null on permission-denied / failure
 
 // Style presets
 const { styles, getStyle } = useMapboxStyles()
@@ -158,10 +209,12 @@ MAPBOX_STYLES.navigationNight
 
 ## Component Naming
 
-Components auto-import with `CroutonMap` prefix:
-- `Map.vue` → `<CroutonMapMap />`
-- `Marker.vue` → `<CroutonMapMarker />`
-- `Popup.vue` → `<CroutonMapPopup />`
+Components auto-import with `CroutonMaps` prefix (defined in `nuxt.config.ts`):
+- `Map.vue` → `<CroutonMapsMap />`
+- `Marker.vue` → `<CroutonMapsMarker />`
+- `Popup.vue` → `<CroutonMapsPopup />`
+- `Preview.vue` → `<CroutonMapsPreview />`
+- `CurrentLocationButton.vue` → `<CroutonMapsCurrentLocationButton />`
 
 ## Common Tasks
 
