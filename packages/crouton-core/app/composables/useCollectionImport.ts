@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
-import Papa from 'papaparse'
 
 /**
  * Field definition for import column mapping
@@ -154,7 +153,12 @@ export function useCollectionImport(collection: string): UseCollectionImportRetu
       return { rows, columns }
     }
 
-    // Default: CSV
+    if (!import.meta.client) {
+      throw new Error('parseFile is client-only')
+    }
+    // Default: CSV — guarded by import.meta.client so Nuxt strips this branch
+    // (and the papaparse dynamic import) from the SSR/Nitro bundle
+    const { default: Papa } = await import('papaparse')
     return new Promise((resolve, reject) => {
       Papa.parse(file, {
         header: true,

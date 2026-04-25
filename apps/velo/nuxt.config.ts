@@ -93,8 +93,7 @@ export default defineNuxtConfig({
       'tsyringe': cfStubs,
       'reflect-metadata': cfStubs,
       '@peculiar/x509': cfStubs,
-      '@simplewebauthn/server': cfStubs,
-      'papaparse': cfStubs
+      '@simplewebauthn/server': cfStubs
     }
   }
 })
