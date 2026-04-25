@@ -7,7 +7,7 @@
     {
       "binding": "DB",
       "database_name": "kvr-db",
-      "database_id": "placeholder-create-with-wrangler",
+      "database_id": "df617430-f8c8-4230-af69-9e391cb19d80",
       "migrations_dir": "server/db/migrations/sqlite"
     }
   ],

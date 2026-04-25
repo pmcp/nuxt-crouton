@@ -1,3 +1,9 @@
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
+
 export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   modules: ['@fyit/crouton'],
@@ -54,5 +60,17 @@ export default defineNuxtConfig({
     '/admin/**': { headers: { 'cache-control': 'no-store' } },
     '/kvr/submit': { headers: { 'cache-control': 'no-store' } },
     '/api/public/**': { headers: { 'cache-control': 'no-store' } }
+  },
+
+  nitro: {
+    alias: {
+      '@better-auth/passkey/client': resolve(cfStubs, 'client'),
+      '@better-auth/passkey': cfStubs,
+      'tsyringe': cfStubs,
+      'reflect-metadata': cfStubs,
+      '@peculiar/x509': cfStubs,
+      '@simplewebauthn/server': cfStubs,
+      'papaparse': cfStubs
+    }
   }
 })
