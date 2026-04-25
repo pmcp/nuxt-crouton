@@ -14,7 +14,8 @@
     "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
     "db:generate": "nuxt prepare && drizzle-kit generate --config=.nuxt/hub/db/drizzle.config.ts",
     "db:migrate": "npx wrangler d1 migrations apply kvr-db --local",
-    "db:migrate:prod": "npx wrangler d1 migrations apply kvr-db --remote"
+    "db:migrate:prod": "npx wrangler d1 migrations apply kvr-db --remote",
+    "logs": "npx wrangler pages deployment tail --project-name kvr"
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
