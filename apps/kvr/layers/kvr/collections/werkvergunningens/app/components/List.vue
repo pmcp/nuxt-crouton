@@ -57,6 +57,54 @@
       />
       <span v-else class="text-gray-400">—</span>
     </template>
+
+    <template #werkverantwoordelijkeHandtekening-cell="{ row }">
+      <img
+        v-if="isDataUrl(row.original.werkverantwoordelijkeHandtekening)"
+        :src="row.original.werkverantwoordelijkeHandtekening"
+        class="h-7 w-20 object-contain rounded-sm border border-neutral-200 bg-white"
+        alt="handtekening"
+      >
+      <span v-else class="text-gray-400">—</span>
+    </template>
+
+    <template #schakelbevoegdeHandtekening-cell="{ row }">
+      <img
+        v-if="isDataUrl(row.original.schakelbevoegdeHandtekening)"
+        :src="row.original.schakelbevoegdeHandtekening"
+        class="h-7 w-20 object-contain rounded-sm border border-neutral-200 bg-white"
+        alt="handtekening"
+      >
+      <span v-else class="text-gray-400">—</span>
+    </template>
+
+    <template #emailStatus-cell="{ row }">
+      <span
+        v-if="row.original.emailStatus"
+        :class="[
+          'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+          row.original.emailStatus === 'sent' && 'bg-green-100 text-green-700',
+          row.original.emailStatus === 'failed' && 'bg-amber-100 text-amber-700',
+          row.original.emailStatus === 'pending' && 'bg-neutral-200 text-neutral-600',
+        ]"
+      >
+        {{ row.original.emailStatus }}
+      </span>
+      <span v-else class="text-gray-400">—</span>
+    </template>
+
+    <template #formPdfPath-cell="{ row }">
+      <a
+        v-if="row.original.formPdfPath"
+        :href="`/images/${row.original.formPdfPath}`"
+        target="_blank"
+        class="inline-flex items-center gap-1 text-xs text-purple-700 hover:underline"
+      >
+        <UIcon name="i-lucide-file-text" class="size-3" />
+        PDF
+      </a>
+      <span v-else class="text-gray-400">—</span>
+    </template>
   </CroutonCollection>
 </template>
 
@@ -74,5 +122,9 @@ const { columns } = useKvrWerkvergunningens()
 const { items: werkvergunningens, pending } = await useCollectionQuery(
   'kvrWerkvergunningens'
 )
+
+function isDataUrl(v: unknown): v is string {
+  return typeof v === 'string' && v.startsWith('data:image/')
+}
 
 </script>

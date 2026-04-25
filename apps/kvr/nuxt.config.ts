@@ -7,7 +7,6 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-i18n',
-    '@fyit/crouton-assets',
     '@fyit/crouton-email',
     './layers/kvr'
   ],
@@ -29,6 +28,11 @@ export default defineNuxtConfig({
     email: {
       resendApiKey: '',
       fromAddress: 'no-reply@kvr.local'
+    },
+    kvr: {
+      publicToken: '',
+      publicRecipient: '',
+      publicTeamSlug: 'kvr'
     }
   },
 
@@ -47,6 +51,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     '/auth/**': { headers: { 'cache-control': 'no-store' } },
-    '/admin/**': { headers: { 'cache-control': 'no-store' } }
+    '/admin/**': { headers: { 'cache-control': 'no-store' } },
+    '/kvr/submit': { headers: { 'cache-control': 'no-store' } },
+    '/api/public/**': { headers: { 'cache-control': 'no-store' } }
   }
 })

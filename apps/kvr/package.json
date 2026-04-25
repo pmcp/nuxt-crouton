@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
-    "@fyit/crouton-assets": "workspace:*",
     "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-email": "workspace:*",
     "@fyit/crouton-i18n": "workspace:*",

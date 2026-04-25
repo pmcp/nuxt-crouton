@@ -182,68 +182,170 @@ async function generateAndUploadPdf(): Promise<string | null> {
       logging: false,
       onclone: (doc: Document, clonedEl: HTMLElement) => {
         // Strip interactive UI chrome from the cloned DOM before rasterising.
-        // Hide anything marked .pdf-hide, plus buttons, X-icons, add buttons, datalists.
+        // Hide anything marked data-pdf-hide (photos section, buttons, datalists).
         clonedEl.querySelectorAll('button, [data-pdf-hide], datalist').forEach((n) => {
           (n as HTMLElement).style.display = 'none'
         })
 
-        // Swap the datetime-local input for a human-readable value.
+        // Replace text-like inputs/textareas with plain divs so the value sits
+        // on top of (not through) the underline, matching the paper form's look.
+        const replaceInputWithText = (input: HTMLInputElement | HTMLTextAreaElement) => {
+          const value = input.value || ''
+          const div = doc.createElement('div')
+          div.textContent = value
+          div.style.cssText = `
+            min-height: 18px;
+            padding: 2px 4px 4px;
+            border-bottom: 1px solid #888;
+            font-size: 11px;
+            line-height: 1.35;
+            color: #111;
+            white-space: pre-wrap;
+            word-break: break-word;
+          `
+          // Preserve the original element's width/flex behavior by copying its class list
+          // (Tailwind width/sizing classes still apply).
+          div.className = input.className
+          input.parentElement?.replaceChild(div, input)
+        }
+        clonedEl.querySelectorAll<HTMLInputElement>(
+          'input[type="text"], input[type="email"], input[type="number"]'
+        ).forEach(replaceInputWithText)
+        clonedEl.querySelectorAll<HTMLTextAreaElement>('textarea').forEach(replaceInputWithText)
+
+        // Tighten spacing so the form fits on a single A4 page.
+        const compactStyle = doc.createElement('style')
+        compactStyle.textContent = `
+          .pdf-tight { font-size: 11px; }
+          .pdf-tight .pt-5 { padding-top: 8px !important; }
+          .pdf-tight .pl-5 { padding-left: 10px !important; }
+          .pdf-tight .pr-5 { padding-right: 10px !important; }
+          .pdf-tight .px-5 { padding-left: 10px !important; padding-right: 10px !important; }
+          .pdf-tight .px-4 { padding-left: 8px !important; padding-right: 8px !important; }
+          .pdf-tight .py-3 { padding-top: 4px !important; padding-bottom: 4px !important; }
+          .pdf-tight .py-2 { padding-top: 3px !important; padding-bottom: 3px !important; }
+          .pdf-tight .py-1\\.5 { padding-top: 3px !important; padding-bottom: 3px !important; }
+          .pdf-tight .py-1 { padding-top: 2px !important; padding-bottom: 2px !important; }
+          .pdf-tight .pb-3 { padding-bottom: 4px !important; }
+          .pdf-tight .pb-4 { padding-bottom: 4px !important; }
+          .pdf-tight .pt-1 { padding-top: 2px !important; }
+          .pdf-tight .p-3 { padding: 6px !important; }
+          .pdf-tight .mt-1 { margin-top: 2px !important; }
+          .pdf-tight .mt-2 { margin-top: 4px !important; }
+          .pdf-tight .mt-3 { margin-top: 6px !important; }
+          .pdf-tight .mb-2 { margin-bottom: 3px !important; }
+          .pdf-tight .mb-3 { margin-bottom: 4px !important; }
+          .pdf-tight .gap-y-2 { row-gap: 4px !important; }
+          .pdf-tight .gap-6 { gap: 12px !important; }
+          .pdf-tight .space-y-2 > * + *,
+          .pdf-tight .space-y-1\\.5 > * + *,
+          .pdf-tight .space-y-1 > * + * { margin-top: 3px !important; }
+          .pdf-tight canvas { height: 56px !important; }
+          .pdf-tight .h-8 { height: 22px !important; }
+          .pdf-tight .h-\\[100px\\] { height: 56px !important; }
+          /* Paper form uses underlines, not boxes — strip borders + bg in PDF and use a single bottom line */
+          .pdf-tight input[type="text"],
+          .pdf-tight input[type="email"],
+          .pdf-tight input[type="date"],
+          .pdf-tight input[type="datetime-local"],
+          .pdf-tight input[type="number"],
+          .pdf-tight textarea {
+            background: transparent !important;
+            border: 0 !important;
+            border-bottom: 1px solid #888 !important;
+            border-radius: 0 !important;
+            font-size: 11px !important;
+            line-height: 20px !important;
+            padding: 0 4px !important;
+            color: #111 !important;
+          }
+          .pdf-tight textarea { min-height: 22px !important; line-height: 1.35 !important; padding: 2px 4px !important; }
+          /* Cable row underlines sit flush with the row — strip extra bottom border from wrapping divs */
+          .pdf-tight .divide-y > * { border-top: 0 !important; }
+          /* Keep the Opgemaakt row on one line (Plaats + Datum & uur label + datetime input) */
+          .pdf-tight [data-opgemaakt-row] { flex-wrap: nowrap !important; gap: 8px !important; }
+          .pdf-tight [data-opgemaakt-row] > input[type="text"] { flex: 1 1 auto !important; min-width: 80px !important; }
+          .pdf-tight [data-opgemaakt-row] > input[type="datetime-local"] { width: 150px !important; }
+          .pdf-tight ul { margin: 2px 0 !important; }
+          .pdf-tight li { margin: 1px 0 !important; line-height: 1.25 !important; }
+        `
+        doc.head.appendChild(compactStyle)
+        clonedEl.classList.add('pdf-tight')
+
+        // Format date / datetime-local input values into the same kind of
+        // "text-on-underline" div we use for the other fields.
+        const replaceDateInput = (input: HTMLInputElement, formatted: string) => {
+          const div = doc.createElement('div')
+          div.textContent = formatted
+          div.style.cssText = `
+            min-height: 18px;
+            padding: 2px 4px 4px;
+            border-bottom: 1px solid #888;
+            font-size: 11px;
+            line-height: 1.35;
+            color: #111;
+          `
+          div.className = input.className
+          input.parentElement?.replaceChild(div, input)
+        }
+
         const opgemaaktIso = (state.value.opgemaaktOp instanceof Date
           ? state.value.opgemaaktOp
           : state.value.opgemaaktOp ? new Date(state.value.opgemaaktOp as any) : null)
-        if (opgemaaktIso) {
-          clonedEl.querySelectorAll('input[type="datetime-local"]').forEach((el) => {
-            const input = el as HTMLInputElement
-            input.setAttribute('type', 'text')
-            input.value = opgemaaktIso.toLocaleString('nl-BE', {
-              day: '2-digit', month: '2-digit', year: 'numeric',
-              hour: '2-digit', minute: '2-digit',
-            })
-          })
-        }
+        clonedEl.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]').forEach((input) => {
+          const formatted = opgemaaktIso
+            ? opgemaaktIso.toLocaleString('nl-BE', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })
+            : ''
+          replaceDateInput(input, formatted)
+        })
 
-        // Swap the date input for a human-readable value.
-        if (state.value.datum) {
-          const datum = state.value.datum instanceof Date
-            ? state.value.datum
-            : new Date(state.value.datum as any)
-          clonedEl.querySelectorAll('input[type="date"]').forEach((el) => {
-            const input = el as HTMLInputElement
-            input.setAttribute('type', 'text')
-            input.value = datum.toLocaleDateString('nl-BE', {
-              day: '2-digit', month: '2-digit', year: 'numeric',
-            })
-          })
-        }
+        const datum = state.value.datum
+          ? (state.value.datum instanceof Date ? state.value.datum : new Date(state.value.datum as any))
+          : null
+        clonedEl.querySelectorAll<HTMLInputElement>('input[type="date"]').forEach((input) => {
+          const formatted = datum
+            ? datum.toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            : ''
+          replaceDateInput(input, formatted)
+        })
+
+        // Append a Sibelga-style footer at the bottom so the PDF looks like the official form.
+        const footer = doc.createElement('div')
+        footer.style.cssText = 'margin-top:12px;padding:8px 12px;border-top:1px solid #bbb;display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#555;'
+        footer.innerHTML = `
+          <div>
+            <div><strong>Sibelga CVBA</strong></div>
+            <div>PB 1340 · 1000 Brussel Brouckère · Tel. 02 549 41 00 · Fax 02 549 46 61 · E-mail: klanten@sibelga.be</div>
+            <div>RPR Brussel · BTW BE 0222.869.673 · IBAN BE35 7330 1768 3837 · BIC KREDBEBB</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:10px;color:#222">
+            <span style="display:inline-block;width:10px;height:10px;border:2.5px solid #c8102e;border-radius:50%"></span>
+            <span>Sibelga</span>
+          </div>
+        `
+        clonedEl.appendChild(footer)
       },
     } as any)
 
     const imgData = canvas.toDataURL('image/jpeg', 0.92)
 
-    // A4 portrait @ 72 dpi (pt): 595 × 842. Fit the full form to one page width,
-    // let height spill across pages if the form is taller.
+    // Force single-page A4. If the rendered form is taller than a page at the
+    // natural width, shrink width (and thus height) so it all fits.
     const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' })
     const pageW = pdf.internal.pageSize.getWidth()
     const pageH = pdf.internal.pageSize.getHeight()
-    const imgW = pageW
-    const imgH = (canvas.height * imgW) / canvas.width
-
-    if (imgH <= pageH) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST')
+    const ratio = canvas.width / canvas.height
+    let imgW = pageW
+    let imgH = pageW / ratio
+    if (imgH > pageH) {
+      imgH = pageH
+      imgW = pageH * ratio
     }
-    else {
-      // Paginate — render the single tall image across multiple pages.
-      let heightLeft = imgH
-      let position = 0
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST')
-      heightLeft -= pageH
-      while (heightLeft > 0) {
-        position -= pageH
-        pdf.addPage()
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST')
-        heightLeft -= pageH
-      }
-    }
+    const offsetX = (pageW - imgW) / 2
+    pdf.addImage(imgData, 'JPEG', offsetX, 0, imgW, imgH, undefined, 'FAST')
 
     const blob = pdf.output('blob')
     const filename = `werkvergunning-${state.value.sblNumber || 'concept'}.pdf`
@@ -522,71 +624,54 @@ const handleSubmit = async () => {
     </div>
 
     <!-- Opgemaakt row -->
-    <div class="px-5 pb-3 flex flex-wrap items-center gap-3 text-sm">
-      <span class="text-neutral-700">Opgemaakt in 2 exemplaren te</span>
+    <div class="px-5 pb-3 flex flex-wrap items-center gap-3 text-sm" data-opgemaakt-row>
+      <span class="text-neutral-700 whitespace-nowrap">Opgemaakt in 2 exemplaren te</span>
       <input v-model="state.plaats" type="text" class="wvg-input h-8 flex-1 min-w-[140px] px-2">
-      <span class="text-neutral-700">Datum & uur</span>
+      <span class="text-neutral-700 whitespace-nowrap">Datum & uur</span>
       <input v-model="opgemaaktStr" type="datetime-local" class="wvg-input h-8 w-52 px-2">
     </div>
 
-    <!-- Signatures two columns -->
-    <div class="px-5 pb-4 grid grid-cols-2 gap-6">
+    <!-- Signatures: flat 2-col grid so Handtekening aligns across both columns -->
+    <div class="px-5 pb-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+      <div class="border-b border-neutral-300 pb-1 font-semibold text-neutral-800">De werkverantwoordelijke</div>
+      <div class="border-b border-neutral-300 pb-1 font-semibold text-neutral-800">De schakelbevoegde van Sibelga</div>
+
+      <label class="block"><span class="block text-xs text-neutral-600">Naam</span><input v-model="state.werkverantwoordelijkeNaam" type="text" class="wvg-input h-8 w-full px-2"></label>
+      <label class="block"><span class="block text-xs text-neutral-600">Naam</span><input v-model="state.schakelbevoegdeNaam" type="text" class="wvg-input h-8 w-full px-2"></label>
+
+      <label class="block"><span class="block text-xs text-neutral-600">Voornaam</span><input v-model="state.werkverantwoordelijkeVoornaam" type="text" class="wvg-input h-8 w-full px-2"></label>
+      <label class="block"><span class="block text-xs text-neutral-600">Voornaam</span><input v-model="state.schakelbevoegdeVoornaam" type="text" class="wvg-input h-8 w-full px-2"></label>
+
+      <label class="block"><span class="block text-xs text-neutral-600">Hoedanigheid</span><input v-model="state.werkverantwoordelijkeHoedanigheid" type="text" class="wvg-input h-8 w-full px-2"></label>
+      <div aria-hidden="true"></div>
+
+      <label class="block"><span class="block text-xs text-neutral-600">De aannemer</span><input v-model="state.werkverantwoordelijkeAannemer" type="text" class="wvg-input h-8 w-full px-2"></label>
+      <div aria-hidden="true"></div>
+
       <div>
-        <div class="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold text-neutral-800">De werkverantwoordelijke</div>
-        <div class="space-y-1.5 text-sm">
-          <label class="block">
-            <span class="block text-xs text-neutral-600">Naam</span>
-            <input v-model="state.werkverantwoordelijkeNaam" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <label class="block">
-            <span class="block text-xs text-neutral-600">Voornaam</span>
-            <input v-model="state.werkverantwoordelijkeVoornaam" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <label class="block">
-            <span class="block text-xs text-neutral-600">Hoedanigheid</span>
-            <input v-model="state.werkverantwoordelijkeHoedanigheid" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <label class="block">
-            <span class="block text-xs text-neutral-600">De aannemer</span>
-            <input v-model="state.werkverantwoordelijkeAannemer" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <div>
-            <span class="block text-xs text-neutral-600">Handtekening</span>
-            <SignaturePad v-model="state.werkverantwoordelijkeHandtekening" />
-          </div>
-        </div>
+        <span class="block text-xs text-neutral-600">Handtekening</span>
+        <SignaturePad v-model="state.werkverantwoordelijkeHandtekening" />
       </div>
       <div>
-        <div class="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold text-neutral-800">De schakelbevoegde van Sibelga</div>
-        <div class="space-y-1.5 text-sm">
-          <label class="block">
-            <span class="block text-xs text-neutral-600">Naam</span>
-            <input v-model="state.schakelbevoegdeNaam" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <label class="block">
-            <span class="block text-xs text-neutral-600">Voornaam</span>
-            <input v-model="state.schakelbevoegdeVoornaam" type="text" class="wvg-input h-8 w-full px-2">
-          </label>
-          <div>
-            <span class="block text-xs text-neutral-600">Handtekening</span>
-            <SignaturePad v-model="state.schakelbevoegdeHandtekening" />
-          </div>
-        </div>
+        <span class="block text-xs text-neutral-600">Handtekening</span>
+        <SignaturePad v-model="state.schakelbevoegdeHandtekening" />
       </div>
     </div>
 
-    <!-- Photos -->
-    <div class="mx-5 mt-1 bg-[#7a3668] px-3 py-1 text-xs font-semibold text-white">
-      FOTO'S
-    </div>
-    <div class="px-5 py-3">
-      <CroutonFormRepeater
-        :model-value="state.photos ?? []"
-        component-name="KvrWerkvergunningensPhotoInput"
-        add-label="Foto toevoegen"
-        :sortable="true"
-        @update:model-value="(v: any) => (state.photos = v)"
-      />
+    <!-- Photos — hidden in the PDF snapshot (data-pdf-hide); included as email attachments -->
+    <div data-pdf-hide>
+      <div class="mx-5 mt-1 bg-[#7a3668] px-3 py-1 text-xs font-semibold text-white">
+        FOTO'S
+      </div>
+      <div class="px-5 py-3">
+        <CroutonFormRepeater
+          :model-value="state.photos ?? []"
+          component-name="KvrWerkvergunningensPhotoInput"
+          add-label="Foto toevoegen"
+          :sortable="true"
+          @update:model-value="(v: any) => (state.photos = v)"
+        />
+      </div>
     </div>
 
     </div> <!-- /pdfAreaEl -->

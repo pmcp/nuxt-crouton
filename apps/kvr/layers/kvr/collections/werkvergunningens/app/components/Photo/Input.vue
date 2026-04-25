@@ -17,6 +17,11 @@ const uploading = ref(false)
 const uploadError = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
+// Let wrapping contexts (e.g. the public submit page) override the upload endpoint
+// and attach auth headers. Falls back to the admin endpoint + no extra headers.
+const uploadEndpoint = inject<string>('kvr-upload-endpoint', '/api/upload-image')
+const uploadHeaders = inject<Record<string, string>>('kvr-upload-headers', {})
+
 async function onFileSelected(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
@@ -27,9 +32,10 @@ async function onFileSelected(e: Event) {
   try {
     const form = new FormData()
     form.append('file', file)
-    const res = await $fetch<{ pathname: string }>('/api/upload-image', {
+    const res = await $fetch<{ pathname: string }>(uploadEndpoint, {
       method: 'POST',
       body: form,
+      headers: uploadHeaders,
     })
     if (model.value) {
       model.value = { ...model.value, assetId: res.pathname }
@@ -54,8 +60,8 @@ const previewUrl = computed(() =>
 </script>
 
 <template>
-  <div class="flex items-start gap-3 w-full">
-    <div class="w-28 h-28 shrink-0 relative rounded-md border border-dashed border-neutral-300 bg-neutral-50 overflow-hidden">
+  <div class="flex items-start gap-3 w-full" data-photo-row>
+    <div class="w-28 h-28 shrink-0 relative rounded-md border border-dashed border-neutral-300 bg-neutral-50 overflow-hidden" data-photo-tile>
       <img
         v-if="previewUrl"
         :src="previewUrl"
@@ -97,6 +103,7 @@ const previewUrl = computed(() =>
         class="w-full"
         size="md"
         placeholder="Omschrijving (bv. situatie voor werken, kabellabel…)"
+        :data-photo-caption="model.caption || ''"
       />
       <p v-if="uploadError" class="text-xs text-red-600">{{ uploadError }}</p>
     </div>
