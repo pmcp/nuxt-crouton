@@ -50,6 +50,8 @@ export interface KvrWerkvergunningen {
   huisnummer: string
   postcode: string
   gemeente: string
+  lng?: number | null
+  lat?: number | null
   ploegLeden?: string
   plaats?: string
   opgemaaktOp?: Date | null

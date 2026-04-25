@@ -93,6 +93,28 @@ function handleValidationError(event: any) {
   validationErrors.value = Array.isArray(event?.errors) ? event.errors : []
 }
 
+// Autofill straat / huisnummer / postcode / gemeente from a reverse-geocoded
+// location result (CroutonMapsCurrentLocationButton). Mapbox's `place_name`
+// puts "Street 12, 1000 City, Country" together — the first segment usually
+// holds the street and number; we split the trailing digits off as huisnummer.
+function applyGeocodeResult(r: { coordinates: [number, number], address: string, context?: { postcode?: string, place?: string } }) {
+  state.value.lng = r.coordinates[0]
+  state.value.lat = r.coordinates[1]
+
+  if (r.context?.postcode) state.value.postcode = r.context.postcode
+  if (r.context?.place) state.value.gemeente = r.context.place
+
+  const firstSegment = r.address.split(',')[0]?.trim() ?? ''
+  const numberMatch = firstSegment.match(/\s+(\d+\w*)$/)
+  if (numberMatch?.[1]) {
+    state.value.huisnummer = numberMatch[1]
+    state.value.straat = firstSegment.slice(0, numberMatch.index).trim()
+  }
+  else if (firstSegment) {
+    state.value.straat = firstSegment
+  }
+}
+
 // Load recipients from the team settings for the datalist dropdown.
 const { getTeamId } = useTeamContext()
 interface RecipientOption { label?: string, email: string, isDefault?: boolean }
@@ -570,6 +592,16 @@ const handleSubmit = async () => {
       B2. ADRES VAN DE WERKZONE
     </div>
     <div class="px-5 py-3 space-y-2">
+      <div class="flex justify-end" data-pdf-hide>
+        <CroutonMapsCurrentLocationButton
+          label="Gebruik mijn locatie"
+          icon="i-lucide-map-pin"
+          color="neutral"
+          variant="outline"
+          size="xs"
+          @located="applyGeocodeResult"
+        />
+      </div>
       <div class="grid grid-cols-[1fr_140px] gap-4">
         <label class="block text-sm">
           <span class="block text-xs text-neutral-600 mb-0.5">Straat</span>

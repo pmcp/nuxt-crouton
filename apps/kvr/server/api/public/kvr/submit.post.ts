@@ -21,6 +21,8 @@ const bodySchema = z.object({
   huisnummer: z.string().min(1),
   postcode: z.string().min(1),
   gemeente: z.string().min(1),
+  lng: z.number().nullable().optional(),
+  lat: z.number().nullable().optional(),
   ploegLeden: z.string().optional(),
   plaats: z.string().optional(),
   opgemaaktOp: z.coerce.date().nullable().optional(),

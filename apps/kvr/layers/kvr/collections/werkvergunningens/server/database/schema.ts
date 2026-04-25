@@ -36,6 +36,8 @@ export const kvrWerkvergunningens = sqliteTable('kvr_werkvergunningens', {
   huisnummer: text('huisnummer').notNull(),
   postcode: text('postcode').notNull(),
   gemeente: text('gemeente').notNull(),
+  lng: real('lng'),
+  lat: real('lat'),
   ploegLeden: text('ploegLeden'),
   plaats: text('plaats'),
   opgemaaktOp: integer('opgemaaktOp', { mode: 'timestamp' }).$default(() => new Date()),

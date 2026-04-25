@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-core',
     '@fyit/crouton-i18n',
     '@fyit/crouton-email',
+    '@fyit/crouton-maps',
     './layers/kvr'
   ],
   hub: {
