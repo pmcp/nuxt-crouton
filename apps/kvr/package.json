@@ -17,6 +17,8 @@
     "db:migrate:prod": "npx wrangler d1 migrations apply kvr-db --remote",
     "logs": "npx wrangler pages deployment tail --project-name kvr"
   },
+
+
   "dependencies": {
     "@fyit/crouton": "workspace:*",
     "@fyit/crouton-core": "workspace:*",
