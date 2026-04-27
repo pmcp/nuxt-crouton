@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
   // Fire-and-forget email send; update emailStatus when done.
   // We await it so the client gets an accurate status in the response.
   const emailTimer = timing.start('email')
-  const emailResult = await sendWerkvergunningEmail(result as any)
+  const emailResult = await sendWerkvergunningEmail(result as any, event)
   emailTimer.end()
 
   try {

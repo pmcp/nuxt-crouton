@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3'
 import { Resend } from 'resend'
 import { blob } from 'hub:blob'
 
@@ -122,8 +123,11 @@ function renderHtml(r: WerkvergunningRecord) {
   `
 }
 
-export async function sendWerkvergunningEmail(record: WerkvergunningRecord): Promise<{ status: 'sent' | 'failed', error?: string }> {
-  const config = useRuntimeConfig()
+export async function sendWerkvergunningEmail(record: WerkvergunningRecord, event: H3Event): Promise<{ status: 'sent' | 'failed', error?: string }> {
+  // Must pass event — useRuntimeConfig() without it returns the module-init
+  // snapshot on CF Workers, which contains build-time defaults instead of
+  // per-request env-var overrides. process.env.NUXT_* is the CF-side fallback.
+  const config = useRuntimeConfig(event)
   const apiKey = (config.email as any)?.resendApiKey || process.env.NUXT_EMAIL_RESEND_API_KEY
   const from = (config.email as any)?.fromAddress || process.env.NUXT_EMAIL_FROM_ADDRESS || 'no-reply@kvr.local'
 

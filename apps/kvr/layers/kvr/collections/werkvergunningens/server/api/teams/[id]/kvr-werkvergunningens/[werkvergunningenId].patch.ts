@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
   // Re-send the email with the updated record + regenerated PDF.
   const emailTimer = timing.start('email')
-  const emailResult = await sendWerkvergunningEmail(result as any)
+  const emailResult = await sendWerkvergunningEmail(result as any, event)
   emailTimer.end()
 
   try {

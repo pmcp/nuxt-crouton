@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Werkvergunning not found' })
   }
 
-  const emailResult = await sendWerkvergunningEmail(record as any)
+  const emailResult = await sendWerkvergunningEmail(record as any, event)
 
   try {
     await updateKvrWerkvergunningen(

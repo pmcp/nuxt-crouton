@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
     emailStatus: 'pending',
   })
 
-  const emailResult = await sendWerkvergunningEmail(record as any)
+  const emailResult = await sendWerkvergunningEmail(record as any, event)
 
   try {
     await updateKvrWerkvergunningen(
