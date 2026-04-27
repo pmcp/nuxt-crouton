@@ -19,7 +19,7 @@ URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, G
 | Flag | Purpose | Default |
 |------|---------|---------|
 | `autoCreateOnSignup` | Auto-create personal workspace on signup | false |
-| `defaultTeamSlug` | Everyone joins this team on signup | undefined |
+| `defaultTeamSlug` | Everyone joins this team on signup (first user → `owner`, rest → `member`) | undefined |
 | `allowCreate` | Can users create additional teams | true |
 | `showSwitcher` | Show team switcher UI | true |
 | `showManagement` | Show team management UI | true |

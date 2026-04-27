@@ -529,11 +529,17 @@ async function addUserToDefaultOrg(
   `)
 
   if (existing.length === 0) {
+    // First user to join the default org becomes owner; everyone after is member
+    const memberCount = await db.all<{ count: number }>(sql`
+      SELECT COUNT(*) as count FROM member WHERE organizationId = ${org.id}
+    `)
+    const isFirstUser = (memberCount[0]?.count ?? 0) === 0
+    const role = isFirstUser ? 'owner' : 'member'
     const memberId = crypto.randomUUID()
     const now = new Date().toISOString()
     await db.run(sql`
       INSERT INTO member (id, organizationId, userId, role, createdAt)
-      VALUES (${memberId}, ${org.id}, ${userId}, 'member', ${now})
+      VALUES (${memberId}, ${org.id}, ${userId}, ${role}, ${now})
     `)
   }
 }
