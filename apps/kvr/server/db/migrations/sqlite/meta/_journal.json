@@ -15,6 +15,13 @@
       "when": 1777000000000,
       "tag": "0001_add_werkvergunningens_coords",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777800000000,
+      "tag": "0002_add_werkvergunningens_form_pdf_path",
+      "breakpoints": true
     }
   ]
 }
