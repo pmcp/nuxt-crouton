@@ -42,14 +42,14 @@ export const kvrWerkvergunningensPhotoItemSchema = z.object({
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const kvrWerkvergunningenSchema = z.object({
-  sblNumber: z.string().min(1, 'sblNumber is required'),
-  datum: z.date({ message: 'datum is required' }),
-  workType: z.string().min(1, 'workType is required'),
+  sblNumber: z.string().min(1, 'Verplicht'),
+  datum: z.date({ message: 'Kies een datum' }),
+  workType: z.string().min(1, 'Kies een type werk'),
   cables: z.array(kvrWerkvergunningensCableItemSchema).optional(),
-  straat: z.string().min(1, 'straat is required'),
-  huisnummer: z.string().min(1, 'huisnummer is required'),
-  postcode: z.string().min(1, 'postcode is required'),
-  gemeente: z.string().min(1, 'gemeente is required'),
+  straat: z.string().min(1, 'Verplicht'),
+  huisnummer: z.string().min(1, 'Verplicht'),
+  postcode: z.string().min(1, 'Verplicht'),
+  gemeente: z.string().min(1, 'Verplicht'),
   lng: z.number().nullable().optional(),
   lat: z.number().nullable().optional(),
   ploegLeden: z.string().optional(),
@@ -64,7 +64,7 @@ export const kvrWerkvergunningenSchema = z.object({
   schakelbevoegdeVoornaam: z.string().optional(),
   schakelbevoegdeHandtekening: z.string().nullable().optional(),
   photos: z.array(kvrWerkvergunningensPhotoItemSchema).optional(),
-  recipientEmail: z.string().min(1, 'recipientEmail is required'),
+  recipientEmail: z.string().min(1, 'Vul een ontvanger in'),
   emailStatus: z.string().optional(),
   formPdfPath: z.string().nullable().optional()
 })

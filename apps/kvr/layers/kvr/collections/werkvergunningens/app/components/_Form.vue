@@ -89,8 +89,32 @@ const errorList = computed(() => validationErrors.value.map((e) => {
   return { name, label: fieldLabels[name] ?? name, message: e.message }
 }))
 
-function handleValidationError(event: any) {
+// O(1) lookup so each input can show its own error inline.
+const fieldErrorMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const e of errorList.value) {
+    if (e.name && !map[e.name]) map[e.name] = e.message
+  }
+  return map
+})
+
+function fieldErrorClass(name: string): string {
+  return fieldErrorMap.value[name] ? 'wvg-input-error' : ''
+}
+
+async function handleValidationError(event: any) {
   validationErrors.value = Array.isArray(event?.errors) ? event.errors : []
+  await nextTick()
+  // Scroll the first errored field into view and focus it so the user lands
+  // exactly where they need to fix something instead of skimming the summary.
+  const first = errorList.value[0]
+  if (!first?.name) return
+  const el = document.querySelector<HTMLElement>(`[data-field="${first.name}"]`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const focusable = el.matches('input, textarea, select') ? el : el.querySelector<HTMLElement>('input, textarea, select')
+    focusable?.focus({ preventScroll: true })
+  }
 }
 
 // Autofill straat / huisnummer / postcode / gemeente from a reverse-geocoded
@@ -492,24 +516,32 @@ const handleSubmit = async () => {
     </div>
 
     <!-- Meta row: Datum + SBL + Nr. 077 -->
-    <div class="flex items-center gap-8 px-5 py-3 text-sm">
-      <label class="flex items-center gap-2">
-        <span class="text-neutral-700">Datum</span>
-        <input
-          v-model="datumStr"
-          type="date"
-          class="wvg-input h-8 w-36 px-2"
-        >
+    <div class="flex items-start gap-8 px-5 py-3 text-sm">
+      <label class="flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="text-neutral-700">Datum</span>
+          <input
+            v-model="datumStr"
+            type="date"
+            data-field="datum"
+            :class="['wvg-input h-8 w-36 px-2', fieldErrorClass('datum')]"
+          >
+        </div>
+        <p v-if="fieldErrorMap.datum" class="text-xs text-red-600">{{ fieldErrorMap.datum }}</p>
       </label>
-      <label class="flex items-center gap-2">
-        <span class="text-neutral-700">Nummer SBL</span>
-        <input
-          v-model="state.sblNumber"
-          type="text"
-          maxlength="10"
-          class="wvg-input h-8 w-32 px-2 tracking-widest text-center"
-          placeholder="SBL"
-        >
+      <label class="flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="text-neutral-700">Nummer SBL</span>
+          <input
+            v-model="state.sblNumber"
+            type="text"
+            maxlength="10"
+            data-field="sblNumber"
+            :class="['wvg-input h-8 w-32 px-2 tracking-widest text-center', fieldErrorClass('sblNumber')]"
+            placeholder="SBL"
+          >
+        </div>
+        <p v-if="fieldErrorMap.sblNumber" class="text-xs text-red-600">{{ fieldErrorMap.sblNumber }}</p>
       </label>
       <div class="ml-auto text-[#5b1f4a] font-bold">
         Nr.&nbsp;<span class="text-xl">077</span>
@@ -520,7 +552,7 @@ const handleSubmit = async () => {
     <div class="mx-5 mt-2 rounded-tr-2xl bg-[#5b1f4a] px-3 py-1.5 text-sm font-semibold text-white">
       A. UIT TE VOEREN WERK
     </div>
-    <div class="px-5 py-3">
+    <div data-field="workType" class="px-5 py-3">
       <div class="flex gap-10">
         <label class="flex items-center gap-2 cursor-pointer text-sm">
           <input v-model="state.workType" type="radio" value="laagspanningslas" class="size-4 accent-[#5b1f4a]">
@@ -531,6 +563,7 @@ const handleSubmit = async () => {
           <span class="text-neutral-800">Hoogspanningslas</span>
         </label>
       </div>
+      <p v-if="fieldErrorMap.workType" class="mt-1 text-xs text-red-600">{{ fieldErrorMap.workType }}</p>
     </div>
 
     <!-- Section B -->
@@ -605,21 +638,47 @@ const handleSubmit = async () => {
       <div class="grid grid-cols-[1fr_140px] gap-4">
         <label class="block text-sm">
           <span class="block text-xs text-neutral-600 mb-0.5">Straat</span>
-          <input v-model="state.straat" type="text" class="wvg-input h-8 w-full px-2">
+          <input
+            v-model="state.straat"
+            type="text"
+            data-field="straat"
+            :class="['wvg-input h-8 w-full px-2', fieldErrorClass('straat')]"
+          >
+          <p v-if="fieldErrorMap.straat" class="mt-0.5 text-xs text-red-600">{{ fieldErrorMap.straat }}</p>
         </label>
         <label class="block text-sm">
           <span class="block text-xs text-neutral-600 mb-0.5">Nr.</span>
-          <input v-model="state.huisnummer" type="text" class="wvg-input h-8 w-full px-2">
+          <input
+            v-model="state.huisnummer"
+            type="text"
+            data-field="huisnummer"
+            :class="['wvg-input h-8 w-full px-2', fieldErrorClass('huisnummer')]"
+          >
+          <p v-if="fieldErrorMap.huisnummer" class="mt-0.5 text-xs text-red-600">{{ fieldErrorMap.huisnummer }}</p>
         </label>
       </div>
       <div class="grid grid-cols-[200px_1fr] gap-4">
         <label class="block text-sm">
           <span class="block text-xs text-neutral-600 mb-0.5">Postcode</span>
-          <input v-model="state.postcode" type="text" inputmode="numeric" maxlength="4" class="wvg-input h-8 w-full px-2">
+          <input
+            v-model="state.postcode"
+            type="text"
+            inputmode="numeric"
+            maxlength="4"
+            data-field="postcode"
+            :class="['wvg-input h-8 w-full px-2', fieldErrorClass('postcode')]"
+          >
+          <p v-if="fieldErrorMap.postcode" class="mt-0.5 text-xs text-red-600">{{ fieldErrorMap.postcode }}</p>
         </label>
         <label class="block text-sm">
           <span class="block text-xs text-neutral-600 mb-0.5">Gemeente</span>
-          <input v-model="state.gemeente" type="text" class="wvg-input h-8 w-full px-2">
+          <input
+            v-model="state.gemeente"
+            type="text"
+            data-field="gemeente"
+            :class="['wvg-input h-8 w-full px-2', fieldErrorClass('gemeente')]"
+          >
+          <p v-if="fieldErrorMap.gemeente" class="mt-0.5 text-xs text-red-600">{{ fieldErrorMap.gemeente }}</p>
         </label>
       </div>
     </div>
@@ -710,10 +769,12 @@ const handleSubmit = async () => {
 
     <!-- Validation errors -->
     <div v-if="errorList.length" class="mx-5 mt-2 rounded-sm border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-      <div class="mb-1 font-semibold">Vul de volgende velden in:</div>
+      <div class="mb-1 font-semibold">
+        Controleer {{ errorList.length === 1 ? 'dit veld' : `deze ${errorList.length} velden` }}:
+      </div>
       <ul class="list-disc pl-5 space-y-0.5">
         <li v-for="(e, i) in errorList" :key="i">
-          <strong>{{ e.label }}:</strong> {{ e.message }}
+          <strong>{{ e.label }}</strong><template v-if="e.message"> — {{ e.message }}</template>
         </li>
       </ul>
     </div>
@@ -737,7 +798,8 @@ const handleSubmit = async () => {
           v-model="state.recipientEmail"
           type="email"
           list="kvr-recipient-options"
-          class="wvg-input h-8 w-full px-2"
+          data-field="recipientEmail"
+          :class="['wvg-input h-8 w-full px-2', fieldErrorClass('recipientEmail')]"
           placeholder="naam@voorbeeld.be"
           required
         >
@@ -748,6 +810,7 @@ const handleSubmit = async () => {
             :value="r.email"
           >{{ r.label || r.email }}</option>
         </datalist>
+        <p v-if="fieldErrorMap.recipientEmail" class="mt-0.5 text-xs text-red-600">{{ fieldErrorMap.recipientEmail }}</p>
       </label>
       <div class="flex items-center gap-3">
         <UButton
@@ -791,5 +854,20 @@ const handleSubmit = async () => {
 .wvg-input:focus {
   background-color: #fff5cc;
   border-color: #5b1f4a;
+}
+
+.wvg-input.wvg-input-error,
+.wvg-form :deep(input.wvg-input-error),
+.wvg-form :deep(textarea.wvg-input-error) {
+  border-color: #dc2626;
+  background-color: #fff1f2;
+}
+
+.wvg-input.wvg-input-error:focus,
+.wvg-form :deep(input.wvg-input-error:focus),
+.wvg-form :deep(textarea.wvg-input-error:focus) {
+  border-color: #dc2626;
+  background-color: #fff1f2;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
 }
 </style>
