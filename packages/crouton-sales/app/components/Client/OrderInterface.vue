@@ -96,9 +96,18 @@ import type { SalesProduct, SalesCategory, ProductOption } from '../../types'
 
 const props = defineProps<{
   eventId: string
-  /** Collection name for products query (defaults to 'salesProducts') */
+  /**
+   * Pre-fetched products. When provided, OrderInterface won't call useCollectionQuery.
+   * Use this for customer/helper-auth flows where the caller fetches via a
+   * helper-token-protected endpoint (e.g., /api/crouton-sales/events/[id]/order-data).
+   * When omitted (admin/team-member flows), defaults to fetching via useCollectionQuery.
+   */
+  products?: SalesProduct[]
+  /** Pre-fetched categories. Same semantics as `products`. */
+  categories?: SalesCategory[]
+  /** Collection name for products query (defaults to 'salesProducts'). Ignored when `products` is provided. */
   productsCollection?: string
-  /** Collection name for categories query (defaults to 'salesCategories') */
+  /** Collection name for categories query (defaults to 'salesCategories'). Ignored when `categories` is provided. */
   categoriesCollection?: string
 }>()
 
@@ -120,21 +129,34 @@ const {
 // Set the event ID
 selectedEventId.value = props.eventId
 
-// Fetch categories and products for this event
-// Collection names are customizable but default to 'salesCategories' and 'salesProducts'
-const { items: categories, pending: categoriesLoading } = await useCollectionQuery(
-  props.categoriesCollection || 'salesCategories',
-  {
-    query: computed(() => ({ eventId: props.eventId })),
-  },
-)
+// When pre-fetched data is provided (helper-auth flow), skip the auto-fetch.
+const usePropsData = props.products !== undefined && props.categories !== undefined
 
-const { items: products, pending: productsLoading } = await useCollectionQuery(
-  props.productsCollection || 'salesProducts',
-  {
-    query: computed(() => ({ eventId: props.eventId })),
-  },
-)
+let categories: Ref<SalesCategory[]> | ComputedRef<SalesCategory[]>
+let products: Ref<SalesProduct[]> | ComputedRef<SalesProduct[]>
+let categoriesLoading: Ref<boolean>
+let productsLoading: Ref<boolean>
+
+if (usePropsData) {
+  categories = computed(() => props.categories ?? [])
+  products = computed(() => props.products ?? [])
+  categoriesLoading = ref(false)
+  productsLoading = ref(false)
+}
+else {
+  const catsQuery = await useCollectionQuery(
+    props.categoriesCollection || 'salesCategories',
+    { query: computed(() => ({ eventId: props.eventId })) }
+  )
+  const prodsQuery = await useCollectionQuery(
+    props.productsCollection || 'salesProducts',
+    { query: computed(() => ({ eventId: props.eventId })) }
+  )
+  categories = catsQuery.items as Ref<SalesCategory[]>
+  products = prodsQuery.items as Ref<SalesProduct[]>
+  categoriesLoading = catsQuery.pending
+  productsLoading = prodsQuery.pending
+}
 
 const loading = computed(() => categoriesLoading.value || productsLoading.value)
 

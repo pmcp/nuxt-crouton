@@ -98,7 +98,7 @@ export function calculateItemPrice(item: CartItem): number {
  */
 export function usePosOrder(options: UsePosOrderOptions = {}) {
   const {
-    apiBasePath = '/api/sales/events',
+    apiBasePath = '/api/crouton-sales/events',
     enablePrinting = false
   } = options
 

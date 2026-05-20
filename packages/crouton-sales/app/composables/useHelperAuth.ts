@@ -32,9 +32,8 @@
  * ```
  */
 
-// Re-export from @fyit/crouton-auth for convenience
-// The useEventAccess composable provides the core functionality
-export { useEventAccess } from '@fyit/crouton-auth/app/composables/useScopedAccess'
+// Note: useEventAccess from @fyit/crouton-auth is auto-imported as a Nuxt
+// layer composable — no explicit re-export needed.
 
 export interface HelperSession {
   token: string
@@ -180,14 +179,14 @@ export function useHelperAuth() {
         return false
       }
 
-      // Call the helper login endpoint
-      // This endpoint validates the PIN and creates/updates the scoped access token
+      // Call the helper login endpoint (package-shipped under /api/crouton-sales)
+      // This endpoint validates the PIN and creates a scoped access token via crouton-auth
       const response = await $fetch<{
         token: string
         helperName: string
         eventId: string
         expiresAt: string
-      }>(`/api/teams/${teamId}/pos-events/${eventId}/helper-login`, {
+      }>(`/api/crouton-sales/teams/${teamId}/events/${eventId}/helper-login`, {
         method: 'POST',
         body
       })
