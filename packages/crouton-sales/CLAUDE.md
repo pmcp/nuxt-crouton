@@ -43,6 +43,49 @@ Package expects tables with `sales` prefix:
 
 User MUST use `sales` as layer name in crouton.config.js.
 
+**No `salesHelpers` table.** Helper sessions live in `scopedAccessToken` (owned by `@fyit/crouton-auth`). See "Helper Authentication" below.
+
+### Admin Pages (shipped by this package)
+
+```
+app/pages/admin/[team]/sales.vue                 # parent layout with 9-tab navbar
+app/pages/admin/[team]/sales/
+  index.vue                                      # overview (orders list)
+  events.vue → events/index.vue                  # events list (<SalesEventsList/>)
+  events/[slug]/index.vue                        # event workspace shell
+  events/[slug]/orders.vue                       # inline POS for the event
+  products.vue / categories.vue / orders.vue
+  locations.vue / printers.vue / clients.vue
+  helpers.vue                                    # ACTIVE helpers (scoped tokens)
+```
+
+Event workspace tabs are extracted into reusable components under `app/components/EventWorkspace/`:
+`ProductsTab.vue`, `OrdersTab.vue`, `PrintersTab.vue`, `SettingsTab.vue`
+(auto-imported as `SalesEventWorkspaceProductsTab`, etc.)
+
+### Customer Pages (POS interface)
+
+```
+app/pages/order/[team]/[event]/login.vue   # helper PIN login (no layout)
+app/pages/order/[team]/[event]/index.vue   # full-screen POS UI (no layout)
+```
+
+### Package-shipped Server Endpoints
+
+All package endpoints live under `/api/crouton-sales/` with an explicit split:
+
+| Path | Auth | Purpose |
+|------|------|---------|
+| `teams/[id]/events/[eventId]/duplicate` POST | team admin | Clone an event + its categories/locations/products/printers |
+| `teams/[id]/events/[eventId]/helper-login` POST | team admin | Validate PIN, issue scoped-access token |
+| `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
+| `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
+| `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
+| `events/[eventId]/order-data` GET | helper token | All data needed by POS UI |
+| `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
+| `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
+| `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
+
 ## Configuration
 
 ```typescript
@@ -120,35 +163,25 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 
 ## Helper Authentication
 
-Helpers (volunteers, staff) authenticate with an event's shared PIN. The authentication is managed by `@fyit/crouton-auth`'s scoped access system.
+Helpers (volunteers, staff) authenticate with an event's shared PIN. Every session is a `scopedAccessToken` row in `@fyit/crouton-auth`. There is no separate `salesHelpers` table. "Active Helpers" UI is a query over `scopedAccessToken` filtered by `resourceType='event'` + `organizationId=teamId` (see `active-helpers.get.ts` endpoints).
 
 ### Client-side Usage
 
 ```typescript
-const {
-  isHelper,
-  helperName,
-  eventId,
-  teamId,
-  login,
-  logout
-} = useHelperAuth()
+const { isHelper, helperName, eventId, teamId, login, logout } = useHelperAuth()
 
-// Login with PIN
+// Login with PIN — every login creates a new scoped-access token
 await login({
   teamId: 'team-123',
   eventId: 'event-456',
   pin: '1234',
-  helperName: 'John'  // For new helpers
-  // OR helperId: 'existing-helper-id'  // For returning helpers
+  helperName: 'John'
 })
 
-// Check authentication
 if (isHelper.value) {
   console.log(`Welcome, ${helperName.value}!`)
 }
 
-// Logout
 await logout()
 ```
 

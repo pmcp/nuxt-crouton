@@ -1,5 +1,10 @@
 {
   "sales": {
+    "title": "Kassa",
+    "admin": {
+      "sectionTitle": "Kassa",
+      "overview": "Overzicht"
+    },
     "cart": {
       "title": "Winkelwagen",
       "empty": "Je winkelwagen is leeg",

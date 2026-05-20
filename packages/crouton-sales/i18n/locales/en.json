@@ -1,5 +1,10 @@
 {
   "sales": {
+    "title": "Point of Sale",
+    "admin": {
+      "sectionTitle": "Point of Sale",
+      "overview": "Overview"
+    },
     "cart": {
       "title": "Cart",
       "empty": "Your cart is empty",
