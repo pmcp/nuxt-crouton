@@ -1,0 +1,219 @@
+[
+  {
+    "collection": "printqueues",
+    "fields": [
+      "eventId",
+      "orderId",
+      "printerId",
+      "locationId",
+      "status",
+      "printData",
+      "printMode",
+      "errorMessage",
+      "retryCount",
+      "completedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.091Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "eventsettings",
+    "fields": [
+      "eventId",
+      "settingKey",
+      "settingValue",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.074Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "orderitems",
+    "fields": [
+      "orderId",
+      "productId",
+      "quantity",
+      "unitPrice",
+      "totalPrice",
+      "remarks",
+      "selectedOptions"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.057Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "categorys",
+    "fields": [
+      "eventId",
+      "title",
+      "displayOrder"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.039Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "printqueues",
+    "fields": [
+      "eventId",
+      "orderId",
+      "printerId",
+      "locationId",
+      "status",
+      "printData",
+      "printMode",
+      "errorMessage",
+      "retryCount",
+      "completedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.019Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "printers",
+    "fields": [
+      "eventId",
+      "locationId",
+      "title",
+      "ipAddress",
+      "port",
+      "status",
+      "showPrices",
+      "isActive"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:41.000Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "eventsettings",
+    "fields": [
+      "eventId",
+      "settingKey",
+      "settingValue",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.982Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "clients",
+    "fields": [
+      "title",
+      "isReusable"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.964Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "locations",
+    "fields": [
+      "eventId",
+      "title"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.945Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "orderitems",
+    "fields": [
+      "orderId",
+      "productId",
+      "quantity",
+      "unitPrice",
+      "totalPrice",
+      "remarks",
+      "selectedOptions"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.926Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "orders",
+    "fields": [
+      "eventId",
+      "clientId",
+      "clientName",
+      "eventOrderNumber",
+      "overallRemarks",
+      "isPersonnel",
+      "status"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.906Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "categories",
+    "fields": [
+      "eventId",
+      "title",
+      "displayOrder"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.888Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "products",
+    "fields": [
+      "eventId",
+      "categoryId",
+      "locationId",
+      "title",
+      "description",
+      "price",
+      "isActive",
+      "requiresRemark",
+      "remarkPrompt",
+      "hasOptions",
+      "multipleOptionsAllowed",
+      "options",
+      "sortOrder"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.859Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  },
+  {
+    "collection": "events",
+    "fields": [
+      "title",
+      "slug",
+      "description",
+      "eventType",
+      "startDate",
+      "endDate",
+      "status",
+      "isCurrent",
+      "helperPin",
+      "metadata",
+      "archivedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-05-19T18:40:40.840Z",
+    "layer": "sales",
+    "gitSha": "010055cd"
+  }
+]

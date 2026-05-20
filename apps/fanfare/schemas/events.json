@@ -1,0 +1,14 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "label": "Event Name", "maxLength": 200 } },
+  "slug": { "type": "string", "meta": { "required": true, "unique": true, "label": "URL Slug" } },
+  "description": { "type": "text", "meta": { "label": "Description" } },
+  "eventType": { "type": "string", "meta": { "label": "Event Type", "default": "standard" } },
+  "startDate": { "type": "date", "meta": { "label": "Start Date" } },
+  "endDate": { "type": "date", "meta": { "label": "End Date" } },
+  "status": { "type": "string", "meta": { "required": true, "label": "Status", "default": "upcoming" } },
+  "isCurrent": { "type": "boolean", "meta": { "label": "Current Event", "default": false } },
+  "helperPin": { "type": "string", "meta": { "label": "Helper PIN", "maxLength": 6, "helpText": "PIN for volunteer login" } },
+  "metadata": { "type": "json", "meta": { "label": "Metadata" } },
+  "archivedAt": { "type": "date", "meta": { "label": "Archived At" } }
+}

@@ -1,0 +1,40 @@
+// Team-based endpoint - requires @fyit/crouton-auth package
+// The resolveTeamAndCheckMembership utility handles team resolution and auth
+import { createSalesPrinter } from '../../../../database/queries'
+import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { z } from 'zod'
+
+const bodySchema = z.object({
+  eventId: z.string().min(1, 'eventId is required'),
+  locationId: z.string().min(1, 'locationId is required'),
+  title: z.string().min(1, 'title is required'),
+  ipAddress: z.string().min(1, 'ipAddress is required'),
+  port: z.number().optional(),
+  status: z.number().optional(),
+  showPrices: z.boolean().optional(),
+  isActive: z.boolean().optional()
+}).strip()
+
+export default defineEventHandler(async (event) => {
+  const timing = useServerTiming(event)
+
+  const authTimer = timing.start('auth')
+  const { team, user } = await resolveTeamAndCheckMembership(event)
+  authTimer.end()
+
+  const body = await readValidatedBody(event, bodySchema.parse)
+
+  // Exclude id field to let the database generate it
+  const { id, ...dataWithoutId } = body
+
+  const dbTimer = timing.start('db')
+  const result = await createSalesPrinter({
+    ...dataWithoutId,
+    teamId: team.id,
+    owner: user.id,
+    createdBy: user.id,
+    updatedBy: user.id
+  })
+  dbTimer.end()
+  return result
+})
