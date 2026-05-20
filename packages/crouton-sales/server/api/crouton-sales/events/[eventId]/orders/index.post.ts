@@ -1,0 +1,126 @@
+import { eq, sql } from 'drizzle-orm'
+import { nanoid } from 'nanoid'
+import { requireScopedAccessToResource } from '@fyit/crouton-auth/server/utils/scoped-access'
+import { organization } from '@fyit/crouton-auth/server/database/schema/auth'
+import { salesEvents } from '~~/layers/sales/collections/events/server/database/schema'
+import { salesOrders } from '~~/layers/sales/collections/orders/server/database/schema'
+import { salesOrderitems } from '~~/layers/sales/collections/orderitems/server/database/schema'
+import { generateAndInsertPrintQueues } from '../../../../../utils/generate-print-queues'
+
+interface OrderItemInput {
+  productId: string
+  quantity: number
+  price: number
+  productName?: string
+  remarks?: string
+  selectedOptions?: Record<string, unknown>
+}
+
+interface CreateOrderBody {
+  items: OrderItemInput[]
+  total: number
+  clientId?: string
+  clientName?: string
+  overallRemarks?: string
+  isPersonnel?: boolean
+}
+
+export default defineEventHandler(async (event) => {
+  const eventId = getRouterParam(event, 'eventId')
+
+  if (!eventId) {
+    throw createError({ status: 400, statusText: 'Event ID is required' })
+  }
+
+  const access = await requireScopedAccessToResource(event, 'event', eventId, 'pos-helper-token')
+  const db = useDB()
+
+  const [eventWithTeam] = await db
+    .select({ event: salesEvents, team: organization })
+    .from(salesEvents)
+    .leftJoin(organization, eq(salesEvents.teamId, organization.id))
+    .where(eq(salesEvents.id, eventId))
+    .limit(1)
+
+  if (!eventWithTeam?.event) {
+    throw createError({ status: 404, statusText: 'Event not found' })
+  }
+
+  const salesEvent = eventWithTeam.event
+  const body = await readBody<CreateOrderBody>(event)
+
+  if (!body.items || body.items.length === 0) {
+    throw createError({ status: 400, statusText: 'Order must have at least one item' })
+  }
+
+  const [orderCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(salesOrders)
+    .where(eq(salesOrders.eventId, eventId))
+
+  const eventOrderNumber = String((orderCount?.count || 0) + 1).padStart(4, '0')
+
+  const orderId = nanoid()
+  const [order] = await db
+    .insert(salesOrders)
+    .values({
+      id: orderId,
+      teamId: salesEvent.teamId,
+      owner: access.displayName,
+      eventId,
+      clientId: body.clientId,
+      clientName: body.clientName,
+      eventOrderNumber,
+      overallRemarks: body.overallRemarks,
+      isPersonnel: body.isPersonnel || false,
+      status: 'pending',
+      createdBy: access.id,
+      updatedBy: access.id
+    })
+    .returning()
+
+  const orderItems = await Promise.all(
+    body.items.map(async (item) => {
+      const [orderItem] = await db
+        .insert(salesOrderitems)
+        .values({
+          teamId: salesEvent.teamId,
+          owner: access.displayName,
+          orderId,
+          productId: item.productId,
+          quantity: String(item.quantity),
+          unitPrice: item.price,
+          totalPrice: item.price * item.quantity,
+          remarks: item.remarks,
+          selectedOptions: item.selectedOptions || {},
+          createdBy: access.id,
+          updatedBy: access.id
+        })
+        .returning()
+      return orderItem
+    })
+  )
+
+  let printQueueIds: string[] = []
+  const { croutonSales } = useRuntimeConfig(event)
+  const printEnabled = (croutonSales as { print?: { enabled?: boolean } } | undefined)?.print?.enabled
+
+  if (printEnabled) {
+    printQueueIds = await generateAndInsertPrintQueues({
+      db,
+      orderId,
+      eventId,
+      teamId: salesEvent.teamId,
+      helperDisplayName: access.displayName,
+      helperId: access.id,
+      orderNumber: eventOrderNumber,
+      clientName: body.clientName || undefined,
+      orderNotes: body.overallRemarks || undefined,
+      teamName: eventWithTeam.team?.name || 'POS',
+      eventName: salesEvent.title,
+      isPersonnel: body.isPersonnel || false
+    })
+  }
+
+  return { order, items: orderItems, eventOrderNumber, printQueueIds }
+})

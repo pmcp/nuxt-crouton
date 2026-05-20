@@ -16,7 +16,19 @@
   ],
   "exports": {
     ".": "./nuxt.config.ts",
-    "./schemas/*": "./schemas/*"
+    "./schemas/*": "./schemas/*",
+    "./server/utils/print-queue-service": {
+      "import": "./server/utils/print-queue-service.ts",
+      "types": "./server/utils/print-queue-service.ts"
+    },
+    "./server/utils/receipt-formatter": {
+      "import": "./server/utils/receipt-formatter.ts",
+      "types": "./server/utils/receipt-formatter.ts"
+    },
+    "./server/utils/generate-print-queues": {
+      "import": "./server/utils/generate-print-queues.ts",
+      "types": "./server/utils/generate-print-queues.ts"
+    }
   },
   "scripts": {
     "build": "unbuild",
