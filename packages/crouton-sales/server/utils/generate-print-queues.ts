@@ -104,10 +104,13 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       orderId,
       printerId: job.printerId,
       locationId: job.locationId,
-      status: PRINT_STATUS.PENDING,
+      // CLI-generated schema declares status/retryCount as TEXT despite the
+      // JSON schema saying integer. Cast to string so equality with string
+      // literals (e.g. '0' for STATUS_PENDING in the jobs endpoint) works.
+      status: String(PRINT_STATUS.PENDING),
       printData: job.printData,
       printMode: job.printMode || 'normal',
-      retryCount: 0,
+      retryCount: '0',
       createdBy: helperId,
       updatedBy: helperId
     })
