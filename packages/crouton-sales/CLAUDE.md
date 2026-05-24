@@ -86,6 +86,22 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
 
+### Print-Server Polling Endpoints
+
+Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler (e.g., the RUT956 BusyBox script at `/Users/pmcp/Projects/fyit-pos-printer`) that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status.
+
+Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.printApiKey` (default `'1234'`; override with env `NUXT_CROUTON_SALES_PRINT_API_KEY`).
+
+| Path | Method | Purpose |
+|------|--------|---------|
+| `print-server/events/[eventId]/jobs?mark_as_printing=true` | GET | List pending jobs joined with printer IP. With `mark_as_printing` flag, flips status pending→printing atomically. |
+| `print-server/jobs/[jobId]/complete` | POST | Mark status=completed, set completedAt. |
+| `print-server/jobs/[jobId]/fail` | POST | Body `{ errorMessage? }`. Set status=failed, increment retryCount. |
+
+`printData` returned by `/jobs` is already base64-encoded ESC/POS bytes (built by `formatReceipt` in `server/utils/receipt-formatter.ts`). Spooler decodes and writes raw bytes to printer's TCP port 9100.
+
+The spooler script's expected job-row shape: `{ id, printData, printerIp, printerPort, printMode, locationId, retryCount }`.
+
 ## Configuration
 
 ```typescript
