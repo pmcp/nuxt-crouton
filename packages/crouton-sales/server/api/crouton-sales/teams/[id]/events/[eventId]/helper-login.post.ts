@@ -1,10 +1,18 @@
+/**
+ * Helper PIN login — public endpoint (no team session required).
+ *
+ * The PIN itself is the auth credential. We scope the lookup by both
+ * teamId (route param, accepts UUID or slug) and eventId so a PIN can
+ * only unlock its own event. On success we issue a scopedAccessToken
+ * tied to the event; the client persists it via useHelperAuth/useEventAccess.
+ */
 import { eq, and } from 'drizzle-orm'
-import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
+import { resolveTeamBySlugOrId } from '@fyit/crouton-auth/server/utils/team'
 import { createScopedToken } from '@fyit/crouton-auth/server/utils/scoped-access'
 import { salesEvents } from '~~/layers/sales/collections/events/server/database/schema'
 
 export default defineEventHandler(async (event) => {
-  const { team } = await resolveTeamAndCheckMembership(event)
+  const { team } = await resolveTeamBySlugOrId(event, 'id')
   const eventId = getRouterParam(event, 'eventId')
 
   if (!eventId) {
@@ -38,7 +46,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Helper PIN not configured for this event' })
   }
 
-  if (salesEvent.helperPin !== pin) {
+  if (String(salesEvent.helperPin).trim() !== String(pin).trim()) {
     throw createError({ status: 401, statusText: 'Invalid PIN' })
   }
 
