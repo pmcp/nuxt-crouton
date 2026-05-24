@@ -32,12 +32,14 @@ export const salesPrintqueues = sqliteTable('sales_printqueues', {
   orderId: text('orderId').notNull(),
   printerId: text('printerId').notNull(),
   locationId: text('locationId'),
-  status: text('status').notNull(),
+  // Hotfix: JSON schema declares these as integer but the cli generated text
+  // columns. Corrected here; cli regression tracked separately.
+  status: integer('status').notNull(),
   printData: text('printData').notNull(),
   printMode: text('printMode'),
   errorMessage: text('errorMessage'),
-  retryCount: text('retryCount'),
-  completedAt: text('completedAt'),
+  retryCount: integer('retryCount'),
+  completedAt: integer('completedAt', { mode: 'timestamp' }),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

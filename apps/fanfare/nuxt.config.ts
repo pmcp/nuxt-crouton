@@ -37,6 +37,17 @@ export default defineNuxtConfig({
     print: { enabled: true }
   },
 
+  // Runtime config:
+  // - printApiKey: shared key the polling spooler uses
+  // - print.enabled: gate that controls whether order POST enqueues print jobs
+  // Override via NUXT_CROUTON_SALES_PRINT_API_KEY / NUXT_CROUTON_SALES_PRINT_ENABLED.
+  runtimeConfig: {
+    croutonSales: {
+      printApiKey: '1234',
+      print: { enabled: true }
+    }
+  },
+
   // Cloudflare Pages deployment
   nitro: {
     preset: 'cloudflare-pages',
