@@ -18,9 +18,13 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   const now = new Date()
 
+  // completedAt is a text column (cli regression: schema says datetime but
+  // gets generated as text). Pass an ISO string so drizzle/SQLite store it
+  // cleanly instead of the long Date.toString() format which trips D1.
+  // updatedAt is a real integer({mode:'timestamp'}) column, so a Date is fine.
   const result = await db
     .update(salesPrintqueues)
-    .set({ status: STATUS_COMPLETED, completedAt: now, updatedAt: now })
+    .set({ status: STATUS_COMPLETED, completedAt: now.toISOString(), updatedAt: now })
     .where(eq(salesPrintqueues.id, jobId))
     .returning({ id: salesPrintqueues.id })
 
