@@ -215,7 +215,12 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
               else {
                 displayValue = String(optionValue)
               }
-              printer.println(`  + ${optionName}: ${displayValue}`)
+              if (optionName === displayValue) {
+                printer.println(`  + ${displayValue}`)
+              }
+              else {
+                printer.println(`  + ${optionName}: ${displayValue}`)
+              }
             }
           }
         }
