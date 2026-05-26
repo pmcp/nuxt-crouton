@@ -36,6 +36,14 @@
         createButton
       />
     </template>
+    <template #title-cell="{ row }">
+      <NuxtLink
+        :to="`/admin/${route.params.team}/sales/events/${row.original.slug}`"
+        class="font-medium hover:underline text-primary"
+      >
+        {{ row.original.title }}
+      </NuxtLink>
+    </template>
     <template #startDate-cell="{ row }">
       <CroutonDate :date="row.original.startDate"></CroutonDate>
     </template>
@@ -63,6 +71,7 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
+const route = useRoute()
 const { columns } = useSalesEvents()
 
 const { items: events, pending } = await useCollectionQuery(
