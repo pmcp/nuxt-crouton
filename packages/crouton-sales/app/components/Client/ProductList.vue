@@ -7,16 +7,29 @@
       v-for="product in products"
       :key="product.id"
       variant="soft"
-      class="cursor-pointer"
       :ui="{ body: 'p-4' }"
-      @click="handleProductClick(product)"
     >
       <!-- Product header -->
       <div class="flex justify-between items-center gap-2">
         <div class="font-medium">{{ product.title }}</div>
         <div class="flex items-center gap-2 shrink-0">
           <span class="text-muted">${{ Number(product.price).toFixed(2) }}</span>
-          <UIcon v-if="hasOptions(product)" name="i-lucide-chevron-down" class="text-muted size-4 transition-transform" :class="{ 'rotate-180': activeProductId === product.id }" />
+          <UButton
+            v-if="hasOptions(product)"
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            :icon="activeProductId === product.id ? 'i-lucide-chevron-up' : 'i-lucide-ellipsis-vertical'"
+            @click.stop="toggleProduct(product)"
+          />
+          <UButton
+            v-else
+            variant="ghost"
+            color="primary"
+            size="xs"
+            icon="i-lucide-plus"
+            @click.stop="emit('select', product)"
+          />
         </div>
       </div>
 
@@ -126,19 +139,13 @@ function confirmMultiOptions(product: SalesProduct) {
   selectedOptionIds.value.delete(product.id)
 }
 
-function handleProductClick(product: SalesProduct) {
-  if (hasOptions(product)) {
-    // Clear previous selection if switching products
-    if (activeProductId.value && activeProductId.value !== product.id) {
-      selectedOptionIds.value.delete(activeProductId.value)
-    }
-    // Toggle expansion/active state
-    activeProductId.value = activeProductId.value === product.id ? null : product.id
+function toggleProduct(product: SalesProduct) {
+  // Clear previous selection if switching products
+  if (activeProductId.value && activeProductId.value !== product.id) {
+    selectedOptionIds.value.delete(activeProductId.value)
   }
-  else {
-    // No options, add directly
-    emit('select', product)
-  }
+  // Toggle expansion/active state
+  activeProductId.value = activeProductId.value === product.id ? null : product.id
 }
 
 function selectOption(product: SalesProduct, optionId: string) {
