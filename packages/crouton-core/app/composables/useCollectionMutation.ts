@@ -109,10 +109,14 @@ export function useCollectionMutation(collection: string): CollectionMutationRet
 
       // Get all matching keys from Nuxt's async data
       const allKeys = Object.keys(nuxtApp.payload.data)
-      const matchingKeys = allKeys.filter(key => key.startsWith(prefix))
+      const matchingKeys = new Set(allKeys.filter(key => key.startsWith(prefix)))
+
+      // Always include the base collection key as fallback
+      // (ensures refresh even if payload.data enumeration misses client-side entries)
+      matchingKeys.add(`${prefix}{}`)
 
       // Refresh all queries for this collection
-      await Promise.all(matchingKeys.map(key => refreshNuxtData(key)))
+      await Promise.all([...matchingKeys].map(key => refreshNuxtData(key)))
     }
 
     // Refresh individual item caches if IDs provided - for detail views (e.g., CroutonCardMini)

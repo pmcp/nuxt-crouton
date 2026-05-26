@@ -77,7 +77,7 @@ export async function useCollectionItem<T = any>(
   const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
 
   const { data, pending, error, refresh } = await useAsyncData(
-    `collection-item-${collection}-${itemId.value}`,
+    `collection-item:${collection}:${itemId.value}`,
     () => {
       if (!itemId.value) return Promise.resolve(null)
 
