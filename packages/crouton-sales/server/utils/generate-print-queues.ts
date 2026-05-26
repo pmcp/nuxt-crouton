@@ -53,6 +53,24 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
 
   const printItems: OrderItemForPrint[] = items.map((it: any) => {
     const product: any = productById.get(it.productId)
+
+    // Resolve selected option IDs to readable labels
+    let resolvedOptions: Record<string, string> | undefined
+    const rawOptions = it.selectedOptions
+    if (rawOptions && product?.options && Array.isArray(product.options) && product.options.length > 0) {
+      const optionIds = Array.isArray(rawOptions)
+        ? rawOptions
+        : typeof rawOptions === 'string'
+          ? [rawOptions]
+          : []
+      const labels = optionIds
+        .map((id: string) => product.options.find((o: any) => o.id === id)?.label)
+        .filter((label: string | undefined): label is string => Boolean(label))
+      if (labels.length > 0) {
+        resolvedOptions = Object.fromEntries(labels.map((label: string) => [label, label]))
+      }
+    }
+
     return {
       productId: it.productId,
       productTitle: product?.title || 'Item',
@@ -61,7 +79,7 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       remarks: it.remarks ?? undefined,
       locationId: product?.locationId ?? undefined,
       locationTitle: product?.locationId ? locationTitleById.get(product.locationId) : undefined,
-      selectedOptions: it.selectedOptions ?? undefined
+      selectedOptions: resolvedOptions
     }
   })
 

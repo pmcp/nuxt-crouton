@@ -55,6 +55,20 @@ interface CreateOrderResponse {
   eventOrderNumber: string
 }
 
+function areOptionsEqual(a?: string | string[], b?: string | string[]): boolean {
+  if (a === b) return true
+  if (!a && !b) return true
+  if (!a || !b) return false
+
+  const arrA = Array.isArray(a) ? a : [a]
+  const arrB = Array.isArray(b) ? b : [b]
+
+  if (arrA.length !== arrB.length) return false
+  const sortedA = [...arrA].sort()
+  const sortedB = [...arrB].sort()
+  return sortedA.every((val, i) => val === sortedB[i])
+}
+
 export interface UsePosOrderOptions {
   /** API base path for orders, defaults to '/api/sales/events' */
   apiBasePath?: string
@@ -122,27 +136,30 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
 
   /**
    * Add a product to the cart
-   * Products with remarks or options are always added as new items
+   * Merges with existing item if product, remarks, and options match
    */
   function addToCart(
     product: SalesProduct,
     remarks?: string,
     selectedOptions?: string | string[]
   ) {
-    // If product has remarks or options, always add as new item
-    if (remarks || selectedOptions) {
-      cartItems.value.push({ product, quantity: 1, remarks, selectedOptions })
-      return
-    }
+    // Normalize: empty array is treated as no options
+    const normalizedOptions = Array.isArray(selectedOptions) && selectedOptions.length === 0
+      ? undefined
+      : selectedOptions
 
+    // Find existing item with same product, remarks, and options
     const existing = cartItems.value.find(i =>
-      i.product.id === product.id && !i.remarks && !i.selectedOptions
+      i.product.id === product.id &&
+      i.remarks === remarks &&
+      areOptionsEqual(i.selectedOptions, normalizedOptions)
     )
+
     if (existing) {
       existing.quantity++
     }
     else {
-      cartItems.value.push({ product, quantity: 1 })
+      cartItems.value.push({ product, quantity: 1, remarks, selectedOptions: normalizedOptions })
     }
   }
 
