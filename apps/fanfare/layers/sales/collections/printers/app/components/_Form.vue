@@ -48,7 +48,7 @@
             <UInput v-model="state.title" class="w-full" size="xl" />
           </UFormField>
 
-          <UFormField label="IP Address" name="ipAddress" help="LAN IP of the printer (RUT956 hands these out via DHCP)" class="not-last:pb-4">
+          <UFormField label="IP Address" name="ipAddress" help="LAN IP of the printer (RUT956 hands these out via DHCP). Port is always 9100." class="not-last:pb-4">
             <UInput
               v-model="state.ipAddress"
               class="w-full"
@@ -56,20 +56,6 @@
               placeholder="192.168.1.70"
               :ui="{ base: 'font-mono' }"
             />
-          </UFormField>
-
-          <UFormField label="Port" name="port" help="ESC/POS raw TCP port (default 9100)" class="not-last:pb-4">
-            <UInput
-              v-model="state.port"
-              class="w-full"
-              size="xl"
-              placeholder="9100"
-              :ui="{ base: 'font-mono' }"
-            />
-          </UFormField>
-
-          <UFormField label="Status" name="status" class="not-last:pb-4">
-            <UInput v-model="state.status" class="w-full" size="xl" />
           </UFormField>
 
           <UFormField label="Show prices on receipts" name="showPrices" class="not-last:pb-4">
