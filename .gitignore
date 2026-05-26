@@ -89,3 +89,4 @@ apps/*/.wrangler/deploy/
 .claude/projects/
 .claude/.package-edit-approved
 apps/kvr/.data
+apps/fanfare/.data
