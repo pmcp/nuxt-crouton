@@ -19,7 +19,7 @@
             variant="ghost"
             color="neutral"
             size="xs"
-            :icon="activeProductId === product.id ? 'i-lucide-chevron-up' : 'i-lucide-ellipsis-vertical'"
+            :icon="activeProductId === product.id ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
             @click.stop="toggleProduct(product)"
           />
           <UButton
