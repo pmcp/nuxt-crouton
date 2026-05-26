@@ -100,13 +100,18 @@ export async function useCollectionQuery(
   const localPending = ref(false)
   const localError = ref<any>(null)
 
+  // Forward the browser's auth cookie during SSR so team-scoped endpoints
+  // see the user's better-auth session. On the client this is undefined.
+  const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   // Use Nuxt's useFetch with proper caching
   // Skip fetching if no team context (will re-fetch when context becomes available)
   const fetchOptions: UseFetchOptions<any> = {
     key: cacheKey.value,
     query: options.query,
     watch: watchArray,
-    immediate: !shouldSkip.value
+    immediate: !shouldSkip.value,
+    headers: requestHeaders
   }
 
   const { data, refresh: doRefresh, pending, error } = await useFetch(

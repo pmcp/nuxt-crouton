@@ -72,6 +72,10 @@ export async function useCollectionItem<T = any>(
   // replacing the manual onMounted retry pattern.
   const canFetchOnServer = !!getTeamId() || isSuperAdmin
 
+  // Forward the browser's auth cookie during SSR so team-scoped endpoints
+  // see the user's better-auth session. On the client this is undefined.
+  const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   const { data, pending, error, refresh } = await useAsyncData(
     `collection-item-${collection}-${itemId.value}`,
     () => {
@@ -80,7 +84,9 @@ export async function useCollectionItem<T = any>(
       const currentTeamId = getTeamId()
       if (!currentTeamId && !isSuperAdmin) return Promise.resolve(null)
 
-      return $fetch<any>(buildApiPath(currentTeamId))
+      return $fetch<any>(buildApiPath(currentTeamId), {
+        headers: requestHeaders,
+      })
     },
     {
       server: canFetchOnServer,
