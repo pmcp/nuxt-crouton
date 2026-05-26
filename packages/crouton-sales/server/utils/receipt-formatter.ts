@@ -107,7 +107,8 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     type: PrinterTypes.EPSON,
     interface: 'tcp://dummy', // Dummy interface for buffer generation only
     width: 48,
-    removeSpecialCharacters: false
+    removeSpecialCharacters: false,
+    encoding: 'CP437'
   })
 
   try {
@@ -303,7 +304,8 @@ export function formatTestReceipt(
     type: PrinterTypes.EPSON,
     interface: 'tcp://dummy',
     width: 48,
-    removeSpecialCharacters: false
+    removeSpecialCharacters: false,
+    encoding: 'CP437'
   })
 
   printer.alignCenter()
