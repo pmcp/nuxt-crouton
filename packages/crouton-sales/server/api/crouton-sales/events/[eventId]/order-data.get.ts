@@ -50,13 +50,10 @@ export default defineEventHandler(async (event) => {
 
   const useReusableClients = settingsObj.use_reusable_clients === 'true'
 
-  let clients: { id: string, title: string }[] = []
-  if (useReusableClients) {
-    clients = await db
-      .select({ id: salesClients.id, title: salesClients.title })
-      .from(salesClients)
-      .where(eq(salesClients.teamId, salesEvent.teamId))
-  }
+  const clients = await db
+    .select({ id: salesClients.id, title: salesClients.title })
+    .from(salesClients)
+    .where(eq(salesClients.teamId, salesEvent.teamId))
 
   return {
     event: {

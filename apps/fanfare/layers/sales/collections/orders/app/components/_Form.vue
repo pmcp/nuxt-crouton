@@ -40,21 +40,58 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="EventId" name="eventId" class="not-last:pb-4">
+        <UFormField label="Event" name="eventId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.eventId"
             collection="salesEvents"
-            label="EventId"
+            label="Event"
           />
         </UFormField>
-        <UFormField label="ClientId" name="clientId" class="not-last:pb-4">
-          <CroutonFormReferenceSelect
+
+        <!-- Client field - only shown when event requires clients -->
+        <UFormField
+          v-if="requiresClient"
+          label="Client"
+          name="clientId"
+          class="not-last:pb-4"
+          help="Select an existing client or create a new one"
+        >
+          <USelectMenu
             v-model="state.clientId"
-            collection="salesClients"
-            label="ClientId"
-          />
+            :items="clients"
+            value-key="id"
+            label-key="title"
+            placeholder="Select a client"
+            searchable
+            size="xl"
+            class="w-full"
+          >
+            <template #default="{ modelValue }">
+              <span v-if="modelValue" class="truncate">
+                {{ getClientLabel(modelValue as string) }}
+              </span>
+              <span v-else class="text-dimmed truncate">
+                Select a client
+              </span>
+            </template>
+
+            <template #content-top>
+              <div class="p-1">
+                <UButton
+                  color="neutral"
+                  icon="i-lucide-plus"
+                  variant="soft"
+                  block
+                  @click="handleCreateClient"
+                >
+                  Create new client
+                </UButton>
+              </div>
+            </template>
+          </USelectMenu>
         </UFormField>
-        <UFormField label="ClientName" name="clientName" class="not-last:pb-4">
+
+        <UFormField label="Client Name" name="clientName" class="not-last:pb-4">
           <UInput v-model="state.clientName" class="w-full" size="xl" />
         </UFormField>
         <UFormField label="EventOrderNumber" name="eventOrderNumber" class="not-last:pb-4">
@@ -91,16 +128,19 @@ import useSalesOrders from '../composables/useSalesOrders'
 const props = defineProps<SalesOrderFormProps>()
 const { defaultValue, schema, collection } = useSalesOrders()
 
+// Fetch events and clients for event-aware client selection
+const { items: events } = await useCollectionQuery('salesEvents')
+const { items: clients } = await useCollectionQuery('salesClients')
+
 // Form layout configuration
 const tabs = ref(false)
-
-
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
 
 // useCrouton still manages modal state
-const { close, loading } = useCrouton()
+const { close, loading, open } = useCrouton()
+const notify = useNotify()
 
 // Initialize form state with proper values (no watch needed!)
 const initialValues = props.action === 'update' && props.activeItem?.id
@@ -109,8 +149,74 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 
 const state = ref<SalesOrderFormData & { id?: string | null }>(initialValues)
 
+// Find the selected event to check if clients are required
+const selectedEvent = computed(() =>
+  events.value.find(e => e.id === state.value.eventId)
+)
+const requiresClient = computed(() =>
+  !!selectedEvent.value?.requiresClient
+)
+
+// Clear client when switching to an event that doesn't require one
+watch(requiresClient, (required) => {
+  if (!required) {
+    state.value.clientId = ''
+  }
+})
+
+// Client label helper
+const clientLabelsMap = computed(() => {
+  const map = new Map<string, string>()
+  for (const client of clients.value) {
+    map.set(client.id, client.title)
+  }
+  return map
+})
+
+const getClientLabel = (id: string): string => {
+  return clientLabelsMap.value.get(id) || id
+}
+
+// Watch client selection to auto-populate clientName
+watch(() => state.value.clientId, (clientId) => {
+  if (clientId) {
+    const client = clients.value.find(c => c.id === clientId)
+    if (client) {
+      state.value.clientName = client.title
+    }
+  }
+})
+
+// Client creation state
+const isCreatingClient = ref(false)
+
+const handleCreateClient = () => {
+  isCreatingClient.value = true
+  open('create', 'salesClients', [])
+}
+
+// Watch for new clients after creation
+watch(() => clients.value.length, (newCount, oldCount) => {
+  if (isCreatingClient.value && newCount > (oldCount || 0)) {
+    const newClient = clients.value[clients.value.length - 1]
+    if (newClient) {
+      state.value.clientId = newClient.id
+      state.value.clientName = newClient.title
+      isCreatingClient.value = false
+    }
+  }
+})
+
 const handleSubmit = async () => {
   try {
+    // Validate client is selected when event requires it
+    if (requiresClient.value && !state.value.clientId) {
+      notify.error('Client required', {
+        description: 'This event requires a client. Please select or create one.'
+      })
+      return
+    }
+
     if (props.action === 'create') {
       await create(state.value)
     } else if (props.action === 'update' && state.value.id) {
@@ -123,8 +229,6 @@ const handleSubmit = async () => {
 
   } catch (error) {
     console.error('Form submission failed:', error)
-    // You can add toast notification here if available
-    // toast.add({ title: 'Error', description: 'Failed to submit form', color: 'red' })
   }
 }
 </script>

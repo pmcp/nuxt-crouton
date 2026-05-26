@@ -31,10 +31,11 @@
           <div v-if="props.requiresClient" class="p-3 border-b">
             <SalesClientSelector
               :clients="props.clients || []"
-              :use-reusable-clients="props.useReusableClients || false"
+              :use-reusable-clients="true"
               :highlight="!hasClient && cartItems.length > 0"
               :client-id="selectedClientId"
               :client-name="selectedClientName || undefined"
+              :event-id="props.eventId"
               @update:client-id="selectedClientId = $event"
               @update:client-name="selectedClientName = $event"
             />
@@ -92,10 +93,11 @@
               <div v-if="props.requiresClient" class="p-3 border-b shrink-0">
                 <SalesClientSelector
                   :clients="props.clients || []"
-                  :use-reusable-clients="props.useReusableClients || false"
+                  :use-reusable-clients="true"
                   :highlight="!hasClient && cartItems.length > 0"
                   :client-id="selectedClientId"
                   :client-name="selectedClientName || undefined"
+                  :event-id="props.eventId"
                   @update:client-id="selectedClientId = $event"
                   @update:client-name="selectedClientName = $event"
                 />
