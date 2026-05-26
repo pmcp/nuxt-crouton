@@ -6,25 +6,14 @@
     </p>
 
     <div v-else class="space-y-2">
-      <div
+      <SalesClientOrderLineItem
         v-for="(item, index) in items"
         :key="`${item.product.id}-${index}`"
-        class="flex items-center gap-3 py-2"
+        :title="item.product.title"
+        :price="calculateItemPrice(item) * item.quantity"
+        :options="getSelectedOptionLabels(item)"
       >
-        <div class="flex-1 min-w-0 space-y-1">
-          <p class="font-medium truncate">{{ item.product.title }}</p>
-          <p
-            v-for="option in getSelectedOptionLabels(item)"
-            :key="option"
-            class="text-xs text-muted truncate pl-2"
-          >
-            {{ option }}
-          </p>
-        </div>
-
-        <span :key="calculateItemPrice(item) * item.quantity" class="w-16 text-right text-sm text-muted shrink-0 animate-pop">${{ (calculateItemPrice(item) * item.quantity).toFixed(2) }}</span>
-
-        <div class="flex items-center gap-1 shrink-0">
+        <template #actions>
           <UButton
             icon="i-lucide-minus"
             size="xs"
@@ -42,8 +31,8 @@
             square
             @click="$emit('updateQuantity', index, item.quantity + 1)"
           />
-        </div>
-      </div>
+        </template>
+      </SalesClientOrderLineItem>
     </div>
 
     <template #footer>

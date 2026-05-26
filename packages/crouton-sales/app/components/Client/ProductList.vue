@@ -7,13 +7,13 @@
       v-for="product in products"
       :key="product.id"
       variant="soft"
-      :ui="{ body: 'p-4' }"
+      :ui="{ body: 'p-3' }"
     >
-      <!-- Product header -->
-      <div class="flex justify-between items-center gap-2">
-        <div class="font-medium">{{ product.title }}</div>
-        <div class="flex items-center gap-2 shrink-0">
-          <span class="text-muted">${{ Number(product.price).toFixed(2) }}</span>
+      <SalesClientOrderLineItem
+        :title="product.title"
+        :price="Number(product.price)"
+      >
+        <template #actions>
           <UButton
             v-if="hasOptions(product)"
             variant="ghost"
@@ -30,8 +30,8 @@
             icon="i-lucide-plus"
             @click.stop="emit('select', product)"
           />
-        </div>
-      </div>
+        </template>
+      </SalesClientOrderLineItem>
 
       <!-- Options (inside card) -->
       <Transition name="slide">
