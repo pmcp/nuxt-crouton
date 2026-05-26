@@ -95,6 +95,20 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
   const groups: NavigationMenuItem[] = []
 
   for (const app of topLevelApps.value) {
+    // Landing route: single clickable app header, ignore all other routes
+    if (app.landingRoute) {
+      const fullPath = buildAdminUrl(app.landingRoute.path)
+      const isExactMatch = route.path === fullPath || route.path === `${fullPath}/`
+      groups.push({
+        label: tLabel(app.name),
+        icon: app.icon,
+        to: fullPath,
+        active: isExactMatch,
+        ...(app.landingRoute.badge !== undefined && { badge: String(app.landingRoute.badge) })
+      })
+      continue
+    }
+
     const allRoutes = getAppAllRoutes(app.id)
     if (allRoutes.length === 0) continue
 
@@ -112,9 +126,16 @@ const appGroups = computed<NavigationMenuItem[]>(() => {
       }
     })
 
-    // Single-item apps appear flat (no group header)
+    // Single-item apps: clickable group header (app name + icon) linking to the route
     if (routeItems.length === 1) {
-      groups.push(routeItems[0]!)
+      const singleRoute = routeItems[0]!
+      groups.push({
+        label: tLabel(app.name),
+        icon: app.icon,
+        to: singleRoute.to,
+        active: singleRoute.active,
+        ...(singleRoute.badge !== undefined && { badge: singleRoute.badge })
+      })
     } else {
       // Multi-item apps get a group header
       groups.push({

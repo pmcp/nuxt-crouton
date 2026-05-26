@@ -17,6 +17,17 @@ export default defineNuxtConfig({
     '@fyit/crouton-sales',
     './layers/sales'
   ],
+  appConfig: {
+    croutonApps: {
+      sales: {
+        landingRoute: {
+          path: '/sales/events',
+          label: 'sales.title',
+          icon: 'i-lucide-shopping-cart'
+        }
+      }
+    }
+  },
   hub: {
     db: 'sqlite',
     kv: true

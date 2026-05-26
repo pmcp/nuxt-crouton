@@ -268,6 +268,13 @@ export interface CroutonAppConfig {
   settingsRoutes?: CroutonAppRoute[]
 
   /**
+   * When set, the sidebar shows only this single route as a clickable
+   * app header, ignoring all other adminRoutes. Useful for apps that
+   * want to present as a single landing page.
+   */
+  landingRoute?: CroutonAppRoute
+
+  /**
    * Optional parent app ID. When set, this app's routes are merged
    * into the parent app's sidebar section instead of appearing standalone.
    * Useful for layers/packages that extend an existing app.
