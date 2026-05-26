@@ -174,9 +174,18 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
 
       for (const item of data.items) {
         if (isKitchenTicket) {
-          // Kitchen format - bold text, no prices
+          // Kitchen format - bold text
           printer.bold(true)
-          printer.println(`${item.quantity}x ${item.name}`)
+          if (data.showPrices && item.price !== undefined) {
+            const itemTotal = item.price * item.quantity
+            const itemText = `${item.quantity}x ${item.name}`
+            const priceText = `\u20AC${itemTotal.toFixed(2)}`
+            const padding = 48 - itemText.length - priceText.length
+            printer.println(itemText + ' '.repeat(Math.max(1, padding)) + priceText)
+          }
+          else {
+            printer.println(`${item.quantity}x ${item.name}`)
+          }
           printer.bold(false)
         }
         else if (data.showPrices && item.price !== undefined) {

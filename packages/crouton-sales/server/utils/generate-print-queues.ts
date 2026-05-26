@@ -91,7 +91,7 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
     port: p.port ?? undefined,
     locationId: p.locationId ?? undefined,
     showPrices: p.showPrices ?? true,
-    type: 'kitchen'
+    type: p.type ?? 'kitchen'
   }))
 
   const jobs = generatePrintJobsForOrder(
