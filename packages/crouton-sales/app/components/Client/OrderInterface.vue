@@ -28,15 +28,30 @@
 
         <!-- Cart sidebar (desktop only) -->
         <div class="hidden md:flex w-80 border-l flex-col">
-          <SalesClientCart
-            :items="cartItems"
-            :total="cartTotal"
-            :disabled="!isOnline"
-            @update-quantity="updateQuantity"
-            @remove="removeFromCart"
-            @checkout="handleCheckout"
-            @clear="clearCart"
-          />
+          <div v-if="props.requiresClient" class="p-3 border-b">
+            <SalesClientSelector
+              :clients="props.clients || []"
+              :use-reusable-clients="props.useReusableClients || false"
+              :highlight="!hasClient && cartItems.length > 0"
+              :client-id="selectedClientId"
+              :client-name="selectedClientName || undefined"
+              @update:client-id="selectedClientId = $event"
+              @update:client-name="selectedClientName = $event"
+            />
+          </div>
+          <div class="flex-1 min-h-0 overflow-y-auto">
+            <SalesClientCart
+              :items="cartItems"
+              :total="cartTotal"
+              :disabled="!isOnline"
+              :client-required="props.requiresClient"
+              :has-client="hasClient"
+              @update-quantity="updateQuantity"
+              @remove="removeFromCart"
+              @checkout="handleCheckout"
+              @clear="clearCart"
+            />
+          </div>
         </div>
       </div>
 
@@ -73,16 +88,31 @@
           />
 
           <template #content>
-            <div class="h-[70vh]">
-              <SalesClientCart
-                :items="cartItems"
-                :total="cartTotal"
-                :disabled="!isOnline"
-                @update-quantity="updateQuantity"
-                @remove="removeFromCart"
-                @checkout="handleCheckout"
-                @clear="clearCart"
-              />
+            <div class="h-[70vh] flex flex-col">
+              <div v-if="props.requiresClient" class="p-3 border-b shrink-0">
+                <SalesClientSelector
+                  :clients="props.clients || []"
+                  :use-reusable-clients="props.useReusableClients || false"
+                  :highlight="!hasClient && cartItems.length > 0"
+                  :client-id="selectedClientId"
+                  :client-name="selectedClientName || undefined"
+                  @update:client-id="selectedClientId = $event"
+                  @update:client-name="selectedClientName = $event"
+                />
+              </div>
+              <div class="flex-1 min-h-0 overflow-y-auto">
+                <SalesClientCart
+                  :items="cartItems"
+                  :total="cartTotal"
+                  :disabled="!isOnline"
+                  :client-required="props.requiresClient"
+                  :has-client="hasClient"
+                  @update-quantity="updateQuantity"
+                  @remove="removeFromCart"
+                  @checkout="handleCheckout"
+                  @clear="clearCart"
+                />
+              </div>
             </div>
           </template>
         </UDrawer>
@@ -92,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SalesProduct, SalesCategory, ProductOption } from '../../types'
+import type { SalesProduct, SalesCategory, ProductOption, SalesClient } from '../../types'
 
 const props = defineProps<{
   eventId: string
@@ -105,6 +135,12 @@ const props = defineProps<{
   products?: SalesProduct[]
   /** Pre-fetched categories. Same semantics as `products`. */
   categories?: SalesCategory[]
+  /** Pre-fetched clients for this event's team. */
+  clients?: SalesClient[]
+  /** Whether this event requires orders to be linked to a client. */
+  requiresClient?: boolean
+  /** Whether to use reusable clients (dropdown) vs free-text input. */
+  useReusableClients?: boolean
   /** Collection name for products query (defaults to 'salesProducts'). Ignored when `products` is provided. */
   productsCollection?: string
   /** Collection name for categories query (defaults to 'salesCategories'). Ignored when `categories` is provided. */
@@ -119,6 +155,8 @@ const {
   cartItems,
   cartTotal,
   selectedEventId,
+  selectedClientId,
+  selectedClientName,
   addToCart,
   removeFromCart,
   updateQuantity,
@@ -159,6 +197,15 @@ else {
 }
 
 const loading = computed(() => categoriesLoading.value || productsLoading.value)
+
+// Client selection state
+const hasClient = computed(() => {
+  if (!props.requiresClient) return true
+  if (props.useReusableClients) {
+    return !!selectedClientId.value || !!(selectedClientName.value?.trim())
+  }
+  return !!(selectedClientName.value?.trim())
+})
 
 // Product options modal state
 const showOptionsModal = ref(false)

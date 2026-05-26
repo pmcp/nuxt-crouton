@@ -64,6 +64,9 @@
         <UFormField label="IsCurrent" name="isCurrent" class="not-last:pb-4">
           <UCheckbox v-model="state.isCurrent" />
         </UFormField>
+        <UFormField label="Requires Client" name="requiresClient" help="When enabled, orders must be linked to a client. Disable for loose orders." class="not-last:pb-4">
+          <UCheckbox v-model="state.requiresClient" />
+        </UFormField>
         <UFormField label="Helper PIN" name="helperPin" help="Digits only, max 6" class="not-last:pb-4">
           <UInput
             v-model="state.helperPin"

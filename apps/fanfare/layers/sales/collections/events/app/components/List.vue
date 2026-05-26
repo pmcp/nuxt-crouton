@@ -48,6 +48,9 @@
     <template #isCurrent-cell="{ row }">
       <CroutonBoolean :value="row.original.isCurrent" />
     </template>
+    <template #requiresClient-cell="{ row }">
+      <CroutonBoolean :value="row.original.requiresClient" />
+    </template>
   </CroutonCollection>
 </template>
 

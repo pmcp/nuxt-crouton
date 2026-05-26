@@ -36,6 +36,7 @@ export const salesEvents = sqliteTable('sales_events', {
   endDate: integer('endDate', { mode: 'timestamp' }).$default(() => new Date()),
   status: text('status').notNull(),
   isCurrent: integer('isCurrent', { mode: 'boolean' }).$default(() => false),
+  requiresClient: integer('requiresClient', { mode: 'boolean' }).$default(() => true),
   helperPin: text('helperPin'),
   metadata: jsonColumn('metadata').$default(() => ({})),
   archivedAt: integer('archivedAt', { mode: 'timestamp' }).$default(() => new Date()),

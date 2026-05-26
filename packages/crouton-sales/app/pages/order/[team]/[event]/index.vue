@@ -19,7 +19,7 @@ interface Client {
 }
 
 interface OrderData {
-  event: { id: string, title: string, slug: string, teamId: string }
+  event: { id: string, title: string, slug: string, teamId: string, requiresClient: boolean }
   products: SalesProduct[]
   categories: SalesCategorie[]
   clients: Client[]
@@ -137,6 +137,9 @@ onMounted(() => {
           :event-id="orderData.event.id"
           :products="orderData.products"
           :categories="orderData.categories"
+          :clients="orderData.clients"
+          :requires-client="orderData.event.requiresClient"
+          :use-reusable-clients="orderData.settings.useReusableClients"
         />
       </div>
     </template>

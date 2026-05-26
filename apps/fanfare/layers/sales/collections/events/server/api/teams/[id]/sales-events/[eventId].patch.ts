@@ -13,6 +13,7 @@ const bodySchema = z.object({
   endDate: z.coerce.date().optional(),
   status: z.string().min(1, 'status is required'),
   isCurrent: z.boolean().optional(),
+  requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   archivedAt: z.coerce.date().optional()

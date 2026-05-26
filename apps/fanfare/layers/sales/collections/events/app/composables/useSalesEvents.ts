@@ -35,6 +35,7 @@ export const salesEventSchema = z.object({
   endDate: z.coerce.date().optional(),
   status: z.string().min(1, 'status is required'),
   isCurrent: z.boolean().optional(),
+  requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
   archivedAt: z.coerce.date().optional()
@@ -50,6 +51,7 @@ export const salesEventsColumns = [
   { accessorKey: 'endDate', header: 'EndDate' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'isCurrent', header: 'IsCurrent' },
+  { accessorKey: 'requiresClient', header: 'RequiresClient' },
   { accessorKey: 'helperPin', header: 'HelperPin' },
   { accessorKey: 'metadata', header: 'Metadata' },
   { accessorKey: 'archivedAt', header: 'ArchivedAt' }
@@ -70,6 +72,7 @@ const _salesEventsConfig = {
     endDate: null,
     status: '',
     isCurrent: false,
+    requiresClient: true,
     helperPin: '',
     metadata: {},
     archivedAt: null
@@ -122,6 +125,12 @@ const _salesEventsConfig = {
           "name": "isCurrent",
           "type": "boolean",
           "label": "Current Event",
+          "area": "main"
+      },
+      {
+          "name": "requiresClient",
+          "type": "boolean",
+          "label": "Requires Client",
           "area": "main"
       },
       {
