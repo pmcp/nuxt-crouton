@@ -7,7 +7,9 @@
       v-for="product in products"
       :key="product.id"
       variant="soft"
+      class="cursor-pointer"
       :ui="{ body: 'p-3' }"
+      @click="handleProductClick(product)"
     >
       <SalesClientOrderLineItem
         :title="product.title"
@@ -137,6 +139,15 @@ function confirmMultiOptions(product: SalesProduct) {
   const selected = selectedOptionIds.value.get(product.id) || []
   emit('select', product, selected.length > 0 ? selected : undefined)
   selectedOptionIds.value.delete(product.id)
+}
+
+function handleProductClick(product: SalesProduct) {
+  if (hasOptions(product)) {
+    toggleProduct(product)
+  }
+  else {
+    emit('select', product)
+  }
 }
 
 function toggleProduct(product: SalesProduct) {
