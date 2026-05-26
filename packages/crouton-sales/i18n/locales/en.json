@@ -58,11 +58,16 @@
     },
     "events": {
       "title": "Events",
+      "description": "Manage your events, products, and orders",
       "select": "Select event",
       "noEvents": "No events available",
       "active": "Active",
       "upcoming": "Upcoming",
-      "past": "Past"
+      "past": "Past",
+      "noDates": "No dates",
+      "standard": "Standard",
+      "workspace": "Workspace",
+      "edit": "Edit"
     },
     "print": {
       "title": "Print",

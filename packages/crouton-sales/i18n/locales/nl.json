@@ -58,11 +58,16 @@
     },
     "events": {
       "title": "Evenementen",
+      "description": "Beheer je evenementen, producten en bestellingen",
       "select": "Selecteer evenement",
       "noEvents": "Geen evenementen beschikbaar",
       "active": "Actief",
       "upcoming": "Aankomend",
-      "past": "Afgelopen"
+      "past": "Afgelopen",
+      "noDates": "Geen datums",
+      "standard": "Standaard",
+      "workspace": "Werkruimte",
+      "edit": "Bewerken"
     },
     "print": {
       "title": "Printen",

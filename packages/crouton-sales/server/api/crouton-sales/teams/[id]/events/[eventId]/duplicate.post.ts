@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
       endDate: null,
       status: originalEvent.status,
       isCurrent: false,
+      requiresClient: originalEvent.requiresClient,
       helperPin: originalEvent.helperPin,
       metadata: originalEvent.metadata,
       archivedAt: null,
