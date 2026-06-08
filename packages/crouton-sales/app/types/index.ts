@@ -56,6 +56,18 @@ export interface SalesPrinter {
   isActive?: boolean
 }
 
+// Sales chart block attrs (CMS page block; see app.config.ts salesChartBlock)
+export interface SalesChartBlockAttrs {
+  /** Chart kind id from SALES_CHART_KINDS (e.g. 'revenue-by-day'). */
+  chart?: string
+  /** Event id to scope to, or '' for all events (team-wide). */
+  eventScope?: string
+  /** Optional chart type override; '' uses the kind's default. */
+  chartTypeOverride?: '' | 'bar' | 'line' | 'area' | 'donut'
+  title?: string
+  height?: number | string
+}
+
 // Print queue item type (opt-in)
 export interface SalesPrintQueueItem {
   id: string

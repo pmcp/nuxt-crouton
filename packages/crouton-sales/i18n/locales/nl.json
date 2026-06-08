@@ -11,7 +11,11 @@
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",
-      "orderNow": "Bestellen"
+      "orderNow": "Bestellen",
+      "salesChart": "Verkoopgrafiek",
+      "noChartPicked": "Geen grafiek gekozen",
+      "allEvents": "Alle events",
+      "scopedEvent": "Eén event"
     },
     "cart": {
       "title": "Winkelwagen",

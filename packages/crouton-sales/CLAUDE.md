@@ -86,6 +86,25 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
 
+### Analytics / Chart Endpoints
+
+Team-scoped aggregation endpoints under `teams/[id]/charts/*` (auth: `resolveTeamAndCheckMembership`).
+Each accepts an optional `?eventId=` to scope to one event; omitted ⇒ team-wide. All return
+`{ items: [...] }` shaped for `CroutonChartsWidget` (via `@fyit/crouton-charts`). Consumed by the
+`salesChartBlock` and catalogued in `app/utils/chart-blocks.ts` (`SALES_CHART_KINDS`).
+
+| Path (GET) | Group by | Returns |
+|------------|----------|---------|
+| `teams/[id]/charts/revenue-by-day` | day of `orders.createdAt` (`date(...,'unixepoch')`) | `{ date, revenue }` |
+| `teams/[id]/charts/revenue-by-product` | product title | `{ product, revenue }` |
+| `teams/[id]/charts/revenue-by-category` | category title (null ⇒ Uncategorized) | `{ category, revenue }` |
+| `teams/[id]/charts/top-products` | product title, top 10 by qty | `{ product, quantity }` |
+| `teams/[id]/charts/orders-by-status` | order status | `{ status, count }` |
+| `teams/[id]/charts/sales-by-location` | product location (null ⇒ No location) | `{ location, revenue }` |
+
+Note: `orderItems.quantity` is TEXT (`cast(... as real)` before summing); `unitPrice`/`totalPrice`
+are `real` (no cast).
+
 ### Print-Server Polling Endpoints
 
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler (e.g., the RUT956 BusyBox script at `/Users/pmcp/Projects/fyit-pos-printer`) that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status.
@@ -171,7 +190,9 @@ event field's `propertyComponents` editor.
 |------------|-------------|----------|---------|
 | `eventStorefrontBlock` | `SalesBlocksEventStorefrontView` | `SalesBlocksEventStorefrontRender` | Public event card with "Order Now" CTA → `/order/[team]/[event]` |
 | `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page |
+| `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
+| `SalesBlocksPropertiesEventScopePicker` | — | — | Event scope dropdown for `salesChartBlock` — emits event **id** with an "All events" ('') option; wired via `propertyComponents['sales-event-scope']` |
 
 Also registered: `pageType: 'eventStorefront'` under `croutonApps.sales.pageTypes`
 for full-page event storefront pages (no block wrapper).

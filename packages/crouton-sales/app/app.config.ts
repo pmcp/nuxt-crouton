@@ -1,4 +1,5 @@
 import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
+import { SALES_CHART_KIND_OPTIONS } from './utils/chart-blocks'
 
 // Inline POS block: full helper login + order interface embedded in a CMS
 // page. Mirrors /order/[team]/[event]/{login,index} but inline so a visitor
@@ -11,7 +12,8 @@ const orderInterfaceBlock: CroutonBlockDefinition = {
   category: 'customer',
   clientOnly: true,
   defaultAttrs: {
-    eventSlug: ''
+    eventSlug: '',
+    height: 'tall'
   },
   components: {
     editorView: 'SalesBlocksOrderInterfaceView',
@@ -26,12 +28,25 @@ const orderInterfaceBlock: CroutonBlockDefinition = {
       type: 'eventSlug',
       label: 'Event',
       description: 'Pick which event\'s POS to embed. Visitors will be asked to log in as a helper first.'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      description: 'Compact/Tall sit inside the page flow. Fill screen makes the POS take the full viewport — pair it with the Full width size for a dedicated POS page.',
+      defaultValue: 'tall',
+      options: [
+        { label: 'Compact (60% viewport)', value: 'compact' },
+        { label: 'Tall (80% viewport)', value: 'tall' },
+        { label: 'Fill screen', value: 'fill' }
+      ]
     }
   ],
   tiptap: {
     parseHTMLTag: 'div[data-type="order-interface-block"]',
     attributes: {
-      eventSlug: { default: '' }
+      eventSlug: { default: '' },
+      height: { default: 'tall' }
     }
   }
 }
@@ -86,6 +101,90 @@ const eventStorefrontBlock: CroutonBlockDefinition = {
       eventSlug: { default: '' },
       title: { default: '' },
       ctaLabel: { default: '' }
+    }
+  }
+}
+
+// Sales analytics block for crouton-pages: editor picks a chart kind and an
+// event scope (one event or all). Renders via CroutonChartsWidget when
+// @fyit/crouton-charts is installed; degrades to a notice otherwise.
+const salesChartBlock: CroutonBlockDefinition = {
+  type: 'salesChartBlock',
+  name: 'Sales Chart',
+  description: 'Embed a sales analytics chart for one event or the whole team',
+  icon: 'i-lucide-chart-bar',
+  category: 'data',
+  clientOnly: true,
+  defaultAttrs: {
+    chart: 'revenue-by-day',
+    eventScope: '',
+    chartTypeOverride: '',
+    title: '',
+    height: 300
+  },
+  components: {
+    editorView: 'SalesBlocksChartBlockView',
+    renderer: 'SalesBlocksChartBlockRender'
+  },
+  propertyComponents: {
+    'sales-event-scope': 'SalesBlocksPropertiesEventScopePicker'
+  },
+  schema: [
+    {
+      name: 'chart',
+      type: 'select',
+      label: 'Chart',
+      description: 'Which sales metric to visualize',
+      defaultValue: 'revenue-by-day',
+      options: SALES_CHART_KIND_OPTIONS
+    },
+    {
+      name: 'eventScope',
+      type: 'sales-event-scope',
+      label: 'Event scope',
+      description: 'Limit to one event, or show all events for the team'
+    },
+    {
+      name: 'chartTypeOverride',
+      type: 'select',
+      label: 'Chart type',
+      description: 'Override the chart\'s default type',
+      defaultValue: '',
+      options: [
+        { label: 'Default', value: '' },
+        { label: 'Bar', value: 'bar' },
+        { label: 'Line', value: 'line' },
+        { label: 'Area', value: 'area' },
+        { label: 'Donut', value: 'donut' }
+      ]
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Optional heading above the chart (overrides the default)'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'Height',
+      defaultValue: '300',
+      options: [
+        { label: '200px', value: '200' },
+        { label: '300px', value: '300' },
+        { label: '400px', value: '400' },
+        { label: '500px', value: '500' }
+      ]
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="sales-chart-block"]',
+    attributes: {
+      chart: { default: 'revenue-by-day' },
+      eventScope: { default: '' },
+      chartTypeOverride: { default: '' },
+      title: { default: '' },
+      height: { default: 300, htmlAttr: 'data-height', parseType: 'int' }
     }
   }
 }
@@ -166,6 +265,7 @@ export default defineAppConfig({
   },
   croutonBlocks: {
     eventStorefrontBlock,
-    orderInterfaceBlock
+    orderInterfaceBlock,
+    salesChartBlock
   }
 })

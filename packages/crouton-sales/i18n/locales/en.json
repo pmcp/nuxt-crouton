@@ -11,7 +11,11 @@
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
-      "orderNow": "Order Now"
+      "orderNow": "Order Now",
+      "salesChart": "Sales Chart",
+      "noChartPicked": "No chart picked",
+      "allEvents": "All events",
+      "scopedEvent": "One event"
     },
     "cart": {
       "title": "Cart",
