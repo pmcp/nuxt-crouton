@@ -114,6 +114,7 @@ const isEditorPreview = computed(() => route.path.startsWith('/admin'))
       :y-fields="kind.yFields"
       :title="props.attrs.title || kind.title"
       :height="height"
+      :stacked="kind.stacked ?? false"
       :query="chartQuery"
     />
   </div>

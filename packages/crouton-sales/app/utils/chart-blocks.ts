@@ -22,6 +22,8 @@ export interface SalesChartKind {
   /** Default heading; overridable per block. */
   title: string
   icon: string
+  /** Stack series (bar/area) — used by multi-series charts like per-product-per-day. */
+  stacked?: boolean
 }
 
 function path(slug: string) {
@@ -58,6 +60,20 @@ export const SALES_CHART_KINDS: Record<string, SalesChartKind> = {
     yFields: 'revenue',
     title: 'Revenue by category',
     icon: 'i-lucide-chart-bar'
+  },
+  'units-per-product-day': {
+    id: 'units-per-product-day',
+    label: 'Units per product per day',
+    apiPath: path('units-per-product-day'),
+    // Stacked bar: one bar per day, products stacked by colour — reads as
+    // "daily volume + product mix" without the grouped-bar clutter.
+    type: 'bar',
+    stacked: true,
+    xField: 'date',
+    // Empty → the widget auto-detects every product column as its own series.
+    yFields: '',
+    title: 'Units sold per product per day',
+    icon: 'i-lucide-chart-bar-stacked'
   },
   'top-products': {
     id: 'top-products',

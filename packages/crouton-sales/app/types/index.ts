@@ -68,6 +68,15 @@ export interface SalesChartBlockAttrs {
   height?: number | string
 }
 
+// Sales product × day matrix block attrs (CMS table block)
+export interface SalesProductMatrixBlockAttrs {
+  /** Event id to scope to, or '' for all events (team-wide). */
+  eventScope?: string
+  /** Default measure shown first; viewers can toggle on the page. */
+  measure?: 'units' | 'revenue'
+  title?: string
+}
+
 // Print queue item type (opt-in)
 export interface SalesPrintQueueItem {
   id: string

@@ -15,7 +15,10 @@
       "salesChart": "Sales Chart",
       "noChartPicked": "No chart picked",
       "allEvents": "All events",
-      "scopedEvent": "One event"
+      "scopedEvent": "One event",
+      "productMatrix": "Sales Table",
+      "units": "Units",
+      "revenue": "Revenue"
     },
     "cart": {
       "title": "Cart",

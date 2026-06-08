@@ -6,7 +6,10 @@
       "allEvents": "Tous les événements",
       "scopedEvent": "Un événement",
       "editBlock": "Modifier le bloc",
-      "deleteBlock": "Supprimer le bloc"
+      "deleteBlock": "Supprimer le bloc",
+      "productMatrix": "Tableau des ventes",
+      "units": "Unités",
+      "revenue": "Revenu"
     },
     "cart": {
       "title": "Panier",

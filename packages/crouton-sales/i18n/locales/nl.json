@@ -15,7 +15,10 @@
       "salesChart": "Verkoopgrafiek",
       "noChartPicked": "Geen grafiek gekozen",
       "allEvents": "Alle events",
-      "scopedEvent": "Eén event"
+      "scopedEvent": "Eén event",
+      "productMatrix": "Verkooptabel",
+      "units": "Aantal",
+      "revenue": "Omzet"
     },
     "cart": {
       "title": "Winkelwagen",

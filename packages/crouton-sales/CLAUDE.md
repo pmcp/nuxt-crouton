@@ -99,6 +99,8 @@ Each accepts an optional `?eventId=` to scope to one event; omitted ⇒ team-wid
 | `teams/[id]/charts/revenue-by-product` | product title | `{ product, revenue }` |
 | `teams/[id]/charts/revenue-by-category` | category title (null ⇒ Uncategorized) | `{ category, revenue }` |
 | `teams/[id]/charts/top-products` | product title, top 10 by qty | `{ product, quantity }` |
+| `teams/[id]/charts/units-per-product-day` | day × product, pivoted (one column per product, zero-filled) | `{ date, <product>: units, ... }` — line chart, yFields auto-detected |
+| `teams/[id]/charts/product-day-matrix` | product × day, both measures + totals | `{ days, products:[{product,units,revenue,totalUnits,totalRevenue}], dayTotals, grandTotal }` — feeds the `salesProductMatrixBlock` table |
 | `teams/[id]/charts/orders-by-status` | order status | `{ status, count }` |
 | `teams/[id]/charts/sales-by-location` | product location (null ⇒ No location) | `{ location, revenue }` |
 
@@ -190,7 +192,8 @@ event field's `propertyComponents` editor.
 |------------|-------------|----------|---------|
 | `eventStorefrontBlock` | `SalesBlocksEventStorefrontView` | `SalesBlocksEventStorefrontRender` | Public event card with "Order Now" CTA → `/order/[team]/[event]` |
 | `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page |
-| `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. |
+| `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
+| `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
 | `SalesBlocksPropertiesEventScopePicker` | — | — | Event scope dropdown for `salesChartBlock` — emits event **id** with an "All events" ('') option; wired via `propertyComponents['sales-event-scope']` |
 

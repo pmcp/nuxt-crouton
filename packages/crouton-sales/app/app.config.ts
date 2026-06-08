@@ -189,6 +189,63 @@ const salesChartBlock: CroutonBlockDefinition = {
   }
 }
 
+// Sales product × day pivot table for crouton-pages: rows = products,
+// columns = days, last column = total, with an interactive Units/Revenue
+// toggle. Pure UTable — no charts dependency.
+const salesProductMatrixBlock: CroutonBlockDefinition = {
+  type: 'salesProductMatrixBlock',
+  name: 'Sales Table (product × day)',
+  description: 'Pivot table of products by day with a Units/Revenue toggle',
+  icon: 'i-lucide-table',
+  category: 'data',
+  clientOnly: true,
+  defaultAttrs: {
+    eventScope: '',
+    measure: 'units',
+    title: ''
+  },
+  components: {
+    editorView: 'SalesBlocksProductMatrixView',
+    renderer: 'SalesBlocksProductMatrixRender'
+  },
+  propertyComponents: {
+    'sales-event-scope': 'SalesBlocksPropertiesEventScopePicker'
+  },
+  schema: [
+    {
+      name: 'eventScope',
+      type: 'sales-event-scope',
+      label: 'Event scope',
+      description: 'Limit to one event, or show all events for the team'
+    },
+    {
+      name: 'measure',
+      type: 'select',
+      label: 'Default measure',
+      description: 'Which measure the table shows first (viewers can toggle)',
+      defaultValue: 'units',
+      options: [
+        { label: 'Units sold', value: 'units' },
+        { label: 'Revenue', value: 'revenue' }
+      ]
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'Title',
+      description: 'Optional heading above the table'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="sales-product-matrix-block"]',
+    attributes: {
+      eventScope: { default: '' },
+      measure: { default: 'units' },
+      title: { default: '' }
+    }
+  }
+}
+
 export default defineAppConfig({
   // App auto-discovery registration for crouton-sales
   croutonApps: {
@@ -266,6 +323,7 @@ export default defineAppConfig({
   croutonBlocks: {
     eventStorefrontBlock,
     orderInterfaceBlock,
-    salesChartBlock
+    salesChartBlock,
+    salesProductMatrixBlock
   }
 })
