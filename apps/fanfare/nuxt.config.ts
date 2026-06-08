@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-i18n',
+    '@fyit/crouton-charts',
     '@fyit/crouton-pages',
     '@fyit/crouton-sales',
     './layers/sales',
