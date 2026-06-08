@@ -3,25 +3,25 @@
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-receipt" class="w-5 h-5" />
-        <span>Receipt Text Settings</span>
+        <span>{{ t('sales.receipt.settingsTitle') }}</span>
       </div>
     </template>
 
     <template #body>
       <div class="space-y-6">
         <p class="text-sm text-muted">
-          Customize the text that appears on printed receipts.
+          {{ t('sales.receipt.customize') }}
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormField label="Special Instructions Title" help="Shown above order notes on kitchen tickets">
+          <UFormField :label="t('sales.receipt.specialInstructionsTitle')" :help="t('sales.receipt.specialInstructionsHelp')">
             <UInput
               v-model="settings.special_instructions_title"
               placeholder="SPECIAL INSTRUCTIONS:"
             />
           </UFormField>
 
-          <UFormField label="Staff Order Header" help="Banner printed on staff/personnel orders">
+          <UFormField :label="t('sales.receipt.staffOrderHeader')" :help="t('sales.receipt.staffOrderHeaderHelp')">
             <UInput
               v-model="settings.staff_order_header"
               placeholder="*** STAFF ORDER ***"
@@ -29,7 +29,7 @@
           </UFormField>
         </div>
 
-        <UFormField label="Footer Text" help="Printed at the bottom of customer receipts">
+        <UFormField :label="t('sales.receipt.footerText')" :help="t('sales.receipt.footerTextHelp')">
           <UTextarea
             v-model="settings.footer_text"
             :rows="2"
@@ -42,14 +42,14 @@
     <template #footer>
       <div class="flex justify-end gap-3">
         <UButton variant="outline" @click="close">
-          Cancel
+          {{ t('sales.common.cancel') }}
         </UButton>
         <UButton
           color="primary"
           :loading="saving"
           @click="save"
         >
-          Save Settings
+          {{ t('sales.receipt.saveSettings') }}
         </UButton>
       </div>
     </template>
@@ -75,6 +75,7 @@ const emit = defineEmits<{
 }>()
 
 const notify = useNotify()
+const { t } = useT()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -106,13 +107,13 @@ async function save() {
       method: 'PUT',
       body: settings.value,
     })
-    notify.success('Settings Saved', { description: 'Receipt text settings have been updated.' })
+    notify.success(t('sales.receipt.settingsSaved'), { description: t('sales.receipt.settingsSavedDesc') })
     emit('saved')
     close()
   }
   catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to save settings.'
-    notify.error('Error', { description: errorMessage })
+    const errorMessage = error instanceof Error ? error.message : t('sales.receipt.saveFailed')
+    notify.error(t('sales.orders.error'), { description: errorMessage })
   }
   finally {
     saving.value = false

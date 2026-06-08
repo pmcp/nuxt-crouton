@@ -12,6 +12,7 @@ import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
 definePageMeta({ middleware: ['auth'] })
 
+const { t } = useT()
 const { open } = useCrouton()
 const route = useRoute()
 const router = useRouter()
@@ -21,7 +22,7 @@ const router = useRouter()
 const teamParam = computed(() => route.params.team as string)
 const eventSlug = computed(() => route.params.slug as string)
 
-const { items: events } = await useCollectionQuery('salesEvents')
+const { items: events, refresh: refreshEvents } = await useCollectionQuery('salesEvents')
 
 const event = computed(() =>
   (events.value as SalesEvent[] | null)?.find(e => e.slug === eventSlug.value)
@@ -62,6 +63,10 @@ async function duplicateEvent() {
       { method: 'POST' }
     )
     if (response?.slug) {
+      // Refresh the cached events list so the freshly-duplicated event is
+      // present before we navigate — otherwise the workspace resolves the new
+      // slug against the stale list and shows "Event not found".
+      await refreshEvents()
       router.push(`/admin/${teamParam.value}/sales/events/${response.slug}`)
     }
   }
@@ -72,10 +77,10 @@ async function duplicateEvent() {
 
 const activeTab = ref('products')
 const tabItems = [
-  { label: 'Products', value: 'products', icon: 'i-lucide-package' },
-  { label: 'Orders', value: 'orders', icon: 'i-lucide-receipt' },
-  { label: 'Printers', value: 'printers', icon: 'i-lucide-printer' },
-  { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' }
+  { label: t('sales.products.title'), value: 'products', icon: 'i-lucide-package' },
+  { label: t('sales.orders.title'), value: 'orders', icon: 'i-lucide-receipt' },
+  { label: t('sales.sidebar.printers'), value: 'printers', icon: 'i-lucide-printer' },
+  { label: t('sales.events.settings'), value: 'settings', icon: 'i-lucide-settings' }
 ]
 </script>
 
@@ -83,7 +88,7 @@ const tabItems = [
   <div v-if="!event" class="flex items-center justify-center h-full">
     <div class="text-center">
       <UIcon name="i-lucide-alert-circle" class="text-4xl text-muted mb-2" />
-      <p class="text-muted">Event not found</p>
+      <p class="text-muted">{{ t('sales.events.eventNotFound') }}</p>
     </div>
   </div>
 
@@ -95,7 +100,7 @@ const tabItems = [
           :model-value="event.id"
           :items="eventOptions"
           value-key="id"
-          placeholder="Select event..."
+          :placeholder="t('sales.events.selectEvent')"
           icon="i-lucide-calendar"
           size="lg"
           class="w-72"
@@ -110,7 +115,7 @@ const tabItems = [
       </div>
       <div class="flex gap-2">
         <UButton variant="outline" icon="i-lucide-pencil" size="sm" @click="openEditEvent">
-          Edit
+          {{ t('sales.events.edit') }}
         </UButton>
         <UButton
           variant="outline"
@@ -119,14 +124,14 @@ const tabItems = [
           :loading="duplicating"
           @click="duplicateEvent"
         >
-          Duplicate
+          {{ t('sales.events.duplicate') }}
         </UButton>
         <UButton
           icon="i-lucide-shopping-cart"
           size="sm"
           :to="`/order/${teamParam}/${event.slug}`"
         >
-          Open POS
+          {{ t('sales.events.openPos') }}
         </UButton>
       </div>
     </div>
@@ -150,7 +155,7 @@ const tabItems = [
         <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
         <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
         <template #fallback>
-          <div class="p-6 text-center text-muted">Loading…</div>
+          <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
         </template>
       </Suspense>
     </div>

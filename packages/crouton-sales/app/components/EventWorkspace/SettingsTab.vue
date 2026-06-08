@@ -4,6 +4,7 @@ import type { SalesEventsetting } from '~~/layers/sales/collections/eventsetting
 
 const props = defineProps<{ event: SalesEvent }>()
 
+const { t } = useT()
 const { open } = useCrouton()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
@@ -33,10 +34,10 @@ const showReceiptSettings = ref(false)
 // Slug is intentionally excluded — it is the route param and editing it here
 // would break the current URL. Use the top-right "Edit" button for the slug.
 const statusOptions = [
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Active', value: 'active' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' }
+  { label: t('sales.workspace.statusUpcoming'), value: 'upcoming' },
+  { label: t('sales.workspace.statusActive'), value: 'active' },
+  { label: t('sales.workspace.statusCompleted'), value: 'completed' },
+  { label: t('sales.workspace.statusCancelled'), value: 'cancelled' }
 ]
 
 const eventForm = ref({
@@ -156,31 +157,31 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Event Details</h3>
+          <h3 class="font-semibold">{{ t('sales.workspace.eventDetails') }}</h3>
           <UButton
             size="xs"
             :loading="savingEventDetails"
             :disabled="!eventDetailsDirty"
             @click="saveEventDetails"
           >
-            Save
+            {{ t('sales.common.save') }}
           </UButton>
         </div>
       </template>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UFormField label="Event name" class="sm:col-span-2">
-          <UInput v-model="eventForm.title" class="w-full" placeholder="e.g. Summer Market 2026" />
+        <UFormField :label="t('sales.workspace.eventName')" class="sm:col-span-2">
+          <UInput v-model="eventForm.title" class="w-full" :placeholder="t('sales.workspace.eventNamePlaceholder')" />
         </UFormField>
-        <UFormField label="Event type">
-          <UInput v-model="eventForm.eventType" class="w-full" placeholder="e.g. market, festival, popup" />
+        <UFormField :label="t('sales.workspace.eventType')">
+          <UInput v-model="eventForm.eventType" class="w-full" :placeholder="t('sales.workspace.eventTypePlaceholder')" />
         </UFormField>
-        <UFormField label="Status">
+        <UFormField :label="t('sales.workspace.status')">
           <USelect v-model="eventForm.status" :items="statusOptions" class="w-full" />
         </UFormField>
-        <UFormField label="Start date">
+        <UFormField :label="t('sales.workspace.startDate')">
           <CroutonCalendar v-model:date="eventForm.startDate" />
         </UFormField>
-        <UFormField label="End date">
+        <UFormField :label="t('sales.workspace.endDate')">
           <CroutonCalendar v-model:date="eventForm.endDate" />
         </UFormField>
       </div>
@@ -190,11 +191,11 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <UCard variant="soft">
         <div class="space-y-3">
-          <h3 class="font-semibold">Client Selection</h3>
+          <h3 class="font-semibold">{{ t('sales.workspace.clientSelection') }}</h3>
           <USwitch
             v-model="useReusableClients"
-            label="Use Reusable Clients"
-            description="Select from existing clients or use free-text names"
+            :label="t('sales.workspace.useReusableClients')"
+            :description="t('sales.workspace.useReusableClientsDesc')"
             :loading="savingClientMode"
             @update:model-value="saveClientModeSetting"
           />
@@ -203,12 +204,12 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
 
       <UCard variant="soft">
         <div class="space-y-3">
-          <h3 class="font-semibold">Helper PIN</h3>
+          <h3 class="font-semibold">{{ t('sales.workspace.helperPin') }}</h3>
           <div class="flex gap-2">
             <UInput
               v-model="helperPin"
               type="text"
-              placeholder="Enter PIN"
+              :placeholder="t('sales.helperLogin.enterPin')"
               size="sm"
               :ui="{ base: 'font-mono' }"
               class="flex-1"
@@ -219,7 +220,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
               :disabled="helperPin === originalHelperPin"
               @click="saveHelperPin"
             >
-              Save
+              {{ t('sales.common.save') }}
             </UButton>
           </div>
         </div>
@@ -227,7 +228,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
 
       <UCard variant="soft">
         <div class="space-y-3">
-          <h3 class="font-semibold">Receipt Settings</h3>
+          <h3 class="font-semibold">{{ t('sales.workspace.receiptSettings') }}</h3>
           <UButton
             variant="outline"
             icon="i-lucide-receipt"
@@ -235,7 +236,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
             block
             @click="showReceiptSettings = true"
           >
-            Edit Receipt Text
+            {{ t('sales.workspace.editReceiptText') }}
           </UButton>
         </div>
       </UCard>
@@ -245,14 +246,14 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Categories</h3>
+          <h3 class="font-semibold">{{ t('sales.categories.title') }}</h3>
           <UButton size="xs" variant="outline" icon="i-lucide-plus" @click="openCreateCategory">
-            Add
+            {{ t('sales.common.add') }}
           </UButton>
         </div>
       </template>
       <div v-if="categoriesPending" class="p-4 text-center text-muted text-sm">
-        Loading...
+        {{ t('sales.common.loading') }}
       </div>
       <CroutonCollection
         v-else-if="categories && (categories as any[]).length > 0"
@@ -261,7 +262,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         :rows="categories"
       />
       <div v-else class="p-4 text-center text-muted text-sm">
-        No categories
+        {{ t('sales.workspace.noCategories') }}
       </div>
     </UCard>
 
@@ -269,14 +270,14 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Locations</h3>
+          <h3 class="font-semibold">{{ t('sales.sidebar.locations') }}</h3>
           <UButton size="xs" variant="outline" icon="i-lucide-plus" @click="openCreateLocation">
-            Add
+            {{ t('sales.common.add') }}
           </UButton>
         </div>
       </template>
       <div v-if="locationsPending" class="p-4 text-center text-muted text-sm">
-        Loading...
+        {{ t('sales.common.loading') }}
       </div>
       <CroutonCollection
         v-else-if="locations && (locations as any[]).length > 0"
@@ -285,7 +286,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         :rows="locations"
       />
       <div v-else class="p-4 text-center text-muted text-sm">
-        No locations
+        {{ t('sales.workspace.noLocations') }}
       </div>
     </UCard>
 
@@ -293,7 +294,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="font-semibold">Active Helpers</h3>
+          <h3 class="font-semibold">{{ t('sales.workspace.activeHelpers') }}</h3>
           <UButton
             size="xs"
             variant="ghost"
@@ -304,7 +305,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </div>
       </template>
       <div v-if="activeHelpersPending" class="p-4 text-center text-muted text-sm">
-        Loading...
+        {{ t('sales.common.loading') }}
       </div>
       <div v-else-if="activeHelpers && activeHelpers.length > 0" class="divide-y divide-default">
         <div
@@ -317,12 +318,12 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
             <span class="font-medium">{{ h.displayName }}</span>
           </div>
           <span class="text-xs text-muted">
-            Expires {{ new Date(h.expiresAt).toLocaleString() }}
+            {{ t('sales.workspace.expires') }} {{ new Date(h.expiresAt).toLocaleString() }}
           </span>
         </div>
       </div>
       <div v-else class="p-4 text-center text-muted text-sm">
-        No helpers currently logged in.
+        {{ t('sales.workspace.noHelpers') }}
       </div>
     </UCard>
 

@@ -25,28 +25,28 @@
     <CroutonFormLayout :navigation-items="navigationItems" v-model="activeSection">
       <template #main>
         <div class="flex flex-col gap-4 p-1">
-          <UFormField v-if="!hideEvent" label="Event" name="eventId" class="not-last:pb-4">
+          <UFormField v-if="!hideEvent" :label="t('sales.form.event')" name="eventId" class="not-last:pb-4">
             <CroutonFormReferenceSelect
               v-model="state.eventId"
               collection="salesEvents"
-              label="Event"
+              :label="t('sales.form.event')"
             />
           </UFormField>
 
-          <UFormField label="Location" name="locationId" class="not-last:pb-4">
+          <UFormField :label="t('sales.form.location')" name="locationId" class="not-last:pb-4">
             <CroutonFormReferenceSelect
               v-model="state.locationId"
               collection="salesLocations"
-              label="Location"
+              :label="t('sales.form.location')"
               :create-initial-data="{ eventId: state.eventId }"
             />
           </UFormField>
 
-          <UFormField label="Title" name="title" class="not-last:pb-4">
+          <UFormField :label="t('sales.form.title')" name="title" class="not-last:pb-4">
             <UInput v-model="state.title" class="w-full" size="xl" />
           </UFormField>
 
-          <UFormField label="IP Address" name="ipAddress" help="LAN IP of the printer (RUT956 hands these out via DHCP). Port is always 9100." class="not-last:pb-4">
+          <UFormField :label="t('sales.form.ipAddress')" name="ipAddress" :help="t('sales.form.ipAddressHelp')" class="not-last:pb-4">
             <UInput
               v-model="state.ipAddress"
               class="w-full"
@@ -56,11 +56,11 @@
             />
           </UFormField>
 
-          <UFormField label="Show prices on receipts" name="showPrices" class="not-last:pb-4">
+          <UFormField :label="t('sales.form.showPrices')" name="showPrices" class="not-last:pb-4">
             <UCheckbox v-model="state.showPrices" />
           </UFormField>
 
-          <UFormField label="Active" name="isActive" class="not-last:pb-4">
+          <UFormField :label="t('sales.common.active')" name="isActive" class="not-last:pb-4">
             <UCheckbox v-model="state.isActive" />
           </UFormField>
         </div>
@@ -100,10 +100,11 @@ interface PrinterFormProps {
 }
 
 const props = defineProps<PrinterFormProps>()
+const { t } = useT()
 const { defaultValue, schema, collection } = useSalesPrinters()
 
 const navigationItems = [
-  { label: 'General', value: 'general' }
+  { label: t('sales.form.general'), value: 'general' }
 ]
 
 const activeSection = ref('general')

@@ -3,7 +3,7 @@
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-eye" class="w-5 h-5" />
-        <span>Print Preview</span>
+        <span>{{ t('sales.print.previewTitle') }}</span>
       </div>
     </template>
 
@@ -12,29 +12,29 @@
         <!-- Printer Info -->
         <UCard>
           <div class="space-y-3">
-            <h4 class="font-medium">Printer Information</h4>
+            <h4 class="font-medium">{{ t('sales.print.printerInformation') }}</h4>
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span class="font-medium">Name:</span>
+                <span class="font-medium">{{ t('sales.print.name') }}:</span>
                 {{ printer.title }}
               </div>
               <div>
-                <span class="font-medium">IP Address:</span>
+                <span class="font-medium">{{ t('sales.print.ipAddress') }}:</span>
                 {{ printer.ipAddress }}:{{ printer.port || '9100' }}
               </div>
               <div>
-                <span class="font-medium">Location:</span>
-                {{ locationName || 'None' }}
+                <span class="font-medium">{{ t('sales.print.location') }}:</span>
+                {{ locationName || t('sales.common.none') }}
               </div>
               <div>
-                <span class="font-medium">Status:</span>
+                <span class="font-medium">{{ t('sales.print.status') }}:</span>
                 <UBadge
                   :color="printer.isActive ? 'success' : 'neutral'"
                   variant="soft"
                   size="xs"
                   class="ml-1"
                 >
-                  {{ printer.isActive ? 'Active' : 'Inactive' }}
+                  {{ printer.isActive ? t('sales.common.active') : t('sales.common.inactive') }}
                 </UBadge>
               </div>
             </div>
@@ -117,22 +117,22 @@
           icon="i-lucide-info"
           color="info"
           variant="soft"
-          title="Preview Information"
+          :title="t('sales.print.previewInformation')"
         >
           <template #description>
-            This shows how receipts will look when printed. The actual content will include real order data.
+            {{ t('sales.print.previewDescription') }}
           </template>
         </UAlert>
       </div>
       <div v-else class="p-8 text-center text-muted">
-        No printer selected
+        {{ t('sales.print.noPrinterSelected') }}
       </div>
     </template>
 
     <template #footer>
       <div class="flex justify-end gap-3">
         <UButton variant="outline" @click="close">
-          Close
+          {{ t('sales.common.close') }}
         </UButton>
         <UButton
           v-if="printer"
@@ -142,7 +142,7 @@
           :disabled="!printer.isActive"
           @click="testPrint"
         >
-          Test Print
+          {{ t('sales.print.testPrint') }}
         </UButton>
       </div>
     </template>
@@ -169,6 +169,7 @@ const emit = defineEmits<{
 }>()
 
 const notify = useNotify()
+const { t } = useT()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -188,12 +189,12 @@ async function testPrint() {
       `${props.testPrintApiBase}/${props.printer.id}/test`,
       { method: 'POST' },
     )
-    notify.success('Test Print Queued', { description: 'A test print job has been sent to the printer.' })
+    notify.success(t('sales.print.testQueued'), { description: t('sales.print.testQueuedDesc') })
     emit('test-print', props.printer)
   }
   catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to send test print.'
-    notify.error('Error', { description: errorMessage })
+    const errorMessage = error instanceof Error ? error.message : t('sales.print.testFailed')
+    notify.error(t('sales.orders.error'), { description: errorMessage })
   }
   finally {
     testPrinting.value = false

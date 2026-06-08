@@ -22,6 +22,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { t } = useT()
+
 interface EventItem {
   id: string
   title: string
@@ -54,7 +56,7 @@ function onChange(value: string) {
     :items="options"
     value-key="value"
     label-key="label"
-    placeholder="Pick an event"
+    :placeholder="t('sales.block.pickEvent')"
     :loading="pending"
     searchable
     class="w-full"

@@ -9,6 +9,7 @@
  */
 definePageMeta({ middleware: ['auth'] })
 
+const { t } = useT()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
 
@@ -28,10 +29,10 @@ const { data: helpers, pending, refresh } = await useFetch<ActiveHelper[]>(
 )
 
 const columns = [
-  { accessorKey: 'displayName', header: 'Helper' },
-  { accessorKey: 'eventTitle', header: 'Event' },
-  { accessorKey: 'lastActiveAt', header: 'Last active' },
-  { accessorKey: 'expiresAt', header: 'Expires' }
+  { accessorKey: 'displayName', header: t('sales.helpers.helper') },
+  { accessorKey: 'eventTitle', header: t('sales.helpers.event') },
+  { accessorKey: 'lastActiveAt', header: t('sales.helpers.lastActive') },
+  { accessorKey: 'expiresAt', header: t('sales.helpers.expires') }
 ]
 </script>
 
@@ -39,8 +40,8 @@ const columns = [
   <div class="space-y-4 p-6">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-2xl font-semibold">Active Helpers</h2>
-        <p class="text-sm text-muted">Helpers currently logged in across all events for this team.</p>
+        <h2 class="text-2xl font-semibold">{{ t('sales.helpers.title') }}</h2>
+        <p class="text-sm text-muted">{{ t('sales.helpers.description') }}</p>
       </div>
       <UButton
         variant="outline"
@@ -49,7 +50,7 @@ const columns = [
         :loading="pending"
         @click="() => refresh()"
       >
-        Refresh
+        {{ t('sales.common.refresh') }}
       </UButton>
     </div>
 
@@ -71,7 +72,7 @@ const columns = [
       <template #empty>
         <div class="p-12 text-center text-muted">
           <UIcon name="i-lucide-users" class="text-4xl mb-2" />
-          <p>No helpers currently logged in.</p>
+          <p>{{ t('sales.workspace.noHelpers') }}</p>
         </div>
       </template>
     </UTable>

@@ -3,6 +3,7 @@ import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
 const props = defineProps<{ event: SalesEvent }>()
 
+const { t } = useT()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
 const { columns: ordersColumns } = useSalesOrders()
@@ -35,7 +36,7 @@ const { items: orders, pending: ordersPending, refresh: refreshOrders } = await 
 )
 
 const helperOptions = computed(() => [
-  { id: null, label: 'All Helpers' },
+  { id: null, label: t('sales.workspace.allHelpers') },
   ...((activeHelpers.value as ActiveHelper[] | null) || []).map(h => ({
     id: h.displayName,
     label: h.displayName
@@ -72,7 +73,7 @@ onUnmounted(() => {
           v-model="selectedHelperName"
           :items="helperOptions"
           value-key="id"
-          placeholder="All Helpers"
+          :placeholder="t('sales.workspace.allHelpers')"
           icon="i-lucide-user"
           size="sm"
           class="w-48"
@@ -80,12 +81,12 @@ onUnmounted(() => {
         />
         <USwitch
           v-model="autoRefreshOrders"
-          label="Auto-refresh"
+          :label="t('sales.orders.autoRefresh')"
           size="sm"
         />
       </div>
       <div class="flex items-center gap-2 text-sm text-muted">
-        <span>{{ (orders as any[])?.length || 0 }} orders</span>
+        <span>{{ (orders as any[])?.length || 0 }} {{ t('sales.workspace.ordersLabel') }}</span>
         <UButton
           variant="ghost"
           size="xs"
@@ -96,7 +97,7 @@ onUnmounted(() => {
       </div>
     </div>
     <div v-if="ordersPending" class="p-6 text-center text-muted">
-      Loading orders...
+      {{ t('sales.workspace.loadingOrders') }}
     </div>
     <CroutonCollection
       v-else-if="orders && (orders as any[]).length > 0"
@@ -108,7 +109,7 @@ onUnmounted(() => {
     />
     <div v-else class="p-12 text-center text-muted">
       <UIcon name="i-lucide-receipt" class="text-4xl mb-2" />
-      <p>No orders yet{{ selectedHelperName ? ' for this helper' : '' }}</p>
+      <p>{{ t('sales.workspace.noOrders') }}{{ selectedHelperName ? t('sales.workspace.forThisHelper') : '' }}</p>
     </div>
   </div>
 </template>

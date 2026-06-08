@@ -21,6 +21,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { t } = useT()
+
 interface EventItem {
   id: string
   title: string
@@ -44,7 +46,7 @@ const options = computed(() => {
     .sort((a, b) => a.label.localeCompare(b.label))
 
   return [
-    { label: 'All events', value: ALL_EVENTS, status: undefined },
+    { label: t('sales.block.allEvents'), value: ALL_EVENTS, status: undefined },
     ...events
   ]
 })
@@ -63,7 +65,7 @@ function onChange(value: string) {
     :items="options"
     value-key="value"
     label-key="label"
-    placeholder="All events"
+    :placeholder="t('sales.block.allEvents')"
     :loading="pending"
     searchable
     class="w-full"

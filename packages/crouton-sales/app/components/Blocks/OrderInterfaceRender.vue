@@ -47,6 +47,7 @@ interface OrderData {
 }
 
 const props = defineProps<Props>()
+const { t } = useT()
 const route = useRoute()
 
 // On a CMS page rendered at /[team]/[...slug], the team slug lives here.
@@ -122,7 +123,7 @@ async function loadEvent() {
     )
   }
   catch (err: any) {
-    lookupError.value = err?.data?.message || err?.statusMessage || 'Event not found'
+    lookupError.value = err?.data?.message || err?.statusMessage || t('sales.helperLogin.eventNotFound')
   }
 }
 
@@ -141,18 +142,18 @@ async function loadOrderData() {
     )
   }
   catch (err: any) {
-    loadError.value = err?.data?.message || err?.statusMessage || 'Failed to load order data'
+    loadError.value = err?.data?.message || err?.statusMessage || t('sales.helperLogin.loadDataError')
   }
 }
 
 async function onLoginSubmit() {
   if (!publicEvent.value) return
   if (!formState.helperName.trim()) {
-    loginError.value = 'Please enter your name.'
+    loginError.value = t('sales.helperLogin.enterNameError')
     return
   }
   if (!formState.pin.trim()) {
-    loginError.value = 'Please enter the PIN.'
+    loginError.value = t('sales.helperLogin.enterPinError')
     return
   }
   loginError.value = ''
@@ -168,7 +169,7 @@ async function onLoginSubmit() {
     await loadOrderData()
   }
   else {
-    loginError.value = 'Login failed. Please check your PIN.'
+    loginError.value = t('sales.helperLogin.failed')
   }
 }
 
@@ -193,7 +194,7 @@ onMounted(async () => {
       class="bg-muted/80 rounded-3xl border border-dashed border-default p-6 text-center text-sm text-muted"
     >
       <UIcon name="i-lucide-shopping-cart" class="w-6 h-6 mx-auto mb-2 text-muted" />
-      No event selected for this POS block.
+      {{ t('sales.helperLogin.noEventForBlock') }}
     </div>
 
     <!-- Lookup failed -->
@@ -229,14 +230,14 @@ onMounted(async () => {
         <div class="flex-1 min-w-0">
           <h2 class="font-semibold text-lg leading-tight truncate">{{ orderData.event.title }}</h2>
           <div class="flex items-center gap-2 mt-1 text-sm text-muted">
-            <span>Logged in as <span class="text-default font-medium">{{ orderData.helper.name }}</span></span>
+            <span>{{ t('sales.helperLogin.loggedInAs') }} <span class="text-default font-medium">{{ orderData.helper.name }}</span></span>
             <span aria-hidden="true">·</span>
             <UButton
               variant="link"
               color="primary"
               size="sm"
               class="p-0"
-              label="Log out"
+              :label="t('sales.helperLogin.logout')"
               @click.stop="handleLogout"
             />
           </div>
@@ -263,7 +264,7 @@ onMounted(async () => {
       variant="subtle"
       icon="i-lucide-alert-circle"
       :title="loadError"
-      :actions="[{ label: 'Retry', color: 'error', variant: 'soft', onClick: loadOrderData }]"
+      :actions="[{ label: t('sales.common.retry'), color: 'error', variant: 'soft', onClick: loadOrderData }]"
     />
 
     <!-- Not logged in: inline helper login form -->
@@ -275,23 +276,23 @@ onMounted(async () => {
         <div class="text-center">
           <UIcon name="i-lucide-store" class="text-3xl text-primary mb-2" />
           <h2 class="text-lg font-semibold">{{ publicEvent.title }}</h2>
-          <p class="text-sm text-muted mt-1">Helper login required to take orders.</p>
+          <p class="text-sm text-muted mt-1">{{ t('sales.helperLogin.required') }}</p>
         </div>
         <UForm :state="formState" class="space-y-3" @submit="onLoginSubmit">
-          <UFormField label="Your name" name="helperName">
+          <UFormField :label="t('sales.helperLogin.yourName')" name="helperName">
             <UInput
               v-model="formState.helperName"
-              placeholder="Enter your name"
+              :placeholder="t('sales.helperLogin.enterName')"
               size="lg"
               class="w-full"
               autocomplete="name"
             />
           </UFormField>
-          <UFormField label="PIN" name="pin">
+          <UFormField :label="t('sales.helperLogin.pin')" name="pin">
             <UInput
               v-model="formState.pin"
               type="password"
-              placeholder="Enter PIN"
+              :placeholder="t('sales.helperLogin.enterPin')"
               size="lg"
               class="w-full"
               :ui="{ base: 'font-mono text-center tracking-widest' }"
@@ -306,7 +307,7 @@ onMounted(async () => {
             size="lg"
             icon="i-lucide-log-in"
           >
-            Log in
+            {{ t('sales.helperLogin.login') }}
           </UButton>
         </UForm>
         <UAlert

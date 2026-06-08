@@ -27,6 +27,7 @@ interface OrderData {
   helper: { id: string, name: string }
 }
 
+const { t } = useT()
 const route = useRoute()
 const teamSlug = computed(() => route.params.team as string)
 const eventSlug = computed(() => route.params.event as string)
@@ -67,7 +68,7 @@ async function loadData() {
     isAuthenticated.value = true
   }
   catch (err: any) {
-    error.value = err.data?.message || err.statusMessage || 'Failed to load data'
+    error.value = err.data?.message || err.statusMessage || t('sales.helperLogin.loadFailed')
     console.error('Failed to load:', err)
   }
   finally {
@@ -94,12 +95,12 @@ onMounted(() => {
     <div v-else-if="!isAuthenticated" class="flex-1 flex items-center justify-center">
       <div class="text-center space-y-4">
         <UIcon name="i-lucide-lock" class="text-4xl text-muted" />
-        <p class="text-muted">Please login to access the order interface</p>
+        <p class="text-muted">{{ t('sales.helperLogin.pleaseLogin') }}</p>
         <UButton
           :to="`/order/${teamSlug}/${eventSlug}/login`"
           icon="i-lucide-log-in"
         >
-          Login
+          {{ t('sales.helperLogin.login') }}
         </UButton>
       </div>
     </div>
@@ -109,7 +110,7 @@ onMounted(() => {
         <UIcon name="i-lucide-alert-circle" class="text-4xl text-error" />
         <p class="text-muted">{{ error }}</p>
         <UButton @click="loadData">
-          Retry
+          {{ t('sales.common.retry') }}
         </UButton>
       </div>
     </div>

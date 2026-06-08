@@ -33,6 +33,7 @@ interface SalesProductMatrixAttrs {
 
 const props = defineProps<{ attrs: SalesProductMatrixAttrs }>()
 
+const { t } = useT()
 const { teamId } = useTeamContext()
 
 const measure = ref<'units' | 'revenue'>(props.attrs.measure === 'revenue' ? 'revenue' : 'units')
@@ -70,9 +71,9 @@ function shortDay(d: string) {
 const columns = computed<TableColumn<Record<string, unknown>>[]>(() => {
   if (!matrix.value) return []
   return [
-    { accessorKey: 'product', header: 'Product' },
+    { accessorKey: 'product', header: t('sales.block.product') },
     ...matrix.value.days.map(d => ({ accessorKey: d, header: shortDay(d) })),
-    { accessorKey: '__total', header: 'Total' }
+    { accessorKey: '__total', header: t('sales.block.total') }
   ]
 })
 
@@ -89,7 +90,7 @@ const rows = computed<Record<string, unknown>[]>(() => {
   })
 
   // Column-totals row
-  const totalRow: Record<string, unknown> = { product: 'Total' }
+  const totalRow: Record<string, unknown> = { product: t('sales.block.total') }
   for (const d of m.days) totalRow[d] = fmt(m.dayTotals[d]?.[key] ?? 0)
   totalRow.__total = fmt(m.grandTotal[key])
   data.push(totalRow)
@@ -149,7 +150,7 @@ function downloadCsv() {
             icon="i-lucide-hash"
             @click="measure = 'units'"
           >
-            Units
+            {{ t('sales.block.units') }}
           </UButton>
           <UButton
             :color="measure === 'revenue' ? 'primary' : 'neutral'"
@@ -157,7 +158,7 @@ function downloadCsv() {
             icon="i-lucide-banknote"
             @click="measure = 'revenue'"
           >
-            Revenue
+            {{ t('sales.block.revenue') }}
           </UButton>
         </UButtonGroup>
         <UButton
@@ -185,7 +186,7 @@ function downloadCsv() {
       class="flex flex-col items-center justify-center rounded-lg border border-dashed border-default text-muted py-10"
     >
       <UIcon name="i-lucide-table" class="size-8 mb-2 opacity-30" />
-      <p class="text-sm">No sales data yet</p>
+      <p class="text-sm">{{ t('sales.block.noSalesData') }}</p>
     </div>
 
     <div v-else class="overflow-x-auto">

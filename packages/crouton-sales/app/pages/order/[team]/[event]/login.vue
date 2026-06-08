@@ -14,6 +14,7 @@ interface SalesEvent {
   slug: string
 }
 
+const { t } = useT()
 const route = useRoute()
 const teamSlug = computed(() => route.params.team as string)
 const eventSlug = computed(() => route.params.event as string)
@@ -48,11 +49,11 @@ async function onSubmit() {
   if (!event.value) return
 
   if (!formState.helperName.trim()) {
-    errorMessage.value = 'Please enter your name.'
+    errorMessage.value = t('sales.helperLogin.enterNameError')
     return
   }
   if (!formState.pin.trim()) {
-    errorMessage.value = 'Please enter the PIN.'
+    errorMessage.value = t('sales.helperLogin.enterPinError')
     return
   }
 
@@ -72,7 +73,7 @@ async function onSubmit() {
     await navigateTo(`/order/${teamSlug.value}/${eventSlug.value}`)
   }
   else {
-    errorMessage.value = 'Login failed. Please check your PIN.'
+    errorMessage.value = t('sales.helperLogin.failed')
   }
 }
 </script>
@@ -82,39 +83,39 @@ async function onSubmit() {
     <div class="w-full max-w-sm space-y-6">
       <div v-if="loading" class="text-center">
         <UIcon name="i-lucide-loader-2" class="animate-spin text-4xl text-primary" />
-        <p class="mt-2 text-muted">Loading event...</p>
+        <p class="mt-2 text-muted">{{ t('sales.helperLogin.loadingEvent') }}</p>
       </div>
 
       <div v-else-if="!event" class="text-center">
         <UIcon name="i-lucide-alert-circle" class="text-4xl text-error mb-2" />
-        <p class="font-medium">Event not found</p>
-        <p class="text-muted text-sm mt-1">Please check the URL and try again.</p>
+        <p class="font-medium">{{ t('sales.helperLogin.eventNotFound') }}</p>
+        <p class="text-muted text-sm mt-1">{{ t('sales.helperLogin.checkUrl') }}</p>
       </div>
 
       <template v-else>
         <div class="text-center">
           <UIcon name="i-lucide-store" class="text-4xl text-primary mb-2" />
           <h1 class="text-xl font-bold">{{ event.title }}</h1>
-          <p class="text-muted mt-1">Helper Login</p>
+          <p class="text-muted mt-1">{{ t('sales.helperLogin.title') }}</p>
         </div>
 
         <UCard>
           <UForm :state="formState" class="space-y-4" @submit="onSubmit">
-            <UFormField label="Your Name" name="helperName">
+            <UFormField :label="t('sales.helperLogin.yourName')" name="helperName">
               <UInput
                 v-model="formState.helperName"
-                placeholder="Enter your name"
+                :placeholder="t('sales.helperLogin.enterName')"
                 size="lg"
                 class="w-full"
                 autocomplete="name"
               />
             </UFormField>
 
-            <UFormField label="PIN" name="pin">
+            <UFormField :label="t('sales.helperLogin.pin')" name="pin">
               <UInput
                 v-model="formState.pin"
                 type="password"
-                placeholder="Enter PIN"
+                :placeholder="t('sales.helperLogin.enterPin')"
                 size="lg"
                 class="w-full"
                 :ui="{ base: 'font-mono text-center tracking-widest' }"
@@ -130,7 +131,7 @@ async function onSubmit() {
               size="lg"
               icon="i-lucide-log-in"
             >
-              Login
+              {{ t('sales.helperLogin.login') }}
             </UButton>
           </UForm>
         </UCard>

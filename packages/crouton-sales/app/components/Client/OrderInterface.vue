@@ -68,9 +68,9 @@
         </template>
 
         <template #footer>
-          <UButton label="Cancel" color="neutral" variant="ghost" @click="showOptionsModal = false" />
+          <UButton :label="t('sales.common.cancel')" color="neutral" variant="ghost" @click="showOptionsModal = false" />
           <UButton
-            label="Add to Cart"
+            :label="t('sales.products.addToCart')"
             :disabled="!selectedOptions || (Array.isArray(selectedOptions) && selectedOptions.length === 0)"
             @click="confirmProductWithOptions"
           />
@@ -83,7 +83,7 @@
           <UButton
             block
             size="lg"
-            :label="cartItems.length > 0 ? `Cart (${cartItems.length}) - $${cartTotal.toFixed(2)}` : t('sales.cart.empty')"
+            :label="cartItems.length > 0 ? `${t('sales.cart.title')} (${cartItems.length}) - €${cartTotal.toFixed(2)}` : t('sales.cart.empty')"
             :icon="cartItems.length > 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart'"
             :color="cartItems.length > 0 ? 'primary' : 'neutral'"
             :variant="cartItems.length > 0 ? 'solid' : 'soft'"

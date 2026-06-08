@@ -24,17 +24,17 @@
     <CroutonFormLayout>
       <template #main>
         <div class="flex flex-col gap-4 p-1">
-          <UFormField v-if="!hideEvent" label="Event" name="eventId" class="not-last:pb-4">
+          <UFormField v-if="!hideEvent" :label="t('sales.form.event')" name="eventId" class="not-last:pb-4">
             <CroutonFormReferenceSelect
               v-model="state.eventId"
               collection="salesEvents"
-              label="Event"
+              :label="t('sales.form.event')"
             />
           </UFormField>
-          <UFormField label="Title" name="title" class="not-last:pb-4">
+          <UFormField :label="t('sales.form.title')" name="title" class="not-last:pb-4">
             <UInput v-model="state.title" class="w-full" size="xl" />
           </UFormField>
-          <UFormField label="Display Order" name="displayOrder" class="not-last:pb-4">
+          <UFormField :label="t('sales.form.displayOrder')" name="displayOrder" class="not-last:pb-4">
             <UInputNumber v-model="state.displayOrder" class="w-full" :min="0" />
           </UFormField>
         </div>
@@ -67,6 +67,7 @@ interface CategoryFormProps {
 }
 
 const props = defineProps<CategoryFormProps>()
+const { t } = useT()
 const { defaultValue, schema, collection } = useSalesCategories()
 
 const { create, update, deleteItems } = useCollectionMutation(collection)

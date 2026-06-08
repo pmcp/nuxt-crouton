@@ -3,6 +3,7 @@ import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
 const props = defineProps<{ event: SalesEvent }>()
 
+const { t } = useT()
 const { open } = useCrouton()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
@@ -54,11 +55,11 @@ onMounted(async () => {
   <div class="space-y-4">
     <div class="flex justify-end">
       <UButton color="primary" size="sm" icon="i-lucide-plus" @click="openCreatePrinter">
-        Add Printer
+        {{ t('sales.workspace.addPrinter') }}
       </UButton>
     </div>
     <div v-if="printersPending" class="p-6 text-center text-muted">
-      Loading printers...
+      {{ t('sales.workspace.loadingPrinters') }}
     </div>
     <CroutonCollection
       v-else-if="printers && (printers as any[]).length > 0"
@@ -73,15 +74,15 @@ onMounted(async () => {
           icon="i-lucide-eye"
           @click.stop="openPrinterPreview(row)"
         >
-          Preview
+          {{ t('sales.common.preview') }}
         </UButton>
       </template>
     </CroutonCollection>
     <div v-else class="p-12 text-center text-muted">
       <UIcon name="i-lucide-printer" class="text-4xl mb-2" />
-      <p>No printers configured</p>
+      <p>{{ t('sales.workspace.noPrinters') }}</p>
       <UButton size="sm" variant="outline" class="mt-3" @click="openCreatePrinter">
-        Add Printer
+        {{ t('sales.workspace.addPrinter') }}
       </UButton>
     </div>
 

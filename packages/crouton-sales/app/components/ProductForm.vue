@@ -31,44 +31,44 @@
         <div class="flex flex-col gap-6 p-1">
           <!-- Details -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-highlighted mb-1">Details</legend>
+            <legend class="text-sm font-semibold text-highlighted mb-1">{{ t('sales.form.details') }}</legend>
 
-            <UFormField v-if="!hideEvent" label="Event" name="eventId">
+            <UFormField v-if="!hideEvent" :label="t('sales.form.event')" name="eventId">
               <CroutonFormReferenceSelect
                 v-model="state.eventId"
                 collection="salesEvents"
-                label="Event"
+                :label="t('sales.form.event')"
               />
             </UFormField>
 
-            <UFormField label="Product Name" name="title">
+            <UFormField :label="t('sales.form.productName')" name="title">
               <UInput v-model="state.title" class="w-full" size="xl" />
             </UFormField>
 
-            <UFormField label="Description" name="description">
+            <UFormField :label="t('sales.form.description')" name="description">
               <UTextarea v-model="state.description" class="w-full" size="xl" />
             </UFormField>
 
             <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Category" name="categoryId">
+              <UFormField :label="t('sales.form.category')" name="categoryId">
                 <CroutonFormReferenceSelect
                   v-model="state.categoryId"
                   collection="salesCategories"
-                  label="Category"
+                  :label="t('sales.form.category')"
                   :create-initial-data="{ eventId: state.eventId }"
                 />
               </UFormField>
-              <UFormField label="Prep Location" name="locationId">
+              <UFormField :label="t('sales.form.prepLocation')" name="locationId">
                 <CroutonFormReferenceSelect
                   v-model="state.locationId"
                   collection="salesLocations"
-                  label="Prep Location"
+                  :label="t('sales.form.prepLocation')"
                   :create-initial-data="{ eventId: state.eventId }"
                 />
               </UFormField>
             </div>
 
-            <UFormField label="Price" name="price">
+            <UFormField :label="t('sales.form.price')" name="price">
               <UInputNumber
                 v-model="state.price"
                 class="w-full"
@@ -79,7 +79,7 @@
             </UFormField>
 
             <UFormField name="isActive">
-              <UCheckbox v-model="state.isActive" label="Active" />
+              <UCheckbox v-model="state.isActive" :label="t('sales.common.active')" />
             </UFormField>
           </fieldset>
 
@@ -87,11 +87,11 @@
 
           <!-- Remark -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-highlighted mb-1">Remark</legend>
+            <legend class="text-sm font-semibold text-highlighted mb-1">{{ t('sales.form.remark') }}</legend>
             <UFormField name="requiresRemark">
-              <UCheckbox v-model="state.requiresRemark" label="Require a remark when ordering" />
+              <UCheckbox v-model="state.requiresRemark" :label="t('sales.form.requireRemark')" />
             </UFormField>
-            <UFormField v-if="state.requiresRemark" label="Remark Prompt" name="remarkPrompt" help="Shown to the cashier when adding this product">
+            <UFormField v-if="state.requiresRemark" :label="t('sales.form.remarkPrompt')" name="remarkPrompt" :help="t('sales.form.remarkPromptHelp')">
               <UInput v-model="state.remarkPrompt" class="w-full" size="xl" />
             </UFormField>
           </fieldset>
@@ -100,19 +100,19 @@
 
           <!-- Options -->
           <fieldset class="flex flex-col gap-4">
-            <legend class="text-sm font-semibold text-highlighted mb-1">Options</legend>
+            <legend class="text-sm font-semibold text-highlighted mb-1">{{ t('sales.form.options') }}</legend>
             <UFormField name="hasOptions">
-              <UCheckbox v-model="state.hasOptions" label="This product has options (variants, extras…)" />
+              <UCheckbox v-model="state.hasOptions" :label="t('sales.form.hasOptions')" />
             </UFormField>
             <template v-if="state.hasOptions">
               <UFormField name="multipleOptionsAllowed">
-                <UCheckbox v-model="state.multipleOptionsAllowed" label="Allow selecting multiple options" />
+                <UCheckbox v-model="state.multipleOptionsAllowed" :label="t('sales.form.allowMultipleOptions')" />
               </UFormField>
-              <UFormField label="Options" name="options">
+              <UFormField :label="t('sales.form.options')" name="options">
                 <CroutonFormRepeater
                   v-model="state.options"
                   component-name="SalesProductsOptionInput"
-                  add-label="Add Item"
+                  :add-label="t('sales.form.addItem')"
                   :sortable="true"
                 />
               </UFormField>
@@ -121,7 +121,7 @@
 
           <USeparator />
 
-          <UFormField label="Sort Order" name="sortOrder">
+          <UFormField :label="t('sales.form.sortOrder')" name="sortOrder">
             <UInputNumber v-model="state.sortOrder" class="w-full" :min="0" />
           </UFormField>
         </div>
@@ -154,6 +154,7 @@ interface ProductFormProps {
 }
 
 const props = defineProps<ProductFormProps>()
+const { t } = useT()
 const { defaultValue, schema, collection } = useSalesProducts()
 
 const { create, update, deleteItems } = useCollectionMutation(collection)

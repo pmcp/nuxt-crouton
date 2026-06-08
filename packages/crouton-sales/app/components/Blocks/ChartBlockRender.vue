@@ -35,6 +35,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useT()
 const { hasApp } = useCroutonApps()
 const hasCharts = computed(() => hasApp('charts'))
 
@@ -74,8 +75,8 @@ const isEditorPreview = computed(() => route.path.startsWith('/admin'))
       v-if="!kind"
       color="neutral"
       icon="i-lucide-chart-bar"
-      title="No chart selected"
-      description="Edit this block to pick a sales chart."
+      :title="t('sales.block.noChartSelected')"
+      :description="t('sales.block.editToPickChart')"
     />
 
     <!-- Charts package not installed -->
@@ -83,8 +84,8 @@ const isEditorPreview = computed(() => route.path.startsWith('/admin'))
       v-else-if="!hasCharts"
       color="warning"
       icon="i-lucide-chart-bar"
-      title="Charts package required"
-      description="Install @fyit/crouton-charts to render this chart."
+      :title="t('sales.block.chartsRequired')"
+      :description="t('sales.block.installCharts')"
     />
 
     <!-- Editor/preview: static placeholder (live chart would crash in the
@@ -102,7 +103,7 @@ const isEditorPreview = computed(() => route.path.startsWith('/admin'))
         <div class="w-3 rounded-sm bg-primary/35" style="height: 70%" />
       </div>
       <p class="text-sm font-medium">{{ props.attrs.title || kind.title }}</p>
-      <p class="text-xs">Chart renders on the published page</p>
+      <p class="text-xs">{{ t('sales.block.chartRendersOnPage') }}</p>
     </div>
 
     <!-- Public page: the live charts widget -->
