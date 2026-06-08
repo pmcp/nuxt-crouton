@@ -121,6 +121,7 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       teamId,
       orderNumber: opts.orderNumber,
       clientName: opts.clientName,
+      helperName: opts.helperDisplayName,
       orderNotes: opts.orderNotes,
       teamName: opts.teamName,
       eventName: opts.eventName,

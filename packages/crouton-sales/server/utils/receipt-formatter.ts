@@ -44,6 +44,8 @@ export interface ReceiptData {
   teamName: string
   eventName: string
   clientName?: string
+  /** Name of the logged-in volunteer/helper who took the order. */
+  helperName?: string
   orderNotes?: string
   items: ReceiptItem[]
   total?: number
@@ -206,6 +208,10 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       ? new Date(data.createdAt)
       : data.createdAt
     printer.println(`Time: ${orderDate.toLocaleString(TIME_LOCALE, { timeZone: data.timeZone || DEFAULT_TIME_ZONE })}`)
+
+    if (data.helperName) {
+      printer.println(`Helper: ${data.helperName}`)
+    }
 
     if (data.clientName) {
       printer.println(`Client: ${data.clientName}`)

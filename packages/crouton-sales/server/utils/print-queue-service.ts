@@ -36,6 +36,7 @@ export interface PrintQueueGeneratorOptions {
   teamId: string
   orderNumber: string
   clientName?: string
+  helperName?: string
   orderNotes?: string
   teamName: string
   eventName: string
@@ -117,6 +118,7 @@ export function generateKitchenTicketData(
     teamName: options.teamName,
     eventName: options.eventName,
     clientName: options.clientName,
+    helperName: options.helperName,
     orderNotes: options.orderNotes,
     items: receiptItems,
     total: printer.showPrices ? total : undefined,
@@ -161,6 +163,7 @@ export function generateReceiptData(
     teamName: options.teamName,
     eventName: options.eventName,
     clientName: options.clientName,
+    helperName: options.helperName,
     orderNotes: options.orderNotes,
     items: receiptItems,
     total,
