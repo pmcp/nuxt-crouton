@@ -32,6 +32,8 @@ interface Props {
   stacked?: boolean
   /** Chart orientation */
   orientation?: 'vertical' | 'horizontal'
+  /** Extra query params forwarded to the data endpoint (e.g. { eventId } to scope an aggregation). */
+  query?: Record<string, string | number>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -54,6 +56,7 @@ const { chartData, categories, pending, error } = useCollectionChart(
     xField: props.xField,
     yFields: yFieldsArray.value,
     apiPath: props.apiPath,
+    query: props.query,
     limit: 100
   }))
 )

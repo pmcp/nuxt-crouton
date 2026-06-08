@@ -12,6 +12,8 @@ export interface UseCollectionChartOptions {
   limit?: number
   /** Direct API path override. Supports {teamId} placeholder. Bypasses collection registry. */
   apiPath?: string
+  /** Extra query params merged into the fetch (e.g. { eventId } to scope an aggregation endpoint). */
+  query?: Record<string, string | number>
 }
 
 import { CHART_COLOR_PALETTE } from '../utils/chart-constants'
@@ -68,7 +70,7 @@ export function useCollectionChart(
 
     try {
       const response = await $fetch<{ items: Record<string, unknown>[] }>(apiPath, {
-        query: { pageSize: limit }
+        query: { pageSize: limit, ...resolvedOptions.value.query }
       })
 
       const items = response?.items || []
@@ -86,7 +88,7 @@ export function useCollectionChart(
         activeYFields = configuredYFields
       } else {
         const skipFields = ['id', 'teamId', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy']
-        const firstRow = items[0]
+        const firstRow = items[0] ?? {}
         activeYFields = Object.keys(firstRow).filter(key => {
           if (skipFields.includes(key)) return false
           if (key === resolvedXField.value) return false
