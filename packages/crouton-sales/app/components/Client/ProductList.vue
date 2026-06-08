@@ -2,7 +2,7 @@
   <div v-if="products.length === 0" class="text-center text-muted py-8">
     {{ t('sales.products.noProducts') }}
   </div>
-  <div v-else ref="containerRef" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+  <div v-else ref="containerRef" class="flex flex-col gap-2">
     <UCard
       v-for="product in products"
       :key="product.id"
