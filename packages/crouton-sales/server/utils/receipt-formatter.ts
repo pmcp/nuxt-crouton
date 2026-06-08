@@ -2,9 +2,19 @@
  * @crouton-package crouton-sales
  * @description ESC/POS thermal receipt formatter for POS systems
  * @opt-in Requires print module to be enabled
+ *
+ * Self-contained ESC/POS byte builder — no native dependencies.
+ *
+ * The server never talks to a printer directly; it only produces the base64
+ * ESC/POS payload that the on-site spooler (e.g. the RUT956 BusyBox script)
+ * streams to the printer's raw TCP port (9100). So we only need to emit the
+ * byte stream, not a full driver. This replaces `node-thermal-printer`, which
+ * dragged in Workers-incompatible deps (pngjs, iconv-lite, unorm) and crashed
+ * the Cloudflare runtime at init.
+ *
+ * Text is encoded to code page 858 (CP850 + €), selected on the printer with
+ * `ESC t 19`. This covers Western-European accents and the € sign.
  */
-
-import { ThermalPrinter, PrinterTypes } from 'node-thermal-printer'
 
 export interface ReceiptItem {
   name: string
@@ -56,45 +66,104 @@ export interface FormattedReceipt {
   rawBuffer: Buffer
 }
 
+const RECEIPT_WIDTH = 48
+
+// ESC/POS control bytes
+const ESC = 0x1B
+const GS = 0x1D
+const LF = 0x0A
+
 /**
- * Finalize printer buffer: fix ESC/POS quirks and return Base64 + raw buffer.
- * Handles TM-m30 ESC d incompatibility and ensures proper ESC @ initialization.
+ * Code page 858 high range: byte 0x80..0xFF -> Unicode code point.
+ * CP858 == CP850 with the dotless-i at 0xD5 replaced by € (U+20AC).
  */
-function finalizePrinterBuffer(printer: ThermalPrinter): FormattedReceipt {
-  let rawBuffer = printer.getBuffer()
+const CP858_HIGH = [
+  0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x00E7, // 80-87
+  0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5, // 88-8F
+  0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9, // 90-97
+  0x00FF, 0x00D6, 0x00DC, 0x00F8, 0x00A3, 0x00D8, 0x00D7, 0x0192, // 98-9F
+  0x00E1, 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA, // A0-A7
+  0x00BF, 0x00AE, 0x00AC, 0x00BD, 0x00BC, 0x00A1, 0x00AB, 0x00BB, // A8-AF
+  0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x00C1, 0x00C2, 0x00C0, // B0-B7
+  0x00A9, 0x2563, 0x2551, 0x2557, 0x255D, 0x00A2, 0x00A5, 0x2510, // B8-BF
+  0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x00E3, 0x00C3, // C0-C7
+  0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x00A4, // C8-CF
+  0x00F0, 0x00D0, 0x00CA, 0x00CB, 0x00C8, 0x20AC, 0x00CD, 0x00CE, // D0-D7
+  0x00CF, 0x2518, 0x250C, 0x2588, 0x2584, 0x00A6, 0x00CC, 0x2580, // D8-DF
+  0x00D3, 0x00DF, 0x00D4, 0x00D2, 0x00F5, 0x00D5, 0x00B5, 0x00FE, // E0-E7
+  0x00DE, 0x00DA, 0x00DB, 0x00D9, 0x00FD, 0x00DD, 0x00AF, 0x00B4, // E8-EF
+  0x00AD, 0x00B1, 0x2017, 0x00BE, 0x00B6, 0x00A7, 0x00F7, 0x00B8, // F0-F7
+  0x00B0, 0x00A8, 0x00B7, 0x00B9, 0x00B3, 0x00B2, 0x25A0, 0x00A0  // F8-FF
+]
 
-  // Remove any ESC @ from the end if it exists
-  if (rawBuffer[rawBuffer.length - 2] === 0x1B && rawBuffer[rawBuffer.length - 1] === 0x40) {
-    rawBuffer = rawBuffer.slice(0, -2)
+const UNICODE_TO_CP858: Map<number, number> = (() => {
+  const map = new Map<number, number>()
+  for (let i = 0; i < CP858_HIGH.length; i++) {
+    const cp = CP858_HIGH[i]
+    // First mapping wins so canonical Latin-1 chars beat box-drawing aliases
+    if (cp !== undefined && !map.has(cp)) map.set(cp, 0x80 + i)
   }
+  // OEM glyph for the rightwards arrow used in item notes (matches the old
+  // iconv CP437/850 behaviour, which emitted 0x1A for U+2192).
+  map.set(0x2192, 0x1A)
+  return map
+})()
 
-  // Fix for TM-m30: Replace ESC d (feed) commands with line feeds
-  const fixedBuffer: number[] = []
-  for (let i = 0; i < rawBuffer.length; i++) {
-    if (i < rawBuffer.length - 2
-      && rawBuffer[i] === 0x1B
-      && rawBuffer[i + 1] === 0x64) {
-      const feedCount = rawBuffer[i + 2]
-      for (let j = 0; j < feedCount; j++) {
-        fixedBuffer.push(0x0A)
-      }
-      i += 2
+/** Encode a JS string to CP858 bytes; unknown chars fall back to '?'. */
+function encodeText(text: string): number[] {
+  const out: number[] = []
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0x3F
+    if (cp < 0x80) {
+      out.push(cp)
     }
     else {
-      fixedBuffer.push(rawBuffer[i])
+      out.push(UNICODE_TO_CP858.get(cp) ?? 0x3F)
     }
   }
-  rawBuffer = Buffer.from(fixedBuffer)
+  return out
+}
 
-  // Prepend ESC @ at the beginning
-  rawBuffer = Buffer.concat([
-    Buffer.from([0x1B, 0x40]), // ESC @ - Initialize printer
-    rawBuffer
-  ])
+/**
+ * Minimal ESC/POS command builder covering the subset the receipts use.
+ * Initializes the printer (ESC @) and selects CP858 (ESC t 19) up front.
+ */
+class EscPosBuilder {
+  private bytes: number[] = []
 
-  return {
-    base64: rawBuffer.toString('base64'),
-    rawBuffer: Buffer.from(rawBuffer)
+  constructor(private readonly width = RECEIPT_WIDTH) {
+    this.raw(ESC, 0x40) // ESC @  — initialize
+    this.raw(ESC, 0x74, 19) // ESC t 19 — select code page 858
+  }
+
+  raw(...b: number[]): this {
+    for (const x of b) this.bytes.push(x)
+    return this
+  }
+
+  alignLeft(): this { return this.raw(ESC, 0x61, 0x00) }
+  alignCenter(): this { return this.raw(ESC, 0x61, 0x01) }
+  bold(on: boolean): this { return this.raw(ESC, 0x45, on ? 1 : 0) }
+  invert(on: boolean): this { return this.raw(GS, 0x42, on ? 1 : 0) }
+
+  print(text: string): this {
+    for (const byte of encodeText(text)) this.bytes.push(byte)
+    return this
+  }
+
+  println(text = ''): this { return this.print(text).raw(LF) }
+
+  drawLine(char = '-'): this { return this.println(char.repeat(this.width)) }
+
+  /** Feed a few lines and perform a full cut. */
+  cut(): this { return this.raw(LF, LF, LF, GS, 0x56, 0x00) }
+
+  build(): FormattedReceipt {
+    const rawBuffer = Buffer.from(this.bytes)
+    return {
+      base64: rawBuffer.toString('base64'),
+      rawBuffer
+    }
   }
 }
 
@@ -103,13 +172,7 @@ function finalizePrinterBuffer(printer: ThermalPrinter): FormattedReceipt {
  * Returns both Base64 encoded string and raw buffer
  */
 export function formatReceipt(data: ReceiptData): FormattedReceipt {
-  const printer = new ThermalPrinter({
-    type: PrinterTypes.EPSON,
-    interface: 'tcp://dummy', // Dummy interface for buffer generation only
-    width: 48,
-    removeSpecialCharacters: false,
-    encoding: 'CP437'
-  })
+  const printer = new EscPosBuilder()
 
   try {
     // Header with team and event
@@ -180,8 +243,8 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
           if (data.showPrices && item.price !== undefined) {
             const itemTotal = item.price * item.quantity
             const itemText = `${item.quantity}x ${item.name}`
-            const priceText = `\u20AC${itemTotal.toFixed(2)}`
-            const padding = 48 - itemText.length - priceText.length
+            const priceText = `€${itemTotal.toFixed(2)}`
+            const padding = RECEIPT_WIDTH - itemText.length - priceText.length
             printer.println(itemText + ' '.repeat(Math.max(1, padding)) + priceText)
           }
           else {
@@ -194,8 +257,8 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
           printer.bold(true)
           const itemTotal = item.price * item.quantity
           const itemText = `${item.quantity}x ${item.name}`
-          const priceText = `\u20AC${itemTotal.toFixed(2)}`
-          const padding = 48 - itemText.length - priceText.length
+          const priceText = `€${itemTotal.toFixed(2)}`
+          const padding = RECEIPT_WIDTH - itemText.length - priceText.length
           printer.println(itemText + ' '.repeat(Math.max(1, padding)) + priceText)
           printer.bold(false)
         }
@@ -216,7 +279,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
                 const optionObj = optionValue as { label: string, price?: number }
                 displayValue = optionObj.label
                 if (optionObj.price) {
-                  displayValue += ` (+\u20AC${Number(optionObj.price).toFixed(2)})`
+                  displayValue += ` (+€${Number(optionObj.price).toFixed(2)})`
                 }
               }
               else if (typeof optionValue === 'boolean') {
@@ -237,7 +300,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
 
         // Item notes/modifications
         if (item.notes) {
-          printer.println(`  \u2192 ${item.notes}`)
+          printer.println(`  → ${item.notes}`)
         }
 
         printer.println('')
@@ -259,8 +322,8 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.alignLeft()
 
       const totalLabel = 'TOTAL:'
-      const totalAmount = `\u20AC${data.total.toFixed(2)}`
-      const totalPadding = 48 - totalLabel.length - totalAmount.length
+      const totalAmount = `€${data.total.toFixed(2)}`
+      const totalPadding = RECEIPT_WIDTH - totalLabel.length - totalAmount.length
 
       printer.bold(true)
       printer.println(totalLabel + ' '.repeat(Math.max(1, totalPadding)) + totalAmount)
@@ -281,7 +344,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     printer.println('')
     printer.cut()
 
-    return finalizePrinterBuffer(printer)
+    return printer.build()
   }
   catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
@@ -300,13 +363,7 @@ export function formatTestReceipt(
 ): FormattedReceipt {
   const settings = receiptSettings || DEFAULT_RECEIPT_SETTINGS
 
-  const printer = new ThermalPrinter({
-    type: PrinterTypes.EPSON,
-    interface: 'tcp://dummy',
-    width: 48,
-    removeSpecialCharacters: false,
-    encoding: 'CP437'
-  })
+  const printer = new EscPosBuilder()
 
   printer.alignCenter()
   printer.bold(true)
@@ -326,5 +383,5 @@ export function formatTestReceipt(
   printer.println('')
   printer.cut()
 
-  return finalizePrinterBuffer(printer)
+  return printer.build()
 }

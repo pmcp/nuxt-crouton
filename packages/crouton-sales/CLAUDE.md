@@ -278,7 +278,11 @@ Events must have a `helperPin` field configured:
 
 - **Extends**: `@fyit/crouton` (required)
 - **Peer deps**: `@fyit/crouton-auth`, `@nuxtjs/i18n ^9.0.0`, `zod ^3.0.0`
-- **Optional**: `node-thermal-printer` for receipt printing
+- **Receipt printing**: zero runtime deps. `receipt-formatter.ts` is a self-contained
+  ESC/POS byte builder (CP858 encoding via `ESC t 19`). It does **not** use
+  `node-thermal-printer` — that lib pulls in `pngjs`/`iconv-lite`/`unorm`, which
+  crash the Cloudflare Workers runtime at init. The server only emits the base64
+  ESC/POS payload; the on-site spooler streams it to the printer's TCP port 9100.
 
 ## Testing
 
