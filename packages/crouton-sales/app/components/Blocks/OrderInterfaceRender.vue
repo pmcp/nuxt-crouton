@@ -16,6 +16,8 @@ import type { SalesCategorie } from '~~/layers/sales/collections/categories/type
 
 interface OrderInterfaceAttrs {
   eventSlug?: string
+  /** How tall the embedded POS renders. 'fill' measures its offset and grows to the viewport bottom. */
+  height?: 'compact' | 'tall' | 'fill'
 }
 
 interface Props {
@@ -52,6 +54,34 @@ const route = useRoute()
 const teamSlug = computed(() => String(route.params.team || ''))
 const eventSlug = computed(() => props.attrs.eventSlug || '')
 
+// --- Embedded POS height -------------------------------------------------
+// Compact/Tall are simple bounded heights that flow inside the page. Fill
+// measures the wrapper's distance from the top of the viewport and grows to
+// the bottom edge, so a POS-only page reads as a full-screen app. Recomputed
+// on mount + resize (not on scroll — the POS scrolls internally, not the page).
+const heightMode = computed(() => props.attrs.height || 'tall')
+const posWrapper = ref<HTMLElement | null>(null)
+const fillHeight = ref('')
+
+const posHeightClass = computed(() => {
+  if (heightMode.value === 'compact') return 'h-[60vh]'
+  if (heightMode.value === 'tall') return 'h-[80vh]'
+  return '' // fill drives height via inline style
+})
+const posHeightStyle = computed(() =>
+  heightMode.value === 'fill' && fillHeight.value
+    ? { height: fillHeight.value }
+    : undefined
+)
+
+function recomputeFillHeight() {
+  if (heightMode.value !== 'fill' || !posWrapper.value) return
+  const top = Math.max(0, Math.round(posWrapper.value.getBoundingClientRect().top))
+  fillHeight.value = `calc(100dvh - ${top}px)`
+}
+
+useEventListener('resize', recomputeFillHeight)
+
 const {
   isHelper,
   loadSession,
@@ -68,6 +98,13 @@ const lookupError = ref<string | null>(null)
 const orderData = ref<OrderData | null>(null)
 const loadError = ref<string | null>(null)
 const initialLoading = ref(true)
+
+// The POS wrapper only mounts once orderData resolves — (re)measure fill
+// height when it appears or the height mode changes.
+watch([orderData, heightMode], async () => {
+  await nextTick()
+  recomputeFillHeight()
+})
 
 // Login form state
 const formState = reactive({ helperName: '', pin: '' })
@@ -179,7 +216,10 @@ onMounted(async () => {
     <!-- Authenticated + data loaded → full POS -->
     <div
       v-else-if="orderData"
-      class="rounded-3xl border border-default overflow-clip bg-default h-dvh flex flex-col"
+      ref="posWrapper"
+      class="rounded-3xl border border-default overflow-clip bg-default flex flex-col"
+      :class="posHeightClass"
+      :style="posHeightStyle"
     >
       <!-- Header keeps everything left-aligned because the CMS shell has a
            fixed-position user-menu pill at top-right that would otherwise
