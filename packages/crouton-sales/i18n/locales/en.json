@@ -94,7 +94,10 @@
       "printError": "Could not trigger print for this order",
       "noOrdersFound": "No orders found",
       "staff": "Staff",
-      "noRemarks": "No remarks"
+      "noRemarks": "No remarks",
+      "noItems": "No items in this order",
+      "unknownProduct": "Unknown product",
+      "total": "Total"
     },
     "events": {
       "title": "Events",

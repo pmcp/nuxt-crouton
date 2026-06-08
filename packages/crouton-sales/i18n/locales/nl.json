@@ -94,7 +94,10 @@
       "printError": "Kan geen printopdracht starten voor deze bestelling",
       "noOrdersFound": "Geen bestellingen gevonden",
       "staff": "Personeel",
-      "noRemarks": "Geen opmerkingen"
+      "noRemarks": "Geen opmerkingen",
+      "noItems": "Geen artikelen in deze bestelling",
+      "unknownProduct": "Onbekend product",
+      "total": "Totaal"
     },
     "events": {
       "title": "Evenementen",

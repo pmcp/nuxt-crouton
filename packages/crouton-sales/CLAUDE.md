@@ -73,11 +73,21 @@ is an `integer` column (migration `0003_furry_lilith`); the old redundant `order
 dropped. The generic tree/sortable reorder path (`useTreeMutation`) is **not** used here because it
 re-fetches all team products un-scoped to the event.
 
-`OrdersTab.vue` renders orders as a **plain list** (not a table, not sortable) styled to match
-`ProductsTab`: a `<ul>` of click-to-edit rows showing the order number (mono), client name with a
-`Staff` badge when `isPersonnel`, remarks as muted subtext, and a status badge (color-coded by
-status). Clicking a row opens the `salesOrders` update slideover via `useCrouton().open`. The
-helper-filter / auto-refresh / count header is unchanged. It does **not** use `CroutonCollection`.
+`OrdersTab.vue` renders orders as a **plain expandable list** (not a table, not sortable) styled to
+match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client name with a `Staff`
+badge when `isPersonnel`, the helper who created it (`order.owner` — the helper displayName set by
+the order POST), and a status badge (color-coded). **Clicking a row toggles expand** (accordion-ish
+via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
+`salesOrders` update slideover via `useCrouton().open`. The helper-filter / auto-refresh / count
+header is unchanged. It does **not** use `CroutonCollection`.
+
+`OrderItems.vue` (auto-import `SalesEventWorkspaceOrderItems`) is the **lazy** expand panel: it
+mounts only when a row is expanded (`v-if`), so its `useCollectionQuery('salesOrderitems', { query:
+{ orderId } })` fetch fires on first expand, not with the orders list. It renders each line
+(qty × product title from the joined `productIdData`, selected options, per-item remarks, line
+total) plus the order total, and the order's `overallRemarks` (passed as `:remarks`) at the top.
+Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
+`getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, type, status, start/end dates)
 via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`, Save

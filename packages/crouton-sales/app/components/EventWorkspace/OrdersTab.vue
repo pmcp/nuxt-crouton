@@ -71,9 +71,19 @@ type OrderRow = {
   overallRemarks?: string
   isPersonnel?: boolean
   status: string
+  owner?: string
 }
 
 const orderRows = computed(() => (orders.value as OrderRow[] | null) || [])
+
+const expandedIds = ref<Set<string>>(new Set())
+
+function toggleExpand(id: string) {
+  const next = new Set(expandedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedIds.value = next
+}
 
 function statusColor(status: string) {
   switch (status) {
@@ -133,29 +143,48 @@ function openEditOrder(id: string) {
       <li
         v-for="order in orderRows"
         :key="order.id"
-        class="group flex items-center gap-3 px-3 py-2.5 bg-default hover:bg-elevated/50 transition-colors cursor-pointer"
-        @click="openEditOrder(order.id)"
+        class="bg-default"
       >
-        <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
-          #{{ order.eventOrderNumber ?? '—' }}
-        </span>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <span class="font-medium truncate">{{ order.clientName || t('sales.orders.client') }}</span>
-            <UBadge v-if="order.isPersonnel" color="neutral" variant="subtle" size="xs">
-              {{ t('sales.orders.staff') }}
-            </UBadge>
+        <div
+          class="group flex items-center gap-3 px-3 py-2.5 hover:bg-elevated/50 transition-colors cursor-pointer"
+          @click="toggleExpand(order.id)"
+        >
+          <UIcon
+            name="i-lucide-chevron-right"
+            class="shrink-0 text-dimmed transition-transform"
+            :class="expandedIds.has(order.id) ? 'rotate-90' : ''"
+          />
+          <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
+            #{{ order.eventOrderNumber ?? '—' }}
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-medium truncate">{{ order.clientName || t('sales.orders.client') }}</span>
+              <UBadge v-if="order.isPersonnel" color="warning" variant="subtle" size="xs">
+                {{ t('sales.orders.staff') }}
+              </UBadge>
+            </div>
+            <p v-if="order.owner" class="text-xs text-muted truncate flex items-center gap-1">
+              <UIcon name="i-lucide-user" class="shrink-0" />
+              {{ order.owner }}
+            </p>
           </div>
-          <p class="text-xs text-muted truncate">
-            {{ order.overallRemarks || t('sales.orders.noRemarks') }}
-          </p>
+          <UBadge :color="statusColor(order.status)" variant="subtle" size="sm" class="shrink-0">
+            {{ order.status }}
+          </UBadge>
+          <UButton
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            @click.stop="openEditOrder(order.id)"
+          />
         </div>
-        <UBadge :color="statusColor(order.status)" variant="subtle" size="sm" class="shrink-0">
-          {{ order.status }}
-        </UBadge>
-        <UIcon
-          name="i-lucide-chevron-right"
-          class="shrink-0 text-dimmed opacity-0 group-hover:opacity-100 transition-opacity"
+        <SalesEventWorkspaceOrderItems
+          v-if="expandedIds.has(order.id)"
+          :order-id="order.id"
+          :remarks="order.overallRemarks"
         />
       </li>
     </ul>

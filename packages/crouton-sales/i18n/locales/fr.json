@@ -94,7 +94,10 @@
       "printError": "Impossible de lancer l'impression pour cette commande",
       "noOrdersFound": "Aucune commande trouvée",
       "staff": "Personnel",
-      "noRemarks": "Aucune remarque"
+      "noRemarks": "Aucune remarque",
+      "noItems": "Aucun article dans cette commande",
+      "unknownProduct": "Produit inconnu",
+      "total": "Total"
     },
     "events": {
       "title": "Événements",
