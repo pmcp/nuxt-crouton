@@ -1,5 +1,28 @@
 [
   {
+    "collection": "pages",
+    "fields": [
+      "title",
+      "slug",
+      "pageType",
+      "content",
+      "config",
+      "status",
+      "visibility",
+      "publishedAt",
+      "showInNavigation",
+      "layout",
+      "seoTitle",
+      "seoDescription",
+      "ogImage",
+      "robots"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-08T12:04:45.108Z",
+    "layer": "pages",
+    "gitSha": "fec581ff"
+  },
+  {
     "collection": "printqueues",
     "fields": [
       "eventId",

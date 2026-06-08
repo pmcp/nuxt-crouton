@@ -1,7 +1,8 @@
 export default {
   // Feature flags - which crouton packages to enable
   features: {
-    sales: { config: { print: { enabled: true } } }
+    sales: { config: { print: { enabled: true } } },
+    pages: true
   },
 
   collections: [
@@ -14,7 +15,8 @@ export default {
     { name: 'clients', fieldsFile: './schemas/clients.json' },
     { name: 'eventSettings', fieldsFile: './schemas/eventSettings.json' },
     { name: 'printers', fieldsFile: './schemas/printers.json' },
-    { name: 'printQueues', fieldsFile: './schemas/printQueues.json' }
+    { name: 'printQueues', fieldsFile: './schemas/printQueues.json' },
+    { name: 'pages', fieldsFile: './schemas/pages.json', formComponent: 'CroutonPagesForm', hierarchy: { enabled: true, parentField: 'parentId', orderField: 'order', pathField: 'path', depthField: 'depth' } }
   ],
 
   targets: [
@@ -25,6 +27,10 @@ export default {
         'orderItems', 'locations', 'clients', 'eventSettings',
         'printers', 'printQueues'
       ]
+    },
+    {
+      layer: 'pages',
+      collections: ['pages']
     }
   ],
 

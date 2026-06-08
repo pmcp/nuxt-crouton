@@ -15,6 +15,13 @@
       "when": 1779791482005,
       "tag": "0001_demonic_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780920291651,
+      "tag": "0002_tidy_abomination",
+      "breakpoints": true
     }
   ]
 }

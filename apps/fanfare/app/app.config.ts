@@ -11,6 +11,8 @@ import { salesEventsettingsConfig } from '../layers/sales/collections/eventsetti
 import { salesPrintersConfig } from '../layers/sales/collections/printers/app/composables/useSalesPrinters'
 import { salesPrintqueuesConfig } from '../layers/sales/collections/printqueues/app/composables/useSalesPrintqueues'
 
+import {pagesPagesConfig} from '../layers/pages/collections/pages/app/composables/usePagesPages';
+
 export default defineAppConfig({
   croutonCollections: {
     translationsUi: translationsUiConfig,
@@ -23,6 +25,7 @@ export default defineAppConfig({
     salesClients: salesClientsConfig,
     salesEventsettings: salesEventsettingsConfig,
     salesPrinters: salesPrintersConfig,
-    salesPrintqueues: salesPrintqueuesConfig
+    salesPrintqueues: salesPrintqueuesConfig,
+    pagesPages: pagesPagesConfig
   }
 })
