@@ -135,11 +135,24 @@ const tabItems = [
     <UTabs v-model="activeTab" :items="tabItems" :content="false" />
 
     <!-- Tab content -->
+    <!--
+      Each tab component runs top-level `await useCollectionQuery`, so it's an
+      async-setup component. Keying a <Suspense> on activeTab gives every tab its
+      own async boundary that is cleanly torn down on switch — without it, rapid
+      tab switching unmounts a still-resolving tab and Vue patches a detached
+      subtree (NotFoundError: insertBefore / "Cannot read properties of null
+      (reading 'subTree')").
+    -->
     <div class="min-h-[400px]">
-      <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
-      <SalesEventWorkspaceOrdersTab v-if="activeTab === 'orders'" :event="event" />
-      <SalesEventWorkspacePrintersTab v-if="activeTab === 'printers'" :event="event" />
-      <SalesEventWorkspaceSettingsTab v-if="activeTab === 'settings'" :event="event" />
+      <Suspense :key="activeTab">
+        <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
+        <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
+        <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
+        <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
+        <template #fallback>
+          <div class="p-6 text-center text-muted">Loading…</div>
+        </template>
+      </Suspense>
     </div>
   </div>
 </template>
