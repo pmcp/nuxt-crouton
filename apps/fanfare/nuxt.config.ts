@@ -43,6 +43,11 @@ export default defineNuxtConfig({
   croutonAuth: {
     methods: {
       passkeys: false
+    },
+    // No public landing page — '/' bounces signed-out users back to login,
+    // so the auth modal's "Go home" button would strand them on a spinner.
+    ui: {
+      showGoHome: false
     }
   },
 

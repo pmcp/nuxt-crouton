@@ -340,6 +340,13 @@ export interface UIConfig {
   showRememberMe?: boolean
   /** Show social login buttons (default: true if oauth configured) */
   showSocialLogin?: boolean
+  /**
+   * Show the "Go home" escape button in the auth modal (default: true).
+   * Set to false for apps with no public landing page, where '/' just
+   * bounces signed-out users back to login (the button would otherwise
+   * strand them on a redirect loop).
+   */
+  showGoHome?: boolean
   /** Enable dark mode support (default: true) */
   darkMode?: boolean
 }

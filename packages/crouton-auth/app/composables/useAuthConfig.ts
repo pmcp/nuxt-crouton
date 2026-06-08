@@ -51,6 +51,7 @@ interface RuntimeAuthConfig {
     }
     showRememberMe?: boolean
     showSocialLogin?: boolean
+    showGoHome?: boolean
     darkMode?: boolean
   }
   session?: {

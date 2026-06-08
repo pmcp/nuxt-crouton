@@ -16,6 +16,11 @@ const notify = useNotify()
 const authModal = useAuthModal()
 const { state } = authModal
 
+// Hide the "Go home" escape hatch for apps with no public landing page
+// (where '/' just bounces signed-out users back here). Default: shown.
+const authConfig = useAuthConfig()
+const showGoHome = computed(() => authConfig?.ui?.showGoHome !== false)
+
 // Bind UModal open state — setter restores URL when user dismisses
 const isOpen = computed({
   get: () => state.value.open,
@@ -294,7 +299,7 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
   >
     <template #content>
       <div class="p-6">
-        <div class="mb-2 flex justify-end">
+        <div v-if="showGoHome" class="mb-2 flex justify-end">
           <UButton
             variant="ghost"
             color="neutral"

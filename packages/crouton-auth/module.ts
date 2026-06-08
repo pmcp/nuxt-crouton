@@ -58,6 +58,7 @@ const defaults: CroutonAuthConfig = {
     },
     showRememberMe: true,
     showSocialLogin: true,
+    showGoHome: true,
     darkMode: true
   },
   session: {
