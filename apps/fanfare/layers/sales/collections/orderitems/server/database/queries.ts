@@ -7,7 +7,7 @@ import * as ordersSchema from '../../../orders/server/database/schema'
 import * as productsSchema from '../../../products/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesOrderitems(teamId: string) {
+export async function getAllSalesOrderitems(teamId: string, filters?: { orderId?: string }) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -44,7 +44,10 @@ export async function getAllSalesOrderitems(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesOrderitems.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesOrderitems.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesOrderitems.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesOrderitems.teamId, teamId))
+    .where(and(
+      eq(tables.salesOrderitems.teamId, teamId),
+      ...(filters?.orderId ? [eq(tables.salesOrderitems.orderId, filters.orderId)] : [])
+    ))
     .orderBy(desc(tables.salesOrderitems.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
