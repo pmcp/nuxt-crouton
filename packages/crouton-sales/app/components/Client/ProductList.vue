@@ -29,9 +29,17 @@
             variant="ghost"
             color="primary"
             size="xs"
-            icon="i-lucide-plus"
-            @click.stop="emit('select', product)"
-          />
+            square
+            class="active:scale-90 transition-transform"
+            @click.stop="addProduct(product)"
+          >
+            <UIcon
+              name="i-lucide-plus"
+              class="size-4 transition-transform"
+              :class="poppedId === product.id ? 'animate-pop' : ''"
+              @animationend="poppedId = null"
+            />
+          </UButton>
         </template>
       </SalesClientOrderLineItem>
 
@@ -76,13 +84,19 @@
               :label="option.label"
               block
               size="md"
-              color="primary"
+              color="neutral"
               variant="ghost"
+              class="active:scale-[0.98] transition-transform"
               @click="selectOption(product, option.id)"
             >
               <template #trailing>
-                <span v-if="option.priceModifier > 0" class="text-xs opacity-70 ms-auto">+${{ option.priceModifier.toFixed(2) }}</span>
-                <UIcon name="i-lucide-plus" class="size-4" :class="{ 'ms-auto': !option.priceModifier }" />
+                <span v-if="option.priceModifier > 0" class="text-xs text-muted ms-auto">+${{ option.priceModifier.toFixed(2) }}</span>
+                <UIcon
+                  name="i-lucide-plus"
+                  class="size-4 text-primary transition-transform"
+                  :class="[{ 'ms-auto': !option.priceModifier }, poppedId === option.id ? 'animate-pop' : '']"
+                  @animationend="poppedId = null"
+                />
               </template>
             </UButton>
           </div>
@@ -107,6 +121,9 @@ const emit = defineEmits<{
 const containerRef = ref<HTMLElement | null>(null)
 const activeProductId = ref<string | null>(null)
 const selectedOptionIds = ref<Map<string, string[]>>(new Map())
+// Tracks the most recently tapped add affordance so its plus icon can
+// briefly "pop" for tactile feedback. Cleared via @animationend (no timers).
+const poppedId = ref<string | null>(null)
 
 function hasOptions(product: SalesProduct): boolean {
   return !!product.hasOptions && Array.isArray(product.options) && product.options.length > 0
@@ -146,7 +163,7 @@ function handleProductClick(product: SalesProduct) {
     toggleProduct(product)
   }
   else {
-    emit('select', product)
+    addProduct(product)
   }
 }
 
@@ -159,7 +176,13 @@ function toggleProduct(product: SalesProduct) {
   activeProductId.value = activeProductId.value === product.id ? null : product.id
 }
 
+function addProduct(product: SalesProduct) {
+  poppedId.value = product.id
+  emit('select', product)
+}
+
 function selectOption(product: SalesProduct, optionId: string) {
+  poppedId.value = optionId
   emit('select', product, optionId)
 }
 
@@ -189,5 +212,21 @@ onClickOutside(containerRef, () => {
 .slide-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+.animate-pop {
+  animation: pop 0.2s ease-out;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 </style>
