@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   pageType: z.string().min(1, 'pageType is required'),
-  config: z.record(z.string(), z.any()).optional(),
+  config: z.record(z.string(), z.any()).nullable().optional(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
   publishedAt: z.coerce.date().optional(),
