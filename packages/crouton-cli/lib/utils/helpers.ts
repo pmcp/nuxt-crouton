@@ -1,5 +1,6 @@
 // Utility functions for case conversion and type mapping
 import { pascalCase, snakeCase, kebabCase } from 'scule'
+import pluralize from 'pluralize'
 
 export const pascal = pascalCase
 export const toSnakeCase = snakeCase
@@ -17,8 +18,11 @@ export interface CaseVariants {
 }
 
 export function toCase(str: string): CaseVariants {
-  const singular = str.endsWith('s') && str.length > 1 ? str.slice(0, -1) : str
-  const plural = str.endsWith('s') ? str : str + 's'
+  // Use npm `pluralize` for proper English rules (category↔categories, entry↔entries,
+  // equipment uncountable). The previous naive `str + 's'` / `str.slice(0,-1)` broke
+  // any word ending in 'y' and double-pluralized uncountables.
+  const singular = pluralize.singular(str)
+  const plural = pluralize(str)
 
   // Use the pascal() helper to properly convert hyphenated names
   const singularPascal = pascal(singular)

@@ -58,8 +58,13 @@ export default defineAppConfig({
 
   const code = await readFile(registryPath, 'utf-8')
 
-  // Check if already registered
-  if (code.includes(`${collectionKey}:`)) {
+  // Check if already registered. Case-insensitive so that an existing
+  // `salesOrderitems` is recognized when a regen produces `salesOrderItems`
+  // (camelCase variant of the same collection). Word boundary + literal `:`
+  // prevents false matches on overlapping prefixes (e.g. `salesEvent` vs
+  // `salesEvents:`).
+  const keyPattern = new RegExp(`\\b${collectionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:`, 'i')
+  if (keyPattern.test(code)) {
     return { added: false, reason: 'already registered' }
   }
 

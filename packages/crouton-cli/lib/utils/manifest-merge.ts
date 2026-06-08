@@ -17,6 +17,7 @@
 import path from 'node:path'
 import fsp from 'node:fs/promises'
 import * as p from '@clack/prompts'
+import pluralizeLib from 'pluralize'
 import { discoverManifests } from './manifest-bridge.ts'
 import { findPackagesDir } from './manifest-loader.ts'
 
@@ -113,11 +114,11 @@ function isConditionMet(featureConfig: boolean | Record<string, unknown>, condit
 }
 
 /**
- * Naive pluralize: add 's' if not already ending in 's'.
- * Used for config-style collection names.
+ * Pluralize a collection name using English rules (category→categories,
+ * entry→entries, equipment uncountable). Idempotent on already-plural input.
  */
 function pluralize(name: string): string {
-  return name.endsWith('s') ? name : name + 's'
+  return pluralizeLib(name)
 }
 
 /**
@@ -261,9 +262,13 @@ export async function mergeManifestCollections(config: CroutonConfig): Promise<M
   // Discover all manifests
   const manifests: Manifest[] = await discoverManifests()
 
-  // Build a set of collection names the user already has
-  const existingNames = new Set(
-    (config.collections || []).map(c => c.name),
+  // Map of user-defined collection names, keyed by lowercased name for
+  // case-insensitive collision detection. Value is the user's original casing
+  // so we can preserve it when reporting/registering matches.
+  // Without this, e.g. user `orderItems` + manifest `orderItem` (pluralizes to
+  // `orderitems`) would both register, producing duplicate app.config entries.
+  const existingNames = new Map<string, string>(
+    (config.collections || []).map(c => [c.name.toLowerCase(), c.name]),
   )
 
   // Ensure arrays exist
@@ -336,14 +341,18 @@ export async function mergeManifestCollections(config: CroutonConfig): Promise<M
       // Use pluralized lowercase name for config compatibility
       const configName = pluralize(col.name.toLowerCase())
 
-      // Skip collections the user already defined (user override wins)
-      // Check both singular and plural forms
-      if (existingNames.has(configName) || existingNames.has(col.name)) {
-        const matchedName = existingNames.has(configName) ? configName : col.name
-        if (!target.collections.includes(matchedName)) {
-          target.collections.push(matchedName)
+      // Skip collections the user already defined (user override wins).
+      // Check case-insensitively against both singular (col.name) and plural
+      // (configName) forms so that user `orderItems` is recognized as the
+      // same collection as manifest `orderItem` → `orderitems`.
+      const matchedOriginal =
+        existingNames.get(configName.toLowerCase()) ??
+        existingNames.get(col.name.toLowerCase())
+      if (matchedOriginal) {
+        if (!target.collections.includes(matchedOriginal)) {
+          target.collections.push(matchedOriginal)
         }
-        result.skipped.push(matchedName)
+        result.skipped.push(matchedOriginal)
         continue
       }
 
@@ -370,6 +379,10 @@ export async function mergeManifestCollections(config: CroutonConfig): Promise<M
         fieldsFile: absSchemaPath,
         ...(col.hierarchy ? { hierarchy: col.hierarchy } : {})
       })
+
+      // Track for subsequent collision checks within this merge pass so two
+      // manifests claiming the same collection don't both register.
+      existingNames.set(configName.toLowerCase(), configName)
 
       // Add to target's collections list
       if (!target.collections.includes(configName)) {

@@ -88,6 +88,30 @@ describe('toCase', () => {
     expect(result.singular).toBe('a')
     expect(result.plural).toBe('as')
   })
+
+  // Regression: previous naive pluralizer (`str + 's'`) produced `categorys`,
+  // `entrys`, etc. The npm `pluralize` library handles English `y → ies` correctly.
+  it('pluralizes words ending in -y correctly', () => {
+    expect(toCase('category').plural).toBe('categories')
+    expect(toCase('entry').plural).toBe('entries')
+    expect(toCase('country').plural).toBe('countries')
+    expect(toCase('category').pascalCasePlural).toBe('Categories')
+  })
+
+  it('singularizes -ies plurals correctly', () => {
+    expect(toCase('categories').singular).toBe('category')
+    expect(toCase('entries').singular).toBe('entry')
+  })
+
+  it('handles uncountable nouns (no double-pluralization)', () => {
+    expect(toCase('equipment').plural).toBe('equipment')
+    expect(toCase('equipment').singular).toBe('equipment')
+  })
+
+  it('is idempotent on already-plural input', () => {
+    expect(toCase('categories').plural).toBe('categories')
+    expect(toCase('products').plural).toBe('products')
+  })
 })
 
 describe('mapType', () => {
