@@ -98,7 +98,7 @@ const donutCategories = computed(() =>
   Object.fromEntries(
     chartData.value.map((row: Record<string, unknown>, i: number) => {
       const label = String(row[xAxisKey.value] ?? `Item ${i}`)
-      return [label, { name: label, color: CHART_COLOR_PALETTE[i % CHART_COLOR_PALETTE.length] }]
+      return [label, { name: label, color: getChartColor(i, chartData.value.length) }]
     })
   )
 )

@@ -16,7 +16,7 @@ export interface UseCollectionChartOptions {
   query?: Record<string, string | number>
 }
 
-import { CHART_COLOR_PALETTE } from '../utils/chart-constants'
+import { getChartColor } from '../utils/chart-constants'
 
 export function useCollectionChart(
   collectionKey: MaybeRef<string>,
@@ -127,7 +127,7 @@ export function useCollectionChart(
 
     return fields.map((field, index) => ({
       name: field,
-      color: CHART_COLOR_PALETTE[index % CHART_COLOR_PALETTE.length]!
+      color: getChartColor(index, fields.length)
     }))
   })
 
