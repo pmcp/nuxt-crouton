@@ -160,6 +160,25 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | `ReceiptSettingsModal.vue` | `SalesSettingsReceiptSettingsModal` | Receipt text customization |
 | `PrintPreviewModal.vue` | `SalesSettingsPrintPreviewModal` | Receipt preview with test print |
 
+### CMS Page Blocks (`Blocks/`) — for `@fyit/crouton-pages`
+
+Registered in `app/app.config.ts` under `croutonBlocks`. Appear in the page
+editor's insert menu whenever an app extends both `@fyit/crouton-sales` and
+`@fyit/crouton-pages`. Both blocks use the shared `EventSlugPicker` as the
+event field's `propertyComponents` editor.
+
+| Block type | Editor view | Renderer | Purpose |
+|------------|-------------|----------|---------|
+| `eventStorefrontBlock` | `SalesBlocksEventStorefrontView` | `SalesBlocksEventStorefrontRender` | Public event card with "Order Now" CTA → `/order/[team]/[event]` |
+| `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page |
+| `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
+
+Also registered: `pageType: 'eventStorefront'` under `croutonApps.sales.pageTypes`
+for full-page event storefront pages (no block wrapper).
+
+Both renderers are `clientOnly: true` — helper sessions live in localStorage
+and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.
+
 ## Common Tasks
 
 ### Add a new product field

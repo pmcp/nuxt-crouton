@@ -5,6 +5,14 @@
       "sectionTitle": "Kassa",
       "overview": "Overzicht"
     },
+    "block": {
+      "eventStorefront": "Event Winkel",
+      "orderInterface": "Bestelinterface",
+      "noEventPicked": "Geen event gekozen",
+      "editBlock": "Blok bewerken",
+      "deleteBlock": "Blok verwijderen",
+      "orderNow": "Bestellen"
+    },
     "cart": {
       "title": "Winkelwagen",
       "empty": "Je winkelwagen is leeg",

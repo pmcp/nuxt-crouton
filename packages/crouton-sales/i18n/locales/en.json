@@ -5,6 +5,14 @@
       "sectionTitle": "Point of Sale",
       "overview": "Overview"
     },
+    "block": {
+      "eventStorefront": "Event Storefront",
+      "orderInterface": "Order Interface",
+      "noEventPicked": "No event picked",
+      "editBlock": "Edit block",
+      "deleteBlock": "Delete block",
+      "orderNow": "Order Now"
+    },
     "cart": {
       "title": "Cart",
       "empty": "Your cart is empty",
