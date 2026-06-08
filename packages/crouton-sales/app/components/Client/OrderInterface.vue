@@ -79,7 +79,7 @@
 
       <!-- Mobile cart button -->
       <div class="md:hidden border-t border-default p-2">
-        <UDrawer direction="bottom">
+        <UDrawer v-model:open="mobileCartOpen" direction="bottom">
           <UButton
             block
             size="lg"
@@ -211,6 +211,9 @@ const hasClient = computed(() => {
   return !!(selectedClientName.value?.trim())
 })
 
+// Mobile cart drawer open state (closed automatically after checkout)
+const mobileCartOpen = ref(false)
+
 // Product options modal state
 const showOptionsModal = ref(false)
 const pendingProduct = ref<SalesProduct | null>(null)
@@ -281,6 +284,9 @@ const filteredProducts = computed(() => {
 async function handleCheckout() {
   try {
     await checkout()
+    // Close the mobile cart drawer once the order is placed (desktop sidebar
+    // just empties as checkout() clears the cart).
+    mobileCartOpen.value = false
     notify.success(t('sales.orders.orderCreated'), { description: t('sales.orders.submittedSuccessfully') })
   }
   catch (error) {
