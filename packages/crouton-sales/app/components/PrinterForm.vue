@@ -38,6 +38,7 @@
               v-model="state.locationId"
               collection="salesLocations"
               label="Location"
+              :create-initial-data="{ eventId: state.eventId }"
             />
           </UFormField>
 

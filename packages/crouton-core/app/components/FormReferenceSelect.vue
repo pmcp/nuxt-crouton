@@ -72,6 +72,10 @@ interface Props {
   hideCreate?: boolean
   multiple?: boolean
   query?: ComputedRef<Record<string, any>> | Ref<Record<string, any>>
+  // Initial data to seed the nested create form when "Create new" is clicked.
+  // Lets a parent form pass context (e.g. { eventId }) so the new referenced
+  // item inherits it instead of starting blank.
+  createInitialData?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -165,7 +169,7 @@ const isCreating = ref(false)
 // Handle create button click
 const handleCreate = () => {
   isCreating.value = true
-  open('create', props.collection, [])
+  open('create', props.collection, [], 'slideover', props.createInitialData)
 }
 
 // Watch for new items after creation

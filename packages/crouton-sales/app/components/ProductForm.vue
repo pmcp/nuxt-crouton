@@ -55,6 +55,7 @@
                   v-model="state.categoryId"
                   collection="salesCategories"
                   label="Category"
+                  :create-initial-data="{ eventId: state.eventId }"
                 />
               </UFormField>
               <UFormField label="Prep Location" name="locationId">
@@ -62,6 +63,7 @@
                   v-model="state.locationId"
                   collection="salesLocations"
                   label="Prep Location"
+                  :create-initial-data="{ eventId: state.eventId }"
                 />
               </UFormField>
             </div>
