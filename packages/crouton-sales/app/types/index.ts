@@ -62,8 +62,8 @@ export interface SalesChartBlockAttrs {
   chart?: string
   /** Event id to scope to, or '' for all events (team-wide). */
   eventScope?: string
-  /** Optional chart type override; '' uses the kind's default. */
-  chartTypeOverride?: '' | 'bar' | 'line' | 'area' | 'donut'
+  /** Optional chart type override; 'default' uses the kind's default. */
+  chartTypeOverride?: 'default' | 'bar' | 'line' | 'area' | 'donut'
   title?: string
   height?: number | string
 }

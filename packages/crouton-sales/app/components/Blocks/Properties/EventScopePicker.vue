@@ -30,6 +30,10 @@ interface EventItem {
 
 const { items, pending } = await useCollectionQuery('salesEvents')
 
+// USelectMenu (reka-ui Combobox) forbids an empty-string item value, so the
+// "All events" choice uses a sentinel that maps back to '' on emit.
+const ALL_EVENTS = '__all__'
+
 const options = computed(() => {
   const events = (items.value as EventItem[] || [])
     .map(e => ({
@@ -40,19 +44,22 @@ const options = computed(() => {
     .sort((a, b) => a.label.localeCompare(b.label))
 
   return [
-    { label: 'All events', value: '', status: undefined },
+    { label: 'All events', value: ALL_EVENTS, status: undefined },
     ...events
   ]
 })
 
+// Map '' (all events) ↔ the sentinel the select needs.
+const selected = computed(() => props.modelValue || ALL_EVENTS)
+
 function onChange(value: string) {
-  emit('update:modelValue', value || '')
+  emit('update:modelValue', value === ALL_EVENTS ? '' : (value || ''))
 }
 </script>
 
 <template>
   <USelectMenu
-    :model-value="modelValue"
+    :model-value="selected"
     :items="options"
     value-key="value"
     label-key="label"

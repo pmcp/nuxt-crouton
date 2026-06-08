@@ -118,7 +118,7 @@ const salesChartBlock: CroutonBlockDefinition = {
   defaultAttrs: {
     chart: 'revenue-by-day',
     eventScope: '',
-    chartTypeOverride: '',
+    chartTypeOverride: 'default',
     title: '',
     height: 300
   },
@@ -149,9 +149,9 @@ const salesChartBlock: CroutonBlockDefinition = {
       type: 'select',
       label: 'Chart type',
       description: 'Override the chart\'s default type',
-      defaultValue: '',
+      defaultValue: 'default',
       options: [
-        { label: 'Default', value: '' },
+        { label: 'Default', value: 'default' },
         { label: 'Bar', value: 'bar' },
         { label: 'Line', value: 'line' },
         { label: 'Area', value: 'area' },
@@ -182,7 +182,7 @@ const salesChartBlock: CroutonBlockDefinition = {
     attributes: {
       chart: { default: 'revenue-by-day' },
       eventScope: { default: '' },
-      chartTypeOverride: { default: '' },
+      chartTypeOverride: { default: 'default' },
       title: { default: '' },
       height: { default: 300, htmlAttr: 'data-height', parseType: 'int' }
     }
