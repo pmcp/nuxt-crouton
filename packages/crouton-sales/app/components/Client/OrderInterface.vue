@@ -43,6 +43,7 @@
           <div class="flex-1 min-h-0 overflow-y-auto">
             <SalesClientCart
               :items="cartItems"
+              :categories="categories || []"
               :total="cartTotal"
               :disabled="!isOnline"
               :client-required="props.requiresClient"
@@ -105,6 +106,7 @@
               <div class="flex-1 min-h-0 overflow-y-auto">
                 <SalesClientCart
                   :items="cartItems"
+                  :categories="categories || []"
                   :total="cartTotal"
                   :disabled="!isOnline"
                   :client-required="props.requiresClient"
