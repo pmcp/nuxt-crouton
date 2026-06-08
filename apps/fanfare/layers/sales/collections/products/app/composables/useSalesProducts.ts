@@ -64,7 +64,7 @@ const _salesProductsConfig = {
   name: 'salesProducts',
   layer: 'sales',
   apiPath: 'sales-products',
-  componentName: 'SalesProductsForm',
+  componentName: 'SalesProductForm',
   defaultValues: {
     eventId: '',
     categoryId: '',

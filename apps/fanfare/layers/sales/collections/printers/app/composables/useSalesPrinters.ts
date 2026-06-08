@@ -57,7 +57,7 @@ const _salesPrintersConfig = {
   name: 'salesPrinters',
   layer: 'sales',
   apiPath: 'sales-printers',
-  componentName: 'SalesPrintersForm',
+  componentName: 'SalesPrinterForm',
   defaultValues: {
     eventId: '',
     locationId: '',

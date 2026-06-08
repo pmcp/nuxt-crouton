@@ -42,7 +42,7 @@ const _salesLocationsConfig = {
   name: 'salesLocations',
   layer: 'sales',
   apiPath: 'sales-locations',
-  componentName: 'SalesLocationsForm',
+  componentName: 'SalesLocationForm',
   defaultValues: {
     eventId: '',
     title: ''
