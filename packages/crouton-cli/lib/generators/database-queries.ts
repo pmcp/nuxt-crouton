@@ -331,6 +331,10 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   // Detect reference fields for LEFT JOINs and post-query processing
   const { singleReferences, arrayReferences } = detectReferenceFields(data, config)
 
+  // Foreign-key fields usable to scope getAll* (e.g. ?eventId=...). Excludes the
+  // owner/createdBy/updatedBy user refs — only real FK columns (eventId, categoryId, …).
+  const filterFields = singleReferences.filter(r => !r.isUserReference).map(r => r.fieldName)
+
   // Generate imports for referenced schemas
   let schemaImports = ''
   const allReferences = [...singleReferences, ...arrayReferences]
@@ -558,19 +562,33 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   // (hierarchy already includes reorderSiblings, so we skip to avoid duplicate exports)
   const sortableQueries = hasHierarchy ? '' : generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
+  // Optional FK filter support for getAll* — keeps output byte-identical for FK-less collections
+  const filtersParam = filterFields.length
+    ? `, filters?: { ${filterFields.map(f => `${f}?: string`).join(', ')} }`
+    : ''
+  const filterConditions = filterFields
+    .map(f => `\n  if (filters?.${f}) conditions.push(eq(tables.${tableName}.${f}, filters.${f}))`)
+    .join('')
+  const getAllConditionsSetup = filterFields.length
+    ? `  const conditions = [eq(tables.${tableName}.teamId, teamId)]${filterConditions}\n`
+    : ''
+  const getAllWhereExpr = filterFields.length
+    ? 'and(...conditions)'
+    : `eq(tables.${tableName}.teamId, teamId)`
+
   return `// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and${useMetadata ? ', desc' : ''}${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
 ${schemaImports}
-export async function getAll${prefixedPascalCasePlural}(teamId: string) {
+export async function getAll${prefixedPascalCasePlural}(teamId: string${filtersParam}) {
   const db = useDB()
-${aliasDefinitions}
+${aliasDefinitions}${getAllConditionsSetup}
   const ${camelCasePlural} = await (db as any)
     .select(${selectClause ? `${selectClause} as any` : '()'})
     .from(tables.${tableName})${leftJoins}
-    .where(eq(tables.${tableName}.teamId, teamId))${orderByClause ? `
+    .where(${getAllWhereExpr})${orderByClause ? `
     .orderBy(${orderByClause})` : ''}
 ${jsonFieldProcessing}${postQueryProcessing}
   return ${camelCasePlural}

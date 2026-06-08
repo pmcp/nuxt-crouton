@@ -587,6 +587,27 @@ With `collab: true` (in config):
 - Adds `useSession()` and `collabConfig` computed to script
 - Requires `@fyit/crouton-collab` to be extended
 
+## List Filtering by Foreign Key
+
+Collections with foreign-key reference fields (`refTarget`) generate a list endpoint
+that scopes results by any FK passed as a query param. For a `products` collection with
+`eventId`/`categoryId` refs:
+
+```ts
+// GET /api/teams/[id]/sales-products?eventId=evt_123  → only that event's products
+const result = await getAllSalesProducts(team.id, {
+  eventId: query.eventId ? String(query.eventId) : undefined,
+  categoryId: query.categoryId ? String(query.categoryId) : undefined,
+})
+```
+
+`getAll*(teamId, filters?)` builds a `conditions` array and applies `and(...conditions)`;
+each FK filter is opt-in (applied only when present). Collections with **no** FK fields
+emit the exact same `getAll*(teamId)` / `.where(eq(teamId))` as before — byte-identical.
+This is what scopes `@fyit/crouton-sales` event-workspace tabs to one event (without it,
+every event showed the team-wide union of products/categories/locations/printers/orders).
+Owner/createdBy/updatedBy user refs are intentionally excluded from filters.
+
 ## Team Authentication
 
 All generated collections are team-scoped. The generator:

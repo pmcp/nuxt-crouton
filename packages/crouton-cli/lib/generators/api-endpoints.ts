@@ -8,6 +8,15 @@ export function generateGetEndpoint(data: Record<string, any>, config: Record<st
   // Check if this collection has translations
   const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
 
+  // Foreign-key fields that can scope the list (e.g. ?eventId=...). Keeps the call
+  // byte-identical for FK-less collections so existing output/tests are unaffected.
+  const filterFields = (data.fields || []).filter((f: Record<string, any>) => f.refTarget).map((f: Record<string, any>) => f.name)
+  const getAllCall = filterFields.length
+    ? `getAll${prefixedPascalCasePlural}(team.id, {
+${filterFields.map((f: string) => `    ${f}: query.${f} ? String(query.${f}) : undefined`).join(',\n')}
+  })`
+    : `getAll${prefixedPascalCasePlural}(team.id)`
+
   const queriesPath = '../../../../database/queries'
 
   return `// Team-based endpoint - requires @fyit/crouton-auth package
@@ -36,7 +45,7 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await getAll${prefixedPascalCasePlural}(team.id)
+  const result = await ${getAllCall}
   dbTimer.end()
   return result
 })`
