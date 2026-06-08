@@ -2,13 +2,16 @@
   <div class="flex justify-between items-center">
     <div class="flex items-center gap-2">
       <span :class="labelClass">{{ t('sales.cart.total') }}</span>
-      <span
+      <UBadge
         v-if="count > 0"
         :key="count"
-        class="bg-primary text-primary-foreground text-xs font-medium rounded px-1.5 py-0.5 animate-pop"
+        color="primary"
+        variant="solid"
+        size="sm"
+        class="animate-pop"
       >
         {{ count }}
-      </span>
+      </UBadge>
     </div>
     <span :key="total" :class="['animate-pop', priceClass]">${{ total.toFixed(2) }}</span>
   </div>

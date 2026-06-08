@@ -8,7 +8,7 @@
 
     <template v-else>
       <!-- Category tabs -->
-      <div class="p-2 border-b shrink-0">
+      <div class="p-2 border-b border-default shrink-0">
         <SalesClientCategoryTabs
           v-model="selectedCategory"
           :categories="categories || []"
@@ -27,8 +27,8 @@
         </div>
 
         <!-- Cart sidebar (desktop only) -->
-        <div class="hidden md:flex w-80 border-l flex-col">
-          <div v-if="props.requiresClient" class="p-3 border-b">
+        <div class="hidden md:flex w-80 border-l border-default flex-col">
+          <div v-if="props.requiresClient" class="p-3 border-b border-default">
             <SalesClientSelector
               :clients="props.clients || []"
               :use-reusable-clients="true"
@@ -78,7 +78,7 @@
       </UModal>
 
       <!-- Mobile cart button -->
-      <div class="md:hidden border-t p-2">
+      <div class="md:hidden border-t border-default p-2">
         <UDrawer direction="bottom">
           <UButton
             block
@@ -91,7 +91,7 @@
 
           <template #content>
             <div class="h-[70vh] flex flex-col">
-              <div v-if="props.requiresClient" class="p-3 border-b shrink-0">
+              <div v-if="props.requiresClient" class="p-3 border-b border-default shrink-0">
                 <SalesClientSelector
                   :clients="props.clients || []"
                   :use-reusable-clients="true"

@@ -52,50 +52,39 @@
     </template>
 
     <!-- Create client modal -->
-    <UModal v-model:open="createModalOpen">
-      <template #content>
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold">
-              {{ t('sales.client.createNew', 'Create new client') }}
-            </h3>
-            <UButton
-              icon="i-lucide-x"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              @click="createModalOpen = false"
-            />
-          </div>
+    <UModal
+      v-model:open="createModalOpen"
+      :title="t('sales.client.createNew', 'Create new client')"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <UFormField :label="t('sales.client.nameLabel', 'Client name')" required>
+          <UInput
+            v-model="newClientName"
+            :placeholder="t('sales.client.namePlaceholder', 'Enter client name')"
+            size="xl"
+            class="w-full"
+            @keyup.enter="createClient"
+          />
+        </UFormField>
+      </template>
 
-          <UFormField :label="t('sales.client.nameLabel', 'Client name')" required>
-            <UInput
-              v-model="newClientName"
-              :placeholder="t('sales.client.namePlaceholder', 'Enter client name')"
-              size="xl"
-              class="w-full"
-              @keyup.enter="createClient"
-            />
-          </UFormField>
-
-          <div class="flex justify-end gap-2 mt-6">
-            <UButton
-              color="neutral"
-              variant="outline"
-              @click="createModalOpen = false"
-            >
-              {{ t('common.cancel', 'Cancel') }}
-            </UButton>
-            <UButton
-              color="primary"
-              :loading="creating"
-              :disabled="!newClientName.trim()"
-              @click="createClient"
-            >
-              {{ t('common.create', 'Create') }}
-            </UButton>
-          </div>
-        </div>
+      <template #footer="{ close }">
+        <UButton
+          color="neutral"
+          variant="outline"
+          @click="close"
+        >
+          {{ t('common.cancel', 'Cancel') }}
+        </UButton>
+        <UButton
+          color="primary"
+          :loading="creating"
+          :disabled="!newClientName.trim()"
+          @click="createClient"
+        >
+          {{ t('common.create', 'Create') }}
+        </UButton>
       </template>
     </UModal>
   </div>
