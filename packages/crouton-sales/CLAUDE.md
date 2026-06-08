@@ -63,6 +63,13 @@ Event workspace tabs are extracted into reusable components under `app/component
 `ProductsTab.vue`, `OrdersTab.vue`, `PrintersTab.vue`, `SettingsTab.vue`
 (auto-imported as `SalesEventWorkspaceProductsTab`, etc.)
 
+`SettingsTab.vue` edits the event's **core fields inline** (title, type, status, start/end dates)
+via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`, Save
+disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
+breaks the current URL — use the workspace's top-right "Edit" button for the slug). The tab also
+hosts Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, Categories,
+Locations, and the Active Helpers list.
+
 ### Customer Pages (POS interface)
 
 ```
@@ -109,14 +116,14 @@ are `real` (no cast).
 
 ### Print-Server Polling Endpoints
 
-Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler (e.g., the RUT956 BusyBox script at `/Users/pmcp/Projects/fyit-pos-printer`) that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status.
+Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
 
 Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.printApiKey` (default `'1234'`; override with env `NUXT_CROUTON_SALES_PRINT_API_KEY`).
 
 | Path | Method | Purpose |
 |------|--------|---------|
 | `print-server/events/[eventId]/jobs?mark_as_printing=true` | GET | List pending jobs joined with printer IP. With `mark_as_printing` flag, flips status pending→printing atomically. |
-| `print-server/jobs/[jobId]/complete` | POST | Mark status=completed, set completedAt. |
+| `print-server/jobs/[jobId]/complete` | POST | Mark status=completed, set completedAt. **Also auto-completes the order**: when no remaining job for that `orderId` is in a non-completed state, sets `salesOrders.status='completed'`. A failed ticket keeps the order out of `completed` until reprinted. |
 | `print-server/jobs/[jobId]/fail` | POST | Body `{ errorMessage? }`. Set status=failed, increment retryCount. |
 
 `printData` returned by `/jobs` is already base64-encoded ESC/POS bytes (built by `formatReceipt` in `server/utils/receipt-formatter.ts`). Spooler decodes and writes raw bytes to printer's TCP port 9100.
@@ -283,6 +290,9 @@ Events must have a `helperPin` field configured:
   `node-thermal-printer` — that lib pulls in `pngjs`/`iconv-lite`/`unorm`, which
   crash the Cloudflare Workers runtime at init. The server only emits the base64
   ESC/POS payload; the on-site spooler streams it to the printer's TCP port 9100.
+  The ticket time is rendered with an explicit IANA timezone (`ReceiptData.timeZone`,
+  default `Europe/Brussels`) because CF Workers run in UTC — otherwise the printed
+  time is off by the local offset.
 
 ## Testing
 

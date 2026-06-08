@@ -29,6 +29,63 @@ const originalHelperPin = ref(props.event.helperPin || '')
 const savingHelperPin = ref(false)
 const showReceiptSettings = ref(false)
 
+// Inline-editable core event details (title / type / dates / status).
+// Slug is intentionally excluded — it is the route param and editing it here
+// would break the current URL. Use the top-right "Edit" button for the slug.
+const statusOptions = [
+  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'Active', value: 'active' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' }
+]
+
+const eventForm = ref({
+  title: props.event.title || '',
+  eventType: props.event.eventType || '',
+  startDate: props.event.startDate ? new Date(props.event.startDate) : null,
+  endDate: props.event.endDate ? new Date(props.event.endDate) : null,
+  status: props.event.status || 'upcoming'
+})
+const savingEventDetails = ref(false)
+
+// Re-seed the form when the event changes (switching events, or an external
+// edit via the top-right "Edit" button).
+watch(() => props.event.id, () => {
+  eventForm.value = {
+    title: props.event.title || '',
+    eventType: props.event.eventType || '',
+    startDate: props.event.startDate ? new Date(props.event.startDate) : null,
+    endDate: props.event.endDate ? new Date(props.event.endDate) : null,
+    status: props.event.status || 'upcoming'
+  }
+})
+
+const toTime = (d: Date | string | null | undefined) => (d ? new Date(d).getTime() : null)
+const eventDetailsDirty = computed(() =>
+  eventForm.value.title !== (props.event.title || '')
+  || eventForm.value.eventType !== (props.event.eventType || '')
+  || eventForm.value.status !== (props.event.status || 'upcoming')
+  || toTime(eventForm.value.startDate) !== toTime(props.event.startDate)
+  || toTime(eventForm.value.endDate) !== toTime(props.event.endDate)
+)
+
+async function saveEventDetails() {
+  savingEventDetails.value = true
+  try {
+    const { update } = useCollectionMutation('salesEvents')
+    await update(props.event.id, {
+      title: eventForm.value.title,
+      eventType: eventForm.value.eventType || undefined,
+      startDate: eventForm.value.startDate instanceof Date ? eventForm.value.startDate.toISOString() : null,
+      endDate: eventForm.value.endDate instanceof Date ? eventForm.value.endDate.toISOString() : null,
+      status: eventForm.value.status
+    })
+  }
+  finally {
+    savingEventDetails.value = false
+  }
+}
+
 watch(clientModeSetting, (s) => {
   if (s) useReusableClients.value = s.settingValue === 'true'
 }, { immediate: true })
@@ -95,6 +152,40 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
 
 <template>
   <div class="space-y-6">
+    <!-- Event details (inline editable) -->
+    <UCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Event Details</h3>
+          <UButton
+            size="xs"
+            :loading="savingEventDetails"
+            :disabled="!eventDetailsDirty"
+            @click="saveEventDetails"
+          >
+            Save
+          </UButton>
+        </div>
+      </template>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <UFormField label="Event name" class="sm:col-span-2">
+          <UInput v-model="eventForm.title" class="w-full" placeholder="e.g. Summer Market 2026" />
+        </UFormField>
+        <UFormField label="Event type">
+          <UInput v-model="eventForm.eventType" class="w-full" placeholder="e.g. market, festival, popup" />
+        </UFormField>
+        <UFormField label="Status">
+          <USelect v-model="eventForm.status" :items="statusOptions" class="w-full" />
+        </UFormField>
+        <UFormField label="Start date">
+          <CroutonCalendar v-model:date="eventForm.startDate" />
+        </UFormField>
+        <UFormField label="End date">
+          <CroutonCalendar v-model:date="eventForm.endDate" />
+        </UFormField>
+      </div>
+    </UCard>
+
     <!-- Top settings row -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <UCard variant="soft">
