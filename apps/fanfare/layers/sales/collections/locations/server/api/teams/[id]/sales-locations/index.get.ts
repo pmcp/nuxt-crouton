@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await getAllSalesLocations(team.id)
+  const result = await getAllSalesLocations(team.id, { eventId: query.eventId ? String(query.eventId) : undefined })
   dbTimer.end()
   return result
 })

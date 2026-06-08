@@ -7,7 +7,7 @@ import * as eventsSchema from '../../../events/server/database/schema'
 import * as clientsSchema from '../../../clients/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesOrders(teamId: string) {
+export async function getAllSalesOrders(teamId: string, filters?: { eventId?: string }) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -44,7 +44,10 @@ export async function getAllSalesOrders(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesOrders.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesOrders.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesOrders.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesOrders.teamId, teamId))
+    .where(and(
+      eq(tables.salesOrders.teamId, teamId),
+      ...(filters?.eventId ? [eq(tables.salesOrders.eventId, filters.eventId)] : [])
+    ))
     .orderBy(desc(tables.salesOrders.createdAt))
 
   return orders

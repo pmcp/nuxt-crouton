@@ -6,7 +6,7 @@ import type { SalesCategorie, NewSalesCategorie } from '../../types'
 import * as eventsSchema from '../../../events/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesCategories(teamId: string) {
+export async function getAllSalesCategories(teamId: string, filters?: { eventId?: string }) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -41,7 +41,10 @@ export async function getAllSalesCategories(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesCategories.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesCategories.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesCategories.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesCategories.teamId, teamId))
+    .where(and(
+      eq(tables.salesCategories.teamId, teamId),
+      ...(filters?.eventId ? [eq(tables.salesCategories.eventId, filters.eventId)] : [])
+    ))
     .orderBy(desc(tables.salesCategories.createdAt))
 
   return categories

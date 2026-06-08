@@ -7,7 +7,7 @@ import * as eventsSchema from '../../../events/server/database/schema'
 import * as locationsSchema from '../../../locations/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesPrinters(teamId: string) {
+export async function getAllSalesPrinters(teamId: string, filters?: { eventId?: string }) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -44,7 +44,10 @@ export async function getAllSalesPrinters(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesPrinters.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesPrinters.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesPrinters.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesPrinters.teamId, teamId))
+    .where(and(
+      eq(tables.salesPrinters.teamId, teamId),
+      ...(filters?.eventId ? [eq(tables.salesPrinters.eventId, filters.eventId)] : [])
+    ))
     .orderBy(desc(tables.salesPrinters.createdAt))
 
   return printers

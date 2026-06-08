@@ -8,7 +8,7 @@ import * as categoriesSchema from '../../../categories/server/database/schema'
 import * as locationsSchema from '../../../locations/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesProducts(teamId: string) {
+export async function getAllSalesProducts(teamId: string, filters?: { eventId?: string }) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -47,7 +47,10 @@ export async function getAllSalesProducts(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesProducts.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesProducts.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesProducts.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesProducts.teamId, teamId))
+    .where(and(
+      eq(tables.salesProducts.teamId, teamId),
+      ...(filters?.eventId ? [eq(tables.salesProducts.eventId, filters.eventId)] : [])
+    ))
     .orderBy(desc(tables.salesProducts.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
