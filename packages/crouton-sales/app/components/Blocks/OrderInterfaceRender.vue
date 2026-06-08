@@ -160,13 +160,13 @@ onMounted(async () => {
     </div>
 
     <!-- Lookup failed -->
-    <div
+    <UAlert
       v-else-if="lookupError"
-      class="bg-muted/80 rounded-3xl border border-default p-6 text-center text-sm text-muted"
-    >
-      <UIcon name="i-lucide-alert-circle" class="w-6 h-6 mx-auto mb-2" />
-      {{ lookupError }}
-    </div>
+      color="error"
+      variant="subtle"
+      icon="i-lucide-alert-circle"
+      :title="lookupError"
+    />
 
     <!-- Initial event lookup pending -->
     <div
@@ -179,31 +179,32 @@ onMounted(async () => {
     <!-- Authenticated + data loaded → full POS -->
     <div
       v-else-if="orderData"
-      class="rounded-3xl border border-default overflow-clip bg-default"
+      class="rounded-3xl border border-default overflow-clip bg-default h-dvh flex flex-col"
     >
       <!-- Header keeps everything left-aligned because the CMS shell has a
            fixed-position user-menu pill at top-right that would otherwise
            cover (and intercept clicks on) any top-right block controls. -->
-      <header class="flex items-start gap-3 px-4 py-3 border-b border-default">
+      <header class="flex items-start gap-3 px-4 py-3 border-b border-default shrink-0">
         <UIcon name="i-lucide-store" class="text-primary text-xl mt-0.5 shrink-0" />
         <div class="flex-1 min-w-0">
           <h2 class="font-semibold text-lg leading-tight truncate">{{ orderData.event.title }}</h2>
           <div class="flex items-center gap-2 mt-1 text-sm text-muted">
             <span>Logged in as <span class="text-default font-medium">{{ orderData.helper.name }}</span></span>
             <span aria-hidden="true">·</span>
-            <button
-              type="button"
-              class="text-primary hover:underline cursor-pointer"
+            <UButton
+              variant="link"
+              color="primary"
+              size="sm"
+              class="p-0"
+              label="Log out"
               @click.stop="handleLogout"
-            >
-              Log out
-            </button>
+            />
           </div>
         </div>
       </header>
-      <!-- 70vh keeps the embedded POS bounded inside the page flow, with its
-           own internal scrolling for the product grid + cart. -->
-      <div class="h-[70vh]">
+      <!-- Fills the remaining viewport height; the POS handles its own
+           internal scrolling for the product grid + cart. -->
+      <div class="flex-1 min-h-0">
         <SalesClientOrderInterface
           :event-id="orderData.event.id"
           :products="orderData.products"
@@ -216,14 +217,14 @@ onMounted(async () => {
     </div>
 
     <!-- order-data fetch failed (helper auth ok, but server errored) -->
-    <div
+    <UAlert
       v-else-if="loadError && isHelper"
-      class="bg-muted/80 rounded-3xl border border-default p-6 text-center"
-    >
-      <UIcon name="i-lucide-alert-circle" class="w-6 h-6 mx-auto mb-2 text-error" />
-      <p class="text-sm text-muted mb-3">{{ loadError }}</p>
-      <UButton size="sm" @click="loadOrderData">Retry</UButton>
-    </div>
+      color="error"
+      variant="subtle"
+      icon="i-lucide-alert-circle"
+      :title="loadError"
+      :actions="[{ label: 'Retry', color: 'error', variant: 'soft', onClick: loadOrderData }]"
+    />
 
     <!-- Not logged in: inline helper login form -->
     <div
@@ -268,9 +269,13 @@ onMounted(async () => {
             Log in
           </UButton>
         </UForm>
-        <p v-if="loginError" class="text-center text-error text-sm">
-          {{ loginError }}
-        </p>
+        <UAlert
+          v-if="loginError"
+          color="error"
+          variant="soft"
+          icon="i-lucide-alert-circle"
+          :title="loginError"
+        />
       </div>
     </div>
   </div>
