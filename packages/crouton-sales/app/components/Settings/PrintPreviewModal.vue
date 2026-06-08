@@ -51,7 +51,7 @@
               <div class="p-4" style="background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);">
                 <!-- Header -->
                 <div class="text-center border-b-2 border-dashed border-gray-400 pb-2 mb-2">
-                  <div class="font-bold text-lg">{{ receiptSettings.test_title }}</div>
+                  <div class="font-bold text-lg">PRINTER TEST</div>
                 </div>
 
                 <!-- Printer Details -->
@@ -66,10 +66,6 @@
                 <!-- Sample Order -->
                 <div class="font-bold text-lg py-1">
                   Sample Order #12345
-                </div>
-
-                <div class="text-sm py-1 font-bold">
-                  {{ receiptSettings.items_section_title }}
                 </div>
 
                 <div class="text-sm space-y-1">

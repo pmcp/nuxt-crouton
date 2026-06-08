@@ -4,13 +4,9 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import { salesEventsettings } from '~~/layers/sales/collections/eventsettings/server/database/schema'
 
 export interface ReceiptSettings {
-  items_section_title: string
   special_instructions_title: string
-  complete_order_header: string
   staff_order_header: string
   footer_text: string
-  test_title: string
-  test_success_message: string
 }
 
 export default defineEventHandler(async (event) => {

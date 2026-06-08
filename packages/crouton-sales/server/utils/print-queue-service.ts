@@ -7,7 +7,7 @@
  * generated sales layer tables (salesPrintqueues, salesPrinters, etc.)
  */
 
-import { formatReceipt, type ReceiptItem, type FormattedReceipt } from './receipt-formatter'
+import { formatReceipt, type ReceiptItem, type FormattedReceipt, type ReceiptSettings } from './receipt-formatter'
 
 // Status codes for print queue
 export const PRINT_STATUS = {
@@ -98,7 +98,8 @@ export function generateKitchenTicketData(
   locationId: string,
   locationTitle: string,
   items: OrderItemForPrint[],
-  printer: PrinterConfig
+  printer: PrinterConfig,
+  receiptSettings?: ReceiptSettings
 ): PrintJobData {
   const receiptItems: ReceiptItem[] = items.map(item => ({
     name: item.productTitle,
@@ -123,7 +124,8 @@ export function generateKitchenTicketData(
     printMode: 'kitchen',
     showPrices: printer.showPrices || false,
     createdAt: new Date(),
-    isPersonnel: options.isPersonnel
+    isPersonnel: options.isPersonnel,
+    receiptSettings
   })
 
   return {
@@ -140,7 +142,8 @@ export function generateKitchenTicketData(
 export function generateReceiptData(
   options: PrintQueueGeneratorOptions,
   items: OrderItemForPrint[],
-  printer: PrinterConfig
+  printer: PrinterConfig,
+  receiptSettings?: ReceiptSettings
 ): PrintJobData {
   const receiptItems: ReceiptItem[] = items.map(item => ({
     name: item.productTitle,
@@ -165,7 +168,8 @@ export function generateReceiptData(
     printMode: 'receipt',
     showPrices: true,
     createdAt: new Date(),
-    isPersonnel: options.isPersonnel
+    isPersonnel: options.isPersonnel,
+    receiptSettings
   })
 
   return {
@@ -204,7 +208,8 @@ export function generateReceiptData(
 export function generatePrintJobsForOrder(
   options: PrintQueueGeneratorOptions,
   orderItems: OrderItemForPrint[],
-  printers: PrinterConfig[]
+  printers: PrinterConfig[],
+  receiptSettings?: ReceiptSettings
 ): PrintJobData[] {
   const jobs: PrintJobData[] = []
 
@@ -234,7 +239,8 @@ export function generatePrintJobsForOrder(
         locationId,
         locationTitle,
         items,
-        printer
+        printer,
+        receiptSettings
       ))
     }
   }
@@ -248,7 +254,7 @@ export function generatePrintJobsForOrder(
 
     // Use the first receipt printer (could be enhanced to support multiple)
     const receiptPrinter = receiptPrinters[0]
-    jobs.push(generateReceiptData(options, allItems, receiptPrinter))
+    jobs.push(generateReceiptData(options, allItems, receiptPrinter, receiptSettings))
   }
 
   return jobs

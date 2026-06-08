@@ -24,24 +24,18 @@ export interface ReceiptItem {
   options?: Record<string, unknown>
 }
 
+// Only the fields the receipt format actually renders. (Earlier versions
+// carried items_section_title/complete_order_header/test_* which nothing used.)
 export interface ReceiptSettings {
-  items_section_title: string
   special_instructions_title: string
-  complete_order_header: string
   staff_order_header: string
   footer_text: string
-  test_title: string
-  test_success_message: string
 }
 
 export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
-  items_section_title: 'ITEMS:',
   special_instructions_title: 'SPECIAL INSTRUCTIONS:',
-  complete_order_header: '*** COMPLETE ORDER ***',
   staff_order_header: '*** STAFF ORDER ***',
-  footer_text: 'Thank you for your order!',
-  test_title: 'PRINTER TEST',
-  test_success_message: 'Test completed successfully!'
+  footer_text: 'Thank you for your order!'
 }
 
 export interface ReceiptData {
@@ -59,7 +53,17 @@ export interface ReceiptData {
   createdAt: Date | string
   isPersonnel?: boolean
   receiptSettings?: ReceiptSettings
+  /**
+   * IANA timezone used to render the order time on the ticket. Cloudflare
+   * Workers run in UTC, so without this the printed time is off by the local
+   * offset. Defaults to Europe/Brussels.
+   */
+  timeZone?: string
 }
+
+/** Default timezone for rendering receipt timestamps. */
+const DEFAULT_TIME_ZONE = 'Europe/Brussels'
+const TIME_LOCALE = 'nl-BE'
 
 export interface FormattedReceipt {
   base64: string
@@ -201,7 +205,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     const orderDate = typeof data.createdAt === 'string'
       ? new Date(data.createdAt)
       : data.createdAt
-    printer.println(`Time: ${orderDate.toLocaleString()}`)
+    printer.println(`Time: ${orderDate.toLocaleString(TIME_LOCALE, { timeZone: data.timeZone || DEFAULT_TIME_ZONE })}`)
 
     if (data.clientName) {
       printer.println(`Client: ${data.clientName}`)
@@ -359,26 +363,24 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
 export function formatTestReceipt(
   printerName: string,
   ipAddress: string,
-  receiptSettings?: ReceiptSettings
+  timeZone: string = DEFAULT_TIME_ZONE
 ): FormattedReceipt {
-  const settings = receiptSettings || DEFAULT_RECEIPT_SETTINGS
-
   const printer = new EscPosBuilder()
 
   printer.alignCenter()
   printer.bold(true)
-  printer.println(settings.test_title)
+  printer.println('PRINTER TEST')
   printer.bold(false)
   printer.drawLine()
 
   printer.alignLeft()
   printer.println(`Printer: ${printerName}`)
   printer.println(`IP: ${ipAddress}`)
-  printer.println(`Time: ${new Date().toLocaleString()}`)
+  printer.println(`Time: ${new Date().toLocaleString(TIME_LOCALE, { timeZone })}`)
   printer.drawLine()
 
   printer.alignCenter()
-  printer.println(settings.test_success_message)
+  printer.println('Test completed successfully!')
   printer.println('ESC/POS formatting active')
   printer.println('')
   printer.cut()

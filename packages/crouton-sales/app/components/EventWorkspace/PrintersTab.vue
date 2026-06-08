@@ -26,23 +26,15 @@ function openPrinterPreview(printer: any) {
 
 // Load receipt settings for preview modal
 interface ReceiptSettings {
-  items_section_title: string
   special_instructions_title: string
-  complete_order_header: string
   staff_order_header: string
   footer_text: string
-  test_title: string
-  test_success_message: string
 }
 
 const receiptSettings = ref<ReceiptSettings>({
-  items_section_title: 'ITEMS:',
   special_instructions_title: 'SPECIAL INSTRUCTIONS:',
-  complete_order_header: '*** COMPLETE ORDER ***',
   staff_order_header: '*** STAFF ORDER ***',
-  footer_text: 'Thank you for your order!',
-  test_title: 'PRINTER TEST',
-  test_success_message: 'Test completed successfully!'
+  footer_text: 'Thank you for your order!'
 })
 
 onMounted(async () => {

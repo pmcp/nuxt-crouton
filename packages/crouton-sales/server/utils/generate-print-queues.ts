@@ -6,7 +6,7 @@
  *
  * Imports drizzle schema lazily from the consuming app's generated sales layer.
  */
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import {
   generatePrintJobsForOrder,
@@ -14,6 +14,7 @@ import {
   type OrderItemForPrint,
   type PrinterConfig
 } from './print-queue-service'
+import { DEFAULT_RECEIPT_SETTINGS, type ReceiptSettings } from './receipt-formatter'
 
 interface GenerateInsertOptions {
   db: any
@@ -38,9 +39,28 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
   const { salesLocations } = await import('~~/layers/sales/collections/locations/server/database/schema')
   const { salesPrinters } = await import('~~/layers/sales/collections/printers/server/database/schema')
   const { salesPrintqueues } = await import('~~/layers/sales/collections/printqueues/server/database/schema')
+  const { salesEventsettings } = await import('~~/layers/sales/collections/eventsettings/server/database/schema')
 
   const printers = await db.select().from(salesPrinters).where(eq(salesPrinters.eventId, eventId))
   if (printers.length === 0) return []
+
+  // Load per-event receipt text customization (settingKey 'receipt_settings').
+  // Falls back to defaults when unset or unparseable.
+  let receiptSettings: ReceiptSettings = DEFAULT_RECEIPT_SETTINGS
+  const [settingsRow] = await db
+    .select()
+    .from(salesEventsettings)
+    .where(and(
+      eq(salesEventsettings.eventId, eventId),
+      eq(salesEventsettings.settingKey, 'receipt_settings')
+    ))
+  if (settingsRow?.settingValue) {
+    try {
+      receiptSettings = { ...DEFAULT_RECEIPT_SETTINGS, ...JSON.parse(settingsRow.settingValue) }
+    } catch {
+      receiptSettings = DEFAULT_RECEIPT_SETTINGS
+    }
+  }
 
   const items = await db.select().from(salesOrderitems).where(eq(salesOrderitems.orderId, orderId))
   if (items.length === 0) return []
@@ -108,7 +128,8 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       createdBy: helperId
     },
     printItems,
-    printerConfigs
+    printerConfigs,
+    receiptSettings
   )
 
   const queueIds: string[] = []

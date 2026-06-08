@@ -14,50 +14,22 @@
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormField label="Items Section Title">
-            <UInput
-              v-model="settings.items_section_title"
-              placeholder="ITEMS:"
-            />
-          </UFormField>
-
-          <UFormField label="Special Instructions Title">
+          <UFormField label="Special Instructions Title" help="Shown above order notes on kitchen tickets">
             <UInput
               v-model="settings.special_instructions_title"
               placeholder="SPECIAL INSTRUCTIONS:"
             />
           </UFormField>
 
-          <UFormField label="Complete Order Header">
-            <UInput
-              v-model="settings.complete_order_header"
-              placeholder="*** COMPLETE ORDER ***"
-            />
-          </UFormField>
-
-          <UFormField label="Staff Order Header">
+          <UFormField label="Staff Order Header" help="Banner printed on staff/personnel orders">
             <UInput
               v-model="settings.staff_order_header"
               placeholder="*** STAFF ORDER ***"
             />
           </UFormField>
-
-          <UFormField label="Test Print Title">
-            <UInput
-              v-model="settings.test_title"
-              placeholder="PRINTER TEST"
-            />
-          </UFormField>
-
-          <UFormField label="Test Success Message">
-            <UInput
-              v-model="settings.test_success_message"
-              placeholder="Test completed successfully!"
-            />
-          </UFormField>
         </div>
 
-        <UFormField label="Footer Text">
+        <UFormField label="Footer Text" help="Printed at the bottom of customer receipts">
           <UTextarea
             v-model="settings.footer_text"
             :rows="2"
@@ -86,13 +58,9 @@
 
 <script setup lang="ts">
 export interface ReceiptSettings {
-  items_section_title: string
   special_instructions_title: string
-  complete_order_header: string
   staff_order_header: string
   footer_text: string
-  test_title: string
-  test_success_message: string
 }
 
 const props = defineProps<{
@@ -116,13 +84,9 @@ const isOpen = computed({
 const saving = ref(false)
 
 const settings = ref<ReceiptSettings>({
-  items_section_title: 'ITEMS:',
   special_instructions_title: 'SPECIAL INSTRUCTIONS:',
-  complete_order_header: '*** COMPLETE ORDER ***',
   staff_order_header: '*** STAFF ORDER ***',
   footer_text: 'Thank you for your order!',
-  test_title: 'PRINTER TEST',
-  test_success_message: 'Test completed successfully!',
 })
 
 async function loadSettings() {
