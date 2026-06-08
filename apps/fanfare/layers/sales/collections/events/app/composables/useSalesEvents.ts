@@ -70,7 +70,7 @@ const _salesEventsConfig = {
     eventType: '',
     startDate: null,
     endDate: null,
-    status: '',
+    status: 'upcoming',
     isCurrent: false,
     requiresClient: true,
     helperPin: '',
