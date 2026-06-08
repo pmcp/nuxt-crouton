@@ -63,6 +63,16 @@ Event workspace tabs are extracted into reusable components under `app/component
 `ProductsTab.vue`, `OrdersTab.vue`, `PrintersTab.vue`, `SettingsTab.vue`
 (auto-imported as `SalesEventWorkspaceProductsTab`, etc.)
 
+`ProductsTab.vue` renders products as a **drag-reorderable list** (not a table): a bespoke `<ul>`
+with `useSortable` (`@vueuse/integrations`, via crouton-core) and a `.drag-handle` grip. Drop
+persists the new visual index to each moved row's `sortOrder` via `useCollectionMutation('salesProducts').update`
+— no reorder endpoint needed (the existing PATCH accepts `sortOrder`). The list is sorted by
+`sortOrder` (nullable integer, null⇒0) then title, and reordering operates on the currently
+**visible** set (whole list, or within the selected category tab). Note: `sales_products.sortOrder`
+is an `integer` column (migration `0003_furry_lilith`); the old redundant `order` int column was
+dropped. The generic tree/sortable reorder path (`useTreeMutation`) is **not** used here because it
+re-fetches all team products un-scoped to the event.
+
 `SettingsTab.vue` edits the event's **core fields inline** (title, type, status, start/end dates)
 via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`, Save
 disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
