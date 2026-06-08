@@ -31,13 +31,14 @@ export const salesPrinterSchema = z.object({
   locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
-  // port/status: stored as text ('9100' / 'idle'). Form no longer exposes
-  // them but kept in schema for API parity. JSON schema (printers.json)
-  // updated to declare string so future cli regens stay consistent.
-  port: z.string().optional(),
-  status: z.string().optional(),
-  showPrices: z.boolean().optional(),
-  isActive: z.boolean().optional()
+  // port/status: nullable text columns ('9100' / 'idle'). The form no longer
+  // exposes them, and existing rows return null — so use nullish() (null OR
+  // undefined), otherwise updating a printer with null port/status fails
+  // client-side validation with a non-field "General" error.
+  port: z.string().nullish(),
+  status: z.string().nullish(),
+  showPrices: z.boolean().nullish(),
+  isActive: z.boolean().nullish()
 })
 
 export const salesPrintersColumns = [
