@@ -92,7 +92,9 @@
       "printTriggered": "Printopdracht verstuurd",
       "printFailed": "Printen mislukt",
       "printError": "Kan geen printopdracht starten voor deze bestelling",
-      "noOrdersFound": "Geen bestellingen gevonden"
+      "noOrdersFound": "Geen bestellingen gevonden",
+      "staff": "Personeel",
+      "noRemarks": "Geen opmerkingen"
     },
     "events": {
       "title": "Evenementen",

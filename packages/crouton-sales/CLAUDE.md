@@ -73,6 +73,12 @@ is an `integer` column (migration `0003_furry_lilith`); the old redundant `order
 dropped. The generic tree/sortable reorder path (`useTreeMutation`) is **not** used here because it
 re-fetches all team products un-scoped to the event.
 
+`OrdersTab.vue` renders orders as a **plain list** (not a table, not sortable) styled to match
+`ProductsTab`: a `<ul>` of click-to-edit rows showing the order number (mono), client name with a
+`Staff` badge when `isPersonnel`, remarks as muted subtext, and a status badge (color-coded by
+status). Clicking a row opens the `salesOrders` update slideover via `useCrouton().open`. The
+helper-filter / auto-refresh / count header is unchanged. It does **not** use `CroutonCollection`.
+
 `SettingsTab.vue` edits the event's **core fields inline** (title, type, status, start/end dates)
 via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`, Save
 disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline

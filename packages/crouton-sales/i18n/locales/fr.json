@@ -92,7 +92,9 @@
       "printTriggered": "Impression lancée",
       "printFailed": "Échec de l'impression",
       "printError": "Impossible de lancer l'impression pour cette commande",
-      "noOrdersFound": "Aucune commande trouvée"
+      "noOrdersFound": "Aucune commande trouvée",
+      "staff": "Personnel",
+      "noRemarks": "Aucune remarque"
     },
     "events": {
       "title": "Événements",

@@ -92,7 +92,9 @@
       "printTriggered": "Print triggered",
       "printFailed": "Print failed",
       "printError": "Could not trigger print for this order",
-      "noOrdersFound": "No orders found"
+      "noOrdersFound": "No orders found",
+      "staff": "Staff",
+      "noRemarks": "No remarks"
     },
     "events": {
       "title": "Events",

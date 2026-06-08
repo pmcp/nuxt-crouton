@@ -4,9 +4,9 @@ import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 const props = defineProps<{ event: SalesEvent }>()
 
 const { t } = useT()
+const { open } = useCrouton()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
-const { columns: ordersColumns } = useSalesOrders()
 
 interface ActiveHelper {
   id: string
@@ -63,6 +63,32 @@ watch(autoRefreshOrders, (enabled) => {
 onUnmounted(() => {
   if (refreshInterval) clearInterval(refreshInterval)
 })
+
+type OrderRow = {
+  id: string
+  eventOrderNumber?: number
+  clientName?: string
+  overallRemarks?: string
+  isPersonnel?: boolean
+  status: string
+}
+
+const orderRows = computed(() => (orders.value as OrderRow[] | null) || [])
+
+function statusColor(status: string) {
+  switch (status) {
+    case 'pending': return 'warning'
+    case 'processing': return 'info'
+    case 'completed': return 'success'
+    case 'cancelled': return 'error'
+    case 'failed': return 'error'
+    default: return 'neutral'
+  }
+}
+
+function openEditOrder(id: string) {
+  open('update', 'salesOrders', [id], 'slideover')
+}
 </script>
 
 <template>
@@ -99,14 +125,40 @@ onUnmounted(() => {
     <div v-if="ordersPending" class="p-6 text-center text-muted">
       {{ t('sales.workspace.loadingOrders') }}
     </div>
-    <CroutonCollection
-      v-else-if="orders && (orders as any[]).length > 0"
-      layout="table"
-      collection="salesOrders"
-      :rows="orders"
-      :columns="ordersColumns"
-      :hide-default-columns="{ createdAt: true, updatedAt: true, createdBy: true, updatedBy: true }"
-    />
+    <ul
+      v-else-if="orderRows.length > 0"
+      role="list"
+      class="divide-y divide-default rounded-lg border border-default overflow-hidden"
+    >
+      <li
+        v-for="order in orderRows"
+        :key="order.id"
+        class="group flex items-center gap-3 px-3 py-2.5 bg-default hover:bg-elevated/50 transition-colors cursor-pointer"
+        @click="openEditOrder(order.id)"
+      >
+        <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
+          #{{ order.eventOrderNumber ?? '—' }}
+        </span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <span class="font-medium truncate">{{ order.clientName || t('sales.orders.client') }}</span>
+            <UBadge v-if="order.isPersonnel" color="neutral" variant="subtle" size="xs">
+              {{ t('sales.orders.staff') }}
+            </UBadge>
+          </div>
+          <p class="text-xs text-muted truncate">
+            {{ order.overallRemarks || t('sales.orders.noRemarks') }}
+          </p>
+        </div>
+        <UBadge :color="statusColor(order.status)" variant="subtle" size="sm" class="shrink-0">
+          {{ order.status }}
+        </UBadge>
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="shrink-0 text-dimmed opacity-0 group-hover:opacity-100 transition-opacity"
+        />
+      </li>
+    </ul>
     <div v-else class="p-12 text-center text-muted">
       <UIcon name="i-lucide-receipt" class="text-4xl mb-2" />
       <p>{{ t('sales.workspace.noOrders') }}{{ selectedHelperName ? t('sales.workspace.forThisHelper') : '' }}</p>
