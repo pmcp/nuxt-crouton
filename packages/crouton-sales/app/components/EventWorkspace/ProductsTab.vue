@@ -17,8 +17,14 @@ const { items: printers } = await useCollectionQuery('salesPrinters', { query: e
 
 const selectedCategoryId = ref<string | null>(null)
 
-// sortOrder is a nullable integer — treat null/undefined as 0
-const orderOf = (p: SalesProduct) => Number(p.sortOrder ?? 0) || 0
+// Admin products view has no "All" tab — default to the first category once loaded.
+watch(categories, (cats) => {
+  const list = (cats as { id: string }[] | null) || []
+  if (!selectedCategoryId.value && list.length) selectedCategoryId.value = list[0].id
+}, { immediate: true })
+
+// `order` is the sortable position column (a reserved field, not in the typed schema)
+const orderOf = (p: SalesProduct) => Number((p as any).order ?? 0) || 0
 
 const productCountsByCategory = computed(() => {
   const counts: Record<string, number> = {}
@@ -41,22 +47,17 @@ const orderedProducts = ref<SalesProduct[]>([])
 watch(filteredProducts, (v) => { orderedProducts.value = [...v] }, { immediate: true })
 
 const listEl = ref<HTMLElement | null>(null)
-const { update } = useCollectionMutation('salesProducts')
-const reordering = ref(false)
+// Standardized sortable: persist the new visual order through the generated
+// /reorder endpoint (order = index) instead of per-item PATCH.
+const { reorderSiblings, reordering } = useTreeMutation('salesProducts')
 
-// Persist sortOrder = visual index for every item whose position changed.
 async function persistOrder() {
   if (reordering.value) return
-  reordering.value = true
-  try {
-    const writes = orderedProducts.value
-      .map((p, index) => (orderOf(p) === index ? null : update(p.id, { sortOrder: index })))
-      .filter(Boolean) as Promise<unknown>[]
-    await Promise.all(writes)
-  }
-  finally {
-    reordering.value = false
-  }
+  const updates: Array<{ id: string, order: number }> = []
+  orderedProducts.value.forEach((p, index) => {
+    if (orderOf(p) !== index) updates.push({ id: p.id, order: index })
+  })
+  if (updates.length) await reorderSiblings(updates)
 }
 
 // useSortable mutates orderedProducts directly on drop; onEnd fires after.
@@ -107,6 +108,7 @@ function openEditProduct(id: string) {
         v-model="selectedCategoryId"
         :categories="(categories as any[]) || []"
         :product-counts="productCountsByCategory"
+        :show-all="false"
       />
       <UButton color="primary" size="sm" icon="i-lucide-plus" @click="openCreateProduct">
         {{ t('sales.workspace.addProduct') }}

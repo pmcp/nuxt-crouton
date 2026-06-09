@@ -11,6 +11,19 @@ const teamParam = computed(() => route.params.team as string)
 const eventQuery = computed(() => ({ eventId: props.event.id }))
 const { items: printers, pending: printersPending } = await useCollectionQuery('salesPrinters', { query: eventQuery })
 
+// Print jobs (salesPrintqueues) scoped to this event, paginated. The list + per-row
+// card render via <CroutonCollection> (card auto-resolves to SalesPrintqueuesCard).
+const {
+  items: printJobs,
+  total: printJobsTotal,
+  page: printJobsPage,
+  paginationData: printJobsPagination,
+  pending: printJobsPending
+} = await useCollectionQuery('salesPrintqueues', {
+  query: eventQuery,
+  pagination: { pageSize: 10 }
+})
+
 function openCreatePrinter() {
   open('create', 'salesPrinters', [], 'slideover', { eventId: props.event.id })
 }
@@ -84,6 +97,31 @@ onMounted(async () => {
       <UButton size="sm" variant="outline" class="mt-3" @click="openCreatePrinter">
         {{ t('sales.workspace.addPrinter') }}
       </UButton>
+    </div>
+
+    <!-- Print jobs for this event -->
+    <div class="space-y-3 pt-6 mt-2 border-t border-default">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-highlighted">
+          {{ t('sales.printQueue.title', 'Print jobs') }}
+        </h3>
+        <span class="text-xs text-muted tabular-nums">{{ printJobsTotal }}</span>
+      </div>
+      <div v-if="printJobsPending" class="p-6 text-center text-muted text-sm">
+        {{ t('sales.printQueue.loading', 'Loading print jobs…') }}
+      </div>
+      <CroutonCollection
+        v-else-if="printJobs && (printJobs as any[]).length > 0"
+        layout="list"
+        collection="salesPrintqueues"
+        :rows="printJobs"
+        server-pagination
+        :pagination-data="printJobsPagination"
+        @update:page="printJobsPage = $event"
+      />
+      <div v-else class="p-6 text-center text-muted text-sm">
+        {{ t('sales.printQueue.empty', 'No print jobs yet') }}
+      </div>
     </div>
 
     <SalesSettingsPrintPreviewModal

@@ -120,12 +120,6 @@
               </UFormField>
             </template>
           </fieldset>
-
-          <USeparator />
-
-          <UFormField :label="t('sales.form.sortOrder')" name="sortOrder">
-            <UInputNumber v-model="state.sortOrder" class="w-full" :min="0" />
-          </UFormField>
         </div>
       </template>
 

@@ -1,6 +1,6 @@
 <template>
   <UTabs
-    :model-value="modelValue ?? 'all'"
+    :model-value="modelValue ?? fallbackValue"
     :items="tabItems"
     :content="false"
     @update:model-value="onTabChange"
@@ -12,11 +12,13 @@ import type { TabsItem } from '@nuxt/ui'
 const { t } = useT()
 import type { SalesCategory } from '../../types'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   categories: SalesCategory[]
   modelValue: string | null
   productCounts: Record<string, number>
-}>()
+  // Show the leading "All" tab (default). Set false to force a category selection.
+  showAll?: boolean
+}>(), { showAll: true })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
@@ -27,12 +29,14 @@ const totalCount = computed(() =>
 )
 
 const tabItems = computed<TabsItem[]>(() => {
-  const items: TabsItem[] = [
-    {
+  const items: TabsItem[] = []
+
+  if (props.showAll) {
+    items.push({
       label: `${t('sales.categories.all')} (${totalCount.value})`,
       value: 'all',
-    },
-  ]
+    })
+  }
 
   for (const cat of props.categories) {
     items.push({
@@ -43,6 +47,11 @@ const tabItems = computed<TabsItem[]>(() => {
 
   return items
 })
+
+// When "All" is hidden, fall back to the first category instead of 'all'.
+const fallbackValue = computed(() =>
+  props.showAll ? 'all' : (props.categories[0]?.id ?? 'all'),
+)
 
 function onTabChange(value: string | number) {
   emit('update:modelValue', value === 'all' ? null : String(value))
