@@ -31,15 +31,31 @@ definePageMeta({
 
 const route = useRoute()
 
-// Safely get locale - may fail during unexpected SSR contexts (e.g., refreshNuxtData triggers)
-let locale = ref('en')
+// Resolve which locale to normalize a no-locale URL to. Public pages use
+// URL-driven locale (/[team]/[locale]/[slug] — a deliberate design choice), so a
+// bare /team URL is canonicalised to the app's configured default locale, NOT a
+// hardcoded 'en' (see commit "base/required locale follows defaultLocale").
+//
+// Prefer the live i18n locale when available; only when i18n is genuinely
+// unavailable (rare SSR contexts — the reason this is guarded) do we fall back
+// to config. croutonI18n.supportedLocales is driven by crouton.config.js, so a
+// single-locale app resolves to that locale (e.g. 'nl') rather than 'en'.
+const runtimeConfig = useRuntimeConfig()
+const pagesConfig = runtimeConfig.public?.croutonPages as { defaultLocale?: string } | undefined
+const i18nCfg = runtimeConfig.croutonI18n as { supportedLocales?: string[] } | undefined
+
+let localeCode = ''
 try {
-  const i18n = useI18n()
-  locale = i18n.locale
+  localeCode = useI18n().locale.value
 } catch {
   if (import.meta.dev) {
-    console.warn('[crouton-pages] useI18n() failed in redirect route, using fallback locale')
+    console.warn('[crouton-pages] useI18n() unavailable in redirect route, using configured default locale')
   }
+}
+if (!localeCode) {
+  localeCode = (i18nCfg?.supportedLocales?.length === 1 ? i18nCfg.supportedLocales[0]! : '')
+    || pagesConfig?.defaultLocale
+    || 'en'
 }
 
 // Get team slug from route params (not teamId — context may not be resolved during client-side nav)
@@ -50,7 +66,7 @@ const slug = !slugParts || (Array.isArray(slugParts) && slugParts.length === 0)
   : Array.isArray(slugParts) ? slugParts.join('/') : slugParts
 
 // Redirect to locale-prefixed URL
-const targetUrl = slug ? `/${team}/${locale.value}/${slug}` : `/${team}/${locale.value}/`
+const targetUrl = slug ? `/${team}/${localeCode}/${slug}` : `/${team}/${localeCode}/`
 
 await navigateTo(targetUrl, { redirectCode: 301 })
 </script>
