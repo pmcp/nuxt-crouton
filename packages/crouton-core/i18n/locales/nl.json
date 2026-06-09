@@ -148,7 +148,9 @@
   },
   "reference": {
     "selectPlaceholder": "Selecteer {label}",
-    "createNew": "Nieuwe {label} aanmaken"
+    "createNew": "Nieuwe {label} aanmaken",
+    "noData": "Nog geen {label}",
+    "noResults": "Geen resultaten voor \"{searchTerm}\""
   },
   "options": {
     "selectPlaceholder": "Selecteer {label}",

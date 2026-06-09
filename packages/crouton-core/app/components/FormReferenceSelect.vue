@@ -39,7 +39,24 @@
       </template>
 
       <template #item-label="{ item }">
-        <span>{{ tContent(item, labelKey) || (item as Record<string, any>)?.id }}</span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="truncate">{{ tContent(item, labelKey) || (item as Record<string, any>)?.id }}</span>
+          <UButton
+            v-if="showEdit"
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            :aria-label="t('actions.edit')"
+            @click.stop.prevent="handleEdit((item as Record<string, any>)?.id)"
+          />
+        </span>
+      </template>
+
+      <template #empty="{ searchTerm }">
+        {{ searchTerm
+          ? t('reference.noResults', { searchTerm })
+          : t('reference.noData', { label: (label || collection).toLowerCase() }) }}
       </template>
 
       <template #content-top>
@@ -70,6 +87,7 @@ interface Props {
   labelKey?: string
   filterFields?: string[]
   hideCreate?: boolean
+  showEdit?: boolean
   multiple?: boolean
   query?: ComputedRef<Record<string, any>> | Ref<Record<string, any>>
   // Initial data to seed the nested create form when "Create new" is clicked.
@@ -170,6 +188,14 @@ const isCreating = ref(false)
 const handleCreate = () => {
   isCreating.value = true
   open('create', props.collection, [], 'slideover', props.createInitialData)
+}
+
+// Handle per-item edit button click. Mirrors create: opens the same slideover
+// flow. Edited labels refresh live since useCollectionMutation invalidates the
+// collection cache that backs `items`.
+const handleEdit = (id: string) => {
+  if (!id) return
+  open('update', props.collection, [id], 'slideover')
 }
 
 // Watch for new items after creation

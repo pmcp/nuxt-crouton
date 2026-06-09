@@ -148,7 +148,9 @@
   },
   "reference": {
     "selectPlaceholder": "Sélectionner {label}",
-    "createNew": "Créer un nouveau {label}"
+    "createNew": "Créer un nouveau {label}",
+    "noData": "Aucun {label} pour le moment",
+    "noResults": "Aucun résultat pour « {searchTerm} »"
   },
   "options": {
     "selectPlaceholder": "Sélectionner {label}",
