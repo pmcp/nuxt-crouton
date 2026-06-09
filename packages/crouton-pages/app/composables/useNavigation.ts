@@ -166,13 +166,15 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const navigation = computed<NavigationItem[]>(() => {
     if (!pages.value || !Array.isArray(pages.value)) return []
 
-    // Filter to only published pages that should show in navigation
-    // Footer pages are excluded — they are rendered separately via useFooterPage()
+    // Filter to only published pages that should show in navigation.
+    // Footer pages are excluded — they are rendered separately via useFooterPage().
+    // Note: 'admin' visibility is NOT excluded here — the server only returns
+    // admin pages to admins (see pages.get.ts), so when they reach the client
+    // they're meant to appear in the front nav for that admin.
     const navPages = pages.value.filter((p: any) =>
       p.status === 'published' &&
       p.showInNavigation !== false &&
       p.visibility !== 'hidden' &&
-      p.visibility !== 'admin' &&
       p.pageType !== 'pages:footer'
     )
 
