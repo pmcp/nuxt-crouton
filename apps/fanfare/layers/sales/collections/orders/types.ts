@@ -32,6 +32,8 @@ export interface SalesOrder {
   clientName?: string
   eventOrderNumber?: number
   overallRemarks?: string
+  /** Free-text remark per location, keyed by locationId. Printed per location, not counted in sales. */
+  locationRemarks?: Record<string, string>
   isPersonnel?: boolean
   status: string
   createdAt: Date

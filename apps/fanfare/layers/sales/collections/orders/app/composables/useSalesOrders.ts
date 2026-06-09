@@ -32,6 +32,7 @@ export const salesOrderSchema = z.object({
   clientName: z.string().optional(),
   eventOrderNumber: z.number().optional(),
   overallRemarks: z.string().optional(),
+  locationRemarks: z.record(z.string(), z.string()).optional(),
   isPersonnel: z.boolean().optional(),
   status: z.string().min(1, 'status is required')
 })
@@ -59,6 +60,7 @@ const _salesOrdersConfig = {
     clientName: '',
     eventOrderNumber: 0,
     overallRemarks: '',
+    locationRemarks: {},
     isPersonnel: false,
     status: ''
   },
