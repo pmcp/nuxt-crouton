@@ -6,8 +6,10 @@ import { SALES_CHART_KIND_OPTIONS } from './utils/chart-blocks'
 // can authenticate and take orders without leaving the CMS-rendered page.
 const orderInterfaceBlock: CroutonBlockDefinition = {
   type: 'orderInterfaceBlock',
-  name: 'Order Interface',
-  description: 'Inline helper POS for one event with login + order taking',
+  // name/description and schema labels/descriptions are i18n keys, translated
+  // by the crouton-pages block editor/panel via useT(). See i18n/locales/*.json.
+  name: 'sales.blocks.orderInterface.name',
+  description: 'sales.blocks.orderInterface.description',
   icon: 'i-lucide-shopping-cart',
   category: 'customer',
   clientOnly: true,
@@ -26,19 +28,19 @@ const orderInterfaceBlock: CroutonBlockDefinition = {
     {
       name: 'eventSlug',
       type: 'eventSlug',
-      label: 'Event',
-      description: 'Pick which event\'s POS to embed. Visitors will be asked to log in as a helper first.'
+      label: 'sales.blocks.orderInterface.fields.eventSlug.label',
+      description: 'sales.blocks.orderInterface.fields.eventSlug.description'
     },
     {
       name: 'height',
       type: 'select',
-      label: 'Height',
-      description: 'Compact/Tall sit inside the page flow. Fill screen makes the POS take the full viewport — pair it with the Full width size for a dedicated POS page.',
+      label: 'sales.blocks.orderInterface.fields.height.label',
+      description: 'sales.blocks.orderInterface.fields.height.description',
       defaultValue: 'tall',
       options: [
-        { label: 'Compact (60% viewport)', value: 'compact' },
-        { label: 'Tall (80% viewport)', value: 'tall' },
-        { label: 'Fill screen', value: 'fill' }
+        { label: 'sales.blocks.orderInterface.fields.height.options.compact', value: 'compact' },
+        { label: 'sales.blocks.orderInterface.fields.height.options.tall', value: 'tall' },
+        { label: 'sales.blocks.orderInterface.fields.height.options.fill', value: 'fill' }
       ]
     }
   ],
@@ -56,8 +58,8 @@ const orderInterfaceBlock: CroutonBlockDefinition = {
 // endpoint and shows a card with a CTA to the POS surface.
 const eventStorefrontBlock: CroutonBlockDefinition = {
   type: 'eventStorefrontBlock',
-  name: 'Event Storefront',
-  description: 'Embed a public order CTA for one event on a CMS page',
+  name: 'sales.blocks.eventStorefront.name',
+  description: 'sales.blocks.eventStorefront.description',
   icon: 'i-lucide-store',
   category: 'customer',
   clientOnly: true,
@@ -79,20 +81,20 @@ const eventStorefrontBlock: CroutonBlockDefinition = {
     {
       name: 'eventSlug',
       type: 'eventSlug',
-      label: 'Event',
-      description: 'Pick which sales event to embed'
+      label: 'sales.blocks.eventStorefront.fields.eventSlug.label',
+      description: 'sales.blocks.eventStorefront.fields.eventSlug.description'
     },
     {
       name: 'title',
       type: 'text',
-      label: 'Title override',
-      description: 'Optional heading; falls back to the event title'
+      label: 'sales.blocks.eventStorefront.fields.title.label',
+      description: 'sales.blocks.eventStorefront.fields.title.description'
     },
     {
       name: 'ctaLabel',
       type: 'text',
-      label: 'Button label',
-      description: 'Optional override for the "Order Now" button'
+      label: 'sales.blocks.eventStorefront.fields.ctaLabel.label',
+      description: 'sales.blocks.eventStorefront.fields.ctaLabel.description'
     }
   ],
   tiptap: {
@@ -110,8 +112,8 @@ const eventStorefrontBlock: CroutonBlockDefinition = {
 // @fyit/crouton-charts is installed; degrades to a notice otherwise.
 const salesChartBlock: CroutonBlockDefinition = {
   type: 'salesChartBlock',
-  name: 'Sales Chart',
-  description: 'Embed a sales analytics chart for one event or the whole team',
+  name: 'sales.blocks.salesChart.name',
+  description: 'sales.blocks.salesChart.description',
   icon: 'i-lucide-chart-bar',
   category: 'data',
   clientOnly: true,
@@ -133,41 +135,46 @@ const salesChartBlock: CroutonBlockDefinition = {
     {
       name: 'chart',
       type: 'select',
-      label: 'Chart',
-      description: 'Which sales metric to visualize',
+      label: 'sales.blocks.salesChart.fields.chart.label',
+      description: 'sales.blocks.salesChart.fields.chart.description',
       defaultValue: 'revenue-by-day',
-      options: SALES_CHART_KIND_OPTIONS
+      // Option labels point at i18n keys so the dropdown is translated in the
+      // editor panel; the public renderer keeps using SALES_CHART_KINDS labels.
+      options: SALES_CHART_KIND_OPTIONS.map(o => ({
+        label: `sales.blocks.salesChart.chartKinds.${o.value}`,
+        value: o.value
+      }))
     },
     {
       name: 'eventScope',
       type: 'sales-event-scope',
-      label: 'Event scope',
-      description: 'Limit to one event, or show all events for the team'
+      label: 'sales.blocks.salesChart.fields.eventScope.label',
+      description: 'sales.blocks.salesChart.fields.eventScope.description'
     },
     {
       name: 'chartTypeOverride',
       type: 'select',
-      label: 'Chart type',
-      description: 'Override the chart\'s default type',
+      label: 'sales.blocks.salesChart.fields.chartTypeOverride.label',
+      description: 'sales.blocks.salesChart.fields.chartTypeOverride.description',
       defaultValue: 'default',
       options: [
-        { label: 'Default', value: 'default' },
-        { label: 'Bar', value: 'bar' },
-        { label: 'Line', value: 'line' },
-        { label: 'Area', value: 'area' },
-        { label: 'Donut', value: 'donut' }
+        { label: 'sales.blocks.salesChart.fields.chartTypeOverride.options.default', value: 'default' },
+        { label: 'sales.blocks.salesChart.fields.chartTypeOverride.options.bar', value: 'bar' },
+        { label: 'sales.blocks.salesChart.fields.chartTypeOverride.options.line', value: 'line' },
+        { label: 'sales.blocks.salesChart.fields.chartTypeOverride.options.area', value: 'area' },
+        { label: 'sales.blocks.salesChart.fields.chartTypeOverride.options.donut', value: 'donut' }
       ]
     },
     {
       name: 'title',
       type: 'text',
-      label: 'Title',
-      description: 'Optional heading above the chart (overrides the default)'
+      label: 'sales.blocks.salesChart.fields.title.label',
+      description: 'sales.blocks.salesChart.fields.title.description'
     },
     {
       name: 'height',
       type: 'select',
-      label: 'Height',
+      label: 'sales.blocks.salesChart.fields.height.label',
       defaultValue: '300',
       options: [
         { label: '200px', value: '200' },
@@ -194,8 +201,8 @@ const salesChartBlock: CroutonBlockDefinition = {
 // toggle. Pure UTable — no charts dependency.
 const salesProductMatrixBlock: CroutonBlockDefinition = {
   type: 'salesProductMatrixBlock',
-  name: 'Sales Table (product × day)',
-  description: 'Pivot table of products by day with a Units/Revenue toggle',
+  name: 'sales.blocks.salesProductMatrix.name',
+  description: 'sales.blocks.salesProductMatrix.description',
   icon: 'i-lucide-table',
   category: 'data',
   clientOnly: true,
@@ -215,25 +222,25 @@ const salesProductMatrixBlock: CroutonBlockDefinition = {
     {
       name: 'eventScope',
       type: 'sales-event-scope',
-      label: 'Event scope',
-      description: 'Limit to one event, or show all events for the team'
+      label: 'sales.blocks.salesProductMatrix.fields.eventScope.label',
+      description: 'sales.blocks.salesProductMatrix.fields.eventScope.description'
     },
     {
       name: 'measure',
       type: 'select',
-      label: 'Default measure',
-      description: 'Which measure the table shows first (viewers can toggle)',
+      label: 'sales.blocks.salesProductMatrix.fields.measure.label',
+      description: 'sales.blocks.salesProductMatrix.fields.measure.description',
       defaultValue: 'units',
       options: [
-        { label: 'Units sold', value: 'units' },
-        { label: 'Revenue', value: 'revenue' }
+        { label: 'sales.blocks.salesProductMatrix.fields.measure.options.units', value: 'units' },
+        { label: 'sales.blocks.salesProductMatrix.fields.measure.options.revenue', value: 'revenue' }
       ]
     },
     {
       name: 'title',
       type: 'text',
-      label: 'Title',
-      description: 'Optional heading above the table'
+      label: 'sales.blocks.salesProductMatrix.fields.title.label',
+      description: 'sales.blocks.salesProductMatrix.fields.title.description'
     }
   ],
   tiptap: {
@@ -252,8 +259,8 @@ const salesProductMatrixBlock: CroutonBlockDefinition = {
 // anonymous visitors (the tabs are authenticated admin surfaces).
 const eventWorkspaceBlock: CroutonBlockDefinition = {
   type: 'eventWorkspaceBlock',
-  name: 'Event Workspace',
-  description: 'Embed the full admin workspace (products, orders, printers, settings) for one event',
+  name: 'sales.blocks.eventWorkspace.name',
+  description: 'sales.blocks.eventWorkspace.description',
   icon: 'i-lucide-layout-dashboard',
   category: 'admin',
   clientOnly: true,
@@ -271,8 +278,8 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
     {
       name: 'eventSlug',
       type: 'eventSlug',
-      label: 'Event',
-      description: 'Pick which event\'s workspace to embed. Only signed-in team members can use it.'
+      label: 'sales.blocks.eventWorkspace.fields.eventSlug.label',
+      description: 'sales.blocks.eventWorkspace.fields.eventSlug.description'
     }
   ],
   tiptap: {

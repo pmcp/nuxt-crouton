@@ -1,6 +1,118 @@
 {
   "sales": {
     "title": "Point de vente",
+    "blocks": {
+      "eventStorefront": {
+        "name": "Boutique d'événement",
+        "description": "Intégrer un bouton de commande public pour un événement sur une page CMS",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez l'événement de vente à intégrer"
+          },
+          "title": {
+            "label": "Remplacer le titre",
+            "description": "Titre optionnel ; reprend le titre de l'événement par défaut"
+          },
+          "ctaLabel": {
+            "label": "Libellé du bouton",
+            "description": "Remplacement optionnel du bouton « Commander »"
+          }
+        }
+      },
+      "orderInterface": {
+        "name": "Interface de commande",
+        "description": "Caisse helper intégrée pour un événement avec connexion + prise de commandes",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez la caisse de l'événement à intégrer. Les visiteurs devront d'abord se connecter en tant que helper."
+          },
+          "height": {
+            "label": "Hauteur",
+            "description": "Compact/Haut restent dans le flux de la page. Plein écran fait occuper toute la fenêtre à la caisse — associez-le à la taille Pleine largeur pour une page de caisse dédiée.",
+            "options": {
+              "compact": "Compact (60% de l'écran)",
+              "tall": "Haut (80% de l'écran)",
+              "fill": "Plein écran"
+            }
+          }
+        }
+      },
+      "eventWorkspace": {
+        "name": "Espace de travail d'événement",
+        "description": "Intégrer l'espace d'administration complet (produits, commandes, imprimantes, paramètres) pour un événement",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez l'espace de travail d'événement à intégrer. Seuls les membres connectés de l'équipe peuvent l'utiliser."
+          }
+        }
+      },
+      "salesChart": {
+        "name": "Graphique de ventes",
+        "description": "Intégrer un graphique d'analyse des ventes pour un événement ou toute l'équipe",
+        "fields": {
+          "chart": {
+            "label": "Graphique",
+            "description": "Quelle métrique de vente visualiser"
+          },
+          "eventScope": {
+            "label": "Portée de l'événement",
+            "description": "Limiter à un événement ou afficher tous les événements de l'équipe"
+          },
+          "chartTypeOverride": {
+            "label": "Type de graphique",
+            "description": "Remplacer le type par défaut du graphique",
+            "options": {
+              "default": "Par défaut",
+              "bar": "Barres",
+              "line": "Lignes",
+              "area": "Aires",
+              "donut": "Anneau"
+            }
+          },
+          "title": {
+            "label": "Titre",
+            "description": "Titre optionnel au-dessus du graphique (remplace le titre par défaut)"
+          },
+          "height": {
+            "label": "Hauteur"
+          }
+        },
+        "chartKinds": {
+          "revenue-by-day": "Chiffre d'affaires par jour",
+          "revenue-by-product": "Chiffre d'affaires par produit",
+          "revenue-by-category": "Chiffre d'affaires par catégorie",
+          "units-per-product-day": "Unités par produit par jour",
+          "top-products": "Meilleurs produits (par quantité)",
+          "orders-by-status": "Commandes par statut",
+          "sales-by-location": "Ventes par emplacement"
+        }
+      },
+      "salesProductMatrix": {
+        "name": "Tableau de ventes (produit × jour)",
+        "description": "Tableau croisé des produits par jour avec une bascule Unités/Chiffre d'affaires",
+        "fields": {
+          "eventScope": {
+            "label": "Portée de l'événement",
+            "description": "Limiter à un événement ou afficher tous les événements de l'équipe"
+          },
+          "measure": {
+            "label": "Mesure par défaut",
+            "description": "Quelle mesure le tableau affiche en premier (les lecteurs peuvent basculer)",
+            "options": {
+              "units": "Unités vendues",
+              "revenue": "Chiffre d'affaires"
+            }
+          },
+          "title": {
+            "label": "Titre",
+            "description": "Titre optionnel au-dessus du tableau"
+          }
+        }
+      }
+    },
     "admin": {
       "sectionTitle": "Point de vente",
       "overview": "Aperçu"

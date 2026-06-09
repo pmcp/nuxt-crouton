@@ -7,6 +7,118 @@
         "description": "Een publieke pagina voor één evenement met de details en een bestelknop voor klanten."
       }
     },
+    "blocks": {
+      "eventStorefront": {
+        "name": "Evenement-winkel",
+        "description": "Voeg een publieke bestelknop voor één evenement toe aan een CMS-pagina",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies welk verkoopevenement je wilt insluiten"
+          },
+          "title": {
+            "label": "Titel overschrijven",
+            "description": "Optionele kop; valt terug op de evenementtitel"
+          },
+          "ctaLabel": {
+            "label": "Knoptekst",
+            "description": "Optionele vervanging voor de knop \"Bestellen\""
+          }
+        }
+      },
+      "orderInterface": {
+        "name": "Bestelinterface",
+        "description": "Ingesloten helper-kassa voor één evenement met login + bestellen",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies welke kassa van een evenement je wilt insluiten. Bezoekers moeten zich eerst als helper aanmelden."
+          },
+          "height": {
+            "label": "Hoogte",
+            "description": "Compact/Hoog blijven binnen de pagina. Scherm vullen laat de kassa het volledige scherm innemen — combineer met Volledige breedte voor een aparte kassapagina.",
+            "options": {
+              "compact": "Compact (60% scherm)",
+              "tall": "Hoog (80% scherm)",
+              "fill": "Scherm vullen"
+            }
+          }
+        }
+      },
+      "eventWorkspace": {
+        "name": "Evenement-werkruimte",
+        "description": "Sluit de volledige beheerwerkruimte (producten, bestellingen, printers, instellingen) voor één evenement in",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies welke evenement-werkruimte je wilt insluiten. Alleen aangemelde teamleden kunnen die gebruiken."
+          }
+        }
+      },
+      "salesChart": {
+        "name": "Verkoopgrafiek",
+        "description": "Sluit een verkoopanalysegrafiek in voor één evenement of het hele team",
+        "fields": {
+          "chart": {
+            "label": "Grafiek",
+            "description": "Welke verkoopmetriek wordt gevisualiseerd"
+          },
+          "eventScope": {
+            "label": "Evenementbereik",
+            "description": "Beperk tot één evenement of toon alle evenementen van het team"
+          },
+          "chartTypeOverride": {
+            "label": "Grafiektype",
+            "description": "Overschrijf het standaardtype van de grafiek",
+            "options": {
+              "default": "Standaard",
+              "bar": "Staaf",
+              "line": "Lijn",
+              "area": "Vlak",
+              "donut": "Donut"
+            }
+          },
+          "title": {
+            "label": "Titel",
+            "description": "Optionele kop boven de grafiek (overschrijft de standaard)"
+          },
+          "height": {
+            "label": "Hoogte"
+          }
+        },
+        "chartKinds": {
+          "revenue-by-day": "Omzet per dag",
+          "revenue-by-product": "Omzet per product",
+          "revenue-by-category": "Omzet per categorie",
+          "units-per-product-day": "Aantal per product per dag",
+          "top-products": "Topproducten (op aantal)",
+          "orders-by-status": "Bestellingen per status",
+          "sales-by-location": "Verkoop per locatie"
+        }
+      },
+      "salesProductMatrix": {
+        "name": "Verkooptabel (product × dag)",
+        "description": "Draaitabel van producten per dag met een schakelaar tussen Aantal/Omzet",
+        "fields": {
+          "eventScope": {
+            "label": "Evenementbereik",
+            "description": "Beperk tot één evenement of toon alle evenementen van het team"
+          },
+          "measure": {
+            "label": "Standaardmaat",
+            "description": "Welke maat de tabel eerst toont (kijkers kunnen wisselen)",
+            "options": {
+              "units": "Verkochte aantallen",
+              "revenue": "Omzet"
+            }
+          },
+          "title": {
+            "label": "Titel",
+            "description": "Optionele kop boven de tabel"
+          }
+        }
+      }
+    },
     "admin": {
       "sectionTitle": "Kassa",
       "overview": "Overzicht"

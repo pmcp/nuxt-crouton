@@ -7,6 +7,118 @@
         "description": "A public page for a single event with its details and an order button for customers."
       }
     },
+    "blocks": {
+      "eventStorefront": {
+        "name": "Event Storefront",
+        "description": "Embed a public order CTA for one event on a CMS page",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which sales event to embed"
+          },
+          "title": {
+            "label": "Title override",
+            "description": "Optional heading; falls back to the event title"
+          },
+          "ctaLabel": {
+            "label": "Button label",
+            "description": "Optional override for the \"Order Now\" button"
+          }
+        }
+      },
+      "orderInterface": {
+        "name": "Order Interface",
+        "description": "Inline helper POS for one event with login + order taking",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's POS to embed. Visitors will be asked to log in as a helper first."
+          },
+          "height": {
+            "label": "Height",
+            "description": "Compact/Tall sit inside the page flow. Fill screen makes the POS take the full viewport — pair it with the Full width size for a dedicated POS page.",
+            "options": {
+              "compact": "Compact (60% viewport)",
+              "tall": "Tall (80% viewport)",
+              "fill": "Fill screen"
+            }
+          }
+        }
+      },
+      "eventWorkspace": {
+        "name": "Event Workspace",
+        "description": "Embed the full admin workspace (products, orders, printers, settings) for one event",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's workspace to embed. Only signed-in team members can use it."
+          }
+        }
+      },
+      "salesChart": {
+        "name": "Sales Chart",
+        "description": "Embed a sales analytics chart for one event or the whole team",
+        "fields": {
+          "chart": {
+            "label": "Chart",
+            "description": "Which sales metric to visualize"
+          },
+          "eventScope": {
+            "label": "Event scope",
+            "description": "Limit to one event, or show all events for the team"
+          },
+          "chartTypeOverride": {
+            "label": "Chart type",
+            "description": "Override the chart's default type",
+            "options": {
+              "default": "Default",
+              "bar": "Bar",
+              "line": "Line",
+              "area": "Area",
+              "donut": "Donut"
+            }
+          },
+          "title": {
+            "label": "Title",
+            "description": "Optional heading above the chart (overrides the default)"
+          },
+          "height": {
+            "label": "Height"
+          }
+        },
+        "chartKinds": {
+          "revenue-by-day": "Revenue by day",
+          "revenue-by-product": "Revenue by product",
+          "revenue-by-category": "Revenue by category",
+          "units-per-product-day": "Units per product per day",
+          "top-products": "Top products (by quantity)",
+          "orders-by-status": "Orders by status",
+          "sales-by-location": "Sales by location"
+        }
+      },
+      "salesProductMatrix": {
+        "name": "Sales Table (product × day)",
+        "description": "Pivot table of products by day with a Units/Revenue toggle",
+        "fields": {
+          "eventScope": {
+            "label": "Event scope",
+            "description": "Limit to one event, or show all events for the team"
+          },
+          "measure": {
+            "label": "Default measure",
+            "description": "Which measure the table shows first (viewers can toggle)",
+            "options": {
+              "units": "Units sold",
+              "revenue": "Revenue"
+            }
+          },
+          "title": {
+            "label": "Title",
+            "description": "Optional heading above the table"
+          }
+        }
+      }
+    },
     "admin": {
       "sectionTitle": "Point of Sale",
       "overview": "Overview"

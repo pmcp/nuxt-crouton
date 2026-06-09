@@ -256,6 +256,15 @@ at render — the same convention as `croutonApps.*.name`.
 Both renderers are `clientOnly: true` — helper sessions live in localStorage
 and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.
 
+**All block definitions in `app/app.config.ts` use i18n keys** for `name`,
+`description`, and every schema field `label`/`description` and select-option
+label — under the `sales.blocks.<block>.…` namespace in
+`i18n/locales/{en,nl,fr}.json` (chart-kind dropdown options resolve
+`sales.blocks.salesChart.chartKinds.<id>`; the public chart renderer still uses
+the English `SALES_CHART_KINDS` labels). The crouton-pages block editor/panel
+translate these via `useBlockI18n()`. When adding a block field or option, add
+the matching key to all three locale files (keep en/nl/fr at parity).
+
 ## Common Tasks
 
 ### Add a new product field
