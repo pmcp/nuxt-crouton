@@ -30,16 +30,9 @@ const originalHelperPin = ref(props.event.helperPin || '')
 const savingHelperPin = ref(false)
 const showReceiptSettings = ref(false)
 
-// Inline-editable core event details (title / type / dates / status).
+// Inline-editable core event details (title / dates / currency).
 // Slug is intentionally excluded — it is the route param and editing it here
 // would break the current URL. Use the top-right "Edit" button for the slug.
-const statusOptions = [
-  { label: t('sales.workspace.statusUpcoming'), value: 'upcoming' },
-  { label: t('sales.workspace.statusActive'), value: 'active' },
-  { label: t('sales.workspace.statusCompleted'), value: 'completed' },
-  { label: t('sales.workspace.statusCancelled'), value: 'cancelled' }
-]
-
 const currencyOptions = [
   { label: t('sales.workspace.currencyEur'), value: 'EUR' },
   { label: t('sales.workspace.currencyUsd'), value: 'USD' }
@@ -47,10 +40,8 @@ const currencyOptions = [
 
 const eventForm = ref({
   title: props.event.title || '',
-  eventType: props.event.eventType || '',
   startDate: props.event.startDate ? new Date(props.event.startDate) : null,
   endDate: props.event.endDate ? new Date(props.event.endDate) : null,
-  status: props.event.status || 'upcoming',
   currency: props.event.currency || 'EUR'
 })
 const savingEventDetails = ref(false)
@@ -60,10 +51,8 @@ const savingEventDetails = ref(false)
 watch(() => props.event.id, () => {
   eventForm.value = {
     title: props.event.title || '',
-    eventType: props.event.eventType || '',
     startDate: props.event.startDate ? new Date(props.event.startDate) : null,
     endDate: props.event.endDate ? new Date(props.event.endDate) : null,
-    status: props.event.status || 'upcoming',
     currency: props.event.currency || 'EUR'
   }
 })
@@ -71,8 +60,6 @@ watch(() => props.event.id, () => {
 const toTime = (d: Date | string | null | undefined) => (d ? new Date(d).getTime() : null)
 const eventDetailsDirty = computed(() =>
   eventForm.value.title !== (props.event.title || '')
-  || eventForm.value.eventType !== (props.event.eventType || '')
-  || eventForm.value.status !== (props.event.status || 'upcoming')
   || eventForm.value.currency !== (props.event.currency || 'EUR')
   || toTime(eventForm.value.startDate) !== toTime(props.event.startDate)
   || toTime(eventForm.value.endDate) !== toTime(props.event.endDate)
@@ -84,10 +71,8 @@ async function saveEventDetails() {
     const { update } = useCollectionMutation('salesEvents')
     await update(props.event.id, {
       title: eventForm.value.title,
-      eventType: eventForm.value.eventType || undefined,
       startDate: eventForm.value.startDate instanceof Date ? eventForm.value.startDate.toISOString() : null,
       endDate: eventForm.value.endDate instanceof Date ? eventForm.value.endDate.toISOString() : null,
-      status: eventForm.value.status,
       currency: eventForm.value.currency
     })
   }
@@ -178,14 +163,8 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </div>
       </template>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <UFormField :label="t('sales.workspace.eventName')" class="sm:col-span-2">
+        <UFormField :label="t('sales.workspace.eventName')">
           <UInput v-model="eventForm.title" class="w-full" :placeholder="t('sales.workspace.eventNamePlaceholder')" />
-        </UFormField>
-        <UFormField :label="t('sales.workspace.eventType')">
-          <UInput v-model="eventForm.eventType" class="w-full" :placeholder="t('sales.workspace.eventTypePlaceholder')" />
-        </UFormField>
-        <UFormField :label="t('sales.workspace.status')">
-          <USelect v-model="eventForm.status" :items="statusOptions" class="w-full" />
         </UFormField>
         <UFormField :label="t('sales.workspace.currency')">
           <USelect v-model="eventForm.currency" :items="currencyOptions" class="w-full" />

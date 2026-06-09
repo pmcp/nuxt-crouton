@@ -105,8 +105,8 @@ total) plus the order total, and the order's `overallRemarks` (passed as `:remar
 Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
 `getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
 
-`SettingsTab.vue` edits the event's **core fields inline** (title, type, status, currency,
-start/end dates) via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
+`SettingsTab.vue` edits the event's **core fields inline** (title, currency, start/end
+dates) via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
 Save disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
 breaks the current URL — use the workspace's top-right "Edit" button for the slug). The tab also
 hosts Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, Categories,
