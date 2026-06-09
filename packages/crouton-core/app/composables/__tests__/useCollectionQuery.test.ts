@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 
 // Mock route
 let mockRoute: { path: string; params: Record<string, any> } = {
@@ -56,6 +56,7 @@ const mockConsoleError = vi.fn()
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('reactive', reactive)
+vi.stubGlobal('watch', watch)
 vi.stubGlobal('useRoute', () => mockRoute)
 vi.stubGlobal('useFetch', mockUseFetch)
 
@@ -439,6 +440,58 @@ describe('useCollectionQuery', () => {
     it.todo('includes onRequest callback')
     it.todo('includes onResponse callback')
     it.todo('includes onResponseError callback')
+  })
+
+  describe('pagination', () => {
+    it('folds page/pageSize into the query when enabled', async () => {
+      const result = await useCollectionQuery('products', {
+        query: computed(() => ({ eventId: 'e1' })),
+        pagination: { pageSize: 25 }
+      })
+
+      const call = mockUseFetch.mock.calls[mockUseFetch.mock.calls.length - 1] as any
+      expect(call[1].query.value).toEqual({ eventId: 'e1', page: 1, pageSize: 25 })
+      expect(result.pageSize.value).toBe(25)
+      expect(result.page.value).toBe(1)
+    })
+
+    it('defaults to page size 10', async () => {
+      const result = await useCollectionQuery('products', { pagination: true })
+      expect(result.pageSize.value).toBe(10)
+    })
+
+    it('reads total from a paginated { items, total } response', async () => {
+      mockFetchState.data.value = { items: [{ id: 'a' }, { id: 'b' }], total: 42 }
+      const result = await useCollectionQuery('products', { pagination: { pageSize: 10 } })
+      expect(result.total.value).toBe(42)
+      expect(result.pageCount.value).toBe(5)
+      expect(result.paginationData.value).toEqual({
+        currentPage: 1,
+        pageSize: 10,
+        totalItems: 42,
+        totalPages: 5
+      })
+      mockFetchState.data.value = []
+    })
+
+    it('clamps setPage / nextPage / prevPage to valid range', async () => {
+      mockFetchState.data.value = { items: [], total: 30 } // 3 pages at size 10
+      const result = await useCollectionQuery('products', { pagination: { pageSize: 10 } })
+      result.setPage(2)
+      expect(result.page.value).toBe(2)
+      result.setPage(99)
+      expect(result.page.value).toBe(3) // clamped to pageCount
+      result.prevPage()
+      expect(result.page.value).toBe(2)
+      result.setPage(-5)
+      expect(result.page.value).toBe(1) // clamped to >= 1
+      mockFetchState.data.value = []
+    })
+
+    it('leaves paginationData null when disabled', async () => {
+      const result = await useCollectionQuery('products')
+      expect(result.paginationData.value).toBeNull()
+    })
   })
 
   describe('proxy integration', () => {

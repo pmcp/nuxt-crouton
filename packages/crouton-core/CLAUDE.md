@@ -176,6 +176,39 @@ collection-item:{name}:{id}       # Single items
 
 Mutations invalidate ALL cache keys for the collection.
 
+## Server Pagination
+
+`useCollectionQuery` has opt-in server pagination that pairs with the generated
+paginated GET endpoint (`?page=&pageSize=` → `{ items, total, page, pageSize }`).
+
+```ts
+const { items, page, pageSize, total, pageCount, paginationData, setPage }
+  = await useCollectionQuery('salesPrintqueues', {
+    query: computed(() => ({ eventId })),   // FK filters still apply
+    pagination: { pageSize: 10 }             // or `true` for the default 10
+  })
+```
+
+- `page`/`pageSize` are writable refs folded into the request query (changing `pageSize`
+  resets to page 1). They become part of the cache key, so each page caches separately.
+- `total` prefers the server's `{ total }`, falling back to array length (so it also works
+  against a non-paginated endpoint). `pageCount = ceil(total / pageSize)`.
+- `paginationData` is shaped for `<CroutonCollection :pagination-data>` and is `null` when
+  pagination is off. Helpers: `setPage` (clamped), `nextPage`, `prevPage`.
+
+Wire it into any layout (`table`, `list`, `grid`) — `Collection.vue` renders
+`CroutonTablePagination` and emits `update:page` / `update:pageCount`:
+
+```vue
+<CroutonCollection
+  layout="list" collection="salesPrintqueues" :rows="items"
+  server-pagination :pagination-data="paginationData"
+  @update:page="page = $event" @update:page-count="pageSize = $event" />
+```
+
+Note: `CroutonTablePagination`'s `page-count` prop is the **page size** (rows per page),
+not the number of pages.
+
 ## Hooks
 
 ```typescript

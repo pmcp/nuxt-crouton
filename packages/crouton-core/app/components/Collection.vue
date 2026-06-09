@@ -116,8 +116,10 @@
       >
         <CroutonTablePagination
           :page="paginationData.currentPage"
-          :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
+          :page-count="paginationData.pageSize"
           :total-items="paginationData.totalItems"
+          @update:page="emit('update:page', $event)"
+          @update:page-count="emit('update:pageCount', $event)"
         />
       </div>
     </template>
@@ -189,8 +191,10 @@
     >
       <CroutonTablePagination
         :page="paginationData.currentPage"
-        :page-count="paginationData.totalPages || Math.ceil(paginationData.totalItems / paginationData.pageSize)"
+        :page-count="paginationData.pageSize"
         :total-items="paginationData.totalItems"
+        @update:page="emit('update:page', $event)"
+        @update:page-count="emit('update:pageCount', $event)"
       />
     </div>
   </div>
@@ -304,6 +308,8 @@ const emit = defineEmits<{
   'kanban-move': [payload: { id: string; newValue: string | null; newOrder: number }]
   'kanban-select': [item: any]
   'create': []
+  'update:page': [value: number]
+  'update:pageCount': [value: number]
 }>()
 
 const { t } = useT()
