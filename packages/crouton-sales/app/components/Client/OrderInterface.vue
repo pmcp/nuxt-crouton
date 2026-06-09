@@ -13,6 +13,7 @@
           v-model="selectedCategory"
           :categories="categories || []"
           :product-counts="productCounts"
+          :show-all="false"
         />
       </div>
 
@@ -274,8 +275,17 @@ function confirmProductWithOptions() {
   selectedOptions.value = null
 }
 
-// Category selection
+// Category selection. The "All" tab is hidden in the POS, so default the
+// selection to the first category once they load — otherwise the tabs would
+// visually highlight the first category while `selectedCategory` stays null and
+// the grid shows every product.
 const selectedCategory = ref<string | null>(null)
+
+watch(categories, (cats) => {
+  if (selectedCategory.value === null && cats.length) {
+    selectedCategory.value = cats[0]!.id
+  }
+}, { immediate: true })
 
 // Product counts per category
 const productCounts = computed(() => {
