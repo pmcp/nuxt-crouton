@@ -45,18 +45,32 @@ const pagesConfig = runtimeConfig.public?.croutonPages as { defaultLocale?: stri
 const i18nCfg = runtimeConfig.croutonI18n as { supportedLocales?: string[]; defaultLocale?: string } | undefined
 
 let localeCode = ''
+let supportedLocales: string[] = []
+let i18nDefaultLocale = ''
 try {
-  localeCode = useI18n().locale.value
+  const i18n = useI18n()
+  localeCode = i18n.locale.value
+  supportedLocales = (i18n.locales.value as Array<string | { code: string }>)
+    .map(l => (typeof l === 'string' ? l : l.code))
+  i18nDefaultLocale = (i18n.defaultLocale as string) || ''
 } catch {
   if (import.meta.dev) {
     console.warn('[crouton-pages] useI18n() unavailable in redirect route, using configured default locale')
   }
 }
+
+// Discard a live locale that isn't actually supported by this app — e.g. a stale
+// `i18n_redirected` cookie left by another crouton app on the same host. Using it
+// would build an unreachable URL like /team/en/ for an nl-only app.
+if (localeCode && supportedLocales.length && !supportedLocales.includes(localeCode)) {
+  localeCode = ''
+}
+
 if (!localeCode) {
   // Resolve the app's configured default — never hardcode 'en' for a non-en app.
-  // Order: single supported locale → croutonI18n.defaultLocale (from crouton.config.js)
-  // → croutonPages.defaultLocale → 'en' as a last resort.
-  localeCode = (i18nCfg?.supportedLocales?.length === 1 ? i18nCfg.supportedLocales[0]! : '')
+  localeCode = (supportedLocales.length === 1 ? supportedLocales[0]! : '')
+    || i18nDefaultLocale
+    || (i18nCfg?.supportedLocales?.length === 1 ? i18nCfg.supportedLocales[0]! : '')
     || i18nCfg?.defaultLocale
     || pagesConfig?.defaultLocale
     || 'en'
@@ -69,10 +83,12 @@ const slug = !slugParts || (Array.isArray(slugParts) && slugParts.length === 0)
   ? ''
   : Array.isArray(slugParts) ? slugParts.join('/') : slugParts
 
-// Redirect to locale-prefixed URL
+// Redirect to locale-prefixed URL. Use 302 (temporary), NOT 301: the locale
+// segment is resolved at runtime (current/default locale), so the mapping isn't
+// permanent — a 301 gets cached by browsers and pins the URL to a stale locale.
 const targetUrl = slug ? `/${team}/${localeCode}/${slug}` : `/${team}/${localeCode}/`
 
-await navigateTo(targetUrl, { redirectCode: 301 })
+await navigateTo(targetUrl, { redirectCode: 302 })
 </script>
 
 <template>
