@@ -17,7 +17,9 @@
  */
 export function useFooterPage(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
-  const { locale: i18nLocale } = useI18n()
+  // useT() rather than raw useI18n(): safe on public/SSR routes where the i18n
+  // auto-import can be unavailable ("useI18n is not defined").
+  const { locale: i18nLocale } = useT()
   const { teamId } = useTeamContext()
 
   const runtimeConfig = useRuntimeConfig()

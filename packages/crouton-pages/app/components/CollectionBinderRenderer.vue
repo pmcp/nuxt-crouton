@@ -35,7 +35,9 @@ interface Props {
 const props = defineProps<Props>()
 
 const route = useRoute()
-const { locale } = useI18n()
+// useT() rather than raw useI18n(): safe on public/SSR routes where the i18n
+// auto-import can be unavailable ("useI18n is not defined").
+const { locale } = useT()
 const collections = useCollections()
 const { getTeamId, teamSlug } = useTeamContext()
 const { hideTeamInUrl } = useDomainContext()

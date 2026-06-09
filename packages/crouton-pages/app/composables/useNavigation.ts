@@ -44,7 +44,10 @@ export interface NavigationItem {
 
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
-  const { locale: i18nLocale } = useI18n()
+  // Use the safe useT() wrapper rather than raw useI18n(): on public routes the
+  // i18n auto-import can be unavailable (SSR), which throws "useI18n is not
+  // defined". useT() catches that internally and still exposes a locale ref.
+  const { locale: i18nLocale } = useT()
   const collections = useCollections()
   const { teamId } = useTeamContext()
   const { hideTeamInUrl } = useDomainContext()

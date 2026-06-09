@@ -20,7 +20,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { locale: i18nLocale } = useI18n()
+// useT() rather than raw useI18n(): safe on public/SSR routes where the i18n
+// auto-import can be unavailable ("useI18n is not defined").
+const { locale: i18nLocale } = useT()
 
 // Resolve localized content
 const localizedContent = computed(() => {
