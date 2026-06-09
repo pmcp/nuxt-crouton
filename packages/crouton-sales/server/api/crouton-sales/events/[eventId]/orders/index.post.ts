@@ -22,6 +22,8 @@ interface CreateOrderBody {
   clientId?: string
   clientName?: string
   overallRemarks?: string
+  /** Free-text remark per location, keyed by locationId. Printed per location, not counted in sales. */
+  locationRemarks?: Record<string, string>
   isPersonnel?: boolean
 }
 
@@ -72,6 +74,7 @@ export default defineEventHandler(async (event) => {
       clientName: body.clientName,
       eventOrderNumber,
       overallRemarks: body.overallRemarks,
+      locationRemarks: body.locationRemarks || null,
       isPersonnel: body.isPersonnel || false,
       status: 'pending',
       createdBy: access.id,
@@ -116,6 +119,7 @@ export default defineEventHandler(async (event) => {
       orderNumber: eventOrderNumber,
       clientName: body.clientName || undefined,
       orderNotes: body.overallRemarks || undefined,
+      locationRemarks: body.locationRemarks || undefined,
       teamName: eventWithTeam.team?.name || 'POS',
       eventName: salesEvent.title,
       isPersonnel: body.isPersonnel || false

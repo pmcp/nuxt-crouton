@@ -50,6 +50,8 @@ export interface ReceiptData {
   items: ReceiptItem[]
   total?: number
   locationName?: string
+  /** Free-text remark for this location, printed on the kitchen ticket only. Not a sales item. */
+  locationNote?: string
   printMode: 'kitchen' | 'receipt'
   showPrices: boolean
   createdAt: Date | string
@@ -238,6 +240,15 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.println(settings.special_instructions_title)
       printer.bold(false)
       printer.println(data.orderNotes)
+    }
+
+    // Per-location remark for kitchen tickets (prints only on this location's ticket)
+    if (data.locationNote && data.printMode === 'kitchen') {
+      printer.drawLine()
+      printer.bold(true)
+      printer.println('REMARK:')
+      printer.bold(false)
+      printer.println(data.locationNote)
     }
 
     printer.drawLine()

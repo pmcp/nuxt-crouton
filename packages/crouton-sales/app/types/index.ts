@@ -22,6 +22,13 @@ export interface SalesCategory {
   displayOrder?: number
 }
 
+// Location type (prep/print destination, e.g. "Bar", "Kitchen")
+export interface SalesLocation {
+  id: string
+  title: string
+  eventId?: string
+}
+
 // Order type
 export interface SalesOrder {
   id: string
@@ -30,6 +37,8 @@ export interface SalesOrder {
   clientName?: string
   eventOrderNumber?: number
   overallRemarks?: string
+  /** Free-text remark per location, keyed by locationId. Printed per location, not counted in sales. */
+  locationRemarks?: Record<string, string>
   isPersonnel?: boolean
   status: OrderStatus
   createdAt?: string

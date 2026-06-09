@@ -62,7 +62,9 @@
       "subtotal": "Subtotal",
       "checkout": "Checkout",
       "selectClient": "Please select a client to proceed",
-      "pay": "Pay"
+      "pay": "Pay",
+      "locationRemark": "Remark for {location}",
+      "locationRemarkPlaceholder": "Add a remark for this location…"
     },
     "products": {
       "title": "Products",

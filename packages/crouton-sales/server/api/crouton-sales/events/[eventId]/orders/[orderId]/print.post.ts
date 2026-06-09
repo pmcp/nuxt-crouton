@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
     orderNumber: order.eventOrderNumber || order.id,
     clientName: order.clientName || undefined,
     orderNotes: order.overallRemarks || undefined,
+    locationRemarks: (order.locationRemarks as Record<string, string> | null) || undefined,
     teamName: eventWithTeam.team?.name || 'POS',
     eventName: eventWithTeam.event.title,
     isPersonnel: order.isPersonnel || false

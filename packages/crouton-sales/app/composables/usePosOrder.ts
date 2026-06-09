@@ -121,6 +121,10 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
   const selectedClientId = ref<string | null>(null)
   const selectedClientName = ref<string | null>(null)
   const overallRemarks = ref<string | null>(null)
+  // Free-text remark per location, keyed by locationId. Printed on that
+  // location's kitchen ticket; never becomes an order item, so it is invisible
+  // to all sales aggregations.
+  const locationRemarks = ref<Record<string, string>>({})
   const isPersonnel = ref(false)
   const isCheckingOut = ref(false)
 
@@ -196,6 +200,7 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
   function clearCart() {
     cartItems.value = []
     overallRemarks.value = null
+    locationRemarks.value = {}
     isPersonnel.value = false
   }
 
@@ -239,6 +244,22 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
         selectedOptions: item.selectedOptions
       }))
 
+      // Only send remarks for locations that actually have an item in this
+      // order (remarks ride along on an existing kitchen ticket) and drop
+      // blank entries.
+      const locationIdsInCart = new Set(
+        cartItems.value
+          .map(item => item.product.locationId)
+          .filter((id): id is string => Boolean(id))
+      )
+      const cleanedLocationRemarks: Record<string, string> = {}
+      for (const [locationId, remark] of Object.entries(locationRemarks.value)) {
+        const trimmed = remark?.trim()
+        if (trimmed && locationIdsInCart.has(locationId)) {
+          cleanedLocationRemarks[locationId] = trimmed
+        }
+      }
+
       // Create order via API
       const response = await $fetch<CreateOrderResponse>(
         `${apiBasePath}/${selectedEventId.value}/orders`,
@@ -250,6 +271,9 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
             clientId: selectedClientId.value,
             clientName: selectedClientName.value,
             overallRemarks: overallRemarks.value,
+            locationRemarks: Object.keys(cleanedLocationRemarks).length > 0
+              ? cleanedLocationRemarks
+              : undefined,
             isPersonnel: isPersonnel.value
           }
         }
@@ -288,6 +312,7 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
     selectedClientId,
     selectedClientName,
     overallRemarks,
+    locationRemarks,
     isPersonnel,
     isCheckingOut: readonly(isCheckingOut),
 

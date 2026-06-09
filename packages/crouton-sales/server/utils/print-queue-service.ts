@@ -100,7 +100,8 @@ export function generateKitchenTicketData(
   locationTitle: string,
   items: OrderItemForPrint[],
   printer: PrinterConfig,
-  receiptSettings?: ReceiptSettings
+  receiptSettings?: ReceiptSettings,
+  locationNote?: string
 ): PrintJobData {
   const receiptItems: ReceiptItem[] = items.map(item => ({
     name: item.productTitle,
@@ -123,6 +124,7 @@ export function generateKitchenTicketData(
     items: receiptItems,
     total: printer.showPrices ? total : undefined,
     locationName: locationTitle,
+    locationNote,
     printMode: 'kitchen',
     showPrices: printer.showPrices || false,
     createdAt: new Date(),
@@ -212,7 +214,8 @@ export function generatePrintJobsForOrder(
   options: PrintQueueGeneratorOptions,
   orderItems: OrderItemForPrint[],
   printers: PrinterConfig[],
-  receiptSettings?: ReceiptSettings
+  receiptSettings?: ReceiptSettings,
+  locationRemarks?: Record<string, string>
 ): PrintJobData[] {
   const jobs: PrintJobData[] = []
 
@@ -236,6 +239,13 @@ export function generatePrintJobsForOrder(
       p.locationId === locationId || locationId === 'default'
     )
 
+    // Per-location remark (items-required: only locations with items reach
+    // this loop, so a remark prints alongside that location's existing ticket).
+    // 'default' is the synthetic key for items with no location — never keyed.
+    const locationNote = locationId === 'default'
+      ? undefined
+      : locationRemarks?.[locationId]
+
     for (const printer of printersForLocation) {
       jobs.push(generateKitchenTicketData(
         options,
@@ -243,7 +253,8 @@ export function generatePrintJobsForOrder(
         locationTitle,
         items,
         printer,
-        receiptSettings
+        receiptSettings,
+        locationNote
       ))
     }
   }

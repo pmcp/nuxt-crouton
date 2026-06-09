@@ -56,7 +56,9 @@
       "subtotal": "Sous-total",
       "checkout": "Passer à la caisse",
       "selectClient": "Veuillez sélectionner un client pour continuer",
-      "pay": "Payer"
+      "pay": "Payer",
+      "locationRemark": "Remarque pour {location}",
+      "locationRemarkPlaceholder": "Ajouter une remarque pour ce lieu…"
     },
     "products": {
       "title": "Produits",
@@ -99,7 +101,21 @@
       "noRemarks": "Aucune remarque",
       "noItems": "Aucun article dans cette commande",
       "unknownProduct": "Produit inconnu",
-      "total": "Total"
+      "total": "Total",
+      "fields": {
+        "eventId": "Événement",
+        "clientId": "Client",
+        "clientName": "Nom du client",
+        "eventOrderNumber": "Numéro de commande",
+        "overallRemarks": "Remarques",
+        "isPersonnel": "Personnel",
+        "status": "Statut"
+      },
+      "selectClient": "Sélectionner un client",
+      "createNewClient": "Créer un nouveau client",
+      "clientHelp": "Sélectionnez un client existant ou créez-en un nouveau",
+      "clientRequired": "Client requis",
+      "clientRequiredDescription": "Cet événement nécessite un client. Veuillez en sélectionner ou en créer un."
     },
     "events": {
       "title": "Événements",

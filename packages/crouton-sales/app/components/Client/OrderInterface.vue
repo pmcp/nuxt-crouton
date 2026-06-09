@@ -44,6 +44,8 @@
             <SalesClientCart
               :items="cartItems"
               :categories="categories || []"
+              :locations="locations || []"
+              :location-remarks="locationRemarks"
               :total="cartTotal"
               :disabled="!isOnline"
               :client-required="props.requiresClient"
@@ -52,6 +54,7 @@
               @remove="removeFromCart"
               @checkout="handleCheckout"
               @clear="clearCart"
+              @update-location-remark="setLocationRemark"
             />
           </div>
         </div>
@@ -107,6 +110,8 @@
                 <SalesClientCart
                   :items="cartItems"
                   :categories="categories || []"
+                  :locations="locations || []"
+                  :location-remarks="locationRemarks"
                   :total="cartTotal"
                   :disabled="!isOnline"
                   :client-required="props.requiresClient"
@@ -115,6 +120,7 @@
                   @remove="removeFromCart"
                   @checkout="handleCheckout"
                   @clear="clearCart"
+                  @update-location-remark="setLocationRemark"
                 />
               </div>
             </div>
@@ -126,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SalesProduct, SalesCategory, ProductOption, SalesClient } from '../../types'
+import type { SalesProduct, SalesCategory, ProductOption, SalesClient, SalesLocation } from '../../types'
 
 const props = defineProps<{
   eventId: string
@@ -141,6 +147,8 @@ const props = defineProps<{
   categories?: SalesCategory[]
   /** Pre-fetched clients for this event's team. */
   clients?: SalesClient[]
+  /** Pre-fetched locations for this event, used to label per-location remark inputs. */
+  locations?: SalesLocation[]
   /** Whether this event requires orders to be linked to a client. */
   requiresClient?: boolean
   /** Whether to use reusable clients (dropdown) vs free-text input. */
@@ -161,6 +169,7 @@ const {
   selectedEventId,
   selectedClientId,
   selectedClientName,
+  locationRemarks,
   addToCart,
   removeFromCart,
   updateQuantity,
@@ -176,12 +185,14 @@ const usePropsData = props.products !== undefined && props.categories !== undefi
 
 let categories: Ref<SalesCategory[]> | ComputedRef<SalesCategory[]>
 let products: Ref<SalesProduct[]> | ComputedRef<SalesProduct[]>
+let locations: Ref<SalesLocation[]> | ComputedRef<SalesLocation[]>
 let categoriesLoading: Ref<boolean>
 let productsLoading: Ref<boolean>
 
 if (usePropsData) {
   categories = computed(() => props.categories ?? [])
   products = computed(() => props.products ?? [])
+  locations = computed(() => props.locations ?? [])
   categoriesLoading = ref(false)
   productsLoading = ref(false)
 }
@@ -194,8 +205,13 @@ else {
     props.productsCollection || 'salesProducts',
     { query: computed(() => ({ eventId: props.eventId })) }
   )
+  const locsQuery = await useCollectionQuery(
+    'salesLocations',
+    { query: computed(() => ({ eventId: props.eventId })) }
+  )
   categories = catsQuery.items as Ref<SalesCategory[]>
   products = prodsQuery.items as Ref<SalesProduct[]>
+  locations = locsQuery.items as Ref<SalesLocation[]>
   categoriesLoading = catsQuery.pending
   productsLoading = prodsQuery.pending
 }
@@ -280,6 +296,12 @@ const filteredProducts = computed(() => {
   }
   return allProducts.filter(p => p.categoryId === selectedCategory.value && p.isActive !== false)
 })
+
+// Set/update the free-text remark for a given location (writes into the
+// usePosOrder locationRemarks map, included in the checkout body).
+function setLocationRemark(locationId: string, value: string) {
+  locationRemarks.value[locationId] = value
+}
 
 async function handleCheckout() {
   try {

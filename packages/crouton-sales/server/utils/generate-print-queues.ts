@@ -26,6 +26,8 @@ interface GenerateInsertOptions {
   orderNumber: string
   clientName?: string
   orderNotes?: string
+  /** Free-text remark per location, keyed by locationId. Printed on that location's kitchen ticket. */
+  locationRemarks?: Record<string, string>
   teamName: string
   eventName: string
   isPersonnel?: boolean
@@ -130,7 +132,8 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
     },
     printItems,
     printerConfigs,
-    receiptSettings
+    receiptSettings,
+    opts.locationRemarks
   )
 
   const queueIds: string[] = []

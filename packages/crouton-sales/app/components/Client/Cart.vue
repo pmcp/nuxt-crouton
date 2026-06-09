@@ -46,6 +46,24 @@
     <template #footer>
       <SalesClientCartTotal :count="itemCount" :total="total" />
 
+      <!-- Per-location remarks: one optional note per location present in the cart.
+           Printed on that location's kitchen ticket, never counted in sales. -->
+      <div v-if="remarkLocations.length > 0" class="space-y-2">
+        <UFormField
+          v-for="loc in remarkLocations"
+          :key="loc.id"
+          :label="t('sales.cart.locationRemark', { location: loc.title })"
+        >
+          <UInput
+            :model-value="locationRemarks?.[loc.id] ?? ''"
+            :placeholder="t('sales.cart.locationRemarkPlaceholder')"
+            icon="i-lucide-message-square-text"
+            class="w-full"
+            @update:model-value="$emit('updateLocationRemark', loc.id, String($event))"
+          />
+        </UFormField>
+      </div>
+
       <div v-if="clientRequired && !hasClient && items.length > 0" class="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning">
         <UIcon name="i-lucide-alert-triangle" class="text-warning shrink-0" />
         <span class="text-sm text-warning font-medium">{{ t('sales.cart.selectClient') }}</span>
@@ -74,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CartItem, ProductOption, SalesCategory } from '../../types'
+import type { CartItem, ProductOption, SalesCategory, SalesLocation } from '../../types'
 import { calculateItemPrice } from '../../composables/usePosOrder'
 const { t } = useT()
 
@@ -86,7 +104,25 @@ const props = defineProps<{
   hasClient?: boolean
   /** Categories used to group + order cart items. Optional — without it items render ungrouped. */
   categories?: SalesCategory[]
+  /** Event locations, used to label per-location remark inputs. */
+  locations?: SalesLocation[]
+  /** Current per-location remark text, keyed by locationId. */
+  locationRemarks?: Record<string, string>
 }>()
+
+// Locations represented by at least one cart item — a remark only prints if its
+// location already has an item on this order (items-required).
+const remarkLocations = computed<SalesLocation[]>(() => {
+  const idsInCart = new Set(
+    props.items
+      .map(item => item.product.locationId)
+      .filter((id): id is string => Boolean(id))
+  )
+  const byId = new Map((props.locations || []).map(loc => [loc.id, loc]))
+  return [...idsInCart]
+    .map(id => byId.get(id))
+    .filter((loc): loc is SalesLocation => Boolean(loc))
+})
 
 const itemCount = computed(() => {
   return props.items.reduce((count, item) => count + item.quantity, 0)
@@ -157,6 +193,7 @@ defineEmits<{
   remove: [index: number]
   checkout: []
   clear: []
+  updateLocationRemark: [locationId: string, value: string]
 }>()
 
 // Get selected option labels as array
