@@ -52,12 +52,14 @@
         <UFormField
           v-for="loc in remarkLocations"
           :key="loc.id"
-          :label="t('sales.cart.locationRemark', { location: loc.title })"
+          :label="t('sales.cart.locationRemark', { params: { location: loc.title } })"
         >
-          <UInput
+          <UTextarea
             :model-value="locationRemarks?.[loc.id] ?? ''"
             :placeholder="t('sales.cart.locationRemarkPlaceholder')"
             icon="i-lucide-message-square-text"
+            :rows="2"
+            autoresize
             class="w-full"
             @update:model-value="$emit('updateLocationRemark', loc.id, String($event))"
           />
@@ -69,24 +71,13 @@
         <span class="text-sm text-warning font-medium">{{ t('sales.cart.selectClient') }}</span>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <UButton
-          :label="t('sales.cart.clear')"
-          color="neutral"
-          variant="soft"
-          size="lg"
-          block
-          :disabled="items.length === 0"
-          @click="$emit('clear')"
-        />
-        <UButton
-          :label="t('sales.cart.pay')"
-          size="lg"
-          block
-          :disabled="disabled || items.length === 0 || (clientRequired && !hasClient)"
-          @click="$emit('checkout')"
-        />
-      </div>
+      <UButton
+        :label="t('sales.cart.pay')"
+        size="lg"
+        block
+        :disabled="disabled || items.length === 0 || (clientRequired && !hasClient)"
+        @click="$emit('checkout')"
+      />
     </template>
   </UCard>
 </template>
