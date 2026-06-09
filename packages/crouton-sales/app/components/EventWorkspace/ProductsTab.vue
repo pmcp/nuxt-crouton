@@ -128,7 +128,8 @@ function openEditProduct(id: string) {
       <li
         v-for="product in orderedProducts"
         :key="product.id"
-        class="group flex items-center gap-3 px-3 py-2.5 bg-default hover:bg-elevated/50 transition-colors cursor-pointer"
+        class="group flex items-center gap-3 px-3 py-2.5 bg-default hover:bg-elevated/50 transition-all cursor-pointer"
+        :class="{ 'opacity-50 hover:opacity-100': product.isActive === false }"
         @click="openEditProduct(product.id)"
       >
         <UIcon
@@ -142,10 +143,10 @@ function openEditProduct(id: string) {
             <UBadge v-if="product.isActive === false" color="neutral" variant="subtle" size="xs">
               {{ t('sales.common.inactive') }}
             </UBadge>
-            <UBadge v-if="product.hasOptions" color="primary" variant="subtle" size="xs" icon="i-lucide-list">
+            <UBadge v-if="product.hasOptions" color="primary" variant="subtle" size="sm" icon="i-lucide-list">
               {{ t('sales.form.options') }}
             </UBadge>
-            <UBadge v-if="product.requiresRemark" color="warning" variant="subtle" size="xs" icon="i-lucide-message-square">
+            <UBadge v-if="product.requiresRemark" color="warning" variant="subtle" size="sm" icon="i-lucide-message-square">
               {{ t('sales.form.remark') }}
             </UBadge>
           </div>
