@@ -36,7 +36,30 @@ const variantOptions = computed(() => [
 ])
 
 const { t } = useT()
+
+// CMS pages for the "link to a page" picker.
+const { pageOptions } = usePageLink()
+
 const buttons = ref<ButtonRowItem[]>([...props.modelValue])
+
+// A button links either to a CMS page (pageId set) or a custom URL.
+function linkMode(btn: ButtonRowItem): 'page' | 'url' {
+  return btn.pageId !== undefined ? 'page' : 'url'
+}
+
+function setLinkMode(index: number, mode: 'page' | 'url') {
+  const btn = { ...buttons.value[index]! } as ButtonRowItem
+  if (mode === 'page') {
+    // Page links are internal — drop the free URL and new-tab flag.
+    btn.pageId = btn.pageId ?? ''
+    btn.to = undefined
+    btn.external = undefined
+  } else {
+    btn.pageId = undefined
+  }
+  buttons.value[index] = btn
+  emitChange()
+}
 
 watch(() => props.modelValue, (newVal) => {
   buttons.value = [...newVal]
@@ -199,27 +222,66 @@ function removeFile(index: number) {
         @update:model-value="updateButton(index, 'label', $event)"
       />
 
-      <!-- Link mode: URL input -->
+      <!-- Link mode: page picker or custom URL -->
       <template v-if="!btn.download">
-        <UInput
-          :model-value="btn.to || ''"
-          :placeholder="t('pages.blocks.links.urlPlaceholder')"
+        <!-- Sub-toggle: link to a CMS page vs a custom URL -->
+        <UButtonGroup size="xs" class="w-full">
+          <UButton
+            :color="linkMode(btn) === 'page' ? 'primary' : 'neutral'"
+            :variant="linkMode(btn) === 'page' ? 'solid' : 'outline'"
+            icon="i-lucide-file-text"
+            :label="t('pages.blocks.buttonRow.linkPage')"
+            class="flex-1"
+            @click="setLinkMode(index, 'page')"
+          />
+          <UButton
+            :color="linkMode(btn) === 'url' ? 'primary' : 'neutral'"
+            :variant="linkMode(btn) === 'url' ? 'solid' : 'outline'"
+            icon="i-lucide-link"
+            :label="t('pages.blocks.buttonRow.linkUrl')"
+            class="flex-1"
+            @click="setLinkMode(index, 'url')"
+          />
+        </UButtonGroup>
+
+        <!-- Page mode: pick a page from the CMS -->
+        <USelectMenu
+          v-if="linkMode(btn) === 'page'"
+          :model-value="btn.pageId || ''"
+          :items="pageOptions"
+          value-key="value"
           size="sm"
-          @update:model-value="updateButton(index, 'to', $event)"
+          :placeholder="t('pages.blocks.buttonRow.selectPage')"
+          :search-input="{ placeholder: t('pages.blocks.buttonRow.searchPages') }"
+          @update:model-value="updateButton(index, 'pageId', $event)"
         >
           <template #leading>
-            <UIcon name="i-lucide-link" class="size-3" />
+            <UIcon name="i-lucide-file-text" class="size-3" />
           </template>
-        </UInput>
+        </USelectMenu>
 
-        <div class="flex items-center gap-2">
-          <USwitch
-            :model-value="btn.external || false"
-            size="xs"
-            @update:model-value="updateButton(index, 'external', $event)"
-          />
-          <span class="text-xs text-neutral-500">{{ t('pages.blocks.buttonRow.openInNewTab') }}</span>
-        </div>
+        <!-- URL mode: free-text URL + new-tab toggle -->
+        <template v-else>
+          <UInput
+            :model-value="btn.to || ''"
+            :placeholder="t('pages.blocks.links.urlPlaceholder')"
+            size="sm"
+            @update:model-value="updateButton(index, 'to', $event)"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-link" class="size-3" />
+            </template>
+          </UInput>
+
+          <div class="flex items-center gap-2">
+            <USwitch
+              :model-value="btn.external || false"
+              size="xs"
+              @update:model-value="updateButton(index, 'external', $event)"
+            />
+            <span class="text-xs text-neutral-500">{{ t('pages.blocks.buttonRow.openInNewTab') }}</span>
+          </div>
+        </template>
       </template>
 
       <!-- Download mode: File upload -->

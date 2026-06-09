@@ -297,7 +297,11 @@
       "buttonRow": {
         "modeLink": "Link",
         "modeDownload": "Download",
-        "openInNewTab": "Openen in nieuw tabblad"
+        "openInNewTab": "Openen in nieuw tabblad",
+        "linkPage": "Pagina",
+        "linkUrl": "Aangepaste URL",
+        "selectPage": "Kies een pagina…",
+        "searchPages": "Zoek pagina’s…"
       }
     },
     "fieldGroups": {

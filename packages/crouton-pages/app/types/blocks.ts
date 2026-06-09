@@ -368,6 +368,8 @@ export interface FileBlock extends PageBlock<FileBlockAttrs> {
 export interface ButtonRowItem {
   label: string
   to?: string
+  /** Id of a CMS page to link to; resolved to its canonical URL at render. Takes precedence over `to`. */
+  pageId?: string
   file?: string
   fileName?: string
   download?: boolean

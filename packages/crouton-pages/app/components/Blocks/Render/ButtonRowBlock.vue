@@ -17,6 +17,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
+// Resolves a button's pageId to its canonical (nested, localized) URL.
+const { resolve: resolvePageUrl } = usePageLink()
+
 const buttons = computed<ButtonRowItem[]>(() => {
   const raw = props.attrs.buttons
   if (Array.isArray(raw)) return raw
@@ -26,6 +29,13 @@ const buttons = computed<ButtonRowItem[]>(() => {
   }
   return []
 })
+
+// A linked page takes precedence over a free-text URL. Falls back to `to` when
+// the page can't be resolved (e.g. unpublished or not visible to the viewer).
+function resolveHref(btn: ButtonRowItem): string | undefined {
+  if (btn.pageId) return resolvePageUrl(btn.pageId) || btn.to || undefined
+  return btn.to || undefined
+}
 
 const alignClass = computed(() => {
   switch (props.attrs.align) {
@@ -74,7 +84,7 @@ const alignClass = computed(() => {
         <UButton
           v-else
           :label="btn.label || 'Button'"
-          :to="btn.to || undefined"
+          :to="resolveHref(btn)"
           :target="btn.external ? '_blank' : undefined"
           :color="btn.color || 'primary'"
           :variant="btn.variant || 'solid'"

@@ -283,7 +283,11 @@
       "buttonRow": {
         "modeLink": "Lien",
         "modeDownload": "Téléchargement",
-        "openInNewTab": "Ouvrir dans un nouvel onglet"
+        "openInNewTab": "Ouvrir dans un nouvel onglet",
+        "linkPage": "Page",
+        "linkUrl": "URL personnalisée",
+        "selectPage": "Choisir une page…",
+        "searchPages": "Rechercher des pages…"
       }
     },
     "fieldGroups": {

@@ -297,7 +297,11 @@
       "buttonRow": {
         "modeLink": "Link",
         "modeDownload": "Download",
-        "openInNewTab": "Open in new tab"
+        "openInNewTab": "Open in new tab",
+        "linkPage": "Page",
+        "linkUrl": "Custom URL",
+        "selectPage": "Select a page…",
+        "searchPages": "Search pages…"
       }
     },
     "fieldGroups": {
