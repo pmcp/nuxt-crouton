@@ -141,7 +141,12 @@ export function useT() {
     if (typeof options === 'string') {
       options = { fallback: options }
     }
-    const { params, fallback, category = 'ui', mode = 'team', placeholder } = options
+    const { params: explicitParams, fallback, category = 'ui', mode = 'team', placeholder, ...rest } = options
+    // Support both the explicit `{ params: {...} }` form and the documented
+    // shorthand `t(key, { count, name })` form (see TranslationOptions). Without
+    // this, shorthand named params never reach interpolation and vue-i18n renders
+    // the placeholders as empty strings.
+    const params = explicitParams ?? (Object.keys(rest).length ? rest : undefined)
 
     // Get the translated value
     let translatedValue: string
@@ -209,7 +214,9 @@ export function useT() {
    * @returns Translated string
    */
   const translateString = (key: string, options: TranslationOptions = {}): string => {
-    const { params, fallback, placeholder } = options
+    const { params: explicitParams, fallback, placeholder, category: _category, mode: _mode, ...rest } = options
+    // Same shorthand-param support as translate() above.
+    const params = explicitParams ?? (Object.keys(rest).length ? rest : undefined)
 
     // Get team overrides
     const teamOverride = teamTranslations.value?.[key]
