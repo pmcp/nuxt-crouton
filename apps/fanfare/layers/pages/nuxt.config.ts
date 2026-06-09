@@ -14,11 +14,7 @@ export default defineNuxtConfig({
   },
   extends: [
     './collections/pages'
-  ],
-  i18n: {
-    locales: [
-      { code: 'en', file: 'en.json' }
-    ],
-    langDir: './locales'
-  }
+  ]
+  // Locales come from the crouton packages, driven by crouton.config.js.
+  // This layer ships no translations of its own (empty locales/ dir).
 })
