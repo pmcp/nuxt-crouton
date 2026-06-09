@@ -42,6 +42,8 @@ export interface NavigationItem {
   isVirtual?: boolean
 }
 
+import { buildPagePath, buildSlugPath, type MinimalPage } from '../utils/page-path'
+
 export function useNavigation(teamSlug?: MaybeRef<string | null>) {
   const route = useRoute()
   // Use the safe useT() wrapper rather than raw useI18n(): on public routes the
@@ -113,15 +115,24 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       p.showInNavigation !== false
     )
 
+    // Index all pages so a nested binder's URL includes its ancestor slugs.
+    const binderPagesById = new Map<string, MinimalPage>()
+    for (const p of newPages as any[]) {
+      binderPagesById.set(p.id, { id: p.id, slug: p.slug, parentId: p.parentId })
+    }
+
     await Promise.all(binders.map(async (binder: any) => {
       if (binderItemsMap.value[binder.id]) return // already loaded
 
       const colConfig = collections.getConfig(binder.config.collection)
       if (!colConfig?.apiPath) return
 
-      const binderTeamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
-      const pathPrefix = `${binderTeamPrefix}/${locale.value}`
-      const binderPath = `${pathPrefix}/${binder.slug || ''}`.replace(/\/+$/, '') || pathPrefix
+      const binderPath = buildPagePath({
+        hideTeamInUrl: hideTeamInUrl.value,
+        team: team.value,
+        locale: locale.value,
+        slugPath: buildSlugPath(binderPagesById.get(binder.id)!, binderPagesById, locale.value)
+      })
 
       const titleField = colConfig.display?.title || 'title'
 
@@ -178,16 +189,25 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
       p.pageType !== 'pages:footer'
     )
 
-    // Build path prefix based on domain context (includes locale)
-    const teamPrefix = hideTeamInUrl.value ? '' : `/${team.value}`
-    const pathPrefix = `${teamPrefix}/${locale.value}`
+    // Index ALL returned pages by id so a child's nested URL can include the
+    // slugs of ancestors that are themselves hidden from navigation.
+    const pagesById = new Map<string, MinimalPage>()
+    for (const p of pages.value as any[]) {
+      pagesById.set(p.id, { id: p.id, slug: p.slug, parentId: p.parentId })
+    }
 
-    // Convert to NavigationItem format
+    // Convert to NavigationItem format — path is the nested slug chain
+    // (/{team}/{locale}/{parent}/{child}), resolved via the shared helper.
     const items: NavigationItem[] = navPages.map((p: any) => ({
       id: p.id,
       title: p.title,
       slug: p.slug,
-      path: `${pathPrefix}/${p.slug || ''}`.replace(/\/+$/, '') || pathPrefix,
+      path: buildPagePath({
+        hideTeamInUrl: hideTeamInUrl.value,
+        team: team.value,
+        locale: locale.value,
+        slugPath: buildSlugPath(pagesById.get(p.id)!, pagesById, locale.value)
+      }),
       icon: p.icon,
       pageType: p.pageType,
       depth: p.depth || 0,

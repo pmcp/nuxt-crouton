@@ -814,11 +814,19 @@ const previewPage = computed(() => {
   }
 })
 
-// Build public URL for the current page (used by "Open in public" button)
-// Uses locale-prefixed format directly to avoid relying on the redirect route
+// Build public URL for the current page (used by "Open in public" button).
+// Resolves the canonical nested path (/{team}/{locale}/{parent}/{child}) via
+// usePageLink so the link honors the page hierarchy. Falls back to the flat
+// leaf-slug URL when the page isn't in the resolver's list yet (e.g. just
+// published and not refetched).
+const { resolve: resolvePageUrl } = usePageLink()
 const publicUrl = computed(() => {
   const teamSlug = teamSlugRef.value
   if (!teamSlug || action.value === 'create') return null
+
+  const resolved = resolvePageUrl(state.value.id as string | undefined)
+  if (resolved) return resolved
+
   const translations = state.value.translations as Record<string, { slug?: string }> | undefined
   const slug = translations?.[locale.value]?.slug
     || (translations ? Object.values(translations)[0]?.slug : null)

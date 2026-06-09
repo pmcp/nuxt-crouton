@@ -16,7 +16,9 @@ CMS-like page management system for Nuxt Crouton. Provides:
 |------|---------|
 | `app/composables/usePageTypes.ts` | Aggregate page types from apps + publishable collections |
 | `app/composables/useDomainContext.ts` | Custom domain detection and context |
-| `app/composables/useNavigation.ts` | Build navigation from published pages |
+| `app/composables/useNavigation.ts` | Build navigation from published pages (nested slug paths) |
+| `app/composables/usePageLink.ts` | Resolve a page id → canonical public URL; page list for pickers |
+| `app/utils/page-path.ts` | Shared nested-URL builder (`buildSlugPath`, `buildPagePath`) — single source of truth |
 | `app/composables/usePageBlocks.ts` | Block manipulation utilities |
 | `app/composables/useFooterPage.ts` | Fetch singleton footer page for current team |
 | `app/components/Renderer.vue` | `CroutonPagesRenderer` - Renders page based on type |
@@ -335,9 +337,30 @@ Components auto-import with `CroutonPages` prefix:
 
 ## URL Structure
 
-- **Public pages**: `/[team]/[slug]` (e.g., `/acme/about`, `/acme/book`)
+- **Public pages**: `/[team]/[locale]/[...slug]` — **nested by hierarchy**. A child
+  page lives at its full ancestor chain, e.g. `/acme/en/events/summer-fair`, not
+  `/acme/en/summer-fair`. Slugs are unique per team (`UNIQUE (teamId, slug)`), so
+  the **last** segment identifies the page; the preceding segments must match its
+  ancestor slugs or the lookup 404s (canonical enforcement).
+- **Collection binder items**: `/[team]/[locale]/{binder-slug}/{itemId}` — when the
+  last segment isn't a page slug, it's treated as a binder item id (binder ids are
+  nanoids, so they never collide with human slugs).
 - **Admin**: `/admin/[team]/pages` (uses CroutonCollection with tree layout)
-- **Homepage**: `/[team]/` (slug is empty string)
+- **Homepage**: `/[team]/[locale]/` (first published root page)
+
+**Building URLs:** always go through `app/utils/page-path.ts` (`buildSlugPath` walks
+the parentId chain → localized slug path; `buildPagePath` adds team/locale prefix).
+The lookup endpoint returns `meta.fullPath` (canonical nested path) for SEO. Used by
+`useNavigation`, `usePageLink`, the public render route, and the admin "open in
+public" button — keep them all on these helpers so the format never drifts.
+
+### Button Row block — link to a CMS page
+
+`buttonRowBlock` buttons support a **Page** mode alongside Custom URL / Download:
+the editor stores the selected page's id in `ButtonRowItem.pageId`, and the renderer
+resolves it to the canonical (nested, localized) URL via `usePageLink().resolve()`,
+falling back to `to` when the page can't be resolved. Picking a page is hierarchy-
+and locale-correct automatically.
 
 ## Page Record Schema
 

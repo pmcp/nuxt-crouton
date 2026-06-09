@@ -27,10 +27,14 @@ export default defineEventHandler(async (event) => {
   // Handle empty slug or _home (homepage)
   const rawSlug = (!slugParam || slugParam === '_home') ? '' : slugParam
 
-  // Split into parts — detect binder sub-routes
+  // Split into nested path segments. Pages are addressed hierarchically
+  // (/{parent}/{child}); a collection-binder item is the special case where the
+  // last segment isn't itself a page slug (see lookup below). Slugs are unique
+  // per team, so the last segment alone identifies the page; the preceding
+  // segments must match its ancestor chain for the URL to be canonical.
   const slugParts = rawSlug ? rawSlug.split('/').filter(Boolean) : []
-  const slug = slugParts[0] || ''
-  const binderItemId = slugParts.length === 2 ? slugParts[1] : null
+  // Resolved during lookup — non-null only for binder sub-routes.
+  let binderItemId: string | null = null
 
   // Get locale from query parameter (for translated slug lookup)
   const locale = getQuery(event).locale as string || 'en'
@@ -63,8 +67,79 @@ export default defineEventHandler(async (event) => {
     // Try to get page from pagesPages table
     try {
       const pagesSchema = await import('~~/layers/pages/collections/pages/server/database/schema')
+      const { sql } = await import('drizzle-orm')
+
+      // Localized slug for a page row: translated slug for the locale, else base.
+      const rowLocalizedSlug = (row: any): string => {
+        if (!row?.translations) return row?.slug || ''
+        try {
+          const tr = typeof row.translations === 'string' ? JSON.parse(row.translations) : row.translations
+          return tr?.[locale]?.slug || row.slug || ''
+        } catch {
+          return row?.slug || ''
+        }
+      }
+
+      // Find a page by its slug for this team, matching base slug OR the
+      // translated slug for the current locale.
+      const findPageBySlug = async (slugValue: string): Promise<any> => {
+        const byBase = await database
+          .select()
+          .from(pagesSchema.pagesPages as any)
+          .where(
+            and(
+              eq(pagesSchema.pagesPages.teamId as any, team.id),
+              eq(pagesSchema.pagesPages.slug as any, slugValue)
+            )
+          )
+          .limit(1)
+          .then((rows: any[]) => rows[0])
+        if (byBase) return byBase
+        return database
+          .select()
+          .from(pagesSchema.pagesPages as any)
+          .where(
+            and(
+              eq(pagesSchema.pagesPages.teamId as any, team.id),
+              sql`json_extract(${pagesSchema.pagesPages.translations as any}, '$.' || ${locale} || '.slug') = ${slugValue}`
+            )
+          )
+          .limit(1)
+          .then((rows: any[]) => rows[0])
+      }
+
+      // Walk a page's parentId chain, returning ancestor localized slugs
+      // ordered root → parent (excluding the page itself).
+      const resolveAncestorSlugs = async (startPage: any): Promise<string[]> => {
+        const slugs: string[] = []
+        const seen = new Set<string>([startPage.id])
+        let parentId: string | null = startPage.parentId || null
+        while (parentId && !seen.has(parentId)) {
+          seen.add(parentId)
+          const parent = await database
+            .select()
+            .from(pagesSchema.pagesPages as any)
+            .where(
+              and(
+                eq(pagesSchema.pagesPages.teamId as any, team.id),
+                eq(pagesSchema.pagesPages.id as any, parentId)
+              )
+            )
+            .limit(1)
+            .then((rows: any[]) => rows[0])
+          if (!parent) break
+          const s = rowLocalizedSlug(parent)
+          if (s) slugs.unshift(s)
+          parentId = parent.parentId || null
+        }
+        return slugs
+      }
 
       let page: any
+      // The canonical nested slug path of the resolved page (localized),
+      // e.g. "events/summer-fair". Empty for the homepage. Returned for SEO.
+      let fullPath = ''
+      const slug = slugParts[0] || ''
 
       if (!slug) {
         // Homepage: fetch first published root page by sort order
@@ -89,48 +164,41 @@ export default defineEventHandler(async (event) => {
           })
         }
       } else {
-        // Find page by slug (first segment)
-        page = await database
-          .select()
-          .from(pagesSchema.pagesPages as any)
-          .where(
-            and(
-              eq(pagesSchema.pagesPages.teamId as any, team.id),
-              eq(pagesSchema.pagesPages.slug as any, slug)
-            )
-          )
-          .limit(1)
-          .then((rows: any[]) => rows[0])
+        const lastSeg = slugParts[slugParts.length - 1]!
 
-        // If not found by base slug, search in translations JSON
-        if (!page) {
-          const { sql } = await import('drizzle-orm')
-          page = await database
-            .select()
-            .from(pagesSchema.pagesPages as any)
-            .where(
-              and(
-                eq(pagesSchema.pagesPages.teamId as any, team.id),
-                sql`json_extract(${pagesSchema.pagesPages.translations as any}, '$.' || ${locale} || '.slug') = ${slug}`
-              )
-            )
-            .limit(1)
-            .then((rows: any[]) => rows[0])
-        }
+        // 1) Treat the last segment as a page slug (unique per team).
+        page = await findPageBySlug(lastSeg)
 
-        if (!page) {
-          throw createError({
-            status: 404,
-            statusText: 'Page not found'
-          })
-        }
+        if (page) {
+          // Nested page: its ancestor slug chain must match the URL prefix,
+          // otherwise the URL is non-canonical → 404.
+          const ancestorSlugs = await resolveAncestorSlugs(page)
+          const prefix = slugParts.slice(0, -1)
+          if (ancestorSlugs.join('/') !== prefix.join('/')) {
+            throw createError({ status: 404, statusText: 'Page not found' })
+          }
+          fullPath = [...ancestorSlugs, rowLocalizedSlug(page)].filter(Boolean).join('/')
+        } else if (slugParts.length >= 2) {
+          // 2) Collection-binder sub-route: the segment before the last is the
+          // binder page, the last segment is the item id.
+          const binderSlug = slugParts[slugParts.length - 2]!
+          page = await findPageBySlug(binderSlug)
 
-        // For multi-segment slugs, verify the page is a collection binder
-        if (binderItemId && page.pageType !== 'pages:collection-binder') {
-          throw createError({
-            status: 404,
-            statusText: 'Page not found'
-          })
+          if (!page || page.pageType !== 'pages:collection-binder') {
+            throw createError({ status: 404, statusText: 'Page not found' })
+          }
+
+          // Binder's own ancestry must match the segments before it.
+          const ancestorSlugs = await resolveAncestorSlugs(page)
+          const prefix = slugParts.slice(0, -2)
+          if (ancestorSlugs.join('/') !== prefix.join('/')) {
+            throw createError({ status: 404, statusText: 'Page not found' })
+          }
+
+          binderItemId = lastSeg
+          fullPath = [...ancestorSlugs, rowLocalizedSlug(page)].filter(Boolean).join('/')
+        } else {
+          throw createError({ status: 404, statusText: 'Page not found' })
         }
       }
 
@@ -234,6 +302,10 @@ export default defineEventHandler(async (event) => {
           teamId: team.id,
           teamSlug: team.slug,
           locale,
+          // Canonical nested slug path (localized), e.g. "events/summer-fair".
+          // Empty for the homepage. Consumers build the URL as
+          // /{team?}/{locale}/{fullPath}.
+          fullPath,
           translations: page.translations
         }
       }

@@ -204,6 +204,13 @@ function toAbsoluteUrl(url: string | undefined | null, base: string): string | u
   return `${base}${url}`
 }
 
+// Canonical nested slug path for the current locale (e.g. "events/summer-fair"),
+// resolved server-side. Falls back to the leaf slug if meta is unavailable.
+const canonicalPath = computed(() => pageMeta.value?.fullPath ?? page.value?.slug ?? '')
+const localePrefixFor = (loc: string) => `${hideTeamInUrl.value ? '' : `/${team.value}`}/${loc}`
+const buildSeoUrl = (loc: string, path: string) =>
+  `${siteUrl}${localePrefixFor(loc)}/${path}`.replace(/\/+$/, '') || `${siteUrl}${localePrefixFor(loc)}`
+
 // SEO meta (server-only — crawlers read SSR HTML)
 useServerSeoMeta({
   title: page.value?.seoTitle || page.value?.title || 'Page',
@@ -212,7 +219,7 @@ useServerSeoMeta({
   ogTitle: page.value?.seoTitle || page.value?.title || 'Page',
   ogDescription: page.value?.seoDescription || undefined,
   ogImage: toAbsoluteUrl(page.value?.ogImage, siteUrl),
-  ogUrl: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${urlLocale.value}/${page.value?.slug || ''}`,
+  ogUrl: buildSeoUrl(urlLocale.value, canonicalPath.value),
   ogType: 'website',
   // Twitter Card
   twitterCard: page.value?.ogImage ? 'summary_large_image' : 'summary',
@@ -236,13 +243,19 @@ const alternateLinks = computed(() => {
   // Get base slug (English slug)
   const baseSlug = page.value.baseSlug || page.value.slug
 
-  // Build alternate links for each locale: /team/locale/slug
+  // Ancestor prefix of the nested path (everything but the leaf), reused across
+  // locales. Ancestor slugs are kept in the current locale — only the page's own
+  // leaf slug is swapped per locale, which is all this page's translations carry.
+  const ancestorPrefix = canonicalPath.value.split('/').slice(0, -1).join('/')
+
+  // Build alternate links for each locale: /team/locale/{ancestors}/{leaf}
   return locales.value.map((loc: { code: string }) => {
     const translatedSlug = parsedTranslations?.[loc.code]?.slug || baseSlug
+    const localePath = ancestorPrefix ? `${ancestorPrefix}/${translatedSlug}` : translatedSlug
     return {
       rel: 'alternate',
       hreflang: loc.code,
-      href: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${loc.code}/${translatedSlug}`
+      href: buildSeoUrl(loc.code, localePath)
     }
   })
 })
@@ -254,7 +267,7 @@ useHead({
     // Canonical URL (absolute)
     {
       rel: 'canonical',
-      href: `${siteUrl}${hideTeamInUrl.value ? '' : `/${team.value}`}/${urlLocale.value}/${page.value?.slug || ''}`
+      href: buildSeoUrl(urlLocale.value, canonicalPath.value)
     },
     // hreflang alternatives
     ...alternateLinks.value
