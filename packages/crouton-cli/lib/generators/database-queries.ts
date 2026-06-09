@@ -544,7 +544,8 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   const hasHierarchy = data.hierarchy && data.hierarchy.enabled
   const hasSortable = data.sortable && data.sortable.enabled
   const useMetadata = config?.flags?.useMetadata ?? true
-  const sqlImport = hasHierarchy ? ', sql' : ''
+  // `sql` is always needed now — getAll* runs a count(*) for pagination totals.
+  const sqlImport = ', sql'
   const ascImport = (hasHierarchy || hasSortable) ? ', asc' : ''
   const orderField = hasSortable ? (data.sortable.orderField || 'order') : 'order'
   const orderByClause = hasSortable
@@ -562,19 +563,18 @@ export function generateQueries(data: Record<string, any>, config: Record<string
   // (hierarchy already includes reorderSiblings, so we skip to avoid duplicate exports)
   const sortableQueries = hasHierarchy ? '' : generateSortableQueries(data, tableName, prefixedPascalCasePlural)
 
-  // Optional FK filter support for getAll* — keeps output byte-identical for FK-less collections
-  const filtersParam = filterFields.length
-    ? `, filters?: { ${filterFields.map(f => `${f}?: string`).join(', ')} }`
-    : ''
+  // getAll* options bag: optional FK filters (e.g. ?eventId=) + optional limit/offset
+  // pagination. When `limit` is provided the function returns { items, total }
+  // (total via a parallel count(*)); otherwise it returns the bare array — so
+  // existing non-paginated callers are unaffected (enforced by the overloads below).
+  const fkTypeFields = filterFields.map(f => `${f}?: string`).join('; ')
+  const overload1Opts = `opts?: {${fkTypeFields ? ` ${fkTypeFields} ` : ''}}`
+  const overload2Opts = `opts: {${fkTypeFields ? ` ${fkTypeFields};` : ''} limit: number; offset?: number }`
+  const implOpts = `opts: {${fkTypeFields ? ` ${fkTypeFields};` : ''} limit?: number; offset?: number } = {}`
   const filterConditions = filterFields
-    .map(f => `\n  if (filters?.${f}) conditions.push(eq(tables.${tableName}.${f}, filters.${f}))`)
+    .map(f => `\n  if (opts.${f}) conditions.push(eq(tables.${tableName}.${f}, opts.${f}))`)
     .join('')
-  const getAllConditionsSetup = filterFields.length
-    ? `  const conditions = [eq(tables.${tableName}.teamId, teamId)]${filterConditions}\n`
-    : ''
-  const getAllWhereExpr = filterFields.length
-    ? 'and(...conditions)'
-    : `eq(tables.${tableName}.teamId, teamId)`
+  const selectExpr = selectClause ? `${selectClause} as any` : '()'
 
   return `// Generated with JSON field post-processing support (v2025-01-11)
 import { eq, and${useMetadata ? ', desc' : ''}${ascImport}, inArray${sqlImport} } from 'drizzle-orm'
@@ -582,15 +582,35 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { ${prefixedPascalCase}, New${prefixedPascalCase} } from '${typesPath}'
 ${schemaImports}
-export async function getAll${prefixedPascalCasePlural}(teamId: string${filtersParam}) {
+// Overload order matters: the paginated signature (required \`limit\`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAll${prefixedPascalCasePlural}(teamId: string, ${overload2Opts}): Promise<{ items: any[]; total: number }>
+export async function getAll${prefixedPascalCasePlural}(teamId: string, ${overload1Opts}): Promise<any[]>
+export async function getAll${prefixedPascalCasePlural}(teamId: string, ${implOpts}) {
   const db = useDB()
-${aliasDefinitions}${getAllConditionsSetup}
-  const ${camelCasePlural} = await (db as any)
-    .select(${selectClause ? `${selectClause} as any` : '()'})
+${aliasDefinitions}  const conditions = [eq(tables.${tableName}.teamId, teamId)]${filterConditions}
+  const whereExpr = and(...conditions)
+
+  let listQuery = (db as any)
+    .select(${selectExpr})
     .from(tables.${tableName})${leftJoins}
-    .where(${getAllWhereExpr})${orderByClause ? `
+    .where(whereExpr)${orderByClause ? `
     .orderBy(${orderByClause})` : ''}
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const ${camelCasePlural} = await listQuery
 ${jsonFieldProcessing}${postQueryProcessing}
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql\`count(*)\` })
+      .from(tables.${tableName})
+      .where(whereExpr)
+    return { items: ${camelCasePlural}, total: Number(countRow?.count ?? 0) }
+  }
+
   return ${camelCasePlural}
 }
 

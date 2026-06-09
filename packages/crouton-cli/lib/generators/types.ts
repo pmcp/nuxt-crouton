@@ -154,7 +154,9 @@ ${translationsType}${metadataFields}  optimisticId?: string
 }
 
 export type ${prefixedPascalCase}FormData = z.infer<typeof ${prefixedSingular}Schema>
-export type New${prefixedPascalCase} = Omit<${prefixedPascalCase}, ${omitList}>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type New${prefixedPascalCase} = Omit<${prefixedPascalCase}, ${omitList}> & { id?: string${useMetadata ? '; createdBy?: string; updatedBy?: string' : ''} }
 
 // Props type for the Form component
 export interface ${prefixedPascalCase}FormProps {

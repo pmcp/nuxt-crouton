@@ -337,6 +337,22 @@ Repeater fields can support per-item translations using `translatableProperties`
 
 ¹ When `meta.properties` is defined, generates typed item schema (see Translatable Repeater Fields)
 
+### Type Aliases
+
+Some types accept aliases (defined via `aliases` in `crouton-core/crouton.manifest.ts` and
+normalized in `mapType`). A schema can use the alias and it resolves to the canonical type —
+**column type, zod, ts, and seed all follow the canonical type**:
+
+| Alias | Canonical | SQLite column |
+|-------|-----------|---------------|
+| `integer` | `number` | `integer()` |
+| `datetime` | `date` | `integer({ mode: 'timestamp' })` |
+
+⚠️ Before the alias was normalized in `mapType`, a field declared `"type": "integer"` fell
+through to `text()` (the schema generator only branches on `number`/`decimal`). Use `number`
+for integer columns; `decimal` is the float/`real` type. A value the spooler/endpoints write
+as a **string** (e.g. a status enum `'0'/'1'/'2'`) should be `string`, not `number`.
+
 ## i18n Field Labels
 
 Generated `Form.vue` field labels resolve through `useT()` instead of hardcoded strings, so
@@ -621,12 +637,41 @@ const result = await getAllSalesProducts(team.id, {
 })
 ```
 
-`getAll*(teamId, filters?)` builds a `conditions` array and applies `and(...conditions)`;
-each FK filter is opt-in (applied only when present). Collections with **no** FK fields
-emit the exact same `getAll*(teamId)` / `.where(eq(teamId))` as before — byte-identical.
-This is what scopes `@fyit/crouton-sales` event-workspace tabs to one event (without it,
-every event showed the team-wide union of products/categories/locations/printers/orders).
+`getAll*(teamId, opts?)` takes a single options bag holding both FK filters and
+pagination (`limit`/`offset`). It builds a `conditions` array and applies `and(...conditions)`;
+each FK filter is opt-in (applied only when present). This is what scopes
+`@fyit/crouton-sales` event-workspace tabs to one event (without it, every event showed the
+team-wide union of products/categories/locations/printers/orders).
 Owner/createdBy/updatedBy user refs are intentionally excluded from filters.
+
+## List Pagination
+
+Every generated `getAll*` and its GET endpoint support **opt-in** server pagination, on
+top of any FK filters. It's always generated (no flag) and is byte-compatible for callers
+that don't use it.
+
+**Query function** — two overloads guard the contract: pass `limit` to paginate, omit it
+for the full array. The paginated overload is declared **first** (it has a required
+`limit`) so non-paginated calls fall through to the array overload:
+
+```ts
+export async function getAllSalesProducts(teamId: string, opts: { eventId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesProducts(teamId: string, opts?: { eventId?: string }): Promise<any[]>
+// impl: when opts.limit != null → .limit().offset() + a parallel count(*) → { items, total }
+```
+
+**GET endpoint** — `?page=1&pageSize=10` switches the response from a bare array to an
+envelope. `pageSize` is clamped to `[1, 100]`, default 10:
+
+```ts
+// GET /api/teams/[id]/sales-products?eventId=evt_123&page=2&pageSize=20
+// → { items, total, page, pageSize }   (no ?page → bare array, unchanged)
+```
+
+Client side, `useCollectionQuery(collection, { pagination: { pageSize } })` (in
+`@fyit/crouton`) folds `page`/`pageSize` into the query and exposes
+`page`/`total`/`pageCount`/`paginationData` for `<CroutonCollection>`. `count(*)` reuses the
+same `where` (no joins), so totals respect FK filters.
 
 ## Team Authentication
 

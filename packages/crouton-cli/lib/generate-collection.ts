@@ -463,6 +463,8 @@ function buildGeneratorData(params: {
         const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
         const hasRepeaterProperties = f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties)
         let baseZod = isDependentField ? 'z.array(z.string())' : f.zod
+        // Dates arrive as ISO strings (forms/JSON) — coerce so validation accepts them.
+        if (f.type === 'date') baseZod = 'z.coerce.date()'
         if (hasRepeaterProperties) {
           const { pascalCase: fieldPascalCase } = toCase(f.name)
           const itemSchemaName = `${layerCamelCase}${cases.pascalCasePlural}${fieldPascalCase}ItemSchema`
@@ -472,7 +474,8 @@ function buildGeneratorData(params: {
           if (isDependentField) {
             return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
           } else if (f.type === 'date') {
-            return `${f.name}: z.date({ required_error: '${f.name} is required' })`
+            // z.coerce.date() (no Zod-3 `required_error`, which is invalid in Zod 4)
+            return `${f.name}: ${baseZod}`
           } else if (f.type === 'string' || f.type === 'text') {
             return `${f.name}: ${baseZod}.min(1, '${f.name} is required')`
           } else if (f.type === 'number' || f.type === 'decimal') {
@@ -487,7 +490,8 @@ function buildGeneratorData(params: {
             return `${f.name}: ${baseZod}`
           }
         } else {
-          const suffix = f.meta?.nullable ? '.nullish()' : '.optional()'
+          // json commonly arrives as null (empty config/metadata) — allow it.
+          const suffix = (f.meta?.nullable || f.type === 'json') ? '.nullish()' : '.optional()'
           return `${f.name}: ${baseZod}${suffix}`
         }
       })
@@ -509,10 +513,13 @@ function buildGeneratorData(params: {
           return `      ${f.name}: z.string().optional()`
         }
       }).join(',\n')
+      // Validate the app's default locale (not a hardcoded 'en') — single-language
+      // apps (e.g. defaultLocale: 'nl') must validate that locale, not English.
+      const defaultLocale = config?.defaultLocale || 'en'
       const requiredFieldsCheck = requiredTranslatableFields.length > 0
         ? `.refine(
-    (translations) => translations.en && ${requiredTranslatableFields.map(f => `translations.en.${f.name}`).join(' && ')},
-    { message: 'English translations for ${requiredTranslatableFields.map(f => f.name).join(', ')} are required' }
+    (translations) => translations.${defaultLocale} && ${requiredTranslatableFields.map(f => `translations.${defaultLocale}.${f.name}`).join(' && ')},
+    { message: 'Translations for ${requiredTranslatableFields.map(f => f.name).join(', ')} (${defaultLocale}) are required' }
   )`
         : ''
       return `${allFieldsSchema},\n  translations: z.record(

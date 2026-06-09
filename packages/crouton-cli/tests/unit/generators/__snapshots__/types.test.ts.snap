@@ -43,7 +43,9 @@ export interface ShopProduct {
 }
 
 export type ShopProductFormData = z.infer<typeof shopProductSchema>
-export type NewShopProduct = Omit<ShopProduct, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewShopProduct = Omit<ShopProduct, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface ShopProductFormProps {

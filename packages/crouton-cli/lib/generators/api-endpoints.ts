@@ -8,14 +8,17 @@ export function generateGetEndpoint(data: Record<string, any>, config: Record<st
   // Check if this collection has translations
   const hasTranslations = config?.translations?.collections?.[plural] || config?.translations?.collections?.[singular]
 
-  // Foreign-key fields that can scope the list (e.g. ?eventId=...). Keeps the call
-  // byte-identical for FK-less collections so existing output/tests are unaffected.
+  // Foreign-key fields that can scope the list (e.g. ?eventId=...). Keeps the
+  // non-paginated call byte-identical for FK-less collections.
   const filterFields = (data.fields || []).filter((f: Record<string, any>) => f.refTarget).map((f: Record<string, any>) => f.name)
-  const getAllCall = filterFields.length
-    ? `getAll${prefixedPascalCasePlural}(team.id, {
-${filterFields.map((f: string) => `    ${f}: query.${f} ? String(query.${f}) : undefined`).join(',\n')}
-  })`
+  const fkInner = filterFields.map((f: string) => `${f}: query.${f} ? String(query.${f}) : undefined`).join(', ')
+  const nonPagCall = filterFields.length
+    ? `getAll${prefixedPascalCasePlural}(team.id, { ${fkInner} })`
     : `getAll${prefixedPascalCasePlural}(team.id)`
+  const pagArgInner = filterFields.length
+    ? `${fkInner}, limit: pageSize, offset: (page - 1) * pageSize`
+    : `limit: pageSize, offset: (page - 1) * pageSize`
+  const pagCall = `getAll${prefixedPascalCasePlural}(team.id, { ${pagArgInner} })`
 
   const queriesPath = '../../../../database/queries'
 
@@ -45,7 +48,16 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await ${getAllCall}
+  // Opt-in pagination: ?page=1&pageSize=10 → { items, total, page, pageSize }
+  if (query.page !== undefined) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 10))
+    const { items, total } = await ${pagCall}
+    dbTimer.end()
+    return { items, total, page, pageSize }
+  }
+
+  const result = await ${nonPagCall}
   dbTimer.end()
   return result
 })`
@@ -148,8 +160,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // Exclude id field${hasHierarchy ? ' (we generate it for path calculation)' : ' to let the database generate it'}
-  const { id, ...dataWithoutId } = body
+  // body is the validated payload (id is not part of the schema)${hasHierarchy ? ' — we generate the id for path calculation' : ' — the database generates the id'}
+  const dataWithoutId = body
 ${hierarchyCalc}
 ${dateConversions}  const dbTimer = timing.start('db')
   ${createCall}

@@ -47,8 +47,11 @@ export function generateSchema(data: Record<string, any>, dialect: string, confi
       ]
     : []
 
-  // Sortable field (only when not using hierarchy, since hierarchy already includes order)
-  const sortable = data.sortable ?? false
+  // Sortable field (only when not using hierarchy, since hierarchy already includes order).
+  // data.sortable may be a boolean (`true`) or the object `{ enabled }` depending on caller —
+  // read both. Previously this checked the object's truthiness, so a non-sortable collection
+  // (`{ enabled: false }`) still got a spurious `order` column.
+  const sortable = data.sortable === true || data.sortable?.enabled === true
   const SORTABLE_FIELDS = (sortable && !hierarchy?.enabled) ? ['order'] : []
 
   // Conditional field generation based on config flags
