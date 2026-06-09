@@ -38,9 +38,16 @@ const props = withDefaults(defineProps<{
   showSwitcher?: boolean
   /** Show the Edit / Duplicate / Open POS header actions. */
   showHeaderActions?: boolean
+  /**
+   * Show the whole header row (event name/date + actions). Hidden in the block,
+   * where the page already provides the event title and these actions don't
+   * apply.
+   */
+  showHeader?: boolean
 }>(), {
   showSwitcher: true,
-  showHeaderActions: true
+  showHeaderActions: true,
+  showHeader: true
 })
 
 const { t } = useT()
@@ -145,7 +152,7 @@ const activeTab = computed({
 
   <div v-else class="space-y-6">
     <!-- Header -->
-    <div class="flex items-start justify-between">
+    <div v-if="showHeader" class="flex items-start justify-between">
       <div class="space-y-1">
         <USelectMenu
           v-if="showSwitcher"

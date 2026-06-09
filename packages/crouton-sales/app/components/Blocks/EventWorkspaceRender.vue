@@ -50,7 +50,7 @@ const eventSlug = computed(() => props.attrs.eventSlug || '')
     <!-- Signed in → render the workspace (event fixed, no switcher) -->
     <div v-else class="rounded-3xl border border-default bg-default p-6">
       <Suspense>
-        <SalesEventWorkspaceShell :event-slug="eventSlug" :show-switcher="false" />
+        <SalesEventWorkspaceShell :event-slug="eventSlug" :show-switcher="false" :show-header="false" />
         <template #fallback>
           <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
         </template>

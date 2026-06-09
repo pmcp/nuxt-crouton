@@ -68,8 +68,11 @@ resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvent
 the header (switcher + Edit/Duplicate/Open-POS actions) + the four tabs in a per-tab `<Suspense>`.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
-`router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` (default `true`).
-The admin page passes `tab-param="tab"`; the `eventWorkspaceBlock` renderer passes `:show-switcher="false"`.
+`router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
+(default `true`; `showHeader` hides the whole header row — event name/date + actions).
+The admin page passes `tab-param="tab"`; the `eventWorkspaceBlock` renderer passes
+`:show-switcher="false" :show-header="false"` (block shows only the tabs — the CMS page already
+provides the event title and the header actions don't apply there).
 The shell uses top-level `await`, so any non-page consumer must give it a `<Suspense>` boundary.
 
 `ProductsTab.vue` renders products as a **drag-reorderable list** (not a table): a bespoke `<ul>`
