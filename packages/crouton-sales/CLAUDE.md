@@ -80,7 +80,11 @@ persists the new visual index to each moved row's `sortOrder` via `useCollection
 **visible** set (whole list, or within the selected category tab). Note: `sales_products.sortOrder`
 is an `integer` column (migration `0003_furry_lilith`); the old redundant `order` int column was
 dropped. The generic tree/sortable reorder path (`useTreeMutation`) is **not** used here because it
-re-fetches all team products un-scoped to the event.
+re-fetches all team products un-scoped to the event. Each row also surfaces routing/flags: the
+product's **location** name (📍) and the active **printer(s)** at that location (🖨️, joined —
+derived by matching `salesPrinters.locationId` to the product's `locationId`), plus **options**
+and **remark** badges (`hasOptions` / `requiresRemark`). The tab therefore also queries
+`salesLocations` + `salesPrinters` scoped to the event.
 
 `OrdersTab.vue` renders orders as a **plain expandable list** (not a table, not sortable) styled to
 match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client name with a `Staff`

@@ -12,6 +12,8 @@ const eventQuery = computed(() => ({ eventId: props.event.id }))
 
 const { items: products, pending: productsPending } = await useCollectionQuery('salesProducts', { query: eventQuery })
 const { items: categories } = await useCollectionQuery('salesCategories', { query: eventQuery })
+const { items: locations } = await useCollectionQuery('salesLocations', { query: eventQuery })
+const { items: printers } = await useCollectionQuery('salesPrinters', { query: eventQuery })
 
 const selectedCategoryId = ref<string | null>(null)
 
@@ -73,6 +75,19 @@ if (import.meta.client) {
 const categoryName = (id?: string) =>
   ((categories.value as { id: string, title: string }[] | null) || []).find(c => c.id === id)?.title
 
+const locationName = (id?: string) =>
+  id ? ((locations.value as { id: string, title: string }[] | null) || []).find(l => l.id === id)?.title : undefined
+
+// Printers route per location, so a product's printer(s) = the active printers
+// at its location. Joined into a comma-separated label (empty ⇒ nothing shown).
+const printerLabel = (locationId?: string) => {
+  if (!locationId) return undefined
+  const list = ((printers.value as { locationId: string, title: string, isActive?: boolean }[] | null) || [])
+    .filter(p => p.locationId === locationId && p.isActive !== false)
+    .map(p => p.title)
+  return list.length ? list.join(', ') : undefined
+}
+
 const priceFormatter = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' })
 const formatPrice = (price: number) => priceFormatter.format(Number(price) || 0)
 
@@ -125,16 +140,26 @@ function openEditProduct(id: string) {
             <UBadge v-if="product.isActive === false" color="neutral" variant="subtle" size="xs">
               {{ t('sales.common.inactive') }}
             </UBadge>
-            <UBadge v-if="product.hasOptions" color="primary" variant="subtle" size="xs">
+            <UBadge v-if="product.hasOptions" color="primary" variant="subtle" size="xs" icon="i-lucide-list">
               {{ t('sales.form.options') }}
             </UBadge>
+            <UBadge v-if="product.requiresRemark" color="warning" variant="subtle" size="xs" icon="i-lucide-message-square">
+              {{ t('sales.form.remark') }}
+            </UBadge>
           </div>
-          <p
-            v-if="!selectedCategoryId && categoryName(product.categoryId)"
-            class="text-xs text-muted truncate"
-          >
-            {{ categoryName(product.categoryId) }}
-          </p>
+          <div class="flex items-center flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted mt-0.5">
+            <span v-if="!selectedCategoryId && categoryName(product.categoryId)" class="truncate">
+              {{ categoryName(product.categoryId) }}
+            </span>
+            <span v-if="locationName(product.locationId)" class="inline-flex items-center gap-1 min-w-0">
+              <UIcon name="i-lucide-map-pin" class="size-3 shrink-0" />
+              <span class="truncate">{{ locationName(product.locationId) }}</span>
+            </span>
+            <span v-if="printerLabel(product.locationId)" class="inline-flex items-center gap-1 min-w-0">
+              <UIcon name="i-lucide-printer" class="size-3 shrink-0" />
+              <span class="truncate">{{ printerLabel(product.locationId) }}</span>
+            </span>
+          </div>
         </div>
         <span class="shrink-0 font-medium tabular-nums">{{ formatPrice(product.price) }}</span>
         <UIcon
