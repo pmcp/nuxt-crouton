@@ -1,5 +1,6 @@
 <template>
   <USelect
+    v-if="locales.length > 1"
     :model-value="locale"
     :items="localeItems"
     value-key="code"

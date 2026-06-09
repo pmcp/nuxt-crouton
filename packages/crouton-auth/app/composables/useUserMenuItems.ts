@@ -77,11 +77,14 @@ export function useUserMenuItems(options?: UserMenuItemsOptions) {
 
   const dropdownItems = computed<DropdownMenuItem[][]>(() => {
     const preferenceGroup: DropdownMenuItem[] = [
-      {
-        label: t('forms.language') || 'Language',
-        icon: 'i-lucide-globe',
-        children: languageItems.value
-      },
+      // Language submenu — only when the app has more than one locale
+      ...(locales.value.length > 1
+        ? [{
+            label: t('forms.language') || 'Language',
+            icon: 'i-lucide-globe',
+            children: languageItems.value
+          }]
+        : []),
       {
         label: 'Dark Mode',
         icon: isDark.value ? 'i-lucide-moon' : 'i-lucide-sun',

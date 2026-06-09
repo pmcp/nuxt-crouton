@@ -168,6 +168,9 @@ defaultLocale: 'nl',
   `FormTranslatableOptionItem`, etc.) — the tab marked `*`, the fallback source,
   and the value mirrored to a collection's root field — follows the configured
   `defaultLocale` (was previously hardcoded to `'en'`).
+- **Language switchers auto-hide for single-locale apps.** `LanguageSwitcher`,
+  `LanguageSwitcherIsland`, and the user-menu "Language" submenu
+  (`useUserMenuItems`, crouton-auth) only render when `locales.length > 1`.
 
 ## Common Tasks
 
