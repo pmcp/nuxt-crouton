@@ -246,6 +246,43 @@ const salesProductMatrixBlock: CroutonBlockDefinition = {
   }
 }
 
+// Admin event workspace embedded in a CMS page: the full Products / Orders /
+// Printers / Settings tabbed workspace for one event. The editor fixes the
+// event by slug; the renderer hides the switcher and shows a sign-in notice for
+// anonymous visitors (the tabs are authenticated admin surfaces).
+const eventWorkspaceBlock: CroutonBlockDefinition = {
+  type: 'eventWorkspaceBlock',
+  name: 'Event Workspace',
+  description: 'Embed the full admin workspace (products, orders, printers, settings) for one event',
+  icon: 'i-lucide-layout-dashboard',
+  category: 'admin',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: ''
+  },
+  components: {
+    editorView: 'SalesBlocksEventWorkspaceView',
+    renderer: 'SalesBlocksEventWorkspaceRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'Event',
+      description: 'Pick which event\'s workspace to embed. Only signed-in team members can use it.'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="event-workspace-block"]',
+    attributes: {
+      eventSlug: { default: '' }
+    }
+  }
+}
+
 export default defineAppConfig({
   // App auto-discovery registration for crouton-sales
   croutonApps: {
@@ -311,8 +348,9 @@ export default defineAppConfig({
       pageTypes: [
         {
           id: 'eventStorefront',
-          name: 'Event Storefront',
-          description: 'Full page showing one event with order CTA',
+          // name/description are i18n keys, translated at render via useT().
+          name: 'sales.pageTypes.eventStorefront.name',
+          description: 'sales.pageTypes.eventStorefront.description',
           icon: 'i-lucide-store',
           component: 'SalesBlocksEventStorefrontRender',
           category: 'customer'

@@ -93,7 +93,7 @@ const showInMenuLabel = computed(() =>
     ]"
   >
     <!-- Page type icon -->
-    <UTooltip :text="pageTypeInfo?.name || $t('pages.editor.regularPage')">
+    <UTooltip :text="pageTypeInfo?.name ? t(pageTypeInfo.name) : $t('pages.editor.regularPage')">
       <UIcon
         :name="pageTypeInfo?.icon || 'i-lucide-file'"
         class="size-4 text-muted shrink-0"
@@ -173,7 +173,7 @@ const showInMenuLabel = computed(() =>
       </div>
       <div class="flex items-center gap-2 text-sm text-muted">
         <span class="font-mono">/{{ localizedSlug }}</span>
-        <span v-if="pageTypeInfo" class="text-xs">{{ pageTypeInfo.name }}</span>
+        <span v-if="pageTypeInfo" class="text-xs">{{ t(pageTypeInfo.name) }}</span>
         <span class="text-xs">{{ timeAgo }}</span>
       </div>
     </div>
@@ -217,7 +217,7 @@ const showInMenuLabel = computed(() =>
         <span class="font-mono truncate">/{{ localizedSlug }}</span>
       </div>
       <div v-if="pageTypeInfo" class="text-xs text-muted">
-        {{ pageTypeInfo.name }}
+        {{ t(pageTypeInfo.name) }}
       </div>
       <div class="text-xs text-muted">
         {{ timeAgo }}

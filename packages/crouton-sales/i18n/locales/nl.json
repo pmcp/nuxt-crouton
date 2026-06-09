@@ -1,6 +1,12 @@
 {
   "sales": {
     "title": "Kassa",
+    "pageTypes": {
+      "eventStorefront": {
+        "name": "Evenement-winkel",
+        "description": "Een publieke pagina voor één evenement met de details en een bestelknop voor klanten."
+      }
+    },
     "admin": {
       "sectionTitle": "Kassa",
       "overview": "Overzicht"
@@ -97,7 +103,21 @@
       "noRemarks": "Geen opmerkingen",
       "noItems": "Geen artikelen in deze bestelling",
       "unknownProduct": "Onbekend product",
-      "total": "Totaal"
+      "total": "Totaal",
+      "fields": {
+        "eventId": "Evenement",
+        "clientId": "Klant",
+        "clientName": "Klantnaam",
+        "eventOrderNumber": "Bestelnummer",
+        "overallRemarks": "Opmerkingen",
+        "isPersonnel": "Personeel",
+        "status": "Status"
+      },
+      "selectClient": "Selecteer een klant",
+      "createNewClient": "Nieuwe klant aanmaken",
+      "clientHelp": "Selecteer een bestaande klant of maak een nieuwe aan",
+      "clientRequired": "Klant vereist",
+      "clientRequiredDescription": "Dit evenement vereist een klant. Selecteer of maak er een aan."
     },
     "events": {
       "title": "Evenementen",

@@ -2,6 +2,20 @@
   "pages": {
     "title": "Pagina's",
     "search": "Zoek pagina's...",
+    "pageTypes": {
+      "regular": {
+        "name": "Gewone pagina",
+        "description": "Een standaard inhoudspagina die je opbouwt met de blok-editor — tekst, afbeeldingen, secties en meer."
+      },
+      "collectionBinder": {
+        "name": "Collectiebundel",
+        "description": "Publiceert elk item uit een collectie als gekoppelde subpagina's in je navigatie."
+      },
+      "footer": {
+        "name": "Voettekst",
+        "description": "De voettekst van de site, samengesteld uit blokken. Eén per site; verschijnt op elke pagina."
+      }
+    },
     "workspace": {
       "title": "Pagina Werkruimte",
       "emptyTitle": "Selecteer een pagina",

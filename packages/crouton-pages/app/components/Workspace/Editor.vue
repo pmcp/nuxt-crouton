@@ -499,9 +499,13 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
 })
 
 // Page type options
+// name/description are i18n keys (see each app's app.config.ts pageTypes).
+// t() returns the key unchanged when missing, so dynamic collection-derived
+// types (plain-string names) stay safe.
 const pageTypeDropdownItems = computed(() => [
   pageTypes.value.map((type: any) => ({
-    label: type.name,
+    label: t(type.name),
+    description: type.description ? t(type.description) : undefined,
     icon: type.icon,
     onSelect: () => { state.value.pageType = type.fullId }
   }))
@@ -900,13 +904,13 @@ defineExpose({ state })
       <!-- Collection item picker — shown above the i18n input so it is always visible -->
       <div v-if="isCollectionPage" class="px-4 pt-4 pb-2 shrink-0 border-b border-default">
         <UFormField
-          :label="t('pages.editor.selectItem', { name: selectedPageType?.name || 'Item' })"
+          :label="t('pages.editor.selectItem', { name: selectedPageType?.name ? t(selectedPageType.name) : 'Item' })"
           name="config.itemId"
         >
           <CroutonFormReferenceSelect
             v-model="collectionItemId"
             :collection="collectionPageName"
-            :label="selectedPageType?.name"
+            :label="selectedPageType?.name ? t(selectedPageType.name) : undefined"
             :label-key="collectionLabelKey"
           />
         </UFormField>
@@ -1053,7 +1057,7 @@ defineExpose({ state })
           <div class="p-4 bg-muted/30 rounded-lg text-center text-sm text-muted mt-6">
             <UIcon name="i-lucide-info" class="size-5 mb-2" />
             <p>{{ t('pages.editor.noConfig') }}</p>
-            <p>{{ t('pages.editor.displaysComponent', { name: selectedPageType?.name }) }}</p>
+            <p>{{ t('pages.editor.displaysComponent', { name: selectedPageType?.name ? t(selectedPageType.name) : '' }) }}</p>
           </div>
         </template>
       </div>

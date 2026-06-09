@@ -178,7 +178,8 @@ const { t } = useT()
         </template>
       </UDropdownMenu>
 
-      <!-- Page Type -->
+      <!-- Page Type — items carry icon + label + description, rendered natively
+           by UDropdownMenu (two-line items) so users see what each type does -->
       <UDropdownMenu
         v-if="action === 'create'"
         :items="pageTypeDropdownItems"
@@ -189,15 +190,8 @@ const { t } = useT()
             :name="selectedPageType?.icon || 'i-lucide-file'"
             class="size-4"
           />
-          <span class="hidden lg:inline">{{ selectedPageType?.name || t('pages.editor.defaultPageType') }}</span>
+          <span class="hidden lg:inline">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.defaultPageType') }}</span>
         </UButton>
-
-        <template #item="{ item }">
-          <span class="flex items-center gap-2">
-            <UIcon :name="item.icon || 'i-lucide-file'" class="size-4 text-muted" />
-            {{ item.label }}
-          </span>
-        </template>
       </UDropdownMenu>
       <UPopover v-else>
         <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
@@ -205,13 +199,13 @@ const { t } = useT()
             :name="selectedPageType?.icon || 'i-lucide-file'"
             class="size-4"
           />
-          <span class="hidden lg:inline">{{ selectedPageType?.name || t('pages.editor.defaultPageType') }}</span>
+          <span class="hidden lg:inline">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.defaultPageType') }}</span>
         </UButton>
         <template #content>
           <div class="p-3 text-sm">
-            <div class="font-medium">{{ selectedPageType?.name || t('pages.editor.regularPage') }}</div>
+            <div class="font-medium">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.regularPage') }}</div>
             <div v-if="selectedPageType?.description" class="text-muted text-xs mt-1">
-              {{ selectedPageType.description }}
+              {{ t(selectedPageType.description) }}
             </div>
           </div>
         </template>

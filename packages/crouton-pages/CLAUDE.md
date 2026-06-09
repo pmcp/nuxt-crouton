@@ -148,26 +148,31 @@ The generated layer should **NOT** have a `Form.vue` or `List.vue` - these are p
 
 ## Page Type Registration
 
-Apps register page types in `app.config.ts`:
+Apps register page types in `app.config.ts`. **`name` and `description` are i18n
+keys** (like `CroutonAppConfig.name`), translated at render via `useT()`'s `t()`.
+The page-type selector shows the `name` as the label and the `description` as a
+one-line explanation beneath it, so each contributing package owns its own copy
+in its locale files (e.g. `bookings.pageTypes.calendar.name` / `.description`).
 
 ```typescript
 export default defineAppConfig({
   croutonApps: {
     bookings: {
       id: 'bookings',
-      name: 'Bookings',
+      name: 'bookings.title',
       pageTypes: [
         {
           id: 'calendar',
-          name: 'Booking Calendar',
+          name: 'bookings.pageTypes.calendar.name',
+          description: 'bookings.pageTypes.calendar.description',
           component: 'CroutonBookingsCalendar',
           icon: 'i-lucide-calendar',
-          category: 'customer',
-          description: 'Interactive calendar for bookings'
+          category: 'customer'
         },
         {
           id: 'my-bookings',
-          name: 'My Bookings',
+          name: 'bookings.pageTypes.myBookings.name',
+          description: 'bookings.pageTypes.myBookings.description',
           component: 'CroutonBookingsList',
           icon: 'i-lucide-list',
           requiresAuth: true
@@ -177,6 +182,11 @@ export default defineAppConfig({
   }
 })
 ```
+
+The core types shipped by this package use the `pages.pageTypes.*` keys (see
+`i18n/locales/{en,nl}.json`). `t()` returns the key unchanged when no translation
+exists, so the dynamic page types derived from publishable collections (which use
+plain-string names) remain safe when piped through `t()`.
 
 ## Publishable Collections
 

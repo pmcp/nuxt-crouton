@@ -231,7 +231,10 @@ event field's `propertyComponents` editor.
 | `SalesBlocksPropertiesEventScopePicker` | — | — | Event scope dropdown for `salesChartBlock` — emits event **id** with an "All events" ('') option; wired via `propertyComponents['sales-event-scope']` |
 
 Also registered: `pageType: 'eventStorefront'` under `croutonApps.sales.pageTypes`
-for full-page event storefront pages (no block wrapper).
+for full-page event storefront pages (no block wrapper). Its `name`/`description`
+are i18n keys (`sales.pageTypes.eventStorefront.{name,description}` in
+`i18n/locales/{en,nl}.json`), translated by the crouton-pages page-type selector
+at render — the same convention as `croutonApps.*.name`.
 
 Both renderers are `clientOnly: true` — helper sessions live in localStorage
 and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.

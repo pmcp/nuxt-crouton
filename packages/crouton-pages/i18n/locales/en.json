@@ -2,6 +2,20 @@
   "pages": {
     "title": "Pages",
     "search": "Search pages...",
+    "pageTypes": {
+      "regular": {
+        "name": "Regular Page",
+        "description": "A standard content page you build with the block editor — text, images, sections and more."
+      },
+      "collectionBinder": {
+        "name": "Collection Binder",
+        "description": "Publishes every item from a collection as linked sub-pages in your navigation."
+      },
+      "footer": {
+        "name": "Footer",
+        "description": "The site footer, composed from blocks. One per site; shown on every page."
+      }
+    },
     "workspace": {
       "title": "Pages Workspace",
       "emptyTitle": "Select a page",

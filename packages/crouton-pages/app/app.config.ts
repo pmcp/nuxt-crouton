@@ -21,8 +21,9 @@ export default defineAppConfig({
       pageTypes: [
         {
           id: 'regular',
-          name: 'Regular Page',
-          description: 'Standard content page with rich text editor',
+          // name/description are i18n keys, translated at render via useT().
+          name: 'pages.pageTypes.regular.name',
+          description: 'pages.pageTypes.regular.description',
           icon: 'i-lucide-file-text',
           component: 'CroutonPagesRegularContent',
           category: 'content',
@@ -30,8 +31,8 @@ export default defineAppConfig({
         },
         {
           id: 'collection-binder',
-          name: 'Collection Binder',
-          description: 'Shows all items from a collection as sub-entries in navigation',
+          name: 'pages.pageTypes.collectionBinder.name',
+          description: 'pages.pageTypes.collectionBinder.description',
           icon: 'i-lucide-layers',
           component: 'CroutonPagesCollectionBinderRenderer',
           category: 'collections',
@@ -39,8 +40,8 @@ export default defineAppConfig({
         },
         {
           id: 'footer',
-          name: 'Footer',
-          description: 'Site footer — compose with blocks, renders in UFooter layout',
+          name: 'pages.pageTypes.footer.name',
+          description: 'pages.pageTypes.footer.description',
           icon: 'i-lucide-panel-bottom',
           component: 'CroutonPagesFooterRenderer',
           category: 'layout',

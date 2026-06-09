@@ -1,6 +1,12 @@
 {
   "sales": {
     "title": "Point of Sale",
+    "pageTypes": {
+      "eventStorefront": {
+        "name": "Event Storefront",
+        "description": "A public page for a single event with its details and an order button for customers."
+      }
+    },
     "admin": {
       "sectionTitle": "Point of Sale",
       "overview": "Overview"
@@ -97,7 +103,21 @@
       "noRemarks": "No remarks",
       "noItems": "No items in this order",
       "unknownProduct": "Unknown product",
-      "total": "Total"
+      "total": "Total",
+      "fields": {
+        "eventId": "Event",
+        "clientId": "Client",
+        "clientName": "Client Name",
+        "eventOrderNumber": "Order Number",
+        "overallRemarks": "Remarks",
+        "isPersonnel": "Personnel",
+        "status": "Status"
+      },
+      "selectClient": "Select a client",
+      "createNewClient": "Create new client",
+      "clientHelp": "Select an existing client or create a new one",
+      "clientRequired": "Client required",
+      "clientRequiredDescription": "This event requires a client. Please select or create one."
     },
     "events": {
       "title": "Events",
