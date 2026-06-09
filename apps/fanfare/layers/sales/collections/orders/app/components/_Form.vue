@@ -40,28 +40,28 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Event" name="eventId" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.eventId', 'Event')" name="eventId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.eventId"
             collection="salesEvents"
-            label="Event"
+            :label="t('sales.orders.fields.eventId', 'Event')"
           />
         </UFormField>
 
         <!-- Client field - only shown when event requires clients -->
         <UFormField
           v-if="requiresClient"
-          label="Client"
+          :label="t('sales.orders.fields.clientId', 'Client')"
           name="clientId"
           class="not-last:pb-4"
-          help="Select an existing client or create a new one"
+          :help="t('sales.orders.clientHelp', 'Select an existing client or create a new one')"
         >
           <USelectMenu
             v-model="state.clientId"
             :items="clients"
             value-key="id"
             label-key="title"
-            placeholder="Select a client"
+            :placeholder="t('sales.orders.selectClient', 'Select a client')"
             searchable
             size="xl"
             class="w-full"
@@ -71,7 +71,7 @@
                 {{ getClientLabel(modelValue as string) }}
               </span>
               <span v-else class="text-dimmed truncate">
-                Select a client
+                {{ t('sales.orders.selectClient', 'Select a client') }}
               </span>
             </template>
 
@@ -84,26 +84,26 @@
                   block
                   @click="handleCreateClient"
                 >
-                  Create new client
+                  {{ t('sales.orders.createNewClient', 'Create new client') }}
                 </UButton>
               </div>
             </template>
           </USelectMenu>
         </UFormField>
 
-        <UFormField label="Client Name" name="clientName" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.clientName', 'Client Name')" name="clientName" class="not-last:pb-4">
           <UInput v-model="state.clientName" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="EventOrderNumber" name="eventOrderNumber" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.eventOrderNumber', 'Order Number')" name="eventOrderNumber" class="not-last:pb-4">
           <UInput v-model="state.eventOrderNumber" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="OverallRemarks" name="overallRemarks" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.overallRemarks', 'Remarks')" name="overallRemarks" class="not-last:pb-4">
           <UTextarea v-model="state.overallRemarks" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="IsPersonnel" name="isPersonnel" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.isPersonnel', 'Personnel')" name="isPersonnel" class="not-last:pb-4">
           <UCheckbox v-model="state.isPersonnel" />
         </UFormField>
-        <UFormField label="Status" name="status" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.status', 'Status')" name="status" class="not-last:pb-4">
           <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
       </div>
@@ -127,6 +127,9 @@ import useSalesOrders from '../composables/useSalesOrders'
 
 const props = defineProps<SalesOrderFormProps>()
 const { defaultValue, schema, collection } = useSalesOrders()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Fetch events and clients for event-aware client selection
 const { items: events } = await useCollectionQuery('salesEvents')
@@ -211,8 +214,8 @@ const handleSubmit = async () => {
   try {
     // Validate client is selected when event requires it
     if (requiresClient.value && !state.value.clientId) {
-      notify.error('Client required', {
-        description: 'This event requires a client. Please select or create one.'
+      notify.error(t('sales.orders.clientRequired', 'Client required'), {
+        description: t('sales.orders.clientRequiredDescription', 'This event requires a client. Please select or create one.')
       })
       return
     }
