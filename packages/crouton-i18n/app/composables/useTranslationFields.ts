@@ -33,6 +33,17 @@ export function useTranslationFields(
   editingLocale: Ref<string>,
   emit: (event: 'update:modelValue' | 'update:english', ...args: any[]) => void,
 ) {
+  const { defaultLocale } = useI18n()
+
+  // The base locale whose value is mirrored to the root field via the
+  // `update:english` event. Driven by the configured i18n defaultLocale
+  // (was hardcoded 'en') so single-locale apps (e.g. nl-only) sync correctly.
+  const requiredLocale = computed<string>(() => {
+    const codes = locales.value.map(l => typeof l === 'string' ? l : l.code)
+    const def = unref(defaultLocale)
+    return (def && codes.includes(def)) ? def : (codes[0] ?? def ?? 'en')
+  })
+
   // Detect if we're in multi-field mode
   const isMultiField = computed(() => {
     const f = unref(fields)
@@ -86,8 +97,9 @@ export function useTranslationFields(
   function updateFieldValue(field: string, value: string, localeCode?: string) {
     const targetLocale = localeCode || editingLocale.value
 
-    // Emit update:english when English value changes
-    if (targetLocale === 'en') {
+    // Mirror the base-locale value to the root field (event name kept for
+    // backwards compat; fires for whichever locale is the configured base).
+    if (targetLocale === requiredLocale.value) {
       emit('update:english', { field, value })
     }
 

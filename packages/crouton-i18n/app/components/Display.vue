@@ -141,8 +141,16 @@ const modalOpen = ref(false)
 const selectedLang = ref<string | null>(null)
 const { copy } = useClipboard()
 const notify = useNotify()
-const { locales } = useI18n()
+const { locales, defaultLocale } = useI18n()
 const { tString } = useT()
+
+// Base locale used as the fallback source (was hardcoded 'en'); driven by the
+// configured i18n defaultLocale so single-locale apps fall back correctly.
+const requiredLocale = computed<string>(() => {
+  const codes = locales.value.map(l => typeof l === 'string' ? l : l.code)
+  const def = unref(defaultLocale)
+  return (def && codes.includes(def)) ? def : (codes[0] ?? def ?? 'en')
+})
 
 // Get available languages from i18n config or props
 const languages = computed(() => {
@@ -173,7 +181,7 @@ const getTranslationForLang = (lang: string): string => {
 
 // Check if we're using fallback for a language
 const isUsingFallback = (lang: string): boolean => {
-  return lang !== 'en' && !props.translations?.[lang] && !!props.translations?.en
+  return lang !== requiredLocale.value && !props.translations?.[lang] && !!props.translations?.[requiredLocale.value]
 }
 
 // Get badge label with fallback indicator

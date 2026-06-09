@@ -35,7 +35,16 @@ const emit = defineEmits<{
   'update:modelValue': [value: OptionItemData]
 }>()
 
-const { t, locale, locales } = useI18n()
+const { t, locale, locales, defaultLocale } = useI18n()
+
+// The base/required locale: its value lives in the root `label` field, while
+// other locales live in `translations.label[code]`. Driven by the configured
+// i18n defaultLocale (was hardcoded 'en') so single-locale apps work correctly.
+const requiredLocale = computed<string>(() => {
+  const codes = locales.value.map(l => typeof l === 'string' ? l : l.code)
+  const def = unref(defaultLocale)
+  return (def && codes.includes(def)) ? def : (codes[0] ?? def ?? 'en')
+})
 
 // Track which locale we're editing
 const editingLocale = ref(locale.value)
@@ -65,7 +74,7 @@ const value = computed({
 
 // Get translation for current editing locale
 function getTranslation(localeCode: string): string {
-  if (localeCode === 'en') {
+  if (localeCode === requiredLocale.value) {
     return props.modelValue?.label || ''
   }
   return props.modelValue?.translations?.label?.[localeCode] || ''
@@ -73,8 +82,8 @@ function getTranslation(localeCode: string): string {
 
 // Set translation for a specific locale
 function setTranslation(localeCode: string, val: string) {
-  if (localeCode === 'en') {
-    // English is stored in the main label field
+  if (localeCode === requiredLocale.value) {
+    // Base locale is stored in the main label field
     emit('update:modelValue', {
       ...props.modelValue,
       label: val
@@ -102,7 +111,7 @@ function setTranslation(localeCode: string, val: string) {
 
 // Check if a locale has a translation
 function hasTranslation(localeCode: string): boolean {
-  if (localeCode === 'en') {
+  if (localeCode === requiredLocale.value) {
     return !!(props.modelValue?.label?.trim())
   }
   return !!(props.modelValue?.translations?.label?.[localeCode]?.trim())
@@ -154,25 +163,25 @@ watch(() => props.modelValue?.label, (newLabel) => {
 
     <!-- Label input (translatable) -->
     <UFormField
-      :label="`Label (${editingLocale.toUpperCase()})${editingLocale === 'en' ? ' *' : ''}`"
-      :required="editingLocale === 'en'"
+      :label="`Label (${editingLocale.toUpperCase()})${editingLocale === requiredLocale ? ' *' : ''}`"
+      :required="editingLocale === requiredLocale"
     >
       <UInput
         :model-value="getTranslation(editingLocale)"
-        :placeholder="editingLocale !== 'en' && getTranslation('en')
-          ? `Fallback: ${getTranslation('en')}`
+        :placeholder="editingLocale !== requiredLocale && getTranslation(requiredLocale)
+          ? `Fallback: ${getTranslation(requiredLocale)}`
           : t('options.displayName')"
         class="w-full"
         @update:model-value="setTranslation(editingLocale, $event)"
       />
-      <template v-if="editingLocale !== 'en' && getTranslation('en')" #hint>
-        <span class="text-xs text-muted">English: {{ getTranslation('en') }}</span>
+      <template v-if="editingLocale !== requiredLocale && getTranslation(requiredLocale)" #hint>
+        <span class="text-xs text-muted">{{ requiredLocale.toUpperCase() }}: {{ getTranslation(requiredLocale) }}</span>
       </template>
     </UFormField>
 
     <!-- Value input (slug, not translatable) -->
     <UFormField
-      v-if="editingLocale === 'en'"
+      v-if="editingLocale === requiredLocale"
       :label="t('options.valueField')"
     >
       <UInput

@@ -58,8 +58,18 @@ const emit = defineEmits<{
   'update:english': [data: { field: string, value: string }]
 }>()
 
-const { locales } = useI18n()
+const { locales, defaultLocale } = useI18n()
 const { t } = useT()
+
+// The base/required locale for translation inputs — the tab marked with `*`,
+// and the source for "Fallback: …" placeholders. Previously hardcoded to 'en';
+// now follows the app's configured i18n defaultLocale so single-locale apps
+// (e.g. nl-only) mark the right tab required instead of expecting 'en'.
+const requiredLocale = computed<string>(() => {
+  const codes = locales.value.map(l => typeof l === 'string' ? l : l.code)
+  const def = unref(defaultLocale)
+  return (def && codes.includes(def)) ? def : (codes[0] ?? def ?? 'en')
+})
 
 // ─── Locale layout (tabs / side-by-side, primary/secondary locales) ──────────
 
@@ -447,7 +457,7 @@ function previewText(field: string, locale: string): string {
                 <span class="flex items-center gap-2">
                   {{ loc.value.toUpperCase() }}
                   <span
-                    v-if="loc.value === 'en'"
+                    v-if="loc.value === requiredLocale"
                     class="text-red-500"
                   >*</span>
                   <span
@@ -702,7 +712,7 @@ function previewText(field: string, locale: string): string {
                 <span class="flex items-center gap-2">
                   {{ loc.value.toUpperCase() }}
                   <span
-                    v-if="loc.value === 'en'"
+                    v-if="loc.value === requiredLocale"
                     class="text-red-500"
                   >*</span>
                   <span
@@ -961,7 +971,7 @@ function previewText(field: string, locale: string): string {
             <span class="flex items-center gap-2">
               {{ (typeof loc === 'string' ? loc : loc.code).toUpperCase() }}
               <span
-                v-if="(typeof loc === 'string' ? loc : loc.code) === 'en'"
+                v-if="(typeof loc === 'string' ? loc : loc.code) === requiredLocale"
                 class="text-red-500"
               >*</span>
               <span
@@ -981,9 +991,9 @@ function previewText(field: string, locale: string): string {
         <UFormField
           v-for="field in fields"
           :key="field"
-          :label="`${field.charAt(0).toUpperCase() + field.slice(1)} (${editingLocale.toUpperCase()})${editingLocale === 'en' ? ' *' : ''}`"
+          :label="`${field.charAt(0).toUpperCase() + field.slice(1)} (${editingLocale.toUpperCase()})${editingLocale === requiredLocale ? ' *' : ''}`"
           :name="`translations.${editingLocale}.${field}`"
-          :required="editingLocale === 'en'"
+          :required="editingLocale === requiredLocale"
         >
           <!-- CroutonEditorSimple (rich text editor) - needs height container -->
           <div
@@ -1036,9 +1046,9 @@ function previewText(field: string, locale: string): string {
           <UTextarea
             v-else-if="getFieldComponent(field) === 'UTextarea'"
             :model-value="getFieldValue(field, editingLocale)"
-            :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"
-            :color="error && editingLocale === 'en' && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
-            :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
+            :placeholder="editingLocale !== requiredLocale && getFieldValue(field, requiredLocale) ? `Fallback: ${getFieldValue(field, requiredLocale)}` : (defaultValues?.[field] || '')"
+            :color="error && editingLocale === requiredLocale && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
+            :highlight="!!(error && editingLocale === requiredLocale && !getFieldValue(field, editingLocale))"
             class="w-full"
             size="lg"
             @update:model-value="updateFieldValue(field, $event)"
@@ -1048,9 +1058,9 @@ function previewText(field: string, locale: string): string {
           <UInput
             v-else
             :model-value="getFieldValue(field, editingLocale)"
-            :placeholder="editingLocale !== 'en' && getFieldValue(field, 'en') ? `Fallback: ${getFieldValue(field, 'en')}` : (defaultValues?.[field] || '')"
-            :color="error && editingLocale === 'en' && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
-            :highlight="!!(error && editingLocale === 'en' && !getFieldValue(field, editingLocale))"
+            :placeholder="editingLocale !== requiredLocale && getFieldValue(field, requiredLocale) ? `Fallback: ${getFieldValue(field, requiredLocale)}` : (defaultValues?.[field] || '')"
+            :color="error && editingLocale === requiredLocale && !getFieldValue(field, editingLocale) ? 'error' : 'primary'"
+            :highlight="!!(error && editingLocale === requiredLocale && !getFieldValue(field, editingLocale))"
             class="w-full"
             size="lg"
             @update:model-value="updateFieldWithTransform(field, $event)"
@@ -1105,15 +1115,15 @@ function previewText(field: string, locale: string): string {
         class="space-y-3"
       >
         <UFormField
-          :label="`Translation (${editingLocale.toUpperCase()})${editingLocale === 'en' ? ' *' : ''}`"
+          :label="`Translation (${editingLocale.toUpperCase()})${editingLocale === requiredLocale ? ' *' : ''}`"
           :name="`values.${editingLocale}`"
-          :required="editingLocale === 'en'"
+          :required="editingLocale === requiredLocale"
         >
           <UInput
             :model-value="getFieldValue('', editingLocale)"
-            :placeholder="editingLocale !== 'en' && getFieldValue('', 'en') ? `Fallback: ${getFieldValue('', 'en')}` : ''"
-            :color="error && editingLocale === 'en' && !getFieldValue('', editingLocale) ? 'error' : 'primary'"
-            :highlight="!!(error && editingLocale === 'en' && !getFieldValue('', editingLocale))"
+            :placeholder="editingLocale !== requiredLocale && getFieldValue('', requiredLocale) ? `Fallback: ${getFieldValue('', requiredLocale)}` : ''"
+            :color="error && editingLocale === requiredLocale && !getFieldValue('', editingLocale) ? 'error' : 'primary'"
+            :highlight="!!(error && editingLocale === requiredLocale && !getFieldValue('', editingLocale))"
             class="w-full"
             size="lg"
             @update:model-value="updateFieldWithTransform('', $event)"
