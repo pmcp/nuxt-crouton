@@ -56,6 +56,7 @@
                   collection="salesCategories"
                   :label="t('sales.form.category')"
                   :create-initial-data="{ eventId: state.eventId }"
+                  show-edit
                 />
               </UFormField>
               <UFormField :label="t('sales.form.prepLocation')" name="locationId">
@@ -64,6 +65,7 @@
                   collection="salesLocations"
                   :label="t('sales.form.prepLocation')"
                   :create-initial-data="{ eventId: state.eventId }"
+                  show-edit
                 />
               </UFormField>
             </div>
