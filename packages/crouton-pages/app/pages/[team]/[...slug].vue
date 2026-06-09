@@ -42,7 +42,7 @@ const route = useRoute()
 // single-locale app resolves to that locale (e.g. 'nl') rather than 'en'.
 const runtimeConfig = useRuntimeConfig()
 const pagesConfig = runtimeConfig.public?.croutonPages as { defaultLocale?: string } | undefined
-const i18nCfg = runtimeConfig.croutonI18n as { supportedLocales?: string[] } | undefined
+const i18nCfg = runtimeConfig.croutonI18n as { supportedLocales?: string[]; defaultLocale?: string } | undefined
 
 let localeCode = ''
 try {
@@ -53,7 +53,11 @@ try {
   }
 }
 if (!localeCode) {
+  // Resolve the app's configured default — never hardcode 'en' for a non-en app.
+  // Order: single supported locale → croutonI18n.defaultLocale (from crouton.config.js)
+  // → croutonPages.defaultLocale → 'en' as a last resort.
   localeCode = (i18nCfg?.supportedLocales?.length === 1 ? i18nCfg.supportedLocales[0]! : '')
+    || i18nCfg?.defaultLocale
     || pagesConfig?.defaultLocale
     || 'en'
 }

@@ -20,6 +20,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     croutonI18n: {
       supportedLocales: croutonLocales.map(l => l.code),
+      defaultLocale: croutonDefaultLocale,
     },
   },
 
