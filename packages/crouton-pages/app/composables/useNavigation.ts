@@ -82,12 +82,19 @@ export function useNavigation(teamSlug?: MaybeRef<string | null>) {
     return routeTeam.value || teamId.value || defaultTeamSlug || null
   })
 
+  // Forward the auth cookie on SSR so the endpoint can see the session and return
+  // members/admin pages for a logged-in user. Without this the server-side fetch
+  // is anonymous (public pages only), and the client reuses that payload — so an
+  // admin's members/admin pages never reach the nav.
+  const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   // Fetch published pages for the team with locale for translated titles/slugs
   const { data: pages, pending: isLoading, refresh } = useFetch(() => {
     if (!team.value || RESERVED_PREFIXES.includes(team.value)) return null as any
     return `/api/teams/${team.value}/pages`
   }, {
     params: { locale },
+    headers: requestHeaders,
     default: () => [],
     transform: (data: any) => data?.data || data || []
   })

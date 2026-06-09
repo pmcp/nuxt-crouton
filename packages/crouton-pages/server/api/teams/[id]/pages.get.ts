@@ -15,7 +15,13 @@
  */
 import { eq, and, or, asc, inArray } from 'drizzle-orm'
 
-export default defineCachedEventHandler(async (event) => {
+// NOTE: This is a plain (uncached) handler on purpose. The response is
+// auth-dependent (members/admins see more pages via the visibility filter), and
+// nitro's defineCachedEventHandler strips request headers from the event passed
+// to the handler body — so getServerSession() inside a cached handler can never
+// see the session cookie and every request resolves as anonymous. A plain
+// handler keeps the cookie, so visibility filtering works.
+export default defineEventHandler(async (event) => {
   const teamParam = getRouterParam(event, 'id')
 
   if (!teamParam) {
@@ -259,26 +265,5 @@ export default defineCachedEventHandler(async (event) => {
       status: 500,
       statusText: 'Failed to fetch pages'
     })
-  }
-}, {
-  maxAge: 60 * 5, // 5 minutes — navigation changes less often than page content
-  name: 'crouton-pages-list',
-  getKey: (event) => {
-    const teamParam = getRouterParam(event, 'id') || 'unknown'
-    const query = getQuery(event)
-    const locale = (query.locale as string) || 'en'
-    const nav = query.navigation === 'true' ? '1' : '0'
-    const visibility = (query.visibility as string) || 'public'
-    const pt = (query.pageType as string) || ''
-    return `${teamParam}:${locale}:nav=${nav}:vis=${visibility}${pt ? `:pt=${pt}` : ''}`
-  },
-  shouldBypassCache: async (event) => {
-    try {
-      const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
-      const session = await getServerSession(event)
-      return !!session?.user
-    } catch {
-      return false
-    }
   }
 })

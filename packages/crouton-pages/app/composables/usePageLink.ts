@@ -32,7 +32,27 @@ export function usePageLink(teamSlug?: MaybeRef<string | null>) {
   const pagesConfig = runtimeConfig.public?.croutonPages as { defaultLocale?: string } | undefined
   const defaultTeamSlug = (runtimeConfig.public?.crouton as any)?.auth?.teams?.defaultTeamSlug as string | undefined
 
-  const locale = computed(() => i18nLocale.value || pagesConfig?.defaultLocale || 'en')
+  // Supported locales + default from i18n, used to reject an unsupported live
+  // locale (e.g. a stale i18n cookie) that would build an unreachable URL.
+  let supportedLocales: string[] = []
+  let i18nDefaultLocale = ''
+  try {
+    const i18n = useI18n()
+    supportedLocales = (i18n.locales.value as Array<string | { code: string }>)
+      .map(l => (typeof l === 'string' ? l : l.code))
+    i18nDefaultLocale = (i18n.defaultLocale as string) || ''
+  } catch {
+    // i18n unavailable (rare SSR contexts) — fall back to config below.
+  }
+
+  const locale = computed(() => {
+    const live = i18nLocale.value
+    if (live && (!supportedLocales.length || supportedLocales.includes(live))) return live
+    return (supportedLocales.length === 1 ? supportedLocales[0]! : '')
+      || i18nDefaultLocale
+      || pagesConfig?.defaultLocale
+      || 'en'
+  })
 
   const routeTeam = computed(() => {
     const param = route.params.team
@@ -44,6 +64,10 @@ export function usePageLink(teamSlug?: MaybeRef<string | null>) {
     return routeTeam.value || teamId.value || defaultTeamSlug || null
   })
 
+  // Forward the auth cookie on SSR so admin/members pages resolve for a logged-in
+  // user (same reason as useNavigation).
+  const requestHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   // Fetch published pages for the team (locale-resolved slugs). Same endpoint
   // useNavigation uses — shared cache key keeps this cheap.
   const { data: pages, pending: isLoading, refresh } = useFetch(() => {
@@ -51,6 +75,7 @@ export function usePageLink(teamSlug?: MaybeRef<string | null>) {
     return `/api/teams/${team.value}/pages`
   }, {
     params: { locale },
+    headers: requestHeaders,
     default: () => [],
     transform: (data: any) => data?.data || data || []
   })
