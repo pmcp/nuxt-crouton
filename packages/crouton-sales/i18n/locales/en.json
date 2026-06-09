@@ -1,31 +1,8 @@
 {
   "sales": {
     "title": "Point of Sale",
-    "pageTypes": {
-      "eventStorefront": {
-        "name": "Event Storefront",
-        "description": "A public page for a single event with its details and an order button for customers."
-      }
-    },
+    "pageTypes": {},
     "blocks": {
-      "eventStorefront": {
-        "name": "Event Storefront",
-        "description": "Embed a public order CTA for one event on a CMS page",
-        "fields": {
-          "eventSlug": {
-            "label": "Event",
-            "description": "Pick which sales event to embed"
-          },
-          "title": {
-            "label": "Title override",
-            "description": "Optional heading; falls back to the event title"
-          },
-          "ctaLabel": {
-            "label": "Button label",
-            "description": "Optional override for the \"Order Now\" button"
-          }
-        }
-      },
       "orderInterface": {
         "name": "Order Interface",
         "description": "Inline helper POS for one event with login + order taking",
@@ -138,14 +115,12 @@
       "inactive": "Inactive"
     },
     "block": {
-      "eventStorefront": "Event Storefront",
       "orderInterface": "Order Interface",
       "eventWorkspace": "Event Workspace",
       "signInRequired": "Sign in as a team member to manage this event.",
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
-      "orderNow": "Order Now",
       "salesChart": "Sales Chart",
       "noChartPicked": "No chart picked",
       "allEvents": "All events",

@@ -53,7 +53,6 @@ app/pages/admin/[team]/sales/
   index.vue                                      # overview (orders list)
   events.vue → events/index.vue                  # events list (<SalesEventsList/>)
   events/[slug]/index.vue                        # thin wrapper → <SalesEventWorkspaceShell> (tab-param="tab")
-  events/[slug]/orders.vue                       # inline POS for the event
   products.vue / categories.vue / orders.vue
   locations.vue / printers.vue / clients.vue
   helpers.vue                                    # ACTIVE helpers (scoped tokens)
@@ -65,7 +64,7 @@ Event workspace tabs are extracted into reusable components under `app/component
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-the header (switcher + Edit/Duplicate/Open-POS actions) + the four tabs in a per-tab `<Suspense>`.
+the header (switcher + Edit/Duplicate actions) + the four tabs in a per-tab `<Suspense>`.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
 `router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
@@ -133,12 +132,14 @@ null ⇒ EUR). Prices are stored as plain numbers — currency is **display only
   form is opened in the crouton overlay (no inject, and `FormDynamicLoader` has no `<Suspense>`, so
   it can't async-look-up the currency). Entry only; the stored price is currency-agnostic.
 
-### Customer Pages (POS interface)
+### Customer POS interface (CMS block)
 
-```
-app/pages/order/[team]/[event]/login.vue   # helper PIN login (no layout)
-app/pages/order/[team]/[event]/index.vue   # full-screen POS UI (no layout)
-```
+The standalone `/order/[team]/[event]/{login,index}` pages were removed. The
+customer-facing POS now lives **only** in the `orderInterfaceBlock` CMS block
+(`SalesBlocksOrderInterfaceRender`), which embeds inline helper login +
+`<SalesClientOrderInterface>` in a crouton-pages page. The underlying public
+endpoints (`events/[teamId]/by-slug/[slug]`, `events/[eventId]/order-data`,
+`events/[eventId]/orders`) are unchanged and consumed by that block.
 
 ### Package-shipped Server Endpoints
 
@@ -260,19 +261,16 @@ event field's `propertyComponents` editor.
 
 | Block type | Editor view | Renderer | Purpose |
 |------------|-------------|----------|---------|
-| `eventStorefrontBlock` | `SalesBlocksEventStorefrontView` | `SalesBlocksEventStorefrontRender` | Public event card with "Order Now" CTA → `/order/[team]/[event]` |
-| `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page |
+| `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page. The customer-facing POS surface (replaces the removed `/order/[team]/[event]` pages). |
 | `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | Embeds the full admin event workspace (`<SalesEventWorkspaceShell>` — Products/Orders/Printers/Settings tabs) for one event. **Admin surface**: tabs hit authenticated `/api/teams/[team]/...`, so the renderer shows a sign-in notice for anonymous visitors (`useAuth().loggedIn` guard) and hides the event switcher (event fixed by the editor). The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `admin`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
 | `SalesBlocksPropertiesEventScopePicker` | — | — | Event scope dropdown for `salesChartBlock` — emits event **id** with an "All events" ('') option; wired via `propertyComponents['sales-event-scope']` |
 
-Also registered: `pageType: 'eventStorefront'` under `croutonApps.sales.pageTypes`
-for full-page event storefront pages (no block wrapper). Its `name`/`description`
-are i18n keys (`sales.pageTypes.eventStorefront.{name,description}` in
-`i18n/locales/{en,nl}.json`), translated by the crouton-pages page-type selector
-at render — the same convention as `croutonApps.*.name`.
+`croutonApps.sales.pageTypes` is currently empty (the `eventStorefront` page
+type and its `eventStorefrontBlock` were removed — the customer POS is the
+`orderInterfaceBlock` on a normal CMS page).
 
 Both renderers are `clientOnly: true` — helper sessions live in localStorage
 and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.

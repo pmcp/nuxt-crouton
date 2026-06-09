@@ -2,24 +2,6 @@
   "sales": {
     "title": "Point de vente",
     "blocks": {
-      "eventStorefront": {
-        "name": "Boutique d'événement",
-        "description": "Intégrer un bouton de commande public pour un événement sur une page CMS",
-        "fields": {
-          "eventSlug": {
-            "label": "Événement",
-            "description": "Choisissez l'événement de vente à intégrer"
-          },
-          "title": {
-            "label": "Remplacer le titre",
-            "description": "Titre optionnel ; reprend le titre de l'événement par défaut"
-          },
-          "ctaLabel": {
-            "label": "Libellé du bouton",
-            "description": "Remplacement optionnel du bouton « Commander »"
-          }
-        }
-      },
       "orderInterface": {
         "name": "Interface de commande",
         "description": "Caisse helper intégrée pour un événement avec connexion + prise de commandes",
@@ -132,14 +114,12 @@
       "inactive": "Inactif"
     },
     "block": {
-      "eventStorefront": "Vitrine de l'événement",
       "orderInterface": "Interface de commande",
       "eventWorkspace": "Espace de gestion",
       "signInRequired": "Connectez-vous en tant que membre de l’équipe pour gérer cet événement.",
       "noEventPicked": "Aucun événement sélectionné",
       "editBlock": "Modifier le bloc",
       "deleteBlock": "Supprimer le bloc",
-      "orderNow": "Commander",
       "salesChart": "Graphique des ventes",
       "noChartPicked": "Aucun graphique sélectionné",
       "allEvents": "Tous les événements",

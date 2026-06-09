@@ -2,8 +2,9 @@ import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-
 import { SALES_CHART_KIND_OPTIONS } from './utils/chart-blocks'
 
 // Inline POS block: full helper login + order interface embedded in a CMS
-// page. Mirrors /order/[team]/[event]/{login,index} but inline so a visitor
-// can authenticate and take orders without leaving the CMS-rendered page.
+// page, so a visitor can authenticate and take orders without leaving the
+// CMS-rendered page. This is the customer-facing POS surface (the standalone
+// /order/[team]/[event] pages were removed in favour of this block).
 const orderInterfaceBlock: CroutonBlockDefinition = {
   type: 'orderInterfaceBlock',
   // name/description and schema labels/descriptions are i18n keys, translated
@@ -49,60 +50,6 @@ const orderInterfaceBlock: CroutonBlockDefinition = {
     attributes: {
       eventSlug: { default: '' },
       height: { default: 'tall' }
-    }
-  }
-}
-
-// Storefront block for crouton-pages: editor picks an event by slug, public
-// renderer fetches it via the existing /api/crouton-sales/events/[teamId]/by-slug
-// endpoint and shows a card with a CTA to the POS surface.
-const eventStorefrontBlock: CroutonBlockDefinition = {
-  type: 'eventStorefrontBlock',
-  name: 'sales.blocks.eventStorefront.name',
-  description: 'sales.blocks.eventStorefront.description',
-  icon: 'i-lucide-store',
-  category: 'customer',
-  clientOnly: true,
-  defaultAttrs: {
-    eventSlug: '',
-    title: '',
-    ctaLabel: ''
-  },
-  components: {
-    editorView: 'SalesBlocksEventStorefrontView',
-    renderer: 'SalesBlocksEventStorefrontRender'
-  },
-  // Maps custom schema field types to the auto-imported component that
-  // renders them inside the block property panel.
-  propertyComponents: {
-    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
-  },
-  schema: [
-    {
-      name: 'eventSlug',
-      type: 'eventSlug',
-      label: 'sales.blocks.eventStorefront.fields.eventSlug.label',
-      description: 'sales.blocks.eventStorefront.fields.eventSlug.description'
-    },
-    {
-      name: 'title',
-      type: 'text',
-      label: 'sales.blocks.eventStorefront.fields.title.label',
-      description: 'sales.blocks.eventStorefront.fields.title.description'
-    },
-    {
-      name: 'ctaLabel',
-      type: 'text',
-      label: 'sales.blocks.eventStorefront.fields.ctaLabel.label',
-      description: 'sales.blocks.eventStorefront.fields.ctaLabel.description'
-    }
-  ],
-  tiptap: {
-    parseHTMLTag: 'div[data-type="event-storefront-block"]',
-    attributes: {
-      eventSlug: { default: '' },
-      title: { default: '' },
-      ctaLabel: { default: '' }
     }
   }
 }
@@ -352,21 +299,10 @@ export default defineAppConfig({
       settingsRoutes: [],
       // Page types for crouton-pages CMS integration. Appears in the page
       // type selector at /admin/[team]/pages.
-      pageTypes: [
-        {
-          id: 'eventStorefront',
-          // name/description are i18n keys, translated at render via useT().
-          name: 'sales.pageTypes.eventStorefront.name',
-          description: 'sales.pageTypes.eventStorefront.description',
-          icon: 'i-lucide-store',
-          component: 'SalesBlocksEventStorefrontRender',
-          category: 'customer'
-        }
-      ]
+      pageTypes: []
     }
   },
   croutonBlocks: {
-    eventStorefrontBlock,
     orderInterfaceBlock,
     eventWorkspaceBlock,
     salesChartBlock,

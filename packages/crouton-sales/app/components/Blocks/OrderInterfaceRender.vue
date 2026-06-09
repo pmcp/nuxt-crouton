@@ -2,8 +2,8 @@
 /**
  * Inline POS Block Public Renderer
  *
- * Embeds the full helper POS for one event inside a CMS page. Combines the
- * two flows from /order/[team]/[event]/{login,index} into a single component:
+ * Embeds the full helper POS for one event inside a CMS page. Handles both
+ * flows in a single component:
  *
  *   not authenticated  →  inline PIN + name login form
  *   authenticated      →  <SalesClientOrderInterface> with logout

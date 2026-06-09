@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<{
   /** Slug of the event to render. */
   eventSlug: string
   /**
-   * Team route param used to build navigation targets (switch event, Open POS).
+   * Team route param used to build navigation targets (switch event).
    * Defaults to `route.params.team`, which is present in both admin
    * (`/admin/[team]/...`) and public CMS (`/[team]/...`) routes.
    */
@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<{
   tabParam?: string
   /** Show the event switcher dropdown (hidden in the block — event is fixed). */
   showSwitcher?: boolean
-  /** Show the Edit / Duplicate / Open POS header actions. */
+  /** Show the Edit / Duplicate header actions. */
   showHeaderActions?: boolean
   /**
    * Show the whole header row (event name/date + actions). Hidden in the block,
@@ -185,13 +185,6 @@ const activeTab = computed({
           @click="duplicateEvent"
         >
           {{ t('sales.events.duplicate') }}
-        </UButton>
-        <UButton
-          icon="i-lucide-shopping-cart"
-          size="sm"
-          :to="`/order/${teamParam}/${event.slug}`"
-        >
-          {{ t('sales.events.openPos') }}
         </UButton>
       </div>
     </div>

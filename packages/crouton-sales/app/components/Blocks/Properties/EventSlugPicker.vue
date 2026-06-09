@@ -2,9 +2,9 @@
 /**
  * Event Slug Picker
  *
- * Custom block property editor for the eventStorefrontBlock. Fetches the
- * current team's sales events and presents a searchable dropdown so editors
- * can pick one instead of typing the slug by hand.
+ * Custom block property editor for the event-scoped blocks (orderInterfaceBlock,
+ * eventWorkspaceBlock). Fetches the current team's sales events and presents a
+ * searchable dropdown so editors can pick one instead of typing the slug by hand.
  *
  * Wired via the block definition's propertyComponents map:
  *   propertyComponents: { eventSlug: 'SalesBlocksPropertiesEventSlugPicker' }

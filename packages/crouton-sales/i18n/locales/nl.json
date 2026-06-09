@@ -1,31 +1,8 @@
 {
   "sales": {
     "title": "Kassa",
-    "pageTypes": {
-      "eventStorefront": {
-        "name": "Evenement-winkel",
-        "description": "Een publieke pagina voor één evenement met de details en een bestelknop voor klanten."
-      }
-    },
+    "pageTypes": {},
     "blocks": {
-      "eventStorefront": {
-        "name": "Evenement-winkel",
-        "description": "Voeg een publieke bestelknop voor één evenement toe aan een CMS-pagina",
-        "fields": {
-          "eventSlug": {
-            "label": "Evenement",
-            "description": "Kies welk verkoopevenement je wilt insluiten"
-          },
-          "title": {
-            "label": "Titel overschrijven",
-            "description": "Optionele kop; valt terug op de evenementtitel"
-          },
-          "ctaLabel": {
-            "label": "Knoptekst",
-            "description": "Optionele vervanging voor de knop \"Bestellen\""
-          }
-        }
-      },
       "orderInterface": {
         "name": "Bestelinterface",
         "description": "Ingesloten helper-kassa voor één evenement met login + bestellen",
@@ -138,14 +115,12 @@
       "inactive": "Inactief"
     },
     "block": {
-      "eventStorefront": "Event Winkel",
       "orderInterface": "Bestelinterface",
       "eventWorkspace": "Evenement-werkruimte",
       "signInRequired": "Meld je aan als teamlid om dit evenement te beheren.",
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",
-      "orderNow": "Bestellen",
       "salesChart": "Verkoopgrafiek",
       "noChartPicked": "Geen grafiek gekozen",
       "allEvents": "Alle events",
