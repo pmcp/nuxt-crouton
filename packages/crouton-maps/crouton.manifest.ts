@@ -91,7 +91,9 @@ export const generatorContribution = defineGeneratorContribution({
     const { detected } = ctx
     const { addressFields, coordinateField, hasAddress } = detected
 
-    if (!hasAddress || !coordinateField) return null
+    // Skip FK fields — a `refTarget` coordinate match (e.g. `locationId`) is a
+    // reference, not a geo field, so no map picker should be injected.
+    if (!hasAddress || !coordinateField || coordinateField.refTarget) return null
 
     const coordinateFieldName = coordinateField.name
 
@@ -215,7 +217,10 @@ const handleMarkerDragEnd = (position: { lng: number; lat: number }) => {
     const { detected } = ctx
     const { coordinateField, hasAddress } = detected
 
-    if (!hasAddress || !coordinateField) return null
+    // A foreign-key field (refTarget) is never geo coordinates — e.g. a `locationId`
+    // FK matches the 'location' pattern but is a reference, not a map field. Skipping
+    // it avoids a duplicate cell slot (the reference cell already renders it).
+    if (!hasAddress || !coordinateField || coordinateField.refTarget) return null
 
     const coordinateFieldName = coordinateField.name
 
