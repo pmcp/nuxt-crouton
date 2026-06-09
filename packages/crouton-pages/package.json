@@ -39,6 +39,7 @@
     "nuxt": "^4.0.0"
   },
   "dependencies": {
+    "@fyit/crouton-i18n": "workspace:*",
     "@tiptap/extension-highlight": "^3.20.0"
   }
 }

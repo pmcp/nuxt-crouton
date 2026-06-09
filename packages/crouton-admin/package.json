@@ -26,6 +26,7 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@fyit/crouton-i18n": "workspace:*",
     "@fyit/crouton-themes": "workspace:*"
   },
   "devDependencies": {

@@ -1,7 +1,12 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import { getCroutonLocales } from '@fyit/crouton-i18n/config-utils'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
+// Locales are driven by the app's crouton.config.js (same source the
+// crouton-i18n layer uses) so this layer never re-adds locales an app turned off.
+const croutonLocales = getCroutonLocales()
 
 // Development startup deduplication guard
 const _dependencies = (globalThis as unknown as Record<string, Set<string>>).__croutonLayers ??= new Set()
@@ -133,11 +138,7 @@ export default defineNuxtConfig({
 
   // i18n translations
   i18n: {
-    locales: [
-      { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'nl', name: 'Nederlands', file: 'nl.json' },
-      { code: 'fr', name: 'Français', file: 'fr.json' }
-    ],
+    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
     langDir: './locales'
   }
 })

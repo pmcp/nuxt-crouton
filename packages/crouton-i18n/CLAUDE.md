@@ -146,6 +146,29 @@ export default defineNuxtConfig({
 })
 ```
 
+### Locales are driven by `crouton.config.js` (all crouton layers)
+
+The active locale set comes from the app's `crouton.config.js` `locales` field —
+**not** from per-package hardcoded arrays. All crouton layers that contribute
+i18n locales (`crouton-i18n`, `crouton-core`, `crouton-auth`, `crouton-admin`,
+`crouton-pages`, `crouton-sales`) call `getCroutonLocales()` from
+`@fyit/crouton-i18n/config-utils`, so they stay in sync.
+
+```js
+// crouton.config.js
+locales: ['nl'],        // single-language app → only the NL tab renders
+defaultLocale: 'nl',
+```
+
+- If `locales` is **omitted**, the default is `en`, `nl`, `fr` (the set the
+  packages historically hardcoded — preserves existing apps).
+- If `locales` is set, you get **exactly** that set across every layer. Adding a
+  locale code that no package ships a `{code}.json` for will warn/skip.
+- The **base/required locale** in translation inputs (`CroutonI18nInput`,
+  `FormTranslatableOptionItem`, etc.) — the tab marked `*`, the fallback source,
+  and the value mirrored to a collection's root field — follows the configured
+  `defaultLocale` (was previously hardcoded to `'en'`).
+
 ## Common Tasks
 
 ### Add new locale

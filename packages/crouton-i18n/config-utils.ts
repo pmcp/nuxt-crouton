@@ -46,8 +46,14 @@ const KNOWN_LOCALE_NAMES: Record<string, string> = {
   uk: 'Українська',
 }
 
+// Default locale set when an app's crouton.config.js doesn't declare `locales`.
+// This matches the locales the crouton packages historically hardcoded
+// (en/nl/fr), so apps that never opted into a specific locale set keep all
+// three. Apps that DO declare `locales` (e.g. `['nl']`) get exactly that set.
 const DEFAULT_LOCALES: { code: string, name: string, file: string }[] = [
   { code: 'en', name: 'English', file: 'en.json' },
+  { code: 'nl', name: 'Nederlands', file: 'nl.json' },
+  { code: 'fr', name: 'Français', file: 'fr.json' },
 ]
 
 function loadCroutonConfig(): CroutonConfig | null {
