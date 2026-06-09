@@ -40,12 +40,18 @@ const statusOptions = [
   { label: t('sales.workspace.statusCancelled'), value: 'cancelled' }
 ]
 
+const currencyOptions = [
+  { label: t('sales.workspace.currencyEur'), value: 'EUR' },
+  { label: t('sales.workspace.currencyUsd'), value: 'USD' }
+]
+
 const eventForm = ref({
   title: props.event.title || '',
   eventType: props.event.eventType || '',
   startDate: props.event.startDate ? new Date(props.event.startDate) : null,
   endDate: props.event.endDate ? new Date(props.event.endDate) : null,
-  status: props.event.status || 'upcoming'
+  status: props.event.status || 'upcoming',
+  currency: props.event.currency || 'EUR'
 })
 const savingEventDetails = ref(false)
 
@@ -57,7 +63,8 @@ watch(() => props.event.id, () => {
     eventType: props.event.eventType || '',
     startDate: props.event.startDate ? new Date(props.event.startDate) : null,
     endDate: props.event.endDate ? new Date(props.event.endDate) : null,
-    status: props.event.status || 'upcoming'
+    status: props.event.status || 'upcoming',
+    currency: props.event.currency || 'EUR'
   }
 })
 
@@ -66,6 +73,7 @@ const eventDetailsDirty = computed(() =>
   eventForm.value.title !== (props.event.title || '')
   || eventForm.value.eventType !== (props.event.eventType || '')
   || eventForm.value.status !== (props.event.status || 'upcoming')
+  || eventForm.value.currency !== (props.event.currency || 'EUR')
   || toTime(eventForm.value.startDate) !== toTime(props.event.startDate)
   || toTime(eventForm.value.endDate) !== toTime(props.event.endDate)
 )
@@ -79,7 +87,8 @@ async function saveEventDetails() {
       eventType: eventForm.value.eventType || undefined,
       startDate: eventForm.value.startDate instanceof Date ? eventForm.value.startDate.toISOString() : null,
       endDate: eventForm.value.endDate instanceof Date ? eventForm.value.endDate.toISOString() : null,
-      status: eventForm.value.status
+      status: eventForm.value.status,
+      currency: eventForm.value.currency
     })
   }
   finally {
@@ -177,6 +186,9 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </UFormField>
         <UFormField :label="t('sales.workspace.status')">
           <USelect v-model="eventForm.status" :items="statusOptions" class="w-full" />
+        </UFormField>
+        <UFormField :label="t('sales.workspace.currency')">
+          <USelect v-model="eventForm.currency" :items="currencyOptions" class="w-full" />
         </UFormField>
         <UFormField :label="t('sales.workspace.startDate')">
           <CroutonCalendar v-model:date="eventForm.startDate" />

@@ -37,6 +37,7 @@ export interface SalesEvent {
   isCurrent?: boolean
   requiresClient?: boolean
   helperPin?: string
+  currency?: string
   metadata?: Record<string, any>
   archivedAt?: Date | null
   createdAt: Date

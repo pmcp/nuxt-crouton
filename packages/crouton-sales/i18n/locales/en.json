@@ -384,7 +384,10 @@
       "statusUpcoming": "Upcoming",
       "statusActive": "Active",
       "statusCompleted": "Completed",
-      "statusCancelled": "Cancelled"
+      "statusCancelled": "Cancelled",
+      "currency": "Currency",
+      "currencyEur": "Euro (€)",
+      "currencyUsd": "Dollar ($)"
     },
     "helpers": {
       "title": "Active Helpers",

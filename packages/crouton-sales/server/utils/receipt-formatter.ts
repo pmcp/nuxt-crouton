@@ -63,11 +63,18 @@ export interface ReceiptData {
    * offset. Defaults to Europe/Brussels.
    */
   timeZone?: string
+  /**
+   * Currency symbol prefixed to prices on the ticket. Derived from the event's
+   * currency ('EUR' → '€', 'USD' → '$'). Both glyphs are printable in CP858.
+   * Defaults to '€'.
+   */
+  currencySymbol?: string
 }
 
 /** Default timezone for rendering receipt timestamps. */
 const DEFAULT_TIME_ZONE = 'Europe/Brussels'
 const TIME_LOCALE = 'nl-BE'
+const DEFAULT_CURRENCY_SYMBOL = '€'
 
 export interface FormattedReceipt {
   base64: string
@@ -181,6 +188,7 @@ class EscPosBuilder {
  */
 export function formatReceipt(data: ReceiptData): FormattedReceipt {
   const printer = new EscPosBuilder()
+  const currencySymbol = data.currencySymbol || DEFAULT_CURRENCY_SYMBOL
 
   try {
     // Header with team and event
@@ -264,7 +272,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
           if (data.showPrices && item.price !== undefined) {
             const itemTotal = item.price * item.quantity
             const itemText = `${item.quantity}x ${item.name}`
-            const priceText = `€${itemTotal.toFixed(2)}`
+            const priceText = `${currencySymbol}${itemTotal.toFixed(2)}`
             const padding = RECEIPT_WIDTH - itemText.length - priceText.length
             printer.println(itemText + ' '.repeat(Math.max(1, padding)) + priceText)
           }
@@ -278,7 +286,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
           printer.bold(true)
           const itemTotal = item.price * item.quantity
           const itemText = `${item.quantity}x ${item.name}`
-          const priceText = `€${itemTotal.toFixed(2)}`
+          const priceText = `${currencySymbol}${itemTotal.toFixed(2)}`
           const padding = RECEIPT_WIDTH - itemText.length - priceText.length
           printer.println(itemText + ' '.repeat(Math.max(1, padding)) + priceText)
           printer.bold(false)
@@ -300,7 +308,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
                 const optionObj = optionValue as { label: string, price?: number }
                 displayValue = optionObj.label
                 if (optionObj.price) {
-                  displayValue += ` (+€${Number(optionObj.price).toFixed(2)})`
+                  displayValue += ` (+${currencySymbol}${Number(optionObj.price).toFixed(2)})`
                 }
               }
               else if (typeof optionValue === 'boolean') {
@@ -343,7 +351,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.alignLeft()
 
       const totalLabel = 'TOTAL:'
-      const totalAmount = `€${data.total.toFixed(2)}`
+      const totalAmount = `${currencySymbol}${data.total.toFixed(2)}`
       const totalPadding = RECEIPT_WIDTH - totalLabel.length - totalAmount.length
 
       printer.bold(true)

@@ -12,7 +12,7 @@
         <SalesClientCategoryTabs
           v-model="selectedCategory"
           :categories="categories || []"
-          :product-counts="productCounts"
+          :cart-counts="cartCountsByCategory"
           :show-all="false"
         />
       </div>
@@ -61,33 +61,13 @@
         </div>
       </div>
 
-      <!-- Product Options Modal -->
-      <UModal v-model:open="showOptionsModal" :title="pendingProduct?.title" :ui="{ footer: 'justify-end' }">
-        <template #body>
-          <SalesClientProductOptionsSelect
-            v-model="selectedOptions"
-            :options="productOptionsForPending"
-            :multiple-allowed="pendingProduct?.multipleOptionsAllowed"
-          />
-        </template>
-
-        <template #footer>
-          <UButton :label="t('sales.common.cancel')" color="neutral" variant="ghost" @click="showOptionsModal = false" />
-          <UButton
-            :label="t('sales.products.addToCart')"
-            :disabled="!selectedOptions || (Array.isArray(selectedOptions) && selectedOptions.length === 0)"
-            @click="confirmProductWithOptions"
-          />
-        </template>
-      </UModal>
-
       <!-- Mobile cart button -->
       <div class="md:hidden border-t border-default p-2">
         <UDrawer v-model:open="mobileCartOpen" direction="bottom">
           <UButton
             block
             size="lg"
-            :label="cartItems.length > 0 ? `${t('sales.cart.title')} (${cartItems.length}) - €${cartTotal.toFixed(2)}` : t('sales.cart.empty')"
+            :label="cartItems.length > 0 ? `${t('sales.cart.title')} (${cartItems.length}) - ${formatPrice(cartTotal)}` : t('sales.cart.empty')"
             :icon="cartItems.length > 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart'"
             :color="cartItems.length > 0 ? 'primary' : 'neutral'"
             :variant="cartItems.length > 0 ? 'solid' : 'soft'"
@@ -133,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SalesProduct, SalesCategory, ProductOption, SalesClient, SalesLocation } from '../../types'
+import type { SalesProduct, SalesCategory, SalesClient, SalesLocation } from '../../types'
 
 const props = defineProps<{
   eventId: string
@@ -158,11 +138,18 @@ const props = defineProps<{
   productsCollection?: string
   /** Collection name for categories query (defaults to 'salesCategories'). Ignored when `categories` is provided. */
   categoriesCollection?: string
+  /** Currency for this event ('EUR' | 'USD', default EUR). Provided to all price displays. */
+  currency?: string
 }>()
 
 const isOnline = useOnline()
 const notify = useNotify()
 const { t } = useT()
+
+// Share the event currency with every descendant price display (cart, line
+// items, option modifiers).
+provideSalesCurrency(() => props.currency)
+const { format: formatPrice } = useSalesCurrency(() => props.currency)
 
 const {
   cartItems,
@@ -231,48 +218,15 @@ const hasClient = computed(() => {
 // Mobile cart drawer open state (closed automatically after checkout)
 const mobileCartOpen = ref(false)
 
-// Product options modal state
-const showOptionsModal = ref(false)
-const pendingProduct = ref<SalesProduct | null>(null)
-const selectedOptions = ref<string | string[] | null>(null)
-
-// Get inline options from the pending product
-const productOptionsForPending = computed<ProductOption[]>(() => {
-  if (!pendingProduct.value?.options) return []
-  const options = pendingProduct.value.options as ProductOption[]
-  return Array.isArray(options) ? options : []
-})
-
-// Handle product selection - show modal if product has options
-function handleProductSelect(product: SalesProduct, preSelectedOptions?: string | string[]) {
-  const options = (product.options as ProductOption[]) || []
-
-  // If options were already selected (from ProductList inline selection)
-  if (preSelectedOptions !== undefined) {
-    addToCart(product, undefined, preSelectedOptions)
-    return
-  }
-
-  if (product.hasOptions && Array.isArray(options) && options.length > 0) {
-    pendingProduct.value = product
-    selectedOptions.value = product.multipleOptionsAllowed ? [] : null
-    showOptionsModal.value = true
-  }
-  else {
-    addToCart(product)
-  }
-}
-
-// Confirm product with selected options
-function confirmProductWithOptions() {
-  if (!pendingProduct.value || !selectedOptions.value) return
-
-  addToCart(pendingProduct.value, undefined, selectedOptions.value)
-
-  // Reset modal state
-  showOptionsModal.value = false
-  pendingProduct.value = null
-  selectedOptions.value = null
+// Add a product to the cart. Options and any required per-item remark are
+// captured inline in the product card (SalesClientProductList) and arrive here
+// ready to add — no modal.
+function handleProductSelect(
+  product: SalesProduct,
+  selectedOption?: string | string[],
+  remark?: string
+) {
+  addToCart(product, remark, selectedOption)
 }
 
 // Category selection. The "All" tab is hidden in the POS, so default the
@@ -287,13 +241,13 @@ watch(categories, (cats) => {
   }
 }, { immediate: true })
 
-// Product counts per category
-const productCounts = computed(() => {
+// Cart quantities per category — drives the count badge on each category tab so
+// it's clear how many items were added from that tab (hidden when zero).
+const cartCountsByCategory = computed(() => {
   const counts: Record<string, number> = {}
-  for (const product of (products.value || []) as SalesProduct[]) {
-    if (product.categoryId) {
-      counts[product.categoryId] = (counts[product.categoryId] || 0) + 1
-    }
+  for (const item of cartItems.value) {
+    const catId = item.product.categoryId
+    if (catId) counts[catId] = (counts[catId] || 0) + item.quantity
   }
   return counts
 })

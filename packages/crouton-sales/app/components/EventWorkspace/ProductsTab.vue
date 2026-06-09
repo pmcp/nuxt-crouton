@@ -89,8 +89,8 @@ const printerLabel = (locationId?: string) => {
   return list.length ? list.join(', ') : undefined
 }
 
-const priceFormatter = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' })
-const formatPrice = (price: number) => priceFormatter.format(Number(price) || 0)
+// Format prices in the event's currency.
+const { format: formatPrice } = useSalesCurrency(() => props.event.currency)
 
 function openCreateProduct() {
   open('create', 'salesProducts', [], 'slideover', { eventId: props.event.id })

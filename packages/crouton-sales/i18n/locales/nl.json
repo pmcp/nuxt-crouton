@@ -384,7 +384,10 @@
       "statusUpcoming": "Aankomend",
       "statusActive": "Actief",
       "statusCompleted": "Afgerond",
-      "statusCancelled": "Geannuleerd"
+      "statusCancelled": "Geannuleerd",
+      "currency": "Valuta",
+      "currencyEur": "Euro (€)",
+      "currencyUsd": "Dollar ($)"
     },
     "helpers": {
       "title": "Actieve helpers",

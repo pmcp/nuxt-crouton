@@ -3,6 +3,9 @@ import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
 const props = defineProps<{ event: SalesEvent }>()
 
+// Share the event currency with the expandable OrderItems panels.
+provideSalesCurrency(() => props.event.currency)
+
 const { t } = useT()
 const { open } = useCrouton()
 const route = useRoute()

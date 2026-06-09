@@ -15,7 +15,7 @@
       :key="price"
       class="w-16 text-right text-sm text-muted shrink-0 animate-pop"
     >
-      ${{ price.toFixed(2) }}
+      {{ format(price) }}
     </span>
 
     <div class="flex items-center gap-1 shrink-0">
@@ -25,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+const { format } = useSalesCurrency()
 defineProps<{
   title: string
   price: number

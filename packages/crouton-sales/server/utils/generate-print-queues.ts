@@ -31,6 +31,8 @@ interface GenerateInsertOptions {
   teamName: string
   eventName: string
   isPersonnel?: boolean
+  /** Event currency ('EUR' | 'USD', default EUR) — sets the receipt price symbol. */
+  currency?: string
 }
 
 export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions): Promise<string[]> {
@@ -128,6 +130,7 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       teamName: opts.teamName,
       eventName: opts.eventName,
       isPersonnel: opts.isPersonnel || false,
+      currency: opts.currency,
       createdBy: helperId
     },
     printItems,

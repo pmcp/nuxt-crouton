@@ -105,12 +105,33 @@ total) plus the order total, and the order's `overallRemarks` (passed as `:remar
 Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
 `getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
 
-`SettingsTab.vue` edits the event's **core fields inline** (title, type, status, start/end dates)
-via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`, Save
-disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
+`SettingsTab.vue` edits the event's **core fields inline** (title, type, status, currency,
+start/end dates) via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
+Save disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
 breaks the current URL — use the workspace's top-right "Edit" button for the slug). The tab also
 hosts Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, Categories,
 Locations, and the Active Helpers list.
+
+### Per-event currency (`useSalesCurrency`)
+
+Each event has a `currency` field (`'EUR' | 'USD'`, default `'EUR'`; nullable column,
+null ⇒ EUR). Prices are stored as plain numbers — currency is **display only**. The
+`useSalesCurrency()` composable (auto-imported) centralises the symbol + `Intl.NumberFormat`
+(`EUR` → `€`/`nl-BE`, `USD` → `$`/`en-US`):
+- A container that owns the event calls `provideSalesCurrency(() => event.currency)`; descendants
+  call `useSalesCurrency()` (no arg) and inherit it via inject. Used by the POS `OrderInterface`
+  (cart, line items, option modifiers) and the workspace `OrdersTab` → `OrderItems`.
+- A component that both knows the currency and renders prices passes it directly:
+  `useSalesCurrency(() => event.currency)` (e.g. `ProductsTab` product rows). Inject can't see a
+  component's own provided value, so pass the override there.
+- The customer POS receives the currency through the `order-data` / `by-slug` endpoints → page
+  → `<SalesClientOrderInterface :currency>`.
+- **Receipts**: `formatReceipt`/`ReceiptData` take a `currencySymbol` (default `€`); the order POST
+  and reprint endpoints thread `salesEvent.currency` → `generateAndInsertPrintQueues` →
+  `print-queue-service` (`receiptCurrencySymbol()`). Both `€` and `$` are printable in CP858.
+- **Known gap**: the `ProductForm` price *input* (`UInputNumber` format-options) stays EUR — the
+  form is opened in the crouton overlay (no inject, and `FormDynamicLoader` has no `<Suspense>`, so
+  it can't async-look-up the currency). Entry only; the stored price is currency-agnostic.
 
 ### Customer Pages (POS interface)
 

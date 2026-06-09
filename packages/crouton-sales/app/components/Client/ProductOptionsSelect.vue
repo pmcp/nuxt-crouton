@@ -15,7 +15,7 @@
       <div class="flex items-center justify-between">
         <span>{{ option.label }}</span>
         <span v-if="option.priceModifier && option.priceModifier > 0" class="text-sm text-muted">
-          +${{ option.priceModifier.toFixed(2) }}
+          +{{ format(option.priceModifier) }}
         </span>
       </div>
     </UCard>
@@ -24,6 +24,8 @@
 
 <script setup lang="ts">
 import type { ProductOption } from '../../types'
+
+const { format } = useSalesCurrency()
 
 interface Props {
   modelValue: string | string[] | null

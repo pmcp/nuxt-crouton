@@ -68,7 +68,8 @@ export default defineEventHandler(async (event) => {
       title: salesEvent.title,
       slug: salesEvent.slug,
       teamId: salesEvent.teamId,
-      requiresClient: salesEvent.requiresClient
+      requiresClient: salesEvent.requiresClient,
+      currency: salesEvent.currency || 'EUR'
     },
     products,
     categories,

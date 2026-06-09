@@ -43,7 +43,7 @@ interface Location {
 }
 
 interface OrderData {
-  event: { id: string, title: string, slug: string, teamId: string, requiresClient: boolean }
+  event: { id: string, title: string, slug: string, teamId: string, requiresClient: boolean, currency?: string }
   products: SalesProduct[]
   categories: SalesCategorie[]
   clients: Client[]
@@ -260,6 +260,7 @@ onMounted(async () => {
           :locations="orderData.locations"
           :requires-client="orderData.event.requiresClient"
           :use-reusable-clients="orderData.settings.useReusableClients"
+          :currency="orderData.event.currency"
         />
       </div>
     </div>

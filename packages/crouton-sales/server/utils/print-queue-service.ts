@@ -42,6 +42,13 @@ export interface PrintQueueGeneratorOptions {
   eventName: string
   isPersonnel?: boolean
   createdBy: string
+  /** Event currency ('EUR' | 'USD', default EUR) — sets the receipt price symbol. */
+  currency?: string
+}
+
+/** Map an event currency code to the symbol printed on receipts. */
+export function receiptCurrencySymbol(currency?: string): string {
+  return currency === 'USD' ? '$' : '€'
 }
 
 export interface PrinterConfig {
@@ -129,7 +136,8 @@ export function generateKitchenTicketData(
     showPrices: printer.showPrices || false,
     createdAt: new Date(),
     isPersonnel: options.isPersonnel,
-    receiptSettings
+    receiptSettings,
+    currencySymbol: receiptCurrencySymbol(options.currency)
   })
 
   return {
@@ -174,7 +182,8 @@ export function generateReceiptData(
     showPrices: true,
     createdAt: new Date(),
     isPersonnel: options.isPersonnel,
-    receiptSettings
+    receiptSettings,
+    currencySymbol: receiptCurrencySymbol(options.currency)
   })
 
   return {

@@ -378,7 +378,10 @@
       "statusUpcoming": "À venir",
       "statusActive": "Actif",
       "statusCompleted": "Terminé",
-      "statusCancelled": "Annulé"
+      "statusCancelled": "Annulé",
+      "currency": "Devise",
+      "currencyEur": "Euro (€)",
+      "currencyUsd": "Dollar ($)"
     },
     "helpers": {
       "title": "Bénévoles actifs",

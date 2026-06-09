@@ -17,7 +17,7 @@
       >
         <template #actions>
           <UButton
-            v-if="hasOptions(product)"
+            v-if="isExpandable(product)"
             variant="ghost"
             color="neutral"
             size="xs"
@@ -43,63 +43,106 @@
         </template>
       </SalesClientOrderLineItem>
 
-      <!-- Options (inside card) -->
+      <!-- Expansion: options and/or a required per-item remark, inline in the card -->
       <Transition name="slide">
         <div
-          v-if="activeProductId === product.id && hasOptions(product)"
+          v-if="activeProductId === product.id && isExpandable(product)"
           class="mt-4 pt-4 border-t border-default space-y-3"
           @click.stop
         >
-          <!-- Multi-select mode -->
-          <template v-if="isMultiSelect(product)">
-            <UCheckbox
-              v-for="option in getOptions(product)"
-              :key="option.id"
-              :model-value="isOptionSelected(product.id, option.id)"
-              @update:model-value="toggleOption(product.id, option.id)"
-            >
-              <template #label>
-                <span class="flex items-center justify-between w-full">
-                  <span>{{ option.label }}</span>
-                  <span v-if="option.priceModifier > 0" class="text-xs text-muted ml-2">+${{ option.priceModifier.toFixed(2) }}</span>
-                </span>
-              </template>
-            </UCheckbox>
-            <UButton
-              block
-              size="sm"
-              color="primary"
-              class="mt-3"
-              @click="confirmMultiOptions(product)"
-            >
-              {{ t('sales.products.addToCart') }}
-            </UButton>
+          <!-- Options -->
+          <template v-if="hasOptions(product)">
+            <!-- Multi-select: checkboxes -->
+            <template v-if="isMultiSelect(product)">
+              <UCheckbox
+                v-for="option in getOptions(product)"
+                :key="option.id"
+                :model-value="isOptionSelected(product.id, option.id)"
+                @update:model-value="toggleOption(product.id, option.id)"
+              >
+                <template #label>
+                  <span class="flex items-center justify-between w-full">
+                    <span>{{ option.label }}</span>
+                    <span v-if="option.priceModifier > 0" class="text-xs text-muted ml-2">+{{ format(option.priceModifier) }}</span>
+                  </span>
+                </template>
+              </UCheckbox>
+            </template>
+
+            <!-- Single-select with a required remark: pick one, then confirm below -->
+            <div v-else-if="product.requiresRemark" class="space-y-2">
+              <UButton
+                v-for="option in getOptions(product)"
+                :key="option.id"
+                :label="option.label"
+                block
+                size="md"
+                :color="isOptionSelected(product.id, option.id) ? 'primary' : 'neutral'"
+                :variant="isOptionSelected(product.id, option.id) ? 'solid' : 'ghost'"
+                class="active:scale-[0.98] transition-transform"
+                @click="selectSingle(product.id, option.id)"
+              >
+                <template #trailing>
+                  <span v-if="option.priceModifier > 0" class="text-xs text-muted ms-auto">+{{ format(option.priceModifier) }}</span>
+                </template>
+              </UButton>
+            </div>
+
+            <!-- Single-select, no remark: each option adds immediately -->
+            <div v-else class="space-y-2">
+              <UButton
+                v-for="option in getOptions(product)"
+                :key="option.id"
+                :label="option.label"
+                block
+                size="md"
+                color="neutral"
+                variant="ghost"
+                class="active:scale-[0.98] transition-transform"
+                @click="selectOption(product, option.id)"
+              >
+                <template #trailing>
+                  <span v-if="option.priceModifier > 0" class="text-xs text-muted ms-auto">+{{ format(option.priceModifier) }}</span>
+                  <UIcon
+                    name="i-lucide-plus"
+                    class="size-4 text-primary transition-transform"
+                    :class="[{ 'ms-auto': !option.priceModifier }, poppedId === option.id ? 'animate-pop' : '']"
+                    @animationend="poppedId = null"
+                  />
+                </template>
+              </UButton>
+            </div>
           </template>
 
-          <!-- Single-select mode -->
-          <div v-else class="space-y-2">
-            <UButton
-              v-for="option in getOptions(product)"
-              :key="option.id"
-              :label="option.label"
-              block
-              size="md"
-              color="neutral"
-              variant="ghost"
-              class="active:scale-[0.98] transition-transform"
-              @click="selectOption(product, option.id)"
-            >
-              <template #trailing>
-                <span v-if="option.priceModifier > 0" class="text-xs text-muted ms-auto">+${{ option.priceModifier.toFixed(2) }}</span>
-                <UIcon
-                  name="i-lucide-plus"
-                  class="size-4 text-primary transition-transform"
-                  :class="[{ 'ms-auto': !option.priceModifier }, poppedId === option.id ? 'animate-pop' : '']"
-                  @animationend="poppedId = null"
-                />
-              </template>
-            </UButton>
-          </div>
+          <!-- Required per-item remark: inline textarea, beneath options or alone -->
+          <UFormField
+            v-if="product.requiresRemark"
+            :label="t('sales.products.remarks')"
+            :description="product.remarkPrompt || undefined"
+          >
+            <UTextarea
+              :model-value="remarkFor(product.id)"
+              :placeholder="product.remarkPrompt || t('sales.products.remarksPlaceholder')"
+              icon="i-lucide-message-square-text"
+              :rows="2"
+              autoresize
+              class="w-full"
+              @update:model-value="setRemark(product.id, String($event))"
+            />
+          </UFormField>
+
+          <!-- One confirm button for multi-select and/or remark products. Remark
+               and multi-select options are optional; single-select is required. -->
+          <UButton
+            v-if="needsConfirm(product)"
+            block
+            size="sm"
+            color="primary"
+            :disabled="confirmDisabled(product)"
+            @click="confirmProduct(product)"
+          >
+            {{ t('sales.products.addToCart') }}
+          </UButton>
         </div>
       </Transition>
     </UCard>
@@ -109,18 +152,21 @@
 <script setup lang="ts">
 import type { SalesProduct, ProductOption } from '../../types'
 const { t } = useT()
+const { format } = useSalesCurrency()
 
 defineProps<{
   products: SalesProduct[]
 }>()
 
 const emit = defineEmits<{
-  select: [product: SalesProduct, selectedOption?: string | string[]]
+  select: [product: SalesProduct, selectedOption?: string | string[], remark?: string]
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
 const activeProductId = ref<string | null>(null)
 const selectedOptionIds = ref<Map<string, string[]>>(new Map())
+// Per-product remark text, keyed by product id (only for requiresRemark products).
+const remarks = ref<Map<string, string>>(new Map())
 // Tracks the most recently tapped add affordance so its plus icon can
 // briefly "pop" for tactile feedback. Cleared via @animationend (no timers).
 const poppedId = ref<string | null>(null)
@@ -131,6 +177,17 @@ function hasOptions(product: SalesProduct): boolean {
 
 function isMultiSelect(product: SalesProduct): boolean {
   return !!product.multipleOptionsAllowed
+}
+
+// A product expands inline when it has options or needs a remark.
+function isExpandable(product: SalesProduct): boolean {
+  return hasOptions(product) || !!product.requiresRemark
+}
+
+// Products that gather input before adding use a single confirm button:
+// multi-select options, or any product requiring a remark.
+function needsConfirm(product: SalesProduct): boolean {
+  return isMultiSelect(product) || !!product.requiresRemark
 }
 
 function getOptions(product: SalesProduct): ProductOption[] {
@@ -152,14 +209,50 @@ function toggleOption(productId: string, optionId: string) {
   }
 }
 
-function confirmMultiOptions(product: SalesProduct) {
+// Single-select (when a remark is required): pick exactly one option.
+function selectSingle(productId: string, optionId: string) {
+  selectedOptionIds.value.set(productId, [optionId])
+}
+
+function remarkFor(productId: string): string {
+  return remarks.value.get(productId) ?? ''
+}
+
+function setRemark(productId: string, value: string) {
+  remarks.value.set(productId, value)
+}
+
+// Confirm is blocked only when a single-select product has no option chosen.
+// Single-select (radio) is mandatory; multi-select options and the remark are
+// both optional.
+function confirmDisabled(product: SalesProduct): boolean {
+  if (hasOptions(product) && !isMultiSelect(product)) {
+    return (selectedOptionIds.value.get(product.id) || []).length === 0
+  }
+  return false
+}
+
+// Gather inline options + remark and add to cart. The remark is optional.
+function confirmProduct(product: SalesProduct) {
   const selected = selectedOptionIds.value.get(product.id) || []
-  emit('select', product, selected.length > 0 ? selected : undefined)
+  let options: string | string[] | undefined
+  if (hasOptions(product)) {
+    options = isMultiSelect(product)
+      ? (selected.length > 0 ? selected : undefined)
+      : selected[0]
+  }
+  const remark = product.requiresRemark ? remarkFor(product.id).trim() : undefined
+
+  poppedId.value = product.id
+  emit('select', product, options, remark)
+
   selectedOptionIds.value.delete(product.id)
+  remarks.value.delete(product.id)
+  activeProductId.value = null
 }
 
 function handleProductClick(product: SalesProduct) {
-  if (hasOptions(product)) {
+  if (isExpandable(product)) {
     toggleProduct(product)
   }
   else {
@@ -167,10 +260,15 @@ function handleProductClick(product: SalesProduct) {
   }
 }
 
+function clearProductState(productId: string) {
+  selectedOptionIds.value.delete(productId)
+  remarks.value.delete(productId)
+}
+
 function toggleProduct(product: SalesProduct) {
   // Clear previous selection if switching products
   if (activeProductId.value && activeProductId.value !== product.id) {
-    selectedOptionIds.value.delete(activeProductId.value)
+    clearProductState(activeProductId.value)
   }
   // Toggle expansion/active state
   activeProductId.value = activeProductId.value === product.id ? null : product.id
@@ -189,7 +287,7 @@ function selectOption(product: SalesProduct, optionId: string) {
 // Close on click outside
 onClickOutside(containerRef, () => {
   if (activeProductId.value) {
-    selectedOptionIds.value.delete(activeProductId.value)
+    clearProductState(activeProductId.value)
   }
   activeProductId.value = null
 })

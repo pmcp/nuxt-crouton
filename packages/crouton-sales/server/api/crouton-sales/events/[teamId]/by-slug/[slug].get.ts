@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
       teamId: salesEvents.teamId,
       title: salesEvents.title,
       slug: salesEvents.slug,
-      status: salesEvents.status
+      status: salesEvents.status,
+      currency: salesEvents.currency
     })
     .from(salesEvents)
     .where(and(eq(salesEvents.teamId, team.id), eq(salesEvents.slug, slug)))

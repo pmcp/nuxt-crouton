@@ -37,6 +37,7 @@ export const salesEventSchema = z.object({
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
+  currency: z.string().optional(),
   metadata: z.record(z.string(), z.any()).nullish(),
   archivedAt: z.coerce.date().optional()
 })

@@ -122,6 +122,7 @@ export default defineEventHandler(async (event) => {
       locationRemarks: body.locationRemarks || undefined,
       teamName: eventWithTeam.team?.name || 'POS',
       eventName: salesEvent.title,
+      currency: salesEvent.currency || undefined,
       isPersonnel: body.isPersonnel || false
     })
   }

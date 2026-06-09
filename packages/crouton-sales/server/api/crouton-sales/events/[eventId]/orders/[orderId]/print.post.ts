@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
     locationRemarks: (order.locationRemarks as Record<string, string> | null) || undefined,
     teamName: eventWithTeam.team?.name || 'POS',
     eventName: eventWithTeam.event.title,
+    currency: eventWithTeam.event.currency || undefined,
     isPersonnel: order.isPersonnel || false
   })
 

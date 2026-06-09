@@ -13,12 +13,13 @@
         {{ count }}
       </UBadge>
     </div>
-    <span :key="total" :class="['animate-pop', priceClass]">${{ total.toFixed(2) }}</span>
+    <span :key="total" :class="['animate-pop', priceClass]">{{ format(total) }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
 const { t } = useT()
+const { format } = useSalesCurrency()
 
 const props = withDefaults(defineProps<{
   count: number

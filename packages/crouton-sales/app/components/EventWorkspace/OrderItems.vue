@@ -18,8 +18,8 @@ type OrderItemRow = {
 
 const rows = computed(() => (items.value as OrderItemRow[] | null) || [])
 
-const priceFormatter = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' })
-const formatPrice = (price: number) => priceFormatter.format(Number(price) || 0)
+// Currency comes from OrdersTab via provide (it owns the event).
+const { format: formatPrice } = useSalesCurrency()
 
 const total = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.totalPrice) || 0), 0))
 
