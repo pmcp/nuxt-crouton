@@ -15,6 +15,7 @@ import type { BlockType, BlockPropertySchema, BlockSize } from '../../types/bloc
 import { getBlockDefinition } from '../../utils/block-registry'
 
 const { t } = useT()
+const { blockName, fieldLabel, fieldDescription, fieldOptions } = useBlockI18n()
 
 // Addon blocks from croutonBlocks registry
 const { getBlock: getAddonBlock } = useCroutonBlocks()
@@ -126,6 +127,7 @@ const blockSizeOptions = [
 function onDelete() {
   emit('delete')
 }
+t
 </script>
 
 <template>
@@ -139,7 +141,7 @@ function onDelete() {
           class="size-5 text-primary"
         />
         <h3 class="text-lg font-semibold">
-          {{ t('pages.blocks.blockSettings', { name: blockDefinition?.name || t('pages.blocks.unknownBlock') }) }}
+          {{ t('pages.blocks.blockSettings', { name: blockDefinition ? blockName(blockDefinition) : t('pages.blocks.unknownBlock') }) }}
         </h3>
       </div>
       <UButton
@@ -192,9 +194,9 @@ function onDelete() {
           <!-- Text Input -->
           <UFormField
             v-if="field.type === 'text'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <UInput
               :model-value="localAttrs[field.name] as string || ''"
@@ -206,9 +208,9 @@ function onDelete() {
           <!-- Textarea -->
           <UFormField
             v-else-if="field.type === 'textarea'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <UTextarea
               :model-value="localAttrs[field.name] as string || ''"
@@ -221,13 +223,13 @@ function onDelete() {
           <!-- Select -->
           <UFormField
             v-else-if="field.type === 'select'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <USelect
               :model-value="localAttrs[field.name] as string || field.defaultValue as string"
-              :items="field.options || []"
+              :items="fieldOptions(blockType, field) as any"
               value-key="value"
               class="w-full"
               @update:model-value="onFieldChange(field.name, $event)"
@@ -237,9 +239,9 @@ function onDelete() {
           <!-- Switch -->
           <UFormField
             v-else-if="field.type === 'switch'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <USwitch
               :model-value="localAttrs[field.name] as boolean || false"
@@ -250,9 +252,9 @@ function onDelete() {
           <!-- Icon Picker -->
           <UFormField
             v-else-if="field.type === 'icon'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonIconPicker
               :model-value="localAttrs[field.name] as string || ''"
@@ -264,9 +266,9 @@ function onDelete() {
           <!-- Image Editor -->
           <UFormField
             v-else-if="field.type === 'image'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesImageEditor
               :model-value="(localAttrs[field.name] as string) || ''"
@@ -279,9 +281,9 @@ function onDelete() {
           <!-- Links Editor -->
           <UFormField
             v-else-if="field.type === 'links'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesLinksEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -292,9 +294,9 @@ function onDelete() {
           <!-- Features Editor -->
           <UFormField
             v-else-if="field.type === 'features'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesFeaturesEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -305,9 +307,9 @@ function onDelete() {
           <!-- Cards Editor -->
           <UFormField
             v-else-if="field.type === 'cards'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesCardsEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -318,9 +320,9 @@ function onDelete() {
           <!-- Collection Picker -->
           <UFormField
             v-else-if="field.type === 'collection'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesCollectionPicker
               :model-value="localAttrs[field.name] as string || ''"
@@ -331,9 +333,9 @@ function onDelete() {
           <!-- FAQ Items Editor -->
           <UFormField
             v-else-if="field.type === 'faq-items'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesFaqItemsEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -344,9 +346,9 @@ function onDelete() {
           <!-- File Editor -->
           <UFormField
             v-else-if="field.type === 'file'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesFileEditor
               :model-value="(localAttrs[field.name] as string) || ''"
@@ -358,9 +360,9 @@ function onDelete() {
           <!-- Video Editor -->
           <UFormField
             v-else-if="field.type === 'video'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesVideoEditor
               :model-value="(localAttrs[field.name] as string) || ''"
@@ -371,9 +373,9 @@ function onDelete() {
           <!-- Button Row Items Editor -->
           <UFormField
             v-else-if="field.type === 'button-row-items'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesButtonRowEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -384,9 +386,9 @@ function onDelete() {
           <!-- Logos Editor -->
           <UFormField
             v-else-if="field.type === 'logos'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesLogosEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -397,9 +399,9 @@ function onDelete() {
           <!-- Gallery Items Editor -->
           <UFormField
             v-else-if="field.type === 'gallery-items'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesGalleryEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -410,9 +412,9 @@ function onDelete() {
           <!-- Stats Items Editor -->
           <UFormField
             v-else-if="field.type === 'stats-items'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesStatsEditor
               :model-value="(localAttrs[field.name] as any[]) || []"
@@ -423,9 +425,9 @@ function onDelete() {
           <!-- Team Member Picker -->
           <UFormField
             v-else-if="field.type === 'team-member'"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <CroutonPagesBlocksPropertiesTeamMemberPicker
               :model-value="localAttrs[field.name] as string || ''"
@@ -437,9 +439,9 @@ function onDelete() {
           <!-- Custom property component from addon blocks (e.g. chart-preset picker) -->
           <UFormField
             v-else-if="getAddonPropertyComponent(field.type)"
-            :label="field.label"
+            :label="fieldLabel(blockType, field)"
             :name="field.name"
-            :description="field.description"
+            :description="fieldDescription(blockType, field)"
           >
             <component
               :is="getAddonPropertyComponent(field.type)!"

@@ -296,6 +296,31 @@ Block properties with `type: 'image'` are rendered with `ImageEditor.vue`, which
 4. Create view component in `app/components/Blocks/Views/`
 5. Create render component in `app/components/Blocks/Render/`
 
+### Block i18n (`useBlockI18n`)
+
+Block-definition strings (`name`, `description`, field `label`/`description`,
+and select-option labels) are translated for the insert menu (`BlockEditor`,
+`BlockEditorWithPreview`, `BlockToolbar`) and the property panel
+(`BlockPropertyPanel`) via the `useBlockI18n()` composable. It supports two
+conventions at once:
+
+- **Addon blocks** (e.g. `@fyit/crouton-sales`) put **explicit i18n keys**
+  directly on the definition (`label: 'sales.blocks.…'`).
+- **Core blocks** (`block-registry.ts`) keep **plain English** on the
+  definition; their translations live under a derived key namespace,
+  `pages.blockLibrary.<shortType>.{name,description,fields.<field>.{label,description,options.<value>}}`
+  (`shortType` = block type minus the `Block` suffix, e.g. `heroBlock` → `hero`),
+  in `i18n/locales/{en,nl,fr}.json`. The English literal in the registry is the
+  fallback, so the registry itself is never edited for i18n.
+
+`useBlockI18n` resolves each string by trying the literal value as a key first
+(addon keys), then the derived core key, then the original text. **Important:**
+this app's `t()` renders a missing key as `[key]`, so values are always passed
+with a fallback (`t(value, fallback)`) — never wrap a block string in bare
+`t(value)`, or plain English core strings will render bracketed. To translate a
+core block, add/extend the `pages.blockLibrary.<shortType>` entry in all three
+locale files (keep en/nl/fr at parity).
+
 ## Component Naming
 
 Components auto-import with `CroutonPages` prefix:

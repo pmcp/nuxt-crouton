@@ -304,6 +304,570 @@
       "info": "Info",
       "extra": "Extra",
       "content": "Content"
+    },
+    "blockLibrary": {
+      "hero": {
+        "name": "Hero",
+        "description": "A responsive hero section with title, description, and CTA buttons",
+        "fields": {
+          "headline": {
+            "label": "Headline",
+            "description": "Small text above the title"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Reverse Layout",
+            "description": "Swap content and image positions"
+          },
+          "links": {
+            "label": "Call to Action Buttons"
+          },
+          "image": {
+            "label": "Hero Image"
+          }
+        }
+      },
+      "section": {
+        "name": "Section",
+        "description": "A content section with features grid",
+        "fields": {
+          "headline": {
+            "label": "Headline",
+            "description": "Small text above the title"
+          },
+          "icon": {
+            "label": "Icon",
+            "description": "Icon displayed above the title"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Reverse Layout"
+          },
+          "features": {
+            "label": "Features"
+          },
+          "links": {
+            "label": "Action Buttons"
+          }
+        }
+      },
+      "cta": {
+        "name": "Call to Action",
+        "description": "A call-to-action banner",
+        "fields": {
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Reverse Layout"
+          },
+          "variant": {
+            "label": "Style",
+            "options": {
+              "outline": "Outline",
+              "solid": "Solid",
+              "soft": "Soft",
+              "subtle": "Subtle",
+              "naked": "Naked"
+            }
+          },
+          "links": {
+            "label": "Action Buttons"
+          }
+        }
+      },
+      "cardGrid": {
+        "name": "Card Grid",
+        "description": "A grid of cards with icons and links",
+        "fields": {
+          "headline": {
+            "label": "Headline"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "columns": {
+            "label": "Columns",
+            "options": {
+              "2": "2 Columns",
+              "3": "3 Columns",
+              "4": "4 Columns"
+            }
+          },
+          "cards": {
+            "label": "Cards"
+          }
+        }
+      },
+      "separator": {
+        "name": "Separator",
+        "description": "A visual divider between sections",
+        "fields": {
+          "label": {
+            "label": "Label",
+            "description": "Optional text in the middle of the separator"
+          },
+          "icon": {
+            "label": "Icon",
+            "description": "Optional icon instead of text"
+          },
+          "type": {
+            "label": "Line Style",
+            "options": {
+              "solid": "Solid",
+              "dashed": "Dashed",
+              "dotted": "Dotted"
+            }
+          }
+        }
+      },
+      "richText": {
+        "name": "Rich Text",
+        "description": "Standard formatted text content",
+        "fields": {
+          "content": {
+            "label": "Content"
+          }
+        }
+      },
+      "collection": {
+        "name": "Collection",
+        "description": "Embed a collection in view-only mode",
+        "fields": {
+          "collection": {
+            "label": "Collection",
+            "description": "Select a collection to display"
+          },
+          "title": {
+            "label": "Title",
+            "description": "Optional title above the collection"
+          },
+          "layout": {
+            "label": "Layout",
+            "options": {
+              "table": "Table",
+              "list": "List",
+              "grid": "Grid",
+              "cards": "Cards"
+            }
+          },
+          "pageSize": {
+            "label": "Items per page",
+            "options": {
+              "5": "5 items",
+              "10": "10 items",
+              "20": "20 items",
+              "50": "50 items"
+            }
+          },
+          "showPagination": {
+            "label": "Show Pagination"
+          }
+        }
+      },
+      "faq": {
+        "name": "FAQ",
+        "description": "A collapsible FAQ accordion",
+        "fields": {
+          "headline": {
+            "label": "Headline",
+            "description": "Small text above the title"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "allowMultiple": {
+            "label": "Allow multiple open",
+            "description": "Let users expand more than one item at a time"
+          },
+          "items": {
+            "label": "Questions"
+          }
+        }
+      },
+      "twoColumn": {
+        "name": "Two Columns",
+        "description": "Side-by-side two-column layout",
+        "fields": {
+          "split": {
+            "label": "Column split",
+            "options": {
+              "1/2": "Equal (50/50)",
+              "1/3": "Left narrow (33/67)",
+              "2/3": "Left wide (67/33)"
+            }
+          },
+          "leftTitle": {
+            "label": "Left: Title"
+          },
+          "leftDescription": {
+            "label": "Left: Description"
+          },
+          "leftImage": {
+            "label": "Left: Image"
+          },
+          "leftLinks": {
+            "label": "Left: Buttons"
+          },
+          "rightTitle": {
+            "label": "Right: Title"
+          },
+          "rightDescription": {
+            "label": "Right: Description"
+          },
+          "rightImage": {
+            "label": "Right: Image"
+          },
+          "rightLinks": {
+            "label": "Right: Buttons"
+          }
+        }
+      },
+      "embed": {
+        "name": "Embed",
+        "description": "Embed YouTube videos, Figma files, or any URL",
+        "fields": {
+          "url": {
+            "label": "URL",
+            "description": "YouTube, Figma, or any embeddable URL"
+          },
+          "height": {
+            "label": "Height",
+            "options": {
+              "300": "Small (300px)",
+              "400": "Medium (400px)",
+              "550": "Large (550px)",
+              "720": "Full HD (720px)"
+            }
+          },
+          "caption": {
+            "label": "Caption",
+            "description": "Optional caption displayed below the embed"
+          }
+        }
+      },
+      "image": {
+        "name": "Image",
+        "description": "A standalone image with optional caption",
+        "fields": {
+          "src": {
+            "label": "Image"
+          },
+          "alt": {
+            "label": "Alt Text",
+            "description": "Describe the image for accessibility"
+          },
+          "caption": {
+            "label": "Caption",
+            "description": "Optional caption displayed below the image"
+          },
+          "width": {
+            "label": "Width",
+            "options": {
+              "full": "Full (100%)",
+              "large": "Large (80%)",
+              "medium": "Medium (60%)",
+              "small": "Small (40%)"
+            }
+          }
+        }
+      },
+      "logo": {
+        "name": "Logos",
+        "description": "A row of logos or brand icons with optional marquee",
+        "fields": {
+          "title": {
+            "label": "Title",
+            "description": "Text displayed above the logos"
+          },
+          "align": {
+            "label": "Alignment",
+            "description": "How logos are distributed",
+            "options": {
+              "center": "Center",
+              "between": "Space Between"
+            }
+          },
+          "size": {
+            "label": "Size",
+            "description": "Logo size",
+            "options": {
+              "xs": "XS",
+              "sm": "SM",
+              "md": "MD",
+              "lg": "LG",
+              "xl": "XL"
+            }
+          },
+          "marquee": {
+            "label": "Marquee",
+            "description": "Enable scrolling marquee animation"
+          },
+          "items": {
+            "label": "Logos"
+          }
+        }
+      },
+      "video": {
+        "name": "Video",
+        "description": "A standalone video with optional caption and playback controls",
+        "fields": {
+          "src": {
+            "label": "Video"
+          },
+          "caption": {
+            "label": "Caption",
+            "description": "Optional caption displayed below the video"
+          },
+          "width": {
+            "label": "Width",
+            "options": {
+              "full": "Full (100%)",
+              "large": "Large (80%)",
+              "medium": "Medium (60%)",
+              "small": "Small (40%)"
+            }
+          },
+          "autoplay": {
+            "label": "Autoplay",
+            "description": "Automatically play the video on page load"
+          },
+          "loop": {
+            "label": "Loop",
+            "description": "Loop the video when it ends"
+          },
+          "muted": {
+            "label": "Muted",
+            "description": "Mute the video by default"
+          },
+          "controls": {
+            "label": "Show Controls",
+            "description": "Display video playback controls"
+          }
+        }
+      },
+      "file": {
+        "name": "File Download",
+        "description": "A downloadable file button with label",
+        "fields": {
+          "label": {
+            "label": "Button Label",
+            "description": "Text shown on the download button"
+          },
+          "file": {
+            "label": "File",
+            "description": "Upload or link a file"
+          },
+          "icon": {
+            "label": "Icon",
+            "description": "Icon shown on the button"
+          }
+        }
+      },
+      "buttonRow": {
+        "name": "Button Row",
+        "description": "A row of link and download buttons",
+        "fields": {
+          "align": {
+            "label": "Alignment",
+            "options": {
+              "left": "Left",
+              "center": "Center",
+              "right": "Right"
+            }
+          },
+          "buttons": {
+            "label": "Buttons"
+          }
+        }
+      },
+      "stats": {
+        "name": "Stats",
+        "description": "Animated number counters with labels",
+        "fields": {
+          "headline": {
+            "label": "Headline",
+            "description": "Small text above the title"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "columns": {
+            "label": "Columns",
+            "options": {
+              "2": "2 Columns",
+              "3": "3 Columns",
+              "4": "4 Columns"
+            }
+          },
+          "stats": {
+            "label": "Stats"
+          }
+        }
+      },
+      "gallery": {
+        "name": "Gallery",
+        "description": "Expandable image gallery with hover effect",
+        "fields": {
+          "headline": {
+            "label": "Headline",
+            "description": "Small text above the title"
+          },
+          "title": {
+            "label": "Title"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "height": {
+            "label": "Height",
+            "options": {
+              "sm": "Small (240px)",
+              "md": "Medium (384px)",
+              "lg": "Large (480px)",
+              "xl": "Extra Large (600px)"
+            }
+          },
+          "images": {
+            "label": "Images"
+          }
+        }
+      },
+      "contact": {
+        "name": "Contact",
+        "description": "A contact card with name, email, phone and more",
+        "fields": {
+          "layout": {
+            "label": "Layout",
+            "description": "Card layout orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "mode": {
+            "label": "Mode",
+            "description": "Fill in manually or select a team member",
+            "options": {
+              "manual": "Manual",
+              "member": "Team Member"
+            }
+          },
+          "memberId": {
+            "label": "Team Member",
+            "description": "Select a team member"
+          },
+          "firstName": {
+            "label": "First Name"
+          },
+          "lastName": {
+            "label": "Last Name"
+          },
+          "email": {
+            "label": "Email"
+          },
+          "phone": {
+            "label": "Phone"
+          },
+          "role": {
+            "label": "Role / Title"
+          },
+          "company": {
+            "label": "Company"
+          },
+          "website": {
+            "label": "Website"
+          },
+          "showAvatar": {
+            "label": "Show Avatar"
+          },
+          "avatar": {
+            "label": "Avatar"
+          }
+        }
+      },
+      "mailing": {
+        "name": "Mailing List",
+        "description": "Email subscription form (Mailchimp or custom)",
+        "fields": {
+          "provider": {
+            "label": "Provider",
+            "options": {
+              "mailchimp": "Mailchimp",
+              "custom": "Custom"
+            }
+          },
+          "actionUrl": {
+            "label": "Form Action URL",
+            "description": "The subscribe endpoint URL (e.g., https://xxx.us5.list-manage.com/subscribe/post?u=...&id=...)"
+          },
+          "emailFieldName": {
+            "label": "Email Field Name",
+            "description": "Name attribute for the email input (default: EMAIL for Mailchimp)"
+          },
+          "honeypotFieldName": {
+            "label": "Honeypot Field Name",
+            "description": "Bot protection field name (optional, from your form provider)"
+          },
+          "title": {
+            "label": "Title",
+            "description": "Heading above the form (optional)"
+          },
+          "description": {
+            "label": "Description",
+            "description": "Text below the heading (optional)"
+          },
+          "buttonLabel": {
+            "label": "Button Label"
+          },
+          "placeholder": {
+            "label": "Placeholder Text"
+          }
+        }
+      }
     }
   },
   "common": {

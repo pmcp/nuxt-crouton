@@ -290,6 +290,570 @@
       "info": "Info",
       "extra": "Extra",
       "content": "Contenu"
+    },
+    "blockLibrary": {
+      "hero": {
+        "name": "Hero",
+        "description": "Une section hero responsive avec titre, description et boutons CTA",
+        "fields": {
+          "headline": {
+            "label": "Accroche",
+            "description": "Petit texte au-dessus du titre"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Disposition inversée",
+            "description": "Inverser le contenu et l’image"
+          },
+          "links": {
+            "label": "Boutons d’appel à l’action"
+          },
+          "image": {
+            "label": "Image hero"
+          }
+        }
+      },
+      "section": {
+        "name": "Section",
+        "description": "Une section de contenu avec une grille de fonctionnalités",
+        "fields": {
+          "headline": {
+            "label": "Accroche",
+            "description": "Petit texte au-dessus du titre"
+          },
+          "icon": {
+            "label": "Icône",
+            "description": "Icône affichée au-dessus du titre"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Disposition inversée"
+          },
+          "features": {
+            "label": "Fonctionnalités"
+          },
+          "links": {
+            "label": "Boutons d’action"
+          }
+        }
+      },
+      "cta": {
+        "name": "Appel à l’action",
+        "description": "Une bannière d’appel à l’action",
+        "fields": {
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "orientation": {
+            "label": "Orientation",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "reverse": {
+            "label": "Disposition inversée"
+          },
+          "variant": {
+            "label": "Style",
+            "options": {
+              "outline": "Contour",
+              "solid": "Plein",
+              "soft": "Doux",
+              "subtle": "Subtil",
+              "naked": "Nu"
+            }
+          },
+          "links": {
+            "label": "Boutons d’action"
+          }
+        }
+      },
+      "cardGrid": {
+        "name": "Grille de cartes",
+        "description": "Une grille de cartes avec icônes et liens",
+        "fields": {
+          "headline": {
+            "label": "Accroche"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "columns": {
+            "label": "Colonnes",
+            "options": {
+              "2": "2 colonnes",
+              "3": "3 colonnes",
+              "4": "4 colonnes"
+            }
+          },
+          "cards": {
+            "label": "Cartes"
+          }
+        }
+      },
+      "separator": {
+        "name": "Séparateur",
+        "description": "Un séparateur visuel entre les sections",
+        "fields": {
+          "label": {
+            "label": "Libellé",
+            "description": "Texte facultatif au milieu du séparateur"
+          },
+          "icon": {
+            "label": "Icône",
+            "description": "Icône facultative à la place du texte"
+          },
+          "type": {
+            "label": "Style de ligne",
+            "options": {
+              "solid": "Plein",
+              "dashed": "Tirets",
+              "dotted": "Pointillés"
+            }
+          }
+        }
+      },
+      "richText": {
+        "name": "Texte enrichi",
+        "description": "Contenu texte formaté standard",
+        "fields": {
+          "content": {
+            "label": "Contenu"
+          }
+        }
+      },
+      "collection": {
+        "name": "Collection",
+        "description": "Intégrer une collection en lecture seule",
+        "fields": {
+          "collection": {
+            "label": "Collection",
+            "description": "Sélectionnez une collection à afficher"
+          },
+          "title": {
+            "label": "Titre",
+            "description": "Titre facultatif au-dessus de la collection"
+          },
+          "layout": {
+            "label": "Disposition",
+            "options": {
+              "table": "Tableau",
+              "list": "Liste",
+              "grid": "Grille",
+              "cards": "Cartes"
+            }
+          },
+          "pageSize": {
+            "label": "Éléments par page",
+            "options": {
+              "5": "5 éléments",
+              "10": "10 éléments",
+              "20": "20 éléments",
+              "50": "50 éléments"
+            }
+          },
+          "showPagination": {
+            "label": "Afficher la pagination"
+          }
+        }
+      },
+      "faq": {
+        "name": "FAQ",
+        "description": "Un accordéon FAQ repliable",
+        "fields": {
+          "headline": {
+            "label": "Accroche",
+            "description": "Petit texte au-dessus du titre"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "allowMultiple": {
+            "label": "Autoriser plusieurs ouverts",
+            "description": "Permettre d’ouvrir plusieurs éléments à la fois"
+          },
+          "items": {
+            "label": "Questions"
+          }
+        }
+      },
+      "twoColumn": {
+        "name": "Deux colonnes",
+        "description": "Disposition à deux colonnes côte à côte",
+        "fields": {
+          "split": {
+            "label": "Répartition des colonnes",
+            "options": {
+              "1/2": "Égale (50/50)",
+              "1/3": "Gauche étroite (33/67)",
+              "2/3": "Gauche large (67/33)"
+            }
+          },
+          "leftTitle": {
+            "label": "Gauche : Titre"
+          },
+          "leftDescription": {
+            "label": "Gauche : Description"
+          },
+          "leftImage": {
+            "label": "Gauche : Image"
+          },
+          "leftLinks": {
+            "label": "Gauche : Boutons"
+          },
+          "rightTitle": {
+            "label": "Droite : Titre"
+          },
+          "rightDescription": {
+            "label": "Droite : Description"
+          },
+          "rightImage": {
+            "label": "Droite : Image"
+          },
+          "rightLinks": {
+            "label": "Droite : Boutons"
+          }
+        }
+      },
+      "embed": {
+        "name": "Intégration",
+        "description": "Intégrer des vidéos YouTube, des fichiers Figma ou toute URL",
+        "fields": {
+          "url": {
+            "label": "URL",
+            "description": "YouTube, Figma ou toute URL intégrable"
+          },
+          "height": {
+            "label": "Hauteur",
+            "options": {
+              "300": "Petit (300px)",
+              "400": "Moyen (400px)",
+              "550": "Grand (550px)",
+              "720": "Full HD (720px)"
+            }
+          },
+          "caption": {
+            "label": "Légende",
+            "description": "Légende facultative affichée sous l’intégration"
+          }
+        }
+      },
+      "image": {
+        "name": "Image",
+        "description": "Une image autonome avec légende facultative",
+        "fields": {
+          "src": {
+            "label": "Image"
+          },
+          "alt": {
+            "label": "Texte alternatif",
+            "description": "Décrivez l’image pour l’accessibilité"
+          },
+          "caption": {
+            "label": "Légende",
+            "description": "Légende facultative affichée sous l’image"
+          },
+          "width": {
+            "label": "Largeur",
+            "options": {
+              "full": "Pleine (100%)",
+              "large": "Grande (80%)",
+              "medium": "Moyenne (60%)",
+              "small": "Petite (40%)"
+            }
+          }
+        }
+      },
+      "logo": {
+        "name": "Logos",
+        "description": "Une rangée de logos ou d’icônes de marque avec marquee facultatif",
+        "fields": {
+          "title": {
+            "label": "Titre",
+            "description": "Texte affiché au-dessus des logos"
+          },
+          "align": {
+            "label": "Alignement",
+            "description": "Comment les logos sont répartis",
+            "options": {
+              "center": "Centré",
+              "between": "Espacé"
+            }
+          },
+          "size": {
+            "label": "Taille",
+            "description": "Taille du logo",
+            "options": {
+              "xs": "XS",
+              "sm": "SM",
+              "md": "MD",
+              "lg": "LG",
+              "xl": "XL"
+            }
+          },
+          "marquee": {
+            "label": "Marquee",
+            "description": "Activer l’animation défilante marquee"
+          },
+          "items": {
+            "label": "Logos"
+          }
+        }
+      },
+      "video": {
+        "name": "Vidéo",
+        "description": "Une vidéo autonome avec légende et commandes de lecture facultatives",
+        "fields": {
+          "src": {
+            "label": "Vidéo"
+          },
+          "caption": {
+            "label": "Légende",
+            "description": "Légende facultative affichée sous la vidéo"
+          },
+          "width": {
+            "label": "Largeur",
+            "options": {
+              "full": "Pleine (100%)",
+              "large": "Grande (80%)",
+              "medium": "Moyenne (60%)",
+              "small": "Petite (40%)"
+            }
+          },
+          "autoplay": {
+            "label": "Lecture automatique",
+            "description": "Lire la vidéo automatiquement au chargement"
+          },
+          "loop": {
+            "label": "Boucle",
+            "description": "Répéter la vidéo à la fin"
+          },
+          "muted": {
+            "label": "Muet",
+            "description": "Couper le son de la vidéo par défaut"
+          },
+          "controls": {
+            "label": "Afficher les commandes",
+            "description": "Afficher les commandes de lecture de la vidéo"
+          }
+        }
+      },
+      "file": {
+        "name": "Téléchargement de fichier",
+        "description": "Un bouton de fichier téléchargeable avec libellé",
+        "fields": {
+          "label": {
+            "label": "Libellé du bouton",
+            "description": "Texte affiché sur le bouton de téléchargement"
+          },
+          "file": {
+            "label": "Fichier",
+            "description": "Téléversez ou liez un fichier"
+          },
+          "icon": {
+            "label": "Icône",
+            "description": "Icône affichée sur le bouton"
+          }
+        }
+      },
+      "buttonRow": {
+        "name": "Rangée de boutons",
+        "description": "Une rangée de boutons de lien et de téléchargement",
+        "fields": {
+          "align": {
+            "label": "Alignement",
+            "options": {
+              "left": "Gauche",
+              "center": "Centré",
+              "right": "Droite"
+            }
+          },
+          "buttons": {
+            "label": "Boutons"
+          }
+        }
+      },
+      "stats": {
+        "name": "Statistiques",
+        "description": "Compteurs de nombres animés avec libellés",
+        "fields": {
+          "headline": {
+            "label": "Accroche",
+            "description": "Petit texte au-dessus du titre"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "columns": {
+            "label": "Colonnes",
+            "options": {
+              "2": "2 colonnes",
+              "3": "3 colonnes",
+              "4": "4 colonnes"
+            }
+          },
+          "stats": {
+            "label": "Statistiques"
+          }
+        }
+      },
+      "gallery": {
+        "name": "Galerie",
+        "description": "Galerie d’images extensible avec effet de survol",
+        "fields": {
+          "headline": {
+            "label": "Accroche",
+            "description": "Petit texte au-dessus du titre"
+          },
+          "title": {
+            "label": "Titre"
+          },
+          "description": {
+            "label": "Description"
+          },
+          "height": {
+            "label": "Hauteur",
+            "options": {
+              "sm": "Petite (240px)",
+              "md": "Moyenne (384px)",
+              "lg": "Grande (480px)",
+              "xl": "Très grande (600px)"
+            }
+          },
+          "images": {
+            "label": "Images"
+          }
+        }
+      },
+      "contact": {
+        "name": "Contact",
+        "description": "Une carte de contact avec nom, e-mail, téléphone et plus",
+        "fields": {
+          "layout": {
+            "label": "Disposition",
+            "description": "Orientation de la carte",
+            "options": {
+              "vertical": "Vertical",
+              "horizontal": "Horizontal"
+            }
+          },
+          "mode": {
+            "label": "Mode",
+            "description": "Remplir manuellement ou sélectionner un membre",
+            "options": {
+              "manual": "Manuel",
+              "member": "Membre de l’équipe"
+            }
+          },
+          "memberId": {
+            "label": "Membre de l’équipe",
+            "description": "Sélectionnez un membre"
+          },
+          "firstName": {
+            "label": "Prénom"
+          },
+          "lastName": {
+            "label": "Nom"
+          },
+          "email": {
+            "label": "E-mail"
+          },
+          "phone": {
+            "label": "Téléphone"
+          },
+          "role": {
+            "label": "Rôle / Titre"
+          },
+          "company": {
+            "label": "Société"
+          },
+          "website": {
+            "label": "Site web"
+          },
+          "showAvatar": {
+            "label": "Afficher l’avatar"
+          },
+          "avatar": {
+            "label": "Avatar"
+          }
+        }
+      },
+      "mailing": {
+        "name": "Liste de diffusion",
+        "description": "Formulaire d’inscription par e-mail (Mailchimp ou personnalisé)",
+        "fields": {
+          "provider": {
+            "label": "Fournisseur",
+            "options": {
+              "mailchimp": "Mailchimp",
+              "custom": "Personnalisé"
+            }
+          },
+          "actionUrl": {
+            "label": "URL d’action du formulaire",
+            "description": "L’URL du point de terminaison d’inscription (ex. https://xxx.us5.list-manage.com/subscribe/post?u=...&id=...)"
+          },
+          "emailFieldName": {
+            "label": "Nom du champ e-mail",
+            "description": "Attribut name pour le champ e-mail (par défaut : EMAIL pour Mailchimp)"
+          },
+          "honeypotFieldName": {
+            "label": "Nom du champ honeypot",
+            "description": "Nom du champ de protection anti-bot (facultatif, fourni par votre prestataire)"
+          },
+          "title": {
+            "label": "Titre",
+            "description": "Titre au-dessus du formulaire (facultatif)"
+          },
+          "description": {
+            "label": "Description",
+            "description": "Texte sous le titre (facultatif)"
+          },
+          "buttonLabel": {
+            "label": "Libellé du bouton"
+          },
+          "placeholder": {
+            "label": "Texte indicatif"
+          }
+        }
+      }
     }
   },
   "common": {

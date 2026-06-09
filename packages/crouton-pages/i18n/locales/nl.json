@@ -304,6 +304,570 @@
       "info": "Info",
       "extra": "Extra",
       "content": "Inhoud"
+    },
+    "blockLibrary": {
+      "hero": {
+        "name": "Hero",
+        "description": "Een responsieve hero-sectie met titel, beschrijving en CTA-knoppen",
+        "fields": {
+          "headline": {
+            "label": "Kop",
+            "description": "Kleine tekst boven de titel"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "orientation": {
+            "label": "Oriëntatie",
+            "options": {
+              "vertical": "Verticaal",
+              "horizontal": "Horizontaal"
+            }
+          },
+          "reverse": {
+            "label": "Omgekeerde lay-out",
+            "description": "Wissel inhoud en afbeelding van plaats"
+          },
+          "links": {
+            "label": "CTA-knoppen"
+          },
+          "image": {
+            "label": "Hero-afbeelding"
+          }
+        }
+      },
+      "section": {
+        "name": "Sectie",
+        "description": "Een inhoudssectie met een functierooster",
+        "fields": {
+          "headline": {
+            "label": "Kop",
+            "description": "Kleine tekst boven de titel"
+          },
+          "icon": {
+            "label": "Pictogram",
+            "description": "Pictogram boven de titel"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "orientation": {
+            "label": "Oriëntatie",
+            "options": {
+              "vertical": "Verticaal",
+              "horizontal": "Horizontaal"
+            }
+          },
+          "reverse": {
+            "label": "Omgekeerde lay-out"
+          },
+          "features": {
+            "label": "Functies"
+          },
+          "links": {
+            "label": "Actieknoppen"
+          }
+        }
+      },
+      "cta": {
+        "name": "Oproep tot actie",
+        "description": "Een call-to-action-banner",
+        "fields": {
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "orientation": {
+            "label": "Oriëntatie",
+            "options": {
+              "vertical": "Verticaal",
+              "horizontal": "Horizontaal"
+            }
+          },
+          "reverse": {
+            "label": "Omgekeerde lay-out"
+          },
+          "variant": {
+            "label": "Stijl",
+            "options": {
+              "outline": "Omlijnd",
+              "solid": "Effen",
+              "soft": "Zacht",
+              "subtle": "Subtiel",
+              "naked": "Kaal"
+            }
+          },
+          "links": {
+            "label": "Actieknoppen"
+          }
+        }
+      },
+      "cardGrid": {
+        "name": "Kaartenrooster",
+        "description": "Een rooster van kaarten met pictogrammen en links",
+        "fields": {
+          "headline": {
+            "label": "Kop"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "columns": {
+            "label": "Kolommen",
+            "options": {
+              "2": "2 kolommen",
+              "3": "3 kolommen",
+              "4": "4 kolommen"
+            }
+          },
+          "cards": {
+            "label": "Kaarten"
+          }
+        }
+      },
+      "separator": {
+        "name": "Scheiding",
+        "description": "Een visuele scheiding tussen secties",
+        "fields": {
+          "label": {
+            "label": "Label",
+            "description": "Optionele tekst in het midden van de scheiding"
+          },
+          "icon": {
+            "label": "Pictogram",
+            "description": "Optioneel pictogram in plaats van tekst"
+          },
+          "type": {
+            "label": "Lijnstijl",
+            "options": {
+              "solid": "Doorlopend",
+              "dashed": "Streepjes",
+              "dotted": "Stippels"
+            }
+          }
+        }
+      },
+      "richText": {
+        "name": "Tekst",
+        "description": "Standaard opgemaakte tekstinhoud",
+        "fields": {
+          "content": {
+            "label": "Inhoud"
+          }
+        }
+      },
+      "collection": {
+        "name": "Collectie",
+        "description": "Sluit een collectie in alleen-lezen modus in",
+        "fields": {
+          "collection": {
+            "label": "Collectie",
+            "description": "Selecteer een collectie om weer te geven"
+          },
+          "title": {
+            "label": "Titel",
+            "description": "Optionele titel boven de collectie"
+          },
+          "layout": {
+            "label": "Lay-out",
+            "options": {
+              "table": "Tabel",
+              "list": "Lijst",
+              "grid": "Rooster",
+              "cards": "Kaarten"
+            }
+          },
+          "pageSize": {
+            "label": "Items per pagina",
+            "options": {
+              "5": "5 items",
+              "10": "10 items",
+              "20": "20 items",
+              "50": "50 items"
+            }
+          },
+          "showPagination": {
+            "label": "Paginering tonen"
+          }
+        }
+      },
+      "faq": {
+        "name": "FAQ",
+        "description": "Een inklapbare FAQ-accordeon",
+        "fields": {
+          "headline": {
+            "label": "Kop",
+            "description": "Kleine tekst boven de titel"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "allowMultiple": {
+            "label": "Meerdere tegelijk openen",
+            "description": "Laat gebruikers meer dan één item tegelijk uitvouwen"
+          },
+          "items": {
+            "label": "Vragen"
+          }
+        }
+      },
+      "twoColumn": {
+        "name": "Twee kolommen",
+        "description": "Naast elkaar geplaatste lay-out met twee kolommen",
+        "fields": {
+          "split": {
+            "label": "Kolomverdeling",
+            "options": {
+              "1/2": "Gelijk (50/50)",
+              "1/3": "Links smal (33/67)",
+              "2/3": "Links breed (67/33)"
+            }
+          },
+          "leftTitle": {
+            "label": "Links: Titel"
+          },
+          "leftDescription": {
+            "label": "Links: Beschrijving"
+          },
+          "leftImage": {
+            "label": "Links: Afbeelding"
+          },
+          "leftLinks": {
+            "label": "Links: Knoppen"
+          },
+          "rightTitle": {
+            "label": "Rechts: Titel"
+          },
+          "rightDescription": {
+            "label": "Rechts: Beschrijving"
+          },
+          "rightImage": {
+            "label": "Rechts: Afbeelding"
+          },
+          "rightLinks": {
+            "label": "Rechts: Knoppen"
+          }
+        }
+      },
+      "embed": {
+        "name": "Insluiten",
+        "description": "Sluit YouTube-video’s, Figma-bestanden of elke URL in",
+        "fields": {
+          "url": {
+            "label": "URL",
+            "description": "YouTube, Figma of elke insluitbare URL"
+          },
+          "height": {
+            "label": "Hoogte",
+            "options": {
+              "300": "Klein (300px)",
+              "400": "Middel (400px)",
+              "550": "Groot (550px)",
+              "720": "Full HD (720px)"
+            }
+          },
+          "caption": {
+            "label": "Bijschrift",
+            "description": "Optioneel bijschrift onder de insluiting"
+          }
+        }
+      },
+      "image": {
+        "name": "Afbeelding",
+        "description": "Een losse afbeelding met optioneel bijschrift",
+        "fields": {
+          "src": {
+            "label": "Afbeelding"
+          },
+          "alt": {
+            "label": "Alt-tekst",
+            "description": "Beschrijf de afbeelding voor toegankelijkheid"
+          },
+          "caption": {
+            "label": "Bijschrift",
+            "description": "Optioneel bijschrift onder de afbeelding"
+          },
+          "width": {
+            "label": "Breedte",
+            "options": {
+              "full": "Vol (100%)",
+              "large": "Groot (80%)",
+              "medium": "Middel (60%)",
+              "small": "Klein (40%)"
+            }
+          }
+        }
+      },
+      "logo": {
+        "name": "Logo’s",
+        "description": "Een rij logo’s of merkpictogrammen met optionele marquee",
+        "fields": {
+          "title": {
+            "label": "Titel",
+            "description": "Tekst boven de logo’s"
+          },
+          "align": {
+            "label": "Uitlijning",
+            "description": "Hoe logo’s worden verdeeld",
+            "options": {
+              "center": "Gecentreerd",
+              "between": "Ruimte ertussen"
+            }
+          },
+          "size": {
+            "label": "Grootte",
+            "description": "Logogrootte",
+            "options": {
+              "xs": "XS",
+              "sm": "SM",
+              "md": "MD",
+              "lg": "LG",
+              "xl": "XL"
+            }
+          },
+          "marquee": {
+            "label": "Marquee",
+            "description": "Schuivende marquee-animatie inschakelen"
+          },
+          "items": {
+            "label": "Logo’s"
+          }
+        }
+      },
+      "video": {
+        "name": "Video",
+        "description": "Een losse video met optioneel bijschrift en afspeelknoppen",
+        "fields": {
+          "src": {
+            "label": "Video"
+          },
+          "caption": {
+            "label": "Bijschrift",
+            "description": "Optioneel bijschrift onder de video"
+          },
+          "width": {
+            "label": "Breedte",
+            "options": {
+              "full": "Vol (100%)",
+              "large": "Groot (80%)",
+              "medium": "Middel (60%)",
+              "small": "Klein (40%)"
+            }
+          },
+          "autoplay": {
+            "label": "Automatisch afspelen",
+            "description": "De video automatisch afspelen bij het laden"
+          },
+          "loop": {
+            "label": "Herhalen",
+            "description": "De video herhalen wanneer die eindigt"
+          },
+          "muted": {
+            "label": "Gedempt",
+            "description": "De video standaard dempen"
+          },
+          "controls": {
+            "label": "Bediening tonen",
+            "description": "Afspeelknoppen van de video tonen"
+          }
+        }
+      },
+      "file": {
+        "name": "Bestandsdownload",
+        "description": "Een downloadknop voor een bestand met label",
+        "fields": {
+          "label": {
+            "label": "Knoptekst",
+            "description": "Tekst op de downloadknop"
+          },
+          "file": {
+            "label": "Bestand",
+            "description": "Upload of koppel een bestand"
+          },
+          "icon": {
+            "label": "Pictogram",
+            "description": "Pictogram op de knop"
+          }
+        }
+      },
+      "buttonRow": {
+        "name": "Knoppenrij",
+        "description": "Een rij link- en downloadknoppen",
+        "fields": {
+          "align": {
+            "label": "Uitlijning",
+            "options": {
+              "left": "Links",
+              "center": "Gecentreerd",
+              "right": "Rechts"
+            }
+          },
+          "buttons": {
+            "label": "Knoppen"
+          }
+        }
+      },
+      "stats": {
+        "name": "Statistieken",
+        "description": "Geanimeerde getaltellers met labels",
+        "fields": {
+          "headline": {
+            "label": "Kop",
+            "description": "Kleine tekst boven de titel"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "columns": {
+            "label": "Kolommen",
+            "options": {
+              "2": "2 kolommen",
+              "3": "3 kolommen",
+              "4": "4 kolommen"
+            }
+          },
+          "stats": {
+            "label": "Statistieken"
+          }
+        }
+      },
+      "gallery": {
+        "name": "Galerij",
+        "description": "Uitklapbare afbeeldingsgalerij met hover-effect",
+        "fields": {
+          "headline": {
+            "label": "Kop",
+            "description": "Kleine tekst boven de titel"
+          },
+          "title": {
+            "label": "Titel"
+          },
+          "description": {
+            "label": "Beschrijving"
+          },
+          "height": {
+            "label": "Hoogte",
+            "options": {
+              "sm": "Klein (240px)",
+              "md": "Middel (384px)",
+              "lg": "Groot (480px)",
+              "xl": "Extra groot (600px)"
+            }
+          },
+          "images": {
+            "label": "Afbeeldingen"
+          }
+        }
+      },
+      "contact": {
+        "name": "Contact",
+        "description": "Een contactkaart met naam, e-mail, telefoon en meer",
+        "fields": {
+          "layout": {
+            "label": "Lay-out",
+            "description": "Oriëntatie van de kaartlay-out",
+            "options": {
+              "vertical": "Verticaal",
+              "horizontal": "Horizontaal"
+            }
+          },
+          "mode": {
+            "label": "Modus",
+            "description": "Handmatig invullen of een teamlid selecteren",
+            "options": {
+              "manual": "Handmatig",
+              "member": "Teamlid"
+            }
+          },
+          "memberId": {
+            "label": "Teamlid",
+            "description": "Selecteer een teamlid"
+          },
+          "firstName": {
+            "label": "Voornaam"
+          },
+          "lastName": {
+            "label": "Achternaam"
+          },
+          "email": {
+            "label": "E-mail"
+          },
+          "phone": {
+            "label": "Telefoon"
+          },
+          "role": {
+            "label": "Functie / Titel"
+          },
+          "company": {
+            "label": "Bedrijf"
+          },
+          "website": {
+            "label": "Website"
+          },
+          "showAvatar": {
+            "label": "Avatar tonen"
+          },
+          "avatar": {
+            "label": "Avatar"
+          }
+        }
+      },
+      "mailing": {
+        "name": "Mailinglijst",
+        "description": "Inschrijfformulier voor e-mail (Mailchimp of aangepast)",
+        "fields": {
+          "provider": {
+            "label": "Provider",
+            "options": {
+              "mailchimp": "Mailchimp",
+              "custom": "Aangepast"
+            }
+          },
+          "actionUrl": {
+            "label": "Formulier-action-URL",
+            "description": "De URL van het inschrijf-endpoint (bijv. https://xxx.us5.list-manage.com/subscribe/post?u=...&id=...)"
+          },
+          "emailFieldName": {
+            "label": "Naam e-mailveld",
+            "description": "Name-attribuut voor het e-mailveld (standaard: EMAIL voor Mailchimp)"
+          },
+          "honeypotFieldName": {
+            "label": "Naam honeypot-veld",
+            "description": "Veldnaam voor botbescherming (optioneel, van je formulierprovider)"
+          },
+          "title": {
+            "label": "Titel",
+            "description": "Kop boven het formulier (optioneel)"
+          },
+          "description": {
+            "label": "Beschrijving",
+            "description": "Tekst onder de kop (optioneel)"
+          },
+          "buttonLabel": {
+            "label": "Knoptekst"
+          },
+          "placeholder": {
+            "label": "Tijdelijke tekst"
+          }
+        }
+      }
     }
   },
   "common": {

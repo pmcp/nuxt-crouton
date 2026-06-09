@@ -15,6 +15,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { t } = useT()
+const { blockName, blockDescription } = useBlockI18n()
 
 // Get block items grouped by category
 const blocksByCategory = computed(() => getBlocksByCategory())
@@ -64,9 +65,9 @@ const insertMenuItems = computed(() => {
     // Add block items
     blocks.forEach(block => {
       items.push({
-        label: block.name,
+        label: blockName(block),
         icon: block.icon,
-        description: block.description,
+        description: blockDescription(block),
         onSelect: () => insertBlock(block)
       })
     })

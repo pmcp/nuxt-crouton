@@ -10,6 +10,7 @@ import { PageBlocks } from '../../editor/extensions/page-blocks'
 import { getBlockMenuItems } from '../../utils/block-registry'
 
 const { t } = useT()
+const { blockName, blockDescription } = useBlockI18n()
 
 // Block suggestion item interface (matches CroutonEditorBlocks prop)
 interface BlockSuggestionItem {
@@ -90,8 +91,8 @@ const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
     .filter(item => item.type !== 'richTextBlock') // Exclude rich text (it's just regular text)
     .map(item => ({
       type: item.type,
-      label: item.name,
-      description: item.description,
+      label: blockName(item),
+      description: blockDescription(item),
       icon: item.icon,
       category: getCategoryLabel(item.category),
       command: getInsertCommand(item.type)
@@ -100,8 +101,8 @@ const blockSuggestionItems = computed<BlockSuggestionItem[]>(() => {
   // Add addon blocks from croutonBlocks registry
   const addonItems = addonBlocks.value.map(def => ({
     type: def.type,
-    label: def.name,
-    description: def.description,
+    label: blockName(def),
+    description: blockDescription(def),
     icon: def.icon,
     category: getCategoryLabel(def.category),
     command: `insert${def.type.charAt(0).toUpperCase()}${def.type.slice(1)}`
