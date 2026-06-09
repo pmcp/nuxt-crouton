@@ -1,163 +1,21 @@
 <script setup lang="ts">
 /**
- * Event Workspace shell
+ * Event Workspace page
  *
- * Resolves the event from slug, renders header (switcher + actions) + tabs.
- * Each tab content lives in <SalesEventWorkspace*Tab /> components and does
- * its own data fetching via `useCollectionQuery` (Nuxt dedupes shared state).
+ * Thin wrapper around <SalesEventWorkspaceShell />. The shell owns the header +
+ * tabs + data fetching; this page just supplies the route params and turns on
+ * URL tab persistence (`?tab=`) so admin tabs are deep-linkable.
  *
  * @route /admin/[team]/sales/events/[slug]
  */
-import type { SalesEvent } from '~~/layers/sales/collections/events/types'
-
 definePageMeta({ middleware: ['auth'] })
 
-const { t } = useT()
-const { open } = useCrouton()
 const route = useRoute()
-const router = useRouter()
-
-// Use route param directly (NOT useTeamContext().teamSlug.value) to avoid
-// SSR/CSR hydration mismatch — useTeamContext returns UUID on server vs slug on client.
-const teamParam = computed(() => route.params.team as string)
 const eventSlug = computed(() => route.params.slug as string)
-
-const { items: events, refresh: refreshEvents } = await useCollectionQuery('salesEvents')
-
-const event = computed(() =>
-  (events.value as SalesEvent[] | null)?.find(e => e.slug === eventSlug.value)
-)
-
-const eventOptions = computed(() =>
-  (events.value as SalesEvent[] | null)?.map(e => ({
-    id: e.id,
-    label: e.title,
-    slug: e.slug
-  })) || []
-)
-
-function switchEvent(eventId: string) {
-  const selected = eventOptions.value.find(e => e.id === eventId)
-  if (selected && selected.slug !== eventSlug.value) {
-    router.push(`/admin/${teamParam.value}/sales/events/${selected.slug}`)
-  }
-}
-
-function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString()
-}
-
-function openEditEvent() {
-  if (!event.value) return
-  open('update', 'salesEvents', [event.value.id])
-}
-
-const duplicating = ref(false)
-async function duplicateEvent() {
-  if (!event.value) return
-  duplicating.value = true
-  try {
-    const response = await $fetch<{ slug?: string }>(
-      `/api/crouton-sales/teams/${teamParam.value}/events/${event.value.id}/duplicate`,
-      { method: 'POST' }
-    )
-    if (response?.slug) {
-      // Refresh the cached events list so the freshly-duplicated event is
-      // present before we navigate — otherwise the workspace resolves the new
-      // slug against the stale list and shows "Event not found".
-      await refreshEvents()
-      router.push(`/admin/${teamParam.value}/sales/events/${response.slug}`)
-    }
-  }
-  finally {
-    duplicating.value = false
-  }
-}
-
-const activeTab = ref('products')
-const tabItems = [
-  { label: t('sales.products.title'), value: 'products', icon: 'i-lucide-package' },
-  { label: t('sales.orders.title'), value: 'orders', icon: 'i-lucide-receipt' },
-  { label: t('sales.sidebar.printers'), value: 'printers', icon: 'i-lucide-printer' },
-  { label: t('sales.events.settings'), value: 'settings', icon: 'i-lucide-settings' }
-]
 </script>
 
 <template>
-  <div v-if="!event" class="flex items-center justify-center h-full">
-    <div class="text-center">
-      <UIcon name="i-lucide-alert-circle" class="text-4xl text-muted mb-2" />
-      <p class="text-muted">{{ t('sales.events.eventNotFound') }}</p>
-    </div>
-  </div>
-
-  <div v-else class="p-6 space-y-6">
-    <!-- Header -->
-    <div class="flex items-start justify-between">
-      <div class="space-y-1">
-        <USelectMenu
-          :model-value="event.id"
-          :items="eventOptions"
-          value-key="id"
-          :placeholder="t('sales.events.selectEvent')"
-          icon="i-lucide-calendar"
-          size="lg"
-          class="w-72"
-          :ui="{ base: 'font-semibold text-lg' }"
-          @update:model-value="switchEvent"
-        />
-        <p class="text-muted text-sm">
-          {{ event.eventType }}
-          <span v-if="event.startDate"> &middot; {{ formatDate(event.startDate) }}</span>
-          <span v-if="event.endDate"> - {{ formatDate(event.endDate) }}</span>
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <UButton variant="outline" icon="i-lucide-pencil" size="sm" @click="openEditEvent">
-          {{ t('sales.events.edit') }}
-        </UButton>
-        <UButton
-          variant="outline"
-          icon="i-lucide-copy"
-          size="sm"
-          :loading="duplicating"
-          @click="duplicateEvent"
-        >
-          {{ t('sales.events.duplicate') }}
-        </UButton>
-        <UButton
-          icon="i-lucide-shopping-cart"
-          size="sm"
-          :to="`/order/${teamParam}/${event.slug}`"
-        >
-          {{ t('sales.events.openPos') }}
-        </UButton>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <UTabs v-model="activeTab" :items="tabItems" :content="false" />
-
-    <!-- Tab content -->
-    <!--
-      Each tab component runs top-level `await useCollectionQuery`, so it's an
-      async-setup component. Keying a <Suspense> on activeTab gives every tab its
-      own async boundary that is cleanly torn down on switch — without it, rapid
-      tab switching unmounts a still-resolving tab and Vue patches a detached
-      subtree (NotFoundError: insertBefore / "Cannot read properties of null
-      (reading 'subTree')").
-    -->
-    <div class="min-h-[400px]">
-      <Suspense :key="activeTab">
-        <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
-        <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
-        <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
-        <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
-        <template #fallback>
-          <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
-        </template>
-      </Suspense>
-    </div>
+  <div class="p-6">
+    <SalesEventWorkspaceShell :event-slug="eventSlug" tab-param="tab" />
   </div>
 </template>

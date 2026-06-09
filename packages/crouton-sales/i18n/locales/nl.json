@@ -28,6 +28,8 @@
     "block": {
       "eventStorefront": "Event Winkel",
       "orderInterface": "Bestelinterface",
+      "eventWorkspace": "Evenement-werkruimte",
+      "signInRequired": "Meld je aan als teamlid om dit evenement te beheren.",
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",

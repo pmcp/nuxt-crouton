@@ -361,6 +361,7 @@ export default defineAppConfig({
   croutonBlocks: {
     eventStorefrontBlock,
     orderInterfaceBlock,
+    eventWorkspaceBlock,
     salesChartBlock,
     salesProductMatrixBlock
   }

@@ -52,7 +52,7 @@ app/pages/admin/[team]/sales.vue                 # parent layout with 9-tab navb
 app/pages/admin/[team]/sales/
   index.vue                                      # overview (orders list)
   events.vue → events/index.vue                  # events list (<SalesEventsList/>)
-  events/[slug]/index.vue                        # event workspace shell
+  events/[slug]/index.vue                        # thin wrapper → <SalesEventWorkspaceShell> (tab-param="tab")
   events/[slug]/orders.vue                       # inline POS for the event
   products.vue / categories.vue / orders.vue
   locations.vue / printers.vue / clients.vue
@@ -62,6 +62,15 @@ app/pages/admin/[team]/sales/
 Event workspace tabs are extracted into reusable components under `app/components/EventWorkspace/`:
 `ProductsTab.vue`, `OrdersTab.vue`, `PrintersTab.vue`, `SettingsTab.vue`
 (auto-imported as `SalesEventWorkspaceProductsTab`, etc.)
+
+The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
+resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
+the header (switcher + Edit/Duplicate/Open-POS actions) + the four tabs in a per-tab `<Suspense>`.
+Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
+and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
+`router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` (default `true`).
+The admin page passes `tab-param="tab"`; the `eventWorkspaceBlock` renderer passes `:show-switcher="false"`.
+The shell uses top-level `await`, so any non-page consumer must give it a `<Suspense>` boundary.
 
 `ProductsTab.vue` renders products as a **drag-reorderable list** (not a table): a bespoke `<ul>`
 with `useSortable` (`@vueuse/integrations`, via crouton-core) and a `.drag-handle` grip. Drop
@@ -225,6 +234,7 @@ event field's `propertyComponents` editor.
 |------------|-------------|----------|---------|
 | `eventStorefrontBlock` | `SalesBlocksEventStorefrontView` | `SalesBlocksEventStorefrontRender` | Public event card with "Order Now" CTA → `/order/[team]/[event]` |
 | `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page |
+| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | Embeds the full admin event workspace (`<SalesEventWorkspaceShell>` — Products/Orders/Printers/Settings tabs) for one event. **Admin surface**: tabs hit authenticated `/api/teams/[team]/...`, so the renderer shows a sign-in notice for anonymous visitors (`useAuth().loggedIn` guard) and hides the event switcher (event fixed by the editor). The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `admin`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |

@@ -28,6 +28,8 @@
     "block": {
       "eventStorefront": "Event Storefront",
       "orderInterface": "Order Interface",
+      "eventWorkspace": "Event Workspace",
+      "signInRequired": "Sign in as a team member to manage this event.",
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
