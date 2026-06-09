@@ -12,7 +12,7 @@
         <SalesClientCategoryTabs
           v-model="selectedCategory"
           :categories="categories || []"
-          :cart-counts="cartCountsByCategory"
+          :counts="cartCountsByCategory"
           :show-all="false"
         />
       </div>

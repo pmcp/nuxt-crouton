@@ -15,32 +15,40 @@ import type { SalesCategory } from '../../types'
 const props = withDefaults(defineProps<{
   categories: SalesCategory[]
   modelValue: string | null
-  productCounts: Record<string, number>
+  // Count to badge on each tab, keyed by category id. Meaning is up to the
+  // caller (cart quantity in the POS, product count in the admin workspace).
+  // Hidden when zero.
+  counts?: Record<string, number>
   // Show the leading "All" tab (default). Set false to force a category selection.
   showAll?: boolean
-}>(), { showAll: true })
+}>(), { showAll: true, counts: () => ({}) })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
 }>()
 
 const totalCount = computed(() =>
-  Object.values(props.productCounts).reduce((sum, count) => sum + count, 0),
+  Object.values(props.counts).reduce((sum, count) => sum + count, 0),
 )
+
+// Append a "(n)" badge only when there are items in the cart for that tab.
+function withCount(label: string, count: number): string {
+  return count > 0 ? `${label} (${count})` : label
+}
 
 const tabItems = computed<TabsItem[]>(() => {
   const items: TabsItem[] = []
 
   if (props.showAll) {
     items.push({
-      label: `${t('sales.categories.all')} (${totalCount.value})`,
+      label: withCount(t('sales.categories.all'), totalCount.value),
       value: 'all',
     })
   }
 
   for (const cat of props.categories) {
     items.push({
-      label: `${cat.title} (${props.productCounts[cat.id] || 0})`,
+      label: withCount(cat.title, props.counts[cat.id] || 0),
       value: cat.id,
     })
   }

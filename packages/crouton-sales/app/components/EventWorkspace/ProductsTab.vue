@@ -107,7 +107,7 @@ function openEditProduct(id: string) {
       <SalesClientCategoryTabs
         v-model="selectedCategoryId"
         :categories="(categories as any[]) || []"
-        :product-counts="productCountsByCategory"
+        :counts="productCountsByCategory"
         :show-all="false"
       />
       <UButton color="primary" size="sm" icon="i-lucide-plus" @click="openCreateProduct">
