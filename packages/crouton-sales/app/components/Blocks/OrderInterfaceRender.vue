@@ -37,11 +37,17 @@ interface Client {
   title: string
 }
 
+interface Location {
+  id: string
+  title: string
+}
+
 interface OrderData {
   event: { id: string, title: string, slug: string, teamId: string, requiresClient: boolean }
   products: SalesProduct[]
   categories: SalesCategorie[]
   clients: Client[]
+  locations: Location[]
   settings: { useReusableClients: boolean }
   helper: { id: string, name: string }
 }
@@ -251,6 +257,7 @@ onMounted(async () => {
           :products="orderData.products"
           :categories="orderData.categories"
           :clients="orderData.clients"
+          :locations="orderData.locations"
           :requires-client="orderData.event.requiresClient"
           :use-reusable-clients="orderData.settings.useReusableClients"
         />
