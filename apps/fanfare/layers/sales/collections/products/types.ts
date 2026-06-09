@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection products
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesProduct
  * - Form data type: SalesProductFormData
  * - New item type: NewSalesProduct
  * - Form props: SalesProductFormProps
- * - Fields: id, eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options, sortOrder
+ * - Fields: id, eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -39,7 +39,6 @@ export interface SalesProduct {
   hasOptions?: boolean
   multipleOptionsAllowed?: boolean
   options?: any[]
-  sortOrder?: number
   createdAt: Date
   updatedAt: Date
   createdBy: string
@@ -49,7 +48,9 @@ export interface SalesProduct {
 }
 
 export type SalesProductFormData = z.infer<typeof salesProductSchema>
-export type NewSalesProduct = Omit<SalesProduct, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesProduct = Omit<SalesProduct, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesProductFormProps {

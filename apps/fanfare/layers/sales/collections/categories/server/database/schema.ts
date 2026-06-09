@@ -26,11 +26,9 @@ export const salesCategories = sqliteTable('sales_categories', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   title: text('title').notNull(),
-  displayOrder: text('displayOrder'),
+  displayOrder: integer('displayOrder'),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

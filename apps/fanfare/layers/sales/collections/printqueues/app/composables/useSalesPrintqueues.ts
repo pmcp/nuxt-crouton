@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printqueues
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesPrintqueues
@@ -31,12 +31,12 @@ export const salesPrintqueueSchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   printerId: z.string().min(1, 'printerId is required'),
   locationId: z.string().optional(),
-  status: z.number(),
+  status: z.string().min(1, 'status is required'),
   printData: z.string().min(1, 'printData is required'),
   printMode: z.string().optional(),
   errorMessage: z.string().optional(),
-  retryCount: z.number().optional(),
-  completedAt: z.date().optional()
+  retryCount: z.string().optional(),
+  completedAt: z.string().optional()
 })
 
 export const salesPrintqueuesColumns = [
@@ -64,12 +64,12 @@ const _salesPrintqueuesConfig = {
     orderId: '',
     printerId: '',
     locationId: '',
-    status: 0,
+    status: '',
     printData: '',
     printMode: '',
     errorMessage: '',
-    retryCount: 0,
-    completedAt: null
+    retryCount: '',
+    completedAt: ''
   },
   columns: salesPrintqueuesColumns,
   fields: [
@@ -99,7 +99,7 @@ const _salesPrintqueuesConfig = {
       },
       {
           "name": "status",
-          "type": "integer",
+          "type": "string",
           "label": "Status",
           "area": "main"
       },
@@ -123,13 +123,13 @@ const _salesPrintqueuesConfig = {
       },
       {
           "name": "retryCount",
-          "type": "integer",
+          "type": "string",
           "label": "Retry Count",
           "area": "main"
       },
       {
           "name": "completedAt",
-          "type": "datetime",
+          "type": "string",
           "label": "Completed At",
           "area": "main"
       }

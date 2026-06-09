@@ -2,14 +2,14 @@
   @crouton-generated
   @collection products
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - List component for products collection
   - Collection name: salesProducts
   - API endpoint: /api/teams/[id]/sales-products
   - Columns composable: useSalesProducts()
-  - Column fields: eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options, sortOrder
+  - Column fields: eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options
 
   ## Common Modifications
   - Add column: Update columns array in composable

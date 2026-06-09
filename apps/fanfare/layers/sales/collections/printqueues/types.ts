@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printqueues
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesPrintqueue
@@ -31,12 +31,12 @@ export interface SalesPrintqueue {
   orderId: string
   printerId: string
   locationId?: string
-  status: number
+  status: string
   printData: string
   printMode?: string
   errorMessage?: string
-  retryCount?: number
-  completedAt?: Date | null
+  retryCount?: string
+  completedAt?: string
   createdAt: Date
   updatedAt: Date
   createdBy: string
@@ -46,7 +46,9 @@ export interface SalesPrintqueue {
 }
 
 export type SalesPrintqueueFormData = z.infer<typeof salesPrintqueueSchema>
-export type NewSalesPrintqueue = Omit<SalesPrintqueue, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesPrintqueue = Omit<SalesPrintqueue, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesPrintqueueFormProps {

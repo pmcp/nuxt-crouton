@@ -26,8 +26,6 @@ export const salesEvents = sqliteTable('sales_events', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   title: text('title').notNull(),
   slug: text('slug').notNull(),
   description: text('description'),

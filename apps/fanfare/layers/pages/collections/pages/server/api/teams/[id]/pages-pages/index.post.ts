@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   pageType: z.string().min(1, 'pageType is required'),
-  config: z.record(z.string(), z.any()).nullable().optional(),
+  config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
   publishedAt: z.coerce.date().optional(),
@@ -31,8 +31,8 @@ const bodySchema = z.object({
       seoDescription: z.string().optional()
     })
   ).refine(
-    (translations) => translations.en && translations.en.title && translations.en.slug,
-    { message: 'English translations for title, slug are required' }
+    (translations) => translations.nl && translations.nl.title && translations.nl.slug,
+    { message: 'Translations for title, slug (nl) are required' }
   )
 }).strip()
 
@@ -45,16 +45,18 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // body.id is already stripped by the schema's .strip(); generate our own
-  // id upfront so path can reference it.
+  // body is the validated payload (id is not part of the schema) — we generate the id for path calculation
+  const dataWithoutId = body
+
+  // Generate ID upfront for correct path calculation
   const recordId = nanoid()
 
   // Calculate path based on parentId
   let path = `/${recordId}/`
   let depth = 0
 
-  if (body.parentId) {
-    const [parent] = await getPagesPagesByIds(team.id, [body.parentId])
+  if (dataWithoutId.parentId) {
+    const [parent] = await getPagesPagesByIds(team.id, [dataWithoutId.parentId])
     if (parent) {
       path = `${parent.path}${recordId}/`
       depth = (parent.depth || 0) + 1
@@ -62,15 +64,12 @@ export default defineEventHandler(async (event) => {
   }
 
   // Convert date string to Date object
-  if (body.publishedAt) {
-    body.publishedAt = new Date(body.publishedAt)
+  if (dataWithoutId.publishedAt) {
+    dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
   }
   const dbTimer = timing.start('db')
-  // Cast because the generated NewPagesPage type still treats translatable
-  // root fields (title/slug) as required and omits the hierarchy `order`
-  // field; the DB schema and runtime accept the shape we're passing.
   const result = await createPagesPage({
-    ...body,
+    ...dataWithoutId,
     id: recordId,
     path,
     depth,
@@ -78,7 +77,7 @@ export default defineEventHandler(async (event) => {
     owner: user.id,
     createdBy: user.id,
     updatedBy: user.id
-  } as Parameters<typeof createPagesPage>[0])
+  })
   dbTimer.end()
   return result
 })

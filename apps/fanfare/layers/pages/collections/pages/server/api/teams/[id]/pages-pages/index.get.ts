@@ -22,6 +22,15 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
+  // Opt-in pagination: ?page=1&pageSize=10 → { items, total, page, pageSize }
+  if (query.page !== undefined) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 10))
+    const { items, total } = await getAllPagesPages(team.id, { limit: pageSize, offset: (page - 1) * pageSize })
+    dbTimer.end()
+    return { items, total, page, pageSize }
+  }
+
   const result = await getAllPagesPages(team.id)
   dbTimer.end()
   return result

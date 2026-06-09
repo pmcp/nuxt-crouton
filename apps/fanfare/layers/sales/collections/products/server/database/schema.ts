@@ -27,6 +27,7 @@ export const salesProducts = sqliteTable('sales_products', {
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
 
+  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   categoryId: text('categoryId'),
   locationId: text('locationId'),
@@ -39,7 +40,6 @@ export const salesProducts = sqliteTable('sales_products', {
   hasOptions: integer('hasOptions', { mode: 'boolean' }).$default(() => false),
   multipleOptionsAllowed: integer('multipleOptionsAllowed', { mode: 'boolean' }).$default(() => false),
   options: jsonColumn('options').$default(() => (null)),
-  sortOrder: integer('sortOrder').$default(() => 0),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

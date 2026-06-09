@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection categories
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesCategories
@@ -26,7 +26,7 @@ import { z } from 'zod'
 
 // Schema exported separately - Zod 4 schemas cannot survive deep cloning
 // Keep schema outside of objects that might be serialized/cloned during SSR
-export const salesCategorieSchema = z.object({
+export const salesCategorySchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
   title: z.string().min(1, 'title is required'),
   displayOrder: z.number().optional()
@@ -66,7 +66,7 @@ const _salesCategoriesConfig = {
       },
       {
           "name": "displayOrder",
-          "type": "integer",
+          "type": "number",
           "label": "Display Order",
           "area": "main"
       }
@@ -75,13 +75,13 @@ const _salesCategoriesConfig = {
 
 // Add schema as non-enumerable property so klona skips it during cloning
 Object.defineProperty(_salesCategoriesConfig, 'schema', {
-  value: salesCategorieSchema,
+  value: salesCategorySchema,
   enumerable: false,
   configurable: false,
   writable: false
 })
 
-export const salesCategoriesConfig = _salesCategoriesConfig as typeof _salesCategoriesConfig & { schema: typeof salesCategorieSchema }
+export const salesCategoriesConfig = _salesCategoriesConfig as typeof _salesCategoriesConfig & { schema: typeof salesCategorySchema }
 
 export const useSalesCategories = () => salesCategoriesConfig
 
@@ -89,7 +89,7 @@ export const useSalesCategories = () => salesCategoriesConfig
 export default function () {
   return {
     defaultValue: salesCategoriesConfig.defaultValues,
-    schema: salesCategorieSchema,
+    schema: salesCategorySchema,
     columns: salesCategoriesConfig.columns,
     collection: salesCategoriesConfig.name
   }

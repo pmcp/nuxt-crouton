@@ -2,7 +2,7 @@
   @crouton-generated
   @collection orderitems
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for orderitems collection
@@ -40,33 +40,33 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="OrderId" name="orderId" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.orderId', 'Order')" name="orderId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.orderId"
             collection="salesOrders"
-            label="OrderId"
+            :label="t('sales.orderitems.fields.orderId', 'Order')"
           />
         </UFormField>
-        <UFormField label="ProductId" name="productId" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.productId', 'Product')" name="productId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.productId"
             collection="salesProducts"
-            label="ProductId"
+            :label="t('sales.orderitems.fields.productId', 'Product')"
           />
         </UFormField>
-        <UFormField label="Quantity" name="quantity" class="not-last:pb-4">
-          <UInput v-model="state.quantity" class="w-full" size="xl" />
+        <UFormField :label="t('sales.orderitems.fields.quantity', 'Quantity')" name="quantity" class="not-last:pb-4">
+          <UInputNumber v-model="state.quantity" class="w-full" />
         </UFormField>
-        <UFormField label="UnitPrice" name="unitPrice" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.unitPrice', 'Unit Price')" name="unitPrice" class="not-last:pb-4">
           <UInputNumber v-model="state.unitPrice" class="w-full" />
         </UFormField>
-        <UFormField label="TotalPrice" name="totalPrice" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.totalPrice', 'Total Price')" name="totalPrice" class="not-last:pb-4">
           <UInputNumber v-model="state.totalPrice" class="w-full" />
         </UFormField>
-        <UFormField label="Remarks" name="remarks" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.remarks', 'Item Remarks')" name="remarks" class="not-last:pb-4">
           <UTextarea v-model="state.remarks" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="SelectedOptions" name="selectedOptions" class="not-last:pb-4">
+        <UFormField :label="t('sales.orderitems.fields.selectedOptions', 'Selected Options')" name="selectedOptions" class="not-last:pb-4">
           <UTextarea
             :model-value="typeof state.selectedOptions === 'string' ? state.selectedOptions : JSON.stringify(state.selectedOptions, null, 2)"
             @update:model-value="(val) => { try { state.selectedOptions = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
@@ -96,6 +96,9 @@ import useSalesOrderitems from '../composables/useSalesOrderitems'
 
 const props = defineProps<SalesOrderitemFormProps>()
 const { defaultValue, schema, collection } = useSalesOrderitems()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)

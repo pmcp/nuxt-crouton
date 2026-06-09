@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printers
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesPrinter
@@ -31,8 +31,8 @@ export interface SalesPrinter {
   locationId: string
   title: string
   ipAddress: string
-  port?: number
-  status?: number
+  port?: string
+  status?: string
   showPrices?: boolean
   isActive?: boolean
   createdAt: Date
@@ -44,7 +44,9 @@ export interface SalesPrinter {
 }
 
 export type SalesPrinterFormData = z.infer<typeof salesPrinterSchema>
-export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesPrinterFormProps {

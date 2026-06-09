@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printers
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesPrinters
@@ -31,14 +31,10 @@ export const salesPrinterSchema = z.object({
   locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
-  // port/status: nullable text columns ('9100' / 'idle'). The form no longer
-  // exposes them, and existing rows return null — so use nullish() (null OR
-  // undefined), otherwise updating a printer with null port/status fails
-  // client-side validation with a non-field "General" error.
-  port: z.string().nullish(),
-  status: z.string().nullish(),
-  showPrices: z.boolean().nullish(),
-  isActive: z.boolean().nullish()
+  port: z.string().optional(),
+  status: z.string().optional(),
+  showPrices: z.boolean().optional(),
+  isActive: z.boolean().optional()
 })
 
 export const salesPrintersColumns = [
@@ -64,8 +60,8 @@ const _salesPrintersConfig = {
     locationId: '',
     title: '',
     ipAddress: '',
-    port: 0,
-    status: 0,
+    port: '',
+    status: '',
     showPrices: false,
     isActive: false
   },
@@ -97,13 +93,13 @@ const _salesPrintersConfig = {
       },
       {
           "name": "port",
-          "type": "integer",
+          "type": "string",
           "label": "Port",
           "area": "main"
       },
       {
           "name": "status",
-          "type": "integer",
+          "type": "string",
           "label": "Status",
           "area": "main"
       },

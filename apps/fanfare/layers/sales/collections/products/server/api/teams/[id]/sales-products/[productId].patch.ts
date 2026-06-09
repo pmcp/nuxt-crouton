@@ -16,8 +16,7 @@ const bodySchema = z.object({
   remarkPrompt: z.string().optional(),
   hasOptions: z.boolean().optional(),
   multipleOptionsAllowed: z.boolean().optional(),
-  options: z.array(z.any()).optional(),
-  sortOrder: z.number().optional()
+  options: z.array(z.any()).optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {

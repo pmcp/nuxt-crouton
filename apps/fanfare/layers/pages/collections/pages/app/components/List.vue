@@ -2,7 +2,7 @@
   @crouton-generated
   @collection pages
   @layer pages
-  @generated 2026-06-08
+  @generated 2026-06-09
 
   ## AI Context
   - List component for pages collection

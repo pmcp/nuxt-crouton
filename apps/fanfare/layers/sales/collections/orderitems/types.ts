@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection orderitems
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesOrderitem
@@ -43,7 +43,9 @@ export interface SalesOrderitem {
 }
 
 export type SalesOrderitemFormData = z.infer<typeof salesOrderitemSchema>
-export type NewSalesOrderitem = Omit<SalesOrderitem, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesOrderitem = Omit<SalesOrderitem, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesOrderitemFormProps {

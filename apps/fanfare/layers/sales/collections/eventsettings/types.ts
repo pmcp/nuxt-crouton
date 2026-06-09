@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection eventsettings
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesEventsetting
@@ -40,7 +40,9 @@ export interface SalesEventsetting {
 }
 
 export type SalesEventsettingFormData = z.infer<typeof salesEventsettingSchema>
-export type NewSalesEventsetting = Omit<SalesEventsetting, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesEventsetting = Omit<SalesEventsetting, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesEventsettingFormProps {

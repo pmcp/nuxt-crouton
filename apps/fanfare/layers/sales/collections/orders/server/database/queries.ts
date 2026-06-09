@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesOrder, NewSalesOrder } from '../../types'
@@ -7,14 +7,22 @@ import * as eventsSchema from '../../../events/server/database/schema'
 import * as clientsSchema from '../../../clients/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesOrders(teamId: string, filters?: { eventId?: string }) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesOrders(teamId: string, opts?: { eventId?: string; clientId?: string }): Promise<any[]>
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesOrders.teamId, teamId)]
+  if (opts.eventId) conditions.push(eq(tables.salesOrders.eventId, opts.eventId))
+  if (opts.clientId) conditions.push(eq(tables.salesOrders.clientId, opts.clientId))
+  const whereExpr = and(...conditions)
 
-  const orders = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesOrders,
       eventIdData: eventsSchema.salesEvents,
@@ -44,11 +52,22 @@ export async function getAllSalesOrders(teamId: string, filters?: { eventId?: st
     .leftJoin(ownerUser, eq(tables.salesOrders.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesOrders.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesOrders.updatedBy, updatedByUser.id))
-    .where(and(
-      eq(tables.salesOrders.teamId, teamId),
-      ...(filters?.eventId ? [eq(tables.salesOrders.eventId, filters.eventId)] : [])
-    ))
+    .where(whereExpr)
     .orderBy(desc(tables.salesOrders.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const orders = await listQuery
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesOrders)
+      .where(whereExpr)
+    return { items: orders, total: Number(countRow?.count ?? 0) }
+  }
 
   return orders
 }

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-06-08
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -28,7 +28,7 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const pagesPageSchema = z.object({
   pageType: z.string().min(1, 'pageType is required'),
-  config: z.record(z.string(), z.any()).optional(),
+  config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
   publishedAt: z.coerce.date().optional(),
@@ -52,8 +52,8 @@ export const pagesPageSchema = z.object({
       seoDescription: z.string().optional()
     })
   ).refine(
-    (translations) => translations.en && translations.en.title && translations.en.slug,
-    { message: 'English translations for title, slug are required' }
+    (translations) => translations.nl && translations.nl.title && translations.nl.slug,
+    { message: 'Translations for title, slug (nl) are required' }
   )
 })
 

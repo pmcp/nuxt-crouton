@@ -26,8 +26,6 @@ export const salesPrinters = sqliteTable('sales_printers', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   locationId: text('locationId').notNull(),
   title: text('title').notNull(),

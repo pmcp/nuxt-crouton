@@ -2,13 +2,13 @@
  * @crouton-generated
  * @collection categories
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
- * - Main interface: SalesCategorie
- * - Form data type: SalesCategorieFormData
- * - New item type: NewSalesCategorie
- * - Form props: SalesCategorieFormProps
+ * - Main interface: SalesCategory
+ * - Form data type: SalesCategoryFormData
+ * - New item type: NewSalesCategory
+ * - Form props: SalesCategoryFormProps
  * - Fields: id, eventId, title, displayOrder
  *
  * ## Common Modifications
@@ -21,9 +21,9 @@
  */
 
 import type { z } from 'zod'
-import type { salesCategorieSchema } from './app/composables/useSalesCategories'
+import type { salesCategorySchema } from './app/composables/useSalesCategories'
 
-export interface SalesCategorie {
+export interface SalesCategory {
   id: string
   teamId: string
   owner: string
@@ -38,13 +38,15 @@ export interface SalesCategorie {
   optimisticAction?: 'create' | 'update' | 'delete'
 }
 
-export type SalesCategorieFormData = z.infer<typeof salesCategorieSchema>
-export type NewSalesCategorie = Omit<SalesCategorie, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+export type SalesCategoryFormData = z.infer<typeof salesCategorySchema>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesCategory = Omit<SalesCategory, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
-export interface SalesCategorieFormProps {
+export interface SalesCategoryFormProps {
   items: string[] // Array of IDs for delete action
-  activeItem: SalesCategorie | Record<string, never> // SalesCategorie for update, empty object for create
+  activeItem: SalesCategory | Record<string, never> // SalesCategory for update, empty object for create
   collection: string
   loading: string
   action: 'create' | 'update' | 'delete'

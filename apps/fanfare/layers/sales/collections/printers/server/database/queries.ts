@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesPrinter, NewSalesPrinter } from '../../types'
@@ -7,14 +7,22 @@ import * as eventsSchema from '../../../events/server/database/schema'
 import * as locationsSchema from '../../../locations/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesPrinters(teamId: string, filters?: { eventId?: string }) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesPrinters(teamId: string, opts: { eventId?: string; locationId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesPrinters(teamId: string, opts?: { eventId?: string; locationId?: string }): Promise<any[]>
+export async function getAllSalesPrinters(teamId: string, opts: { eventId?: string; locationId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesPrinters.teamId, teamId)]
+  if (opts.eventId) conditions.push(eq(tables.salesPrinters.eventId, opts.eventId))
+  if (opts.locationId) conditions.push(eq(tables.salesPrinters.locationId, opts.locationId))
+  const whereExpr = and(...conditions)
 
-  const printers = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesPrinters,
       eventIdData: eventsSchema.salesEvents,
@@ -44,11 +52,22 @@ export async function getAllSalesPrinters(teamId: string, filters?: { eventId?: 
     .leftJoin(ownerUser, eq(tables.salesPrinters.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesPrinters.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesPrinters.updatedBy, updatedByUser.id))
-    .where(and(
-      eq(tables.salesPrinters.teamId, teamId),
-      ...(filters?.eventId ? [eq(tables.salesPrinters.eventId, filters.eventId)] : [])
-    ))
+    .where(whereExpr)
     .orderBy(desc(tables.salesPrinters.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const printers = await listQuery
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesPrinters)
+      .where(whereExpr)
+    return { items: printers, total: Number(countRow?.count ?? 0) }
+  }
 
   return printers
 }

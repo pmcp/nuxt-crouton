@@ -36,6 +36,20 @@
       "when": 1780999506934,
       "tag": "0004_marvelous_masked_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1781011228940,
+      "tag": "0005_fair_harpoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1781012576967,
+      "tag": "0006_overconfident_spyke",
+      "breakpoints": true
     }
   ]
 }

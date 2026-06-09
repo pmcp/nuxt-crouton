@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection orders
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesOrder
@@ -32,8 +32,6 @@ export interface SalesOrder {
   clientName?: string
   eventOrderNumber?: number
   overallRemarks?: string
-  /** Free-text remark per location, keyed by locationId. Printed per location, not counted in sales. */
-  locationRemarks?: Record<string, string>
   isPersonnel?: boolean
   status: string
   createdAt: Date
@@ -45,7 +43,9 @@ export interface SalesOrder {
 }
 
 export type SalesOrderFormData = z.infer<typeof salesOrderSchema>
-export type NewSalesOrder = Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesOrder = Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesOrderFormProps {

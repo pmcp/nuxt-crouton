@@ -11,7 +11,7 @@ const bodySchema = z.object({
   unitPrice: z.number(),
   totalPrice: z.number(),
   remarks: z.string().optional(),
-  selectedOptions: z.record(z.string(), z.any()).optional()
+  selectedOptions: z.record(z.string(), z.any()).nullish()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {

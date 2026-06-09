@@ -2,7 +2,7 @@
   @crouton-generated
   @collection printers
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - List component for printers collection

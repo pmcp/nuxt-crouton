@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesProduct, NewSalesProduct } from '../../types'
@@ -8,14 +8,23 @@ import * as categoriesSchema from '../../../categories/server/database/schema'
 import * as locationsSchema from '../../../locations/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesProducts(teamId: string, filters?: { eventId?: string }) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesProducts(teamId: string, opts: { eventId?: string; categoryId?: string; locationId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesProducts(teamId: string, opts?: { eventId?: string; categoryId?: string; locationId?: string }): Promise<any[]>
+export async function getAllSalesProducts(teamId: string, opts: { eventId?: string; categoryId?: string; locationId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesProducts.teamId, teamId)]
+  if (opts.eventId) conditions.push(eq(tables.salesProducts.eventId, opts.eventId))
+  if (opts.categoryId) conditions.push(eq(tables.salesProducts.categoryId, opts.categoryId))
+  if (opts.locationId) conditions.push(eq(tables.salesProducts.locationId, opts.locationId))
+  const whereExpr = and(...conditions)
 
-  const products = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesProducts,
       eventIdData: eventsSchema.salesEvents,
@@ -47,11 +56,14 @@ export async function getAllSalesProducts(teamId: string, filters?: { eventId?: 
     .leftJoin(ownerUser, eq(tables.salesProducts.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesProducts.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesProducts.updatedBy, updatedByUser.id))
-    .where(and(
-      eq(tables.salesProducts.teamId, teamId),
-      ...(filters?.eventId ? [eq(tables.salesProducts.eventId, filters.eventId)] : [])
-    ))
-    .orderBy(desc(tables.salesProducts.createdAt))
+    .where(whereExpr)
+    .orderBy(asc(tables.salesProducts.order), desc(tables.salesProducts.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const products = await listQuery
 
   // Post-query processing for JSON fields (repeater/json types)
   products.forEach((item: any) => {
@@ -68,6 +80,14 @@ export async function getAllSalesProducts(teamId: string, filters?: { eventId?: 
         item.options = []
       }
   })
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesProducts)
+      .where(whereExpr)
+    return { items: products, total: Number(countRow?.count ?? 0) }
+  }
 
   return products
 }
@@ -117,7 +137,7 @@ export async function getSalesProductsByIds(teamId: string, productIds: string[]
         inArray(tables.salesProducts.id, productIds)
       )
     )
-    .orderBy(desc(tables.salesProducts.createdAt))
+    .orderBy(asc(tables.salesProducts.order), desc(tables.salesProducts.createdAt))
 
   // Post-query processing for JSON fields (repeater/json types)
   products.forEach((item: any) => {
@@ -216,4 +236,30 @@ export async function deleteSalesProduct(
   }
 
   return { success: true }
+}
+
+// Sortable reorder queries (auto-generated when sortable: true)
+
+export async function reorderSiblingsSalesProducts(
+  teamId: string,
+  updates: { id: string; order: number }[]
+) {
+  const db = useDB()
+
+  const results = await Promise.all(
+    updates.map(({ id, order }) =>
+      (db as any)
+        .update(tables.salesProducts)
+        .set({ order })
+        .where(
+          and(
+            eq(tables.salesProducts.id, id),
+            eq(tables.salesProducts.teamId, teamId)
+          )
+        )
+        .returning()
+    )
+  )
+
+  return { success: true, updated: results.flat().length }
 }

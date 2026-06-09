@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-06-08
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: PagesPage
@@ -27,11 +27,6 @@ export interface PagesPage {
   id: string
   teamId: string
   owner: string
-  // Hierarchy fields (collection declared with hierarchy: { enabled: true })
-  parentId?: string | null
-  path: string
-  depth: number
-  order: number
   title: string
   slug: string
   pageType: string
@@ -57,14 +52,9 @@ export interface PagesPage {
 }
 
 export type PagesPageFormData = z.infer<typeof pagesPageSchema>
-// Audit/id fields are nominally auto-generated, but the POST handler computes
-// `id` upfront for path/depth wiring and passes audit fields explicitly, so
-// callers may supply them. Timestamps remain server-owned.
-export type NewPagesPage = Omit<PagesPage, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & {
-  id?: string
-  createdBy?: string
-  updatedBy?: string
-}
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewPagesPage = Omit<PagesPage, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface PagesPageFormProps {

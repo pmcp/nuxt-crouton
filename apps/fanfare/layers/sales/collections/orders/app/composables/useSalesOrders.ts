@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection orders
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesOrders
@@ -32,7 +32,6 @@ export const salesOrderSchema = z.object({
   clientName: z.string().optional(),
   eventOrderNumber: z.number().optional(),
   overallRemarks: z.string().optional(),
-  locationRemarks: z.record(z.string(), z.string()).optional(),
   isPersonnel: z.boolean().optional(),
   status: z.string().min(1, 'status is required')
 })
@@ -60,7 +59,6 @@ const _salesOrdersConfig = {
     clientName: '',
     eventOrderNumber: 0,
     overallRemarks: '',
-    locationRemarks: {},
     isPersonnel: false,
     status: ''
   },
@@ -86,7 +84,7 @@ const _salesOrdersConfig = {
       },
       {
           "name": "eventOrderNumber",
-          "type": "integer",
+          "type": "number",
           "label": "Order Number",
           "area": "main"
       },

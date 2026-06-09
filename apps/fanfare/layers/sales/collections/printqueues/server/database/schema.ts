@@ -26,19 +26,10 @@ export const salesPrintqueues = sqliteTable('sales_printqueues', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   orderId: text('orderId').notNull(),
   printerId: text('printerId').notNull(),
   locationId: text('locationId'),
-  // NOTE: JSON schema says integer for status/retryCount and datetime for
-  // completedAt, but we keep these as text here. The underlying SQLite column
-  // affinity is TEXT (from the original CREATE TABLE) and switching drizzle
-  // to integer without a real migration silently drops status updates that
-  // pass string literals. The package endpoints use string status values
-  // ('0'/'1'/'2'/'9') everywhere — that's the contract until the cli is
-  // fixed to emit proper column types.
   status: text('status').notNull(),
   printData: text('printData').notNull(),
   printMode: text('printMode'),

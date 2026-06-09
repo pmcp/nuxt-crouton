@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection clients
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesClient
@@ -38,7 +38,9 @@ export interface SalesClient {
 }
 
 export type SalesClientFormData = z.infer<typeof salesClientSchema>
-export type NewSalesClient = Omit<SalesClient, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesClient = Omit<SalesClient, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesClientFormProps {

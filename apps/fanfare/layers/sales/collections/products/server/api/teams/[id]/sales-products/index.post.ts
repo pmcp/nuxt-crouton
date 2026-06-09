@@ -16,8 +16,7 @@ const bodySchema = z.object({
   remarkPrompt: z.string().optional(),
   hasOptions: z.boolean().optional(),
   multipleOptionsAllowed: z.boolean().optional(),
-  options: z.array(z.any()).optional(),
-  sortOrder: z.number().optional()
+  options: z.array(z.any()).optional()
 }).strip()
 
 export default defineEventHandler(async (event) => {
@@ -29,8 +28,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // Exclude id field to let the database generate it
-  const { id, ...dataWithoutId } = body
+  // body is the validated payload (id is not part of the schema) — the database generates the id
+  const dataWithoutId = body
 
   const dbTimer = timing.start('db')
   const result = await createSalesProduct({

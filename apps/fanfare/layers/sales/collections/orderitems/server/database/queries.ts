@@ -1,5 +1,5 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesOrderitem, NewSalesOrderitem } from '../../types'
@@ -7,14 +7,22 @@ import * as ordersSchema from '../../../orders/server/database/schema'
 import * as productsSchema from '../../../products/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesOrderitems(teamId: string, filters?: { orderId?: string }) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesOrderitems(teamId: string, opts: { orderId?: string; productId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesOrderitems(teamId: string, opts?: { orderId?: string; productId?: string }): Promise<any[]>
+export async function getAllSalesOrderitems(teamId: string, opts: { orderId?: string; productId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesOrderitems.teamId, teamId)]
+  if (opts.orderId) conditions.push(eq(tables.salesOrderitems.orderId, opts.orderId))
+  if (opts.productId) conditions.push(eq(tables.salesOrderitems.productId, opts.productId))
+  const whereExpr = and(...conditions)
 
-  const orderitems = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesOrderitems,
       orderIdData: ordersSchema.salesOrders,
@@ -44,11 +52,14 @@ export async function getAllSalesOrderitems(teamId: string, filters?: { orderId?
     .leftJoin(ownerUser, eq(tables.salesOrderitems.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesOrderitems.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesOrderitems.updatedBy, updatedByUser.id))
-    .where(and(
-      eq(tables.salesOrderitems.teamId, teamId),
-      ...(filters?.orderId ? [eq(tables.salesOrderitems.orderId, filters.orderId)] : [])
-    ))
+    .where(whereExpr)
     .orderBy(desc(tables.salesOrderitems.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const orderitems = await listQuery
 
   // Post-query processing for JSON fields (repeater/json types)
   orderitems.forEach((item: any) => {
@@ -65,6 +76,14 @@ export async function getAllSalesOrderitems(teamId: string, filters?: { orderId?
         item.selectedOptions = null
       }
   })
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesOrderitems)
+      .where(whereExpr)
+    return { items: orderitems, total: Number(countRow?.count ?? 0) }
+  }
 
   return orderitems
 }

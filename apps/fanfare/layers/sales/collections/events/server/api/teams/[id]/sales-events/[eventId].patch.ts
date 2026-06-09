@@ -15,7 +15,7 @@ const bodySchema = z.object({
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).nullish(),
   archivedAt: z.coerce.date().optional()
 }).partial().strip()
 

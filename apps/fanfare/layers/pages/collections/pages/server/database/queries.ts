@@ -5,14 +5,20 @@ import * as tables from './schema'
 import type { PagesPage, NewPagesPage } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllPagesPages(teamId: string) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllPagesPages(teamId: string, opts: { limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllPagesPages(teamId: string, opts?: {}): Promise<any[]>
+export async function getAllPagesPages(teamId: string, opts: { limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.pagesPages.teamId, teamId)]
+  const whereExpr = and(...conditions)
 
-  const pages = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.pagesPages,
       ownerUser: {
@@ -38,8 +44,14 @@ export async function getAllPagesPages(teamId: string) {
     .leftJoin(ownerUser, eq(tables.pagesPages.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.pagesPages.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.pagesPages.updatedBy, updatedByUser.id))
-    .where(eq(tables.pagesPages.teamId, teamId))
+    .where(whereExpr)
     .orderBy(desc(tables.pagesPages.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const pages = await listQuery
 
   // Post-query processing for JSON fields (repeater/json types)
   pages.forEach((item: any) => {
@@ -56,6 +68,14 @@ export async function getAllPagesPages(teamId: string) {
         item.config = null
       }
   })
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.pagesPages)
+      .where(whereExpr)
+    return { items: pages, total: Number(countRow?.count ?? 0) }
+  }
 
   return pages
 }

@@ -15,7 +15,7 @@ const bodySchema = z.object({
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).nullish(),
   archivedAt: z.coerce.date().optional()
 }).strip()
 
@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // Exclude id field to let the database generate it
-  const { id, ...dataWithoutId } = body
+  // body is the validated payload (id is not part of the schema) — the database generates the id
+  const dataWithoutId = body
 
   // Convert date string to Date object
   if (dataWithoutId.startDate) {

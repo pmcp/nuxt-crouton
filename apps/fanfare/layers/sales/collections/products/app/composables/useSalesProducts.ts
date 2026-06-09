@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection products
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesProducts
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-products
  * - Form component: SalesProductsForm
  * - List component: SalesProductsList
- * - Fields: id, eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options, sortOrder
+ * - Fields: id, eventId, categoryId, locationId, title, description, price, isActive, requiresRemark, remarkPrompt, hasOptions, multipleOptionsAllowed, options
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -38,8 +38,7 @@ export const salesProductSchema = z.object({
   remarkPrompt: z.string().optional(),
   hasOptions: z.boolean().optional(),
   multipleOptionsAllowed: z.boolean().optional(),
-  options: z.array(z.any()).optional(),
-  sortOrder: z.number().optional()
+  options: z.array(z.any()).optional()
 })
 
 export const salesProductsColumns = [
@@ -55,8 +54,7 @@ export const salesProductsColumns = [
   { accessorKey: 'remarkPrompt', header: 'RemarkPrompt' },
   { accessorKey: 'hasOptions', header: 'HasOptions' },
   { accessorKey: 'multipleOptionsAllowed', header: 'MultipleOptionsAllowed' },
-  { accessorKey: 'options', header: 'Options' },
-  { accessorKey: 'sortOrder', header: 'SortOrder' }
+  { accessorKey: 'options', header: 'Options' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -77,12 +75,15 @@ const _salesProductsConfig = {
     remarkPrompt: '',
     hasOptions: false,
     multipleOptionsAllowed: false,
-    options: [],
-    sortOrder: 0
+    options: []
   },
   columns: salesProductsColumns,
   dependentFieldComponents: {
     options: 'SalesProductsOptionSelect'
+  },
+  sortable: {
+    enabled: true,
+    orderField: 'order'
   },
   fields: [
       {
@@ -155,12 +156,6 @@ const _salesProductsConfig = {
           "name": "options",
           "type": "repeater",
           "label": "Options",
-          "area": "main"
-      },
-      {
-          "name": "sortOrder",
-          "type": "integer",
-          "label": "Sort Order",
           "area": "main"
       }
   ],

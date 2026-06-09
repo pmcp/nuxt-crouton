@@ -26,14 +26,11 @@ export const salesOrders = sqliteTable('sales_orders', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   clientId: text('clientId'),
   clientName: text('clientName'),
-  eventOrderNumber: text('eventOrderNumber'),
+  eventOrderNumber: integer('eventOrderNumber'),
   overallRemarks: text('overallRemarks'),
-  locationRemarks: jsonColumn('locationRemarks'),
   isPersonnel: integer('isPersonnel', { mode: 'boolean' }).$default(() => false),
   status: text('status').notNull(),
 

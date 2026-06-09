@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   pageType: z.string().min(1, 'pageType is required'),
-  config: z.record(z.string(), z.any()).nullable().optional(),
+  config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
   publishedAt: z.coerce.date().optional(),
@@ -30,13 +30,9 @@ const bodySchema = z.object({
       seoDescription: z.string().optional()
     })
   ).refine(
-    (translations) => translations.en && translations.en.title && translations.en.slug,
-    { message: 'English translations for title, slug are required' }
-  ),
-  // Locale indicates which translation locale the body.translations payload
-  // updates — scaffolder generates a merge block that reads body.locale but
-  // omits it from the schema. Adding it here to satisfy the typecheck.
-  locale: z.string().optional()
+    (translations) => translations.nl && translations.nl.title && translations.nl.slug,
+    { message: 'Translations for title, slug (nl) are required' }
+  )
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {

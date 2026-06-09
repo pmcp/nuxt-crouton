@@ -2,7 +2,7 @@
   @crouton-generated
   @collection orders
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for orders collection
@@ -47,60 +47,23 @@
             :label="t('sales.orders.fields.eventId', 'Event')"
           />
         </UFormField>
-
-        <!-- Client field - only shown when event requires clients -->
-        <UFormField
-          v-if="requiresClient"
-          :label="t('sales.orders.fields.clientId', 'Client')"
-          name="clientId"
-          class="not-last:pb-4"
-          :help="t('sales.orders.clientHelp', 'Select an existing client or create a new one')"
-        >
-          <USelectMenu
+        <UFormField :label="t('sales.orders.fields.clientId', 'Client')" name="clientId" class="not-last:pb-4">
+          <CroutonFormReferenceSelect
             v-model="state.clientId"
-            :items="clients"
-            value-key="id"
-            label-key="title"
-            :placeholder="t('sales.orders.selectClient', 'Select a client')"
-            searchable
-            size="xl"
-            class="w-full"
-          >
-            <template #default="{ modelValue }">
-              <span v-if="modelValue" class="truncate">
-                {{ getClientLabel(modelValue as string) }}
-              </span>
-              <span v-else class="text-dimmed truncate">
-                {{ t('sales.orders.selectClient', 'Select a client') }}
-              </span>
-            </template>
-
-            <template #content-top>
-              <div class="p-1">
-                <UButton
-                  color="neutral"
-                  icon="i-lucide-plus"
-                  variant="soft"
-                  block
-                  @click="handleCreateClient"
-                >
-                  {{ t('sales.orders.createNewClient', 'Create new client') }}
-                </UButton>
-              </div>
-            </template>
-          </USelectMenu>
+            collection="salesClients"
+            :label="t('sales.orders.fields.clientId', 'Client')"
+          />
         </UFormField>
-
         <UFormField :label="t('sales.orders.fields.clientName', 'Client Name')" name="clientName" class="not-last:pb-4">
           <UInput v-model="state.clientName" class="w-full" size="xl" />
         </UFormField>
         <UFormField :label="t('sales.orders.fields.eventOrderNumber', 'Order Number')" name="eventOrderNumber" class="not-last:pb-4">
-          <UInput v-model="state.eventOrderNumber" class="w-full" size="xl" />
+          <UInputNumber v-model="state.eventOrderNumber" class="w-full" />
         </UFormField>
-        <UFormField :label="t('sales.orders.fields.overallRemarks', 'Remarks')" name="overallRemarks" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.overallRemarks', 'Special Instructions')" name="overallRemarks" class="not-last:pb-4">
           <UTextarea v-model="state.overallRemarks" class="w-full" size="xl" />
         </UFormField>
-        <UFormField :label="t('sales.orders.fields.isPersonnel', 'Personnel')" name="isPersonnel" class="not-last:pb-4">
+        <UFormField :label="t('sales.orders.fields.isPersonnel', 'Staff Order')" name="isPersonnel" class="not-last:pb-4">
           <UCheckbox v-model="state.isPersonnel" />
         </UFormField>
         <UFormField :label="t('sales.orders.fields.status', 'Status')" name="status" class="not-last:pb-4">
@@ -131,19 +94,16 @@ const { defaultValue, schema, collection } = useSalesOrders()
 // Field labels resolve through translations (team override → system → fallback)
 const { t } = useT()
 
-// Fetch events and clients for event-aware client selection
-const { items: events } = await useCollectionQuery('salesEvents')
-const { items: clients } = await useCollectionQuery('salesClients')
-
 // Form layout configuration
 const tabs = ref(false)
+
+
 
 // Use new mutation composable for data operations
 const { create, update, deleteItems } = useCollectionMutation(collection)
 
 // useCrouton still manages modal state
-const { close, loading, open } = useCrouton()
-const notify = useNotify()
+const { close, loading } = useCrouton()
 
 // Initialize form state with proper values (no watch needed!)
 const initialValues = props.action === 'update' && props.activeItem?.id
@@ -152,74 +112,8 @@ const initialValues = props.action === 'update' && props.activeItem?.id
 
 const state = ref<SalesOrderFormData & { id?: string | null }>(initialValues)
 
-// Find the selected event to check if clients are required
-const selectedEvent = computed(() =>
-  events.value.find(e => e.id === state.value.eventId)
-)
-const requiresClient = computed(() =>
-  !!selectedEvent.value?.requiresClient
-)
-
-// Clear client when switching to an event that doesn't require one
-watch(requiresClient, (required) => {
-  if (!required) {
-    state.value.clientId = ''
-  }
-})
-
-// Client label helper
-const clientLabelsMap = computed(() => {
-  const map = new Map<string, string>()
-  for (const client of clients.value) {
-    map.set(client.id, client.title)
-  }
-  return map
-})
-
-const getClientLabel = (id: string): string => {
-  return clientLabelsMap.value.get(id) || id
-}
-
-// Watch client selection to auto-populate clientName
-watch(() => state.value.clientId, (clientId) => {
-  if (clientId) {
-    const client = clients.value.find(c => c.id === clientId)
-    if (client) {
-      state.value.clientName = client.title
-    }
-  }
-})
-
-// Client creation state
-const isCreatingClient = ref(false)
-
-const handleCreateClient = () => {
-  isCreatingClient.value = true
-  open('create', 'salesClients', [])
-}
-
-// Watch for new clients after creation
-watch(() => clients.value.length, (newCount, oldCount) => {
-  if (isCreatingClient.value && newCount > (oldCount || 0)) {
-    const newClient = clients.value[clients.value.length - 1]
-    if (newClient) {
-      state.value.clientId = newClient.id
-      state.value.clientName = newClient.title
-      isCreatingClient.value = false
-    }
-  }
-})
-
 const handleSubmit = async () => {
   try {
-    // Validate client is selected when event requires it
-    if (requiresClient.value && !state.value.clientId) {
-      notify.error(t('sales.orders.clientRequired', 'Client required'), {
-        description: t('sales.orders.clientRequiredDescription', 'This event requires a client. Please select or create one.')
-      })
-      return
-    }
-
     if (props.action === 'create') {
       await create(state.value)
     } else if (props.action === 'update' && state.value.id) {
@@ -232,6 +126,8 @@ const handleSubmit = async () => {
 
   } catch (error) {
     console.error('Form submission failed:', error)
+    // You can add toast notification here if available
+    // toast.add({ title: 'Error', description: 'Failed to submit form', color: 'red' })
   }
 }
 </script>

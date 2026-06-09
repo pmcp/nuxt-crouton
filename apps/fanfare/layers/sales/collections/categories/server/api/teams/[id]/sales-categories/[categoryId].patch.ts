@@ -1,6 +1,6 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { updateSalesCategorie } from '../../../../database/queries'
+import { updateSalesCategory } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { z } from 'zod'
 
@@ -13,9 +13,9 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { categorieId } = getRouterParams(event)
-  if (!categorieId) {
-    throw createError({ status: 400, statusText: 'Missing categorie ID' })
+  const { categoryId } = getRouterParams(event)
+  if (!categoryId) {
+    throw createError({ status: 400, statusText: 'Missing category ID' })
   }
 
   const authTimer = timing.start('auth')
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const dbTimer = timing.start('db')
-  const result = await updateSalesCategorie(categorieId, team.id, user.id, updates, { role: membership.role })
+  const result = await updateSalesCategory(categoryId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })

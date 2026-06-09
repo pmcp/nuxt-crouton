@@ -9,12 +9,12 @@ const bodySchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   printerId: z.string().min(1, 'printerId is required'),
   locationId: z.string().optional(),
-  status: z.number(),
+  status: z.string().min(1, 'status is required'),
   printData: z.string().min(1, 'printData is required'),
   printMode: z.string().optional(),
   errorMessage: z.string().optional(),
-  retryCount: z.number().optional(),
-  completedAt: z.date().optional()
+  retryCount: z.string().optional(),
+  completedAt: z.string().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {

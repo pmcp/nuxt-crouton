@@ -26,8 +26,6 @@ export const salesEventsettings = sqliteTable('sales_eventsettings', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   eventId: text('eventId').notNull(),
   settingKey: text('settingKey').notNull(),
   settingValue: text('settingValue'),

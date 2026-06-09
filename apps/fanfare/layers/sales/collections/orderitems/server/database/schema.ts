@@ -26,11 +26,9 @@ export const salesOrderitems = sqliteTable('sales_orderitems', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   orderId: text('orderId').notNull(),
   productId: text('productId').notNull(),
-  quantity: text('quantity').notNull(),
+  quantity: integer('quantity').notNull(),
   unitPrice: real('unitPrice').notNull(),
   totalPrice: real('totalPrice').notNull(),
   remarks: text('remarks'),

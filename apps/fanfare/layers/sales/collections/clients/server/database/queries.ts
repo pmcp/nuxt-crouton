@@ -1,18 +1,24 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesClient, NewSalesClient } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesClients(teamId: string) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesClients(teamId: string, opts: { limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesClients(teamId: string, opts?: {}): Promise<any[]>
+export async function getAllSalesClients(teamId: string, opts: { limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesClients.teamId, teamId)]
+  const whereExpr = and(...conditions)
 
-  const clients = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesClients,
       ownerUser: {
@@ -38,8 +44,22 @@ export async function getAllSalesClients(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesClients.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesClients.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesClients.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesClients.teamId, teamId))
+    .where(whereExpr)
     .orderBy(desc(tables.salesClients.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const clients = await listQuery
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesClients)
+      .where(whereExpr)
+    return { items: clients, total: Number(countRow?.count ?? 0) }
+  }
 
   return clients
 }

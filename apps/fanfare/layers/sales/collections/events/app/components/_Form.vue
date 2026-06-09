@@ -2,14 +2,14 @@
   @crouton-generated
   @collection events
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for events collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/sales-events
   - Zod schema: useSalesEvents() composable
-  - Fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, helperPin, metadata, archivedAt
+  - Fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -39,87 +39,49 @@
   >
     <CroutonFormLayout>
       <template #main>
-      <div class="flex flex-col gap-6 p-1">
-        <!-- Event details -->
-        <section class="flex flex-col gap-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-muted">Event details</p>
-
-          <UFormField label="Event name" name="title" class="not-last:pb-4">
-            <UInput v-model="state.title" class="w-full" size="xl" placeholder="e.g. Summer Market 2026" />
-          </UFormField>
-
-          <UFormField
-            label="URL slug"
-            name="slug"
-            help="Used in the public order link. Auto-filled from the name — edit if you want."
-            class="not-last:pb-4"
-          >
-            <UInput
-              v-model="state.slug"
-              class="w-full"
-              size="xl"
-              :ui="{ base: 'font-mono' }"
-              @input="slugManuallyEdited = true"
-            />
-          </UFormField>
-
-          <UFormField label="Description" name="description" class="not-last:pb-4">
-            <UTextarea v-model="state.description" class="w-full" size="xl" :rows="3" placeholder="Optional — shown on the event page" />
-          </UFormField>
-
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UFormField label="Event type" name="eventType">
-              <UInput v-model="state.eventType" class="w-full" size="xl" placeholder="e.g. market, festival, popup" />
-            </UFormField>
-
-            <UFormField label="Status" name="status">
-              <USelect v-model="state.status" :items="statusOptions" class="w-full" size="xl" />
-            </UFormField>
-          </div>
-        </section>
-
-        <!-- Schedule -->
-        <section class="flex flex-col gap-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-muted">Schedule</p>
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <UFormField label="Start date" name="startDate">
-              <CroutonCalendar v-model:date="state.startDate" />
-            </UFormField>
-            <UFormField label="End date" name="endDate">
-              <CroutonCalendar v-model:date="state.endDate" />
-            </UFormField>
-          </div>
-        </section>
-
-        <!-- Access & options -->
-        <section class="flex flex-col gap-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-muted">Access &amp; options</p>
-
-          <UFormField label="Helper PIN" name="helperPin" help="Digits only, max 6 — staff use this to log into the POS" class="not-last:pb-4">
-            <UInput
-              v-model="state.helperPin"
-              class="w-full"
-              size="xl"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength="6"
-              placeholder="e.g. 1234"
-              :ui="{ base: 'font-mono tracking-widest' }"
-              @input="(e: any) => { state.helperPin = (e.target.value || '').replace(/\D/g, '').slice(0, 6) }"
-            />
-          </UFormField>
-
-          <UFormField name="isCurrent" class="not-last:pb-4">
-            <UCheckbox v-model="state.isCurrent" label="Make this the current event" />
-          </UFormField>
-
-          <UFormField name="requiresClient" class="not-last:pb-4">
-            <UCheckbox
-              v-model="state.requiresClient"
-              label="Require a client on every order"
-            />
-          </UFormField>
-        </section>
+      <div class="flex flex-col gap-4 p-1">
+        <UFormField :label="t('sales.events.fields.title', 'Event Name')" name="title" class="not-last:pb-4">
+          <UInput v-model="state.title" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.slug', 'URL Slug')" name="slug" class="not-last:pb-4">
+          <UInput v-model="state.slug" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.description', 'Description')" name="description" class="not-last:pb-4">
+          <UTextarea v-model="state.description" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.eventType', 'Event Type')" name="eventType" class="not-last:pb-4">
+          <UInput v-model="state.eventType" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.startDate', 'Start Date')" name="startDate" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.startDate" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.endDate', 'End Date')" name="endDate" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.endDate" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.status', 'Status')" name="status" class="not-last:pb-4">
+          <UInput v-model="state.status" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.isCurrent', 'Current Event')" name="isCurrent" class="not-last:pb-4">
+          <UCheckbox v-model="state.isCurrent" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.requiresClient', 'Requires Client')" name="requiresClient" class="not-last:pb-4">
+          <UCheckbox v-model="state.requiresClient" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.helperPin', 'Helper PIN')" name="helperPin" class="not-last:pb-4">
+          <UInput v-model="state.helperPin" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.metadata', 'Metadata')" name="metadata" class="not-last:pb-4">
+          <UTextarea
+            :model-value="typeof state.metadata === 'string' ? state.metadata : JSON.stringify(state.metadata, null, 2)"
+            @update:model-value="(val) => { try { state.metadata = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
+            class="w-full font-mono text-sm"
+            :rows="8"
+            placeholder="Enter JSON object"
+          />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.archivedAt', 'Archived At')" name="archivedAt" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.archivedAt" />
+        </UFormField>
       </div>
       </template>
 
@@ -142,27 +104,11 @@ import useSalesEvents from '../composables/useSalesEvents'
 const props = defineProps<SalesEventFormProps>()
 const { defaultValue, schema, collection } = useSalesEvents()
 
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
+
 // Form layout configuration
 const tabs = ref(false)
-
-// Status is a fixed set of states (matches Card.vue statusColor() rendering)
-const statusOptions = [
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Active', value: 'active' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' }
-]
-
-// Slug helpers — auto-derive from the event name until the user edits it manually
-const slugManuallyEdited = ref(false)
-function slugify(value: string): string {
-  return (value || '')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '') // strip accents
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
 
 
 
@@ -191,18 +137,6 @@ if (props.action === 'update' && props.activeItem?.id) {
 }
 
 const state = ref<SalesEventFormData & { id?: string | null }>(initialValues)
-
-// When editing, the slug already exists — never auto-overwrite it
-if (props.action === 'update') {
-  slugManuallyEdited.value = true
-}
-
-// Auto-derive slug from the event name until the user types their own
-watch(() => state.value.title, (title) => {
-  if (!slugManuallyEdited.value) {
-    state.value.slug = slugify(title || '')
-  }
-})
 
 const handleSubmit = async () => {
   try {

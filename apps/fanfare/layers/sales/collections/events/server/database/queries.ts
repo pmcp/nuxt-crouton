@@ -1,18 +1,24 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesEvent, NewSalesEvent } from '../../types'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesEvents(teamId: string) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesEvents(teamId: string, opts: { limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesEvents(teamId: string, opts?: {}): Promise<any[]>
+export async function getAllSalesEvents(teamId: string, opts: { limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesEvents.teamId, teamId)]
+  const whereExpr = and(...conditions)
 
-  const events = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesEvents,
       ownerUser: {
@@ -38,8 +44,14 @@ export async function getAllSalesEvents(teamId: string) {
     .leftJoin(ownerUser, eq(tables.salesEvents.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesEvents.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesEvents.updatedBy, updatedByUser.id))
-    .where(eq(tables.salesEvents.teamId, teamId))
+    .where(whereExpr)
     .orderBy(desc(tables.salesEvents.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const events = await listQuery
 
   // Post-query processing for JSON fields (repeater/json types)
   events.forEach((item: any) => {
@@ -56,6 +68,14 @@ export async function getAllSalesEvents(teamId: string) {
         item.metadata = null
       }
   })
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesEvents)
+      .where(whereExpr)
+    return { items: events, total: Number(countRow?.count ?? 0) }
+  }
 
   return events
 }

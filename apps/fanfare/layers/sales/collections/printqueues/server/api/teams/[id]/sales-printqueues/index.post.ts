@@ -9,12 +9,12 @@ const bodySchema = z.object({
   orderId: z.string().min(1, 'orderId is required'),
   printerId: z.string().min(1, 'printerId is required'),
   locationId: z.string().optional(),
-  status: z.number(),
+  status: z.string().min(1, 'status is required'),
   printData: z.string().min(1, 'printData is required'),
   printMode: z.string().optional(),
   errorMessage: z.string().optional(),
-  retryCount: z.number().optional(),
-  completedAt: z.date().optional()
+  retryCount: z.string().optional(),
+  completedAt: z.string().optional()
 }).strip()
 
 export default defineEventHandler(async (event) => {
@@ -26,8 +26,8 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, bodySchema.parse)
 
-  // Exclude id field to let the database generate it
-  const { id, ...dataWithoutId } = body
+  // body is the validated payload (id is not part of the schema) — the database generates the id
+  const dataWithoutId = body
 
   const dbTimer = timing.start('db')
   const result = await createSalesPrintqueue({

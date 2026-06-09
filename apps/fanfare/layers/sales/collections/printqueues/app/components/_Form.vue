@@ -2,7 +2,7 @@
   @crouton-generated
   @collection printqueues
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for printqueues collection
@@ -40,50 +40,50 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="EventId" name="eventId" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.eventId', 'Event')" name="eventId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.eventId"
             collection="salesEvents"
-            label="EventId"
+            :label="t('sales.printqueues.fields.eventId', 'Event')"
           />
         </UFormField>
-        <UFormField label="OrderId" name="orderId" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.orderId', 'Order')" name="orderId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.orderId"
             collection="salesOrders"
-            label="OrderId"
+            :label="t('sales.printqueues.fields.orderId', 'Order')"
           />
         </UFormField>
-        <UFormField label="PrinterId" name="printerId" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.printerId', 'Printer')" name="printerId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.printerId"
             collection="salesPrinters"
-            label="PrinterId"
+            :label="t('sales.printqueues.fields.printerId', 'Printer')"
           />
         </UFormField>
-        <UFormField label="LocationId" name="locationId" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.locationId', 'Location')" name="locationId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.locationId"
             collection="salesLocations"
-            label="LocationId"
+            :label="t('sales.printqueues.fields.locationId', 'Location')"
           />
         </UFormField>
-        <UFormField label="Status" name="status" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.status', 'Status')" name="status" class="not-last:pb-4">
           <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="PrintData" name="printData" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.printData', 'Print Data')" name="printData" class="not-last:pb-4">
           <UTextarea v-model="state.printData" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="PrintMode" name="printMode" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.printMode', 'Print Mode')" name="printMode" class="not-last:pb-4">
           <UInput v-model="state.printMode" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="ErrorMessage" name="errorMessage" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.errorMessage', 'Error Message')" name="errorMessage" class="not-last:pb-4">
           <UTextarea v-model="state.errorMessage" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="RetryCount" name="retryCount" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.retryCount', 'Retry Count')" name="retryCount" class="not-last:pb-4">
           <UInput v-model="state.retryCount" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="CompletedAt" name="completedAt" class="not-last:pb-4">
+        <UFormField :label="t('sales.printqueues.fields.completedAt', 'Completed At')" name="completedAt" class="not-last:pb-4">
           <UInput v-model="state.completedAt" class="w-full" size="xl" />
         </UFormField>
       </div>
@@ -107,6 +107,9 @@ import useSalesPrintqueues from '../composables/useSalesPrintqueues'
 
 const props = defineProps<SalesPrintqueueFormProps>()
 const { defaultValue, schema, collection } = useSalesPrintqueues()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)

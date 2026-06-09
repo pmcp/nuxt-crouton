@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection events
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Main interface: SalesEvent
  * - Form data type: SalesEventFormData
  * - New item type: NewSalesEvent
  * - Form props: SalesEventFormProps
- * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, helperPin, metadata, archivedAt
+ * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -48,7 +48,9 @@ export interface SalesEvent {
 }
 
 export type SalesEventFormData = z.infer<typeof salesEventSchema>
-export type NewSalesEvent = Omit<SalesEvent, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>
+// New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
+// generated POST endpoint provides them; other callers (e.g. seed) may omit them.
+export type NewSalesEvent = Omit<SalesEvent, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesEventFormProps {

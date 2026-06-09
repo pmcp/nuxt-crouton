@@ -2,7 +2,7 @@
   @crouton-generated
   @collection eventsettings
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for eventsettings collection
@@ -40,20 +40,20 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="EventId" name="eventId" class="not-last:pb-4">
+        <UFormField :label="t('sales.eventsettings.fields.eventId', 'Event')" name="eventId" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.eventId"
             collection="salesEvents"
-            label="EventId"
+            :label="t('sales.eventsettings.fields.eventId', 'Event')"
           />
         </UFormField>
-        <UFormField label="SettingKey" name="settingKey" class="not-last:pb-4">
+        <UFormField :label="t('sales.eventsettings.fields.settingKey', 'Setting Key')" name="settingKey" class="not-last:pb-4">
           <UInput v-model="state.settingKey" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="SettingValue" name="settingValue" class="not-last:pb-4">
+        <UFormField :label="t('sales.eventsettings.fields.settingValue', 'Setting Value')" name="settingValue" class="not-last:pb-4">
           <UTextarea v-model="state.settingValue" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Description" name="description" class="not-last:pb-4">
+        <UFormField :label="t('sales.eventsettings.fields.description', 'Description')" name="description" class="not-last:pb-4">
           <UTextarea v-model="state.description" class="w-full" size="xl" />
         </UFormField>
       </div>
@@ -77,6 +77,9 @@ import useSalesEventsettings from '../composables/useSalesEventsettings'
 
 const props = defineProps<SalesEventsettingFormProps>()
 const { defaultValue, schema, collection } = useSalesEventsettings()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)

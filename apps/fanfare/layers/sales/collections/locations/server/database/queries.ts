@@ -1,19 +1,26 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesLocation, NewSalesLocation } from '../../types'
 import * as eventsSchema from '../../../events/server/database/schema'
 import { user } from '~~/server/db/schema'
 
-export async function getAllSalesLocations(teamId: string, filters?: { eventId?: string }) {
+// Overload order matters: the paginated signature (required `limit`) must come
+// first so non-paginated calls fall through to the array overload.
+export async function getAllSalesLocations(teamId: string, opts: { eventId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesLocations(teamId: string, opts?: { eventId?: string }): Promise<any[]>
+export async function getAllSalesLocations(teamId: string, opts: { eventId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
   const createdByUser = alias(user as any, 'createdByUser')
   const updatedByUser = alias(user as any, 'updatedByUser')
+  const conditions = [eq(tables.salesLocations.teamId, teamId)]
+  if (opts.eventId) conditions.push(eq(tables.salesLocations.eventId, opts.eventId))
+  const whereExpr = and(...conditions)
 
-  const locations = await (db as any)
+  let listQuery = (db as any)
     .select({
       ...tables.salesLocations,
       eventIdData: eventsSchema.salesEvents,
@@ -41,11 +48,22 @@ export async function getAllSalesLocations(teamId: string, filters?: { eventId?:
     .leftJoin(ownerUser, eq(tables.salesLocations.owner, ownerUser.id))
     .leftJoin(createdByUser, eq(tables.salesLocations.createdBy, createdByUser.id))
     .leftJoin(updatedByUser, eq(tables.salesLocations.updatedBy, updatedByUser.id))
-    .where(and(
-      eq(tables.salesLocations.teamId, teamId),
-      ...(filters?.eventId ? [eq(tables.salesLocations.eventId, filters.eventId)] : [])
-    ))
+    .where(whereExpr)
     .orderBy(desc(tables.salesLocations.createdAt))
+
+  if (opts.limit != null) {
+    listQuery = listQuery.limit(opts.limit).offset(opts.offset ?? 0)
+  }
+
+  const locations = await listQuery
+
+  if (opts.limit != null) {
+    const [countRow] = await (db as any)
+      .select({ count: sql`count(*)` })
+      .from(tables.salesLocations)
+      .where(whereExpr)
+    return { items: locations, total: Number(countRow?.count ?? 0) }
+  }
 
   return locations
 }

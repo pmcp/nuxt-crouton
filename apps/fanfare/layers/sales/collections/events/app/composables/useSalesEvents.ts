@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection events
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesEvents
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-events
  * - Form component: SalesEventsForm
  * - List component: SalesEventsList
- * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, helperPin, metadata, archivedAt
+ * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -37,7 +37,7 @@ export const salesEventSchema = z.object({
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).nullish(),
   archivedAt: z.coerce.date().optional()
 })
 
@@ -70,9 +70,9 @@ const _salesEventsConfig = {
     eventType: '',
     startDate: null,
     endDate: null,
-    status: 'upcoming',
+    status: '',
     isCurrent: false,
-    requiresClient: true,
+    requiresClient: false,
     helperPin: '',
     metadata: {},
     archivedAt: null

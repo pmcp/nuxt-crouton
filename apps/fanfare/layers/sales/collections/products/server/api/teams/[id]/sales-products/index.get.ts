@@ -20,7 +20,16 @@ export default defineEventHandler(async (event) => {
     return result
   }
 
-  const result = await getAllSalesProducts(team.id, { eventId: query.eventId ? String(query.eventId) : undefined })
+  // Opt-in pagination: ?page=1&pageSize=10 → { items, total, page, pageSize }
+  if (query.page !== undefined) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const pageSize = Math.min(100, Math.max(1, Number(query.pageSize) || 10))
+    const { items, total } = await getAllSalesProducts(team.id, { eventId: query.eventId ? String(query.eventId) : undefined, categoryId: query.categoryId ? String(query.categoryId) : undefined, locationId: query.locationId ? String(query.locationId) : undefined, limit: pageSize, offset: (page - 1) * pageSize })
+    dbTimer.end()
+    return { items, total, page, pageSize }
+  }
+
+  const result = await getAllSalesProducts(team.id, { eventId: query.eventId ? String(query.eventId) : undefined, categoryId: query.categoryId ? String(query.categoryId) : undefined, locationId: query.locationId ? String(query.locationId) : undefined })
   dbTimer.end()
   return result
 })

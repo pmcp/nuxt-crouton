@@ -2,14 +2,14 @@
   @crouton-generated
   @collection events
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - List component for events collection
   - Collection name: salesEvents
   - API endpoint: /api/teams/[id]/sales-events
   - Columns composable: useSalesEvents()
-  - Column fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, helperPin, metadata, archivedAt
+  - Column fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -35,14 +35,6 @@
         :collection="'salesEvents'"
         createButton
       />
-    </template>
-    <template #title-cell="{ row }">
-      <NuxtLink
-        :to="`/admin/${route.params.team}/sales/events/${row.original.slug}`"
-        class="font-medium hover:underline text-primary"
-      >
-        {{ row.original.title }}
-      </NuxtLink>
     </template>
     <template #startDate-cell="{ row }">
       <CroutonDate :date="row.original.startDate"></CroutonDate>
@@ -71,7 +63,6 @@ const props = withDefaults(defineProps<{
   layout: 'table'
 })
 
-const route = useRoute()
 const { columns } = useSalesEvents()
 
 const { items: events, pending } = await useCollectionQuery(

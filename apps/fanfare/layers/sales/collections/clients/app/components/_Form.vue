@@ -2,7 +2,7 @@
   @crouton-generated
   @collection clients
   @layer sales
-  @generated 2026-05-19
+  @generated 2026-06-09
 
   ## AI Context
   - Form component for clients collection
@@ -40,10 +40,10 @@
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Title" name="title" class="not-last:pb-4">
+        <UFormField :label="t('sales.clients.fields.title', 'Client Name')" name="title" class="not-last:pb-4">
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="IsReusable" name="isReusable" class="not-last:pb-4">
+        <UFormField :label="t('sales.clients.fields.isReusable', 'Reusable')" name="isReusable" class="not-last:pb-4">
           <UCheckbox v-model="state.isReusable" />
         </UFormField>
       </div>
@@ -67,6 +67,9 @@ import useSalesClients from '../composables/useSalesClients'
 
 const props = defineProps<SalesClientFormProps>()
 const { defaultValue, schema, collection } = useSalesClients()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)

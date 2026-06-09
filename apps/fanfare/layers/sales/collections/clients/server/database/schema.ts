@@ -26,8 +26,6 @@ export const salesClients = sqliteTable('sales_clients', {
 
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
-
-  order: integer('order').notNull().$default(() => 0),
   title: text('title').notNull(),
   isReusable: integer('isReusable', { mode: 'boolean' }).$default(() => true),
 

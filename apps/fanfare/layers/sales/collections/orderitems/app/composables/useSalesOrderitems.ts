@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection orderitems
  * @layer sales
- * @generated 2026-05-19
+ * @generated 2026-06-09
  *
  * ## AI Context
  * - Composable: useSalesOrderitems
@@ -33,7 +33,7 @@ export const salesOrderitemSchema = z.object({
   unitPrice: z.number(),
   totalPrice: z.number(),
   remarks: z.string().optional(),
-  selectedOptions: z.record(z.string(), z.any()).optional()
+  selectedOptions: z.record(z.string(), z.any()).nullish()
 })
 
 export const salesOrderitemsColumns = [
@@ -78,7 +78,7 @@ const _salesOrderitemsConfig = {
       },
       {
           "name": "quantity",
-          "type": "integer",
+          "type": "number",
           "label": "Quantity",
           "area": "main"
       },
