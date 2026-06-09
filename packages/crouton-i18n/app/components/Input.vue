@@ -80,6 +80,7 @@ const {
   secondaryEditingLocale,
   allLocaleOptions,
   isSameLocale,
+  isSingleLocale,
   showDualColumns,
   narrowLocaleTab,
   narrowLocaleTabs,
@@ -184,8 +185,9 @@ function previewText(field: string, locale: string): string {
     <template v-if="layoutMode === 'side-by-side' && isMultiField">
       <!-- NARROW: Tab-based locale switching (< lg screens) -->
       <div class="lg:hidden flex flex-col h-full min-h-0">
-        <!-- Locale tabs -->
+        <!-- Locale tabs — hidden for single-locale apps -->
         <UTabs
+          v-if="!isSingleLocale"
           v-model="narrowLocaleTab"
           :items="narrowLocaleTabs"
           :content="false"
@@ -423,27 +425,30 @@ function previewText(field: string, locale: string): string {
           <div class="flex-1 min-w-0">
             <slot name="header" />
           </div>
-          <UButton
-            :variant="!showDualColumns ? 'solid' : 'ghost'"
-            color="neutral"
-            icon="i-lucide-square"
-            size="xs"
-            @click="showDualColumns = false"
-          />
-          <UButton
-            :variant="showDualColumns ? 'solid' : 'ghost'"
-            color="neutral"
-            icon="i-lucide-columns-2"
-            size="xs"
-            @click="showDualColumns = true"
-          />
+          <!-- Single/dual column toggle — irrelevant for single-locale apps -->
+          <template v-if="!isSingleLocale">
+            <UButton
+              :variant="!showDualColumns ? 'solid' : 'ghost'"
+              color="neutral"
+              icon="i-lucide-square"
+              size="xs"
+              @click="showDualColumns = false"
+            />
+            <UButton
+              :variant="showDualColumns ? 'solid' : 'ghost'"
+              color="neutral"
+              icon="i-lucide-columns-2"
+              size="xs"
+              @click="showDualColumns = true"
+            />
+          </template>
         </div>
 
         <div :class="['grid gap-6 flex-1 min-h-0', showDualColumns ? 'grid-cols-2' : 'grid-cols-1']">
         <!-- LEFT COLUMN: Primary locale (selectable) -->
         <div class="flex flex-col min-h-0">
-          <!-- Column header with locale tabs -->
-          <div class="flex items-center justify-between mb-3">
+          <!-- Column header with locale tabs — hidden for single-locale apps -->
+          <div v-if="!isSingleLocale" class="flex items-center justify-between mb-3">
             <UFieldGroup class="w-full">
               <UButton
                 v-for="loc in allLocaleOptions"

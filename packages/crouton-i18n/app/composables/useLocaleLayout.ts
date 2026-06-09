@@ -42,8 +42,17 @@ export function useLocaleLayout(
   // Detect when both panels show the same language
   const isSameLocale = computed(() => primaryEditingLocale.value === secondaryEditingLocale.value)
 
-  // User-togglable column count for side-by-side mode
-  const showDualColumns = ref(true)
+  // Single-locale apps (e.g. nl-only) have no second language to compare/translate —
+  // no locale tabs, no dual columns, just one editor.
+  const isSingleLocale = computed(() => allLocaleCodes.value.length <= 1)
+
+  // User-togglable column count for side-by-side mode.
+  // Forced off for single-locale apps (a second column would duplicate the same locale).
+  const _showDualColumns = ref(true)
+  const showDualColumns = computed<boolean>({
+    get: () => !isSingleLocale.value && _showDualColumns.value,
+    set: (v: boolean) => { _showDualColumns.value = v },
+  })
 
   // Narrow-screen tab tracking (shows ALL locales)
   const narrowLocaleTab = ref(primaryEditingLocale.value)
@@ -87,6 +96,7 @@ export function useLocaleLayout(
     secondaryEditingLocale,
     allLocaleOptions,
     isSameLocale,
+    isSingleLocale,
     showDualColumns,
     narrowLocaleTab,
     narrowLocaleTabs,
