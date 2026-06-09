@@ -43,25 +43,25 @@ exports[`generateFormComponent > all field types > generates form for all field 
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Title" name="title" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.title', 'Title')" name="title" class="not-last:pb-4">
           <UInput v-model="state.title" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Content" name="content" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.content', 'Content')" name="content" class="not-last:pb-4">
           <UTextarea v-model="state.content" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Count" name="count" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.count', 'Count')" name="count" class="not-last:pb-4">
           <UInputNumber v-model="state.count" class="w-full" />
         </UFormField>
-        <UFormField label="Price" name="price" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.price', 'Price')" name="price" class="not-last:pb-4">
           <UInputNumber v-model="state.price" class="w-full" />
         </UFormField>
-        <UFormField label="Enabled" name="enabled" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.enabled', 'Enabled')" name="enabled" class="not-last:pb-4">
           <UCheckbox v-model="state.enabled" />
         </UFormField>
-        <UFormField label="PublishedAt" name="publishedAt" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.publishedAt', 'Published At')" name="publishedAt" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
-        <UFormField label="Metadata" name="metadata" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.metadata', 'Metadata')" name="metadata" class="not-last:pb-4">
           <UTextarea
             :model-value="typeof state.metadata === 'string' ? state.metadata : JSON.stringify(state.metadata, null, 2)"
             @update:model-value="(val) => { try { state.metadata = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
@@ -70,7 +70,7 @@ exports[`generateFormComponent > all field types > generates form for all field 
             placeholder="Enter JSON object"
           />
         </UFormField>
-        <UFormField label="Items" name="items" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.items', 'Items')" name="items" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.items"
             component-name="ShopProductsItemInput"
@@ -78,7 +78,7 @@ exports[`generateFormComponent > all field types > generates form for all field 
             :sortable="true"
           />
         </UFormField>
-        <UFormField label="Tags" name="tags" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.tags', 'Tags')" name="tags" class="not-last:pb-4">
           <UTextarea
             :model-value="Array.isArray(state.tags) ? state.tags.join('\\n') : ''"
             @update:model-value="(val) => state.tags = val ? val.split('\\n').filter(Boolean) : []"
@@ -109,6 +109,9 @@ import useShopProducts from '../composables/useShopProducts'
 
 const props = defineProps<ShopProductFormProps>()
 const { defaultValue, schema, collection } = useShopProducts()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)
@@ -205,16 +208,16 @@ exports[`generateFormComponent > generates correct output for basic collection 1
     <CroutonFormLayout>
       <template #main>
       <div class="flex flex-col gap-4 p-1">
-        <UFormField label="Name" name="name" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.name', 'Name')" name="name" class="not-last:pb-4">
           <UInput v-model="state.name" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Description" name="description" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.description', 'Description')" name="description" class="not-last:pb-4">
           <UTextarea v-model="state.description" class="w-full" size="xl" />
         </UFormField>
-        <UFormField label="Price" name="price" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.price', 'Price')" name="price" class="not-last:pb-4">
           <UInputNumber v-model="state.price" class="w-full" />
         </UFormField>
-        <UFormField label="Active" name="active" class="not-last:pb-4">
+        <UFormField :label="t('shop.products.fields.active', 'Active')" name="active" class="not-last:pb-4">
           <UCheckbox v-model="state.active" />
         </UFormField>
       </div>
@@ -238,6 +241,9 @@ import useShopProducts from '../composables/useShopProducts'
 
 const props = defineProps<ShopProductFormProps>()
 const { defaultValue, schema, collection } = useShopProducts()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 const tabs = ref(false)

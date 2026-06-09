@@ -337,6 +337,26 @@ Repeater fields can support per-item translations using `translatableProperties`
 
 ¹ When `meta.properties` is defined, generates typed item schema (see Translatable Repeater Fields)
 
+## i18n Field Labels
+
+Generated `Form.vue` field labels resolve through `useT()` instead of hardcoded strings, so
+they can be translated (and team-overridden) like the rest of the app. Each `UFormField`
+emits:
+
+```vue
+<UFormField :label="t('{layer}.{plural}.fields.{fieldName}', '{Humanized Fallback}')" ... >
+```
+
+- **Key convention:** `{layer}.{plural}.fields.{fieldName}` (e.g. `sales.orders.fields.clientName`)
+- **Fallback:** the 2nd `t()` arg is a humanized field name (`eventOrderNumber` → `Event Order Number`),
+  or `meta.label` when set — so untranslated keys still render readable text, never `[key]`.
+- `const { t } = useT()` is added to the generated `<script setup>`.
+- Static "Parent" (hierarchy) and "Translations" labels use `crouton.form.parent` / `crouton.form.translations`.
+
+**To translate:** add the `{layer}.{plural}.fields.*` keys to your layer/package locale JSON
+(e.g. `i18n/locales/{en,nl,fr}.json`) registered via `i18n.langDir`. No DB seeding required —
+vue-i18n merges them at build time; seed into `translations_ui` only if you want admin overrides.
+
 ## Generated Output
 
 ```

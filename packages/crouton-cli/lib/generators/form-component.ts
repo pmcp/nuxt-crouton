@@ -56,6 +56,20 @@ function humanizeGroupName(groupName: string | null): string {
     .trim()
 }
 
+// Helper: Convert a camelCase field name to a human-readable fallback label
+// e.g., 'eventOrderNumber' → 'Event Order Number'
+function humanizeFieldName(fieldName: string): string {
+  return fieldName
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim()
+}
+
+// Helper: Escape single quotes/backslashes for embedding a string in a single-quoted JS literal
+function escapeLabel(value: unknown): string {
+  return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+}
+
 // Helper: Convert snake_case or kebab-case to human-readable label
 // e.g., 'booking_created' → 'Booking Created'
 function formatOptionLabel(value: unknown): string {
@@ -136,6 +150,16 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
     return componentName
   }
 
+  // ── i18n field labels ──────────────────────────────────────────────────────
+  // Field labels resolve through useT() so they can be translated/overridden per
+  // team, with a humanized fallback so untranslated keys still render readable text.
+  // Key convention: `{layer}.{plural}.fields.{fieldName}` (seed these in your locales).
+  const fieldsI18nPrefix = `${layer}.${plural}.fields`
+  const labelAttr = (field, fallbackOverride?: string): string => {
+    const fallback = fallbackOverride ?? field.meta?.label ?? humanizeFieldName(field.name)
+    return `:label="t('${fieldsI18nPrefix}.${field.name}', '${escapeLabel(fallback)}')"`
+  }
+
   const generateFieldMarkup = (field) => {
     // ── Contribution override takes priority ─────────────────────────────
     const override = formEnhancements.fieldOverrides?.[field.name]
@@ -149,7 +173,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
     // Check if a custom component is specified in meta
     if (field.meta?.component) {
       const componentName = resolveComponentName(field.meta.component)
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <${componentName} v-model="state.${field.name}" />
         </UFormField>`
     }
@@ -167,7 +191,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
       // Determine dependent label (capitalize first letter)
       const dependentLabel = dependsOn.charAt(0).toUpperCase() + dependsOn.slice(1)
 
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonFormDependentFieldLoader
             v-model="state.${field.name}"
             :dependent-value="state.${dependsOn}"
@@ -181,7 +205,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
     // Check if this is a static options select field (inline meta.options array)
     if (field.meta?.displayAs === 'optionsSelect' && Array.isArray(field.meta?.options) && !field.meta?.optionsCollection) {
       const label = field.meta.label || fieldName
-      return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <USelect
             v-model="state.${field.name}"
             :items="${field.name}Options"
@@ -211,12 +235,12 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         resolvedOptionsCollection = `${layerCamelCase}${refCases.pascalCasePlural}`
       }
 
-      return `        <UFormField label="${label}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonFormOptionsSelect
             v-model="state.${field.name}"
             options-collection="${resolvedOptionsCollection}"
             options-field="${optionsField}"
-            label="${label}"${!creatable
+            ${labelAttr(field)}${!creatable
               ? `
             :creatable="false"`
               : ''}
@@ -241,7 +265,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
 
       // Check if this is a read-only reference field
       if (field.meta?.readOnly) {
-        return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+        return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonItemCardMini
             v-if="state.${field.name}"
             :id="state.${field.name}"
@@ -259,28 +283,28 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
 
       // Check if this is an array type (multi-select reference)
       if (field.type === 'array') {
-        return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+        return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
-            label="${fieldName}"${labelKeyAttr}
+            ${labelAttr(field)}${labelKeyAttr}
             multiple
           />
         </UFormField>`
       }
 
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonFormReferenceSelect
             v-model="state.${field.name}"
             collection="${resolvedCollection}"
-            label="${fieldName}"${labelKeyAttr}
+            ${labelAttr(field)}${labelKeyAttr}
           />
         </UFormField>`
     }
 
     // Image field type — base fallback uses CroutonImageUpload (crouton-assets contribution overrides with CroutonAssetsPicker)
     if (field.type === 'image') {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonImageUpload
             v-model="state.${field.name}"
             :crop="true"
@@ -290,7 +314,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
 
     // File field type — base fallback uses CroutonImageUpload
     if (field.type === 'file') {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonImageUpload
             v-model="state.${field.name}"
           />
@@ -299,20 +323,20 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
 
     // Default component selection based on field type
     if (field.type === 'text') {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UTextarea v-model="state.${field.name}" class="w-full" size="xl" />
         </UFormField>`
     } else if (field.type === 'boolean') {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UCheckbox v-model="state.${field.name}" />
         </UFormField>`
     } else if (field.type === 'number' || field.type === 'decimal') {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UInputNumber v-model="state.${field.name}" class="w-full" />
         </UFormField>`
     } else if (field.type === 'date') {
       const pickerProp = field.meta?.picker ? ' picker' : ''
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonCalendar v-model:date="state.${field.name}"${pickerProp} />
         </UFormField>`
     } else if (field.type === 'repeater') {
@@ -322,7 +346,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
       const addLabel = field.meta?.addLabel || 'Add Item'
       const sortable = field.meta?.sortable !== false // Default to true
 
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <CroutonFormRepeater
             v-model="state.${field.name}"
             component-name="${componentName}"
@@ -332,7 +356,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         </UFormField>`
     } else if (field.type === 'json') {
       // JSON field - use textarea with JSON serialization
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UTextarea
             :model-value="typeof state.${field.name} === 'string' ? state.${field.name} : JSON.stringify(state.${field.name}, null, 2)"
             @update:model-value="(val) => { try { state.${field.name} = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
@@ -343,7 +367,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
         </UFormField>`
     } else if (field.type === 'array' && !field.refTarget) {
       // Array field without refTarget - use textarea with array handling
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UTextarea
             :model-value="Array.isArray(state.${field.name}) ? state.${field.name}.join('\\n') : ''"
             @update:model-value="(val) => state.${field.name} = val ? val.split('\\n').filter(Boolean) : []"
@@ -354,7 +378,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
           <p class="text-sm text-gray-500 mt-1">Enter one value per line</p>
         </UFormField>`
     } else {
-      return `        <UFormField label="${fieldName}" name="${field.name}" class="not-last:pb-4">
+      return `        <UFormField ${labelAttr(field)} name="${field.name}" class="not-last:pb-4">
           <UInput v-model="state.${field.name}" class="w-full" size="xl" />
         </UFormField>`
     }
@@ -364,12 +388,12 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
   // This uses CroutonFormParentSelect which excludes self and descendants
   const parentPickerSection = hasHierarchy
     ? `
-        <UFormField label="Parent" name="${parentField}" class="not-last:pb-4">
+        <UFormField :label="t('crouton.form.parent', 'Parent')" name="${parentField}" class="not-last:pb-4">
           <CroutonFormParentSelect
             v-model="state.${parentField}"
             collection="${layerCamelCase}${pascalCasePlural}"
             :current-id="state.id"
-            label="Parent"
+            :label="t('crouton.form.parent', 'Parent')"
           />
         </UFormField>`
     : ''
@@ -466,7 +490,7 @@ export function generateFormComponent(data: Record<string, any>, config: Record<
           : ''}
         show-ai-translate
         field-type="${plural}"
-        label="Translations"
+        :label="t('crouton.form.translations', 'Translations')"
       />`
     : ''
 
@@ -652,6 +676,9 @@ import use${prefixedPascalCasePlural} from '../composables/use${prefixedPascalCa
 
 const props = defineProps<${prefixedPascalCase}FormProps>()
 const { defaultValue, schema, collection } = use${prefixedPascalCasePlural}()
+
+// Field labels resolve through translations (team override → system → fallback)
+const { t } = useT()
 
 // Form layout configuration
 ${navigationItemsCode}
