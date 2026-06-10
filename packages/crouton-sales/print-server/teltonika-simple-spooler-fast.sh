@@ -17,6 +17,9 @@
 #   has no `base64` applet. awk on BusyBox is byte-safe, so 8-bit ESC/POS
 #   (incl. CP858 high bytes) survives.
 # - Uses `nc IP PORT` (the minimal nc form) — compatible with RutOS BusyBox nc.
+# - A job is only marked complete after the printer confirms it is online with
+#   paper present (ESC/POS DLE EOT status queries appended to the payload).
+#   Set STATUS_CHECK=0 for the legacy "TCP send = done" behavior.
 
 # Configuration - can be overridden with environment variables
 API_URL="${API_URL:-http://192.168.1.214:3000}"
@@ -24,6 +27,15 @@ API_KEY="${API_KEY:-1234}"
 EVENT_ID="${EVENT_ID:-CHANGE_ME}"
 PRINTER_PORT="9100"
 PROCESSED="/tmp/processed_ids.txt"
+# STATUS_CHECK=1 (default): after sending the ticket, query the printer with
+# ESC/POS DLE EOT and only mark the job complete when the printer answers
+# "online, paper present". STATUS_CHECK=0 restores the legacy fire-and-forget
+# behavior (complete as soon as the TCP send succeeds) for printers that don't
+# answer DLE EOT.
+STATUS_CHECK="${STATUS_CHECK:-1}"
+# Seconds to hold the socket open after sending — lets the printer drain its
+# receive buffer and answer the status queries on the same connection.
+DRAIN_SECS="${DRAIN_SECS:-2}"
 
 # Add Google DNS if not present
 grep -q "8.8.8.8" /etc/resolv.conf || echo "nameserver 8.8.8.8" >> /etc/resolv.conf
@@ -57,6 +69,37 @@ decode_base64() {
     }'
 }
 
+# Print the decimal value of the first bytes of a file, one per line (max 2).
+# Used to parse DLE EOT status responses — minimal BusyBox has no od/hexdump
+# guarantee, but awk is byte-safe on RutOS (same trick as decode_base64).
+# Status bytes are never 0x00 or 0x0A (fixed bit 1 is always set), so awk's
+# line handling can't eat them.
+read_status_bytes() {
+    awk 'BEGIN { for (i = 1; i < 256; i++) ord[sprintf("%c", i)] = i }
+    n < 2 {
+        for (j = 1; j <= length($0) && n < 2; j++) { print ord[substr($0, j, 1)]; n++ }
+    }' "$1"
+}
+
+# Callbacks are synchronous — the outer process_job is already backgrounded;
+# backgrounding again here lets procd reap the curl before it lands, leaving
+# the job stuck at status=printing.
+report_complete() {
+    curl -s -m 3 -X POST \
+        -H "x-api-key: $API_KEY" \
+        -H "Content-Type: application/json" \
+        "$API_URL/api/print-server/jobs/$1/complete" >/dev/null 2>&1
+}
+
+# $2 = errorMessage (must not contain double quotes)
+report_fail() {
+    curl -s -m 3 -X POST \
+        -H "x-api-key: $API_KEY" \
+        -H "Content-Type: application/json" \
+        -d "{\"errorMessage\":\"$2\"}" \
+        "$API_URL/api/print-server/jobs/$1/fail" >/dev/null 2>&1
+}
+
 # Process jobs in parallel
 process_job() {
     JOB_ID="$1"
@@ -64,46 +107,78 @@ process_job() {
     JOB_PRINTER_IP="$3"
 
     TMPFILE="/tmp/print_$JOB_ID.bin"
+    RESPFILE="/tmp/printresp_$JOB_ID.bin"
 
     # Decode print data
     echo "$PRINT_DATA" | decode_base64 > "$TMPFILE"
 
-    if [ -s "$TMPFILE" ]; then
-        # Send to printer (simplified - no reset command for speed)
-        timeout 5 nc $JOB_PRINTER_IP $PRINTER_PORT < "$TMPFILE" 2>/dev/null
+    if [ ! -s "$TMPFILE" ]; then
+        # Decode produced no bytes — report failure so the job doesn't sit at
+        # status=printing forever.
+        echo "$(date '+%H:%M:%S') Job $JOB_ID: empty decode (bad printData)"
+        report_fail "$JOB_ID" "Empty base64 decode"
+        rm -f "$TMPFILE"
+        return
+    fi
+
+    if [ "$STATUS_CHECK" = "1" ]; then
+        # Append two real-time status queries after the ticket payload:
+        #   DLE EOT 1 (printer status: offline bit) + DLE EOT 4 (paper sensor).
+        # The printer answers each with one byte on the same socket. Getting an
+        # answer proves we talked to a live ESC/POS printer; the bits tell us
+        # whether it can actually print (online, paper present). Note these are
+        # processed in real time, so they can't confirm the very last lines hit
+        # paper — but they catch the silent killers: paper out, cover open,
+        # wrong IP, dead printer.
+        printf '\020\004\001\020\004\004' >> "$TMPFILE"
+
+        # The trailing sleep keeps stdin (and thus the socket) open so the
+        # printer can drain its buffer and reply before nc closes — abrupt
+        # close right after send is how tickets used to vanish silently.
+        : > "$RESPFILE"
+        ( cat "$TMPFILE"; sleep "$DRAIN_SECS" ) | timeout 15 nc "$JOB_PRINTER_IP" "$PRINTER_PORT" > "$RESPFILE" 2>/dev/null
+
+        set -- $(read_status_bytes "$RESPFILE")
+        PRINTER_BYTE="${1:-}"
+        PAPER_BYTE="${2:-}"
+
+        if [ -z "$PRINTER_BYTE" ]; then
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: no status response from $JOB_PRINTER_IP"
+            report_fail "$JOB_ID" "No status response from printer (offline, wrong IP, or not an ESC/POS device)"
+        elif [ $(( PRINTER_BYTE & 147 )) -ne 18 ]; then
+            # Every DLE EOT response has fixed bits 0/1/4/7 = 0/1/1/0,
+            # i.e. (byte & 0x93) == 0x12 — anything else is not ESC/POS status.
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: unexpected status byte $PRINTER_BYTE from $JOB_PRINTER_IP"
+            report_fail "$JOB_ID" "Unexpected status response from printer IP - not an ESC/POS printer?"
+        elif [ -n "$PAPER_BYTE" ] && [ $(( PAPER_BYTE & 96 )) -ne 0 ]; then
+            # DLE EOT 4: bits 5+6 set = roll paper end
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: paper out on $JOB_PRINTER_IP"
+            report_fail "$JOB_ID" "Paper out"
+        elif [ $(( PRINTER_BYTE & 8 )) -ne 0 ]; then
+            # DLE EOT 1: bit 3 = offline (cover open, paper end, error, feed button)
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: printer offline ($JOB_PRINTER_IP)"
+            report_fail "$JOB_ID" "Printer offline (cover open, paper out, or error)"
+        else
+            echo "$(date '+%H:%M:%S') Job $JOB_ID printed on $JOB_PRINTER_IP"
+            echo "$JOB_ID" >> "$PROCESSED"
+            report_complete "$JOB_ID"
+        fi
+    else
+        # Legacy fire-and-forget: trust the TCP send (no confirmation the
+        # printer actually printed).
+        timeout 5 nc "$JOB_PRINTER_IP" "$PRINTER_PORT" < "$TMPFILE" 2>/dev/null
 
         if [ $? -eq 0 ]; then
             echo "$(date '+%H:%M:%S') Job $JOB_ID sent to $JOB_PRINTER_IP"
             echo "$JOB_ID" >> "$PROCESSED"
-
-            # Mark as completed (synchronous — the outer process_job is already
-            # backgrounded; backgrounding again here lets procd reap the curl
-            # before it lands, leaving the job stuck at status=printing).
-            curl -s -m 3 -X POST \
-                -H "x-api-key: $API_KEY" \
-                -H "Content-Type: application/json" \
-                "$API_URL/api/print-server/jobs/$JOB_ID/complete" >/dev/null 2>&1
+            report_complete "$JOB_ID"
         else
             echo "$(date '+%H:%M:%S') Job $JOB_ID failed to print"
-            # Mark as failed (synchronous — see note above)
-            curl -s -m 3 -X POST \
-                -H "x-api-key: $API_KEY" \
-                -H "Content-Type: application/json" \
-                -d '{"errorMessage":"Failed to send to printer"}' \
-                "$API_URL/api/print-server/jobs/$JOB_ID/fail" >/dev/null 2>&1
+            report_fail "$JOB_ID" "Failed to send to printer"
         fi
-    else
-        # Decode produced no bytes — report failure so the job doesn't sit at
-        # status=printing forever.
-        echo "$(date '+%H:%M:%S') Job $JOB_ID: empty decode (bad printData)"
-        curl -s -m 3 -X POST \
-            -H "x-api-key: $API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"errorMessage":"Empty base64 decode"}' \
-            "$API_URL/api/print-server/jobs/$JOB_ID/fail" >/dev/null 2>&1
     fi
 
-    rm -f "$TMPFILE"
+    rm -f "$TMPFILE" "$RESPFILE"
 }
 
 while true; do

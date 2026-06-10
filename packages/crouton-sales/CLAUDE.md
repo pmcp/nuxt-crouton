@@ -182,6 +182,8 @@ are `real` (no cast).
 
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
 
+**Print confirmation (feedback loop)**: the spooler appends ESC/POS real-time status queries (`DLE EOT 1` printer status + `DLE EOT 4` paper sensor) to each payload and holds the socket open (`DRAIN_SECS`, default 2s) for the reply. It calls `/complete` only when the printer answers "online, paper present"; otherwise `/fail` with a specific `errorMessage` (`Paper out`, `Printer offline (cover open, paper out, or error)`, `No status response from printer …`). So the UI's **Done** badge means the printer confirmed it could print — not merely "bytes sent over TCP" (the old behavior, restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). Holding the socket also fixes the silent-loss mode where `nc` closed before the printer drained its buffer. Limitation: queries are real-time, so paper running out mid-ticket isn't caught.
+
 Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.printApiKey` (default `'1234'`; override with env `NUXT_CROUTON_SALES_PRINT_API_KEY`).
 
 | Path | Method | Purpose |

@@ -23,7 +23,18 @@ forwarding, no inbound exposure.
 1. POS order is placed → app generates a print job per printer (base64 ESC/POS) in D1.
 2. Spooler polls `GET /api/print-server/events/{EVENT_ID}/jobs?mark_as_printing=true`.
 3. Decodes the base64, streams the raw bytes to `printerIp:9100` via `nc`.
-4. Calls back `POST /api/print-server/jobs/{id}/complete` (or `/fail`).
+4. Queries printer status (ESC/POS `DLE EOT 1` + `DLE EOT 4`, appended to the
+   payload on the same socket) and waits for the response bytes.
+5. Calls back `POST /api/print-server/jobs/{id}/complete` **only when the
+   printer answered "online, paper present"** — otherwise `/fail` with a
+   specific `errorMessage` (`Paper out`, `Printer offline (cover open, paper
+   out, or error)`, `No status response from printer`, …).
+
+So a **Done** badge in the admin UI means the printer confirmed it was online
+with paper at job time — not just that bytes were sent. Caveat: the status
+queries are processed in real time, so paper running out *mid-ticket* can still
+slip through; everything else (paper out, cover open, wrong IP, dead printer)
+is caught and surfaces as a failed job.
 
 ## Network topology (validated)
 
@@ -67,6 +78,8 @@ Set in `/etc/init.d/print_server` under `procd_set_param env`:
 | `API_URL` | Base URL of the hosted app, e.g. `https://fanfare.pages.dev` |
 | `API_KEY` | **Must match** the app secret `NUXT_CROUTON_SALES_PRINT_API_KEY` |
 | `EVENT_ID` | The current sales event's id (per-event — see caveat) |
+| `STATUS_CHECK` | Optional, default `1`. Set `0` to skip the DLE EOT confirmation and mark jobs complete on TCP send alone (only for printers that don't answer DLE EOT — the TM-m30 does) |
+| `DRAIN_SECS` | Optional, default `2`. Seconds the socket is held open after sending so the printer can drain its buffer and reply |
 
 > The API key is a secret and is **not** stored in this repo. Set it on the
 > deployment with `wrangler pages secret put NUXT_CROUTON_SALES_PRINT_API_KEY`
@@ -102,6 +115,10 @@ curl -s -H "x-api-key: $KEY" "https://your-app.pages.dev/api/print-server/events
 
 # printer leg: raw ESC/POS test print (init + text + feed + cut)
 printf '\x1b\x40router -> printer OK\n\n\n\x1d\x56\x41\x10' | nc 192.168.1.72 9100
+
+# status leg: query printer status (expect a couple of non-printable bytes back;
+# pipe through hexdump-ish awk if you want to inspect them)
+( printf '\x10\x04\x01\x10\x04\x04'; sleep 2 ) | nc 192.168.1.72 9100 | wc -c   # expect 2
 ```
 
 ### Gotchas learned in the field

@@ -17,6 +17,8 @@
 # - API_KEY must equal the app's NUXT_CROUTON_SALES_PRINT_API_KEY secret.
 # - EVENT_ID is per-event: change it and `restart` for each new event.
 # - `respawn` auto-restarts the spooler if it ever exits.
+# - Optional env: STATUS_CHECK=0 disables the DLE EOT print confirmation
+#   (legacy fire-and-forget); DRAIN_SECS tunes the post-send socket hold.
 
 START=99
 STOP=10
