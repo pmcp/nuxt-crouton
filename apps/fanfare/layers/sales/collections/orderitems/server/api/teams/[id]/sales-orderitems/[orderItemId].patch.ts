@@ -17,8 +17,8 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { orderitemId } = getRouterParams(event)
-  if (!orderitemId) {
+  const { orderItemId } = getRouterParams(event)
+  if (!orderItemId) {
     throw createError({ status: 400, statusText: 'Missing orderitem ID' })
   }
 
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const dbTimer = timing.start('db')
-  const result = await updateSalesOrderitem(orderitemId, team.id, user.id, updates, { role: membership.role })
+  const result = await updateSalesOrderitem(orderItemId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })

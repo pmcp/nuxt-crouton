@@ -20,8 +20,8 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { printqueueId } = getRouterParams(event)
-  if (!printqueueId) {
+  const { printQueueId } = getRouterParams(event)
+  if (!printQueueId) {
     throw createError({ status: 400, statusText: 'Missing printqueue ID' })
   }
 
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const dbTimer = timing.start('db')
-  const result = await updateSalesPrintqueue(printqueueId, team.id, user.id, updates, { role: membership.role })
+  const result = await updateSalesPrintqueue(printQueueId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })

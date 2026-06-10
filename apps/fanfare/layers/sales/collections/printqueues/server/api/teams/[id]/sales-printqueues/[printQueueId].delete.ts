@@ -6,8 +6,8 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { printqueueId } = getRouterParams(event)
-  if (!printqueueId) {
+  const { printQueueId } = getRouterParams(event)
+  if (!printQueueId) {
     throw createError({ status: 400, statusText: 'Missing printqueue ID' })
   }
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   authTimer.end()
 
   const dbTimer = timing.start('db')
-  const result = await deleteSalesPrintqueue(printqueueId, team.id, user.id, { role: membership.role })
+  const result = await deleteSalesPrintqueue(printQueueId, team.id, user.id, { role: membership.role })
   dbTimer.end()
   return result
 })

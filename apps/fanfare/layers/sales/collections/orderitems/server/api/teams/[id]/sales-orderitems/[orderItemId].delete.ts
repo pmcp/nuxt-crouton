@@ -6,8 +6,8 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { orderitemId } = getRouterParams(event)
-  if (!orderitemId) {
+  const { orderItemId } = getRouterParams(event)
+  if (!orderItemId) {
     throw createError({ status: 400, statusText: 'Missing orderitem ID' })
   }
 
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   authTimer.end()
 
   const dbTimer = timing.start('db')
-  const result = await deleteSalesOrderitem(orderitemId, team.id, user.id, { role: membership.role })
+  const result = await deleteSalesOrderitem(orderItemId, team.id, user.id, { role: membership.role })
   dbTimer.end()
   return result
 })

@@ -14,8 +14,8 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { eventsettingId } = getRouterParams(event)
-  if (!eventsettingId) {
+  const { eventSettingId } = getRouterParams(event)
+  if (!eventSettingId) {
     throw createError({ status: 400, statusText: 'Missing eventsetting ID' })
   }
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const dbTimer = timing.start('db')
-  const result = await updateSalesEventsetting(eventsettingId, team.id, user.id, updates, { role: membership.role })
+  const result = await updateSalesEventsetting(eventSettingId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })
