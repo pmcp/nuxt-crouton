@@ -377,15 +377,8 @@ async function copyBackupCodes(codes: string[]) {
             </p>
 
             <div class="flex flex-col items-center gap-4 mt-4">
-              <!-- QR Code placeholder - needs qrcode library -->
-              <div class="p-4 bg-white rounded-lg">
-                <img
-                  v-if="totpUri"
-                  :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri)}`"
-                  alt="2FA QR Code"
-                  class="size-48"
-                >
-              </div>
+              <!-- Rendered locally — the TOTP secret never leaves the device -->
+              <CroutonQrCode v-if="totpUri" :data="totpUri" :size="200" />
 
               <div class="text-center">
                 <p class="text-sm text-muted">
