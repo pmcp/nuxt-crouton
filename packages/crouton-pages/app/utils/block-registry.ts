@@ -27,6 +27,7 @@ import type {
   GalleryBlockAttrs,
   ContactBlockAttrs,
   MailingBlockAttrs,
+  QrCodeBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -1025,6 +1026,63 @@ export const mailingBlockDefinition: BlockDefinition<MailingBlockAttrs> = {
   ]
 }
 
+export const qrCodeBlockDefinition: BlockDefinition<QrCodeBlockAttrs> = {
+  type: 'qrCodeBlock',
+  name: 'QR Code',
+  description: 'A scannable QR code linking to a page or URL',
+  icon: 'i-lucide-qr-code',
+  category: 'cta',
+  defaultAttrs: {
+    pageId: '',
+    url: '',
+    caption: '',
+    size: 'md',
+    align: 'center'
+  },
+  schema: [
+    {
+      name: 'pageId',
+      type: 'page',
+      label: 'Page',
+      description: 'The page the QR code links to (resolved to its public URL)'
+    },
+    {
+      name: 'url',
+      type: 'text',
+      label: 'Custom URL',
+      description: 'Used when no page is selected. Must be an absolute URL.'
+    },
+    {
+      name: 'caption',
+      type: 'text',
+      label: 'Caption',
+      description: 'Optional text shown beneath the QR code'
+    },
+    {
+      name: 'size',
+      type: 'select',
+      label: 'Size',
+      options: [
+        { label: 'Small', value: 'sm' },
+        { label: 'Medium', value: 'md' },
+        { label: 'Large', value: 'lg' }
+      ],
+      defaultValue: 'md'
+    },
+    {
+      name: 'align',
+      type: 'select',
+      label: 'Alignment',
+      options: [
+        { label: 'Left', value: 'left' },
+        { label: 'Center', value: 'center' },
+        { label: 'Right', value: 'right' }
+      ],
+      defaultValue: 'center'
+    }
+  ]
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -1044,7 +1102,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   statsBlock: statsBlockDefinition,
   galleryBlock: galleryBlockDefinition,
   contactBlock: contactBlockDefinition,
-  mailingBlock: mailingBlockDefinition
+  mailingBlock: mailingBlockDefinition,
+  qrCodeBlock: qrCodeBlockDefinition
 }
 
 // ============================================================================

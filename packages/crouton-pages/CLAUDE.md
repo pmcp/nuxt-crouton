@@ -229,6 +229,7 @@ The package includes a block-based page editor using TipTap and Nuxt UI page com
 | `cardGridBlock` | UPageGrid + UPageCard | Grid of cards |
 | `separatorBlock` | USeparator | Visual divider |
 | `richTextBlock` | prose div | Standard text content |
+| `qrCodeBlock` | CroutonQrCode | Scannable QR code linking to a CMS page (via the `page` field picker) or a custom URL. Resolves `pageId` → absolute public URL with `usePageLink().resolve()` + `useRequestURL().origin`. |
 
 ### Content Format
 
@@ -361,6 +362,14 @@ the editor stores the selected page's id in `ButtonRowItem.pageId`, and the rend
 resolves it to the canonical (nested, localized) URL via `usePageLink().resolve()`,
 falling back to `to` when the page can't be resolved. Picking a page is hierarchy-
 and locale-correct automatically.
+
+### `page` schema field type (reusable page picker)
+
+Block schemas can use `type: 'page'` for any attribute that stores a CMS page id.
+`BlockPropertyPanel` renders it as a `USelectMenu` populated from
+`usePageLink().pageOptions` (searchable, `{ label, value: pageId }`). The renderer
+resolves the stored id via `usePageLink().resolve(pageId)`. Used by `qrCodeBlock`
+(its `pageId` attr); reusable by any future block that links to a page.
 
 ## Page Record Schema
 

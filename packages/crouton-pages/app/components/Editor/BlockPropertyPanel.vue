@@ -20,6 +20,9 @@ const { blockName, fieldLabel, fieldDescription, fieldOptions } = useBlockI18n()
 // Addon blocks from croutonBlocks registry
 const { getBlock: getAddonBlock } = useCroutonBlocks()
 
+// CMS pages for the `page` field picker (resolved to canonical URLs at render).
+const { pageOptions } = usePageLink()
+
 interface Props {
   node: Node
 }
@@ -232,6 +235,23 @@ t
               :items="fieldOptions(blockType, field) as any"
               value-key="value"
               class="w-full"
+              @update:model-value="onFieldChange(field.name, $event)"
+            />
+          </UFormField>
+
+          <!-- Page Picker -->
+          <UFormField
+            v-else-if="field.type === 'page'"
+            :label="fieldLabel(blockType, field)"
+            :name="field.name"
+            :description="fieldDescription(blockType, field)"
+          >
+            <USelectMenu
+              :model-value="localAttrs[field.name] as string || ''"
+              :items="pageOptions"
+              value-key="value"
+              class="w-full"
+              :placeholder="t('pages.blockLibrary.qrCode.fields.pageId.placeholder', 'Select a page')"
               @update:model-value="onFieldChange(field.name, $event)"
             />
           </UFormField>

@@ -68,7 +68,8 @@ const blockComponents: Record<string, string> = {
   statsBlock: 'CroutonPagesBlocksRenderStatsBlock',
   galleryBlock: 'CroutonPagesBlocksRenderGalleryBlock',
   contactBlock: 'CroutonPagesBlocksRenderContactBlock',
-  mailingBlock: 'CroutonPagesBlocksRenderMailingBlock'
+  mailingBlock: 'CroutonPagesBlocksRenderMailingBlock',
+  qrCodeBlock: 'CroutonPagesBlocksRenderQrCodeBlock'
 }
 
 // Get component name for a block type — checks core blocks then addon blocks

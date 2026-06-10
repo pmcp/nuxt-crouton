@@ -857,6 +857,42 @@
             "label": "Texte indicatif"
           }
         }
+      },
+      "qrCode": {
+        "name": "Code QR",
+        "description": "Un code QR scannable renvoyant vers une page ou une URL",
+        "noTarget": "Aucune page sélectionnée",
+        "fields": {
+          "pageId": {
+            "label": "Page",
+            "description": "La page vers laquelle pointe le code QR (résolue en son URL publique)",
+            "placeholder": "Sélectionner une page"
+          },
+          "url": {
+            "label": "URL personnalisée",
+            "description": "Utilisée lorsqu'aucune page n'est sélectionnée. Doit être une URL absolue."
+          },
+          "caption": {
+            "label": "Légende",
+            "description": "Texte facultatif affiché sous le code QR"
+          },
+          "size": {
+            "label": "Taille",
+            "options": {
+              "sm": "Petit",
+              "md": "Moyen",
+              "lg": "Grand"
+            }
+          },
+          "align": {
+            "label": "Alignement",
+            "options": {
+              "left": "Gauche",
+              "center": "Centré",
+              "right": "Droite"
+            }
+          }
+        }
       }
     }
   },

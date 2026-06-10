@@ -871,6 +871,42 @@
             "label": "Tijdelijke tekst"
           }
         }
+      },
+      "qrCode": {
+        "name": "QR-code",
+        "description": "Een scanbare QR-code die naar een pagina of URL verwijst",
+        "noTarget": "Geen pagina geselecteerd",
+        "fields": {
+          "pageId": {
+            "label": "Pagina",
+            "description": "De pagina waarnaar de QR-code verwijst (omgezet naar de publieke URL)",
+            "placeholder": "Selecteer een pagina"
+          },
+          "url": {
+            "label": "Aangepaste URL",
+            "description": "Gebruikt wanneer geen pagina is geselecteerd. Moet een absolute URL zijn."
+          },
+          "caption": {
+            "label": "Bijschrift",
+            "description": "Optionele tekst onder de QR-code"
+          },
+          "size": {
+            "label": "Grootte",
+            "options": {
+              "sm": "Klein",
+              "md": "Middel",
+              "lg": "Groot"
+            }
+          },
+          "align": {
+            "label": "Uitlijning",
+            "options": {
+              "left": "Links",
+              "center": "Gecentreerd",
+              "right": "Rechts"
+            }
+          }
+        }
       }
     }
   },

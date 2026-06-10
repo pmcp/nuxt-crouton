@@ -31,6 +31,7 @@ export type BlockType =
   | 'galleryBlock'
   | 'contactBlock'
   | 'mailingBlock'
+  | 'qrCodeBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -215,6 +216,7 @@ export type BlockAttrs =
   | GalleryBlockAttrs
   | ContactBlockAttrs
   | MailingBlockAttrs
+  | QrCodeBlockAttrs
 
 // ============================================================================
 // Block Node Types (TipTap format)
@@ -472,6 +474,25 @@ export interface MailingBlock extends PageBlock<MailingBlockAttrs> {
   type: 'mailingBlock'
 }
 
+export type QrCodeSize = 'sm' | 'md' | 'lg'
+
+export interface QrCodeBlockAttrs {
+  /** Id of a CMS page to encode; resolved to its absolute public URL at render. Takes precedence over `url`. */
+  pageId?: string
+  /** Fallback custom URL (absolute) encoded when no page is selected. */
+  url?: string
+  /** Optional caption shown beneath the QR code. */
+  caption?: string
+  /** Rendered size preset. */
+  size?: QrCodeSize
+  /** Horizontal alignment within the block. */
+  align?: 'left' | 'center' | 'right'
+}
+
+export interface QrCodeBlock extends PageBlock<QrCodeBlockAttrs> {
+  type: 'qrCodeBlock'
+}
+
 // ============================================================================
 // Document Type
 // ============================================================================
@@ -497,7 +518,7 @@ export interface BlockDefinition<T extends BlockAttrs = BlockAttrs> {
 
 export interface BlockPropertySchema {
   name: string
-  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items' | 'gallery-items' | 'team-member'
+  type: 'text' | 'textarea' | 'select' | 'switch' | 'links' | 'features' | 'cards' | 'icon' | 'image' | 'video' | 'file' | 'collection' | 'faq-items' | 'logos' | 'chart-preset' | 'button-row-items' | 'stats-items' | 'gallery-items' | 'team-member' | 'page'
   label: string
   description?: string
   required?: boolean
