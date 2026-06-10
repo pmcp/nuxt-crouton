@@ -908,6 +908,9 @@ importers:
       sortablejs:
         specifier: ^1.15.6
         version: 1.15.6
+      uqr:
+        specifier: ^0.1.2
+        version: 0.1.2
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*

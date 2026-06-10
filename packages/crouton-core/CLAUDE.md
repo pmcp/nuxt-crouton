@@ -71,6 +71,7 @@ export default defineNuxtConfig({
 | `app/components/ImageUpload.vue` | File picker with optional crop support |
 | `app/components/UsersAvatarUpload.vue` | Avatar upload with 1:1 circular crop |
 | `app/components/DropZone.vue` | Drag-and-drop file upload zone (VueUse) |
+| `app/components/QrCode.vue` | `CroutonQrCode` — renders any string (usually a URL) as an inline SVG QR code via `uqr` (zero-dep, SSR-safe). Props: `data`, `size?` (px). |
 | `server/api/upload-image.post.ts` | Authenticated file upload to blob storage |
 | `server/api/upload-image.delete.ts` | Authenticated file deletion from blob storage |
 | `server/routes/images/[pathname].get.ts` | Image serving with cache headers |
