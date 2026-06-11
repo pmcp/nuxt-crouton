@@ -131,6 +131,22 @@ function printerJobs(orderId: string, printerId: string) {
   return (jobsByOrder.value.get(orderId) || []).filter(j => j.printerId === printerId)
 }
 
+// Per-line retry on a failed job (OrderItems emits the job id). The refresh
+// flips the line to Pending immediately; the spooler picks it up on its poll.
+const retryNotify = useNotify()
+async function retryPrintJob(jobId: string) {
+  try {
+    await $fetch(
+      `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/printqueues/retry-failed`,
+      { method: 'POST', body: { jobId } }
+    )
+    await refreshPrintJobs()
+  }
+  catch {
+    retryNotify.error(t('sales.printQueue.resendError', 'Could not requeue print jobs'))
+  }
+}
+
 // Per-job status meta — same enum as PrintqueuesCard: 0=pending, 1=printing,
 // 2=done, 9=error.
 function jobStatusMeta(status: string | number | undefined) {
@@ -470,6 +486,7 @@ function openEditOrder(id: string) {
           :order-id="order.id"
           :remarks="order.overallRemarks"
           :print-jobs="jobsByOrder.get(order.id) || []"
+          @retry-job="retryPrintJob"
         />
       </li>
     </ul>

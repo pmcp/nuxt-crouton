@@ -47,8 +47,10 @@ const timeLabel = computed(() => {
 <template>
   <div class="flex items-center gap-3 w-full">
     <UIcon name="i-lucide-printer" class="shrink-0 text-dimmed" />
-    <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
-      #{{ orderNumber ?? '—' }}
+    <!-- Order number only when the join is present — inside an expanded order
+         it's redundant (and rendered a dangling green "#—"). -->
+    <span v-if="orderNumber" class="shrink-0 font-mono font-semibold tabular-nums text-primary">
+      #{{ orderNumber }}
     </span>
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">

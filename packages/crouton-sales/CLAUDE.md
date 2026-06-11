@@ -147,6 +147,10 @@ mounts only when a row is expanded (`v-if`), so its `useCollectionQuery('salesOr
 total) plus the order total, and the order's `overallRemarks` (passed as `:remarks`) at the top.
 Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
 `getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
+The print-job list below the items has **no section header** (the printer icons suffice) and no
+order number on the rows (`PrintqueuesCard` hides its `#number` when the order join is absent).
+Failed lines carry a **re-print button** — emits `retryJob` to OrdersTab, which POSTs
+`printqueues/retry-failed` with `{ jobId }` and refreshes the queue poll.
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
 "Event Details" card (header also carries Duplicate/Delete) — saved with
@@ -217,7 +221,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` only on kitchen tickets with order notes; `footer_text` only on `type: 'receipt'` printer jobs |
-| `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }`. Backs the "Resend failed jobs" button in `PrintersTab` |
+| `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |

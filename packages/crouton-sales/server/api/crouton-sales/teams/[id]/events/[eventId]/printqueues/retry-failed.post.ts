@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Event ID is required' })
   }
 
-  const body = await readBody<{ printerId?: string }>(event).catch(() => null)
+  const body = await readBody<{ printerId?: string, jobId?: string }>(event).catch(() => null)
 
   const staleBefore = new Date(Date.now() - STALE_PRINTING_MS)
   const conditions = [
@@ -42,6 +42,10 @@ export default defineEventHandler(async (event) => {
   ]
   if (body?.printerId) {
     conditions.push(eq(salesPrintqueues.printerId, body.printerId))
+  }
+  // Single-job retry (the per-line button in the expanded order).
+  if (body?.jobId) {
+    conditions.push(eq(salesPrintqueues.id, body.jobId))
   }
 
   const db = useDB()

@@ -7,6 +7,10 @@ const props = defineProps<{
   printJobs?: any[]
 }>()
 
+// Requeue one failed print job — handled by OrdersTab, which owns the
+// team/event context and the print-queue poll.
+const emit = defineEmits<{ retryJob: [jobId: string] }>()
+
 const { t } = useT()
 
 const itemsQuery = computed(() => ({ orderId: props.orderId }))
@@ -85,15 +89,25 @@ function optionsText(options?: Record<string, unknown> | null) {
       </div>
     </template>
 
-    <!-- Print jobs for this order (what the removed Printers tab used to list) -->
+    <!-- Print jobs for this order (what the removed Printers tab used to list).
+         The printer icons on the rows make a section label redundant. -->
     <div v-if="printJobs?.length" class="mt-3 pt-3 border-t border-default/60">
-      <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-        <UIcon name="i-lucide-printer" class="shrink-0" />
-        {{ t('sales.sidebar.printers') }}
-      </p>
       <ul class="divide-y divide-default/60">
         <li v-for="job in printJobs" :key="job.id" class="py-2">
-          <SalesPrintqueuesCard :item="job" stateless />
+          <div class="flex items-center gap-2">
+            <SalesPrintqueuesCard :item="job" stateless class="flex-1 min-w-0" />
+            <UButton
+              v-if="String(job.status ?? '') === '9'"
+              size="xs"
+              color="warning"
+              variant="soft"
+              icon="i-lucide-rotate-ccw"
+              class="shrink-0"
+              @click="emit('retryJob', job.id)"
+            >
+              {{ t('sales.orders.rePrint') }}
+            </UButton>
+          </div>
           <p v-if="jobItemsText(job)" class="text-xs text-muted mt-1 ps-7">
             {{ jobItemsText(job) }}
           </p>
