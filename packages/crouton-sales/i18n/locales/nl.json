@@ -381,7 +381,7 @@
       "showInactive": "Inactieve producten",
       "clientsPanel": {
         "button": "Klanten",
-        "title": "Klantenrekeningen",
+        "title": "Klanten",
         "searchPlaceholder": "Zoek klanten…",
         "empty": "Nog geen actieve klanten met bestellingen",
         "noMatches": "Geen klanten gevonden",
