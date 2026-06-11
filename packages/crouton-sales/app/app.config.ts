@@ -1,59 +1,6 @@
 import type { CroutonBlockDefinition } from '@fyit/crouton-core/app/types/block-definition'
 import { SALES_CHART_KIND_OPTIONS } from './utils/chart-blocks'
 
-// Inline POS block: full helper login + order interface embedded in a CMS
-// page, so a visitor can authenticate and take orders without leaving the
-// CMS-rendered page. This is the customer-facing POS surface (the standalone
-// /order/[team]/[event] pages were removed in favour of this block).
-const orderInterfaceBlock: CroutonBlockDefinition = {
-  type: 'orderInterfaceBlock',
-  // name/description and schema labels/descriptions are i18n keys, translated
-  // by the crouton-pages block editor/panel via useT(). See i18n/locales/*.json.
-  name: 'sales.blocks.orderInterface.name',
-  description: 'sales.blocks.orderInterface.description',
-  icon: 'i-lucide-shopping-cart',
-  category: 'customer',
-  clientOnly: true,
-  defaultAttrs: {
-    eventSlug: '',
-    height: 'tall'
-  },
-  components: {
-    editorView: 'SalesBlocksOrderInterfaceView',
-    renderer: 'SalesBlocksOrderInterfaceRender'
-  },
-  propertyComponents: {
-    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
-  },
-  schema: [
-    {
-      name: 'eventSlug',
-      type: 'eventSlug',
-      label: 'sales.blocks.orderInterface.fields.eventSlug.label',
-      description: 'sales.blocks.orderInterface.fields.eventSlug.description'
-    },
-    {
-      name: 'height',
-      type: 'select',
-      label: 'sales.blocks.orderInterface.fields.height.label',
-      description: 'sales.blocks.orderInterface.fields.height.description',
-      defaultValue: 'tall',
-      options: [
-        { label: 'sales.blocks.orderInterface.fields.height.options.compact', value: 'compact' },
-        { label: 'sales.blocks.orderInterface.fields.height.options.tall', value: 'tall' },
-        { label: 'sales.blocks.orderInterface.fields.height.options.fill', value: 'fill' }
-      ]
-    }
-  ],
-  tiptap: {
-    parseHTMLTag: 'div[data-type="order-interface-block"]',
-    attributes: {
-      eventSlug: { default: '' },
-      height: { default: 'tall' }
-    }
-  }
-}
-
 // Sales analytics block for crouton-pages: editor picks a chart kind and an
 // event scope (one event or all). Renders via CroutonChartsWidget when
 // @fyit/crouton-charts is installed; degrades to a notice otherwise.
@@ -200,10 +147,14 @@ const salesProductMatrixBlock: CroutonBlockDefinition = {
   }
 }
 
-// Admin event workspace embedded in a CMS page: the full Products / Orders /
-// Printers / Settings tabbed workspace for one event. The editor fixes the
-// event by slug; the renderer hides the switcher and shows a sign-in notice for
-// anonymous visitors (the tabs are authenticated admin surfaces).
+// The single sales surface for CMS pages: the event workspace, which shows a
+// different face per session. The editor fixes the event by slug. Anonymous
+// visitors (volunteers) get the kassa only — inline helper PIN login + order
+// interface (this absorbed the removed orderInterfaceBlock, incl. its
+// `height` attribute). Signed-in team members get the full workspace shell
+// (kassa + settings/orders/clients panes; switcher hidden).
+// name/description and schema labels/descriptions are i18n keys, translated
+// by the crouton-pages block editor/panel via useT(). See i18n/locales/*.json.
 const eventWorkspaceBlock: CroutonBlockDefinition = {
   type: 'eventWorkspaceBlock',
   name: 'sales.blocks.eventWorkspace.name',
@@ -212,7 +163,8 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   category: 'admin',
   clientOnly: true,
   defaultAttrs: {
-    eventSlug: ''
+    eventSlug: '',
+    height: 'tall'
   },
   components: {
     editorView: 'SalesBlocksEventWorkspaceView',
@@ -227,12 +179,25 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
       type: 'eventSlug',
       label: 'sales.blocks.eventWorkspace.fields.eventSlug.label',
       description: 'sales.blocks.eventWorkspace.fields.eventSlug.description'
+    },
+    {
+      name: 'height',
+      type: 'select',
+      label: 'sales.blocks.eventWorkspace.fields.height.label',
+      description: 'sales.blocks.eventWorkspace.fields.height.description',
+      defaultValue: 'tall',
+      options: [
+        { label: 'sales.blocks.eventWorkspace.fields.height.options.compact', value: 'compact' },
+        { label: 'sales.blocks.eventWorkspace.fields.height.options.tall', value: 'tall' },
+        { label: 'sales.blocks.eventWorkspace.fields.height.options.fill', value: 'fill' }
+      ]
     }
   ],
   tiptap: {
     parseHTMLTag: 'div[data-type="event-workspace-block"]',
     attributes: {
-      eventSlug: { default: '' }
+      eventSlug: { default: '' },
+      height: { default: 'tall' }
     }
   }
 }
@@ -303,7 +268,6 @@ export default defineAppConfig({
     }
   },
   croutonBlocks: {
-    orderInterfaceBlock,
     eventWorkspaceBlock,
     salesChartBlock,
     salesProductMatrixBlock

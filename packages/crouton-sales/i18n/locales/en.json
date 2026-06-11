@@ -3,32 +3,22 @@
     "title": "Point of Sale",
     "pageTypes": {},
     "blocks": {
-      "orderInterface": {
-        "name": "Order Interface",
-        "description": "Inline helper POS for one event with login + order taking",
+      "eventWorkspace": {
+        "name": "Event Workspace",
+        "description": "Embed the event workspace: visitors get the kassa with helper login, signed-in team members get the full workspace",
         "fields": {
           "eventSlug": {
             "label": "Event",
-            "description": "Pick which event's POS to embed. Visitors will be asked to log in as a helper first."
+            "description": "Pick which event to embed. Visitors log in as a helper first; team members see the full workspace."
           },
           "height": {
             "label": "Height",
-            "description": "Compact/Tall sit inside the page flow. Fill screen makes the POS take the full viewport — pair it with the Full width size for a dedicated POS page.",
+            "description": "Height of the visitor kassa (the team-member workspace sizes itself). Compact/Tall sit inside the page flow. Fill screen makes the POS take the full viewport — pair it with the Full width size for a dedicated POS page.",
             "options": {
               "compact": "Compact (60% viewport)",
               "tall": "Tall (80% viewport)",
               "fill": "Fill screen"
             }
-          }
-        }
-      },
-      "eventWorkspace": {
-        "name": "Event Workspace",
-        "description": "Embed the full admin workspace (products, orders, printers, settings) for one event",
-        "fields": {
-          "eventSlug": {
-            "label": "Event",
-            "description": "Pick which event's workspace to embed. Only signed-in team members can use it."
           }
         }
       },
@@ -116,9 +106,7 @@
       "confirmDelete": "Confirm delete"
     },
     "block": {
-      "orderInterface": "Order Interface",
       "eventWorkspace": "Event Workspace",
-      "signInRequired": "Sign in as a team member to manage this event.",
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
@@ -280,7 +268,6 @@
       "eventNotFound": "Event not found",
       "checkUrl": "Please check the URL and try again.",
       "pleaseLogin": "Please login to access the order interface",
-      "noEventForBlock": "No event selected for this POS block.",
       "loadDataError": "Failed to load order data",
       "loadFailed": "Failed to load data"
     },

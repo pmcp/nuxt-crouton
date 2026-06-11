@@ -2,32 +2,22 @@
   "sales": {
     "title": "Point de vente",
     "blocks": {
-      "orderInterface": {
-        "name": "Interface de commande",
-        "description": "Caisse helper intégrée pour un événement avec connexion + prise de commandes",
+      "eventWorkspace": {
+        "name": "Espace de travail d'événement",
+        "description": "Intégrer l'espace de travail d'événement : les visiteurs reçoivent la caisse avec connexion helper, les membres connectés de l'équipe l'espace complet",
         "fields": {
           "eventSlug": {
             "label": "Événement",
-            "description": "Choisissez la caisse de l'événement à intégrer. Les visiteurs devront d'abord se connecter en tant que helper."
+            "description": "Choisissez l'événement à intégrer. Les visiteurs se connectent d'abord en tant que helper ; les membres de l'équipe voient l'espace complet."
           },
           "height": {
             "label": "Hauteur",
-            "description": "Compact/Haut restent dans le flux de la page. Plein écran fait occuper toute la fenêtre à la caisse — associez-le à la taille Pleine largeur pour une page de caisse dédiée.",
+            "description": "Hauteur de la caisse visiteur (l'espace membre gère sa propre hauteur). Compact/Haut restent dans le flux de la page. Plein écran fait occuper toute la fenêtre à la caisse — associez-le à la taille Pleine largeur pour une page de caisse dédiée.",
             "options": {
               "compact": "Compact (60% de l'écran)",
               "tall": "Haut (80% de l'écran)",
               "fill": "Plein écran"
             }
-          }
-        }
-      },
-      "eventWorkspace": {
-        "name": "Espace de travail d'événement",
-        "description": "Intégrer l'espace d'administration complet (produits, commandes, imprimantes, paramètres) pour un événement",
-        "fields": {
-          "eventSlug": {
-            "label": "Événement",
-            "description": "Choisissez l'espace de travail d'événement à intégrer. Seuls les membres connectés de l'équipe peuvent l'utiliser."
           }
         }
       },
@@ -115,9 +105,7 @@
       "confirmDelete": "Confirmer la suppression"
     },
     "block": {
-      "orderInterface": "Interface de commande",
       "eventWorkspace": "Espace de gestion",
-      "signInRequired": "Connectez-vous en tant que membre de l’équipe pour gérer cet événement.",
       "noEventPicked": "Aucun événement sélectionné",
       "editBlock": "Modifier le bloc",
       "deleteBlock": "Supprimer le bloc",
@@ -279,7 +267,6 @@
       "eventNotFound": "Événement introuvable",
       "checkUrl": "Vérifiez l'URL et réessayez.",
       "pleaseLogin": "Connectez-vous pour accéder à l'interface de commande",
-      "noEventForBlock": "Aucun événement sélectionné pour ce bloc de caisse.",
       "loadDataError": "Échec du chargement des données de commande",
       "loadFailed": "Échec du chargement des données"
     },

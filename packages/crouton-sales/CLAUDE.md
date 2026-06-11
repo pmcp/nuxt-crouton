@@ -121,8 +121,10 @@ current event navigates back to the events list via a `crouton:mutation` hook (m
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (**legacy, ignored** — kept for consumer compatibility),
 `showSwitcher` / `showHeaderActions` / `showHeader` (default `true`).
-The `eventWorkspaceBlock` renderer passes `:show-switcher="false" :show-header="false"`, which now
-means the block shows **only the POS** — the settings/orders toggles live in the hidden header.
+The `eventWorkspaceBlock` renderer mounts the shell **only for signed-in team members** and passes
+`:show-switcher="false"` (event fixed by the editor) — the header stays visible so the
+settings/orders toggles are reachable. Anonymous visitors (volunteers) get `<SalesPosPanel>`
+from the block instead, never this shell.
 The shell uses top-level `await`, so any non-page consumer must give it a `<Suspense>` boundary.
 
 `ProductsTab.vue` renders products as a **drag-reorderable list** (not a table): a bespoke `<ul>`
@@ -254,12 +256,13 @@ null ⇒ EUR). Prices are stored as plain numbers — currency is **display only
 
 ### Customer POS interface (CMS block)
 
-The standalone `/order/[team]/[event]/{login,index}` pages were removed. The
-customer-facing POS now lives **only** in the `orderInterfaceBlock` CMS block
-(`SalesBlocksOrderInterfaceRender`), which embeds inline helper login +
-`<SalesClientOrderInterface>` in a crouton-pages page. The underlying public
-endpoints (`events/[teamId]/by-slug/[slug]`, `events/[eventId]/order-data`,
-`events/[eventId]/orders`) are unchanged and consumed by that block.
+The standalone `/order/[team]/[event]/{login,index}` pages were removed, and the
+separate `orderInterfaceBlock` was later folded into the `eventWorkspaceBlock`:
+the customer-facing POS is now that block's **anonymous face** — the renderer
+mounts `<SalesPosPanel>` (inline helper PIN login + `<SalesClientOrderInterface>`)
+for visitors without a team session. The underlying public endpoints
+(`events/[teamId]/by-slug/[slug]`, `events/[eventId]/order-data`,
+`events/[eventId]/orders`) are unchanged and consumed via that panel.
 
 ### Package-shipped Server Endpoints
 
@@ -369,7 +372,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
 | `OrdersList.vue` | `SalesPosOrdersList` | Orders table with status filtering and auto-refresh |
-| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`/`salesEvents` (the last so flag flips like "Require client" reach the kassa live). Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside and the fanfare admin order page |
+| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`/`salesEvents` (the last so flag flips like "Require client" reach the kassa live). Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside, the `eventWorkspaceBlock`'s anonymous (volunteer) face, and the fanfare admin order page |
 
 ### Admin (`Admin/`)
 | Component | Auto-import Name | Purpose |
@@ -386,13 +389,12 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 
 Registered in `app/app.config.ts` under `croutonBlocks`. Appear in the page
 editor's insert menu whenever an app extends both `@fyit/crouton-sales` and
-`@fyit/crouton-pages`. Both blocks use the shared `EventSlugPicker` as the
-event field's `propertyComponents` editor.
+`@fyit/crouton-pages`. The workspace block uses the shared `EventSlugPicker` as
+the event field's `propertyComponents` editor.
 
 | Block type | Editor view | Renderer | Purpose |
 |------------|-------------|----------|---------|
-| `orderInterfaceBlock` | `SalesBlocksOrderInterfaceView` | `SalesBlocksOrderInterfaceRender` | Inline helper login + `<SalesClientOrderInterface>` embedded in a CMS page. The customer-facing POS surface (replaces the removed `/order/[team]/[event]` pages). |
-| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | Embeds the full admin event workspace (`<SalesEventWorkspaceShell>` — Products/Orders/Printers/Settings tabs) for one event. **Admin surface**: tabs hit authenticated `/api/teams/[team]/...`, so the renderer shows a sign-in notice for anonymous visitors (`useAuth().loggedIn` guard) and hides the event switcher (event fixed by the editor). The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `admin`. |
+| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles. The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `admin`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
@@ -400,9 +402,9 @@ event field's `propertyComponents` editor.
 
 `croutonApps.sales.pageTypes` is currently empty (the `eventStorefront` page
 type and its `eventStorefrontBlock` were removed — the customer POS is the
-`orderInterfaceBlock` on a normal CMS page).
+`eventWorkspaceBlock`'s anonymous face on a normal CMS page).
 
-Both renderers are `clientOnly: true` — helper sessions live in localStorage
+All renderers are `clientOnly: true` — helper sessions live in localStorage
 and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.
 
 **All block definitions in `app/app.config.ts` use i18n keys** for `name`,

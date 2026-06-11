@@ -3,32 +3,22 @@
     "title": "Kassa",
     "pageTypes": {},
     "blocks": {
-      "orderInterface": {
-        "name": "Bestelinterface",
-        "description": "Ingesloten helper-kassa voor één evenement met login + bestellen",
+      "eventWorkspace": {
+        "name": "Evenement-werkruimte",
+        "description": "Sluit de evenement-werkruimte in: bezoekers krijgen de kassa met helper-login, aangemelde teamleden de volledige werkruimte",
         "fields": {
           "eventSlug": {
             "label": "Evenement",
-            "description": "Kies welke kassa van een evenement je wilt insluiten. Bezoekers moeten zich eerst als helper aanmelden."
+            "description": "Kies welk evenement je wilt insluiten. Bezoekers melden zich eerst als helper aan; teamleden zien de volledige werkruimte."
           },
           "height": {
             "label": "Hoogte",
-            "description": "Compact/Hoog blijven binnen de pagina. Scherm vullen laat de kassa het volledige scherm innemen — combineer met Volledige breedte voor een aparte kassapagina.",
+            "description": "Hoogte van de bezoekerskassa (de teamlid-werkruimte bepaalt zijn eigen hoogte). Compact/Hoog blijven binnen de pagina. Scherm vullen laat de kassa het volledige scherm innemen — combineer met Volledige breedte voor een aparte kassapagina.",
             "options": {
               "compact": "Compact (60% scherm)",
               "tall": "Hoog (80% scherm)",
               "fill": "Scherm vullen"
             }
-          }
-        }
-      },
-      "eventWorkspace": {
-        "name": "Evenement-werkruimte",
-        "description": "Sluit de volledige beheerwerkruimte (producten, bestellingen, printers, instellingen) voor één evenement in",
-        "fields": {
-          "eventSlug": {
-            "label": "Evenement",
-            "description": "Kies welke evenement-werkruimte je wilt insluiten. Alleen aangemelde teamleden kunnen die gebruiken."
           }
         }
       },
@@ -116,9 +106,7 @@
       "confirmDelete": "Bevestig verwijderen"
     },
     "block": {
-      "orderInterface": "Bestelinterface",
       "eventWorkspace": "Evenement-werkruimte",
-      "signInRequired": "Meld je aan als teamlid om dit evenement te beheren.",
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",
@@ -280,7 +268,6 @@
       "eventNotFound": "Event niet gevonden",
       "checkUrl": "Controleer de URL en probeer opnieuw.",
       "pleaseLogin": "Log in om toegang te krijgen tot de bestelinterface",
-      "noEventForBlock": "Geen event geselecteerd voor dit kassablok.",
       "loadDataError": "Bestelgegevens laden mislukt",
       "loadFailed": "Gegevens laden mislukt"
     },

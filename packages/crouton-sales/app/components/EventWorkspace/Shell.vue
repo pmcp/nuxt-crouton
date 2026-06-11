@@ -15,9 +15,10 @@
  *
  * Used in two places:
  *  - the admin page `/admin/[team]/sales/events/[slug]`
- *  - the `eventWorkspaceBlock` CMS block (event fixed by the editor, so the
- *    switcher is hidden). NOTE: the block hides the header, so it currently
- *    shows the POS only — the settings/orders toggles live in the header.
+ *  - the `eventWorkspaceBlock` CMS block, for signed-in team members only
+ *    (event fixed by the editor, so the switcher is hidden; the header stays
+ *    so the settings/orders toggles are reachable). Anonymous visitors get
+ *    <SalesPosPanel> from the block instead — never this shell.
  *
  * @see app/pages/admin/[team]/sales/events/[slug]/index.vue
  * @see app/components/Blocks/EventWorkspaceRender.vue
