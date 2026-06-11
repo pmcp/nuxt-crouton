@@ -482,9 +482,10 @@ function toggleExpand(id: string) {
         />
       </li>
     </ul>
-    <div v-else class="p-12 text-center text-muted">
-      <UIcon name="i-lucide-receipt" class="text-4xl mb-2" />
-      <p>{{ hasActiveFilters ? t('sales.workspace.noOrdersFiltered') : t('sales.workspace.noOrders') }}</p>
+    <!-- Same empty-state styling as the cart's "empty" block (Client/Cart.vue) -->
+    <div v-else class="p-12 flex flex-col items-center justify-center gap-3 text-muted">
+      <UIcon name="i-lucide-receipt" class="size-10 opacity-40" />
+      <p class="text-sm">{{ hasActiveFilters ? t('sales.workspace.noOrdersFiltered') : t('sales.workspace.noOrders') }}</p>
     </div>
     <!-- Older orders: newest page is the register's working set; history on demand -->
     <div v-if="ordersPageCount > 1" class="flex items-center justify-center gap-3 pt-1">
