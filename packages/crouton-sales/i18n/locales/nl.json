@@ -330,6 +330,8 @@
       "noOrders": "Nog geen bestellingen",
       "noOrdersFiltered": "Geen bestellingen voor deze filters",
       "allPrinters": "Alle printers",
+      "filters": "Filters",
+      "allClients": "Alle klanten",
       "allPrintStatuses": "Alle statussen",
       "printBusy": "Bezig",
       "addPrinter": "Printer toevoegen",

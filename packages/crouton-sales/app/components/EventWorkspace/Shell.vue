@@ -107,6 +107,11 @@ onUnmounted(unhookMutation)
 // block (showHeaderActions=false) never exposes the toggles.
 const settingsOpen = ref(false)
 const ordersOpen = ref(false)
+
+// Orders-pane filters: the toggle lives in the pane header (next to ✕), the
+// selects live in OrdersTab — state is lifted here, count feeds the chip.
+const ordersFiltersOpen = ref(false)
+const ordersFilterCount = ref(0)
 </script>
 
 <template>
@@ -210,18 +215,34 @@ const ordersOpen = ref(false)
                 <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0 text-muted" />
                 {{ t('sales.orders.title') }}
               </span>
-              <UButton
-                icon="i-lucide-x"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                :aria-label="t('sales.common.close')"
-                @click="ordersOpen = false"
-              />
+              <div class="flex items-center gap-1">
+                <UChip :show="ordersFilterCount > 0" :text="ordersFilterCount" size="xl" inset>
+                  <UButton
+                    icon="i-lucide-filter"
+                    size="xs"
+                    color="neutral"
+                    :variant="ordersFiltersOpen ? 'soft' : 'ghost'"
+                    :aria-label="t('sales.workspace.filters')"
+                    @click="ordersFiltersOpen = !ordersFiltersOpen"
+                  />
+                </UChip>
+                <UButton
+                  icon="i-lucide-x"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  :aria-label="t('sales.common.close')"
+                  @click="ordersOpen = false"
+                />
+              </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4 pt-2">
               <Suspense>
-                <SalesEventWorkspaceOrdersTab :event="event" />
+                <SalesEventWorkspaceOrdersTab
+                  v-model:filters-open="ordersFiltersOpen"
+                  :event="event"
+                  @update:active-filter-count="ordersFilterCount = $event"
+                />
                 <template #fallback>
                   <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
                 </template>

@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
-const props = defineProps<{ event: SalesEvent }>()
+const props = defineProps<{
+  event: SalesEvent
+  /** When provided, the filters toggle is owned by the parent (pane header)
+   *  and the internal Filters button is hidden. Bind via v-model:filters-open. */
+  filtersOpen?: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:filtersOpen': [value: boolean]
+  /** Active-filter count, for the parent's chip on its toggle button. */
+  'update:activeFilterCount': [count: number]
+}>()
 
 // Share the event currency with the expandable OrderItems panels.
 provideSalesCurrency(() => props.event.currency)
@@ -24,15 +35,26 @@ const { data: activeHelpers } = await useFetch<ActiveHelper[]>(
   { default: () => [] }
 )
 
+// Controlled (pane header owns the toggle) vs standalone (own button).
+const headerControlled = computed(() => props.filtersOpen !== undefined)
+const internalFiltersOpen = ref(false)
+const filtersOpen = computed<boolean>({
+  get: () => headerControlled.value ? !!props.filtersOpen : internalFiltersOpen.value,
+  set: v => headerControlled.value ? emit('update:filtersOpen', v) : (internalFiltersOpen.value = v)
+})
+
 const selectedHelperName = ref<string | null>(null)
+const selectedClientId = ref<string | null>(null)
 const selectedPrinterId = ref<string | null>(null)
 const selectedPrintStatus = ref<string | null>(null)
 
-// Printer filters apply server-side (EXISTS over the order's print jobs) —
-// the list is paginated, so client-side filtering would miss other pages.
+// All filters apply server-side — the list is paginated, so client-side
+// filtering would miss matches on other pages. Printer filters go through
+// an EXISTS over the order's print jobs.
 const ordersQuery = computed(() => {
   const q: Record<string, string> = { eventId: props.event.id }
   if (selectedHelperName.value) q.owner = selectedHelperName.value
+  if (selectedClientId.value) q.clientId = selectedClientId.value
   if (selectedPrinterId.value) q.printerId = selectedPrinterId.value
   if (selectedPrintStatus.value) q.printStatus = selectedPrintStatus.value
   return q
@@ -52,9 +74,22 @@ const {
 )
 
 // Filter change ⇒ back to page 1 (the old page may not exist in the new set).
-watch([selectedHelperName, selectedPrinterId, selectedPrintStatus], () => {
+watch([selectedHelperName, selectedClientId, selectedPrinterId, selectedPrintStatus], () => {
   ordersPage.value = 1
 })
+
+// Client filter only when the event runs in reusable-clients mode — free-text
+// orders carry no clientId, so the filter would be meaningless there.
+const { items: eventSettings } = await useCollectionQuery(
+  'salesEventsettings',
+  { query: computed(() => ({ eventId: props.event.id })) }
+)
+const useReusableClients = computed(() =>
+  (((eventSettings.value as { settingKey: string, settingValue: string }[] | null) || [])
+    .some(s => s.settingKey === 'use_reusable_clients' && s.settingValue === 'true'))
+)
+
+const { items: clients } = await useCollectionQuery('salesClients')
 
 // Printer LEDs: one dot per active event printer on every order row (the
 // dedicated Printers tab is gone — per-order print status lives here now).
@@ -154,6 +189,14 @@ const helperOptions = computed(() => [
   }))
 ])
 
+const clientOptions = computed(() => [
+  { id: null, label: t('sales.workspace.allClients') },
+  ...(((clients.value as { id: string, title: string }[] | null) || [])
+    .slice()
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .map(c => ({ id: c.id, label: c.title })))
+])
+
 const printerOptions = computed(() => [
   { id: null, label: t('sales.workspace.allPrinters') },
   ...printerList.value.map(p => ({ id: p.id, label: p.title }))
@@ -168,9 +211,13 @@ const printStatusOptions = computed(() => [
   { id: 'failed', label: t('sales.printQueue.statusError', 'Error') }
 ])
 
-const hasActiveFilters = computed(() =>
-  Boolean(selectedHelperName.value || selectedPrinterId.value || selectedPrintStatus.value)
+const activeFilterCount = computed(() =>
+  [selectedHelperName.value, selectedClientId.value, selectedPrinterId.value, selectedPrintStatus.value]
+    .filter(Boolean).length
 )
+const hasActiveFilters = computed(() => activeFilterCount.value > 0)
+
+watch(activeFilterCount, c => emit('update:activeFilterCount', c), { immediate: true })
 
 // Register overview: always live, no toggle. Poll every 5s while the screen
 // is visible — orders arrive from other helpers' devices, so the view must
@@ -227,41 +274,70 @@ function openEditOrder(id: string) {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Selects share the row (flex-1) so the filter bar always fits the
-         pane width — the orders pane can be resized quite narrow. -->
-    <div class="flex items-center gap-2">
-      <USelectMenu
-        v-model="selectedHelperName"
-        :items="helperOptions"
-        value-key="id"
-        :placeholder="t('sales.workspace.allHelpers')"
-        icon="i-lucide-user"
-        size="sm"
-        class="flex-1 min-w-0"
-        :searchable="true"
-      />
-      <USelectMenu
-        v-if="printerList.length"
-        v-model="selectedPrinterId"
-        :items="printerOptions"
-        value-key="id"
-        :placeholder="t('sales.workspace.allPrinters')"
-        icon="i-lucide-printer"
-        size="sm"
-        class="flex-1 min-w-0"
-      />
-      <USelectMenu
-        v-if="printerList.length"
-        v-model="selectedPrintStatus"
-        :items="printStatusOptions"
-        value-key="id"
-        :placeholder="t('sales.workspace.allPrintStatuses')"
-        icon="i-lucide-circle-dot"
-        size="sm"
-        class="flex-1 min-w-0"
-      />
-    </div>
+  <div class="space-y-4 @container">
+    <!-- Filters live behind a toggle (in the pane header when the parent
+         controls it); the chip marks a collapsed-but-active filter so a
+         filtered list is never mistaken for the full one. When header-
+         controlled and closed, render nothing — no stray space-y gap. -->
+    <UCollapsible v-if="!headerControlled || filtersOpen" v-model:open="filtersOpen">
+      <UChip v-if="!headerControlled" :show="hasActiveFilters" :text="activeFilterCount" size="xl" inset>
+        <UButton
+          :label="t('sales.workspace.filters')"
+          icon="i-lucide-filter"
+          :trailing-icon="filtersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          color="neutral"
+          variant="outline"
+          size="xs"
+        />
+      </UChip>
+      <template #content>
+        <!-- Container-responsive: 1 column in a narrow pane, 2 side by side
+             once the resizable pane has room. -->
+        <div class="grid grid-cols-1 @md:grid-cols-2 gap-2 pt-2">
+          <USelectMenu
+            v-model="selectedHelperName"
+            :items="helperOptions"
+            value-key="id"
+            :placeholder="t('sales.workspace.allHelpers')"
+            icon="i-lucide-user"
+            size="sm"
+            class="w-full"
+            :searchable="true"
+          />
+          <USelectMenu
+            v-if="useReusableClients"
+            v-model="selectedClientId"
+            :items="clientOptions"
+            value-key="id"
+            :placeholder="t('sales.workspace.allClients')"
+            icon="i-lucide-users"
+            size="sm"
+            class="w-full"
+            :searchable="true"
+          />
+          <USelectMenu
+            v-if="printerList.length"
+            v-model="selectedPrinterId"
+            :items="printerOptions"
+            value-key="id"
+            :placeholder="t('sales.workspace.allPrinters')"
+            icon="i-lucide-printer"
+            size="sm"
+            class="w-full"
+          />
+          <USelectMenu
+            v-if="printerList.length"
+            v-model="selectedPrintStatus"
+            :items="printStatusOptions"
+            value-key="id"
+            :placeholder="t('sales.workspace.allPrintStatuses')"
+            icon="i-lucide-circle-dot"
+            size="sm"
+            class="w-full"
+          />
+        </div>
+      </template>
+    </UCollapsible>
     <!-- Loading state only before first data — the 5s poll flips `pending`
          on every refresh and would otherwise flicker the whole list. -->
     <div v-if="ordersPending && orderRows.length === 0" class="p-6 text-center text-muted">

@@ -329,6 +329,8 @@
       "noOrders": "Aucune commande pour le moment",
       "noOrdersFiltered": "Aucune commande ne correspond à ces filtres",
       "allPrinters": "Toutes les imprimantes",
+      "filters": "Filtres",
+      "allClients": "Tous les clients",
       "allPrintStatuses": "Tous les statuts",
       "printBusy": "En cours",
       "addPrinter": "Ajouter une imprimante",

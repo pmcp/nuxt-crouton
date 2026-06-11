@@ -330,6 +330,8 @@
       "noOrders": "No orders yet",
       "noOrdersFiltered": "No orders match these filters",
       "allPrinters": "All printers",
+      "filters": "Filters",
+      "allClients": "All clients",
       "allPrintStatuses": "All statuses",
       "printBusy": "In progress",
       "addPrinter": "Add Printer",

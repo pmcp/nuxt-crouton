@@ -72,7 +72,8 @@ switcher (with a "create event" item in its `#content-top`, same pattern as
 - a **vertical "Bestellingen" tab** hanging near the top of the kassa's right edge (Shell-owned,
   no prop plumbing) opens `OrdersTab` as a pane beside the POS, resizable via Reka UI's Splitter
   (`SplitterGroup`/`Panel`/`ResizeHandle`; ratio persists via `autoSaveId`). While open the strip
-  hides and the pane header carries a close ✕. The POS itself is `@container`-responsive: squeezed
+  hides and the pane header carries the orders filter toggle (chip = active-filter count;
+  state lifted into Shell, selects live in OrdersTab) and a close ✕. The POS itself is `@container`-responsive: squeezed
   below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport
 - **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
   live in its Event Details header. The full event form (incl. slug) is not reachable from the
@@ -107,12 +108,19 @@ match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client na
 badge when `isPersonnel`, the helper who created it (`order.owner` — the helper displayName set by
 the order POST) — no status badge: the printer LEDs convey state. **Clicking a row toggles expand** (accordion-ish
 via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
-`salesOrders` update slideover via `useCrouton().open`. The header carries **three filters** —
-helper, printer, and print status (busy / done / failed; printer + status selects only render when
-the event has active printers). No order count, no manual refresh button: the 2s poll is the only
-refresh. All filters apply **server-side** (the list is paginated): the component sends
-`?owner=`, `?printerId=`, `?printStatus=` and the app's generated `sales-orders` GET must honor
-them — `getAllSalesOrders` matches printer filters via an EXISTS subquery on `salesPrintqueues`
+`salesOrders` update slideover via `useCrouton().open`. Filters hide behind a **Filters toggle**
+(`UCollapsible`; a `UChip` with the active count marks a collapsed-but-filtered list). The toggle
+is **header-controllable**: pass `v-model:filters-open` (+ listen to `@update:active-filter-count`
+for the chip) and OrdersTab hides its own button — Shell does this to host the toggle in the
+orders-pane header next to ✕; standalone usage without the prop keeps the internal button.
+Filters: helper,
+client (only when the event's `use_reusable_clients` eventsetting is on — free-text orders carry
+no `clientId`), printer, and print status (busy / done / failed; printer + status selects only
+render when the event has active printers), in a container-responsive grid (1 col → 2 cols at
+`@md`). No order count, no manual refresh button: the 2s poll is the only refresh. All filters
+apply **server-side** (the list is paginated): the component sends `?owner=`, `?clientId=`,
+`?printerId=`, `?printStatus=` and the app's generated `sales-orders` GET must honor them —
+`getAllSalesOrders` matches printer filters via an EXISTS subquery on `salesPrintqueues`
 (`busy` = status 0/1, `done` = 2, `failed` = 9). Filter changes reset to page 1. It does **not**
 use `CroutonCollection`.
 Each row also shows **printer LEDs**: one dot per active event printer (queries `salesPrinters` +
