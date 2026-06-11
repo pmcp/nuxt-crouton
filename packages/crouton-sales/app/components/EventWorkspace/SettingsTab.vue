@@ -30,7 +30,7 @@ const originalHelperPin = ref(props.event.helperPin || '')
 const savingHelperPin = ref(false)
 const showReceiptSettings = ref(false)
 
-// Inline-editable core event details (title / dates / currency).
+// Inline-editable core event details (title / currency).
 // Slug is intentionally excluded — it is the route param and editing it here
 // would break the current URL. Use the top-right "Edit" button for the slug.
 const currencyOptions = [
@@ -40,8 +40,6 @@ const currencyOptions = [
 
 const eventForm = ref({
   title: props.event.title || '',
-  startDate: props.event.startDate ? new Date(props.event.startDate) : null,
-  endDate: props.event.endDate ? new Date(props.event.endDate) : null,
   currency: props.event.currency || 'EUR'
 })
 const savingEventDetails = ref(false)
@@ -51,18 +49,13 @@ const savingEventDetails = ref(false)
 watch(() => props.event.id, () => {
   eventForm.value = {
     title: props.event.title || '',
-    startDate: props.event.startDate ? new Date(props.event.startDate) : null,
-    endDate: props.event.endDate ? new Date(props.event.endDate) : null,
     currency: props.event.currency || 'EUR'
   }
 })
 
-const toTime = (d: Date | string | null | undefined) => (d ? new Date(d).getTime() : null)
 const eventDetailsDirty = computed(() =>
   eventForm.value.title !== (props.event.title || '')
   || eventForm.value.currency !== (props.event.currency || 'EUR')
-  || toTime(eventForm.value.startDate) !== toTime(props.event.startDate)
-  || toTime(eventForm.value.endDate) !== toTime(props.event.endDate)
 )
 
 async function saveEventDetails() {
@@ -71,8 +64,6 @@ async function saveEventDetails() {
     const { update } = useCollectionMutation('salesEvents')
     await update(props.event.id, {
       title: eventForm.value.title,
-      startDate: eventForm.value.startDate instanceof Date ? eventForm.value.startDate.toISOString() : null,
-      endDate: eventForm.value.endDate instanceof Date ? eventForm.value.endDate.toISOString() : null,
       currency: eventForm.value.currency
     })
   }
@@ -168,12 +159,6 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </UFormField>
         <UFormField :label="t('sales.workspace.currency')">
           <USelect v-model="eventForm.currency" :items="currencyOptions" class="w-full" />
-        </UFormField>
-        <UFormField :label="t('sales.workspace.startDate')">
-          <CroutonCalendar v-model:date="eventForm.startDate" />
-        </UFormField>
-        <UFormField :label="t('sales.workspace.endDate')">
-          <CroutonCalendar v-model:date="eventForm.endDate" />
         </UFormField>
       </div>
     </UCard>

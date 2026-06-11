@@ -52,12 +52,6 @@
         <UFormField :label="t('sales.events.fields.eventType', 'Event Type')" name="eventType" class="not-last:pb-4">
           <UInput v-model="state.eventType" class="w-full" size="xl" />
         </UFormField>
-        <UFormField :label="t('sales.events.fields.startDate', 'Start Date')" name="startDate" class="not-last:pb-4">
-          <CroutonCalendar v-model:date="state.startDate" />
-        </UFormField>
-        <UFormField :label="t('sales.events.fields.endDate', 'End Date')" name="endDate" class="not-last:pb-4">
-          <CroutonCalendar v-model:date="state.endDate" />
-        </UFormField>
         <UFormField :label="t('sales.events.fields.status', 'Status')" name="status" class="not-last:pb-4">
           <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>

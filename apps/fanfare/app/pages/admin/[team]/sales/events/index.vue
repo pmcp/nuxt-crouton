@@ -76,18 +76,6 @@ const orderPath = (event: SalesEvent) =>
           </UBadge>
         </div>
 
-        <div class="text-sm text-muted mt-1 flex items-center gap-1.5">
-          <UIcon name="i-lucide-calendar" class="w-3.5 h-3.5 shrink-0" />
-          <template v-if="event.startDate">
-            <NuxtTime :datetime="event.startDate" date-style="medium" />
-            <template v-if="event.endDate">
-              <span aria-hidden="true">–</span>
-              <NuxtTime :datetime="event.endDate" date-style="medium" />
-            </template>
-          </template>
-          <template v-else>{{ t('sales.events.noDates') }}</template>
-        </div>
-
         <div class="flex items-center gap-2 mt-4">
           <UButton
             icon="i-lucide-store"
