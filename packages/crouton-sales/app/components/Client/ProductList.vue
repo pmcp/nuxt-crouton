@@ -8,6 +8,7 @@
       :key="product.id"
       variant="soft"
       class="cursor-pointer group/card relative overflow-hidden"
+      :class="product.isActive === false ? 'opacity-60' : ''"
       :ui="{ body: 'p-3' }"
       @click="handleProductClick(product)"
     >
@@ -16,7 +17,8 @@
       <div
         v-if="editable"
         class="absolute left-0 top-0 bottom-0 z-10 flex items-center px-1.5
-               transition-transform duration-200 ease-out -translate-x-full group-hover/card:translate-x-0"
+               transition-transform duration-200 ease-out -translate-x-full group-hover/card:translate-x-0
+               pointer-coarse:translate-x-0"
       >
         <UIcon
           name="i-lucide-grip-vertical"
@@ -24,32 +26,39 @@
           @click.stop
         />
       </div>
-      <div
+      <button
         v-if="editable"
-        class="absolute right-0 top-0 bottom-0 z-10 flex items-center px-1.5
-               transition-transform duration-200 ease-out translate-x-full group-hover/card:translate-x-0"
+        type="button"
+        class="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center px-2.5
+               bg-elevated/95 hover:bg-elevated text-muted hover:text-highlighted cursor-pointer
+               transition-all duration-200 ease-out translate-x-full group-hover/card:translate-x-0
+               pointer-coarse:translate-x-0"
+        :aria-label="t('common.edit')"
+        @click.stop="emit('edit', product.id)"
       >
-        <UButton
-          variant="ghost"
-          color="neutral"
-          size="xs"
-          icon="i-lucide-pencil"
-          :aria-label="t('common.edit')"
-          @click.stop="emit('edit', product.id)"
-        />
-      </div>
+        <UIcon name="i-lucide-pencil" class="size-4" />
+      </button>
 
       <!-- Hover pushes the content inward so the slide-out panels never cover
            the title or price. -->
       <div
         class="transition-[padding] duration-200 ease-out"
-        :class="editable ? 'group-hover/card:ps-7 group-hover/card:pe-9' : ''"
+        :class="editable ? 'group-hover/card:ps-7 group-hover/card:pe-9 pointer-coarse:ps-7 pointer-coarse:pe-9' : ''"
       >
       <SalesClientOrderLineItem
         :title="product.title"
         :price="Number(product.price)"
       >
         <template #actions>
+          <UBadge
+            v-if="product.isActive === false"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            class="shrink-0"
+          >
+            {{ t('sales.common.inactive') }}
+          </UBadge>
           <UButton
             v-if="isExpandable(product)"
             variant="ghost"
@@ -322,6 +331,12 @@ function confirmProduct(product: SalesProduct) {
 }
 
 function handleProductClick(product: SalesProduct) {
+  // Inactive products are only visible in the editable POS — clicking one
+  // opens its edit form (to reactivate it) instead of the cart flow.
+  if (product.isActive === false) {
+    if (props.editable) emit('edit', product.id)
+    return
+  }
   if (isExpandable(product)) {
     toggleProduct(product)
   }

@@ -102,8 +102,8 @@ onUnmounted(unhookMutation)
 // query param, and the CMS block (showHeaderActions=false) never exposes it.
 const posOpen = ref(false)
 
+// Products live in the kassa now (editable POS) — no dedicated tab.
 const tabItems = [
-  { label: t('sales.products.title'), value: 'products', icon: 'i-lucide-package' },
   { label: t('sales.orders.title'), value: 'orders', icon: 'i-lucide-receipt' },
   { label: t('sales.events.settings'), value: 'settings', icon: 'i-lucide-settings' }
 ]
@@ -111,13 +111,13 @@ const tabItems = [
 // Active tab: synced to a URL query key when `tabParam` is set (deep-linkable,
 // survives refresh), otherwise plain local state. `router.replace` keeps tab
 // switches out of the browser history.
-const localTab = ref('products')
+const localTab = ref('orders')
 const activeTab = computed({
   get() {
     if (props.tabParam) {
       const q = route.query[props.tabParam]
       const value = Array.isArray(q) ? q[0] : q
-      return (value && tabItems.some(i => i.value === value)) ? value : 'products'
+      return (value && tabItems.some(i => i.value === value)) ? value : 'orders'
     }
     return localTab.value
   },
@@ -206,8 +206,7 @@ const activeTab = computed({
         -->
         <div class="min-h-[400px]">
           <Suspense :key="activeTab">
-            <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
-            <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
+            <SalesEventWorkspaceOrdersTab v-if="activeTab === 'orders'" :event="event" />
             <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
             <template #fallback>
               <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>

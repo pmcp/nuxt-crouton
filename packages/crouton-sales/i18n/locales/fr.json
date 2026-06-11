@@ -363,7 +363,8 @@
       "statusCancelled": "Annulé",
       "currency": "Devise",
       "currencyEur": "Euro (€)",
-      "currencyUsd": "Dollar ($)"
+      "currencyUsd": "Dollar ($)",
+      "showInactive": "Afficher les produits inactifs"
     },
     "helpers": {
       "title": "Bénévoles actifs",
@@ -400,7 +401,20 @@
       "resendFailed": "Renvoyer les travaux échoués",
       "resendQueued": "{count} travail(aux) d'impression remis en file",
       "resendNone": "Aucun travail d'impression échoué",
-      "resendError": "Échec de la remise en file"
+      "resendError": "Échec de la remise en file",
+      "errors": {
+        "paperOut": "Papier épuisé",
+        "coverOpen": "Capot ouvert",
+        "printerError": "Erreur imprimante",
+        "printerOffline": "Imprimante hors ligne",
+        "notResponding": "L'imprimante ne répond pas — papier épuisé, capot ouvert ou hors ligne ?",
+        "notEscpos": "Réponse inattendue — pas une imprimante ESC/POS ?",
+        "stoppedMidTicket": "L'imprimante a cessé de répondre pendant l'impression (papier épuisé ?)",
+        "parseFailed": "Le spooler n'a pas pu lire la tâche d'impression",
+        "emptyDecode": "Données d'impression vides",
+        "sendFailed": "Échec de l'envoi à l'imprimante",
+        "generic": "Échec de la tâche d'impression"
+      }
     }
   }
 }

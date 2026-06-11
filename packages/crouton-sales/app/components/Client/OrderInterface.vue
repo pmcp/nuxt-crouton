@@ -12,13 +12,23 @@
         <div class="flex-1 min-w-0">
           <SalesClientCategoryTabs
             v-model="selectedCategory"
-            :categories="categories || []"
+            :categories="sortedCategories"
             :counts="cartCountsByCategory"
             :show-all="false"
             :editable="editable"
             @edit="openEditCategory"
+            @reorder="handleCategoryReorder"
           />
         </div>
+        <UButton
+          v-if="editable"
+          :icon="showInactive ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+          size="sm"
+          color="neutral"
+          :variant="showInactive ? 'solid' : 'soft'"
+          :aria-label="t('sales.workspace.showInactive', 'Show inactive products')"
+          @click="showInactive = !showInactive"
+        />
         <UButton
           v-if="editable"
           icon="i-lucide-plus"
@@ -261,13 +271,20 @@ function handleProductSelect(
   addToCart(product, remark, selectedOption)
 }
 
+// Categories in the admin-arranged order: displayOrder, then title. Drives
+// the tab order in the POS (and the Settings tab list mirrors it).
+const sortedCategories = computed(() =>
+  ([...(categories.value || [])] as SalesCategory[])
+    .sort((a, b) => ((a as any).displayOrder ?? 0) - ((b as any).displayOrder ?? 0) || a.title.localeCompare(b.title))
+)
+
 // Category selection. The "All" tab is hidden in the POS, so default the
 // selection to the first category once they load — otherwise the tabs would
 // visually highlight the first category while `selectedCategory` stays null and
 // the grid shows every product.
 const selectedCategory = ref<string | null>(null)
 
-watch(categories, (cats) => {
+watch(sortedCategories, (cats) => {
   // Also covers the selected category being deleted from the editable POS —
   // fall back to the first remaining tab instead of pointing at a ghost id.
   const selectionGone = selectedCategory.value !== null && !cats.some(c => c.id === selectedCategory.value)
@@ -275,6 +292,10 @@ watch(categories, (cats) => {
     selectedCategory.value = cats[0]!.id
   }
 }, { immediate: true })
+
+// Admin-only: include inactive products (dimmed in the list; clicking one
+// opens its edit form instead of the cart).
+const showInactive = ref(false)
 
 // Cart quantities per category — drives the count badge on each category tab so
 // it's clear how many items were added from that tab (hidden when zero).
@@ -288,10 +309,11 @@ const cartCountsByCategory = computed(() => {
 })
 
 // Filtered products based on selected category, in the same order the admin
-// arranged them (sortOrder, then title — mirrors the workspace ProductsTab).
+// arranged them (sortOrder, then title). Inactive products are hidden unless
+// the admin toggles them visible.
 const filteredProducts = computed(() => {
   const allProducts = ([...(products.value || [])] as SalesProduct[])
-    .filter(p => p.isActive !== false)
+    .filter(p => p.isActive !== false || (props.editable && showInactive.value))
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title))
   if (selectedCategory.value === null) return allProducts
   return allProducts.filter(p => p.categoryId === selectedCategory.value)
@@ -338,6 +360,25 @@ const { reorderSiblings, reordering } = useTreeMutation('salesProducts')
 async function handleReorder(updates: Array<{ id: string, order: number }>) {
   if (!updates.length || reordering.value) return
   await reorderSiblings(updates)
+}
+
+// Tab drag-reorder → persist into the categories' displayOrder. Sequential
+// updates (not parallel) so the panel's mutation-driven refresh lands once
+// with the final order.
+const { update: updateCategory } = useCollectionMutation('salesCategories')
+const reorderingCategories = ref(false)
+
+async function handleCategoryReorder(updates: Array<{ id: string, order: number }>) {
+  if (!updates.length || reorderingCategories.value) return
+  reorderingCategories.value = true
+  try {
+    for (const u of updates) {
+      await updateCategory(u.id, { displayOrder: u.order })
+    }
+  }
+  finally {
+    reorderingCategories.value = false
+  }
 }
 
 async function handleCheckout() {

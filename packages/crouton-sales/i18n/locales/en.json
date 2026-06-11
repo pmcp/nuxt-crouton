@@ -364,7 +364,8 @@
       "statusCancelled": "Cancelled",
       "currency": "Currency",
       "currencyEur": "Euro (€)",
-      "currencyUsd": "Dollar ($)"
+      "currencyUsd": "Dollar ($)",
+      "showInactive": "Show inactive products"
     },
     "helpers": {
       "title": "Active Helpers",
@@ -401,7 +402,20 @@
       "resendFailed": "Resend failed jobs",
       "resendQueued": "Requeued {count} print job(s)",
       "resendNone": "No failed print jobs to resend",
-      "resendError": "Could not requeue print jobs"
+      "resendError": "Could not requeue print jobs",
+      "errors": {
+        "paperOut": "Paper out",
+        "coverOpen": "Cover open",
+        "printerError": "Printer error",
+        "printerOffline": "Printer offline",
+        "notResponding": "Printer not responding — paper out, cover open, or offline?",
+        "notEscpos": "Unexpected response — not an ESC/POS printer?",
+        "stoppedMidTicket": "Printer stopped responding while printing (paper ran out mid-ticket?)",
+        "parseFailed": "Spooler could not read the print job",
+        "emptyDecode": "Empty print data",
+        "sendFailed": "Could not send to printer",
+        "generic": "Print job failed"
+      }
     }
   }
 }

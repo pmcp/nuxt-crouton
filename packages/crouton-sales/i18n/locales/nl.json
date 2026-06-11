@@ -364,7 +364,8 @@
       "statusCancelled": "Geannuleerd",
       "currency": "Valuta",
       "currencyEur": "Euro (€)",
-      "currencyUsd": "Dollar ($)"
+      "currencyUsd": "Dollar ($)",
+      "showInactive": "Toon inactieve producten"
     },
     "helpers": {
       "title": "Actieve helpers",
@@ -401,7 +402,20 @@
       "resendFailed": "Mislukte opdrachten opnieuw versturen",
       "resendQueued": "{count} printopdracht(en) opnieuw in wachtrij",
       "resendNone": "Geen mislukte printopdrachten",
-      "resendError": "Opnieuw versturen mislukt"
+      "resendError": "Opnieuw versturen mislukt",
+      "errors": {
+        "paperOut": "Papier op",
+        "coverOpen": "Klep open",
+        "printerError": "Printerfout",
+        "printerOffline": "Printer offline",
+        "notResponding": "Printer reageert niet — papier op, klep open of offline?",
+        "notEscpos": "Onverwacht antwoord — geen ESC/POS-printer?",
+        "stoppedMidTicket": "Printer stopte tijdens het printen (papier op halverwege?)",
+        "parseFailed": "Spooler kon de printopdracht niet lezen",
+        "emptyDecode": "Lege printdata",
+        "sendFailed": "Versturen naar printer mislukt",
+        "generic": "Printopdracht mislukt"
+      }
     }
   }
 }
