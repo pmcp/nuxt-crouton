@@ -160,7 +160,7 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   name: 'sales.blocks.eventWorkspace.name',
   description: 'sales.blocks.eventWorkspace.description',
   icon: 'i-lucide-layout-dashboard',
-  category: 'admin',
+  category: 'kassa',
   clientOnly: true,
   defaultAttrs: {
     eventSlug: '',
