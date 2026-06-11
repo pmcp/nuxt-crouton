@@ -36,7 +36,10 @@ Event -> Products/Categories -> Customer selects -> Cart -> Order -> Print (opt-
 **Printer types** (`salesPrinters.type`, nullable — NULL ⇒ kitchen): `kitchen` printers get one
 ticket per location (matched on `locationId`); a `receipt` printer gets one combined customer
 receipt for the whole order (`printMode: 'receipt'` — the only mode that prints the
-receipt-settings `footer_text`). Selected in `PrinterForm.vue` (package component); the generated
+receipt-settings `footer_text`). **Customer receipts are on-demand only**: checkout queues kitchen
+tickets but never a receipt (`generatePrintJobsForOrder` gates it on `options.withReceipt`) — the
+receipt printer only fires via the manual reprint endpoint (`orders/[orderId]/print`, which sets
+`withReceipt: true`) or the end-of-tab `end-receipt`. Selected in `PrinterForm.vue` (package component); the generated
 printers collection needs the `type` column + zod field (fanfare has it, migration
 `0008_windy_dragon_man`). **`locationId` is kitchen-only**: receipt printers store NULL (routing
 never reads it) — the form shows type above location, hides the location field for receipt and
@@ -293,8 +296,8 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
-| `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
-| `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
+| `events/[eventId]/orders` POST | helper token | Create order + generate print queues (kitchen tickets only — no customer receipt) |
+| `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order, **including the customer receipt** (`withReceipt: true` — the only per-order receipt path) |
 | `teams/[id]/events/[eventId]/clients/summary` GET | team member | Active clients with an open tab at this event (`{ id, title, orderCount, total }`, non-cancelled orders only). Backs the workspace clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/tab` GET | team member | Read-only preview of a client's open tab: the aggregated receipt lines `end-receipt` would print (`{ lines: [{ name, quantity, price, optionLabels, total }], orderCount, total }`). Backs the expandable rows in the clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged — shared `aggregateClientTab` in `server/utils/client-tab.ts`, also used by the `tab` GET), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |

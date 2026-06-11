@@ -33,6 +33,8 @@ interface GenerateInsertOptions {
   isPersonnel?: boolean
   /** Event currency ('EUR' | 'USD', default EUR) — sets the receipt price symbol. */
   currency?: string
+  /** Queue the customer receipt too — only the manual reprint endpoint sets this. */
+  withReceipt?: boolean
 }
 
 export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions): Promise<string[]> {
@@ -131,7 +133,8 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       eventName: opts.eventName,
       isPersonnel: opts.isPersonnel || false,
       currency: opts.currency,
-      createdBy: helperId
+      createdBy: helperId,
+      withReceipt: opts.withReceipt || false
     },
     printItems,
     printerConfigs,

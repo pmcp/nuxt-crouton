@@ -47,7 +47,10 @@ export default defineEventHandler(async (event) => {
     teamName: eventWithTeam.team?.name || 'POS',
     eventName: eventWithTeam.event.title,
     currency: eventWithTeam.event.currency || undefined,
-    isPersonnel: order.isPersonnel || false
+    isPersonnel: order.isPersonnel || false,
+    // Manual reprint is the on-demand path for the customer receipt —
+    // checkout itself never queues one.
+    withReceipt: true
   })
 
   return {

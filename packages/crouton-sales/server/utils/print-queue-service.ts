@@ -44,6 +44,12 @@ export interface PrintQueueGeneratorOptions {
   createdBy: string
   /** Event currency ('EUR' | 'USD', default EUR) — sets the receipt price symbol. */
   currency?: string
+  /**
+   * Also queue the combined customer receipt on the event's receipt printer.
+   * Receipts are on-demand only: checkout never sets this — only the manual
+   * reprint endpoint does. Tab clients get theirs via end-receipt instead.
+   */
+  withReceipt?: boolean
 }
 
 /** Map an event currency code to the symbol printed on receipts. */
@@ -268,9 +274,9 @@ export function generatePrintJobsForOrder(
     }
   }
 
-  // Create receipt job (all items combined)
+  // Create receipt job (all items combined) — on-demand only (withReceipt)
   // Use the first receipt printer (could be enhanced to support multiple)
-  const receiptPrinter = receiptPrinters[0]
+  const receiptPrinter = options.withReceipt ? receiptPrinters[0] : undefined
   if (receiptPrinter) {
     const allItems: OrderItemForPrint[] = []
     for (const [, locationData] of itemsByLocation) {
