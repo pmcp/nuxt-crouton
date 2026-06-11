@@ -50,7 +50,6 @@ interface OrderData {
   categories: SalesCategory[]
   clients: { id: string, title: string }[]
   locations: { id: string, title: string }[]
-  settings: { useReusableClients: boolean }
   helper: { id: string, name: string }
 }
 
@@ -162,7 +161,9 @@ onMounted(async () => {
 // Products/categories/locations created or edited from the POS (or anywhere
 // else while it's open) must show up without a reload — order-data is a
 // plain pre-fetched payload, so re-fetch it on relevant mutations.
-const CATALOG_COLLECTIONS = ['salesProducts', 'salesCategories', 'salesLocations']
+// salesEvents is included so flipping event flags in the settings panel
+// (e.g. "Require client") reaches the kassa live.
+const CATALOG_COLLECTIONS = ['salesProducts', 'salesCategories', 'salesLocations', 'salesEvents']
 const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
   if (orderData.value && CATALOG_COLLECTIONS.includes(payload.collection)) {
     loadOrderData()
@@ -225,7 +226,6 @@ onUnmounted(unhookMutation)
           :clients="orderData.clients"
           :locations="orderData.locations"
           :requires-client="orderData.event.requiresClient"
-          :use-reusable-clients="orderData.settings.useReusableClients"
           :currency="orderData.event.currency"
           :editable="editable"
         />

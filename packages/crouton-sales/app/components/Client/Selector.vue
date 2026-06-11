@@ -1,55 +1,44 @@
 <template>
-  <div class="space-y-2 p-3 -m-3 rounded-lg" :class="highlight ? 'border border-warning bg-warning/5' : ''">
-    <label class="text-sm font-medium text-muted">{{ t('sales.client.label') }}</label>
+  <!-- No visible label — the select's placeholder/icon carry the meaning, and
+       the row lines up with the category-tabs row beside it. -->
+  <div class="p-1 -m-1 rounded-lg" :class="highlight ? 'border border-warning bg-warning/5' : ''">
+    <!-- Dropdown with search and create — clients are always the reusable
+         kind; there is no free-text mode. -->
+    <USelectMenu
+      v-model="selectedValue"
+      :items="allClients"
+      value-key="id"
+      label-key="title"
+      :placeholder="t('sales.client.selectOrCreate')"
+      :aria-label="t('sales.client.label')"
+      icon="i-lucide-user"
+      size="lg"
+      class="w-full"
+      searchable
+    >
+      <template #default="{ modelValue }">
+        <span v-if="modelValue" class="truncate">
+          {{ getClientLabel(modelValue as string) }}
+        </span>
+        <span v-else class="text-dimmed truncate">
+          {{ t('sales.client.selectOrCreate') }}
+        </span>
+      </template>
 
-    <!-- Reusable clients mode: dropdown with search and create -->
-    <template v-if="useReusableClients">
-      <USelectMenu
-        v-model="selectedValue"
-        :items="allClients"
-        value-key="id"
-        label-key="title"
-        :placeholder="t('sales.client.selectOrCreate')"
-        icon="i-lucide-user"
-        size="lg"
-        class="w-full"
-        searchable
-      >
-        <template #default="{ modelValue }">
-          <span v-if="modelValue" class="truncate">
-            {{ getClientLabel(modelValue as string) }}
-          </span>
-          <span v-else class="text-dimmed truncate">
-            {{ t('sales.client.selectOrCreate') }}
-          </span>
-        </template>
-
-        <template #content-top>
-          <div class="p-1">
-            <UButton
-              color="neutral"
-              icon="i-lucide-plus"
-              variant="soft"
-              block
-              @click="openCreateModal"
-            >
-              {{ t('sales.client.createNew', 'Create new client') }}
-            </UButton>
-          </div>
-        </template>
-      </USelectMenu>
-    </template>
-
-    <!-- Free-text mode: simple input -->
-    <template v-else>
-      <UInput
-        v-model="clientName"
-        :placeholder="t('sales.client.enterName')"
-        icon="i-lucide-user"
-        size="lg"
-        class="w-full"
-      />
-    </template>
+      <template #content-top>
+        <div class="p-1">
+          <UButton
+            color="neutral"
+            icon="i-lucide-plus"
+            variant="soft"
+            block
+            @click="openCreateModal"
+          >
+            {{ t('sales.client.createNew', 'Create new client') }}
+          </UButton>
+        </div>
+      </template>
+    </USelectMenu>
 
     <!-- Create client modal -->
     <UModal
@@ -97,10 +86,8 @@ const { t } = useT()
 
 const props = defineProps<{
   clients: SalesClient[]
-  useReusableClients: boolean
   highlight?: boolean
   clientId?: string | null
-  clientName?: string
   /** Event ID for helper-scoped client creation (volunteer/POS flows) */
   eventId?: string
 }>()
@@ -111,10 +98,6 @@ const emit = defineEmits<{
   'client-created': [client: SalesClient]
 }>()
 
-// For free-text mode
-const clientName = ref('')
-
-// For reusable clients mode
 const selectedValue = ref<string>('')
 const creating = ref(false)
 const createModalOpen = ref(false)
@@ -183,7 +166,7 @@ async function createClient() {
   }
 }
 
-// Emit changes for reusable mode
+// Emit selection changes
 watch(selectedValue, (value) => {
   if (!value) return
 
@@ -194,24 +177,8 @@ watch(selectedValue, (value) => {
   }
 })
 
-// Emit changes for free-text mode
-watch(clientName, (value) => {
-  emit('update:clientName', value)
-  emit('update:clientId', null)
-})
-
 // Sync with external props (for clearing/resetting)
 watch(() => props.clientId, (newId) => {
-  if (newId === null && props.useReusableClients) {
-    selectedValue.value = ''
-  } else if (newId && props.useReusableClients) {
-    selectedValue.value = newId
-  }
-})
-
-watch(() => props.clientName, (newName) => {
-  if (!props.useReusableClients && newName !== clientName.value) {
-    clientName.value = newName || ''
-  }
+  selectedValue.value = newId || ''
 })
 </script>

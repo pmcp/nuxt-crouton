@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { SalesEvent } from '~~/layers/sales/collections/events/types'
-import type { SalesEventsetting } from '~~/layers/sales/collections/eventsettings/types'
 
 const props = defineProps<{ event: SalesEvent }>()
 
@@ -59,23 +58,10 @@ async function resendFailedJobs() {
   }
 }
 
-const { items: allSettings, refresh: refreshSettings } = await useCollectionQuery('salesEventsettings')
-
-const eventSettings = computed(() =>
-  ((allSettings.value as SalesEventsetting[] | null) || []).filter(s => s.eventId === props.event.id)
-)
-
-const clientModeSetting = computed(() =>
-  eventSettings.value.find(s => s.settingKey === 'use_reusable_clients')
-)
-
-const useReusableClients = ref(false)
-const savingClientMode = ref(false)
-
 // The POS only shows the client selector when the event's requiresClient is
 // truthy (OrderInterface gates on it) — mirror that here so the switch shows
-// what the kassa actually does. The reusable-clients mode below only applies
-// while this is on.
+// what the kassa actually does. Clients are always the reusable kind (pick
+// from saved clients or create one); there is no free-text mode.
 const requiresClient = ref(!!props.event.requiresClient)
 const savingRequiresClient = ref(false)
 const helperPin = ref(props.event.helperPin || '')
@@ -126,10 +112,6 @@ async function saveEventDetails() {
   }
 }
 
-watch(clientModeSetting, (s) => {
-  if (s) useReusableClients.value = s.settingValue === 'true'
-}, { immediate: true })
-
 async function saveRequiresClient(value: boolean) {
   savingRequiresClient.value = true
   try {
@@ -141,31 +123,6 @@ async function saveRequiresClient(value: boolean) {
   }
   finally {
     savingRequiresClient.value = false
-  }
-}
-
-async function saveClientModeSetting(value: boolean) {
-  savingClientMode.value = true
-  try {
-    const { create, update } = useCollectionMutation('salesEventsettings')
-    if (clientModeSetting.value) {
-      await update(clientModeSetting.value.id, { settingValue: String(value) })
-    }
-    else {
-      await create({
-        eventId: props.event.id,
-        settingKey: 'use_reusable_clients',
-        settingValue: String(value),
-        description: 'Whether to use reusable clients or free-text names'
-      })
-    }
-    await refreshSettings()
-  }
-  catch {
-    useReusableClients.value = !value
-  }
-  finally {
-    savingClientMode.value = false
   }
 }
 
@@ -279,21 +236,21 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
       <UCard variant="soft">
         <div class="space-y-3">
           <h3 class="font-semibold">{{ t('sales.workspace.clientSelection') }}</h3>
-          <USwitch
-            v-model="requiresClient"
-            :label="t('sales.workspace.requiresClient')"
-            :description="t('sales.workspace.requiresClientDesc')"
-            :loading="savingRequiresClient"
-            @update:model-value="saveRequiresClient"
-          />
-          <USwitch
-            v-model="useReusableClients"
-            :label="t('sales.workspace.useReusableClients')"
-            :description="t('sales.workspace.useReusableClientsDesc')"
-            :loading="savingClientMode"
-            :disabled="!requiresClient"
-            @update:model-value="saveClientModeSetting"
-          />
+          <!-- Settings row: text flush with the heading, switch on the
+               trailing edge aligned with the label line. -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p class="text-sm font-medium leading-5">{{ t('sales.workspace.requiresClient') }}</p>
+              <p class="text-sm text-muted">{{ t('sales.workspace.requiresClientDesc') }}</p>
+            </div>
+            <USwitch
+              v-model="requiresClient"
+              :aria-label="t('sales.workspace.requiresClient')"
+              :loading="savingRequiresClient"
+              class="mt-0.5"
+              @update:model-value="saveRequiresClient"
+            />
+          </div>
         </div>
       </UCard>
 

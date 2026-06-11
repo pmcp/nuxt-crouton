@@ -350,8 +350,6 @@
       "clientSelection": "Klantselectie",
       "requiresClient": "Klant vereist",
       "requiresClientDesc": "Bestellingen moeten aan een klant gekoppeld worden — toont de klantkeuze in de kassa",
-      "useReusableClients": "Herbruikbare klanten gebruiken",
-      "useReusableClientsDesc": "Kies uit bestaande klanten of gebruik vrije tekst",
       "helperPin": "Helper-PIN",
       "receiptSettings": "Boninstellingen",
       "editReceiptText": "Bontekst bewerken",
@@ -398,7 +396,6 @@
       "notes": "Notities",
       "label": "Klant",
       "selectOrCreate": "Selecteer of maak klant aan...",
-      "enterName": "Voer klantnaam in...",
       "createNew": "Nieuwe klant aanmaken",
       "nameLabel": "Klantnaam",
       "namePlaceholder": "Voer klantnaam in"

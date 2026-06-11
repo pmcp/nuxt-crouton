@@ -63,13 +63,12 @@
 
         <!-- Cart sidebar (wide panes only) -->
         <div class="hidden @2xl:flex w-80 border-l border-default flex-col">
-          <div v-if="props.requiresClient" class="p-3 border-b border-default">
+          <!-- p-2 matches the category-tabs row so both header rows align. -->
+          <div v-if="props.requiresClient" class="p-2 border-b border-default">
             <SalesClientSelector
               :clients="props.clients || []"
-              :use-reusable-clients="props.useReusableClients ?? false"
               :highlight="!hasClient && cartItems.length > 0"
               :client-id="selectedClientId"
-              :client-name="selectedClientName || undefined"
               :event-id="props.eventId"
               @update:client-id="selectedClientId = $event"
               @update:client-name="selectedClientName = $event"
@@ -116,10 +115,8 @@
               <div v-if="props.requiresClient" class="p-3 border-b border-default shrink-0">
                 <SalesClientSelector
                   :clients="props.clients || []"
-                  :use-reusable-clients="props.useReusableClients ?? false"
                   :highlight="!hasClient && cartItems.length > 0"
                   :client-id="selectedClientId"
-                  :client-name="selectedClientName || undefined"
                   :event-id="props.eventId"
                   @update:client-id="selectedClientId = $event"
                   @update:client-name="selectedClientName = $event"
@@ -174,8 +171,6 @@ const props = defineProps<{
   locations?: SalesLocation[]
   /** Whether this event requires orders to be linked to a client. */
   requiresClient?: boolean
-  /** Whether to use reusable clients (dropdown) vs free-text input. */
-  useReusableClients?: boolean
   /** Collection name for products query (defaults to 'salesProducts'). Ignored when `products` is provided. */
   productsCollection?: string
   /** Collection name for categories query (defaults to 'salesCategories'). Ignored when `categories` is provided. */
@@ -259,10 +254,7 @@ const loading = computed(() => categoriesLoading.value || productsLoading.value)
 // Client selection state
 const hasClient = computed(() => {
   if (!props.requiresClient) return true
-  if (props.useReusableClients) {
-    return !!selectedClientId.value || !!(selectedClientName.value?.trim())
-  }
-  return !!(selectedClientName.value?.trim())
+  return !!selectedClientId.value || !!(selectedClientName.value?.trim())
 })
 
 // Mobile cart drawer open state (closed automatically after checkout)

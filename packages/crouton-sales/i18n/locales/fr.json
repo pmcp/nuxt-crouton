@@ -349,8 +349,6 @@
       "clientSelection": "Sélection du client",
       "requiresClient": "Client requis",
       "requiresClientDesc": "Les commandes doivent être liées à un client — affiche le sélecteur de client dans la caisse",
-      "useReusableClients": "Utiliser des clients réutilisables",
-      "useReusableClientsDesc": "Sélectionnez parmi les clients existants ou utilisez du texte libre",
       "helperPin": "PIN bénévole",
       "receiptSettings": "Paramètres du reçu",
       "editReceiptText": "Modifier le texte du reçu",
@@ -397,7 +395,6 @@
       "notes": "Notes",
       "label": "Client",
       "selectOrCreate": "Sélectionner ou créer un client...",
-      "enterName": "Saisir le nom du client...",
       "createNew": "Créer un nouveau client",
       "nameLabel": "Nom du client",
       "namePlaceholder": "Saisir le nom du client"

@@ -48,7 +48,6 @@ interface OrderData {
   categories: SalesCategorie[]
   clients: Client[]
   locations: Location[]
-  settings: { useReusableClients: boolean }
   helper: { id: string, name: string }
 }
 
@@ -259,7 +258,6 @@ onMounted(async () => {
           :clients="orderData.clients"
           :locations="orderData.locations"
           :requires-client="orderData.event.requiresClient"
-          :use-reusable-clients="orderData.settings.useReusableClients"
           :currency="orderData.event.currency"
         />
       </div>

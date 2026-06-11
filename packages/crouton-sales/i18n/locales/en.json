@@ -350,8 +350,6 @@
       "clientSelection": "Client Selection",
       "requiresClient": "Require client",
       "requiresClientDesc": "Orders must be linked to a client — shows the client picker in the register",
-      "useReusableClients": "Use Reusable Clients",
-      "useReusableClientsDesc": "Select from existing clients or use free-text names",
       "helperPin": "Helper PIN",
       "receiptSettings": "Receipt Settings",
       "editReceiptText": "Edit Receipt Text",
@@ -398,7 +396,6 @@
       "notes": "Notes",
       "label": "Client",
       "selectOrCreate": "Select or create client...",
-      "enterName": "Enter client name...",
       "createNew": "Create new client",
       "nameLabel": "Client name",
       "namePlaceholder": "Enter client name"

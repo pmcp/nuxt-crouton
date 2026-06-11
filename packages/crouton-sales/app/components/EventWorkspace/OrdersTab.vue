@@ -78,16 +78,9 @@ watch([selectedHelperName, selectedClientId, selectedPrinterId, selectedPrintSta
   ordersPage.value = 1
 })
 
-// Client filter only when the event runs in reusable-clients mode — free-text
-// orders carry no clientId, so the filter would be meaningless there.
-const { items: eventSettings } = await useCollectionQuery(
-  'salesEventsettings',
-  { query: computed(() => ({ eventId: props.event.id })) }
-)
-const useReusableClients = computed(() =>
-  (((eventSettings.value as { settingKey: string, settingValue: string }[] | null) || [])
-    .some(s => s.settingKey === 'use_reusable_clients' && s.settingValue === 'true'))
-)
+// Client filter only when the event requires clients — loose orders carry no
+// clientId, so the filter would be meaningless there.
+const clientFilterEnabled = computed(() => !!props.event.requiresClient)
 
 const { items: clients } = await useCollectionQuery('salesClients')
 
@@ -313,7 +306,7 @@ function openEditOrder(id: string) {
               :searchable="true"
             />
             <USelectMenu
-              v-if="useReusableClients"
+              v-if="clientFilterEnabled"
               v-model="selectedClientId"
               :items="clientOptions"
               value-key="id"

@@ -122,8 +122,8 @@ is **header-controllable**: pass `v-model:filters-open` (+ listen to `@update:ac
 for the chip) and OrdersTab hides its own button — Shell does this to host the toggle in the
 orders-pane header next to ✕; standalone usage without the prop keeps the internal button.
 Filters: helper,
-client (only when the event's `use_reusable_clients` eventsetting is on — free-text orders carry
-no `clientId`), printer, and print status (busy / done / failed; printer + status selects only
+client (only when the event has `requiresClient` — loose orders carry no `clientId`), printer,
+and print status (busy / done / failed; printer + status selects only
 render when the event has active printers), in a container-responsive grid (1 col → 2 cols at
 `@md`). No order count, no manual refresh button: the 2s poll is the only refresh. All filters
 apply **server-side** (the list is paginated): the component sends `?owner=`, `?clientId=`,
@@ -300,7 +300,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
 | `OrdersList.vue` | `SalesPosOrdersList` | Orders table with status filtering and auto-refresh |
-| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`. Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside and the fanfare admin order page |
+| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`/`salesEvents` (the last so flag flips like "Require client" reach the kassa live). Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside and the fanfare admin order page |
 
 ### Admin (`Admin/`)
 | Component | Auto-import Name | Purpose |

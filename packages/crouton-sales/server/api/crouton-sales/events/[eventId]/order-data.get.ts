@@ -5,7 +5,6 @@ import { salesProducts } from '~~/layers/sales/collections/products/server/datab
 import { salesCategories } from '~~/layers/sales/collections/categories/server/database/schema'
 import { salesClients } from '~~/layers/sales/collections/clients/server/database/schema'
 import { salesLocations } from '~~/layers/sales/collections/locations/server/database/schema'
-import { salesEventsettings } from '~~/layers/sales/collections/eventsettings/server/database/schema'
 
 // Helper-authenticated endpoint: all data needed for POS order interface
 export default defineEventHandler(async (event) => {
@@ -41,18 +40,6 @@ export default defineEventHandler(async (event) => {
     .from(salesCategories)
     .where(eq(salesCategories.eventId, eventId))
 
-  const settings = await db
-    .select()
-    .from(salesEventsettings)
-    .where(eq(salesEventsettings.eventId, eventId))
-
-  const settingsObj: Record<string, string> = {}
-  for (const setting of settings) {
-    settingsObj[setting.settingKey] = setting.settingValue || ''
-  }
-
-  const useReusableClients = settingsObj.use_reusable_clients === 'true'
-
   const clients = await db
     .select({ id: salesClients.id, title: salesClients.title })
     .from(salesClients)
@@ -77,7 +64,6 @@ export default defineEventHandler(async (event) => {
     categories,
     clients,
     locations,
-    settings: { useReusableClients },
     helper: {
       id: access.id,
       name: access.displayName
