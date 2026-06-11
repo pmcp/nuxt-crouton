@@ -81,10 +81,12 @@ switcher (with a "create event" item in its `#content-top`, same pattern as
   (`SplitterGroup`/`Panel`/`ResizeHandle`; ratio persists via `autoSaveId`). While open the strip
   hides and the pane header carries the orders filter toggle (chip = active-filter count;
   state lifted into Shell, selects live in OrdersTab) and a close ✕. The POS itself is `@container`-responsive: squeezed
-  below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport
+  below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport. The
+  drawer is non-portaled (`:portal="false"`) — the `@container` root has layout containment, so
+  the drawer + overlay stay inside the POS module instead of covering the whole page
 - **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
-  live in its Event Details header. The full event form (incl. slug) is not reachable from the
-  workspace.
+  live as explained rows at the bottom of its Event Details card. The full event form (incl.
+  slug) is not reachable from the workspace.
 Per-order print status lives on the order rows as LED dots. Event dates are deliberately not shown
 anywhere in the workspace (irrelevant to the POS flow; columns remain in the DB). Deleting the
 current event navigates back to the events list via a `crouton:mutation` hook (matched on
@@ -153,7 +155,8 @@ Failed lines carry a **re-print button** — emits `retryJob` to OrdersTab, whic
 `printqueues/retry-failed` with `{ jobId }` and refreshes the queue poll.
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
-"Event Details" card (header also carries Duplicate/Delete) — saved with
+"Event Details" card (header carries only Save; Duplicate/Delete sit at the card's bottom as
+explained label + description rows) — saved with
 `useCollectionMutation('salesEvents').update`, Save disabled until dirty. **Slug is intentionally
 excluded** (it's the route param; editing it inline breaks the current URL). Layout: **one
 3-column row** (`lg:grid-cols-3`). Block 1: the Event Details card — name + currency fields with

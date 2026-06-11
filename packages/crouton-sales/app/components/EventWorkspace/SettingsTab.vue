@@ -231,35 +231,14 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         <template #header>
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold">{{ t('sales.workspace.eventDetails') }}</h3>
-            <div class="flex items-center gap-2">
-              <UButton
-                size="xs"
-                variant="outline"
-                color="neutral"
-                icon="i-lucide-copy"
-                :loading="duplicating"
-                @click="duplicateEvent"
-              >
-                {{ t('sales.events.duplicate') }}
-              </UButton>
-              <UButton
-                size="xs"
-                variant="outline"
-                color="error"
-                icon="i-lucide-trash-2"
-                @click="deleteEvent"
-              >
-                {{ t('common.delete') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :loading="savingEventDetails"
-                :disabled="!eventDetailsDirty"
-                @click="saveEventDetails"
-              >
-                {{ t('sales.common.save') }}
-              </UButton>
-            </div>
+            <UButton
+              size="xs"
+              :loading="savingEventDetails"
+              :disabled="!eventDetailsDirty"
+              @click="saveEventDetails"
+            >
+              {{ t('sales.common.save') }}
+            </UButton>
           </div>
         </template>
         <div class="space-y-4">
@@ -285,6 +264,44 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
               class="mt-0.5"
               @update:model-value="saveRequiresClient"
             />
+          </div>
+
+          <USeparator />
+
+          <!-- Event-level actions as explained rows (moved out of the header). -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p class="text-sm font-medium leading-5">{{ t('sales.workspace.duplicateEvent') }}</p>
+              <p class="text-sm text-muted">{{ t('sales.workspace.duplicateEventDesc') }}</p>
+            </div>
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              icon="i-lucide-copy"
+              :loading="duplicating"
+              class="shrink-0 mt-0.5"
+              @click="duplicateEvent"
+            >
+              {{ t('sales.events.duplicate') }}
+            </UButton>
+          </div>
+
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p class="text-sm font-medium leading-5">{{ t('sales.workspace.deleteEvent') }}</p>
+              <p class="text-sm text-muted">{{ t('sales.workspace.deleteEventDesc') }}</p>
+            </div>
+            <UButton
+              size="xs"
+              variant="outline"
+              color="error"
+              icon="i-lucide-trash-2"
+              class="shrink-0 mt-0.5"
+              @click="deleteEvent"
+            >
+              {{ t('common.delete') }}
+            </UButton>
           </div>
         </div>
       </UCard>
