@@ -105,15 +105,6 @@ const orderPath = (event: SalesEvent) =>
             :label="t('sales.events.workspace')"
             @click.stop="navigateTo(workspacePath(event))"
           />
-          <UButton
-            icon="i-lucide-pencil"
-            size="sm"
-            color="neutral"
-            variant="ghost"
-            class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-            :aria-label="t('sales.events.edit')"
-            @click.stop="crouton.open('update', 'salesEvents', [event.id])"
-          />
         </div>
       </div>
     </div>
