@@ -44,7 +44,7 @@
       <!-- Label, or the inline rename input -->
       <input
         v-if="editingId === cat.id"
-        :ref="focusEditInput"
+        :ref="setEditInput"
         v-model="editingTitle"
         type="text"
         class="bg-transparent outline-none text-center min-w-0 w-28 border-b border-current/40"
@@ -69,7 +69,7 @@
       </span>
     </li>
 
-    <!-- Draft tab: spawned by "+", commits on enter/blur, vanishes if empty -->
+    <!-- Draft tab: spawned by "+", commits on enter/blur/click-outside, vanishes if empty -->
     <li
       v-if="creating"
       role="presentation"
@@ -77,7 +77,7 @@
              text-sm font-medium bg-elevated/60 text-highlighted"
     >
       <input
-        :ref="focusEditInput"
+        :ref="setDraftInput"
         v-model="draftTitle"
         type="text"
         class="bg-transparent outline-none text-center min-w-0 w-28 border-b border-current/40"
@@ -193,9 +193,27 @@ function startEdit(categoryId: string) {
   editingTitle.value = cat.title
 }
 
-function focusEditInput(el: unknown) {
-  if (el instanceof HTMLInputElement) el.focus()
+// Template refs double as autofocus + click-outside anchors. Blur alone can't
+// close these inputs: programmatic focus() is ignored on touch devices outside
+// a direct tap handler, so an untouched input never receives focus and never
+// blurs — onClickOutside below covers that path.
+const editInputEl = ref<HTMLInputElement | null>(null)
+const draftInputEl = ref<HTMLInputElement | null>(null)
+
+function setEditInput(el: unknown) {
+  const input = el instanceof HTMLInputElement ? el : null
+  if (input && input !== editInputEl.value) input.focus()
+  editInputEl.value = input
 }
+
+function setDraftInput(el: unknown) {
+  const input = el instanceof HTMLInputElement ? el : null
+  if (input && input !== draftInputEl.value) input.focus()
+  draftInputEl.value = input
+}
+
+onClickOutside(editInputEl, commitEdit)
+onClickOutside(draftInputEl, commitCreate)
 
 function commitEdit() {
   // Blur fires after enter — the first commit clears editingId, so bail.
