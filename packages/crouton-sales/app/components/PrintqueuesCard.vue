@@ -49,7 +49,7 @@ const timeLabel = computed(() => {
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <span class="font-medium truncate">{{ printerName || t('sales.printQueue.printer', 'Printer') }}</span>
-        <UBadge v-if="retryCount > 0" color="neutral" variant="subtle" size="xs">
+        <UBadge v-if="retryCount > 0" color="neutral" variant="subtle" size="sm">
           {{ t('sales.printQueue.retries', 'retries') }}: {{ retryCount }}
         </UBadge>
       </div>
