@@ -157,16 +157,23 @@
             </div>
           </template>
 
-          <!-- Required per-item remark: inline textarea, beneath options or alone -->
+          <!-- Required per-item remark: inline textarea, beneath options or alone.
+               Header matches the cart's remark section (icon + singular label);
+               the prompt lives in the field description only — no placeholder or
+               textarea icon, they doubled the same text inside the box. -->
           <UFormField
             v-if="product.requiresRemark"
-            :label="t('sales.products.remarks')"
             :description="product.remarkPrompt || undefined"
+            :class="hasOptions(product) ? 'pt-2' : ''"
           >
+            <template #label>
+              <span class="flex items-center gap-2">
+                <UIcon name="i-lucide-message-square-text" class="size-4" />
+                {{ t('sales.cart.remark') }}
+              </span>
+            </template>
             <UTextarea
               :model-value="remarkFor(product.id)"
-              :placeholder="product.remarkPrompt || t('sales.products.remarksPlaceholder')"
-              icon="i-lucide-message-square-text"
               :rows="2"
               autoresize
               class="w-full"
