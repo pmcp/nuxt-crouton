@@ -1,13 +1,20 @@
 <template>
-  <div class="flex items-center gap-3 py-2">
+  <!-- items-start: price + qty controls align with the product name line,
+       not the vertical middle of a multi-line block. -->
+  <div class="flex items-start gap-3 py-2">
     <div class="flex-1 min-w-0 space-y-1">
       <p class="font-medium truncate">{{ title }}</p>
       <p
         v-for="option in options"
         :key="option"
-        class="text-xs text-muted truncate pl-2"
+        class="text-xs text-muted truncate flex items-center gap-1.5"
       >
+        <span class="size-1 rounded-full bg-current opacity-60 shrink-0" />
         {{ option }}
+      </p>
+      <p v-if="remark" class="text-xs text-warning truncate flex items-center gap-1.5">
+        <span class="size-1 rounded-full bg-current opacity-60 shrink-0" />
+        {{ remark }}
       </p>
     </div>
 
@@ -30,6 +37,9 @@ defineProps<{
   title: string
   price: number
   options?: string[]
+  /** Per-item remark (requiresRemark products) — warning-colored like
+   * everywhere else remarks appear. */
+  remark?: string
 }>()
 </script>
 

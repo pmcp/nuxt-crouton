@@ -14,33 +14,38 @@
         >
           {{ group.title }}
         </p>
-        <SalesClientOrderLineItem
-          v-for="entry in group.entries"
-          :key="`${entry.item.product.id}-${entry.index}`"
-          :title="entry.item.product.title"
-          :price="calculateItemPrice(entry.item) * entry.item.quantity"
-          :options="getSelectedOptionLabels(entry.item)"
-        >
-          <template #actions>
-            <UButton
-              icon="i-lucide-minus"
-              size="xs"
-              color="neutral"
-              variant="soft"
-              square
-              @click="$emit('updateQuantity', entry.index, entry.item.quantity - 1)"
-            />
-            <span :key="entry.item.quantity" class="w-6 text-center text-sm animate-pop">{{ entry.item.quantity }}</span>
-            <UButton
-              icon="i-lucide-plus"
-              size="xs"
-              color="neutral"
-              variant="soft"
-              square
-              @click="$emit('updateQuantity', entry.index, entry.item.quantity + 1)"
-            />
-          </template>
-        </SalesClientOrderLineItem>
+        <!-- Subtle divider between products — same treatment as the expanded
+             order's item list in the workspace. -->
+        <div class="divide-y divide-default/60">
+          <SalesClientOrderLineItem
+            v-for="entry in group.entries"
+            :key="`${entry.item.product.id}-${entry.index}`"
+            :title="entry.item.product.title"
+            :price="calculateItemPrice(entry.item) * entry.item.quantity"
+            :options="getSelectedOptionLabels(entry.item)"
+            :remark="entry.item.remarks"
+          >
+            <template #actions>
+              <UButton
+                icon="i-lucide-minus"
+                size="xs"
+                color="neutral"
+                variant="soft"
+                square
+                @click="$emit('updateQuantity', entry.index, entry.item.quantity - 1)"
+              />
+              <span :key="entry.item.quantity" class="w-6 text-center text-sm animate-pop">{{ entry.item.quantity }}</span>
+              <UButton
+                icon="i-lucide-plus"
+                size="xs"
+                color="neutral"
+                variant="soft"
+                square
+                @click="$emit('updateQuantity', entry.index, entry.item.quantity + 1)"
+              />
+            </template>
+          </SalesClientOrderLineItem>
+        </div>
       </div>
     </div>
 
