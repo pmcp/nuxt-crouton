@@ -33,6 +33,10 @@
             />
           </UFormField>
 
+          <UFormField :label="t('sales.form.title')" name="title" class="not-last:pb-4">
+            <UInput v-model="state.title" class="w-full" size="xl" />
+          </UFormField>
+
           <UFormField :label="t('sales.form.location')" name="locationId" class="not-last:pb-4">
             <CroutonFormReferenceSelect
               v-model="state.locationId"
@@ -42,36 +46,55 @@
             />
           </UFormField>
 
-          <UFormField :label="t('sales.form.title')" name="title" class="not-last:pb-4">
-            <UInput v-model="state.title" class="w-full" size="xl" />
-          </UFormField>
-
           <UFormField :label="t('sales.form.ipAddress')" name="ipAddress" :help="t('sales.form.ipAddressHelp')" class="not-last:pb-4">
             <UInput
               v-model="state.ipAddress"
               class="w-full"
               size="xl"
+              icon="i-lucide-network"
               placeholder="192.168.1.70"
               :ui="{ base: 'font-mono' }"
             />
           </UFormField>
 
-          <UFormField :label="t('sales.form.printerType')" name="type" :help="t('sales.form.printerTypeHelp')" class="not-last:pb-4">
-            <USelect
+          <UFormField :label="t('sales.form.printerType')" name="type" class="not-last:pb-4">
+            <URadioGroup
               v-model="state.type"
               :items="printerTypeItems"
-              class="w-full"
-              size="xl"
-            />
+              variant="card"
+              orientation="horizontal"
+              :ui="{ item: 'flex-1 items-start', fieldset: 'w-full gap-2' }"
+            >
+              <template #label="{ item }">
+                <span class="flex items-center gap-1.5">
+                  <UIcon :name="(item as any).icon" class="size-4 shrink-0 text-muted" />
+                  {{ (item as any).label }}
+                </span>
+              </template>
+            </URadioGroup>
           </UFormField>
 
-          <UFormField :label="t('sales.form.showPrices')" name="showPrices" class="not-last:pb-4">
-            <UCheckbox v-model="state.showPrices" />
-          </UFormField>
+          <div class="rounded-lg border border-default divide-y divide-default">
+            <UFormField name="showPrices">
+              <div class="flex items-center justify-between gap-4 p-4">
+                <div>
+                  <p class="text-sm font-medium text-highlighted">{{ t('sales.form.showPrices') }}</p>
+                  <p class="text-xs text-muted mt-0.5">{{ t('sales.form.showPricesHelp') }}</p>
+                </div>
+                <USwitch v-model="state.showPrices" />
+              </div>
+            </UFormField>
 
-          <UFormField :label="t('sales.common.active')" name="isActive" class="not-last:pb-4">
-            <UCheckbox v-model="state.isActive" />
-          </UFormField>
+            <UFormField name="isActive">
+              <div class="flex items-center justify-between gap-4 p-4">
+                <div>
+                  <p class="text-sm font-medium text-highlighted">{{ t('sales.common.active') }}</p>
+                  <p class="text-xs text-muted mt-0.5">{{ t('sales.form.printerActiveHelp') }}</p>
+                </div>
+                <USwitch v-model="state.isActive" />
+              </div>
+            </UFormField>
+          </div>
         </div>
       </template>
 
@@ -143,8 +166,18 @@ const navigationItems = [
 ]
 
 const printerTypeItems = [
-  { label: t('sales.form.printerTypeKitchen'), value: 'kitchen' },
-  { label: t('sales.form.printerTypeReceipt'), value: 'receipt' }
+  {
+    label: t('sales.form.printerTypeKitchen'),
+    description: t('sales.form.printerTypeKitchenHelp'),
+    icon: 'i-lucide-chef-hat',
+    value: 'kitchen'
+  },
+  {
+    label: t('sales.form.printerTypeReceipt'),
+    description: t('sales.form.printerTypeReceiptHelp'),
+    icon: 'i-lucide-receipt-text',
+    value: 'receipt'
+  }
 ]
 
 const activeSection = ref('general')
