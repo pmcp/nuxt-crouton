@@ -22,19 +22,26 @@ forwarding, no inbound exposure.
 
 1. POS order is placed → app generates a print job per printer (base64 ESC/POS) in D1.
 2. Spooler polls `GET /api/print-server/events/{EVENT_ID}/jobs?mark_as_printing=true`.
-3. Decodes the base64, streams the raw bytes to `printerIp:9100` via `nc`.
-4. Queries printer status (ESC/POS `DLE EOT 1` + `DLE EOT 4`, appended to the
-   payload on the same socket) and waits for the response bytes.
+3. **Pre-flight**: queries printer status on its own connection (ESC/POS
+   `DLE EOT 1` + `2` + `4`). If the printer reports `Cover open`, `Paper out`,
+   `Printer error`, `Printer offline`, or doesn't answer (`No status response
+   from printer`), the job fails immediately **without sending the ticket** —
+   this also prevents ghost tickets printing once paper is reloaded. The
+   pre-flight must be its own connection: an error-state printer stops
+   draining its buffer, so queries appended after a payload would get stuck
+   behind the jammed data and never be answered.
+4. Decodes the base64, streams the raw bytes to `printerIp:9100` via `nc`,
+   with the same status queries appended as a confirmation pass (the held-open
+   socket also lets the printer drain its buffer before close).
 5. Calls back `POST /api/print-server/jobs/{id}/complete` **only when the
-   printer answered "online, paper present"** — otherwise `/fail` with a
-   specific `errorMessage` (`Paper out`, `Printer offline (cover open, paper
-   out, or error)`, `No status response from printer`, …).
+   printer answered "online, paper present"** — otherwise `/fail` with the
+   specific `errorMessage` from step 3, or `Printer stopped responding while
+   printing (paper ran out mid-ticket?)` when the confirmation pass got no
+   reply.
 
 So a **Done** badge in the admin UI means the printer confirmed it was online
-with paper at job time — not just that bytes were sent. Caveat: the status
-queries are processed in real time, so paper running out *mid-ticket* can still
-slip through; everything else (paper out, cover open, wrong IP, dead printer)
-is caught and surfaces as a failed job.
+with paper — not just that bytes were sent. Failed jobs carry the exact reason
+in `errorMessage`, shown on the print job card.
 
 ## Network topology (validated)
 

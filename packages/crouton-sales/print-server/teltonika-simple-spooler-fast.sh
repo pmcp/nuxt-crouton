@@ -69,16 +69,48 @@ decode_base64() {
     }'
 }
 
-# Print the decimal value of the first bytes of a file, one per line (max 2).
+# Print the decimal value of the first bytes of a file, one per line (max 3).
 # Used to parse DLE EOT status responses — minimal BusyBox has no od/hexdump
 # guarantee, but awk is byte-safe on RutOS (same trick as decode_base64).
 # Status bytes are never 0x00 or 0x0A (fixed bit 1 is always set), so awk's
 # line handling can't eat them.
 read_status_bytes() {
     awk 'BEGIN { for (i = 1; i < 256; i++) ord[sprintf("%c", i)] = i }
-    n < 2 {
-        for (j = 1; j <= length($0) && n < 2; j++) { print ord[substr($0, j, 1)]; n++ }
+    n < 3 {
+        for (j = 1; j <= length($0) && n < 3; j++) { print ord[substr($0, j, 1)]; n++ }
     }' "$1"
+}
+
+# The three real-time status queries sent together, answered in order:
+#   DLE EOT 1 (printer status), DLE EOT 2 (offline cause), DLE EOT 4 (paper).
+STATUS_QUERIES='\020\004\001\020\004\002\020\004\004'
+
+# Classify the three DLE EOT response bytes ($1 $2 $3, decimal; may be empty).
+# $4 = message to use when there was no response at all.
+# Sets STATUS_ERROR to a human-readable reason, or "" when the printer is
+# online with paper present.
+classify_status() {
+    B1="$1"; B2="$2"; B3="$3"
+    STATUS_ERROR=""
+    if [ -z "$B1" ]; then
+        STATUS_ERROR="$4"
+    elif [ $(( B1 & 147 )) -ne 18 ]; then
+        # Every DLE EOT response has fixed bits 0/1/4/7 = 0/1/1/0,
+        # i.e. (byte & 0x93) == 0x12 — anything else is not ESC/POS status.
+        STATUS_ERROR="Unexpected status response - not an ESC/POS printer?"
+    elif [ -n "$B2" ] && [ $(( B2 & 4 )) -ne 0 ]; then
+        # DLE EOT 2: bit 2 = cover open
+        STATUS_ERROR="Cover open"
+    elif { [ -n "$B3" ] && [ $(( B3 & 96 )) -ne 0 ]; } || { [ -n "$B2" ] && [ $(( B2 & 32 )) -ne 0 ]; }; then
+        # DLE EOT 4: bits 5+6 = roll paper end / DLE EOT 2: bit 5 = stopped, paper end
+        STATUS_ERROR="Paper out"
+    elif [ -n "$B2" ] && [ $(( B2 & 64 )) -ne 0 ]; then
+        # DLE EOT 2: bit 6 = error condition
+        STATUS_ERROR="Printer error"
+    elif [ $(( B1 & 8 )) -ne 0 ]; then
+        # DLE EOT 1: bit 3 = offline for any other reason
+        STATUS_ERROR="Printer offline"
+    fi
 }
 
 # Callbacks are synchronous — the outer process_job is already backgrounded;
@@ -122,42 +154,43 @@ process_job() {
     fi
 
     if [ "$STATUS_CHECK" = "1" ]; then
-        # Append two real-time status queries after the ticket payload:
-        #   DLE EOT 1 (printer status: offline bit) + DLE EOT 4 (paper sensor).
-        # The printer answers each with one byte on the same socket. Getting an
-        # answer proves we talked to a live ESC/POS printer; the bits tell us
-        # whether it can actually print (online, paper present). Note these are
-        # processed in real time, so they can't confirm the very last lines hit
-        # paper — but they catch the silent killers: paper out, cover open,
-        # wrong IP, dead printer.
-        printf '\020\004\001\020\004\004' >> "$TMPFILE"
+        # Pre-flight: query status on its OWN connection BEFORE sending the
+        # ticket. A printer in an error state (no paper, cover open) stops
+        # draining its receive buffer, so queries appended after a payload get
+        # stuck behind the jammed ticket data and are never answered — on an
+        # empty connection a live ESC/POS printer always answers, even while
+        # offline. This also avoids dumping the ticket into a jammed buffer,
+        # which would print as a ghost ticket once paper is reloaded.
+        : > "$RESPFILE"
+        ( printf "$STATUS_QUERIES"; sleep 1 ) | timeout 8 nc "$JOB_PRINTER_IP" "$PRINTER_PORT" > "$RESPFILE" 2>/dev/null
 
-        # The trailing sleep keeps stdin (and thus the socket) open so the
-        # printer can drain its buffer and reply before nc closes — abrupt
-        # close right after send is how tickets used to vanish silently.
+        set -- $(read_status_bytes "$RESPFILE")
+        classify_status "${1:-}" "${2:-}" "${3:-}" \
+            "No status response from printer (offline, wrong IP, or not an ESC/POS device)"
+
+        if [ -n "$STATUS_ERROR" ]; then
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: pre-flight failed on $JOB_PRINTER_IP: $STATUS_ERROR"
+            report_fail "$JOB_ID" "$STATUS_ERROR"
+            rm -f "$TMPFILE" "$RESPFILE"
+            return
+        fi
+
+        # Printer is healthy — send the ticket with the same status queries
+        # appended as a confirmation pass. The trailing sleep keeps stdin (and
+        # thus the socket) open so the printer can drain its buffer and reply
+        # before nc closes — abrupt close right after send is how tickets used
+        # to vanish silently.
+        printf "$STATUS_QUERIES" >> "$TMPFILE"
         : > "$RESPFILE"
         ( cat "$TMPFILE"; sleep "$DRAIN_SECS" ) | timeout 15 nc "$JOB_PRINTER_IP" "$PRINTER_PORT" > "$RESPFILE" 2>/dev/null
 
         set -- $(read_status_bytes "$RESPFILE")
-        PRINTER_BYTE="${1:-}"
-        PAPER_BYTE="${2:-}"
+        classify_status "${1:-}" "${2:-}" "${3:-}" \
+            "Printer stopped responding while printing (paper ran out mid-ticket?)"
 
-        if [ -z "$PRINTER_BYTE" ]; then
-            echo "$(date '+%H:%M:%S') Job $JOB_ID: no status response from $JOB_PRINTER_IP"
-            report_fail "$JOB_ID" "No status response from printer (offline, wrong IP, or not an ESC/POS device)"
-        elif [ $(( PRINTER_BYTE & 147 )) -ne 18 ]; then
-            # Every DLE EOT response has fixed bits 0/1/4/7 = 0/1/1/0,
-            # i.e. (byte & 0x93) == 0x12 — anything else is not ESC/POS status.
-            echo "$(date '+%H:%M:%S') Job $JOB_ID: unexpected status byte $PRINTER_BYTE from $JOB_PRINTER_IP"
-            report_fail "$JOB_ID" "Unexpected status response from printer IP - not an ESC/POS printer?"
-        elif [ -n "$PAPER_BYTE" ] && [ $(( PAPER_BYTE & 96 )) -ne 0 ]; then
-            # DLE EOT 4: bits 5+6 set = roll paper end
-            echo "$(date '+%H:%M:%S') Job $JOB_ID: paper out on $JOB_PRINTER_IP"
-            report_fail "$JOB_ID" "Paper out"
-        elif [ $(( PRINTER_BYTE & 8 )) -ne 0 ]; then
-            # DLE EOT 1: bit 3 = offline (cover open, paper end, error, feed button)
-            echo "$(date '+%H:%M:%S') Job $JOB_ID: printer offline ($JOB_PRINTER_IP)"
-            report_fail "$JOB_ID" "Printer offline (cover open, paper out, or error)"
+        if [ -n "$STATUS_ERROR" ]; then
+            echo "$(date '+%H:%M:%S') Job $JOB_ID: post-send check failed on $JOB_PRINTER_IP: $STATUS_ERROR"
+            report_fail "$JOB_ID" "$STATUS_ERROR"
         else
             echo "$(date '+%H:%M:%S') Job $JOB_ID printed on $JOB_PRINTER_IP"
             echo "$JOB_ID" >> "$PROCESSED"
