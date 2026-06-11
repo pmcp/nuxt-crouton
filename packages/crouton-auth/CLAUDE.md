@@ -196,6 +196,12 @@ export default defineNuxtConfig({
 BETTER_AUTH_SECRET=your-secret-key
 BETTER_AUTH_URL=http://localhost:3000
 
+# Optional: extra trusted origins (comma-separated). Works in production —
+# needed when a custom domain fronts a Pages project (e.g.
+# kassa.friendlyinter.net alongside fanfare.pages.dev). Set as a Pages
+# secret/env var on the deployment.
+BETTER_AUTH_TRUSTED_ORIGINS=https://kassa.friendlyinter.net,https://*.fanfare.pages.dev
+
 # OAuth (optional)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
