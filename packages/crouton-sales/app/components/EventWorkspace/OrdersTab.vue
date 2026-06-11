@@ -107,6 +107,7 @@ type PrintJobRow = {
   retryCount?: number
   createdAt?: string | number
   completedAt?: string | number
+  printerIdData?: { title: string }
 }
 
 // Slim status endpoint instead of the generated collection GET: that one
@@ -123,9 +124,18 @@ const printerList = computed(() =>
     .sort((a, b) => a.title.localeCompare(b.title))
 )
 
+// All event printers (incl. inactive — old jobs may reference them). The slim
+// status endpoint ships only printerId, so jobs are enriched with the title
+// here; without it PrintqueuesCard falls back to a generic "Printer" label.
+const printerTitleById = computed(() => new Map(
+  (((printers.value as PrinterRow[] | null) || [])).map(p => [p.id, p.title])
+))
+
 const jobsByOrder = computed(() => {
   const map = new Map<string, PrintJobRow[]>()
-  for (const job of ((printJobs.value as PrintJobRow[] | null) || [])) {
+  for (const rawJob of ((printJobs.value as PrintJobRow[] | null) || [])) {
+    const title = printerTitleById.value.get(rawJob.printerId)
+    const job = title ? { ...rawJob, printerIdData: { title } } : rawJob
     const list = map.get(job.orderId)
     if (list) list.push(job)
     else map.set(job.orderId, [job])

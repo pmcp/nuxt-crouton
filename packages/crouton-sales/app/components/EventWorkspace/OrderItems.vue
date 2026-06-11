@@ -40,15 +40,23 @@ const { format: formatPrice } = useSalesCurrency()
 
 const total = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.totalPrice) || 0), 0))
 
-// What a given print job actually printed: kitchen tickets carry the items
-// routed to the job's location (product.locationId), receipt-mode jobs (or
-// jobs without a location) print the whole order. One line per item.
+// What a given print job actually printed — mirrors the server's grouping in
+// generatePrintJobsForOrder: receipt jobs carry the whole order; kitchen jobs
+// carry their location's items (product.locationId); a kitchen job WITHOUT a
+// location is the synthetic "default" ticket and carries only the items that
+// themselves have no location — NOT the whole order. One line per item.
 function jobItems(job: any): string[] {
   const all = rows.value
-  const isWholeOrder = job?.printMode === 'receipt' || !job?.locationId
-  const subset = isWholeOrder
-    ? all
-    : all.filter(i => (i.productIdData as any)?.locationId === job.locationId)
+  let subset: typeof all
+  if (job?.printMode === 'kitchen' && !job?.locationId) {
+    subset = all.filter(i => !(i.productIdData as any)?.locationId)
+  }
+  else if (job?.locationId) {
+    subset = all.filter(i => (i.productIdData as any)?.locationId === job.locationId)
+  }
+  else {
+    subset = all
+  }
   return subset
     .map(i => `${i.quantity}× ${i.productIdData?.title || t('sales.orders.unknownProduct')}`)
 }

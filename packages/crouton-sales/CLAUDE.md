@@ -185,8 +185,12 @@ render them raw), per-item remarks, line total, order total. Requires the app's
 json column** (package `schemas/orders.json` has it; fanfare migration `0009_spotty_aqueduct`) —
 without it the order POST silently drops location remarks and reprints lose them. The **printers
 tab** lists jobs via `<SalesPrintqueuesCard>` (each followed by **what that ticket printed**,
-stacked one item per line: kitchen jobs = items whose `productIdData.locationId` matches the
-job's `locationId`, receipt-mode/locationless jobs = the whole order), or the
+stacked one item per line, mirroring the server's `generatePrintJobsForOrder` grouping: kitchen
+jobs with a `locationId` = items whose `productIdData.locationId` matches it; kitchen jobs
+WITHOUT a location = the synthetic "default" ticket, i.e. only items that themselves have no
+location — sent to every kitchen printer; receipt-mode jobs = the whole order). OrdersTab
+enriches each slim status row with `printerIdData: { title }` from its printers query so the
+card shows the real printer name instead of the generic fallback. The tab shows the
 `noTicketForPrinter` explanation when the order generated no tickets (`:has-printers` keeps the
 tab visible). Failed lines carry an **icon-only re-print button** in the card's `#actions` slot
 (left of the LED, so the dot stays rightmost) — emits `retryJob` to OrdersTab, which POSTs
