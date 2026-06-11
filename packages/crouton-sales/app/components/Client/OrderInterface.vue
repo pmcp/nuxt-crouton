@@ -22,15 +22,6 @@
         </div>
         <UButton
           v-if="editable"
-          :icon="showInactive ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-          size="sm"
-          color="neutral"
-          :variant="showInactive ? 'solid' : 'soft'"
-          :aria-label="t('sales.workspace.showInactive', 'Show inactive products')"
-          @click="showInactive = !showInactive"
-        />
-        <UButton
-          v-if="editable"
           icon="i-lucide-plus"
           size="sm"
           color="neutral"
@@ -42,25 +33,36 @@
 
       <!-- Main content area -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- Products grid -->
-        <div class="flex-1 overflow-y-auto p-2">
-          <SalesClientProductList
-            :products="filteredProducts"
-            :editable="editable"
-            @select="handleProductSelect"
-            @edit="openEditProduct"
-            @reorder="handleReorder"
-          />
-          <UButton
+        <!-- Products column -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Admin toolbar: add product + show-inactive, pinned above the list -->
+          <div
             v-if="editable"
-            block
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-plus"
-            class="mt-2 border-dashed"
-            :label="t('sales.workspace.addProduct')"
-            @click="openCreateProduct"
-          />
+            class="shrink-0 flex items-center justify-between gap-3 p-2 pb-0"
+          >
+            <UButton
+              size="sm"
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-plus"
+              :label="t('sales.workspace.addProduct')"
+              @click="openCreateProduct"
+            />
+            <USwitch
+              v-model="showInactive"
+              :label="t('sales.workspace.showInactive', 'Show inactive')"
+              size="sm"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto p-2">
+            <SalesClientProductList
+              :products="filteredProducts"
+              :editable="editable"
+              @select="handleProductSelect"
+              @edit="openEditProduct"
+              @reorder="handleReorder"
+            />
+          </div>
         </div>
 
         <!-- Cart sidebar (desktop only) -->
