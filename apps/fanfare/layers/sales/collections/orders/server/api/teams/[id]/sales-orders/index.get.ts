@@ -23,7 +23,9 @@ export default defineEventHandler(async (event) => {
   const filters = {
     eventId: query.eventId ? String(query.eventId) : undefined,
     clientId: query.clientId ? String(query.clientId) : undefined,
-    owner: query.owner ? String(query.owner) : undefined
+    owner: query.owner ? String(query.owner) : undefined,
+    printerId: query.printerId ? String(query.printerId) : undefined,
+    printStatus: query.printStatus ? String(query.printStatus) : undefined
   }
 
   // Opt-in pagination: ?page=1&pageSize=10 → { items, total, page, pageSize }
