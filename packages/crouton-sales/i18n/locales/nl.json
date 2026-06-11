@@ -338,6 +338,8 @@
       "loadingPrinters": "Printers laden...",
       "noPrinters": "Geen printers geconfigureerd",
       "clientSelection": "Klantselectie",
+      "requiresClient": "Klant vereist",
+      "requiresClientDesc": "Bestellingen moeten aan een klant gekoppeld worden — toont de klantkeuze in de kassa",
       "useReusableClients": "Herbruikbare klanten gebruiken",
       "useReusableClientsDesc": "Kies uit bestaande klanten of gebruik vrije tekst",
       "helperPin": "Helper-PIN",

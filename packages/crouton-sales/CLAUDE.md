@@ -144,7 +144,10 @@ Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the 
 "Event Details" card (header also carries Duplicate/Delete) — saved with
 `useCollectionMutation('salesEvents').update`, Save disabled until dirty. **Slug is intentionally
 excluded** (it's the route param; editing it inline breaks the current URL). The tab also hosts
-Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, the Active Helpers
+Helper PIN, Client Selection (a **"Require client" switch** persisting `salesEvents.requiresClient`
+— the field the POS gates `<SalesClientSelector>` on — plus the reusable-clients mode switch
+(`salesEventsettings` `use_reusable_clients`), disabled while require-client is off since it only
+picks dropdown vs free-text once the selector shows), Receipt Settings, the Active Helpers
 list, and a 3-column grid of **compact catalog cards** (`SettingsListCard.vue`, auto-import
 `SalesEventWorkspaceSettingsListCard`): Categories / Locations / Printers as simple rows with the
 POS slide-out hover affordances (pencil right; drag grip left when `orderField` is set).

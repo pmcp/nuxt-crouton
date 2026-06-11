@@ -71,6 +71,13 @@ const clientModeSetting = computed(() =>
 
 const useReusableClients = ref(false)
 const savingClientMode = ref(false)
+
+// The POS only shows the client selector when the event's requiresClient is
+// truthy (OrderInterface gates on it) — mirror that here so the switch shows
+// what the kassa actually does. The reusable-clients mode below only applies
+// while this is on.
+const requiresClient = ref(!!props.event.requiresClient)
+const savingRequiresClient = ref(false)
 const helperPin = ref(props.event.helperPin || '')
 const originalHelperPin = ref(props.event.helperPin || '')
 const savingHelperPin = ref(false)
@@ -97,6 +104,7 @@ watch(() => props.event.id, () => {
     title: props.event.title || '',
     currency: props.event.currency || 'EUR'
   }
+  requiresClient.value = !!props.event.requiresClient
 })
 
 const eventDetailsDirty = computed(() =>
@@ -121,6 +129,20 @@ async function saveEventDetails() {
 watch(clientModeSetting, (s) => {
   if (s) useReusableClients.value = s.settingValue === 'true'
 }, { immediate: true })
+
+async function saveRequiresClient(value: boolean) {
+  savingRequiresClient.value = true
+  try {
+    const { update } = useCollectionMutation('salesEvents')
+    await update(props.event.id, { requiresClient: value })
+  }
+  catch {
+    requiresClient.value = !value
+  }
+  finally {
+    savingRequiresClient.value = false
+  }
+}
 
 async function saveClientModeSetting(value: boolean) {
   savingClientMode.value = true
@@ -258,10 +280,18 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         <div class="space-y-3">
           <h3 class="font-semibold">{{ t('sales.workspace.clientSelection') }}</h3>
           <USwitch
+            v-model="requiresClient"
+            :label="t('sales.workspace.requiresClient')"
+            :description="t('sales.workspace.requiresClientDesc')"
+            :loading="savingRequiresClient"
+            @update:model-value="saveRequiresClient"
+          />
+          <USwitch
             v-model="useReusableClients"
             :label="t('sales.workspace.useReusableClients')"
             :description="t('sales.workspace.useReusableClientsDesc')"
             :loading="savingClientMode"
+            :disabled="!requiresClient"
             @update:model-value="saveClientModeSetting"
           />
         </div>
