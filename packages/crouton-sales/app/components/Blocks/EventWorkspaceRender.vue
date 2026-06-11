@@ -81,8 +81,10 @@ watch([posWrapper, heightMode], async () => {
       {{ t('sales.block.noEventPicked') }}
     </div>
 
-    <!-- Team member session → the full workspace (event fixed, no switcher) -->
-    <div v-else-if="loggedIn" class="rounded-3xl border border-default bg-default p-6">
+    <!-- Team member session → the full workspace (event fixed, no switcher).
+         No border: the shell frames its own kassa; p-6 stays so the block
+         keeps the exact same width as the previously bordered version. -->
+    <div v-else-if="loggedIn" class="rounded-3xl bg-default p-6">
       <Suspense>
         <SalesEventWorkspaceShell :event-slug="eventSlug" :show-switcher="false" />
         <template #fallback>
