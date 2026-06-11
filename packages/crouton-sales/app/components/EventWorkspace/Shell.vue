@@ -155,15 +155,6 @@ const ordersOpen = ref(false)
       </div>
       <div v-if="showHeaderActions" class="flex gap-2">
         <UButton
-          icon="i-lucide-receipt"
-          size="sm"
-          color="primary"
-          :variant="ordersOpen ? 'solid' : 'soft'"
-          @click="ordersOpen = !ordersOpen"
-        >
-          {{ t('sales.orders.title') }}
-        </UButton>
-        <UButton
           icon="i-lucide-pencil"
           size="sm"
           color="neutral"
@@ -191,31 +182,68 @@ const ordersOpen = ref(false)
       </template>
     </UCollapsible>
 
-    <!-- Kassa: the main surface. Orders join as a resizable pane on toggle
-         (drag the divider; sizes persist via autoSaveId). -->
-    <SplitterGroup
-      direction="horizontal"
-      auto-save-id="sales-workspace-pos"
-      class="flex border border-default rounded-xl overflow-clip bg-default h-[75vh]"
-    >
-      <SplitterPanel :min-size="35" class="min-w-0">
-        <!-- No panel header: the workspace header above already names the
-             event (the standalone order page keeps it). -->
-        <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" :show-header="false" />
-      </SplitterPanel>
-      <template v-if="ordersOpen">
-        <SplitterResizeHandle
-          class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
-        />
-        <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 overflow-y-auto p-4">
-          <Suspense>
-            <SalesEventWorkspaceOrdersTab :event="event" />
-            <template #fallback>
-              <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
-            </template>
-          </Suspense>
+    <!-- Kassa: the main surface, full remaining viewport height. Orders join
+         as a resizable pane on toggle (drag the divider; sizes persist via
+         autoSaveId). The vertical tab hangs just OUTSIDE the kassa's right
+         edge (reserved gutter via pe-11, so it never overflows the page). -->
+    <div class="relative" :class="ordersOpen ? '' : 'pe-11'">
+    <div class="flex border border-default rounded-xl overflow-clip bg-default h-[calc(100dvh-13rem)] min-h-[28rem]">
+      <SplitterGroup
+        direction="horizontal"
+        auto-save-id="sales-workspace-pos"
+        class="flex flex-1 min-w-0"
+      >
+        <SplitterPanel :min-size="35" class="min-w-0">
+          <!-- No panel header: the workspace header above already names the
+               event (the standalone order page keeps it). -->
+          <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" :show-header="false" />
         </SplitterPanel>
-      </template>
-    </SplitterGroup>
+        <template v-if="ordersOpen">
+          <SplitterResizeHandle
+            class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
+          />
+          <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 flex flex-col">
+            <div class="shrink-0 flex items-center justify-between px-4 pt-3">
+              <span class="text-sm font-semibold">{{ t('sales.orders.title') }}</span>
+              <UButton
+                icon="i-lucide-x"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                :aria-label="t('sales.common.close')"
+                @click="ordersOpen = false"
+              />
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 pt-2">
+              <Suspense>
+                <SalesEventWorkspaceOrdersTab :event="event" />
+                <template #fallback>
+                  <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+                </template>
+              </Suspense>
+            </div>
+          </SplitterPanel>
+        </template>
+      </SplitterGroup>
+
+    </div>
+
+    <!-- Vertical orders tab: hangs just outside the kassa's right edge while
+         the pane is closed (the pane has its own close button when open) -->
+    <button
+      v-if="!ordersOpen"
+      type="button"
+      class="absolute right-0 top-5 flex flex-col items-center gap-1.5 px-1.5 py-3 rounded-md
+             cursor-pointer border border-default bg-elevated/60 hover:bg-elevated
+             text-muted hover:text-highlighted transition-colors"
+      :aria-label="t('sales.orders.title')"
+      @click="ordersOpen = true"
+    >
+      <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0" />
+      <span class="[writing-mode:vertical-rl] text-sm font-medium tracking-wide">
+        {{ t('sales.orders.title') }}
+      </span>
+    </button>
+    </div>
   </div>
 </template>

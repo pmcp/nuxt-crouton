@@ -1,33 +1,110 @@
 <template>
-  <div ref="wrapEl">
-    <UTabs
-      :key="tabsKey"
-      :model-value="modelValue ?? fallbackValue"
-      :items="tabItems"
-      :content="false"
-      @update:model-value="onTabChange"
+  <!-- Helper POS / workspace lists: plain UTabs (read-only, no drag). -->
+  <UTabs
+    v-if="!sortableMode"
+    :model-value="modelValue ?? fallbackValue"
+    :items="tabItems"
+    :content="false"
+    @update:model-value="onTabChange"
+  />
+
+  <!-- Admin POS: a custom tab row that Vue and SortableJS co-own (same
+       pattern as ProductList). UTabs can't be dragged safely — Reka UI's
+       animated indicator element gets measured against DOM that Sortable
+       just moved, which breaks the tab styling on drop. -->
+  <ul
+    v-else
+    ref="listEl"
+    role="tablist"
+    class="flex w-full items-center gap-1 rounded-lg bg-elevated p-1"
+  >
+    <li
+      v-for="cat in orderedCategories"
+      :key="cat.id"
+      role="tab"
+      tabindex="0"
+      :aria-selected="isActive(cat.id)"
+      class="group/tab flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-md
+             px-3 py-1.5 text-sm font-medium cursor-pointer select-none transition-colors"
+      :class="isActive(cat.id)
+        ? 'bg-primary text-inverted'
+        : 'text-muted hover:text-highlighted hover:bg-elevated/60'"
+      @click="onTabChange(cat.id)"
+      @keydown.enter.self="onTabChange(cat.id)"
     >
-      <!-- Editable mode: pencil inside the active tab → edit that category -->
-      <template v-if="editable" #trailing="{ item }">
-        <!-- Styled span, not <UButton>: this sits inside the tab's <button>,
-             and nested buttons are invalid HTML (breaks SSR hydration). -->
-        <span
-          v-if="item.value !== 'all' && (modelValue ?? fallbackValue) === item.value"
-          role="button"
-          :aria-label="t('common.edit')"
-          class="ml-1.5 inline-flex items-center justify-center size-6 rounded-full
-                 bg-black/15 hover:bg-black/30 active:scale-95 transition-all"
-          @click.stop="emit('edit', String(item.value))"
-        >
-          <UIcon name="i-lucide-pencil" class="size-3.5" />
-        </span>
-      </template>
-    </UTabs>
-  </div>
+      <!-- Drag grip (left, hover-revealed; the only drag surface) -->
+      <span
+        class="tab-drag-handle inline-flex items-center cursor-grab active:cursor-grabbing
+               opacity-0 group-hover/tab:opacity-100 pointer-coarse:opacity-100 transition-opacity"
+        @click.stop
+      >
+        <UIcon name="i-lucide-grip-vertical" class="size-3.5" />
+      </span>
+
+      <!-- Label, or the inline rename input -->
+      <input
+        v-if="editingId === cat.id"
+        :ref="focusEditInput"
+        v-model="editingTitle"
+        type="text"
+        class="bg-transparent outline-none text-center min-w-0 w-28 border-b border-current/40"
+        @click.stop
+        @keydown.enter.stop.prevent="commitEdit"
+        @keydown.esc.stop.prevent="cancelEdit"
+        @blur="commitEdit"
+      >
+      <span v-else class="truncate">{{ withCount(cat.title, counts?.[cat.id] || 0) }}</span>
+
+      <!-- Rename pencil (right, active tab only) -->
+      <span
+        v-if="isActive(cat.id) && editingId !== cat.id"
+        role="button"
+        :aria-label="t('common.edit')"
+        class="inline-flex items-center justify-center size-6 rounded-full shrink-0
+               bg-black/15 hover:bg-black/30 active:scale-95 transition-all
+               opacity-0 group-hover/tab:opacity-100 pointer-coarse:opacity-100"
+        @click.stop="startEdit(cat.id)"
+      >
+        <UIcon name="i-lucide-pencil" class="size-3.5" />
+      </span>
+    </li>
+
+    <!-- Draft tab: spawned by "+", commits on enter/blur, vanishes if empty -->
+    <li
+      v-if="creating"
+      role="presentation"
+      class="flex-1 min-w-0 flex items-center justify-center rounded-md px-3 py-1.5
+             text-sm font-medium bg-elevated/60 text-highlighted"
+    >
+      <input
+        :ref="focusEditInput"
+        v-model="draftTitle"
+        type="text"
+        class="bg-transparent outline-none text-center min-w-0 w-28 border-b border-current/40"
+        @click.stop
+        @keydown.enter.stop.prevent="commitCreate"
+        @keydown.esc.stop.prevent="cancelCreate"
+        @blur="commitCreate"
+      >
+    </li>
+
+    <!-- Add category: starts a draft tab instead of opening a form -->
+    <li role="presentation" class="shrink-0">
+      <button
+        type="button"
+        class="flex items-center justify-center size-8 rounded-md cursor-pointer
+               text-muted hover:text-highlighted hover:bg-elevated/60 transition-colors"
+        :aria-label="t('sales.workspace.add')"
+        @click="startCreate"
+      >
+        <UIcon name="i-lucide-plus" class="size-4" />
+      </button>
+    </li>
+  </ul>
 </template>
 
 <script setup lang="ts">
-import Sortable from 'sortablejs'
+import { useSortable } from '@vueuse/integrations/useSortable'
 import type { TabsItem } from '@nuxt/ui'
 const { t } = useT()
 import type { SalesCategory } from '../../types'
@@ -41,20 +118,23 @@ const props = withDefaults(defineProps<{
   counts?: Record<string, number>
   // Show the leading "All" tab (default). Set false to force a category selection.
   showAll?: boolean
-  // Admin POS: pencil on the active tab (emits 'edit') + drag-reorder of the
-  // tabs themselves (emits 'reorder'; only when showAll is off, so indices
-  // map 1:1 onto categories).
+  // Admin POS: drag grip (left, hover) reorders tabs (emits 'reorder'); pencil
+  // on the active tab renames inline (emits 'rename'). Only effective when
+  // showAll is off, so indices map 1:1 onto categories.
   editable?: boolean
 }>(), { showAll: true, counts: () => ({}) })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
-  'edit': [categoryId: string]
+  'rename': [payload: { id: string, title: string }]
+  'create': [payload: { title: string }]
   'reorder': [updates: Array<{ id: string, order: number }>]
 }>()
 
-// Local mutable copy so a drop can reorder optimistically before the parent's
-// data refresh catches up.
+// The custom (draggable) row replaces UTabs only in the editable POS.
+const sortableMode = computed(() => props.editable && !props.showAll)
+
+// Local mutable copy that useSortable reorders in place on drop.
 const orderedCategories = ref<SalesCategory[]>([])
 watch(() => props.categories, (v) => { orderedCategories.value = [...(v || [])] }, { immediate: true })
 
@@ -92,42 +172,95 @@ const fallbackValue = computed(() =>
   props.showAll ? 'all' : (orderedCategories.value[0]?.id ?? 'all'),
 )
 
+function isActive(categoryId: string): boolean {
+  return (props.modelValue ?? fallbackValue.value) === categoryId
+}
+
 function onTabChange(value: string | number) {
   emit('update:modelValue', value === 'all' ? null : String(value))
 }
 
-// --- Tab drag-reorder (editable POS) ---------------------------------------
-// SortableJS moves DOM nodes that Vue owns, so after a drop we apply the move
-// to our local array and bump `tabsKey` to remount UTabs with clean DOM (the
-// Sortable instance dies with the old tablist; re-init on the new one).
-const wrapEl = ref<HTMLElement | null>(null)
-const tabsKey = ref(0)
-let sortable: Sortable | null = null
+// --- Inline rename (editable POS) -------------------------------------------
+// The pencil swaps the active tab's label for an input; enter/blur commits
+// (emits 'rename' for the parent to persist), esc cancels.
+const editingId = ref<string | null>(null)
+const editingTitle = ref('')
 
-function initTabSortable() {
-  if (!import.meta.client || !props.editable || props.showAll) return
-  const listEl = wrapEl.value?.querySelector('[role="tablist"]') as HTMLElement | null
-  if (!listEl) return
-  sortable?.destroy()
-  sortable = Sortable.create(listEl, {
+function startEdit(categoryId: string) {
+  const cat = orderedCategories.value.find(c => c.id === categoryId)
+  if (!cat) return
+  editingId.value = categoryId
+  editingTitle.value = cat.title
+}
+
+function focusEditInput(el: unknown) {
+  if (el instanceof HTMLInputElement) el.focus()
+}
+
+function commitEdit() {
+  // Blur fires after enter — the first commit clears editingId, so bail.
+  if (!editingId.value) return
+  const id = editingId.value
+  const title = editingTitle.value.trim()
+  const original = orderedCategories.value.find(c => c.id === id)?.title
+  editingId.value = null
+  if (title && title !== original) {
+    emit('rename', { id, title })
+  }
+}
+
+function cancelEdit() {
+  editingId.value = null
+}
+
+// --- Inline create (editable POS) -------------------------------------------
+// "+" spawns a draft tab with a focused input; a non-empty commit emits
+// 'create' (parent persists + selects), an empty one just removes the draft.
+const creating = ref(false)
+const draftTitle = ref('')
+
+function startCreate() {
+  creating.value = true
+  draftTitle.value = ''
+}
+
+function commitCreate() {
+  if (!creating.value) return
+  const title = draftTitle.value.trim()
+  creating.value = false
+  if (title) emit('create', { title })
+}
+
+function cancelCreate() {
+  creating.value = false
+}
+
+// --- Tab drag-reorder (editable POS) ---------------------------------------
+// Vue renders the row from orderedCategories and useSortable mutates the same
+// array on drop — no separate indicator element to fall out of sync.
+const listEl = ref<HTMLElement | null>(null)
+
+const orderOf = (c: SalesCategory) => (c as any).displayOrder ?? 0
+
+function emitNewOrder() {
+  const updates: Array<{ id: string, order: number }> = []
+  orderedCategories.value.forEach((c, index) => {
+    if (orderOf(c) !== index) updates.push({ id: c.id, order: index })
+  })
+  if (updates.length) emit('reorder', updates)
+}
+
+if (import.meta.client && props.editable) {
+  useSortable(listEl, orderedCategories, {
     animation: 150,
+    handle: '.tab-drag-handle',
+    // Only real tabs are sortable — the draft tab and the "+" li are
+    // role="presentation" and must not shift the index mapping.
     draggable: '[role="tab"]',
-    onEnd: (evt) => {
-      const from = evt.oldIndex ?? 0
-      const to = evt.newIndex ?? 0
-      if (from === to) return
-      const list = [...orderedCategories.value]
-      const [moved] = list.splice(from, 1)
-      if (!moved) return
-      list.splice(to, 0, moved)
-      orderedCategories.value = list
-      tabsKey.value++
-      nextTick(initTabSortable)
-      emit('reorder', list.map((c, index) => ({ id: c.id, order: index })))
+    ghostClass: 'opacity-50',
+    onEnd: (evt: { oldIndex?: number, newIndex?: number }) => {
+      if (evt.oldIndex !== evt.newIndex) emitNewOrder()
     }
   })
 }
-
-onMounted(initTabSortable)
-onUnmounted(() => sortable?.destroy())
 </script>

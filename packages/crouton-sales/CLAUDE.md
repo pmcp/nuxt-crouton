@@ -69,8 +69,11 @@ resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvent
 **kassa-first — no tabs**: header + `<SalesPosPanel>` as the main surface. The header is the event
 switcher (with a "create event" item in its `#content-top`, same pattern as
 `CroutonFormReferenceSelect`) and two panel toggles:
-- **Bestellingen** toggles `OrdersTab` as a third pane beside the POS's products/cart columns
-  (`xl:w-[28rem]`, internal scroll; stacks below the POS under xl)
+- a **vertical "Bestellingen" tab** hanging near the top of the kassa's right edge (Shell-owned,
+  no prop plumbing) opens `OrdersTab` as a pane beside the POS, resizable via Reka UI's Splitter
+  (`SplitterGroup`/`Panel`/`ResizeHandle`; ratio persists via `autoSaveId`). While open the strip
+  hides and the pane header carries a close ✕. The POS itself is `@container`-responsive: squeezed
+  below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport
 - **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
   live in its Event Details header. The full event form (incl. slug) is not reachable from the
   workspace.
@@ -104,8 +107,14 @@ match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client na
 badge when `isPersonnel`, the helper who created it (`order.owner` — the helper displayName set by
 the order POST) — no status badge: the printer LEDs convey state. **Clicking a row toggles expand** (accordion-ish
 via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
-`salesOrders` update slideover via `useCrouton().open`. The helper-filter / auto-refresh / count
-header is unchanged. It does **not** use `CroutonCollection`.
+`salesOrders` update slideover via `useCrouton().open`. The header carries **three filters** —
+helper, printer, and print status (busy / done / failed; printer + status selects only render when
+the event has active printers) — plus the order count. No manual refresh button: the 2s poll is
+the only refresh. All filters apply **server-side** (the list is paginated): the component sends
+`?owner=`, `?printerId=`, `?printStatus=` and the app's generated `sales-orders` GET must honor
+them — `getAllSalesOrders` matches printer filters via an EXISTS subquery on `salesPrintqueues`
+(`busy` = status 0/1, `done` = 2, `failed` = 9). Filter changes reset to page 1. It does **not**
+use `CroutonCollection`.
 Each row also shows **printer LEDs**: one dot per active event printer (queries `salesPrinters` +
 `salesPrintqueues` scoped to the event, jobs grouped by `orderId`). Grey = no ticket for that
 printer, orange pulsing = pending/printing (0/1), green = done (2), red = failed (9) — worst
@@ -264,7 +273,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |
 | `CartTotal.vue` | `SalesClientCartTotal` | Order total display with item count |
-| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds catalog editing: "+" buttons open the crouton create forms (category with eventId preset; product with eventId + active categoryId preset), and the active category tab shows a pencil (CategoryTabs `editable` + `@edit`) opening its update form. The category **tabs themselves drag-reorder** (CategoryTabs `@reorder`; raw SortableJS on the tablist with a key-bump remount — persists `displayOrder`, which the POS sorts tabs by). Product cards get slide-out hover edit/reorder (ProductList `editable`; persists via `useTreeMutation('salesProducts').reorderSiblings`); the list sorts by `sortOrder` then title. An admin toolbar row pinned above the product list carries "add product" and a labeled show-inactive switch — inactive products render dimmed + badged, and clicking one opens its edit form instead of the cart. The Category/Location/Product update forms carry a two-step inline delete (arm → confirm; `sales.common.confirmDelete`) instead of a nested delete overlay |
+| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds catalog editing: "+" buttons open the crouton create forms (category with eventId preset; product with eventId + active categoryId preset), and the active category tab shows a pencil (CategoryTabs `editable`) that **renames inline** — the tab label swaps for an input, enter/blur commits (`@rename` → PATCH title), esc cancels; the full category form incl. delete stays in the settings panel's list. The category **tabs drag-reorder via a grip handle** on each tab's left (hover-revealed, always visible on touch; CategoryTabs `@reorder`; raw SortableJS on the tablist with a key-bump remount — persists `displayOrder`, which the POS sorts tabs by). Product cards get slide-out hover edit/reorder (ProductList `editable`; persists via `useTreeMutation('salesProducts').reorderSiblings`); the list sorts by `sortOrder` then title. An admin toolbar row pinned above the product list carries "add product" and a labeled show-inactive switch — inactive products render dimmed + badged, and clicking one opens its edit form instead of the cart. The Category/Location/Product update forms carry a two-step inline delete (arm → confirm; `sales.common.confirmDelete`) instead of a nested delete overlay |
 | `Selector.vue` | `SalesClientSelector` | Client selector with create-on-type |
 | `OfflineBanner.vue` | `SalesClientOfflineBanner` | Offline mode indicator |
 

@@ -1,5 +1,8 @@
 <template>
-  <div class="h-full flex flex-col">
+  <!-- @container: the POS responds to its own pane width, not the viewport —
+       squeezed beside the orders pane it flips to mobile mode (cart drawer at
+       the bottom) exactly like on a phone. -->
+  <div class="h-full flex flex-col @container">
     <SalesClientOfflineBanner />
 
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -7,34 +10,24 @@
     </div>
 
     <template v-else>
-      <!-- Category tabs -->
-      <div class="p-2 border-b border-default shrink-0 flex items-center gap-2">
-        <div class="flex-1 min-w-0">
-          <SalesClientCategoryTabs
-            v-model="selectedCategory"
-            :categories="sortedCategories"
-            :counts="cartCountsByCategory"
-            :show-all="false"
-            :editable="editable"
-            @edit="openEditCategory"
-            @reorder="handleCategoryReorder"
-          />
-        </div>
-        <UButton
-          v-if="editable"
-          icon="i-lucide-plus"
-          size="sm"
-          color="neutral"
-          variant="soft"
-          :aria-label="t('sales.workspace.add')"
-          @click="openCreateCategory"
-        />
-      </div>
-
       <!-- Main content area -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- Products column -->
+        <!-- Products column (the category tabs live here, not over the cart) -->
         <div class="flex-1 flex flex-col overflow-hidden">
+          <div class="p-2 border-b border-default shrink-0 flex items-center gap-2">
+            <div class="flex-1 min-w-0">
+              <SalesClientCategoryTabs
+                v-model="selectedCategory"
+                :categories="sortedCategories"
+                :counts="cartCountsByCategory"
+                :show-all="false"
+                :editable="editable"
+                @rename="handleCategoryRename"
+                @create="handleCategoryCreate"
+                @reorder="handleCategoryReorder"
+              />
+            </div>
+          </div>
           <!-- Admin toolbar: add product + show-inactive, pinned above the list -->
           <div
             v-if="editable"
@@ -68,8 +61,8 @@
           </div>
         </div>
 
-        <!-- Cart sidebar (desktop only) -->
-        <div class="hidden md:flex w-80 border-l border-default flex-col">
+        <!-- Cart sidebar (wide panes only) -->
+        <div class="hidden @2xl:flex w-80 border-l border-default flex-col">
           <div v-if="props.requiresClient" class="p-3 border-b border-default">
             <SalesClientSelector
               :clients="props.clients || []"
@@ -102,8 +95,8 @@
         </div>
       </div>
 
-      <!-- Mobile cart button -->
-      <div class="md:hidden border-t border-default p-2">
+      <!-- Narrow-pane cart row (cart column is hidden, drawer from the bottom) -->
+      <div class="@2xl:hidden border-t border-default p-2">
         <UDrawer v-model:open="mobileCartOpen" direction="bottom">
           <UButton
             block
@@ -330,13 +323,20 @@ function setLocationRemark(locationId: string, value: string) {
   locationRemarks.value[locationId] = value
 }
 
-// Admin editing affordances (editable mode): open the crouton create forms
-// with the event (and active category) preset. The caller is responsible for
-// refreshing pre-fetched data on crouton:mutation (SalesPosPanel does this).
+// Admin editing affordances (editable mode). Products open the crouton create
+// form; categories are created inline in the tab row (draft tab via "+").
+// The caller refreshes pre-fetched data on crouton:mutation (SalesPosPanel).
 const { open: openCrouton } = useCrouton()
 
-function openCreateCategory() {
-  openCrouton('create', 'salesCategories', [], 'slideover', { eventId: props.eventId })
+// Draft tab committed with a title → create at the end of the tab order and
+// select it once the id comes back.
+async function handleCategoryCreate({ title }: { title: string }) {
+  const created = await createCategory({
+    eventId: props.eventId,
+    title,
+    displayOrder: sortedCategories.value.length
+  })
+  if (created?.id) selectedCategory.value = created.id
 }
 
 function openCreateProduct() {
@@ -346,10 +346,11 @@ function openCreateProduct() {
   })
 }
 
-// Pencil on the active category tab → update form (which carries the
-// two-step delete, same as the location form).
-function openEditCategory(categoryId: string) {
-  openCrouton('update', 'salesCategories', [categoryId])
+// Pencil on the active category tab → inline rename in the tab itself; we
+// just persist. (Full form incl. delete stays reachable via the settings
+// panel's category list.)
+async function handleCategoryRename({ id, title }: { id: string, title: string }) {
+  await updateCategory(id, { title })
 }
 
 // Pencil on a product card → update form (same two-step delete).
@@ -370,7 +371,7 @@ async function handleReorder(updates: Array<{ id: string, order: number }>) {
 // Tab drag-reorder → persist into the categories' displayOrder. Sequential
 // updates (not parallel) so the panel's mutation-driven refresh lands once
 // with the final order.
-const { update: updateCategory } = useCollectionMutation('salesCategories')
+const { update: updateCategory, create: createCategory } = useCollectionMutation('salesCategories')
 const reorderingCategories = ref(false)
 
 async function handleCategoryReorder(updates: Array<{ id: string, order: number }>) {
