@@ -25,7 +25,6 @@ const { data: activeHelpers } = await useFetch<ActiveHelper[]>(
 )
 
 const selectedHelperName = ref<string | null>(null)
-const autoRefreshOrders = ref(false)
 
 const ordersQuery = computed(() => {
   const q: Record<string, string> = { eventId: props.event.id }
@@ -33,10 +32,24 @@ const ordersQuery = computed(() => {
   return q
 })
 
-const { items: orders, pending: ordersPending, refresh: refreshOrders } = await useCollectionQuery(
+// Server pagination: events run into hundreds of orders, and this view polls
+// every 2s — fetch only the newest page (server orders by createdAt desc).
+const {
+  items: orders,
+  pending: ordersPending,
+  refresh: refreshOrders,
+  page: ordersPage,
+  total: ordersTotal,
+  pageCount: ordersPageCount
+} = await useCollectionQuery(
   'salesOrders',
-  { query: ordersQuery, watch: true }
+  { query: ordersQuery, watch: true, pagination: { pageSize: 25 } }
 )
+
+// Filter change ⇒ back to page 1 (the old page may not exist in the new set).
+watch(selectedHelperName, () => {
+  ordersPage.value = 1
+})
 
 // Printer LEDs: one dot per active event printer on every order row (the
 // dedicated Printers tab is gone — per-order print status lives here now).
@@ -44,13 +57,25 @@ const { items: printers } = await useCollectionQuery(
   'salesPrinters',
   { query: computed(() => ({ eventId: props.event.id })) }
 )
-const { items: printJobs, refresh: refreshPrintJobs } = await useCollectionQuery(
-  'salesPrintqueues',
-  { query: computed(() => ({ eventId: props.event.id })), watch: true }
-)
-
 type PrinterRow = { id: string, title: string, isActive?: boolean }
-type PrintJobRow = { id: string, orderId: string, printerId: string, status?: string | number, errorMessage?: string }
+type PrintJobRow = {
+  id: string
+  orderId: string
+  printerId: string
+  status?: string | number
+  errorMessage?: string
+  retryCount?: number
+  createdAt?: string | number
+  completedAt?: string | number
+}
+
+// Slim status endpoint instead of the generated collection GET: that one
+// returns each job's full base64 printData, which is far too heavy for the
+// register's 2s poll. This payload is ~50 bytes per job.
+const { data: printJobs, refresh: refreshPrintJobs } = await useFetch<PrintJobRow[]>(
+  () => `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/printqueues/status`,
+  { default: () => [] }
+)
 
 const printerList = computed(() =>
   (((printers.value as PrinterRow[] | null) || []).filter(p => p.isActive !== false))
@@ -125,25 +150,40 @@ const helperOptions = computed(() => [
 ])
 
 const ordersRefreshing = ref(false)
+
+// Register overview: always live, no toggle. Poll every 5s while the screen
+// is visible — orders arrive from other helpers' devices, so the view must
+// keep refreshing even when this register is idle. Pause while the browser
+// tab is hidden and catch up the moment it becomes visible again.
+function refreshAll() {
+  refreshOrders()
+  refreshPrintJobs()
+}
+
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
-watch(autoRefreshOrders, (enabled) => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-    refreshInterval = null
-  }
-  if (enabled) {
-    refreshInterval = setInterval(async () => {
-      ordersRefreshing.value = true
-      await Promise.all([refreshOrders(), refreshPrintJobs()])
-      ordersRefreshing.value = false
-    }, 10000)
-  }
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') refreshAll()
+}
+
+onMounted(() => {
+  refreshInterval = setInterval(() => {
+    if (document.visibilityState === 'hidden') return
+    refreshAll()
+  }, 2000)
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
 onUnmounted(() => {
   if (refreshInterval) clearInterval(refreshInterval)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
+
+async function manualRefresh() {
+  ordersRefreshing.value = true
+  await Promise.all([refreshOrders(), refreshPrintJobs()])
+  ordersRefreshing.value = false
+}
 
 type OrderRow = {
   id: string
@@ -185,24 +225,21 @@ function openEditOrder(id: string) {
           class="w-48"
           :searchable="true"
         />
-        <USwitch
-          v-model="autoRefreshOrders"
-          :label="t('sales.orders.autoRefresh')"
-          size="sm"
-        />
       </div>
       <div class="flex items-center gap-2 text-sm text-muted">
-        <span>{{ (orders as any[])?.length || 0 }} {{ t('sales.workspace.ordersLabel') }}</span>
+        <span>{{ ordersTotal }} {{ t('sales.workspace.ordersLabel') }}</span>
         <UButton
           variant="ghost"
           size="xs"
           icon="i-lucide-refresh-cw"
           :loading="ordersRefreshing"
-          @click="() => { refreshOrders(); refreshPrintJobs() }"
+          @click="manualRefresh"
         />
       </div>
     </div>
-    <div v-if="ordersPending" class="p-6 text-center text-muted">
+    <!-- Loading state only before first data — the 5s poll flips `pending`
+         on every refresh and would otherwise flicker the whole list. -->
+    <div v-if="ordersPending && orderRows.length === 0" class="p-6 text-center text-muted">
       {{ t('sales.workspace.loadingOrders') }}
     </div>
     <ul
@@ -326,6 +363,24 @@ function openEditOrder(id: string) {
     <div v-else class="p-12 text-center text-muted">
       <UIcon name="i-lucide-receipt" class="text-4xl mb-2" />
       <p>{{ t('sales.workspace.noOrders') }}{{ selectedHelperName ? t('sales.workspace.forThisHelper') : '' }}</p>
+    </div>
+    <!-- Older orders: newest page is the register's working set; history on demand -->
+    <div v-if="ordersPageCount > 1" class="flex items-center justify-center gap-3 pt-1">
+      <UButton
+        variant="ghost"
+        size="xs"
+        icon="i-lucide-chevron-left"
+        :disabled="ordersPage <= 1"
+        @click="ordersPage--"
+      />
+      <span class="text-xs text-muted tabular-nums">{{ ordersPage }} / {{ ordersPageCount }}</span>
+      <UButton
+        variant="ghost"
+        size="xs"
+        icon="i-lucide-chevron-right"
+        :disabled="ordersPage >= ordersPageCount"
+        @click="ordersPage++"
+      />
     </div>
   </div>
 </template>
