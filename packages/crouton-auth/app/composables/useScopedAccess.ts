@@ -348,12 +348,14 @@ export function useScopedAccess(
 
 /**
  * Shorthand for event-scoped access (POS helpers)
+ *
+ * Uses the canonical 'scoped-access-token' cookie so server-side checks
+ * (e.g. crouton-pages' scoped visibility) see the token during SSR.
  */
 export function useEventAccess(options?: Omit<UseScopedAccessOptions, 'storageKey'>) {
   return useScopedAccess('event', {
     ...options,
-    storageKey: 'pos-helper-info', // Match legacy storage key
-    cookieName: options?.cookieName || 'pos-helper-token' // Match legacy cookie name
+    storageKey: 'event-access-session'
   })
 }
 
@@ -363,7 +365,6 @@ export function useEventAccess(options?: Omit<UseScopedAccessOptions, 'storageKe
 export function useBookingAccess(options?: Omit<UseScopedAccessOptions, 'storageKey'>) {
   return useScopedAccess('booking', {
     ...options,
-    storageKey: 'booking-access-session',
-    cookieName: options?.cookieName || 'booking-access-token'
+    storageKey: 'booking-access-session'
   })
 }

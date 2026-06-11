@@ -55,6 +55,7 @@
       "public": "Public",
       "members": "Members Only",
       "admin": "Admin Only",
+      "scoped": "Access Code Holders",
       "hidden": "Hidden"
     },
     "layout": {

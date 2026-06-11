@@ -363,7 +363,7 @@ Two halves: **tokens** (the bearer credential a holder uses after login) and **g
 
 ### Transport Convention
 
-The canonical header for scoped tokens is **`x-scoped-token`** (exported as `SCOPED_TOKEN_HEADER`). `validateScopedTokenFromEvent` checks, in order: `x-scoped-token` header → cookie (default `scoped-access-token`, set by redeem/mint for SSR) → `Authorization: Bearer`. Package-specific headers (e.g. sales' legacy `x-helper-token`) are transitional.
+The canonical header for scoped tokens is **`x-scoped-token`** (exported as `SCOPED_TOKEN_HEADER`); the canonical cookie is **`scoped-access-token`** (set by `useScopedAccess`, the redeem/mint endpoints, and read during SSR — e.g. by crouton-pages' scoped visibility). `validateScopedTokenFromEvent` checks, in order: `x-scoped-token` header → cookie → `Authorization: Bearer`. All consumers use these — there are no package-specific names.
 
 ### Grants (credential → token)
 
@@ -420,7 +420,7 @@ const { token, expiresAt } = await createScopedToken({
 
 // Validate in API handler
 export default defineEventHandler(async (event) => {
-  const access = await requireScopedAccess(event, 'pos-helper-token')
+  const access = await requireScopedAccess(event)
   // access.displayName, access.resourceId, etc.
 })
 ```

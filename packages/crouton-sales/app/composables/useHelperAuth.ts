@@ -68,8 +68,9 @@ export function useHelperAuth() {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Cookie and localStorage keys (matching legacy implementation)
-  const COOKIE_NAME = 'pos-helper-token'
+  // Canonical token cookie (read server-side by requireScopedAccess and
+  // crouton-pages' scoped visibility); localStorage holds the session blob.
+  const COOKIE_NAME = 'scoped-access-token'
   const STORAGE_KEY = 'pos-helper-info'
   const COOKIE_MAX_AGE = 60 * 60 * 8 // 8 hours
 

@@ -441,7 +441,7 @@ the matching key to all three locale files (keep en/nl/fr at parity).
 
 Helpers (volunteers, staff) authenticate with an event's shared PIN. Every session is a `scopedAccessToken` row in `@fyit/crouton-auth`. There is no separate `salesHelpers` table. "Active Helpers" UI is a query over `scopedAccessToken` filtered by `resourceType='event'` + `organizationId=teamId` (see `active-helpers.get.ts` endpoints).
 
-Since the grants migration, the PIN check itself lives in crouton-auth: `helper-login` syncs `salesEvents.helperPin` into a `scopedAccessGrant` (`resourceType 'event'`, role `helper`) on each login and redeems via `verifyAndRedeemGrant` — per-grant lockout (5 fails → exponential lock, surfaced as 429) replaces the old unprotected string compare. `salesEvents.helperPin` stays the editable source of truth; the grant is derived state, created on first login (no backfill). Helper requests authenticate via the `pos-helper-token` cookie (set by `useScopedAccess`) or the canonical `x-scoped-token` header — the old `x-helper-token` header was never read server-side and has been removed from Panel.vue/Selector.vue.
+Since the grants migration, the PIN check itself lives in crouton-auth: `helper-login` syncs `salesEvents.helperPin` into a `scopedAccessGrant` (`resourceType 'event'`, role `helper`) on each login and redeems via `verifyAndRedeemGrant` — per-grant lockout (5 fails → exponential lock, surfaced as 429) replaces the old unprotected string compare. `salesEvents.helperPin` stays the editable source of truth; the grant is derived state, created on first login (no backfill). Helper requests authenticate via the canonical `scoped-access-token` cookie (set by `useHelperAuth`) or the `x-scoped-token` header — which also makes helper sessions visible to crouton-pages' `scoped` page visibility during SSR. The legacy `pos-helper-token` cookie and `x-helper-token` header are gone.
 
 ### Client-side Usage
 
@@ -472,7 +472,7 @@ await logout()
 import { requireScopedAccess } from '@fyit/crouton-auth/server'
 
 export default defineEventHandler(async (event) => {
-  const access = await requireScopedAccess(event, 'pos-helper-token')
+  const access = await requireScopedAccess(event)
 
   // access.displayName - Helper's name
   // access.resourceId - Event ID

@@ -55,6 +55,7 @@
       "public": "Openbaar",
       "members": "Alleen leden",
       "admin": "Alleen beheerders",
+      "scoped": "Met toegangscode",
       "hidden": "Verborgen"
     },
     "layout": {

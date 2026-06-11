@@ -340,7 +340,6 @@ describe('useEventAccess', () => {
   it('should use event-specific defaults', () => {
     const access = useEventAccess()
     expect(access.session.value).toBeNull()
-    // The storage key should be 'pos-helper-info' for legacy compatibility
   })
 })
 

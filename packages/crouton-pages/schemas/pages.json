@@ -83,6 +83,7 @@
         { "value": "public", "label": "Public" },
         { "value": "members", "label": "Members Only" },
         { "value": "admin", "label": "Admin Only" },
+        { "value": "scoped", "label": "Scoped Access (token holders)" },
         { "value": "hidden", "label": "Hidden (Direct Link)" }
       ]
     },

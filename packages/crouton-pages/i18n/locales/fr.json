@@ -41,6 +41,7 @@
       "public": "Public",
       "members": "Membres uniquement",
       "admin": "Admin uniquement",
+      "scoped": "Avec code d'accès",
       "hidden": "Caché"
     },
     "layout": {

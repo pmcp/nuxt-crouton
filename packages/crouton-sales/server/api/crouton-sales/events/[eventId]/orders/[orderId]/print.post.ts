@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Event ID and Order ID are required' })
   }
 
-  const access = await requireScopedAccessToResource(event, 'event', eventId, 'pos-helper-token')
+  const access = await requireScopedAccessToResource(event, 'event', eventId)
   const db = useDB()
 
   const [order] = await db.select().from(salesOrders).where(eq(salesOrders.id, orderId)).limit(1)

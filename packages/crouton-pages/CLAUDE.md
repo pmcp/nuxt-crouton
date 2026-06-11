@@ -383,7 +383,7 @@ interface PageRecord {
   content?: string        // For regular pages (HTML from editor)
   config?: object         // For app pages (type-specific settings)
   status: 'draft' | 'published' | 'archived'
-  visibility: 'public' | 'members' | 'hidden'
+  visibility: 'public' | 'members' | 'admin' | 'scoped' | 'hidden'
   showInNavigation: boolean
   parentId?: string       // For hierarchy
   order: number           // For sorting
@@ -415,6 +415,32 @@ interface PageRecord {
 ```vue
 <CroutonPagesRenderer :page="pageData" />
 ```
+
+## Scoped Visibility (token-gated pages)
+
+`visibility: 'scoped'` gates a page behind crouton-auth's **scoped access
+tokens** — the accountless tokens volunteers/guests get by redeeming a PIN
+(see crouton-auth's grants). Team members always pass too (admin preview).
+
+- **Enforcement** lives in the slug endpoint: a valid token whose
+  `organizationId` matches the team unlocks the page; otherwise it falls back
+  to a team-member session; otherwise 401. The response is sent with
+  `Cache-Control: private, no-store` (same pattern as members/admin) so gated
+  content never enters the ISR/SWR cache.
+- **Narrowing**: the page's `config` json may carry
+  `{ "requiredScope": { "resourceType": "event", "resourceId": "..." } }` —
+  then only tokens scoped to that resource pass (string comparison; pages
+  never learns what the resource is). Either key may be omitted.
+- **Navigation**: the pages list endpoint includes `scoped` pages for team
+  members and for anonymous visitors presenting a valid scoped token, so nav
+  shows them exactly when they're reachable.
+- **Transport**: the token arrives via the canonical `x-scoped-token` header
+  or the `scoped-access-token` cookie (set by `useScopedAccess`/redeem/mint —
+  the cookie is what makes SSR work).
+- **PIN-protect a single page**: create a grant on `('page', pageId)` via
+  crouton-auth's `upsertScopedGrant`, set the page's `requiredScope` to match,
+  and have the visitor redeem at `/api/auth/scoped-access/redeem`. No domain
+  package involved.
 
 ## Footer System
 

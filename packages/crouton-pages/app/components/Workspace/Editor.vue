@@ -531,6 +531,7 @@ const visibilityConfig: Record<string, { icon: string; label: string }> = {
   public: { icon: 'i-lucide-globe', label: t('pages.visibility.public') },
   members: { icon: 'i-lucide-users', label: t('pages.visibility.members') },
   admin: { icon: 'i-lucide-shield', label: t('pages.visibility.admin') },
+  scoped: { icon: 'i-lucide-key-round', label: t('pages.visibility.scoped') },
   hidden: { icon: 'i-lucide-eye-off', label: t('pages.visibility.hidden') }
 }
 

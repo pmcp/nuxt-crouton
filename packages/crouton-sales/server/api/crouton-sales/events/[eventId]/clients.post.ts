@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Event ID is required' })
   }
 
-  await requireScopedAccessToResource(event, 'event', eventId, 'pos-helper-token')
+  await requireScopedAccessToResource(event, 'event', eventId)
 
   const body = await readBody(event)
   const title = body?.title?.trim()

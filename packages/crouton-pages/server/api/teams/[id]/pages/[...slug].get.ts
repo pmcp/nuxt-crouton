@@ -213,6 +213,64 @@ export default defineEventHandler(async (event) => {
       // Check visibility
       if (page.visibility === 'hidden') {
         // Hidden pages require direct link - allow access
+      } else if (page.visibility === 'scoped') {
+        // Scoped pages: a valid scoped-access token for this team unlocks the
+        // page (volunteers/guests — see crouton-auth grants). Team members
+        // pass too, so admins can preview. The page's config may narrow the
+        // required token via { requiredScope: { resourceType, resourceId? } } —
+        // compared as plain strings, pages never learns what the resource is.
+        let allowed = false
+
+        try {
+          const { validateScopedTokenFromEvent } = await import('@fyit/crouton-auth/server/utils/scoped-access')
+          const access = await validateScopedTokenFromEvent(event)
+
+          if (access && access.organizationId === team.id) {
+            let requiredScope: { resourceType?: string, resourceId?: string } | null = null
+            try {
+              const config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
+              requiredScope = config?.requiredScope || null
+            } catch {
+              // Malformed config — treat as no scope restriction
+            }
+
+            allowed = !requiredScope
+              || ((!requiredScope.resourceType || access.resourceType === requiredScope.resourceType)
+                && (!requiredScope.resourceId || access.resourceId === requiredScope.resourceId))
+          }
+
+          if (!allowed) {
+            // Fall back to a team-member session (admin preview)
+            const { getServerSession } = await import('@fyit/crouton-auth/server/utils/useServerAuth')
+            const session = await getServerSession(event)
+            if (session?.user) {
+              const membership = await database
+                .select({ id: authSchema.member.id as any })
+                .from(authSchema.member as any)
+                .where(
+                  and(
+                    eq(authSchema.member.userId as any, session.user.id),
+                    eq(authSchema.member.organizationId as any, team.id)
+                  )
+                )
+                .limit(1)
+                .then((rows: any[]) => rows[0])
+              allowed = !!membership
+            }
+          }
+        } catch {
+          allowed = false
+        }
+
+        if (!allowed) {
+          throw createError({
+            status: 401,
+            statusText: 'Access token required'
+          })
+        }
+
+        // Prevent ISR/SWR from caching token-gated page responses
+        setResponseHeader(event, 'Cache-Control', 'private, no-store')
       } else if (page.visibility === 'members' || page.visibility === 'admin') {
         // Members/admin-only pages require authentication
         try {

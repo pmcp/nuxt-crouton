@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Event ID is required' })
   }
 
-  const access = await requireScopedAccessToResource(event, 'event', eventId, 'pos-helper-token')
+  const access = await requireScopedAccessToResource(event, 'event', eventId)
 
   const db = useDB()
 

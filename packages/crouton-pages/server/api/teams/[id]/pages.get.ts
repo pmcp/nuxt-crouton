@@ -64,6 +64,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Check for a scoped-access token (volunteers/guests — unlocks 'scoped' pages)
+    let hasScopedAccess = false
+    try {
+      const { validateScopedTokenFromEvent } = await import('@fyit/crouton-auth/server/utils/scoped-access')
+      const access = await validateScopedTokenFromEvent(event)
+      hasScopedAccess = !!access && access.organizationId === team.id
+    } catch {
+      // Scoped access not available - continue without
+    }
+
     // Check if user is authenticated and a team member
     let isMember = false
     let isAdmin = false
@@ -115,15 +125,17 @@ export default defineEventHandler(async (event) => {
         conditions.push(eq(pagesSchema.pagesPages.pageType as any, pageTypeFilter))
       }
 
-      // Add visibility filter based on auth status
+      // Add visibility filter based on auth status. Members always include
+      // 'scoped' (they pass the slug endpoint's session fallback); anonymous
+      // visitors include it only with a valid scoped token for this team.
       if (visibilityFilter) {
         conditions.push(eq(pagesSchema.pagesPages.visibility as any, visibilityFilter))
       } else if (isAdmin) {
-        // Admins see public + members + admin pages
-        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members', 'admin']))
+        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members', 'admin', 'scoped']))
       } else if (isMember) {
-        // Authenticated members see public + members pages
-        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members']))
+        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'members', 'scoped']))
+      } else if (hasScopedAccess) {
+        conditions.push(inArray(pagesSchema.pagesPages.visibility as any, ['public', 'scoped']))
       } else {
         // Default: only show public pages
         conditions.push(eq(pagesSchema.pagesPages.visibility as any, 'public'))
