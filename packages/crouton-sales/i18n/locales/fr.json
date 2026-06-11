@@ -335,6 +335,7 @@
       "noOrdersFiltered": "Aucune commande ne correspond à ces filtres",
       "allPrinters": "Toutes les imprimantes",
       "filters": "Filtres",
+      "resetFilters": "Réinitialiser les filtres",
       "allClients": "Tous les clients",
       "allPrintStatuses": "Tous les statuts",
       "printBusy": "En cours",

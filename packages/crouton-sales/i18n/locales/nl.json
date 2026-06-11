@@ -336,6 +336,7 @@
       "noOrdersFiltered": "Geen bestellingen voor deze filters",
       "allPrinters": "Alle printers",
       "filters": "Filters",
+      "resetFilters": "Filters wissen",
       "allClients": "Alle klanten",
       "allPrintStatuses": "Alle statussen",
       "printBusy": "Bezig",

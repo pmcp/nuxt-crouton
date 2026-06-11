@@ -219,6 +219,13 @@ const hasActiveFilters = computed(() => activeFilterCount.value > 0)
 
 watch(activeFilterCount, c => emit('update:activeFilterCount', c), { immediate: true })
 
+function resetFilters() {
+  selectedHelperName.value = null
+  selectedClientId.value = null
+  selectedPrinterId.value = null
+  selectedPrintStatus.value = null
+}
+
 // Register overview: always live, no toggle. Poll every 5s while the screen
 // is visible — orders arrive from other helpers' devices, so the view must
 // keep refreshing even when this register is idle. Pause while the browser
@@ -293,48 +300,60 @@ function openEditOrder(id: string) {
       <template #content>
         <!-- Container-responsive: 1 column in a narrow pane, 2 side by side
              once the resizable pane has room. -->
-        <div class="grid grid-cols-1 @md:grid-cols-2 gap-2 pt-2">
-          <USelectMenu
-            v-model="selectedHelperName"
-            :items="helperOptions"
-            value-key="id"
-            :placeholder="t('sales.workspace.allHelpers')"
-            icon="i-lucide-user"
-            size="sm"
-            class="w-full"
-            :searchable="true"
-          />
-          <USelectMenu
-            v-if="useReusableClients"
-            v-model="selectedClientId"
-            :items="clientOptions"
-            value-key="id"
-            :placeholder="t('sales.workspace.allClients')"
-            icon="i-lucide-users"
-            size="sm"
-            class="w-full"
-            :searchable="true"
-          />
-          <USelectMenu
-            v-if="printerList.length"
-            v-model="selectedPrinterId"
-            :items="printerOptions"
-            value-key="id"
-            :placeholder="t('sales.workspace.allPrinters')"
-            icon="i-lucide-printer"
-            size="sm"
-            class="w-full"
-          />
-          <USelectMenu
-            v-if="printerList.length"
-            v-model="selectedPrintStatus"
-            :items="printStatusOptions"
-            value-key="id"
-            :placeholder="t('sales.workspace.allPrintStatuses')"
-            icon="i-lucide-circle-dot"
-            size="sm"
-            class="w-full"
-          />
+        <div class="rounded-lg bg-elevated/60 border border-default p-3 space-y-2" :class="headerControlled ? '' : 'mt-2'">
+          <div class="grid grid-cols-1 @md:grid-cols-2 gap-2">
+            <USelectMenu
+              v-model="selectedHelperName"
+              :items="helperOptions"
+              value-key="id"
+              :placeholder="t('sales.workspace.allHelpers')"
+              icon="i-lucide-user"
+              size="sm"
+              class="w-full"
+              :searchable="true"
+            />
+            <USelectMenu
+              v-if="useReusableClients"
+              v-model="selectedClientId"
+              :items="clientOptions"
+              value-key="id"
+              :placeholder="t('sales.workspace.allClients')"
+              icon="i-lucide-users"
+              size="sm"
+              class="w-full"
+              :searchable="true"
+            />
+            <USelectMenu
+              v-if="printerList.length"
+              v-model="selectedPrinterId"
+              :items="printerOptions"
+              value-key="id"
+              :placeholder="t('sales.workspace.allPrinters')"
+              icon="i-lucide-printer"
+              size="sm"
+              class="w-full"
+            />
+            <USelectMenu
+              v-if="printerList.length"
+              v-model="selectedPrintStatus"
+              :items="printStatusOptions"
+              value-key="id"
+              :placeholder="t('sales.workspace.allPrintStatuses')"
+              icon="i-lucide-circle-dot"
+              size="sm"
+              class="w-full"
+            />
+          </div>
+          <div v-if="hasActiveFilters" class="flex justify-end">
+            <UButton
+              :label="t('sales.workspace.resetFilters')"
+              icon="i-lucide-rotate-ccw"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              @click="resetFilters"
+            />
+          </div>
         </div>
       </template>
     </UCollapsible>

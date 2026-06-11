@@ -336,6 +336,7 @@
       "noOrdersFiltered": "No orders match these filters",
       "allPrinters": "All printers",
       "filters": "Filters",
+      "resetFilters": "Reset filters",
       "allClients": "All clients",
       "allPrintStatuses": "All statuses",
       "printBusy": "In progress",

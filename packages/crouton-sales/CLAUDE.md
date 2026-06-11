@@ -116,7 +116,8 @@ badge when `isPersonnel`, the helper who created it (`order.owner` — the helpe
 the order POST) — no status badge: the printer LEDs convey state. **Clicking a row toggles expand** (accordion-ish
 via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
 `salesOrders` update slideover via `useCrouton().open`. Filters hide behind a **Filters toggle**
-(`UCollapsible`; a `UChip` with the active count marks a collapsed-but-filtered list). The toggle
+(`UCollapsible`; a `UChip` with the active count marks a collapsed-but-filtered list). The panel
+is a `bg-elevated/60` card with a reset button (visible only while filters are active). The toggle
 is **header-controllable**: pass `v-model:filters-open` (+ listen to `@update:active-filter-count`
 for the chip) and OrdersTab hides its own button — Shell does this to host the toggle in the
 orders-pane header next to ✕; standalone usage without the prop keeps the internal button.
