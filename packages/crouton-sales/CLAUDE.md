@@ -64,7 +64,10 @@ Event workspace tabs are extracted into reusable components under `app/component
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-the header (switcher + Edit/Duplicate actions) + the four tabs in a per-tab `<Suspense>`.
+the header (switcher + Create/Edit/Duplicate/Delete actions) + the four tabs in a per-tab `<Suspense>`.
+Event dates are deliberately not shown anywhere in the workspace (irrelevant to the POS flow;
+columns remain in the DB). Deleting the current event navigates back to the events list via a
+`crouton:mutation` hook (matched on `itemIds`).
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
 `router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
@@ -104,8 +107,8 @@ total) plus the order total, and the order's `overallRemarks` (passed as `:remar
 Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
 `getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
 
-`SettingsTab.vue` edits the event's **core fields inline** (title, currency, start/end
-dates) via an "Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
+`SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
+"Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
 Save disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
 breaks the current URL — use the workspace's top-right "Edit" button for the slug). The tab also
 hosts Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, Categories,
@@ -152,7 +155,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
-| `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue all failed print jobs (status 9→0; optional body `{ printerId }`) so the spooler resends them — backs the "Resend failed jobs" button in `PrintersTab` |
+| `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }`. Backs the "Resend failed jobs" button in `PrintersTab` |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
@@ -184,6 +187,8 @@ are `real` (no cast).
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
 
 **Print confirmation (feedback loop)**: the spooler runs a **pre-flight status check on its own connection** (ESC/POS `DLE EOT 1`+`2`+`4`) before sending each ticket — an error-state printer stops draining its receive buffer, so queries appended after a payload would jam behind it and never answer (this is why pre-flight must be a separate connection). Pre-flight failures (`Cover open`, `Paper out`, `Printer error`, `Printer offline`, `No status response from printer …`) fail the job **without sending the ticket**, preventing ghost prints when paper is reloaded. On a healthy pre-flight it sends the payload with the same queries appended as a confirmation pass (socket held open `DRAIN_SECS`, default 2s, which also fixes the silent-loss mode where `nc` closed before the printer drained its buffer); no reply there ⇒ `Printer stopped responding while printing (paper ran out mid-ticket?)`. `/complete` is called only when the printer confirms "online, paper present" — so the UI's **Done** badge means the printer confirmed it could print, not merely "bytes sent over TCP" (old behavior restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). The failed job's `errorMessage` is rendered on `PrintqueuesCard.vue`.
+
+**Spooler job-loop invariants** (learned from stuck-at-"printing" bugs): jobs are processed **sequentially** (Epson TM printers accept one connection on 9100 — parallel jobs to the same printer starve each other) and there is **no local processed-ids dedup** (the server's `mark_as_printing` flip is the dedup; a requeued job must print again even if this spooler printed it before). The poll uses `-m 30` (a bulk requeue returns every ticket's base64 — `-m 5` truncated over 5G, leaving flipped-but-unparsed jobs stranded), unparseable job ids are failed via callback instead of skipped, and `/complete`/`/fail` callbacks retry 3× with `-f -m 10` (a lost callback strands the job at status=printing).
 
 Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.printApiKey` (default `'1234'`; override with env `NUXT_CROUTON_SALES_PRINT_API_KEY`).
 

@@ -26,7 +26,6 @@ API_URL="${API_URL:-http://192.168.1.214:3000}"
 API_KEY="${API_KEY:-1234}"
 EVENT_ID="${EVENT_ID:-CHANGE_ME}"
 PRINTER_PORT="9100"
-PROCESSED="/tmp/processed_ids.txt"
 # STATUS_CHECK=1 (default): after sending the ticket, query the printer with
 # ESC/POS DLE EOT and only mark the job complete when the printer answers
 # "online, paper present". STATUS_CHECK=0 restores the legacy fire-and-forget
@@ -113,26 +112,34 @@ classify_status() {
     fi
 }
 
-# Callbacks are synchronous — the outer process_job is already backgrounded;
-# backgrounding again here lets procd reap the curl before it lands, leaving
-# the job stuck at status=printing.
+# Callback helpers. The server flips a job to status=printing when we fetch
+# it, so a lost callback strands the job there (UI can only recover it via
+# "Resend failed jobs") — retry a few times and use -f so HTTP errors count.
 report_complete() {
-    curl -s -m 3 -X POST \
-        -H "x-api-key: $API_KEY" \
-        -H "Content-Type: application/json" \
-        "$API_URL/api/print-server/jobs/$1/complete" >/dev/null 2>&1
+    for _ in 1 2 3; do
+        curl -s -f -m 10 -X POST \
+            -H "x-api-key: $API_KEY" \
+            -H "Content-Type: application/json" \
+            "$API_URL/api/print-server/jobs/$1/complete" >/dev/null 2>&1 && return 0
+        sleep 2
+    done
+    echo "$(date '+%H:%M:%S') WARNING: could not report job $1 complete"
 }
 
 # $2 = errorMessage (must not contain double quotes)
 report_fail() {
-    curl -s -m 3 -X POST \
-        -H "x-api-key: $API_KEY" \
-        -H "Content-Type: application/json" \
-        -d "{\"errorMessage\":\"$2\"}" \
-        "$API_URL/api/print-server/jobs/$1/fail" >/dev/null 2>&1
+    for _ in 1 2 3; do
+        curl -s -f -m 10 -X POST \
+            -H "x-api-key: $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"errorMessage\":\"$2\"}" \
+            "$API_URL/api/print-server/jobs/$1/fail" >/dev/null 2>&1 && return 0
+        sleep 2
+    done
+    echo "$(date '+%H:%M:%S') WARNING: could not report job $1 failed"
 }
 
-# Process jobs in parallel
+# Process one job, start to finish (pre-flight → send → confirm → callback)
 process_job() {
     JOB_ID="$1"
     PRINT_DATA="$2"
@@ -193,7 +200,6 @@ process_job() {
             report_fail "$JOB_ID" "$STATUS_ERROR"
         else
             echo "$(date '+%H:%M:%S') Job $JOB_ID printed on $JOB_PRINTER_IP"
-            echo "$JOB_ID" >> "$PROCESSED"
             report_complete "$JOB_ID"
         fi
     else
@@ -203,7 +209,6 @@ process_job() {
 
         if [ $? -eq 0 ]; then
             echo "$(date '+%H:%M:%S') Job $JOB_ID sent to $JOB_PRINTER_IP"
-            echo "$JOB_ID" >> "$PROCESSED"
             report_complete "$JOB_ID"
         else
             echo "$(date '+%H:%M:%S') Job $JOB_ID failed to print"
@@ -215,9 +220,11 @@ process_job() {
 }
 
 while true; do
-    # Poll API with shorter timeout (crouton-sales format)
-    # Remove newlines from JSON response for grep/sed parsing
-    RESPONSE=$(curl -s -m 5 -H "x-api-key: $API_KEY" "$API_URL/api/print-server/events/$EVENT_ID/jobs?mark_as_printing=true" 2>/dev/null)
+    # Poll API. Generous timeout: a bulk requeue ("Resend failed jobs") returns
+    # every ticket's base64 in one response — with -m 5 that truncated over 5G,
+    # leaving jobs flipped to status=printing but never parsed (stuck forever).
+    # Remove newlines from JSON response for grep/sed parsing.
+    RESPONSE=$(curl -s -m 30 -H "x-api-key: $API_KEY" "$API_URL/api/print-server/events/$EVENT_ID/jobs?mark_as_printing=true" 2>/dev/null)
     RESPONSE=$(echo "$RESPONSE" | tr -d '\n\r' | tr -s ' ')
 
     if [ ! -z "$RESPONSE" ] && echo "$RESPONSE" | grep -q '"printData"'; then
@@ -225,38 +232,31 @@ while true; do
         JOBLIST="/tmp/jobs_$$.txt"
         echo "$RESPONSE" | grep -o '"id": *"[^"]*"' | sed 's/"id": *"\([^"]*\)"/\1/g' > "$JOBLIST"
 
-        # Process jobs in parallel (up to 3 at once)
-        ACTIVE_JOBS=0
+        # Process jobs SEQUENTIALLY. Two reasons:
+        # - Epson TM printers accept one connection on port 9100 at a time, so
+        #   parallel jobs to the same printer starve each other into timeouts.
+        # - There is deliberately no local "already processed" dedup: the server
+        #   flips jobs to status=printing on fetch, which is the real dedup, and
+        #   a requeued job ("Resend failed jobs") MUST print again even if this
+        #   spooler printed it before.
         while IFS= read -r JOB_ID; do
             if [ ! -z "$JOB_ID" ]; then
-                # Check if already processed
-                if [ -f "$PROCESSED" ] && grep -q "^$JOB_ID$" "$PROCESSED"; then
-                    continue
-                fi
-
                 # Extract job data (camelCase field names for crouton-sales, handle spaces in JSON)
                 PRINT_DATA=$(echo "$RESPONSE" | sed -n "s/.*\"id\": *\"$JOB_ID\"[^}]*\"printData\": *\"\([^\"]*\)\".*/\1/p")
                 JOB_PRINTER_IP=$(echo "$RESPONSE" | sed -n "s/.*\"id\": *\"$JOB_ID\"[^}]*\"printerIp\": *\"\([^\"]*\)\".*/\1/p")
 
                 if [ ! -z "$PRINT_DATA" ] && [ ! -z "$JOB_PRINTER_IP" ]; then
                     echo "$(date '+%H:%M:%S') Processing job $JOB_ID to $JOB_PRINTER_IP"
-
-                    # Run job in background
-                    process_job "$JOB_ID" "$PRINT_DATA" "$JOB_PRINTER_IP" &
-
-                    ACTIVE_JOBS=$((ACTIVE_JOBS + 1))
-
-                    # Limit concurrent jobs to avoid overwhelming
-                    if [ $ACTIVE_JOBS -ge 3 ]; then
-                        wait  # Wait for some jobs to complete
-                        ACTIVE_JOBS=0
-                    fi
+                    process_job "$JOB_ID" "$PRINT_DATA" "$JOB_PRINTER_IP"
+                else
+                    # We saw the id but couldn't parse its data (truncated
+                    # response?) — fail it so it doesn't sit at status=printing.
+                    echo "$(date '+%H:%M:%S') Job $JOB_ID: could not parse job data from poll response"
+                    report_fail "$JOB_ID" "Spooler could not parse job from poll response"
                 fi
             fi
         done < "$JOBLIST"
 
-        # Wait for remaining jobs
-        wait
         rm -f "$JOBLIST"
 
         # Short sleep when jobs found
