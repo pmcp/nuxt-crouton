@@ -9,9 +9,9 @@ import { user } from '~~/server/db/schema'
 
 // Overload order matters: the paginated signature (required `limit`) must come
 // first so non-paginated calls fall through to the array overload.
-export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
-export async function getAllSalesOrders(teamId: string, opts?: { eventId?: string; clientId?: string }): Promise<any[]>
-export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit?: number; offset?: number } = {}) {
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; owner?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesOrders(teamId: string, opts?: { eventId?: string; clientId?: string; owner?: string }): Promise<any[]>
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; owner?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -20,6 +20,10 @@ export async function getAllSalesOrders(teamId: string, opts: { eventId?: string
   const conditions = [eq(tables.salesOrders.teamId, teamId)]
   if (opts.eventId) conditions.push(eq(tables.salesOrders.eventId, opts.eventId))
   if (opts.clientId) conditions.push(eq(tables.salesOrders.clientId, opts.clientId))
+  // owner holds the helper displayName (set by the order POST) — used by the
+  // register's helper filter, which must apply server-side now that the list
+  // is paginated.
+  if (opts.owner) conditions.push(eq(tables.salesOrders.owner, opts.owner))
   const whereExpr = and(...conditions)
 
   let listQuery = (db as any)
