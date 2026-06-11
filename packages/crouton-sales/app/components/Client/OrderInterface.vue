@@ -103,9 +103,17 @@
         </div>
       </div>
 
-      <!-- Narrow-pane cart row (cart column is hidden, drawer from the bottom) -->
+      <!-- Narrow-pane cart row (cart column is hidden, drawer from the bottom).
+           :portal="false" keeps the drawer in the DOM under the [contain:layout]
+           root, so the fixed drawer + overlay resolve against the module instead
+           of the viewport. Heights are % of the module. -->
       <div class="@2xl:hidden border-t border-default p-2">
-        <UDrawer v-model:open="mobileCartOpen" direction="bottom">
+        <UDrawer
+          v-model:open="mobileCartOpen"
+          direction="bottom"
+          :portal="false"
+          :ui="{ content: 'h-[70%]' }"
+        >
           <UButton
             block
             size="lg"
@@ -116,7 +124,7 @@
           />
 
           <template #content>
-            <div class="h-[70vh] flex flex-col">
+            <div class="h-full flex flex-col">
               <div v-if="props.requiresClient" class="p-3 border-b border-default shrink-0">
                 <SalesClientSelector
                   :clients="props.clients || []"
