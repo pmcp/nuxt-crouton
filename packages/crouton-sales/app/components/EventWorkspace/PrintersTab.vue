@@ -25,6 +25,19 @@ const {
   pagination: { pageSize: 10 }
 })
 
+// Print outcomes arrive seconds after the order (spooler pre-flight +
+// callbacks), so poll while the tab is open — otherwise staff stare at a
+// stale "Printing" badge that has long since become Done/Error.
+let printJobsPoll: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  printJobsPoll = setInterval(() => {
+    refreshPrintJobs()
+  }, 5000)
+})
+onUnmounted(() => {
+  if (printJobsPoll) clearInterval(printJobsPoll)
+})
+
 // Requeue all failed jobs (status 9 → 0) so the spooler resends them —
 // the recovery action after a printer ran out of paper or was offline.
 const toast = useToast()
