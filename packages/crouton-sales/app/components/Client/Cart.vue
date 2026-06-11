@@ -109,7 +109,7 @@
 
       <div v-if="clientRequired && !hasClient && items.length > 0" class="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning">
         <UIcon name="i-lucide-alert-triangle" class="text-warning shrink-0" />
-        <span class="text-sm text-warning font-medium">{{ t('sales.cart.selectClient') }}</span>
+        <span class="text-sm text-warning font-medium">{{ clientWarning || t('sales.cart.selectClient') }}</span>
       </div>
 
       <UButton
@@ -134,6 +134,9 @@ const props = defineProps<{
   disabled: boolean
   clientRequired?: boolean
   hasClient?: boolean
+  /** Warning shown when the client indication is missing — the parent picks
+   * the wording (select a client vs enter a name). */
+  clientWarning?: string
   /** Categories used to group + order cart items. Optional — without it items render ungrouped. */
   categories?: SalesCategory[]
   /** Event locations, used to label per-location remark inputs. */

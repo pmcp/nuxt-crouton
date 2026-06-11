@@ -67,9 +67,13 @@
 
         <!-- Cart sidebar (wide panes only) -->
         <div class="hidden @2xl:flex w-80 border-l border-default flex-col">
-          <!-- h-14 matches the category-tabs row so both bottom borders align. -->
-          <div v-if="props.requiresClient" class="h-14 px-2 border-b border-default flex items-center">
+          <!-- h-14 matches the category-tabs row so both bottom borders align.
+               Every order needs a client indication on the ticket: reusable
+               clients when the event requires them, otherwise a plain
+               mandatory name input. -->
+          <div class="h-14 px-2 border-b border-default flex items-center">
             <SalesClientSelector
+              v-if="props.requiresClient"
               class="flex-1 min-w-0"
               :clients="props.clients || []"
               :highlight="!hasClient && cartItems.length > 0"
@@ -77,6 +81,16 @@
               :event-id="props.eventId"
               @update:client-id="selectedClientId = $event"
               @update:client-name="selectedClientName = $event"
+            />
+            <UInput
+              v-else
+              :model-value="selectedClientName ?? ''"
+              class="flex-1 min-w-0"
+              icon="i-lucide-user"
+              :placeholder="t('sales.cart.namePlaceholder')"
+              :highlight="!hasClient && cartItems.length > 0"
+              :color="!hasClient && cartItems.length > 0 ? 'warning' : undefined"
+              @update:model-value="selectedClientName = String($event)"
             />
           </div>
           <div class="flex-1 min-h-0 overflow-y-auto">
@@ -88,7 +102,8 @@
               :is-personnel="isPersonnel"
               :total="cartTotal"
               :disabled="!isOnline"
-              :client-required="props.requiresClient"
+              client-required
+              :client-warning="clientWarning"
               :has-client="hasClient"
               @update-quantity="updateQuantity"
               @remove="removeFromCart"
@@ -123,14 +138,25 @@
 
           <template #content>
             <div class="h-full flex flex-col">
-              <div v-if="props.requiresClient" class="p-3 border-b border-default shrink-0">
+              <div class="p-3 border-b border-default shrink-0">
                 <SalesClientSelector
+                  v-if="props.requiresClient"
                   :clients="props.clients || []"
                   :highlight="!hasClient && cartItems.length > 0"
                   :client-id="selectedClientId"
                   :event-id="props.eventId"
                   @update:client-id="selectedClientId = $event"
                   @update:client-name="selectedClientName = $event"
+                />
+                <UInput
+                  v-else
+                  :model-value="selectedClientName ?? ''"
+                  class="w-full"
+                  icon="i-lucide-user"
+                  :placeholder="t('sales.cart.namePlaceholder')"
+                  :highlight="!hasClient && cartItems.length > 0"
+                  :color="!hasClient && cartItems.length > 0 ? 'warning' : undefined"
+                  @update:model-value="selectedClientName = String($event)"
                 />
               </div>
               <div class="flex-1 min-h-0 overflow-y-auto">
@@ -142,7 +168,8 @@
                   :is-personnel="isPersonnel"
                   :total="cartTotal"
                   :disabled="!isOnline"
-                  :client-required="props.requiresClient"
+                  client-required
+                  :client-warning="clientWarning"
                   :has-client="hasClient"
                   @update-quantity="updateQuantity"
                   @remove="removeFromCart"
@@ -265,11 +292,18 @@ const loading = computed(() => categoriesLoading.value || productsLoading.value)
 // re-added — e.g. the remark accordion missing a just-assigned location.
 watch(products, fresh => syncCartProducts(fresh ?? []))
 
-// Client selection state
-const hasClient = computed(() => {
-  if (!props.requiresClient) return true
-  return !!selectedClientId.value || !!(selectedClientName.value?.trim())
-})
+// Client indication is always mandatory — a ticket without any name can't be
+// matched to a customer at pickup. requiresClient only decides the input kind
+// (reusable client selector vs plain name field).
+const hasClient = computed(() =>
+  !!selectedClientId.value || !!(selectedClientName.value?.trim())
+)
+
+const clientWarning = computed(() =>
+  props.requiresClient
+    ? t('sales.cart.selectClient')
+    : t('sales.cart.enterName', 'Enter a name to continue')
+)
 
 // Mobile cart drawer open state (closed automatically after checkout)
 const mobileCartOpen = ref(false)
