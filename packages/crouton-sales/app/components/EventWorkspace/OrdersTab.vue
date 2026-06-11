@@ -18,7 +18,6 @@ const emit = defineEmits<{
 provideSalesCurrency(() => props.event.currency)
 
 const { t } = useT()
-const { open } = useCrouton()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
 
@@ -90,12 +89,20 @@ const { items: printers } = await useCollectionQuery(
   'salesPrinters',
   { query: computed(() => ({ eventId: props.event.id })) }
 )
+
+// Location titles — names the per-location remarks in the expanded order.
+const { items: locations } = await useCollectionQuery(
+  'salesLocations',
+  { query: computed(() => ({ eventId: props.event.id })) }
+)
 type PrinterRow = { id: string, title: string, isActive?: boolean }
 type PrintJobRow = {
   id: string
   orderId: string
   printerId: string
   status?: string | number
+  locationId?: string | null
+  printMode?: string | null
   errorMessage?: string
   retryCount?: number
   createdAt?: string | number
@@ -158,10 +165,10 @@ function jobStatusMeta(status: string | number | undefined) {
   }
 }
 
-// LED state per order × printer. Worst status wins: red > orange > green; no
-// ticket for that printer ⇒ grey.
-function printerLed(orderId: string, printerId: string) {
-  const statuses = printerJobs(orderId, printerId).map(j => String(j.status ?? '0'))
+// One LED per order: combined worst status across every printer's jobs.
+// Red wins, then orange (busy), then green; no jobs at all ⇒ grey.
+function orderLed(orderId: string) {
+  const statuses = (jobsByOrder.value.get(orderId) || []).map(j => String(j.status ?? '0'))
   if (!statuses.length) {
     return { class: 'bg-accented', label: t('sales.printQueue.noTicket', 'No ticket') }
   }
@@ -185,9 +192,10 @@ function jobTime(job: any): string {
   const v = job?.completedAt || job?.createdAt
   if (!v) return ''
   const d = new Date(v)
+  // 24h clock — matches the printed ticket times.
   return Number.isNaN(d.getTime())
     ? ''
-    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 const helperOptions = computed(() => [
@@ -268,6 +276,7 @@ type OrderRow = {
   eventOrderNumber?: number
   clientName?: string
   overallRemarks?: string
+  locationRemarks?: Record<string, string> | null
   isPersonnel?: boolean
   status: string
   owner?: string
@@ -284,9 +293,6 @@ function toggleExpand(id: string) {
   expandedIds.value = next
 }
 
-function openEditOrder(id: string) {
-  open('update', 'salesOrders', [id], 'slideover')
-}
 </script>
 
 <template>
@@ -380,6 +386,7 @@ function openEditOrder(id: string) {
         v-for="order in orderRows"
         :key="order.id"
         class="bg-default"
+        :class="order.isPersonnel ? 'border-s-2 border-s-warning' : ''"
       >
         <div
           class="group relative overflow-hidden hover:bg-elevated/50 transition-colors cursor-pointer"
@@ -400,80 +407,62 @@ function openEditOrder(id: string) {
             />
           </div>
 
-          <!-- Edit strip slides in from the right (full height, bookings-card
-               style), pushing the LEDs inward -->
-          <button
-            type="button"
-            class="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center px-2.5
-                   bg-elevated/95 hover:bg-elevated text-muted hover:text-highlighted cursor-pointer
-                   transition-all duration-200 ease-out translate-x-full group-hover:translate-x-0
-                   pointer-coarse:translate-x-0"
-            :aria-label="t('common.edit')"
-            @click.stop="openEditOrder(order.id)"
-          >
-            <UIcon name="i-lucide-pencil" class="size-4" />
-          </button>
-
           <div
-            class="flex items-center gap-3 px-3 py-2.5 transition-[padding] duration-200 ease-out group-hover:pe-14 pointer-coarse:pe-14"
+            class="flex items-center gap-3 px-3 py-2.5"
             :class="expandedIds.has(order.id) ? 'ps-9' : 'group-hover:ps-9 pointer-coarse:ps-9'"
           >
-          <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
+          <!-- Staff orders: warning edge bar on the row (li), no badge -->
+          <span class="shrink-0 font-mono font-semibold tabular-nums text-muted">
             #{{ order.eventOrderNumber ?? '—' }}
           </span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-medium truncate">{{ order.clientName || t('sales.orders.client') }}</span>
-              <UBadge v-if="order.isPersonnel" color="warning" variant="subtle" size="xs">
-                {{ t('sales.orders.staff') }}
-              </UBadge>
             </div>
             <p v-if="order.owner" class="text-xs text-muted truncate flex items-center gap-1">
               <UIcon name="i-lucide-user" class="shrink-0" />
               {{ order.owner }}
             </p>
           </div>
-          <!-- One LED per event printer: grey = no ticket, orange = working,
-               green = printed, red = failed. Hover popover shows the jobs. -->
-          <div v-if="printerList.length" class="shrink-0 flex items-center gap-1.5" @click.stop>
-            <UPopover
-              v-for="printer in printerList"
-              :key="printer.id"
-              mode="hover"
-              :open-delay="150"
-            >
+          <!-- One LED per order: the combined worst status across all printers
+               (red wins, then orange, then green; grey = no tickets at all).
+               Hover popover breaks it down per printer. -->
+          <div v-if="printerList.length" class="shrink-0 flex items-center" @click.stop>
+            <UPopover mode="hover" :open-delay="150">
               <span
                 class="block size-2.5 rounded-full transition-colors"
-                :class="printerLed(order.id, printer.id).class"
+                :class="orderLed(order.id).class"
               />
               <template #content>
-                <div class="p-3 space-y-2 min-w-52 max-w-72">
-                  <p class="text-sm font-semibold flex items-center gap-1.5">
-                    <UIcon name="i-lucide-printer" class="shrink-0 text-muted" />
-                    {{ printer.title }}
-                  </p>
-                  <p v-if="!printerJobs(order.id, printer.id).length" class="text-xs text-muted">
-                    {{ t('sales.printQueue.noTicketForPrinter') }}
-                  </p>
-                  <div
-                    v-for="job in printerJobs(order.id, printer.id)"
-                    v-else
-                    :key="job.id"
-                    class="space-y-1"
-                  >
-                    <div class="flex items-center justify-between gap-3">
-                      <UBadge
-                        :color="jobStatusMeta(job.status).color"
-                        variant="subtle"
-                        size="sm"
-                      >
-                        {{ jobStatusMeta(job.status).label }}
-                      </UBadge>
-                      <span v-if="jobTime(job)" class="text-xs text-dimmed tabular-nums">{{ jobTime(job) }}</span>
-                    </div>
-                    <p v-if="String(job.status ?? '') === '9' && job.errorMessage" class="text-xs text-error">
-                      {{ jobError(job) }}
+                <div class="p-3 space-y-3 min-w-52 max-w-72">
+                  <div v-for="printer in printerList" :key="printer.id" class="space-y-1">
+                    <p class="text-sm font-semibold flex items-center gap-1.5">
+                      <UIcon name="i-lucide-printer" class="shrink-0 text-muted" />
+                      {{ printer.title }}
                     </p>
+                    <p v-if="!printerJobs(order.id, printer.id).length" class="text-xs text-muted">
+                      {{ t('sales.printQueue.noTicketForPrinter') }}
+                    </p>
+                    <div
+                      v-for="job in printerJobs(order.id, printer.id)"
+                      v-else
+                      :key="job.id"
+                      class="space-y-1"
+                    >
+                      <div class="flex items-center justify-between gap-3">
+                        <UBadge
+                          :color="jobStatusMeta(job.status).color"
+                          variant="subtle"
+                          size="sm"
+                        >
+                          {{ jobStatusMeta(job.status).label }}
+                        </UBadge>
+                        <span v-if="jobTime(job)" class="text-xs text-dimmed tabular-nums">{{ jobTime(job) }}</span>
+                      </div>
+                      <p v-if="String(job.status ?? '') === '9' && job.errorMessage" class="text-xs text-error">
+                        {{ jobError(job) }}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </template>
@@ -485,7 +474,10 @@ function openEditOrder(id: string) {
           v-if="expandedIds.has(order.id)"
           :order-id="order.id"
           :remarks="order.overallRemarks"
+          :location-remarks="order.locationRemarks"
+          :locations="locations || []"
           :print-jobs="jobsByOrder.get(order.id) || []"
+          :has-printers="printerList.length > 0"
           @retry-job="retryPrintJob"
         />
       </li>

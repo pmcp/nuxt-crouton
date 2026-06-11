@@ -114,11 +114,12 @@ and **remark** badges (`hasOptions` / `requiresRemark`). The tab therefore also 
 `salesLocations` + `salesPrinters` scoped to the event.
 
 `OrdersTab.vue` renders orders as a **plain expandable list** (not a table, not sortable) styled to
-match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client name with a `Staff`
-badge when `isPersonnel`, the helper who created it (`order.owner` — the helper displayName set by
-the order POST) — no status badge: the printer LEDs convey state. **Clicking a row toggles expand** (accordion-ish
-via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
-`salesOrders` update slideover via `useCrouton().open`. Filters hide behind a **Filters toggle**
+match `ProductsTab`: a `<ul>` of rows showing the order number (mono, muted), client name, the
+helper who created it (`order.owner` — the helper displayName set by the order POST) — no status
+badge: the printer LED conveys state. Staff orders (`isPersonnel`) carry a **warning edge bar**
+on the row (`border-s-2 border-s-warning`) instead of a badge. **Clicking a row toggles expand**
+(accordion-ish via an `expandedIds` Set; the chevron rotates). There is **no edit pencil** —
+orders are not editable from the workspace. Filters hide behind a **Filters toggle**
 (`UCollapsible`; a `UChip` with the active count marks a collapsed-but-filtered list). The panel
 is a `bg-elevated/60` card with a reset button (visible only while filters are active). The toggle
 is **header-controllable**: pass `v-model:filters-open` (+ listen to `@update:active-filter-count`
@@ -134,26 +135,37 @@ apply **server-side** (the list is paginated): the component sends `?owner=`, `?
 `getAllSalesOrders` matches printer filters via an EXISTS subquery on `salesPrintqueues`
 (`busy` = status 0/1, `done` = 2, `failed` = 9). Filter changes reset to page 1. It does **not**
 use `CroutonCollection`.
-Each row also shows **printer LEDs**: one dot per active event printer (queries `salesPrinters` +
-`salesPrintqueues` scoped to the event, jobs grouped by `orderId`). Grey = no ticket for that
-printer, orange pulsing = pending/printing (0/1), green = done (2), red = failed (9) — worst
-status wins; a hover `UPopover` per dot lists that printer's jobs (status, time, failure reason).
-Auto-refresh also refreshes the print queues. The expand panel (`OrderItems`) receives
-`:print-jobs` and lists them via `<SalesPrintqueuesCard>`, each followed by **what that ticket
-printed** (`jobItemsText`: kitchen jobs = items whose `productIdData.locationId` matches the
-job's `locationId`; receipt-mode/locationless jobs = the whole order).
+Each row shows **one combined printer LED** (`orderLed`): worst status across every job of the
+order — red (any failed, 9) > pulsing orange (any pending/printing, 0/1) > green (all done, 2);
+grey = no jobs at all. A hover `UPopover` on the dot breaks it down **per printer** (status
+badge, 24h time, failure reason; "no ticket" explanation for printers without a job for this
+order). Jobs come from the slim `printqueues/status` endpoint — it must include `locationId` +
+`printMode` so OrderItems can list what each ticket printed. OrdersTab also queries
+`salesLocations` (names the per-location remarks) and passes `:locations`,
+`:location-remarks="order.locationRemarks"` and `:has-printers` to the expand panel.
 
 `OrderItems.vue` (auto-import `SalesEventWorkspaceOrderItems`) is the **lazy** expand panel: it
 mounts only when a row is expanded (`v-if`), so its `useCollectionQuery('salesOrderitems', { query:
-{ orderId } })` fetch fires on first expand, not with the orders list. It renders each line
-(qty × product title from the joined `productIdData`, selected options, per-item remarks, line
-total) plus the order total, and the order's `overallRemarks` (passed as `:remarks`) at the top.
-Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the generated
-`getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
-The print-job list below the items has **no section header** (the printer icons suffice) and no
-order number on the rows (`PrintqueuesCard` hides its `#number` when the order join is absent).
-Failed lines carry a **re-print button** — emits `retryJob` to OrdersTab, which POSTs
-`printqueues/retry-failed` with `{ jobId }` and refreshes the queue poll.
+{ orderId } })` fetch fires on first expand, not with the orders list. Content is split into
+**two `UTabs` tabs — "Bestelling" | "Printers"** (`sales.orders.tabOrder`/`tabPrinters`;
+`default-value="order"` is required because the items carry explicit `value`s; the tab list hides
+when the event has no printers and no jobs). The **order tab** renders the order's
+`overallRemarks` (`:remarks`) and the **per-location remarks** (`:location-remarks` +
+`:locations` for the names, warning-styled "Location: text" lines), then each line: qty ×
+product title from the joined `productIdData`, **selected option labels resolved from
+`productIdData.options` and stacked one per line** (the stored values are option ids — never
+render them raw), per-item remarks, line total, order total. Requires the app's
+`sales-orderitems` GET to honor `?orderId=` and the **orders table to have the `locationRemarks`
+json column** (package `schemas/orders.json` has it; fanfare migration `0009_spotty_aqueduct`) —
+without it the order POST silently drops location remarks and reprints lose them. The **printers
+tab** lists jobs via `<SalesPrintqueuesCard>` (each followed by **what that ticket printed**,
+stacked one item per line: kitchen jobs = items whose `productIdData.locationId` matches the
+job's `locationId`, receipt-mode/locationless jobs = the whole order), or the
+`noTicketForPrinter` explanation when the order generated no tickets (`:has-printers` keeps the
+tab visible). Failed lines carry an **icon-only re-print button** in the card's `#actions` slot
+(left of the LED, so the dot stays rightmost) — emits `retryJob` to OrdersTab, which POSTs
+`printqueues/retry-failed` with `{ jobId }` and refreshes the queue poll. The panel has extra
+bottom padding (`pb-6`) to separate an expanded ticket from the next row.
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency, client switch,
 helper PIN) **plus the receipt text settings** behind **one panel-wide Save button** (top-right
@@ -262,7 +274,7 @@ are `real` (no cast).
 
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
 
-**Print confirmation (feedback loop)**: the spooler runs a **pre-flight status check on its own connection** (ESC/POS `DLE EOT 1`+`2`+`4`) before sending each ticket — an error-state printer stops draining its receive buffer, so queries appended after a payload would jam behind it and never answer (this is why pre-flight must be a separate connection). Pre-flight failures (`Cover open`, `Paper out`, `Printer error`, `Printer offline`, `Printer not responding - paper out, cover open, or offline?`) fail the job **without sending the ticket**, preventing ghost prints when paper is reloaded. On a healthy pre-flight it sends the payload with the same queries appended as a confirmation pass (socket held open `DRAIN_SECS`, default 2s, which also fixes the silent-loss mode where `nc` closed before the printer drained its buffer); no reply there ⇒ `Printer stopped responding while printing (paper ran out mid-ticket?)`. `/complete` is called only when the printer confirms "online, paper present" — so the UI's **Done** badge means the printer confirmed it could print, not merely "bytes sent over TCP" (old behavior restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). The failed job's `errorMessage` is rendered on `PrintqueuesCard.vue`.
+**Print confirmation (feedback loop)**: the spooler runs a **pre-flight status check on its own connection** (ESC/POS `DLE EOT 1`+`2`+`4`) before sending each ticket — an error-state printer stops draining its receive buffer, so queries appended after a payload would jam behind it and never answer (this is why pre-flight must be a separate connection). Pre-flight failures (`Cover open`, `Paper out`, `Printer error`, `Printer offline`, `Printer not responding - paper out, cover open, or offline?`) fail the job **without sending the ticket**, preventing ghost prints when paper is reloaded. On a healthy pre-flight it sends the payload with the same queries appended as a confirmation pass (socket held open `DRAIN_SECS`, default 2s, which also fixes the silent-loss mode where `nc` closed before the printer drained its buffer); no reply there ⇒ `Printer stopped responding while printing (paper ran out mid-ticket?)`. `/complete` is called only when the printer confirms "online, paper present" — so the UI's **Done** badge means the printer confirmed it could print, not merely "bytes sent over TCP" (old behavior restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). The failed job's `errorMessage` is rendered inside `PrintqueuesCard.vue`'s **LED hover popover** (printer name header, status badge, 24h time, error text — same styling as the order-row LED popover); the row itself stays one calm line (printer name, location · retry count meta, time, LED rightmost, with an `#actions` slot before the LED for row buttons).
 
 **Spooler job-loop invariants** (learned from stuck-at-"printing" bugs): jobs are processed **sequentially** (Epson TM printers accept one connection on 9100 — parallel jobs to the same printer starve each other) and there is **no local processed-ids dedup** (the server's `mark_as_printing` flip is the dedup; a requeued job must print again even if this spooler printed it before). The poll uses `-m 30` (a bulk requeue returns every ticket's base64 — `-m 5` truncated over 5G, leaving flipped-but-unparsed jobs stranded), unparseable job ids are failed via callback instead of skipped, and `/complete`/`/fail` callbacks retry 3× with `-f -m 10` (a lost callback strands the job at status=printing).
 

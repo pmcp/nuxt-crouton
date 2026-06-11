@@ -25,6 +25,10 @@ export default defineEventHandler(async (event) => {
       orderId: salesPrintqueues.orderId,
       printerId: salesPrintqueues.printerId,
       status: salesPrintqueues.status,
+      // locationId + printMode let OrderItems list what each ticket printed
+      // (kitchen jobs = that location's items, receipt jobs = whole order).
+      locationId: salesPrintqueues.locationId,
+      printMode: salesPrintqueues.printMode,
       errorMessage: salesPrintqueues.errorMessage,
       retryCount: salesPrintqueues.retryCount,
       createdAt: salesPrintqueues.createdAt,

@@ -192,10 +192,11 @@
       "printFailed": "Print failed",
       "printError": "Could not trigger print for this order",
       "noOrdersFound": "No orders found",
-      "staff": "Staff",
       "noRemarks": "No remarks",
       "noItems": "No items in this order",
       "unknownProduct": "Unknown product",
+      "tabOrder": "Order",
+      "tabPrinters": "Printers",
       "total": "Total",
       "fields": {
         "eventId": "Event",

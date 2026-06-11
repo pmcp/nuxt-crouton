@@ -64,6 +64,13 @@
       "when": 1781192781955,
       "tag": "0008_windy_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1781201484673,
+      "tag": "0009_spotty_aqueduct",
+      "breakpoints": true
     }
   ]
 }

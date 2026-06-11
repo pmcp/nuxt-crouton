@@ -5,6 +5,13 @@ const props = defineProps<{
   /** This order's print queue rows (passed by OrdersTab, which owns the
    * event-wide query) — rendered as a per-printer detail list. */
   printJobs?: any[]
+  /** Whether the event has active printers — keeps the Printers tab visible
+   * (with an explanation) even when this order generated no tickets. */
+  hasPrinters?: boolean
+  /** Per-location remark text keyed by locationId (order.locationRemarks). */
+  locationRemarks?: Record<string, string> | null
+  /** Event locations — names the location remarks. */
+  locations?: Array<{ id: string, title: string }>
 }>()
 
 // Requeue one failed print job — handled by OrdersTab, which owns the
@@ -35,8 +42,8 @@ const total = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.total
 
 // What a given print job actually printed: kitchen tickets carry the items
 // routed to the job's location (product.locationId), receipt-mode jobs (or
-// jobs without a location) print the whole order.
-function jobItemsText(job: any): string {
+// jobs without a location) print the whole order. One line per item.
+function jobItems(job: any): string[] {
   const all = rows.value
   const isWholeOrder = job?.printMode === 'receipt' || !job?.locationId
   const subset = isWholeOrder
@@ -44,75 +51,131 @@ function jobItemsText(job: any): string {
     : all.filter(i => (i.productIdData as any)?.locationId === job.locationId)
   return subset
     .map(i => `${i.quantity}× ${i.productIdData?.title || t('sales.orders.unknownProduct')}`)
-    .join(' · ')
 }
 
-function optionsText(options?: Record<string, unknown> | null) {
-  if (!options) return ''
-  const entries = Object.entries(options).filter(([, v]) => v !== null && v !== undefined && v !== '')
-  if (!entries.length) return ''
-  return entries.map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' · ')
+// Order details and print jobs as tabs. The Printers tab shows whenever the
+// event prints at all — an order without tickets still explains why instead
+// of silently dropping the tab. Without printers the single tab list hides.
+const tabs = computed(() => [
+  { label: t('sales.orders.tabOrder', 'Order'), value: 'order', slot: 'order' as const },
+  ...(props.printJobs?.length || props.hasPrinters
+    ? [{ label: t('sales.orders.tabPrinters', 'Printers'), value: 'printers', slot: 'printers' as const }]
+    : []),
+])
+
+// Selected options are stored as option ids — resolve each to its label via
+// the joined product's options array (raw ids on screen help nobody), one
+// line per option.
+function optionLabels(item: OrderItemRow): string[] {
+  const sel = item.selectedOptions
+  if (!sel) return []
+  const ids = Array.isArray(sel)
+    ? sel
+    : typeof sel === 'object'
+      ? Object.values(sel)
+      : [sel]
+  const productOptions = (item.productIdData as any)?.options || []
+  return ids
+    .filter((id): id is string => Boolean(id))
+    .map(id => productOptions.find((o: any) => o?.id === id)?.label || String(id))
 }
+
+// Location remarks with their location names, ready to render.
+const namedLocationRemarks = computed(() => {
+  const byId = new Map((props.locations || []).map(loc => [loc.id, loc.title]))
+  return Object.entries(props.locationRemarks || {})
+    .filter(([, text]) => text?.trim())
+    .map(([locationId, text]) => ({
+      locationId,
+      title: byId.get(locationId) || locationId,
+      text,
+    }))
+})
 </script>
 
 <template>
-  <div class="bg-elevated/30 px-4 py-3">
+  <!-- Extra bottom padding sets the expanded ticket apart from the next row -->
+  <div class="bg-elevated/30 px-4 pt-3 pb-6">
     <div v-if="pending" class="py-2 text-sm text-muted">
       {{ t('sales.workspace.loadingOrders') }}
     </div>
-    <div v-else-if="rows.length === 0" class="py-2 text-sm text-muted">
-      {{ t('sales.orders.noItems') }}
-    </div>
-    <template v-else>
-      <div v-if="props.remarks" class="mb-2 flex items-start gap-1.5 text-sm text-warning">
-        <UIcon name="i-lucide-message-square" class="shrink-0 mt-0.5" />
-        <span>{{ props.remarks }}</span>
-      </div>
-      <ul class="divide-y divide-default/60">
-        <li v-for="item in rows" :key="item.id" class="flex items-start gap-3 py-2 text-sm">
-          <span class="shrink-0 tabular-nums font-medium text-muted w-8">{{ item.quantity }}×</span>
-          <div class="min-w-0 flex-1">
-            <span class="font-medium">{{ item.productIdData?.title || t('sales.orders.unknownProduct') }}</span>
-            <p v-if="optionsText(item.selectedOptions)" class="text-xs text-muted truncate">
-              {{ optionsText(item.selectedOptions) }}
-            </p>
-            <p v-if="item.remarks" class="text-xs text-warning truncate">
-              {{ item.remarks }}
-            </p>
+    <UTabs
+      v-else
+      :items="tabs"
+      default-value="order"
+      variant="link"
+      size="sm"
+      :ui="{ list: tabs.length > 1 ? '' : 'hidden' }"
+    >
+      <template #order>
+        <div v-if="rows.length === 0" class="py-2 text-sm text-muted">
+          {{ t('sales.orders.noItems') }}
+        </div>
+        <template v-else>
+          <div v-if="props.remarks" class="mb-2 flex items-start gap-1.5 text-sm text-warning">
+            <UIcon name="i-lucide-message-square" class="shrink-0 mt-0.5" />
+            <span>{{ props.remarks }}</span>
           </div>
-          <span class="shrink-0 tabular-nums">{{ formatPrice(item.totalPrice) }}</span>
-        </li>
-      </ul>
-      <div class="flex items-center justify-between border-t border-default mt-2 pt-2 text-sm font-semibold">
-        <span>{{ t('sales.orders.total') }}</span>
-        <span class="tabular-nums">{{ formatPrice(total) }}</span>
-      </div>
-    </template>
+          <!-- Per-location remarks (printed as REMARK: on that location's ticket) -->
+          <div
+            v-for="remark in namedLocationRemarks"
+            :key="remark.locationId"
+            class="mb-2 flex items-start gap-1.5 text-sm text-warning"
+          >
+            <UIcon name="i-lucide-message-square" class="shrink-0 mt-0.5" />
+            <span><span class="font-medium">{{ remark.title }}:</span> {{ remark.text }}</span>
+          </div>
+          <ul class="divide-y divide-default/60">
+            <li v-for="item in rows" :key="item.id" class="flex items-start gap-3 py-2 text-sm">
+              <span class="shrink-0 tabular-nums font-medium text-muted w-8">{{ item.quantity }}×</span>
+              <div class="min-w-0 flex-1">
+                <span class="font-medium">{{ item.productIdData?.title || t('sales.orders.unknownProduct') }}</span>
+                <p v-for="(label, i) in optionLabels(item)" :key="i" class="text-xs text-muted truncate">
+                  {{ label }}
+                </p>
+                <p v-if="item.remarks" class="text-xs text-warning truncate">
+                  {{ item.remarks }}
+                </p>
+              </div>
+              <span class="shrink-0 tabular-nums">{{ formatPrice(item.totalPrice) }}</span>
+            </li>
+          </ul>
+          <div class="flex items-center justify-between border-t border-default mt-2 pt-2 text-sm font-semibold">
+            <span>{{ t('sales.orders.total') }}</span>
+            <span class="tabular-nums">{{ formatPrice(total) }}</span>
+          </div>
+        </template>
+      </template>
 
-    <!-- Print jobs for this order (what the removed Printers tab used to list).
-         The printer icons on the rows make a section label redundant. -->
-    <div v-if="printJobs?.length" class="mt-3 pt-3 border-t border-default/60">
-      <ul class="divide-y divide-default/60">
-        <li v-for="job in printJobs" :key="job.id" class="py-2">
-          <div class="flex items-center gap-2">
-            <SalesPrintqueuesCard :item="job" stateless class="flex-1 min-w-0" />
-            <UButton
-              v-if="String(job.status ?? '') === '9'"
-              size="xs"
-              color="warning"
-              variant="soft"
-              icon="i-lucide-rotate-ccw"
-              class="shrink-0"
-              @click="emit('retryJob', job.id)"
-            >
-              {{ t('sales.orders.rePrint') }}
-            </UButton>
-          </div>
-          <p v-if="jobItemsText(job)" class="text-xs text-muted mt-1 ps-7">
-            {{ jobItemsText(job) }}
-          </p>
-        </li>
-      </ul>
-    </div>
+      <template #printers>
+        <p v-if="!printJobs?.length" class="py-2 text-sm text-muted">
+          {{ t('sales.printQueue.noTicketForPrinter') }}
+        </p>
+        <ul v-else class="divide-y divide-default/60">
+          <li v-for="job in printJobs" :key="job.id" class="py-2">
+            <SalesPrintqueuesCard :item="job" stateless class="w-full">
+              <!-- Icon-only re-print, left of the LED so the dot stays rightmost -->
+              <template #actions>
+                <UTooltip v-if="String(job.status ?? '') === '9'" :text="t('sales.orders.rePrint')">
+                  <UButton
+                    size="xs"
+                    color="warning"
+                    variant="soft"
+                    icon="i-lucide-rotate-ccw"
+                    square
+                    class="shrink-0"
+                    :aria-label="t('sales.orders.rePrint')"
+                    @click="emit('retryJob', job.id)"
+                  />
+                </UTooltip>
+              </template>
+            </SalesPrintqueuesCard>
+            <ul v-if="jobItems(job).length" class="text-xs text-muted mt-1 ps-7 space-y-0.5">
+              <li v-for="(line, i) in jobItems(job)" :key="i">{{ line }}</li>
+            </ul>
+          </li>
+        </ul>
+      </template>
+    </UTabs>
   </div>
 </template>
