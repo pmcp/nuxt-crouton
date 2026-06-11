@@ -223,8 +223,9 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
 
 <template>
   <div class="space-y-6">
-    <!-- Row 1: core event details (name + currency) beside client selection -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+    <!-- One row, three blocks: event (name + currency + client switch),
+         printers (incl. print settings), helpers (incl. PIN). -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
       <!-- Event details (inline editable) -->
       <UCard>
         <template #header>
@@ -261,21 +262,17 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
             </div>
           </div>
         </template>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-4">
           <UFormField :label="t('sales.workspace.eventName')">
             <UInput v-model="eventForm.title" class="w-full" :placeholder="t('sales.workspace.eventNamePlaceholder')" />
           </UFormField>
           <UFormField :label="t('sales.workspace.currency')">
             <USelect v-model="eventForm.currency" :items="currencyOptions" class="w-full" />
           </UFormField>
-        </div>
-      </UCard>
 
-      <UCard variant="soft">
-        <div class="space-y-3">
-          <h3 class="font-semibold">{{ t('sales.workspace.clientSelection') }}</h3>
-          <!-- Settings row: text flush with the heading, switch on the
-               trailing edge aligned with the label line. -->
+          <USeparator />
+
+          <!-- Client selection: switch row, trailing edge aligned with the label line. -->
           <div class="flex items-start justify-between gap-3">
             <div class="space-y-1">
               <p class="text-sm font-medium leading-5">{{ t('sales.workspace.requiresClient') }}</p>
@@ -291,10 +288,7 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
           </div>
         </div>
       </UCard>
-    </div>
 
-    <!-- Row 2: printers (incl. print settings) beside helpers (incl. PIN) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <!-- Printers: LED per row = last-known online state (checked on print). -->
       <SalesEventWorkspaceSettingsListCard
         :title="t('sales.sidebar.printers')"

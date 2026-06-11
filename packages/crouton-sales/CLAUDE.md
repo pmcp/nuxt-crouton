@@ -151,13 +151,13 @@ Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
 "Event Details" card (header also carries Duplicate/Delete) — saved with
 `useCollectionMutation('salesEvents').update`, Save disabled until dirty. **Slug is intentionally
-excluded** (it's the route param; editing it inline breaks the current URL). Layout: **two
-2-column rows**. Row 1: the Event Details card beside Client Selection (a single **"Require
-client" switch** persisting `salesEvents.requiresClient` — the field the POS gates
-`<SalesClientSelector>` on; clients are **always the reusable kind**, the old free-text mode and
-its `use_reusable_clients` eventsetting were removed — existing rows are simply ignored). Row 2:
-the **Printers card** (`SettingsListCard.vue`, auto-import
-`SalesEventWorkspaceSettingsListCard`) beside the **Helpers card**, which hosts the shared
+excluded** (it's the route param; editing it inline breaks the current URL). Layout: **one
+3-column row** (`lg:grid-cols-3`). Block 1: the Event Details card — name + currency fields with
+the **"Require client" switch** below a separator (persisting `salesEvents.requiresClient` — the
+field the POS gates `<SalesClientSelector>` on; clients are **always the reusable kind**, the old
+free-text mode and its `use_reusable_clients` eventsetting were removed — existing rows are
+simply ignored). Block 2: the **Printers card** (`SettingsListCard.vue`, auto-import
+`SalesEventWorkspaceSettingsListCard`). Block 3: the **Helpers card**, which hosts the shared
 Helper-PIN input above the active-helpers list (scoped tokens). The printers card header carries
 the **Print settings** button (`sales.workspace.receiptSettings`, nl "Printinstellingen" — opens
 the receipt-text modal; the standalone receipt-settings card is gone) and the
