@@ -26,9 +26,13 @@ const orderNumber = computed(() => props.item?.orderIdData?.eventOrderNumber)
 const printerName = computed(() => props.item?.printerIdData?.title)
 const locationName = computed(() => props.item?.locationIdData?.title)
 const retryCount = computed(() => Number(props.item?.retryCount ?? 0))
-const errorMessage = computed(() =>
-  String(props.item?.status ?? '') === '9' ? props.item?.errorMessage : undefined
-)
+const errorMessage = computed(() => {
+  if (String(props.item?.status ?? '') !== '9') return undefined
+  const raw = props.item?.errorMessage
+  if (!raw) return undefined
+  const key = printErrorKey(raw)
+  return key ? t(key, raw) : raw
+})
 
 const timeLabel = computed(() => {
   const v = props.item?.completedAt || props.item?.createdAt
