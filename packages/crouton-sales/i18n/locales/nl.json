@@ -152,7 +152,8 @@
       "selectClient": "Selecteer een klant om door te gaan",
       "pay": "Betalen",
       "locationRemark": "Opmerking voor {location}",
-      "locationRemarkPlaceholder": "Voeg een opmerking toe voor deze locatie…"
+      "locationRemarkPlaceholder": "Voeg een opmerking toe voor deze locatie…",
+      "staffOrder": "Personeelsbestelling"
     },
     "products": {
       "title": "Producten",

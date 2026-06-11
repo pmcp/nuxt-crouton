@@ -279,7 +279,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 ### Customer-Facing (`Client/`)
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
-| `Cart.vue` | `SalesClientCart` | Shopping cart display with quantity controls |
+| `Cart.vue` | `SalesClientCart` | Shopping cart display with quantity controls. Footer carries a **Staff order** `USwitch` (`isPersonnel` prop + `update:isPersonnel` emit, bound to `usePosOrder().isPersonnel` in OrderInterface) — flags the order so tickets print the receipt-settings staff banner |
 | `ProductList.vue` | `SalesClientProductList` | Product grid with inline option selection |
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |

@@ -66,6 +66,18 @@
         </UFormField>
       </div>
 
+      <!-- Staff order: prints the staff banner on tickets (receipt settings) -->
+      <div v-if="items.length > 0" class="flex items-center justify-between gap-2">
+        <span class="text-sm" :class="isPersonnel ? 'text-warning font-medium' : 'text-muted'">
+          {{ t('sales.cart.staffOrder') }}
+        </span>
+        <USwitch
+          :model-value="isPersonnel ?? false"
+          color="warning"
+          @update:model-value="$emit('update:isPersonnel', $event)"
+        />
+      </div>
+
       <div v-if="clientRequired && !hasClient && items.length > 0" class="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning">
         <UIcon name="i-lucide-alert-triangle" class="text-warning shrink-0" />
         <span class="text-sm text-warning font-medium">{{ t('sales.cart.selectClient') }}</span>
@@ -99,6 +111,8 @@ const props = defineProps<{
   locations?: SalesLocation[]
   /** Current per-location remark text, keyed by locationId. */
   locationRemarks?: Record<string, string>
+  /** Staff order flag — prints the staff banner (receipt settings) on tickets. */
+  isPersonnel?: boolean
 }>()
 
 // Locations represented by at least one cart item — a remark only prints if its
@@ -185,6 +199,7 @@ defineEmits<{
   checkout: []
   clear: []
   updateLocationRemark: [locationId: string, value: string]
+  'update:isPersonnel': [value: boolean]
 }>()
 
 // Get selected option labels as array

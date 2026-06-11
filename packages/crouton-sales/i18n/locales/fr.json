@@ -151,7 +151,8 @@
       "selectClient": "Veuillez sélectionner un client pour continuer",
       "pay": "Payer",
       "locationRemark": "Remarque pour {location}",
-      "locationRemarkPlaceholder": "Ajouter une remarque pour ce lieu…"
+      "locationRemarkPlaceholder": "Ajouter une remarque pour ce lieu…",
+      "staffOrder": "Commande du personnel"
     },
     "products": {
       "title": "Produits",
