@@ -12,6 +12,52 @@ const teamParam = computed(() => route.params.team as string)
 const eventQuery = computed(() => ({ eventId: props.event.id }))
 const { items: categories, pending: categoriesPending } = await useCollectionQuery('salesCategories', { query: eventQuery })
 const { items: locations, pending: locationsPending } = await useCollectionQuery('salesLocations', { query: eventQuery })
+const { items: printers, pending: printersPending } = await useCollectionQuery('salesPrinters', { query: eventQuery })
+
+// Rows for the compact list cards. Categories are sorted by displayOrder —
+// the same order the kassa tabs use — so drag-reorder here is WYSIWYG.
+const categoryRows = computed(() =>
+  (((categories.value as any[] | null) || []))
+    .slice()
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0) || String(a.title).localeCompare(String(b.title)))
+)
+
+const locationRows = computed(() => ((locations.value as any[] | null) || []))
+
+const printerRows = computed(() =>
+  (((printers.value as any[] | null) || [])).map(p => ({
+    ...p,
+    subtitle: [
+      locationRows.value.find(l => l.id === p.locationId)?.title,
+      p.isActive === false ? t('sales.common.inactive') : undefined
+    ].filter(Boolean).join(' · ') || undefined
+  }))
+)
+
+// Requeue failed/stuck print jobs (moved from the removed Printers tab).
+const notify = useNotify()
+const resending = ref(false)
+async function resendFailedJobs() {
+  resending.value = true
+  try {
+    const res = await $fetch<{ requeued: number }>(
+      `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/printqueues/retry-failed`,
+      { method: 'POST' }
+    )
+    if (res.requeued > 0) {
+      notify.success(t('sales.printQueue.resendQueued', { params: { count: res.requeued }, fallback: `Requeued ${res.requeued} print job(s)` }))
+    }
+    else {
+      notify.info(t('sales.printQueue.resendNone', 'No failed print jobs to resend'))
+    }
+  }
+  catch {
+    notify.error(t('sales.printQueue.resendError', 'Could not requeue print jobs'))
+  }
+  finally {
+    resending.value = false
+  }
+}
 
 const { items: allSettings, refresh: refreshSettings } = await useCollectionQuery('salesEventsettings')
 
@@ -143,14 +189,6 @@ function deleteEvent() {
   open('delete', 'salesEvents', [props.event.id])
 }
 
-function openCreateCategory() {
-  open('create', 'salesCategories', [], 'slideover', { eventId: props.event.id })
-}
-
-function openCreateLocation() {
-  open('create', 'salesLocations', [], 'slideover', { eventId: props.event.id })
-}
-
 // Active helpers card (scoped tokens, not a collection)
 interface ActiveHelper {
   id: string
@@ -269,57 +307,47 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
       </UCard>
     </div>
 
-    <!-- Categories -->
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">{{ t('sales.categories.title') }}</h3>
-          <UButton size="xs" variant="outline" icon="i-lucide-plus" @click="openCreateCategory">
-            {{ t('sales.common.add') }}
-          </UButton>
-        </div>
-      </template>
-      <div v-if="categoriesPending" class="p-4 text-center text-muted text-sm">
-        {{ t('sales.common.loading') }}
-      </div>
-      <CroutonCollection
-        v-else-if="categories && (categories as any[]).length > 0"
-        layout="grid"
+    <!-- Catalog structure: compact editable lists. Categories drag-reorder
+         drives the kassa tab order (displayOrder). -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+      <SalesEventWorkspaceSettingsListCard
+        :title="t('sales.categories.title')"
         collection="salesCategories"
-        :rows="categories"
+        :rows="categoryRows"
+        :pending="categoriesPending"
+        :empty-label="t('sales.workspace.noCategories')"
+        :create-data="{ eventId: event.id }"
+        order-field="displayOrder"
       />
-      <div v-else class="p-4 text-center text-muted text-sm">
-        {{ t('sales.workspace.noCategories') }}
-      </div>
-    </UCard>
-
-    <!-- Locations -->
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3 class="font-semibold">{{ t('sales.sidebar.locations') }}</h3>
-          <UButton size="xs" variant="outline" icon="i-lucide-plus" @click="openCreateLocation">
-            {{ t('sales.common.add') }}
-          </UButton>
-        </div>
-      </template>
-      <div v-if="locationsPending" class="p-4 text-center text-muted text-sm">
-        {{ t('sales.common.loading') }}
-      </div>
-      <CroutonCollection
-        v-else-if="locations && (locations as any[]).length > 0"
-        layout="grid"
+      <SalesEventWorkspaceSettingsListCard
+        :title="t('sales.sidebar.locations')"
         collection="salesLocations"
-        :rows="locations"
+        :rows="locationRows"
+        :pending="locationsPending"
+        :empty-label="t('sales.workspace.noLocations')"
+        :create-data="{ eventId: event.id }"
       />
-      <div v-else class="p-4 text-center text-muted text-sm">
-        {{ t('sales.workspace.noLocations') }}
-      </div>
-    </UCard>
-
-    <!-- Printer management (the dedicated Printers tab was removed — per-order
-         print status now lives on the order rows as LED indicators) -->
-    <SalesEventWorkspacePrintersTab :event="event" />
+      <SalesEventWorkspaceSettingsListCard
+        :title="t('sales.sidebar.printers')"
+        collection="salesPrinters"
+        :rows="printerRows"
+        :pending="printersPending"
+        :empty-label="t('sales.workspace.noPrinters')"
+        :create-data="{ eventId: event.id }"
+      >
+        <template #header-actions>
+          <UButton
+            size="xs"
+            variant="outline"
+            color="warning"
+            icon="i-lucide-rotate-ccw"
+            :loading="resending"
+            :aria-label="t('sales.printQueue.resendFailed', 'Resend failed jobs')"
+            @click="resendFailedJobs"
+          />
+        </template>
+      </SalesEventWorkspaceSettingsListCard>
+    </div>
 
     <!-- Active Helpers (scoped tokens, not a collection) -->
     <UCard>
