@@ -26,6 +26,9 @@ const orderNumber = computed(() => props.item?.orderIdData?.eventOrderNumber)
 const printerName = computed(() => props.item?.printerIdData?.title)
 const locationName = computed(() => props.item?.locationIdData?.title)
 const retryCount = computed(() => Number(props.item?.retryCount ?? 0))
+const errorMessage = computed(() =>
+  String(props.item?.status ?? '') === '9' ? props.item?.errorMessage : undefined
+)
 
 const timeLabel = computed(() => {
   const v = props.item?.completedAt || props.item?.createdAt
@@ -53,6 +56,14 @@ const timeLabel = computed(() => {
       <p v-if="locationName" class="text-xs text-muted truncate flex items-center gap-1">
         <UIcon name="i-lucide-map-pin" class="shrink-0" />
         {{ locationName }}
+      </p>
+      <p
+        v-if="errorMessage"
+        class="text-xs text-error truncate flex items-center gap-1"
+        :title="errorMessage"
+      >
+        <UIcon name="i-lucide-triangle-alert" class="shrink-0" />
+        {{ errorMessage }}
       </p>
     </div>
     <span v-if="timeLabel" class="shrink-0 text-xs text-dimmed tabular-nums">{{ timeLabel }}</span>
