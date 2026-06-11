@@ -95,6 +95,7 @@ function statusColor(status: string) {
     case 'completed': return 'success'
     case 'cancelled': return 'error'
     case 'failed': return 'error'
+    case 'print_failed': return 'error'
     default: return 'neutral'
   }
 }

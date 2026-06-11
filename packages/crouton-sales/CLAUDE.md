@@ -160,7 +160,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }`. Backs the "Resend failed jobs" button in `PrintersTab` |
-| `events/[eventId]/order-data` GET | helper token | All data needed by POS UI |
+| `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
@@ -200,7 +200,7 @@ Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.pr
 |------|--------|---------|
 | `print-server/events/[eventId]/jobs?mark_as_printing=true` | GET | List pending jobs joined with printer IP. With `mark_as_printing` flag, flips status pending→printing atomically. |
 | `print-server/jobs/[jobId]/complete` | POST | Mark status=completed, set completedAt. **Also auto-completes the order**: when no remaining job for that `orderId` is in a non-completed state, sets `salesOrders.status='completed'`. A failed ticket keeps the order out of `completed` until reprinted. |
-| `print-server/jobs/[jobId]/fail` | POST | Body `{ errorMessage? }`. Set status=failed, increment retryCount. |
+| `print-server/jobs/[jobId]/fail` | POST | Body `{ errorMessage? }`. Set status=failed, increment retryCount. **Also flags the order** `status='print_failed'` (unless completed/cancelled) so the orders list surfaces the printer problem; once every job later completes, the complete callback flips it to `completed`. `OrderStatus` includes `print_failed`; the OrdersList reprint button shows for it. |
 
 `printData` returned by `/jobs` is already base64-encoded ESC/POS bytes (built by `formatReceipt` in `server/utils/receipt-formatter.ts`). Spooler decodes and writes raw bytes to printer's TCP port 9100.
 
@@ -244,7 +244,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |
 | `CartTotal.vue` | `SalesClientCartTotal` | Order total display with item count |
-| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds "+" affordances that open the crouton create forms: add category (eventId preset) and add product (eventId + active categoryId preset) |
+| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds catalog editing: "+" buttons open the crouton create forms (category with eventId preset; product with eventId + active categoryId preset), and the active category tab shows a pencil (CategoryTabs `editable` + `@edit`) opening its update form. Product cards get an edit pencil + drag-reorder (ProductList `editable`; persists via `useTreeMutation('salesProducts').reorderSiblings`, order = visual index in the visible set, same as ProductsTab). The POS product list is sorted by `sortOrder` then title. The Category/Location/Product update forms carry a two-step inline delete (arm → confirm; `sales.common.confirmDelete`) instead of a nested delete overlay |
 | `Selector.vue` | `SalesClientSelector` | Client selector with create-on-type |
 | `OfflineBanner.vue` | `SalesClientOfflineBanner` | Offline mode indicator |
 

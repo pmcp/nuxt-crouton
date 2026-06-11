@@ -8,8 +8,10 @@ export type { ProductOption, SalesProduct, CartItem, UsePosOrderOptions } from '
 // Re-export ProductOption for direct import in components
 export { type ProductOption } from '../composables/usePosOrder'
 
-// Order status enum
-export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'
+// Order status enum — print_failed is set by the print-server fail callback
+// when one of the order's tickets couldn't print; the complete callback flips
+// the order to completed once all tickets have printed.
+export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled' | 'print_failed'
 
 // Print job status enum
 export type PrintStatus = 0 | 1 | 2 | 9 // 0=pending, 1=printing, 2=done, 9=error

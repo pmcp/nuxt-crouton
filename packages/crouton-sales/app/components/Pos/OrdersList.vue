@@ -41,7 +41,7 @@
       <template #actions-cell="{ row }">
         <div class="flex gap-2 justify-end">
           <UButton
-            v-if="showReprint && row.original.status === 'failed'"
+            v-if="showReprint && row.original.status === 'print_failed'"
             :label="t('sales.orders.rePrint')"
             size="sm"
             color="warning"
@@ -160,6 +160,7 @@ function getStatusColor(status: string) {
     case 'processing': return 'info'
     case 'completed': return 'success'
     case 'cancelled': return 'error'
+    case 'print_failed': return 'error'
     default: return 'neutral'
   }
 }
