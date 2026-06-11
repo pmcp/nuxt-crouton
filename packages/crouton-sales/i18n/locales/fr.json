@@ -153,8 +153,6 @@
       "locationRemark": "Remarque pour {location}",
       "locationRemarkPlaceholder": "Ajouter une remarque pour ce lieu…",
       "remark": "Remarque",
-      "remarkFor": "Pour",
-      "wholeOrder": "Toute la commande",
       "remarkPlaceholder": "Saisissez la remarque…",
       "staffOrder": "Commande du personnel"
     },

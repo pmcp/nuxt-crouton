@@ -195,6 +195,21 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
   }
 
   /**
+   * Re-point cart items at fresh product rows (matched by id) after a catalog
+   * refresh — cart items snapshot the product at add-time, so an admin edit
+   * (location, price, title) made while the item sits in the cart would
+   * otherwise stay stale until re-added.
+   */
+  function syncCartProducts(products: SalesProduct[]) {
+    if (!products.length) return
+    const byId = new Map(products.map(product => [product.id, product]))
+    for (const item of cartItems.value) {
+      const updated = byId.get(item.product.id)
+      if (updated) item.product = updated
+    }
+  }
+
+  /**
    * Clear the entire cart
    */
   function clearCart() {
@@ -325,6 +340,7 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
     addToCart,
     removeFromCart,
     updateQuantity,
+    syncCartProducts,
     clearCart,
     getItemPrice,
     getItemTotal,

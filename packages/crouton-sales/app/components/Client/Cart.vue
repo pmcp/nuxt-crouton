@@ -47,35 +47,50 @@
     <template #footer>
       <SalesClientCartTotal :count="itemCount" :total="total" />
 
-      <!-- Remarks: one button that slides open a target picker + textarea.
-           Whole-order notes print under the special-instructions title on every
-           kitchen ticket; a location remark only on that location's ticket.
-           Never counted in sales. -->
-      <UCollapsible v-if="items.length > 0" v-model:open="remarksOpen">
+      <!-- Remarks: one button that slides open an accordion of the locations
+           with items in the cart, each with its own note. A location remark
+           prints as REMARK: on that location's ticket only. Never counted
+           in sales. -->
+      <!-- Toggle + accordion share one elevated block so they read as a unit. -->
+      <UCollapsible
+        v-if="remarkLocations.length > 0"
+        v-model:open="remarksOpen"
+        class="rounded-lg bg-elevated/60"
+      >
         <UButton
           size="sm"
           color="neutral"
-          :variant="remarksOpen || remarkCount > 0 ? 'subtle' : 'soft'"
+          variant="ghost"
           icon="i-lucide-message-square-text"
-          :trailing-icon="remarksOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          :trailing-icon="remarksOpen ? 'i-lucide-minus' : 'i-lucide-plus'"
           :label="remarkCount > 0 ? `${t('sales.cart.remark')} (${remarkCount})` : t('sales.cart.remark')"
           block
           :ui="{ trailingIcon: 'ms-auto' }"
         />
 
         <template #content>
-          <div class="space-y-2 p-2 mt-2 rounded-lg bg-elevated/60">
-            <UFormField :label="t('sales.cart.remarkFor')">
-              <USelect v-model="remarkTarget" :items="remarkTargets" class="w-full" />
-            </UFormField>
-            <UTextarea
-              :model-value="activeRemark"
-              :placeholder="t('sales.cart.remarkPlaceholder')"
-              :rows="2"
-              autoresize
-              class="w-full"
-              @update:model-value="setActiveRemark(String($event))"
-            />
+          <div class="px-2 pb-1">
+            <UAccordion type="multiple" :items="remarkAccordionItems">
+              <template #default="{ item }">
+                <span class="flex items-center gap-2 text-sm">
+                  {{ item.label }}
+                  <span
+                    v-if="locationRemark(item.value).trim()"
+                    class="size-1.5 rounded-full bg-primary"
+                  />
+                </span>
+              </template>
+              <template #body="{ item }">
+                <UTextarea
+                  :model-value="locationRemark(item.value)"
+                  :placeholder="t('sales.cart.remarkPlaceholder')"
+                  :rows="2"
+                  autoresize
+                  class="w-full"
+                  @update:model-value="emitLocationRemark(item.value, String($event))"
+                />
+              </template>
+            </UAccordion>
           </div>
         </template>
       </UCollapsible>
@@ -125,8 +140,6 @@ const props = defineProps<{
   locations?: SalesLocation[]
   /** Current per-location remark text, keyed by locationId. */
   locationRemarks?: Record<string, string>
-  /** Whole-order note — prints under the special-instructions title on kitchen tickets. */
-  overallRemarks?: string | null
   /** Staff order flag — prints the staff banner (receipt settings) on tickets. */
   isPersonnel?: boolean
 }>()
@@ -215,52 +228,30 @@ const emit = defineEmits<{
   checkout: []
   clear: []
   updateLocationRemark: [locationId: string, value: string]
-  'update:overallRemarks': [value: string]
   'update:isPersonnel': [value: boolean]
 }>()
 
-// Remarks panel: pick who the remark is for — the whole order, or one of the
-// locations that already has an item in the cart (items-required, same rule
-// the print pipeline applies).
+// Remarks panel: an accordion item per location that already has an item in
+// the cart (items-required, same rule the print pipeline applies). Each item
+// carries its own textarea; a filled one shows a dot next to its label.
 const remarksOpen = ref(false)
-const ORDER_TARGET = '__order__'
-const remarkTarget = ref(ORDER_TARGET)
 
-const remarkTargets = computed(() => [
-  { label: t('sales.cart.wholeOrder'), value: ORDER_TARGET },
-  ...remarkLocations.value.map(loc => ({ label: loc.title, value: loc.id })),
-])
-
-// If the selected location drops out of the cart, fall back to the whole order.
-watch(remarkTargets, (targets) => {
-  if (!targets.some(target => target.value === remarkTarget.value)) {
-    remarkTarget.value = ORDER_TARGET
-  }
-})
-
-const activeRemark = computed(() =>
-  remarkTarget.value === ORDER_TARGET
-    ? (props.overallRemarks ?? '')
-    : (props.locationRemarks?.[remarkTarget.value] ?? '')
+const remarkAccordionItems = computed(() =>
+  remarkLocations.value.map(loc => ({ label: loc.title, value: loc.id }))
 )
 
-function setActiveRemark(value: string) {
-  if (remarkTarget.value === ORDER_TARGET) {
-    emit('update:overallRemarks', value)
-  }
-  else {
-    emit('updateLocationRemark', remarkTarget.value, value)
-  }
+function locationRemark(locationId?: string): string {
+  return locationId ? (props.locationRemarks?.[locationId] ?? '') : ''
 }
 
-// Targets that currently carry text — shown as a count on the collapsed button.
-const remarkCount = computed(() => {
-  let count = props.overallRemarks?.trim() ? 1 : 0
-  for (const loc of remarkLocations.value) {
-    if (props.locationRemarks?.[loc.id]?.trim()) count++
-  }
-  return count
-})
+function emitLocationRemark(locationId: string | undefined, value: string) {
+  if (locationId) emit('updateLocationRemark', locationId, value)
+}
+
+// Locations that currently carry text — shown as a count on the collapsed button.
+const remarkCount = computed(() =>
+  remarkLocations.value.filter(loc => props.locationRemarks?.[loc.id]?.trim()).length
+)
 
 // Get selected option labels as array
 function getSelectedOptionLabels(item: CartItem): string[] {

@@ -85,7 +85,6 @@
               :categories="categories || []"
               :locations="locations || []"
               :location-remarks="locationRemarks"
-              :overall-remarks="overallRemarks"
               :is-personnel="isPersonnel"
               :total="cartTotal"
               :disabled="!isOnline"
@@ -96,7 +95,6 @@
               @checkout="handleCheckout"
               @clear="clearCart"
               @update-location-remark="setLocationRemark"
-              @update:overall-remarks="overallRemarks = $event"
               @update:is-personnel="isPersonnel = $event"
             />
           </div>
@@ -212,11 +210,11 @@ const {
   selectedClientId,
   selectedClientName,
   locationRemarks,
-  overallRemarks,
   isPersonnel,
   addToCart,
   removeFromCart,
   updateQuantity,
+  syncCartProducts,
   clearCart,
   checkout,
 } = usePosOrder()
@@ -261,6 +259,11 @@ else {
 }
 
 const loading = computed(() => categoriesLoading.value || productsLoading.value)
+
+// Cart items snapshot the product at add-time, so an admin edit (location,
+// price, title) would otherwise keep stale data in the cart until the item is
+// re-added — e.g. the remark accordion missing a just-assigned location.
+watch(products, fresh => syncCartProducts(fresh ?? []))
 
 // Client selection state
 const hasClient = computed(() => {

@@ -154,8 +154,6 @@
       "locationRemark": "Opmerking voor {location}",
       "locationRemarkPlaceholder": "Voeg een opmerking toe voor deze locatie…",
       "remark": "Opmerking",
-      "remarkFor": "Voor",
-      "wholeOrder": "Hele bestelling",
       "remarkPlaceholder": "Typ de opmerking…",
       "staffOrder": "Personeelsbestelling"
     },
