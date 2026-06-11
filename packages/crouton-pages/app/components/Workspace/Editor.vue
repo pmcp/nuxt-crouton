@@ -538,7 +538,7 @@ const visibilityConfig: Record<string, { icon: string; label: string }> = {
 const visibilityDropdownItems = computed(() => [
   Object.entries(visibilityConfig).map(([visibility, config]) => ({
     label: config.label,
-    slot: visibility as 'public' | 'members' | 'hidden',
+    slot: visibility as 'public' | 'members' | 'admin' | 'scoped' | 'hidden',
     onSelect: () => { state.value.visibility = visibility }
   }))
 ])

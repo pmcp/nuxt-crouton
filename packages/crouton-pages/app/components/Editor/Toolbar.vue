@@ -242,6 +242,12 @@ const { t } = useT()
             {{ (item as any).label }}
           </span>
         </template>
+        <template #scoped="{ item }">
+          <span class="flex items-center gap-2">
+            <UIcon name="i-lucide-key-round" class="size-4 text-muted" />
+            {{ (item as any).label }}
+          </span>
+        </template>
         <template #hidden="{ item }">
           <span class="flex items-center gap-2">
             <UIcon name="i-lucide-eye-off" class="size-4 text-muted" />
