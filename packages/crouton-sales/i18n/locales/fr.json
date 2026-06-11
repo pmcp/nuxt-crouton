@@ -111,7 +111,8 @@
       "loading": "Chargement...",
       "none": "Aucun",
       "active": "Actif",
-      "inactive": "Inactif"
+      "inactive": "Inactif",
+      "confirmDelete": "Confirmer la suppression"
     },
     "block": {
       "orderInterface": "Interface de commande",
@@ -250,7 +251,8 @@
       "ipAddressHelp": "IP LAN de l'imprimante (le RUT956 les attribue via DHCP). Le port est toujours 9100.",
       "showPrices": "Afficher les prix sur les reçus",
       "general": "Général",
-      "displayOrder": "Ordre d'affichage"
+      "displayOrder": "Ordre d'affichage",
+      "activeHelp": "Les produits inactifs sont masqués dans la caisse"
     },
     "helperLogin": {
       "title": "Connexion bénévole",

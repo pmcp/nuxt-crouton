@@ -4,7 +4,23 @@
     :items="tabItems"
     :content="false"
     @update:model-value="onTabChange"
-  />
+  >
+    <!-- Editable mode: pencil inside the active tab → edit that category -->
+    <template v-if="editable" #trailing="{ item }">
+      <!-- Styled span, not <UButton>: this sits inside the tab's <button>,
+           and nested buttons are invalid HTML (breaks SSR hydration). -->
+      <span
+        v-if="item.value !== 'all' && (modelValue ?? fallbackValue) === item.value"
+        role="button"
+        :aria-label="t('common.edit')"
+        class="ml-1.5 inline-flex items-center justify-center size-6 rounded-full
+               bg-black/15 hover:bg-black/30 active:scale-95 transition-all"
+        @click.stop="emit('edit', String(item.value))"
+      >
+        <UIcon name="i-lucide-pencil" class="size-3.5" />
+      </span>
+    </template>
+  </UTabs>
 </template>
 
 <script setup lang="ts">
@@ -21,10 +37,13 @@ const props = withDefaults(defineProps<{
   counts?: Record<string, number>
   // Show the leading "All" tab (default). Set false to force a category selection.
   showAll?: boolean
+  // Show a pencil on the active tab that emits 'edit' (admin POS only).
+  editable?: boolean
 }>(), { showAll: true, counts: () => ({}) })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
+  'edit': [categoryId: string]
 }>()
 
 const totalCount = computed(() =>

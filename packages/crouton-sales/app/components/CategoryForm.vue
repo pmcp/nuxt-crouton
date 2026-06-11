@@ -41,12 +41,25 @@
       </template>
 
       <template #footer>
-        <CroutonFormActionButton
-          :action="action"
-          :collection="collection"
-          :items="items"
-          :loading="loading"
-        />
+        <div class="space-y-2">
+          <CroutonFormActionButton
+            :action="action"
+            :collection="collection"
+            :items="items"
+            :loading="loading"
+          />
+          <!-- Two-step delete: first click arms, second click deletes. -->
+          <UButton
+            v-if="action === 'update' && state.id"
+            block
+            icon="i-lucide-trash-2"
+            color="error"
+            :variant="confirmingDelete ? 'solid' : 'ghost'"
+            :label="confirmingDelete ? t('sales.common.confirmDelete') : t('common.delete')"
+            :loading="deleting"
+            @click="handleDelete"
+          />
+        </div>
       </template>
     </CroutonFormLayout>
   </UForm>
@@ -94,6 +107,28 @@ const handleSubmit = async () => {
     close()
   } catch (error) {
     console.error('Form submission failed:', error)
+  }
+}
+
+// Delete from the update form: two-step (arm → confirm) instead of a nested
+// delete overlay, which would leave this slideover open on a deleted record.
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+
+const handleDelete = async () => {
+  if (!confirmingDelete.value) {
+    confirmingDelete.value = true
+    return
+  }
+  if (!state.value.id) return
+  deleting.value = true
+  try {
+    await deleteItems([state.value.id])
+    close()
+  } catch (error) {
+    console.error('Delete failed:', error)
+  } finally {
+    deleting.value = false
   }
 }
 </script>

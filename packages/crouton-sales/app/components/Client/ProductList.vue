@@ -4,13 +4,47 @@
   </div>
   <div v-else ref="containerRef" class="flex flex-col gap-2">
     <UCard
-      v-for="product in products"
+      v-for="product in orderedProducts"
       :key="product.id"
       variant="soft"
-      class="cursor-pointer"
+      class="cursor-pointer group/card relative overflow-hidden"
       :ui="{ body: 'p-3' }"
       @click="handleProductClick(product)"
     >
+      <!-- Admin affordances slide in from the card edges on hover (bookings-card
+           pattern): reorder grip on the left, edit pencil on the right. -->
+      <div
+        v-if="editable"
+        class="absolute left-0 top-0 bottom-0 z-10 flex items-center px-1.5
+               transition-transform duration-200 ease-out -translate-x-full group-hover/card:translate-x-0"
+      >
+        <UIcon
+          name="i-lucide-grip-vertical"
+          class="drag-handle size-4 text-muted cursor-grab active:cursor-grabbing"
+          @click.stop
+        />
+      </div>
+      <div
+        v-if="editable"
+        class="absolute right-0 top-0 bottom-0 z-10 flex items-center px-1.5
+               transition-transform duration-200 ease-out translate-x-full group-hover/card:translate-x-0"
+      >
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          icon="i-lucide-pencil"
+          :aria-label="t('common.edit')"
+          @click.stop="emit('edit', product.id)"
+        />
+      </div>
+
+      <!-- Hover pushes the content inward so the slide-out panels never cover
+           the title or price. -->
+      <div
+        class="transition-[padding] duration-200 ease-out"
+        :class="editable ? 'group-hover/card:ps-7 group-hover/card:pe-9' : ''"
+      >
       <SalesClientOrderLineItem
         :title="product.title"
         :price="Number(product.price)"
@@ -145,24 +179,60 @@
           </UButton>
         </div>
       </Transition>
+      </div>
     </UCard>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useSortable } from '@vueuse/integrations/useSortable'
 import type { SalesProduct, ProductOption } from '../../types'
 const { t } = useT()
 const { format } = useSalesCurrency()
 
-defineProps<{
+const props = defineProps<{
   products: SalesProduct[]
+  /** Admin POS: show a drag handle (reorder) and edit pencil on each card. */
+  editable?: boolean
 }>()
 
 const emit = defineEmits<{
   select: [product: SalesProduct, selectedOption?: string | string[], remark?: string]
+  edit: [productId: string]
+  /** New visual order after a drop — only the rows whose index changed. */
+  reorder: [updates: Array<{ id: string, order: number }>]
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
+
+// Local mutable copy that useSortable reorders in place on drop (mirrors
+// ProductsTab). Always the render source so editable/non-editable paths match.
+const orderedProducts = ref<SalesProduct[]>([])
+watch(() => props.products, (v) => { orderedProducts.value = [...(v || [])] }, { immediate: true })
+
+const orderOf = (p: SalesProduct) => p.sortOrder ?? 0
+
+function emitNewOrder() {
+  const updates: Array<{ id: string, order: number }> = []
+  orderedProducts.value.forEach((p, index) => {
+    if (orderOf(p) !== index) updates.push({ id: p.id, order: index })
+  })
+  if (updates.length) emit('reorder', updates)
+}
+
+// Editable is fixed for the life of the POS session (admin vs helper), so a
+// one-time init is fine — no need for a reactive `disabled` option.
+if (import.meta.client && props.editable) {
+  useSortable(containerRef, orderedProducts, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'opacity-50',
+    chosenClass: 'bg-elevated',
+    onEnd: (evt: { oldIndex?: number, newIndex?: number }) => {
+      if (evt.oldIndex !== evt.newIndex) emitNewOrder()
+    }
+  })
+}
 const activeProductId = ref<string | null>(null)
 const selectedOptionIds = ref<Map<string, string[]>>(new Map())
 // Per-product remark text, keyed by product id (only for requiresRemark products).

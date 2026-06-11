@@ -112,7 +112,8 @@
       "loading": "Loading...",
       "none": "None",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "confirmDelete": "Confirm delete"
     },
     "block": {
       "orderInterface": "Order Interface",
@@ -251,7 +252,8 @@
       "ipAddressHelp": "LAN IP of the printer (RUT956 hands these out via DHCP). Port is always 9100.",
       "showPrices": "Show prices on receipts",
       "general": "General",
-      "displayOrder": "Display Order"
+      "displayOrder": "Display Order",
+      "activeHelp": "Inactive products are hidden in the POS"
     },
     "helperLogin": {
       "title": "Helper Login",

@@ -15,6 +15,8 @@
             :categories="categories || []"
             :counts="cartCountsByCategory"
             :show-all="false"
+            :editable="editable"
+            @edit="openEditCategory"
           />
         </div>
         <UButton
@@ -34,7 +36,10 @@
         <div class="flex-1 overflow-y-auto p-2">
           <SalesClientProductList
             :products="filteredProducts"
+            :editable="editable"
             @select="handleProductSelect"
+            @edit="openEditProduct"
+            @reorder="handleReorder"
           />
           <UButton
             v-if="editable"
@@ -263,7 +268,10 @@ function handleProductSelect(
 const selectedCategory = ref<string | null>(null)
 
 watch(categories, (cats) => {
-  if (selectedCategory.value === null && cats.length) {
+  // Also covers the selected category being deleted from the editable POS —
+  // fall back to the first remaining tab instead of pointing at a ghost id.
+  const selectionGone = selectedCategory.value !== null && !cats.some(c => c.id === selectedCategory.value)
+  if ((selectedCategory.value === null || selectionGone) && cats.length) {
     selectedCategory.value = cats[0]!.id
   }
 }, { immediate: true })
@@ -279,13 +287,14 @@ const cartCountsByCategory = computed(() => {
   return counts
 })
 
-// Filtered products based on selected category
+// Filtered products based on selected category, in the same order the admin
+// arranged them (sortOrder, then title — mirrors the workspace ProductsTab).
 const filteredProducts = computed(() => {
-  const allProducts = (products.value || []) as SalesProduct[]
-  if (selectedCategory.value === null) {
-    return allProducts.filter(p => p.isActive !== false)
-  }
-  return allProducts.filter(p => p.categoryId === selectedCategory.value && p.isActive !== false)
+  const allProducts = ([...(products.value || [])] as SalesProduct[])
+    .filter(p => p.isActive !== false)
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title))
+  if (selectedCategory.value === null) return allProducts
+  return allProducts.filter(p => p.categoryId === selectedCategory.value)
 })
 
 // Set/update the free-text remark for a given location (writes into the
@@ -308,6 +317,27 @@ function openCreateProduct() {
     eventId: props.eventId,
     ...(selectedCategory.value ? { categoryId: selectedCategory.value } : {})
   })
+}
+
+// Pencil on the active category tab → update form (which carries the
+// two-step delete, same as the location form).
+function openEditCategory(categoryId: string) {
+  openCrouton('update', 'salesCategories', [categoryId])
+}
+
+// Pencil on a product card → update form (same two-step delete).
+function openEditProduct(productId: string) {
+  openCrouton('update', 'salesProducts', [productId])
+}
+
+// Drag-reorder persistence: same generated /reorder path as the workspace
+// ProductsTab (order = visual index within the visible set). The resulting
+// 'reorder' mutation makes SalesPosPanel re-fetch order-data.
+const { reorderSiblings, reordering } = useTreeMutation('salesProducts')
+
+async function handleReorder(updates: Array<{ id: string, order: number }>) {
+  if (!updates.length || reordering.value) return
+  await reorderSiblings(updates)
 }
 
 async function handleCheckout() {

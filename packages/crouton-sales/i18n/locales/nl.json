@@ -112,7 +112,8 @@
       "loading": "Laden...",
       "none": "Geen",
       "active": "Actief",
-      "inactive": "Inactief"
+      "inactive": "Inactief",
+      "confirmDelete": "Bevestig verwijderen"
     },
     "block": {
       "orderInterface": "Bestelinterface",
@@ -251,7 +252,8 @@
       "ipAddressHelp": "LAN-IP van de printer (RUT956 deelt deze uit via DHCP). Poort is altijd 9100.",
       "showPrices": "Prijzen op bonnen tonen",
       "general": "Algemeen",
-      "displayOrder": "Weergavevolgorde"
+      "displayOrder": "Weergavevolgorde",
+      "activeHelp": "Inactieve producten zijn verborgen in de kassa"
     },
     "helperLogin": {
       "title": "Helper-login",
