@@ -31,11 +31,14 @@ export const salesPrinterSchema = z.object({
   locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
-  port: z.string().optional(),
-  type: z.enum(['kitchen', 'receipt']).optional(),
-  status: z.string().optional(),
-  showPrices: z.boolean().optional(),
-  isActive: z.boolean().optional()
+  // nullish, not optional: these DB columns are nullable, and existing rows
+  // come back as null — .optional() rejects null, failing the update form on
+  // fields it doesn't even render.
+  port: z.string().nullish(),
+  type: z.enum(['kitchen', 'receipt']).nullish(),
+  status: z.string().nullish(),
+  showPrices: z.boolean().nullish(),
+  isActive: z.boolean().nullish()
 })
 
 export const salesPrintersColumns = [

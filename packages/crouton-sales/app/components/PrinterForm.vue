@@ -76,19 +76,45 @@
       </template>
 
       <template #footer>
-        <CroutonValidationErrorSummary
+        <!-- List the actual messages: schema fields without a rendered input
+             (e.g. nullable DB columns) would otherwise surface as an opaque
+             "1 error in General" with nothing to correct. -->
+        <UAlert
           v-if="validationErrors.length > 0"
-          :tab-errors="tabErrorCounts"
-          :navigation-items="navigationItems"
-        />
+          color="error"
+          icon="i-lucide-triangle-alert"
+          :title="t('validation.fixErrors', { count: validationErrors.length })"
+          class="mb-4"
+        >
+          <template #description>
+            <ul class="mt-2 space-y-1 text-xs">
+              <li v-for="err in validationErrors" :key="err.name">
+                <span class="font-medium">{{ fieldLabel(err.name) }}:</span> {{ err.message }}
+              </li>
+            </ul>
+          </template>
+        </UAlert>
 
-        <CroutonFormActionButton
-          :action="action"
-          :collection="collection"
-          :items="items"
-          :loading="loading"
-          :has-validation-errors="validationErrors.length > 0"
-        />
+        <div class="space-y-2">
+          <CroutonFormActionButton
+            :action="action"
+            :collection="collection"
+            :items="items"
+            :loading="loading"
+            :has-validation-errors="validationErrors.length > 0"
+          />
+          <!-- Two-step delete: first click arms, second click deletes. -->
+          <UButton
+            v-if="action === 'update' && state.id"
+            block
+            icon="i-lucide-trash-2"
+            color="error"
+            :variant="confirmingDelete ? 'solid' : 'ghost'"
+            :label="confirmingDelete ? t('sales.common.confirmDelete') : t('common.delete')"
+            :loading="deleting"
+            @click="handleDelete"
+          />
+        </div>
       </template>
     </CroutonFormLayout>
   </UForm>
@@ -128,11 +154,18 @@ const handleValidationError = (event: any) => {
   if (event?.errors) validationErrors.value = event.errors
 }
 
-// Single-tab form — bucket every error under 'general'. Required: the summary
-// component does Object.entries(tabErrors) and has no default for the prop.
-const tabErrorCounts = computed<Record<string, number>>(() =>
-  validationErrors.value.length ? { general: validationErrors.value.length } : ({} as Record<string, number>)
-)
+// Human label for an error's field — falls back to the raw schema field name
+// for fields that have no input in this form (port, status, …).
+const fieldLabels: Record<string, string> = {
+  eventId: t('sales.form.event'),
+  locationId: t('sales.form.location'),
+  title: t('sales.form.title'),
+  ipAddress: t('sales.form.ipAddress'),
+  type: t('sales.form.printerType'),
+  showPrices: t('sales.form.showPrices'),
+  isActive: t('sales.common.active')
+}
+const fieldLabel = (name: string) => fieldLabels[name] || name
 
 const { create, update, deleteItems } = useCollectionMutation(collection)
 const { close, loading } = useCrouton()
@@ -162,6 +195,28 @@ const handleSubmit = async () => {
     close()
   } catch (error) {
     console.error('Form submission failed:', error)
+  }
+}
+
+// Delete from the update form: two-step (arm → confirm) instead of a nested
+// delete overlay, which would leave this slideover open on a deleted record.
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+
+const handleDelete = async () => {
+  if (!confirmingDelete.value) {
+    confirmingDelete.value = true
+    return
+  }
+  if (!state.value.id) return
+  deleting.value = true
+  try {
+    await deleteItems([state.value.id])
+    close()
+  } catch (error) {
+    console.error('Delete failed:', error)
+  } finally {
+    deleting.value = false
   }
 }
 </script>
