@@ -398,8 +398,7 @@
         "confirmPrint": "Confirmer ?",
         "printed": "Addition imprimée pour {client} — compte clôturé",
         "printError": "Impossible d'imprimer l'addition",
-        "loadError": "Impossible de charger les clients",
-        "hint": "L'impression clôture le compte du client et le retire de la caisse."
+        "loadError": "Impossible de charger les clients"
       }
     },
     "helpers": {

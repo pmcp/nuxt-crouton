@@ -85,28 +85,36 @@ The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `Sales
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
 **kassa-first — no tabs**: header + `<SalesPosPanel>` as the main surface. The header is the event
 switcher (with a "create event" item in its `#content-top`, same pattern as
-`CroutonFormReferenceSelect`) and two panel toggles:
-- a **vertical "Bestellingen" tab** hanging near the top of the kassa's right edge (Shell-owned,
-  no prop plumbing) opens `OrdersTab` as a pane beside the POS, resizable via Reka UI's Splitter
-  (`SplitterGroup`/`Panel`/`ResizeHandle`; ratio persists via `autoSaveId`). While open the strip
-  hides and the pane header carries the orders filter toggle (chip = active-filter count;
-  state lifted into Shell, selects live in OrdersTab) and a close ✕. The POS itself is `@container`-responsive: squeezed
-  below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport. The
-  drawer is non-portaled (`:portal="false"`) and the POS root carries `[contain:layout]`, making
-  it the containing block for the fixed drawer + overlay — the cart slides out of the POS module
-  instead of covering the whole page (`container-type` alone does NOT contain fixed descendants)
-- **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
-  live as explained rows at the bottom of its Event Details card. The full event form (incl.
-  slug) is not reachable from the workspace.
-In recurring-clients mode (`event.requiresClient`) the header and the orders-pane header also
-carry a **Clients button** → `EventWorkspace/ClientsPanel.vue` (auto-import
-`SalesEventWorkspaceClientsPanel`): a slideover listing active clients with an open tab
-(searchable; data from `clients/summary`), each with a two-step **Print receipt** button that
-POSTs `end-receipt` (prints the aggregated tab, deactivates the client, removes the row).
+`CroutonFormReferenceSelect`) and the **Bewerken** toggle, which expands `SettingsTab` inline
+under the header (`UCollapsible`); Duplicate/Delete live as explained rows at the bottom of its
+Event Details card. The full event form (incl. slug) is not reachable from the workspace.
+Beside the POS, up to two **side panes** open via vertical tabs stacked in a reserved gutter at
+the kassa's right edge (Shell-owned, no prop plumbing). Both panes can be open at once, each
+resizable via Reka UI's Splitter (`SplitterGroup`/`Panel`/`ResizeHandle`; panels carry explicit
+`id`/`order` because the set is dynamic; ratios persist via `autoSaveId`). An open pane's tab
+hides — the pane header (icon + title, mirroring the tab) carries the close ✕:
+- **"Bestellingen"** opens `OrdersTab`; its pane header also carries the orders filter toggle
+  (chip = active-filter count; state lifted into Shell, selects live in OrdersTab). The POS
+  itself is `@container`-responsive: squeezed below `@2xl` it flips to mobile mode (cart drawer
+  at the bottom) regardless of viewport. The drawer is non-portaled (`:portal="false"`) and the
+  POS root carries `[contain:layout]`, making it the containing block for the fixed drawer +
+  overlay — the cart slides out of the POS module instead of covering the whole page
+  (`container-type` alone does NOT contain fixed descendants)
+- **"Klanten"** (recurring-clients mode only, `event.requiresClient`) opens
+  `EventWorkspace/ClientsPanel.vue` (auto-import `SalesEventWorkspaceClientsPanel`) — the pane
+  body only, Shell owns the pane header. **No longer a slideover, and there is no header Clients
+  button anymore.** It lists active clients with an open tab (searchable; data from
+  `clients/summary`), each with a two-step **Print receipt** button that POSTs `end-receipt`
+  (prints the aggregated tab, deactivates the client, removes the row). Rows **expand on click**
+  (same sliding-chevron affordance as the orders rows) to preview the aggregated receipt lines —
+  fetched lazily on first expand from the `tab` GET, which shares its aggregation with
+  `end-receipt`, so the preview matches the print exactly. Not async — it refreshes in
+  `onMounted`, remounting fresh on every open (`v-if`).
 Per-order print status lives on the order rows as LED dots. Event dates are deliberately not shown
 anywhere in the workspace (irrelevant to the POS flow; columns remain in the DB). Deleting the
 current event navigates back to the events list via a `crouton:mutation` hook (matched on
-`itemIds`). Both panel components are async-setup, so each toggle target gets its own `<Suspense>`.
+`itemIds`). OrdersTab and SettingsTab are async-setup, so each toggle target gets its own
+`<Suspense>`.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (**legacy, ignored** — kept for consumer compatibility),
 `showSwitcher` / `showHeaderActions` / `showHeader` (default `true`).
@@ -264,7 +272,8 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
 | `teams/[id]/events/[eventId]/clients/summary` GET | team member | Active clients with an open tab at this event (`{ id, title, orderCount, total }`, non-cancelled orders only). Backs the workspace clients panel |
-| `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |
+| `teams/[id]/events/[eventId]/clients/[clientId]/tab` GET | team member | Read-only preview of a client's open tab: the aggregated receipt lines `end-receipt` would print (`{ lines: [{ name, quantity, price, optionLabels, total }], orderCount, total }`). Backs the expandable rows in the clients panel |
+| `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged — shared `aggregateClientTab` in `server/utils/client-tab.ts`, also used by the `tab` GET), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |
 
 ### Analytics / Chart Endpoints
 

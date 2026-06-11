@@ -399,8 +399,7 @@
         "confirmPrint": "Confirm?",
         "printed": "Receipt printed for {client} — tab settled",
         "printError": "Could not print the receipt",
-        "loadError": "Could not load clients",
-        "hint": "Printing the receipt settles the client's tab and removes them from the register."
+        "loadError": "Could not load clients"
       }
     },
     "helpers": {

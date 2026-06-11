@@ -399,8 +399,7 @@
         "confirmPrint": "Bevestig?",
         "printed": "Rekening afgedrukt voor {client} — afgesloten",
         "printError": "Kon de rekening niet afdrukken",
-        "loadError": "Kon klanten niet laden",
-        "hint": "Na het afdrukken is de rekening afgesloten en verdwijnt de klant uit de kassa."
+        "loadError": "Kon klanten niet laden"
       }
     },
     "helpers": {

@@ -7,8 +7,11 @@
  * tabs — the two former tabs became header-driven panels:
  *
  *  - "Bewerken" expands the settings (SettingsTab) inline under the header
- *  - "Bestellingen" toggles the orders list (OrdersTab) as a third pane
- *    beside the POS's products/cart columns
+ *  - "Bestellingen" toggles the orders list (OrdersTab) as a pane beside
+ *    the POS's products/cart columns
+ *  - "Klanten" (recurring-clients mode only) toggles the client end-receipts
+ *    list (ClientsPanel) as another pane — both can be open at once,
+ *    side by side
  *
  * Used in two places:
  *  - the admin page `/admin/[team]/sales/events/[slug]`
@@ -106,16 +109,22 @@ onUnmounted(unhookMutation)
 // Header-driven panels. Local state — not worth query params, and the CMS
 // block (showHeaderActions=false) never exposes the toggles.
 const settingsOpen = ref(false)
+
+// Side panes beside the POS: orders, and clients (end-of-tab receipts —
+// recurring-clients mode only). Independent toggles — both can be open at
+// once; each closed pane keeps a vertical tab hanging in the right gutter.
 const ordersOpen = ref(false)
+const clientsOpen = ref(false)
+
+// The gutter is reserved whenever at least one vertical tab is hanging.
+const hasGutter = computed(() =>
+  !ordersOpen.value || (!!event.value?.requiresClient && !clientsOpen.value)
+)
 
 // Orders-pane filters: the toggle lives in the pane header (next to ✕), the
 // selects live in OrdersTab — state is lifted here, count feeds the chip.
 const ordersFiltersOpen = ref(false)
 const ordersFilterCount = ref(0)
-
-// Clients panel ("show clients" → settle a tab). Only meaningful in
-// recurring-clients mode; the button hides otherwise.
-const clientsOpen = ref(false)
 </script>
 
 <template>
@@ -129,7 +138,7 @@ const clientsOpen = ref(false)
   <div v-else class="space-y-4">
     <!-- Header. Same right gutter as the kassa when the orders tab hangs
          there, so Bewerken aligns with the kassa edge, not the gutter. -->
-    <div v-if="showHeader" class="flex items-start justify-between" :class="ordersOpen ? '' : 'pe-11'">
+    <div v-if="showHeader" class="flex items-start justify-between" :class="hasGutter ? 'pe-11' : ''">
       <div class="space-y-1">
         <USelectMenu
           v-if="showSwitcher"
@@ -165,16 +174,6 @@ const clientsOpen = ref(false)
       </div>
       <div v-if="showHeaderActions" class="flex gap-2">
         <UButton
-          v-if="event.requiresClient"
-          icon="i-lucide-users"
-          size="sm"
-          color="neutral"
-          variant="outline"
-          @click="clientsOpen = true"
-        >
-          {{ t('sales.workspace.clientsPanel.button') }}
-        </UButton>
-        <UButton
           icon="i-lucide-pencil"
           size="sm"
           color="neutral"
@@ -202,18 +201,19 @@ const clientsOpen = ref(false)
       </template>
     </UCollapsible>
 
-    <!-- Kassa: the main surface, full remaining viewport height. Orders join
-         as a resizable pane on toggle (drag the divider; sizes persist via
-         autoSaveId). The vertical tab hangs just OUTSIDE the kassa's right
-         edge (reserved gutter via pe-11, so it never overflows the page). -->
-    <div class="relative" :class="ordersOpen ? '' : 'pe-11'">
+    <!-- Kassa: the main surface, full remaining viewport height. Orders or
+         clients join as a resizable pane on toggle (drag the divider; sizes
+         persist via autoSaveId). The vertical tabs hang just OUTSIDE the
+         kassa's right edge (reserved gutter via pe-11, so they never
+         overflow the page). -->
+    <div class="relative" :class="hasGutter ? 'pe-11' : ''">
     <div class="flex border border-default rounded-xl overflow-clip bg-default h-[calc(100dvh-13rem)] min-h-[28rem]">
       <SplitterGroup
         direction="horizontal"
         auto-save-id="sales-workspace-pos"
         class="flex flex-1 min-w-0"
       >
-        <SplitterPanel :min-size="35" class="min-w-0">
+        <SplitterPanel id="pos" :order="1" :min-size="35" class="min-w-0">
           <!-- No panel header: the workspace header above already names the
                event (the standalone order page keeps it). -->
           <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" :show-header="false" />
@@ -222,7 +222,7 @@ const clientsOpen = ref(false)
           <SplitterResizeHandle
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
-          <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 flex flex-col">
+          <SplitterPanel id="orders" :order="2" :default-size="30" :min-size="18" class="min-w-0 flex flex-col">
             <!-- Pane header mirrors the hanging tab: same bg + icon, with ✕.
                  h-14 matches the POS header rows so all bottom borders align. -->
             <div class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 bg-elevated/60 border-b border-default">
@@ -231,17 +231,6 @@ const clientsOpen = ref(false)
                 {{ t('sales.orders.title') }}
               </span>
               <div class="flex items-center gap-1">
-                <UButton
-                  v-if="event.requiresClient"
-                  icon="i-lucide-users"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  :aria-label="t('sales.workspace.clientsPanel.title')"
-                  @click="clientsOpen = true"
-                >
-                  {{ t('sales.workspace.clientsPanel.button') }}
-                </UButton>
                 <UChip :show="ordersFilterCount > 0" :text="ordersFilterCount" size="xl" inset>
                   <UButton
                     icon="i-lucide-filter"
@@ -276,35 +265,69 @@ const clientsOpen = ref(false)
             </div>
           </SplitterPanel>
         </template>
+        <template v-if="clientsOpen">
+          <SplitterResizeHandle
+            class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
+          />
+          <SplitterPanel id="clients" :order="3" :default-size="25" :min-size="15" class="min-w-0 flex flex-col">
+            <div class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 bg-elevated/60 border-b border-default">
+              <span class="flex items-center gap-1.5 text-sm font-medium">
+                <UIcon name="i-lucide-users" class="size-4 shrink-0 text-muted" />
+                {{ t('sales.workspace.clientsPanel.title') }}
+              </span>
+              <UButton
+                icon="i-lucide-x"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                :aria-label="t('sales.common.close')"
+                @click="clientsOpen = false"
+              />
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 pt-2">
+              <SalesEventWorkspaceClientsPanel :event="event" />
+            </div>
+          </SplitterPanel>
+        </template>
       </SplitterGroup>
 
     </div>
 
-    <!-- Vertical orders tab: hangs just outside the kassa's right edge while
-         the pane is closed (the pane has its own close button when open) -->
-    <button
-      v-if="!ordersOpen"
-      type="button"
-      class="absolute top-2 left-[calc(100%-2.75rem)] -ml-px flex flex-col items-center gap-1.5
-             px-1.5 py-3 rounded-e-md cursor-pointer
-             border border-l-0 border-default bg-elevated/60 hover:bg-elevated
-             text-muted hover:text-highlighted transition-colors"
-      :aria-label="t('sales.orders.title')"
-      @click="ordersOpen = true"
+    <!-- Vertical pane tabs: hang just outside the kassa's right edge while
+         their pane is closed (the open pane has its own close button) -->
+    <div
+      v-if="hasGutter"
+      class="absolute top-2 left-[calc(100%-2.75rem)] -ml-px flex flex-col gap-2"
     >
-      <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0" />
-      <span class="[writing-mode:vertical-rl] text-sm font-medium tracking-wide">
-        {{ t('sales.orders.title') }}
-      </span>
-    </button>
+      <button
+        v-if="!ordersOpen"
+        type="button"
+        class="flex flex-col items-center gap-1.5 px-1.5 py-3 rounded-e-md cursor-pointer
+               border border-l-0 border-default bg-elevated/60 hover:bg-elevated
+               text-muted hover:text-highlighted transition-colors"
+        :aria-label="t('sales.orders.title')"
+        @click="ordersOpen = true"
+      >
+        <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0" />
+        <span class="[writing-mode:vertical-rl] text-sm font-medium tracking-wide">
+          {{ t('sales.orders.title') }}
+        </span>
+      </button>
+      <button
+        v-if="event.requiresClient && !clientsOpen"
+        type="button"
+        class="flex flex-col items-center gap-1.5 px-1.5 py-3 rounded-e-md cursor-pointer
+               border border-l-0 border-default bg-elevated/60 hover:bg-elevated
+               text-muted hover:text-highlighted transition-colors"
+        :aria-label="t('sales.workspace.clientsPanel.button')"
+        @click="clientsOpen = true"
+      >
+        <UIcon name="i-lucide-users" class="size-4 shrink-0" />
+        <span class="[writing-mode:vertical-rl] text-sm font-medium tracking-wide">
+          {{ t('sales.workspace.clientsPanel.button') }}
+        </span>
+      </button>
     </div>
-
-    <!-- Clients panel slideover (recurring-clients mode): settle a tab by
-         printing the aggregated end-of-tab receipt. -->
-    <SalesEventWorkspaceClientsPanel
-      v-if="event.requiresClient"
-      v-model:open="clientsOpen"
-      :event="event"
-    />
+    </div>
   </div>
 </template>
