@@ -73,7 +73,7 @@ const _salesEventsConfig = {
     endDate: null,
     status: '',
     isCurrent: false,
-    requiresClient: false,
+    requiresClient: true,
     helperPin: '',
     metadata: {},
     archivedAt: null
