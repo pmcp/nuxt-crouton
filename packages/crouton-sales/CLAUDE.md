@@ -173,9 +173,11 @@ apply **server-side** (the list is paginated): the component sends `?owner=`, `?
 use `CroutonCollection`.
 Each row shows **one combined printer LED** (`orderLed`): worst status across every job of the
 order — red (any failed, 9) > pulsing orange (any pending/printing, 0/1) > green (all done, 2);
-grey = no jobs at all. A hover `UPopover` on the dot breaks it down **per printer** (an LED dot
-left of the printer name, latest 24h job time, failure reasons; "no ticket" explanation for
-printers without a job for this order). Jobs come from the slim `printqueues/status` endpoint — it must include `locationId` +
+grey = no jobs at all. A hover `UPopover` on the dot breaks it down **per printer**, listing
+**only printers with a job for this order** (derived from the jobs, so inactive printers with old
+jobs still appear; an LED dot left of the printer name, latest 24h job time, failure reasons). A
+printer without a ticket is irrelevant noise and is omitted; only when the order generated no
+tickets at all does the popover show the single `noTicketForPrinter` explanation. Jobs come from the slim `printqueues/status` endpoint — it must include `locationId` +
 `printMode` so OrderItems can list what each ticket printed. OrdersTab also queries
 `salesLocations` (names the per-location remarks) and passes `:locations`,
 `:location-remarks="order.locationRemarks"` and `:has-printers` to the expand panel.

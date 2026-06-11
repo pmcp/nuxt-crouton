@@ -148,6 +148,21 @@ function printerJobs(orderId: string, printerId: string) {
   return (jobsByOrder.value.get(orderId) || []).filter(j => j.printerId === printerId)
 }
 
+// Popover breakdown rows: only printers that actually got a ticket for this
+// order — derived from the jobs (not printerList) so inactive printers with
+// old jobs still show up. Printers without a ticket are simply irrelevant here.
+function popoverPrinters(orderId: string) {
+  const rows = new Map<string, { id: string, title: string }>()
+  for (const job of (jobsByOrder.value.get(orderId) || [])) {
+    if (rows.has(job.printerId)) continue
+    rows.set(job.printerId, {
+      id: job.printerId,
+      title: job.printerIdData?.title || t('sales.printQueue.printer', 'Printer')
+    })
+  }
+  return [...rows.values()].sort((a, b) => a.title.localeCompare(b.title))
+}
+
 // Per-line retry on a failed job (OrderItems emits the job id). The refresh
 // flips the line to Pending immediately; the spooler picks it up on its poll.
 const retryNotify = useNotify()
@@ -453,7 +468,7 @@ function toggleExpand(id: string) {
               />
               <template #content>
                 <div class="p-3 space-y-3 min-w-52 max-w-72">
-                  <div v-for="printer in printerList" :key="printer.id" class="space-y-1">
+                  <div v-for="printer in popoverPrinters(order.id)" :key="printer.id" class="space-y-1">
                     <div class="flex items-center justify-between gap-3">
                       <p class="text-sm font-semibold flex items-center gap-1.5 min-w-0">
                         <UTooltip :text="printerLed(order.id, printer.id).label">
@@ -469,15 +484,16 @@ function toggleExpand(id: string) {
                         {{ printerTime(order.id, printer.id) }}
                       </span>
                     </div>
-                    <p v-if="!printerJobs(order.id, printer.id).length" class="text-xs text-muted">
-                      {{ t('sales.printQueue.noTicketForPrinter') }}
-                    </p>
                     <template v-for="job in printerJobs(order.id, printer.id)" :key="job.id">
                       <p v-if="String(job.status ?? '') === '9' && job.errorMessage" class="text-xs text-error">
                         {{ jobError(job) }}
                       </p>
                     </template>
                   </div>
+                  <!-- Order generated no tickets at all (grey LED): explain once -->
+                  <p v-if="!popoverPrinters(order.id).length" class="text-xs text-muted">
+                    {{ t('sales.printQueue.noTicketForPrinter') }}
+                  </p>
                 </div>
               </template>
             </UPopover>
