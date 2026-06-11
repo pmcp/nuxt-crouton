@@ -109,8 +109,8 @@ the order POST) — no status badge: the printer LEDs convey state. **Clicking a
 via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
 `salesOrders` update slideover via `useCrouton().open`. The header carries **three filters** —
 helper, printer, and print status (busy / done / failed; printer + status selects only render when
-the event has active printers) — plus the order count. No manual refresh button: the 2s poll is
-the only refresh. All filters apply **server-side** (the list is paginated): the component sends
+the event has active printers). No order count, no manual refresh button: the 2s poll is the only
+refresh. All filters apply **server-side** (the list is paginated): the component sends
 `?owner=`, `?printerId=`, `?printStatus=` and the app's generated `sales-orders` GET must honor
 them — `getAllSalesOrders` matches printer filters via an EXISTS subquery on `salesPrintqueues`
 (`busy` = status 0/1, `done` = 2, `failed` = 9). Filter changes reset to page 1. It does **not**

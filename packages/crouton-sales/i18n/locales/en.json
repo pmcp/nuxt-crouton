@@ -327,9 +327,11 @@
     "workspace": {
       "allHelpers": "All Helpers",
       "loadingOrders": "Loading orders...",
-      "ordersLabel": "orders",
       "noOrders": "No orders yet",
-      "forThisHelper": " for this helper",
+      "noOrdersFiltered": "No orders match these filters",
+      "allPrinters": "All printers",
+      "allPrintStatuses": "All statuses",
+      "printBusy": "In progress",
       "addPrinter": "Add Printer",
       "loadingPrinters": "Loading printers...",
       "noPrinters": "No printers configured",

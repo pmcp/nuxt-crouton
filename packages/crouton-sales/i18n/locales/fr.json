@@ -326,9 +326,11 @@
     "workspace": {
       "allHelpers": "Tous les bénévoles",
       "loadingOrders": "Chargement des commandes...",
-      "ordersLabel": "commandes",
       "noOrders": "Aucune commande pour le moment",
-      "forThisHelper": " pour ce bénévole",
+      "noOrdersFiltered": "Aucune commande ne correspond à ces filtres",
+      "allPrinters": "Toutes les imprimantes",
+      "allPrintStatuses": "Tous les statuts",
+      "printBusy": "En cours",
       "addPrinter": "Ajouter une imprimante",
       "loadingPrinters": "Chargement des imprimantes...",
       "noPrinters": "Aucune imprimante configurée",

@@ -327,9 +327,11 @@
     "workspace": {
       "allHelpers": "Alle helpers",
       "loadingOrders": "Bestellingen laden...",
-      "ordersLabel": "bestellingen",
       "noOrders": "Nog geen bestellingen",
-      "forThisHelper": " voor deze helper",
+      "noOrdersFiltered": "Geen bestellingen voor deze filters",
+      "allPrinters": "Alle printers",
+      "allPrintStatuses": "Alle statussen",
+      "printBusy": "Bezig",
       "addPrinter": "Printer toevoegen",
       "loadingPrinters": "Printers laden...",
       "noPrinters": "Geen printers geconfigureerd",

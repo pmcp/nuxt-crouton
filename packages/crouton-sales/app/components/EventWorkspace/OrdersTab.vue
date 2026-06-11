@@ -25,10 +25,16 @@ const { data: activeHelpers } = await useFetch<ActiveHelper[]>(
 )
 
 const selectedHelperName = ref<string | null>(null)
+const selectedPrinterId = ref<string | null>(null)
+const selectedPrintStatus = ref<string | null>(null)
 
+// Printer filters apply server-side (EXISTS over the order's print jobs) —
+// the list is paginated, so client-side filtering would miss other pages.
 const ordersQuery = computed(() => {
   const q: Record<string, string> = { eventId: props.event.id }
   if (selectedHelperName.value) q.owner = selectedHelperName.value
+  if (selectedPrinterId.value) q.printerId = selectedPrinterId.value
+  if (selectedPrintStatus.value) q.printStatus = selectedPrintStatus.value
   return q
 })
 
@@ -39,7 +45,6 @@ const {
   pending: ordersPending,
   refresh: refreshOrders,
   page: ordersPage,
-  total: ordersTotal,
   pageCount: ordersPageCount
 } = await useCollectionQuery(
   'salesOrders',
@@ -47,7 +52,7 @@ const {
 )
 
 // Filter change ⇒ back to page 1 (the old page may not exist in the new set).
-watch(selectedHelperName, () => {
+watch([selectedHelperName, selectedPrinterId, selectedPrintStatus], () => {
   ordersPage.value = 1
 })
 
@@ -149,7 +154,23 @@ const helperOptions = computed(() => [
   }))
 ])
 
-const ordersRefreshing = ref(false)
+const printerOptions = computed(() => [
+  { id: null, label: t('sales.workspace.allPrinters') },
+  ...printerList.value.map(p => ({ id: p.id, label: p.title }))
+])
+
+// Buckets, not raw job statuses: busy folds pending+printing together — the
+// register cares about "still coming out" vs "done" vs "needs attention".
+const printStatusOptions = computed(() => [
+  { id: null, label: t('sales.workspace.allPrintStatuses') },
+  { id: 'busy', label: t('sales.workspace.printBusy') },
+  { id: 'done', label: t('sales.printQueue.statusDone', 'Done') },
+  { id: 'failed', label: t('sales.printQueue.statusError', 'Error') }
+])
+
+const hasActiveFilters = computed(() =>
+  Boolean(selectedHelperName.value || selectedPrinterId.value || selectedPrintStatus.value)
+)
 
 // Register overview: always live, no toggle. Poll every 5s while the screen
 // is visible — orders arrive from other helpers' devices, so the view must
@@ -179,12 +200,6 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 
-async function manualRefresh() {
-  ordersRefreshing.value = true
-  await Promise.all([refreshOrders(), refreshPrintJobs()])
-  ordersRefreshing.value = false
-}
-
 type OrderRow = {
   id: string
   eventOrderNumber?: number
@@ -213,29 +228,39 @@ function openEditOrder(id: string) {
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <USelectMenu
-          v-model="selectedHelperName"
-          :items="helperOptions"
-          value-key="id"
-          :placeholder="t('sales.workspace.allHelpers')"
-          icon="i-lucide-user"
-          size="sm"
-          class="w-48"
-          :searchable="true"
-        />
-      </div>
-      <div class="flex items-center gap-2 text-sm text-muted">
-        <span>{{ ordersTotal }} {{ t('sales.workspace.ordersLabel') }}</span>
-        <UButton
-          variant="ghost"
-          size="xs"
-          icon="i-lucide-refresh-cw"
-          :loading="ordersRefreshing"
-          @click="manualRefresh"
-        />
-      </div>
+    <!-- Selects share the row (flex-1) so the filter bar always fits the
+         pane width — the orders pane can be resized quite narrow. -->
+    <div class="flex items-center gap-2">
+      <USelectMenu
+        v-model="selectedHelperName"
+        :items="helperOptions"
+        value-key="id"
+        :placeholder="t('sales.workspace.allHelpers')"
+        icon="i-lucide-user"
+        size="sm"
+        class="flex-1 min-w-0"
+        :searchable="true"
+      />
+      <USelectMenu
+        v-if="printerList.length"
+        v-model="selectedPrinterId"
+        :items="printerOptions"
+        value-key="id"
+        :placeholder="t('sales.workspace.allPrinters')"
+        icon="i-lucide-printer"
+        size="sm"
+        class="flex-1 min-w-0"
+      />
+      <USelectMenu
+        v-if="printerList.length"
+        v-model="selectedPrintStatus"
+        :items="printStatusOptions"
+        value-key="id"
+        :placeholder="t('sales.workspace.allPrintStatuses')"
+        icon="i-lucide-circle-dot"
+        size="sm"
+        class="flex-1 min-w-0"
+      />
     </div>
     <!-- Loading state only before first data — the 5s poll flips `pending`
          on every refresh and would otherwise flicker the whole list. -->
@@ -362,7 +387,7 @@ function openEditOrder(id: string) {
     </ul>
     <div v-else class="p-12 text-center text-muted">
       <UIcon name="i-lucide-receipt" class="text-4xl mb-2" />
-      <p>{{ t('sales.workspace.noOrders') }}{{ selectedHelperName ? t('sales.workspace.forThisHelper') : '' }}</p>
+      <p>{{ hasActiveFilters ? t('sales.workspace.noOrdersFiltered') : t('sales.workspace.noOrders') }}</p>
     </div>
     <!-- Older orders: newest page is the register's working set; history on demand -->
     <div v-if="ordersPageCount > 1" class="flex items-center justify-center gap-3 pt-1">
