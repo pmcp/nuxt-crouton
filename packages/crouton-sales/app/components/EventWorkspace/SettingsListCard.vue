@@ -14,6 +14,8 @@ interface ListRow {
   id: string
   title: string
   subtitle?: string
+  /** Optional status dot before the title (e.g. printer online state). */
+  led?: { class: string, label?: string }
   [key: string]: any
 }
 
@@ -117,8 +119,13 @@ if (import.meta.client && props.orderField) {
           class="px-3 py-2 transition-[padding] duration-200 ease-out group-hover/row:pe-9 pointer-coarse:pe-9"
           :class="orderField ? 'group-hover/row:ps-7 pointer-coarse:ps-7' : ''"
         >
-          <p class="text-sm font-medium truncate">{{ row.title }}</p>
-          <p v-if="row.subtitle" class="text-xs text-muted truncate">{{ row.subtitle }}</p>
+          <div class="flex items-center gap-2 min-w-0">
+            <UTooltip v-if="row.led" :text="row.led.label">
+              <span class="size-2 rounded-full shrink-0" :class="row.led.class" />
+            </UTooltip>
+            <p class="text-sm font-medium truncate">{{ row.title }}</p>
+          </div>
+          <p v-if="row.subtitle" class="text-xs text-muted truncate" :class="row.led ? 'ps-4' : ''">{{ row.subtitle }}</p>
         </div>
       </li>
     </ul>
