@@ -34,8 +34,9 @@
     >
       <!-- Drag grip (left, hover-revealed; the only drag surface) -->
       <span
-        class="tab-drag-handle inline-flex items-center cursor-grab active:cursor-grabbing
+        class="tab-drag-handle inline-flex items-center
                opacity-0 group-hover/tab:opacity-100 pointer-coarse:opacity-100 transition-opacity"
+        :class="reorderPending ? 'cursor-wait opacity-40!' : 'cursor-grab active:cursor-grabbing'"
         @click.stop
       >
         <UIcon name="i-lucide-grip-vertical" class="size-3.5" />
@@ -122,6 +123,10 @@ const props = withDefaults(defineProps<{
   // on the active tab renames inline (emits 'rename'). Only effective when
   // showAll is off, so indices map 1:1 onto categories.
   editable?: boolean
+  // True while the parent is persisting a previous 'reorder'. Dragging is
+  // disabled until it flips back — a drag started mid-save would be dropped
+  // by the parent and snap back on the next refetch.
+  reorderPending?: boolean
 }>(), { showAll: true, counts: () => ({}) })
 
 const emit = defineEmits<{
@@ -269,16 +274,20 @@ function emitNewOrder() {
 }
 
 if (import.meta.client && props.editable) {
-  useSortable(listEl, orderedCategories, {
+  const sortable = useSortable(listEl, orderedCategories, {
     animation: 150,
     handle: '.tab-drag-handle',
     // Only real tabs are sortable — the draft tab and the "+" li are
     // role="presentation" and must not shift the index mapping.
     draggable: '[role="tab"]',
     ghostClass: 'opacity-50',
+    disabled: props.reorderPending,
     onEnd: (evt: { oldIndex?: number, newIndex?: number }) => {
       if (evt.oldIndex !== evt.newIndex) emitNewOrder()
     }
+  })
+  watch(() => props.reorderPending, (pending) => {
+    sortable.option('disabled', !!pending)
   })
 }
 </script>

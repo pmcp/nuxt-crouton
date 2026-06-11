@@ -26,6 +26,7 @@
                 :counts="cartCountsByCategory"
                 :show-all="false"
                 :editable="editable"
+                :reorder-pending="reorderingCategories"
                 @rename="handleCategoryRename"
                 @create="handleCategoryCreate"
                 @reorder="handleCategoryReorder"
