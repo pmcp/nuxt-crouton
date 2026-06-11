@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { requireScopedAccessToResource } from '@fyit/crouton-auth/server/utils/scoped-access'
 import { salesEvents } from '~~/layers/sales/collections/events/server/database/schema'
 import { salesProducts } from '~~/layers/sales/collections/products/server/database/schema'
@@ -40,10 +40,15 @@ export default defineEventHandler(async (event) => {
     .from(salesCategories)
     .where(eq(salesCategories.eventId, eventId))
 
+  // Only active clients: a client is deactivated when their end-of-tab
+  // receipt is printed, which removes them from the POS picker.
   const clients = await db
     .select({ id: salesClients.id, title: salesClients.title })
     .from(salesClients)
-    .where(eq(salesClients.teamId, salesEvent.teamId))
+    .where(and(
+      eq(salesClients.teamId, salesEvent.teamId),
+      eq(salesClients.isActive, true)
+    ))
 
   // Locations for this event — used to label per-location remark inputs in the POS.
   const locations = await db

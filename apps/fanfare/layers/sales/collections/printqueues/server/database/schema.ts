@@ -27,7 +27,9 @@ export const salesPrintqueues = sqliteTable('sales_printqueues', {
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
   eventId: text('eventId').notNull(),
-  orderId: text('orderId').notNull(),
+  // Nullable: end-of-tab receipts aggregate a client's whole tab and are
+  // not tied to a single order. Order auto-complete callbacks skip null.
+  orderId: text('orderId'),
   printerId: text('printerId').notNull(),
   locationId: text('locationId'),
   status: text('status').notNull(),

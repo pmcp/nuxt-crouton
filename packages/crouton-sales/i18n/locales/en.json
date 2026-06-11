@@ -387,7 +387,21 @@
       "currency": "Currency",
       "currencyEur": "Euro (€)",
       "currencyUsd": "Dollar ($)",
-      "showInactive": "Inactive products"
+      "showInactive": "Inactive products",
+      "clientsPanel": {
+        "button": "Clients",
+        "title": "Client tabs",
+        "searchPlaceholder": "Search clients…",
+        "empty": "No active clients with orders yet",
+        "noMatches": "No clients match your search",
+        "orderCount": "{count} order(s)",
+        "printReceipt": "Print receipt",
+        "confirmPrint": "Confirm?",
+        "printed": "Receipt printed for {client} — tab settled",
+        "printError": "Could not print the receipt",
+        "loadError": "Could not load clients",
+        "hint": "Printing the receipt settles the client's tab and removes them from the register."
+      }
     },
     "helpers": {
       "title": "Active Helpers",

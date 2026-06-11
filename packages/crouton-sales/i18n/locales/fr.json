@@ -386,7 +386,21 @@
       "currency": "Devise",
       "currencyEur": "Euro (€)",
       "currencyUsd": "Dollar ($)",
-      "showInactive": "Produits inactifs"
+      "showInactive": "Produits inactifs",
+      "clientsPanel": {
+        "button": "Clients",
+        "title": "Additions clients",
+        "searchPlaceholder": "Rechercher des clients…",
+        "empty": "Aucun client actif avec des commandes",
+        "noMatches": "Aucun client trouvé",
+        "orderCount": "{count} commande(s)",
+        "printReceipt": "Imprimer l'addition",
+        "confirmPrint": "Confirmer ?",
+        "printed": "Addition imprimée pour {client} — compte clôturé",
+        "printError": "Impossible d'imprimer l'addition",
+        "loadError": "Impossible de charger les clients",
+        "hint": "L'impression clôture le compte du client et le retire de la caisse."
+      }
     },
     "helpers": {
       "title": "Bénévoles actifs",

@@ -387,7 +387,21 @@
       "currency": "Valuta",
       "currencyEur": "Euro (€)",
       "currencyUsd": "Dollar ($)",
-      "showInactive": "Inactieve producten"
+      "showInactive": "Inactieve producten",
+      "clientsPanel": {
+        "button": "Klanten",
+        "title": "Klantenrekeningen",
+        "searchPlaceholder": "Zoek klanten…",
+        "empty": "Nog geen actieve klanten met bestellingen",
+        "noMatches": "Geen klanten gevonden",
+        "orderCount": "{count} bestelling(en)",
+        "printReceipt": "Print rekening",
+        "confirmPrint": "Bevestig?",
+        "printed": "Rekening afgedrukt voor {client} — afgesloten",
+        "printError": "Kon de rekening niet afdrukken",
+        "loadError": "Kon klanten niet laden",
+        "hint": "Na het afdrukken is de rekening afgesloten en verdwijnt de klant uit de kassa."
+      }
     },
     "helpers": {
       "title": "Actieve helpers",

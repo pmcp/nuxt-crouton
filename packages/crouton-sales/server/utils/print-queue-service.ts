@@ -269,14 +269,14 @@ export function generatePrintJobsForOrder(
   }
 
   // Create receipt job (all items combined)
-  if (receiptPrinters.length > 0) {
+  // Use the first receipt printer (could be enhanced to support multiple)
+  const receiptPrinter = receiptPrinters[0]
+  if (receiptPrinter) {
     const allItems: OrderItemForPrint[] = []
     for (const [, locationData] of itemsByLocation) {
       allItems.push(...locationData.items)
     }
 
-    // Use the first receipt printer (could be enhanced to support multiple)
-    const receiptPrinter = receiptPrinters[0]
     jobs.push(generateReceiptData(options, allItems, receiptPrinter, receiptSettings))
   }
 

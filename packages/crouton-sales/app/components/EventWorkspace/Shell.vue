@@ -112,6 +112,10 @@ const ordersOpen = ref(false)
 // selects live in OrdersTab — state is lifted here, count feeds the chip.
 const ordersFiltersOpen = ref(false)
 const ordersFilterCount = ref(0)
+
+// Clients panel ("show clients" → settle a tab). Only meaningful in
+// recurring-clients mode; the button hides otherwise.
+const clientsOpen = ref(false)
 </script>
 
 <template>
@@ -160,6 +164,16 @@ const ordersFilterCount = ref(0)
         </p>
       </div>
       <div v-if="showHeaderActions" class="flex gap-2">
+        <UButton
+          v-if="event.requiresClient"
+          icon="i-lucide-users"
+          size="sm"
+          color="neutral"
+          variant="outline"
+          @click="clientsOpen = true"
+        >
+          {{ t('sales.workspace.clientsPanel.button') }}
+        </UButton>
         <UButton
           icon="i-lucide-pencil"
           size="sm"
@@ -217,6 +231,17 @@ const ordersFilterCount = ref(0)
                 {{ t('sales.orders.title') }}
               </span>
               <div class="flex items-center gap-1">
+                <UButton
+                  v-if="event.requiresClient"
+                  icon="i-lucide-users"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  :aria-label="t('sales.workspace.clientsPanel.title')"
+                  @click="clientsOpen = true"
+                >
+                  {{ t('sales.workspace.clientsPanel.button') }}
+                </UButton>
                 <UChip :show="ordersFilterCount > 0" :text="ordersFilterCount" size="xl" inset>
                   <UButton
                     icon="i-lucide-filter"
@@ -273,5 +298,13 @@ const ordersFilterCount = ref(0)
       </span>
     </button>
     </div>
+
+    <!-- Clients panel slideover (recurring-clients mode): settle a tab by
+         printing the aggregated end-of-tab receipt. -->
+    <SalesEventWorkspaceClientsPanel
+      v-if="event.requiresClient"
+      v-model:open="clientsOpen"
+      :event="event"
+    />
   </div>
 </template>

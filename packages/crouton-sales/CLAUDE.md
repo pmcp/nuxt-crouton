@@ -52,6 +52,16 @@ User MUST use `sales` as layer name in crouton.config.js.
 
 **No `salesHelpers` table.** Helper sessions live in `scopedAccessToken` (owned by `@fyit/crouton-auth`). See "Helper Authentication" below.
 
+**Client tabs**: `salesClients.isActive` (default true) marks an open tab. The end-receipt endpoint
+clears it; inactive clients are excluded from `order-data`'s client list (POS picker) and the
+clients panel. `salesPrintqueues.orderId` is **nullable** — end-of-tab receipts belong to the whole
+tab, not one order (the complete/fail callbacks skip order auto-complete when null).
+
+**Ticket layout**: kitchen tickets print the **client name** as the big centered header (double
+width/height) — the location name is deliberately NOT printed (each kitchen printer sits at its
+location). Customer receipts keep the small `Client:` line; end-of-tab receipts (`ReceiptData.clientTab`)
+reuse the big client header and print `Orders: N` instead of `Order #x`.
+
 ### Admin Pages (shipped by this package)
 
 ```
@@ -88,6 +98,11 @@ switcher (with a "create event" item in its `#content-top`, same pattern as
 - **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
   live as explained rows at the bottom of its Event Details card. The full event form (incl.
   slug) is not reachable from the workspace.
+In recurring-clients mode (`event.requiresClient`) the header and the orders-pane header also
+carry a **Clients button** → `EventWorkspace/ClientsPanel.vue` (auto-import
+`SalesEventWorkspaceClientsPanel`): a slideover listing active clients with an open tab
+(searchable; data from `clients/summary`), each with a two-step **Print receipt** button that
+POSTs `end-receipt` (prints the aggregated tab, deactivates the client, removes the row).
 Per-order print status lives on the order rows as LED dots. Event dates are deliberately not shown
 anywhere in the workspace (irrelevant to the POS flow; columns remain in the DB). Deleting the
 current event navigates back to the events list via a `crouton:mutation` hook (matched on
@@ -248,6 +263,8 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order |
+| `teams/[id]/events/[eventId]/clients/summary` GET | team member | Active clients with an open tab at this event (`{ id, title, orderCount, total }`, non-cancelled orders only). Backs the workspace clients panel |
+| `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |
 
 ### Analytics / Chart Endpoints
 

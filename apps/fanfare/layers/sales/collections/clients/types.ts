@@ -29,6 +29,7 @@ export interface SalesClient {
   owner: string
   title: string
   isReusable?: boolean
+  isActive?: boolean
   createdAt: Date
   updatedAt: Date
   createdBy: string

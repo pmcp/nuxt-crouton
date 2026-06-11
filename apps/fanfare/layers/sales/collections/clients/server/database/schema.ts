@@ -28,6 +28,9 @@ export const salesClients = sqliteTable('sales_clients', {
   owner: text('owner').notNull(),
   title: text('title').notNull(),
   isReusable: integer('isReusable', { mode: 'boolean' }).$default(() => true),
+  // Active = still ordering. Set to false when the end-of-tab receipt is
+  // printed; inactive clients disappear from the POS picker and clients panel.
+  isActive: integer('isActive', { mode: 'boolean' }).notNull().default(true),
 
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date()),

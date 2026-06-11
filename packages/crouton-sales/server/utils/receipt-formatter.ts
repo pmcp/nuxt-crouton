@@ -69,6 +69,12 @@ export interface ReceiptData {
    * Defaults to '€'.
    */
   currencySymbol?: string
+  /**
+   * End-of-tab summary receipt: aggregates a client's whole tab (several
+   * orders) into one settlement ticket. Prints the client name as the big
+   * header and an order count instead of a single order number.
+   */
+  clientTab?: { orderCount: number }
 }
 
 /** Default timezone for rendering receipt timestamps. */
@@ -160,6 +166,8 @@ class EscPosBuilder {
   alignCenter(): this { return this.raw(ESC, 0x61, 0x01) }
   bold(on: boolean): this { return this.raw(ESC, 0x45, on ? 1 : 0) }
   invert(on: boolean): this { return this.raw(GS, 0x42, on ? 1 : 0) }
+  /** GS ! n — double width + height when on, normal size when off. */
+  doubleSize(on: boolean): this { return this.raw(GS, 0x21, on ? 0x11 : 0x00) }
 
   print(text: string): this {
     for (const byte of encodeText(text)) this.bytes.push(byte)
@@ -198,20 +206,31 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     printer.bold(false)
     printer.println(data.eventName)
 
-    // Location header for kitchen tickets
-    if (data.printMode === 'kitchen' && data.locationName) {
+    // Client name header — the runner's call-out, so it prints big. On
+    // kitchen tickets the location name is deliberately not printed: each
+    // kitchen printer sits at its location, so naming it on the ticket is
+    // noise. End-of-tab receipts get the same header (settled per client).
+    if (data.clientName && (data.printMode === 'kitchen' || data.clientTab)) {
       printer.drawLine()
       printer.bold(true)
-      printer.println(data.locationName.toUpperCase())
+      printer.doubleSize(true)
+      printer.println(data.clientName.toUpperCase())
+      printer.doubleSize(false)
       printer.bold(false)
     }
 
     printer.drawLine()
 
-    // Order information
+    // Order information. An end-of-tab receipt covers several orders, so it
+    // shows the count instead of a single order number.
     printer.alignLeft()
     printer.bold(true)
-    printer.println(`Order #${data.orderNumber}`)
+    if (data.clientTab) {
+      printer.println(`Orders: ${data.clientTab.orderCount}`)
+    }
+    else {
+      printer.println(`Order #${data.orderNumber}`)
+    }
     printer.bold(false)
 
     const orderDate = typeof data.createdAt === 'string'
@@ -223,7 +242,9 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.println(`Helper: ${data.helperName}`)
     }
 
-    if (data.clientName) {
+    // On kitchen tickets and end-of-tab receipts the client is already the
+    // big header above
+    if (data.clientName && data.printMode === 'receipt' && !data.clientTab) {
       printer.println(`Client: ${data.clientName}`)
     }
 

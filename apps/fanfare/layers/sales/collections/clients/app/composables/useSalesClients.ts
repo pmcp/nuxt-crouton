@@ -28,7 +28,8 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const salesClientSchema = z.object({
   title: z.string().min(1, 'title is required'),
-  isReusable: z.boolean().optional()
+  isReusable: z.boolean().optional(),
+  isActive: z.boolean().optional()
 })
 
 export const salesClientsColumns = [

@@ -28,7 +28,7 @@ export interface SalesPrintqueue {
   teamId: string
   owner: string
   eventId: string
-  orderId: string
+  orderId: string | null
   printerId: string
   locationId?: string
   status: string
