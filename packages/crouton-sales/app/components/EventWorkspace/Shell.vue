@@ -323,10 +323,11 @@ const ordersFilterCount = ref(0)
     </div>
 
     <!-- Vertical pane tabs: hang just outside the kassa's right edge while
-         their pane is closed (the open pane has its own close button) -->
+         their pane is closed (the open pane has its own close button).
+         top-14 drops them under the POS header line (client-selector row). -->
     <div
       v-if="hasGutter"
-      class="absolute top-2 left-[calc(100%-2.75rem)] -ml-px flex flex-col gap-2"
+      class="absolute top-14 left-[calc(100%-2.75rem)] -ml-px flex flex-col gap-2"
     >
       <button
         v-if="!ordersOpen"

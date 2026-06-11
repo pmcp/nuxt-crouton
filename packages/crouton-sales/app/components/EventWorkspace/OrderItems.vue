@@ -103,7 +103,7 @@ const namedLocationRemarks = computed(() => {
 
 <template>
   <!-- Extra bottom padding sets the expanded ticket apart from the next row -->
-  <div class="bg-elevated/30 px-4 pt-3 pb-6">
+  <div class="bg-elevated/30 px-4 pt-3 pb-10">
     <div v-if="pending" class="py-2 text-sm text-muted">
       {{ t('sales.workspace.loadingOrders') }}
     </div>
