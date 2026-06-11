@@ -103,11 +103,32 @@ const creating = ref(false)
 const createModalOpen = ref(false)
 const newClientName = ref('')
 
-// Track newly created clients (with their IDs)
+// Track newly created clients (with their IDs) — a local bridge until the
+// next order-data refetch returns them from the server.
 const createdClients = ref<SalesClient[]>([])
 
 // Combine existing clients with any newly created items
 const allClients = computed(() => [...props.clients, ...createdClients.value])
+
+// A fresh props.clients comes from a refetched order-data payload: prune the
+// local copies the server now confirms, so later refetches fully control the
+// list — otherwise a client created here would linger after its tab is
+// settled (end-receipt deactivates it and drops it from order-data).
+watch(() => props.clients, (list) => {
+  if (createdClients.value.length === 0) return
+  const serverIds = new Set(list.map(c => c.id))
+  createdClients.value = createdClients.value.filter(c => !serverIds.has(c.id))
+})
+
+// When the selected client disappears (tab settled), clear the selection so
+// checkout can't reference an inactive client.
+watch(allClients, (list) => {
+  if (selectedValue.value && !list.some(c => c.id === selectedValue.value)) {
+    selectedValue.value = ''
+    emit('update:clientId', null)
+    emit('update:clientName', '')
+  }
+})
 
 // Client label helper
 const clientLabelsMap = computed(() => {
@@ -123,6 +144,7 @@ const getClientLabel = (id: string): string => {
 }
 
 const { token } = useHelperAuth()
+const nuxtApp = useNuxtApp()
 
 const openCreateModal = () => {
   newClientName.value = ''
@@ -156,6 +178,18 @@ async function createClient() {
       emit('client-created', client)
       createModalOpen.value = false
       newClientName.value = ''
+      // The create POST bypasses useCollectionMutation — emit the hook so
+      // Pos/Panel.vue refetches order-data, which confirms the new client
+      // server-side (and lets the prune watch above drop the local copy).
+      await nuxtApp.hooks.callHook('crouton:mutation', {
+        operation: 'create',
+        collection: 'salesClients',
+        itemId: client.id,
+        data: client,
+        result: null,
+        correlationId: `pos-client-create-${client.id}`,
+        timestamp: Date.now()
+      })
     }
   }
   catch (error) {
