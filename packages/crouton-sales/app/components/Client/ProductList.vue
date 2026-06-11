@@ -112,24 +112,23 @@
               </UCheckbox>
             </template>
 
-            <!-- Single-select with a required remark: pick one, then confirm below -->
-            <div v-else-if="product.requiresRemark" class="space-y-2">
-              <UButton
-                v-for="option in getOptions(product)"
-                :key="option.id"
-                :label="option.label"
-                block
-                size="md"
-                :color="isOptionSelected(product.id, option.id) ? 'primary' : 'neutral'"
-                :variant="isOptionSelected(product.id, option.id) ? 'solid' : 'ghost'"
-                class="active:scale-[0.98] transition-transform"
-                @click="selectSingle(product.id, option.id)"
-              >
-                <template #trailing>
-                  <span v-if="option.priceModifier > 0" class="text-xs text-muted ms-auto">+{{ format(option.priceModifier) }}</span>
-                </template>
-              </UButton>
-            </div>
+            <!-- Single-select with a required remark: pick one, then confirm
+                 below. Plain radios — a solid selected button read far too
+                 heavy next to the checkboxes and the confirm button. -->
+            <URadioGroup
+              v-else-if="product.requiresRemark"
+              :model-value="selectedSingleOption(product.id)"
+              :items="getOptions(product).map(o => ({ label: o.label, value: o.id, priceModifier: o.priceModifier }))"
+              :ui="{ fieldset: 'gap-y-3', item: 'w-full', label: 'w-full' }"
+              @update:model-value="selectSingle(product.id, $event as string)"
+            >
+              <template #label="{ item }">
+                <span class="flex items-center justify-between w-full">
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.priceModifier > 0" class="text-xs text-muted ml-2">+{{ format(item.priceModifier) }}</span>
+                </span>
+              </template>
+            </URadioGroup>
 
             <!-- Single-select, no remark: each option adds immediately -->
             <div v-else class="space-y-2">
@@ -298,6 +297,11 @@ function toggleOption(productId: string, optionId: string) {
 // Single-select (when a remark is required): pick exactly one option.
 function selectSingle(productId: string, optionId: string) {
   selectedOptionIds.value.set(productId, [optionId])
+}
+
+// The radio group's model: the single selected option id (or undefined).
+function selectedSingleOption(productId: string): string | undefined {
+  return selectedOptionIds.value.get(productId)?.[0]
 }
 
 function remarkFor(productId: string): string {
