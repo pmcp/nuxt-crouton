@@ -164,21 +164,10 @@ async function retryPrintJob(jobId: string) {
   }
 }
 
-// Per-job status meta — same enum as PrintqueuesCard: 0=pending, 1=printing,
-// 2=done, 9=error.
-function jobStatusMeta(status: string | number | undefined) {
-  switch (String(status ?? '0')) {
-    case '1': return { color: 'info' as const, label: t('sales.printQueue.statusPrinting', 'Printing') }
-    case '2': return { color: 'success' as const, label: t('sales.printQueue.statusDone', 'Done') }
-    case '9': return { color: 'error' as const, label: t('sales.printQueue.statusError', 'Error') }
-    default: return { color: 'warning' as const, label: t('sales.printQueue.statusPending', 'Pending') }
-  }
-}
-
-// One LED per order: combined worst status across every printer's jobs.
-// Red wins, then orange (busy), then green; no jobs at all ⇒ grey.
-function orderLed(orderId: string) {
-  const statuses = (jobsByOrder.value.get(orderId) || []).map(j => String(j.status ?? '0'))
+// Combined worst status across a set of jobs (status enum: 0=pending,
+// 1=printing, 2=done, 9=error). Red wins, then orange (busy), then green;
+// no jobs at all ⇒ grey.
+function ledFromStatuses(statuses: string[]) {
   if (!statuses.length) {
     return { class: 'bg-accented', label: t('sales.printQueue.noTicket', 'No ticket') }
   }
@@ -189,6 +178,25 @@ function orderLed(orderId: string) {
     return { class: 'bg-warning animate-pulse', label: t('sales.printQueue.statusPrinting', 'Printing') }
   }
   return { class: 'bg-success', label: t('sales.printQueue.statusDone', 'Done') }
+}
+
+// One LED per order row, across every printer's jobs.
+function orderLed(orderId: string) {
+  return ledFromStatuses((jobsByOrder.value.get(orderId) || []).map(j => String(j.status ?? '0')))
+}
+
+// One LED per printer inside the popover breakdown.
+function printerLed(orderId: string, printerId: string) {
+  return ledFromStatuses(printerJobs(orderId, printerId).map(j => String(j.status ?? '0')))
+}
+
+// Latest job time for a printer's breakdown row.
+function printerTime(orderId: string, printerId: string): string {
+  const jobs = printerJobs(orderId, printerId)
+  if (!jobs.length) return ''
+  const latest = jobs.reduce((a, b) =>
+    new Date(b.completedAt || b.createdAt || 0).getTime() >= new Date(a.completedAt || a.createdAt || 0).getTime() ? b : a)
+  return jobTime(latest)
 }
 
 // Spooler error messages are stored in English; translate the known set.
@@ -446,33 +454,29 @@ function toggleExpand(id: string) {
               <template #content>
                 <div class="p-3 space-y-3 min-w-52 max-w-72">
                   <div v-for="printer in printerList" :key="printer.id" class="space-y-1">
-                    <p class="text-sm font-semibold flex items-center gap-1.5">
-                      <UIcon name="i-lucide-printer" class="shrink-0 text-muted" />
-                      {{ printer.title }}
-                    </p>
+                    <div class="flex items-center justify-between gap-3">
+                      <p class="text-sm font-semibold flex items-center gap-1.5 min-w-0">
+                        <UTooltip :text="printerLed(order.id, printer.id).label">
+                          <span
+                            class="size-2 rounded-full shrink-0 transition-colors"
+                            :class="printerLed(order.id, printer.id).class"
+                          />
+                        </UTooltip>
+                        <UIcon name="i-lucide-printer" class="shrink-0 text-muted" />
+                        <span class="truncate">{{ printer.title }}</span>
+                      </p>
+                      <span v-if="printerTime(order.id, printer.id)" class="text-xs text-dimmed tabular-nums">
+                        {{ printerTime(order.id, printer.id) }}
+                      </span>
+                    </div>
                     <p v-if="!printerJobs(order.id, printer.id).length" class="text-xs text-muted">
                       {{ t('sales.printQueue.noTicketForPrinter') }}
                     </p>
-                    <div
-                      v-for="job in printerJobs(order.id, printer.id)"
-                      v-else
-                      :key="job.id"
-                      class="space-y-1"
-                    >
-                      <div class="flex items-center justify-between gap-3">
-                        <UBadge
-                          :color="jobStatusMeta(job.status).color"
-                          variant="subtle"
-                          size="sm"
-                        >
-                          {{ jobStatusMeta(job.status).label }}
-                        </UBadge>
-                        <span v-if="jobTime(job)" class="text-xs text-dimmed tabular-nums">{{ jobTime(job) }}</span>
-                      </div>
+                    <template v-for="job in printerJobs(order.id, printer.id)" :key="job.id">
                       <p v-if="String(job.status ?? '') === '9' && job.errorMessage" class="text-xs text-error">
                         {{ jobError(job) }}
                       </p>
-                    </div>
+                    </template>
                   </div>
                 </div>
               </template>
