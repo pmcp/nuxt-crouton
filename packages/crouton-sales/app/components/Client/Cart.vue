@@ -1,5 +1,5 @@
 <template>
-  <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto', footer: 'space-y-4' }">
+  <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto px-3 sm:px-3', footer: 'space-y-4 px-3 sm:px-3' }">
     <!-- Cart items -->
     <div v-if="items.length === 0" class="h-full flex flex-col items-center justify-center gap-3 text-muted">
       <UIcon name="i-lucide-shopping-cart" class="size-10 opacity-40" />
@@ -70,12 +70,14 @@
           :trailing-icon="remarksOpen ? 'i-lucide-minus' : 'i-lucide-plus'"
           :label="remarkCount > 0 ? `${t('sales.cart.remark')} (${remarkCount})` : t('sales.cart.remark')"
           block
+          class="py-3"
+          :class="remarksOpen ? 'rounded-b-none border-b border-default' : ''"
           :ui="{ trailingIcon: 'ms-auto' }"
         />
 
         <template #content>
           <div class="px-2 pb-1">
-            <UAccordion type="multiple" :items="remarkAccordionItems">
+            <UAccordion type="multiple" :items="remarkAccordionItems" :ui="{ trigger: 'text-toned font-normal' }">
               <template #default="{ item }">
                 <span class="flex items-center gap-2 text-sm">
                   {{ item.label }}
@@ -91,6 +93,7 @@
                   :placeholder="t('sales.cart.remarkPlaceholder')"
                   :rows="2"
                   autoresize
+                  variant="soft"
                   class="w-full"
                   @update:model-value="emitLocationRemark(item.value, String($event))"
                 />
