@@ -100,6 +100,17 @@ function statusColor(status: string) {
   }
 }
 
+function statusLabel(status: string) {
+  switch (status) {
+    case 'pending': return t('sales.orders.pending', 'Pending')
+    case 'processing': return t('sales.orders.processing', 'Processing')
+    case 'completed': return t('sales.orders.completed', 'Completed')
+    case 'cancelled': return t('sales.orders.cancelled', 'Cancelled')
+    case 'print_failed': return t('sales.orders.printFailed', 'Print failed')
+    default: return status
+  }
+}
+
 function openEditOrder(id: string) {
   open('update', 'salesOrders', [id], 'slideover')
 }
@@ -174,7 +185,7 @@ function openEditOrder(id: string) {
             </p>
           </div>
           <UBadge :color="statusColor(order.status)" variant="subtle" size="sm" class="shrink-0">
-            {{ order.status }}
+            {{ statusLabel(order.status) }}
           </UBadge>
           <UButton
             icon="i-lucide-pencil"

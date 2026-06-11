@@ -31,7 +31,7 @@
       </template>
 
       <template #status-cell="{ row }">
-        <UBadge :color="getStatusColor(row.original.status)" :label="row.original.status" size="md" />
+        <UBadge :color="getStatusColor(row.original.status)" :label="getStatusLabel(row.original.status)" size="md" />
       </template>
 
       <template #createdAt-cell="{ row }">
@@ -162,6 +162,17 @@ function getStatusColor(status: string) {
     case 'cancelled': return 'error'
     case 'print_failed': return 'error'
     default: return 'neutral'
+  }
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'pending': return t('sales.orders.pending', 'Pending')
+    case 'processing': return t('sales.orders.processing', 'Processing')
+    case 'completed': return t('sales.orders.completed', 'Completed')
+    case 'cancelled': return t('sales.orders.cancelled', 'Cancelled')
+    case 'print_failed': return t('sales.orders.printFailed', 'Print failed')
+    default: return status
   }
 }
 
