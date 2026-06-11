@@ -543,6 +543,59 @@ const visibilityDropdownItems = computed(() => [
   }))
 ])
 
+// Access code for scoped visibility — manages the ('page', pageId) grant via
+// the access-code endpoint. The code is hashed server-side, so we only ever
+// know whether one exists.
+const { getTeamId: getTeamIdForAccessCode } = useTeamContext()
+const hasAccessCode = ref(false)
+const accessCodePending = ref(false)
+
+const accessCodeUrl = () =>
+  `/api/teams/${getTeamIdForAccessCode()}/pages/${state.value.id}/access-code`
+
+watch(
+  () => [state.value.visibility, state.value.id] as const,
+  async ([visibility, id]) => {
+    if (visibility !== 'scoped' || !id) {
+      hasAccessCode.value = false
+      return
+    }
+    try {
+      const { exists } = await $fetch<{ exists: boolean }>(accessCodeUrl())
+      hasAccessCode.value = exists
+    } catch {
+      hasAccessCode.value = false
+    }
+  },
+  { immediate: true }
+)
+
+async function saveAccessCode(code: string) {
+  if (!state.value.id) return
+  accessCodePending.value = true
+  try {
+    await $fetch(accessCodeUrl(), { method: 'PUT', body: { code } })
+    hasAccessCode.value = true
+  } catch (err) {
+    console.error('Failed to save access code:', err)
+  } finally {
+    accessCodePending.value = false
+  }
+}
+
+async function removeAccessCode() {
+  if (!state.value.id) return
+  accessCodePending.value = true
+  try {
+    await $fetch(accessCodeUrl(), { method: 'DELETE' })
+    hasAccessCode.value = false
+  } catch (err) {
+    console.error('Failed to remove access code:', err)
+  } finally {
+    accessCodePending.value = false
+  }
+}
+
 // Layout options
 const layoutOptions = [
   { value: 'default', label: t('pages.layout.default') },
@@ -897,6 +950,8 @@ defineExpose({ state })
         :show-close="showClose"
         :page-id="state.id"
         :public-url="publicUrl"
+        :has-access-code="hasAccessCode"
+        :access-code-pending="accessCodePending"
         @update:status="state.status = $event"
         @update:visibility="state.visibility = $event"
         @update:show-in-navigation="state.showInNavigation = $event"
@@ -908,6 +963,8 @@ defineExpose({ state })
         @cancel="emit('cancel')"
         @delete="handleDelete"
         @close="emit('close')"
+        @save-access-code="saveAccessCode"
+        @remove-access-code="removeAccessCode"
       />
 
       <!-- Collection item picker — shown above the i18n input so it is always visible -->

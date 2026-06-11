@@ -132,8 +132,16 @@ if (error.value?.statusCode === 404) {
   showError({ statusCode: 404, statusMessage: 'Page Not Found' })
 }
 
-// Handle 401 - redirect to login for members-only pages
-if (error.value?.statusCode === 401) {
+// Scoped (access-code) pages announce their required scope in the 401 payload —
+// render the PIN gate inline instead of bouncing to the member login.
+const scopedGate = computed<{ teamId: string, scope: { resourceType?: string, resourceId?: string } } | null>(() => {
+  if (error.value?.statusCode !== 401) return null
+  const payload: any = (error.value as any)?.data?.data ?? (error.value as any)?.data
+  return payload?.reason === 'scoped' ? payload : null
+})
+
+// Handle 401 - redirect to login for members/admin-only pages
+if (error.value?.statusCode === 401 && !scopedGate.value) {
   navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 }
 
@@ -286,6 +294,14 @@ useHead({
     <template v-else-if="page">
       <CroutonPagesRenderer :page="previewPage" />
     </template>
+
+    <!-- Scoped page without a token: inline access-code gate -->
+    <CroutonPagesScopedAccessGate
+      v-else-if="scopedGate"
+      :team-id="scopedGate.teamId"
+      :scope="scopedGate.scope"
+      @unlocked="refresh()"
+    />
 
     <!-- Error / Not found -->
     <template v-else>

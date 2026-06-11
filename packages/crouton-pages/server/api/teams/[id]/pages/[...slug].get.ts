@@ -221,19 +221,19 @@ export default defineEventHandler(async (event) => {
         // compared as plain strings, pages never learns what the resource is.
         let allowed = false
 
+        let requiredScope: { resourceType?: string, resourceId?: string } | null = null
+        try {
+          const config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
+          requiredScope = config?.requiredScope || null
+        } catch {
+          // Malformed config — treat as no scope restriction
+        }
+
         try {
           const { validateScopedTokenFromEvent } = await import('@fyit/crouton-auth/server/utils/scoped-access')
           const access = await validateScopedTokenFromEvent(event)
 
           if (access && access.organizationId === team.id) {
-            let requiredScope: { resourceType?: string, resourceId?: string } | null = null
-            try {
-              const config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
-              requiredScope = config?.requiredScope || null
-            } catch {
-              // Malformed config — treat as no scope restriction
-            }
-
             allowed = !requiredScope
               || ((!requiredScope.resourceType || access.resourceType === requiredScope.resourceType)
                 && (!requiredScope.resourceId || access.resourceId === requiredScope.resourceId))
@@ -263,9 +263,18 @@ export default defineEventHandler(async (event) => {
         }
 
         if (!allowed) {
+          // The data payload lets the client render a PIN gate instead of the
+          // member login: it says which resource a credential must be redeemed
+          // against — the page's requiredScope, or the page itself (so a grant
+          // on ('page', pageId) makes the page self-service PIN-protectable).
           throw createError({
             status: 401,
-            statusText: 'Access token required'
+            statusText: 'Access token required',
+            data: {
+              reason: 'scoped',
+              teamId: team.id,
+              scope: requiredScope ?? { resourceType: 'page', resourceId: page.id }
+            }
           })
         }
 

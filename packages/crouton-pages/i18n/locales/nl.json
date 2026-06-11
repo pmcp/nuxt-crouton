@@ -153,7 +153,13 @@
         "groupByHelp": "Groepeer items op een referentieveld (bijv. categorie). Items worden gegroepeerd op de titel van het gerefereerde record.",
         "groupByPlaceholder": "bijv. categorie",
         "selectCollection": "Selecteer een collectie..."
-      }
+      },
+      "accessCode": "Toegangscode",
+      "accessCodeSet": "Er is een code ingesteld — een nieuwe code vervangt de oude",
+      "accessCodeUnset": "Nog geen code ingesteld — bezoekers kunnen deze pagina niet openen",
+      "accessCodePlaceholder": "bv. 1234",
+      "accessCodeSave": "Instellen",
+      "accessCodeRemove": "Code verwijderen"
     },
     "sidebar": {
       "drafts": "Concepten",
@@ -909,6 +915,17 @@
           }
         }
       }
+    },
+    "scopedGate": {
+      "title": "Toegangscode vereist",
+      "description": "Deze pagina is alleen beschikbaar met een toegangscode.",
+      "namePlaceholder": "Je naam (optioneel)",
+      "pinPlaceholder": "Toegangscode",
+      "submit": "Ontgrendelen",
+      "invalid": "Ongeldige toegangscode",
+      "locked": "Te veel pogingen — probeer het later opnieuw",
+      "exhausted": "Deze toegangscode is niet meer beschikbaar",
+      "guestName": "Gast"
     }
   },
   "common": {

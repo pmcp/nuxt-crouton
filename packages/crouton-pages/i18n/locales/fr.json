@@ -139,7 +139,13 @@
         "groupByHelp": "Grouper les éléments par un champ de référence (ex. catégorie). Les éléments sont groupés par le titre de l'enregistrement référencé.",
         "groupByPlaceholder": "ex. catégorie",
         "selectCollection": "Sélectionner une collection..."
-      }
+      },
+      "accessCode": "Code d'accès",
+      "accessCodeSet": "Un code est défini — un nouveau code remplace l'ancien",
+      "accessCodeUnset": "Pas encore de code — les visiteurs ne peuvent pas ouvrir cette page",
+      "accessCodePlaceholder": "p.ex. 1234",
+      "accessCodeSave": "Définir",
+      "accessCodeRemove": "Supprimer le code"
     },
     "sidebar": {
       "drafts": "Brouillons",
@@ -895,6 +901,17 @@
           }
         }
       }
+    },
+    "scopedGate": {
+      "title": "Code d'accès requis",
+      "description": "Cette page n'est disponible qu'avec un code d'accès.",
+      "namePlaceholder": "Votre nom (optionnel)",
+      "pinPlaceholder": "Code d'accès",
+      "submit": "Déverrouiller",
+      "invalid": "Code d'accès invalide",
+      "locked": "Trop de tentatives — réessayez plus tard",
+      "exhausted": "Ce code d'accès n'est plus disponible",
+      "guestName": "Invité"
     }
   },
   "common": {

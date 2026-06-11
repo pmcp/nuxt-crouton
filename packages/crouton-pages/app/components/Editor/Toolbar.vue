@@ -112,6 +112,10 @@ interface Props {
   pageId?: string | null
   /** Public URL for the open-in-public button */
   publicUrl?: string | null
+  /** Whether the page currently has an access code grant (scoped visibility) */
+  hasAccessCode?: boolean
+  /** Whether an access-code save/remove is in flight */
+  accessCodePending?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -134,9 +138,23 @@ const emit = defineEmits<{
   'cancel': []
   'delete': []
   'close': []
+  'save-access-code': [code: string]
+  'remove-access-code': []
 }>()
 
 const { t } = useT()
+
+// Local input for the scoped-visibility access code — the stored code is
+// hashed server-side and never round-trips; hasAccessCode only reports
+// existence, so the field always starts empty.
+const accessCodeInput = ref('')
+
+function saveAccessCode() {
+  const code = accessCodeInput.value.trim()
+  if (!code) return
+  emit('save-access-code', code)
+  accessCodeInput.value = ''
+}
 </script>
 
 <template>
@@ -312,6 +330,47 @@ const { t } = useT()
                   class="w-full"
                   @update:model-value="(val: string | null) => emit('update:parentId', val)"
                 />
+              </UFormField>
+
+              <!-- Access code — only for scoped visibility on a saved page -->
+              <UFormField
+                v-if="visibility === 'scoped' && pageId"
+                :label="t('pages.editor.accessCode')"
+                name="accessCode"
+                :description="hasAccessCode ? t('pages.editor.accessCodeSet') : t('pages.editor.accessCodeUnset')"
+              >
+                <div class="flex gap-2">
+                  <UInput
+                    v-model="accessCodeInput"
+                    :placeholder="hasAccessCode ? '••••••' : t('pages.editor.accessCodePlaceholder')"
+                    icon="i-lucide-key-round"
+                    size="sm"
+                    class="flex-1"
+                    autocomplete="off"
+                    @keydown.enter.prevent="saveAccessCode"
+                  />
+                  <UButton
+                    size="sm"
+                    color="primary"
+                    variant="soft"
+                    :loading="accessCodePending"
+                    :disabled="!accessCodeInput.trim()"
+                    @click="saveAccessCode"
+                  >
+                    {{ t('pages.editor.accessCodeSave') }}
+                  </UButton>
+                </div>
+                <UButton
+                  v-if="hasAccessCode"
+                  size="xs"
+                  color="error"
+                  variant="link"
+                  class="mt-1 px-0"
+                  :loading="accessCodePending"
+                  @click="emit('remove-access-code')"
+                >
+                  {{ t('pages.editor.accessCodeRemove') }}
+                </UButton>
               </UFormField>
             </div>
           </template>

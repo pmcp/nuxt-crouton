@@ -153,7 +153,13 @@
         "groupByHelp": "Group items by a reference field (e.g. category). Items are grouped by the referenced record's title.",
         "groupByPlaceholder": "e.g. category",
         "selectCollection": "Select a collection..."
-      }
+      },
+      "accessCode": "Access code",
+      "accessCodeSet": "A code is set — entering a new one replaces it",
+      "accessCodeUnset": "No code set yet — visitors can't unlock this page",
+      "accessCodePlaceholder": "e.g. 1234",
+      "accessCodeSave": "Set",
+      "accessCodeRemove": "Remove code"
     },
     "sidebar": {
       "drafts": "Drafts",
@@ -909,6 +915,17 @@
           }
         }
       }
+    },
+    "scopedGate": {
+      "title": "Access code required",
+      "description": "This page is only available with an access code.",
+      "namePlaceholder": "Your name (optional)",
+      "pinPlaceholder": "Access code",
+      "submit": "Unlock",
+      "invalid": "Invalid access code",
+      "locked": "Too many attempts — try again later",
+      "exhausted": "This access code is no longer available",
+      "guestName": "Guest"
     }
   },
   "common": {
