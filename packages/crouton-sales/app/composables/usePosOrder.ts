@@ -116,6 +116,14 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
     enablePrinting = false
   } = options
 
+  // Always send the helper token explicitly: the scoped-access-token cookie
+  // is shared with other scoped flows (e.g. a page-gate token, which is
+  // httpOnly and can't be overwritten client-side) and may carry a token for
+  // a different resource — the x-scoped-token header wins server-side.
+  const { token: helperToken } = useHelperAuth()
+  const helperHeaders = (): Record<string, string> =>
+    helperToken.value ? { 'x-scoped-token': helperToken.value } : {}
+
   const cartItems = ref<CartItem[]>([])
   const selectedEventId = ref<string | null>(null)
   const selectedClientId = ref<string | null>(null)
@@ -280,6 +288,7 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
         `${apiBasePath}/${selectedEventId.value}/orders`,
         {
           method: 'POST',
+          headers: helperHeaders(),
           body: {
             items,
             total: cartTotal.value,
@@ -299,7 +308,7 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
         try {
           await $fetch(
             `${apiBasePath}/${selectedEventId.value}/orders/${response.order.id}/print`,
-            { method: 'POST' }
+            { method: 'POST', headers: helperHeaders() }
           )
         }
         catch (printError) {
