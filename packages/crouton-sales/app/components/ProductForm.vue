@@ -41,7 +41,7 @@
               />
             </UFormField>
 
-            <UFormField :label="t('sales.form.productName')" name="title">
+            <UFormField :label="t('sales.form.productName')" name="title" required>
               <UInput v-model="state.title" class="w-full" size="xl" />
             </UFormField>
 
@@ -50,7 +50,7 @@
             </UFormField>
 
             <div class="grid grid-cols-2 gap-4">
-              <UFormField :label="t('sales.form.category')" name="categoryId">
+              <UFormField :label="t('sales.form.category')" name="categoryId" required>
                 <CroutonFormReferenceSelect
                   v-model="state.categoryId"
                   collection="salesCategories"
@@ -59,7 +59,7 @@
                   show-edit
                 />
               </UFormField>
-              <UFormField :label="t('sales.form.prepLocation')" name="locationId">
+              <UFormField :label="t('sales.form.prepLocation')" name="locationId" required>
                 <CroutonFormReferenceSelect
                   v-model="state.locationId"
                   collection="salesLocations"

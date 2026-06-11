@@ -6,8 +6,11 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  categoryId: z.string().optional(),
-  locationId: z.string().optional(),
+  // partial() makes these optional for patches, but a present categoryId or
+  // locationId must be non-empty — a product must always keep a category and
+  // prep location.
+  categoryId: z.string().min(1, 'categoryId is required'),
+  locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   description: z.string().optional(),
   price: z.number(),
