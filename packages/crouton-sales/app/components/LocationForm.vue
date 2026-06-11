@@ -38,23 +38,21 @@
       </template>
 
       <template #footer>
-        <div class="space-y-2">
+        <!-- Delete pill left, save stretches over the rest (items-stretch keeps
+             the pill the same height as the save button). -->
+        <div class="flex items-stretch gap-2">
+          <CroutonDeleteButton
+            v-if="action === 'update' && state.id"
+            expanded
+            :loading="deleting"
+            @confirm="handleDelete"
+          />
           <CroutonFormActionButton
+            class="flex-1"
             :action="action"
             :collection="collection"
             :items="items"
             :loading="loading"
-          />
-          <!-- Two-step delete: first click arms, second click deletes. -->
-          <UButton
-            v-if="action === 'update' && state.id"
-            block
-            icon="i-lucide-trash-2"
-            color="error"
-            :variant="confirmingDelete ? 'solid' : 'ghost'"
-            :label="confirmingDelete ? t('sales.common.confirmDelete') : t('common.delete')"
-            :loading="deleting"
-            @click="handleDelete"
           />
         </div>
       </template>
@@ -107,16 +105,11 @@ const handleSubmit = async () => {
   }
 }
 
-// Delete from the update form: two-step (arm → confirm) instead of a nested
-// delete overlay, which would leave this slideover open on a deleted record.
-const confirmingDelete = ref(false)
+// Delete stays in-form (a nested overlay would leave this slideover open on a
+// deleted record); the arm→confirm step lives in CroutonDeleteButton.
 const deleting = ref(false)
 
 const handleDelete = async () => {
-  if (!confirmingDelete.value) {
-    confirmingDelete.value = true
-    return
-  }
   if (!state.value.id) return
   deleting.value = true
   try {

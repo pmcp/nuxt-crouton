@@ -96,7 +96,8 @@
   },
   "deleteConfirm": {
     "title": "Delete {count} {name}?",
-    "cannotBeUndone": "This action cannot be undone."
+    "cannotBeUndone": "This action cannot be undone.",
+    "sure": "sure?"
   },
   "kanban": {
     "groupBy": "Group by:",

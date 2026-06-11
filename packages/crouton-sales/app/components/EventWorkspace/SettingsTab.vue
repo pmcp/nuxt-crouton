@@ -9,7 +9,6 @@ const props = defineProps<{
 }>()
 
 const { t } = useT()
-const { open } = useCrouton()
 const route = useRoute()
 const teamParam = computed(() => route.params.team as string)
 
@@ -225,10 +224,18 @@ async function duplicateEvent() {
   }
 }
 
-// Delete opens the standard confirm; the Shell's crouton:mutation hook
-// navigates back to the events list once the delete lands.
-function deleteEvent() {
-  open('delete', 'salesEvents', [props.event.id])
+// The pill's arm→confirm replaces the delete overlay; the Shell's
+// crouton:mutation hook navigates back to the events list once the delete lands.
+const deletingEvent = ref(false)
+async function deleteEvent() {
+  deletingEvent.value = true
+  try {
+    const { deleteItems } = useCollectionMutation('salesEvents')
+    await deleteItems([props.event.id])
+  }
+  finally {
+    deletingEvent.value = false
+  }
 }
 
 // Active helpers card (scoped tokens, not a collection)
@@ -327,16 +334,12 @@ function helperExpiry(value: string): string {
               <p class="text-sm font-medium leading-5">{{ t('sales.workspace.deleteEvent') }}</p>
               <p class="text-sm text-muted">{{ t('sales.workspace.deleteEventDesc') }}</p>
             </div>
-            <UButton
-              size="xs"
-              variant="outline"
-              color="error"
-              icon="i-lucide-trash-2"
+            <CroutonDeleteButton
+              expanded
               class="shrink-0 mt-0.5"
-              @click="deleteEvent"
-            >
-              {{ t('common.delete') }}
-            </UButton>
+              :loading="deletingEvent"
+              @confirm="deleteEvent"
+            />
           </div>
         </div>
       </UCard>

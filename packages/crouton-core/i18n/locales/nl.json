@@ -96,7 +96,8 @@
   },
   "deleteConfirm": {
     "title": "{count} {name} verwijderen?",
-    "cannotBeUndone": "Deze actie kan niet ongedaan worden gemaakt."
+    "cannotBeUndone": "Deze actie kan niet ongedaan worden gemaakt.",
+    "sure": "zeker?"
   },
   "kanban": {
     "groupBy": "Groeperen op:",

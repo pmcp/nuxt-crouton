@@ -96,7 +96,8 @@
   },
   "deleteConfirm": {
     "title": "Supprimer {count} {name} ?",
-    "cannotBeUndone": "Cette action est irréversible."
+    "cannotBeUndone": "Cette action est irréversible.",
+    "sure": "sûr ?"
   },
   "kanban": {
     "groupBy": "Grouper par :",
