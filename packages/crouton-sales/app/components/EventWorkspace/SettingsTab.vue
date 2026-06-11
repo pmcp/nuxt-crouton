@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
-const props = defineProps<{ event: SalesEvent }>()
+const props = defineProps<{
+  event: SalesEvent
+  /** Hide the internal save row — the host renders its own Save button
+   *  driven by the exposed { save, dirty, saving } (Shell's header row). */
+  hideSaveBar?: boolean
+}>()
 
 const { t } = useT()
 const { open } = useCrouton()
@@ -193,6 +198,9 @@ async function saveSettings() {
   }
 }
 
+// Let the Shell host the Save button in its header row (hideSaveBar).
+defineExpose({ save: saveSettings, dirty, saving })
+
 // Event-level actions (moved out of the workspace header to declutter it).
 // Same useCollectionQuery cache as the Shell, so refresh() updates its list
 // before navigating to the duplicated event's slug.
@@ -236,12 +244,22 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
   () => `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/active-helpers`,
   { default: () => [] }
 )
+
+// 24h clock, day/month only when the token outlives today — matches jobTime().
+function helperExpiry(value: string): string {
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  return d.toDateString() === new Date().toDateString()
+    ? time
+    : `${d.toLocaleDateString([], { day: 'numeric', month: 'numeric' })} ${time}`
+}
 </script>
 
 <template>
   <div class="space-y-4">
     <!-- One Save for the whole panel: event fields + receipt text. -->
-    <div class="flex items-center justify-end gap-3">
+    <div v-if="!hideSaveBar" class="flex items-center justify-end gap-3">
       <span v-if="dirty" class="text-sm text-muted">{{ t('sales.workspace.unsavedChanges') }}</span>
       <UButton
         :loading="saving"
@@ -411,21 +429,21 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         <div v-if="activeHelpersPending" class="p-4 text-center text-muted text-sm">
           {{ t('sales.common.loading') }}
         </div>
-        <div v-else-if="activeHelpers && activeHelpers.length > 0" class="divide-y divide-default">
-          <div
+        <ul v-else-if="activeHelpers && activeHelpers.length > 0" class="flex flex-col gap-1">
+          <li
             v-for="h in activeHelpers"
             :key="h.id"
-            class="flex items-center justify-between p-3"
+            class="flex items-center gap-2.5 rounded-lg bg-elevated/40 px-3 py-2"
           >
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-user" class="text-muted" />
-              <span class="font-medium">{{ h.displayName }}</span>
+            <UIcon name="i-lucide-user" class="size-4 shrink-0 text-muted" />
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">{{ h.displayName }}</p>
+              <p class="text-xs text-muted">
+                {{ t('sales.workspace.expires') }} {{ helperExpiry(h.expiresAt) }}
+              </p>
             </div>
-            <span class="text-xs text-muted">
-              {{ t('sales.workspace.expires') }} {{ new Date(h.expiresAt).toLocaleString() }}
-            </span>
-          </div>
-        </div>
+          </li>
+        </ul>
         <div v-else class="p-4 text-center text-muted text-sm">
           {{ t('sales.workspace.noHelpers') }}
         </div>

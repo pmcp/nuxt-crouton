@@ -6,7 +6,7 @@
  * (event switcher + actions) above the POS, which is the main surface. No
  * tabs — the two former tabs became header-driven panels:
  *
- *  - "Bewerken" expands the settings (SettingsTab) inline under the header
+ *  - "Instellingen" expands the settings (SettingsTab) inline under the header
  *  - "Bestellingen" toggles the orders list (OrdersTab) as a pane beside
  *    the POS's products/cart columns
  *  - "Klanten" (recurring-clients mode only) toggles the client end-receipts
@@ -111,6 +111,10 @@ onUnmounted(unhookMutation)
 // block (showHeaderActions=false) never exposes the toggles.
 const settingsOpen = ref(false)
 
+// SettingsTab's exposed save state — the Save button lives in our header row
+// (exposed refs are unwrapped on the component instance).
+const settingsTab = ref<{ save: () => Promise<void>, dirty: boolean, saving: boolean } | null>(null)
+
 // Side panes beside the POS: orders, and clients (end-of-tab receipts —
 // recurring-clients mode only). Independent toggles — both can be open at
 // once; each closed pane keeps a vertical tab hanging in the right gutter.
@@ -144,70 +148,87 @@ const ordersFilterCount = ref(0)
   </div>
 
   <div v-else class="space-y-4">
-    <!-- Header. Same right gutter as the kassa when the orders tab hangs
-         there, so Bewerken aligns with the kassa edge, not the gutter. -->
-    <div v-if="showHeader" class="flex items-start justify-between" :class="hasGutter ? 'pe-11' : ''">
-      <div class="space-y-1">
-        <USelectMenu
-          v-if="showSwitcher"
-          :model-value="event.id"
-          :items="eventOptions"
-          value-key="id"
-          :placeholder="t('sales.events.selectEvent')"
-          icon="i-lucide-ticket"
-          size="lg"
-          class="w-72"
-          :ui="{ base: 'font-semibold text-lg' }"
-          @update:model-value="switchEvent"
-        >
-          <!-- Create-from-dropdown, same pattern as CroutonFormReferenceSelect -->
-          <template #content-top>
-            <div class="p-1">
-              <UButton
-                color="neutral"
-                icon="i-lucide-plus"
-                variant="soft"
-                block
-                @click="openCreateEvent"
-              >
-                {{ t('reference.createNew', { label: t('sales.events.title') }) }}
-              </UButton>
+    <!-- Header + settings: one bordered container. The header row (event
+         switcher, settings toggle right beside it, Save on the right while
+         open) stays visible; the settings slide open underneath, inside the
+         same panel. Same right gutter as the kassa when a vertical tab hangs
+         there, so the container aligns with the kassa edge, not the gutter. -->
+    <div v-if="showHeader" :class="hasGutter ? 'pe-11' : ''">
+      <div class="border border-default rounded-xl bg-elevated/20">
+        <div class="flex items-center gap-2 p-3 sm:p-4">
+          <USelectMenu
+            v-if="showSwitcher"
+            :model-value="event.id"
+            :items="eventOptions"
+            value-key="id"
+            :placeholder="t('sales.events.selectEvent')"
+            icon="i-lucide-ticket"
+            size="sm"
+            class="w-56"
+            :ui="{ base: 'font-semibold' }"
+            @update:model-value="switchEvent"
+          >
+            <!-- Create-from-dropdown, same pattern as CroutonFormReferenceSelect -->
+            <template #content-top>
+              <div class="p-1">
+                <UButton
+                  color="neutral"
+                  icon="i-lucide-plus"
+                  variant="soft"
+                  block
+                  @click="openCreateEvent"
+                >
+                  {{ t('reference.createNew', { label: t('sales.events.title') }) }}
+                </UButton>
+              </div>
+            </template>
+          </USelectMenu>
+          <h2 v-else class="font-semibold text-lg">{{ event.title }}</h2>
+          <UButton
+            v-if="showHeaderActions"
+            icon="i-lucide-settings"
+            size="sm"
+            color="neutral"
+            :variant="settingsOpen ? 'solid' : 'outline'"
+            @click="settingsOpen = !settingsOpen"
+          >
+            {{ t('sales.events.settings') }}
+          </UButton>
+          <p v-if="event.eventType" class="text-muted text-sm ms-2">
+            {{ event.eventType }}
+          </p>
+          <!-- Panel-wide Save, hosted here so it shares the header line.
+               Drives SettingsTab's exposed { save, dirty, saving }. -->
+          <div v-if="settingsOpen" class="ms-auto flex items-center gap-3">
+            <span v-if="settingsTab?.dirty" class="text-sm text-muted hidden sm:inline">
+              {{ t('sales.workspace.unsavedChanges') }}
+            </span>
+            <UButton
+              size="sm"
+              :loading="settingsTab?.saving"
+              :disabled="!settingsTab?.dirty"
+              @click="settingsTab?.save()"
+            >
+              {{ t('sales.common.save') }}
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Own Suspense — SettingsTab is an async-setup component. -->
+        <UCollapsible :open="settingsOpen">
+          <template #content>
+            <div class="p-4 sm:p-6 pt-1">
+              <Suspense>
+                <SalesEventWorkspaceSettingsTab ref="settingsTab" :event="event" hide-save-bar />
+                <template #fallback>
+                  <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+                </template>
+              </Suspense>
             </div>
           </template>
-        </USelectMenu>
-        <h2 v-else class="font-semibold text-lg">{{ event.title }}</h2>
-        <p v-if="event.eventType" class="text-muted text-sm">
-          {{ event.eventType }}
-        </p>
-      </div>
-      <div v-if="showHeaderActions" class="flex gap-2">
-        <UButton
-          icon="i-lucide-pencil"
-          size="sm"
-          color="neutral"
-          :variant="settingsOpen ? 'solid' : 'outline'"
-          @click="settingsOpen = !settingsOpen"
-        >
-          {{ t('sales.events.edit') }}
-        </UButton>
+        </UCollapsible>
       </div>
     </div>
-
-    <!-- Settings: expands under the header ("Bewerken"). Own Suspense —
-         SettingsTab is an async-setup component. Contained in a bordered
-         panel so the expansion reads as one block, not loose cards. -->
-    <UCollapsible :open="settingsOpen">
-      <template #content>
-        <div class="border border-default rounded-xl bg-elevated/20 p-4 sm:p-6 mb-4">
-          <Suspense>
-            <SalesEventWorkspaceSettingsTab :event="event" />
-            <template #fallback>
-              <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
-            </template>
-          </Suspense>
-        </div>
-      </template>
-    </UCollapsible>
 
     <!-- Kassa: the main surface, full remaining viewport height. Orders or
          clients join as a resizable pane on toggle (drag the divider; sizes

@@ -83,11 +83,14 @@ SettingsTab.
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-**kassa-first — no tabs**: header + `<SalesPosPanel>` as the main surface. The header is the event
-switcher (with a "create event" item in its `#content-top`, same pattern as
-`CroutonFormReferenceSelect`) and the **Bewerken** toggle, which expands `SettingsTab` inline
-under the header (`UCollapsible`); Duplicate/Delete live as explained rows at the bottom of its
-Event Details card. The full event form (incl. slug) is not reachable from the workspace.
+**kassa-first — no tabs**: header + `<SalesPosPanel>` as the main surface. The header row (compact
+event switcher with a "create event" item in its `#content-top`, same pattern as
+`CroutonFormReferenceSelect`, the **Instellingen** toggle right beside it, and — only while open —
+the panel-wide **Opslaan** button at the row's right) lives **inside the settings container**: one
+bordered panel whose `UCollapsible` slides `SettingsTab` open under the header row. The Save button
+is Shell-hosted: SettingsTab gets `hide-save-bar` and exposes `{ save, dirty, saving }`
+(`defineExpose`), which Shell reads via a template ref; Duplicate/Delete live as explained rows at
+the bottom of its Event Details card. The full event form (incl. slug) is not reachable from the workspace.
 Beside the POS, up to two **side panes** open via vertical tabs stacked in a reserved gutter at
 the kassa's right edge (Shell-owned, no prop plumbing). Both panes can be open at once, each
 resizable via Reka UI's Splitter (`SplitterGroup`/`Panel`/`ResizeHandle`; panels carry explicit
@@ -165,9 +168,9 @@ apply **server-side** (the list is paginated): the component sends `?owner=`, `?
 use `CroutonCollection`.
 Each row shows **one combined printer LED** (`orderLed`): worst status across every job of the
 order — red (any failed, 9) > pulsing orange (any pending/printing, 0/1) > green (all done, 2);
-grey = no jobs at all. A hover `UPopover` on the dot breaks it down **per printer** (status
-badge, 24h time, failure reason; "no ticket" explanation for printers without a job for this
-order). Jobs come from the slim `printqueues/status` endpoint — it must include `locationId` +
+grey = no jobs at all. A hover `UPopover` on the dot breaks it down **per printer** (an LED dot
+left of the printer name, latest 24h job time, failure reasons; "no ticket" explanation for
+printers without a job for this order). Jobs come from the slim `printqueues/status` endpoint — it must include `locationId` +
 `printMode` so OrderItems can list what each ticket printed. OrdersTab also queries
 `salesLocations` (names the per-location remarks) and passes `:locations`,
 `:location-remarks="order.locationRemarks"` and `:has-printers` to the expand panel.
@@ -200,8 +203,9 @@ tab visible). Failed lines carry an **icon-only re-print button** in the card's 
 bottom padding (`pb-6`) to separate an expanded ticket from the next row.
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency, client switch,
-helper PIN) **plus the receipt text settings** behind **one panel-wide Save button** (top-right
-row above the grid; disabled until dirty, with an "unsaved changes" hint). There are no per-card
+helper PIN) **plus the receipt text settings** behind **one panel-wide Save button** (disabled
+until dirty, with an "unsaved changes" hint; rendered by the Shell's header row when mounted with
+`hide-save-bar`, otherwise as SettingsTab's own top-right row). There are no per-card
 save buttons and the client switch no longer auto-saves on toggle — everything commits together:
 one `useCollectionMutation('salesEvents').update` for the dirty event fields and one PUT to
 `receipt-settings` when the receipt text changed (parallel; `helperPin` is a `salesEvents`
@@ -394,7 +398,7 @@ the event field's `propertyComponents` editor.
 
 | Block type | Editor view | Renderer | Purpose |
 |------------|-------------|----------|---------|
-| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles. The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `admin`. |
+| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles. The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `kassa`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
