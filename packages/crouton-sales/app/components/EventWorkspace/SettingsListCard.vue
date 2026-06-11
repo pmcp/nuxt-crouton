@@ -132,5 +132,9 @@ if (import.meta.client && props.orderField) {
     <div v-else class="p-4 text-center text-muted text-sm">
       {{ emptyLabel || t('sales.common.none') }}
     </div>
+
+    <template v-if="$slots.footer" #footer>
+      <slot name="footer" />
+    </template>
   </UCard>
 </template>

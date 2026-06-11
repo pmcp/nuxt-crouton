@@ -358,6 +358,8 @@
       "deleteEventDesc": "Supprime définitivement cet événement",
       "helperPin": "PIN bénévole",
       "receiptSettings": "Paramètres d'impression",
+      "unsavedChanges": "Modifications non enregistrées",
+      "settingsSaved": "Paramètres enregistrés",
       "editReceiptText": "Modifier le texte du reçu",
       "activeHelpers": "Bénévoles actifs",
       "add": "Ajouter",

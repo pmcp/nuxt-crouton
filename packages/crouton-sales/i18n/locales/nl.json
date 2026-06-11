@@ -359,6 +359,8 @@
       "deleteEventDesc": "Verwijdert dit evenement definitief",
       "helperPin": "Helper-PIN",
       "receiptSettings": "Printinstellingen",
+      "unsavedChanges": "Niet-opgeslagen wijzigingen",
+      "settingsSaved": "Instellingen opgeslagen",
       "editReceiptText": "Bontekst bewerken",
       "activeHelpers": "Actieve helpers",
       "add": "Toevoegen",

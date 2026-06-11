@@ -96,20 +96,13 @@ async function resendFailedJobs() {
   }
 }
 
-// The POS only shows the client selector when the event's requiresClient is
-// truthy (OrderInterface gates on it) — mirror that here so the switch shows
-// what the kassa actually does. Clients are always the reusable kind (pick
-// from saved clients or create one); there is no free-text mode.
-const requiresClient = ref(!!props.event.requiresClient)
-const savingRequiresClient = ref(false)
-const helperPin = ref(props.event.helperPin || '')
-const originalHelperPin = ref(props.event.helperPin || '')
-const savingHelperPin = ref(false)
-const showReceiptSettings = ref(false)
-
-// Inline-editable core event details (title / currency).
-// Slug is intentionally excluded — it is the route param and editing it here
-// would break the current URL. Use the top-right "Edit" button for the slug.
+// Inline-editable event fields (title / currency / client switch / helper
+// PIN) plus the receipt text settings — one form, one Save button for the
+// whole panel. Slug is intentionally excluded — it is the route param and
+// editing it here would break the current URL.
+// The client switch mirrors the POS gate: OrderInterface only shows the
+// client selector when requiresClient is truthy. Clients are always the
+// reusable kind; there is no free-text mode.
 const currencyOptions = [
   { label: t('sales.workspace.currencyEur'), value: 'EUR' },
   { label: t('sales.workspace.currencyUsd'), value: 'USD' }
@@ -117,62 +110,86 @@ const currencyOptions = [
 
 const eventForm = ref({
   title: props.event.title || '',
-  currency: props.event.currency || 'EUR'
+  currency: props.event.currency || 'EUR',
+  requiresClient: !!props.event.requiresClient,
+  helperPin: props.event.helperPin || ''
 })
-const savingEventDetails = ref(false)
+
+// Receipt text settings live in the printers card (they only matter when
+// printing) but save through the same panel-wide Save button.
+interface ReceiptSettings {
+  special_instructions_title: string
+  staff_order_header: string
+  footer_text: string
+}
+
+const receiptEndpoint = computed(() =>
+  `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/receipt-settings`
+)
+const { data: receiptSaved } = await useFetch<ReceiptSettings>(receiptEndpoint, {
+  default: () => ({
+    special_instructions_title: 'SPECIAL INSTRUCTIONS:',
+    staff_order_header: '*** STAFF ORDER ***',
+    footer_text: 'Thank you for your order!'
+  })
+})
+const receiptForm = ref<ReceiptSettings>({ ...receiptSaved.value })
+watch(receiptSaved, (v) => { receiptForm.value = { ...v } })
 
 // Re-seed the form when the event changes (switching events, or an external
 // edit via the top-right "Edit" button).
 watch(() => props.event.id, () => {
   eventForm.value = {
     title: props.event.title || '',
-    currency: props.event.currency || 'EUR'
+    currency: props.event.currency || 'EUR',
+    requiresClient: !!props.event.requiresClient,
+    helperPin: props.event.helperPin || ''
   }
-  requiresClient.value = !!props.event.requiresClient
 })
 
-const eventDetailsDirty = computed(() =>
+const eventDirty = computed(() =>
   eventForm.value.title !== (props.event.title || '')
   || eventForm.value.currency !== (props.event.currency || 'EUR')
+  || eventForm.value.requiresClient !== !!props.event.requiresClient
+  || eventForm.value.helperPin !== (props.event.helperPin || '')
 )
 
-async function saveEventDetails() {
-  savingEventDetails.value = true
-  try {
-    const { update } = useCollectionMutation('salesEvents')
-    await update(props.event.id, {
-      title: eventForm.value.title,
-      currency: eventForm.value.currency
-    })
-  }
-  finally {
-    savingEventDetails.value = false
-  }
-}
+const receiptDirty = computed(() =>
+  receiptForm.value.special_instructions_title !== receiptSaved.value.special_instructions_title
+  || receiptForm.value.staff_order_header !== receiptSaved.value.staff_order_header
+  || receiptForm.value.footer_text !== receiptSaved.value.footer_text
+)
 
-async function saveRequiresClient(value: boolean) {
-  savingRequiresClient.value = true
+const dirty = computed(() => eventDirty.value || receiptDirty.value)
+const saving = ref(false)
+
+async function saveSettings() {
+  saving.value = true
   try {
-    const { update } = useCollectionMutation('salesEvents')
-    await update(props.event.id, { requiresClient: value })
+    const tasks: Promise<unknown>[] = []
+    if (eventDirty.value) {
+      const { update } = useCollectionMutation('salesEvents')
+      tasks.push(update(props.event.id, {
+        title: eventForm.value.title,
+        currency: eventForm.value.currency,
+        requiresClient: eventForm.value.requiresClient,
+        helperPin: eventForm.value.helperPin || undefined
+      }))
+    }
+    if (receiptDirty.value) {
+      tasks.push(
+        $fetch(receiptEndpoint.value, { method: 'PUT', body: receiptForm.value })
+          .then(() => { receiptSaved.value = { ...receiptForm.value } })
+      )
+    }
+    await Promise.all(tasks)
+    notify.success(t('sales.workspace.settingsSaved'))
   }
   catch {
-    requiresClient.value = !value
+    notify.error(t('sales.receipt.saveFailed'))
   }
   finally {
-    savingRequiresClient.value = false
-  }
-}
-
-async function saveHelperPin() {
-  savingHelperPin.value = true
-  try {
-    const { update } = useCollectionMutation('salesEvents')
-    await update(props.event.id, { helperPin: helperPin.value || undefined })
-    originalHelperPin.value = helperPin.value
-  }
-  finally {
-    savingHelperPin.value = false
+    saving.value = false
   }
 }
 
@@ -222,24 +239,26 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
+    <!-- One Save for the whole panel: event fields + receipt text. -->
+    <div class="flex items-center justify-end gap-3">
+      <span v-if="dirty" class="text-sm text-muted">{{ t('sales.workspace.unsavedChanges') }}</span>
+      <UButton
+        :loading="saving"
+        :disabled="!dirty"
+        @click="saveSettings"
+      >
+        {{ t('sales.common.save') }}
+      </UButton>
+    </div>
+
     <!-- One row, three blocks: event (name + currency + client switch),
-         printers (incl. print settings), helpers (incl. PIN). -->
+         printers (incl. receipt text), helpers (incl. PIN). -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
       <!-- Event details (inline editable) -->
       <UCard>
         <template #header>
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="font-semibold">{{ t('sales.workspace.eventDetails') }}</h3>
-            <UButton
-              size="xs"
-              :loading="savingEventDetails"
-              :disabled="!eventDetailsDirty"
-              @click="saveEventDetails"
-            >
-              {{ t('sales.common.save') }}
-            </UButton>
-          </div>
+          <h3 class="font-semibold">{{ t('sales.workspace.eventDetails') }}</h3>
         </template>
         <div class="space-y-4">
           <UFormField :label="t('sales.workspace.eventName')">
@@ -258,11 +277,9 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
               <p class="text-sm text-muted">{{ t('sales.workspace.requiresClientDesc') }}</p>
             </div>
             <USwitch
-              v-model="requiresClient"
+              v-model="eventForm.requiresClient"
               :aria-label="t('sales.workspace.requiresClient')"
-              :loading="savingRequiresClient"
               class="mt-0.5"
-              @update:model-value="saveRequiresClient"
             />
           </div>
 
@@ -319,20 +336,47 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
           <UButton
             size="xs"
             variant="outline"
-            icon="i-lucide-receipt"
-            @click="showReceiptSettings = true"
-          >
-            {{ t('sales.workspace.receiptSettings') }}
-          </UButton>
-          <UButton
-            size="xs"
-            variant="outline"
             color="warning"
             icon="i-lucide-rotate-ccw"
             :loading="resending"
             :aria-label="t('sales.printQueue.resendFailed', 'Resend failed jobs')"
             @click="resendFailedJobs"
           />
+        </template>
+
+        <!-- Receipt text settings, inline (saved via the panel's Save button) -->
+        <template #footer>
+          <div class="space-y-4">
+            <div class="space-y-1">
+              <p class="text-sm font-medium leading-5">{{ t('sales.workspace.receiptSettings') }}</p>
+              <p class="text-sm text-muted">{{ t('sales.receipt.customize') }}</p>
+            </div>
+            <UFormField :label="t('sales.receipt.specialInstructionsTitle')" :help="t('sales.receipt.specialInstructionsHelp')">
+              <UInput
+                v-model="receiptForm.special_instructions_title"
+                class="w-full"
+                size="sm"
+                placeholder="SPECIAL INSTRUCTIONS:"
+              />
+            </UFormField>
+            <UFormField :label="t('sales.receipt.staffOrderHeader')" :help="t('sales.receipt.staffOrderHeaderHelp')">
+              <UInput
+                v-model="receiptForm.staff_order_header"
+                class="w-full"
+                size="sm"
+                placeholder="*** STAFF ORDER ***"
+              />
+            </UFormField>
+            <UFormField :label="t('sales.receipt.footerText')" :help="t('sales.receipt.footerTextHelp')">
+              <UTextarea
+                v-model="receiptForm.footer_text"
+                class="w-full"
+                size="sm"
+                :rows="2"
+                placeholder="Thank you for your order!"
+              />
+            </UFormField>
+          </div>
         </template>
       </SalesEventWorkspaceSettingsListCard>
 
@@ -352,24 +396,14 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </template>
 
         <UFormField :label="t('sales.workspace.helperPin')">
-          <div class="flex gap-2">
-            <UInput
-              v-model="helperPin"
-              type="text"
-              :placeholder="t('sales.helperLogin.enterPin')"
-              size="sm"
-              :ui="{ base: 'font-mono' }"
-              class="flex-1"
-            />
-            <UButton
-              size="sm"
-              :loading="savingHelperPin"
-              :disabled="helperPin === originalHelperPin"
-              @click="saveHelperPin"
-            >
-              {{ t('sales.common.save') }}
-            </UButton>
-          </div>
+          <UInput
+            v-model="eventForm.helperPin"
+            type="text"
+            :placeholder="t('sales.helperLogin.enterPin')"
+            size="sm"
+            :ui="{ base: 'font-mono' }"
+            class="w-full"
+          />
         </UFormField>
 
         <USeparator class="my-4" />
@@ -397,12 +431,5 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         </div>
       </UCard>
     </div>
-
-    <!-- Receipt settings modal -->
-    <SalesSettingsReceiptSettingsModal
-      v-if="event"
-      v-model="showReceiptSettings"
-      :api-endpoint="`/api/crouton-sales/teams/${teamParam}/events/${event.id}/receipt-settings`"
-    />
   </div>
 </template>

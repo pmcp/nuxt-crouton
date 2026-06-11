@@ -359,6 +359,8 @@
       "deleteEventDesc": "Permanently removes this event",
       "helperPin": "Helper PIN",
       "receiptSettings": "Print settings",
+      "unsavedChanges": "Unsaved changes",
+      "settingsSaved": "Settings saved",
       "editReceiptText": "Edit Receipt Text",
       "activeHelpers": "Active Helpers",
       "add": "Add",

@@ -155,21 +155,26 @@ order number on the rows (`PrintqueuesCard` hides its `#number` when the order j
 Failed lines carry a **re-print button** — emits `retryJob` to OrdersTab, which POSTs
 `printqueues/retry-failed` with `{ jobId }` and refreshes the queue poll.
 
-`SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
-"Event Details" card (header carries only Save; Duplicate/Delete sit at the card's bottom as
-explained label + description rows) — saved with
-`useCollectionMutation('salesEvents').update`, Save disabled until dirty. **Slug is intentionally
+`SettingsTab.vue` edits the event's **core fields inline** (title, currency, client switch,
+helper PIN) **plus the receipt text settings** behind **one panel-wide Save button** (top-right
+row above the grid; disabled until dirty, with an "unsaved changes" hint). There are no per-card
+save buttons and the client switch no longer auto-saves on toggle — everything commits together:
+one `useCollectionMutation('salesEvents').update` for the dirty event fields and one PUT to
+`receipt-settings` when the receipt text changed (parallel; `helperPin` is a `salesEvents`
+column, so it rides the same update). Duplicate/Delete sit at the Event Details card's bottom as
+explained label + description rows. **Slug is intentionally
 excluded** (it's the route param; editing it inline breaks the current URL). Layout: **one
 3-column row** (`lg:grid-cols-3`). Block 1: the Event Details card — name + currency fields with
 the **"Require client" switch** below a separator (persisting `salesEvents.requiresClient` — the
 field the POS gates `<SalesClientSelector>` on; clients are **always the reusable kind**, the old
 free-text mode and its `use_reusable_clients` eventsetting were removed — existing rows are
 simply ignored). Block 2: the **Printers card** (`SettingsListCard.vue`, auto-import
-`SalesEventWorkspaceSettingsListCard`). Block 3: the **Helpers card**, which hosts the shared
+`SalesEventWorkspaceSettingsListCard`), whose **footer hosts the receipt-text fields inline**
+(special-instructions title / staff-order header / footer text, loaded from the
+`receipt-settings` GET — `SalesSettingsReceiptSettingsModal` is no longer mounted here; the file
+remains for the unmounted `PrintersTab`). Block 3: the **Helpers card**, which hosts the shared
 Helper-PIN input above the active-helpers list (scoped tokens). The printers card header carries
-the **Print settings** button (`sales.workspace.receiptSettings`, nl "Printinstellingen" — opens
-the receipt-text modal; the standalone receipt-settings card is gone) and the
-requeue-failed-jobs button (`printqueues/retry-failed`), which also refreshes the LEDs.
+the requeue-failed-jobs button (`printqueues/retry-failed`), which also refreshes the LEDs.
 Printer rows keep the POS slide-out hover affordances (pencil right; drag grip left when
 `orderField` is set). The Categories and Locations cards were **removed** — categories are
 edited inline in the kassa (create/rename/reorder; delete via the team-level categories page),
@@ -180,8 +185,9 @@ last job completed (the spooler's DLE EOT pre-flight confirmed the printer onlin
 job failed, pulsing orange = job in flight, grey = never printed. There is no separate ping —
 "online" means online as of the last print attempt. `SettingsListCard` props: `title`, `collection`, `rows`
 (`{ id, title, subtitle?, led? }` — `led: { class, label? }` renders a status dot with tooltip
-before the title), `pending?`, `emptyLabel?`, `createData?`, `orderField?`; slot
-`header-actions`.
+before the title), `pending?`, `emptyLabel?`, `createData?`, `orderField?`; slots
+`header-actions` and `footer` (UCard footer passthrough — the printers card uses it for the
+receipt-text fields).
 
 ### Per-event currency (`useSalesCurrency`)
 
