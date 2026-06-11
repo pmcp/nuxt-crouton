@@ -280,7 +280,7 @@
       "testPrintTitle": "Titre de l'impression test",
       "testSuccessMessage": "Message de réussite du test",
       "footerText": "Texte de pied de page",
-      "specialInstructionsHelp": "Affiché au-dessus des notes de commande sur les tickets de cuisine",
+      "specialInstructionsHelp": "En-tête au-dessus des remarques sur les tickets de cuisine (p. ex. la remarque par emplacement de la caisse)",
       "staffOrderHeaderHelp": "Bannière imprimée sur les commandes du personnel",
       "footerTextHelp": "Imprimé en bas des reçus clients",
       "saveSettings": "Enregistrer les paramètres",

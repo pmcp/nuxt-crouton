@@ -281,7 +281,7 @@
       "testPrintTitle": "Test Print Title",
       "testSuccessMessage": "Test Success Message",
       "footerText": "Footer Text",
-      "specialInstructionsHelp": "Shown above order notes on kitchen tickets",
+      "specialInstructionsHelp": "Header above remarks on kitchen tickets (e.g. the per-location remark from the register)",
       "staffOrderHeaderHelp": "Banner printed on staff/personnel orders",
       "footerTextHelp": "Printed at the bottom of customer receipts",
       "saveSettings": "Save Settings",

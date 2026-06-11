@@ -281,7 +281,7 @@
       "testPrintTitle": "Titel testafdruk",
       "testSuccessMessage": "Bericht test geslaagd",
       "footerText": "Voettekst",
-      "specialInstructionsHelp": "Wordt boven bestelnotities getoond op keukentickets",
+      "specialInstructionsHelp": "Koptekst boven de opmerkingen op keukentickets (bv. de opmerking per locatie uit de kassa)",
       "staffOrderHeaderHelp": "Banner geprint op personeelsbestellingen",
       "footerTextHelp": "Onderaan klantbonnen geprint",
       "saveSettings": "Instellingen opslaan",

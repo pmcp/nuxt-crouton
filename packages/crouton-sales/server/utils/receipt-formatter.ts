@@ -32,10 +32,12 @@ export interface ReceiptSettings {
   footer_text: string
 }
 
+// Dutch defaults, matching the formatter's default locale — events override
+// them per event via receipt-settings.
 export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
-  special_instructions_title: 'SPECIAL INSTRUCTIONS:',
-  staff_order_header: '*** STAFF ORDER ***',
-  footer_text: 'Thank you for your order!'
+  special_instructions_title: 'OPMERKING:',
+  staff_order_header: '*** PERSONEEL ***',
+  footer_text: 'Bedankt voor je bestelling!'
 }
 
 export interface ReceiptData {
@@ -75,12 +77,37 @@ export interface ReceiptData {
    * header and an order count instead of a single order number.
    */
   clientTab?: { orderCount: number }
+  /** Language for the fixed ticket labels (Order/Time/Helper/…). Default nl. */
+  locale?: ReceiptLocale
 }
 
 /** Default timezone for rendering receipt timestamps. */
 const DEFAULT_TIME_ZONE = 'Europe/Brussels'
 const TIME_LOCALE = 'nl-BE'
 const DEFAULT_CURRENCY_SYMBOL = '€'
+
+export type ReceiptLocale = 'en' | 'nl' | 'fr'
+
+/** Fixed ticket labels per locale. Default is nl — the formatter already
+ * renders times in nl-BE; pass `ReceiptData.locale` to override. */
+interface ReceiptLabels {
+  orders: string
+  order: string
+  time: string
+  helper: string
+  client: string
+  notes: string
+  total: string
+  yes: string
+  no: string
+}
+
+const RECEIPT_LABELS: Record<ReceiptLocale, ReceiptLabels> = {
+  nl: { orders: 'Bestellingen', order: 'Bestelling', time: 'Tijd', helper: 'Helper', client: 'Klant', notes: 'NOTITIES:', total: 'TOTAAL:', yes: 'Ja', no: 'Nee' },
+  en: { orders: 'Orders', order: 'Order', time: 'Time', helper: 'Helper', client: 'Client', notes: 'NOTES:', total: 'TOTAL:', yes: 'Yes', no: 'No' },
+  fr: { orders: 'Commandes', order: 'Commande', time: 'Heure', helper: 'Bénévole', client: 'Client', notes: 'NOTES :', total: 'TOTAL :', yes: 'Oui', no: 'Non' }
+}
+const DEFAULT_RECEIPT_LOCALE: ReceiptLocale = 'nl'
 
 export interface FormattedReceipt {
   base64: string
@@ -197,6 +224,7 @@ class EscPosBuilder {
 export function formatReceipt(data: ReceiptData): FormattedReceipt {
   const printer = new EscPosBuilder()
   const currencySymbol = data.currencySymbol || DEFAULT_CURRENCY_SYMBOL
+  const L = RECEIPT_LABELS[data.locale || DEFAULT_RECEIPT_LOCALE]
 
   try {
     // Header with team and event
@@ -226,26 +254,26 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     printer.alignLeft()
     printer.bold(true)
     if (data.clientTab) {
-      printer.println(`Orders: ${data.clientTab.orderCount}`)
+      printer.println(`${L.orders}: ${data.clientTab.orderCount}`)
     }
     else {
-      printer.println(`Order #${data.orderNumber}`)
+      printer.println(`${L.order} #${data.orderNumber}`)
     }
     printer.bold(false)
 
     const orderDate = typeof data.createdAt === 'string'
       ? new Date(data.createdAt)
       : data.createdAt
-    printer.println(`Time: ${orderDate.toLocaleString(TIME_LOCALE, { timeZone: data.timeZone || DEFAULT_TIME_ZONE })}`)
+    printer.println(`${L.time}: ${orderDate.toLocaleString(TIME_LOCALE, { timeZone: data.timeZone || DEFAULT_TIME_ZONE })}`)
 
     if (data.helperName) {
-      printer.println(`Helper: ${data.helperName}`)
+      printer.println(`${L.helper}: ${data.helperName}`)
     }
 
     // On kitchen tickets and end-of-tab receipts the client is already the
     // big header above
     if (data.clientName && data.printMode === 'receipt' && !data.clientTab) {
-      printer.println(`Client: ${data.clientName}`)
+      printer.println(`${L.client}: ${data.clientName}`)
     }
 
     // Staff order indicator
@@ -271,11 +299,15 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.println(data.orderNotes)
     }
 
-    // Per-location remark for kitchen tickets (prints only on this location's ticket)
+    // Per-location remark for kitchen tickets (prints only on this location's
+    // ticket). Headed by the same customizable special-instructions title as
+    // the order notes above — since the POS dropped the whole-order remark,
+    // this is where that setting actually reaches paper.
     if (data.locationNote && data.printMode === 'kitchen') {
+      const settings = data.receiptSettings || DEFAULT_RECEIPT_SETTINGS
       printer.drawLine()
       printer.bold(true)
-      printer.println('REMARK:')
+      printer.println(settings.special_instructions_title)
       printer.bold(false)
       printer.println(data.locationNote)
     }
@@ -333,7 +365,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
                 }
               }
               else if (typeof optionValue === 'boolean') {
-                displayValue = optionValue ? 'Yes' : 'No'
+                displayValue = optionValue ? L.yes : L.no
               }
               else {
                 displayValue = String(optionValue)
@@ -361,7 +393,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
     if (data.orderNotes && data.printMode === 'receipt') {
       printer.drawLine()
       printer.bold(true)
-      printer.println('NOTES:')
+      printer.println(L.notes)
       printer.bold(false)
       printer.println(data.orderNotes)
     }
@@ -371,7 +403,7 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
       printer.drawLine()
       printer.alignLeft()
 
-      const totalLabel = 'TOTAL:'
+      const totalLabel = L.total
       const totalAmount = `${currencySymbol}${data.total.toFixed(2)}`
       const totalPadding = RECEIPT_WIDTH - totalLabel.length - totalAmount.length
 
