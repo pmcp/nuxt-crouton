@@ -172,8 +172,11 @@ process_job() {
         ( printf "$STATUS_QUERIES"; sleep 1 ) | timeout 8 nc "$JOB_PRINTER_IP" "$PRINTER_PORT" > "$RESPFILE" 2>/dev/null
 
         set -- $(read_status_bytes "$RESPFILE")
+        # In the field, a printer that accepts nothing / answers nothing is
+        # almost always in an error state with a jammed receive buffer —
+        # i.e. paper out or cover open. Say so instead of a vague shrug.
         classify_status "${1:-}" "${2:-}" "${3:-}" \
-            "No status response from printer (offline, wrong IP, or not an ESC/POS device)"
+            "Printer not responding - paper out, cover open, or offline?"
 
         if [ -n "$STATUS_ERROR" ]; then
             echo "$(date '+%H:%M:%S') Job $JOB_ID: pre-flight failed on $JOB_PRINTER_IP: $STATUS_ERROR"

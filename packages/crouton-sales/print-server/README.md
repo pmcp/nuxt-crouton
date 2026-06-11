@@ -24,8 +24,8 @@ forwarding, no inbound exposure.
 2. Spooler polls `GET /api/print-server/events/{EVENT_ID}/jobs?mark_as_printing=true`.
 3. **Pre-flight**: queries printer status on its own connection (ESC/POS
    `DLE EOT 1` + `2` + `4`). If the printer reports `Cover open`, `Paper out`,
-   `Printer error`, `Printer offline`, or doesn't answer (`No status response
-   from printer`), the job fails immediately **without sending the ticket** —
+   `Printer error`, `Printer offline`, or doesn't answer (`Printer not
+   responding - paper out, cover open, or offline?`), the job fails immediately **without sending the ticket** —
    this also prevents ghost tickets printing once paper is reloaded. The
    pre-flight must be its own connection: an error-state printer stops
    draining its buffer, so queries appended after a payload would get stuck
