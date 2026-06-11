@@ -19,6 +19,7 @@ const props = defineProps<{
 
 const { t } = useT()
 const toast = useToast()
+const nuxtApp = useNuxtApp()
 const { format: formatPrice } = useSalesCurrency(() => props.event.currency)
 
 interface ClientTabSummary {
@@ -102,6 +103,17 @@ async function refresh() {
 
 onMounted(refresh)
 
+// The kassa sits right beside this pane: a checkout emits a salesOrders
+// mutation (usePosOrder), so refresh the tabs live and refetch the receipt
+// preview of any expanded row instead of waiting for a remount.
+const unhookMutation = nuxtApp.hook('crouton:mutation', (payload: any) => {
+  if (payload.collection !== 'salesOrders') return
+  refresh()
+  tabLines.value = {}
+  for (const id of expandedIds.value) loadTab(id)
+})
+onUnmounted(unhookMutation)
+
 const filteredClients = computed(() => {
   const query = search.value.trim().toLowerCase()
   if (!query) return clients.value
@@ -118,6 +130,17 @@ async function printEndReceipt(client: ClientTabSummary) {
   try {
     await $fetch(`${apiBase.value}/${client.id}/end-receipt`, { method: 'POST' })
     clients.value = clients.value.filter(c => c.id !== client.id)
+    // end-receipt deactivates the client server-side; emit the mutation so
+    // the POS picker (order-data in Pos/Panel.vue) drops it without a reload.
+    await nuxtApp.hooks.callHook('crouton:mutation', {
+      operation: 'update',
+      collection: 'salesClients',
+      itemId: client.id,
+      data: { isActive: false },
+      result: null,
+      correlationId: `end-receipt-${client.id}`,
+      timestamp: Date.now()
+    })
     toast.add({
       title: t('sales.workspace.clientsPanel.printed', { client: client.title }),
       color: 'success',

@@ -162,8 +162,10 @@ onMounted(async () => {
 // else while it's open) must show up without a reload — order-data is a
 // plain pre-fetched payload, so re-fetch it on relevant mutations.
 // salesEvents is included so flipping event flags in the settings panel
-// (e.g. "Require client") reaches the kassa live.
-const CATALOG_COLLECTIONS = ['salesProducts', 'salesCategories', 'salesLocations', 'salesEvents']
+// (e.g. "Require client") reaches the kassa live. salesClients so a tab
+// settled in the clients panel (end-receipt deactivates the client) drops
+// out of the client picker immediately.
+const CATALOG_COLLECTIONS = ['salesProducts', 'salesCategories', 'salesLocations', 'salesEvents', 'salesClients']
 const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
   if (orderData.value && CATALOG_COLLECTIONS.includes(payload.collection)) {
     loadOrderData()

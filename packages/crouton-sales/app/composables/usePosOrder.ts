@@ -124,6 +124,10 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
   const helperHeaders = (): Record<string, string> =>
     helperToken.value ? { 'x-scoped-token': helperToken.value } : {}
 
+  // Captured at setup: checkout emits crouton:mutation after awaits, where
+  // useNuxtApp() would lose the Nuxt context.
+  const nuxtApp = useNuxtApp()
+
   const cartItems = ref<CartItem[]>([])
   const selectedEventId = ref<string | null>(null)
   const selectedClientId = ref<string | null>(null)
@@ -316,6 +320,19 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
           console.error('Failed to trigger print queue:', printError)
         }
       }
+
+      // The order POST bypasses useCollectionMutation, so emit the mutation
+      // hook ourselves — open views (clients panel, anything watching
+      // salesOrders) refresh live instead of only on remount.
+      await nuxtApp.hooks.callHook('crouton:mutation', {
+        operation: 'create',
+        collection: 'salesOrders',
+        itemId: response.order.id,
+        data: { eventId: selectedEventId.value, clientId: selectedClientId.value },
+        result: response.order,
+        correlationId: `pos-checkout-${response.order.id}`,
+        timestamp: Date.now()
+      })
 
       // Clear cart after successful checkout
       clearCart()
