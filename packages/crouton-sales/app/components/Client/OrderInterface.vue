@@ -81,6 +81,7 @@
               :categories="categories || []"
               :locations="locations || []"
               :location-remarks="locationRemarks"
+              :overall-remarks="overallRemarks"
               :is-personnel="isPersonnel"
               :total="cartTotal"
               :disabled="!isOnline"
@@ -91,6 +92,7 @@
               @checkout="handleCheckout"
               @clear="clearCart"
               @update-location-remark="setLocationRemark"
+              @update:overall-remarks="overallRemarks = $event"
               @update:is-personnel="isPersonnel = $event"
             />
           </div>
@@ -129,6 +131,7 @@
                   :categories="categories || []"
                   :locations="locations || []"
                   :location-remarks="locationRemarks"
+                  :overall-remarks="overallRemarks"
                   :is-personnel="isPersonnel"
                   :total="cartTotal"
                   :disabled="!isOnline"
@@ -139,6 +142,7 @@
                   @checkout="handleCheckout"
                   @clear="clearCart"
                   @update-location-remark="setLocationRemark"
+                  @update:overall-remarks="overallRemarks = $event"
                   @update:is-personnel="isPersonnel = $event"
                 />
               </div>
@@ -202,6 +206,7 @@ const {
   selectedClientId,
   selectedClientName,
   locationRemarks,
+  overallRemarks,
   isPersonnel,
   addToCart,
   removeFromCart,

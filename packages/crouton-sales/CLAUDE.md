@@ -287,7 +287,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 ### Customer-Facing (`Client/`)
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
-| `Cart.vue` | `SalesClientCart` | Shopping cart display with quantity controls. Footer carries a **Staff order** `USwitch` (`isPersonnel` prop + `update:isPersonnel` emit, bound to `usePosOrder().isPersonnel` in OrderInterface) — flags the order so tickets print the receipt-settings staff banner |
+| `Cart.vue` | `SalesClientCart` | Shopping cart display with quantity controls. Footer carries a **Remark button** (`UCollapsible`, count badge when collapsed) that slides open a target picker — **Whole order** (→ `overallRemarks`, printed under the receipt-settings special-instructions title on every kitchen ticket) or one of the locations with items in the cart (→ `locationRemarks`, printed as `REMARK:` on that location's ticket only) — plus a **Staff order** `USwitch` (`isPersonnel`) for the staff banner. All three bind to `usePosOrder()` refs via props + `update:*` emits in OrderInterface |
 | `ProductList.vue` | `SalesClientProductList` | Product grid with inline option selection |
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |

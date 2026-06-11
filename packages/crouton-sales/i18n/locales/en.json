@@ -153,6 +153,10 @@
       "pay": "Pay",
       "locationRemark": "Remark for {location}",
       "locationRemarkPlaceholder": "Add a remark for this location…",
+      "remark": "Remark",
+      "remarkFor": "For",
+      "wholeOrder": "Whole order",
+      "remarkPlaceholder": "Type the remark…",
       "staffOrder": "Staff order"
     },
     "products": {
