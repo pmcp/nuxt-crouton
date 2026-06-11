@@ -66,7 +66,7 @@
           <div v-if="props.requiresClient" class="p-3 border-b border-default">
             <SalesClientSelector
               :clients="props.clients || []"
-              :use-reusable-clients="true"
+              :use-reusable-clients="props.useReusableClients ?? false"
               :highlight="!hasClient && cartItems.length > 0"
               :client-id="selectedClientId"
               :client-name="selectedClientName || undefined"
@@ -112,7 +112,7 @@
               <div v-if="props.requiresClient" class="p-3 border-b border-default shrink-0">
                 <SalesClientSelector
                   :clients="props.clients || []"
-                  :use-reusable-clients="true"
+                  :use-reusable-clients="props.useReusableClients ?? false"
                   :highlight="!hasClient && cartItems.length > 0"
                   :client-id="selectedClientId"
                   :client-name="selectedClientName || undefined"
