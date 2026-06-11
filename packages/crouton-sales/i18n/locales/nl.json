@@ -385,6 +385,21 @@
       "title": "Offline",
       "message": "Je bent momenteel offline. Sommige functies kunnen beperkt zijn.",
       "banner": "Je bent offline. Bestellingen kunnen niet worden ingediend."
+    },
+    "printQueue": {
+      "title": "Printopdrachten",
+      "loading": "Printopdrachten laden…",
+      "empty": "Nog geen printopdrachten",
+      "printer": "Printer",
+      "retries": "pogingen",
+      "statusPending": "Wachtend",
+      "statusPrinting": "Printen",
+      "statusDone": "Klaar",
+      "statusError": "Fout",
+      "resendFailed": "Mislukte opdrachten opnieuw versturen",
+      "resendQueued": "{count} printopdracht(en) opnieuw in wachtrij",
+      "resendNone": "Geen mislukte printopdrachten",
+      "resendError": "Opnieuw versturen mislukt"
     }
   }
 }

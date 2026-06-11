@@ -18,11 +18,51 @@ const {
   total: printJobsTotal,
   page: printJobsPage,
   paginationData: printJobsPagination,
-  pending: printJobsPending
+  pending: printJobsPending,
+  refresh: refreshPrintJobs
 } = await useCollectionQuery('salesPrintqueues', {
   query: eventQuery,
   pagination: { pageSize: 10 }
 })
+
+// Requeue all failed jobs (status 9 → 0) so the spooler resends them —
+// the recovery action after a printer ran out of paper or was offline.
+const toast = useToast()
+const resending = ref(false)
+
+async function resendFailedJobs() {
+  resending.value = true
+  try {
+    const res = await $fetch<{ requeued: number }>(
+      `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/printqueues/retry-failed`,
+      { method: 'POST' }
+    )
+    if (res.requeued > 0) {
+      toast.add({
+        title: t('sales.printQueue.resendQueued', { params: { count: res.requeued }, fallback: `Requeued ${res.requeued} print job(s)` }),
+        color: 'success',
+        icon: 'i-lucide-printer'
+      })
+    }
+    else {
+      toast.add({
+        title: t('sales.printQueue.resendNone', 'No failed print jobs to resend'),
+        color: 'neutral'
+      })
+    }
+    await refreshPrintJobs()
+  }
+  catch (err) {
+    console.error('Error requeuing print jobs:', err)
+    toast.add({
+      title: t('sales.printQueue.resendError', 'Could not requeue print jobs'),
+      color: 'error'
+    })
+  }
+  finally {
+    resending.value = false
+  }
+}
 
 function openCreatePrinter() {
   open('create', 'salesPrinters', [], 'slideover', { eventId: props.event.id })
@@ -105,7 +145,19 @@ onMounted(async () => {
         <h3 class="text-sm font-semibold text-highlighted">
           {{ t('sales.printQueue.title', 'Print jobs') }}
         </h3>
-        <span class="text-xs text-muted tabular-nums">{{ printJobsTotal }}</span>
+        <div class="flex items-center gap-3">
+          <UButton
+            size="xs"
+            variant="outline"
+            color="neutral"
+            icon="i-lucide-rotate-ccw"
+            :loading="resending"
+            @click="resendFailedJobs"
+          >
+            {{ t('sales.printQueue.resendFailed', 'Resend failed jobs') }}
+          </UButton>
+          <span class="text-xs text-muted tabular-nums">{{ printJobsTotal }}</span>
+        </div>
       </div>
       <div v-if="printJobsPending" class="p-6 text-center text-muted text-sm">
         {{ t('sales.printQueue.loading', 'Loading print jobs…') }}

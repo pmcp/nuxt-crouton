@@ -385,6 +385,21 @@
       "title": "Offline",
       "message": "You are currently offline. Some features may be limited.",
       "banner": "You are offline. Orders cannot be submitted."
+    },
+    "printQueue": {
+      "title": "Print jobs",
+      "loading": "Loading print jobs…",
+      "empty": "No print jobs yet",
+      "printer": "Printer",
+      "retries": "retries",
+      "statusPending": "Pending",
+      "statusPrinting": "Printing",
+      "statusDone": "Done",
+      "statusError": "Error",
+      "resendFailed": "Resend failed jobs",
+      "resendQueued": "Requeued {count} print job(s)",
+      "resendNone": "No failed print jobs to resend",
+      "resendError": "Could not requeue print jobs"
     }
   }
 }

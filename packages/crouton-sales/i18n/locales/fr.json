@@ -384,6 +384,21 @@
       "title": "Hors ligne",
       "message": "Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées.",
       "banner": "Vous êtes hors ligne. Les commandes ne peuvent pas être soumises."
+    },
+    "printQueue": {
+      "title": "Travaux d'impression",
+      "loading": "Chargement des travaux d'impression…",
+      "empty": "Aucun travail d'impression",
+      "printer": "Imprimante",
+      "retries": "tentatives",
+      "statusPending": "En attente",
+      "statusPrinting": "Impression",
+      "statusDone": "Terminé",
+      "statusError": "Erreur",
+      "resendFailed": "Renvoyer les travaux échoués",
+      "resendQueued": "{count} travail(aux) d'impression remis en file",
+      "resendNone": "Aucun travail d'impression échoué",
+      "resendError": "Échec de la remise en file"
     }
   }
 }

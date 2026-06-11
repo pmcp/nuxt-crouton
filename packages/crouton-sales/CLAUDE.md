@@ -152,6 +152,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
+| `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue all failed print jobs (status 9→0; optional body `{ printerId }`) so the spooler resends them — backs the "Resend failed jobs" button in `PrintersTab` |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues |
