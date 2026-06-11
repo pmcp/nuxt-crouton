@@ -388,7 +388,10 @@
       "notes": "Notes",
       "label": "Client",
       "selectOrCreate": "Select or create client...",
-      "enterName": "Enter client name..."
+      "enterName": "Enter client name...",
+      "createNew": "Create new client",
+      "nameLabel": "Client name",
+      "namePlaceholder": "Enter client name"
     },
     "offline": {
       "title": "Offline",

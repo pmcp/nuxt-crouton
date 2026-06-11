@@ -387,7 +387,10 @@
       "notes": "Notes",
       "label": "Client",
       "selectOrCreate": "Sélectionner ou créer un client...",
-      "enterName": "Saisir le nom du client..."
+      "enterName": "Saisir le nom du client...",
+      "createNew": "Créer un nouveau client",
+      "nameLabel": "Nom du client",
+      "namePlaceholder": "Saisir le nom du client"
     },
     "offline": {
       "title": "Hors ligne",

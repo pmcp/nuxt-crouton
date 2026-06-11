@@ -388,7 +388,10 @@
       "notes": "Notities",
       "label": "Klant",
       "selectOrCreate": "Selecteer of maak klant aan...",
-      "enterName": "Voer klantnaam in..."
+      "enterName": "Voer klantnaam in...",
+      "createNew": "Nieuwe klant aanmaken",
+      "nameLabel": "Klantnaam",
+      "namePlaceholder": "Voer klantnaam in"
     },
     "offline": {
       "title": "Offline",
