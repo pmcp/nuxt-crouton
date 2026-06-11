@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<{
   /** Show the Edit / Duplicate header actions. */
   showHeaderActions?: boolean
   /**
-   * Show the whole header row (event name/date + actions). Hidden in the block,
+   * Show the whole header row (event name + actions). Hidden in the block,
    * where the page already provides the event title and these actions don't
    * apply.
    */
@@ -79,15 +79,33 @@ function switchEvent(eventId: string) {
   }
 }
 
-function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString()
-}
-
 function openEditEvent() {
   if (!event.value) return
   open('update', 'salesEvents', [event.value.id])
 }
+
+function openCreateEvent() {
+  open('create', 'salesEvents')
+}
+
+function openDeleteEvent() {
+  if (!event.value) return
+  open('delete', 'salesEvents', [event.value.id])
+}
+
+// The workspace's own event can be deleted from the header — once the delete
+// mutation lands this page has nothing to show, so fall back to the events list.
+const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
+  if (
+    payload.operation === 'delete'
+    && payload.collection === 'salesEvents'
+    && event.value
+    && payload.itemIds?.includes(event.value.id)
+  ) {
+    router.push(`/admin/${teamParam.value}/sales/events`)
+  }
+})
+onUnmounted(unhookMutation)
 
 const duplicating = ref(false)
 async function duplicateEvent() {
@@ -110,6 +128,11 @@ async function duplicateEvent() {
     duplicating.value = false
   }
 }
+
+// Kassa aside: the POS opens in a panel beside the tab content, so orders /
+// print queues stay visible while taking orders. Local state — not worth a
+// query param, and the CMS block (showHeaderActions=false) never exposes it.
+const posOpen = ref(false)
 
 const tabItems = [
   { label: t('sales.products.title'), value: 'products', icon: 'i-lucide-package' },
@@ -160,20 +183,30 @@ const activeTab = computed({
           :items="eventOptions"
           value-key="id"
           :placeholder="t('sales.events.selectEvent')"
-          icon="i-lucide-calendar"
+          icon="i-lucide-ticket"
           size="lg"
           class="w-72"
           :ui="{ base: 'font-semibold text-lg' }"
           @update:model-value="switchEvent"
         />
         <h2 v-else class="font-semibold text-lg">{{ event.title }}</h2>
-        <p class="text-muted text-sm">
+        <p v-if="event.eventType" class="text-muted text-sm">
           {{ event.eventType }}
-          <span v-if="event.startDate"> &middot; {{ formatDate(event.startDate) }}</span>
-          <span v-if="event.endDate"> - {{ formatDate(event.endDate) }}</span>
         </p>
       </div>
       <div v-if="showHeaderActions" class="flex gap-2">
+        <UButton
+          icon="i-lucide-store"
+          size="sm"
+          color="primary"
+          :variant="posOpen ? 'solid' : 'soft'"
+          @click="posOpen = !posOpen"
+        >
+          {{ t('sales.events.openPos') }}
+        </UButton>
+        <UButton icon="i-lucide-plus" size="sm" @click="openCreateEvent">
+          {{ t('common.create') }}
+        </UButton>
         <UButton variant="outline" icon="i-lucide-pencil" size="sm" @click="openEditEvent">
           {{ t('sales.events.edit') }}
         </UButton>
@@ -186,31 +219,53 @@ const activeTab = computed({
         >
           {{ t('sales.events.duplicate') }}
         </UButton>
+        <UButton
+          variant="outline"
+          color="error"
+          icon="i-lucide-trash-2"
+          size="sm"
+          @click="openDeleteEvent"
+        >
+          {{ t('common.delete') }}
+        </UButton>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <UTabs v-model="activeTab" :items="tabItems" :content="false" />
+    <!-- Tab column + optional kassa aside (stacks below on narrow screens) -->
+    <div class="flex flex-col xl:flex-row gap-6 xl:items-start">
+      <div class="flex-1 min-w-0 space-y-6">
+        <!-- Tabs -->
+        <UTabs v-model="activeTab" :items="tabItems" :content="false" />
 
-    <!-- Tab content -->
-    <!--
-      Each tab component runs top-level `await useCollectionQuery`, so it's an
-      async-setup component. Keying a <Suspense> on activeTab gives every tab its
-      own async boundary that is cleanly torn down on switch — without it, rapid
-      tab switching unmounts a still-resolving tab and Vue patches a detached
-      subtree (NotFoundError: insertBefore / "Cannot read properties of null
-      (reading 'subTree')").
-    -->
-    <div class="min-h-[400px]">
-      <Suspense :key="activeTab">
-        <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
-        <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
-        <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
-        <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
-        <template #fallback>
-          <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
-        </template>
-      </Suspense>
+        <!-- Tab content -->
+        <!--
+          Each tab component runs top-level `await useCollectionQuery`, so it's an
+          async-setup component. Keying a <Suspense> on activeTab gives every tab its
+          own async boundary that is cleanly torn down on switch — without it, rapid
+          tab switching unmounts a still-resolving tab and Vue patches a detached
+          subtree (NotFoundError: insertBefore / "Cannot read properties of null
+          (reading 'subTree')").
+        -->
+        <div class="min-h-[400px]">
+          <Suspense :key="activeTab">
+            <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
+            <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
+            <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
+            <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
+            <template #fallback>
+              <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+            </template>
+          </Suspense>
+        </div>
+      </div>
+
+      <!-- Kassa aside: full POS for this event, admin session = no PIN -->
+      <aside
+        v-if="posOpen"
+        class="xl:w-[36rem] shrink-0 h-[70vh] xl:sticky xl:top-4 border border-default rounded-xl overflow-clip bg-default"
+      >
+        <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" />
+      </aside>
     </div>
   </div>
 </template>

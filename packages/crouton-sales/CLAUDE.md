@@ -64,10 +64,13 @@ Event workspace tabs are extracted into reusable components under `app/component
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-the header (switcher + Create/Edit/Duplicate/Delete actions) + the four tabs in a per-tab `<Suspense>`.
+the header (switcher + Kassa toggle + Create/Edit/Duplicate/Delete actions) + the four tabs in a
+per-tab `<Suspense>`.
 Event dates are deliberately not shown anywhere in the workspace (irrelevant to the POS flow;
 columns remain in the DB). Deleting the current event navigates back to the events list via a
-`crouton:mutation` hook (matched on `itemIds`).
+`crouton:mutation` hook (matched on `itemIds`). The **Kassa toggle** opens a sticky aside
+(`xl:w-[36rem]`, stacks below the tabs on narrow screens) hosting `<SalesPosPanel>` — the full POS
+beside the Orders/Printers tabs, so new orders and print jobs are visible while taking orders.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
 `router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
@@ -151,7 +154,8 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | Path | Auth | Purpose |
 |------|------|---------|
 | `teams/[id]/events/[eventId]/duplicate` POST | team admin | Clone an event + its categories/locations/products/printers |
-| `teams/[id]/events/[eventId]/helper-login` POST | team admin | Validate PIN, issue scoped-access token |
+| `teams/[id]/events/[eventId]/helper-login` POST | public (PIN is the credential) | Validate PIN, issue scoped-access token |
+| `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
@@ -240,7 +244,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |
 | `CartTotal.vue` | `SalesClientCartTotal` | Order total display with item count |
-| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components |
+| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds "+" affordances that open the crouton create forms: add category (eventId preset) and add product (eventId + active categoryId preset) |
 | `Selector.vue` | `SalesClientSelector` | Client selector with create-on-type |
 | `OfflineBanner.vue` | `SalesClientOfflineBanner` | Offline mode indicator |
 
@@ -248,6 +252,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
 | `OrdersList.vue` | `SalesPosOrdersList` | Orders table with status filtering and auto-refresh |
+| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`. Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside and the fanfare admin order page |
 
 ### Admin (`Admin/`)
 | Component | Auto-import Name | Purpose |
@@ -318,7 +323,9 @@ Helpers (volunteers, staff) authenticate with an event's shared PIN. Every sessi
 ```typescript
 const { isHelper, helperName, eventId, teamId, login, logout } = useHelperAuth()
 
-// Login with PIN — every login creates a new scoped-access token
+// Login with PIN — every login creates a new scoped-access token.
+// Team members can skip the PIN: loginAsAdmin({ teamId, eventId }) hits the
+// admin-helper-token endpoint (session-authed) and stores the same session.
 await login({
   teamId: 'team-123',
   eventId: 'event-456',

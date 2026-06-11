@@ -8,12 +8,23 @@
 
     <template v-else>
       <!-- Category tabs -->
-      <div class="p-2 border-b border-default shrink-0">
-        <SalesClientCategoryTabs
-          v-model="selectedCategory"
-          :categories="categories || []"
-          :counts="cartCountsByCategory"
-          :show-all="false"
+      <div class="p-2 border-b border-default shrink-0 flex items-center gap-2">
+        <div class="flex-1 min-w-0">
+          <SalesClientCategoryTabs
+            v-model="selectedCategory"
+            :categories="categories || []"
+            :counts="cartCountsByCategory"
+            :show-all="false"
+          />
+        </div>
+        <UButton
+          v-if="editable"
+          icon="i-lucide-plus"
+          size="sm"
+          color="neutral"
+          variant="soft"
+          :aria-label="t('sales.workspace.add')"
+          @click="openCreateCategory"
         />
       </div>
 
@@ -24,6 +35,16 @@
           <SalesClientProductList
             :products="filteredProducts"
             @select="handleProductSelect"
+          />
+          <UButton
+            v-if="editable"
+            block
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-plus"
+            class="mt-2 border-dashed"
+            :label="t('sales.workspace.addProduct')"
+            @click="openCreateProduct"
           />
         </div>
 
@@ -140,6 +161,12 @@ const props = defineProps<{
   categoriesCollection?: string
   /** Currency for this event ('EUR' | 'USD', default EUR). Provided to all price displays. */
   currency?: string
+  /**
+   * Show admin editing affordances (add category / add product, via the
+   * crouton create forms). Only enable for team-member sessions — the forms
+   * post to team-scoped CRUD endpoints that helper tokens can't reach.
+   */
+  editable?: boolean
 }>()
 
 const isOnline = useOnline()
@@ -265,6 +292,22 @@ const filteredProducts = computed(() => {
 // usePosOrder locationRemarks map, included in the checkout body).
 function setLocationRemark(locationId: string, value: string) {
   locationRemarks.value[locationId] = value
+}
+
+// Admin editing affordances (editable mode): open the crouton create forms
+// with the event (and active category) preset. The caller is responsible for
+// refreshing pre-fetched data on crouton:mutation (SalesPosPanel does this).
+const { open: openCrouton } = useCrouton()
+
+function openCreateCategory() {
+  openCrouton('create', 'salesCategories', [], 'slideover', { eventId: props.eventId })
+}
+
+function openCreateProduct() {
+  openCrouton('create', 'salesProducts', [], 'slideover', {
+    eventId: props.eventId,
+    ...(selectedCategory.value ? { categoryId: selectedCategory.value } : {})
+  })
 }
 
 async function handleCheckout() {

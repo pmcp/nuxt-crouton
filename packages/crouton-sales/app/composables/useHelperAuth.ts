@@ -214,6 +214,50 @@ export function useHelperAuth() {
   }
 
   /**
+   * Login as a team member (no PIN)
+   *
+   * Uses the admin-helper-token endpoint: the logged-in team session is the
+   * credential, the server issues the same scoped helper token (displayName =
+   * the user's name) so all downstream POS endpoints work unchanged.
+   *
+   * @returns True if a session was established
+   */
+  async function loginAsAdmin(options: { teamId: string, eventId: string }): Promise<boolean> {
+    const { teamId, eventId } = options
+
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await $fetch<{
+        token: string
+        helperName: string
+        eventId: string
+        expiresAt: string
+      }>(`/api/crouton-sales/teams/${teamId}/events/${eventId}/admin-helper-token`, {
+        method: 'POST'
+      })
+
+      setSession({
+        token: response.token,
+        helperName: response.helperName,
+        eventId: response.eventId,
+        teamId,
+        expiresAt: response.expiresAt
+      })
+      return true
+    }
+    catch (err: unknown) {
+      const fetchError = err as { data?: { message?: string, statusMessage?: string }, statusMessage?: string }
+      error.value = fetchError.data?.message || fetchError.data?.statusMessage || fetchError.statusMessage || 'Login failed'
+      return false
+    }
+    finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
    * Validate current session with server
    */
   async function validateToken(): Promise<boolean> {
@@ -275,6 +319,7 @@ export function useHelperAuth() {
 
     // Methods
     login,
+    loginAsAdmin,
     logout,
     validateToken,
     loadSession,
