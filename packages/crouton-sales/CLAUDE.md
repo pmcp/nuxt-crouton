@@ -66,25 +66,23 @@ SettingsTab.
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-the header + two tabs (Orders / Settings, default `orders`) in a per-tab `<Suspense>`. The header is
-just the event switcher (with a "create event" item in its `#content-top`, same pattern as
-`CroutonFormReferenceSelect`) and the Kassa toggle — Duplicate/Delete moved into the Settings tab's
-Event Details header, and the Edit form button was removed (title/currency edit inline in
-Settings; the full form incl. slug is no longer reachable from the workspace). Per-order print
-status lives on the Orders tab rows as LED dots.
-Event dates are deliberately not shown anywhere in the workspace (irrelevant to the POS flow;
-columns remain in the DB). Deleting the current event navigates back to the events list via a
-`crouton:mutation` hook (matched on `itemIds`). The **Kassa toggle** opens a sticky aside
-(50/50 with the tab column via `xl:flex-1`, stacks below on narrow screens) hosting
-`<SalesPosPanel>` — the full POS beside the Orders tab, so new orders and print jobs are visible
-while taking orders.
+**kassa-first — no tabs**: header + `<SalesPosPanel>` as the main surface. The header is the event
+switcher (with a "create event" item in its `#content-top`, same pattern as
+`CroutonFormReferenceSelect`) and two panel toggles:
+- **Bestellingen** toggles `OrdersTab` as a third pane beside the POS's products/cart columns
+  (`xl:w-[28rem]`, internal scroll; stacks below the POS under xl)
+- **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
+  live in its Event Details header. The full event form (incl. slug) is not reachable from the
+  workspace.
+Per-order print status lives on the order rows as LED dots. Event dates are deliberately not shown
+anywhere in the workspace (irrelevant to the POS flow; columns remain in the DB). Deleting the
+current event navigates back to the events list via a `crouton:mutation` hook (matched on
+`itemIds`). Both panel components are async-setup, so each toggle target gets its own `<Suspense>`.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
-and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
-`router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
-(default `true`; `showHeader` hides the whole header row — event name/date + actions).
-The admin page passes `tab-param="tab"`; the `eventWorkspaceBlock` renderer passes
-`:show-switcher="false" :show-header="false"` (block shows only the tabs — the CMS page already
-provides the event title and the header actions don't apply there).
+and public CMS routes), `tabParam` (**legacy, ignored** — kept for consumer compatibility),
+`showSwitcher` / `showHeaderActions` / `showHeader` (default `true`).
+The `eventWorkspaceBlock` renderer passes `:show-switcher="false" :show-header="false"`, which now
+means the block shows **only the POS** — the settings/orders toggles live in the hidden header.
 The shell uses top-level `await`, so any non-page consumer must give it a `<Suspense>` boundary.
 
 `ProductsTab.vue` renders products as a **drag-reorderable list** (not a table): a bespoke `<ul>`

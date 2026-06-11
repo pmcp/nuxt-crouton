@@ -2,20 +2,27 @@
 /**
  * Event Workspace shell (reusable)
  *
- * Resolves an event from its slug, then renders the header (event switcher +
- * actions) and the four workspace tabs (Products / Orders / Printers /
- * Settings). Each tab content lives in <SalesEventWorkspace*Tab /> and does its
- * own data fetching via `useCollectionQuery` (Nuxt dedupes shared state).
+ * Kassa-first: resolves an event from its slug, then renders the header
+ * (event switcher + actions) above the POS, which is the main surface. No
+ * tabs — the two former tabs became header-driven panels:
+ *
+ *  - "Bewerken" expands the settings (SettingsTab) inline under the header
+ *  - "Bestellingen" toggles the orders list (OrdersTab) as a third pane
+ *    beside the POS's products/cart columns
  *
  * Used in two places:
- *  - the admin page `/admin/[team]/sales/events/[slug]` (full chrome, tab synced
- *    to `?tab=`)
+ *  - the admin page `/admin/[team]/sales/events/[slug]`
  *  - the `eventWorkspaceBlock` CMS block (event fixed by the editor, so the
- *    switcher is hidden and the tab stays local state by default)
+ *    switcher is hidden). NOTE: the block hides the header, so it currently
+ *    shows the POS only — the settings/orders toggles live in the header.
  *
  * @see app/pages/admin/[team]/sales/events/[slug]/index.vue
  * @see app/components/Blocks/EventWorkspaceRender.vue
  */
+// Reka UI splitter (the primitive Nuxt UI's resizable dashboard panels build
+// on) — UDashboardPanel itself needs a top-level UDashboardGroup, which can't
+// be embedded mid-page.
+import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { SalesEvent } from '~~/layers/sales/collections/events/types'
 
 const props = withDefaults(defineProps<{
@@ -28,15 +35,13 @@ const props = withDefaults(defineProps<{
    */
   teamParam?: string
   /**
-   * Query-key to persist the active tab in the URL (e.g. 'tab' → `?tab=orders`).
-   * When unset the active tab is local component state — preferred for the CMS
-   * block, where a bare query param could collide with other blocks or the
-   * page's own params.
+   * Legacy: used to sync the active tab to a URL query key. The workspace
+   * has no tabs anymore — accepted for consumer compatibility, ignored.
    */
   tabParam?: string
   /** Show the event switcher dropdown (hidden in the block — event is fixed). */
   showSwitcher?: boolean
-  /** Show the Edit / Duplicate header actions. */
+  /** Show the header action buttons (settings / orders toggles). */
   showHeaderActions?: boolean
   /**
    * Show the whole header row (event name + actions). Hidden in the block,
@@ -83,8 +88,9 @@ function openCreateEvent() {
   open('create', 'salesEvents')
 }
 
-// The workspace's own event can be deleted from the header — once the delete
-// mutation lands this page has nothing to show, so fall back to the events list.
+// The workspace's own event can be deleted from the settings panel — once the
+// delete mutation lands this page has nothing to show, so fall back to the
+// events list.
 const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
   if (
     payload.operation === 'delete'
@@ -97,39 +103,10 @@ const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
 })
 onUnmounted(unhookMutation)
 
-// Kassa aside: the POS opens in a panel beside the tab content, so orders /
-// print queues stay visible while taking orders. Local state — not worth a
-// query param, and the CMS block (showHeaderActions=false) never exposes it.
-const posOpen = ref(false)
-
-// Products live in the kassa now (editable POS) — no dedicated tab.
-const tabItems = [
-  { label: t('sales.orders.title'), value: 'orders', icon: 'i-lucide-receipt' },
-  { label: t('sales.events.settings'), value: 'settings', icon: 'i-lucide-settings' }
-]
-
-// Active tab: synced to a URL query key when `tabParam` is set (deep-linkable,
-// survives refresh), otherwise plain local state. `router.replace` keeps tab
-// switches out of the browser history.
-const localTab = ref('orders')
-const activeTab = computed({
-  get() {
-    if (props.tabParam) {
-      const q = route.query[props.tabParam]
-      const value = Array.isArray(q) ? q[0] : q
-      return (value && tabItems.some(i => i.value === value)) ? value : 'orders'
-    }
-    return localTab.value
-  },
-  set(value: string) {
-    if (props.tabParam) {
-      router.replace({ query: { ...route.query, [props.tabParam]: value } })
-    }
-    else {
-      localTab.value = value
-    }
-  }
-})
+// Header-driven panels. Local state — not worth query params, and the CMS
+// block (showHeaderActions=false) never exposes the toggles.
+const settingsOpen = ref(false)
+const ordersOpen = ref(false)
 </script>
 
 <template>
@@ -140,7 +117,7 @@ const activeTab = computed({
     </div>
   </div>
 
-  <div v-else class="space-y-6">
+  <div v-else class="space-y-4">
     <!-- Header -->
     <div v-if="showHeader" class="flex items-start justify-between">
       <div class="space-y-1">
@@ -178,50 +155,67 @@ const activeTab = computed({
       </div>
       <div v-if="showHeaderActions" class="flex gap-2">
         <UButton
-          icon="i-lucide-store"
+          icon="i-lucide-receipt"
           size="sm"
           color="primary"
-          :variant="posOpen ? 'solid' : 'soft'"
-          @click="posOpen = !posOpen"
+          :variant="ordersOpen ? 'solid' : 'soft'"
+          @click="ordersOpen = !ordersOpen"
         >
-          {{ t('sales.events.openPos') }}
+          {{ t('sales.orders.title') }}
+        </UButton>
+        <UButton
+          icon="i-lucide-pencil"
+          size="sm"
+          color="neutral"
+          :variant="settingsOpen ? 'solid' : 'outline'"
+          @click="settingsOpen = !settingsOpen"
+        >
+          {{ t('sales.events.edit') }}
         </UButton>
       </div>
     </div>
 
-    <!-- Tab column + optional kassa aside (stacks below on narrow screens) -->
-    <div class="flex flex-col xl:flex-row gap-6 xl:items-start">
-      <div class="flex-1 min-w-0 space-y-6">
-        <!-- Tabs -->
-        <UTabs v-model="activeTab" :items="tabItems" :content="false" />
-
-        <!-- Tab content -->
-        <!--
-          Each tab component runs top-level `await useCollectionQuery`, so it's an
-          async-setup component. Keying a <Suspense> on activeTab gives every tab its
-          own async boundary that is cleanly torn down on switch — without it, rapid
-          tab switching unmounts a still-resolving tab and Vue patches a detached
-          subtree (NotFoundError: insertBefore / "Cannot read properties of null
-          (reading 'subTree')").
-        -->
-        <div class="min-h-[400px]">
-          <Suspense :key="activeTab">
-            <SalesEventWorkspaceOrdersTab v-if="activeTab === 'orders'" :event="event" />
-            <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
+    <!-- Settings: expands under the header ("Bewerken"). Own Suspense —
+         SettingsTab is an async-setup component. Contained in a bordered
+         panel so the expansion reads as one block, not loose cards. -->
+    <UCollapsible :open="settingsOpen">
+      <template #content>
+        <div class="border border-default rounded-xl bg-elevated/20 p-4 sm:p-6 mb-4">
+          <Suspense>
+            <SalesEventWorkspaceSettingsTab :event="event" />
             <template #fallback>
               <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
             </template>
           </Suspense>
         </div>
-      </div>
+      </template>
+    </UCollapsible>
 
-      <!-- Kassa aside: full POS for this event, admin session = no PIN -->
-      <aside
-        v-if="posOpen"
-        class="xl:flex-1 xl:min-w-0 h-[70vh] xl:sticky xl:top-4 border border-default rounded-xl overflow-clip bg-default"
-      >
-        <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" />
-      </aside>
-    </div>
+    <!-- Kassa: the main surface. Orders join as a resizable pane on toggle
+         (drag the divider; sizes persist via autoSaveId). -->
+    <SplitterGroup
+      direction="horizontal"
+      auto-save-id="sales-workspace-pos"
+      class="flex border border-default rounded-xl overflow-clip bg-default h-[75vh]"
+    >
+      <SplitterPanel :min-size="35" class="min-w-0">
+        <!-- No panel header: the workspace header above already names the
+             event (the standalone order page keeps it). -->
+        <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" :show-header="false" />
+      </SplitterPanel>
+      <template v-if="ordersOpen">
+        <SplitterResizeHandle
+          class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
+        />
+        <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 overflow-y-auto p-4">
+          <Suspense>
+            <SalesEventWorkspaceOrdersTab :event="event" />
+            <template #fallback>
+              <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+            </template>
+          </Suspense>
+        </SplitterPanel>
+      </template>
+    </SplitterGroup>
   </div>
 </template>
