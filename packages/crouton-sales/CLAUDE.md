@@ -91,7 +91,10 @@ Event Details card. The full event form (incl. slug) is not reachable from the w
 Beside the POS, up to two **side panes** open via vertical tabs stacked in a reserved gutter at
 the kassa's right edge (Shell-owned, no prop plumbing). Both panes can be open at once, each
 resizable via Reka UI's Splitter (`SplitterGroup`/`Panel`/`ResizeHandle`; panels carry explicit
-`id`/`order` because the set is dynamic; ratios persist via `autoSaveId`). An open pane's tab
+`id`/`order` because the set is dynamic; ratios persist via `autoSaveId`). Pane visibility
+persists too: `useLocalStorage('sales-workspace-{orders,clients}-open')` with `initOnMounted`
+(SSR renders closed, restores after hydration); the keys are global across events, so the
+clients flag is gated per event by `requiresClient` (`clientsPaneOpen`). An open pane's tab
 hides — the pane header (icon + title, mirroring the tab) carries the close ✕:
 - **"Bestellingen"** opens `OrdersTab`; its pane header also carries the orders filter toggle
   (chip = active-filter count; state lifted into Shell, selects live in OrdersTab). The POS

@@ -113,12 +113,19 @@ const settingsOpen = ref(false)
 // Side panes beside the POS: orders, and clients (end-of-tab receipts —
 // recurring-clients mode only). Independent toggles — both can be open at
 // once; each closed pane keeps a vertical tab hanging in the right gutter.
-const ordersOpen = ref(false)
-const clientsOpen = ref(false)
+// Persisted in localStorage so the arrangement survives reloads, matching
+// the splitter ratios (autoSaveId). initOnMounted keeps SSR markup at the
+// default (closed) and restores after hydration.
+const ordersOpen = useLocalStorage('sales-workspace-orders-open', false, { initOnMounted: true })
+const clientsOpen = useLocalStorage('sales-workspace-clients-open', false, { initOnMounted: true })
+
+// The stored flag is global, but the clients pane only exists in
+// recurring-clients mode — gate the persisted value per event.
+const clientsPaneOpen = computed(() => clientsOpen.value && !!event.value?.requiresClient)
 
 // The gutter is reserved whenever at least one vertical tab is hanging.
 const hasGutter = computed(() =>
-  !ordersOpen.value || (!!event.value?.requiresClient && !clientsOpen.value)
+  !ordersOpen.value || (!!event.value?.requiresClient && !clientsPaneOpen.value)
 )
 
 // Orders-pane filters: the toggle lives in the pane header (next to ✕), the
@@ -265,7 +272,7 @@ const ordersFilterCount = ref(0)
             </div>
           </SplitterPanel>
         </template>
-        <template v-if="clientsOpen">
+        <template v-if="clientsPaneOpen">
           <SplitterResizeHandle
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
