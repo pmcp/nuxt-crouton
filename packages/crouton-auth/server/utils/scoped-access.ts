@@ -501,10 +501,12 @@ export interface UpsertScopedGrantOptions {
 /**
  * Create or update the grant for a resource + credential type.
  *
- * One grant per (organization, resourceType, resourceId, credentialType) —
- * domains call this when the source credential changes (e.g., an event's
- * PIN is edited). Updating resets usage counters and any lockout, since a
- * new secret starts a new lifecycle.
+ * One grant per (organization, resourceType, resourceId, credentialType).
+ * Safe to call on every login attempt (lazy sync from the domain's source
+ * credential): when the secret is unchanged, usage counters and lockout
+ * state are preserved — otherwise repeated syncing would defeat the
+ * brute-force protection. A changed secret starts a new lifecycle and
+ * resets everything.
  */
 export async function upsertScopedGrant(
   options: UpsertScopedGrantOptions
@@ -523,10 +525,9 @@ export async function upsertScopedGrant(
   } = options
 
   const db = useDB()
-  const secretHash = await hashGrantSecret(secret)
 
   const [existing] = await db
-    .select({ id: scopedAccessGrant.id })
+    .select()
     .from(scopedAccessGrant)
     .where(
       and(
@@ -539,23 +540,30 @@ export async function upsertScopedGrant(
     .limit(1)
 
   if (existing) {
+    const secretUnchanged = await verifyGrantSecret(secret, existing.secretHash)
     await db
       .update(scopedAccessGrant)
       .set({
-        secretHash,
         role,
         maxUses,
         expiresAt,
         tokenTtl,
-        usedCount: 0,
-        failedAttempts: 0,
-        lockedUntil: null,
         isActive: true,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: metadata ? JSON.stringify(metadata) : null,
+        ...(secretUnchanged
+          ? {}
+          : {
+              secretHash: await hashGrantSecret(secret),
+              usedCount: 0,
+              failedAttempts: 0,
+              lockedUntil: null
+            })
       })
       .where(eq(scopedAccessGrant.id, existing.id))
     return { id: existing.id }
   }
+
+  const secretHash = await hashGrantSecret(secret)
 
   const id = crypto.randomUUID()
   await db.insert(scopedAccessGrant).values({

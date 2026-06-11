@@ -369,7 +369,7 @@ The canonical header for scoped tokens is **`x-scoped-token`** (exported as `SCO
 
 ```typescript
 import {
-  upsertScopedGrant,          // create/update the grant for a resource (resets counters)
+  upsertScopedGrant,          // create/update the grant for a resource
   verifyAndRedeemGrant,       // verify secret + lockout + maxUses, mint token
   revokeScopedGrantsForResource,
   listScopedGrantsForResource // never returns secrets
@@ -388,6 +388,8 @@ await upsertScopedGrant({
 ```
 
 Brute-force protection is per-grant: 5 consecutive failures lock redemption for an exponentially growing window (1 min → 1 hour cap). This — not the hash — is the security boundary for low-entropy PINs; never mint tokens for unverified input around it. `credentialType` is `'pin'` today; `'link'` (URL-embedded secret) is reserved.
+
+`upsertScopedGrant` is safe to call on every login attempt (lazy sync — how sales' helper-login works, so no backfill or save-hook is needed): counters and lockout are preserved when the secret is unchanged, and only a *changed* secret resets them.
 
 Grants can't FK into domain tables — call `revokeScopedGrantsForResource` when the resource is deleted.
 

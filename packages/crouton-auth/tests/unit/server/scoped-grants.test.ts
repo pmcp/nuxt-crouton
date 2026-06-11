@@ -149,8 +149,14 @@ describe('server/utils/scoped-access grants', () => {
       expect(lastInsertedValues?.credentialType).toBe('pin')
     })
 
-    it('should update existing grant and reset counters', async () => {
-      selectResults = [{ id: 'existing-grant-id' }]
+    it('should reset counters when the secret changed', async () => {
+      const grant = await createMockGrantRecord('1234', {
+        id: 'existing-grant-id',
+        failedAttempts: 3,
+        usedCount: 7
+      })
+      selectResults = [grant]
+      vi.mocked(mockDb.insert).mockClear()
 
       const result = await upsertScopedGrant({
         organizationId: 'org-123',
@@ -163,10 +169,37 @@ describe('server/utils/scoped-access grants', () => {
       expect(result.id).toBe('existing-grant-id')
       expect(mockDb.insert).not.toHaveBeenCalled()
       expect(mockDb.update).toHaveBeenCalled()
+      expect(lastUpdateValues?.secretHash).toBeDefined()
       expect(lastUpdateValues?.usedCount).toBe(0)
       expect(lastUpdateValues?.failedAttempts).toBe(0)
       expect(lastUpdateValues?.lockedUntil).toBeNull()
       expect(lastUpdateValues?.isActive).toBe(true)
+    })
+
+    it('should preserve counters and lockout when the secret is unchanged', async () => {
+      const grant = await createMockGrantRecord('1234', {
+        id: 'existing-grant-id',
+        failedAttempts: 4,
+        usedCount: 7,
+        lockedUntil: new Date(Date.now() + 60000)
+      })
+      selectResults = [grant]
+      lastUpdateValues = null
+
+      await upsertScopedGrant({
+        organizationId: 'org-123',
+        resourceType: 'event',
+        resourceId: 'event-456',
+        secret: '1234',
+        role: 'helper'
+      })
+
+      expect(mockDb.update).toHaveBeenCalled()
+      // Lazy-sync on login must not give attackers a lockout reset
+      expect(lastUpdateValues).not.toHaveProperty('secretHash')
+      expect(lastUpdateValues).not.toHaveProperty('usedCount')
+      expect(lastUpdateValues).not.toHaveProperty('failedAttempts')
+      expect(lastUpdateValues).not.toHaveProperty('lockedUntil')
     })
   })
 

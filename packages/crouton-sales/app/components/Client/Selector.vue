@@ -143,7 +143,7 @@ async function createClient() {
       newClient = await $fetch<{ id: string; title: string }>(`/api/crouton-sales/events/${props.eventId}/clients`, {
         method: 'POST',
         body: { title },
-        headers: { 'x-helper-token': token.value }
+        headers: { 'x-scoped-token': token.value }
       })
     }
 

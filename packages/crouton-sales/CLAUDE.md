@@ -275,7 +275,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | Path | Auth | Purpose |
 |------|------|---------|
 | `teams/[id]/events/[eventId]/duplicate` POST | team admin | Clone an event + its categories/locations/products/printers |
-| `teams/[id]/events/[eventId]/helper-login` POST | public (PIN is the credential) | Validate PIN, issue scoped-access token |
+| `teams/[id]/events/[eventId]/helper-login` POST | public (PIN is the credential) | Thin wrapper over crouton-auth grants: lazily syncs `salesEvents.helperPin` into the event's `scopedAccessGrant` (counters preserved when unchanged), then `verifyAndRedeemGrant` mints the token. Brute-force lockout → 429 + Retry-After |
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
@@ -440,6 +440,8 @@ the matching key to all three locale files (keep en/nl/fr at parity).
 ## Helper Authentication
 
 Helpers (volunteers, staff) authenticate with an event's shared PIN. Every session is a `scopedAccessToken` row in `@fyit/crouton-auth`. There is no separate `salesHelpers` table. "Active Helpers" UI is a query over `scopedAccessToken` filtered by `resourceType='event'` + `organizationId=teamId` (see `active-helpers.get.ts` endpoints).
+
+Since the grants migration, the PIN check itself lives in crouton-auth: `helper-login` syncs `salesEvents.helperPin` into a `scopedAccessGrant` (`resourceType 'event'`, role `helper`) on each login and redeems via `verifyAndRedeemGrant` — per-grant lockout (5 fails → exponential lock, surfaced as 429) replaces the old unprotected string compare. `salesEvents.helperPin` stays the editable source of truth; the grant is derived state, created on first login (no backfill). Helper requests authenticate via the `pos-helper-token` cookie (set by `useScopedAccess`) or the canonical `x-scoped-token` header — the old `x-helper-token` header was never read server-side and has been removed from Panel.vue/Selector.vue.
 
 ### Client-side Usage
 

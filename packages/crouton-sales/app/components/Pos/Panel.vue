@@ -103,7 +103,7 @@ async function loadOrderData() {
   try {
     orderData.value = await $fetch<OrderData>(
       `/api/crouton-sales/events/${publicEvent.value.id}/order-data`,
-      { headers: { 'x-helper-token': token.value } }
+      { headers: { 'x-scoped-token': token.value } }
     )
   }
   catch (err: any) {
