@@ -163,7 +163,7 @@ function jobStatusMeta(status: string | number | undefined) {
 function printerLed(orderId: string, printerId: string) {
   const statuses = printerJobs(orderId, printerId).map(j => String(j.status ?? '0'))
   if (!statuses.length) {
-    return { class: 'bg-accented', label: t('sales.common.none') }
+    return { class: 'bg-accented', label: t('sales.printQueue.noTicket', 'No ticket') }
   }
   if (statuses.includes('9')) {
     return { class: 'bg-error', label: t('sales.printQueue.statusError', 'Error') }
@@ -453,7 +453,7 @@ function openEditOrder(id: string) {
                     {{ printer.title }}
                   </p>
                   <p v-if="!printerJobs(order.id, printer.id).length" class="text-xs text-muted">
-                    {{ t('sales.common.none') }}
+                    {{ t('sales.printQueue.noTicketForPrinter') }}
                   </p>
                   <div
                     v-for="job in printerJobs(order.id, printer.id)"

@@ -420,6 +420,8 @@
       "printer": "Imprimante",
       "retries": "tentatives",
       "statusPending": "En attente",
+      "noTicket": "Aucun ticket",
+      "noTicketForPrinter": "Aucun ticket — aucun article de cette commande ne va à l'emplacement de cette imprimante. Une imprimante/un emplacement est-il défini sur les produits ?",
       "statusPrinting": "Impression",
       "statusDone": "Terminé",
       "statusError": "Erreur",

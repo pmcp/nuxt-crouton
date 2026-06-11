@@ -11,13 +11,15 @@ const props = defineProps<{
 
 const { t } = useT()
 
-// status is a string enum: 0=pending, 1=printing, 2=done, 9=error
+// status is a string enum: 0=pending, 1=printing, 2=done, 9=error.
+// Rendered as an LED dot — same color language as the order-row and
+// printer-card LEDs (pulsing orange = busy, green = done, red = failed).
 function statusMeta(status: string | number | undefined) {
   switch (String(status ?? '')) {
-    case '1': return { label: t('sales.printQueue.statusPrinting', 'Printing'), color: 'info' as const }
-    case '2': return { label: t('sales.printQueue.statusDone', 'Done'), color: 'success' as const }
-    case '9': return { label: t('sales.printQueue.statusError', 'Error'), color: 'error' as const }
-    default: return { label: t('sales.printQueue.statusPending', 'Pending'), color: 'warning' as const }
+    case '2': return { label: t('sales.printQueue.statusDone', 'Done'), class: 'bg-success' }
+    case '9': return { label: t('sales.printQueue.statusError', 'Error'), class: 'bg-error' }
+    case '1': return { label: t('sales.printQueue.statusPrinting', 'Printing'), class: 'bg-warning animate-pulse' }
+    default: return { label: t('sales.printQueue.statusPending', 'Pending'), class: 'bg-warning animate-pulse' }
   }
 }
 
@@ -73,8 +75,8 @@ const timeLabel = computed(() => {
       </p>
     </div>
     <span v-if="timeLabel" class="shrink-0 text-xs text-dimmed tabular-nums">{{ timeLabel }}</span>
-    <UBadge :color="status.color" variant="subtle" size="sm" class="shrink-0">
-      {{ status.label }}
-    </UBadge>
+    <UTooltip :text="status.label">
+      <span class="block size-2.5 rounded-full shrink-0" :class="status.class" />
+    </UTooltip>
   </div>
 </template>

@@ -421,6 +421,8 @@
       "printer": "Printer",
       "retries": "retries",
       "statusPending": "Pending",
+      "noTicket": "No ticket",
+      "noTicketForPrinter": "No ticket — no items in this order go to this printer's location. Is a printer/location set on the products?",
       "statusPrinting": "Printing",
       "statusDone": "Done",
       "statusError": "Error",

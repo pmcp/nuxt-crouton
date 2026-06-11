@@ -421,6 +421,8 @@
       "printer": "Printer",
       "retries": "pogingen",
       "statusPending": "Wachtend",
+      "noTicket": "Geen ticket",
+      "noTicketForPrinter": "Geen ticket — geen items in deze bestelling voor de locatie van deze printer. Is er een printer/locatie ingesteld op de producten?",
       "statusPrinting": "Printen",
       "statusDone": "Klaar",
       "statusError": "Fout",
