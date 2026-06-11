@@ -58,7 +58,7 @@ const router = useRouter()
 const teamParam = computed(() => props.teamParam || (route.params.team as string))
 const eventSlug = computed(() => props.eventSlug)
 
-const { items: events, refresh: refreshEvents } = await useCollectionQuery('salesEvents')
+const { items: events } = await useCollectionQuery('salesEvents')
 
 const event = computed(() =>
   (events.value as SalesEvent[] | null)?.find(e => e.slug === eventSlug.value)
@@ -79,18 +79,8 @@ function switchEvent(eventId: string) {
   }
 }
 
-function openEditEvent() {
-  if (!event.value) return
-  open('update', 'salesEvents', [event.value.id])
-}
-
 function openCreateEvent() {
   open('create', 'salesEvents')
-}
-
-function openDeleteEvent() {
-  if (!event.value) return
-  open('delete', 'salesEvents', [event.value.id])
 }
 
 // The workspace's own event can be deleted from the header — once the delete
@@ -107,28 +97,6 @@ const unhookMutation = useNuxtApp().hook('crouton:mutation', (payload: any) => {
 })
 onUnmounted(unhookMutation)
 
-const duplicating = ref(false)
-async function duplicateEvent() {
-  if (!event.value) return
-  duplicating.value = true
-  try {
-    const response = await $fetch<{ slug?: string }>(
-      `/api/crouton-sales/teams/${teamParam.value}/events/${event.value.id}/duplicate`,
-      { method: 'POST' }
-    )
-    if (response?.slug) {
-      // Refresh the cached events list so the freshly-duplicated event is
-      // present before we navigate — otherwise the workspace resolves the new
-      // slug against the stale list and shows "Event not found".
-      await refreshEvents()
-      router.push(`/admin/${teamParam.value}/sales/events/${response.slug}`)
-    }
-  }
-  finally {
-    duplicating.value = false
-  }
-}
-
 // Kassa aside: the POS opens in a panel beside the tab content, so orders /
 // print queues stay visible while taking orders. Local state — not worth a
 // query param, and the CMS block (showHeaderActions=false) never exposes it.
@@ -137,7 +105,6 @@ const posOpen = ref(false)
 const tabItems = [
   { label: t('sales.products.title'), value: 'products', icon: 'i-lucide-package' },
   { label: t('sales.orders.title'), value: 'orders', icon: 'i-lucide-receipt' },
-  { label: t('sales.sidebar.printers'), value: 'printers', icon: 'i-lucide-printer' },
   { label: t('sales.events.settings'), value: 'settings', icon: 'i-lucide-settings' }
 ]
 
@@ -188,7 +155,22 @@ const activeTab = computed({
           class="w-72"
           :ui="{ base: 'font-semibold text-lg' }"
           @update:model-value="switchEvent"
-        />
+        >
+          <!-- Create-from-dropdown, same pattern as CroutonFormReferenceSelect -->
+          <template #content-top>
+            <div class="p-1">
+              <UButton
+                color="neutral"
+                icon="i-lucide-plus"
+                variant="soft"
+                block
+                @click="openCreateEvent"
+              >
+                {{ t('reference.createNew', { label: t('sales.events.title') }) }}
+              </UButton>
+            </div>
+          </template>
+        </USelectMenu>
         <h2 v-else class="font-semibold text-lg">{{ event.title }}</h2>
         <p v-if="event.eventType" class="text-muted text-sm">
           {{ event.eventType }}
@@ -203,30 +185,6 @@ const activeTab = computed({
           @click="posOpen = !posOpen"
         >
           {{ t('sales.events.openPos') }}
-        </UButton>
-        <UButton icon="i-lucide-plus" size="sm" @click="openCreateEvent">
-          {{ t('common.create') }}
-        </UButton>
-        <UButton variant="outline" icon="i-lucide-pencil" size="sm" @click="openEditEvent">
-          {{ t('sales.events.edit') }}
-        </UButton>
-        <UButton
-          variant="outline"
-          icon="i-lucide-copy"
-          size="sm"
-          :loading="duplicating"
-          @click="duplicateEvent"
-        >
-          {{ t('sales.events.duplicate') }}
-        </UButton>
-        <UButton
-          variant="outline"
-          color="error"
-          icon="i-lucide-trash-2"
-          size="sm"
-          @click="openDeleteEvent"
-        >
-          {{ t('common.delete') }}
         </UButton>
       </div>
     </div>
@@ -250,7 +208,6 @@ const activeTab = computed({
           <Suspense :key="activeTab">
             <SalesEventWorkspaceProductsTab v-if="activeTab === 'products'" :event="event" />
             <SalesEventWorkspaceOrdersTab v-else-if="activeTab === 'orders'" :event="event" />
-            <SalesEventWorkspacePrintersTab v-else-if="activeTab === 'printers'" :event="event" />
             <SalesEventWorkspaceSettingsTab v-else-if="activeTab === 'settings'" :event="event" />
             <template #fallback>
               <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
@@ -262,7 +219,7 @@ const activeTab = computed({
       <!-- Kassa aside: full POS for this event, admin session = no PIN -->
       <aside
         v-if="posOpen"
-        class="xl:w-[36rem] shrink-0 h-[70vh] xl:sticky xl:top-4 border border-default rounded-xl overflow-clip bg-default"
+        class="xl:flex-1 xl:min-w-0 h-[70vh] xl:sticky xl:top-4 border border-default rounded-xl overflow-clip bg-default"
       >
         <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" />
       </aside>

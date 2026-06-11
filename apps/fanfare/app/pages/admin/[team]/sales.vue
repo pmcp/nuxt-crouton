@@ -27,7 +27,7 @@ const { t } = useT()
     </template>
 
     <template #body>
-      <div class="max-w-6xl mx-auto w-full">
+      <div class="max-w-[96rem] mx-auto w-full">
         <NuxtPage />
       </div>
     </template>

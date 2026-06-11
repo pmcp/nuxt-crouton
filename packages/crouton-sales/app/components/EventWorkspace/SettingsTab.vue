@@ -113,6 +113,36 @@ async function saveHelperPin() {
   }
 }
 
+// Event-level actions (moved out of the workspace header to declutter it).
+// Same useCollectionQuery cache as the Shell, so refresh() updates its list
+// before navigating to the duplicated event's slug.
+const router = useRouter()
+const { refresh: refreshEvents } = await useCollectionQuery('salesEvents')
+
+const duplicating = ref(false)
+async function duplicateEvent() {
+  duplicating.value = true
+  try {
+    const response = await $fetch<{ slug?: string }>(
+      `/api/crouton-sales/teams/${teamParam.value}/events/${props.event.id}/duplicate`,
+      { method: 'POST' }
+    )
+    if (response?.slug) {
+      await refreshEvents()
+      router.push(`/admin/${teamParam.value}/sales/events/${response.slug}`)
+    }
+  }
+  finally {
+    duplicating.value = false
+  }
+}
+
+// Delete opens the standard confirm; the Shell's crouton:mutation hook
+// navigates back to the events list once the delete lands.
+function deleteEvent() {
+  open('delete', 'salesEvents', [props.event.id])
+}
+
 function openCreateCategory() {
   open('create', 'salesCategories', [], 'slideover', { eventId: props.event.id })
 }
@@ -141,16 +171,37 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
     <!-- Event details (inline editable) -->
     <UCard>
       <template #header>
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <h3 class="font-semibold">{{ t('sales.workspace.eventDetails') }}</h3>
-          <UButton
-            size="xs"
-            :loading="savingEventDetails"
-            :disabled="!eventDetailsDirty"
-            @click="saveEventDetails"
-          >
-            {{ t('sales.common.save') }}
-          </UButton>
+          <div class="flex items-center gap-2">
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              icon="i-lucide-copy"
+              :loading="duplicating"
+              @click="duplicateEvent"
+            >
+              {{ t('sales.events.duplicate') }}
+            </UButton>
+            <UButton
+              size="xs"
+              variant="outline"
+              color="error"
+              icon="i-lucide-trash-2"
+              @click="deleteEvent"
+            >
+              {{ t('common.delete') }}
+            </UButton>
+            <UButton
+              size="xs"
+              :loading="savingEventDetails"
+              :disabled="!eventDetailsDirty"
+              @click="saveEventDetails"
+            >
+              {{ t('sales.common.save') }}
+            </UButton>
+          </div>
         </div>
       </template>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -265,6 +316,10 @@ const { data: activeHelpers, pending: activeHelpersPending, refresh: refreshActi
         {{ t('sales.workspace.noLocations') }}
       </div>
     </UCard>
+
+    <!-- Printer management (the dedicated Printers tab was removed — per-order
+         print status now lives on the order rows as LED indicators) -->
+    <SalesEventWorkspacePrintersTab :event="event" />
 
     <!-- Active Helpers (scoped tokens, not a collection) -->
     <UCard>

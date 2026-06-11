@@ -1,5 +1,11 @@
 <script setup lang="ts">
-const props = defineProps<{ orderId: string, remarks?: string }>()
+const props = defineProps<{
+  orderId: string
+  remarks?: string
+  /** This order's print queue rows (passed by OrdersTab, which owns the
+   * event-wide query) — rendered as a per-printer detail list. */
+  printJobs?: any[]
+}>()
 
 const { t } = useT()
 
@@ -64,5 +70,18 @@ function optionsText(options?: Record<string, unknown> | null) {
         <span class="tabular-nums">{{ formatPrice(total) }}</span>
       </div>
     </template>
+
+    <!-- Print jobs for this order (what the removed Printers tab used to list) -->
+    <div v-if="printJobs?.length" class="mt-3 pt-3 border-t border-default/60">
+      <p class="text-xs font-semibold text-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
+        <UIcon name="i-lucide-printer" class="shrink-0" />
+        {{ t('sales.sidebar.printers') }}
+      </p>
+      <ul class="divide-y divide-default/60">
+        <li v-for="job in printJobs" :key="job.id" class="py-2">
+          <SalesPrintqueuesCard :item="job" stateless />
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
