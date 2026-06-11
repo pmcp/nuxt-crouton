@@ -59,23 +59,25 @@ app/pages/admin/[team]/sales/
 ```
 
 Event workspace tabs are extracted into reusable components under `app/components/EventWorkspace/`:
-`ProductsTab.vue`, `OrdersTab.vue`, `PrintersTab.vue`, `SettingsTab.vue`
-(auto-imported as `SalesEventWorkspaceProductsTab`, etc.)
+`OrdersTab.vue`, `SettingsTab.vue` (+ `SettingsListCard.vue`), auto-imported as
+`SalesEventWorkspaceOrdersTab`, etc. `ProductsTab.vue` and `PrintersTab.vue` still exist but are
+**no longer mounted anywhere** — products are managed inside the editable POS, printers inside
+SettingsTab.
 
 The workspace **shell** itself is `EventWorkspace/Shell.vue` (auto-import `SalesEventWorkspaceShell`):
 resolves the event from a `:event-slug` prop via `useCollectionQuery('salesEvents')`, then renders
-the header + three tabs (Products / Orders / Settings) in a per-tab `<Suspense>`. The header is
+the header + two tabs (Orders / Settings, default `orders`) in a per-tab `<Suspense>`. The header is
 just the event switcher (with a "create event" item in its `#content-top`, same pattern as
 `CroutonFormReferenceSelect`) and the Kassa toggle — Duplicate/Delete moved into the Settings tab's
 Event Details header, and the Edit form button was removed (title/currency edit inline in
-Settings; the full form incl. slug is no longer reachable from the workspace). The Printers tab
-was removed: printer management renders inside SettingsTab (`<SalesEventWorkspacePrintersTab>`
-embedded as-is) and per-order print status lives on the Orders tab rows as LED dots.
+Settings; the full form incl. slug is no longer reachable from the workspace). Per-order print
+status lives on the Orders tab rows as LED dots.
 Event dates are deliberately not shown anywhere in the workspace (irrelevant to the POS flow;
 columns remain in the DB). Deleting the current event navigates back to the events list via a
 `crouton:mutation` hook (matched on `itemIds`). The **Kassa toggle** opens a sticky aside
-(`xl:w-[36rem]`, stacks below the tabs on narrow screens) hosting `<SalesPosPanel>` — the full POS
-beside the Orders/Printers tabs, so new orders and print jobs are visible while taking orders.
+(50/50 with the tab column via `xl:flex-1`, stacks below on narrow screens) hosting
+`<SalesPosPanel>` — the full POS beside the Orders tab, so new orders and print jobs are visible
+while taking orders.
 Props: `eventSlug` (required), `teamParam` (defaults to `route.params.team`, present in both admin
 and public CMS routes), `tabParam` (a query key → syncs the active tab to the URL via
 `router.replace`; unset ⇒ local `ref` state), `showSwitcher` / `showHeaderActions` / `showHeader`
@@ -102,16 +104,18 @@ and **remark** badges (`hasOptions` / `requiresRemark`). The tab therefore also 
 `OrdersTab.vue` renders orders as a **plain expandable list** (not a table, not sortable) styled to
 match `ProductsTab`: a `<ul>` of rows showing the order number (mono), client name with a `Staff`
 badge when `isPersonnel`, the helper who created it (`order.owner` — the helper displayName set by
-the order POST), and a status badge (color-coded). **Clicking a row toggles expand** (accordion-ish
+the order POST) — no status badge: the printer LEDs convey state. **Clicking a row toggles expand** (accordion-ish
 via an `expandedIds` Set; the chevron rotates). The pencil button (hover, `@click.stop`) opens the
 `salesOrders` update slideover via `useCrouton().open`. The helper-filter / auto-refresh / count
 header is unchanged. It does **not** use `CroutonCollection`.
 Each row also shows **printer LEDs**: one dot per active event printer (queries `salesPrinters` +
 `salesPrintqueues` scoped to the event, jobs grouped by `orderId`). Grey = no ticket for that
 printer, orange pulsing = pending/printing (0/1), green = done (2), red = failed (9) — worst
-status wins; tooltip = printer name + status. Auto-refresh also refreshes the print queues. The
-expand panel (`OrderItems`) receives `:print-jobs` and lists them via `<SalesPrintqueuesCard>`
-(the removed Printers tab's job list, per order).
+status wins; a hover `UPopover` per dot lists that printer's jobs (status, time, failure reason).
+Auto-refresh also refreshes the print queues. The expand panel (`OrderItems`) receives
+`:print-jobs` and lists them via `<SalesPrintqueuesCard>`, each followed by **what that ticket
+printed** (`jobItemsText`: kitchen jobs = items whose `productIdData.locationId` matches the
+job's `locationId`; receipt-mode/locationless jobs = the whole order).
 
 `OrderItems.vue` (auto-import `SalesEventWorkspaceOrderItems`) is the **lazy** expand panel: it
 mounts only when a row is expanded (`v-if`), so its `useCollectionQuery('salesOrderitems', { query:
@@ -122,11 +126,18 @@ Requires the app's `sales-orderitems` GET endpoint to honor `?orderId=` — the 
 `getAllSalesOrderitems(teamId, { orderId })` filter (mirrors the products `eventId` scoping).
 
 `SettingsTab.vue` edits the event's **core fields inline** (title, currency) via an
-"Event Details" card — saved with `useCollectionMutation('salesEvents').update`,
-Save disabled until dirty. **Slug is intentionally excluded** (it's the route param; editing it inline
-breaks the current URL — use the workspace's top-right "Edit" button for the slug). The tab also
-hosts Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, Categories,
-Locations, and the Active Helpers list.
+"Event Details" card (header also carries Duplicate/Delete) — saved with
+`useCollectionMutation('salesEvents').update`, Save disabled until dirty. **Slug is intentionally
+excluded** (it's the route param; editing it inline breaks the current URL). The tab also hosts
+Helper PIN, Client Selection mode (`salesEventsettings`), Receipt Settings, the Active Helpers
+list, and a 3-column grid of **compact catalog cards** (`SettingsListCard.vue`, auto-import
+`SalesEventWorkspaceSettingsListCard`): Categories / Locations / Printers as simple rows with the
+POS slide-out hover affordances (pencil right; drag grip left when `orderField` is set).
+Categories reorder persists `displayOrder` — the same field the kassa tabs sort and reorder by —
+via per-row `update()`. The printers card header carries the requeue-failed-jobs button
+(`printqueues/retry-failed`). `SettingsListCard` props: `title`, `collection`, `rows`
+(`{ id, title, subtitle? }`), `pending?`, `emptyLabel?`, `createData?`, `orderField?`; slot
+`header-actions`.
 
 ### Per-event currency (`useSalesCurrency`)
 
@@ -255,7 +266,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | `CategoryTabs.vue` | `SalesClientCategoryTabs` | Category navigation tabs |
 | `ProductOptionsSelect.vue` | `SalesClientProductOptionsSelect` | Product variant/option selection |
 | `CartTotal.vue` | `SalesClientCartTotal` | Order total display with item count |
-| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds catalog editing: "+" buttons open the crouton create forms (category with eventId preset; product with eventId + active categoryId preset), and the active category tab shows a pencil (CategoryTabs `editable` + `@edit`) opening its update form. Product cards get an edit pencil + drag-reorder (ProductList `editable`; persists via `useTreeMutation('salesProducts').reorderSiblings`, order = visual index in the visible set, same as ProductsTab). The POS product list is sorted by `sortOrder` then title. The Category/Location/Product update forms carry a two-step inline delete (arm → confirm; `sales.common.confirmDelete`) instead of a nested delete overlay |
+| `OrderInterface.vue` | `SalesClientOrderInterface` | Main order page combining all components. `editable` prop (admin sessions only) adds catalog editing: "+" buttons open the crouton create forms (category with eventId preset; product with eventId + active categoryId preset), and the active category tab shows a pencil (CategoryTabs `editable` + `@edit`) opening its update form. The category **tabs themselves drag-reorder** (CategoryTabs `@reorder`; raw SortableJS on the tablist with a key-bump remount — persists `displayOrder`, which the POS sorts tabs by). Product cards get slide-out hover edit/reorder (ProductList `editable`; persists via `useTreeMutation('salesProducts').reorderSiblings`); the list sorts by `sortOrder` then title. An eye toggle (admin only) reveals **inactive products** (dimmed + badge; clicking one opens its edit form instead of the cart). The Category/Location/Product update forms carry a two-step inline delete (arm → confirm; `sales.common.confirmDelete`) instead of a nested delete overlay |
 | `Selector.vue` | `SalesClientSelector` | Client selector with create-on-type |
 | `OfflineBanner.vue` | `SalesClientOfflineBanner` | Offline mode indicator |
 

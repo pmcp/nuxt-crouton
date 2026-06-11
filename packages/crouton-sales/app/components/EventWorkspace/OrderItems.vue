@@ -29,6 +29,20 @@ const { format: formatPrice } = useSalesCurrency()
 
 const total = computed(() => rows.value.reduce((sum, r) => sum + (Number(r.totalPrice) || 0), 0))
 
+// What a given print job actually printed: kitchen tickets carry the items
+// routed to the job's location (product.locationId), receipt-mode jobs (or
+// jobs without a location) print the whole order.
+function jobItemsText(job: any): string {
+  const all = rows.value
+  const isWholeOrder = job?.printMode === 'receipt' || !job?.locationId
+  const subset = isWholeOrder
+    ? all
+    : all.filter(i => (i.productIdData as any)?.locationId === job.locationId)
+  return subset
+    .map(i => `${i.quantity}× ${i.productIdData?.title || t('sales.orders.unknownProduct')}`)
+    .join(' · ')
+}
+
 function optionsText(options?: Record<string, unknown> | null) {
   if (!options) return ''
   const entries = Object.entries(options).filter(([, v]) => v !== null && v !== undefined && v !== '')
@@ -80,6 +94,9 @@ function optionsText(options?: Record<string, unknown> | null) {
       <ul class="divide-y divide-default/60">
         <li v-for="job in printJobs" :key="job.id" class="py-2">
           <SalesPrintqueuesCard :item="job" stateless />
+          <p v-if="jobItemsText(job)" class="text-xs text-muted mt-1 ps-7">
+            {{ jobItemsText(job) }}
+          </p>
         </li>
       </ul>
     </div>

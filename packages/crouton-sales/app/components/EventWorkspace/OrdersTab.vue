@@ -100,6 +100,13 @@ function printerLed(orderId: string, printerId: string) {
   return { class: 'bg-success', label: t('sales.printQueue.statusDone', 'Done') }
 }
 
+// Spooler error messages are stored in English; translate the known set.
+function jobError(job: PrintJobRow): string {
+  const raw = job.errorMessage || ''
+  const key = printErrorKey(raw)
+  return key ? t(key, raw) : raw
+}
+
 function jobTime(job: any): string {
   const v = job?.completedAt || job?.createdAt
   if (!v) return ''
@@ -159,29 +166,6 @@ function toggleExpand(id: string) {
   expandedIds.value = next
 }
 
-function statusColor(status: string) {
-  switch (status) {
-    case 'pending': return 'warning'
-    case 'processing': return 'info'
-    case 'completed': return 'success'
-    case 'cancelled': return 'error'
-    case 'failed': return 'error'
-    case 'print_failed': return 'error'
-    default: return 'neutral'
-  }
-}
-
-function statusLabel(status: string) {
-  switch (status) {
-    case 'pending': return t('sales.orders.pending', 'Pending')
-    case 'processing': return t('sales.orders.processing', 'Processing')
-    case 'completed': return t('sales.orders.completed', 'Completed')
-    case 'cancelled': return t('sales.orders.cancelled', 'Cancelled')
-    case 'print_failed': return t('sales.orders.printFailed', 'Print failed')
-    default: return status
-  }
-}
-
 function openEditOrder(id: string) {
   open('update', 'salesOrders', [id], 'slideover')
 }
@@ -232,14 +216,42 @@ function openEditOrder(id: string) {
         class="bg-default"
       >
         <div
-          class="group flex items-center gap-3 px-3 py-2.5 hover:bg-elevated/50 transition-colors cursor-pointer"
+          class="group relative overflow-hidden hover:bg-elevated/50 transition-colors cursor-pointer"
           @click="toggleExpand(order.id)"
         >
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="shrink-0 text-dimmed transition-transform"
-            :class="expandedIds.has(order.id) ? 'rotate-90' : ''"
-          />
+          <!-- Expand chevron slides in from the left edge (stays out while
+               the row is expanded), pushing the content inward — same
+               affordance pattern as the POS product cards. -->
+          <div
+            class="absolute left-0 top-0 bottom-0 z-10 flex items-center ps-3
+                   transition-transform duration-200 ease-out"
+            :class="expandedIds.has(order.id) ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0 pointer-coarse:translate-x-0'"
+          >
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="shrink-0 text-dimmed transition-transform"
+              :class="expandedIds.has(order.id) ? 'rotate-90' : ''"
+            />
+          </div>
+
+          <!-- Edit strip slides in from the right (full height, bookings-card
+               style), pushing the LEDs inward -->
+          <button
+            type="button"
+            class="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center px-2.5
+                   bg-elevated/95 hover:bg-elevated text-muted hover:text-highlighted cursor-pointer
+                   transition-all duration-200 ease-out translate-x-full group-hover:translate-x-0
+                   pointer-coarse:translate-x-0"
+            :aria-label="t('common.edit')"
+            @click.stop="openEditOrder(order.id)"
+          >
+            <UIcon name="i-lucide-pencil" class="size-4" />
+          </button>
+
+          <div
+            class="flex items-center gap-3 px-3 py-2.5 transition-[padding] duration-200 ease-out group-hover:pe-14 pointer-coarse:pe-14"
+            :class="expandedIds.has(order.id) ? 'ps-9' : 'group-hover:ps-9 pointer-coarse:ps-9'"
+          >
           <span class="shrink-0 font-mono font-semibold tabular-nums text-primary">
             #{{ order.eventOrderNumber ?? '—' }}
           </span>
@@ -294,24 +306,14 @@ function openEditOrder(id: string) {
                       <span v-if="jobTime(job)" class="text-xs text-dimmed tabular-nums">{{ jobTime(job) }}</span>
                     </div>
                     <p v-if="String(job.status ?? '') === '9' && job.errorMessage" class="text-xs text-error">
-                      {{ job.errorMessage }}
+                      {{ jobError(job) }}
                     </p>
                   </div>
                 </div>
               </template>
             </UPopover>
           </div>
-          <UBadge :color="statusColor(order.status)" variant="subtle" size="sm" class="shrink-0">
-            {{ statusLabel(order.status) }}
-          </UBadge>
-          <UButton
-            icon="i-lucide-pencil"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            @click.stop="openEditOrder(order.id)"
-          />
+          </div>
         </div>
         <SalesEventWorkspaceOrderItems
           v-if="expandedIds.has(order.id)"
