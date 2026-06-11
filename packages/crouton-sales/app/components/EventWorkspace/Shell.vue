@@ -118,8 +118,9 @@ const ordersOpen = ref(false)
   </div>
 
   <div v-else class="space-y-4">
-    <!-- Header -->
-    <div v-if="showHeader" class="flex items-start justify-between">
+    <!-- Header. Same right gutter as the kassa when the orders tab hangs
+         there, so Bewerken aligns with the kassa edge, not the gutter. -->
+    <div v-if="showHeader" class="flex items-start justify-between" :class="ordersOpen ? '' : 'pe-11'">
       <div class="space-y-1">
         <USelectMenu
           v-if="showSwitcher"
@@ -203,8 +204,12 @@ const ordersOpen = ref(false)
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
           <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 flex flex-col">
-            <div class="shrink-0 flex items-center justify-between px-4 pt-3">
-              <span class="text-sm font-semibold">{{ t('sales.orders.title') }}</span>
+            <!-- Pane header mirrors the hanging tab: same bg + icon, with ✕ -->
+            <div class="shrink-0 flex items-center justify-between gap-2 px-3 py-2 bg-elevated/60 border-b border-default">
+              <span class="flex items-center gap-1.5 text-sm font-medium">
+                <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0 text-muted" />
+                {{ t('sales.orders.title') }}
+              </span>
               <UButton
                 icon="i-lucide-x"
                 size="xs"
@@ -233,8 +238,9 @@ const ordersOpen = ref(false)
     <button
       v-if="!ordersOpen"
       type="button"
-      class="absolute right-0 top-5 flex flex-col items-center gap-1.5 px-1.5 py-3 rounded-md
-             cursor-pointer border border-default bg-elevated/60 hover:bg-elevated
+      class="absolute top-2 left-[calc(100%-2.75rem)] -ml-px flex flex-col items-center gap-1.5
+             px-1.5 py-3 rounded-e-md cursor-pointer
+             border border-l-0 border-default bg-elevated/60 hover:bg-elevated
              text-muted hover:text-highlighted transition-colors"
       :aria-label="t('sales.orders.title')"
       @click="ordersOpen = true"
