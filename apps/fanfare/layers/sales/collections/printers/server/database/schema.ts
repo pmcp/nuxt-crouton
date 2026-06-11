@@ -27,7 +27,8 @@ export const salesPrinters = sqliteTable('sales_printers', {
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
   eventId: text('eventId').notNull(),
-  locationId: text('locationId').notNull(),
+  // Nullable: receipt printers carry no location (kitchen routing key only)
+  locationId: text('locationId'),
   title: text('title').notNull(),
   ipAddress: text('ipAddress').notNull(),
   port: text('port'),

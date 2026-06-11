@@ -6,7 +6,8 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  locationId: z.string().min(1, 'locationId is required'),
+  // Nullable: receipt printers carry no location (kitchen routing key only)
+  locationId: z.string().nullish(),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),

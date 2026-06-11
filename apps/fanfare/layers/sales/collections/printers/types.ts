@@ -28,7 +28,8 @@ export interface SalesPrinter {
   teamId: string
   owner: string
   eventId: string
-  locationId: string
+  /** Kitchen routing key — null for receipt printers (they print the whole order) */
+  locationId: string | null
   title: string
   ipAddress: string
   port?: string
@@ -48,7 +49,7 @@ export interface SalesPrinter {
 export type SalesPrinterFormData = z.infer<typeof salesPrinterSchema>
 // New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
 // generated POST endpoint provides them; other callers (e.g. seed) may omit them.
-export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
+export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'locationId'> & { id?: string; createdBy?: string; updatedBy?: string; locationId?: string | null }
 
 // Props type for the Form component
 export interface SalesPrinterFormProps {

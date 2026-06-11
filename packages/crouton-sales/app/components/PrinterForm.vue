@@ -17,7 +17,7 @@
 
   <UForm
     v-else
-    :schema="schema"
+    :schema="formSchema"
     :state="state"
     @submit="handleSubmit"
     @error="handleValidationError"
@@ -37,7 +37,32 @@
             <UInput v-model="state.title" class="w-full" size="xl" />
           </UFormField>
 
-          <UFormField :label="t('sales.form.location')" name="locationId" class="not-last:pb-4">
+          <!-- Type sits above location: it decides whether location shows at all. -->
+          <UFormField :label="t('sales.form.printerType')" name="type" class="not-last:pb-4">
+            <URadioGroup
+              v-model="state.type"
+              :items="printerTypeItems"
+              variant="card"
+              orientation="horizontal"
+              :ui="{ item: 'flex-1 items-start', fieldset: 'w-full gap-2' }"
+            >
+              <template #label="{ item }">
+                <span class="flex items-center gap-1.5">
+                  <UIcon :name="(item as any).icon" class="size-4 shrink-0 text-muted" />
+                  {{ (item as any).label }}
+                </span>
+              </template>
+            </URadioGroup>
+          </UFormField>
+
+          <!-- Location is the kitchen routing key; receipt printers print the
+               whole order and never read it, so the field hides for them. -->
+          <UFormField
+            v-if="state.type !== 'receipt'"
+            :label="t('sales.form.location')"
+            name="locationId"
+            class="not-last:pb-4"
+          >
             <CroutonFormReferenceSelect
               v-model="state.locationId"
               collection="salesLocations"
@@ -55,23 +80,6 @@
               placeholder="192.168.1.70"
               :ui="{ base: 'font-mono' }"
             />
-          </UFormField>
-
-          <UFormField :label="t('sales.form.printerType')" name="type" class="not-last:pb-4">
-            <URadioGroup
-              v-model="state.type"
-              :items="printerTypeItems"
-              variant="card"
-              orientation="horizontal"
-              :ui="{ item: 'flex-1 items-start', fieldset: 'w-full gap-2' }"
-            >
-              <template #label="{ item }">
-                <span class="flex items-center gap-1.5">
-                  <UIcon :name="(item as any).icon" class="size-4 shrink-0 text-muted" />
-                  {{ (item as any).label }}
-                </span>
-              </template>
-            </URadioGroup>
           </UFormField>
 
           <div class="rounded-lg border border-default divide-y divide-default">
@@ -118,24 +126,22 @@
           </template>
         </UAlert>
 
-        <div class="space-y-2">
+        <!-- Delete pill left, save stretches over the rest (items-stretch keeps
+             the pill the same height as the save button). -->
+        <div class="flex items-stretch gap-2">
+          <CroutonDeleteButton
+            v-if="action === 'update' && state.id"
+            expanded
+            :loading="deleting"
+            @confirm="handleDelete"
+          />
           <CroutonFormActionButton
+            class="flex-1"
             :action="action"
             :collection="collection"
             :items="items"
             :loading="loading"
             :has-validation-errors="validationErrors.length > 0"
-          />
-          <!-- Two-step delete: first click arms, second click deletes. -->
-          <UButton
-            v-if="action === 'update' && state.id"
-            block
-            icon="i-lucide-trash-2"
-            color="error"
-            :variant="confirmingDelete ? 'solid' : 'ghost'"
-            :label="confirmingDelete ? t('sales.common.confirmDelete') : t('common.delete')"
-            :loading="deleting"
-            @click="handleDelete"
           />
         </div>
       </template>
@@ -212,10 +218,26 @@ const state = ref<Record<string, any> & { id?: string | null }>(initialValues)
 // Pre-existing printers have no type column value — they are kitchen printers.
 if (!state.value.type) state.value.type = 'kitchen'
 
+// Location only routes kitchen tickets — required there, meaningless for
+// receipt printers (the generated schema leaves it nullish for that reason).
+const formSchema = schema.superRefine((data: Record<string, any>, ctx: { addIssue: (issue: Record<string, any>) => void }) => {
+  if (data.type !== 'receipt' && !data.locationId) {
+    ctx.addIssue({ code: 'custom', path: ['locationId'], message: t('sales.form.locationRequired') })
+  }
+})
+
+// Switching to receipt drops the stale routing key (the field is hidden then).
+watch(() => state.value.type, (type) => {
+  if (type === 'receipt') state.value.locationId = null
+})
+
 // Event is implied by the workspace — hide the selector when it's preset.
 const hideEvent = computed(() => !!state.value.eventId)
 
 const handleSubmit = async () => {
+  // Pre-existing receipt printers may still carry a location from before the
+  // field was hidden — drop it on save so routing data stays clean.
+  if (state.value.type === 'receipt') state.value.locationId = null
   try {
     if (props.action === 'create') {
       await create(state.value)
@@ -231,16 +253,11 @@ const handleSubmit = async () => {
   }
 }
 
-// Delete from the update form: two-step (arm → confirm) instead of a nested
-// delete overlay, which would leave this slideover open on a deleted record.
-const confirmingDelete = ref(false)
+// Delete stays in-form (a nested overlay would leave this slideover open on a
+// deleted record); the arm→confirm step lives in CroutonDeleteButton.
 const deleting = ref(false)
 
 const handleDelete = async () => {
-  if (!confirmingDelete.value) {
-    confirmingDelete.value = true
-    return
-  }
   if (!state.value.id) return
   deleting.value = true
   try {

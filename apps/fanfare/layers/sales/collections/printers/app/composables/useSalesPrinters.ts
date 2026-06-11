@@ -28,7 +28,9 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const salesPrinterSchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  locationId: z.string().min(1, 'locationId is required'),
+  // Only kitchen printers need a location (routing key) — PrinterForm enforces
+  // that conditionally via superRefine; receipt printers store null.
+  locationId: z.string().nullish(),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
   // nullish, not optional: these DB columns are nullable, and existing rows

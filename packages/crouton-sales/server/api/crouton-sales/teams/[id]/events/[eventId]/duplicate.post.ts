@@ -130,8 +130,10 @@ export default defineEventHandler(async (event) => {
     .where(eq(salesPrinters.eventId, eventId))
 
   for (const printer of printers) {
-    const newLocationId = locationMap[printer.locationId]
-    if (!newLocationId) continue
+    // Receipt printers carry no location — copy them as-is. Kitchen printers
+    // are only copied when their location was cloned too.
+    const newLocationId = printer.locationId ? locationMap[printer.locationId] : null
+    if (printer.locationId && !newLocationId) continue
 
     await db.insert(salesPrinters).values({
       id: nanoid(),

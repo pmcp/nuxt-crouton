@@ -238,6 +238,7 @@
       "addItem": "Ajouter un élément",
       "sortOrder": "Ordre de tri",
       "location": "Emplacement",
+      "locationRequired": "Choisissez l'emplacement que dessert cette imprimante",
       "title": "Titre",
       "ipAddress": "Adresse IP",
       "ipAddressHelp": "IP LAN de l'imprimante (le RUT956 les attribue via DHCP). Le port est toujours 9100.",

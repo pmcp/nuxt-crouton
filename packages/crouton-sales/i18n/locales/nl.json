@@ -239,6 +239,7 @@
       "addItem": "Item toevoegen",
       "sortOrder": "Sorteervolgorde",
       "location": "Locatie",
+      "locationRequired": "Kies de locatie die deze printer bedient",
       "title": "Titel",
       "ipAddress": "IP-adres",
       "ipAddressHelp": "LAN-IP van de printer (RUT956 deelt deze uit via DHCP). Poort is altijd 9100.",

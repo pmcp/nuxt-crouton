@@ -239,6 +239,7 @@
       "addItem": "Add Item",
       "sortOrder": "Sort Order",
       "location": "Location",
+      "locationRequired": "Select the location this printer serves",
       "title": "Title",
       "ipAddress": "IP Address",
       "ipAddressHelp": "LAN IP of the printer (RUT956 hands these out via DHCP). Port is always 9100.",
