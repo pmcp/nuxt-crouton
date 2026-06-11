@@ -1,8 +1,10 @@
 <template>
   <!-- @container: the POS responds to its own pane width, not the viewport —
        squeezed beside the orders pane it flips to mobile mode (cart drawer at
-       the bottom) exactly like on a phone. -->
-  <div class="h-full flex flex-col @container">
+       the bottom) exactly like on a phone. [contain:layout] makes this root the
+       containing block for the fixed cart drawer (container-type alone does
+       not — verified in Chromium), keeping the drawer inside the POS module. -->
+  <div class="h-full flex flex-col @container [contain:layout]">
     <SalesClientOfflineBanner />
 
     <div v-if="loading" class="flex-1 flex items-center justify-center">
@@ -14,7 +16,9 @@
       <div class="flex-1 flex overflow-hidden">
         <!-- Products column (the category tabs live here, not over the cart) -->
         <div class="flex-1 flex flex-col overflow-hidden">
-          <div class="p-2 border-b border-default shrink-0 flex items-center gap-2">
+          <!-- h-14 shared with the cart's client-selector row so both bottom
+               borders sit on the same line regardless of content height. -->
+          <div class="h-14 px-2 border-b border-default shrink-0 flex items-center gap-2">
             <div class="flex-1 min-w-0">
               <SalesClientCategoryTabs
                 v-model="selectedCategory"
@@ -63,9 +67,10 @@
 
         <!-- Cart sidebar (wide panes only) -->
         <div class="hidden @2xl:flex w-80 border-l border-default flex-col">
-          <!-- p-2 matches the category-tabs row so both header rows align. -->
-          <div v-if="props.requiresClient" class="p-2 border-b border-default">
+          <!-- h-14 matches the category-tabs row so both bottom borders align. -->
+          <div v-if="props.requiresClient" class="h-14 px-2 border-b border-default flex items-center">
             <SalesClientSelector
+              class="flex-1 min-w-0"
               :clients="props.clients || []"
               :highlight="!hasClient && cartItems.length > 0"
               :client-id="selectedClientId"
@@ -128,7 +133,6 @@
                   :categories="categories || []"
                   :locations="locations || []"
                   :location-remarks="locationRemarks"
-                  :overall-remarks="overallRemarks"
                   :is-personnel="isPersonnel"
                   :total="cartTotal"
                   :disabled="!isOnline"
@@ -139,7 +143,6 @@
                   @checkout="handleCheckout"
                   @clear="clearCart"
                   @update-location-remark="setLocationRemark"
-                  @update:overall-remarks="overallRemarks = $event"
                   @update:is-personnel="isPersonnel = $event"
                 />
               </div>
