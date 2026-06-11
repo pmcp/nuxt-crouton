@@ -34,10 +34,12 @@ export default defineEventHandler(async (event) => {
     .from(salesProducts)
     .where(eq(salesProducts.eventId, eventId))
 
+  // Scope to the event, not the team — duplicated events clone their
+  // categories, so team-wide fetching showed every clone as a duplicate tab.
   const categories = await db
     .select()
     .from(salesCategories)
-    .where(eq(salesCategories.teamId, salesEvent.teamId))
+    .where(eq(salesCategories.eventId, eventId))
 
   const settings = await db
     .select()
