@@ -351,14 +351,47 @@ export default defineNuxtConfig({
 - Minimum TTL is 60 seconds (NuxtHub KV limitation)
 - See [nuxthub-ratelimit docs](https://github.com/fayazara/nuxthub-ratelimit)
 
-## Scoped Access Tokens
+## Scoped Access Tokens & Grants
 
 Provides lightweight, resource-scoped authentication for scenarios where full user accounts aren't needed:
 - Event helpers (POS/sales)
 - Guest access to bookings
 - Temporary attendee access
+- PIN-protected CMS pages
 
-### Server Utilities
+Two halves: **tokens** (the bearer credential a holder uses after login) and **grants** (the redeemable credential — e.g. a shared PIN — that mints tokens). Domains own the binding (which resource gets a grant, what role its tokens carry); auth owns verification, redemption limits, and brute-force lockout. Grants are deliberately **not accounts**: no email, no identity, no lifecycle beyond expiry.
+
+### Transport Convention
+
+The canonical header for scoped tokens is **`x-scoped-token`** (exported as `SCOPED_TOKEN_HEADER`). `validateScopedTokenFromEvent` checks, in order: `x-scoped-token` header → cookie (default `scoped-access-token`, set by redeem/mint for SSR) → `Authorization: Bearer`. Package-specific headers (e.g. sales' legacy `x-helper-token`) are transitional.
+
+### Grants (credential → token)
+
+```typescript
+import {
+  upsertScopedGrant,          // create/update the grant for a resource (resets counters)
+  verifyAndRedeemGrant,       // verify secret + lockout + maxUses, mint token
+  revokeScopedGrantsForResource,
+  listScopedGrantsForResource // never returns secrets
+} from '@crouton/auth/server'
+
+// Domain syncs its credential into a grant (e.g. on event save)
+await upsertScopedGrant({
+  organizationId: team.id,
+  resourceType: 'event',
+  resourceId: event.id,
+  secret: event.pin,        // hashed before storage
+  role: 'helper',           // stamped onto minted tokens
+  // maxUses: 1,            // invite-code semantics; null = unlimited (shared PIN)
+  // tokenTtl: 4 * 60 * 60 * 1000
+})
+```
+
+Brute-force protection is per-grant: 5 consecutive failures lock redemption for an exponentially growing window (1 min → 1 hour cap). This — not the hash — is the security boundary for low-entropy PINs; never mint tokens for unverified input around it. `credentialType` is `'pin'` today; `'link'` (URL-embedded secret) is reserved.
+
+Grants can't FK into domain tables — call `revokeScopedGrantsForResource` when the resource is deleted.
+
+### Token Server Utilities
 
 ```typescript
 import {
@@ -369,7 +402,8 @@ import {
   requireScopedAccessToResource,
   revokeScopedToken,
   revokeScopedTokensForResource,
-  listScopedTokensForResource
+  listScopedTokensForResource,
+  SCOPED_TOKEN_HEADER
 } from '@crouton/auth/server'
 
 // Create a helper token
@@ -397,21 +431,28 @@ const {
   isAuthenticated,
   displayName,
   resourceId,
-  login,
+  authHeaders,   // { 'x-scoped-token': token } — spread into $fetch headers
+  redeem,        // redeem({ teamId, resourceId, secret, displayName }) via generic endpoint
+  login,         // custom-endpoint variant (legacy/domain-specific logins)
   logout
 } = useEventAccess()
 
 // Generic scoped access
 const access = useScopedAccess('booking')
+await access.redeem({ teamId, resourceId: bookingId, secret: pin, displayName: 'Guest' })
 ```
 
 ### API Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/auth/scoped-access/validate` | POST | Validate a token |
-| `/api/auth/scoped-access/logout` | POST | Revoke a token |
-| `/api/auth/scoped-access/refresh` | POST | Extend token expiration |
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/auth/scoped-access/redeem` | POST | Public (the secret is the auth) | Present credential (PIN) → token; 429 + Retry-After when locked, 410 when exhausted, 401 otherwise (not_found and invalid_secret are indistinguishable) |
+| `/api/auth/scoped-access/mint` | POST | Team member session | Delegation: mint a scoped token directly (no secret) |
+| `/api/auth/scoped-access/validate` | POST | — | Validate a token |
+| `/api/auth/scoped-access/logout` | POST | — | Revoke a token |
+| `/api/auth/scoped-access/refresh` | POST | — | Extend token expiration |
+
+Both redeem and mint also set the `scoped-access-token` cookie (httpOnly) so SSR can validate.
 
 ### Database Schema
 
@@ -423,6 +464,16 @@ The `scopedAccessToken` table stores:
 - `displayName`: Name of the token holder
 - `role`: Authorization role (e.g., 'helper', 'guest')
 - `expiresAt`: Token expiration timestamp
+
+The `scopedAccessGrant` table stores the redeemable credential per resource:
+- `credentialType`: `'pin'` (typed) — `'link'` reserved for URL-embedded secrets
+- `secretHash`: Salted SHA-256 (`{salt}:{hash}`); plaintext never stored
+- `maxUses` / `usedCount`: Redemption limits (null = unlimited shared PIN)
+- `failedAttempts` / `lockedUntil`: Per-grant brute-force lockout state
+- `tokenTtl`: Lifetime (ms) of tokens minted from this grant
+- One grant per (organization, resourceType, resourceId, credentialType)
+
+Consuming apps must regenerate migrations (`npx nuxt db generate`) after upgrading to pick up `scopedAccessGrant`.
 
 ## Dependencies
 

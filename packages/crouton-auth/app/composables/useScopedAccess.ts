@@ -42,6 +42,19 @@ export interface ScopedAccessLoginOptions {
   body: Record<string, unknown>
 }
 
+export interface ScopedAccessRedeemOptions {
+  /** Team ID or slug */
+  teamId: string
+  /** Resource ID to gain access to */
+  resourceId: string
+  /** The credential (PIN) */
+  secret: string
+  /** Display name for the token holder */
+  displayName: string
+  /** Credential presentation type (default: 'pin') */
+  credentialType?: string
+}
+
 export interface UseScopedAccessOptions {
   /** Cookie name for storing the token (default: 'scoped-access-token') */
   cookieName?: string
@@ -90,6 +103,18 @@ export function useScopedAccess(
   })
 
   const token = computed(() => session.value?.token || '')
+
+  /**
+   * Headers for authenticated API calls — canonical scoped-token header.
+   * Spread into $fetch options: `$fetch(url, { headers: authHeaders.value })`
+   */
+  const authHeaders = computed<Record<string, string>>(() => {
+    const headers: Record<string, string> = {}
+    if (session.value?.token) {
+      headers['x-scoped-token'] = session.value.token
+    }
+    return headers
+  })
   const displayName = computed(() => session.value?.displayName || '')
   const organizationId = computed(() => session.value?.organizationId || '')
   const resourceId = computed(() => session.value?.resourceId || '')
@@ -200,6 +225,21 @@ export function useScopedAccess(
   }
 
   /**
+   * Redeem a credential (PIN) against the generic grant endpoint
+   *
+   * Wraps login() with the canonical /api/auth/scoped-access/redeem endpoint;
+   * resourceType comes from the composable.
+   *
+   * @returns True if redemption succeeded
+   */
+  async function redeem(redeemOptions: ScopedAccessRedeemOptions): Promise<boolean> {
+    return login({
+      loginEndpoint: '/api/auth/scoped-access/redeem',
+      body: { ...redeemOptions, resourceType }
+    })
+  }
+
+  /**
    * Logout and clear session
    */
   async function logout(): Promise<void> {
@@ -288,6 +328,7 @@ export function useScopedAccess(
     // Computed
     isAuthenticated,
     token,
+    authHeaders,
     displayName,
     organizationId,
     resourceId,
@@ -296,6 +337,7 @@ export function useScopedAccess(
 
     // Methods
     login,
+    redeem,
     logout,
     loadSession,
     clearSession,

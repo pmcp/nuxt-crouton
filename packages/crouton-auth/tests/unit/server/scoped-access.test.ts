@@ -282,9 +282,25 @@ describe('server/utils/scoped-access', () => {
       expect(getCookie).toHaveBeenCalledWith(event, 'scoped-access-token')
     })
 
+    it('should validate token from canonical x-scoped-token header', async () => {
+      vi.mocked(getCookie).mockReturnValue(null)
+      vi.mocked(getHeader).mockImplementation((_event, name) =>
+        name === 'x-scoped-token' ? 'scoped-header-token' : null
+      )
+      selectResults = [createMockTokenRecord()]
+
+      const event = createMockEvent()
+      const result = await validateScopedTokenFromEvent(event)
+
+      expect(result).not.toBeNull()
+      expect(getHeader).toHaveBeenCalledWith(event, 'x-scoped-token')
+    })
+
     it('should validate token from authorization header', async () => {
       vi.mocked(getCookie).mockReturnValue(null)
-      vi.mocked(getHeader).mockReturnValue('Bearer header-token')
+      vi.mocked(getHeader).mockImplementation((_event, name) =>
+        name === 'authorization' ? 'Bearer header-token' : null
+      )
       selectResults = [createMockTokenRecord()]
 
       const event = createMockEvent()
@@ -294,9 +310,26 @@ describe('server/utils/scoped-access', () => {
       expect(getHeader).toHaveBeenCalledWith(event, 'authorization')
     })
 
-    it('should prefer cookie over header', async () => {
+    it('should prefer canonical header over cookie', async () => {
       vi.mocked(getCookie).mockReturnValue('cookie-token')
-      vi.mocked(getHeader).mockReturnValue('Bearer header-token')
+      vi.mocked(getHeader).mockImplementation((_event, name) =>
+        name === 'x-scoped-token' ? 'scoped-header-token' : null
+      )
+      selectResults = [createMockTokenRecord()]
+
+      const event = createMockEvent()
+      await validateScopedTokenFromEvent(event)
+
+      // Canonical header was found, so the cookie was never consulted
+      expect(mockDb.select).toHaveBeenCalled()
+      expect(getCookie).not.toHaveBeenCalled()
+    })
+
+    it('should prefer cookie over authorization header', async () => {
+      vi.mocked(getCookie).mockReturnValue('cookie-token')
+      vi.mocked(getHeader).mockImplementation((_event, name) =>
+        name === 'authorization' ? 'Bearer header-token' : null
+      )
       selectResults = [createMockTokenRecord()]
 
       const event = createMockEvent()

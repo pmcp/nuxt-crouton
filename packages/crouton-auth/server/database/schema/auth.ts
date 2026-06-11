@@ -356,6 +356,60 @@ export const scopedAccessToken = sqliteTable('scopedAccessToken', {
 ])
 
 // ============================================================================
+// Scoped Access Grant Table
+// ============================================================================
+
+/**
+ * Scoped Access Grant table - Redeemable credentials for scoped tokens
+ *
+ * A grant is the credential half of scoped access: "present this secret for
+ * this resource, receive a scopedAccessToken." One shared event PIN is one
+ * grant with unlimited uses; an invite code is a grant with maxUses: 1.
+ *
+ * Domains own the binding (which resource gets a grant, what role its tokens
+ * carry); this table owns verification, redemption limits, and brute-force
+ * lockout. Grants are not accounts — no email, no identity, no lifecycle
+ * beyond expiry.
+ */
+export const scopedAccessGrant = sqliteTable('scopedAccessGrant', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  /** Organization/team the grant belongs to */
+  organizationId: text('organizationId').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  /** Type of resource this grant unlocks (e.g., 'event', 'page', 'booking') */
+  resourceType: text('resourceType').notNull(),
+  /** ID of the specific resource */
+  resourceId: text('resourceId').notNull(),
+  /** Role stamped onto tokens minted from this grant (e.g., 'helper', 'guest') */
+  role: text('role').notNull().default('guest'),
+  /** How the secret is presented: 'pin' (typed) — 'link' (URL-embedded) reserved */
+  credentialType: text('credentialType').notNull().default('pin'),
+  /** Salted hash of the secret, formatted as `{saltHex}:{sha256Hex}` */
+  secretHash: text('secretHash').notNull(),
+  /** Max successful redemptions; null = unlimited (shared PIN) */
+  maxUses: integer('maxUses'),
+  /** Successful redemptions so far */
+  usedCount: integer('usedCount').notNull().default(0),
+  /** Consecutive failed secret attempts (reset on success) */
+  failedAttempts: integer('failedAttempts').notNull().default(0),
+  /** Brute-force lockout: redemption refused until this passes */
+  lockedUntil: integer('lockedUntil', { mode: 'timestamp' }),
+  /** Whether this grant can currently be redeemed */
+  isActive: integer('isActive', { mode: 'boolean' }).notNull().default(true),
+  /** When the grant stops being redeemable; null = no expiry (follows resource) */
+  expiresAt: integer('expiresAt', { mode: 'timestamp' }),
+  /** Lifetime (ms) of tokens minted from this grant */
+  tokenTtl: integer('tokenTtl').notNull().default(8 * 60 * 60 * 1000),
+  /** Additional metadata (JSON) */
+  metadata: text('metadata'),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
+}, table => [
+  index('scoped_grant_resource_idx').on(table.resourceType, table.resourceId),
+  index('scoped_grant_org_idx').on(table.organizationId),
+  index('scoped_grant_active_idx').on(table.isActive, table.expiresAt)
+])
+
+// ============================================================================
 // Auth Email Log Table
 // ============================================================================
 
@@ -530,6 +584,9 @@ export type NewDomain = typeof domain.$inferInsert
 
 export type ScopedAccessToken = typeof scopedAccessToken.$inferSelect
 export type NewScopedAccessToken = typeof scopedAccessToken.$inferInsert
+
+export type ScopedAccessGrant = typeof scopedAccessGrant.$inferSelect
+export type NewScopedAccessGrant = typeof scopedAccessGrant.$inferInsert
 
 export type AuthEmailLog = typeof authEmailLog.$inferSelect
 export type NewAuthEmailLog = typeof authEmailLog.$inferInsert

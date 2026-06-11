@@ -24,10 +24,10 @@
  * }
  * ```
  */
-import { eq, and, gt, lt } from 'drizzle-orm'
+import { eq, and, gt, lt, sql } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { scopedAccessToken } from '../database/schema/auth'
-import type { ScopedAccessToken } from '../database/schema/auth'
+import { scopedAccessToken, scopedAccessGrant } from '../database/schema/auth'
+import type { ScopedAccessToken, ScopedAccessGrant } from '../database/schema/auth'
 
 /**
  * Options for creating a scoped access token
@@ -173,9 +173,17 @@ export async function validateScopedToken(
 }
 
 /**
+ * Canonical header for scoped access tokens. All consumers should send this;
+ * package-specific headers (e.g. sales' legacy 'x-helper-token') are
+ * transitional and read only via the explicit cookieName/header overrides.
+ */
+export const SCOPED_TOKEN_HEADER = 'x-scoped-token'
+
+/**
  * Validate scoped access token from H3 event
  *
- * Extracts token from cookie or authorization header and validates it.
+ * Extracts token from the canonical 'x-scoped-token' header, cookie, or
+ * Bearer authorization header and validates it.
  *
  * @param event - H3 event
  * @param cookieName - Name of the cookie to check (default: 'scoped-access-token')
@@ -185,13 +193,19 @@ export async function validateScopedTokenFromEvent(
   event: H3Event,
   cookieName = 'scoped-access-token'
 ): Promise<ScopedAccessResult | null> {
-  // Try cookie first
+  // Canonical header first
+  const headerToken = getHeader(event, SCOPED_TOKEN_HEADER)
+  if (headerToken) {
+    return validateScopedToken(headerToken)
+  }
+
+  // Then cookie (set by redeem/mint for SSR validation)
   const cookieToken = getCookie(event, cookieName)
   if (cookieToken) {
     return validateScopedToken(cookieToken)
   }
 
-  // Try authorization header
+  // Finally authorization header
   const authHeader = getHeader(event, 'authorization')
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7)
@@ -415,6 +429,334 @@ export async function extendScopedToken(
     .where(eq(scopedAccessToken.id, record.id))
 
   return newExpiresAt
+}
+
+// ============================================================================
+// Scoped Access Grants
+// ============================================================================
+
+/**
+ * Hash a grant secret with a random salt.
+ *
+ * PINs are low-entropy, so the hash is NOT the security boundary here —
+ * the per-grant lockout in verifyAndRedeemGrant is. SHA-256 keeps this
+ * cheap on Workers; the salt only prevents trivial cross-grant comparison.
+ */
+async function hashGrantSecret(secret: string, saltHex?: string): Promise<string> {
+  const salt = saltHex ?? Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+  const data = new TextEncoder().encode(`${salt}:${secret}`)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  const hash = Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+  return `${salt}:${hash}`
+}
+
+async function verifyGrantSecret(secret: string, stored: string): Promise<boolean> {
+  const [salt] = stored.split(':')
+  if (!salt) return false
+  return (await hashGrantSecret(secret, salt)) === stored
+}
+
+/** Lockout policy: after this many consecutive failures, redemption locks */
+const GRANT_LOCKOUT_THRESHOLD = 5
+/** Base lockout duration; doubles with each failure past the threshold */
+const GRANT_LOCKOUT_BASE_MS = 60 * 1000
+/** Lockout never exceeds this */
+const GRANT_LOCKOUT_MAX_MS = 60 * 60 * 1000
+
+function lockoutDuration(failedAttempts: number): number {
+  const past = failedAttempts - GRANT_LOCKOUT_THRESHOLD
+  return Math.min(GRANT_LOCKOUT_BASE_MS * 2 ** Math.max(past, 0), GRANT_LOCKOUT_MAX_MS)
+}
+
+/**
+ * Options for creating or updating a grant
+ */
+export interface UpsertScopedGrantOptions {
+  /** Organization/team ID */
+  organizationId: string
+  /** Type of resource the grant unlocks (e.g., 'event', 'page') */
+  resourceType: string
+  /** ID of the specific resource */
+  resourceId: string
+  /** Plaintext secret (PIN); hashed before storage */
+  secret: string
+  /** Role stamped onto tokens minted from this grant (default: 'guest') */
+  role?: string
+  /** Credential presentation type (default: 'pin') */
+  credentialType?: string
+  /** Max successful redemptions; null/undefined = unlimited */
+  maxUses?: number | null
+  /** When the grant stops being redeemable; null = no expiry */
+  expiresAt?: Date | null
+  /** Lifetime (ms) of tokens minted from this grant (default: 8 hours) */
+  tokenTtl?: number
+  /** Additional metadata */
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * Create or update the grant for a resource + credential type.
+ *
+ * One grant per (organization, resourceType, resourceId, credentialType) —
+ * domains call this when the source credential changes (e.g., an event's
+ * PIN is edited). Updating resets usage counters and any lockout, since a
+ * new secret starts a new lifecycle.
+ */
+export async function upsertScopedGrant(
+  options: UpsertScopedGrantOptions
+): Promise<{ id: string }> {
+  const {
+    organizationId,
+    resourceType,
+    resourceId,
+    secret,
+    role = 'guest',
+    credentialType = 'pin',
+    maxUses = null,
+    expiresAt = null,
+    tokenTtl = 8 * 60 * 60 * 1000,
+    metadata
+  } = options
+
+  const db = useDB()
+  const secretHash = await hashGrantSecret(secret)
+
+  const [existing] = await db
+    .select({ id: scopedAccessGrant.id })
+    .from(scopedAccessGrant)
+    .where(
+      and(
+        eq(scopedAccessGrant.organizationId, organizationId),
+        eq(scopedAccessGrant.resourceType, resourceType),
+        eq(scopedAccessGrant.resourceId, resourceId),
+        eq(scopedAccessGrant.credentialType, credentialType)
+      )
+    )
+    .limit(1)
+
+  if (existing) {
+    await db
+      .update(scopedAccessGrant)
+      .set({
+        secretHash,
+        role,
+        maxUses,
+        expiresAt,
+        tokenTtl,
+        usedCount: 0,
+        failedAttempts: 0,
+        lockedUntil: null,
+        isActive: true,
+        metadata: metadata ? JSON.stringify(metadata) : null
+      })
+      .where(eq(scopedAccessGrant.id, existing.id))
+    return { id: existing.id }
+  }
+
+  const id = crypto.randomUUID()
+  await db.insert(scopedAccessGrant).values({
+    id,
+    organizationId,
+    resourceType,
+    resourceId,
+    role,
+    credentialType,
+    secretHash,
+    maxUses,
+    expiresAt,
+    tokenTtl,
+    metadata: metadata ? JSON.stringify(metadata) : null
+  })
+  return { id }
+}
+
+/**
+ * Options for redeeming a grant
+ */
+export interface RedeemGrantOptions {
+  /** Organization/team ID */
+  organizationId: string
+  /** Resource type the caller wants access to */
+  resourceType: string
+  /** Resource ID the caller wants access to */
+  resourceId: string
+  /** Presented secret (PIN) */
+  secret: string
+  /** Display name for the minted token holder */
+  displayName: string
+  /** Credential presentation type (default: 'pin') */
+  credentialType?: string
+}
+
+/**
+ * Result of a redemption attempt. Callers map `reason` to HTTP responses;
+ * 'not_found' and 'invalid_secret' should be indistinguishable to clients.
+ */
+export type RedeemGrantResult =
+  | {
+    ok: true
+    token: string
+    tokenId: string
+    expiresAt: Date
+    role: string
+    resourceType: string
+    resourceId: string
+    displayName: string
+  }
+  | { ok: false; reason: 'not_found' | 'invalid_secret' | 'locked' | 'exhausted'; retryAfterMs?: number }
+
+/**
+ * Verify a presented credential against a resource's grant and, on success,
+ * mint a scoped access token.
+ *
+ * Brute-force protection is per-grant: after GRANT_LOCKOUT_THRESHOLD
+ * consecutive failures the grant locks for an exponentially growing window.
+ * This is the actual security boundary for low-entropy PINs — callers must
+ * not bypass it with direct token minting for unverified input.
+ */
+export async function verifyAndRedeemGrant(
+  options: RedeemGrantOptions
+): Promise<RedeemGrantResult> {
+  const {
+    organizationId,
+    resourceType,
+    resourceId,
+    secret,
+    displayName,
+    credentialType = 'pin'
+  } = options
+
+  const db = useDB()
+  const now = new Date()
+
+  const [grant] = await db
+    .select()
+    .from(scopedAccessGrant)
+    .where(
+      and(
+        eq(scopedAccessGrant.organizationId, organizationId),
+        eq(scopedAccessGrant.resourceType, resourceType),
+        eq(scopedAccessGrant.resourceId, resourceId),
+        eq(scopedAccessGrant.credentialType, credentialType),
+        eq(scopedAccessGrant.isActive, true)
+      )
+    )
+    .limit(1)
+
+  if (!grant || (grant.expiresAt && grant.expiresAt <= now)) {
+    return { ok: false, reason: 'not_found' }
+  }
+
+  if (grant.lockedUntil && grant.lockedUntil > now) {
+    return { ok: false, reason: 'locked', retryAfterMs: grant.lockedUntil.getTime() - now.getTime() }
+  }
+
+  if (!(await verifyGrantSecret(secret, grant.secretHash))) {
+    const failedAttempts = grant.failedAttempts + 1
+    const lockedUntil = failedAttempts >= GRANT_LOCKOUT_THRESHOLD
+      ? new Date(now.getTime() + lockoutDuration(failedAttempts))
+      : null
+    await db
+      .update(scopedAccessGrant)
+      .set({ failedAttempts, lockedUntil })
+      .where(eq(scopedAccessGrant.id, grant.id))
+    return lockedUntil
+      ? { ok: false, reason: 'locked', retryAfterMs: lockedUntil.getTime() - now.getTime() }
+      : { ok: false, reason: 'invalid_secret' }
+  }
+
+  if (grant.maxUses !== null && grant.usedCount >= grant.maxUses) {
+    return { ok: false, reason: 'exhausted' }
+  }
+
+  await db
+    .update(scopedAccessGrant)
+    .set({
+      usedCount: sql`${scopedAccessGrant.usedCount} + 1`,
+      failedAttempts: 0,
+      lockedUntil: null
+    })
+    .where(eq(scopedAccessGrant.id, grant.id))
+
+  const { token, id: tokenId, expiresAt } = await createScopedToken({
+    organizationId,
+    resourceType,
+    resourceId,
+    displayName,
+    role: grant.role,
+    expiresIn: grant.tokenTtl
+  })
+
+  return {
+    ok: true,
+    token,
+    tokenId,
+    expiresAt,
+    role: grant.role,
+    resourceType,
+    resourceId,
+    displayName
+  }
+}
+
+/**
+ * Revoke all grants for a resource.
+ *
+ * Auth can't FK into domain tables, so domains must call this when the
+ * resource is deleted or closed. Existing tokens are untouched — revoke
+ * those separately via revokeScopedTokensForResource if needed.
+ */
+export async function revokeScopedGrantsForResource(
+  resourceType: string,
+  resourceId: string
+): Promise<number> {
+  const db = useDB()
+
+  const result = await db
+    .update(scopedAccessGrant)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(scopedAccessGrant.resourceType, resourceType),
+        eq(scopedAccessGrant.resourceId, resourceId),
+        eq(scopedAccessGrant.isActive, true)
+      )
+    )
+
+  return result.rowsAffected
+}
+
+/**
+ * List active grants for a resource (secrets are never returned)
+ */
+export async function listScopedGrantsForResource(
+  resourceType: string,
+  resourceId: string
+): Promise<Pick<ScopedAccessGrant, 'id' | 'role' | 'credentialType' | 'maxUses' | 'usedCount' | 'expiresAt' | 'createdAt'>[]> {
+  const db = useDB()
+
+  return db
+    .select({
+      id: scopedAccessGrant.id,
+      role: scopedAccessGrant.role,
+      credentialType: scopedAccessGrant.credentialType,
+      maxUses: scopedAccessGrant.maxUses,
+      usedCount: scopedAccessGrant.usedCount,
+      expiresAt: scopedAccessGrant.expiresAt,
+      createdAt: scopedAccessGrant.createdAt
+    })
+    .from(scopedAccessGrant)
+    .where(
+      and(
+        eq(scopedAccessGrant.resourceType, resourceType),
+        eq(scopedAccessGrant.resourceId, resourceId),
+        eq(scopedAccessGrant.isActive, true)
+      )
+    )
 }
 
 /**
