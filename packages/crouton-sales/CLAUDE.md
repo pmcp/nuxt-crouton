@@ -82,8 +82,9 @@ switcher (with a "create event" item in its `#content-top`, same pattern as
   hides and the pane header carries the orders filter toggle (chip = active-filter count;
   state lifted into Shell, selects live in OrdersTab) and a close ✕. The POS itself is `@container`-responsive: squeezed
   below `@2xl` it flips to mobile mode (cart drawer at the bottom) regardless of viewport. The
-  drawer is non-portaled (`:portal="false"`) — the `@container` root has layout containment, so
-  the drawer + overlay stay inside the POS module instead of covering the whole page
+  drawer is non-portaled (`:portal="false"`) and the POS root carries `[contain:layout]`, making
+  it the containing block for the fixed drawer + overlay — the cart slides out of the POS module
+  instead of covering the whole page (`container-type` alone does NOT contain fixed descendants)
 - **Bewerken** expands `SettingsTab` inline under the header (`UCollapsible`); Duplicate/Delete
   live as explained rows at the bottom of its Event Details card. The full event form (incl.
   slug) is not reachable from the workspace.

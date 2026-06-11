@@ -209,8 +209,9 @@ const ordersFilterCount = ref(0)
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
           <SplitterPanel :default-size="30" :min-size="18" class="min-w-0 flex flex-col">
-            <!-- Pane header mirrors the hanging tab: same bg + icon, with ✕ -->
-            <div class="shrink-0 flex items-center justify-between gap-2 px-3 py-2 bg-elevated/60 border-b border-default">
+            <!-- Pane header mirrors the hanging tab: same bg + icon, with ✕.
+                 h-14 matches the POS header rows so all bottom borders align. -->
+            <div class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 bg-elevated/60 border-b border-default">
               <span class="flex items-center gap-1.5 text-sm font-medium">
                 <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0 text-muted" />
                 {{ t('sales.orders.title') }}
