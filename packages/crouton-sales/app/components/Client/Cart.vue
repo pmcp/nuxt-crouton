@@ -1,9 +1,10 @@
 <template>
   <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto', footer: 'space-y-4' }">
     <!-- Cart items -->
-    <p v-if="items.length === 0" class="text-center text-muted py-8">
-      {{ t('sales.cart.empty') }}
-    </p>
+    <div v-if="items.length === 0" class="h-full flex flex-col items-center justify-center gap-3 text-muted">
+      <UIcon name="i-lucide-shopping-cart" class="size-10 opacity-40" />
+      <p class="text-sm">{{ t('sales.cart.empty') }}</p>
+    </div>
 
     <div v-else class="space-y-4">
       <div v-for="group in groupedItems" :key="group.key" class="space-y-2">
