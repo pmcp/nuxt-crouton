@@ -172,7 +172,10 @@ onMounted(async () => {
           <span class="text-xs text-muted tabular-nums">{{ printJobsTotal }}</span>
         </div>
       </div>
-      <div v-if="printJobsPending" class="p-6 text-center text-muted text-sm">
+      <!-- Loading state only before the first data arrives — the 5s poll
+           flips `pending` on every refresh, and swapping the list for a
+           loading placeholder each time made the whole list flicker. -->
+      <div v-if="printJobsPending && !(printJobs && (printJobs as any[]).length > 0)" class="p-6 text-center text-muted text-sm">
         {{ t('sales.printQueue.loading', 'Loading print jobs…') }}
       </div>
       <CroutonCollection
