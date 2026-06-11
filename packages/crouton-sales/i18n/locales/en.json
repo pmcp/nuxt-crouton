@@ -365,7 +365,7 @@
       "currency": "Currency",
       "currencyEur": "Euro (€)",
       "currencyUsd": "Dollar ($)",
-      "showInactive": "Show inactive products"
+      "showInactive": "Inactive products"
     },
     "helpers": {
       "title": "Active Helpers",

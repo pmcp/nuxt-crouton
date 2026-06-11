@@ -48,10 +48,13 @@
               :label="t('sales.workspace.addProduct')"
               @click="openCreateProduct"
             />
-            <USwitch
-              v-model="showInactive"
-              :label="t('sales.workspace.showInactive', 'Show inactive')"
+            <UButton
               size="sm"
+              color="neutral"
+              :variant="showInactive ? 'solid' : 'soft'"
+              icon="i-lucide-eye"
+              :label="t('sales.workspace.showInactive', 'Inactive products')"
+              @click="showInactive = !showInactive"
             />
           </div>
           <div class="flex-1 overflow-y-auto p-2">

@@ -364,7 +364,7 @@
       "currency": "Devise",
       "currencyEur": "Euro (€)",
       "currencyUsd": "Dollar ($)",
-      "showInactive": "Afficher les produits inactifs"
+      "showInactive": "Produits inactifs"
     },
     "helpers": {
       "title": "Bénévoles actifs",
