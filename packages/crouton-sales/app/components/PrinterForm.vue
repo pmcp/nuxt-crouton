@@ -56,6 +56,15 @@
             />
           </UFormField>
 
+          <UFormField :label="t('sales.form.printerType')" name="type" :help="t('sales.form.printerTypeHelp')" class="not-last:pb-4">
+            <USelect
+              v-model="state.type"
+              :items="printerTypeItems"
+              class="w-full"
+              size="xl"
+            />
+          </UFormField>
+
           <UFormField :label="t('sales.form.showPrices')" name="showPrices" class="not-last:pb-4">
             <UCheckbox v-model="state.showPrices" />
           </UFormField>
@@ -107,6 +116,11 @@ const navigationItems = [
   { label: t('sales.form.general'), value: 'general' }
 ]
 
+const printerTypeItems = [
+  { label: t('sales.form.printerTypeKitchen'), value: 'kitchen' },
+  { label: t('sales.form.printerTypeReceipt'), value: 'receipt' }
+]
+
 const activeSection = ref('general')
 
 const validationErrors = ref<Array<{ name: string, message: string }>>([])
@@ -128,6 +142,9 @@ const { close, loading } = useCrouton()
 const initialValues = { ...defaultValue, ...(props.activeItem || {}) }
 
 const state = ref<Record<string, any> & { id?: string | null }>(initialValues)
+
+// Pre-existing printers have no type column value — they are kitchen printers.
+if (!state.value.type) state.value.type = 'kitchen'
 
 // Event is implied by the workspace — hide the selector when it's preset.
 const hideEvent = computed(() => !!state.value.eventId)

@@ -10,6 +10,7 @@ const bodySchema = z.object({
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
+  type: z.enum(['kitchen', 'receipt']).optional(),
   status: z.string().optional(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()

@@ -31,6 +31,8 @@ export const salesPrinters = sqliteTable('sales_printers', {
   title: text('title').notNull(),
   ipAddress: text('ipAddress').notNull(),
   port: text('port'),
+  // kitchen = per-location tickets (default, also for NULL); receipt = combined customer receipt
+  type: text('type'),
   status: text('status'),
   showPrices: integer('showPrices', { mode: 'boolean' }).$default(() => true),
   isActive: integer('isActive', { mode: 'boolean' }).$default(() => true),

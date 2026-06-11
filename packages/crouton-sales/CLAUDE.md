@@ -33,6 +33,13 @@ Event -> Products/Categories -> Customer selects -> Cart -> Order -> Print (opt-
 5. Checkout creates Order with OrderItems
 6. If printing enabled: Print jobs queued for locations
 
+**Printer types** (`salesPrinters.type`, nullable — NULL ⇒ kitchen): `kitchen` printers get one
+ticket per location (matched on `locationId`); a `receipt` printer gets one combined customer
+receipt for the whole order (`printMode: 'receipt'` — the only mode that prints the
+receipt-settings `footer_text`). Selected in `PrinterForm.vue` (package component); the generated
+printers collection needs the `type` column + zod field (fanfare has it, migration
+`0008_windy_dragon_man`).
+
 ### Database Tables (Convention)
 
 Package expects tables with `sales` prefix:
@@ -198,7 +205,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
-| `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization |
+| `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` only on kitchen tickets with order notes; `footer_text` only on `type: 'receipt'` printer jobs |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }`. Backs the "Resend failed jobs" button in `PrintersTab` |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |

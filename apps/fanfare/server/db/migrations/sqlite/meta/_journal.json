@@ -57,6 +57,13 @@
       "when": 1781025061641,
       "tag": "0007_elite_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1781192781955,
+      "tag": "0008_windy_dragon_man",
+      "breakpoints": true
     }
   ]
 }

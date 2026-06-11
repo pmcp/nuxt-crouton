@@ -32,6 +32,7 @@ export const salesPrinterSchema = z.object({
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
+  type: z.enum(['kitchen', 'receipt']).optional(),
   status: z.string().optional(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()
@@ -61,6 +62,7 @@ const _salesPrintersConfig = {
     title: '',
     ipAddress: '',
     port: '',
+    type: 'kitchen',
     status: '',
     showPrices: false,
     isActive: false
@@ -95,6 +97,12 @@ const _salesPrintersConfig = {
           "name": "port",
           "type": "string",
           "label": "Port",
+          "area": "main"
+      },
+      {
+          "name": "type",
+          "type": "string",
+          "label": "Printer Type",
           "area": "main"
       },
       {

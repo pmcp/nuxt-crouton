@@ -62,6 +62,8 @@ export interface SalesPrinter {
   title: string
   ipAddress: string
   port?: number
+  /** kitchen = per-location tickets (default); receipt = combined customer receipt with footer */
+  type?: 'kitchen' | 'receipt'
   status?: PrintStatus
   showPrices?: boolean
   isActive?: boolean

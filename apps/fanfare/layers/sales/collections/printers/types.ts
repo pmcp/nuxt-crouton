@@ -32,6 +32,8 @@ export interface SalesPrinter {
   title: string
   ipAddress: string
   port?: string
+  /** kitchen = per-location tickets (default, also NULL); receipt = combined customer receipt */
+  type?: 'kitchen' | 'receipt'
   status?: string
   showPrices?: boolean
   isActive?: boolean
