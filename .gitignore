@@ -3,6 +3,9 @@ node_modules
 .pnpm-store
 .pnpm-debug.log
 
+# Node.js compile cache (NODE_COMPILE_CACHE runtime artifacts)
+node-compile-cache/
+
 # Nuxt
 .nuxt
 .output
