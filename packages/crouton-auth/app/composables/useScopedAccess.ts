@@ -58,9 +58,9 @@ export interface ScopedAccessRedeemOptions {
 export interface UseScopedAccessOptions {
   /** Cookie name for storing the token (default: 'scoped-access-token') */
   cookieName?: string
-  /** Cookie name for session data (default: 'scoped-access-session') */
+  /** Cookie name for session data (default: `scoped-access-session-${resourceType}`) */
   storageKey?: string
-  /** Cookie max age in seconds (default: 8 hours) */
+  /** Fallback cookie max age in seconds when the session has no usable expiresAt (default: 8 hours) */
   cookieMaxAge?: number
 }
 
@@ -76,20 +76,34 @@ export function useScopedAccess(
 ) {
   const {
     cookieName = 'scoped-access-token',
-    storageKey = 'scoped-access-session',
+    // Keyed per resourceType so every consumer of the same resource type
+    // (generic gate, useEventAccess, …) lands on the same session.
+    storageKey = `scoped-access-session-${resourceType}`,
     cookieMaxAge = 60 * 60 * 8 // 8 hours
   } = options
 
-  // Persist session in cookie for SSR compatibility (replaces localStorage)
-  const sessionCookie = useCookie<ScopedAccessSession | null>(storageKey, {
-    maxAge: cookieMaxAge,
-    default: () => null
-  })
+  // The session cookie's lifetime must follow the token's real expiresAt —
+  // a fixed maxAge would keep a dead token's session alive (or expire a
+  // live one early) when a grant uses a non-default tokenTtl.
+  const sessionMaxAge = (data: ScopedAccessSession | null): number => {
+    if (!data?.expiresAt) return cookieMaxAge
+    const remaining = Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)
+    return remaining > 0 ? remaining : cookieMaxAge
+  }
+
+  // Persist session in cookie for SSR compatibility (replaces localStorage).
+  // Created fresh per write so maxAge can track the session's expiresAt.
+  const sessionCookie = (maxAge: number) =>
+    useCookie<ScopedAccessSession | null>(storageKey, {
+      maxAge,
+      default: () => null
+    })
 
   // State
   const session = useState<ScopedAccessSession | null>(`scoped-access-${resourceType}`, () => null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const errorStatus = ref<number | null>(null)
 
   // Computed properties
   const isAuthenticated = computed(() => {
@@ -126,7 +140,7 @@ export function useScopedAccess(
    */
   function loadSession(): ScopedAccessSession | null {
     try {
-      const data = sessionCookie.value
+      const data = sessionCookie(cookieMaxAge).value
       if (!data) return null
 
       // Validate resource type matches
@@ -152,12 +166,13 @@ export function useScopedAccess(
    */
   function saveSession(data: ScopedAccessSession): void {
     session.value = data
-    sessionCookie.value = data
+    const maxAge = sessionMaxAge(data)
+    sessionCookie(maxAge).value = data
 
-    // Also set token cookie for server-side validation
-    const tokenCookie = useCookie(cookieName, {
-      maxAge: cookieMaxAge
-    })
+    // Also set token cookie for server-side validation. Note: when the
+    // server already set its httpOnly copy (redeem/mint), this write is a
+    // silent no-op — the httpOnly cookie wins and JS can never clear it.
+    const tokenCookie = useCookie(cookieName, { maxAge })
     tokenCookie.value = data.token
   }
 
@@ -166,7 +181,7 @@ export function useScopedAccess(
    */
   function clearSession(): void {
     session.value = null
-    sessionCookie.value = null
+    sessionCookie(cookieMaxAge).value = null
 
     const tokenCookie = useCookie(cookieName)
     tokenCookie.value = null
@@ -183,6 +198,7 @@ export function useScopedAccess(
   async function login(loginOptions: ScopedAccessLoginOptions): Promise<boolean> {
     isLoading.value = true
     error.value = null
+    errorStatus.value = null
 
     try {
       const response = await $fetch<{
@@ -215,8 +231,9 @@ export function useScopedAccess(
       return true
     }
     catch (err: unknown) {
-      const fetchError = err as { data?: { message?: string; statusMessage?: string }; statusMessage?: string }
+      const fetchError = err as { status?: number; statusCode?: number; data?: { message?: string; statusMessage?: string }; statusMessage?: string }
       error.value = fetchError.data?.message || fetchError.data?.statusMessage || fetchError.statusMessage || 'Login failed'
+      errorStatus.value = fetchError.status ?? fetchError.statusCode ?? null
       return false
     }
     finally {
@@ -324,6 +341,7 @@ export function useScopedAccess(
     session: readonly(session),
     isLoading: readonly(isLoading),
     error: readonly(error),
+    errorStatus: readonly(errorStatus),
 
     // Computed
     isAuthenticated,
@@ -351,20 +369,16 @@ export function useScopedAccess(
  *
  * Uses the canonical 'scoped-access-token' cookie so server-side checks
  * (e.g. crouton-pages' scoped visibility) see the token during SSR.
+ * No storageKey override: the session lands on the shared
+ * 'scoped-access-session-event' key, same as `useScopedAccess('event')`.
  */
 export function useEventAccess(options?: Omit<UseScopedAccessOptions, 'storageKey'>) {
-  return useScopedAccess('event', {
-    ...options,
-    storageKey: 'event-access-session'
-  })
+  return useScopedAccess('event', options)
 }
 
 /**
  * Shorthand for booking-scoped access
  */
 export function useBookingAccess(options?: Omit<UseScopedAccessOptions, 'storageKey'>) {
-  return useScopedAccess('booking', {
-    ...options,
-    storageKey: 'booking-access-session'
-  })
+  return useScopedAccess('booking', options)
 }

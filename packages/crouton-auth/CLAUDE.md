@@ -342,6 +342,7 @@ export default defineNuxtConfig({
 | `/api/auth/sign-up/*` | 5 | 60s | Prevent account spam |
 | `/api/auth/forgot-password` | 3 | 60s | Prevent email abuse |
 | `/api/auth/verify-email` | 5 | 60s | Prevent verification spam |
+| `/api/auth/scoped-access/*` | 10 | 60s | Public redeem endpoint — PIN brute force + pre-auth hook work (the before-redeem hook does a DB read per attempt) |
 | `/api/auth/*` | 15 | 60s | General auth fallback |
 | `/api/*` | 150 | 60s | General API |
 
@@ -389,7 +390,11 @@ await upsertScopedGrant({
 
 Brute-force protection is per-grant: 5 consecutive failures lock redemption for an exponentially growing window (1 min → 1 hour cap). This — not the hash — is the security boundary for low-entropy PINs; never mint tokens for unverified input around it. `credentialType` is `'pin'` today; `'link'` (URL-embedded secret) is reserved.
 
-`upsertScopedGrant` is safe to call on every login attempt (lazy sync — how sales' helper-login works, so no backfill or save-hook is needed): counters and lockout are preserved when the secret is unchanged, and only a *changed* secret resets them.
+`upsertScopedGrant` is safe to call on every login attempt (lazy sync — no backfill or save-hook is needed): counters and lockout are preserved when the secret is unchanged, and only a *changed* secret resets them. Pass `skipWhenLocked: true` for syncs driven by public login attempts — it skips the UPDATE while the grant is locked out, so an attacker can't drive a DB write per attempt. Note the upsert unconditionally overwrites `role`, `maxUses`, `expiresAt`, `tokenTtl`: a lazily-synced grant is fully owned by its sync and must never be hand-edited.
+
+### Before-Redeem Hook (lazy credential sync)
+
+The generic redeem endpoint fires `crouton:scoped-access:before-redeem` with `{ organizationId, resourceType, resourceId, credentialType }` **before** `verifyAndRedeemGrant`. Domain packages register a Nitro plugin handler that syncs their source credential into the grant (e.g. crouton-sales upserts `salesEvents.helperPin` into the `('event', eventId)` grant — trimmed, with `skipWhenLocked`). Auth stays domain-agnostic: it fires the hook without knowing what the resource is. Hook failures are logged and swallowed — the redeem then fails as a normal 401, indistinguishable from a wrong secret (no info leak on the public endpoint).
 
 Grants can't FK into domain tables — call `revokeScopedGrantsForResource` when the resource is deleted.
 
@@ -436,6 +441,7 @@ const {
   authHeaders,   // { 'x-scoped-token': token } — spread into $fetch headers
   redeem,        // redeem({ teamId, resourceId, secret, displayName }) via generic endpoint
   login,         // custom-endpoint variant (legacy/domain-specific logins)
+  errorStatus,   // HTTP status of the last failed login/redeem (429 locked, 410 exhausted, …)
   logout
 } = useEventAccess()
 
@@ -443,6 +449,8 @@ const {
 const access = useScopedAccess('booking')
 await access.redeem({ teamId, resourceId: bookingId, secret: pin, displayName: 'Guest' })
 ```
+
+Sessions persist in a client-readable cookie keyed **per resource type** (`scoped-access-session-${resourceType}`), so every consumer of the same resource type lands on the same session (the pages gate and `useEventAccess` share `scoped-access-session-event`). The session cookie's `maxAge` follows the token's real `expiresAt` (not a fixed 8h), keeping the client session honest when a grant uses a custom `tokenTtl`. The httpOnly `scoped-access-token` cookie (server-set by redeem/mint) is for SSR validation only — client writes to it are silent no-ops and client code must never depend on reading it.
 
 ### API Endpoints
 

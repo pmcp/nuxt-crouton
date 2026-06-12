@@ -19,7 +19,25 @@ declare module 'nitropack' {
     }) => void | Promise<void>
 
     'crouton:auth:email': (payload: CroutonAuthEmailPayload) => void | Promise<void>
+
+    'crouton:scoped-access:before-redeem': (payload: ScopedAccessBeforeRedeemPayload) => void | Promise<void>
   }
+}
+
+/**
+ * Payload for the crouton:scoped-access:before-redeem Nitro hook.
+ *
+ * Fired by the generic redeem endpoint before verifyAndRedeemGrant so domain
+ * packages can lazily sync their source credential into the grant (e.g.
+ * crouton-sales syncs salesEvents.helperPin into the event grant). Handlers
+ * must trim synced secrets and pass skipWhenLocked to upsertScopedGrant.
+ * The presented secret is deliberately NOT in the payload.
+ */
+export interface ScopedAccessBeforeRedeemPayload {
+  organizationId: string
+  resourceType: string
+  resourceId: string
+  credentialType: string
 }
 
 export type CroutonAuthEmailPayload = {

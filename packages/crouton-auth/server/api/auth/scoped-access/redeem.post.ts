@@ -1,3 +1,4 @@
+/// <reference path="../../../crouton-hooks.d.ts" />
 /**
  * Redeem a Scoped Access Grant
  *
@@ -37,6 +38,23 @@ export default defineEventHandler(async (event) => {
   const team = await getTeamById(event, teamId) ?? await getTeamBySlug(event, teamId)
   if (!team) {
     throw createError({ status: 404, statusText: 'Team not found' })
+  }
+
+  // Let domain packages lazily sync their source credential into the grant
+  // before verification (e.g. crouton-sales syncs salesEvents.helperPin into
+  // the event grant). Hook failures must not leak credential info on this
+  // public endpoint: log and continue — the redeem then fails as a normal
+  // not_found/invalid_secret 401.
+  try {
+    await useNitroApp().hooks.callHook('crouton:scoped-access:before-redeem', {
+      organizationId: team.id,
+      resourceType,
+      resourceId,
+      credentialType: credentialType || 'pin'
+    })
+  }
+  catch (err) {
+    console.error('[crouton-auth] before-redeem hook failed:', err)
   }
 
   const result = await verifyAndRedeemGrant({

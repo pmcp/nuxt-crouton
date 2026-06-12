@@ -496,6 +496,12 @@ export interface UpsertScopedGrantOptions {
   tokenTtl?: number
   /** Additional metadata */
   metadata?: Record<string, unknown>
+  /**
+   * Skip the UPDATE when the existing grant is locked out. For lazy syncs
+   * driven by public login attempts (e.g. the before-redeem hook): a
+   * locked-out attacker must not be able to drive a DB write per attempt.
+   */
+  skipWhenLocked?: boolean
 }
 
 /**
@@ -521,7 +527,8 @@ export async function upsertScopedGrant(
     maxUses = null,
     expiresAt = null,
     tokenTtl = 8 * 60 * 60 * 1000,
-    metadata
+    metadata,
+    skipWhenLocked = false
   } = options
 
   const db = useDB()
@@ -540,6 +547,9 @@ export async function upsertScopedGrant(
     .limit(1)
 
   if (existing) {
+    if (skipWhenLocked && existing.lockedUntil && existing.lockedUntil > new Date()) {
+      return { id: existing.id }
+    }
     const secretUnchanged = await verifyGrantSecret(secret, existing.secretHash)
     await db
       .update(scopedAccessGrant)
