@@ -151,7 +151,11 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
 </script>
 
 <template>
-  <div class="fixed top-4 sm:top-6 inset-x-0 z-50 px-4 sm:px-6 pointer-events-none [&>*]:pointer-events-auto">
+  <!-- Mobile top hugs the viewport edge so the pill centers on a slim header
+       line right under it (in portrait Safari the webview already starts
+       below the status bar — env(safe-area-inset-top) is 0 there; the max()
+       keeps it clear of the notch in standalone/PWA mode). -->
+  <div class="fixed top-[max(0.25rem,env(safe-area-inset-top))] sm:top-6 inset-x-0 z-50 px-4 sm:px-6 pointer-events-none [&>*]:pointer-events-auto">
     <!-- Loading state -->
     <template v-if="isLoading">
       <div class="relative flex items-center justify-center">
