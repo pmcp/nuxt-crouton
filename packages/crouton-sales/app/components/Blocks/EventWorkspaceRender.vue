@@ -39,14 +39,15 @@ const eventSlug = computed(() => props.attrs.eventSlug || '')
 // measures the wrapper's distance from the top of the viewport and grows to
 // the bottom edge, so a POS-only page reads as a full-screen app. Recomputed
 // on mount + resize (not on scroll — the POS scrolls internally, not the page).
-// On phones the kassa always fills to the viewport bottom — a helper taking
-// orders wants a full-screen app, not a 60/80vh card with the page peeking
-// through. compact/tall only apply from sm up. (Renderer is clientOnly, so
-// the media query is reliable from the first paint.)
+//
+// Phones ignore the attr entirely: the kassa takes over the screen as a
+// fixed inset-0 layer — header right under the status bar, no page chrome
+// above, no page peeking through below. Safe-area paddings keep the header
+// out of the notch and the cart bar above iOS Safari's floating bottom bar
+// (env() needs viewport-fit=cover — set by this layer's viewport-meta plugin).
+// (Renderer is clientOnly, so the media query is reliable from first paint.)
 const isPhone = useMediaQuery('(max-width: 639px)')
-const heightMode = computed(() =>
-  isPhone.value ? 'fill' : (props.attrs.height || 'tall')
-)
+const heightMode = computed(() => props.attrs.height || 'tall')
 const posWrapper = ref<HTMLElement | null>(null)
 const fillHeight = ref('')
 
@@ -56,13 +57,13 @@ const posHeightClass = computed(() => {
   return '' // fill drives height via inline style
 })
 const posHeightStyle = computed(() =>
-  heightMode.value === 'fill' && fillHeight.value
+  !isPhone.value && heightMode.value === 'fill' && fillHeight.value
     ? { height: fillHeight.value }
     : undefined
 )
 
 function recomputeFillHeight() {
-  if (heightMode.value !== 'fill' || !posWrapper.value) return
+  if (isPhone.value || heightMode.value !== 'fill' || !posWrapper.value) return
   const top = Math.max(0, Math.round(posWrapper.value.getBoundingClientRect().top))
   fillHeight.value = `calc(100dvh - ${top}px)`
 }
@@ -71,7 +72,7 @@ useEventListener('resize', recomputeFillHeight)
 
 // The kassa wrapper only exists in the volunteer branch — (re)measure when it
 // appears (mount, or a logout flipping the branch) or the height mode changes.
-watch([posWrapper, heightMode], async () => {
+watch([posWrapper, heightMode, isPhone], async () => {
   await nextTick()
   recomputeFillHeight()
 })
@@ -100,12 +101,15 @@ watch([posWrapper, heightMode], async () => {
       </Suspense>
     </div>
 
-    <!-- Anonymous → kassa only; the panel owns the helper PIN login flow -->
+    <!-- Anonymous → kassa only; the panel owns the helper PIN login flow.
+         Phones: fixed full-screen takeover (see height section above). -->
     <div
       v-else
       ref="posWrapper"
-      class="rounded-3xl border border-default overflow-clip bg-default flex flex-col"
-      :class="posHeightClass"
+      class="overflow-clip bg-default flex flex-col"
+      :class="isPhone
+        ? 'fixed inset-0 z-40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
+        : ['rounded-3xl border border-default', posHeightClass]"
       :style="posHeightStyle"
     >
       <SalesPosPanel :event-slug="eventSlug" />

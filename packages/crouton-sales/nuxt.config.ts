@@ -43,6 +43,10 @@ export default defineNuxtConfig({
     dirs: [join(currentDir, 'app/composables')]
   },
 
+  // Kassa viewport meta (safe-area + input-zoom suppression) lives in
+  // app/plugins/viewport-meta.ts — a layer's app.head can't override Nuxt's
+  // default viewport meta, so it's applied at runtime via useHead.
+
   // i18n configuration
   i18n: {
     locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
