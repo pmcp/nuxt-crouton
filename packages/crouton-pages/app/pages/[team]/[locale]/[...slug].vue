@@ -134,10 +134,33 @@ if (error.value?.statusCode === 404) {
 
 // Scoped (access-code) pages announce their required scope in the 401 payload —
 // render the PIN gate inline instead of bouncing to the member login.
-const scopedGate = computed<{ teamId: string, scope: { resourceType?: string, resourceId?: string } } | null>(() => {
+const scopedGate = computed<{ teamId: string, scope: { resourceType?: string, resourceId?: string, nameRequired?: boolean }, chrome?: { hideNav?: boolean, hideAuthControls?: boolean } } | null>(() => {
   if (error.value?.statusCode !== 401) return null
   const payload: any = (error.value as any)?.data?.data ?? (error.value as any)?.data
   return payload?.reason === 'scoped' ? payload : null
+})
+
+// Per-page chrome: pages can hide the nav pill and/or the login/account
+// controls via config flags (e.g. a volunteer-facing kassa page). Shared
+// with CroutonPagesNav via useState — same pattern as pageLayout. The
+// language switcher and color-mode toggle always stay reachable. On a gated
+// scoped page the flags come from the 401 payload so the gate is chrome-less
+// too.
+const pageChrome = useState<{ hideNav: boolean, hideAuthControls: boolean }>('pageChrome', () => ({ hideNav: false, hideAuthControls: false }))
+
+watchEffect(() => {
+  let cfg: any = null
+  try {
+    cfg = typeof page.value?.config === 'string' ? JSON.parse(page.value.config) : page.value?.config
+  } catch {
+    cfg = null
+  }
+  const src = cfg ?? scopedGate.value?.chrome ?? {}
+  pageChrome.value = { hideNav: !!src.hideNav, hideAuthControls: !!src.hideAuthControls }
+})
+
+onBeforeUnmount(() => {
+  pageChrome.value = { hideNav: false, hideAuthControls: false }
 })
 
 // Handle 401 - redirect to login for members/admin-only pages

@@ -161,7 +161,11 @@
       "accessCodeSave": "Instellen",
       "accessCodeRemove": "Code verwijderen",
       "scopeFromBlockTitle": "Beveiligd door een blok op deze pagina",
-      "scopeFromBlockDescription": "Een blok op deze pagina levert de toegangscode (bv. de helper-pincode van het evenement) — de eigen toegangscode van de pagina wordt niet gebruikt."
+      "scopeFromBlockDescription": "Een blok op deze pagina levert de toegangscode (bv. de helper-pincode van het evenement) — de eigen toegangscode van de pagina wordt niet gebruikt.",
+      "chromeHideNav": "Verberg paginanavigatie",
+      "chromeHideNavDescription": "Verberg de navigatiepil op deze pagina",
+      "chromeHideAuth": "Verberg login- en accountknoppen",
+      "chromeHideAuthDescription": "Verberg login-, account- en beheermenu’s op deze pagina — taal en donkere modus blijven beschikbaar"
     },
     "sidebar": {
       "drafts": "Concepten",

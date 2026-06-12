@@ -147,7 +147,11 @@
       "accessCodeSave": "Définir",
       "accessCodeRemove": "Supprimer le code",
       "scopeFromBlockTitle": "Protégée par un bloc de cette page",
-      "scopeFromBlockDescription": "Un bloc de cette page fournit le code d'accès (p.ex. le code PIN des bénévoles de l'événement) — le code d'accès propre à la page n'est pas utilisé."
+      "scopeFromBlockDescription": "Un bloc de cette page fournit le code d'accès (p.ex. le code PIN des bénévoles de l'événement) — le code d'accès propre à la page n'est pas utilisé.",
+      "chromeHideNav": "Masquer la navigation",
+      "chromeHideNavDescription": "Masquer la pilule de navigation sur cette page",
+      "chromeHideAuth": "Masquer les boutons de connexion et de compte",
+      "chromeHideAuthDescription": "Masquer les menus de connexion, de compte et d’administration sur cette page — la langue et le mode sombre restent disponibles"
     },
     "sidebar": {
       "drafts": "Brouillons",

@@ -58,8 +58,16 @@ const menuItems = computed<NavigationMenuItem[]>(() => {
   }))
 })
 
-// Show left pill only when more than 1 page
-const showPageNav = computed(() => menuItems.value.length > 1)
+// Per-page chrome flags (set by the public page route from page.config —
+// e.g. a volunteer-facing kassa page hides the member login). Language
+// switcher and color-mode toggle are deliberately not hideable.
+const pageChrome = useState<{ hideNav: boolean, hideAuthControls: boolean }>('pageChrome', () => ({ hideNav: false, hideAuthControls: false }))
+
+// Show left pill only when more than 1 page and the page doesn't hide it
+const showPageNav = computed(() => menuItems.value.length > 1 && !pageChrome.value.hideNav)
+
+// Login button / user avatar / admin menu visibility
+const showAuthControls = computed(() => !pageChrome.value.hideAuthControls)
 
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -179,59 +187,61 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
       <!-- Right pill: User menu + language + dark mode (pinned right) -->
       <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
-          <!-- Authenticated: Avatar dropdown -->
-          <UDropdownMenu
-            v-if="user"
-            :items="userDropdownItems"
-            :content="{ align: 'end', side: 'bottom' }"
-            :ui="{ content: 'w-56' }"
-          >
-            <UButton
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              class="rounded-full"
+          <template v-if="showAuthControls">
+            <!-- Authenticated: Avatar dropdown -->
+            <UDropdownMenu
+              v-if="user"
+              :items="userDropdownItems"
+              :content="{ align: 'end', side: 'bottom' }"
+              :ui="{ content: 'w-56' }"
             >
-              <template #leading>
-                <UAvatar
-                  :src="user?.image ?? undefined"
-                  :alt="user?.name ?? 'User'"
-                  :text="userInitials"
-                  size="2xs"
-                />
-              </template>
-            </UButton>
-          </UDropdownMenu>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                class="rounded-full"
+              >
+                <template #leading>
+                  <UAvatar
+                    :src="user?.image ?? undefined"
+                    :alt="user?.name ?? 'User'"
+                    :text="userInitials"
+                    size="2xs"
+                  />
+                </template>
+              </UButton>
+            </UDropdownMenu>
 
-          <!-- Not authenticated: Login button -->
-          <UButton
-            v-else
-            to="/auth/login"
-            icon="i-lucide-log-in"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            :label="t('auth.signIn')"
-          />
-
-          <!-- Admin menu -->
-          <UDropdownMenu
-            v-if="user && isAdmin && currentTeam?.slug"
-            :items="adminDropdownItems"
-            :content="{ align: 'end', side: 'bottom' }"
-            :ui="{ content: 'w-48' }"
-          >
+            <!-- Not authenticated: Login button -->
             <UButton
-              icon="i-lucide-settings"
+              v-else
+              to="/auth/login"
+              icon="i-lucide-log-in"
               color="neutral"
               variant="ghost"
               size="sm"
-              aria-label="Admin menu"
+              :label="t('auth.signIn')"
             />
-          </UDropdownMenu>
-        </ClientOnly>
 
-        <USeparator orientation="vertical" class="h-5 mx-1" />
+            <!-- Admin menu -->
+            <UDropdownMenu
+              v-if="user && isAdmin && currentTeam?.slug"
+              :items="adminDropdownItems"
+              :content="{ align: 'end', side: 'bottom' }"
+              :ui="{ content: 'w-48' }"
+            >
+              <UButton
+                icon="i-lucide-settings"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                aria-label="Admin menu"
+              />
+            </UDropdownMenu>
+
+            <USeparator orientation="vertical" class="h-5 mx-1" />
+          </template>
+        </ClientOnly>
 
         <!-- Language Switcher -->
         <CroutonI18nLanguageSwitcher class="w-auto" />
@@ -297,53 +307,54 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
         </UPopover>
       </div>
 
-      <!-- Right pill: User menu (logged in) or language/dark mode (logged out) -->
+      <!-- Right pill: auth controls (unless the page hides them) + language + dark mode -->
       <div :class="[pillClass, 'px-2 py-1', showPageNav && 'absolute right-0']">
         <ClientOnly>
-          <!-- Authenticated: Avatar dropdown -->
-          <template v-if="user">
-            <UDropdownMenu
-              :items="userDropdownItems"
-              :content="{ align: 'end', side: 'bottom' }"
-              :ui="{ content: 'w-56' }"
-            >
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="sm"
-                class="rounded-full"
+          <template v-if="showAuthControls">
+            <!-- Authenticated: Avatar dropdown -->
+            <template v-if="user">
+              <UDropdownMenu
+                :items="userDropdownItems"
+                :content="{ align: 'end', side: 'bottom' }"
+                :ui="{ content: 'w-56' }"
               >
-                <template #leading>
-                  <UAvatar
-                    :src="user?.image ?? undefined"
-                    :alt="user?.name ?? 'User'"
-                    :text="userInitials"
-                    size="2xs"
-                  />
-                </template>
-              </UButton>
-            </UDropdownMenu>
+                <UButton
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  class="rounded-full"
+                >
+                  <template #leading>
+                    <UAvatar
+                      :src="user?.image ?? undefined"
+                      :alt="user?.name ?? 'User'"
+                      :text="userInitials"
+                      size="2xs"
+                    />
+                  </template>
+                </UButton>
+              </UDropdownMenu>
 
-            <!-- Admin menu -->
-            <UDropdownMenu
-              v-if="isAdmin && currentTeam?.slug"
-              :items="adminDropdownItems"
-              :content="{ align: 'end', side: 'bottom' }"
-              :ui="{ content: 'w-48' }"
-            >
-              <UButton
-                icon="i-lucide-settings"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                aria-label="Admin menu"
-              />
-            </UDropdownMenu>
-          </template>
+              <!-- Admin menu -->
+              <UDropdownMenu
+                v-if="isAdmin && currentTeam?.slug"
+                :items="adminDropdownItems"
+                :content="{ align: 'end', side: 'bottom' }"
+                :ui="{ content: 'w-48' }"
+              >
+                <UButton
+                  icon="i-lucide-settings"
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Admin menu"
+                />
+              </UDropdownMenu>
+            </template>
 
-          <!-- Not authenticated: Language + dark mode only -->
-          <template v-else>
+            <!-- Not authenticated: Login button -->
             <UButton
+              v-else
               to="/auth/login"
               icon="i-lucide-log-in"
               color="neutral"
@@ -352,17 +363,20 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
             />
 
             <USeparator orientation="vertical" class="h-5" />
-
-            <CroutonI18nLanguageSwitcher class="w-auto" />
-
-            <UButton
-              :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              @click="toggleColorMode"
-            />
           </template>
+        </ClientOnly>
+
+        <!-- Language + dark mode — always reachable, even on chrome-less pages -->
+        <CroutonI18nLanguageSwitcher class="w-auto" />
+
+        <ClientOnly>
+          <UButton
+            :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="toggleColorMode"
+          />
         </ClientOnly>
       </div>
     </div>

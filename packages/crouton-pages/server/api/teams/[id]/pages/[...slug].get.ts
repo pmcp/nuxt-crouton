@@ -223,9 +223,15 @@ export default defineEventHandler(async (event) => {
         let allowed = false
 
         let requiredScope: { resourceType?: string, resourceId?: string, nameRequired?: boolean } | null = null
+        // Per-page chrome flags, echoed in the 401 payload so the access gate
+        // renders with the same (hidden) chrome as the unlocked page.
+        let chrome: { hideNav?: boolean, hideAuthControls?: boolean } | undefined
         try {
           const config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
           requiredScope = config?.requiredScope || null
+          if (config?.hideNav || config?.hideAuthControls) {
+            chrome = { hideNav: !!config.hideNav, hideAuthControls: !!config.hideAuthControls }
+          }
         } catch {
           // Malformed config — treat as no scope restriction
         }
@@ -317,7 +323,8 @@ export default defineEventHandler(async (event) => {
             data: {
               reason: 'scoped',
               teamId: team.id,
-              scope: requiredScope ?? { resourceType: 'page', resourceId: page.id }
+              scope: requiredScope ?? { resourceType: 'page', resourceId: page.id },
+              ...(chrome ? { chrome } : {})
             }
           })
         }

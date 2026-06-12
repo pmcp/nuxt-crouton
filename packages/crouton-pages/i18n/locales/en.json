@@ -161,7 +161,11 @@
       "accessCodeSave": "Set",
       "accessCodeRemove": "Remove code",
       "scopeFromBlockTitle": "Gated by a block on this page",
-      "scopeFromBlockDescription": "A block on this page provides the access credential (e.g. the event's helper PIN) — the page's own access code is not used."
+      "scopeFromBlockDescription": "A block on this page provides the access credential (e.g. the event's helper PIN) — the page's own access code is not used.",
+      "chromeHideNav": "Hide page navigation",
+      "chromeHideNavDescription": "Hide the navigation pill on this page",
+      "chromeHideAuth": "Hide login & account controls",
+      "chromeHideAuthDescription": "Hide login, account and admin menus on this page — language and dark mode stay available"
     },
     "sidebar": {
       "drafts": "Drafts",

@@ -381,7 +381,7 @@ interface PageRecord {
   slug: string
   pageType: string        // 'core:regular' or 'appId:pageTypeId'
   content?: string        // For regular pages (HTML from editor)
-  config?: object         // For app pages (type-specific settings)
+  config?: object         // Type-specific settings + page-level flags (see below)
   status: 'draft' | 'published' | 'archived'
   visibility: 'public' | 'members' | 'admin' | 'scoped' | 'hidden'
   showInNavigation: boolean
@@ -391,6 +391,25 @@ interface PageRecord {
   depth?: number          // Nesting level
 }
 ```
+
+### Per-page chrome flags (`config.hideNav` / `config.hideAuthControls`)
+
+Pages can hide pieces of the floating nav on their public render — e.g. a
+volunteer-facing kassa page hides the member-login pill so PIN-holding
+volunteers can't wander into the team login. Two switches in the editor
+toolbar's settings popover write sparse booleans into `config`:
+
+- `hideNav` — hides the page-navigation pill (center/hamburger).
+- `hideAuthControls` — hides login button, user avatar, and admin menu. The
+  **language switcher and color-mode toggle always stay** in the right pill.
+
+Plumbing: the public route (`[team]/[locale]/[...slug].vue`) publishes the
+flags via `useState('pageChrome')` (same pattern as `pageLayout`), `Nav.vue`
+consumes it, and the scoped-page 401 payload echoes them as `data.chrome` so
+the access gate renders chrome-less too. On regular pages `handleSubmit`
+strips config to the page-level keys (`hideNav`, `hideAuthControls`,
+`requiredScope`) instead of nulling it — type-specific config still resets
+when the page type changes.
 
 ## Common Tasks
 

@@ -123,6 +123,10 @@ interface Props {
    * field is replaced by an explanatory hint. One trust level per page.
    */
   scopeProvidedByBlock?: boolean
+  /** Per-page chrome: hide the page-navigation pill on the public page */
+  hideNav?: boolean
+  /** Per-page chrome: hide the login/account/admin controls on the public page (language + color mode stay) */
+  hideAuthControls?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -147,6 +151,8 @@ const emit = defineEmits<{
   'close': []
   'save-access-code': [code: string]
   'remove-access-code': []
+  'update:hideNav': [value: boolean]
+  'update:hideAuthControls': [value: boolean]
 }>()
 
 const { t } = useT()
@@ -336,6 +342,32 @@ function saveAccessCode() {
                   size="sm"
                   class="w-full"
                   @update:model-value="(val: string | null) => emit('update:parentId', val)"
+                />
+              </UFormField>
+
+              <!-- Per-page chrome: hide nav pill / login controls on the
+                   public page (language + color mode always stay) -->
+              <UFormField
+                :label="t('pages.editor.chromeHideNav')"
+                :description="t('pages.editor.chromeHideNavDescription')"
+                name="hideNav"
+              >
+                <USwitch
+                  :model-value="hideNav ?? false"
+                  size="sm"
+                  @update:model-value="emit('update:hideNav', $event)"
+                />
+              </UFormField>
+
+              <UFormField
+                :label="t('pages.editor.chromeHideAuth')"
+                :description="t('pages.editor.chromeHideAuthDescription')"
+                name="hideAuthControls"
+              >
+                <USwitch
+                  :model-value="hideAuthControls ?? false"
+                  size="sm"
+                  @update:model-value="emit('update:hideAuthControls', $event)"
                 />
               </UFormField>
 

@@ -609,6 +609,22 @@ const scopeProvidingBlockTypes = new Set(
     .map(([key, def]) => def?.type || key)
 )
 
+// Per-page chrome flags (config.hideNav / config.hideAuthControls) — hide
+// the public page's nav pill and/or login/account controls (language +
+// color-mode toggle always stay). Stored sparsely: false is removed from
+// config instead of persisted.
+const configChromeFlag = (key: 'hideNav' | 'hideAuthControls') => computed({
+  get: () => !!(state.value.config as any)?.[key],
+  set: (value: boolean) => {
+    const config = { ...(state.value.config as Record<string, unknown> | undefined) }
+    if (value) config[key] = true
+    else delete config[key]
+    state.value.config = config
+  }
+})
+const chromeHideNav = configChromeFlag('hideNav')
+const chromeHideAuthControls = configChromeFlag('hideAuthControls')
+
 const scopeProvidedByBlock = computed(() => {
   if (state.value.visibility !== 'scoped' || !scopeProvidingBlockTypes.size) return false
 
@@ -752,6 +768,20 @@ async function handleSubmit() {
     const primaryLocale = Object.keys(translations)[0] || 'en'
     const primary = translations[primaryLocale] || {}
 
+    // Regular pages carry no type-specific config, but page-level flags
+    // (chrome hiding, manual requiredScope) live in config too and must
+    // survive the save — strip everything else instead of nulling wholesale.
+    const PAGE_LEVEL_CONFIG_KEYS = ['hideNav', 'hideAuthControls', 'requiredScope'] as const
+    const regularPageConfig = () => {
+      const config = state.value.config as Record<string, unknown> | null | undefined
+      if (!config) return null
+      const kept = Object.fromEntries(
+        PAGE_LEVEL_CONFIG_KEYS.filter(key => config[key] !== undefined && config[key] !== false)
+          .map(key => [key, config[key]])
+      )
+      return Object.keys(kept).length ? kept : null
+    }
+
     const rawContent = showBlockEditor.value ? (primary.content || state.value.content) : state.value.content
     const submitData = {
       ...state.value,
@@ -761,7 +791,7 @@ async function handleSubmit() {
       seoDescription: (primary as any).seoDescription || '',
       content: rawContent && typeof rawContent === 'object' ? JSON.stringify(rawContent) : rawContent,
       translations,
-      config: isRegularPage.value ? null : state.value.config
+      config: isRegularPage.value ? regularPageConfig() : state.value.config
     } as any
 
     let savedPage: any
@@ -987,6 +1017,10 @@ defineExpose({ state })
         :has-access-code="hasAccessCode"
         :access-code-pending="accessCodePending"
         :scope-provided-by-block="scopeProvidedByBlock"
+        :hide-nav="chromeHideNav"
+        :hide-auth-controls="chromeHideAuthControls"
+        @update:hide-nav="chromeHideNav = $event"
+        @update:hide-auth-controls="chromeHideAuthControls = $event"
         @update:status="state.status = $event"
         @update:visibility="state.visibility = $event"
         @update:show-in-navigation="state.showInNavigation = $event"
