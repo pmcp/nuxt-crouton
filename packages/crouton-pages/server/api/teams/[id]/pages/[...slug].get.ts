@@ -1,3 +1,4 @@
+/// <reference path="../../../../crouton-hooks.d.ts" />
 /**
  * Get Single Page by Slug (Catch-All)
  *
@@ -221,12 +222,55 @@ export default defineEventHandler(async (event) => {
         // compared as plain strings, pages never learns what the resource is.
         let allowed = false
 
-        let requiredScope: { resourceType?: string, resourceId?: string } | null = null
+        let requiredScope: { resourceType?: string, resourceId?: string, nameRequired?: boolean } | null = null
         try {
           const config = typeof page.config === 'string' ? JSON.parse(page.config) : page.config
           requiredScope = config?.requiredScope || null
         } catch {
           // Malformed config — treat as no scope restriction
+        }
+
+        // Derive the scope from the page's content blocks at read time
+        // (crouton:pages:derive-scope — e.g. crouton-sales answers
+        // ('event', eventId) for an embedded eventWorkspaceBlock, so the gate
+        // redeems the event's helper PIN directly). The blocks are the source
+        // of truth — nothing is stored, so there's no state to drift. A
+        // derived scope outranks config.requiredScope; no answer (block
+        // removed, event deleted, slug unresolvable) falls back to the
+        // stored scope, then to the page's own ('page', pageId) gate.
+        const docBlocks = (raw: unknown): Array<{ type?: string, attrs?: Record<string, unknown> }> => {
+          try {
+            const doc = typeof raw === 'string' ? JSON.parse(raw) : raw
+            return Array.isArray((doc as any)?.content) ? (doc as any).content : []
+          } catch {
+            return []
+          }
+        }
+        let blocks = docBlocks(page.content)
+        if (!blocks.length && page.translations) {
+          // Block content may live only in the translations (localized
+          // editor) — any locale will do, the embedded blocks are identical.
+          try {
+            const tr = typeof page.translations === 'string' ? JSON.parse(page.translations) : page.translations
+            for (const localeData of Object.values(tr || {})) {
+              blocks = docBlocks((localeData as any)?.content)
+              if (blocks.length) break
+            }
+          } catch {
+            // Malformed translations — no blocks to derive from
+          }
+        }
+
+        if (blocks.length) {
+          try {
+            const derivePayload = { teamId: team.id, blocks, result: null as { resourceType: string, resourceId: string, nameRequired?: boolean } | null }
+            await useNitroApp().hooks.callHook('crouton:pages:derive-scope', derivePayload)
+            if (derivePayload.result) {
+              requiredScope = derivePayload.result
+            }
+          } catch (err) {
+            console.error('[crouton-pages] derive-scope hook failed:', err)
+          }
         }
 
         try {

@@ -159,7 +159,9 @@
       "accessCodeUnset": "No code set yet — visitors can't unlock this page",
       "accessCodePlaceholder": "e.g. 1234",
       "accessCodeSave": "Set",
-      "accessCodeRemove": "Remove code"
+      "accessCodeRemove": "Remove code",
+      "scopeFromBlockTitle": "Gated by a block on this page",
+      "scopeFromBlockDescription": "A block on this page provides the access credential (e.g. the event's helper PIN) — the page's own access code is not used."
     },
     "sidebar": {
       "drafts": "Drafts",
@@ -920,6 +922,7 @@
       "title": "Access code required",
       "description": "This page is only available with an access code.",
       "namePlaceholder": "Your name (optional)",
+      "namePlaceholderRequired": "Your name",
       "pinPlaceholder": "Access code",
       "submit": "Unlock",
       "invalid": "Invalid access code",

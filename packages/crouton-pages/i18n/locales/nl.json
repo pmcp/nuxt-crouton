@@ -159,7 +159,9 @@
       "accessCodeUnset": "Nog geen code ingesteld — bezoekers kunnen deze pagina niet openen",
       "accessCodePlaceholder": "bv. 1234",
       "accessCodeSave": "Instellen",
-      "accessCodeRemove": "Code verwijderen"
+      "accessCodeRemove": "Code verwijderen",
+      "scopeFromBlockTitle": "Beveiligd door een blok op deze pagina",
+      "scopeFromBlockDescription": "Een blok op deze pagina levert de toegangscode (bv. de helper-pincode van het evenement) — de eigen toegangscode van de pagina wordt niet gebruikt."
     },
     "sidebar": {
       "drafts": "Concepten",
@@ -920,6 +922,7 @@
       "title": "Toegangscode vereist",
       "description": "Deze pagina is alleen beschikbaar met een toegangscode.",
       "namePlaceholder": "Je naam (optioneel)",
+      "namePlaceholderRequired": "Je naam",
       "pinPlaceholder": "Toegangscode",
       "submit": "Ontgrendelen",
       "invalid": "Ongeldige toegangscode",

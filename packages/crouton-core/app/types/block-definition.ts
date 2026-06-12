@@ -42,6 +42,13 @@ export interface CroutonBlockDefinition {
   schema: CroutonBlockPropertySchema[]
   /** Whether to wrap the renderer in <ClientOnly> */
   clientOnly?: boolean
+  /**
+   * Editor hint: this block provides the access scope for a 'scoped' page
+   * (the server derives it via the crouton:pages:derive-scope Nitro hook).
+   * The page editor uses this flag only to mirror the server's derivation —
+   * e.g. hiding the page access-code field when such a block is present.
+   */
+  providesScope?: boolean
   /** Auto-imported component names */
   components: {
     /** Editor NodeView component name (e.g. 'CroutonChartsBlocksChartBlockView') */

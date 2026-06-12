@@ -427,10 +427,39 @@ tokens** — the accountless tokens volunteers/guests get by redeeming a PIN
   to a team-member session; otherwise 401. The response is sent with
   `Cache-Control: private, no-store` (same pattern as members/admin) so gated
   content never enters the ISR/SWR cache.
+- **Derived scope (read-time, never stored)**: on every scoped-page request
+  the endpoint parses the content blocks (base `content`, falling back to any
+  locale's translations content) and fires the `crouton:pages:derive-scope`
+  Nitro hook with `{ teamId, blocks, result }`. Domain plugins may answer via
+  the mutable `result` field — the first non-null answer wins (e.g.
+  crouton-sales answers `('event', eventId, nameRequired: true)` for an
+  embedded `eventWorkspaceBlock`, so the gate redeems the event's helper PIN
+  and the kassa adopts that session). Precedence: **derived >
+  `config.requiredScope` > `('page', pageId)` fallback**. No answer (block
+  removed, resource deleted) ⇒ self-healing fallback to the stored scope /
+  page-code gate — no state to drift, no migration. The hook contract lives
+  in `server/crouton-hooks.d.ts`.
 - **Narrowing**: the page's `config` json may carry
   `{ "requiredScope": { "resourceType": "event", "resourceId": "..." } }` —
   then only tokens scoped to that resource pass (string comparison; pages
-  never learns what the resource is). Either key may be omitted.
+  never learns what the resource is). Either key may be omitted. A derived
+  scope outranks it (see above).
+- **The 401 payload** echoes the effective scope verbatim (including
+  `nameRequired`) in `data.scope`, so `ScopedAccessGate.vue` knows what to
+  redeem against. The gate redeems via `useScopedAccess(scope.resourceType)`
+  — the composable persists a client-readable per-resourceType session
+  (`scoped-access-session-${resourceType}`) that embedded surfaces (e.g. the
+  kassa) can adopt; the httpOnly `scoped-access-token` cookie keeps its one
+  job, the page's SSR check. `scope.nameRequired` makes the gate's name field
+  mandatory (whitespace-only rejected — a UX nudge, not a guarantee; the
+  endpoint accepts any non-empty name).
+- **Editor hint**: when a scoped page's content contains a block whose
+  definition carries `providesScope: true` (a `CroutonBlockDefinition` flag —
+  the editor only mirrors the server's derivation), the access-code field in
+  the toolbar settings popover hides behind a "gated by a block on this page"
+  hint — one trust level per page. A pre-existing `('page', pageId)` grant is
+  NOT revoked: while the block is present the derived scope wins and the page
+  code is inert; remove the block and the page-code gate resumes.
 - **Navigation**: the pages list endpoint includes `scoped` pages for team
   members and for anonymous visitors presenting a valid scoped token, so nav
   shows them exactly when they're reachable.

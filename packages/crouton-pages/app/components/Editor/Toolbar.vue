@@ -116,6 +116,13 @@ interface Props {
   hasAccessCode?: boolean
   /** Whether an access-code save/remove is in flight */
   accessCodePending?: boolean
+  /**
+   * Whether the page content contains a scope-providing block (e.g. a kassa
+   * block gated by the event's helper PIN). The server derives the scope from
+   * the block at read time, so the page's own access code is inert — the
+   * field is replaced by an explanatory hint. One trust level per page.
+   */
+  scopeProvidedByBlock?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -332,9 +339,20 @@ function saveAccessCode() {
                 />
               </UFormField>
 
+              <!-- Scope provided by a content block (e.g. kassa → event helper
+                   PIN): the page access code is inert, show the hint instead -->
+              <UAlert
+                v-if="visibility === 'scoped' && scopeProvidedByBlock"
+                color="info"
+                variant="subtle"
+                icon="i-lucide-key-round"
+                :title="t('pages.editor.scopeFromBlockTitle')"
+                :description="t('pages.editor.scopeFromBlockDescription')"
+              />
+
               <!-- Access code — only for scoped visibility on a saved page -->
               <UFormField
-                v-if="visibility === 'scoped' && pageId"
+                v-else-if="visibility === 'scoped' && pageId"
                 :label="t('pages.editor.accessCode')"
                 name="accessCode"
                 :description="hasAccessCode ? t('pages.editor.accessCodeSet') : t('pages.editor.accessCodeUnset')"

@@ -145,7 +145,9 @@
       "accessCodeUnset": "Pas encore de code — les visiteurs ne peuvent pas ouvrir cette page",
       "accessCodePlaceholder": "p.ex. 1234",
       "accessCodeSave": "Définir",
-      "accessCodeRemove": "Supprimer le code"
+      "accessCodeRemove": "Supprimer le code",
+      "scopeFromBlockTitle": "Protégée par un bloc de cette page",
+      "scopeFromBlockDescription": "Un bloc de cette page fournit le code d'accès (p.ex. le code PIN des bénévoles de l'événement) — le code d'accès propre à la page n'est pas utilisé."
     },
     "sidebar": {
       "drafts": "Brouillons",
@@ -906,6 +908,7 @@
       "title": "Code d'accès requis",
       "description": "Cette page n'est disponible qu'avec un code d'accès.",
       "namePlaceholder": "Votre nom (optionnel)",
+      "namePlaceholderRequired": "Votre nom",
       "pinPlaceholder": "Code d'accès",
       "submit": "Déverrouiller",
       "invalid": "Code d'accès invalide",

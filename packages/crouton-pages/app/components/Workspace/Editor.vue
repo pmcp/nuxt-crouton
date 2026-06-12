@@ -596,6 +596,40 @@ async function removeAccessCode() {
   }
 }
 
+// Mirror of the server's read-time scope derivation, for the editor hint
+// only: when a scoped page's content contains a block whose definition
+// carries `providesScope` (e.g. the sales kassa block), the page is gated by
+// that block's own credential and the access-code field hides behind a hint.
+// Detection is the flag on the block definition — the editor never
+// re-implements the server's derivation logic.
+const registeredCroutonBlocks = (useAppConfig().croutonBlocks ?? {}) as Record<string, { type?: string, providesScope?: boolean }>
+const scopeProvidingBlockTypes = new Set(
+  Object.entries(registeredCroutonBlocks)
+    .filter(([, def]) => def?.providesScope)
+    .map(([key, def]) => def?.type || key)
+)
+
+const scopeProvidedByBlock = computed(() => {
+  if (state.value.visibility !== 'scoped' || !scopeProvidingBlockTypes.size) return false
+
+  const docs: unknown[] = [state.value.content]
+  const translations = state.value.translations as Record<string, { content?: unknown }> | undefined
+  for (const data of Object.values(translations || {})) {
+    docs.push(data?.content)
+  }
+
+  return docs.some((raw) => {
+    if (!raw) return false
+    try {
+      const doc = typeof raw === 'string' ? JSON.parse(raw) : raw
+      const blocks = Array.isArray((doc as any)?.content) ? (doc as any).content : []
+      return blocks.some((b: any) => scopeProvidingBlockTypes.has(b?.type))
+    } catch {
+      return false
+    }
+  })
+})
+
 // Layout options
 const layoutOptions = [
   { value: 'default', label: t('pages.layout.default') },
@@ -952,6 +986,7 @@ defineExpose({ state })
         :public-url="publicUrl"
         :has-access-code="hasAccessCode"
         :access-code-pending="accessCodePending"
+        :scope-provided-by-block="scopeProvidedByBlock"
         @update:status="state.status = $event"
         @update:visibility="state.visibility = $event"
         @update:show-in-navigation="state.showInNavigation = $event"
