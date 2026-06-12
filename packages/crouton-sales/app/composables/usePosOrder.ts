@@ -53,6 +53,9 @@ interface CreateOrderResponse {
   }
   items: unknown[]
   eventOrderNumber: string
+  /** Kitchen-ticket jobs queued by the order POST — empty when printing is
+   * disabled or no printer matched. Feeds usePrintWatcher. */
+  printQueueIds: string[]
 }
 
 function areOptionsEqual(a?: string | string[], b?: string | string[]): boolean {
@@ -72,8 +75,6 @@ function areOptionsEqual(a?: string | string[], b?: string | string[]): boolean 
 export interface UsePosOrderOptions {
   /** API base path for orders, defaults to '/api/sales/events' */
   apiBasePath?: string
-  /** Whether to trigger print queue after checkout (if printing enabled) */
-  enablePrinting?: boolean
 }
 
 /**
@@ -112,8 +113,7 @@ export function calculateItemPrice(item: CartItem): number {
  */
 export function usePosOrder(options: UsePosOrderOptions = {}) {
   const {
-    apiBasePath = '/api/crouton-sales/events',
-    enablePrinting = false
+    apiBasePath = '/api/crouton-sales/events'
   } = options
 
   // Always send the helper token explicitly: the scoped-access-token cookie
@@ -306,20 +306,6 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
           }
         }
       )
-
-      // Trigger print queue generation if enabled
-      if (enablePrinting) {
-        try {
-          await $fetch(
-            `${apiBasePath}/${selectedEventId.value}/orders/${response.order.id}/print`,
-            { method: 'POST', headers: helperHeaders() }
-          )
-        }
-        catch (printError) {
-          // Log but don't fail checkout if printing fails
-          console.error('Failed to trigger print queue:', printError)
-        }
-      }
 
       // The order POST bypasses useCollectionMutation, so emit the mutation
       // hook ourselves — open views (clients panel, anything watching

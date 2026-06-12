@@ -120,12 +120,45 @@
         <span class="text-sm text-warning font-medium">{{ clientWarning || t('sales.cart.selectClient') }}</span>
       </div>
 
+      <!-- Print failures persist as rows (one per order) so a busy event keeps
+           ordering while a previous order's printer problem stays visible. -->
+      <div
+        v-for="warning in printWarnings || []"
+        :key="warning.orderId"
+        class="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning"
+      >
+        <UIcon name="i-lucide-printer" class="text-warning shrink-0 mt-0.5" />
+        <div class="flex-1 min-w-0 text-sm text-warning">
+          <p class="font-medium">
+            #{{ warning.orderNumber }} — {{ warning.timedOut ? t('sales.cart.printTimeout') : t('sales.cart.printFailed') }}
+          </p>
+          <p v-for="failure in warning.failures" :key="failure.printerTitle" class="text-xs">
+            {{ failure.printerTitle }}<template v-if="failure.errorMessage">: {{ failure.errorMessage }}</template>
+          </p>
+        </div>
+        <UButton
+          icon="i-lucide-x"
+          size="xs"
+          color="warning"
+          variant="ghost"
+          square
+          @click="$emit('dismissPrintWarning', warning.orderId)"
+        />
+      </div>
+
+      <!-- The order button is the print feedback: it spins while the kitchen
+           tickets print and confirms green when every ticket is done. A new
+           order always wins — items in the cart yield the button back to
+           "Bestel" while the watcher continues in the background. -->
       <UButton
-        :label="t('sales.cart.pay')"
+        :label="orderButton.label"
         size="lg"
         block
-        :disabled="disabled || items.length === 0 || (clientRequired && !hasClient)"
-        @click="$emit('checkout')"
+        :color="orderButton.color"
+        :icon="orderButton.icon"
+        :loading="orderButton.loading"
+        :disabled="orderButton.disabled"
+        @click="handleOrderClick"
       />
     </template>
   </UCard>
@@ -133,6 +166,7 @@
 
 <script setup lang="ts">
 import type { CartItem, ProductOption, SalesCategory, SalesLocation } from '../../types'
+import type { PrintButtonState, WatchedOrder } from '../../composables/usePrintWatcher'
 import { calculateItemPrice } from '../../composables/usePosOrder'
 const { t } = useT()
 
@@ -153,6 +187,12 @@ const props = defineProps<{
   locationRemarks?: Record<string, string>
   /** Staff order flag — prints the staff banner (receipt settings) on tickets. */
   isPersonnel?: boolean
+  /** The order POST is in flight (usePosOrder's isCheckingOut). */
+  submitting?: boolean
+  /** Latest order's print feedback (usePrintWatcher's buttonState). */
+  printState?: PrintButtonState
+  /** Orders with failed/stuck tickets — rendered as dismissible warning rows. */
+  printWarnings?: WatchedOrder[]
 }>()
 
 // Locations represented by at least one cart item — a remark only prints if its
@@ -240,7 +280,42 @@ const emit = defineEmits<{
   clear: []
   updateLocationRemark: [locationId: string, value: string]
   'update:isPersonnel': [value: boolean]
+  dismissPrintWarning: [orderId: string]
 }>()
+
+// Button state machine. Items in the cart always win (the volunteer is
+// building the next order — the watcher keeps running in the background and
+// failures surface as warning rows instead of hijacking the button). The
+// print states only show while the cart sits empty after a checkout. The
+// status modes stay undimmed (not disabled) — clicks are simply no-ops there.
+const orderButton = computed(() => {
+  if (props.submitting) {
+    return { label: t('sales.cart.submitOrder'), color: 'primary', icon: undefined, loading: true, disabled: true } as const
+  }
+  if (props.items.length === 0) {
+    switch (props.printState) {
+      case 'printing':
+        return { label: t('sales.cart.printing'), color: 'primary', icon: undefined, loading: true, disabled: false } as const
+      case 'confirmed':
+        return { label: t('sales.cart.printed'), color: 'success', icon: 'i-lucide-check', loading: false, disabled: false } as const
+      case 'warning':
+        return { label: t('sales.cart.printFailed'), color: 'warning', icon: 'i-lucide-alert-triangle', loading: false, disabled: false } as const
+    }
+  }
+  return {
+    label: t('sales.cart.submitOrder'),
+    color: 'primary',
+    icon: undefined,
+    loading: false,
+    disabled: props.disabled || props.items.length === 0 || (props.clientRequired === true && !props.hasClient)
+  } as const
+})
+
+function handleOrderClick() {
+  // Only an actual order submit fires checkout — the print-status modes are
+  // display-only (the cart is empty there, checkout would just throw).
+  if (!props.submitting && props.items.length > 0) emit('checkout')
+}
 
 // Remarks panel: an accordion item per location that already has an item in
 // the cart (items-required, same rule the print pipeline applies). Each item

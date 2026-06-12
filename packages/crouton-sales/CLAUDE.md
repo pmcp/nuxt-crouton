@@ -9,6 +9,7 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | File | Purpose |
 |------|---------|
 | `app/composables/usePosOrder.ts` | Cart management, checkout, price calculations |
+| `app/composables/usePrintWatcher.ts` | Post-checkout print feedback — polls per-order print-status, derives the order button's state |
 | `app/composables/useHelperAuth.ts` | Helper authentication (wraps nuxt-crouton-auth) |
 | `app/components/Client/` | Customer-facing order interface (8 components) |
 | `app/components/Admin/` | Admin sidebar navigation |
@@ -298,6 +299,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues (kitchen tickets only — no customer receipt) |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order, **including the customer receipt** (`withReceipt: true` — the only per-order receipt path) |
+| `events/[eventId]/orders/[orderId]/print-status` GET | helper token | Slim per-order print job status for the POS order button's print watcher (`{ id, status, errorMessage, retryCount, printMode, printerTitle, completedAt }` — printer name joined server-side; order must belong to the event). Empty array = the order generated no tickets, a real answer not an error |
 | `teams/[id]/events/[eventId]/clients/summary` GET | team member | Active clients with an open tab at this event (`{ id, title, orderCount, total }`, non-cancelled orders only). Backs the workspace clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/tab` GET | team member | Read-only preview of a client's open tab: the aggregated receipt lines `end-receipt` would print (`{ lines: [{ name, quantity, price, optionLabels, total }], orderCount, total }`). Backs the expandable rows in the clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged — shared `aggregateClientTab` in `server/utils/client-tab.ts`, also used by the `tab` GET), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |
@@ -328,6 +330,21 @@ are `real` (no cast).
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
 
 **Print confirmation (feedback loop)**: the spooler runs a **pre-flight status check on its own connection** (ESC/POS `DLE EOT 1`+`2`+`4`) before sending each ticket — an error-state printer stops draining its receive buffer, so queries appended after a payload would jam behind it and never answer (this is why pre-flight must be a separate connection). Pre-flight failures (`Cover open`, `Paper out`, `Printer error`, `Printer offline`, `Printer not responding - paper out, cover open, or offline?`) fail the job **without sending the ticket**, preventing ghost prints when paper is reloaded. On a healthy pre-flight it sends the payload with the same queries appended as a confirmation pass (socket held open `DRAIN_SECS`, default 2s, which also fixes the silent-loss mode where `nc` closed before the printer drained its buffer); no reply there ⇒ `Printer stopped responding while printing (paper ran out mid-ticket?)`. `/complete` is called only when the printer confirms "online, paper present" — so the UI's **Done** badge means the printer confirmed it could print, not merely "bytes sent over TCP" (old behavior restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). The failed job's `errorMessage` is rendered inside `PrintqueuesCard.vue`'s **LED hover popover** (printer name header, status badge, 24h time, error text — same styling as the order-row LED popover); the row itself stays one calm line (printer name, location · retry count meta, time, LED rightmost, with an `#actions` slot before the LED for row buttons).
+
+**Volunteer-facing print feedback (the order button)**: the POS checkout button is the print
+status surface — no success toast. `usePosOrder().checkout` returns the order POST's
+`printQueueIds`; `OrderInterface` feeds them to `usePrintWatcher()`, which polls the helper-authed
+`orders/[orderId]/print-status` GET every 2s (the spooler's own cadence; always sends
+`x-scoped-token` explicitly — the shared cookie may carry a different resource's token) and
+derives the button state: spinner "Wordt geprint…" (any job 0/1) → green ✓ "Geprint" (all jobs 2,
+auto-reverts after ~4s) → warning "Print mislukt" (any job 9, worst-status wins). **A new order
+always wins**: items in the cart yield the button back to "Bestel"; failures of previous orders
+persist as dismissible warning rows above the button, named by order number + failing printer(s).
+Terminal conditions stop a poll: all jobs 2/9, empty `printQueueIds` (no watcher at all), a 401
+(stop silently), or a ~60s timeout → "Nog niet geprint — printer offline?" (jobs stuck at 0 —
+spooler down). The narrow-pane collapsed cart bar mirrors the state (the drawer auto-closes on
+checkout). Watcher is in-memory only — the admin LEDs remain the durable record; volunteer retry
+is deliberately out (the reprint endpoint would ghost-print customer receipts).
 
 **Spooler job-loop invariants** (learned from stuck-at-"printing" bugs): jobs are processed **sequentially** (Epson TM printers accept one connection on 9100 — parallel jobs to the same printer starve each other) and there is **no local processed-ids dedup** (the server's `mark_as_printing` flip is the dedup; a requeued job must print again even if this spooler printed it before). The poll uses `-m 30` (a bulk requeue returns every ticket's base64 — `-m 5` truncated over 5G, leaving flipped-but-unparsed jobs stranded), unparseable job ids are failed via callback instead of skipped, and `/complete`/`/fail` callbacks retry 3× with `-f -m 10` (a lost callback strands the job at status=printing).
 

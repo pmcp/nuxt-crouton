@@ -106,12 +106,16 @@
               client-required
               :client-warning="clientWarning"
               :has-client="hasClient"
+              :submitting="isCheckingOut"
+              :print-state="printButtonState"
+              :print-warnings="printWarnings"
               @update-quantity="updateQuantity"
               @remove="removeFromCart"
               @checkout="handleCheckout"
               @clear="clearCart"
               @update-location-remark="setLocationRemark"
               @update:is-personnel="isPersonnel = $event"
+              @dismiss-print-warning="dismissPrintWarning"
             />
           </div>
         </div>
@@ -128,13 +132,17 @@
           :portal="false"
           :ui="{ content: 'h-[70%]' }"
         >
+          <!-- The drawer auto-closes on checkout, so this collapsed bar must
+               mirror the print feedback (spinner / ✓ / warning) or the
+               volunteer never sees it. -->
           <UButton
             block
             size="lg"
-            :label="cartItems.length > 0 ? `${t('sales.cart.title')} (${cartItems.length}) - ${formatPrice(cartTotal)}` : t('sales.cart.empty')"
-            :icon="cartItems.length > 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart'"
-            :color="cartItems.length > 0 ? 'primary' : 'neutral'"
-            :variant="cartItems.length > 0 ? 'solid' : 'soft'"
+            :label="mobileBar.label"
+            :icon="mobileBar.icon"
+            :color="mobileBar.color"
+            :variant="mobileBar.variant"
+            :loading="mobileBar.loading"
           />
 
           <template #content>
@@ -172,12 +180,16 @@
                   client-required
                   :client-warning="clientWarning"
                   :has-client="hasClient"
+                  :submitting="isCheckingOut"
+                  :print-state="printButtonState"
+                  :print-warnings="printWarnings"
                   @update-quantity="updateQuantity"
                   @remove="removeFromCart"
                   @checkout="handleCheckout"
                   @clear="clearCart"
                   @update-location-remark="setLocationRemark"
                   @update:is-personnel="isPersonnel = $event"
+                  @dismiss-print-warning="dismissPrintWarning"
                 />
               </div>
             </div>
@@ -239,6 +251,7 @@ const {
   selectedClientName,
   locationRemarks,
   isPersonnel,
+  isCheckingOut,
   addToCart,
   removeFromCart,
   updateQuantity,
@@ -246,6 +259,16 @@ const {
   clearCart,
   checkout,
 } = usePosOrder()
+
+// The order button is the print feedback: after checkout we watch the order's
+// kitchen tickets via the helper-authed print-status endpoint and feed the
+// derived state into the Cart (and the collapsed mobile bar).
+const {
+  buttonState: printButtonState,
+  warnings: printWarnings,
+  watchOrder,
+  dismiss: dismissPrintWarning
+} = usePrintWatcher()
 
 // Set the event ID
 selectedEventId.value = props.eventId
@@ -308,6 +331,31 @@ const clientWarning = computed(() =>
 
 // Mobile cart drawer open state (closed automatically after checkout)
 const mobileCartOpen = ref(false)
+
+// Collapsed cart bar (narrow panes). Mirrors the print feedback while the
+// cart is empty; with items it stays the cart summary — a pending warning
+// then only swaps the icon (the rows wait inside the drawer).
+const mobileBar = computed(() => {
+  if (cartItems.value.length > 0) {
+    return {
+      label: `${t('sales.cart.title')} (${cartItems.value.length}) - ${formatPrice(cartTotal.value)}`,
+      icon: printWarnings.value.length > 0 ? 'i-lucide-alert-triangle' : 'i-lucide-shopping-cart',
+      color: 'primary',
+      variant: 'solid',
+      loading: isCheckingOut.value
+    } as const
+  }
+  switch (printButtonState.value) {
+    case 'printing':
+      return { label: t('sales.cart.printing'), icon: undefined, color: 'primary', variant: 'soft', loading: true } as const
+    case 'confirmed':
+      return { label: t('sales.cart.printed'), icon: 'i-lucide-check', color: 'success', variant: 'soft', loading: false } as const
+    case 'warning':
+      return { label: t('sales.cart.printFailed'), icon: 'i-lucide-alert-triangle', color: 'warning', variant: 'soft', loading: false } as const
+    default:
+      return { label: t('sales.cart.empty'), icon: 'i-lucide-shopping-cart', color: 'neutral', variant: 'soft', loading: false } as const
+  }
+})
 
 // Add a product to the cart. Options and any required per-item remark are
 // captured inline in the product card (SalesClientProductList) and arrive here
@@ -440,13 +488,22 @@ async function handleCategoryReorder(updates: Array<{ id: string, order: number 
 
 async function handleCheckout() {
   try {
-    await checkout()
+    const response = await checkout()
     // Close the mobile cart drawer once the order is placed (desktop sidebar
     // just empties as checkout() clears the cart).
     mobileCartOpen.value = false
-    notify.success(t('sales.orders.orderCreated'), { description: t('sales.orders.submittedSuccessfully') })
+    // No success toast — the order button itself is the feedback now. Empty
+    // printQueueIds (printing disabled / no printers) means nothing to watch.
+    watchOrder({
+      orderId: response.order.id,
+      eventId: props.eventId,
+      orderNumber: response.eventOrderNumber,
+      printQueueIds: response.printQueueIds ?? []
+    })
   }
   catch (error) {
+    // A failed order POST is an order problem, not a print problem — the
+    // error toast stays.
     notify.error(t('sales.orders.error'), { description: error instanceof Error ? error.message : t('sales.orders.failedToCreate') })
   }
 }
