@@ -1,8 +1,9 @@
 <template>
   <!-- items-start: price + qty controls align with the product name line,
-       not the vertical middle of a multi-line block. -->
-  <div class="flex items-start gap-3 py-2">
-    <div class="flex-1 min-w-0 space-y-1">
+       not the vertical middle of a multi-line block. py stays slim — these
+       rows repeat a lot on a phone screen. -->
+  <div class="flex items-start gap-3 py-1.5">
+    <div class="flex-1 min-w-0 space-y-0.5">
       <p class="font-medium truncate">{{ title }}</p>
       <p
         v-for="option in options"

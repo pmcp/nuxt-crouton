@@ -9,7 +9,7 @@
       variant="soft"
       class="cursor-pointer group/card relative overflow-hidden"
       :class="product.isActive === false ? 'opacity-60' : ''"
-      :ui="{ body: 'p-3' }"
+      :ui="{ body: 'px-3 py-1.5' }"
       @click="handleProductClick(product)"
     >
       <!-- Admin affordances slide in from the card edges on hover (bookings-card
@@ -93,7 +93,7 @@
       <Transition name="slide">
         <div
           v-if="activeProductId === product.id && isExpandable(product)"
-          class="mt-4 pt-4 border-t border-default space-y-3"
+          class="mt-2 pt-2.5 pb-1.5 border-t border-default space-y-2.5"
           @click.stop
         >
           <!-- Options -->
@@ -116,13 +116,14 @@
             </template>
 
             <!-- Single-select with a required remark: pick one, then confirm
-                 below. Plain radios — a solid selected button read far too
-                 heavy next to the checkboxes and the confirm button. -->
+                 below. Card-variant radios — each option is a full tappable
+                 card with a visible selected state. -->
             <URadioGroup
               v-else-if="product.requiresRemark"
+              variant="card"
               :model-value="selectedSingleOption(product.id)"
               :items="getOptions(product).map(o => ({ label: o.label, value: o.id, priceModifier: o.priceModifier }))"
-              :ui="{ fieldset: 'gap-y-3', item: 'w-full', label: 'w-full' }"
+              :ui="{ fieldset: 'gap-y-2', item: 'w-full', label: 'w-full' }"
               @update:model-value="selectSingle(product.id, $event as string)"
             >
               <template #label="{ item }">

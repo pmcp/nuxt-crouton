@@ -1,7 +1,7 @@
 <template>
-  <!-- Footer stays compact (space-y-3, py-3) — in the mobile drawer it stacks
-       total + remarks + staff switch + warnings + order button, and every
-       saved pixel goes to the scrollable line-item area above it. -->
+  <!-- Footer stays compact (space-y-3, py-3) — in the mobile drawer every
+       saved pixel goes to the scrollable line-item area above it. The total
+       rides the order button; remark + staff share one row. -->
   <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto px-3 sm:px-3', footer: 'space-y-3 px-3 sm:px-3 py-3 sm:py-3' }">
     <!-- Cart items -->
     <div v-if="items.length === 0" class="h-full flex flex-col items-center justify-center gap-3 text-muted">
@@ -55,69 +55,68 @@
     </div>
 
     <template #footer>
-      <SalesClientCartTotal :count="itemCount" :total="total" />
+      <!-- One compact controls row: remark toggle (left) + staff switch
+           (right). The old stacked Totaal / remark block / staff rows ate
+           half the phone drawer — the total lives on the order button now. -->
+      <div v-if="items.length > 0">
+        <div class="flex items-center justify-between gap-2">
+          <!-- A location remark prints as REMARK: on that location's ticket
+               only. Never counted in sales. -->
+          <UButton
+            v-if="remarkLocations.length > 0"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-message-square-text"
+            :trailing-icon="remarksOpen ? 'i-lucide-minus' : 'i-lucide-plus'"
+            :label="remarkCount > 0 ? `${t('sales.cart.remark')} (${remarkCount})` : t('sales.cart.remark')"
+            @click="remarksOpen = !remarksOpen"
+          />
+          <span v-else />
+          <!-- Staff order: prints the staff banner on tickets (receipt settings) -->
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm" :class="isPersonnel ? 'text-warning font-medium' : 'text-muted'">
+              {{ t('sales.cart.staffOrder') }}
+            </span>
+            <USwitch
+              :model-value="isPersonnel ?? false"
+              color="warning"
+              @update:model-value="$emit('update:isPersonnel', $event)"
+            />
+          </label>
+        </div>
 
-      <!-- Remarks: one button that slides open an accordion of the locations
-           with items in the cart, each with its own note. A location remark
-           prints as REMARK: on that location's ticket only. Never counted
-           in sales. -->
-      <!-- Toggle + accordion share one elevated block so they read as a unit. -->
-      <UCollapsible
-        v-if="remarkLocations.length > 0"
-        v-model:open="remarksOpen"
-        class="rounded-lg bg-elevated/60"
-      >
-        <UButton
-          size="sm"
-          color="neutral"
-          variant="ghost"
-          icon="i-lucide-message-square-text"
-          :trailing-icon="remarksOpen ? 'i-lucide-minus' : 'i-lucide-plus'"
-          :label="remarkCount > 0 ? `${t('sales.cart.remark')} (${remarkCount})` : t('sales.cart.remark')"
-          block
-          class="py-3"
-          :class="remarksOpen ? 'rounded-b-none border-b border-default' : ''"
-          :ui="{ trailingIcon: 'ms-auto' }"
-        />
-
-        <template #content>
-          <div class="px-2 pb-1">
-            <UAccordion type="multiple" :items="remarkAccordionItems" :ui="{ trigger: 'text-toned font-normal' }">
-              <template #default="{ item }">
-                <span class="flex items-center gap-2 text-sm">
-                  {{ item.label }}
-                  <span
-                    v-if="locationRemark(item.value).trim()"
-                    class="size-1.5 rounded-full bg-primary"
+        <!-- Remarks accordion: one item per location with items in the cart,
+             each body its own note. Controlled by the toggle above (the
+             collapsible has no trigger of its own). -->
+        <UCollapsible v-if="remarkLocations.length > 0" v-model:open="remarksOpen">
+          <template #content>
+            <div class="mt-2 px-2 pb-1 rounded-lg bg-elevated/60">
+              <UAccordion type="multiple" :items="remarkAccordionItems" :ui="{ trigger: 'text-toned font-normal' }">
+                <template #default="{ item }">
+                  <span class="flex items-center gap-2 text-sm">
+                    {{ item.label }}
+                    <span
+                      v-if="locationRemark(item.value).trim()"
+                      class="size-1.5 rounded-full bg-primary"
+                    />
+                  </span>
+                </template>
+                <template #body="{ item }">
+                  <UTextarea
+                    :model-value="locationRemark(item.value)"
+                    :placeholder="t('sales.cart.remarkPlaceholder')"
+                    :rows="2"
+                    autoresize
+                    variant="soft"
+                    class="w-full"
+                    @update:model-value="emitLocationRemark(item.value, String($event))"
                   />
-                </span>
-              </template>
-              <template #body="{ item }">
-                <UTextarea
-                  :model-value="locationRemark(item.value)"
-                  :placeholder="t('sales.cart.remarkPlaceholder')"
-                  :rows="2"
-                  autoresize
-                  variant="soft"
-                  class="w-full"
-                  @update:model-value="emitLocationRemark(item.value, String($event))"
-                />
-              </template>
-            </UAccordion>
-          </div>
-        </template>
-      </UCollapsible>
-
-      <!-- Staff order: prints the staff banner on tickets (receipt settings) -->
-      <div v-if="items.length > 0" class="flex items-center justify-between gap-2">
-        <span class="text-sm" :class="isPersonnel ? 'text-warning font-medium' : 'text-muted'">
-          {{ t('sales.cart.staffOrder') }}
-        </span>
-        <USwitch
-          :model-value="isPersonnel ?? false"
-          color="warning"
-          @update:model-value="$emit('update:isPersonnel', $event)"
-        />
+                </template>
+              </UAccordion>
+            </div>
+          </template>
+        </UCollapsible>
       </div>
 
       <div v-if="clientRequired && !hasClient && items.length > 0" class="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning">
@@ -174,6 +173,7 @@ import type { CartItem, ProductOption, SalesCategory, SalesLocation } from '../.
 import type { PrintButtonState, WatchedOrder } from '../../composables/usePrintWatcher'
 import { calculateItemPrice } from '../../composables/usePosOrder'
 const { t } = useT()
+const { format } = useSalesCurrency()
 
 const props = defineProps<{
   items: CartItem[]
@@ -212,10 +212,6 @@ const remarkLocations = computed<SalesLocation[]>(() => {
   return [...idsInCart]
     .map(id => byId.get(id))
     .filter((loc): loc is SalesLocation => Boolean(loc))
-})
-
-const itemCount = computed(() => {
-  return props.items.reduce((count, item) => count + item.quantity, 0)
 })
 
 interface CartEntry {
@@ -308,7 +304,10 @@ const orderButton = computed(() => {
     }
   }
   return {
-    label: t('sales.cart.submitOrder'),
+    // The total rides the button — there is no separate Totaal row.
+    label: props.items.length > 0
+      ? `${t('sales.cart.submitOrder')} · ${format(props.total)}`
+      : t('sales.cart.submitOrder'),
     color: 'primary',
     icon: undefined,
     loading: false,

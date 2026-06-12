@@ -201,30 +201,29 @@ onUnmounted(unhookMutation)
 
     <!-- Authenticated + data loaded → full POS -->
     <template v-else-if="orderData">
+      <!-- One slim line: logout at the LEFT (the page's floating color-mode
+           pill owns the top-right corner), then title + helper name. No
+           store icon — every saved pixel goes to the product list on phones. -->
+      <!-- max-sm:pe-12 clears the page's floating pill in the top-right. -->
       <header
         v-if="showHeader"
-        class="flex items-start gap-3 px-4 py-3 border-b border-default shrink-0"
+        class="flex items-center gap-2 px-3 py-2 max-sm:pe-12 border-b border-default shrink-0"
       >
-        <UIcon name="i-lucide-store" class="text-primary text-xl mt-0.5 shrink-0" />
-        <div class="flex-1 min-w-0">
-          <h2 class="font-semibold text-lg leading-tight truncate">{{ orderData.event.title }}</h2>
-          <div class="flex items-center gap-2 mt-1 text-sm text-muted">
-            <span>{{ t('sales.helperLogin.loggedInAs') }} <span class="text-default font-medium">{{ orderData.helper.name }}</span></span>
-            <!-- Logging out is only meaningful for PIN sessions — an admin
-                 session would just re-mint a token on the next mount. -->
-            <template v-if="!loggedIn">
-              <span aria-hidden="true">·</span>
-              <UButton
-                variant="link"
-                color="primary"
-                size="sm"
-                class="p-0"
-                :label="t('sales.helperLogin.logout')"
-                @click.stop="handleLogout"
-              />
-            </template>
-          </div>
-        </div>
+        <!-- Logging out is only meaningful for PIN sessions — an admin
+             session would just re-mint a token on the next mount. -->
+        <UButton
+          v-if="!loggedIn"
+          icon="i-lucide-log-out"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          :aria-label="t('sales.helperLogin.logout')"
+          @click.stop="handleLogout"
+        />
+        <h2 class="flex-1 min-w-0 font-semibold leading-tight truncate">
+          {{ orderData.event.title }}
+          <span class="text-sm text-muted font-normal">· {{ orderData.helper.name }}</span>
+        </h2>
       </header>
       <div class="flex-1 min-h-0">
         <SalesClientOrderInterface
