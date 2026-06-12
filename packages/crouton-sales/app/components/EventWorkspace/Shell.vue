@@ -128,9 +128,19 @@ const clientsOpen = useLocalStorage('sales-workspace-clients-open', false, { ini
 // recurring-clients mode — gate the persisted value per event.
 const clientsPaneOpen = computed(() => clientsOpen.value && !!event.value?.requiresClient)
 
+// Narrow screens can't host side-by-side panes — the splitter would squeeze
+// the kassa to nothing. Below lg the panes become slideovers instead, toggled
+// from a button row above the kassa. Their open state is ephemeral (not the
+// persisted refs): an overlay auto-opening on page load would trap the user.
+const isNarrow = useMediaQuery('(max-width: 1023px)')
+const ordersSlideoverOpen = ref(false)
+const clientsSlideoverOpen = ref(false)
+
 // The gutter is reserved whenever at least one vertical tab is hanging.
+// Narrow mode has no gutter — the toggles live in the button row instead.
 const hasGutter = computed(() =>
-  !ordersOpen.value || (!!event.value?.requiresClient && !clientsPaneOpen.value)
+  !isNarrow.value
+  && (!ordersOpen.value || (!!event.value?.requiresClient && !clientsPaneOpen.value))
 )
 
 // Orders-pane filters: the toggle lives in the pane header (next to ✕), the
@@ -155,7 +165,7 @@ const ordersFilterCount = ref(0)
          there, so the container aligns with the kassa edge, not the gutter. -->
     <div v-if="showHeader" :class="hasGutter ? 'pe-11' : ''">
       <div class="border border-default rounded-xl bg-elevated/20">
-        <div class="flex items-center gap-2 p-3 sm:p-4">
+        <div class="flex flex-wrap items-center gap-2 p-3 sm:p-4">
           <USelectMenu
             v-if="showSwitcher"
             :model-value="event.id"
@@ -230,6 +240,30 @@ const ordersFilterCount = ref(0)
       </div>
     </div>
 
+    <!-- Narrow screens: the side panes can't fit beside the kassa, so they
+         open as slideovers from this button row instead of the gutter tabs. -->
+    <div v-if="isNarrow" class="flex flex-wrap gap-2">
+      <UButton
+        icon="i-lucide-clipboard-list"
+        size="sm"
+        color="neutral"
+        variant="outline"
+        @click="ordersSlideoverOpen = true"
+      >
+        {{ t('sales.orders.title') }}
+      </UButton>
+      <UButton
+        v-if="event.requiresClient"
+        icon="i-lucide-users"
+        size="sm"
+        color="neutral"
+        variant="outline"
+        @click="clientsSlideoverOpen = true"
+      >
+        {{ t('sales.workspace.clientsPanel.button') }}
+      </UButton>
+    </div>
+
     <!-- Kassa: the main surface, full remaining viewport height. Orders or
          clients join as a resizable pane on toggle (drag the divider; sizes
          persist via autoSaveId). The vertical tabs hang just OUTSIDE the
@@ -247,7 +281,7 @@ const ordersFilterCount = ref(0)
                event (the standalone order page keeps it). -->
           <SalesPosPanel :event-slug="event.slug" :team-param="teamParam" :show-header="false" />
         </SplitterPanel>
-        <template v-if="ordersOpen">
+        <template v-if="ordersOpen && !isNarrow">
           <SplitterResizeHandle
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
@@ -294,7 +328,7 @@ const ordersFilterCount = ref(0)
             </div>
           </SplitterPanel>
         </template>
-        <template v-if="clientsPaneOpen">
+        <template v-if="clientsPaneOpen && !isNarrow">
           <SplitterResizeHandle
             class="w-1 shrink-0 bg-accented hover:bg-primary/60 data-[state=drag]:bg-primary transition-colors"
           />
@@ -359,5 +393,79 @@ const ordersFilterCount = ref(0)
       </button>
     </div>
     </div>
+
+    <!-- Narrow-mode panes: same headers + bodies as the splitter panes, but
+         as full-height slideovers (only mounted below lg). -->
+    <USlideover v-if="isNarrow" v-model:open="ordersSlideoverOpen">
+      <template #content>
+        <div class="flex flex-col h-full min-h-0">
+          <div class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 bg-elevated/60 border-b border-default">
+            <span class="flex items-center gap-1.5 text-sm font-medium">
+              <UIcon name="i-lucide-clipboard-list" class="size-4 shrink-0 text-muted" />
+              {{ t('sales.orders.title') }}
+            </span>
+            <div class="flex items-center gap-1">
+              <UChip :show="ordersFilterCount > 0" :text="ordersFilterCount" size="xl" inset>
+                <UButton
+                  icon="i-lucide-filter"
+                  size="xs"
+                  color="neutral"
+                  :variant="ordersFiltersOpen ? 'soft' : 'ghost'"
+                  :aria-label="t('sales.workspace.filters')"
+                  @click="ordersFiltersOpen = !ordersFiltersOpen"
+                />
+              </UChip>
+              <UButton
+                icon="i-lucide-x"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                :aria-label="t('sales.common.close')"
+                @click="ordersSlideoverOpen = false"
+              />
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 pt-2">
+            <Suspense>
+              <SalesEventWorkspaceOrdersTab
+                v-model:filters-open="ordersFiltersOpen"
+                :event="event"
+                @update:active-filter-count="ordersFilterCount = $event"
+              />
+              <template #fallback>
+                <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+              </template>
+            </Suspense>
+          </div>
+        </div>
+      </template>
+    </USlideover>
+
+    <USlideover
+      v-if="isNarrow && event.requiresClient"
+      v-model:open="clientsSlideoverOpen"
+    >
+      <template #content>
+        <div class="flex flex-col h-full min-h-0">
+          <div class="h-14 shrink-0 flex items-center justify-between gap-2 px-3 bg-elevated/60 border-b border-default">
+            <span class="flex items-center gap-1.5 text-sm font-medium">
+              <UIcon name="i-lucide-users" class="size-4 shrink-0 text-muted" />
+              {{ t('sales.workspace.clientsPanel.title') }}
+            </span>
+            <UButton
+              icon="i-lucide-x"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              :aria-label="t('sales.common.close')"
+              @click="clientsSlideoverOpen = false"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 pt-2">
+            <SalesEventWorkspaceClientsPanel :event="event" />
+          </div>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
