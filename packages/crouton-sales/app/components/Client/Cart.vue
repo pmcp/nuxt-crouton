@@ -1,5 +1,8 @@
 <template>
-  <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto px-3 sm:px-3', footer: 'space-y-4 px-3 sm:px-3' }">
+  <!-- Footer stays compact (space-y-3, py-3) — in the mobile drawer it stacks
+       total + remarks + staff switch + warnings + order button, and every
+       saved pixel goes to the scrollable line-item area above it. -->
+  <UCard class="flex flex-col h-full" :ui="{ root: 'rounded-none', body: 'flex-1 overflow-y-auto px-3 sm:px-3', footer: 'space-y-3 px-3 sm:px-3 py-3 sm:py-3' }">
     <!-- Cart items -->
     <div v-if="items.length === 0" class="h-full flex flex-col items-center justify-center gap-3 text-muted">
       <UIcon name="i-lucide-shopping-cart" class="size-10 opacity-40" />
@@ -26,9 +29,11 @@
             :remark="entry.item.remarks"
           >
             <template #actions>
+              <!-- md: +/− are the most-tapped controls during an order — keep
+                   them thumb-sized on touch devices. -->
               <UButton
                 icon="i-lucide-minus"
-                size="xs"
+                size="md"
                 color="neutral"
                 variant="soft"
                 square
@@ -37,7 +42,7 @@
               <span :key="entry.item.quantity" class="w-6 text-center text-sm animate-pop">{{ entry.item.quantity }}</span>
               <UButton
                 icon="i-lucide-plus"
-                size="xs"
+                size="md"
                 color="neutral"
                 variant="soft"
                 square

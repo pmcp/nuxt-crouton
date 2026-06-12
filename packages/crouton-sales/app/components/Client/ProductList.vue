@@ -59,11 +59,14 @@
           >
             {{ t('sales.common.inactive') }}
           </UBadge>
+          <!-- md buttons: the whole card is tappable, but these are the visible
+               affordances — keep them comfortably thumb-sized for the POS. -->
           <UButton
             v-if="isExpandable(product)"
             variant="ghost"
             color="neutral"
-            size="xs"
+            size="md"
+            square
             :icon="activeProductId === product.id ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
             @click.stop="toggleProduct(product)"
           />
@@ -71,7 +74,7 @@
             v-else
             variant="ghost"
             color="primary"
-            size="xs"
+            size="md"
             square
             class="active:scale-90 transition-transform"
             @click.stop="addProduct(product)"
@@ -185,7 +188,7 @@
           <UButton
             v-if="needsConfirm(product)"
             block
-            size="sm"
+            size="lg"
             color="primary"
             :disabled="confirmDisabled(product)"
             @click="confirmProduct(product)"

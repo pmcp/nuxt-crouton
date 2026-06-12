@@ -1,10 +1,14 @@
 <template>
-  <!-- Helper POS / workspace lists: plain UTabs (read-only, no drag). -->
+  <!-- Helper POS / workspace lists: plain UTabs (read-only, no drag).
+       min-w-fit keeps every label readable: tabs stretch when they fit and
+       the row scrolls horizontally when they don't (instead of all tabs
+       shrinking to single letters on narrow screens). -->
   <UTabs
     v-if="!sortableMode"
     :model-value="modelValue ?? fallbackValue"
     :items="tabItems"
     :content="false"
+    :ui="{ list: 'overflow-x-auto', trigger: 'flex-1 min-w-fit' }"
     @update:model-value="onTabChange"
   />
 
@@ -16,7 +20,7 @@
     v-else
     ref="listEl"
     role="tablist"
-    class="flex w-full items-center gap-1 rounded-lg bg-elevated p-1"
+    class="flex w-full items-center gap-1 rounded-lg bg-elevated p-1 overflow-x-auto"
   >
     <li
       v-for="cat in orderedCategories"
@@ -24,7 +28,7 @@
       role="tab"
       tabindex="0"
       :aria-selected="isActive(cat.id)"
-      class="group/tab flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-md
+      class="group/tab flex-1 min-w-fit flex items-center justify-center gap-1.5 rounded-md
              px-3 py-1.5 text-sm font-medium cursor-pointer select-none transition-colors"
       :class="isActive(cat.id)
         ? 'bg-primary text-inverted'
@@ -74,7 +78,7 @@
     <li
       v-if="creating"
       role="presentation"
-      class="flex-1 min-w-0 flex items-center justify-center rounded-md px-3 py-1.5
+      class="flex-1 min-w-fit flex items-center justify-center rounded-md px-3 py-1.5
              text-sm font-medium bg-elevated/60 text-highlighted"
     >
       <input

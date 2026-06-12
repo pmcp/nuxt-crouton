@@ -130,7 +130,7 @@
           v-model:open="mobileCartOpen"
           direction="bottom"
           :portal="false"
-          :ui="{ content: 'h-[70%]' }"
+          :ui="{ content: 'h-[85%]' }"
         >
           <!-- The drawer auto-closes on checkout, so this collapsed bar must
                mirror the print feedback (spinner / ✓ / warning) or the
