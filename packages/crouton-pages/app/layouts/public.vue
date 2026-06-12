@@ -24,6 +24,12 @@ const pageLayout = useState<'default' | 'full-height' | 'full-screen'>('pageLayo
 const { navigation } = useNavigation()
 const isSinglePage = computed(() => !navigation.value || navigation.value.length <= 1)
 
+// Per-page chrome (set by the page route from config.hideNav): when the nav
+// pill is hidden there's nothing to clear below, so content starts at the
+// utility-pill height — same as single-page mode.
+const pageChrome = useState<{ hideNav: boolean, hideAuthControls: boolean }>('pageChrome', () => ({ hideNav: false, hideAuthControls: false }))
+const navPillHidden = computed(() => isSinglePage.value || pageChrome.value.hideNav)
+
 // Inline editing state (shared with page route via useState)
 const isEditing = useState<boolean>('pageEditing', () => false)
 const editingPageId = useState<string | null>('editingPageId', () => null)
@@ -98,9 +104,10 @@ const drawerOpen = computed({
 const containerRef = ref<HTMLElement>()
 const mainRef = ref<HTMLElement>()
 
-// Top padding: when single page (no center nav pill), content starts at same height as the utility pill
+// Top padding: when there's no center nav pill (single page, or hidden via
+// page chrome), content starts at same height as the utility pill
 // Nav pill is at top-4 sm:top-6, so content aligns with it instead of clearing below it
-const topPadding = computed(() => isSinglePage.value ? 'pt-4 sm:pt-6' : 'pt-20 sm:pt-24')
+const topPadding = computed(() => navPillHidden.value ? 'pt-4 sm:pt-6' : 'pt-20 sm:pt-24')
 
 // Apply layout classes to DOM elements
 // Needed because: 1) SSR hydration mismatch, 2) navigation between pages
@@ -132,7 +139,7 @@ onMounted(() => {
 })
 
 // Watch for layout changes (handles navigation between pages)
-watch([pageLayout, isSinglePage], () => {
+watch([pageLayout, navPillHidden], () => {
   nextTick(applyLayoutClasses)
 })
 
