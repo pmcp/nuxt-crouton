@@ -39,7 +39,14 @@ const eventSlug = computed(() => props.attrs.eventSlug || '')
 // measures the wrapper's distance from the top of the viewport and grows to
 // the bottom edge, so a POS-only page reads as a full-screen app. Recomputed
 // on mount + resize (not on scroll — the POS scrolls internally, not the page).
-const heightMode = computed(() => props.attrs.height || 'tall')
+// On phones the kassa always fills to the viewport bottom — a helper taking
+// orders wants a full-screen app, not a 60/80vh card with the page peeking
+// through. compact/tall only apply from sm up. (Renderer is clientOnly, so
+// the media query is reliable from the first paint.)
+const isPhone = useMediaQuery('(max-width: 639px)')
+const heightMode = computed(() =>
+  isPhone.value ? 'fill' : (props.attrs.height || 'tall')
+)
 const posWrapper = ref<HTMLElement | null>(null)
 const fillHeight = ref('')
 
