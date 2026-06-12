@@ -124,6 +124,8 @@
       "chartRendersOnPage": "Grafiek wordt weergegeven op de gepubliceerde pagina",
       "noSalesData": "Nog geen verkoopgegevens",
       "pickEvent": "Kies een event",
+      "noHelperPinTitle": "Geen helper-pincode ingesteld voor dit evenement",
+      "noHelperPinDescription": "Op een afgeschermde pagina wordt dit blok ontgrendeld met de helper-pincode van het evenement — zonder pincode kunnen vrijwilligers niet inloggen. Stel de pincode in bij de instellingen van het evenement.",
       "product": "Product",
       "total": "Totaal"
     },

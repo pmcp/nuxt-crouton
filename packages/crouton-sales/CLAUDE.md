@@ -10,7 +10,8 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 |------|---------|
 | `app/composables/usePosOrder.ts` | Cart management, checkout, price calculations |
 | `app/composables/usePrintWatcher.ts` | Post-checkout print feedback — polls per-order print-status, derives the order button's state |
-| `app/composables/useHelperAuth.ts` | Helper authentication (wraps nuxt-crouton-auth) |
+| `app/composables/useHelperAuth.ts` | Helper authentication (wraps nuxt-crouton-auth; PIN login via generic redeem, gate-session adoption) |
+| `server/plugins/scoped-access.ts` | Nitro hook handlers: before-redeem helperPin→grant sync + pages derive-scope (one PIN from page gate to POS) |
 | `app/components/Client/` | Customer-facing order interface (8 components) |
 | `app/components/Admin/` | Admin sidebar navigation |
 | `app/components/Pos/` | Order management (OrdersList) |
@@ -289,7 +290,6 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | Path | Auth | Purpose |
 |------|------|---------|
 | `teams/[id]/events/[eventId]/duplicate` POST | team admin | Clone an event + its categories/locations/products/printers |
-| `teams/[id]/events/[eventId]/helper-login` POST | public (PIN is the credential) | Thin wrapper over crouton-auth grants: lazily syncs `salesEvents.helperPin` into the event's `scopedAccessGrant` (counters preserved when unchanged), then `verifyAndRedeemGrant` mints the token. Brute-force lockout → 429 + Retry-After |
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
@@ -406,7 +406,7 @@ Components are auto-imported with `Sales` prefix (e.g., `SalesClientCart`, `Sale
 | Component | Auto-import Name | Purpose |
 |-----------|------------------|---------|
 | `OrdersList.vue` | `SalesPosOrdersList` | Orders table with status filtering and auto-refresh |
-| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, auto-issues an admin helper token for team sessions (no PIN form), falls back to inline PIN login, renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`/`salesEvents`/`salesClients` (salesEvents so flag flips like "Require client" reach the kassa live; salesClients so a settled tab drops out of the client picker). `usePosOrder().checkout` emits the hook itself for `salesOrders` (the order POST bypasses `useCollectionMutation`). Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside, the `eventWorkspaceBlock`'s anonymous (volunteer) face, and the fanfare admin order page |
+| `Panel.vue` | `SalesPosPanel` | Self-contained POS: resolves the event by slug, then without a matching helper session tries in order: adopt the page gate's event session (`adoptScopedSession` — scoped kassa pages, no second PIN), auto-issue an admin helper token for team sessions (no PIN form), fall back to inline PIN login (generic redeem). Renders `SalesClientOrderInterface` (`editable` when team session), and re-fetches order-data on `crouton:mutation` for `salesProducts`/`salesCategories`/`salesLocations`/`salesEvents`/`salesClients` (salesEvents so flag flips like "Require client" reach the kassa live; salesClients so a settled tab drops out of the client picker). `usePosOrder().checkout` emits the hook itself for `salesOrders` (the order POST bypasses `useCollectionMutation`). Props: `eventSlug` (required), `teamParam?`, `editable?` (default true), `showHeader?`. All loading is client-side (helper sessions live in localStorage). Used by the workspace kassa aside, the `eventWorkspaceBlock`'s anonymous (volunteer) face, and the fanfare admin order page |
 
 ### Admin (`Admin/`)
 | Component | Auto-import Name | Purpose |
@@ -428,7 +428,7 @@ the event field's `propertyComponents` editor.
 
 | Block type | Editor view | Renderer | Purpose |
 |------------|-------------|----------|---------|
-| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles. The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. category `kassa`. |
+| `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles. The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>`. Carries `providesScope: true`: on a `scoped` page the derive-scope hook gates the page behind the event's helper PIN (one login, adopted by the panel) and the page editor hides the access-code field; `EventSlugPicker` warns inline when the picked event has no `helperPin`. category `kassa`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` |
@@ -471,14 +471,19 @@ the matching key to all three locale files (keep en/nl/fr at parity).
 
 Helpers (volunteers, staff) authenticate with an event's shared PIN. Every session is a `scopedAccessToken` row in `@fyit/crouton-auth`. There is no separate `salesHelpers` table. "Active Helpers" UI is a query over `scopedAccessToken` filtered by `resourceType='event'` + `organizationId=teamId` (see `active-helpers.get.ts` endpoints).
 
-Since the grants migration, the PIN check itself lives in crouton-auth: `helper-login` syncs `salesEvents.helperPin` into a `scopedAccessGrant` (`resourceType 'event'`, role `helper`) on each login and redeems via `verifyAndRedeemGrant` — per-grant lockout (5 fails → exponential lock, surfaced as 429) replaces the old unprotected string compare. `salesEvents.helperPin` stays the editable source of truth; the grant is derived state, created on first login (no backfill). Helper requests authenticate via the canonical `scoped-access-token` cookie (set by `useHelperAuth`) or the `x-scoped-token` header — which also makes helper sessions visible to crouton-pages' `scoped` page visibility during SSR. The legacy `pos-helper-token` cookie and `x-helper-token` header are gone.
+The PIN check itself lives in crouton-auth. There is **no sales login endpoint anymore** (the bespoke `helper-login` was deleted): `useHelperAuth().login()` redeems against the generic `/api/auth/scoped-access/redeem` (trimming the pin client-side — the generic endpoint doesn't), and a Nitro plugin (`server/plugins/scoped-access.ts`) handles the `crouton:scoped-access:before-redeem` hook to lazily sync `salesEvents.helperPin` into the event's `scopedAccessGrant` (`resourceType 'event'`, role `helper`; trimmed; `skipWhenLocked` so a locked-out attacker can't drive writes). Per-grant lockout (5 fails → exponential lock, surfaced as 429) is crouton-auth's. `salesEvents.helperPin` stays the editable source of truth; the grant is derived state, created on first login (no backfill) and **fully owned by the sync** — never hand-edit it. One accepted regression vs the old endpoint: "no PIN configured" and "event not found" now surface as the generic 401 (no-leak posture on a public endpoint); the admin-visible signal is the `EventSlugPicker`'s missing-PIN warning in the page editor. Helper requests authenticate via the canonical `scoped-access-token` cookie or the `x-scoped-token` header — which also makes helper sessions visible to crouton-pages' `scoped` page visibility during SSR. The legacy `pos-helper-token` cookie and `x-helper-token` header are gone.
+
+### One PIN from page gate to POS (scoped pages)
+
+The same Nitro plugin also answers crouton-pages' `crouton:pages:derive-scope` hook: when a `scoped` page's content contains an `eventWorkspaceBlock`, it resolves the block's `eventSlug` → event **id** and answers `{ resourceType: 'event', resourceId, nameRequired: true }`. The page gate then redeems the **event grant** directly (name mandatory — it prints on tickets and lands on `order.owner`), and the token it mints *is* a helper token. `SalesPosPanel` adopts that session on mount via `useHelperAuth().adoptScopedSession()` (a **copy** into its own localStorage session, so the shift survives cookie clobbering by other scoped flows) — the volunteer logs in once at the gate and never sees the panel's PIN form. The block definition carries `providesScope: true` so the page editor hides the page access-code field behind a hint. When the event can't be resolved (block removed, event deleted, stale slug) the hook answers nothing and the page falls back to its page-code gate. `useHelperAuth().logout()` also clears the adopted-from `useScopedAccess('event')` session — otherwise the panel's mount order (adopt → admin → PIN form) would immediately re-adopt it.
 
 ### Client-side Usage
 
 ```typescript
-const { isHelper, helperName, eventId, teamId, login, logout } = useHelperAuth()
+const { isHelper, helperName, eventId, teamId, login, adoptScopedSession, logout } = useHelperAuth()
 
-// Login with PIN — every login creates a new scoped-access token.
+// Login with PIN — every login creates a new scoped-access token (via the
+// generic /api/auth/scoped-access/redeem; pin trimmed client-side).
 // Team members can skip the PIN: loginAsAdmin({ teamId, eventId }) hits the
 // admin-helper-token endpoint (session-authed) and stores the same session.
 await login({
@@ -487,6 +492,9 @@ await login({
   pin: '1234',
   helperName: 'John'
 })
+
+// Or adopt the page gate's event session (scoped kassa pages):
+adoptScopedSession({ teamId: 'team-123', eventId: 'event-456' })
 
 if (isHelper.value) {
   console.log(`Welcome, ${helperName.value}!`)

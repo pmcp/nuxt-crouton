@@ -61,7 +61,8 @@ const {
   eventId: sessionEventId,
   teamId: sessionTeamId,
   login,
-  loginAsAdmin
+  loginAsAdmin,
+  adoptScopedSession
 } = useHelperAuth()
 
 const publicEvent = ref<PublicEvent | null>(null)
@@ -147,9 +148,14 @@ onMounted(async () => {
   loadSession()
   await loadEvent()
   if (publicEvent.value) {
-    // Team members skip the PIN: mint an admin helper token when there's no
-    // (matching) helper session yet. Falls through to the PIN form on failure
-    // (e.g. the session user isn't a member of this team).
+    // No (matching) helper session yet — try, in order:
+    // 1) adopt the page gate's event session (a scoped page already redeemed
+    //    the event's helper PIN — the volunteer never sees a second PIN form)
+    // 2) team members mint an admin helper token (no PIN)
+    // 3) fall through to the inline PIN form
+    if (!sessionMatchesEvent.value) {
+      adoptScopedSession({ teamId: publicEvent.value.teamId, eventId: publicEvent.value.id })
+    }
     if (!sessionMatchesEvent.value && loggedIn.value) {
       await loginAsAdmin({ teamId: publicEvent.value.teamId, eventId: publicEvent.value.id })
     }

@@ -50,10 +50,8 @@ export interface HelperLoginOptions {
   eventId: string
   /** Event PIN for authentication */
   pin: string
-  /** Helper's display name (required for new helpers) */
+  /** Helper's display name */
   helperName?: string
-  /** Existing helper ID (for returning helpers) */
-  helperId?: string
 }
 
 /**
@@ -67,6 +65,11 @@ export function useHelperAuth() {
   const helperSession = useState<HelperSession | null>('helper-session', () => null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+
+  // The shared event session (crouton-auth): the page gate writes it when a
+  // scoped page redeems the event's helper PIN, and our own PIN login writes
+  // through it. Adoption copies from it; logout clears it (see logout()).
+  const eventAccess = useScopedAccess('event')
 
   // Canonical token cookie (read server-side by requireScopedAccess and
   // crouton-pages' scoped visibility); localStorage holds the session blob.
@@ -154,64 +157,83 @@ export function useHelperAuth() {
   /**
    * Login as helper
    *
-   * Authenticates with the event's PIN and creates or updates a helper session.
+   * Redeems the event's PIN against crouton-auth's generic redeem endpoint
+   * (the before-redeem hook lazily syncs `salesEvents.helperPin` into the
+   * event grant server-side — the bespoke helper-login endpoint is gone).
+   * Goes through `useScopedAccess('event')` so the shared event session and
+   * this composable's session stay aligned. The pin is trimmed here — the
+   * generic endpoint does not trim server-side.
    *
-   * @param options - Login options including teamId, eventId, pin, and helper identity
+   * @param options - Login options including teamId, eventId, pin, and helper name
    * @returns True if login succeeded
    */
   async function login(options: HelperLoginOptions): Promise<boolean> {
-    const { teamId, eventId, pin, helperName, helperId } = options
+    const { teamId, eventId, pin, helperName } = options
 
-    isLoading.value = true
     error.value = null
 
-    try {
-      // Build request body
-      const body: Record<string, string> = { pin }
+    if (!helperName) {
+      error.value = 'Helper name is required'
+      return false
+    }
 
-      if (helperId) {
-        body.helperId = helperId
-      }
-      else if (helperName) {
-        body.helperName = helperName
-      }
-      else {
-        error.value = 'Helper name or ID is required'
+    isLoading.value = true
+
+    try {
+      const success = await eventAccess.redeem({
+        teamId,
+        resourceId: eventId,
+        secret: String(pin).trim(),
+        displayName: helperName
+      })
+
+      if (!success) {
+        error.value = eventAccess.error.value || 'Login failed'
         return false
       }
 
-      // Call the helper login endpoint (package-shipped under /api/crouton-sales)
-      // This endpoint validates the PIN and creates a scoped access token via crouton-auth
-      const response = await $fetch<{
-        token: string
-        helperName: string
-        eventId: string
-        expiresAt: string
-      }>(`/api/crouton-sales/teams/${teamId}/events/${eventId}/helper-login`, {
-        method: 'POST',
-        body
+      const source = eventAccess.session.value!
+      setSession({
+        token: source.token,
+        helperName: source.displayName,
+        eventId: source.resourceId,
+        teamId: source.organizationId || teamId,
+        expiresAt: source.expiresAt
       })
-
-      // Create session from response
-      const session: HelperSession = {
-        token: response.token,
-        helperName: response.helperName,
-        eventId: response.eventId,
-        teamId,
-        expiresAt: response.expiresAt
-      }
-
-      setSession(session)
       return true
-    }
-    catch (err: unknown) {
-      const fetchError = err as { data?: { message?: string; statusMessage?: string }; statusMessage?: string }
-      error.value = fetchError.data?.message || fetchError.data?.statusMessage || fetchError.statusMessage || 'Login failed'
-      return false
     }
     finally {
       isLoading.value = false
     }
+  }
+
+  /**
+   * Adopt the page gate's event session
+   *
+   * When a scoped CMS page embeds the kassa, its access gate already
+   * redeemed the event's helper PIN and stored an ('event', eventId) session
+   * via useScopedAccess — adopting it means the volunteer never sees a
+   * second PIN form. The session is **copied** (not referenced) into our own
+   * localStorage session, so the shift survives later clobbering of the
+   * shared cookies by other scoped flows.
+   *
+   * @returns True if a matching gate session was adopted
+   */
+  function adoptScopedSession(options: { teamId: string, eventId: string }): boolean {
+    const source = eventAccess.session.value ?? eventAccess.loadSession()
+    if (!source?.token) return false
+    if (source.resourceId !== options.eventId) return false
+    if (source.organizationId && source.organizationId !== options.teamId) return false
+    if (new Date(source.expiresAt) < new Date()) return false
+
+    setSession({
+      token: source.token,
+      helperName: source.displayName,
+      eventId: source.resourceId,
+      teamId: source.organizationId || options.teamId,
+      expiresAt: source.expiresAt
+    })
+    return true
   }
 
   /**
@@ -287,6 +309,13 @@ export function useHelperAuth() {
 
   /**
    * Logout helper
+   *
+   * Also clears the shared `useScopedAccess('event')` session this one was
+   * adopted from (or wrote through). Without that, logout is a no-op by
+   * construction: the panel's mount order (adopt → admin → PIN form) would
+   * immediately re-adopt the persistent source — as the same name on a
+   * handover, or as a revoked token landing checkout in an error state
+   * instead of the PIN form.
    */
   async function logout(): Promise<void> {
     // Revoke token on server (fire and forget)
@@ -299,6 +328,7 @@ export function useHelperAuth() {
       })
     }
 
+    eventAccess.clearSession()
     clearSession()
   }
 
@@ -321,6 +351,7 @@ export function useHelperAuth() {
     // Methods
     login,
     loginAsAdmin,
+    adoptScopedSession,
     logout,
     validateToken,
     loadSession,

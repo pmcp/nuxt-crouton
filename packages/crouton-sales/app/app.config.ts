@@ -162,6 +162,11 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   icon: 'i-lucide-layout-dashboard',
   category: 'kassa',
   clientOnly: true,
+  // On a 'scoped' page this block provides the access scope: the server's
+  // derive-scope hook (server/plugins/scoped-access.ts) answers
+  // ('event', eventId), so the page gate redeems the event's helper PIN.
+  // This flag only mirrors that for the page editor's hint.
+  providesScope: true,
   defaultAttrs: {
     eventSlug: '',
     height: 'tall'
