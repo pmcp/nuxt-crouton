@@ -18,8 +18,11 @@ const { state } = authModal
 
 // Hide the "Go home" escape hatch for apps with no public landing page
 // (where '/' just bounces signed-out users back here). Default: shown.
+// Also hidden when the modal is dismissable — then the X / Esc / outside-click
+// already returns you to the page behind (its own gate), so a "Go home" that
+// jumps to '/' would be the wrong, confusing exit.
 const authConfig = useAuthConfig()
-const showGoHome = computed(() => authConfig?.ui?.showGoHome !== false)
+const showGoHome = computed(() => !state.value.dismissible && authConfig?.ui?.showGoHome !== false)
 
 // Bind UModal open state — setter restores URL when user dismisses
 const isOpen = computed({
@@ -30,9 +33,11 @@ const isOpen = computed({
 })
 
 // Explicit exit: user chooses to leave the protected route entirely.
-// The modal is non-dismissable (outside-click / Esc / X all disabled) because
-// the page behind it requires auth — so the only way out is to succeed or to
-// deliberately navigate away.
+// For a hard auth requirement the modal is non-dismissable (outside-click /
+// Esc / X disabled) — the page behind requires auth, so the only way out is to
+// succeed or to deliberately navigate away. When opened as a dismissable
+// "staff door" the X / Esc / outside-click are enabled and restore the page
+// behind (see `dismissible` in useAuthModal).
 async function handleGoHome() {
   state.value.open = false
   await navigateTo('/')
@@ -293,8 +298,8 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
   <UModal
     v-model:open="isOpen"
     :title="modalTitle"
-    :dismissible="false"
-    :close="false"
+    :dismissible="state.dismissible === true"
+    :close="state.dismissible === true"
     :ui="{ overlay: 'z-[60]', content: 'z-[60] sm:max-w-md', title: 'sr-only' }"
   >
     <template #content>

@@ -29,8 +29,10 @@ const { t } = useT()
 
 // Staff door: a team member signs in with their account (separate backend from
 // the access code) and returns here — member access passes the same gate.
+// dismissible=1 → the member-login modal can be closed (X / Esc / outside),
+// dropping the visitor back on this access-code gate instead of trapping them.
 const route = useRoute()
-const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}&dismissible=1`)
 
 const scopedAccess = useScopedAccess(props.scope.resourceType || 'page')
 

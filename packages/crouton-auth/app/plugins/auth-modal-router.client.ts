@@ -29,12 +29,16 @@ export default defineNuxtPlugin(() => {
 
     const redirectTo = (to.query.redirect as string) || '/'
     const prefillEmail = (to.query.email as string) || undefined
+    // A "staff door" link (e.g. on a scoped kassa page) passes ?dismissible=1
+    // so the modal can be closed back to the page behind it (which re-asserts
+    // its own gate). Hard auth redirects omit it and stay non-dismissable.
+    const dismissible = to.query.dismissible === '1' || to.query.dismissible === 'true'
 
     // Update visible URL without triggering navigation
     window.history.pushState(null, '', to.fullPath)
 
     // Open the auth modal
-    useAuthModal().open(mode, redirectTo, from.fullPath, prefillEmail)
+    useAuthModal().open(mode, redirectTo, from.fullPath, prefillEmail, dismissible)
 
     // Cancel the router navigation
     return false

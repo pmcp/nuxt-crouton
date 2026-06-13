@@ -76,8 +76,11 @@ const showAuthControls = computed(() => !pageChrome.value.hideAuthControls)
 // the addon's full teardown, fired via a hook so we stay package-agnostic.
 // Member login returns to the current page (otherwise you land on /auth/login
 // with no way back to a kassa / scoped page).
+// dismissible=1 → on a normal public page the member-login modal can be
+// closed back to the page (there's content behind it). Hard members/admin
+// 401s open the modal without this flag, staying non-dismissable.
 const route = useRoute()
-const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}&dismissible=1`)
 
 const scopedSession = useState<{ displayName: string } | null>('crouton:scoped-session', () => null)
 async function logoutScopedSession() {
