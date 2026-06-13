@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Order not found' })
   }
 
-  return db
+  const jobs = await db
     .select({
       id: salesPrintqueues.id,
       status: salesPrintqueues.status,
@@ -47,4 +47,11 @@ export default defineEventHandler(async (event) => {
     .from(salesPrintqueues)
     .leftJoin(salesPrinters, eq(salesPrintqueues.printerId, salesPrinters.id))
     .where(eq(salesPrintqueues.orderId, orderId))
+
+  // Display (KDS) jobs are bumped on a screen, not printed — they stay "shown"
+  // until the kitchen acts, which is not the ordering volunteer's concern. This
+  // endpoint feeds only the checkout print-watcher, so drop them here (the KDS
+  // reads display jobs straight off the queue). Kitchen/receipt jobs never have
+  // a null printMode, so this filter only ever removes display rows.
+  return jobs.filter((j: any) => j.printMode !== 'display')
 })

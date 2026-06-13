@@ -7,7 +7,7 @@
  * generated sales layer tables (salesPrintqueues, salesPrinters, etc.)
  */
 
-import { formatReceipt, type ReceiptItem, type FormattedReceipt, type ReceiptSettings } from './receipt-formatter'
+import { formatReceipt, type ReceiptItem, type ReceiptSettings } from './receipt-formatter'
 
 // Status codes for print queue
 export const PRINT_STATUS = {

@@ -84,6 +84,25 @@
             "description": "Optionele kop boven de tabel"
           }
         }
+      },
+      "kitchenDisplay": {
+        "name": "Keukenscherm",
+        "description": "Een keukenscherm voor op een pagina (bv. een iPad): toont de bestellingen die naar een displaystation gaan en laat het personeel ze afvinken.",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies van welk evenement de bestellingen op dit scherm verschijnen. Bestellingen die naar een 'display'-station van dit evenement gaan, komen hier."
+          }
+        },
+        "ui": {
+          "title": "Keukenscherm",
+          "live": "live",
+          "active": "{count} actief",
+          "allCaughtUp": "Alles bijgewerkt — geen open bestellingen.",
+          "bump": "Klaar",
+          "staff": "personeel",
+          "eventNotFound": "Evenement niet gevonden"
+        }
       }
     },
     "admin": {
@@ -127,7 +146,8 @@
       "noHelperPinTitle": "Geen helper-pincode ingesteld voor dit evenement",
       "noHelperPinDescription": "Op een afgeschermde pagina wordt dit blok ontgrendeld met de helper-pincode van het evenement — zonder pincode kunnen vrijwilligers niet inloggen. Stel de pincode in bij de instellingen van het evenement.",
       "product": "Product",
-      "total": "Totaal"
+      "total": "Totaal",
+      "kitchenDisplay": "Keukenscherm"
     },
     "cart": {
       "title": "Winkelwagen",

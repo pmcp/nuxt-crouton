@@ -84,6 +84,25 @@
             "description": "Optional heading above the table"
           }
         }
+      },
+      "kitchenDisplay": {
+        "name": "Kitchen Display",
+        "description": "A drop-on-a-page kitchen screen (e.g. an iPad): shows the orders routed to a display station and lets staff bump them done.",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's orders this screen shows. Orders routed to a 'display'-driver station for this event appear here."
+          }
+        },
+        "ui": {
+          "title": "Kitchen Display",
+          "live": "live",
+          "active": "{count} active",
+          "allCaughtUp": "All caught up — no open orders.",
+          "bump": "Bump",
+          "staff": "staff",
+          "eventNotFound": "Event not found"
+        }
       }
     },
     "admin": {
@@ -127,7 +146,8 @@
       "noHelperPinTitle": "No helper PIN set for this event",
       "noHelperPinDescription": "On a scoped page this block is unlocked with the event’s helper PIN — without one, volunteers cannot log in. Set the PIN in the event’s settings.",
       "product": "Product",
-      "total": "Total"
+      "total": "Total",
+      "kitchenDisplay": "Kitchen Display"
     },
     "cart": {
       "title": "Cart",
