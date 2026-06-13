@@ -80,6 +80,16 @@ jobs:
           pnpm --filter '@fyit/crouton-core' build
           pnpm --filter '@fyit/crouton' build
 
+      # Fill the shared prod fanfare-db with the demo team/event/catalog + the
+      # scoped kassa page (#82), so every preview is instantly clickable at
+      # /test1/nl/vlaamsekermis. Idempotent (stable-id upserts), so re-running
+      # on each push never duplicates. continue-on-error: the preview deploy is
+      # the critical path — a seed hiccup shouldn't block the URL.
+      - name: Seed demo data (remote, idempotent)
+        working-directory: apps/fanfare
+        continue-on-error: true
+        run: pnpm db:seed:remote
+
       - name: Compute preview branch alias
         id: alias
         run: |
