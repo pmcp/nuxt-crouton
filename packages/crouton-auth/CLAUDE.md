@@ -37,6 +37,7 @@ URLs always include `[team]` param (industry standard: Linear, Notion, Vercel, G
 | `types/config.ts` | `CroutonAuthConfig` configuration type |
 | `types/connector.ts` | `BetterAuthConnector` interface |
 | `app/utils/security.ts` | Client-side security utilities (public API for consumer apps) |
+| `seed/index.ts` | Seed provider (`@fyit/crouton-auth/seed`) — upserts the team `organization`; optional staff user/account/member behind `--with-staff` |
 
 ## Public Utilities
 
@@ -484,6 +485,16 @@ The `scopedAccessGrant` table stores the redeemable credential per resource:
 - One grant per (organization, resourceType, resourceId, credentialType)
 
 Consuming apps must regenerate migrations (`npx nuxt db generate`) after upgrading to pick up `scopedAccessGrant`.
+
+## Demo Seeding (`@fyit/crouton-auth/seed`)
+
+Ships a `SeedProvider` (id `auth`, no deps, runs first) for the composable
+seeding system (epic #82, contract in `@fyit/crouton-core/shared/seed`). It
+upserts the team `organization` (id `seed:org:<slug>`, slug e.g. `test1`) that
+every domain provider hangs off. With `--with-staff` it also seeds a known staff
+login — `user` + credential `account` (password hashed via `better-auth/crypto`'s
+`hashPassword`, the scrypt envelope login verifies against) + owner `member`.
+Idempotent (stable ids). Run via an app's `crouton-seed` / `db:seed:*` scripts.
 
 ## Dependencies
 
