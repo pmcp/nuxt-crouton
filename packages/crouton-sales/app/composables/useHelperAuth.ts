@@ -318,14 +318,23 @@ export function useHelperAuth() {
    * instead of the PIN form.
    */
   async function logout(): Promise<void> {
-    // Revoke token on server (fire and forget)
-    if (helperSession.value?.token) {
-      $fetch('/api/auth/scoped-access/logout', {
+    // Revoke the server token AND clear the httpOnly scoped-access-token cookie.
+    // This MUST be awaited: the nav fires logout() right before reloadNuxtApp,
+    // and SSR only re-gates once the clearing Set-Cookie has landed. A
+    // fire-and-forget call would be aborted by the reload, leaving a live
+    // httpOnly cookie that SSR keeps honoring (logged-out user, gated content).
+    // The endpoint falls back to the cookie when no token is sent, so we send
+    // the body when we have it and still clear the cookie otherwise.
+    try {
+      await $fetch('/api/auth/scoped-access/logout', {
         method: 'POST',
-        body: { token: helperSession.value.token }
-      }).catch(() => {
-        // Ignore errors - session is cleared locally regardless
+        body: helperSession.value?.token ? { token: helperSession.value.token } : {}
       })
+    }
+    catch {
+      // Ignore — client state is cleared regardless; the cookie clear is the
+      // server's job and a failure here just means the token row may linger
+      // (it still expires), but the gate re-asserts on the reload.
     }
 
     eventAccess.clearSession()

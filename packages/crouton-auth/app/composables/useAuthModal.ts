@@ -13,6 +13,15 @@ interface AuthModalState {
   redirectTo: string
   previousPath: string
   prefillEmail?: string
+  /**
+   * When true, the modal can be dismissed (X / Esc / outside-click) and
+   * restores `previousPath`. Used by the "staff door" on pages that have their
+   * own gate behind them (e.g. a scoped kassa page falls back to the PIN gate),
+   * so trying member login is never a dead-end. Hard auth requirements
+   * (members/admin 401s) leave this false — there's nothing behind to fall back
+   * to, so the only ways out are to succeed or deliberately leave.
+   */
+  dismissible?: boolean
 }
 
 export function useAuthModal() {
@@ -23,8 +32,8 @@ export function useAuthModal() {
     previousPath: '/'
   }))
 
-  function open(mode: AuthModalMode, redirectTo: string, previousPath: string, prefillEmail?: string) {
-    state.value = { open: true, mode, redirectTo, previousPath, prefillEmail }
+  function open(mode: AuthModalMode, redirectTo: string, previousPath: string, prefillEmail?: string, dismissible = false) {
+    state.value = { open: true, mode, redirectTo, previousPath, prefillEmail, dismissible }
   }
 
   /**
