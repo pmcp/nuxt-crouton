@@ -8,6 +8,7 @@
     "app",
     "server",
     "schemas",
+    "seed",
     "i18n",
     "dist",
     "nuxt.config.ts",
@@ -16,6 +17,10 @@
   ],
   "exports": {
     ".": "./nuxt.config.ts",
+    "./seed": {
+      "import": "./seed/index.ts",
+      "types": "./seed/index.ts"
+    },
     "./schemas/*": "./schemas/*",
     "./server/utils/print-queue-service": {
       "import": "./server/utils/print-queue-service.ts",
