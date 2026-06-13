@@ -450,7 +450,7 @@ const access = useScopedAccess('booking')
 await access.redeem({ teamId, resourceId: bookingId, secret: pin, displayName: 'Guest' })
 ```
 
-Sessions persist in a client-readable cookie keyed **per resource type** (`scoped-access-session-${resourceType}`), so every consumer of the same resource type lands on the same session (the pages gate and `useEventAccess` share `scoped-access-session-event`). The session cookie's `maxAge` follows the token's real `expiresAt` (not a fixed 8h), keeping the client session honest when a grant uses a custom `tokenTtl`. The httpOnly `scoped-access-token` cookie (server-set by redeem/mint) is for SSR validation only — client writes to it are silent no-ops and client code must never depend on reading it.
+Sessions persist in a client-readable cookie keyed **per resource type** (`scoped-access-session-${resourceType}`), so every consumer of the same resource type lands on the same session (the pages gate and `useEventAccess` share `scoped-access-session-event`). The session cookie's `maxAge` follows the token's real `expiresAt` (not a fixed 8h), keeping the client session honest when a grant uses a custom `tokenTtl`. The httpOnly `scoped-access-token` cookie (server-set by redeem/mint) is for SSR validation only — client writes to it are silent no-ops and client code must never depend on reading it. Because JS can't clear an httpOnly cookie, **logout must go through the server**: `useScopedAccess().logout()` / `useEventAccess().logout()` **await** the `/api/auth/scoped-access/logout` POST (no longer fire-and-forget) so the clearing `Set-Cookie` lands before any reload — otherwise SSR keeps honoring a live cookie and a "logged-out" user still sees gated content.
 
 ### API Endpoints
 
@@ -459,7 +459,7 @@ Sessions persist in a client-readable cookie keyed **per resource type** (`scope
 | `/api/auth/scoped-access/redeem` | POST | Public (the secret is the auth) | Present credential (PIN) → token; 429 + Retry-After when locked, 410 when exhausted, 401 otherwise (not_found and invalid_secret are indistinguishable) |
 | `/api/auth/scoped-access/mint` | POST | Team member session | Delegation: mint a scoped token directly (no secret) |
 | `/api/auth/scoped-access/validate` | POST | — | Validate a token |
-| `/api/auth/scoped-access/logout` | POST | — | Revoke a token |
+| `/api/auth/scoped-access/logout` | POST | — | Revoke a token (read from the body **or** the `scoped-access-token` cookie) **and** clear that httpOnly cookie via `Set-Cookie`, so the next SSR request re-gates. No body required — the cookie alone is enough |
 | `/api/auth/scoped-access/refresh` | POST | — | Extend token expiration |
 
 Both redeem and mint also set the `scoped-access-token` cookie (httpOnly) so SSR can validate.

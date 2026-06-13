@@ -260,20 +260,20 @@ export function useScopedAccess(
    * Logout and clear session
    */
   async function logout(): Promise<void> {
-    // Optionally notify server to revoke token
-    if (session.value?.token) {
-      try {
-        // Fire and forget - don't block logout on server response
-        $fetch('/api/auth/scoped-access/logout', {
-          method: 'POST',
-          body: { token: session.value.token }
-        }).catch(() => {
-          // Ignore errors - session is cleared locally regardless
-        })
-      }
-      catch {
-        // Ignore errors
-      }
+    // Await the server revoke + httpOnly-cookie clear before clearing local
+    // state. The httpOnly scoped-access-token cookie can only be cleared by a
+    // server Set-Cookie (client JS can't touch it), and SSR re-gates only once
+    // that lands — so this must not be fire-and-forget. The endpoint falls back
+    // to the cookie when no token is sent, so logout still clears it even if
+    // the in-memory session was already lost.
+    try {
+      await $fetch('/api/auth/scoped-access/logout', {
+        method: 'POST',
+        body: session.value?.token ? { token: session.value.token } : {}
+      })
+    }
+    catch {
+      // Ignore — local state is cleared regardless.
     }
 
     clearSession()
