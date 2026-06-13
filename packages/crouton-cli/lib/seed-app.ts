@@ -12,8 +12,7 @@
 import { createJiti } from 'jiti'
 import consola from 'consola'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readFileSync, existsSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -185,19 +184,22 @@ export async function seedApp(options: SeedAppOptions): Promise<string> {
     return sql
   }
 
-  // Write to a temp file and hand it to wrangler — the same transport the
-  // migration scripts use, so it works identically local and remote.
-  const dir = mkdtempSync(join(tmpdir(), 'crouton-seed-'))
-  const sqlFile = join(dir, 'seed.sql')
-  writeFileSync(sqlFile, `${sql}\n`)
-
+  // Pass the SQL via --command (the D1 query API), NOT --file. `--file` against
+  // a remote D1 uses the bulk *import* API, which does a user-details lookup
+  // that a Pages/D1-query-scoped CLOUDFLARE_API_TOKEN can't perform (fails with
+  // "Authentication error [code: 10000] … missing User->User Details->Read").
+  // --command needs only the regular D1 query permission the deploy token
+  // already has, and wrangler runs all `;`-separated statements in one call.
+  // execFileSync passes the SQL as a single argv entry (no shell), so quotes/
+  // JSON in the fixture data need no escaping. Curated seeds are small, so the
+  // OS arg-length limit is not a concern.
   const wranglerArgs = [
     'wrangler',
     'd1',
     'execute',
     options.db,
     options.remote ? '--remote' : '--local',
-    `--file=${sqlFile}`,
+    `--command=${sql}`,
     '--yes'
   ]
 
