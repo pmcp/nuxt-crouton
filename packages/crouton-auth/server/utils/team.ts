@@ -7,20 +7,12 @@
 import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
 import { useRuntimeConfig } from '#imports'
-import { drizzle } from 'drizzle-orm/d1'
 import { sql, eq, and } from 'drizzle-orm'
 import { organization, member as memberTable } from '../database/schema/auth'
 import type { Team, Member, User } from '../../types'
 import { mapOrganizationToTeam } from '../../shared/utils/auth'
 import { useServerAuth, requireServerSession } from './useServerAuth'
 import type { CroutonAuthConfig } from '../../types/config'
-
-// D1Database type from Cloudflare workers-types
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type D1Database = any
-
-// hubDatabase is a NuxtHub auto-import, declare it for TypeScript
-declare function hubDatabase(): D1Database
 
 // Extended session type with organization plugin properties
 interface OrganizationSession {
@@ -314,8 +306,7 @@ export async function getOrCreateDefaultOrganization(event: H3Event): Promise<Te
 
   // Team doesn't exist - create it using direct DB access
   // (We're in request context, so database is available)
-  const d1 = hubDatabase()
-  const db = drizzle(d1)
+  const db = useDB()
 
   const now = new Date().toISOString()
   const orgId = crypto.randomUUID()
@@ -483,8 +474,7 @@ export async function getOrganizationMembershipDirect(
   organizationId: string,
   userId: string
 ): Promise<{ role: 'owner' | 'admin' | 'member' } | null> {
-  const d1 = hubDatabase()
-  const db = drizzle(d1)
+  const db = useDB()
 
   const result = await db
     .select({ role: member.role })
