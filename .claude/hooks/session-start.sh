@@ -8,6 +8,18 @@
 # Local (non-web) sessions are skipped — local dev manages its own setup.
 set -euo pipefail
 
+# Issue-first reminder — surfaces in EVERY session (before the remote-only
+# setup gate). The repo tracks work as GitHub issues; the easiest step to skip
+# is opening the issue BEFORE coding. See CLAUDE.md "ISSUE-FIRST (HARD GATE)"
+# and the github-tasks skill.
+cat <<'REMINDER'
+[session-start] 📋 ISSUE-FIRST: before writing code for any new feature/package/app,
+  open the GitHub issue first (epic + sub-issues for multi-step work) via the
+  github-tasks skill, and add its pkg:/app: label to .github/labels.yml. Work
+  lands via a PR (Closes #NN), not direct pushes to main. A missing issue = a
+  failing build: stop and create it.
+REMINDER
+
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
