@@ -1,0 +1,40 @@
+{
+  "three": {
+    "name": "3D",
+    "viewer": {
+      "noModel": "Geen model geselecteerd",
+      "loading": "3D laden…"
+    },
+    "blocks": {
+      "model": {
+        "name": "3D-model",
+        "description": "Voeg een interactief glTF/.glb 3D-model toe met draaibesturing",
+        "fields": {
+          "src": {
+            "label": "Model",
+            "description": "Kies een .glb/.gltf-bestand of plak een model-URL"
+          },
+          "title": {
+            "label": "Bijschrift",
+            "description": "Optioneel bijschrift onder het model"
+          },
+          "background": {
+            "label": "Achtergrond",
+            "options": {
+              "transparent": "Transparant",
+              "dark": "Donker",
+              "light": "Licht"
+            }
+          },
+          "autoRotate": {
+            "label": "Automatisch draaien",
+            "description": "Laat het model langzaam draaien"
+          },
+          "height": {
+            "label": "Hoogte"
+          }
+        }
+      }
+    }
+  }
+}
