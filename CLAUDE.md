@@ -147,6 +147,12 @@ const comp = resolveComponent('CroutonAssetsPicker')
 
 Addon packages must register in `croutonApps` (in `app/app.config.ts`) to be detectable via `hasApp()`.
 
+### New App `postinstall` Must Be Guarded
+
+**Every app in `apps/` MUST use `"postinstall": "nuxt prepare 2>/dev/null || true"` — NEVER a bare `nuxt prepare`.**
+
+Cloudflare Pages (and any whole-monorepo `pnpm install`) runs *every* workspace's `postinstall`. On a fresh install the dist-consumed `@fyit/*` workspace packages aren't built yet, so a bare `nuxt prepare` errors with `Could not load '@fyit/crouton'`, exits 1, and **aborts the entire install — failing the deploy of every other app, including the docs site.** The `2>/dev/null || true` guard always exits 0; the real prepare/build still runs in each app's own deploy pipeline. When scaffolding a new app, copy the guarded form from `apps/velo/package.json`.
+
 ## MANDATORY: TypeScript Checking
 **EVERY change requires `pnpm typecheck`** (runs per-app via `pnpm -r --filter './apps/*' typecheck`). Never run `npx nuxt typecheck` from root — it has no Nuxt app context and produces thousands of false positives. Fix errors immediately. Never skip.
 
