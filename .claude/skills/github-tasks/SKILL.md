@@ -49,11 +49,12 @@ GitHub issues slot into the repo's task-execution flow (see `CLAUDE.md`):
 
 1. **Pick / open an issue** — the issue is the unit of work. For a multi-step initiative, open an epic + sub-issues first.
 2. **Mark in progress** — assign yourself / set the Project Status to In Progress (if a board exists).
-3. **Do the work** — follow `CLAUDE.md` patterns; run `pnpm typecheck`.
-4. **Commit referencing the issue** — use the `/commit` skill; include the issue number in the body (e.g. `(#60)`), or `Closes #60` to auto-close on merge.
-5. **Close the issue** (or tick its box in the epic) when the acceptance criteria are met.
+3. **Branch + do the work** — work on a feature branch; follow `CLAUDE.md` patterns; run `pnpm typecheck`.
+4. **Commit** — use the `/commit` skill, referencing the issue in the body (e.g. `(#NN)`).
+5. **Open a PR** — early is fine. Put `Closes #NN` in the body so the issue auto-closes on merge. Let CI run and fix failures (the PR can be watched/autofixed).
+6. **Squash-merge** → the issue closes automatically and the branch is deleted. Don't push feature work straight to `main`.
 
-Issues are the source of truth for *what* to do; `docs/PROGRESS_TRACKER.md` (if used) becomes an optional phase-level rollup, not the per-task tracker.
+Work lands via **PRs**, not direct pushes to `main`. Issues are the source of truth for *what* to do; `docs/PROGRESS_TRACKER.md` (if used) becomes an optional phase-level rollup, not the per-task tracker.
 
 ## Quick reference
 

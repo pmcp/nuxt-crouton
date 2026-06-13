@@ -53,7 +53,7 @@ Every task in `/docs/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 ### GitHub Issue Tracking
 
-Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`), reference the issue number in the commit (`(#NN)` or `Closes #NN`), and close it when the acceptance criteria are met. `docs/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
+Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `docs/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
 ### Commit Format (enforced by /commit skill)
 ```
