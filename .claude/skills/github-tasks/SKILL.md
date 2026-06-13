@@ -32,6 +32,16 @@ Write it as:
 
 Keep it tight and skimmable. A `mermaid` flow is welcome when the steps branch or the state change is the point — never for decoration.
 
+### Epic acceptance rollup (the epic is the verification unit)
+
+Sub-issues are the **work** unit; the **epic** is the **verification** unit. When all of an epic's sub-issues have merged (the feature has "landed in the app"), post a single **`## 🧪 Verify the whole thing`** comment on the epic *before closing it* — so the owner does **one** QA pass instead of hunting across sub-issues:
+
+- **What landed** — one plain line per merged sub-issue/PR (what's now different).
+- **Where to test** — the **one** link: the deployed preview or production URL, plus any test data (PINs/logins/seed URLs) needed.
+- **Walkthrough** — the per-issue "How to test" steps **stitched into one ordered pass** a human runs end-to-end, with the before/after where it matters.
+
+Close the epic **only after that pass passes** (or the owner confirms). This turns "a bunch of merged PRs" into a single "now go click these and confirm it all works" checklist for a non-technical owner. If a sub-issue couldn't be auto-verified (e.g. needs a device), say so explicitly in the rollup rather than implying it's confirmed.
+
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
 ## Core rules
