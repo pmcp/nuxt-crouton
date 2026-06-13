@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales App — Fulfillment Flow Explorer</title>
+<style>
+  :root{
+    --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --emerald:#059669; --emerald-bg:#ecfdf5; --blue:#2563eb; --blue-bg:#eff6ff;
+    --amber:#b45309; --amber-bg:#fffbeb; --red:#dc2626; --red-bg:#fef2f2; --slate:#475569;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:36px 22px 60px}
+  header h1{font-size:30px;font-weight:800;margin:0 0 6px;letter-spacing:-.02em}
+  header p{margin:0;color:var(--muted);font-size:15.5px;max-width:760px;line-height:1.5}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:22px 24px;margin-top:24px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .panel h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);margin:0 0 16px}
+
+  .controls{display:grid;grid-template-columns:1fr;gap:20px}
+  .ctl-label{font-size:13px;font-weight:700;color:var(--slate);margin:0 0 9px}
+  .pills{display:flex;flex-wrap:wrap;gap:9px}
+  .pill{border:1.5px solid var(--line);background:#fff;color:var(--slate);
+    padding:9px 15px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;
+    transition:all .16s ease;user-select:none;display:inline-flex;align-items:center;gap:7px}
+  .pill:hover{border-color:#cbd5e1;transform:translateY(-1px)}
+  .pill.active{background:var(--ink);border-color:var(--ink);color:#fff;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  .pill .em{font-size:16px}
+
+  /* Flow */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin-top:4px}
+  .node{flex:1 1 150px;min-width:150px;background:#fff;border:1.5px solid var(--line);
+    border-radius:14px;padding:14px 14px;display:flex;flex-direction:column;gap:4px;
+    transition:all .2s ease;position:relative}
+  .node .ico{font-size:22px}
+  .node .ttl{font-weight:700;font-size:14px;line-height:1.2}
+  .node .sub{font-size:12px;color:var(--muted);line-height:1.35}
+  .node.accent-green{border-color:#6ee7b7;background:var(--emerald-bg)}
+  .node.accent-blue{border-color:#93c5fd;background:var(--blue-bg)}
+  .node.accent-dim{opacity:.55}
+  .conn{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;padding:0 4px}
+  .conn .arr{font-size:20px;color:#94a3b8;line-height:1}
+  .conn .lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    text-align:center;color:var(--muted);line-height:1.2}
+  .conn.net .lbl{color:var(--blue)} .conn.net .arr{color:var(--blue)}
+  .conn.lan .lbl{color:var(--emerald)} .conn.lan .arr{color:var(--emerald)}
+
+  /* Status badges */
+  .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:10px;
+    font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .ok{color:var(--emerald)} .ok .dot{background:var(--emerald)}
+  .no{color:var(--red)} .no .dot{background:var(--red)}
+  .warn{color:var(--amber)} .warn .dot{background:var(--amber)}
+
+  .callout{margin-top:18px;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.5;
+    border:1px solid;display:flex;gap:11px;align-items:flex-start}
+  .callout .cico{font-size:18px;flex:0 0 auto}
+  .callout.good{background:var(--emerald-bg);border-color:#6ee7b7;color:#065f46}
+  .callout.constrained{background:var(--amber-bg);border-color:#fcd34d;color:#92400e}
+  .callout.invalid{background:var(--red-bg);border-color:#fca5a5;color:#991b1b}
+
+  /* Reference tables */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  td .yes{color:var(--emerald);font-weight:700} td .nope{color:var(--red);font-weight:700}
+  td.name{font-weight:700}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;
+    background:#f1f5f9;color:var(--slate);margin:1px 2px 1px 0}
+  .grid2{display:grid;grid-template-columns:1fr;gap:24px}
+  .lifecycle{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+    background:#f1f5f9;border-radius:6px;padding:2px 7px;color:var(--slate);white-space:nowrap}
+  footer{margin-top:30px;color:var(--muted);font-size:12.5px;text-align:center}
+
+  @media (max-width:760px){
+    .flow{flex-direction:column}
+    .node{width:100%}
+    .conn{flex-basis:auto;padding:7px 0;flex-direction:row;gap:8px}
+    .conn .arr{transform:rotate(90deg)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sales App — Fulfillment Flow Explorer</h1>
+    <p>Pick a deployment, a device, and how orders get fulfilled. The flow below redraws to show exactly how an order travels from the POS to its destination — and where the trade-offs are. One codebase covers every combination.</p>
+  </header>
+
+  <!-- CONTROLS -->
+  <div class="panel">
+    <h2>Build the flow</h2>
+    <div class="controls">
+      <div>
+        <div class="ctl-label">1 · Deployment profile <span style="color:var(--muted);font-weight:500">— where the app runs &amp; truth lives</span></div>
+        <div class="pills" id="g-profile"></div>
+      </div>
+      <div>
+        <div class="ctl-label">2 · POS device <span style="color:var(--muted);font-weight:500">— what volunteers hold</span></div>
+        <div class="pills" id="g-device"></div>
+      </div>
+      <div>
+        <div class="ctl-label">3 · Output driver <span style="color:var(--muted);font-weight:500">— how an order is fulfilled</span></div>
+        <div class="pills" id="g-driver"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW -->
+  <div class="panel">
+    <h2>Order flow</h2>
+    <div class="flow" id="flow"></div>
+    <div class="badges" id="badges"></div>
+    <div id="callout"></div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="panel">
+    <h2>All options at a glance</h2>
+    <div class="grid2">
+      <div>
+        <div class="ctl-label">Deployment profiles</div>
+        <table>
+          <thead><tr><th>Profile</th><th>Runs on</th><th>Truth</th><th>Offline</th></tr></thead>
+          <tbody id="ref-profiles"></tbody>
+        </table>
+      </div>
+      <div>
+        <div class="ctl-label">Output drivers</div>
+        <table>
+          <thead><tr><th>Driver</th><th>Destination</th><th>Transport</th><th>iOS</th><th>Lifecycle</th></tr></thead>
+          <tbody id="ref-drivers"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>One codebase · ports-and-adapters · universal print queue with swappable drivers — see <code>docs/architecture/venue-local-first-architecture.md</code></footer>
+</div>
+
+<script>
+const profiles = {
+  venue:    {em:'🏠', name:'Venue rig (Pi + RUT)', server:'Raspberry Pi', serverSub:'on the LAN', truth:'Pi SQLite', runsOn:'Raspberry Pi (+RUT)', offline:'full', net:'lan'},
+  cloud:    {em:'☁️', name:'Cloud / BYO (zero infra)', server:'Cloudflare', serverSub:'over the internet', truth:'Cloud D1', runsOn:'Cloudflare', offline:'none', net:'net'},
+  selfhost: {em:'🖥️', name:'Self-hosted', server:'Your server', serverSub:'wherever you run node', truth:'Your DB', runsOn:'Your box (node-server)', offline:'depends', net:'lan'},
+};
+const devices = {
+  ipad:    {em:'📱', name:'iPad / iOS', ios:true},
+  android: {em:'🤖', name:'Android', ios:false},
+  desktop: {em:'💻', name:'Desktop (Chrome)', ios:false},
+};
+const drivers = {
+  escpos:      {em:'🧾', name:'Thermal (ESC/POS)', dest:'Network thermal printer', destSub:'LAN · port 9100',
+                drainer:'In-process TCP drainer', drainerSub:'server → printer', transport:'LAN TCP :9100',
+                lifecycle:'print → complete', needsServerLan:true, iosOk:'server', profiles:['venue','selfhost']},
+  browserprint:{em:'🖨️', name:'Browser print (AirPrint)', dest:'Any AirPrint / OS printer', destSub:'via OS dialog',
+                drainer:'POS renders HTML', drainerSub:'window.print()', transport:'OS print dialog',
+                lifecycle:'render → print', iosOk:true, profiles:['venue','cloud','selfhost']},
+  webusb:      {em:'🔌', name:'WebUSB / Bluetooth', dest:'Device-attached printer', destSub:'USB / BT',
+                drainer:'POS sends bytes', drainerSub:'WebUSB / Web BT', transport:'WebUSB / Web BT',
+                lifecycle:'render → send', iosOk:false, profiles:['venue','cloud','selfhost']},
+  display:     {em:'📺', name:'Display (KDS)', dest:'On-screen order feed', destSub:'iPad — tap to “bump”',
+                drainer:'KDS client subscribes', drainerSub:'WebSocket / SSE', transport:'WebSocket / SSE',
+                lifecycle:'pending → shown → bumped', iosOk:true, profiles:['venue','cloud','selfhost']},
+  none:        {em:'🚫', name:'No printer (digital)', dest:'Orders list / customer screen', destSub:'nothing prints',
+                drainer:'—', drainerSub:'no fulfillment job', transport:'—',
+                lifecycle:'order just shows', iosOk:true, profiles:['venue','cloud','selfhost']},
+};
+
+const state = {profile:'venue', device:'ipad', driver:'escpos'};
+
+function makePills(containerId, dict, key){
+  const c = document.getElementById(containerId);
+  c.innerHTML='';
+  for(const id in dict){
+    const b=document.createElement('div');
+    b.className='pill'+(state[key]===id?' active':'');
+    b.innerHTML='<span class="em">'+dict[id].em+'</span>'+dict[id].name;
+    b.onclick=()=>{state[key]=id; renderAll();};
+    c.appendChild(b);
+  }
+}
+
+function node(accent, ico, ttl, sub){
+  return '<div class="node '+accent+'"><div class="ico">'+ico+'</div><div class="ttl">'+ttl+'</div><div class="sub">'+sub+'</div></div>';
+}
+function conn(kind, label){
+  return '<div class="conn '+kind+'"><div class="lbl">'+label+'</div><div class="arr">→</div></div>';
+}
+
+function renderFlow(){
+  const p=profiles[state.profile], d=drivers[state.driver], dev=devices[state.device];
+  const f=document.getElementById('flow');
+  let html='';
+  // 1 POS
+  html+=node('accent-blue', dev.em, 'POS — '+dev.name, 'Volunteer places order (name + PIN)');
+  // link POS -> server
+  html+=conn(p.net, p.net==='net'?'Internet · HTTPS':'LAN');
+  // 2 server + truth (combined)
+  html+=node(p.net==='lan'?'accent-green':'accent-blue', p.em, p.server, 'App + '+p.truth);
+  if(state.driver==='none'){
+    html+=conn('','');
+    html+=node('accent-dim','📋','Orders list','Shows on screen — no fulfillment job');
+    f.innerHTML=html; return;
+  }
+  // queue
+  html+=conn('','enqueue');
+  html+=node('','📥','Print queue','salesPrintqueues (universal outbox)');
+  // drainer
+  const drainerLan = state.driver==='escpos';
+  html+=conn(drainerLan?'lan':'', drainerLan?'LAN':'deliver');
+  html+=node('','⚙️',d.drainer,d.drainerSub);
+  // destination
+  html+=conn(drainerLan?'lan':'', '');
+  const destAccent = state.driver==='display' ? 'accent-blue' : 'accent-green';
+  html+=node(destAccent, d.em, d.dest, d.destSub);
+  f.innerHTML=html;
+}
+
+function renderBadges(){
+  const p=profiles[state.profile], d=drivers[state.driver], dev=devices[state.device];
+  const b=document.getElementById('badges');
+  let items=[];
+  // offline
+  if(p.offline==='full') items.push(['ok','Works fully offline']);
+  else if(p.offline==='none') items.push(['no','Needs internet to take orders']);
+  else items.push(['warn','Offline depends on your setup']);
+  // ios
+  if(d.iosOk===false) items.push(['no','Not supported on iOS']);
+  else if(d.iosOk===true) items.push(['ok','iOS-friendly']);
+  else items.push(['ok','Printing is server-side (device OS irrelevant)']);
+  // lifecycle
+  items.push(['warn','Lifecycle: '+d.lifecycle]);
+  b.innerHTML=items.map(i=>'<span class="badge '+i[0]+'"><span class="dot"></span>'+i[1]+'</span>').join('');
+}
+
+function renderCallout(){
+  const p=state.profile, d=state.driver, dev=devices[state.device], drv=drivers[d];
+  const el=document.getElementById('callout');
+  let cls='good', ico='✅', msg='';
+
+  // INVALID: cloud + escpos (HTTPS app can't reach a LAN printer IP)
+  if(d==='escpos' && p==='cloud'){
+    cls='invalid'; ico='⛔';
+    msg='<b>Not possible.</b> A cloud-hosted HTTPS app can’t reach a printer’s LAN IP (mixed-content blocking). Direct-to-IP thermal printing is a <b>venue / self-hosted</b> capability. For a cloud/BYO setup, use <b>AirPrint</b> or a <b>display (KDS)</b> instead.';
+  }
+  // INVALID: webusb/bt on iOS
+  else if(d==='webusb' && dev.ios){
+    cls='invalid'; ico='⛔';
+    msg='<b>Not on iOS.</b> Safari has no WebUSB / Web Bluetooth / Web Serial. On an iPad, use <b>AirPrint</b> (browser print) or a <b>display</b>. WebUSB/BT is an Android / desktop option.';
+  }
+  // CONSTRAINED: thermal needs the server on the LAN
+  else if(d==='escpos'){
+    cls='good'; ico='✅';
+    msg='<b>Classic path.</b> The server is on the LAN, so it streams ESC/POS straight to the printer over TCP :9100 — sub-second, fully offline. (This is today’s fanfare flow.)';
+  }
+  else if(d==='display'){
+    cls='good'; ico='📺';
+    msg='<b>Recommended first driver.</b> Covers “no printer” <i>and</i> “iPad as printer” at once, works in every profile, and is browser-native — no print plumbing, no iOS/mixed-content landmines. The iPad just subscribes to the order feed and taps to bump.';
+  }
+  else if(d==='browserprint'){
+    cls='good'; ico='🖨️';
+    msg='<b>Bring-your-own-printer, the iOS-safe way.</b> The POS renders a print-styled receipt and calls the OS print dialog → any AirPrint printer the customer brought. Works on every device, every profile.';
+  }
+  else if(d==='webusb'){
+    cls='constrained'; ico='⚠️';
+    msg='<b>Android / desktop only.</b> Talks straight to a USB- or Bluetooth-attached printer from the browser — no server round-trip needed for the bytes. Not available on iOS.';
+  }
+  else if(d==='none'){
+    cls='good'; ico='✅';
+    msg='<b>Digital only.</b> No printer at all — orders just appear in the live list (and optionally a customer-facing screen). The leanest possible setup.';
+  }
+
+  // Extra note: cloud profile is always online-required (unless already invalid)
+  if(p==='cloud' && cls!=='invalid'){
+    msg+=' <br><span style="opacity:.85">Note: the cloud/BYO profile needs a connection to take orders — offline-on-just-phones is intentionally out of scope.</span>';
+  }
+  el.className='callout '+cls;
+  el.innerHTML='<span class="cico">'+ico+'</span><div>'+msg+'</div>';
+}
+
+function renderRef(){
+  const offTxt={full:'<span class="yes">✓ full</span>',none:'<span class="nope">needs net</span>',depends:'depends'};
+  document.getElementById('ref-profiles').innerHTML=Object.values(profiles).map(p=>
+    '<tr><td class="name">'+p.em+' '+p.name+'</td><td>'+p.runsOn+'</td><td>'+p.truth+'</td><td>'+offTxt[p.offline]+'</td></tr>').join('');
+  const iosTxt=v=> v===true?'<span class="yes">✓</span>': v===false?'<span class="nope">✗</span>':'<span style="color:var(--muted)">n/a</span>';
+  document.getElementById('ref-drivers').innerHTML=Object.entries(drivers).map(([id,d])=>
+    '<tr><td class="name">'+d.em+' '+d.name+'</td><td>'+d.dest+'</td><td>'+d.transport+'</td><td>'+iosTxt(d.iosOk)+'</td><td><span class="lifecycle">'+d.lifecycle+'</span></td></tr>').join('');
+}
+
+function renderAll(){
+  makePills('g-profile',profiles,'profile');
+  makePills('g-device',devices,'device');
+  makePills('g-driver',drivers,'driver');
+  renderFlow(); renderBadges(); renderCallout();
+}
+renderRef();
+renderAll();
+</script>
+</body>
+</html>
