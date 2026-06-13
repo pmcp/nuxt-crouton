@@ -60,7 +60,7 @@ To add or change a label: edit `.github/labels.yml`, commit, and let the workflo
 GitHub issues slot into the repo's task-execution flow (see `CLAUDE.md`):
 
 1. **Pick / open an issue** — the issue is the unit of work. For a multi-step initiative, open an epic + sub-issues first.
-2. **Mark in progress** — assign yourself / set the Project Status to In Progress (if a board exists).
+2. **Mark in progress — do this the moment you START, not after.** Apply the `status:in-progress` label and assign yourself (set the Project board Status to *In Progress* if a board exists). Swap to `status:blocked` if you're waiting on something, and remove the status label when the issue closes.
 3. **Branch + do the work** — work on a feature branch; follow `CLAUDE.md` patterns; run `pnpm typecheck`.
 4. **Commit** — use the `/commit` skill, referencing the issue in the body (e.g. `(#NN)`).
 5. **Open a PR** — early is fine. Put `Closes #NN` in the body so the issue auto-closes on merge. Let CI run and fix failures (the PR can be watched/autofixed).

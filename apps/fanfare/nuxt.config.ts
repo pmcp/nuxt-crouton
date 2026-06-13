@@ -4,6 +4,10 @@ import { dirname, resolve } from 'node:path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
 
+// The Workers stubs only apply to the Cloudflare build. On the node-server
+// target (venue/Pi) we keep the real deps so passkeys etc. work.
+const isCloudflare = (process.env.NITRO_PRESET ?? 'cloudflare-pages') === 'cloudflare-pages'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: ['@fyit/crouton'],
@@ -71,14 +75,16 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'cloudflare-pages',
     sourceMap: false,
-    alias: {
-      '@better-auth/passkey/client': resolve(cfStubs, 'client'),
-      '@better-auth/passkey': cfStubs,
-      'tsyringe': cfStubs,
-      'reflect-metadata': cfStubs,
-      '@peculiar/x509': cfStubs,
-      '@simplewebauthn/server': cfStubs,
-      'papaparse': cfStubs
-    }
+    alias: isCloudflare
+      ? {
+          '@better-auth/passkey/client': resolve(cfStubs, 'client'),
+          '@better-auth/passkey': cfStubs,
+          'tsyringe': cfStubs,
+          'reflect-metadata': cfStubs,
+          '@peculiar/x509': cfStubs,
+          '@simplewebauthn/server': cfStubs,
+          'papaparse': cfStubs
+        }
+      : {}
   }
 })

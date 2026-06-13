@@ -148,3 +148,11 @@
 - name: "needs-triage"
   color: "e4e669"
   description: "Not yet scoped"
+
+# ── Status ──
+- name: "status:in-progress"
+  color: "fbca04"
+  description: "Actively being worked on"
+- name: "status:blocked"
+  color: "d93f0b"
+  description: "Blocked / waiting on something"
