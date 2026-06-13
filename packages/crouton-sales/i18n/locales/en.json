@@ -103,6 +103,20 @@
           "staff": "staff",
           "eventNotFound": "Event not found"
         }
+      },
+      "salesOrders": {
+        "name": "Orders",
+        "description": "Shows one event's orders list on its own page. Visible to signed-in team members only.",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's orders appear here."
+          }
+        },
+        "ui": {
+          "teamOnly": "Sign in as a team member to view the orders.",
+          "eventNotFound": "Event not found"
+        }
       }
     },
     "admin": {
@@ -149,7 +163,8 @@
       "noHelperPinDescription": "On a scoped page this block is unlocked with the event’s helper PIN — without one, volunteers cannot log in. Set the PIN in the event’s settings.",
       "product": "Product",
       "total": "Total",
-      "kitchenDisplay": "Kitchen Display"
+      "kitchenDisplay": "Kitchen Display",
+      "orders": "Orders"
     },
     "cart": {
       "title": "Cart",
