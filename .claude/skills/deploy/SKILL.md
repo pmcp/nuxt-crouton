@@ -191,6 +191,55 @@ After deploy completes:
 2. Remind user to check the app in browser
 3. Note any post-deploy steps (e.g., seed data, set additional secrets)
 
+## Per-PR Preview Deploys (test on a phone)
+
+To test an app on a real device straight from a PR — without running it locally —
+add a preview workflow that deploys every PR to a Cloudflare Pages **preview URL**
+and comments the link on the PR. Reference template:
+`.github/workflows/deploy-fanfare-preview.yml`.
+
+How it works:
+- Trigger: `pull_request` (opened/synchronize/reopened), paths-filtered to
+  `apps/{app}/**` + the `crouton*` packages it consumes + lockfile + the workflow.
+  `concurrency` per PR with `cancel-in-progress` (newer push cancels older build).
+- Build like a normal deploy (build module packages → `nuxt prepare` → `nuxt build`
+  with `NITRO_PRESET=cloudflare-pages`), then deploy with a **branch alias**:
+  `wrangler pages deploy dist/ --project-name {app} --branch "$GITHUB_HEAD_REF"`.
+  Cloudflare publishes it at a stable `<branch>.{app}.pages.dev` host.
+- Preview **reuses the production D1 + KV** (bindings come from `wrangler.toml`), so
+  seeded test data is present. **Do NOT run migrations on preview** — never mutate
+  the prod DB from a PR; the live schema is already current for additive changes.
+- Comment the URL on the PR via `actions/github-script` (upsert one marker comment).
+  Needs `permissions: pull-requests: write`.
+
+### CI credentials — the gotcha
+
+The job needs **`CLOUDFLARE_ACCOUNT_ID`** + **`CLOUDFLARE_API_TOKEN`** visible to it:
+- The per-app **manual** deploy workflows (`deploy-{app}.yml`) declare
+  `environment: staging`/`production`, so they read these as **GitHub *Environment*
+  secrets**. A `pull_request`-triggered preview job usually has **no `environment:`**,
+  so it sees *empty* values and fails at the credential guard.
+- **Solo-simple fix (recommended):** add the two as **repo-level** secrets
+  (repo → Settings → Secrets and variables → Actions → New repository secret). The
+  preview job then reads them with no `environment:` block. Sibling deploys keep their
+  environment-scoped copies; the repo-level copies (same values) feed the PR job.
+- **If you need protection rules** (reviewers/branch policy on prod), instead create a
+  dedicated `preview` GitHub Environment (no protection) with the two secrets and set
+  `environment: preview` on the job — keeps PR previews off the staging/production envs.
+
+### Getting the two values
+
+- **`CLOUDFLARE_ACCOUNT_ID`** — Cloudflare dashboard → Workers & Pages → Account ID in
+  the right sidebar (also the hex in the dashboard URL). Not secret (appears in URLs).
+- **`CLOUDFLARE_API_TOKEN`** — My Profile → API Tokens → **Create Custom Token**,
+  permission **Account · Cloudflare Pages · Edit**, scoped to your account. Cloudflare
+  shows a token's value **only once at creation**, and GitHub never reveals a saved
+  secret — so you **cannot copy an existing token** from either side. Mint a fresh,
+  dedicated token rather than trying to reuse one (don't *roll* an in-use token — that
+  breaks whatever currently uses it).
+
+The Pages project must exist first: `npx wrangler pages project create {app} --production-branch main`.
+
 ## Troubleshooting
 
 ### `papaparse` RollupError
