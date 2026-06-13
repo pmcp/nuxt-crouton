@@ -21,11 +21,12 @@ binding = "KV"
 id = "b3183976e74846ff9913e1b6c641d951"
 
 # Environment variables (set in the Cloudflare dashboard or via wrangler secret).
-# NOTE: do NOT declare BETTER_AUTH_TRUSTED_ORIGINS here — it's already set as a
-# Pages project variable (dashboard), and a duplicate in [vars] makes the deploy
-# fail with "Binding name 'BETTER_AUTH_TRUSTED_ORIGINS' already in use". To let
-# member login work on preview links, add https://*.fanfare.pages.dev to that
-# existing dashboard variable (Pages → fanfare → Settings → Environment variables,
-# Production + Preview) — not here.
+# NOTE: member login no longer depends on BETTER_AUTH_TRUSTED_ORIGINS — crouton-auth
+# trusts the origin each request is served from (kassa.friendlyinter.net, any
+# *.fanfare.pages.dev preview, kassa.local), so same-origin login works with no
+# env var set. Only set BETTER_AUTH_TRUSTED_ORIGINS to trust an *additional*
+# cross-origin caller, and if you do, set it as a Pages project variable
+# (dashboard) — NOT here: a duplicate in [vars] makes the deploy fail with
+# "Binding name 'BETTER_AUTH_TRUSTED_ORIGINS' already in use".
 # [vars]
 # NUXT_PUBLIC_SITE_URL = "https://fanfare.pages.dev"

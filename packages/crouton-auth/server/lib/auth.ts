@@ -146,9 +146,26 @@ export function createAuth(options: CreateAuthOptions) {
       }
     },
 
-    // Trusted origins for CORS/CSRF protection
-    // Allow requests from the baseURL origin and localhost for development
-    trustedOrigins: buildTrustedOrigins(baseURL),
+    // Trusted origins for CORS/CSRF protection.
+    // Passed as a function so the static list (baseURL origin, dev localhost,
+    // BETTER_AUTH_TRUSTED_ORIGINS) is always joined by the origin the request
+    // was actually served from. A browser login is same-origin, so it works on
+    // any host the app runs on — the custom domain (kassa.friendlyinter.net),
+    // *.pages.dev preview URLs, the kassa.local venue host — with no dependency
+    // on BETTER_AUTH_URL / a dashboard env var being set, and without the cached
+    // auth instance locking the list to whichever host initialized it first.
+    // Still CSRF-safe: a cross-site attack carries a foreign Origin header that
+    // won't match the request's own host (same guarantee as Better Auth's own
+    // request-derived baseURL trust).
+    trustedOrigins: (request: Request) => {
+      const origins = buildTrustedOrigins(baseURL)
+      try {
+        origins.push(new URL(request.url).origin)
+      } catch {
+        // Malformed request URL — fall back to the static list.
+      }
+      return origins
+    },
 
     // Plugins - Organization (Teams), Passkey, and 2FA support
     plugins: buildPlugins(config, baseURL, config.debug, db),
