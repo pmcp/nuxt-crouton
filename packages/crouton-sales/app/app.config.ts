@@ -207,6 +207,44 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   }
 }
 
+// Kitchen Display (KDS) for crouton-pages: a drop-on-a-page screen — typically
+// an iPad — that renders the orders routed to a `display`-driver station and
+// lets staff bump them done. Reads display jobs straight off the print queue
+// (salesPrintqueues); the editor fixes the event by slug. name/description and
+// field labels are i18n keys (see i18n/locales/*.json).
+const kitchenDisplayBlock: CroutonBlockDefinition = {
+  type: 'kitchenDisplayBlock',
+  name: 'sales.blocks.kitchenDisplay.name',
+  description: 'sales.blocks.kitchenDisplay.description',
+  icon: 'i-lucide-monitor',
+  category: 'kassa',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: ''
+  },
+  components: {
+    editorView: 'SalesBlocksKitchenDisplayView',
+    renderer: 'SalesBlocksKitchenDisplayRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'sales.blocks.kitchenDisplay.fields.eventSlug.label',
+      description: 'sales.blocks.kitchenDisplay.fields.eventSlug.description'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="kitchen-display-block"]',
+    attributes: {
+      eventSlug: { default: '' }
+    }
+  }
+}
+
 export default defineAppConfig({
   // App auto-discovery registration for crouton-sales
   croutonApps: {
@@ -274,6 +312,7 @@ export default defineAppConfig({
   },
   croutonBlocks: {
     eventWorkspaceBlock,
+    kitchenDisplayBlock,
     salesChartBlock,
     salesProductMatrixBlock
   }
