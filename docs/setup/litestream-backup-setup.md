@@ -1,6 +1,6 @@
-# Litestream Backup — Pi SQLite → R2/S3
+# Litestream Backup — Pi SQLite → self-hosted object storage (hardcore OSS)
 
-Runbook for continuous backup of the venue Pi's SQLite database (issue #64). Litestream streams the WAL to object storage every few seconds, giving point-in-time restore if the Pi/SD card dies. The Pi stays the authoritative writer; this is disaster recovery, not a live cloud mirror (see `docs/architecture/venue-local-first-architecture.md` → "Sync model").
+Runbook for continuous backup of the venue Pi's SQLite database (issue #64). Litestream streams the WAL to object storage every few seconds, giving point-in-time restore if the Pi/SD card dies. The Pi stays the authoritative writer; this is disaster recovery, not a live cloud mirror (see `docs/architecture/venue-local-first-architecture.md` → "Sync model"). Hardcore-OSS: the backup target is **self-hosted** object storage (MinIO or any S3-compatible) or `restic` — **no Turso, no R2, no SaaS**.
 
 > Scope note: this assumes the app runs on the Pi via the `node-server` target (#63) with a local SQLite file. Until that lands, this is reference config.
 
@@ -10,7 +10,7 @@ Runbook for continuous backup of the venue Pi's SQLite database (issue #64). Lit
   ```sql
   PRAGMA journal_mode = WAL;
   ```
-- An R2 (or S3) bucket + credentials, set as env on the Pi:
+- A bucket on **self-hosted MinIO** (or any S3-compatible store you run — no SaaS) + credentials, set as env on the Pi:
   `LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY`.
 
 ## Config
@@ -24,7 +24,7 @@ dbs:
       - type: s3
         bucket: fanfare-venue-backup
         path: kassa
-        endpoint: https://<accountid>.r2.cloudflarestorage.com
+        endpoint: https://minio.example.internal   # self-hosted MinIO / any S3-compatible
         region: auto
         # creds from LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY
         sync-interval: 1s
@@ -75,6 +75,10 @@ Restore is point-in-time to the last synced WAL frame (seconds of potential loss
 - [ ] Object storage shows generations + WAL segments accumulating.
 - [ ] A test `litestream restore` to a scratch path reproduces the current data.
 
+## No-server alternative: restic
+
+If you'd rather not run an S3 server at all, **`restic`** can snapshot the (WAL-checkpointed) SQLite file to a local disk, an SFTP target, or any S3-compatible store — fully OSS. Litestream is preferred for continuous, second-level replication; `restic` is fine for periodic snapshots.
+
 ## Egress note
 
-Litestream's only outbound traffic is to the R2/S3 endpoint — allow it through the RUT firewall as part of the **Pi-only WAN egress** rule (see `venue-network-setup.md`). It's small (KB of WAL frames), so it's cheap on a metered 5G SIM.
+Litestream's only outbound traffic is to your MinIO/S3-compatible endpoint — allow it through the RUT firewall as part of the **Pi-only WAN egress** rule (see `venue-network-setup.md`). It's small (KB of WAL frames), so it's cheap on a metered 5G SIM.
