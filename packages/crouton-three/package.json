@@ -1,0 +1,60 @@
+{
+  "name": "@fyit/crouton-three",
+  "version": "0.1.0",
+  "description": "TresJS (Three.js for Vue) integration for Nuxt Crouton — 3D scenes, glTF model viewer, keyboard controls, and a pages block for interactive 3D content and games",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "i18n",
+    "nuxt.config.ts",
+    "crouton.manifest.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "npx nuxt typecheck",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "threejs",
+    "tresjs",
+    "3d",
+    "webgl",
+    "game"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-three"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@tresjs/cientos": "^4.3.0",
+    "@tresjs/core": "^4.3.1",
+    "@tresjs/nuxt": "^3.0.7",
+    "three": "^0.171.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.171.0"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-core": "workspace:*",
+    "@nuxt/ui": "^4.0.0",
+    "@vueuse/core": "^11.0.0 || ^12.0.0 || ^13.0.0",
+    "nuxt": "^3.0.0 || ^4.0.0"
+  }
+}

@@ -1,0 +1,179 @@
+name: Deploy Fanfare Preview
+
+# Per-PR Cloudflare Pages preview for fanfare. Each PR gets a stable preview
+# URL (<branch>.fanfare.pages.dev) posted as a comment, so the kassa flow can
+# be tested on a phone without running the app locally. Mirrors deploy-velo.yml
+# (monorepo: build the module packages, then nuxt build + wrangler deploy).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'apps/fanfare/**'
+      - 'packages/crouton/**'
+      - 'packages/crouton-core/**'
+      - 'packages/crouton-auth/**'
+      - 'packages/crouton-i18n/**'
+      - 'packages/crouton-charts/**'
+      - 'packages/crouton-pages/**'
+      - 'packages/crouton-sales/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-fanfare-preview.yml'
+
+# One in-flight preview per PR; a newer push cancels the older build.
+concurrency:
+  group: fanfare-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    name: Build & deploy preview
+    runs-on: ubuntu-latest
+    # Reads CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN as REPO-level secrets
+    # (Settings → Secrets and variables → Actions). Solo repo, no reviewers to
+    # gate on, so no GitHub Environment is needed — keep it simple. The sibling
+    # app deploys scope these to staging/production environments; add repo-level
+    # copies (same values) so this PR-trigger job can see them.
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Cloudflare credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID repo secrets are missing — add them to enable fanfare previews."
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Cache layer builds
+        id: layer-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/crouton-auth/dist
+            packages/crouton-core/dist
+            packages/crouton/dist
+          key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
+
+      - name: Build module packages
+        if: steps.layer-cache.outputs.cache-hit != 'true'
+        run: |
+          pnpm --filter '@fyit/crouton-auth' build
+          pnpm --filter '@fyit/crouton-core' build
+          pnpm --filter '@fyit/crouton' build
+
+      - name: Compute preview branch alias
+        id: alias
+        run: |
+          # Cloudflare Pages derives the preview alias host from the branch:
+          # lowercase, non-alphanumerics → '-', host segment capped at 28 chars.
+          # We mirror it for the comment; the deploy step still captures the
+          # authoritative URL from wrangler's output as the source of truth.
+          RAW="${{ github.head_ref }}"
+          SAN=$(echo "$RAW" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-28 | sed 's/-*$//')
+          echo "branch=$RAW" >> "$GITHUB_OUTPUT"
+          echo "alias=https://$SAN.fanfare.pages.dev" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: apps/fanfare
+
+      - name: Build
+        run: npx nuxt build
+        working-directory: apps/fanfare
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          NITRO_PRESET: 'cloudflare-pages'
+          # The scoped PIN/login + logout flow is plain Nitro routes and does not
+          # use better-auth, so it works on previews as-is. Member (staff) login
+          # DOES use better-auth: the wildcard trusts every branch alias, and the
+          # build-time URL is our best-effort alias guess (placeholder secret
+          # keeps prerender from failing). If staff login misbehaves on a
+          # preview, set these per-deployment in the CF dashboard.
+          BETTER_AUTH_SECRET: prerender-placeholder
+          BETTER_AUTH_URL: ${{ steps.alias.outputs.alias }}
+          BETTER_AUTH_TRUSTED_ORIGINS: 'https://*.fanfare.pages.dev'
+
+      # Same workaround as the deploy-{velo,triage,...} workflows: Wrangler 4.64+
+      # rejects an `env` block in the redirected config Nitro copies into
+      # dist/_worker.js/wrangler.json. Strip it so the deploy succeeds (no-op
+      # when there's no env block, e.g. fanfare's current wrangler.toml).
+      - name: Strip env from redirected wrangler config
+        working-directory: apps/fanfare
+        run: |
+          CONFIG="dist/_worker.js/wrangler.json"
+          if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
+            node -e "
+              const fs = require('fs');
+              const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+              delete cfg.env;
+              fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+            "
+          fi
+
+      # Preview shares the production fanfare-db D1 + KV (bindings come from
+      # apps/fanfare/wrangler.toml), so the seeded test team/event are present.
+      # We deliberately do NOT run migrations here — never mutate the prod DB
+      # from a PR; the live schema is already current for additive changes.
+      - name: Deploy to Cloudflare Pages (preview)
+        id: deploy
+        working-directory: apps/fanfare
+        run: |
+          set -o pipefail
+          OUT=$(npx wrangler pages deploy dist/ \
+            --project-name fanfare \
+            --branch "${{ steps.alias.outputs.branch }}" \
+            --commit-dirty=true 2>&1 | tee /dev/stderr)
+          URL=$(echo "$OUT" | grep -oE 'https://[a-z0-9-]+\.fanfare\.pages\.dev' | tail -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL on the PR
+        if: always() && steps.deploy.outputs.url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const build = '${{ steps.deploy.outputs.url }}';
+            const alias = '${{ steps.alias.outputs.alias }}';
+            const marker = '<!-- fanfare-preview -->';
+            const body = [
+              marker,
+              '### 🚀 Fanfare preview deployed',
+              '',
+              `**Open on your phone:** ${alias}`,
+              `Latest build: ${build}`,
+              '',
+              '**Test the kassa:**',
+              `1. Go to \`${alias}/test1/nl/vlaamsekermis\` → the access-code screen.`,
+              '2. PIN `1234` + a name → the kassa (the top-right pill shows your name + log out).',
+              '3. Log out → you land back on the access-code screen, even after a refresh.',
+              '4. "Team member? Log in" → the box can be closed (X / tap outside / Esc) back to the gate.',
+              '',
+              '_Member (staff) login on previews needs the preview origin in `BETTER_AUTH_*`; the PIN/logout flow does not._'
+            ].join('\n');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            }

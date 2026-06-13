@@ -42,8 +42,9 @@ const { loggedIn } = useAuth()
 const teamParam = computed(() => props.teamParam || String(route.params.team || ''))
 
 // Staff door on the volunteer login: member sign-in that returns to this page
-// (where the workspace shell renders for logged-in team members).
-const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+// (where the workspace shell renders for logged-in team members). dismissible=1
+// lets the volunteer close the member modal and fall back to the PIN form.
+const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}&dismissible=1`)
 
 interface PublicEvent {
   id: string

@@ -20,6 +20,18 @@ A precise, structured block an AI can act on without guessing: scope, exact file
 
 Use explicit headings (`## 👤 For humans` / `## 🤖 For agents`) so both are obvious. Scale to the change — a one-line human summary is fine for something small — but **always include both**.
 
+## How to test (REQUIRED on every closeable issue/PR — written for a human)
+
+Every issue that changes observable behaviour, and every PR, MUST carry a **`## 🧪 How to test`** section written for someone who knows the *app concept* but not the code. It is not "run the unit tests" — it is *where a person clicks and what they should see*. Treat it as the acceptance check: if a non-developer can't follow it to confirm the change, it's not done.
+
+Write it as:
+- **What changed** — one or two plain sentences: what's different now vs. before.
+- **Where you'll see it** — the concrete surface: the URL/page, the button, the screen. Name it the way a user would ("the top-right log-out button", "the access-code screen"), not by file or component.
+- **Steps** — a short numbered walk-through, each step an action + the expected result. Include the **before/after contrast** where it matters ("previously the kassa still showed; now you land on the access-code screen").
+- **Test data** — any PINs, logins, or seed URLs needed to reproduce (e.g. `/test1/nl/vlaamsekermis`, helper PIN `1234`).
+
+Keep it tight and skimmable. A `mermaid` flow is welcome when the steps branch or the state change is the point — never for decoration.
+
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
 ## Core rules
@@ -37,7 +49,7 @@ Use explicit headings (`## 👤 For humans` / `## 🤖 For agents`) so both are 
 
 - **Epic** — one tracking issue per initiative. Body: goals, a checklist of workstreams, links to design docs. Labels: `epic` + the primary `pkg:`/`app:` it spans.
 - **Child issues** — one per workstream, each linked as a **sub-issue** of the epic so GitHub shows a progress bar.
-- Keep issue bodies tight: scope, acceptance criteria, links to `docs/`.
+- Keep issue bodies tight: scope, acceptance criteria, links to `docs/`, and the required **`## 🧪 How to test`** section (above).
 
 ## How to create them (tools)
 
@@ -61,7 +73,7 @@ To add or change a label: edit `.github/labels.yml`, commit, and let the workflo
 
 GitHub issues slot into the repo's task-execution flow (see `CLAUDE.md`):
 
-1. **Pick / open an issue** — the issue is the unit of work. For a multi-step initiative, open an epic + sub-issues first.
+1. **Check for existing work FIRST, then pick / open an issue** — the issue is the unit of work. Because sessions are ephemeral and a teammate (or a past you) may already have opened the epic/tasks, **always search before creating**: `mcp__github__search_issues` / `mcp__github__list_issues` (e.g. by `epic` label and by keywords for the feature). If a matching epic or task already exists, continue *that* one (assign yourself, set `status:in-progress`) instead of opening a duplicate. Only when nothing matches do you open a new epic + sub-issues for a multi-step initiative.
 2. **Mark in progress — do this the moment you START, not after.** Apply the `status:in-progress` label and assign yourself; swap to `status:blocked` when waiting; remove the status label on close. **Tooling caveat:** the GitHub Project board's columns are driven by its own *Status field*, which these tools **cannot write** (Projects v2 fields aren't exposed — `list_issue_fields` is empty). So the label + assignment are the signals the agent sets; the board reflects *In Progress / In Review* via the **Project's built-in workflows** (enable "PR opened → In review", "reopened → In progress"; "merged/closed → Done" is default) or a manual card move. Don't claim the board moved — it won't from here.
 3. **Branch + do the work** — work on a feature branch; follow `CLAUDE.md` patterns; run `pnpm typecheck`.
 4. **Commit** — use the `/commit` skill, referencing the issue in the body (e.g. `(#NN)`).

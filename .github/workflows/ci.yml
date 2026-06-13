@@ -43,6 +43,52 @@ jobs:
       - name: Type check MCP Server
         run: pnpm --filter @fyit/crouton-mcp typecheck
 
+  build-fanfare:
+    # Dual-target smoke test: fanfare must build for both the Cloudflare
+    # (cloud) and node-server (venue/Pi) presets, or the unused path silently
+    # rots. The build itself is the smoke test — node-server boot was proven in
+    # #63. Scoped to fanfare to stay fast; typecheck is intentionally NOT gated
+    # here (fanfare carries a known pre-existing baseline of type errors).
+    name: Build fanfare (${{ matrix.preset }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [cloudflare-pages, node-server]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build fanfare's workspace dependencies
+        # '^...' selects fanfare's transitive workspace deps (excludes fanfare
+        # itself). They are dist-consumed, so they must be built before the app.
+        run: pnpm --filter "fanfare^..." build
+
+      - name: Prepare Nuxt
+        # postinstall (nuxt prepare) is skipped above via --ignore-scripts.
+        run: npx nuxt prepare
+        working-directory: apps/fanfare
+
+      - name: Build fanfare (${{ matrix.preset }})
+        run: npx nuxt build
+        working-directory: apps/fanfare
+        env:
+          NITRO_PRESET: ${{ matrix.preset }}
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          # Build-time prerender needs a secret present; value is irrelevant in CI.
+          BETTER_AUTH_SECRET: ci-placeholder
+
   docs-check:
     name: Documentation Check
     runs-on: ubuntu-latest
