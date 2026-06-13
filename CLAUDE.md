@@ -156,6 +156,7 @@ Addon packages must register in `croutonApps` (in `app/app.config.ts`) to be det
 - Start simple, add complexity only when proven necessary
 - ALWAYS check VueUse composables first before writing custom utilities
 - Check Nuxt UI templates before building from scratch
+- Before building new **infrastructure/capability**, run the `ecosystem-check` skill — check Nuxt / UnJS / Vite / OSS prior art first (it's often already solved, e.g. db0, unstorage). Honour constraints: Nuxt-native, OSS, self-hostable, no mandatory SaaS.
 
 ### 2. Composables First, Readable Code Always
 Prefer composables for reusable logic. Keep inline logic readable. Avoid over-engineered functional pipelines.
@@ -302,6 +303,7 @@ docs/
 | Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
 | Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |
+| Skill | `.claude/skills/ecosystem-check/SKILL.md` | Check Nuxt/UnJS/Vite/OSS prior art before building |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
 | Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |
