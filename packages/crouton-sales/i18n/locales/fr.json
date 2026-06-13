@@ -116,6 +116,21 @@
           "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir les commandes.",
           "eventNotFound": "Événement introuvable"
         }
+      },
+      "salesClients": {
+        "name": "Clients",
+        "description": "Affiche les notes clients ouvertes d'un événement sur sa propre page, avec l'action de clôture / impression par client. Réservé aux membres de l'équipe connectés et aux événements à clients récurrents.",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez de quel événement les notes clients ouvertes apparaissent ici."
+          }
+        },
+        "ui": {
+          "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir les clients.",
+          "notRecurring": "Cet événement n'utilise pas de clients récurrents, il n'y a donc aucune note ouverte.",
+          "eventNotFound": "Événement introuvable"
+        }
       }
     },
     "admin": {
@@ -163,7 +178,8 @@
       "product": "Produit",
       "total": "Total",
       "kitchenDisplay": "Écran cuisine",
-      "orders": "Commandes"
+      "orders": "Commandes",
+      "clients": "Clients"
     },
     "cart": {
       "title": "Panier",

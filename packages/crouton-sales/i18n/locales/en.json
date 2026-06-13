@@ -117,6 +117,21 @@
           "teamOnly": "Sign in as a team member to view the orders.",
           "eventNotFound": "Event not found"
         }
+      },
+      "salesClients": {
+        "name": "Clients",
+        "description": "Shows one event's open client tabs on its own page, with the per-client settle / print-receipt action. For signed-in team members and recurring-client events only.",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's open client tabs appear here."
+          }
+        },
+        "ui": {
+          "teamOnly": "Sign in as a team member to view the clients.",
+          "notRecurring": "This event doesn't use recurring clients, so there are no open tabs.",
+          "eventNotFound": "Event not found"
+        }
       }
     },
     "admin": {
@@ -164,7 +179,8 @@
       "product": "Product",
       "total": "Total",
       "kitchenDisplay": "Kitchen Display",
-      "orders": "Orders"
+      "orders": "Orders",
+      "clients": "Clients"
     },
     "cart": {
       "title": "Cart",
