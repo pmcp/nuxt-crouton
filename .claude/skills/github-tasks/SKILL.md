@@ -20,6 +20,8 @@ A precise, structured block an AI can act on without guessing: scope, exact file
 
 Use explicit headings (`## 👤 For humans` / `## 🤖 For agents`) so both are obvious. Scale to the change — a one-line human summary is fine for something small — but **always include both**.
 
+**Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
+
 ## Core rules
 
 1. **Every issue maps to a package or an app — never "root".** If it feels like root-level work (CI, deploy, ops), label it with the **app it serves** (e.g. CI that builds fanfare → `app:fanfare`). There is deliberately no `root` label.
@@ -60,7 +62,7 @@ To add or change a label: edit `.github/labels.yml`, commit, and let the workflo
 GitHub issues slot into the repo's task-execution flow (see `CLAUDE.md`):
 
 1. **Pick / open an issue** — the issue is the unit of work. For a multi-step initiative, open an epic + sub-issues first.
-2. **Mark in progress — do this the moment you START, not after.** Apply the `status:in-progress` label and assign yourself (set the Project board Status to *In Progress* if a board exists). Swap to `status:blocked` if you're waiting on something, and remove the status label when the issue closes.
+2. **Mark in progress — do this the moment you START, not after.** Apply the `status:in-progress` label and assign yourself; swap to `status:blocked` when waiting; remove the status label on close. **Tooling caveat:** the GitHub Project board's columns are driven by its own *Status field*, which these tools **cannot write** (Projects v2 fields aren't exposed — `list_issue_fields` is empty). So the label + assignment are the signals the agent sets; the board reflects *In Progress / In Review* via the **Project's built-in workflows** (enable "PR opened → In review", "reopened → In progress"; "merged/closed → Done" is default) or a manual card move. Don't claim the board moved — it won't from here.
 3. **Branch + do the work** — work on a feature branch; follow `CLAUDE.md` patterns; run `pnpm typecheck`.
 4. **Commit** — use the `/commit` skill, referencing the issue in the body (e.g. `(#NN)`).
 5. **Open a PR** — early is fine. Put `Closes #NN` in the body so the issue auto-closes on merge. Let CI run and fix failures (the PR can be watched/autofixed).
