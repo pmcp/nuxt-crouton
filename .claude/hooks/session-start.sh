@@ -16,6 +16,21 @@ fi
 # the repo root relative to this script so the hook is also runnable directly.
 cd "${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
+# Provide a dev BETTER_AUTH_SECRET so apps (e.g. fanfare) boot without manual
+# env config. Generated once and reused (kept outside the repo so it's stable
+# across sessions and never committed). Dev-only — production uses its own
+# secret. Skipped if you've already set BETTER_AUTH_SECRET in the env config.
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && [ -z "${BETTER_AUTH_SECRET:-}" ]; then
+  dev_secret_file="${HOME:-/root}/.crouton-dev-auth-secret"
+  if [ ! -s "$dev_secret_file" ]; then
+    openssl rand -hex 32 > "$dev_secret_file" 2>/dev/null || true
+  fi
+  if [ -s "$dev_secret_file" ]; then
+    echo "export BETTER_AUTH_SECRET=$(cat "$dev_secret_file")" >> "$CLAUDE_ENV_FILE"
+    echo "[session-start] dev BETTER_AUTH_SECRET exported"
+  fi
+fi
+
 echo "[session-start] pnpm install…"
 pnpm install
 
