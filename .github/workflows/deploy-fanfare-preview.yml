@@ -112,6 +112,23 @@ jobs:
           BETTER_AUTH_URL: ${{ steps.alias.outputs.alias }}
           BETTER_AUTH_TRUSTED_ORIGINS: 'https://*.fanfare.pages.dev'
 
+      # Same workaround as the deploy-{velo,triage,...} workflows: Wrangler 4.64+
+      # rejects an `env` block in the redirected config Nitro copies into
+      # dist/_worker.js/wrangler.json. Strip it so the deploy succeeds (no-op
+      # when there's no env block, e.g. fanfare's current wrangler.toml).
+      - name: Strip env from redirected wrangler config
+        working-directory: apps/fanfare
+        run: |
+          CONFIG="dist/_worker.js/wrangler.json"
+          if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
+            node -e "
+              const fs = require('fs');
+              const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+              delete cfg.env;
+              fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+            "
+          fi
+
       # Preview shares the production fanfare-db D1 + KV (bindings come from
       # apps/fanfare/wrangler.toml), so the seeded test team/event are present.
       # We deliberately do NOT run migrations here — never mutate the prod DB

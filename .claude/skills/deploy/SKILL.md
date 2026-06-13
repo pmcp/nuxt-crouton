@@ -109,15 +109,41 @@ Add to `package.json`:
 }
 ```
 
-#### Missing GitHub Actions Workflow
+#### Missing GitHub Actions Workflows
 
-Generate `.github/workflows/deploy-{app-name}.yml` based on the standard template.
+Onboarding an app to Cloudflare scaffolds **two** workflows. Always model them on
+the existing `deploy-velo.yml` / `deploy-triage.yml` so every app deploys the same way.
 
-Key variables:
-- **paths**: `apps/{app-name}/**` + all extended packages from `nuxt.config.ts`
-- **layer builds**: match the `extends` in `nuxt.config.ts`
-- **BETTER_AUTH_URL**: app-specific production/staging URLs
-- **Strip env step**: include if app has `[[kv_namespaces]]` in wrangler.toml
+**1. Manual / branch deploy — `.github/workflows/deploy-{app-name}.yml`** (staging + prod):
+- **Trigger**: `push` to `staging` (paths-filtered) + `workflow_dispatch` with a
+  `staging`/`production` environment input.
+- **environment**: `${{ inputs.environment || 'staging' }}` — reads the
+  `CLOUDFLARE_*` **Environment** secrets.
+- **Steps** (the house pattern): cache + build the module packages that match
+  `extends` in `nuxt.config.ts` (always `@fyit/crouton-auth`, `@fyit/crouton-core`,
+  `@fyit/crouton`) → run D1 migrations (`apply DB --remote` for prod, `--env preview
+  --remote` for staging) → `nuxt prepare` → `nuxt build` (`NITRO_PRESET=cloudflare-pages`,
+  `NODE_OPTIONS=--max-old-space-size=8192`, `BETTER_AUTH_URL` per env,
+  `BETTER_AUTH_SECRET=prerender-placeholder`, `CLOUDFLARE_ENV=preview` for staging) →
+  **strip-env step if the app has `[[kv_namespaces]]`** → `wrangler pages deploy dist/
+  --commit-dirty=true [--branch staging]`.
+
+**2. Per-PR preview — `.github/workflows/deploy-{app-name}-preview.yml`** (template:
+`deploy-fanfare-preview.yml`). Same build/strip mechanics as above, but:
+- **Trigger**: `pull_request` (opened/synchronize/reopened), same paths filter;
+  `concurrency` per PR with `cancel-in-progress`; `permissions: pull-requests: write`.
+- **Secrets**: reads `CLOUDFLARE_*` as **repo-level** Actions secrets (no `environment:`
+  block — see the gotcha in "Per-PR Preview Deploys" below) so it works on PR branches
+  without environment protection rules.
+- **No migrations**: the preview reuses the production D1/KV (seed data present); never
+  run migrations from a PR.
+- **Deploy**: `wrangler pages deploy dist/ --project-name {app-name} --branch
+  "$GITHUB_HEAD_REF"`, then upsert a comment with the `<branch>.{app-name}.pages.dev`
+  URL via `actions/github-script`.
+
+Per-workflow variables to set: **paths** (`apps/{app-name}/**` + the app's extended
+packages + lockfile + the workflow file), **layer builds** (match `extends`),
+**BETTER_AUTH_URL** (app URLs), and the **strip-env step** when the app has KV.
 
 ### Step 4: Determine Environment
 
