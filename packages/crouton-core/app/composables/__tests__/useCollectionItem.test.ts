@@ -119,7 +119,7 @@ describe('useCollectionItem', () => {
     it('fetches item with query strategy', async () => {
       await useCollectionItem('products', 'item-1')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1', { headers: undefined })
     })
 
     it('returns first item from array response (query strategy)', async () => {
@@ -147,7 +147,7 @@ describe('useCollectionItem', () => {
 
       await useCollectionItem('products', 'item-1')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products/item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products/item-1', { headers: undefined })
     })
 
     it('returns object directly (restful strategy)', async () => {
@@ -175,7 +175,7 @@ describe('useCollectionItem', () => {
     it('uses super-admin path', async () => {
       await useCollectionItem('products', 'item-1')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/super-admin/products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/super-admin/products?ids=item-1', { headers: undefined })
     })
   })
 
@@ -185,7 +185,7 @@ describe('useCollectionItem', () => {
 
       await useCollectionItem('products', idRef)
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1', { headers: undefined })
     })
 
     it('handles function id', async () => {
@@ -193,7 +193,7 @@ describe('useCollectionItem', () => {
 
       await useCollectionItem('products', idFn)
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/products?ids=item-1', { headers: undefined })
     })
 
     it('passes watch option with itemId to useAsyncData', async () => {
@@ -306,7 +306,7 @@ describe('useCollectionItem', () => {
     it('uses custom apiPath from config', async () => {
       await useCollectionItem('products', 'item-1')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/custom-products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/custom-products?ids=item-1', { headers: undefined })
     })
   })
 
@@ -317,7 +317,7 @@ describe('useCollectionItem', () => {
       await useCollectionItem('products', 'item-1')
 
       expect(mockGetProxiedEndpoint).toHaveBeenCalled()
-      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/proxied-products?ids=item-1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/teams/team-123/proxied-products?ids=item-1', { headers: undefined })
     })
   })
 
