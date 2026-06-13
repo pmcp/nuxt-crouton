@@ -5,7 +5,8 @@
   "type": "module",
   "bin": {
     "crouton": "./bin/crouton-generate.js",
-    "crouton-generate": "./bin/crouton-generate.js"
+    "crouton-generate": "./bin/crouton-generate.js",
+    "crouton-seed": "./bin/crouton-seed.mjs"
   },
   "exports": {
     ".": "./bin/crouton-generate.js",
