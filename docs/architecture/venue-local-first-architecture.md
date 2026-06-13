@@ -4,6 +4,8 @@
 
 For event/POS deployments (e.g. fanfare), run the **entire Nuxt app on a Raspberry Pi at the venue**, with a Teltonika RUT956 as the network. The Pi is the authoritative source of truth and operates with **zero internet**; the cloud is a continuously-synced mirror/backup that catches up whenever the 5G uplink is available. This document captures the target topology, the dual-target ("local + Cloudflare") strategy, the sync model and its consistency trade-off, and the RUT network/firewall configuration.
 
+It also covers the broader generalization the same codebase must support: **deployment profiles** that span everything from a full venue rig down to "just a few phones with no infrastructure," and an **output-driver** model that generalizes the hardcoded "printer" so the app works equally with thermal printers, a bring-your-own printer, an iPad used as a display, or no printer at all.
+
 This is an architecture decision record, not an implementation guide. Code changes are scoped at the end under "Migration surface".
 
 ## Why this shape
@@ -111,6 +113,53 @@ Supporting both runtimes is tractable because **both targets are SQLite** — D1
 - **CI must build *and* smoke-test both targets**, or the unused path silently rots. This is the recurring tax of dual-target — budget for it.
 - **Discipline rule:** no D1-only or Node-only SQL/features in domain code. Anything runtime-specific goes behind a port, never inline.
 
+## Deployment profiles
+
+The venue rig above is one point on a spectrum. The same codebase must also serve customers who have **no Pi and no RUT** — just phones or iPads, or their own setup entirely. Two things vary independently, and the architecture keeps them orthogonal:
+
+1. **Deployment topology** — where the app runs and where the truth lives.
+2. **Output driver** — how an order gets fulfilled (next section).
+
+| Profile | Runs on | Source of truth | Output | Offline? |
+|---------|---------|-----------------|--------|----------|
+| **Venue rig** | Pi (+ optional RUT) | Pi SQLite | thermal TCP, or any driver | ✅ fully offline |
+| **Cloud / zero-infra (BYO)** | Cloudflare | Cloud D1 | browser drivers only | ⚠️ needs connectivity |
+| **Self-hosted** | their own box (`node-server`) | that box | any driver | depends on their setup |
+
+The BYO tier is just "the Cloudflare target + browser-native output drivers" — the same dual-target ports above, packaged as a profile. Self-hosting is the `node-server` target on arbitrary hardware.
+
+**Decision: the zero-infra (BYO) tier is online-required.** Without a local server there is no local source of truth, so "keeps working offline" could only mean making the browser itself a local-first node — a PWA with IndexedDB + a multi-device **sync engine** to converge phones that took orders offline. That is a large, separate workstream and is **explicitly out of scope** until a real BYO customer demands offline-without-infrastructure. Offline resilience remains a property of the **venue (Pi)** profile only; most BYO setups (a stall with Wi-Fi or cell) accept "needs a connection."
+
+**Consequence for BYO printing:** a cloud-hosted HTTPS app **cannot reach a printer's LAN IP** (mixed-content blocking). So in the cloud tier, output is always browser/OS-mediated — AirPrint via the print dialog, Web Bluetooth, or an on-screen display — never direct-to-IP. Direct-to-IP thermal printing is a venue/self-hosted-profile capability.
+
+## Output drivers (generalizing the "printer")
+
+Today `salesPrinters` fuses three concerns: **destination** (a network IP), **transport** (TCP :9100), and **render format** (ESC/POS). Generalizing means splitting them and putting a `driver` on the target (conceptually a "station" / "fulfillment target"):
+
+The seam already exists. The formatter has a normalized **`ReceiptData` model** (`receipt-formatter.ts`), and `formatReceipt(data)` is just *one encoder* (→ ESC/POS). Build the ticket model once, then add sibling encoders:
+- `formatReceipt(data)` → ESC/POS bytes (thermal) — exists
+- `renderTicketHtml(data)` → print-styled HTML (browser/AirPrint/PDF)
+- `toDisplayPayload(data)` → structured JSON (on-screen KDS)
+
+| Driver | Output | Transport | Format | Profiles | iOS-friendly |
+|--------|--------|-----------|--------|----------|--------------|
+| `network-escpos` (default, existing) | thermal printer | LAN TCP :9100 | ESC/POS | venue, self-host | n/a (server-side) |
+| `browser-print` | BYO printer via OS dialog | `window.print()` → AirPrint | HTML | any | ✅ |
+| `webusb` / `bluetooth` | device-attached printer | WebUSB / Web Bluetooth | ESC/POS | any | ❌ (no iOS) |
+| `display` (KDS) | on-screen order feed + "bump" | WebSocket/SSE subscribe | JSON | any | ✅ |
+| `none` | digital only (orders list / customer screen) | — | — | any | ✅ |
+
+**The queue stays universal.** `salesPrintqueues` remains the outbox for *every* driver; only the **drainer** differs — TCP socket (thermal), push-to-subscriber (display/browser clients), or browser-side render-and-print. The `display` driver uses a **display + acknowledge** lifecycle (`pending → shown → bumped`) instead of print + complete, but rides the same table and status UI.
+
+**Data model:** add `driver` + a `config` JSON blob to `salesPrinters`; **existing rows default to `network-escpos`** so nothing breaks. Routing (items → location → station) is unchanged and driver-agnostic.
+
+**Scenario mapping:**
+- **No printer** → `display` or `none`.
+- **Bring your own printer** → `browser-print` (AirPrint) on iPad; `webusb`/`bluetooth` on Android/desktop.
+- **iPad as a printer replacement** → `display` (KDS).
+
+**Recommended first driver: `display` (KDS).** It covers *both* "no printer" and "iPad as printer," works in every profile, is browser-native, and has zero iOS/mixed-content landmines — it's just a web client subscribing to the order feed you already have. `browser-print`/AirPrint is the fast follow; `webusb`/`bluetooth` is a later device-specific nicety.
+
 ## RUT956 network configuration
 
 Goal: tablets reach the Pi over the LAN and use **their own cellular** for general web; **users never consume the venue's 5G**; only the Pi egresses to the WAN for sync.
@@ -156,3 +205,5 @@ The domain logic, schema, migrations, scoped-PIN volunteer auth, receipt formatt
 - DB driver: **better-sqlite3** (simplest, native, single-box) vs **libsql** (keeps a future Turso embedded-replica option open).
 - HTTPS-on-LAN: **internal CA cert on tablets** vs **real cert via DNS-01**.
 - Commit to **node-only** vs maintain the full **dual-target** matrix (and its CI cost).
+- Output drivers: which to build first (recommended **`display`/KDS**), and whether to rename the `salesPrinters` concept to "station" in the UI (table stays for back-compat).
+- BYO offline: confirmed **out of scope** — revisit only if a real zero-infra customer requires offline ordering (would add a PWA sync-engine workstream).
