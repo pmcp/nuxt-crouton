@@ -51,6 +51,10 @@ Every task in `/docs/PROGRESS_TRACKER.md` follows this 5-step flow:
 5. Git Commit           → ALWAYS use /commit skill — NEVER git commit directly
 ```
 
+### GitHub Issue Tracking
+
+Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`), reference the issue number in the commit (`(#NN)` or `Closes #NN`), and close it when the acceptance criteria are met. `docs/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
+
 ### Commit Format (enforced by /commit skill)
 ```
 <type>(<scope>): <description>
@@ -297,6 +301,7 @@ docs/
 | Skill | `.claude/skills/crouton.md` | Collection generation workflow |
 | Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
+| Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
 | Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |
