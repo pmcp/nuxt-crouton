@@ -45,6 +45,7 @@ export default defineNuxtConfig({
 
 | File | Purpose |
 |------|---------|
+| `shared/seed/` | Composable seeding contract + runner core (`SeedProvider`, `SeedContext`, `buildUpsert`, `seedId`, `collectSeedSql`) — exported at `@fyit/crouton-core/shared/seed` |
 | `server/utils/encryption.ts` | AES-256-GCM encryption for storing third-party secrets at rest |
 | `server/utils/tiptap-renderer.ts` | Server-side TipTap JSON to HTML conversion (auto-imported by Nitro) |
 | `app/composables/useCrouton.ts` | Modal/slideover state management (nested up to 5 levels) |
@@ -101,6 +102,26 @@ useDisplayConfig()      → Resolves display roles (title/subtitle/image/badge) 
 useCroutonShortcuts()   → Keyboard shortcuts (create, save, close, delete, search)
 useTeamContext()        → Team ID/slug from route params (client-side)
 ```
+
+## Seeding Contract (shared/seed/)
+
+The home of composable, per-package demo seeding (epic #82). Pure TS (no Nuxt
+runtime), exported at `@fyit/crouton-core/shared/seed`:
+
+- `SeedProvider` (`{ id, dependsOn?, seed(ctx) }`) + `SeedContext` (`teamId`,
+  `teamSlug`, `locale`, `upsert(table, byId, values)`, `now`, optional
+  `createPageWithBlocks`). Each package ships a provider at `<pkg>/seed`.
+- `buildUpsert(table, byId, values)` → idempotent `INSERT … ON CONFLICT(byId)
+  DO UPDATE SET …` SQL (identifiers double-quoted so `order` is safe;
+  `createdAt` held immutable on update). `seedId(...parts)` / `seedOrgId(slug)`
+  derive stable ids so re-runs upsert instead of duplicating.
+- `topoSort(providers)` + `collectSeedSql({ providers, teamSlug, teamId, locale,
+  withStaff, createPageWithBlocks })` order providers by `dependsOn` and return
+  the combined SQL. The CLI `crouton-seed` command wraps this with discovery +
+  `wrangler d1 execute` transport (see crouton-cli CLAUDE.md).
+
+Seeding generates SQL executed via `wrangler d1`, so it runs identically against
+local SQLite and remote D1 with no live DB connection.
 
 ## Encryption Utility (server/utils/encryption.ts)
 
