@@ -93,3 +93,4 @@ apps/*/.wrangler/deploy/
 .claude/.package-edit-approved
 apps/kvr/.data
 apps/fanfare/.data
+apps/three-demo/.data
