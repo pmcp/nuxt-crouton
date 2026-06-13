@@ -33,6 +33,12 @@ jobs:
   preview:
     name: Build & deploy preview
     runs-on: ubuntu-latest
+    # Reads the Cloudflare secrets from a dedicated 'preview' GitHub Environment
+    # (create it under Settings → Environments with no protection rules, and add
+    # CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN). Kept separate from the
+    # staging/production environments so PR-branch previews aren't gated by their
+    # reviewer/branch protections.
+    environment: preview
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
