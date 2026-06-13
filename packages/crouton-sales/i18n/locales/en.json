@@ -157,6 +157,7 @@
       "eventWorkspace": "Event Workspace",
       "openKassaHint": "Tap to start taking orders",
       "makeOrder": "Place an order",
+      "openKassa": "Open register",
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
