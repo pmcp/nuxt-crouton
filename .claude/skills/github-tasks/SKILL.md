@@ -8,6 +8,18 @@ allowed-tools: mcp__github__issue_write, mcp__github__sub_issue_write, mcp__gith
 
 The canonical task tracker for this repo is **GitHub Issues** (`pmcp/nuxt-crouton`). This skill defines how to create and label them consistently so every task maps to a real part of the monorepo.
 
+## Writing for two audiences (REQUIRED — applies to issues, PRs, and commits)
+
+Everything that lands in GitHub is written for **two readers**, in this order:
+
+### 👤 For humans (first — and it must be genuinely easy to read)
+Lead with this. Plain language a busy person skims in seconds: *what changed, why it matters, what to expect* — impact over mechanics. Short sentences, no unexplained jargon, no raw file paths unless they're the point. Use a **diagram only when it makes the change easier to understand** (a flow, a before/after, an architecture or state change). Mermaid renders in issue/PR bodies — use it there. **Never add a diagram for decoration**; if it doesn't earn its space, leave it out.
+
+### 🤖 For agents
+A precise, structured block an AI can act on without guessing: scope, exact files/paths and symbols, behaviour changes, acceptance criteria, follow-ups, links to issues/docs.
+
+Use explicit headings (`## 👤 For humans` / `## 🤖 For agents`) so both are obvious. Scale to the change — a one-line human summary is fine for something small — but **always include both**.
+
 ## Core rules
 
 1. **Every issue maps to a package or an app — never "root".** If it feels like root-level work (CI, deploy, ops), label it with the **app it serves** (e.g. CI that builds fanfare → `app:fanfare`). There is deliberately no `root` label.

@@ -140,13 +140,15 @@ For changes spanning multiple packages: `feat(crouton-cli,crouton-core): descrip
 
 **Keep the subject line under 72 characters.**
 
-**Use the body for context when the change isn't obvious:**
-```
-refactor(crouton-core): simplify team permission checks
+**Use the body for context when the change isn't obvious.**
 
-Replaced nested conditionals with a permission map lookup.
-The old approach was O(n²) for teams with many roles.
-```
+### Two audiences in the body (REQUIRED)
+
+Keep the conventional subject line, then write the body for **both** readers (full convention lives in the `github-tasks` skill):
+- **👤 For humans** — a short, plain-language summary of what changed and why it matters (one line is fine for small commits).
+- **🤖 For agents** — the precise specifics: files/symbols touched, behaviour changes, follow-ups.
+
+Diagrams belong in PR/issue bodies (which render Mermaid), **not** in commit messages — keep commit text lean.
 
 ## HEREDOC Format (MANDATORY)
 
@@ -156,8 +158,13 @@ Always use this format to preserve formatting:
 git commit -m "$(cat <<'EOF'
 feat(crouton-core): add useTeamMembers composable
 
-Provides reactive team member list with role filtering
-and invite status tracking.
+👤 For humans
+Team settings can now show a live member list that filters by role and
+flags who still has a pending invite — no manual refresh needed.
+
+🤖 For agents
+- New app/composables/useTeamMembers.ts — reactive list, role filter
+- Surfaces invite status from member.status; used by TeamSettings.vue
 EOF
 )"
 ```
