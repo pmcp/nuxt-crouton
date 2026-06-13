@@ -42,7 +42,7 @@ Run these checks in parallel:
 1. **wrangler.toml** — check for `TODO` placeholders in `database_id` or KV `id`
 2. **CF stubs** — check `server/utils/_cf-stubs/` exists (required for all DB apps)
 3. **Nitro aliases** — check `nuxt.config.ts` has `nitro.alias` for papaparse and passkey stubs
-4. **Package scripts** — verify `cf:deploy` script exists in `package.json`
+4. **Package scripts** — verify `cf:deploy` script exists, and that `postinstall` is the guarded `nuxt prepare 2>/dev/null || true` (a bare `nuxt prepare` aborts the whole-monorepo install on Cloudflare and fails every app's deploy — see Step 3)
 5. **Pages project** — run `npx wrangler pages project list 2>/dev/null | grep {app-name}` to check if the Pages project exists
 
 ### Step 3: First-Time Setup (if needed)
@@ -103,11 +103,20 @@ npx wrangler pages secret put BETTER_AUTH_SECRET --project-name {app-name}
 Add to `package.json`:
 ```json
 {
+  "postinstall": "nuxt prepare 2>/dev/null || true",
   "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
   "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
   "db:migrate:prod": "npx wrangler d1 migrations apply {app-name}-db --remote"
 }
 ```
+
+> **The `postinstall` guard is mandatory for every app** (`2>/dev/null || true`, never a bare
+> `nuxt prepare`). Cloudflare Pages runs `pnpm install` across the **whole monorepo**, which fires
+> every app's `postinstall`. A fresh install hasn't built the dist-consumed `@fyit/*` workspace
+> packages yet, so a bare `nuxt prepare` errors (`Could not load '@fyit/crouton'`), exits 1, and
+> **aborts the entire install — failing the deploy of every other app too** (this is exactly how a
+> new app once broke the docs deploy). The guard always exits 0, so a missing local prepare can't
+> take the monorepo down; the real prepare/build still runs in the app's own deploy pipeline.
 
 #### Missing GitHub Actions Workflows
 

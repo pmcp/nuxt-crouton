@@ -7,7 +7,7 @@
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "deploy": "nuxt build && wrangler pages deploy dist",
-    "postinstall": "nuxt prepare",
+    "postinstall": "nuxt prepare 2>/dev/null || true",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck"
   },
