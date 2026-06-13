@@ -41,6 +41,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `server/api/teams/[id]/pages/[slug].get.ts` | Get single page by slug |
 | `app/stubs/AIPageGenerator.vue` | Stub for AI page generator (real impl in crouton-ai) |
 | `nuxt.config.ts` | Layer configuration |
+| `seed/index.ts` | Seed provider + `createPageWithBlocks` helper (`@fyit/crouton-pages/seed`) — injected onto `SeedContext` for block packages |
 
 ## Architecture
 
@@ -630,6 +631,21 @@ Collection-binder pages with `visibility: 'public'` and `status: 'published'` au
 - Cache responses with SWR (5 min)
 
 The `CollectionBinderRenderer` auto-switches to public endpoints when not in `/admin/` and the page visibility is `'public'`.
+
+## Demo Seeding (`@fyit/crouton-pages/seed`)
+
+Part of the composable seeding system (epic #82, contract in
+`@fyit/crouton-core/shared/seed`). Exports:
+
+- `createPageWithBlocks(ctx, { slug, locale, title, blocks, visibility, ... })` —
+  upserts a `pages_pages` row whose `content` is a `{ type: 'doc', content: blocks }`
+  TipTap doc (mirrored into `translations.<locale>.content` and base `content` so
+  both the renderer and the scoped-access derive-scope hook see the blocks).
+  Idempotent by a stable `seed:page:<team>:<slug>` id. The seed runner injects this
+  onto `ctx.createPageWithBlocks`, so a block package (e.g. crouton-sales) can seed
+  a demo page only when crouton-pages is present.
+- `provider` (id `pages`, `dependsOn: ['auth']`) — seeds crouton-pages' own demo
+  page (a plain content page) and materializes any `registerDemoPage(...)` builders.
 
 ## Dependencies
 
