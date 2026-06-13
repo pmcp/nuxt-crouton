@@ -61,7 +61,7 @@ Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github
 ```
 Types: `feat` | `fix` | `refactor` | `docs` | `test` | `chore`
 
-Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-editor` | `crouton-flow` | `crouton-assets` | `crouton-devtools` | `crouton-auth` | `docs` | `playground` | `test` | `root`
+Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-editor` | `crouton-flow` | `crouton-three` | `crouton-assets` | `crouton-devtools` | `crouton-auth` | `docs` | `playground` | `test` | `root`
 
 ### Progress Tracker Updates
 - Task Status: `[ ]` → `🔄` → `[x] ✅`

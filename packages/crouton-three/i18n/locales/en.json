@@ -1,0 +1,40 @@
+{
+  "three": {
+    "name": "3D",
+    "viewer": {
+      "noModel": "No model selected",
+      "loading": "Loading 3D…"
+    },
+    "blocks": {
+      "model": {
+        "name": "3D Model",
+        "description": "Embed an interactive glTF/.glb 3D model with orbit controls",
+        "fields": {
+          "src": {
+            "label": "Model",
+            "description": "Choose a .glb/.gltf file or paste a model URL"
+          },
+          "title": {
+            "label": "Caption",
+            "description": "Optional caption shown below the model"
+          },
+          "background": {
+            "label": "Background",
+            "options": {
+              "transparent": "Transparent",
+              "dark": "Dark",
+              "light": "Light"
+            }
+          },
+          "autoRotate": {
+            "label": "Auto-rotate",
+            "description": "Slowly spin the model"
+          },
+          "height": {
+            "label": "Height"
+          }
+        }
+      }
+    }
+  }
+}

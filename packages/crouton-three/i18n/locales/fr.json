@@ -1,0 +1,40 @@
+{
+  "three": {
+    "name": "3D",
+    "viewer": {
+      "noModel": "Aucun modèle sélectionné",
+      "loading": "Chargement 3D…"
+    },
+    "blocks": {
+      "model": {
+        "name": "Modèle 3D",
+        "description": "Intégrez un modèle 3D glTF/.glb interactif avec contrôles d'orbite",
+        "fields": {
+          "src": {
+            "label": "Modèle",
+            "description": "Choisissez un fichier .glb/.gltf ou collez une URL de modèle"
+          },
+          "title": {
+            "label": "Légende",
+            "description": "Légende facultative affichée sous le modèle"
+          },
+          "background": {
+            "label": "Arrière-plan",
+            "options": {
+              "transparent": "Transparent",
+              "dark": "Sombre",
+              "light": "Clair"
+            }
+          },
+          "autoRotate": {
+            "label": "Rotation automatique",
+            "description": "Faire tourner lentement le modèle"
+          },
+          "height": {
+            "label": "Hauteur"
+          }
+        }
+      }
+    }
+  }
+}
