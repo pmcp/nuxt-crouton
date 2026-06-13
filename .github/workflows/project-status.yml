@@ -1,0 +1,95 @@
+name: Project status automation
+
+# Auto-moves cards on the GitHub Project board (Status field) so it reflects
+# reality without manual dragging:
+#   - PR opened / reopened / ready for review  -> In review
+#   - PR back to draft                          -> In progress
+#   - Issue assigned or reopened                -> In progress
+# (Item added -> Backlog and merged/closed -> Done are handled by the
+#  Project's own built-in workflows; we don't fight those.)
+#
+# ── One-time setup (required) ──────────────────────────────────────────────
+# GITHUB_TOKEN cannot write a user-owned Projects v2 board, so this needs a PAT:
+#   1. Create a token with Projects read/write + repo scope
+#      (classic: `project` + `repo`; or fine-grained: Projects RW + Issues/PRs read).
+#   2. Add it as the repo secret  PROJECTS_TOKEN.
+#   3. (optional) Set repo variable PROJECT_NAME if the board isn't named "Crouton".
+# Until PROJECTS_TOKEN exists the job is skipped (no red runs).
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, converted_to_draft]
+  issues:
+    types: [assigned, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  set-status:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.PROJECTS_TOKEN != '' }}
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PROJECT_NAME: ${{ vars.PROJECT_NAME || 'Crouton' }}
+        with:
+          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          script: |
+            const projectName = process.env.PROJECT_NAME
+            const { owner, repo } = context.repo
+
+            // Decide the target Status from the event
+            let target = null
+            if (context.eventName === 'pull_request') {
+              const a = context.payload.action
+              target = a === 'converted_to_draft' ? 'In progress' : 'In review'
+            } else if (context.eventName === 'issues') {
+              target = 'In progress' // assigned or reopened
+            }
+            if (!target) return
+
+            const contentNodeId = context.payload.pull_request?.node_id
+              ?? context.payload.issue?.node_id
+            if (!contentNodeId) return
+
+            // 1) Find the project + its Status field/options (by title, among repo-linked projects)
+            const projQ = await github.graphql(`
+              query($owner:String!,$repo:String!){
+                repository(owner:$owner,name:$repo){
+                  projectsV2(first:20){ nodes {
+                    id title
+                    field(name:"Status"){ ... on ProjectV2SingleSelectField { id options { id name } } }
+                  } }
+                }
+              }`, { owner, repo })
+            const project = projQ.repository.projectsV2.nodes.find(p => p.title === projectName)
+            if (!project || !project.field) { core.warning(`Project "${projectName}" or its Status field not found`); return }
+            const option = project.field.options.find(o => o.name.toLowerCase() === target.toLowerCase())
+            if (!option) { core.warning(`Status option "${target}" not found`); return }
+
+            // 2) Find this item on the project (add it if missing)
+            const itemQ = await github.graphql(`
+              query($id:ID!){ node(id:$id){
+                ... on Issue { projectItems(first:50){ nodes { id project { id } } } }
+                ... on PullRequest { projectItems(first:50){ nodes { id project { id } } } }
+              } }`, { id: contentNodeId })
+            let item = (itemQ.node.projectItems?.nodes || []).find(i => i.project.id === project.id)
+            if (!item) {
+              const added = await github.graphql(`
+                mutation($project:ID!,$content:ID!){
+                  addProjectV2ItemById(input:{projectId:$project,contentId:$content}){ item { id } }
+                }`, { project: project.id, content: contentNodeId })
+              item = { id: added.addProjectV2ItemById.item.id }
+            }
+
+            // 3) Set Status
+            await github.graphql(`
+              mutation($project:ID!,$item:ID!,$field:ID!,$opt:String!){
+                updateProjectV2ItemFieldValue(input:{
+                  projectId:$project, itemId:$item, fieldId:$field,
+                  value:{ singleSelectOptionId:$opt }
+                }){ projectV2Item { id } }
+              }`, { project: project.id, item: item.id, field: project.field.id, opt: option.id })
+
+            core.info(`Set "${projectName}" status -> ${target} for ${contentNodeId}`)

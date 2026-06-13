@@ -34,6 +34,12 @@ export const salesPrinters = sqliteTable('sales_printers', {
   port: text('port'),
   // kitchen = per-location tickets (default, also for NULL); receipt = combined customer receipt
   type: text('type'),
+  // Output driver — how this station is fulfilled. Existing rows default to
+  // 'network-escpos' (the thermal TCP path), so nothing changes for current
+  // printers. Other drivers: 'browser-print' (AirPrint), 'display' (KDS), 'none'.
+  driver: text('driver').$default(() => 'network-escpos'),
+  // Driver-specific config (JSON) — e.g. display layout, browser-print options.
+  config: jsonColumn('config'),
   status: text('status'),
   showPrices: integer('showPrices', { mode: 'boolean' }).$default(() => true),
   isActive: integer('isActive', { mode: 'boolean' }).$default(() => true),
