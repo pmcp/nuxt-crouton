@@ -20,12 +20,12 @@ migrations_dir = "server/db/migrations/sqlite"
 binding = "KV"
 id = "b3183976e74846ff9913e1b6c641d951"
 
-# Environment variables (non-secret). Applied to every `wrangler pages deploy`
-# — production AND branch previews — so they're present at runtime.
-[vars]
-# Origins better-auth accepts for sign-in (CSRF/CORS). The baseURL host is
-# trusted automatically; this adds the custom domain + every *.pages.dev preview
-# alias, so member login works on PR preview links too — not just the PIN flow.
-# Wildcards are supported by better-auth. Read at runtime in
-# crouton-auth/server/lib/auth.ts (process.env.BETTER_AUTH_TRUSTED_ORIGINS).
-BETTER_AUTH_TRUSTED_ORIGINS = "https://kassa.friendlyinter.net,https://fanfare.pages.dev,https://*.fanfare.pages.dev"
+# Environment variables (set in the Cloudflare dashboard or via wrangler secret).
+# NOTE: do NOT declare BETTER_AUTH_TRUSTED_ORIGINS here — it's already set as a
+# Pages project variable (dashboard), and a duplicate in [vars] makes the deploy
+# fail with "Binding name 'BETTER_AUTH_TRUSTED_ORIGINS' already in use". To let
+# member login work on preview links, add https://*.fanfare.pages.dev to that
+# existing dashboard variable (Pages → fanfare → Settings → Environment variables,
+# Production + Preview) — not here.
+# [vars]
+# NUXT_PUBLIC_SITE_URL = "https://fanfare.pages.dev"
