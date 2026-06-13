@@ -126,6 +126,8 @@
     },
     "block": {
       "eventWorkspace": "Evenement-werkruimte",
+      "openKassaHint": "Tik om bestellingen op te nemen",
+      "makeOrder": "Maak een bestelling",
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",
@@ -290,6 +292,7 @@
       "enterPin": "Voer PIN in",
       "login": "Inloggen",
       "logout": "Uitloggen",
+      "staffLogin": "Teamlid? Log in als beheerder",
       "loggedInAs": "Ingelogd als",
       "enterNameError": "Voer je naam in.",
       "enterPinError": "Voer de PIN in.",

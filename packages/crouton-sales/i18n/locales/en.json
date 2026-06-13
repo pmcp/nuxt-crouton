@@ -126,6 +126,8 @@
     },
     "block": {
       "eventWorkspace": "Event Workspace",
+      "openKassaHint": "Tap to start taking orders",
+      "makeOrder": "Place an order",
       "noEventPicked": "No event picked",
       "editBlock": "Edit block",
       "deleteBlock": "Delete block",
@@ -290,6 +292,7 @@
       "enterPin": "Enter PIN",
       "login": "Log in",
       "logout": "Log out",
+      "staffLogin": "Team member? Log in as admin",
       "loggedInAs": "Logged in as",
       "enterNameError": "Please enter your name.",
       "enterPinError": "Please enter the PIN.",

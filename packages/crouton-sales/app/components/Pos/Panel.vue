@@ -25,16 +25,25 @@ const props = withDefaults(defineProps<{
   editable?: boolean
   /** Show the event title / logged-in-as header row. */
   showHeader?: boolean
+  /** Render a close button on the header's right — set when the panel runs
+   *  inside the fullscreen kassa modal so the volunteer can exit. */
+  closable?: boolean
 }>(), {
   editable: true,
   showHeader: true
 })
+
+const emit = defineEmits<{ close: [] }>()
 
 const { t } = useT()
 const route = useRoute()
 const { loggedIn } = useAuth()
 
 const teamParam = computed(() => props.teamParam || String(route.params.team || ''))
+
+// Staff door on the volunteer login: member sign-in that returns to this page
+// (where the workspace shell renders for logged-in team members).
+const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 
 interface PublicEvent {
   id: string
@@ -56,7 +65,6 @@ interface OrderData {
 const {
   isHelper,
   loadSession,
-  logout,
   token,
   eventId: sessionEventId,
   teamId: sessionTeamId,
@@ -139,11 +147,6 @@ async function onLoginSubmit() {
   }
 }
 
-async function handleLogout() {
-  await logout()
-  orderData.value = null
-}
-
 onMounted(async () => {
   loadSession()
   await loadEvent()
@@ -204,26 +207,27 @@ onUnmounted(unhookMutation)
       <!-- One slim line: logout at the LEFT (the page's floating color-mode
            pill owns the top-right corner), then title + helper name. No
            store icon — every saved pixel goes to the product list on phones. -->
-      <!-- max-sm:pe-12 clears the page's floating pill in the top-right. -->
+      <!-- Pure ordering surface: title + which helper is signed in, and a
+           close button when launched in the fullscreen modal. Session
+           controls (logout) live in the launcher / page chrome, never here. -->
       <header
         v-if="showHeader"
-        class="flex items-center gap-2 px-3 py-2 max-sm:pe-12 border-b border-default shrink-0"
+        class="flex items-center gap-2 px-3 py-2 border-b border-default shrink-0"
       >
-        <!-- Logging out is only meaningful for PIN sessions — an admin
-             session would just re-mint a token on the next mount. -->
-        <UButton
-          v-if="!loggedIn"
-          icon="i-lucide-log-out"
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          :aria-label="t('sales.helperLogin.logout')"
-          @click.stop="handleLogout"
-        />
         <h2 class="flex-1 min-w-0 font-semibold leading-tight truncate">
           {{ orderData.event.title }}
           <span class="text-sm text-muted font-normal">· {{ orderData.helper.name }}</span>
         </h2>
+        <!-- Exit the fullscreen kassa modal. -->
+        <UButton
+          v-if="closable"
+          icon="i-lucide-x"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          :aria-label="t('sales.common.close')"
+          @click.stop="emit('close')"
+        />
       </header>
       <div class="flex-1 min-h-0">
         <SalesClientOrderInterface
@@ -299,6 +303,18 @@ onUnmounted(unhookMutation)
           icon="i-lucide-alert-circle"
           :title="loginError"
         />
+        <!-- Staff door: a team member signs in with their account and returns
+             here as admin (the workspace shell renders for logged-in members).
+             Separate backend from the volunteer PIN — same screen, two doors. -->
+        <div class="text-center pt-1">
+          <UButton
+            :to="staffLoginUrl"
+            variant="link"
+            color="neutral"
+            size="sm"
+            :label="t('sales.helperLogin.staffLogin')"
+          />
+        </div>
       </div>
     </div>
   </div>

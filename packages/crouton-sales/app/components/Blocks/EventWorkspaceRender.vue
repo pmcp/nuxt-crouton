@@ -2,27 +2,34 @@
 /**
  * Event Workspace Block Public Renderer
  *
- * The single sales block for CMS pages — one block, two faces by session:
+ * One block, two faces by session:
  *
  *   signed-in team member →  the full workspace shell (kassa + settings /
  *                             orders / clients panes; event fixed by the
  *                             editor, so the switcher is hidden)
- *   anonymous / volunteer →  the kassa only, via <SalesPosPanel> (inline
- *                             helper PIN login, then the order interface)
+ *   anonymous / volunteer →  an "Open kassa" launcher that opens the POS
+ *                             (<SalesPosPanel>) in a fullscreen modal
  *
- * This replaced the separate orderInterfaceBlock — the volunteer face IS the
- * old kassa block, so existing `orderInterfaceBlock` nodes in stored page
- * content must be migrated to this node type (same attrs incl. `height`).
+ * Why a launcher + modal (not an inline or `fixed inset-0` panel): the block
+ * lives inside a normal scrollable CMS page and can sit beside other blocks
+ * (a QR code, a button row). A `fixed inset-0` takeover left those siblings
+ * scrollable behind it, which iOS Safari rubber-bands ("the page scrolls
+ * while it doesn't"). UModal's Reka dialog locks the page scroll properly,
+ * portals to <body>, and is iOS-reliable — and the launch is explicit, so
+ * the public page stays a clean, ordinary in-flow page. The launcher (this
+ * "kassa opening module") owns the helper session display + logout; the
+ * modal is a pure ordering surface with just a close button.
  *
- * The shell does a top-level `await useCollectionQuery`, so we give it a local
- * <Suspense> boundary (BlockContent.vue wraps us in <ClientOnly>, which is not
- * a Suspense boundary).
+ * The member shell does a top-level `await`, so it gets a local <Suspense>
+ * (BlockContent.vue wraps us in <ClientOnly>, which is not a Suspense
+ * boundary). The panel loads client-side, so it needs none.
  */
 interface EventWorkspaceAttrs {
   eventSlug?: string
   /**
-   * Volunteer-kassa height: compact/tall flow inside the page, 'fill' grows
-   * to the viewport bottom. The admin shell sizes itself and ignores this.
+   * @deprecated The volunteer kassa is now a fullscreen modal launched on
+   * demand, not an inline panel — height no longer applies. Kept so stored
+   * `height` attrs on existing nodes don't break.
    */
   height?: 'compact' | 'tall' | 'fill'
 }
@@ -34,48 +41,10 @@ const { loggedIn } = useAuth()
 
 const eventSlug = computed(() => props.attrs.eventSlug || '')
 
-// --- Volunteer kassa height ------------------------------------------------
-// Compact/Tall are simple bounded heights that flow inside the page. Fill
-// measures the wrapper's distance from the top of the viewport and grows to
-// the bottom edge, so a POS-only page reads as a full-screen app. Recomputed
-// on mount + resize (not on scroll — the POS scrolls internally, not the page).
-//
-// Phones ignore the attr entirely: the kassa takes over the screen as a
-// fixed inset-0 layer — header right under the status bar, no page chrome
-// above, no page peeking through below. Safe-area paddings keep the header
-// out of the notch and the cart bar above iOS Safari's floating bottom bar
-// (env() needs viewport-fit=cover — set by this layer's viewport-meta plugin).
-// (Renderer is clientOnly, so the media query is reliable from first paint.)
-const isPhone = useMediaQuery('(max-width: 639px)')
-const heightMode = computed(() => props.attrs.height || 'tall')
-const posWrapper = ref<HTMLElement | null>(null)
-const fillHeight = ref('')
-
-const posHeightClass = computed(() => {
-  if (heightMode.value === 'compact') return 'h-[60vh]'
-  if (heightMode.value === 'tall') return 'h-[80vh]'
-  return '' // fill drives height via inline style
-})
-const posHeightStyle = computed(() =>
-  !isPhone.value && heightMode.value === 'fill' && fillHeight.value
-    ? { height: fillHeight.value }
-    : undefined
-)
-
-function recomputeFillHeight() {
-  if (isPhone.value || heightMode.value !== 'fill' || !posWrapper.value) return
-  const top = Math.max(0, Math.round(posWrapper.value.getBoundingClientRect().top))
-  fillHeight.value = `calc(100dvh - ${top}px)`
-}
-
-useEventListener('resize', recomputeFillHeight)
-
-// The kassa wrapper only exists in the volunteer branch — (re)measure when it
-// appears (mount, or a logout flipping the branch) or the height mode changes.
-watch([posWrapper, heightMode, isPhone], async () => {
-  await nextTick()
-  recomputeFillHeight()
-})
+// The kassa opens in a fullscreen modal — the panel mounts (and fetches) on
+// first open. The helper session indicator + logout live in the page nav's
+// auth pill (the scoped-session-nav plugin bridges them), not here.
+const kassaOpen = ref(false)
 </script>
 
 <template>
@@ -101,18 +70,31 @@ watch([posWrapper, heightMode, isPhone], async () => {
       </Suspense>
     </div>
 
-    <!-- Anonymous → kassa only; the panel owns the helper PIN login flow.
-         Phones: fixed full-screen takeover (see height section above). -->
-    <div
-      v-else
-      ref="posWrapper"
-      class="overflow-clip bg-default flex flex-col"
-      :class="isPhone
-        ? 'fixed inset-0 z-40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
-        : ['rounded-3xl border border-default', posHeightClass]"
-      :style="posHeightStyle"
-    >
-      <SalesPosPanel :event-slug="eventSlug" />
-    </div>
+    <!-- Anonymous → "Open kassa" launcher (owns session + logout) and the
+         POS in a fullscreen modal. -->
+    <template v-else>
+      <div class="rounded-3xl border border-default bg-default p-8 flex flex-col items-center gap-5 text-center">
+        <p class="text-sm text-muted">{{ t('sales.block.openKassaHint') }}</p>
+        <UButton size="xl" @click="kassaOpen = true">
+          {{ t('sales.block.makeOrder') }}
+        </UButton>
+      </div>
+
+      <UModal v-model:open="kassaOpen" fullscreen :ui="{ content: 'bg-default' }">
+        <template #content>
+          <!-- Safe-area padding: the content is fixed inset-0, so keep the
+               header off the notch and the cart bar above Safari's bottom bar
+               (env() needs viewport-fit=cover — set by the viewport-meta plugin). -->
+          <div class="flex flex-col h-full pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            <SalesPosPanel
+              :event-slug="eventSlug"
+              closable
+              class="flex-1 min-h-0"
+              @close="kassaOpen = false"
+            />
+          </div>
+        </template>
+      </UModal>
+    </template>
   </div>
 </template>

@@ -125,6 +125,8 @@
     },
     "block": {
       "eventWorkspace": "Espace de gestion",
+      "openKassaHint": "Touchez pour prendre les commandes",
+      "makeOrder": "Passer une commande",
       "noEventPicked": "Aucun événement sélectionné",
       "editBlock": "Modifier le bloc",
       "deleteBlock": "Supprimer le bloc",
@@ -289,6 +291,7 @@
       "enterPin": "Saisissez le PIN",
       "login": "Se connecter",
       "logout": "Se déconnecter",
+      "staffLogin": "Membre de l'équipe ? Connexion admin",
       "loggedInAs": "Connecté en tant que",
       "enterNameError": "Veuillez saisir votre nom.",
       "enterPinError": "Veuillez saisir le PIN.",
