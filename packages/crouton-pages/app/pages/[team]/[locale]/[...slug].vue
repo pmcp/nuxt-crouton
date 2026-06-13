@@ -156,7 +156,13 @@ watchEffect(() => {
     cfg = null
   }
   const src = cfg ?? scopedGate.value?.chrome ?? {}
-  pageChrome.value = { hideNav: !!src.hideNav, hideAuthControls: !!src.hideAuthControls }
+  pageChrome.value = {
+    hideNav: !!src.hideNav,
+    // While the access-code gate is shown, always hide the member-login button:
+    // the gate has its own "Team member? Log in" door, so a second nav login
+    // button only sends volunteers into the member auth dead-end.
+    hideAuthControls: !!src.hideAuthControls || !!scopedGate.value
+  }
 })
 
 onBeforeUnmount(() => {

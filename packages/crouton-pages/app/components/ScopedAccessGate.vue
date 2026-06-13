@@ -27,6 +27,11 @@ const emit = defineEmits<{ unlocked: [] }>()
 
 const { t } = useT()
 
+// Staff door: a team member signs in with their account (separate backend from
+// the access code) and returns here — member access passes the same gate.
+const route = useRoute()
+const staffLoginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+
 const scopedAccess = useScopedAccess(props.scope.resourceType || 'page')
 
 const pin = ref('')
@@ -117,6 +122,17 @@ async function unlock() {
           {{ t('pages.scopedGate.submit', 'Unlock') }}
         </UButton>
       </form>
+
+      <!-- Staff door — member account login (returns to this page). -->
+      <div class="text-center mt-4">
+        <UButton
+          :to="staffLoginUrl"
+          variant="link"
+          color="neutral"
+          size="sm"
+          :label="t('pages.scopedGate.staffLogin', 'Team member? Log in')"
+        />
+      </div>
     </UCard>
   </div>
 </template>

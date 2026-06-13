@@ -72,7 +72,8 @@
       "noindex": "Pas d'indexation"
     },
     "nav": {
-      "menu": "Menu"
+      "menu": "Menu",
+      "signOut": "Déconnexion"
     },
     "collection": {
       "itemUnavailable": "Élément indisponible",
@@ -915,6 +916,7 @@
       "namePlaceholderRequired": "Votre nom",
       "pinPlaceholder": "Code d'accès",
       "submit": "Déverrouiller",
+      "staffLogin": "Membre de l'équipe ? Connexion",
       "invalid": "Code d'accès invalide",
       "locked": "Trop de tentatives — réessayez plus tard",
       "exhausted": "Ce code d'accès n'est plus disponible",

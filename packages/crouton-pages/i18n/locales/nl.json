@@ -86,7 +86,8 @@
       "noindex": "Geen indexering"
     },
     "nav": {
-      "menu": "Menu"
+      "menu": "Menu",
+      "signOut": "Uitloggen"
     },
     "collection": {
       "itemUnavailable": "Item niet beschikbaar",
@@ -929,6 +930,7 @@
       "namePlaceholderRequired": "Je naam",
       "pinPlaceholder": "Toegangscode",
       "submit": "Ontgrendelen",
+      "staffLogin": "Teamlid? Log in",
       "invalid": "Ongeldige toegangscode",
       "locked": "Te veel pogingen — probeer het later opnieuw",
       "exhausted": "Deze toegangscode is niet meer beschikbaar",

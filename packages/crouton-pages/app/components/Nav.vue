@@ -69,6 +69,25 @@ const showPageNav = computed(() => menuItems.value.length > 1 && !pageChrome.val
 // Login button / user avatar / admin menu visibility
 const showAuthControls = computed(() => !pageChrome.value.hideAuthControls)
 
+// Scoped visitor session (e.g. a kassa volunteer who redeemed a PIN). Published
+// by the owning addon (crouton-sales) into shared state — display-only here.
+// Shown even when member auth controls are hidden: it's the visitor's *own*
+// session, and `hideAuthControls` only hides the team-member login. Logout is
+// the addon's full teardown, fired via a hook so we stay package-agnostic.
+// Member login returns to the current page (otherwise you land on /auth/login
+// with no way back to a kassa / scoped page).
+const route = useRoute()
+const loginUrl = computed(() => `/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+
+const scopedSession = useState<{ displayName: string } | null>('crouton:scoped-session', () => null)
+async function logoutScopedSession() {
+  await (useNuxtApp().hooks as any).callHook('crouton:scoped-session:logout')
+  // Re-gate: a scoped page without a session must fall back to its access gate,
+  // so re-login is the PIN (not the member email/password form). A full reload
+  // re-runs the SSR scope check (the token was revoked server-side).
+  reloadNuxtApp({ force: true })
+}
+
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
@@ -216,10 +235,11 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
               </UButton>
             </UDropdownMenu>
 
-            <!-- Not authenticated: Login button -->
+            <!-- Not authenticated: Login button (suppressed when a scoped
+                 visitor session is active — they're already signed in). -->
             <UButton
-              v-else
-              to="/auth/login"
+              v-else-if="!scopedSession"
+              :to="loginUrl"
               icon="i-lucide-log-in"
               color="neutral"
               variant="ghost"
@@ -243,6 +263,25 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
               />
             </UDropdownMenu>
 
+            <!-- Divider only when the member section actually rendered something. -->
+            <USeparator v-if="user || !scopedSession" orientation="vertical" class="h-5 mx-1" />
+          </template>
+        </ClientOnly>
+
+        <!-- Scoped visitor session (e.g. a kassa volunteer). Their own session,
+             so it shows even when member auth controls are hidden; never
+             alongside a member avatar (`!user`). -->
+        <ClientOnly>
+          <template v-if="scopedSession && !user">
+            <span class="text-sm text-muted max-w-28 truncate">{{ scopedSession.displayName }}</span>
+            <UButton
+              icon="i-lucide-log-out"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :aria-label="t('pages.nav.signOut')"
+              @click="logoutScopedSession"
+            />
             <USeparator orientation="vertical" class="h-5 mx-1" />
           </template>
         </ClientOnly>
@@ -356,16 +395,33 @@ const pillClass = 'flex items-center gap-1 bg-muted/80 backdrop-blur-sm rounded-
               </UDropdownMenu>
             </template>
 
-            <!-- Not authenticated: Login button -->
+            <!-- Not authenticated: Login button (suppressed for scoped visitors). -->
             <UButton
-              v-else
-              to="/auth/login"
+              v-else-if="!scopedSession"
+              :to="loginUrl"
               icon="i-lucide-log-in"
               color="neutral"
               variant="ghost"
               size="sm"
             />
 
+            <USeparator v-if="user || !scopedSession" orientation="vertical" class="h-5" />
+          </template>
+        </ClientOnly>
+
+        <!-- Scoped visitor session — own session, shown even on chrome-less
+             pages; never alongside a member avatar (`!user`). -->
+        <ClientOnly>
+          <template v-if="scopedSession && !user">
+            <span class="text-sm text-muted max-w-24 truncate">{{ scopedSession.displayName }}</span>
+            <UButton
+              icon="i-lucide-log-out"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :aria-label="t('pages.nav.signOut')"
+              @click="logoutScopedSession"
+            />
             <USeparator orientation="vertical" class="h-5" />
           </template>
         </ClientOnly>

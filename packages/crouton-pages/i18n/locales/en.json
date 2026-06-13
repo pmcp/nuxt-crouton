@@ -86,7 +86,8 @@
       "noindex": "No indexing"
     },
     "nav": {
-      "menu": "Menu"
+      "menu": "Menu",
+      "signOut": "Sign out"
     },
     "collection": {
       "itemUnavailable": "Item Unavailable",
@@ -929,6 +930,7 @@
       "namePlaceholderRequired": "Your name",
       "pinPlaceholder": "Access code",
       "submit": "Unlock",
+      "staffLogin": "Team member? Log in",
       "invalid": "Invalid access code",
       "locked": "Too many attempts — try again later",
       "exhausted": "This access code is no longer available",
