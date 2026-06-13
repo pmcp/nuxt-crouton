@@ -197,11 +197,13 @@ export default defineNuxtConfig({
 BETTER_AUTH_SECRET=your-secret-key
 BETTER_AUTH_URL=http://localhost:3000
 
-# Optional: extra trusted origins (comma-separated). Works in production —
-# needed when a custom domain fronts a Pages project (e.g.
-# kassa.friendlyinter.net alongside fanfare.pages.dev). Set as a Pages
-# secret/env var on the deployment.
-BETTER_AUTH_TRUSTED_ORIGINS=https://kassa.friendlyinter.net,https://*.fanfare.pages.dev
+# Optional: extra trusted origins (comma-separated). The origin a request is
+# actually served from is ALWAYS trusted automatically (createAuth passes
+# trustedOrigins as a per-request function), so same-origin member login works
+# on any host — custom domain, *.pages.dev preview, kassa.local — with no env
+# var set. Use this only to trust *additional, cross-origin* callers (e.g. a
+# separate front-end host hitting this API). Belt-and-suspenders, not required.
+BETTER_AUTH_TRUSTED_ORIGINS=https://some-other-frontend.example.com
 
 # OAuth (optional)
 GOOGLE_CLIENT_ID=
