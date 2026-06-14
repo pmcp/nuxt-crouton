@@ -10,8 +10,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare 2>/dev/null || true",
     "typecheck": "nuxt typecheck",
-    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
-    "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
+    "cf:deploy": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy && node scripts/sync-wrangler-ids.mjs && npx wrangler d1 migrations apply three-demo-db --remote",
+    "cf:preview": "NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env preview && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply three-demo-preview-db --config .output/server/wrangler.json --env preview --remote",
+    "sync:ids": "node scripts/sync-wrangler-ids.mjs",
+    "db:migrate:preview": "npx wrangler d1 migrations apply three-demo-preview-db --config .output/server/wrangler.json --env preview --remote",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply three-demo-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply three-demo-db --remote"

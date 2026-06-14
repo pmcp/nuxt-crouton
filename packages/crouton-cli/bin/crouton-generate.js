@@ -172,7 +172,8 @@ const initCmd = defineCommand({
     features: { type: 'string', description: 'Comma-separated feature names (e.g., bookings,pages,editor)', default: '' },
     theme: { type: 'string', description: 'Theme to wire into extends (e.g., ko)' },
     dialect: { type: 'string', alias: 'd', description: 'Database dialect (sqlite or pg)', default: 'sqlite' },
-    noCf: { type: 'boolean', description: 'Skip Cloudflare-specific config (wrangler.toml, CF stubs)' },
+    noCf: { type: 'boolean', description: 'Skip Cloudflare-specific config (wrangler.jsonc, CF stubs)' },
+    domain: { type: 'string', description: 'Cloudflare zone for custom-domain routes (e.g. pmcp.dev → <app>.pmcp.dev / <app>-preview.pmcp.dev)' },
     dryRun: { type: 'boolean', description: 'Preview what will be generated without writing files' },
   },
   async run({ args }) {
@@ -188,6 +189,7 @@ const initCmd = defineCommand({
       theme: args.theme,
       dialect: args.dialect,
       cf: !args.noCf,
+      domain: args.domain,
       dryRun: args.dryRun,
     })
   }
@@ -386,7 +388,8 @@ const scaffoldAppCmd = defineCommand({
     features: { type: 'string', description: 'Comma-separated feature names (e.g., bookings,pages,editor)', default: '' },
     theme: { type: 'string', description: 'Theme to wire into extends (e.g., ko)' },
     dialect: { type: 'string', alias: 'd', description: 'Database dialect (sqlite or pg)', default: 'sqlite' },
-    noCf: { type: 'boolean', description: 'Skip Cloudflare-specific config (wrangler.toml, CF stubs)' },
+    noCf: { type: 'boolean', description: 'Skip Cloudflare-specific config (wrangler.jsonc, CF stubs)' },
+    domain: { type: 'string', description: 'Cloudflare zone for custom-domain routes (e.g. pmcp.dev → <app>.pmcp.dev / <app>-preview.pmcp.dev)' },
     dryRun: { type: 'boolean', description: 'Preview what will be generated without writing files' },
   },
   async run({ args }) {
@@ -402,6 +405,7 @@ const scaffoldAppCmd = defineCommand({
       theme: args.theme,
       dialect: args.dialect,
       cf: !args.noCf,
+      domain: args.domain,
       dryRun: args.dryRun,
     })
   }

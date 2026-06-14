@@ -1,0 +1,204 @@
+name: Deploy App (reusable, Cloudflare Workers)
+
+# Reusable deploy pipeline for any crouton app on Cloudflare Workers (#114).
+#
+# Per-app callers stay tiny — they just say which app + environment and pass
+# secrets (see deploy-three-demo.yml for the reference caller). All the real work
+# lives in the app's own `cf:deploy` / `cf:preview` scripts (build → deploy →
+# auto-provision id-less D1/KV → sync ids back into wrangler.jsonc → remote D1
+# migrate), so the pipeline has ONE source of truth: package.json. CI only adds
+# the environment, the workspace layer builds, and the PR preview-URL comment.
+#
+# No Pages "strip env from redirected config" step is needed: the cloudflare_module
+# preset strips `env` from the generated .output config itself, and cf:preview
+# re-injects it via scripts/inject-wrangler-env.mjs.
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: App directory name under apps/ (e.g. three-demo)
+        required: true
+        type: string
+      environment:
+        description: 'production | preview'
+        required: false
+        default: preview
+        type: string
+      production-url:
+        description: Public production URL (used as BETTER_AUTH_URL at build time)
+        required: false
+        default: ''
+        type: string
+      preview-url:
+        description: Public preview URL (used as BETTER_AUTH_URL at build time)
+        required: false
+        default: ''
+        type: string
+      node-version:
+        required: false
+        default: '20'
+        type: string
+      layer-packages:
+        description: >-
+          Space-separated pnpm filter names of dist-consumed framework packages
+          to build before the app (only those WITH a build script are built;
+          pure source layers like crouton-editor/pages/charts are skipped).
+        required: false
+        default: '@fyit/crouton-auth @fyit/crouton-core @fyit/crouton'
+        type: string
+    secrets:
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      # Optional: a JSON object of { "NAME": "value", … } pushed to the Worker as
+      # secrets on every deploy (wrangler secret bulk). Store it as a GitHub
+      # *Environment* secret so production and staging can hold env-specific values
+      # (e.g. different BETTER_AUTH_URL). Omit it to manage Worker secrets manually
+      # (they persist across deploys, so a one-time `wrangler secret bulk` also works).
+      WORKER_SECRETS_JSON:
+        required: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.app }} (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    # GitHub deployment environment — kept as production/staging so any
+    # environment-scoped secrets/protection from the existing setup still apply
+    # (the Workers target is preview/prod independently, via inputs.environment).
+    environment: ${{ inputs.environment == 'production' && 'production' || 'staging' }}
+    permissions:
+      contents: read
+      pull-requests: write   # for the preview-URL PR comment
+    # Serialize (don't cancel — a cancel mid-migration is unsafe) deploys to the
+    # same app+env so concurrent runs can't race on auto-provisioning / sync / D1.
+    concurrency:
+      group: deploy-${{ inputs.app }}-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NODE_OPTIONS: '--max-old-space-size=8192'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs['node-version'] }}
+          cache: 'pnpm'
+
+      # --ignore-scripts: skip every workspace postinstall (guarded `nuxt prepare`)
+      # during a whole-monorepo install; the app's own prepare runs below.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # The dist-consumed framework packages (inputs.layer-packages) must be built
+      # before the app build. Pure source layers (crouton-editor/pages/charts) have
+      # no build script and are skipped.
+      - name: Cache layer builds
+        id: layer-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+          key: layer-builds-${{ hashFiles('packages/**/*.ts') }}
+
+      - name: Build layer packages
+        if: steps.layer-cache.outputs.cache-hit != 'true'
+        env:
+          LAYER_PACKAGES: ${{ inputs['layer-packages'] }}
+        run: |
+          for pkg in $LAYER_PACKAGES; do
+            dir="packages/${pkg#@fyit/}"
+            if node -e "process.exit(require('./$dir/package.json').scripts?.build ? 0 : 1)" 2>/dev/null; then
+              echo "Building $pkg"
+              pnpm --filter "$pkg" build
+            else
+              echo "Skipping $pkg (no build script / pure source layer)"
+            fi
+          done
+
+      - name: Cache Nuxt build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/${{ inputs.app }}/node_modules/.cache
+            apps/${{ inputs.app }}/.nuxt/cache
+          key: nuxt-build-${{ inputs.app }}-${{ hashFiles(format('apps/{0}/**', inputs.app), 'packages/**/*.ts') }}
+          restore-keys: |
+            nuxt-build-${{ inputs.app }}-
+
+      # Rolldown's tsconfig generation needs an explicit prepare before build
+      # (see deploy-learnings); cf:deploy/cf:preview only run `nuxt build`.
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: apps/${{ inputs.app }}
+
+      # The one real step: run the SAME script a developer runs locally. It builds
+      # with NITRO_PRESET=cloudflare_module, deploys (auto-provisioning id-less
+      # D1/KV on first run), syncs the provisioned ids back into wrangler.jsonc,
+      # and applies remote D1 migrations.
+      - name: Deploy (build → provision → sync ids → migrate)
+        id: deploy
+        working-directory: apps/${{ inputs.app }}
+        env:
+          # BETTER_AUTH_* are only needed by the prerender pass at build time.
+          BETTER_AUTH_SECRET: prerender-placeholder
+          BETTER_AUTH_URL: ${{ inputs.environment == 'production' && inputs['production-url'] || inputs['preview-url'] }}
+        run: |
+          set -o pipefail
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            pnpm run cf:deploy | tee deploy.log
+          else
+            pnpm run cf:preview | tee deploy.log
+          fi
+          # Surface the deployed *.workers.dev URL (best-effort) for the PR comment.
+          URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | tail -1 || true)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed: ${URL:-<url not parsed>}"
+
+      # Push Worker secrets from the (optional) WORKER_SECRETS_JSON bundle. Runs
+      # after the worker exists; secrets persist across deploys, so this is a no-op
+      # re-upload when unchanged. Skipped entirely if the secret isn't provided.
+      # Targets the preview worker with --env preview for non-production deploys.
+      - name: Sync Worker secrets
+        working-directory: apps/${{ inputs.app }}
+        env:
+          SECRETS_JSON: ${{ secrets.WORKER_SECRETS_JSON }}
+        run: |
+          if [ -z "$SECRETS_JSON" ]; then
+            echo "No WORKER_SECRETS_JSON provided — skipping secret sync (manage Worker secrets manually)."
+            exit 0
+          fi
+          printf '%s' "$SECRETS_JSON" > "$RUNNER_TEMP/worker-secrets.json"
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json"
+          else
+            npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json" --env preview
+          fi
+          rm -f "$RUNNER_TEMP/worker-secrets.json"
+
+      # On PRs, post/update a sticky comment with the isolated preview URL.
+      - name: Comment preview URL on PR
+        if: ${{ inputs.environment != 'production' && github.event_name == 'pull_request' && steps.deploy.outputs.url != '' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}'
+            const app = '${{ inputs.app }}'
+            const marker = `<!-- deploy-preview:${app} -->`
+            const body = `${marker}\n🚀 **${app}** preview deployed: ${url}\n\n_Isolated, auto-provisioned Workers preview env (its own D1 + KV)._`
+            const { owner, repo } = context.repo
+            const issue_number = context.issue.number
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number })
+            const existing = comments.find(c => c.body && c.body.includes(marker))
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body })
+            }

@@ -1,135 +1,52 @@
 name: Deploy Triage
 
+# Thin caller for the reusable Workers deploy pipeline (#115, on #114's deploy-app.yml).
+# Push to `staging` (or a PR) → isolated preview (reuses triage-staging-db).
+# Manual dispatch with environment=production → production (reuses triage-db).
+
 on:
   push:
     branches:
       - staging
     paths:
       - 'apps/triage/**'
+      - 'packages/crouton/**'
       - 'packages/crouton-core/**'
       - 'packages/crouton-auth/**'
       - 'packages/crouton-ai/**'
       - 'packages/crouton-editor/**'
       - 'packages/crouton-pages/**'
       - 'packages/crouton-triage/**'
+      - 'packages/crouton-charts/**'
+      - 'packages/crouton-flow/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-triage.yml'
+      - '.github/workflows/deploy-app.yml'
+  pull_request:
+    paths:
+      - 'apps/triage/**'
+      - '.github/workflows/deploy-triage.yml'
+      - '.github/workflows/deploy-app.yml'
   workflow_dispatch:
     inputs:
       environment:
         description: 'Deploy target'
         required: true
-        default: 'staging'
+        default: 'preview'
         type: choice
         options:
-          - staging
+          - preview
           - production
 
 jobs:
   deploy:
-    name: Deploy to ${{ inputs.environment || 'staging' }}
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'staging' }}
-    env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Cache layer builds
-        id: layer-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            packages/crouton-core/dist
-            packages/crouton-auth/dist
-            packages/crouton-ai/dist
-            packages/crouton-editor/dist
-            packages/crouton-pages/dist
-            packages/crouton-triage/dist
-            packages/crouton-charts/dist
-            packages/crouton-flow/dist
-            packages/crouton/dist
-          key: layer-builds-${{ hashFiles('packages/crouton-core/**/*.ts', 'packages/crouton-auth/**/*.ts', 'packages/crouton-ai/**/*.ts', 'packages/crouton-editor/**/*.ts', 'packages/crouton-pages/**/*.ts', 'packages/crouton-triage/**/*.ts', 'packages/crouton-charts/**/*.ts', 'packages/crouton-flow/**/*.ts', 'packages/crouton/**/*.ts') }}
-
-      - name: Build layer packages
-        if: steps.layer-cache.outputs.cache-hit != 'true'
-        run: |
-          pnpm --filter '@fyit/crouton-core' build
-          pnpm --filter '@fyit/crouton-auth' build
-          pnpm --filter '@fyit/crouton-ai' build
-          pnpm --filter '@fyit/crouton-editor' build
-          pnpm --filter '@fyit/crouton-pages' build
-          pnpm --filter '@fyit/crouton-triage' build
-          pnpm --filter '@fyit/crouton-charts' build
-          pnpm --filter '@fyit/crouton-flow' build
-          pnpm --filter '@fyit/crouton' build
-
-      - name: Cache Nuxt build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            apps/triage/node_modules/.cache
-            apps/triage/.nuxt/cache
-          key: nuxt-build-triage-${{ hashFiles('apps/triage/**', 'packages/**/*.ts') }}
-          restore-keys: |
-            nuxt-build-triage-
-
-      - name: Run database migrations
-        run: |
-          if [ "${{ inputs.environment || 'staging' }}" = "production" ]; then
-            npx wrangler d1 migrations apply DB --remote
-          else
-            npx wrangler d1 migrations apply DB --env preview --remote
-          fi
-        working-directory: apps/triage
-
-      - name: Prepare Nuxt
-        run: npx nuxt prepare
-        working-directory: apps/triage
-
-      - name: Build
-        run: npx nuxt build
-        working-directory: apps/triage
-        env:
-          NODE_OPTIONS: '--max-old-space-size=8192'
-          NITRO_PRESET: 'cloudflare-pages'
-          CLOUDFLARE_ENV: ${{ (inputs.environment || 'staging') == 'staging' && 'preview' || '' }}
-          BETTER_AUTH_SECRET: prerender-placeholder
-          BETTER_AUTH_URL: ${{ (inputs.environment || 'staging') == 'production' && 'https://triage.friendlyinter.net' || 'https://staging.triage.pages.dev' }}
-
-      # Workaround: Wrangler 4.64+ rejects env blocks in redirected configs.
-      # Nitro copies the full wrangler config (including env) into the generated
-      # _worker.js/wrangler.json. Strip it so deploy succeeds.
-      - name: Strip env from redirected wrangler config
-        run: |
-          CONFIG="dist/_worker.js/wrangler.json"
-          if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
-            node -e "
-              const fs = require('fs');
-              const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
-              delete cfg.env;
-              fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
-            "
-          fi
-        working-directory: apps/triage
-      - name: Deploy to Cloudflare Pages
-        run: |
-          if [ "${{ inputs.environment || 'staging' }}" = "production" ]; then
-            npx wrangler pages deploy dist/ --commit-dirty=true
-          else
-            npx wrangler pages deploy dist/ --commit-dirty=true --branch staging
-          fi
-        working-directory: apps/triage
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      app: triage
+      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'preview' }}
+      production-url: https://triage.friendlyinter.net
+      preview-url: https://triage-preview.cloudflare-e53.workers.dev
+      # Only the dist-consumed packages with a build script (editor/pages/charts are
+      # pure source layers — the reusable workflow skips those automatically).
+      layer-packages: '@fyit/crouton-core @fyit/crouton-auth @fyit/crouton-ai @fyit/crouton-triage @fyit/crouton-flow @fyit/crouton'
+    secrets: inherit

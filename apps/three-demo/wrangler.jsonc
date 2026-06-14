@@ -1,42 +1,49 @@
 {
-  // Cloudflare Pages configuration for three-demo.
+  // Cloudflare WORKERS (static assets) config for three-demo — pilot for #109.
   //
-  // NOTE: the database_id / kv namespace id values below are PLACEHOLDERS.
-  // The `/deploy` skill (first-time setup) creates the real D1 database and KV
-  // namespace via `wrangler d1 create three-demo-db` / `wrangler kv namespace
-  // create three-demo-kv` and writes the returned ids here, plus the env.preview
-  // (staging) ids. Bindings do NOT inherit across envs — list them per env.
+  // Nitro's `cloudflare_module` preset reads this file at build time and writes
+  // the deployable config to `.output/server/wrangler.json`, injecting `main`
+  // + the `assets` binding (→ ../public) automatically.
+  //
+  // Bootstrap vs committed: the FIRST deploy can use id-less D1/KV bindings —
+  // wrangler auto-provisions them (4.45+). But remote `d1 migrations apply`
+  // reads THIS source file and needs the real `database_id`, so once
+  // provisioned we commit the ids here (same as velo).
   "name": "three-demo",
   "compatibility_date": "2024-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "dist",
 
-  // Production bindings
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "three-demo-db",
-      "database_id": "REPLACE_WITH_PROD_D1_ID",
+      "database_id": "8d195834-1767-4f4e-8168-c7dff5eecf20",
       "migrations_dir": "server/db/migrations/sqlite"
     }
   ],
   "kv_namespaces": [
-    { "binding": "KV", "id": "REPLACE_WITH_PROD_KV_ID" }
+    { "binding": "KV", "id": "7da665b3a93040eaa381df122284f11f" }
   ],
 
-  // Preview/staging environment overrides — separate ids, no inheritance.
+  // Preview environment — its OWN isolated D1 + KV, id-less so they auto-provision
+  // on the first `wrangler deploy --env preview` (then commit the written-back ids,
+  // same bootstrap→committed flow as production above).
+  //
+  // NuxtHub/Nitro strip this `env` block from the generated .output/server/
+  // wrangler.json (nitro#3429), so `pnpm cf:preview` re-injects it post-build via
+  // scripts/inject-wrangler-env.mjs before deploying. See #113.
   "env": {
     "preview": {
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "three-demo-staging-db",
-          "database_id": "REPLACE_WITH_STAGING_D1_ID",
+          "database_name": "three-demo-preview-db",
+          "database_id": "6ab321e2-da6d-46af-a5d9-888591bf0d4e",
           "migrations_dir": "server/db/migrations/sqlite"
         }
       ],
       "kv_namespaces": [
-        { "binding": "KV", "id": "REPLACE_WITH_STAGING_KV_ID" }
+        { "binding": "KV", "id": "378655fa536a428a9089ad8df714e461" }
       ]
     }
   }

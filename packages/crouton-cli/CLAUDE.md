@@ -149,6 +149,7 @@ crouton init my-app --dry-run
 | `--theme <name>` | Theme to wire into extends (e.g., `ko`) |
 | `-d, --dialect <type>` | `sqlite` or `pg` (default: sqlite) |
 | `--no-cf` | Skip Cloudflare-specific config |
+| `--domain <zone>` | CF zone for custom-domain routes → `<app>.<zone>` (prod) + `<app>-preview.<zone>` (preview); auto-bound on deploy. Omit → id-less `*.workers.dev` |
 | `--dry-run` | Preview without writing files |
 
 ### What `crouton init` Does
@@ -157,6 +158,37 @@ crouton init my-app --dry-run
 2. **generate** — Generates collections from `crouton.config.js` (if collections are defined)
 3. **doctor** — Validates everything is wired correctly
 4. **Summary** — Prints next steps (dev server, deploy)
+
+## Deploy Scaffolding — Cloudflare Workers (the crouton standard)
+
+When `cf` is enabled (default), `scaffold-app` emits a **Workers (static-assets)**
+deploy setup — auto-provisioning, zero manual id-juggling (epic #108 / #114).
+NOT Cloudflare Pages. Generated artifacts:
+
+| File | Purpose |
+|------|---------|
+| `wrangler.jsonc` | Workers config, **id-less** D1+KV (top-level + `env.preview`) so the first deploy auto-provisions them; `name`/`assets`/`main` injected by the `cloudflare_module` preset at build |
+| `scripts/sync-wrangler-ids.mjs` | After provisioning, queries `wrangler d1 list`/`kv namespace list` and writes the ids back into `wrangler.jsonc` (D1 by `database_name`, KV by the deterministic `<worker>-<binding>` title). Idempotent, comment-preserving |
+| `scripts/inject-wrangler-env.mjs` | Re-injects the `env` block Nitro strips from `.output/server/wrangler.json` (nitro#3429) + drops the redirect so `--env preview` deploys work |
+| `drizzle.config.ts` | Resolves the bundled schema path (`.nuxt/` or the cache buildDir) so `db:generate` works unedited |
+
+Both `scripts/*.mjs` are **app-name-agnostic** (they read the app's own
+`wrangler.jsonc`), shipped as raw templates in `lib/templates/wrangler/` and copied
+verbatim. The generated `package.json` chains them:
+`cf:deploy` = build → deploy (auto-provision) → `sync:ids` → migrate prod;
+`cf:preview` = build → inject-env → deploy `--env preview` → `sync:ids` →
+re-inject-env → migrate preview. `nuxt.config` pins **no** nitro preset (supplied via
+`NITRO_PRESET=cloudflare_module` in the scripts); `postinstall` is the guarded
+`nuxt prepare 2>/dev/null || true`. Reference app: `apps/three-demo`.
+
+**Custom domains (`--domain <zone>`):** when passed, `wrangler.jsonc` also gets
+custom-domain `routes` — `<app>.<zone>` (top-level/prod) + `<app>-preview.<zone>`
+(`env.preview`). On deploy, wrangler binds them and creates the DNS record + cert
+(the zone must be in the same CF account). Nitro preserves top-level `routes`;
+`inject-wrangler-env` carries the `env.preview` ones. Without `--domain`, apps stay
+on id-less `*.workers.dev` (the CLI stays domain-agnostic for general use). Adding
+routes also disables the `*.workers.dev` URL by default (`workers_dev` off).
+First real app on this path: `apps/triage` (triage.pmcp.dev, #115).
 
 ## DB Pull Command
 

@@ -9,6 +9,7 @@ interface InitAppOptions {
   theme?: string
   dialect?: string
   cf?: boolean
+  domain?: string
   dryRun?: boolean
 }
 
@@ -16,7 +17,7 @@ interface InitAppOptions {
  * Run the full init pipeline: scaffold -> generate -> doctor -> summary.
  */
 export async function initApp(name: string, options: InitAppOptions = {}): Promise<void> {
-  const { features = [], theme, dialect = 'sqlite', cf = true, dryRun = false } = options
+  const { features = [], theme, dialect = 'sqlite', cf = true, domain, dryRun = false } = options
 
   console.log(`\n  crouton init — creating ${name}\n`)
 
@@ -25,7 +26,7 @@ export async function initApp(name: string, options: InitAppOptions = {}): Promi
   let appDir
   try {
     const { scaffoldApp } = await import('./scaffold-app.ts')
-    const result = await scaffoldApp(name, { features, theme, dialect, cf, dryRun })
+    const result = await scaffoldApp(name, { features, theme, dialect, cf, domain, dryRun })
     appDir = result.appDir
   } catch (error) {
     consola.error('Step 1/3 — Scaffold failed')
@@ -80,10 +81,10 @@ function printSummary(name: string, appDir: string, cf: boolean): void {
   console.log()
   console.log('  Deploy:')
   if (cf) {
-    console.log('  4.  npx crouton deploy-setup     (creates CF resources + CI workflow)')
-    console.log('  5.  npx crouton deploy-check     (validates everything)')
+    console.log('  4.  pnpm cf:deploy      (builds, auto-provisions D1+KV, syncs ids, migrates, deploys to Workers)')
+    console.log('  5.  pnpm cf:preview     (deploys an isolated, auto-provisioned preview env)')
   } else {
-    console.log('       npx wrangler pages deploy dist/')
+    console.log('       configure your own deploy target')
   }
   console.log()
 }
