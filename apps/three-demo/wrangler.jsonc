@@ -1,43 +1,26 @@
 {
-  // Cloudflare Pages configuration for three-demo.
+  // Cloudflare WORKERS (static assets) config for three-demo — pilot for #109.
   //
-  // NOTE: the database_id / kv namespace id values below are PLACEHOLDERS.
-  // The `/deploy` skill (first-time setup) creates the real D1 database and KV
-  // namespace via `wrangler d1 create three-demo-db` / `wrangler kv namespace
-  // create three-demo-kv` and writes the returned ids here, plus the env.preview
-  // (staging) ids. Bindings do NOT inherit across envs — list them per env.
+  // Nitro's `cloudflare_module` preset reads this file at build time and writes
+  // the deployable config to `.output/server/wrangler.json`, injecting `main`
+  // (the worker entry) and the `assets` binding (→ ../public) automatically.
+  //
+  // D1 + KV bindings are listed WITHOUT resource ids: wrangler's automatic
+  // resource provisioning (open beta, 4.45+; repo is on 4.64) creates and links
+  // them on the first `wrangler deploy`, and keeps them linked across deploys —
+  // no manual `d1 create` / id wrangling.
   "name": "three-demo",
   "compatibility_date": "2024-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "dist",
 
-  // Production bindings
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "three-demo-db",
-      "database_id": "REPLACE_WITH_PROD_D1_ID",
       "migrations_dir": "server/db/migrations/sqlite"
     }
   ],
   "kv_namespaces": [
-    { "binding": "KV", "id": "REPLACE_WITH_PROD_KV_ID" }
-  ],
-
-  // Preview/staging environment overrides — separate ids, no inheritance.
-  "env": {
-    "preview": {
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "three-demo-staging-db",
-          "database_id": "REPLACE_WITH_STAGING_D1_ID",
-          "migrations_dir": "server/db/migrations/sqlite"
-        }
-      ],
-      "kv_namespaces": [
-        { "binding": "KV", "id": "REPLACE_WITH_STAGING_KV_ID" }
-      ]
-    }
-  }
+    { "binding": "KV" }
+  ]
 }

@@ -10,8 +10,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare 2>/dev/null || true",
     "typecheck": "nuxt typecheck",
-    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
-    "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
+    "cf:deploy": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy",
+    "cf:preview": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output versions upload",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply three-demo-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply three-demo-db --remote"
