@@ -9,6 +9,7 @@ interface InitAppOptions {
   theme?: string
   dialect?: string
   cf?: boolean
+  domain?: string
   dryRun?: boolean
 }
 
@@ -16,7 +17,7 @@ interface InitAppOptions {
  * Run the full init pipeline: scaffold -> generate -> doctor -> summary.
  */
 export async function initApp(name: string, options: InitAppOptions = {}): Promise<void> {
-  const { features = [], theme, dialect = 'sqlite', cf = true, dryRun = false } = options
+  const { features = [], theme, dialect = 'sqlite', cf = true, domain, dryRun = false } = options
 
   console.log(`\n  crouton init — creating ${name}\n`)
 
@@ -25,7 +26,7 @@ export async function initApp(name: string, options: InitAppOptions = {}): Promi
   let appDir
   try {
     const { scaffoldApp } = await import('./scaffold-app.ts')
-    const result = await scaffoldApp(name, { features, theme, dialect, cf, dryRun })
+    const result = await scaffoldApp(name, { features, theme, dialect, cf, domain, dryRun })
     appDir = result.appDir
   } catch (error) {
     consola.error('Step 1/3 — Scaffold failed')

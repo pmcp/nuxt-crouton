@@ -112,6 +112,7 @@ crouton init my-app --dry-run
 | `--theme <name>` | Theme to wire into extends (e.g., `ko`) |
 | `-d, --dialect <type>` | `sqlite` or `pg` (default: sqlite) |
 | `--no-cf` | Skip Cloudflare-specific config |
+| `--domain <zone>` | CF zone for custom-domain routes → `<app>.<zone>` (prod) + `<app>-preview.<zone>` (preview); auto-bound on deploy. Omit → id-less `*.workers.dev` |
 | `--dry-run` | Preview without writing files |
 
 ### What `crouton init` Does
@@ -142,6 +143,15 @@ verbatim. The generated `package.json` chains them:
 re-inject-env → migrate preview. `nuxt.config` pins **no** nitro preset (supplied via
 `NITRO_PRESET=cloudflare_module` in the scripts); `postinstall` is the guarded
 `nuxt prepare 2>/dev/null || true`. Reference app: `apps/three-demo`.
+
+**Custom domains (`--domain <zone>`):** when passed, `wrangler.jsonc` also gets
+custom-domain `routes` — `<app>.<zone>` (top-level/prod) + `<app>-preview.<zone>`
+(`env.preview`). On deploy, wrangler binds them and creates the DNS record + cert
+(the zone must be in the same CF account). Nitro preserves top-level `routes`;
+`inject-wrangler-env` carries the `env.preview` ones. Without `--domain`, apps stay
+on id-less `*.workers.dev` (the CLI stays domain-agnostic for general use). Adding
+routes also disables the `*.workers.dev` URL by default (`workers_dev` off).
+First real app on this path: `apps/triage` (triage.pmcp.dev, #115).
 
 ## DB Pull Command
 

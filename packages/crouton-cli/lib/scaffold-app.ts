@@ -101,6 +101,8 @@ interface ScaffoldVars {
   theme?: string
   dialect: string
   cf: boolean
+  /** Optional CF zone — emits <name>.<domain> / <name>-preview.<domain> routes. */
+  domain?: string
   modules: Record<string, any>
 }
 
@@ -263,6 +265,17 @@ function tmplWranglerJsonc(vars: ScaffoldVars): string {
   // auto-provisions the D1 + KV (wrangler 4.45+). `sync-wrangler-ids.mjs` then
   // writes the provisioned ids back here (bootstrap → committed), which remote
   // `d1 migrations apply` needs (workers-sdk#13632). Same flow for env.preview.
+  //
+  // With --domain <zone>, custom-domain routes are emitted so `wrangler deploy`
+  // auto-binds <name>.<zone> (prod) / <name>-preview.<zone> (preview), creating
+  // the DNS record + cert (the zone must live in this Cloudflare account). Nitro
+  // preserves top-level routes; inject-wrangler-env carries the env.preview ones.
+  const prodRoute = vars.domain
+    ? `\n  "routes": [{ "pattern": "${vars.name}.${vars.domain}", "custom_domain": true }],\n`
+    : ''
+  const previewRoute = vars.domain
+    ? `\n      "routes": [{ "pattern": "${vars.name}-preview.${vars.domain}", "custom_domain": true }],`
+    : ''
   return `{
   // Cloudflare WORKERS (static assets) config for ${vars.name}.
   //
@@ -275,7 +288,7 @@ function tmplWranglerJsonc(vars: ScaffoldVars): string {
   "name": "${vars.name}",
   "compatibility_date": "2024-09-02",
   "compatibility_flags": ["nodejs_compat"],
-
+${prodRoute}
   "d1_databases": [
     {
       "binding": "DB",
@@ -292,7 +305,7 @@ function tmplWranglerJsonc(vars: ScaffoldVars): string {
   // from the generated .output config (nitro#3429), so cf:preview re-injects it
   // via scripts/inject-wrangler-env.mjs before deploying.
   "env": {
-    "preview": {
+    "preview": {${previewRoute}
       "d1_databases": [
         {
           "binding": "DB",
@@ -525,13 +538,14 @@ export const passkeyClient = () => ({
 
 export async function scaffoldApp(
   name: string,
-  options: { features?: string[]; theme?: string; dialect?: string; cf?: boolean; dryRun?: boolean; outDir?: string } = {}
+  options: { features?: string[]; theme?: string; dialect?: string; cf?: boolean; domain?: string; dryRun?: boolean; outDir?: string } = {}
 ): Promise<{ files: ScaffoldFile[]; appDir: string }> {
   const {
     features: featureNames = [],
     theme,
     dialect = 'sqlite',
     cf = true,
+    domain,
     dryRun = false,
     outDir
   } = options
@@ -569,7 +583,7 @@ export async function scaffoldApp(
     frameworkPackages.splice(coreIdx + 1, 0, '@fyit/crouton-i18n')
   }
 
-  const vars: ScaffoldVars = { name, features, extends: frameworkPackages, theme, dialect, cf, modules }
+  const vars: ScaffoldVars = { name, features, extends: frameworkPackages, theme, dialect, cf, domain, modules }
   const authSecret = randomBytes(32).toString('hex')
 
   // Build file list
