@@ -7,13 +7,16 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
-    "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
-    "cf:preview": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist --branch preview",
+    "postinstall": "nuxt prepare 2>/dev/null || true",
+    "cf:deploy": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy && node scripts/sync-wrangler-ids.mjs && npx wrangler d1 migrations apply triage-db --remote",
+    "cf:preview": "NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env preview && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply triage-staging-db --config .output/server/wrangler.json --env preview --remote",
+    "sync:ids": "node scripts/sync-wrangler-ids.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote",
+    "db:migrate:preview": "npx wrangler d1 migrations apply triage-staging-db --config .output/server/wrangler.json --env preview --remote",
     "tunnel": "cloudflared tunnel --config ~/.cloudflared/triage-dev.yml run triage-dev",
-    "logs": "npx wrangler pages deployment tail --project-name triage"
+    "logs": "npx wrangler tail triage"
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
