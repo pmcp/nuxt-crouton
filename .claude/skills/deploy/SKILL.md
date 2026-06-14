@@ -97,6 +97,22 @@ Ensure **repo-level** secrets `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` e
 (Settings → Secrets and variables → Actions). The reusable workflow maps the GitHub
 `environment:` to `production`/`staging`, so environment-scoped secrets also work.
 
+### Step 4.5: App (Worker) secrets
+The app's own secrets (`BETTER_AUTH_SECRET`/`BETTER_AUTH_URL`, `NUXT_*`, etc.) live
+on the **Worker**, NOT in `wrangler.jsonc`. **Worker secrets persist across deploys**,
+so this is a one-time bootstrap per worker (prod + preview), not a per-deploy step.
+
+Two ways:
+- **Manual (one-time):** `npx wrangler secret bulk secrets.json` (prod) /
+  `… --env preview` (preview). `BETTER_AUTH_URL`/`BASE_URL` must be the **production
+  domain** (not localhost). Pages secrets do NOT carry over — re-provide the values.
+- **Automatic (CI):** store the whole bundle as a GitHub **Environment** secret
+  `WORKER_SECRETS_JSON` (a JSON object of `{ "NAME": "value", … }`) under the
+  `production` and `staging` environments (env-scoped so each can hold the right
+  URLs). The reusable `deploy-app.yml` runs `wrangler secret bulk` from it on every
+  deploy (`--env preview` for non-prod). Omit it to manage secrets manually.
+  Automation can't invent values — they must live in that secret once.
+
 ### Step 5: Routine deploys
 - **CI (preferred):** push to `staging` (or open a PR) → the caller runs the pipeline.
 - **Local:** `pnpm cf:deploy` (prod) / `pnpm cf:preview` (preview) from the app dir.

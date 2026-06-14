@@ -52,6 +52,13 @@ on:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
+      # Optional: a JSON object of { "NAME": "value", … } pushed to the Worker as
+      # secrets on every deploy (wrangler secret bulk). Store it as a GitHub
+      # *Environment* secret so production and staging can hold env-specific values
+      # (e.g. different BETTER_AUTH_URL). Omit it to manage Worker secrets manually
+      # (they persist across deploys, so a one-time `wrangler secret bulk` also works).
+      WORKER_SECRETS_JSON:
+        required: false
 
 jobs:
   deploy:
@@ -154,6 +161,27 @@ jobs:
           URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | tail -1 || true)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed: ${URL:-<url not parsed>}"
+
+      # Push Worker secrets from the (optional) WORKER_SECRETS_JSON bundle. Runs
+      # after the worker exists; secrets persist across deploys, so this is a no-op
+      # re-upload when unchanged. Skipped entirely if the secret isn't provided.
+      # Targets the preview worker with --env preview for non-production deploys.
+      - name: Sync Worker secrets
+        working-directory: apps/${{ inputs.app }}
+        env:
+          SECRETS_JSON: ${{ secrets.WORKER_SECRETS_JSON }}
+        run: |
+          if [ -z "$SECRETS_JSON" ]; then
+            echo "No WORKER_SECRETS_JSON provided — skipping secret sync (manage Worker secrets manually)."
+            exit 0
+          fi
+          printf '%s' "$SECRETS_JSON" > "$RUNNER_TEMP/worker-secrets.json"
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json"
+          else
+            npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json" --env preview
+          fi
+          rm -f "$RUNNER_TEMP/worker-secrets.json"
 
       # On PRs, post/update a sticky comment with the isolated preview URL.
       - name: Comment preview URL on PR
