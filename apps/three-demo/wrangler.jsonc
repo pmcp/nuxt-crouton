@@ -38,11 +38,12 @@
         {
           "binding": "DB",
           "database_name": "three-demo-preview-db",
+          "database_id": "6ab321e2-da6d-46af-a5d9-888591bf0d4e",
           "migrations_dir": "server/db/migrations/sqlite"
         }
       ],
       "kv_namespaces": [
-        { "binding": "KV" }
+        { "binding": "KV", "id": "378655fa536a428a9089ad8df714e461" }
       ]
     }
   }
