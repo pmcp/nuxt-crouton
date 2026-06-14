@@ -1,28 +1,29 @@
 <script setup lang="ts">
 /**
- * Kitchen Display (KDS) Block — public renderer (#61, the `display` driver).
+ * Kitchen Display (KDS) Block — public renderer (#61, decoupled KDS).
  *
- * Drop-on-a-page kitchen screen for an iPad: reads display jobs straight off
- * the print queue (`salesPrintqueues`) and lets staff "bump" a ticket when it's
- * done. Every `display`-driver station enqueues a JSON job; this screen renders
- * it and closes the same queue row on bump (lifecycle pending → shown → bumped),
- * so a second screen or a refresh sees the same board and the admin order LEDs
- * reflect it.
+ * Drop-on-a-page kitchen screen for an iPad. It is NOT a printer: it reads the
+ * event's orders directly and shows one ticket per (order × location), so the
+ * kitchen screen and the bar screen each see only their items and bump them
+ * independently. "Done" lives in `salesKdsbumps`; bumping never touches the
+ * print queue or the order's status.
  *
- * The editor fixes the event by slug; we resolve it to an id via the public
- * by-slug endpoint (same path the volunteer kassa uses), then poll the display
- * feed. clientOnly — BlockContent wraps us in <ClientOnly>; no top-level await,
- * so no Suspense boundary is needed.
+ * The editor fixes the event by slug and (optionally) which locations this
+ * screen shows; we resolve the slug to an id via the public by-slug endpoint,
+ * then poll the feed scoped to those locations. clientOnly — BlockContent wraps
+ * us in <ClientOnly>; no top-level await, so no Suspense boundary is needed.
  */
 interface KitchenDisplayAttrs {
   eventSlug?: string
+  /** Locations this screen shows; empty/absent = every location in the event. */
+  locations?: string[]
 }
 
 interface KdsItem { title: string, quantity: number, remarks?: string | null }
 interface KdsJob {
   id: string
-  orderId: string | null
-  stationId: string
+  orderId: string
+  locationId: string
   orderNumber: string
   clientName: string | null
   isPersonnel: boolean
@@ -60,11 +61,15 @@ async function resolveEvent() {
   }
 }
 
+// Locations this screen shows, as a query param; empty = the whole event.
+const locationsParam = computed(() => (props.attrs.locations || []).filter(Boolean).join(','))
+
 async function refresh() {
   if (!eventId.value) return
   try {
     const res = await $fetch<{ jobs: KdsJob[] }>(
-      `/api/crouton-sales/events/${eventId.value}/display-jobs`
+      `/api/crouton-sales/events/${eventId.value}/display-jobs`,
+      { query: locationsParam.value ? { locations: locationsParam.value } : undefined }
     )
     jobs.value = res.jobs
   }
@@ -73,17 +78,20 @@ async function refresh() {
   }
 }
 
-async function bump(id: string) {
+async function bump(job: KdsJob) {
   if (!eventId.value) return
-  bumping.value = new Set([...bumping.value, id])
+  bumping.value = new Set([...bumping.value, job.id])
   try {
-    await $fetch(`/api/crouton-sales/events/${eventId.value}/display-jobs/${id}/bump`, { method: 'POST' })
+    await $fetch(`/api/crouton-sales/events/${eventId.value}/kds-bump`, {
+      method: 'POST',
+      body: { orderId: job.orderId, locationId: job.locationId }
+    })
     await refresh()
   }
   catch {
     // Bump failed — show the tile again so it can be retried.
     const next = new Set(bumping.value)
-    next.delete(id)
+    next.delete(job.id)
     bumping.value = next
   }
 }
@@ -193,7 +201,7 @@ function ago(iso: string) {
 
           <button
             class="px-4 py-3 text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition-colors"
-            @click="bump(o.id)"
+            @click="bump(o)"
           >
             ✓ {{ t('sales.blocks.kitchenDisplay.ui.bump') }}
           </button>

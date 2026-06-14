@@ -91,7 +91,12 @@
         "fields": {
           "eventSlug": {
             "label": "Evenement",
-            "description": "Kies van welk evenement de bestellingen op dit scherm verschijnen. Bestellingen die naar een 'display'-station van dit evenement gaan, komen hier."
+            "description": "Kies van welk evenement dit scherm de bestellingen toont."
+          },
+          "locations": {
+            "label": "Locaties",
+            "description": "Welke locaties dit scherm toont (bv. Keuken, Bar). Laat leeg om alle locaties te tonen.",
+            "placeholder": "Alle locaties"
           }
         },
         "ui": {

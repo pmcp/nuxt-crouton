@@ -91,7 +91,12 @@
         "fields": {
           "eventSlug": {
             "label": "Event",
-            "description": "Pick which event's orders this screen shows. Orders routed to a 'display'-driver station for this event appear here."
+            "description": "Pick which event's orders this screen shows."
+          },
+          "locations": {
+            "label": "Locations",
+            "description": "Which locations this screen shows (e.g. Kitchen, Bar). Leave empty to show every location.",
+            "placeholder": "All locations"
           }
         },
         "ui": {

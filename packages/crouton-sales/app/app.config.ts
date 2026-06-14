@@ -298,14 +298,16 @@ const kitchenDisplayBlock: CroutonBlockDefinition = {
   category: 'kassa',
   clientOnly: true,
   defaultAttrs: {
-    eventSlug: ''
+    eventSlug: '',
+    locations: []
   },
   components: {
     editorView: 'SalesBlocksKitchenDisplayView',
     renderer: 'SalesBlocksKitchenDisplayRender'
   },
   propertyComponents: {
-    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker',
+    locations: 'SalesBlocksPropertiesLocationsPicker'
   },
   schema: [
     {
@@ -313,12 +315,19 @@ const kitchenDisplayBlock: CroutonBlockDefinition = {
       type: 'eventSlug',
       label: 'sales.blocks.kitchenDisplay.fields.eventSlug.label',
       description: 'sales.blocks.kitchenDisplay.fields.eventSlug.description'
+    },
+    {
+      name: 'locations',
+      type: 'locations',
+      label: 'sales.blocks.kitchenDisplay.fields.locations.label',
+      description: 'sales.blocks.kitchenDisplay.fields.locations.description'
     }
   ],
   tiptap: {
     parseHTMLTag: 'div[data-type="kitchen-display-block"]',
     attributes: {
-      eventSlug: { default: '' }
+      eventSlug: { default: '' },
+      locations: { default: [] }
     }
   }
 }

@@ -90,7 +90,12 @@
         "fields": {
           "eventSlug": {
             "label": "Événement",
-            "description": "Choisissez l'événement dont les commandes s'affichent sur cet écran. Les commandes routées vers une station « display » de cet événement apparaissent ici."
+            "description": "Choisissez l'événement dont cet écran affiche les commandes."
+          },
+          "locations": {
+            "label": "Emplacements",
+            "description": "Les emplacements affichés par cet écran (ex. Cuisine, Bar). Laisser vide pour tous les afficher.",
+            "placeholder": "Tous les emplacements"
           }
         },
         "ui": {
