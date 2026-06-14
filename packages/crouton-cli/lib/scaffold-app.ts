@@ -1,10 +1,20 @@
 // scaffold-app.ts — Generate a complete crouton app scaffold
 import { randomBytes } from 'node:crypto'
-import { join } from 'node:path'
-import { access, mkdir, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import consola from 'consola'
 import { loadModules } from './module-registry.ts'
 import { getFrameworkPackages } from './utils/framework-packages.ts'
+
+// Wrangler helper scripts are shipped as raw templates (they're app-name-agnostic —
+// they read the app's own wrangler.jsonc at runtime) and copied verbatim into the
+// scaffolded app's scripts/ dir.
+const TEMPLATE_DIR = join(dirname(fileURLToPath(import.meta.url)), 'templates', 'wrangler')
+
+async function readTemplate(name: string): Promise<string> {
+  return readFile(join(TEMPLATE_DIR, name), 'utf-8')
+}
 
 // ─── Template helpers ─────────────────────────────────────────────
 
@@ -116,14 +126,26 @@ function tmplPackageJson(vars: ScaffoldVars): string {
     dev: 'nuxt dev',
     generate: 'nuxt generate',
     preview: 'nuxt preview',
-    postinstall: 'nuxt prepare'
+    // Guarded: a whole-monorepo `pnpm install` (e.g. on Cloudflare) runs every
+    // workspace's postinstall before the dist-consumed @fyit/* packages are built;
+    // a bare `nuxt prepare` would error and abort the entire install. The guard
+    // always exits 0 — the real prepare still runs in each app's own pipeline.
+    postinstall: 'nuxt prepare 2>/dev/null || true'
   }
   if (vars.cf) {
-    scripts['cf:deploy'] = 'NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist'
-    scripts['cf:preview'] = 'NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview'
+    // Cloudflare Workers (static assets) deploy — the crouton standard.
+    // Each deploy: build → deploy (auto-provisions id-less D1/KV on first run) →
+    // sync ids back into wrangler.jsonc → remote D1 migrate. See `crouton deploy`.
+    scripts['cf:deploy'] = `NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy && node scripts/sync-wrangler-ids.mjs && npx wrangler d1 migrations apply ${vars.name}-db --remote`
+    // Preview = its OWN isolated, auto-provisioned env. The env block is dropped
+    // from the generated .output config (nitro#3429), so re-inject it post-build,
+    // and again after sync so the migrate command sees the provisioned ids.
+    scripts['cf:preview'] = `NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env preview && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply ${vars.name}-preview-db --config .output/server/wrangler.json --env preview --remote`
+    scripts['sync:ids'] = 'node scripts/sync-wrangler-ids.mjs'
     scripts['db:generate'] = 'drizzle-kit generate'
     scripts['db:migrate'] = `npx wrangler d1 migrations apply ${vars.name}-db --local`
     scripts['db:migrate:prod'] = `npx wrangler d1 migrations apply ${vars.name}-db --remote`
+    scripts['db:migrate:preview'] = `npx wrangler d1 migrations apply ${vars.name}-preview-db --config .output/server/wrangler.json --env preview --remote`
   }
 
   return JSON.stringify({
@@ -140,13 +162,15 @@ function tmplPackageJson(vars: ScaffoldVars): string {
 function tmplNuxtConfig(vars: ScaffoldVars): string {
   const extendsArr = vars.extends.map(p => `    '${p}'`).join(',\n')
 
-  // Build nitro alias block for CF stubs
+  // Build nitro alias block for CF stubs. The Workers preset is supplied at build
+  // time via `NITRO_PRESET=cloudflare_module` (in the cf:deploy/cf:preview scripts),
+  // so it's intentionally NOT pinned here — keeping `pnpm dev`/`build` preset-free.
   let nitroBlock = ''
   if (vars.cf) {
     nitroBlock = `
-  // Cloudflare Pages deployment
+  // Cloudflare Workers deployment — stub passkey/webauthn packages (tsyringe is
+  // incompatible with workerd). Preset comes from NITRO_PRESET at build time.
   nitro: {
-    preset: 'cloudflare-pages',
     alias: {
       '@better-auth/passkey/client': resolve(cfStubs, 'client'),
       '@better-auth/passkey': cfStubs,
@@ -234,32 +258,75 @@ ${featuresStr ? featuresStr + '\n' : ''}  },
 `
 }
 
-function tmplWranglerToml(vars: ScaffoldVars): string {
-  return `# Cloudflare Pages configuration for ${vars.name}
-# Deploy with: npx wrangler pages deploy dist/
+function tmplWranglerJsonc(vars: ScaffoldVars): string {
+  // Workers (static-assets) config, id-LESS so the first `pnpm cf:deploy`
+  // auto-provisions the D1 + KV (wrangler 4.45+). `sync-wrangler-ids.mjs` then
+  // writes the provisioned ids back here (bootstrap → committed), which remote
+  // `d1 migrations apply` needs (workers-sdk#13632). Same flow for env.preview.
+  return `{
+  // Cloudflare WORKERS (static assets) config for ${vars.name}.
+  //
+  // Nitro's \`cloudflare_module\` preset (NITRO_PRESET in cf:deploy) reads this
+  // file at build time and writes the deployable config to
+  // .output/server/wrangler.json, injecting \`main\` + the \`assets\` binding.
+  //
+  // Bootstrap → committed: bindings start id-LESS so the first deploy
+  // auto-provisions them; \`pnpm sync:ids\` then writes the ids back here.
+  "name": "${vars.name}",
+  "compatibility_date": "2024-09-02",
+  "compatibility_flags": ["nodejs_compat"],
 
-name = "${vars.name}"
-compatibility_date = "2024-09-02"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "${vars.name}-db",
+      "migrations_dir": "server/db/migrations/sqlite"
+    }
+  ],
+  "kv_namespaces": [
+    { "binding": "KV" }
+  ],
 
-# D1 Database binding
-# Create with: npx wrangler d1 create ${vars.name}-db
-[[d1_databases]]
-binding = "DB"
-database_name = "${vars.name}-db"
-database_id = "TODO_REPLACE_WITH_REAL_ID"
-migrations_dir = "server/db/migrations/sqlite"
+  // Preview environment — its OWN isolated D1 + KV, also id-less so they
+  // auto-provision on the first \`pnpm cf:preview\`. The env block is stripped
+  // from the generated .output config (nitro#3429), so cf:preview re-injects it
+  // via scripts/inject-wrangler-env.mjs before deploying.
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "${vars.name}-preview-db",
+          "migrations_dir": "server/db/migrations/sqlite"
+        }
+      ],
+      "kv_namespaces": [
+        { "binding": "KV" }
+      ]
+    }
+  }
+}
+`
+}
 
-# KV Namespace binding
-# Create with: npx wrangler kv namespace create ${vars.name}-kv
-[[kv_namespaces]]
-binding = "KV"
-id = "TODO_REPLACE_WITH_REAL_ID"
+function tmplDrizzleConfig(): string {
+  // schema path resolves whichever buildDir NuxtHub wrote the bundled schema to
+  // (.nuxt for some apps, node_modules/.cache/nuxt/.nuxt when the cache buildDir
+  // is used), so `pnpm db:generate` works without hand-editing the path.
+  return `import { existsSync } from 'node:fs'
+import { defineConfig } from 'drizzle-kit'
 
-# Environment variables (set in Cloudflare dashboard or via wrangler secret)
-# [vars]
-# NUXT_PUBLIC_SITE_URL = "https://${vars.name}.pages.dev"
+const schemaCandidates = [
+  '.nuxt/hub/db/schema.mjs',
+  'node_modules/.cache/nuxt/.nuxt/hub/db/schema.mjs',
+]
+const schema = schemaCandidates.find(p => existsSync(p)) ?? schemaCandidates[0]
+
+export default defineConfig({
+  dialect: 'sqlite',
+  schema,
+  out: 'server/db/migrations/sqlite',
+})
 `
 }
 
@@ -522,8 +589,15 @@ export async function scaffoldApp(
 
   // Add Cloudflare-specific files
   if (cf) {
+    const [injectScript, syncScript] = await Promise.all([
+      readTemplate('inject-wrangler-env.mjs'),
+      readTemplate('sync-wrangler-ids.mjs'),
+    ])
     files.push(
-      { path: 'wrangler.toml', content: tmplWranglerToml(vars) },
+      { path: 'wrangler.jsonc', content: tmplWranglerJsonc(vars) },
+      { path: 'drizzle.config.ts', content: tmplDrizzleConfig() },
+      { path: 'scripts/inject-wrangler-env.mjs', content: injectScript },
+      { path: 'scripts/sync-wrangler-ids.mjs', content: syncScript },
       { path: 'server/utils/_cf-stubs/index.ts', content: tmplCfStubsIndex() },
       { path: 'server/utils/_cf-stubs/client.ts', content: tmplCfStubsClient() }
     )
@@ -572,8 +646,8 @@ export async function scaffoldApp(
   console.log('  4.', 'Update crouton.config.js with collections')
   console.log('  5.', 'crouton generate')
   if (cf) {
-    console.log('  6.', 'npx crouton deploy-setup    (creates CF resources + CI workflow)')
-    console.log('  7.', 'npx crouton deploy-check    (validates deploy readiness)')
+    console.log('  6.', 'pnpm cf:deploy    (builds, auto-provisions D1+KV, syncs ids, migrates, deploys to Workers)')
+    console.log('  7.', 'pnpm cf:preview   (deploys an isolated, auto-provisioned preview env)')
   }
   console.log()
 
