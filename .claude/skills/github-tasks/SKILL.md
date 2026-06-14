@@ -42,24 +42,34 @@ Sub-issues are the **work** unit; the **epic** is the **verification** unit. Whe
 
 Close the epic **only after that pass passes** (or the owner confirms). This turns "a bunch of merged PRs" into a single "now go click these and confirm it all works" checklist for a non-technical owner. If a sub-issue couldn't be auto-verified (e.g. needs a device), say so explicitly in the rollup rather than implying it's confirmed.
 
-### Preview links rollup (the epic aggregates its sub-issues' previews)
+### Epic dashboard — `## 📊 At a glance` (pin it at the top of every epic)
 
-The per-PR preview deploy (`.github/workflows/deploy-fanfare-preview.yml`, and the same pattern for other apps) posts a `<branch>.<app>.pages.dev` URL as a bot comment on each PR. **Don't leave those links stranded on individual PRs — roll them up into the parent epic** so the epic itself answers "what changed, and where do I click to try it?" at a glance.
+An epic body should **open** with a glanceable status board, so anyone — especially a non-technical owner — sees *where it is* and *where to click it* without reading prose. Make `## 📊 At a glance` the **first** section, above `## 👤 For humans`, with three parts:
 
-Maintain a **`## 🔗 Preview links`** table in the **epic body** — create it when the first sub-issue PR deploys a preview, and keep it current as more land:
+**1. Status badges** — shields.io static badges (they render in issue bodies). Keep 4–6: overall status, sub-issue progress, the integrating PR, preview/deploy state, scope. shields converts `_`→space, `--`→`-`, `%23`→`#`, `·` is fine inline:
+```
+![status](https://img.shields.io/badge/status-merged_·_verifying-f5a623)
+![sub-issues](https://img.shields.io/badge/sub_issues-3_of_3_merged-2ecc71)
+![pr](https://img.shields.io/badge/PR-%23107_merged-8e44ad)
+![preview](https://img.shields.io/badge/preview-live-2ecc71)
+![scope](https://img.shields.io/badge/scope-crouton--sales-1d76db)
+```
 
-| Sub-issue | What changed | Preview |
-|-----------|--------------|---------|
-| #105 Orders block | standalone Orders CMS block | https://…fanfare.pages.dev |
-| #106 Clients block | standalone Clients CMS block | https://…fanfare.pages.dev |
-| **Whole epic** | integrated build | https://…fanfare.pages.dev |
+**2. The status board** — one table, one row per sub-issue + a **🎯 Whole epic** row. Fold the preview links in as a column (don't keep a separate preview table):
 
-Rules:
-- **Copy the URL from the preview bot comment** — never hand-construct it (Cloudflare truncates the branch slug unpredictably).
-- **One row per sub-issue**, updated *in place* when the PR is re-pushed — never append duplicates. If several sub-issues ship in one PR (one branch), they share one preview URL: give each its own row pointing at the same link.
-- **Overall epic preview** = the preview of the PR that integrates the epic (often a single feature PR, or the last sub-issue PR). Record it as a **Whole epic** row so there's one "try the whole thing" link.
-- Update the table on the **same beat as setting `status:in-progress`** — i.e. right after you open/refresh a sub-issue PR and the bot comments. That keeps the epic the single live verification surface.
-- **Branch previews are ephemeral** (retired/overwritten once the branch is gone or rebuilt). When the epic merges, fold the table into the `## 🧪 Verify the whole thing` rollup and **replace per-branch URLs with the canonical staging/production URL**.
+| Workstream | Landed | PR | Preview | Verified |
+|------------|:------:|:--:|:------:|:--------:|
+| #105 — Orders block | ✅ | #107 | [open ↗](https://…) | 🧪 |
+| **🎯 Whole epic** | ✅ | #107 | [open ↗](https://…) | 🧪 |
+
+**3. A legend:** `✅ done · 🔄 in progress · ⬜ todo · 🧪 merged, awaiting verification · ❌ blocked`.
+
+The three status columns are deliberately distinct — **Landed** (PR merged), **Preview** (a link you can click *now*), **Verified** (a human confirmed it on that link). A plain progress bar conflates these; this doesn't ("landed" ≠ "verified"). The board **doubles as the close checklist**: flip each row's `🧪`→`✅` as it's verified, and close the epic when the Verified column is all green.
+
+Maintaining it (same beat as setting `status:in-progress`):
+- **Copy preview URLs from the preview bot comment** — never hand-construct them (Cloudflare truncates the branch slug unpredictably).
+- **One row per sub-issue**, updated *in place* — never append duplicates. Sub-issues sharing one PR/branch share one preview URL (one row each, same link). The **🎯 Whole epic** row points at the integrating PR's preview, so there's one "try the whole thing" link.
+- **Branch previews are ephemeral** (retired once the branch is gone or rebuilt). On merge, swap per-branch URLs for the **canonical staging/production URL** and update the badges (`preview: live` → `deploy: production`). The end-to-end steps live in the `## 🧪 Verify the whole thing` rollup — link it from the board.
 
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
