@@ -16,7 +16,7 @@
     <UTable
       :data="filteredOrders"
       :columns="columns"
-      :loading="status === 'pending'"
+      :loading="pending"
       :ui="{
         th: 'py-3.5 px-4',
         td: 'py-4 px-4'
@@ -55,7 +55,7 @@
     </UTable>
 
     <!-- Empty state -->
-    <div v-if="filteredOrders.length === 0 && status !== 'pending'" class="text-center py-12 text-muted">
+    <div v-if="filteredOrders.length === 0 && !pending" class="text-center py-12 text-muted">
       {{ t('sales.orders.noOrdersFound') }}
     </div>
   </div>
@@ -86,11 +86,13 @@ const props = withDefaults(defineProps<{
 const notify = useNotify()
 const { t } = useT()
 
-// Build query based on eventId prop
-const query = computed(() => props.eventId ? { eventId: props.eventId } : undefined)
+// Build query based on eventId prop. Returns {} (not undefined) when unscoped so
+// it satisfies CollectionQueryOptions.query (Record<string, any>); the composable
+// treats an empty query the same as none.
+const query = computed(() => props.eventId ? { eventId: props.eventId } : {})
 
 // Fetch orders
-const { items: orders, status, refresh } = await useCollectionQuery(props.collectionName, {
+const { items: orders, pending, refresh } = await useCollectionQuery(props.collectionName, {
   query,
 })
 

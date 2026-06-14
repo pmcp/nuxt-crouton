@@ -14,4 +14,5 @@ export { salesClients } from '../../layers/sales/collections/clients/server/data
 export { salesEventsettings } from '../../layers/sales/collections/eventsettings/server/database/schema'
 export { salesPrinters } from '../../layers/sales/collections/printers/server/database/schema'
 export { salesPrintqueues } from '../../layers/sales/collections/printqueues/server/database/schema'
+export { salesKdsbumps } from '../../layers/sales/collections/kdsbumps/server/database/schema'
 export { pagesPages } from '../../layers/pages/collections/pages/server/database/schema'

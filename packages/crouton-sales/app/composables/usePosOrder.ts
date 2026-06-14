@@ -333,8 +333,10 @@ export function usePosOrder(options: UsePosOrderOptions = {}) {
   }
 
   return {
-    // State
-    cartItems: readonly(cartItems),
+    // State — cartItems is mutated only via this composable's own methods
+    // (addToCart/updateQuantity/etc); consumers treat it as read-only via the
+    // `readonly CartItem[]` prop on the cart components.
+    cartItems,
     selectedEventId,
     selectedClientId,
     selectedClientName,

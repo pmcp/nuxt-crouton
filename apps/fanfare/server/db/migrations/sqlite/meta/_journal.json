@@ -92,6 +92,13 @@
       "when": 1781344616985,
       "tag": "0012_good_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1781475716173,
+      "tag": "0013_black_bug",
+      "breakpoints": true
     }
   ]
 }

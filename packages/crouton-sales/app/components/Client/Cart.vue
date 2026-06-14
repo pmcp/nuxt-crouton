@@ -176,7 +176,7 @@ const { t } = useT()
 const { format } = useSalesCurrency()
 
 const props = defineProps<{
-  items: CartItem[]
+  items: readonly CartItem[]
   total: number
   disabled: boolean
   clientRequired?: boolean

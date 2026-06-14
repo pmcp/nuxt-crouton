@@ -9,6 +9,7 @@ import clientsSchema from './schemas/clients.json'
 import eventSettingsSchema from './schemas/eventSettings.json'
 import printersSchema from './schemas/printers.json'
 import printQueuesSchema from './schemas/printQueues.json'
+import kdsBumpsSchema from './schemas/kdsBumps.json'
 
 export default defineCroutonManifest({
   id: 'crouton-sales',
@@ -104,6 +105,13 @@ export default defineCroutonManifest({
       schemaPath: './schemas/printQueues.json',
       optional: true,
       condition: 'config.print.enabled'
+    },
+    {
+      name: 'kdsBump',
+      tableName: 'salesKdsbumps',
+      description: 'Kitchen-display bump records — one per (order × location) cleared off a screen, so kitchen and bar screens bump the same order independently.',
+      schema: kdsBumpsSchema,
+      schemaPath: './schemas/kdsBumps.json'
     }
   ],
 
