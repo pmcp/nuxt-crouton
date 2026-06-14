@@ -57,12 +57,16 @@ function parseJsonc(text) {
   return JSON.parse(noComments.replace(/,(\s*[}\]])/g, '$1'))
 }
 
-/** Run a wrangler subcommand and parse its --json output (banner goes to stderr). */
+/**
+ * Run a wrangler subcommand and parse its JSON output. Pass the FULL arg list —
+ * note the two list commands differ: `d1 list` needs an explicit `--json` flag,
+ * but `kv namespace list` already emits a JSON array and REJECTS `--json`.
+ */
 function wranglerJson(args, injectEnvVar) {
   const injected = process.env[injectEnvVar]
   const raw = injected !== undefined
     ? injected
-    : execFileSync('npx', ['wrangler', ...args, '--json'], {
+    : execFileSync('npx', ['wrangler', ...args], {
         cwd: appDir,
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'inherit'],
@@ -142,7 +146,7 @@ function main() {
     process.exit(1)
   }
 
-  const d1List = wranglerJson(['d1', 'list'], 'SYNC_D1_LIST_JSON')
+  const d1List = wranglerJson(['d1', 'list', '--json'], 'SYNC_D1_LIST_JSON')
   const kvList = wranglerJson(['kv', 'namespace', 'list'], 'SYNC_KV_LIST_JSON')
 
   // Scopes in document order: top-level first, then each env.* in declared order.
