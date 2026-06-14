@@ -1,305 +1,164 @@
 ---
 name: deploy
-description: Deploy a crouton app to Cloudflare Pages. Handles first-time setup (create project, D1, KV, secrets) and subsequent deploys. Use when deploying any app in apps/.
-allowed-tools: Bash, Read, Grep, Glob, Agent, AskUserQuestion
+description: Deploy a crouton app to Cloudflare Workers (auto-provisioning). Handles the first bootstrap deploy (auto-creates D1+KV, syncs ids, migrates), wiring CI, and routine deploys. Also migrates an older Pages app to Workers. Use when deploying any app in apps/.
+allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, AskUserQuestion
 ---
 
-# Deploy Skill
+# Deploy Skill — Cloudflare Workers
 
-Deploys a crouton app to Cloudflare Pages. Handles both first-time setup and routine deploys.
+Deploys a crouton app to **Cloudflare Workers (static assets)** — the crouton
+deploy standard (#108). Wrangler **auto-provisions** the app's D1 + KV on the
+first deploy, so there's no manual resource/project creation, no id-juggling.
+
+> **Not Cloudflare Pages.** We do NOT use `wrangler pages …`, `pages_build_output_dir`,
+> or the Pages "strip env" step anymore. If you find those, the app is on the old
+> Pages path — see **Migrating a Pages app → Workers** below.
 
 ## Usage
 
 ```
 /deploy              # Deploy current app (auto-detected from cwd)
-/deploy thinkgraph   # Deploy specific app
+/deploy three-demo   # Deploy a specific app (preview/staging)
 /deploy velo prod    # Deploy to production
 ```
 
 ## Rules
 
-1. **NEVER deploy without confirming the target app and environment**
-2. **NEVER skip `nuxt prepare` before build** — rolldown tsconfig bug
-3. **ALWAYS check `wrangler.toml` for TODO placeholders** before deploying
-4. **ALWAYS use `NITRO_PRESET=cloudflare-pages`** for the build
-5. **NEVER run `hub: { database: true }`** — always `hub: { db: 'sqlite' }`
+1. **NEVER deploy without confirming the target app and environment.**
+2. **Workers, not Pages** — `NITRO_PRESET=cloudflare_module`, output in `.output/`, deploy with `wrangler deploy` (never `wrangler pages deploy`).
+3. **NEVER manually create D1/KV** — they auto-provision from the **id-less** `wrangler.jsonc` on first deploy. After provisioning, run `sync:ids` and **commit** the written-back ids (remote `d1 migrations apply` needs them — workers-sdk#13632).
+4. **NEVER skip `nuxt prepare` before build** in CI — rolldown tsconfig bug. (Locally, the `cf:*` scripts assume `node_modules`/`.nuxt` are prepared from `pnpm install`.)
+5. **`hub: { db: 'sqlite' }`** — never `hub: { database: true }`.
+6. **`postinstall` must be guarded** — `nuxt prepare 2>/dev/null || true`, never bare (a bare prepare aborts the whole-monorepo install and fails every app's deploy).
+
+## How the pipeline works (one source of truth)
+
+The deploy logic lives in the app's **`package.json` scripts** — the same commands
+you run locally and that CI runs. Don't reinvent them step-by-step:
+
+- **`cf:deploy`** (production): `build → wrangler deploy (auto-provision) → sync:ids → d1 migrations apply --remote`
+- **`cf:preview`** (isolated preview env): `build → inject-wrangler-env → wrangler deploy --env preview → sync:ids → inject-wrangler-env → d1 migrations apply --env preview --remote`
+- **`sync:ids`** — queries wrangler, writes provisioned ids back into `wrangler.jsonc`
+- **`db:migrate` / `db:migrate:prod` / `db:migrate:preview`** — D1 migrations (local / remote / preview-remote)
+
+A freshly scaffolded app (`crouton init`) already ships all of this:
+`wrangler.jsonc` (id-less), `scripts/sync-wrangler-ids.mjs`,
+`scripts/inject-wrangler-env.mjs`, `drizzle.config.ts`, the chained scripts, the
+CF stubs + nitro aliases, and the guarded postinstall.
 
 ## Workflow
 
-### Step 1: Detect App
+### Step 1: Detect app
+- arg → `apps/{arg}/`; else if cwd is inside an app → that app; else ask.
+- Verify it has `wrangler.jsonc` + `package.json`.
 
-Determine which app to deploy:
-- If arg provided: use `apps/{arg}/`
-- If cwd is inside an app: use that app
-- Otherwise: ask the user
+### Step 2: Pre-flight (run in parallel)
+Confirm the app is Workers-ready:
+1. **`wrangler.jsonc`** present, **Workers-style** (has `compatibility_flags: ["nodejs_compat"]`, `d1_databases`/`kv_namespaces`; **no** `pages_build_output_dir`).
+2. **Scripts** `scripts/sync-wrangler-ids.mjs` + `scripts/inject-wrangler-env.mjs` exist.
+3. **`drizzle.config.ts`** exists (so `db:generate` works).
+4. **Package scripts** — `cf:deploy` is the Workers chain; `postinstall` is guarded.
+5. **CF stubs** — `server/utils/_cf-stubs/` exists; `nuxt.config.ts` has `nitro.alias` for passkey/webauthn/papaparse stubs and pins **no** preset.
+6. **Auth** — `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` available in the environment (see **Credentials**).
 
-Verify the app exists and has both `wrangler.toml` and `package.json`.
+If anything is missing and the app is on the old Pages setup → **Migrating a Pages app → Workers**. If it's just missing files, copy them from `apps/three-demo` (the reference) or re-run the scaffolder.
 
-### Step 2: Pre-flight Checks
-
-Run these checks in parallel:
-
-1. **wrangler.toml** — check for `TODO` placeholders in `database_id` or KV `id`
-2. **CF stubs** — check `server/utils/_cf-stubs/` exists (required for all DB apps)
-3. **Nitro aliases** — check `nuxt.config.ts` has `nitro.alias` for papaparse and passkey stubs
-4. **Package scripts** — verify `cf:deploy` script exists, and that `postinstall` is the guarded `nuxt prepare 2>/dev/null || true` (a bare `nuxt prepare` aborts the whole-monorepo install on Cloudflare and fails every app's deploy — see Step 3)
-5. **Pages project** — run `npx wrangler pages project list 2>/dev/null | grep {app-name}` to check if the Pages project exists
-
-### Step 3: First-Time Setup (if needed)
-
-If any pre-flight checks fail, guide the user through setup:
-
-#### Missing Cloudflare Resources
+### Step 3: First (bootstrap) deploy
+The id-less bindings auto-provision here. Confirm with the user, then:
 
 ```bash
-# Create Pages project
-npx wrangler pages project create {app-name}
-
-# Create D1 database (if app uses DB)
-npx wrangler d1 create {app-name}-db
-
-# Create KV namespace (if app uses KV)
-npx wrangler kv namespace create {app-name}-kv
+cd apps/{app}
+pnpm cf:deploy      # prod: builds, AUTO-PROVISIONS D1+KV, syncs ids, migrates
 ```
 
-Update `wrangler.toml` with returned IDs.
-
-#### Missing CF Stubs
-
-Copy from any existing app (they're identical):
-- `server/utils/_cf-stubs/index.ts`
-- `server/utils/_cf-stubs/client.ts`
-
-Add nitro aliases to `nuxt.config.ts`:
-```typescript
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
-
-// Inside defineNuxtConfig:
-nitro: {
-  alias: {
-    '@better-auth/passkey/client': resolve(cfStubs, 'client'),
-    '@better-auth/passkey': cfStubs,
-    'tsyringe': cfStubs,
-    'reflect-metadata': cfStubs,
-    '@peculiar/x509': cfStubs,
-    '@simplewebauthn/server': cfStubs,
-    'papaparse': cfStubs
-  }
-}
-```
-
-#### Missing Secrets
-
+Then **commit the written-back ids** (bootstrap → committed):
 ```bash
-npx wrangler pages secret put BETTER_AUTH_SECRET --project-name {app-name}
+git add apps/{app}/wrangler.jsonc && git commit -m "chore({app}): commit provisioned D1/KV ids"
 ```
 
-#### Missing Package Scripts
-
-Add to `package.json`:
-```json
-{
-  "postinstall": "nuxt prepare 2>/dev/null || true",
-  "cf:deploy": "NITRO_PRESET=cloudflare-pages nuxt build && npx wrangler pages deploy dist",
-  "cf:preview": "NITRO_PRESET=cloudflare-pages CLOUDFLARE_ENV=preview nuxt build && npx wrangler pages deploy dist --branch preview",
-  "db:migrate:prod": "npx wrangler d1 migrations apply {app-name}-db --remote"
-}
-```
-
-> **The `postinstall` guard is mandatory for every app** (`2>/dev/null || true`, never a bare
-> `nuxt prepare`). Cloudflare Pages runs `pnpm install` across the **whole monorepo**, which fires
-> every app's `postinstall`. A fresh install hasn't built the dist-consumed `@fyit/*` workspace
-> packages yet, so a bare `nuxt prepare` errors (`Could not load '@fyit/crouton'`), exits 1, and
-> **aborts the entire install — failing the deploy of every other app too** (this is exactly how a
-> new app once broke the docs deploy). The guard always exits 0, so a missing local prepare can't
-> take the monorepo down; the real prepare/build still runs in the app's own deploy pipeline.
-
-#### Missing GitHub Actions Workflows
-
-Onboarding an app to Cloudflare scaffolds **two** workflows. Always model them on
-the existing `deploy-velo.yml` / `deploy-triage.yml` so every app deploys the same way.
-
-**1. Manual / branch deploy — `.github/workflows/deploy-{app-name}.yml`** (staging + prod):
-- **Trigger**: `push` to `staging` (paths-filtered) + `workflow_dispatch` with a
-  `staging`/`production` environment input.
-- **environment**: `${{ inputs.environment || 'staging' }}` — reads the
-  `CLOUDFLARE_*` **Environment** secrets.
-- **Steps** (the house pattern): cache + build the module packages that match
-  `extends` in `nuxt.config.ts` (always `@fyit/crouton-auth`, `@fyit/crouton-core`,
-  `@fyit/crouton`) → run D1 migrations (`apply DB --remote` for prod, `--env preview
-  --remote` for staging) → `nuxt prepare` → `nuxt build` (`NITRO_PRESET=cloudflare-pages`,
-  `NODE_OPTIONS=--max-old-space-size=8192`, `BETTER_AUTH_URL` per env,
-  `BETTER_AUTH_SECRET=prerender-placeholder`, `CLOUDFLARE_ENV=preview` for staging) →
-  **strip-env step if the app has `[[kv_namespaces]]`** → `wrangler pages deploy dist/
-  --commit-dirty=true [--branch staging]`.
-
-**2. Per-PR preview — `.github/workflows/deploy-{app-name}-preview.yml`** (template:
-`deploy-fanfare-preview.yml`). Same build/strip mechanics as above, but:
-- **Trigger**: `pull_request` (opened/synchronize/reopened), same paths filter;
-  `concurrency` per PR with `cancel-in-progress`; `permissions: pull-requests: write`.
-- **Secrets**: reads `CLOUDFLARE_*` as **repo-level** Actions secrets (no `environment:`
-  block — see the gotcha in "Per-PR Preview Deploys" below) so it works on PR branches
-  without environment protection rules.
-- **No migrations**: the preview reuses the production D1/KV (seed data present); never
-  run migrations from a PR.
-- **Deploy**: `wrangler pages deploy dist/ --project-name {app-name} --branch
-  "$GITHUB_HEAD_REF"`, then upsert a comment with the `<branch>.{app-name}.pages.dev`
-  URL via `actions/github-script`.
-
-Per-workflow variables to set: **paths** (`apps/{app-name}/**` + the app's extended
-packages + lockfile + the workflow file), **layer builds** (match `extends`),
-**BETTER_AUTH_URL** (app URLs), and the **strip-env step** when the app has KV.
-
-### Step 4: Determine Environment
-
-- If arg provided (`prod`/`production`/`staging`): use that
-- Default: `staging`
-- Ask the user if unclear
-
-### Step 5: Run Database Migrations (if applicable)
-
-Check if the app has a `db:migrate:prod` script. If so:
-
+For the isolated preview environment (its own auto-provisioned D1+KV):
 ```bash
-# Production
-npx wrangler d1 migrations apply {db-name} --remote
-
-# Staging
-npx wrangler d1 migrations apply {db-name} --env preview --remote
+pnpm cf:preview     # provisions + deploys the *-preview worker
+git add apps/{app}/wrangler.jsonc   # commit the preview ids too
 ```
 
-Check if there are pending migrations first:
-```bash
-ls server/db/migrations/sqlite/
-```
+> If you're an agent **without Cloudflare egress** (sandbox), you can't run these —
+> verify what's verifiable (config, `pnpm sync:ids --dry-run` logic) and have the
+> user run the CF-gated steps, pasting output (the #109/#113/#114 loop).
 
-If no migrations directory or it's empty, skip this step.
+### Step 4: Wire CI (per-app caller)
+Add a tiny caller that uses the reusable `deploy-app.yml`. **Model on
+`.github/workflows/deploy-three-demo.yml`.** Set: `app`, `production-url`,
+`preview-url`, and the `paths` filter (the app + its extended `crouton*` packages +
+lockfile + both workflow files). Push to `staging`/open a PR → isolated preview with
+the URL commented on the PR; manual dispatch → production. Uses `secrets: inherit`.
 
-### Step 6: Build
+Ensure **repo-level** secrets `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` exist
+(Settings → Secrets and variables → Actions). The reusable workflow maps the GitHub
+`environment:` to `production`/`staging`, so environment-scoped secrets also work.
 
-```bash
-cd apps/{app-name}
-npx nuxt prepare
-NITRO_PRESET=cloudflare-pages npx nuxt build
-```
+### Step 5: Routine deploys
+- **CI (preferred):** push to `staging` (or open a PR) → the caller runs the pipeline.
+- **Local:** `pnpm cf:deploy` (prod) / `pnpm cf:preview` (preview) from the app dir.
 
-Set env vars:
-- `NODE_OPTIONS='--max-old-space-size=8192'`
-- `NITRO_PRESET=cloudflare-pages`
-- `BETTER_AUTH_SECRET=prerender-placeholder`
-- `BETTER_AUTH_URL={app-url}` (staging or production)
-- `CLOUDFLARE_ENV=preview` (staging only)
+## Migrating a Pages app → Workers
 
-### Step 7: Post-Build Fixups
+For an app still on the Pages setup (`wrangler.toml`, `pages_build_output_dir`,
+`wrangler pages deploy`):
 
-**Strip env from generated wrangler config** (Wrangler 4.64+ workaround):
-```bash
-CONFIG="dist/_worker.js/wrangler.json"
-if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
-  node -e "
-    const fs = require('fs');
-    const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
-    delete cfg.env;
-    fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
-  "
-fi
-```
+1. **`wrangler.toml` → `wrangler.jsonc`** in the Workers shape (see `apps/three-demo`):
+   drop `pages_build_output_dir`; keep `name`/`compatibility_*`; `d1_databases` (reuse
+   the existing prod `database_id`), `kv_namespaces`; add an `env.preview` block with a
+   **separate** `{app}-preview-db` + KV (id-less to auto-provision, or existing staging ids).
+2. **Add** `scripts/sync-wrangler-ids.mjs`, `scripts/inject-wrangler-env.mjs`,
+   `drizzle.config.ts` (copy from `apps/three-demo`).
+3. **package.json** — replace the Pages `cf:*` scripts with the Workers chain
+   (`NITRO_PRESET=cloudflare_module`, `sync:ids`, `db:migrate:preview`); keep the
+   guarded `postinstall`.
+4. **nuxt.config.ts** — remove `nitro.preset: 'cloudflare-pages'` (keep the `nitro.alias` stubs).
+5. **CI** — replace `deploy-{app}.yml` (+ any `-preview.yml`) with the thin caller from Step 4; delete the Pages strip-env step (not needed on Workers).
+6. **Deploy + commit ids** as in Step 3.
 
-### Step 8: Deploy
+## Credentials
 
-```bash
-# Production
-npx wrangler pages deploy dist/ --commit-dirty=true
+The job/shell needs **`CLOUDFLARE_ACCOUNT_ID`** + **`CLOUDFLARE_API_TOKEN`**.
 
-# Staging
-npx wrangler pages deploy dist/ --commit-dirty=true --branch staging
-```
+- **`CLOUDFLARE_ACCOUNT_ID`** — dashboard → Workers & Pages → Account ID (also the hex in the dashboard URL). Not secret.
+- **`CLOUDFLARE_API_TOKEN`** — My Profile → API Tokens → **Create Custom Token**. For Workers + **auto-provisioning** the token needs (Account-scoped):
+  - **Workers Scripts: Edit**
+  - **D1: Edit**
+  - **Workers KV Storage: Edit**
+  - (**Workers R2 Storage: Edit** if the app uses blob)
 
-### Step 9: Verify
+  Cloudflare shows a token's value **only once**, and GitHub never reveals a saved
+  secret — so mint a fresh dedicated token rather than reusing one.
 
-After deploy completes:
-1. Report the deployment URL from wrangler output
-2. Remind user to check the app in browser
-3. Note any post-deploy steps (e.g., seed data, set additional secrets)
-
-## Per-PR Preview Deploys (test on a phone)
-
-To test an app on a real device straight from a PR — without running it locally —
-add a preview workflow that deploys every PR to a Cloudflare Pages **preview URL**
-and comments the link on the PR. Reference template:
-`.github/workflows/deploy-fanfare-preview.yml`.
-
-How it works:
-- Trigger: `pull_request` (opened/synchronize/reopened), paths-filtered to
-  `apps/{app}/**` + the `crouton*` packages it consumes + lockfile + the workflow.
-  `concurrency` per PR with `cancel-in-progress` (newer push cancels older build).
-- Build like a normal deploy (build module packages → `nuxt prepare` → `nuxt build`
-  with `NITRO_PRESET=cloudflare-pages`), then deploy with a **branch alias**:
-  `wrangler pages deploy dist/ --project-name {app} --branch "$GITHUB_HEAD_REF"`.
-  Cloudflare publishes it at a stable `<branch>.{app}.pages.dev` host.
-- Preview **reuses the production D1 + KV** (bindings come from `wrangler.toml`), so
-  seeded test data is present. **Do NOT run migrations on preview** — never mutate
-  the prod DB from a PR; the live schema is already current for additive changes.
-- Comment the URL on the PR via `actions/github-script` (upsert one marker comment).
-  Needs `permissions: pull-requests: write`.
-
-### CI credentials — the gotcha
-
-The job needs **`CLOUDFLARE_ACCOUNT_ID`** + **`CLOUDFLARE_API_TOKEN`** visible to it:
-- The per-app **manual** deploy workflows (`deploy-{app}.yml`) declare
-  `environment: staging`/`production`, so they read these as **GitHub *Environment*
-  secrets**. A `pull_request`-triggered preview job usually has **no `environment:`**,
-  so it sees *empty* values and fails at the credential guard.
-- **Solo-simple fix (recommended):** add the two as **repo-level** secrets
-  (repo → Settings → Secrets and variables → Actions → New repository secret). The
-  preview job then reads them with no `environment:` block. Sibling deploys keep their
-  environment-scoped copies; the repo-level copies (same values) feed the PR job.
-- **If you need protection rules** (reviewers/branch policy on prod), instead create a
-  dedicated `preview` GitHub Environment (no protection) with the two secrets and set
-  `environment: preview` on the job — keeps PR previews off the staging/production envs.
-
-### Getting the two values
-
-- **`CLOUDFLARE_ACCOUNT_ID`** — Cloudflare dashboard → Workers & Pages → Account ID in
-  the right sidebar (also the hex in the dashboard URL). Not secret (appears in URLs).
-- **`CLOUDFLARE_API_TOKEN`** — My Profile → API Tokens → **Create Custom Token**,
-  permission **Account · Cloudflare Pages · Edit**, scoped to your account. Cloudflare
-  shows a token's value **only once at creation**, and GitHub never reveals a saved
-  secret — so you **cannot copy an existing token** from either side. Mint a fresh,
-  dedicated token rather than trying to reuse one (don't *roll* an in-use token — that
-  breaks whatever currently uses it).
-
-The Pages project must exist first: `npx wrangler pages project create {app} --production-branch main`.
+> Note: this differs from the old Pages token (which used *Cloudflare Pages: Edit*).
+> A Pages-only token will fail to auto-provision D1/KV.
 
 ## Troubleshooting
 
-### `papaparse` RollupError
-**Fix:** Add CF stubs + nitro aliases (Step 3).
+### `Couldn't find a D1 DB … missing database_id` (on migrate)
+The first deploy provisioned the DB but the id isn't in `wrangler.jsonc` yet. Run
+`pnpm sync:ids` (after a deploy) and commit the result. `cf:deploy`/`cf:preview` do
+this automatically.
 
-### `Durable Objects bindings should specify script_name`
-**Fix:** Pages requires DOs in a separate Worker. Comment out DO bindings or add `script_name`.
+### `Configuration file does not support "env"` / redirected config rejects env
+Wrangler 4.64+ rejects `env` in a *redirected* config. `scripts/inject-wrangler-env.mjs`
+(run by `cf:preview`) re-injects `env` into `.output/server/wrangler.json` and removes
+the redirect so `--env preview` deploys read it directly. No manual strip step.
 
-### `[[migrations]] not supported`
-**Fix:** Remove `[[migrations]]` from wrangler.toml. D1 migrations are applied separately.
+### `papaparse` RollupError / passkey/tsyringe errors
+Add the CF stubs + `nitro.alias` (see scaffolder output / `apps/three-demo`).
 
-### `Configuration file does not support "env"`
-**Fix:** The post-build strip step handles this (Step 7).
-
-### `Project does not exist`
-**Fix:** Run `npx wrangler pages project create {app-name}` first.
+### KV namespace not found by `sync:ids`
+It matches the auto-provisioned title `<worker-name>-<binding>` (e.g.
+`{app}-KV`, `{app}-preview-KV`). The script logs the available titles if no match —
+adjust only if your account names them differently.
 
 ### Build OOM
-**Fix:** Ensure `NODE_OPTIONS='--max-old-space-size=8192'` is set.
+Set `NODE_OPTIONS='--max-old-space-size=8192'` (CI sets this).
 
 ## Deploy Learnings Location
-
-Each app's deploy gotchas are documented at:
-```
-docs/projects/{app-name}/{app-name}-deploy.md
-```
-
-After encountering and fixing a new issue, append it to the app's deploy doc.
+Per-app deploy gotchas: `docs/projects/{app}/{app}-deploy.md`. Append new fixes there.
+Reference implementation for everything above: **`apps/three-demo`**.
