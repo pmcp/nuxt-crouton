@@ -19,13 +19,15 @@
  *
  * Matching conventions
  *   D1 : `database_name` is explicit in config → exact match against `d1 list`.
- *   KV : config blocks carry no name, so we derive the auto-provisioned title from
- *        the worker name + binding and match it (case-insensitively) against
- *        `kv namespace list`. Worker name = `<name>` for the top-level scope and
- *        `<name>-<env>` for an `env.<env>` scope (wrangler's `--env` suffixing).
- *        Candidate titles tried, in order:
- *          `<workerName>-<binding>`            e.g. three-demo-preview-KV
- *          `<workerName>-<binding lowercased>` e.g. three-demo-preview-kv
+ *   KV : a `kv_namespaces` entry has NO name/title field — only binding/id/preview_id
+ *        (workers-sdk#4248), so the title can't be set declaratively. Wrangler
+ *        auto-provisions it with a DETERMINISTIC title: `<worker-name>-<binding>`.
+ *        Worker name = `<name>` for the top-level scope and `<name>-<env>` for an
+ *        `env.<env>` scope (wrangler's `--env` suffixing). So we reconstruct that
+ *        exact title and match it (case-insensitively) against `kv namespace list`.
+ *        Candidates tried, in order:
+ *          `<workerName>-<binding>`            e.g. three-demo-preview-KV  (the rule)
+ *          `<workerName>-<binding lowercased>` e.g. three-demo-preview-kv  (safety net)
  *        If none match, the available titles are logged and the binding is left
  *        untouched (never guesses, never breaks the file).
  *
