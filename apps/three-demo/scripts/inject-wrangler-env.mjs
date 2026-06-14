@@ -12,13 +12,14 @@
  *
  * Run after `nuxt build`, before `wrangler ... deploy --env <name>`.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const appDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const sourcePath = join(appDir, 'wrangler.jsonc')
 const targetPath = join(appDir, '.output/server/wrangler.json')
+const redirectPath = join(appDir, '.wrangler/deploy/config.json')
 
 /** Minimal JSONC → JSON (strips // and /* *\/ comments + trailing commas, keeps strings). */
 function parseJsonc(text) {
@@ -56,3 +57,14 @@ writeFileSync(targetPath, JSON.stringify(target, null, 2))
 console.log(
   `[inject-wrangler-env] injected env: ${Object.keys(source.env).join(', ')} → .output/server/wrangler.json`
 )
+
+// Wrangler rejects `env` blocks in a *redirected* configuration
+// (.wrangler/deploy/config.json). Now that we've added one, remove the redirect
+// so the deploy reads .output/server/wrangler.json directly via an explicit
+// `--config` flag (where named environments are allowed).
+if (existsSync(redirectPath)) {
+  rmSync(redirectPath)
+  console.log(
+    '[inject-wrangler-env] removed .wrangler/deploy/config.json — deploy with `--config .output/server/wrangler.json`'
+  )
+}
