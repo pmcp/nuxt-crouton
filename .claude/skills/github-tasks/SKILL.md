@@ -70,6 +70,7 @@ Maintaining it (same beat as setting `status:in-progress`):
 - **Copy preview URLs from the preview bot comment** — never hand-construct them (Cloudflare truncates the branch slug unpredictably).
 - **One row per sub-issue**, updated *in place* — never append duplicates. Sub-issues sharing one PR/branch share one preview URL (one row each, same link). The **🎯 Whole epic** row points at the integrating PR's preview, so there's one "try the whole thing" link.
 - **Branch previews are ephemeral** (retired once the branch is gone or rebuilt). On merge, swap per-branch URLs for the **canonical staging/production URL** and update the badges (`preview: live` → `deploy: production`). The end-to-end steps live in the `## 🧪 Verify the whole thing` rollup — link it from the board.
+- **A deep-link only works if that environment's DB actually has the data.** Demo paths from *local* seeding (e.g. `/test1/nl/vlaamsekermis`) **404 on a preview that shares the production DB** — production was never seeded with the demo team. Link the **app root** unless you've confirmed the target env is seeded, and mark the badge honestly (`preview-app_up_·_demo_data_pending`) rather than implying a working demo link. The durable fix is a dedicated, auto-seeded preview DB.
 
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
