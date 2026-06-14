@@ -20,7 +20,8 @@ const selectedCategoryId = ref<string | null>(null)
 // Admin products view has no "All" tab — default to the first category once loaded.
 watch(categories, (cats) => {
   const list = (cats as { id: string }[] | null) || []
-  if (!selectedCategoryId.value && list.length) selectedCategoryId.value = list[0].id
+  const first = list[0]
+  if (!selectedCategoryId.value && first) selectedCategoryId.value = first.id
 }, { immediate: true })
 
 // `order` is the sortable position column (a reserved field, not in the typed schema)

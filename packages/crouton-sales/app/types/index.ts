@@ -5,9 +5,6 @@
 
 export type { ProductOption, SalesProduct, CartItem, UsePosOrderOptions } from '../composables/usePosOrder'
 
-// Re-export ProductOption for direct import in components
-export { type ProductOption } from '../composables/usePosOrder'
-
 // Order status enum — print_failed is set by the print-server fail callback
 // when one of the order's tickets couldn't print; the complete callback flips
 // the order to completed once all tickets have printed.
