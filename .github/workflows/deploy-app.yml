@@ -39,6 +39,14 @@ on:
         required: false
         default: '20'
         type: string
+      layer-packages:
+        description: >-
+          Space-separated pnpm filter names of dist-consumed framework packages
+          to build before the app (only those WITH a build script are built;
+          pure source layers like crouton-editor/pages/charts are skipped).
+        required: false
+        default: '@fyit/crouton-auth @fyit/crouton-core @fyit/crouton'
+        type: string
     secrets:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
@@ -82,24 +90,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      # The dist-consumed framework packages must be built before the app build.
-      # (Addon layers like crouton-three / crouton-pages are consumed from source.)
+      # The dist-consumed framework packages (inputs.layer-packages) must be built
+      # before the app build. Pure source layers (crouton-editor/pages/charts) have
+      # no build script and are skipped.
       - name: Cache layer builds
         id: layer-cache
         uses: actions/cache@v4
         with:
           path: |
-            packages/crouton-auth/dist
-            packages/crouton-core/dist
-            packages/crouton/dist
-          key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
+            packages/*/dist
+          key: layer-builds-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Build layer packages
         if: steps.layer-cache.outputs.cache-hit != 'true'
+        env:
+          LAYER_PACKAGES: ${{ inputs['layer-packages'] }}
         run: |
-          pnpm --filter '@fyit/crouton-auth' build
-          pnpm --filter '@fyit/crouton-core' build
-          pnpm --filter '@fyit/crouton' build
+          for pkg in $LAYER_PACKAGES; do
+            dir="packages/${pkg#@fyit/}"
+            if node -e "process.exit(require('./$dir/package.json').scripts?.build ? 0 : 1)" 2>/dev/null; then
+              echo "Building $pkg"
+              pnpm --filter "$pkg" build
+            else
+              echo "Skipping $pkg (no build script / pure source layer)"
+            fi
+          done
 
       - name: Cache Nuxt build artifacts
         uses: actions/cache@v4
