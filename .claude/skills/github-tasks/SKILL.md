@@ -42,6 +42,25 @@ Sub-issues are the **work** unit; the **epic** is the **verification** unit. Whe
 
 Close the epic **only after that pass passes** (or the owner confirms). This turns "a bunch of merged PRs" into a single "now go click these and confirm it all works" checklist for a non-technical owner. If a sub-issue couldn't be auto-verified (e.g. needs a device), say so explicitly in the rollup rather than implying it's confirmed.
 
+### Preview links rollup (the epic aggregates its sub-issues' previews)
+
+The per-PR preview deploy (`.github/workflows/deploy-fanfare-preview.yml`, and the same pattern for other apps) posts a `<branch>.<app>.pages.dev` URL as a bot comment on each PR. **Don't leave those links stranded on individual PRs — roll them up into the parent epic** so the epic itself answers "what changed, and where do I click to try it?" at a glance.
+
+Maintain a **`## 🔗 Preview links`** table in the **epic body** — create it when the first sub-issue PR deploys a preview, and keep it current as more land:
+
+| Sub-issue | What changed | Preview |
+|-----------|--------------|---------|
+| #105 Orders block | standalone Orders CMS block | https://…fanfare.pages.dev |
+| #106 Clients block | standalone Clients CMS block | https://…fanfare.pages.dev |
+| **Whole epic** | integrated build | https://…fanfare.pages.dev |
+
+Rules:
+- **Copy the URL from the preview bot comment** — never hand-construct it (Cloudflare truncates the branch slug unpredictably).
+- **One row per sub-issue**, updated *in place* when the PR is re-pushed — never append duplicates. If several sub-issues ship in one PR (one branch), they share one preview URL: give each its own row pointing at the same link.
+- **Overall epic preview** = the preview of the PR that integrates the epic (often a single feature PR, or the last sub-issue PR). Record it as a **Whole epic** row so there's one "try the whole thing" link.
+- Update the table on the **same beat as setting `status:in-progress`** — i.e. right after you open/refresh a sub-issue PR and the bot comments. That keeps the epic the single live verification surface.
+- **Branch previews are ephemeral** (retired/overwritten once the branch is gone or rebuilt). When the epic merges, fold the table into the `## 🧪 Verify the whole thing` rollup and **replace per-branch URLs with the canonical staging/production URL**.
+
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
 ## Core rules
