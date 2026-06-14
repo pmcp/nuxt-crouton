@@ -102,6 +102,35 @@
           "staff": "personnel",
           "eventNotFound": "Événement introuvable"
         }
+      },
+      "salesOrders": {
+        "name": "Commandes",
+        "description": "Affiche la liste des commandes d'un événement sur sa propre page. Visible uniquement par les membres de l'équipe connectés.",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez de quel événement les commandes apparaissent ici."
+          }
+        },
+        "ui": {
+          "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir les commandes.",
+          "eventNotFound": "Événement introuvable"
+        }
+      },
+      "salesClients": {
+        "name": "Clients",
+        "description": "Affiche les notes clients ouvertes d'un événement sur sa propre page, avec l'action de clôture / impression par client. Réservé aux membres de l'équipe connectés et aux événements à clients récurrents.",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez de quel événement les notes clients ouvertes apparaissent ici."
+          }
+        },
+        "ui": {
+          "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir les clients.",
+          "notRecurring": "Cet événement n'utilise pas de clients récurrents, il n'y a donc aucune note ouverte.",
+          "eventNotFound": "Événement introuvable"
+        }
       }
     },
     "admin": {
@@ -127,6 +156,7 @@
       "eventWorkspace": "Espace de gestion",
       "openKassaHint": "Touchez pour prendre les commandes",
       "makeOrder": "Passer une commande",
+      "openKassa": "Ouvrir la caisse",
       "noEventPicked": "Aucun événement sélectionné",
       "editBlock": "Modifier le bloc",
       "deleteBlock": "Supprimer le bloc",
@@ -148,7 +178,9 @@
       "noHelperPinDescription": "Sur une page protégée, ce bloc se déverrouille avec le code PIN bénévole de l’événement — sans code, les bénévoles ne peuvent pas se connecter. Définissez le code PIN dans les paramètres de l’événement.",
       "product": "Produit",
       "total": "Total",
-      "kitchenDisplay": "Écran cuisine"
+      "kitchenDisplay": "Écran cuisine",
+      "orders": "Commandes",
+      "clients": "Clients"
     },
     "cart": {
       "title": "Panier",

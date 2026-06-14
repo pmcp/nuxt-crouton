@@ -98,6 +98,22 @@ nitro: {
 npx wrangler pages secret put BETTER_AUTH_SECRET --project-name {app-name}
 ```
 
+> **⚠️ PR previews need `BETTER_AUTH_SECRET` on the *Preview* environment too — set it
+> once, in the dashboard.** `wrangler pages secret put` (wrangler 4.x) has **no
+> environment flag** — confirmed via `--help`, it exposes only `--project-name` — so it
+> writes the **Production** secret set *only*. Cloudflare Pages PR/branch previews (the
+> `deploy-<app>-preview.yml` workflow) run with the project's **Preview** env vars, so
+> without a Preview copy, **member (staff) login fails on every preview** with
+> `[crouton/auth] BETTER_AUTH_SECRET is required` (the build-time placeholder doesn't
+> reach the runtime worker). Fix it once: **Workers & Pages → {app-name} → Settings →
+> Variables and Secrets → switch to _Preview_ → add `BETTER_AUTH_SECRET`** (Encrypt; any
+> 32+ char value via `openssl rand -base64 32` — preview sessions are independent of
+> prod, so it need not match). Preview env vars are project-level and persist across all
+> future previews, then redeploy the preview (push to the PR) to pick it up. The
+> PIN/volunteer scoped-access flow doesn't use better-auth, so it works on previews
+> regardless. (Automating this in CI is possible but needs a direct Cloudflare API
+> PATCH of `deployment_configs.preview.env_vars` — the CLI can't target Preview.)
+
 #### Missing Package Scripts
 
 Add to `package.json`:

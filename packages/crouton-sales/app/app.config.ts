@@ -207,6 +207,84 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   }
 }
 
+// Standalone Orders block for crouton-pages: one event's live orders list
+// (the same view as the workspace "Bestellingen" pane) on its own page, so an
+// admin can build a dedicated orders / kitchen-status screen. Team-members-only
+// — the renderer gates on useAuth().loggedIn (the orders data is team-scoped),
+// non-members get a hint. The editor fixes the event by slug. name/description
+// and field labels are i18n keys (see i18n/locales/*.json).
+const salesOrdersBlock: CroutonBlockDefinition = {
+  type: 'salesOrdersBlock',
+  name: 'sales.blocks.salesOrders.name',
+  description: 'sales.blocks.salesOrders.description',
+  icon: 'i-lucide-receipt',
+  category: 'kassa',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: ''
+  },
+  components: {
+    editorView: 'SalesBlocksOrdersView',
+    renderer: 'SalesBlocksOrdersRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'sales.blocks.salesOrders.fields.eventSlug.label',
+      description: 'sales.blocks.salesOrders.fields.eventSlug.description'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="sales-orders-block"]',
+    attributes: {
+      eventSlug: { default: '' }
+    }
+  }
+}
+
+// Standalone Clients block for crouton-pages: one event's open client tabs
+// (the same view as the workspace "Klanten" pane — active clients with the
+// settle / print-receipt action) on its own page. Team-members-only and only
+// meaningful for recurring-client events: the renderer gates on
+// useAuth().loggedIn and on event.requiresClient (a note otherwise). The editor
+// fixes the event by slug. name/description and field labels are i18n keys.
+const salesClientsBlock: CroutonBlockDefinition = {
+  type: 'salesClientsBlock',
+  name: 'sales.blocks.salesClients.name',
+  description: 'sales.blocks.salesClients.description',
+  icon: 'i-lucide-users',
+  category: 'kassa',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: ''
+  },
+  components: {
+    editorView: 'SalesBlocksClientsView',
+    renderer: 'SalesBlocksClientsRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'sales.blocks.salesClients.fields.eventSlug.label',
+      description: 'sales.blocks.salesClients.fields.eventSlug.description'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="sales-clients-block"]',
+    attributes: {
+      eventSlug: { default: '' }
+    }
+  }
+}
+
 // Kitchen Display (KDS) for crouton-pages: a drop-on-a-page screen — typically
 // an iPad — that renders the orders routed to a `display`-driver station and
 // lets staff bump them done. Reads display jobs straight off the print queue
@@ -312,6 +390,8 @@ export default defineAppConfig({
   },
   croutonBlocks: {
     eventWorkspaceBlock,
+    salesOrdersBlock,
+    salesClientsBlock,
     kitchenDisplayBlock,
     salesChartBlock,
     salesProductMatrixBlock
