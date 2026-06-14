@@ -5,6 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./nuxt.config.ts",
+    "./seed": {
+      "import": "./seed/index.ts",
+      "types": "./seed/index.ts"
+    },
     "./module": {
       "types": "./dist/module.d.ts",
       "import": "./dist/module.mjs",
@@ -48,6 +52,7 @@
     "dist",
     "app",
     "server",
+    "seed",
     "types",
     "nuxt.config.ts",
     "CHANGELOG.md",

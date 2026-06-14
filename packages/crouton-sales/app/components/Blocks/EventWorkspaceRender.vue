@@ -2,13 +2,18 @@
 /**
  * Event Workspace Block Public Renderer
  *
- * One block, two faces by session:
+ * One block, faces by session — and, for members, by viewport:
  *
- *   signed-in team member →  the full workspace shell (kassa + settings /
- *                             orders / clients panes; event fixed by the
- *                             editor, so the switcher is hidden)
- *   anonymous / volunteer →  an "Open kassa" launcher that opens the POS
- *                             (<SalesPosPanel>) in a fullscreen modal
+ *   member on a wide screen →  the full workspace shell INLINE (kassa +
+ *                              settings / orders / clients panes; event fixed
+ *                              by the editor, so the switcher is hidden)
+ *   member on a phone/tablet → an "Open kassa" launcher that opens that SAME
+ *                              workspace shell in a fullscreen modal — the
+ *                              inline shell is cramped boxed inside a scrolling
+ *                              CMS page on small screens (<lg, matching Shell's
+ *                              own breakpoint)
+ *   anonymous / volunteer →    an "Open kassa" launcher that opens the POS
+ *                              (<SalesPosPanel>) in a fullscreen modal
  *
  * Why a launcher + modal (not an inline or `fixed inset-0` panel): the block
  * lives inside a normal scrollable CMS page and can sit beside other blocks
@@ -22,7 +27,8 @@
  *
  * The member shell does a top-level `await`, so it gets a local <Suspense>
  * (BlockContent.vue wraps us in <ClientOnly>, which is not a Suspense
- * boundary). The panel loads client-side, so it needs none.
+ * boundary) — in both the inline and the modal mount. The panel loads
+ * client-side, so it needs none.
  */
 interface EventWorkspaceAttrs {
   eventSlug?: string
@@ -41,8 +47,17 @@ const { loggedIn } = useAuth()
 
 const eventSlug = computed(() => props.attrs.eventSlug || '')
 
-// The kassa opens in a fullscreen modal — the panel mounts (and fetches) on
-// first open. The helper session indicator + logout live in the page nav's
+// Members get the workspace inline only on a wide screen. Below lg (the same
+// breakpoint Shell uses to drop its side-by-side panes) the inline shell is
+// cramped inside the scrolling CMS page, so members fall through to the same
+// launcher → fullscreen modal as volunteers — but the modal hosts the full
+// shell, not just the POS. clientOnly wrapper ⇒ matchMedia is read on mount,
+// so there's no SSR/hydration flash.
+const isNarrow = useMediaQuery('(max-width: 1023px)')
+const showInlineShell = computed(() => loggedIn.value && !isNarrow.value)
+
+// The kassa opens in a fullscreen modal — the shell/panel mounts (and fetches)
+// on first open. The helper session indicator + logout live in the page nav's
 // auth pill (the scoped-session-nav plugin bridges them), not here.
 const kassaOpen = ref(false)
 </script>
@@ -58,10 +73,10 @@ const kassaOpen = ref(false)
       {{ t('sales.block.noEventPicked') }}
     </div>
 
-    <!-- Team member session → the full workspace (event fixed, no switcher).
-         No border: the shell frames its own kassa; p-6 stays so the block
-         keeps the exact same width as the previously bordered version. -->
-    <div v-else-if="loggedIn" class="rounded-3xl bg-default p-6">
+    <!-- Wide-screen team member → the full workspace inline (event fixed, no
+         switcher). No border: the shell frames its own kassa; p-6 stays so the
+         block keeps the exact same width as the previously bordered version. -->
+    <div v-else-if="showInlineShell" class="rounded-3xl bg-default p-6">
       <Suspense>
         <SalesEventWorkspaceShell :event-slug="eventSlug" :show-switcher="false" />
         <template #fallback>
@@ -70,13 +85,15 @@ const kassaOpen = ref(false)
       </Suspense>
     </div>
 
-    <!-- Anonymous → "Open kassa" launcher (owns session + logout) and the
-         POS in a fullscreen modal. -->
+    <!-- Otherwise → "Open kassa" launcher + fullscreen modal. Two cases: a
+         member on a narrow screen (modal hosts the full workspace shell), or an
+         anonymous volunteer (modal hosts the POS panel). The session indicator
+         + logout live in the page nav's auth pill, not here. -->
     <template v-else>
       <div class="rounded-3xl border border-default bg-default p-8 flex flex-col items-center gap-5 text-center">
         <p class="text-sm text-muted">{{ t('sales.block.openKassaHint') }}</p>
         <UButton size="xl" @click="kassaOpen = true">
-          {{ t('sales.block.makeOrder') }}
+          {{ loggedIn ? t('sales.block.openKassa') : t('sales.block.makeOrder') }}
         </UButton>
       </div>
 
@@ -86,7 +103,32 @@ const kassaOpen = ref(false)
                header off the notch and the cart bar above Safari's bottom bar
                (env() needs viewport-fit=cover — set by the viewport-meta plugin). -->
           <div class="flex flex-col h-full pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            <!-- Member (narrow) → the full workspace shell. The shell has no
+                 exit affordance of its own, so add a close button above it. -->
+            <template v-if="loggedIn">
+              <div class="flex items-center justify-end px-2 py-1 shrink-0 border-b border-default">
+                <UButton
+                  icon="i-lucide-x"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  :aria-label="t('sales.common.close')"
+                  @click="kassaOpen = false"
+                />
+              </div>
+              <div class="flex-1 min-h-0 overflow-y-auto p-4">
+                <Suspense>
+                  <SalesEventWorkspaceShell :event-slug="eventSlug" :show-switcher="false" />
+                  <template #fallback>
+                    <div class="p-6 text-center text-muted">{{ t('sales.common.loading') }}</div>
+                  </template>
+                </Suspense>
+              </div>
+            </template>
+
+            <!-- Volunteer → pure ordering surface (its own close button). -->
             <SalesPosPanel
+              v-else
               :event-slug="eventSlug"
               closable
               class="flex-1 min-h-0"

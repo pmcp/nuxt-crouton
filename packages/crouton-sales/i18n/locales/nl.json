@@ -103,6 +103,35 @@
           "staff": "personeel",
           "eventNotFound": "Evenement niet gevonden"
         }
+      },
+      "salesOrders": {
+        "name": "Bestellingen",
+        "description": "Toont de bestellingenlijst van één evenement op een eigen pagina. Alleen zichtbaar voor aangemelde teamleden.",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies van welk evenement de bestellingen hier verschijnen."
+          }
+        },
+        "ui": {
+          "teamOnly": "Meld je aan als teamlid om de bestellingen te bekijken.",
+          "eventNotFound": "Evenement niet gevonden"
+        }
+      },
+      "salesClients": {
+        "name": "Klanten",
+        "description": "Toont de openstaande klantrekeningen van één evenement op een eigen pagina, met de afrekenen-knop per klant. Alleen voor aangemelde teamleden en evenementen met vaste klanten.",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies van welk evenement de openstaande klantrekeningen hier verschijnen."
+          }
+        },
+        "ui": {
+          "teamOnly": "Meld je aan als teamlid om de klanten te bekijken.",
+          "notRecurring": "Dit evenement gebruikt geen vaste klanten, dus er zijn geen openstaande rekeningen.",
+          "eventNotFound": "Evenement niet gevonden"
+        }
       }
     },
     "admin": {
@@ -128,6 +157,7 @@
       "eventWorkspace": "Evenement-werkruimte",
       "openKassaHint": "Tik om bestellingen op te nemen",
       "makeOrder": "Maak een bestelling",
+      "openKassa": "Open kassa",
       "noEventPicked": "Geen event gekozen",
       "editBlock": "Blok bewerken",
       "deleteBlock": "Blok verwijderen",
@@ -149,7 +179,9 @@
       "noHelperPinDescription": "Op een afgeschermde pagina wordt dit blok ontgrendeld met de helper-pincode van het evenement — zonder pincode kunnen vrijwilligers niet inloggen. Stel de pincode in bij de instellingen van het evenement.",
       "product": "Product",
       "total": "Totaal",
-      "kitchenDisplay": "Keukenscherm"
+      "kitchenDisplay": "Keukenscherm",
+      "orders": "Bestellingen",
+      "clients": "Klanten"
     },
     "cart": {
       "title": "Winkelwagen",

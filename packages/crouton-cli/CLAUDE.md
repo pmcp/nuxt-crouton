@@ -18,7 +18,44 @@ crouton rollback-interactive                 # Interactive removal UI
 crouton seed-translations                    # Seed i18n data
 crouton db-pull                              # Pull remote D1 → local dev
 crouton db-pull --env preview                # Pull from staging environment
+crouton-seed --db <name> [--remote]          # Seed an app DB from its packages' providers
 ```
+
+## App Seeding (`crouton-seed`)
+
+`crouton-seed` (separate bin, `bin/crouton-seed.mjs` → `lib/seed-app.ts`) fills an
+app's D1 with the demo data its extended packages ship (epic #82). It mirrors the
+`db:migrate` local/remote split via `wrangler d1 execute`:
+
+```bash
+crouton-seed --db fanfare-db            # local  (→ wrangler d1 execute --local)
+crouton-seed --db fanfare-db --remote   # remote (→ wrangler d1 execute --remote)
+crouton-seed --db fanfare-db --dry-run  # print the generated SQL, don't execute
+```
+
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `--db <name>` | (required) | D1 database name/binding (e.g. `fanfare-db`) |
+| `--remote` | false | Target remote D1 instead of local |
+| `--dir <path>` | cwd | App directory (where package.json lives) |
+| `--team <slug>` | `test1` | Team slug to seed |
+| `--locale <l>` | `nl` | Locale demo content is authored in |
+| `--with-staff` | false | Also seed an optional staff login (better-auth credential) |
+| `--dry-run` | false | Print SQL instead of running wrangler |
+
+**How it works:** BFS-discovers every `@fyit/crouton-*` package reachable from the
+app (direct deps + transitively bundled ones like `crouton-auth` via `crouton-core`),
+loads each package's `./seed` export via **jiti** (no build step), topo-sorts the
+providers by `dependsOn` (`auth → sales → pages`), then calls
+`collectSeedSql()` from `@fyit/crouton-core/shared/seed` to turn their declarative
+`ctx.upsert(...)` calls into idempotent `INSERT … ON CONFLICT(id) DO UPDATE` SQL,
+which it pipes to `wrangler d1 execute --file`. Stable, namespace-derived ids
+(`seed:org:test1`, `seed:event:test1:vlaamsekermis`) make re-runs upsert in place.
+
+The contract (`SeedProvider`, `SeedContext`, `createPageWithBlocks`) lives in
+`@fyit/crouton-core/shared/seed`; each package ships its provider at `<pkg>/seed`.
+Wire it into an app with `db:seed:local` / `db:seed:remote` scripts (see
+`apps/fanfare/package.json`).
 
 ## Add Command (Module Installation)
 
@@ -210,6 +247,8 @@ crouton db-pull --config ./custom-wrangler.jsonc
 | File | Purpose |
 |------|---------|
 | `bin/crouton-generate.js` | CLI entry point (citty with 12 subcommands) |
+| `bin/crouton-seed.mjs` | `crouton-seed` entry — app DB seeding (citty) |
+| `lib/seed-app.ts` | Seed runner: discover providers, order, collect SQL, run wrangler |
 | `lib/generate-collection.ts` | Main orchestrator (~74KB) |
 | `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.ts` | Template generators (14 files) |
