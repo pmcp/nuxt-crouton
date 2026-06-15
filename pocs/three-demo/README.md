@@ -48,7 +48,7 @@ setup, no ids to paste.
 # needs Cloudflare auth once: CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN (or `wrangler login`)
 pnpm --filter three-demo cf:deploy          # build + wrangler deploy → *.workers.dev URL (auto-provisions D1+KV)
 pnpm --filter three-demo db:migrate:prod    # apply D1 migrations remotely (see #13632 caveat)
-pnpm --filter three-demo cf:preview         # wrangler versions upload → preview URL
+pnpm --filter three-demo cf:staging         # deploy the isolated staging env
 ```
 
 Local Worker run (no Cloudflare account needed — uses `workerd`/miniflare):
