@@ -328,6 +328,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
+| `sync/ingest` POST | `x-sync-key` secret (fail-closed) | Cloud D1 ingest (#178): idempotent upsert of batched outbox events from the Pi pusher. See "Cloud ingest" above |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` heads the remark blocks on kitchen tickets — the per-location remarks from the POS and legacy whole-order notes; `footer_text` only on `type: 'receipt'` printer jobs |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
@@ -433,6 +434,31 @@ live orders/sales. #176 is the **capture** layer (this package); the push loop
 - **Not captured** (deliberate, for #177+ to revisit): the thermal RUT spooler
   callbacks (`print-server/jobs/[jobId]/{complete,fail}` — the cloud-authoritative
   profile, no Pi outbox) and `printqueues/retry-failed` (admin edge, 9→0).
+
+### Cloud ingest (#178)
+
+The cloud side that **receives** the Pi's changes and writes them into D1.
+
+- **Endpoint `POST /api/crouton-sales/sync/ingest`** (`server/api/crouton-sales/sync/ingest.post.ts`).
+  Body `{ events: IngestEvent[] }` (the outbox rows); reply
+  `{ received, appliedCount, applied: string[], skipped: [{id, reason, permanent}] }`.
+  The pusher (#177) advances its cursor past `applied`, retries non-permanent
+  skips, drops permanent ones.
+- **Auth — fail-closed shared secret** (`server/utils/cloud-sync-auth.ts`,
+  `requireCloudSyncKey`): header `x-sync-key` vs `runtimeConfig.croutonSales.cloudSyncSecret`
+  (env `NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET`). Unlike the print key there is **no
+  default** — unset secret ⇒ 503, wrong key ⇒ 401 (this is the only writer of
+  mirrored data, so it must never default to open).
+- **Apply** (`server/utils/sync-ingest.ts`, `applyOutboxEvents`): per event,
+  **idempotent upsert keyed by the nanoid** into `salesOrders` / `salesOrderitems`
+  / `salesPrintqueues` — UPDATE-by-id, INSERT only when absent (replays converge,
+  no dup rows). A partial *transition* payload updates only its fields; a *create*
+  payload inserts. JSON timestamps are revived to `Date` for timestamp columns
+  (`getTableColumns` dataType check), unknown keys dropped. Per-event try/catch:
+  malformed ⇒ permanent skip; a transition before its create (INSERT NOT-NULL
+  fail) ⇒ non-permanent skip so the pusher retries after the create lands. The
+  batch is **not** atomic — partial application is allowed and acked precisely.
+  No order-number assignment here (Pi-local).
 
 ## Configuration
 
