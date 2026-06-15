@@ -38,7 +38,10 @@ export default defineNuxtConfig({
     }
   },
 
-  compatibilityDate: '2024-07-11',
+  // Must be >= 2024-09-19 so nitro selects the MODERN cloudflare_module preset
+  // (static assets + deployConfig) instead of cloudflare-module-legacy (Workers
+  // Sites), which doesn't emit a deployable wrangler config → "missing entry-point".
+  compatibilityDate: '2024-09-19',
 
   nitro: {
     prerender: {
