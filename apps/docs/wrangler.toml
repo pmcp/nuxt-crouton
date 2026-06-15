@@ -1,4 +1,0 @@
-# Cloudflare Pages deployment config
-name = "crouton-docs"
-pages_build_output_dir = "dist"
-compatibility_date = "2024-07-11"

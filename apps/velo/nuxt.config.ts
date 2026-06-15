@@ -85,7 +85,8 @@ export default defineNuxtConfig({
     '/admin/**': { headers: { 'cache-control': 'no-store' } },
   },
 
-  // Cloudflare Pages deployment
+  // Cloudflare Workers deployment — preset supplied at build via NITRO_PRESET
+  // (cf:deploy/cf:staging); intentionally NOT pinned here so dev/build stay preset-free.
   nitro: {
     alias: {
       '@better-auth/passkey/client': resolve(cfStubs, 'client'),

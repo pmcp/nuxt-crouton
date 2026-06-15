@@ -1,0 +1,9 @@
+{
+  "collections": [
+    {
+      "key": "mainItems",
+      "heading": "Main Items",
+      "create": { "name": "e2e item" }
+    }
+  ]
+}

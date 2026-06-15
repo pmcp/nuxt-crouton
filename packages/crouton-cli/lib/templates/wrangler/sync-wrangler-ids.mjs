@@ -15,7 +15,7 @@
  *      every `env.*` scope — preserving the file's comments and formatting.
  *
  * Idempotent: re-running with the same provisioned resources is a no-op. Safe to
- * chain into `cf:deploy` / `cf:preview` (run AFTER the first provisioning deploy).
+ * chain into `cf:deploy` / `cf:staging` (run AFTER the first provisioning deploy).
  *
  * Matching conventions
  *   D1 : `database_name` is explicit in config → exact match against `d1 list`.
@@ -26,8 +26,8 @@
  *        `env.<env>` scope (wrangler's `--env` suffixing). So we reconstruct that
  *        exact title and match it (case-insensitively) against `kv namespace list`.
  *        Candidates tried, in order:
- *          `<workerName>-<binding>`            e.g. myapp-preview-KV  (the rule)
- *          `<workerName>-<binding lowercased>` e.g. myapp-preview-kv  (safety net)
+ *          `<workerName>-<binding>`            e.g. myapp-staging-KV  (the rule)
+ *          `<workerName>-<binding lowercased>` e.g. myapp-staging-kv  (safety net)
  *        If none match, the available titles are logged and the binding is left
  *        untouched (never guesses, never breaks the file).
  *

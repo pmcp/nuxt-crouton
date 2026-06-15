@@ -1,0 +1,4 @@
+{
+  "name": { "type": "string", "meta": { "required": true, "maxLength": 200 } },
+  "done": { "type": "boolean", "meta": { "default": false } }
+}

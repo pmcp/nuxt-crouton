@@ -1,0 +1,33 @@
+{
+  "name": "@crouton/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "cf:deploy": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy",
+    "postinstall": "nuxt prepare 2>/dev/null || true",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.68",
+    "@iconify-json/simple-icons": "^1.2.53",
+    "@iconify-json/vscode-icons": "^1.2.30",
+    "@nuxt/content": "^3.7.1",
+    "@nuxt/image": "^1.11.0",
+    "@nuxt/ui": "catalog:",
+    "@nuxtjs/mcp-toolkit": "^0.5.2",
+    "better-sqlite3": "^12.4.1",
+    "nuxt": "catalog:",
+    "nuxt-llms": "0.1.3"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.9.0",
+    "eslint": "^9.36.0",
+    "typescript": "catalog:",
+    "vue-tsc": "^3.1.0"
+  },
+  "version": "0.1.0"
+}

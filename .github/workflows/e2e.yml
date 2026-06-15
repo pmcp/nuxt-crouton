@@ -1,0 +1,76 @@
+name: E2E
+
+# Boots each crouton fixture app and runs the Playwright smoke (login + CRUD).
+# Catches regressions — e.g. a dependency bump that breaks a generated app —
+# before merge. Matrix = one job per fixture (see fixtures/* + e2e/CLAUDE.md).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'fixtures/**'
+      - 'e2e/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'fixtures/**'
+      - 'e2e/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/e2e.yml'
+
+jobs:
+  e2e:
+    name: E2E (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [minimal, with-pages]
+    env:
+      # Better-auth needs a secret present; the value is irrelevant in CI.
+      BETTER_AUTH_SECRET: ci-placeholder-secret
+      BETTER_AUTH_URL: http://localhost:3000
+      E2E_FIXTURE: ${{ matrix.fixture }}
+      NODE_OPTIONS: '--max-old-space-size=8192'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build the fixture's workspace dependencies
+        # '^...' selects the fixture's transitive workspace deps (the dist-consumed
+        # @fyit/* packages), excluding the fixture app itself.
+        run: pnpm --filter "e2e-fixture-${{ matrix.fixture }}^..." build
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e smoke
+        run: pnpm test:e2e
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.fixture }}
+          path: playwright-report/
+          retention-days: 7
