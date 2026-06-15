@@ -60,6 +60,9 @@ export default defineNuxtConfig({
       wrangler: {
         name: 'docs',
         compatibility_date: '2024-09-19',
+        // Staging-slot domain (#133); → docs.friendlyinter.net at the DNS cutover (#134).
+        // Auto-bound on deploy (pmcp.dev is a CF zone; token has Zone Workers Routes + DNS Edit).
+        routes: [{ pattern: 'docs.pmcp.dev', custom_domain: true }],
         d1_databases: [{ binding: 'DB', database_name: 'docs-db' }]
       }
     }

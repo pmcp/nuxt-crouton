@@ -12,6 +12,12 @@ node-compile-cache/
 dist
 .cache
 
+# Local dev artifacts anywhere in the tree (NuxtHub/wrangler D1+R2+KV+blob state,
+# @nuxt/content DBs). Global patterns so new apps/pocs/fixtures are covered without
+# adding a per-dir line each time (supersedes the apps/<name>/.data list below).
+**/.data/
+**/.wrangler/
+
 # Logs
 *.log
 npm-debug.log*
