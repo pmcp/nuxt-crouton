@@ -15,7 +15,7 @@
 
   // Custom domain — auto-bound on `wrangler deploy` (pmcp.dev is a CF zone).
   // Cloudflare creates the DNS record + cert; no dashboard step.
-  "routes": [{ "pattern": "triage.pmcp.dev", "custom_domain": true }],
+  "routes": [{ "pattern": "triage.friendlyinter.net", "custom_domain": true }],
 
   "d1_databases": [
     {
@@ -34,7 +34,7 @@
   // `--env staging` creates a `triage-staging` worker bound to these. The env block
   // is stripped from the generated .output config (nitro#3429), so cf:staging
   // re-injects it via scripts/inject-wrangler-env.mjs. (Route stays on the -preview
-  // hostname until #136 reassigns it to triage.pmcp.dev after the DNS move.)
+  // hostname until #136 reassigns it to triage.friendlyinter.net after the DNS move.)
   "env": {
     "staging": {
       "routes": [{ "pattern": "triage-preview.pmcp.dev", "custom_domain": true }],

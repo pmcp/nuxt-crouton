@@ -14,6 +14,10 @@
   "compatibility_date": "2024-09-02",
   "compatibility_flags": ["nodejs_compat"],
 
+  // Production custom domain (#133/#134): bound on `pnpm cf:deploy` now that
+  // friendlyinter.net is a Cloudflare zone. Staging stays on velo.pmcp.dev (env.staging).
+  "routes": [{ "pattern": "velo.friendlyinter.net", "custom_domain": true }],
+
   "d1_databases": [
     {
       "binding": "DB",
