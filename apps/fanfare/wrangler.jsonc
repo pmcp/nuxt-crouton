@@ -7,7 +7,7 @@
   //
   // Migrated in place: PRODUCTION reuses the EXISTING provisioned D1 + KV (same ids
   // the Pages deploy used), so there is NO data migration — the Worker binds the
-  // same fanfare-db. The production domain moves to kassa.pmcp.dev (pmcp.dev is a
+  // same fanfare-db. The production domain moves to kassa.friendlyinter.net (pmcp.dev is a
   // CF zone, so the custom domain + DNS + cert are bound automatically on deploy).
   "name": "fanfare",
   "compatibility_date": "2024-09-02",
@@ -15,7 +15,7 @@
 
   // Custom domain — auto-bound on `wrangler deploy` (pmcp.dev is a CF zone).
   // Cloudflare creates the DNS record + cert; no dashboard step.
-  "routes": [{ "pattern": "kassa.pmcp.dev", "custom_domain": true }],
+  "routes": [{ "pattern": "kassa.friendlyinter.net", "custom_domain": true }],
 
   "d1_databases": [
     {
