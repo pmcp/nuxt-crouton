@@ -43,11 +43,15 @@
         {
           "binding": "DB",
           "database_name": "fanfare-staging-db",
-          "migrations_dir": "server/db/migrations/sqlite"
+          "migrations_dir": "server/db/migrations/sqlite",
+          "database_id": "4e673287-c505-4bde-9af2-c36902386db6"
         }
       ],
       "kv_namespaces": [
-        { "binding": "KV" }
+        {
+          "binding": "KV",
+          "id": "6c9182027fb043eb8ff6ac3e9d8a713d"
+        }
       ]
     }
   }
