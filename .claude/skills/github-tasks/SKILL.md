@@ -42,6 +42,17 @@ Sub-issues are the **work** unit; the **epic** is the **verification** unit. Whe
 
 Close the epic **only after that pass passes** (or the owner confirms). This turns "a bunch of merged PRs" into a single "now go click these and confirm it all works" checklist for a non-technical owner. If a sub-issue couldn't be auto-verified (e.g. needs a device), say so explicitly in the rollup rather than implying it's confirmed.
 
+### Closing a child? Always check the parent (REQUIRED)
+
+A merged PR auto-closes the issues in its `Closes #NN` lines — but **a parent epic has no `Closes` line of its own, so it never auto-closes**, and a fully-delivered epic left open is the most common stale-tracking bug. So **every time you close an issue (or one auto-closes on merge), walk up the tree**:
+
+1. Resolve the parent: `mcp__github__issue_read` (`method: get`) → `parent_issue_url`, or read the epic's `get_sub_issues`.
+2. If the issue has a parent, check whether **all** of the parent's children are now `closed` (`get_sub_issues` → every child's `state`).
+3. If they are, the epic's work is done — post the `## 🧪 Verify the whole thing` rollup (above) and **close the parent** as `completed` (or, if you can't verify, tell the owner it's ready to close and why).
+4. Recurse: a parent can itself be a child of a grander epic — keep walking up until you hit one with open siblings or no parent.
+
+Don't stop at the issue you were asked about; closing the leaf without checking the branch above it leaves the epic falsely "in progress".
+
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
 ## Core rules
