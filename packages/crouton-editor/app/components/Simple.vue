@@ -86,8 +86,10 @@ const model = computed({
   }
 })
 
-// Track the editor instance for translation commands
-const editorInstance = ref<Editor | null>(null)
+// Track the editor instance for translation commands.
+// shallowRef (not ref) — tiptap's Editor is a class holding internal reactive
+// refs; a deep ref() unwraps them and corrupts the Editor type (TS2345).
+const editorInstance = shallowRef<Editor | null>(null)
 const isTranslating = ref(false)
 const isUploadingImage = ref(false)
 

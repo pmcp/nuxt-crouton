@@ -38,9 +38,7 @@
       />
       <div class="absolute inset-0 bg-transparent group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors" />
       <UModal v-if="expandable" :title="title || 'Content preview'">
-        <template #default="{ open }">
-          <div class="absolute inset-0" @click="open" />
-        </template>
+        <div class="absolute inset-0 cursor-pointer" />
         <template #body>
           <div
             class="prose prose-sm max-w-none dark:prose-invert"
