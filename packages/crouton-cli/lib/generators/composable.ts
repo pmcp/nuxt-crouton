@@ -5,7 +5,7 @@ import { toCase } from '../utils/helpers.ts'
  * Generate Zod schema for a repeater item with optional translatable properties
  * When meta.translatableProperties is present, includes translations validation
  */
-function generateRepeaterItemSchema(field: Record<string, any>, layerCamelCase: string, pascalCasePlural: string): { name: string; code: string } {
+export function generateRepeaterItemSchema(field: Record<string, any>, layerCamelCase: string, pascalCasePlural: string): { name: string; code: string } {
   const { pascalCase: fieldPascalCase, camelCase: fieldCamelCase } = toCase(field.name)
   const schemaName = `${layerCamelCase}${pascalCasePlural}${fieldPascalCase}ItemSchema`
 

@@ -17,7 +17,8 @@ e2e/                         # the harness (Playwright) — NOT a workspace pack
 
 fixtures/                    # the apps under test — real crouton apps, one per config
   minimal/                   # core + auth + i18n, one 'items' collection
-  with-pages/                # + @fyit/crouton-pages
+  with-pages/                # + @fyit/crouton-pages   (surface: pages workspace)
+  with-bookings/             # + @fyit/crouton-bookings (surface: bookings admin)
   <name>/                    # add more here
     e2e.manifest.json        # declares what to smoke (collections, fields)
 ```
@@ -135,6 +136,8 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
 ## Scope / follow-ups
 Current: list + CRUD per collection, plus optional package-specific `surfaces`
 (e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
-over `fixtures/*` (see `.github/workflows/e2e.yml`). Next: lean on `surfaces` when
-adding a domain-package fixture (e.g. with-bookings) so it asserts that package's
-UI, not just generic items CRUD.
+over `fixtures/*` (see `.github/workflows/e2e.yml`). `with-bookings` is the
+domain-package example: it boots a heavy package (locations/settings/slots) and
+asserts the bookings admin UI via `surfaces`. Adding such a fixture is also how the
+harness caught a real crouton-cli scaffolder bug (#172) — generators that emit
+broken code get caught at boot.

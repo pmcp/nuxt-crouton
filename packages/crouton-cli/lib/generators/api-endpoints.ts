@@ -141,13 +141,17 @@ import { nanoid } from 'nanoid'`
     owner: user.id,${metadataFields}
   })`
 
+  // Repeater fields reference a named item schema in fieldsSchema; define it
+  // locally so the server validation doesn't reference an undefined symbol.
+  const itemSchemasPrefix = data.repeaterItemSchemasCode ? `${data.repeaterItemSchemasCode}\n\n` : ''
+
   return `// Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 ${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { z } from 'zod'
 
-const bodySchema = z.object({
+${itemSchemasPrefix}const bodySchema = z.object({
   ${data.fieldsSchema}
 }).strip()
 
@@ -201,13 +205,17 @@ export function generatePatchEndpoint(data: Record<string, any>, config: Record<
     ? `import { update${prefixedPascalCase}, get${prefixedPascalCasePlural}ByIds } from '${queriesPath}'`
     : `import { update${prefixedPascalCase} } from '${queriesPath}'`
 
+  // Repeater fields reference a named item schema in fieldsSchema; define it
+  // locally so the server validation doesn't reference an undefined symbol.
+  const itemSchemasPrefix = data.repeaterItemSchemasCode ? `${data.repeaterItemSchemasCode}\n\n` : ''
+
   return `// Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
 ${imports}
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { z } from 'zod'
 
-const bodySchema = z.object({
+${itemSchemasPrefix}const bodySchema = z.object({
   ${data.fieldsSchema}
 }).partial().strip()
 
