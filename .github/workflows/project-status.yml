@@ -4,15 +4,21 @@ name: Project status automation
 # reality without manual dragging:
 #   - PR opened / reopened / ready for review  -> In review
 #   - PR back to draft                          -> In progress
+#   - PR closed (merged or not)                 -> Done
 #   - Issue assigned or reopened                -> In progress
 #   - Issue labeled status:in-progress          -> In progress
 #   - Issue labeled status:blocked              -> Blocked
+#   - Issue closed                              -> Done
 # The label triggers are the reliable signal: the github-tasks flow (and
 # agents) mark "work started" by applying status:in-progress, not by
 # assigning — so without these an issue would skip In progress entirely and
 # jump straight to In review when its PR opens.
-# (Item added -> Backlog and merged/closed -> Done are handled by the
-#  Project's own built-in workflows; we don't fight those.)
+# We own merged/closed -> Done here rather than delegating to the Project's
+# built-in workflow, so the board advances deterministically without depending
+# on a UI toggle that can silently be off. When a merged PR auto-closes its
+# linked issues, each fires its own `issues: closed` event, so those cards move
+# to Done too — including a parent epic once you close it.
+# (Item added -> Backlog is still handled by the Project's built-in workflow.)
 #
 # ── One-time setup (required) ──────────────────────────────────────────────
 # GITHUB_TOKEN cannot write a user-owned Projects v2 board, so this needs a PAT:
@@ -24,9 +30,9 @@ name: Project status automation
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, converted_to_draft]
+    types: [opened, reopened, ready_for_review, converted_to_draft, closed]
   issues:
-    types: [assigned, reopened, labeled]
+    types: [assigned, reopened, labeled, closed]
 
 permissions:
   contents: read
@@ -69,14 +75,22 @@ jobs:
             let target = null
             if (context.eventName === 'pull_request') {
               const a = context.payload.action
-              target = a === 'converted_to_draft' ? 'In progress' : 'In review'
+              // closed covers both merge and close-without-merge — either way
+              // the PR is off the board's active lanes.
+              if (a === 'closed') target = 'Done'
+              else if (a === 'converted_to_draft') target = 'In progress'
+              else target = 'In review' // opened / reopened / ready_for_review
             } else if (context.eventName === 'issues') {
+              const a = context.payload.action
+              // A merged PR's `Closes #NN` auto-closes its issues, firing this
+              // `closed` event — that's what advances sub-issues (and a manually
+              // closed parent epic) to Done.
+              if (a === 'closed') target = 'Done'
               // `labeled` is the reliable "work started/blocked" signal; the
               // label name decides the column. assigned/reopened keep the old
               // In-progress behaviour as a fallback.
-              target = context.payload.action === 'labeled'
-                ? labelToStatus(context.payload.label?.name)
-                : 'In progress'
+              else if (a === 'labeled') target = labelToStatus(context.payload.label?.name)
+              else target = 'In progress'
             }
             if (!target) return
 
