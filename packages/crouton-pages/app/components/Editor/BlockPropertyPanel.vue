@@ -66,6 +66,15 @@ function getAddonPropertyComponent(fieldType: string): string | null {
 // Changes are ONLY applied when user clicks "Done"
 const localAttrs = ref<Record<string, unknown>>({})
 
+// Expose the live, editing-in-progress block attrs to custom property
+// components (the addon `propertyComponents` editors), so an editor can read
+// SIBLING fields — e.g. the sales kitchen-display LocationsPicker scopes its
+// options to the block's currently-picked `eventSlug`. Opt-in via inject, so
+// editors that don't need it are unaffected. The ref identity is stable
+// (only `.value` is reassigned), and `.value` is deeply reactive, so consumers
+// reading `blockAttrs.value.<field>` track live edits.
+provide('croutonBlockAttrs', localAttrs)
+
 // Track which block type we're editing to detect when a different block is selected
 const editingBlockType = ref<string | null>(null)
 

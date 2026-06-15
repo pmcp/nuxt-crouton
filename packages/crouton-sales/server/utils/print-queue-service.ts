@@ -7,7 +7,21 @@
  * generated sales layer tables (salesPrintqueues, salesPrinters, etc.)
  */
 
-import { formatReceipt, type ReceiptItem, type ReceiptSettings } from './receipt-formatter'
+import { formatReceipt, type ReceiptData, type ReceiptItem, type ReceiptSettings } from './receipt-formatter'
+
+/**
+ * Encode one ticket for a station's output driver. `network-escpos` (default)
+ * emits base64 ESC/POS bytes for the thermal TCP path (unchanged); `browser-print`
+ * stores the canonical ReceiptData as JSON, which the browser-print drainer
+ * renders to HTML (renderTicketHtml, in the browser-print-jobs endpoint) and
+ * sends to the OS / AirPrint dialog. The stored payload differs by driver;
+ * routing + ReceiptData do not.
+ */
+export function encodeTicket(data: ReceiptData, driver?: string): string {
+  return (driver || 'network-escpos') === 'browser-print'
+    ? JSON.stringify(data)
+    : formatReceipt(data).base64
+}
 
 // Status codes for print queue
 export const PRINT_STATUS = {
@@ -75,47 +89,7 @@ export interface PrintJobData {
   printerId: string
   locationId?: string
   printData: string
-  printMode: 'kitchen' | 'receipt' | 'display'
-}
-
-/**
- * Display (KDS) payload — the JSON a screen renders instead of ESC/POS bytes.
- * Self-contained so the display job carries everything the screen needs.
- */
-export interface DisplayPayload {
-  orderNumber: string
-  clientName?: string
-  isPersonnel?: boolean
-  createdAt: string
-  items: Array<{ title: string, quantity: number, remarks?: string }>
-}
-
-/** Build the display payload for an order (driver: 'display'). */
-export function toDisplayPayload(
-  options: PrintQueueGeneratorOptions,
-  items: OrderItemForPrint[]
-): DisplayPayload {
-  return {
-    orderNumber: options.orderNumber,
-    clientName: options.clientName,
-    isPersonnel: options.isPersonnel,
-    createdAt: new Date().toISOString(),
-    items: items.map(i => ({ title: i.productTitle, quantity: i.quantity, remarks: i.remarks }))
-  }
-}
-
-/** Generate a display (KDS) job — printData is JSON, not ESC/POS bytes. */
-export function generateDisplayJobData(
-  options: PrintQueueGeneratorOptions,
-  items: OrderItemForPrint[],
-  station: PrinterConfig
-): PrintJobData {
-  return {
-    printerId: station.id,
-    locationId: undefined,
-    printData: JSON.stringify(toDisplayPayload(options, items)),
-    printMode: 'display'
-  }
+  printMode: 'kitchen' | 'receipt'
 }
 
 /**
@@ -168,7 +142,7 @@ export function generateKitchenTicketData(
 
   const total = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
 
-  const formattedReceipt = formatReceipt({
+  const receiptData: ReceiptData = {
     orderNumber: options.orderNumber,
     orderId: options.orderId,
     teamName: options.teamName,
@@ -186,12 +160,12 @@ export function generateKitchenTicketData(
     isPersonnel: options.isPersonnel,
     receiptSettings,
     currencySymbol: receiptCurrencySymbol(options.currency)
-  })
+  }
 
   return {
     printerId: printer.id,
     locationId: locationId === 'default' ? undefined : locationId,
-    printData: formattedReceipt.base64,
+    printData: encodeTicket(receiptData, printer.driver),
     printMode: 'kitchen'
   }
 }
@@ -215,7 +189,7 @@ export function generateReceiptData(
 
   const total = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
 
-  const formattedReceipt = formatReceipt({
+  const receiptData: ReceiptData = {
     orderNumber: options.orderNumber,
     orderId: options.orderId,
     teamName: options.teamName,
@@ -232,12 +206,12 @@ export function generateReceiptData(
     isPersonnel: options.isPersonnel,
     receiptSettings,
     currencySymbol: receiptCurrencySymbol(options.currency)
-  })
+  }
 
   return {
     printerId: printer.id,
     locationId: undefined,
-    printData: formattedReceipt.base64,
+    printData: encodeTicket(receiptData, printer.driver),
     printMode: 'receipt'
   }
 }
@@ -284,14 +258,16 @@ export function generatePrintJobsForOrder(
   const itemsByLocation = groupItemsByLocation(orderItems)
 
   // Driver decides how a station is fulfilled. Null/undefined = 'network-escpos'
-  // (the thermal path), so existing stations behave exactly as before.
+  // (the thermal path), so existing stations behave exactly as before. Routing
+  // (kitchen-by-location vs combined receipt) is driver-agnostic — only the
+  // encoding differs (encodeTicket), so thermal + browser-print stations route
+  // identically. Unknown drivers produce no jobs (forward-compatible).
   const driverOf = (p: PrinterConfig) => p.driver || 'network-escpos'
-  const escposPrinters = printers.filter(p => driverOf(p) === 'network-escpos')
-  const displayStations = printers.filter(p => driverOf(p) === 'display')
+  const drivable = printers.filter(p => ['network-escpos', 'browser-print'].includes(driverOf(p)))
 
-  // Separate kitchen printers (by location) and receipt printers (escpos only)
-  const kitchenPrinters = escposPrinters.filter(p => p.type === 'kitchen' || !p.type)
-  const receiptPrinters = escposPrinters.filter(p => p.type === 'receipt')
+  // Separate kitchen printers (by location) and receipt printers.
+  const kitchenPrinters = drivable.filter(p => p.type === 'kitchen' || !p.type)
+  const receiptPrinters = drivable.filter(p => p.type === 'receipt')
 
   // Create kitchen ticket jobs (one per location per printer)
   for (const [locationId, locationData] of itemsByLocation) {
@@ -332,17 +308,6 @@ export function generatePrintJobsForOrder(
     }
 
     jobs.push(generateReceiptData(options, allItems, receiptPrinter, receiptSettings))
-  }
-
-  // Display (KDS) stations: one job per station carrying the whole order as JSON.
-  if (displayStations.length > 0) {
-    const allItems: OrderItemForPrint[] = []
-    for (const [, locationData] of itemsByLocation) {
-      allItems.push(...locationData.items)
-    }
-    for (const station of displayStations) {
-      jobs.push(generateDisplayJobData(options, allItems, station))
-    }
   }
 
   return jobs

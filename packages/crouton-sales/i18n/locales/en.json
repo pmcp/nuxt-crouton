@@ -96,7 +96,8 @@
           "locations": {
             "label": "Locations",
             "description": "Which locations this screen shows (e.g. Kitchen, Bar). Leave empty to show every location.",
-            "placeholder": "All locations"
+            "placeholder": "All locations",
+            "needsEvent": "Pick an event above first — then choose its locations."
           }
         },
         "ui": {
@@ -136,6 +137,27 @@
           "teamOnly": "Sign in as a team member to view the clients.",
           "notRecurring": "This event doesn't use recurring clients, so there are no open tabs.",
           "eventNotFound": "Event not found"
+        }
+      },
+      "printBridge": {
+        "name": "Print Bridge",
+        "description": "A screen that prints pending tickets through the device OS / AirPrint dialog — for stations using the Browser / AirPrint driver.",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event tickets this bridge prints."
+          }
+        },
+        "ui": {
+          "title": "Print Bridge",
+          "hint": "Keep this screen open near the printer. Tap Print to send a ticket to the print dialog.",
+          "printAll": "Print all ({count})",
+          "allPrinted": "All caught up — nothing to print.",
+          "eventNotFound": "Event not found",
+          "print": "Print",
+          "discard": "Discard",
+          "ticket": "Ticket",
+          "receipt": "Receipt"
         }
       }
     },
@@ -186,7 +208,8 @@
       "total": "Total",
       "kitchenDisplay": "Kitchen Display",
       "orders": "Orders",
-      "clients": "Clients"
+      "clients": "Clients",
+      "printBridge": "Print Bridge"
     },
     "cart": {
       "title": "Cart",
@@ -318,7 +341,13 @@
       "printerActiveHelp": "Turn off to temporarily take this printer out of use",
       "general": "General",
       "displayOrder": "Display Order",
-      "activeHelp": "Inactive products are hidden in the POS"
+      "activeHelp": "Inactive products are hidden in the POS",
+      "driver": "Output",
+      "driverHelp": "How this station prints its tickets.",
+      "driverNetwork": "Network printer",
+      "driverNetworkHelp": "Thermal printer on the venue network (ESC/POS).",
+      "driverBrowser": "Browser / AirPrint",
+      "driverBrowserHelp": "Print via the device print dialog from a print-bridge screen."
     },
     "helperLogin": {
       "title": "Helper Login",

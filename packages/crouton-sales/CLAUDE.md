@@ -53,18 +53,28 @@ the DB column nullable (fanfare migration `0011_rainy_zemo`). Only the FIRST rec
 event receives jobs. Event duplication copies location-less printers as-is.
 
 **Output driver** (`salesPrinters.driver`, nullable — NULL ⇒ `network-escpos`): how a station is
-fulfilled (see `docs/architecture/venue-local-first-architecture.md` → "Output drivers"). The
-thermal path (`network-escpos`) is the default and unchanged. A **`display`** station (KDS) enqueues
-a `printMode: 'display'` job whose `printData` is a JSON `DisplayPayload` (`toDisplayPayload` in
-`print-queue-service.ts`) instead of ESC/POS bytes — `generatePrintJobsForOrder` emits one display
-job per display station carrying the whole order. **`generate-print-queues.ts` must pass `driver`
-through** to the `PrinterConfig` (it does), or display stations silently fall back to thermal.
-Display jobs ride the same `salesPrintqueues` table and the same numeric status codes
-(`pending '0' → shown '1' → bumped '2'`, where bumped reuses COMPLETED), so the admin order LEDs
-work unchanged — but they are **excluded from the returned `printQueueIds`** (and from the
-`print-status` watcher endpoint), so the volunteer's checkout button isn't held "printing" until the
-kitchen bumps a screen. The KDS (`kitchenDisplayBlock`) reads/bumps them via the `display-jobs`
-endpoints.
+fulfilled (see `docs/architecture/venue-local-first-architecture.md` → "Output drivers"). Routing
+(items → location → station, kitchen vs receipt) is **driver-agnostic**; only the **encoding**
+differs, via `encodeTicket(receiptData, driver)` in `print-queue-service.ts`:
+
+- **`network-escpos`** (default, set by NULL too) — base64 ESC/POS bytes for the thermal TCP path
+  (`formatReceipt`). Unchanged; drained by **either** the on-site RUT956 HTTP spooler (cloud profile)
+  **or** the in-process Node drainer (`escpos-drainer.ts`, venue/self-host profile — see
+  "Print-Server Polling Endpoints"). One or the other per printer set, never both.
+- **`browser-print`** (#127, AirPrint) — the canonical `ReceiptData` stored as **JSON**. The drainer
+  is a browser screen, the **`printBridgeBlock`**: it polls `browser-print-jobs` (jobs server-rendered
+  to HTML by `renderTicketHtml`), prints each through the OS / AirPrint dialog (`window.print()` in a
+  hidden iframe) and POSTs `done`/`fail`. Same `salesPrintqueues` lifecycle + order LEDs as thermal
+  (shared transitions in `print-job-complete.ts`). Works in any profile incl. cloud — no LAN socket,
+  no printer IP (PrinterForm hides the IP field and stores a `'browser-print'` sentinel to satisfy
+  the NOT-NULL column). The **thermal spooler GET excludes non-`network-escpos` jobs** so a
+  browser-print job is never streamed to a printer IP.
+
+`generatePrintJobsForOrder` produces jobs for `network-escpos` + `browser-print` stations; any other
+driver value yields no jobs (forward-compatible). **The `display` driver was removed** when the KDS
+was decoupled (#61/#117): the KDS is not a printer and does **not** ride `salesPrintqueues` — the
+`kitchenDisplayBlock` reads orders directly per location and bumps via `salesKdsbumps` (`display-jobs`
+/ `kds-bump`). No `printMode: 'display'` job, `DisplayPayload`, or `toDisplayPayload` remains.
 
 ### Database Tables (Convention)
 
@@ -323,6 +333,9 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `events/[eventId]/orders/[orderId]/print-status` GET | helper token | Slim per-order print job status for the POS order button's print watcher (`{ id, status, errorMessage, retryCount, printMode, printerTitle, completedAt }` — printer name joined server-side; order must belong to the event). **Excludes `display` jobs** (they're bumped on a screen, not printed — a display job stays "shown" until the kitchen acts and would hang the checkout button). Empty array = the order generated no tickets, a real answer not an error |
 | `events/[eventId]/display-jobs` GET | none (LAN) | KDS read model for the `display` driver: pending/shown `display` jobs off `salesPrintqueues` for the event, payload parsed (`{ id, orderId, stationId, orderNumber, clientName, isPersonnel, createdAt, items }`). **Flips pending → shown on read** (records the job reached a screen). Backs `kitchenDisplayBlock`. Unauthed — an unattended venue-LAN screen (tightening to a helper token is a follow-up) |
 | `events/[eventId]/display-jobs/[jobId]/bump` POST | none (LAN) | Mark a `display` job done (shown → bumped). Bumped maps onto the shared COMPLETED status (`'2'`), so admin order LEDs treat it like a printed ticket; **auto-completes the order** once no job remains open (mirrors the thermal `complete` callback — a display-only "no printer" order completes when bumped). Scoped to the event + `printMode: 'display'` so it can only ever close a display job |
+| `events/[eventId]/browser-print-jobs` GET | none (LAN) | Drainer read model for the `browser-print` (AirPrint) driver: pending (status 0) queue rows whose station is a `browser-print` printer, each **server-rendered to HTML** via `renderTicketHtml` (`{ id, orderId, stationId, stationTitle, printMode, locationId, orderNumber, html }`). `?stationId=` narrows to one station. Backs `printBridgeBlock`. Unauthed venue-LAN screen (mirrors `display-jobs`; helper-token tightening is a follow-up). An unparseable payload returns `html: null` so the bridge can fail it instead of crashing the poll |
+| `events/[eventId]/browser-print-jobs/[jobId]/done` POST | none (LAN) | Mark a browser-print job completed + auto-complete the order (shared `completePrintJob` in `print-job-complete.ts`). Scoped to the event + a `browser-print` station |
+| `events/[eventId]/browser-print-jobs/[jobId]/fail` POST | none (LAN) | Mark a browser-print job failed + flag the order `print_failed` (shared `failPrintJob`). Body `{ errorMessage? }`. Scoped to the event + a `browser-print` station |
 | `teams/[id]/events/[eventId]/clients/summary` GET | team member | Active clients with an open tab at this event (`{ id, title, orderCount, total }`, non-cancelled orders only). Backs the workspace clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/tab` GET | team member | Read-only preview of a client's open tab: the aggregated receipt lines `end-receipt` would print (`{ lines: [{ name, quantity, price, optionLabels, total }], orderCount, total }`). Backs the expandable rows in the clients panel |
 | `teams/[id]/events/[eventId]/clients/[clientId]/end-receipt` POST | team member | Settle a client's tab: aggregates every non-cancelled order (identical product+price+options lines merged — shared `aggregateClientTab` in `server/utils/client-tab.ts`, also used by the `tab` GET), queues ONE end-of-tab receipt (receipt printer, fallback first printer; `orderId: null`, `clientTab` header format) and sets the client `isActive = false` |
@@ -350,7 +363,9 @@ are `real` (no cast).
 
 ### Print-Server Polling Endpoints
 
-Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event.
+Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event. The `/jobs` GET **excludes non-`network-escpos` jobs** (driver-filtered) so the spooler never receives a browser-print job.
+
+**In-process drainer (Node target, no external spooler)** — when the app runs on a Node box ON the venue LAN (a Pi/mini-PC), it can open TCP `:9100` to the printers itself instead of running the RUT spooler. `server/utils/escpos-drainer.ts` is a faithful port of the spooler (DLE-EOT pre-flight on its own connection → send ESC/POS + confirmation pass → `classifyStatus` → `completePrintJob`/`failPrintJob`, the **same** queue lifecycle/LEDs — no HTTP callback, it has direct DB access). The `server/plugins/escpos-drainer.ts` Nitro plugin runs it on a poll loop **only when `CROUTON_SALES_PRINT_DRAINER` is set** (`CROUTON_SALES_PRINT_DRAINER_EVENT`, `_POLL_MS` optional) — OFF by default, so existing deploys + Cloudflare are unchanged. `node:net` is imported **lazily** (inside `exchange`), keeping the module import-safe on Workers. Claims jobs pending → printing (recoverable by retry-failed on crash) and prints sequentially (one `:9100` connection per Epson TM). **Run EITHER the spooler OR the in-process drainer for a printer set, never both.**
 
 **Print confirmation (feedback loop)**: the spooler runs a **pre-flight status check on its own connection** (ESC/POS `DLE EOT 1`+`2`+`4`) before sending each ticket — an error-state printer stops draining its receive buffer, so queries appended after a payload would jam behind it and never answer (this is why pre-flight must be a separate connection). Pre-flight failures (`Cover open`, `Paper out`, `Printer error`, `Printer offline`, `Printer not responding - paper out, cover open, or offline?`) fail the job **without sending the ticket**, preventing ghost prints when paper is reloaded. On a healthy pre-flight it sends the payload with the same queries appended as a confirmation pass (socket held open `DRAIN_SECS`, default 2s, which also fixes the silent-loss mode where `nc` closed before the printer drained its buffer); no reply there ⇒ `Printer stopped responding while printing (paper ran out mid-ticket?)`. `/complete` is called only when the printer confirms "online, paper present" — so the UI's **Done** badge means the printer confirmed it could print, not merely "bytes sent over TCP" (old behavior restorable with `STATUS_CHECK=0` for printers that don't answer DLE EOT). The failed job's `errorMessage` is rendered inside `PrintqueuesCard.vue`'s **LED hover popover** (printer name header, status badge, 24h time, error text — same styling as the order-row LED popover); the row itself stays one calm line (printer name, location · retry count meta, time, LED rightmost, with an `#actions` slot before the LED for row buttons).
 
@@ -456,10 +471,12 @@ the event field's `propertyComponents` editor.
 | `salesClientsBlock` | `SalesBlocksClientsView` | `SalesBlocksClientsRender` | **Standalone Clients list** — one event's open client tabs (the same view as the workspace's "Klanten" pane: active clients with the two-step settle / print-receipt action) on its own CMS page. **Team-members-only** (renderer gates on `useAuth().loggedIn`) and only meaningful for **recurring-client events** — a member on a non-`requiresClient` event gets an explanatory note. Resolves the event member-side via the shared `SalesBlocksEventResolver` inside `<Suspense>`, then renders `SalesEventWorkspaceClientsPanel`. Editor fixes the event by slug (`EventSlugPicker`). `clientOnly`; category `kassa`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
-| `kitchenDisplayBlock` | `SalesBlocksKitchenDisplayView` | `SalesBlocksKitchenDisplayRender` | **Kitchen Display (KDS)** for the `display` output driver — a drop-on-a-page screen (typically an iPad). The editor fixes the event by slug (`EventSlugPicker`); the renderer resolves it to an id via the public `by-slug` endpoint (same as `SalesPosPanel`), then **reads display jobs straight off `salesPrintqueues`** (`display-jobs` GET, polled every 2s) and renders the orders routed to a `display`-driver station. "Bump" POSTs `display-jobs/[jobId]/bump` (optimistic local hide), closing the queue row. `clientOnly`; category `kassa`. Not a separate `/kds` app route — the block is the only surface. |
+| `kitchenDisplayBlock` | `SalesBlocksKitchenDisplayView` | `SalesBlocksKitchenDisplayRender` | **Kitchen Display (KDS)** — a drop-on-a-page screen (typically an iPad), **decoupled from printers** (#61/#117). The editor fixes the event by slug (`EventSlugPicker`) and optionally which locations to show (`LocationsPicker`); the renderer resolves the slug to an id via the public `by-slug` endpoint (same as `SalesPosPanel`), then **reads orders directly** off the `display-jobs` GET — one ticket per `(order × location)`, polled every 2s, NOT off `salesPrintqueues`. "Bump" POSTs `kds-bump` (per-`(order, location)` row in `salesKdsbumps`; optimistic local hide). `clientOnly`; category `kassa`. Not a separate `/kds` app route — the block is the only surface. |
+| `printBridgeBlock` | `SalesBlocksPrintBridgeView` | `SalesBlocksPrintBridgeRender` | **Print Bridge** — the browser-side drainer for the `browser-print` (AirPrint) output driver (#127). A drop-on-a-page screen kept open near the printer: resolves the event by slug, polls `browser-print-jobs` (server-rendered ticket HTML), and prints each through the OS / AirPrint dialog (`window.print()` in a hidden iframe), POSTing `done`/`fail`. Same queue + order LEDs as thermal; works in any profile (no LAN socket). Editor fixes the event by slug (`EventSlugPicker`). `clientOnly`; category `kassa`. |
 | `SalesBlocksEventResolver` | — | — | Slot helper for the standalone blocks: `await`s `useCollectionQuery('salesEvents')`, resolves an event by slug and exposes the full `SalesEvent` via its default scoped slot (`v-slot="{ event }"`); shows a `notFoundLabel` fallback otherwise. **Team-scoped** — only mount it for `loggedIn` members, inside `<Suspense>`. Shared by `salesOrdersBlock` + `salesClientsBlock`. |
 | `SalesBlocksPropertiesEventSlugPicker` | — | — | Searchable event dropdown (uses `useCollectionQuery('salesEvents')`); reused via `propertyComponents.eventSlug` (shared by `eventWorkspaceBlock`, `salesOrdersBlock`, `salesClientsBlock` + `kitchenDisplayBlock`) |
 | `SalesBlocksPropertiesEventScopePicker` | — | — | Event scope dropdown for `salesChartBlock` — emits event **id** with an "All events" ('') option; wired via `propertyComponents['sales-event-scope']` |
+| `SalesBlocksPropertiesLocationsPicker` | — | — | Multi-select for `kitchenDisplayBlock`'s `locations` attr. **Scoped to the block's event** (#119): reads the sibling `eventSlug` via the `croutonBlockAttrs` inject (provided by crouton-pages' `BlockPropertyPanel`), resolves it to an id and offers **only that event's** `salesLocations` (empty until an event is picked). Wired via `propertyComponents.locations`. |
 
 `croutonApps.sales.pageTypes` is currently empty (the `eventStorefront` page
 type and its `eventStorefrontBlock` were removed — the customer POS is the
@@ -592,7 +609,11 @@ Idempotent (stable ids). Run via an app's `crouton-seed` / `db:seed:*` scripts.
   time is off by the local offset. Fixed ticket labels (Order/Time/Helper/Client/
   NOTES/TOTAL/Yes-No) come from a per-locale map (`ReceiptData.locale`: en/nl/fr,
   **default nl** — matching the nl-BE time rendering); the free-text headers stay
-  per-event `receipt-settings`.
+  per-event `receipt-settings`. `ReceiptData` is the **canonical** ticket model with
+  two sibling encoders: `formatReceipt` (ESC/POS bytes, thermal) and `renderTicketHtml`
+  (a self-contained print-styled HTML document, for the `browser-print`/AirPrint driver
+  — same layout, HTML-escaped, 80mm `@page`). `encodeTicket(data, driver)` in
+  `print-queue-service.ts` picks the encoder per station.
 
 ## Testing
 

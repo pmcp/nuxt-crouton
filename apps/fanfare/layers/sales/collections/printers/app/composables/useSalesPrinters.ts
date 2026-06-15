@@ -38,6 +38,10 @@ export const salesPrinterSchema = z.object({
   // fields it doesn't even render.
   port: z.string().nullish(),
   type: z.enum(['kitchen', 'receipt']).nullish(),
+  // Output driver — how the station is fulfilled. Null ⇒ 'network-escpos'
+  // (thermal). 'browser-print' fulfils via the OS/AirPrint print dialog.
+  // nullish: existing rows may be null and the DB column is nullable.
+  driver: z.enum(['network-escpos', 'browser-print']).nullish(),
   status: z.string().nullish(),
   showPrices: z.boolean().nullish(),
   isActive: z.boolean().nullish()
@@ -68,6 +72,7 @@ const _salesPrintersConfig = {
     ipAddress: '',
     port: '',
     type: 'kitchen',
+    driver: 'network-escpos',
     status: '',
     showPrices: false,
     isActive: false

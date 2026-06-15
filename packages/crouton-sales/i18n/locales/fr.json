@@ -95,7 +95,8 @@
           "locations": {
             "label": "Emplacements",
             "description": "Les emplacements affichés par cet écran (ex. Cuisine, Bar). Laisser vide pour tous les afficher.",
-            "placeholder": "Tous les emplacements"
+            "placeholder": "Tous les emplacements",
+            "needsEvent": "Choisissez d’abord un événement ci-dessus, puis ses emplacements."
           }
         },
         "ui": {
@@ -135,6 +136,27 @@
           "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir les clients.",
           "notRecurring": "Cet événement n'utilise pas de clients récurrents, il n'y a donc aucune note ouverte.",
           "eventNotFound": "Événement introuvable"
+        }
+      },
+      "printBridge": {
+        "name": "Passerelle d’impression",
+        "description": "Un écran qui imprime les tickets en attente via la boîte de dialogue OS / AirPrint de l’appareil — pour les stations utilisant le pilote Navigateur / AirPrint.",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez l’événement dont cette passerelle imprime les tickets."
+          }
+        },
+        "ui": {
+          "title": "Passerelle d’impression",
+          "hint": "Gardez cet écran ouvert près de l’imprimante. Touchez Imprimer pour envoyer un ticket à la boîte de dialogue.",
+          "printAll": "Tout imprimer ({count})",
+          "allPrinted": "Tout est à jour — rien à imprimer.",
+          "eventNotFound": "Événement introuvable",
+          "print": "Imprimer",
+          "discard": "Supprimer",
+          "ticket": "Ticket",
+          "receipt": "Reçu"
         }
       }
     },
@@ -185,7 +207,8 @@
       "total": "Total",
       "kitchenDisplay": "Écran cuisine",
       "orders": "Commandes",
-      "clients": "Clients"
+      "clients": "Clients",
+      "printBridge": "Passerelle d’impression"
     },
     "cart": {
       "title": "Panier",
@@ -317,7 +340,13 @@
       "printerActiveHelp": "Désactivez pour mettre temporairement cette imprimante hors service",
       "general": "Général",
       "displayOrder": "Ordre d'affichage",
-      "activeHelp": "Les produits inactifs sont masqués dans la caisse"
+      "activeHelp": "Les produits inactifs sont masqués dans la caisse",
+      "driver": "Sortie",
+      "driverHelp": "Comment cette station imprime ses tickets.",
+      "driverNetwork": "Imprimante réseau",
+      "driverNetworkHelp": "Imprimante thermique sur le réseau du lieu (ESC/POS).",
+      "driverBrowser": "Navigateur / AirPrint",
+      "driverBrowserHelp": "Imprimer via la boîte de dialogue d’impression de l’appareil, depuis un écran passerelle."
     },
     "helperLogin": {
       "title": "Connexion bénévole",

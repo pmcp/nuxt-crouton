@@ -372,6 +372,25 @@ Block schemas can use `type: 'page'` for any attribute that stores a CMS page id
 resolves the stored id via `usePageLink().resolve(pageId)`. Used by `qrCodeBlock`
 (its `pageId` attr); reusable by any future block that links to a page.
 
+### Custom property editors can read sibling attrs (`croutonBlockAttrs` provide)
+
+Addon `propertyComponents` editors get only `model-value` + `update:model-value`
+from `BlockPropertyPanel`. When an editor needs a SIBLING field of the same
+block, the panel **provides** the live editing attrs under the `croutonBlockAttrs`
+inject key (the `localAttrs` ref — stable identity, deeply reactive). A custom
+editor opts in:
+
+```ts
+import type { Ref } from 'vue'
+const blockAttrs = inject<Ref<Record<string, unknown>>>('croutonBlockAttrs')
+const eventSlug = computed(() => String(blockAttrs?.value?.eventSlug ?? ''))
+```
+
+It's purely opt-in (inject) — editors that don't need it are unaffected, and
+`inject` returns `undefined` when the component is mounted outside the panel
+(degrade gracefully). Used by crouton-sales' `SalesBlocksPropertiesLocationsPicker`
+to scope its options to the kitchen-display block's picked `eventSlug` (#119).
+
 ## Page Record Schema
 
 ```typescript

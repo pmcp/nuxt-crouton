@@ -5,7 +5,7 @@
  * to expose its IP. Pass `?mark_as_printing=true` to atomically flip status→1
  * in the same call so concurrent pollers don't duplicate work.
  */
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, or, inArray, isNull } from 'drizzle-orm'
 import { requirePrintServerKey } from '../../../../utils/print-server-auth'
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
@@ -45,7 +45,11 @@ export default defineEventHandler(async (event) => {
     .where(
       and(
         eq(salesPrintqueues.eventId, eventId),
-        eq(salesPrintqueues.status, STATUS_PENDING)
+        eq(salesPrintqueues.status, STATUS_PENDING),
+        // Thermal spooler only — never hand it browser-print (or other-driver)
+        // jobs, which carry no printer IP and aren't ESC/POS. NULL ⇒ legacy
+        // thermal station, so it stays included.
+        or(isNull(salesPrinters.driver), eq(salesPrinters.driver, 'network-escpos'))
       )
     )
 
