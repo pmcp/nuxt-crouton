@@ -25,7 +25,7 @@ import { exportI18nSchema } from './utils/i18n-schema.ts'
 // Import generators
 import { generateFormComponent } from './generators/form-component.ts'
 import { generateListComponent } from './generators/list-component.ts'
-import { generateComposable } from './generators/composable.ts'
+import { generateComposable, generateRepeaterItemSchema } from './generators/composable.ts'
 import { generateCollectionReadme } from './generators/collection-readme.ts'
 import {
   generateGetEndpoint,
@@ -565,6 +565,16 @@ ${translationsFieldSchema}
     return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
   }).join('\n  ')
 
+  // Repeater fields with properties reference a named item schema (e.g.
+  // `...SlotItemSchema`) in fieldsSchema. The composable exports those, but
+  // server endpoints (POST/PATCH) validate the same body and need the schema
+  // defined locally — without this they'd reference an undefined symbol and
+  // the app 500s on boot. Emit the definitions as plain `const` for the server.
+  const repeaterItemSchemasCode = fields
+    .filter(f => f.type === 'repeater' && (f.meta?.translatableProperties || f.meta?.properties))
+    .map(f => generateRepeaterItemSchema(f, layerCamelCase, cases.pascalCasePlural).code.replace(/^export /, ''))
+    .join('\n\n')
+
   return {
     ...cases,
     originalCollectionName: collection,
@@ -573,6 +583,7 @@ ${translationsFieldSchema}
     layerCamelCase,
     fields,
     fieldsSchema,
+    repeaterItemSchemasCode,
     fieldsDefault,
     fieldsColumns,
     fieldsTypes,
