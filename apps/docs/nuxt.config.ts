@@ -44,6 +44,21 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/'],
       crawlLinks: true
+    },
+    // Cloudflare Workers deploy (official @nuxt/content path — docs is NOT a NuxtHub
+    // app, so nitro itself generates the deploy config via `deployConfig`, declaring
+    // the D1 binding `@nuxt/content` queries at runtime). Preset is supplied at build
+    // via NITRO_PRESET=cloudflare_module (kept unpinned so `pnpm dev` stays preset-free).
+    // id-less D1 → auto-provisions on first deploy; commit the id back here after.
+    // https://content.nuxt.com/docs/deploy/cloudflare-workers
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true,
+      wrangler: {
+        name: 'docs',
+        compatibility_date: '2024-09-19',
+        d1_databases: [{ binding: 'DB', database_name: 'docs-db' }]
+      }
     }
   },
 

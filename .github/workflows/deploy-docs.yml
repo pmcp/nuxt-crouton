@@ -1,11 +1,14 @@
 name: Deploy Docs
 
-# Thin caller for the reusable Workers deploy pipeline (#99, on #114's deploy-app.yml).
-# Push to `staging` (or a PR) → isolated staging env on docs.pmcp.dev (its own
-# auto-provisioned docs-staging-db). Manual dispatch with environment=production →
-# production (docs-db). The prod custom domain (docs.friendlyinter.net) is bound at
-# the DNS cutover (#134). Replaces the old Cloudflare Pages git-integration build —
-# disable that in the dashboard after the first successful Workers deploy.
+# Self-contained Workers deploy for the docs site (#99). docs is NOT a crouton/NuxtHub
+# app — it's a plain @nuxt/content site — so it does NOT use the reusable deploy-app.yml
+# (which assumes NuxtHub generates the deploy config). Instead, nitro generates the
+# deploy config itself (nuxt.config nitro.cloudflare.deployConfig) and we `wrangler deploy`
+# directly — the official @nuxt/content → Workers path.
+#
+# Single environment (public docs has no per-PR data to isolate). The custom domain
+# (docs.pmcp.dev now → docs.friendlyinter.net at the DNS cutover, #134) is attached
+# separately; this just deploys the worker.
 
 on:
   push:
@@ -15,37 +18,54 @@ on:
       - 'apps/docs/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-docs.yml'
-      - '.github/workflows/deploy-app.yml'
   pull_request:
     paths:
       - 'apps/docs/**'
       - '.github/workflows/deploy-docs.yml'
-      - '.github/workflows/deploy-app.yml'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deploy target'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 jobs:
   deploy:
-    # The reusable workflow's PR-comment step needs pull-requests: write; a caller
-    # must grant it explicitly or the call fails to validate under restrictive
-    # default token permissions ("only allowed pull-requests: none").
+    name: Deploy docs to Cloudflare Workers
+    runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
-      pull-requests: write
-    uses: ./.github/workflows/deploy-app.yml
-    with:
-      app: docs
-      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'staging' }}
-      production-url: https://docs.friendlyinter.net
-      staging-url: https://docs.pmcp.dev
-      # docs is standalone (no @fyit/* layers) — build nothing before the app.
-      layer-packages: ''
-    secrets: inherit
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NODE_OPTIONS: '--max-old-space-size=8192'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # @nuxt/content uses better-sqlite3 at BUILD time to process collections into the
+      # local DB (the dump loaded into D1 at runtime); --ignore-scripts skips its native
+      # build, so rebuild it before the build.
+      - name: Rebuild better-sqlite3
+        run: pnpm rebuild better-sqlite3
+
+      # build (cloudflare_module → nitro generates .output/server/wrangler.json via
+      # deployConfig) then deploy. Don't gate the build with PRs that only validate.
+      - name: Build + deploy
+        if: github.event_name != 'pull_request'
+        run: pnpm cf:deploy
+        working-directory: apps/docs
+
+      # On PRs, build only (no deploy) as a smoke test that the cloudflare_module build
+      # + content→D1 dump succeed.
+      - name: Build only (PR smoke test)
+        if: github.event_name == 'pull_request'
+        run: NITRO_PRESET=cloudflare_module npx nuxt build
+        working-directory: apps/docs
