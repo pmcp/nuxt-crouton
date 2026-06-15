@@ -21,9 +21,9 @@
   "devDependencies": {
     "@nuxt/kit": "^3.14.0",
     "@nuxt/schema": "^3.14.0",
-    "nuxt": "^4.3.1",
-    "typescript": "^5.7.0",
-    "vue": "^3.5.25"
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "vue": "catalog:"
   },
   "peerDependencies": {
     "@fyit/crouton-core": "workspace:*",

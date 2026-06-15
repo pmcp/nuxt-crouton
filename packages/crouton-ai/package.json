@@ -57,6 +57,6 @@
   },
   "devDependencies": {
     "unbuild": "^3.6.1",
-    "typescript": "^5.0.0"
+    "typescript": "catalog:"
   }
 }

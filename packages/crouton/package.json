@@ -64,7 +64,7 @@
     "jiti": "^2.4.0"
   },
   "devDependencies": {
-    "nuxt": "^4.3.1",
+    "nuxt": "catalog:",
     "unbuild": "^3.6.1"
   },
   "peerDependencies": {
