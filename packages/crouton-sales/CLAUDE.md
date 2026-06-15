@@ -18,6 +18,11 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | `app/components/Pos/` | Order management (OrdersList) |
 | `app/components/Settings/` | Print settings modals (opt-in) |
 | `server/utils/sync-outbox.ts` | Pi-side capture for the D1 live mirror (#176) — `recordOutboxEvents()` + `isCloudSyncEnabled()`; gated by `CROUTON_SALES_CLOUD_SYNC` |
+| `server/utils/sync-ingest.ts` | Cloud-side apply (#178) — `applyOutboxEvents()` idempotent upsert by nanoid |
+| `server/utils/cloud-sync-auth.ts` | Fail-closed `x-sync-key` auth for the ingest (#178) |
+| `server/utils/cloud-sync-pusher.ts` | Pi-side push loop (#177) — `pushPendingOutbox()` drains outbox → ingest |
+| `server/plugins/cloud-sync-pusher.ts` | Nitro plugin running the push loop (gated, backoff) |
+| `server/api/crouton-sales/sync/ingest.post.ts` | Cloud D1 ingest endpoint (#178) |
 | `server/database/schema.ts` | Package-owned Drizzle schema: `salesSyncOutbox` (`sales_sync_outbox` table) |
 | `server/db/schema.ts` | Re-export NuxtHub scans so consuming apps auto-pick-up `sales_sync_outbox` in `db:generate` |
 | `server/database/migrations/0001_sales_sync_outbox.sql` | Package migration creating `sales_sync_outbox` |
@@ -459,6 +464,26 @@ The cloud side that **receives** the Pi's changes and writes them into D1.
   fail) ⇒ non-permanent skip so the pusher retries after the create lands. The
   batch is **not** atomic — partial application is allowed and acked precisely.
   No order-number assignment here (Pi-local).
+
+### Push loop — Pi side (#177)
+
+The Pi-side background loop that actually sends the outbox up to the cloud.
+
+- **Nitro plugin `server/plugins/cloud-sync-pusher.ts`** — mirrors the
+  escpos-drainer plugin: starts only when `CROUTON_SALES_CLOUD_SYNC` is set AND
+  `CROUTON_SALES_CLOUD_SYNC_URL` is configured (else idle); OFF by default and on
+  Cloudflare. Self-chained `setTimeout` (never overlaps): a full batch reschedules
+  in 50ms so bursts drain in seconds; on push failure it **backs off
+  exponentially** (capped 60s) and resumes on reconnect. Tunables:
+  `CROUTON_SALES_CLOUD_SYNC_POLL_MS` (3000), `CROUTON_SALES_CLOUD_SYNC_BATCH` (100).
+- **`server/utils/cloud-sync-pusher.ts` `pushPendingOutbox()`** — selects pending
+  rows (`syncedAt IS NULL`, `ORDER BY seq`, limited), POSTs `{ events }` to the
+  ingest with `x-sync-key` (secret from `NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET`),
+  then sets `syncedAt` on the cloud's `applied` ids **and** on permanent skips
+  (drop a poison row so it can't wedge the loop); non-permanent skips stay pending
+  for the next tick. Transport errors throw → the plugin backs off. Idempotent by
+  nanoid downstream, so a push that's uncertain (network dropped after apply) is
+  re-sent harmlessly and converges. `fetcher` option is injectable for tests.
 
 ## Configuration
 
