@@ -304,6 +304,12 @@ docs/
 
 **After changes**: Search `apps/docs/content` for references and update external docs.
 
+### Screenshots (HARD GATE)
+
+**ALL screenshots go in `screenshots/` at the repo root — NEVER the root dir or an app dir.**
+
+This applies to every agent and sub-agent, and every capture method: Playwright (`browser_take_screenshot` → set `filename` to `screenshots/<name>.png`), `xcrun simctl io ... screenshot`, macOS `screencapture`, etc. Always write to `screenshots/<descriptive-name>.png`. The folder is gitignored (`*.png`), so captures stay out of commits.
+
 ## Maintaining AI Documentation (MANDATORY)
 
 | Change Type | What to Update |

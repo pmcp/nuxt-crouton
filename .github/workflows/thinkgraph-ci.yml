@@ -6,6 +6,7 @@ on:
     paths:
       - 'packages/**'
       - 'apps/**'
+      - 'pocs/thinkgraph/**'
       - 'pnpm-lock.yaml'
 
 jobs:
@@ -35,7 +36,9 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: |
-          pnpm typecheck 2>&1 | tee /tmp/typecheck-output.txt
+          # thinkgraph moved to pocs/ (excluded from the root `apps/*` typecheck),
+          # so include it explicitly alongside the live apps.
+          pnpm --filter './apps/*' --filter './pocs/thinkgraph' typecheck 2>&1 | tee /tmp/typecheck-output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Report result to ThinkGraph
