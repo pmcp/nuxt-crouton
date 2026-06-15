@@ -41,7 +41,7 @@ Each todo requires:
 
 ## Task Execution Workflow (MANDATORY)
 
-Every task in `/docs/PROGRESS_TRACKER.md` follows this 5-step flow:
+Every task in `/writeups/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 ```
 1. Mark Task In Progress → Edit PROGRESS_TRACKER.md ([ ] → 🔄), use TodoWrite
@@ -55,7 +55,7 @@ Every task in `/docs/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 **ISSUE-FIRST (HARD GATE): open the tracking issue BEFORE writing code.** For any new feature/package/app/initiative, the *first* action is creating the GitHub issue (epic + sub-issues for anything multi-step) via the `github-tasks` skill — not after the work, not at PR time. If you catch yourself editing files for an initiative that has no issue, STOP and open it first. New package or app? It also needs its `pkg:`/`app:` label in `.github/labels.yml`. This is the step most easily skipped — treat a missing issue like a failing build.
 
-Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `docs/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
+Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `writeups/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
 ### Commit Format (enforced by /commit skill)
 ```
@@ -72,7 +72,7 @@ Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-e
 - Add Daily Log entry
 
 ### Multi-Agent Continuity
-When starting or resuming: read `/docs/PROGRESS_TRACKER.md` first. Check git status for uncommitted work.
+When starting or resuming: read `/writeups/PROGRESS_TRACKER.md` first. Check git status for uncommitted work.
 
 ### Critical Reminders
 - ✅ ALWAYS use `/commit` skill for ALL commits
@@ -296,7 +296,7 @@ Agent personalities are defined in `.claude/agents/*.md`. Include personality in
 ## Documentation Organization
 
 ```
-docs/
+writeups/           # internal project docs (the docs SITE now lives at top-level docs/)
 ├── briefings/      # [feature-name]-brief.md
 ├── reports/        # [type]-report-YYYYMMDD.md
 ├── guides/         # [topic]-guide.md
@@ -304,7 +304,7 @@ docs/
 └── architecture/   # [domain]-architecture.md
 ```
 
-**After changes**: Search `apps/docs/content` for references and update external docs.
+**After changes**: Search `docs/content` for references and update external docs.
 
 ### Screenshots (HARD GATE)
 
@@ -351,7 +351,7 @@ Available: `KO` theme (hardware-inspired). Usage: `extends: ['@fyit/crouton-them
 
 When any task reveals repetitive work an MCP tool/resource/prompt could automate, capture with `/mcp-idea <description>` or add to `.claude/mcp-ideas.md`.
 
-MCP Servers: CLI MCP (`packages/nuxt-crouton-mcp-server/`), Docs MCP (`apps/docs/server/mcp/`)
+MCP Servers: CLI MCP (`packages/nuxt-crouton-mcp-server/`), Docs MCP (`docs/server/mcp/`)
 
 ## Key Reminders
 

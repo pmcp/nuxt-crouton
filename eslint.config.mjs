@@ -39,6 +39,8 @@ export default createConfigForNuxt({
       '**/coverage/**',
       // Apps are linted by their own configs
       'apps/**',
+      // The docs site (relocated from apps/docs) lints via its own config
+      'docs/**',
       // POCs (not-yet-live) are excluded from the shared pipeline
       'pocs/**'
     ]
