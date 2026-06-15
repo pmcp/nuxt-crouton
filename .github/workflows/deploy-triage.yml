@@ -1,7 +1,7 @@
 name: Deploy Triage
 
 # Thin caller for the reusable Workers deploy pipeline (#115, on #114's deploy-app.yml).
-# Push to `staging` (or a PR) → isolated preview (reuses triage-staging-db).
+# Push to `staging` (or a PR) → isolated staging env (reuses triage-staging-db).
 # Manual dispatch with environment=production → production (reuses triage-db).
 
 on:
@@ -32,20 +32,26 @@ on:
       environment:
         description: 'Deploy target'
         required: true
-        default: 'preview'
+        default: 'staging'
         type: choice
         options:
-          - preview
+          - staging
           - production
 
 jobs:
   deploy:
+    # The reusable workflow's PR-comment step needs pull-requests: write; a caller
+    # must grant it explicitly or the call fails to validate under restrictive
+    # default token permissions ("only allowed pull-requests: none").
+    permissions:
+      contents: read
+      pull-requests: write
     uses: ./.github/workflows/deploy-app.yml
     with:
       app: triage
-      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'preview' }}
+      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'staging' }}
       production-url: https://triage.friendlyinter.net
-      preview-url: https://triage-preview.cloudflare-e53.workers.dev
+      staging-url: https://triage-preview.cloudflare-e53.workers.dev
       # Only the dist-consumed packages with a build script (editor/pages/charts are
       # pure source layers — the reusable workflow skips those automatically).
       layer-packages: '@fyit/crouton-core @fyit/crouton-auth @fyit/crouton-ai @fyit/crouton-triage @fyit/crouton-flow @fyit/crouton'

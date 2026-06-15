@@ -5,14 +5,14 @@ on:
     branches:
       - staging
     paths:
-      - 'apps/thinkgraph/**'
+      - 'pocs/thinkgraph/**'
       - 'packages/crouton/**'
       - 'packages/crouton-core/**'
       - 'packages/crouton-flow/**'
       - 'packages/crouton-ai/**'
       - 'packages/crouton-mcp-toolkit/**'
       - 'packages/crouton-collab/**'
-      - 'workers/collab-worker/**'
+      - 'pocs/thinkgraph-collab-worker/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-thinkgraph.yml'
   workflow_dispatch:
@@ -76,9 +76,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            apps/thinkgraph/node_modules/.cache
-            apps/thinkgraph/.nuxt/cache
-          key: nuxt-build-thinkgraph-${{ hashFiles('apps/thinkgraph/**', 'packages/**/*.ts') }}
+            pocs/thinkgraph/node_modules/.cache
+            pocs/thinkgraph/.nuxt/cache
+          key: nuxt-build-thinkgraph-${{ hashFiles('pocs/thinkgraph/**', 'packages/**/*.ts') }}
           restore-keys: |
             nuxt-build-thinkgraph-
 
@@ -89,15 +89,15 @@ jobs:
           else
             npx wrangler d1 migrations apply DB --env preview --remote
           fi
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph
 
       - name: Prepare Nuxt (generate tsconfig)
         run: npx nuxt prepare
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph
 
       - name: Build
         run: npx nuxt build
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           NITRO_PRESET: 'cloudflare-pages'
@@ -110,7 +110,7 @@ jobs:
         id: typecheck
         continue-on-error: true
         run: npx nuxt typecheck
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph
 
       - name: Notify ThinkGraph CI webhook
         if: always() && steps.typecheck.outcome != 'skipped'
@@ -148,17 +148,17 @@ jobs:
               fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
             "
           fi
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph
 
       - name: Deploy Collab Worker (Durable Objects)
         run: npx wrangler deploy
-        working-directory: workers/collab-worker
+        working-directory: pocs/thinkgraph-collab-worker
 
       - name: Run collab D1 migration
         run: |
           npx wrangler d1 execute thinkgraph-db --remote \
             --file=../../packages/crouton-collab/server/database/migrations/0001_yjs_collab_states.sql
-        working-directory: workers/collab-worker
+        working-directory: pocs/thinkgraph-collab-worker
 
       - name: Deploy to Cloudflare Pages
         run: |
@@ -167,4 +167,4 @@ jobs:
           else
             npx wrangler pages deploy dist/ --commit-dirty=true --branch staging
           fi
-        working-directory: apps/thinkgraph
+        working-directory: pocs/thinkgraph

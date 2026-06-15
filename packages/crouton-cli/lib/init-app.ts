@@ -82,7 +82,7 @@ function printSummary(name: string, appDir: string, cf: boolean): void {
   console.log('  Deploy:')
   if (cf) {
     console.log('  4.  pnpm cf:deploy      (builds, auto-provisions D1+KV, syncs ids, migrates, deploys to Workers)')
-    console.log('  5.  pnpm cf:preview     (deploys an isolated, auto-provisioned preview env)')
+    console.log('  5.  pnpm cf:staging     (deploys an isolated, auto-provisioned staging env)')
   } else {
     console.log('       configure your own deploy target')
   }

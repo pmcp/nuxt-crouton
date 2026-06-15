@@ -42,6 +42,9 @@ coverage
 
 # Build
 *.tsbuildinfo
+# POCs — local dev state never committed
+pocs/**/.data
+pocs/**/.wrangler
 apps/playground/.data
 apps/test/.data
 apps/test-nuxthub/.data

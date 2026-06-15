@@ -29,12 +29,14 @@
     { "binding": "KV", "id": "db80d9c0c4424af4bd4c652968caf283" }
   ],
 
-  // Preview environment — reuses the EXISTING staging D1 + KV (so staging data is
-  // preserved). Deploying `--env preview` creates a `triage-preview` worker bound
-  // to these. The env block is stripped from the generated .output config
-  // (nitro#3429), so cf:preview re-injects it via scripts/inject-wrangler-env.mjs.
+  // Staging environment (#133: staging on pmcp.dev, prod on friendlyinter.net) —
+  // reuses the EXISTING staging D1 + KV (so staging data is preserved). Deploying
+  // `--env staging` creates a `triage-staging` worker bound to these. The env block
+  // is stripped from the generated .output config (nitro#3429), so cf:staging
+  // re-injects it via scripts/inject-wrangler-env.mjs. (Route stays on the -preview
+  // hostname until #136 reassigns it to triage.pmcp.dev after the DNS move.)
   "env": {
-    "preview": {
+    "staging": {
       "routes": [{ "pattern": "triage-preview.pmcp.dev", "custom_domain": true }],
       "d1_databases": [
         {

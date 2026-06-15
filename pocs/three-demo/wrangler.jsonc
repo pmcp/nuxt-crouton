@@ -25,15 +25,15 @@
     { "binding": "KV", "id": "7da665b3a93040eaa381df122284f11f" }
   ],
 
-  // Preview environment — its OWN isolated D1 + KV, id-less so they auto-provision
-  // on the first `wrangler deploy --env preview` (then commit the written-back ids,
+  // Staging environment — its OWN isolated D1 + KV, id-less so they auto-provision
+  // on the first `wrangler deploy --env staging` (then commit the written-back ids,
   // same bootstrap→committed flow as production above).
   //
   // NuxtHub/Nitro strip this `env` block from the generated .output/server/
-  // wrangler.json (nitro#3429), so `pnpm cf:preview` re-injects it post-build via
+  // wrangler.json (nitro#3429), so `pnpm cf:staging` re-injects it post-build via
   // scripts/inject-wrangler-env.mjs before deploying. See #113.
   "env": {
-    "preview": {
+    "staging": {
       "d1_databases": [
         {
           "binding": "DB",

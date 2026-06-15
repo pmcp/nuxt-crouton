@@ -101,7 +101,7 @@ interface ScaffoldVars {
   theme?: string
   dialect: string
   cf: boolean
-  /** Optional CF zone — emits <name>.<domain> / <name>-preview.<domain> routes. */
+  /** Optional CF zone — emits <name>.<domain> / <name>-staging.<domain> routes. */
   domain?: string
   modules: Record<string, any>
 }
@@ -139,15 +139,19 @@ function tmplPackageJson(vars: ScaffoldVars): string {
     // Each deploy: build → deploy (auto-provisions id-less D1/KV on first run) →
     // sync ids back into wrangler.jsonc → remote D1 migrate. See `crouton deploy`.
     scripts['cf:deploy'] = `NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy && node scripts/sync-wrangler-ids.mjs && npx wrangler d1 migrations apply ${vars.name}-db --remote`
-    // Preview = its OWN isolated, auto-provisioned env. The env block is dropped
+    // Staging = its OWN isolated, auto-provisioned env. The env block is dropped
     // from the generated .output config (nitro#3429), so re-inject it post-build,
     // and again after sync so the migrate command sees the provisioned ids.
-    scripts['cf:preview'] = `NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env preview && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply ${vars.name}-preview-db --config .output/server/wrangler.json --env preview --remote`
+    // NB: the migrate step must NOT pass --config .output/server/wrangler.json —
+    // wrangler resolves migrations_dir relative to the config dir, doubling
+    // `server/server/…` → "No migrations present" (#138). Drop --config so it
+    // resolves from the app-root source config (where the synced ids live).
+    scripts['cf:staging'] = `NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env staging && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply ${vars.name}-staging-db --env staging --remote`
     scripts['sync:ids'] = 'node scripts/sync-wrangler-ids.mjs'
     scripts['db:generate'] = 'drizzle-kit generate'
     scripts['db:migrate'] = `npx wrangler d1 migrations apply ${vars.name}-db --local`
     scripts['db:migrate:prod'] = `npx wrangler d1 migrations apply ${vars.name}-db --remote`
-    scripts['db:migrate:preview'] = `npx wrangler d1 migrations apply ${vars.name}-preview-db --config .output/server/wrangler.json --env preview --remote`
+    scripts['db:migrate:staging'] = `npx wrangler d1 migrations apply ${vars.name}-staging-db --env staging --remote`
   }
 
   return JSON.stringify({
@@ -165,7 +169,7 @@ function tmplNuxtConfig(vars: ScaffoldVars): string {
   const extendsArr = vars.extends.map(p => `    '${p}'`).join(',\n')
 
   // Build nitro alias block for CF stubs. The Workers preset is supplied at build
-  // time via `NITRO_PRESET=cloudflare_module` (in the cf:deploy/cf:preview scripts),
+  // time via `NITRO_PRESET=cloudflare_module` (in the cf:deploy/cf:staging scripts),
   // so it's intentionally NOT pinned here — keeping `pnpm dev`/`build` preset-free.
   let nitroBlock = ''
   if (vars.cf) {
@@ -264,17 +268,17 @@ function tmplWranglerJsonc(vars: ScaffoldVars): string {
   // Workers (static-assets) config, id-LESS so the first `pnpm cf:deploy`
   // auto-provisions the D1 + KV (wrangler 4.45+). `sync-wrangler-ids.mjs` then
   // writes the provisioned ids back here (bootstrap → committed), which remote
-  // `d1 migrations apply` needs (workers-sdk#13632). Same flow for env.preview.
+  // `d1 migrations apply` needs (workers-sdk#13632). Same flow for env.staging.
   //
   // With --domain <zone>, custom-domain routes are emitted so `wrangler deploy`
-  // auto-binds <name>.<zone> (prod) / <name>-preview.<zone> (preview), creating
+  // auto-binds <name>.<zone> (prod) / <name>-staging.<zone> (staging), creating
   // the DNS record + cert (the zone must live in this Cloudflare account). Nitro
-  // preserves top-level routes; inject-wrangler-env carries the env.preview ones.
+  // preserves top-level routes; inject-wrangler-env carries the env.staging ones.
   const prodRoute = vars.domain
     ? `\n  "routes": [{ "pattern": "${vars.name}.${vars.domain}", "custom_domain": true }],\n`
     : ''
-  const previewRoute = vars.domain
-    ? `\n      "routes": [{ "pattern": "${vars.name}-preview.${vars.domain}", "custom_domain": true }],`
+  const stagingRoute = vars.domain
+    ? `\n      "routes": [{ "pattern": "${vars.name}-staging.${vars.domain}", "custom_domain": true }],`
     : ''
   return `{
   // Cloudflare WORKERS (static assets) config for ${vars.name}.
@@ -300,16 +304,16 @@ ${prodRoute}
     { "binding": "KV" }
   ],
 
-  // Preview environment — its OWN isolated D1 + KV, also id-less so they
-  // auto-provision on the first \`pnpm cf:preview\`. The env block is stripped
-  // from the generated .output config (nitro#3429), so cf:preview re-injects it
+  // Staging environment — its OWN isolated D1 + KV, also id-less so they
+  // auto-provision on the first \`pnpm cf:staging\`. The env block is stripped
+  // from the generated .output config (nitro#3429), so cf:staging re-injects it
   // via scripts/inject-wrangler-env.mjs before deploying.
   "env": {
-    "preview": {${previewRoute}
+    "staging": {${stagingRoute}
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "${vars.name}-preview-db",
+          "database_name": "${vars.name}-staging-db",
           "migrations_dir": "server/db/migrations/sqlite"
         }
       ],
@@ -661,7 +665,7 @@ export async function scaffoldApp(
   console.log('  5.', 'crouton generate')
   if (cf) {
     console.log('  6.', 'pnpm cf:deploy    (builds, auto-provisions D1+KV, syncs ids, migrates, deploys to Workers)')
-    console.log('  7.', 'pnpm cf:preview   (deploys an isolated, auto-provisioned preview env)')
+    console.log('  7.', 'pnpm cf:staging   (deploys an isolated, auto-provisioned staging env)')
   }
   console.log()
 

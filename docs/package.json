@@ -6,7 +6,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
-    "deploy": "nuxt build && wrangler pages deploy dist",
+    "cf:deploy": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler --cwd .output deploy",
     "postinstall": "nuxt prepare 2>/dev/null || true",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck"
