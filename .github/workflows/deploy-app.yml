@@ -99,6 +99,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      # --ignore-scripts above also skips native-module build steps. @nuxt/content
+      # (the docs app) needs better-sqlite3's native binding at BUILD time to process
+      # collections into the local DB (the dump that's loaded into D1 at runtime).
+      # Rebuild it so the build doesn't fail with "Could not locate the bindings file".
+      # No-op for apps that don't have it in their graph.
+      - name: Rebuild native build deps skipped by --ignore-scripts
+        run: pnpm rebuild better-sqlite3 2>/dev/null || true
+
       # The dist-consumed framework packages (inputs.layer-packages) must be built
       # before the app build. Pure source layers (crouton-editor/pages/charts) have
       # no build script and are skipped.
