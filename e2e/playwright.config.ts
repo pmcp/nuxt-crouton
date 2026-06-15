@@ -10,6 +10,9 @@ import { join } from 'node:path'
 
 const storageState = join(__dirname, '.auth', 'user.json')
 
+// Which fixture app to boot/test (default: minimal). See e2e/helpers.ts.
+const fixture = process.env.E2E_FIXTURE || 'minimal'
+
 export default defineConfig({
   testDir: '.',
   fullyParallel: false,
@@ -43,9 +46,9 @@ export default defineConfig({
     }
   ],
 
-  // Boots the fixture app if it isn't already running on :3000.
+  // Boots the active fixture app if it isn't already running on :3000.
   webServer: {
-    command: 'pnpm --filter e2e-fixture-minimal dev',
+    command: `pnpm --filter e2e-fixture-${fixture} dev`,
     cwd: '..',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
