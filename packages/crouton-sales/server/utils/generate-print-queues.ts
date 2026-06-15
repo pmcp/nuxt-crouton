@@ -15,6 +15,7 @@ import {
   type PrinterConfig
 } from './print-queue-service'
 import { DEFAULT_RECEIPT_SETTINGS, type ReceiptSettings } from './receipt-formatter'
+import { recordOutboxEvents, type OutboxEvent } from './sync-outbox'
 
 interface GenerateInsertOptions {
   db: any
@@ -148,9 +149,10 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
   )
 
   const queueIds: string[] = []
+  const outboxEvents: OutboxEvent[] = []
   for (const job of jobs) {
     const queueId = nanoid()
-    await db.insert(salesPrintqueues).values({
+    const row = {
       id: queueId,
       teamId,
       owner: helperDisplayName,
@@ -167,9 +169,25 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       retryCount: '0',
       createdBy: helperId,
       updatedBy: helperId
-    })
+    }
+    await db.insert(salesPrintqueues).values(row)
     queueIds.push(queueId)
+
+    // Mirror the print-status row (#176) without the bulky base64 printData —
+    // the cloud shows status, it never prints, so the event stays kilobytes.
+    const { printData: _printData, ...mirror } = row
+    outboxEvents.push({
+      entityType: 'printstatus',
+      entityId: queueId,
+      orderId,
+      teamId,
+      eventId,
+      payload: mirror
+    })
   }
+
+  // No-op unless CROUTON_SALES_CLOUD_SYNC is on; best-effort, never throws.
+  await recordOutboxEvents(db, outboxEvents)
 
   return queueIds
 }

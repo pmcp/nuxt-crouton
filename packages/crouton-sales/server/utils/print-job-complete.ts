@@ -14,6 +14,7 @@
  * app (same pattern as `generate-print-queues.ts`).
  */
 import { and, count, eq, ne, notInArray, sql } from 'drizzle-orm'
+import { isCloudSyncEnabled, recordOutboxEvents, type OutboxEvent } from './sync-outbox'
 
 // salesPrintqueues.status is text-typed in the generated schema — string literals.
 const STATUS_COMPLETED = '2'
@@ -65,6 +66,25 @@ export async function completePrintJob(
     }
   }
 
+  // Mirror the print-status transition (#176): the job → done, plus the order
+  // row when it auto-completed. No-op unless CROUTON_SALES_CLOUD_SYNC is on
+  // (guard the order re-select too, so disabled processes pay nothing).
+  if (isCloudSyncEnabled() && orderId) {
+    const events: OutboxEvent[] = [{
+      entityType: 'printstatus',
+      entityId: jobId,
+      orderId,
+      payload: { id: jobId, status: STATUS_COMPLETED, completedAt: now.toISOString(), updatedAt: now },
+    }]
+    if (orderCompleted) {
+      const [orderRow] = await db.select().from(salesOrders).where(eq(salesOrders.id, orderId)).limit(1)
+      if (orderRow) {
+        events.push({ entityType: 'order', entityId: orderId, orderId, teamId: orderRow.teamId, eventId: orderRow.eventId, payload: orderRow })
+      }
+    }
+    await recordOutboxEvents(db, events)
+  }
+
   return { found: true, orderCompleted }
 }
 
@@ -102,6 +122,22 @@ export async function failPrintJob(
         eq(salesOrders.id, orderId),
         notInArray(salesOrders.status, ['completed', 'cancelled'])
       ))
+  }
+
+  // Mirror the print-status transition (#176): the job → failed, plus the
+  // current order row (its status may have flipped to print_failed).
+  if (isCloudSyncEnabled() && orderId) {
+    const events: OutboxEvent[] = [{
+      entityType: 'printstatus',
+      entityId: jobId,
+      orderId,
+      payload: { id: jobId, status: STATUS_FAILED, errorMessage, updatedAt: now },
+    }]
+    const [orderRow] = await db.select().from(salesOrders).where(eq(salesOrders.id, orderId)).limit(1)
+    if (orderRow) {
+      events.push({ entityType: 'order', entityId: orderId, orderId, teamId: orderRow.teamId, eventId: orderRow.eventId, payload: orderRow })
+    }
+    await recordOutboxEvents(db, events)
   }
 
   return { found: true }

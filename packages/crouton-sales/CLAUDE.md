@@ -17,6 +17,15 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | `app/components/Admin/` | Admin sidebar navigation |
 | `app/components/Pos/` | Order management (OrdersList) |
 | `app/components/Settings/` | Print settings modals (opt-in) |
+| `server/utils/sync-outbox.ts` | Pi-side capture for the D1 live mirror (#176) — `recordOutboxEvents()` + `isCloudSyncEnabled()`; gated by `CROUTON_SALES_CLOUD_SYNC` |
+| `server/utils/sync-ingest.ts` | Cloud-side apply (#178) — `applyOutboxEvents()` idempotent upsert by nanoid |
+| `server/utils/cloud-sync-auth.ts` | Fail-closed `x-sync-key` auth for the ingest (#178) |
+| `server/utils/cloud-sync-pusher.ts` | Pi-side push loop (#177) — `pushPendingOutbox()` drains outbox → ingest |
+| `server/plugins/cloud-sync-pusher.ts` | Nitro plugin running the push loop (gated, backoff) |
+| `server/api/crouton-sales/sync/ingest.post.ts` | Cloud D1 ingest endpoint (#178) |
+| `server/database/schema.ts` | Package-owned Drizzle schema: `salesSyncOutbox` (`sales_sync_outbox` table) |
+| `server/db/schema.ts` | Re-export NuxtHub scans so consuming apps auto-pick-up `sales_sync_outbox` in `db:generate` |
+| `server/database/migrations/0001_sales_sync_outbox.sql` | Package migration creating `sales_sync_outbox` |
 | `schemas/` | JSON schema files for crouton generate |
 | `seed/index.ts` | Seed provider (`@fyit/crouton-sales/seed`) — event `vlaamsekermis` (PIN `1234`) + categories/products + a scoped kassa demo page |
 
@@ -324,6 +333,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
+| `sync/ingest` POST | `x-sync-key` secret (fail-closed) | Cloud D1 ingest (#178): idempotent upsert of batched outbox events from the Pi pusher. See "Cloud ingest" above |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` heads the remark blocks on kitchen tickets — the per-location remarks from the POS and legacy whole-order notes; `footer_text` only on `type: 'receipt'` printer jobs |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
@@ -397,6 +407,83 @@ Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.pr
 `printData` returned by `/jobs` is already base64-encoded ESC/POS bytes (built by `formatReceipt` in `server/utils/receipt-formatter.ts`). Spooler decodes and writes raw bytes to printer's TCP port 9100.
 
 The spooler script's expected job-row shape: `{ id, printData, printerIp, printerPort, printMode, locationId, retryCount }`.
+
+## Cloud Sync — Pi-side outbox (D1 live mirror)
+
+Part of epic #175 (keep a live online copy of the venue's data). The venue till
+runs on a Pi as the authoritative writer; when the 5G uplink is up it pushes its
+changes to a Cloudflare D1 **mirror** so an online dashboard (#179) can show
+live orders/sales. #176 is the **capture** layer (this package); the push loop
+(#177) and cloud ingest (#178) build on the rows it records.
+
+- **Table `sales_sync_outbox`** (`server/database/schema.ts`, package-owned like
+  crouton-flow's `flow_configs`). One row **per entity change**, keyed by the
+  entity's existing **nanoid** (`entityId`) so the downstream D1 upsert is
+  idempotent (re-sending after an uncertain push is safe). `seq` is the monotonic
+  cursor the pusher drains oldest-first; `syncedAt` stays NULL until the cloud
+  acks. NuxtHub auto-discovers the table via `server/db/schema.ts` — consuming
+  apps just run `db:generate` + migrate (or apply `0001_sales_sync_outbox.sql`).
+- **Capture** (`recordOutboxEvents()` in `server/utils/sync-outbox.ts`) is wired
+  into the existing mutation paths:
+  - order create + each order-item → `orders/index.post.ts`
+  - print-job create (status `0`) → `generate-print-queues.ts` (the single choke
+    point for order/reprint/end-receipt) — the bulky base64 `printData` is
+    **omitted** from the mirrored payload (the cloud shows status, never prints)
+  - print-status transitions (done `2` / failed `9`) + the order's status flip →
+    `print-job-complete.ts` (the path the in-process ESC/POS drainer and the
+    browser-print drainer both call)
+- **Gated by `CROUTON_SALES_CLOUD_SYNC`** (`'1'`/`'true'`) — OFF by default and
+  on every Cloudflare deploy (the cloud *is* the mirror there; only the venue Pi
+  captures), mirroring the escpos-drainer env-gate. Capture is **best-effort**:
+  failures are logged and swallowed so they can never block the till.
+- **Not captured** (deliberate, for #177+ to revisit): the thermal RUT spooler
+  callbacks (`print-server/jobs/[jobId]/{complete,fail}` — the cloud-authoritative
+  profile, no Pi outbox) and `printqueues/retry-failed` (admin edge, 9→0).
+
+### Cloud ingest (#178)
+
+The cloud side that **receives** the Pi's changes and writes them into D1.
+
+- **Endpoint `POST /api/crouton-sales/sync/ingest`** (`server/api/crouton-sales/sync/ingest.post.ts`).
+  Body `{ events: IngestEvent[] }` (the outbox rows); reply
+  `{ received, appliedCount, applied: string[], skipped: [{id, reason, permanent}] }`.
+  The pusher (#177) advances its cursor past `applied`, retries non-permanent
+  skips, drops permanent ones.
+- **Auth — fail-closed shared secret** (`server/utils/cloud-sync-auth.ts`,
+  `requireCloudSyncKey`): header `x-sync-key` vs `runtimeConfig.croutonSales.cloudSyncSecret`
+  (env `NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET`). Unlike the print key there is **no
+  default** — unset secret ⇒ 503, wrong key ⇒ 401 (this is the only writer of
+  mirrored data, so it must never default to open).
+- **Apply** (`server/utils/sync-ingest.ts`, `applyOutboxEvents`): per event,
+  **idempotent upsert keyed by the nanoid** into `salesOrders` / `salesOrderitems`
+  / `salesPrintqueues` — UPDATE-by-id, INSERT only when absent (replays converge,
+  no dup rows). A partial *transition* payload updates only its fields; a *create*
+  payload inserts. JSON timestamps are revived to `Date` for timestamp columns
+  (`getTableColumns` dataType check), unknown keys dropped. Per-event try/catch:
+  malformed ⇒ permanent skip; a transition before its create (INSERT NOT-NULL
+  fail) ⇒ non-permanent skip so the pusher retries after the create lands. The
+  batch is **not** atomic — partial application is allowed and acked precisely.
+  No order-number assignment here (Pi-local).
+
+### Push loop — Pi side (#177)
+
+The Pi-side background loop that actually sends the outbox up to the cloud.
+
+- **Nitro plugin `server/plugins/cloud-sync-pusher.ts`** — mirrors the
+  escpos-drainer plugin: starts only when `CROUTON_SALES_CLOUD_SYNC` is set AND
+  `CROUTON_SALES_CLOUD_SYNC_URL` is configured (else idle); OFF by default and on
+  Cloudflare. Self-chained `setTimeout` (never overlaps): a full batch reschedules
+  in 50ms so bursts drain in seconds; on push failure it **backs off
+  exponentially** (capped 60s) and resumes on reconnect. Tunables:
+  `CROUTON_SALES_CLOUD_SYNC_POLL_MS` (3000), `CROUTON_SALES_CLOUD_SYNC_BATCH` (100).
+- **`server/utils/cloud-sync-pusher.ts` `pushPendingOutbox()`** — selects pending
+  rows (`syncedAt IS NULL`, `ORDER BY seq`, limited), POSTs `{ events }` to the
+  ingest with `x-sync-key` (secret from `NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET`),
+  then sets `syncedAt` on the cloud's `applied` ids **and** on permanent skips
+  (drop a poison row so it can't wedge the loop); non-permanent skips stay pending
+  for the next tick. Transport errors throw → the plugin backs off. Idempotent by
+  nanoid downstream, so a push that's uncertain (network dropped after apply) is
+  re-sent harmlessly and converges. `fetcher` option is injectable for tests.
 
 ## Configuration
 

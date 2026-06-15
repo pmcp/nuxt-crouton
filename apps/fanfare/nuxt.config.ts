@@ -65,10 +65,14 @@ export default defineNuxtConfig({
   // Runtime config:
   // - printApiKey: shared key the polling spooler uses
   // - print.enabled: gate that controls whether order POST enqueues print jobs
-  // Override via NUXT_CROUTON_SALES_PRINT_API_KEY / NUXT_CROUTON_SALES_PRINT_ENABLED.
+  // - cloudSyncSecret: shared secret the Pi pusher (#177) presents to the cloud
+  //   D1 ingest (#178). Empty by default = fail-closed (ingest rejects all).
+  // Override via NUXT_CROUTON_SALES_PRINT_API_KEY / NUXT_CROUTON_SALES_PRINT_ENABLED /
+  // NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET.
   runtimeConfig: {
     croutonSales: {
       printApiKey: '1234',
+      cloudSyncSecret: '',
       print: { enabled: true }
     }
   },

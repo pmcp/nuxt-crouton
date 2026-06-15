@@ -346,6 +346,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |
 | Skill | `.claude/skills/ecosystem-check/SKILL.md` | Check Nuxt/UnJS/Vite/OSS prior art before building |
 | Skill | `.claude/skills/e2e-smoke/SKILL.md` | Run the Playwright fixture smoke harness (boot + auth + CRUD) after a dep bump or `packages/` change |
+| Skill | `.claude/skills/db-migrations/SKILL.md` | The migrate step (`db:generate` schema.mjs-after-build gotcha) + package-owned infra tables. App collections use the `crouton` CLI, not this |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
 | Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |

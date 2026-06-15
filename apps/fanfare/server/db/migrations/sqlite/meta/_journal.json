@@ -99,6 +99,13 @@
       "when": 1781475716173,
       "tag": "0013_black_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1781548812527,
+      "tag": "0014_gifted_chronomancer",
+      "breakpoints": true
     }
   ]
 }
