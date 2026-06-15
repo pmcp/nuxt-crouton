@@ -193,7 +193,7 @@ Concentrated seams, mostly already abstracted:
 1. **`useDB()`** (`packages/crouton-auth/server/utils/database.ts`) — turn into a driver factory (D1 vs better-sqlite3). Single choke point.
 2. **Two direct `hubDatabase()` calls** in `packages/crouton-auth/server/utils/team.ts` (~lines 317, 486) and the better-auth wiring — fold onto `useDB()`.
 3. **`hubKV` / `hubBlob`** usages — wrap behind `useKV()` / `useBlob()` over unstorage.
-4. **Printer drainer** — add an in-process Node drainer that reuses the existing `receipt-formatter.ts` (already dependency-free) and the existing complete/fail transitions; keep enqueue + schema + UI unchanged.
+4. **Printer drainer** — ✅ **done** (#61): `packages/crouton-sales/server/utils/escpos-drainer.ts` + the `escpos-drainer` Nitro plugin. In-process Node drainer (DLE-EOT pre-flight → TCP `:9100` → shared `completePrintJob`/`failPrintJob`), gated by `CROUTON_SALES_PRINT_DRAINER`, `node:net` imported lazily so it stays Workers-import-safe. Enqueue + schema + UI unchanged; run it OR the RUT spooler, never both.
 5. **`nuxt.config.ts`** — `node-server` preset for the Pi build; gate `cf-stubs` aliases behind the Cloudflare preset.
 6. **CI** — build + smoke-test both presets.
 
