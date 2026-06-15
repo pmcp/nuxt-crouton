@@ -1,0 +1,13 @@
+[
+  {
+    "collection": "items",
+    "fields": [
+      "name",
+      "done"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-15T11:30:22.901Z",
+    "layer": "main",
+    "gitSha": "c9b9dbaa"
+  }
+]
