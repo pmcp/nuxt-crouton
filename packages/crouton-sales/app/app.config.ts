@@ -332,6 +332,42 @@ const kitchenDisplayBlock: CroutonBlockDefinition = {
   }
 }
 
+// Print Bridge — the browser-side drainer for the `browser-print` (AirPrint)
+// output driver. A drop-on-a-page screen near the printer that prints pending
+// tickets via the OS print dialog. The editor fixes the event by slug.
+const printBridgeBlock: CroutonBlockDefinition = {
+  type: 'printBridgeBlock',
+  name: 'sales.blocks.printBridge.name',
+  description: 'sales.blocks.printBridge.description',
+  icon: 'i-lucide-printer',
+  category: 'kassa',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: ''
+  },
+  components: {
+    editorView: 'SalesBlocksPrintBridgeView',
+    renderer: 'SalesBlocksPrintBridgeRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'sales.blocks.printBridge.fields.eventSlug.label',
+      description: 'sales.blocks.printBridge.fields.eventSlug.description'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="print-bridge-block"]',
+    attributes: {
+      eventSlug: { default: '' }
+    }
+  }
+}
+
 export default defineAppConfig({
   // App auto-discovery registration for crouton-sales
   croutonApps: {
@@ -402,6 +438,7 @@ export default defineAppConfig({
     salesOrdersBlock,
     salesClientsBlock,
     kitchenDisplayBlock,
+    printBridgeBlock,
     salesChartBlock,
     salesProductMatrixBlock
   }

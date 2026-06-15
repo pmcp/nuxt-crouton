@@ -436,6 +436,116 @@ export function formatReceipt(data: ReceiptData): FormattedReceipt {
 }
 
 /**
+ * HTML encoder for the `browser-print` output driver — the sibling of
+ * `formatReceipt` (ESC/POS) that targets the OS / AirPrint print dialog
+ * (`window.print()`) instead of a thermal printer's TCP port. Takes the SAME
+ * canonical `ReceiptData`, so routing + content stay driver-agnostic; only the
+ * encoding differs (HTML vs ESC/POS bytes).
+ *
+ * Returns a self-contained HTML document (own print CSS), sized for an 80mm
+ * roll, so a bridge screen can drop it into an iframe and print it as-is. All
+ * order-derived text is HTML-escaped.
+ */
+export function renderTicketHtml(data: ReceiptData): string {
+  const currencySymbol = data.currencySymbol || DEFAULT_CURRENCY_SYMBOL
+  const L = RECEIPT_LABELS[data.locale || DEFAULT_RECEIPT_LOCALE]
+  const settings = data.receiptSettings || DEFAULT_RECEIPT_SETTINGS
+  const isKitchen = data.printMode === 'kitchen'
+
+  const esc = (v: unknown): string =>
+    String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  const money = (n: number): string => `${currencySymbol}${n.toFixed(2)}`
+
+  const orderDate = typeof data.createdAt === 'string' ? new Date(data.createdAt) : data.createdAt
+  const timeStr = orderDate.toLocaleString(TIME_LOCALE, { timeZone: data.timeZone || DEFAULT_TIME_ZONE })
+
+  const rows: string[] = []
+  rows.push(`<header class="c"><strong class="team">${esc(data.teamName)}</strong><div>${esc(data.eventName)}</div></header>`)
+
+  // Big client call-out — kitchen tickets + end-of-tab receipts only (mirrors formatReceipt).
+  if (data.clientName && (isKitchen || data.clientTab)) {
+    rows.push(`<div class="hr"></div><div class="client">${esc(data.clientName.toUpperCase())}</div>`)
+  }
+
+  rows.push('<div class="hr"></div>')
+  rows.push(data.clientTab
+    ? `<div><strong>${esc(L.orders)}: ${esc(data.clientTab.orderCount)}</strong></div>`
+    : `<div><strong>${esc(L.order)} #${esc(data.orderNumber)}</strong></div>`)
+  rows.push(`<div>${esc(L.time)}: ${esc(timeStr)}</div>`)
+  if (data.helperName) rows.push(`<div>${esc(L.helper)}: ${esc(data.helperName)}</div>`)
+  if (data.clientName && data.printMode === 'receipt' && !data.clientTab) {
+    rows.push(`<div>${esc(L.client)}: ${esc(data.clientName)}</div>`)
+  }
+
+  if (data.isPersonnel) rows.push(`<div class="staff">${esc(settings.staff_order_header)}</div>`)
+
+  // Special instructions / per-location remark — kitchen, at the top.
+  if (data.orderNotes && isKitchen) {
+    rows.push(`<div class="hr"></div><div><strong>${esc(settings.special_instructions_title)}</strong></div><div>${esc(data.orderNotes)}</div>`)
+  }
+  if (data.locationNote && isKitchen) {
+    rows.push(`<div class="hr"></div><div><strong>${esc(settings.special_instructions_title)}</strong></div><div>${esc(data.locationNote)}</div>`)
+  }
+
+  rows.push('<div class="hr"></div><ul class="items">')
+  for (const item of data.items || []) {
+    const showPrice = data.showPrices && item.price !== undefined
+    const line = showPrice
+      ? `<span>${esc(item.quantity)}x ${esc(item.name)}</span><span class="amt">${esc(money(item.price! * item.quantity))}</span>`
+      : `<span>${esc(item.quantity)}x ${esc(item.name)}</span>`
+    rows.push(`<li><div class="line"><strong>${line}</strong></div>`)
+    if (item.options) {
+      for (const [optionName, optionValue] of Object.entries(item.options)) {
+        if (!optionValue) continue
+        let display = ''
+        if (typeof optionValue === 'object' && optionValue !== null && 'label' in optionValue) {
+          const o = optionValue as { label: string, price?: number }
+          display = o.label + (o.price ? ` (+${money(Number(o.price))})` : '')
+        }
+        else if (typeof optionValue === 'boolean') display = optionValue ? L.yes : L.no
+        else display = String(optionValue)
+        rows.push(`<div class="opt">+ ${optionName === display ? esc(display) : `${esc(optionName)}: ${esc(display)}`}</div>`)
+      }
+    }
+    if (item.notes) rows.push(`<div class="opt">&rarr; ${esc(item.notes)}</div>`)
+    rows.push('</li>')
+  }
+  rows.push('</ul>')
+
+  if (data.orderNotes && data.printMode === 'receipt') {
+    rows.push(`<div class="hr"></div><div><strong>${esc(L.notes)}</strong></div><div>${esc(data.orderNotes)}</div>`)
+  }
+  if (data.printMode === 'receipt' && data.showPrices && data.total !== undefined) {
+    rows.push(`<div class="hr"></div><div class="line total"><strong><span>${esc(L.total)}</span><span class="amt">${esc(money(data.total))}</span></strong></div>`)
+  }
+  if (data.printMode === 'receipt') {
+    rows.push(`<div class="hr"></div><div class="c">${esc(settings.footer_text)}</div>`)
+  }
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(L.order)} #${esc(data.orderNumber)}</title><style>
+@page { size: 80mm auto; margin: 0; }
+* { box-sizing: border-box; }
+body { width: 80mm; margin: 0 auto; padding: 4mm; font: 13px/1.35 'Menlo','Consolas',monospace; color: #000; }
+.c { text-align: center; }
+.team { font-size: 15px; }
+.client { text-align: center; font-weight: 700; font-size: 22px; text-transform: uppercase; }
+.staff { text-align: center; font-weight: 700; margin: 4px 0; padding: 2px 0; background: #000; color: #fff; }
+.hr { border-top: 1px dashed #000; margin: 6px 0; }
+.items { list-style: none; margin: 0; padding: 0; }
+.items li { margin-bottom: 6px; }
+.line { display: flex; justify-content: space-between; gap: 8px; }
+.line .amt { white-space: nowrap; }
+.total { font-size: 15px; }
+.opt { padding-left: 12px; }
+@media print { body { padding: 0; } }
+</style></head><body>${rows.join('')}</body></html>`
+}
+
+/**
  * Generate a test receipt for printer testing
  */
 export function formatTestReceipt(

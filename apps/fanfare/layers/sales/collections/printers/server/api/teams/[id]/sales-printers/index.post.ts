@@ -12,6 +12,8 @@ const bodySchema = z.object({
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
   type: z.enum(['kitchen', 'receipt']).optional(),
+  // Output driver — null/absent ⇒ 'network-escpos' (thermal).
+  driver: z.enum(['network-escpos', 'browser-print']).optional(),
   status: z.string().optional(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()

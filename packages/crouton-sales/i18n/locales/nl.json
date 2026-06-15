@@ -138,6 +138,27 @@
           "notRecurring": "Dit evenement gebruikt geen vaste klanten, dus er zijn geen openstaande rekeningen.",
           "eventNotFound": "Evenement niet gevonden"
         }
+      },
+      "printBridge": {
+        "name": "Printbrug",
+        "description": "Een scherm dat openstaande tickets afdrukt via het OS-/AirPrint-venster van het toestel — voor stations met de driver Browser / AirPrint.",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies van welk evenement deze brug de tickets afdrukt."
+          }
+        },
+        "ui": {
+          "title": "Printbrug",
+          "hint": "Houd dit scherm open bij de printer. Tik op Afdrukken om een ticket naar het printvenster te sturen.",
+          "printAll": "Alles afdrukken ({count})",
+          "allPrinted": "Alles bijgewerkt — niets af te drukken.",
+          "eventNotFound": "Evenement niet gevonden",
+          "print": "Afdrukken",
+          "discard": "Verwijderen",
+          "ticket": "Ticket",
+          "receipt": "Bon"
+        }
       }
     },
     "admin": {
@@ -187,7 +208,8 @@
       "total": "Totaal",
       "kitchenDisplay": "Keukenscherm",
       "orders": "Bestellingen",
-      "clients": "Klanten"
+      "clients": "Klanten",
+      "printBridge": "Printbrug"
     },
     "cart": {
       "title": "Winkelwagen",
@@ -319,7 +341,13 @@
       "printerActiveHelp": "Zet uit om deze printer tijdelijk buiten gebruik te stellen",
       "general": "Algemeen",
       "displayOrder": "Weergavevolgorde",
-      "activeHelp": "Inactieve producten zijn verborgen in de kassa"
+      "activeHelp": "Inactieve producten zijn verborgen in de kassa",
+      "driver": "Uitvoer",
+      "driverHelp": "Hoe dit station zijn tickets afdrukt.",
+      "driverNetwork": "Netwerkprinter",
+      "driverNetworkHelp": "Thermische printer op het venuenetwerk (ESC/POS).",
+      "driverBrowser": "Browser / AirPrint",
+      "driverBrowserHelp": "Afdrukken via het printvenster van het toestel, vanaf een print-bridge-scherm."
     },
     "helperLogin": {
       "title": "Helper-login",
