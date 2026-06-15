@@ -96,7 +96,8 @@
           "locations": {
             "label": "Locations",
             "description": "Which locations this screen shows (e.g. Kitchen, Bar). Leave empty to show every location.",
-            "placeholder": "All locations"
+            "placeholder": "All locations",
+            "needsEvent": "Pick an event above first — then choose its locations."
           }
         },
         "ui": {

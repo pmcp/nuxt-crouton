@@ -96,7 +96,8 @@
           "locations": {
             "label": "Locaties",
             "description": "Welke locaties dit scherm toont (bv. Keuken, Bar). Laat leeg om alle locaties te tonen.",
-            "placeholder": "Alle locaties"
+            "placeholder": "Alle locaties",
+            "needsEvent": "Kies eerst hierboven een evenement — kies daarna de locaties."
           }
         },
         "ui": {

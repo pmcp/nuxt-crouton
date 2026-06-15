@@ -95,7 +95,8 @@
           "locations": {
             "label": "Emplacements",
             "description": "Les emplacements affichés par cet écran (ex. Cuisine, Bar). Laisser vide pour tous les afficher.",
-            "placeholder": "Tous les emplacements"
+            "placeholder": "Tous les emplacements",
+            "needsEvent": "Choisissez d’abord un événement ci-dessus, puis ses emplacements."
           }
         },
         "ui": {
