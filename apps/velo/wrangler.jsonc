@@ -1,11 +1,19 @@
 {
-  // Cloudflare Pages configuration for velo
+  // Cloudflare WORKERS (static assets) config for velo — migrated from Pages (#120).
+  //
+  // Nitro's `cloudflare_module` preset (NITRO_PRESET in cf:deploy) reads this file
+  // at build time and writes the deployable config to .output/server/wrangler.json,
+  // injecting `main` + the `assets` binding automatically.
+  //
+  // Reuses the EXISTING provisioned D1 + R2 (same ids/names the Pages deploy used),
+  // so there is NO data migration. Domain convention (#133): production →
+  // friendlyinter.net, staging → pmcp.dev. The prod custom domain
+  // (velo.friendlyinter.net) is bound at the DNS cutover (#134); until then prod
+  // deploys to *.workers.dev, while staging is live on velo.pmcp.dev.
   "name": "velo",
   "compatibility_date": "2024-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": "dist",
 
-  // Production bindings
   "d1_databases": [
     {
       "binding": "DB",
@@ -18,10 +26,13 @@
     { "binding": "BLOB", "bucket_name": "velo-blob" }
   ],
 
-  // Preview/staging environment overrides
-  // NOTE: bindings do NOT inherit — must be specified fully per env
+  // Staging environment — reuses the EXISTING velo-staging-db + velo-staging-blob.
+  // Deploying `--env staging` creates a `velo-staging` worker bound to these on
+  // velo.pmcp.dev. The env block is stripped from the generated .output config
+  // (nitro#3429), so cf:staging re-injects it via scripts/inject-wrangler-env.mjs.
   "env": {
-    "preview": {
+    "staging": {
+      "routes": [{ "pattern": "velo.pmcp.dev", "custom_domain": true }],
       "d1_databases": [
         {
           "binding": "DB",
