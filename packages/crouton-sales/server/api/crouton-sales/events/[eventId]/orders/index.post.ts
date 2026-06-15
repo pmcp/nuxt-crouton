@@ -6,6 +6,7 @@ import { salesEvents } from '~~/layers/sales/collections/events/server/database/
 import { salesOrders } from '~~/layers/sales/collections/orders/server/database/schema'
 import { salesOrderitems } from '~~/layers/sales/collections/orderitems/server/database/schema'
 import { generateAndInsertPrintQueues } from '../../../../../utils/generate-print-queues'
+import { recordOutboxEvents } from '../../../../../utils/sync-outbox'
 
 interface OrderItemInput {
   productId: string
@@ -103,6 +104,28 @@ export default defineEventHandler(async (event) => {
       return orderItem
     })
   )
+
+  // Capture for the cloud mirror (#176) — one row for the order + one per item,
+  // keyed by each row's nanoid. No-op unless CROUTON_SALES_CLOUD_SYNC is on
+  // (the venue Pi), best-effort so it never blocks checkout.
+  await recordOutboxEvents(db, [
+    {
+      entityType: 'order',
+      entityId: order.id,
+      orderId: order.id,
+      teamId: salesEvent.teamId,
+      eventId,
+      payload: order as Record<string, unknown>,
+    },
+    ...orderItems.map(item => ({
+      entityType: 'orderitem' as const,
+      entityId: item.id,
+      orderId,
+      teamId: salesEvent.teamId,
+      eventId,
+      payload: item as Record<string, unknown>,
+    })),
+  ])
 
   let printQueueIds: string[] = []
   const { croutonSales } = useRuntimeConfig(event)

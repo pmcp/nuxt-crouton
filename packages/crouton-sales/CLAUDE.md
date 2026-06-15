@@ -17,6 +17,10 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | `app/components/Admin/` | Admin sidebar navigation |
 | `app/components/Pos/` | Order management (OrdersList) |
 | `app/components/Settings/` | Print settings modals (opt-in) |
+| `server/utils/sync-outbox.ts` | Pi-side capture for the D1 live mirror (#176) — `recordOutboxEvents()` + `isCloudSyncEnabled()`; gated by `CROUTON_SALES_CLOUD_SYNC` |
+| `server/database/schema.ts` | Package-owned Drizzle schema: `salesSyncOutbox` (`sales_sync_outbox` table) |
+| `server/db/schema.ts` | Re-export NuxtHub scans so consuming apps auto-pick-up `sales_sync_outbox` in `db:generate` |
+| `server/database/migrations/0001_sales_sync_outbox.sql` | Package migration creating `sales_sync_outbox` |
 | `schemas/` | JSON schema files for crouton generate |
 | `seed/index.ts` | Seed provider (`@fyit/crouton-sales/seed`) — event `vlaamsekermis` (PIN `1234`) + categories/products + a scoped kassa demo page |
 
@@ -397,6 +401,38 @@ Auth: shared `x-api-key` header validated against `runtimeConfig.croutonSales.pr
 `printData` returned by `/jobs` is already base64-encoded ESC/POS bytes (built by `formatReceipt` in `server/utils/receipt-formatter.ts`). Spooler decodes and writes raw bytes to printer's TCP port 9100.
 
 The spooler script's expected job-row shape: `{ id, printData, printerIp, printerPort, printMode, locationId, retryCount }`.
+
+## Cloud Sync — Pi-side outbox (D1 live mirror)
+
+Part of epic #175 (keep a live online copy of the venue's data). The venue till
+runs on a Pi as the authoritative writer; when the 5G uplink is up it pushes its
+changes to a Cloudflare D1 **mirror** so an online dashboard (#179) can show
+live orders/sales. #176 is the **capture** layer (this package); the push loop
+(#177) and cloud ingest (#178) build on the rows it records.
+
+- **Table `sales_sync_outbox`** (`server/database/schema.ts`, package-owned like
+  crouton-flow's `flow_configs`). One row **per entity change**, keyed by the
+  entity's existing **nanoid** (`entityId`) so the downstream D1 upsert is
+  idempotent (re-sending after an uncertain push is safe). `seq` is the monotonic
+  cursor the pusher drains oldest-first; `syncedAt` stays NULL until the cloud
+  acks. NuxtHub auto-discovers the table via `server/db/schema.ts` — consuming
+  apps just run `db:generate` + migrate (or apply `0001_sales_sync_outbox.sql`).
+- **Capture** (`recordOutboxEvents()` in `server/utils/sync-outbox.ts`) is wired
+  into the existing mutation paths:
+  - order create + each order-item → `orders/index.post.ts`
+  - print-job create (status `0`) → `generate-print-queues.ts` (the single choke
+    point for order/reprint/end-receipt) — the bulky base64 `printData` is
+    **omitted** from the mirrored payload (the cloud shows status, never prints)
+  - print-status transitions (done `2` / failed `9`) + the order's status flip →
+    `print-job-complete.ts` (the path the in-process ESC/POS drainer and the
+    browser-print drainer both call)
+- **Gated by `CROUTON_SALES_CLOUD_SYNC`** (`'1'`/`'true'`) — OFF by default and
+  on every Cloudflare deploy (the cloud *is* the mirror there; only the venue Pi
+  captures), mirroring the escpos-drainer env-gate. Capture is **best-effort**:
+  failures are logged and swallowed so they can never block the till.
+- **Not captured** (deliberate, for #177+ to revisit): the thermal RUT spooler
+  callbacks (`print-server/jobs/[jobId]/{complete,fail}` — the cloud-authoritative
+  profile, no Pi outbox) and `printqueues/retry-failed` (admin edge, 9→0).
 
 ## Configuration
 
