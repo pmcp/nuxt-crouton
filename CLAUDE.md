@@ -254,6 +254,16 @@ npx wrangler pages deploy dist/   # Deploy via CI (see .github/workflows/deploy-
 npx wrangler d1 migrations apply  # Remote DB migrations
 ```
 
+### Updating Dependencies
+
+Shared versions live in the `catalog:` block of `pnpm-workspace.yaml` (single source of truth — bump there once, not in each `package.json`). We deliberately use **no update bot** (Renovate/Dependabot); for a solo dev that's PR noise, not help. Update on-demand with **`taze`** (catalog-aware):
+
+```bash
+npx taze minor -r -w   # review + write available minor/patch bumps across the monorepo
+pnpm install           # then verify: pnpm -r --filter './apps/*' typecheck
+npx taze major -r      # majors: review only (-w to write), one family at a time
+```
+
 ## State Management (No Pinia)
 
 Use Nuxt's built-in `useState()`. Use `useFetch()` / `$fetch()` for server state.
