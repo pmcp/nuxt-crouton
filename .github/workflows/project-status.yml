@@ -5,6 +5,12 @@ name: Project status automation
 #   - PR opened / reopened / ready for review  -> In review
 #   - PR back to draft                          -> In progress
 #   - Issue assigned or reopened                -> In progress
+#   - Issue labeled status:in-progress          -> In progress
+#   - Issue labeled status:blocked              -> Blocked
+# The label triggers are the reliable signal: the github-tasks flow (and
+# agents) mark "work started" by applying status:in-progress, not by
+# assigning — so without these an issue would skip In progress entirely and
+# jump straight to In review when its PR opens.
 # (Item added -> Backlog and merged/closed -> Done are handled by the
 #  Project's own built-in workflows; we don't fight those.)
 #
@@ -20,7 +26,7 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review, converted_to_draft]
   issues:
-    types: [assigned, reopened]
+    types: [assigned, reopened, labeled]
 
 permissions:
   contents: read
@@ -49,13 +55,28 @@ jobs:
             const projectName = process.env.PROJECT_NAME
             const { owner, repo } = context.repo
 
+            // Map a status:* label to a board column. Returning null means
+            // "ignore this label" so unrelated labels are a clean no-op.
+            const labelToStatus = (name) => {
+              switch ((name || '').toLowerCase()) {
+                case 'status:in-progress': return 'In progress'
+                case 'status:blocked':     return 'Blocked'
+                default:                   return null
+              }
+            }
+
             // Decide the target Status from the event
             let target = null
             if (context.eventName === 'pull_request') {
               const a = context.payload.action
               target = a === 'converted_to_draft' ? 'In progress' : 'In review'
             } else if (context.eventName === 'issues') {
-              target = 'In progress' // assigned or reopened
+              // `labeled` is the reliable "work started/blocked" signal; the
+              // label name decides the column. assigned/reopened keep the old
+              // In-progress behaviour as a fallback.
+              target = context.payload.action === 'labeled'
+                ? labelToStatus(context.payload.label?.name)
+                : 'In progress'
             }
             if (!target) return
 
