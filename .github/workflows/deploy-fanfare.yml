@@ -50,6 +50,12 @@ on:
 
 jobs:
   deploy:
+    # The reusable workflow's PR-comment step needs pull-requests: write; a caller
+    # must grant it explicitly or the call fails to validate under restrictive
+    # default token permissions ("only allowed pull-requests: none").
+    permissions:
+      contents: read
+      pull-requests: write
     uses: ./.github/workflows/deploy-app.yml
     with:
       app: fanfare
