@@ -1,13 +1,13 @@
 name: Deploy Fanfare
 
 # Thin caller for the reusable Workers deploy pipeline (#121, on #114's deploy-app.yml).
-# Push to `staging` (or open a PR) → isolated, demo-seeded preview (auto-provisioned
-# fanfare-staging-db + KV, bound to kassa-preview.pmcp.dev). Manual dispatch with
-# environment=production → production (reuses the existing fanfare-db, kassa.pmcp.dev).
+# Push to `staging` (or open a PR) → isolated, demo-seeded staging deploy
+# (auto-provisioned fanfare-staging-db + KV, bound to kassa-preview.pmcp.dev). Manual
+# dispatch with environment=production → production (reuses fanfare-db, kassa.pmcp.dev).
 #
 # Replaces the old Pages workflows (deploy-fanfare.yml production + the separate
-# deploy-fanfare-preview.yml that seeded the SHARED prod DB). The preview now binds
-# its own isolated staging DB — a PR preview never touches production data.
+# deploy-fanfare-preview.yml that seeded the SHARED prod DB). The staging env now binds
+# its own isolated DB — a PR deploy never touches production data.
 
 on:
   push:
@@ -42,10 +42,10 @@ on:
       environment:
         description: 'Deploy target'
         required: true
-        default: 'preview'
+        default: 'staging'
         type: choice
         options:
-          - preview
+          - staging
           - production
 
 jobs:
@@ -53,9 +53,9 @@ jobs:
     uses: ./.github/workflows/deploy-app.yml
     with:
       app: fanfare
-      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'preview' }}
+      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'staging' }}
       production-url: https://kassa.pmcp.dev
-      preview-url: https://kassa-preview.pmcp.dev
+      staging-url: https://kassa-preview.pmcp.dev
       # Only the dist-consumed packages with a build script. crouton-i18n/charts/
       # pages/sales are pure source layers — the reusable workflow skips those.
       layer-packages: '@fyit/crouton-core @fyit/crouton-auth @fyit/crouton'
