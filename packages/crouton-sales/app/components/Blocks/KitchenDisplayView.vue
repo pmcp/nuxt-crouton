@@ -106,14 +106,14 @@ function handleOpenPanel() {
           </div>
         </div>
 
-        <!-- Mini KDS preview: a grid of order tiles on a dark board -->
-        <div class="bg-slate-900/80 rounded-lg p-3 border border-slate-700/50">
+        <!-- Mini KDS preview: a grid of order tiles, theme-driven (follows dark mode) -->
+        <div class="bg-muted/50 rounded-lg p-3 ring ring-default">
           <div class="grid grid-cols-3 gap-2">
-            <div v-for="tile in 3" :key="tile" class="rounded-md bg-slate-800/80 p-2 space-y-1.5">
-              <div class="h-3 w-8 rounded bg-emerald-500/40" />
-              <div class="h-2 w-full rounded bg-slate-700/60" />
-              <div class="h-2 w-3/4 rounded bg-slate-700/60" />
-              <div class="h-3 w-full rounded bg-emerald-600/40 mt-1" />
+            <div v-for="tile in 3" :key="tile" class="rounded-md bg-elevated/80 p-2 space-y-1.5">
+              <div class="h-3 w-8 rounded bg-primary/40" />
+              <div class="h-2 w-full rounded bg-accented/60" />
+              <div class="h-2 w-3/4 rounded bg-accented/60" />
+              <div class="h-3 w-full rounded bg-success/40 mt-1" />
             </div>
           </div>
         </div>

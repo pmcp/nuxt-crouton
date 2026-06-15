@@ -147,21 +147,21 @@ function ago(iso: string) {
       {{ t('sales.blocks.kitchenDisplay.ui.eventNotFound') }}
     </div>
 
-    <!-- The board -->
-    <div v-else class="rounded-3xl overflow-hidden bg-slate-950 text-slate-100 p-5">
+    <!-- The board — theme-driven via Nuxt UI semantic tokens (follows dark mode) -->
+    <div v-else class="rounded-3xl overflow-hidden bg-default ring ring-default p-5">
       <header class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-3">
-          <span class="text-2xl">🍳</span>
-          <h1 class="text-xl font-bold tracking-tight">{{ t('sales.blocks.kitchenDisplay.ui.title') }}</h1>
+          <UIcon name="i-lucide-chef-hat" class="size-6 text-primary" />
+          <h2 class="text-xl font-bold tracking-tight text-highlighted">{{ t('sales.blocks.kitchenDisplay.ui.title') }}</h2>
         </div>
-        <div class="flex items-center gap-2 text-sm text-slate-400">
-          <span class="inline-block size-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div class="flex items-center gap-2 text-sm text-muted">
+          <span class="inline-block size-2 rounded-full bg-success animate-pulse" />
           {{ t('sales.blocks.kitchenDisplay.ui.live') }} · {{ t('sales.blocks.kitchenDisplay.ui.active', { count: active.length }) }}
         </div>
       </header>
 
-      <div v-if="active.length === 0" class="flex flex-col items-center justify-center text-center text-slate-500 py-32">
-        <span class="text-5xl mb-3">✅</span>
+      <div v-if="active.length === 0" class="flex flex-col items-center justify-center text-center text-dimmed py-32">
+        <UIcon name="i-lucide-check-check" class="size-12 mb-3 text-success" />
         <p class="text-lg">{{ t('sales.blocks.kitchenDisplay.ui.allCaughtUp') }}</p>
       </div>
 
@@ -173,38 +173,42 @@ function ago(iso: string) {
         <div
           v-for="o in active"
           :key="o.id"
-          class="rounded-2xl bg-slate-900 border border-slate-800 shadow-lg overflow-hidden flex flex-col"
+          class="rounded-2xl bg-muted ring ring-default shadow-sm overflow-hidden flex flex-col"
+          :class="o.isPersonnel ? 'ring-warning/60' : ''"
         >
           <div
-            class="flex items-center justify-between px-4 py-3 border-b border-slate-800"
-            :class="o.isPersonnel ? 'bg-amber-500/15' : 'bg-slate-800/60'"
+            class="flex items-center justify-between px-4 py-3 border-b border-default"
+            :class="o.isPersonnel ? 'bg-warning/10' : 'bg-elevated/60'"
           >
             <div class="flex items-baseline gap-2">
-              <span class="text-2xl font-extrabold">#{{ o.orderNumber }}</span>
-              <span v-if="o.isPersonnel" class="text-[11px] font-bold uppercase text-amber-400">{{ t('sales.blocks.kitchenDisplay.ui.staff') }}</span>
+              <span class="text-2xl font-extrabold text-highlighted">#{{ o.orderNumber }}</span>
+              <UBadge v-if="o.isPersonnel" color="warning" variant="subtle" size="sm" class="font-bold uppercase">{{ t('sales.blocks.kitchenDisplay.ui.staff') }}</UBadge>
             </div>
-            <span class="text-xs text-slate-400 tabular-nums">{{ ago(o.createdAt) }}</span>
+            <span class="text-xs text-muted tabular-nums">{{ ago(o.createdAt) }}</span>
           </div>
 
           <div class="px-4 py-3 flex-1">
-            <p v-if="o.clientName" class="text-sm text-slate-400 mb-2">{{ o.clientName }}</p>
+            <p v-if="o.clientName" class="text-sm text-muted mb-2">{{ o.clientName }}</p>
             <ul class="space-y-1.5">
-              <li v-for="(it, i) in o.items" :key="i" class="flex gap-2 text-[15px]">
-                <span class="font-bold text-emerald-400 tabular-nums min-w-[1.5rem]">{{ it.quantity }}×</span>
+              <li v-for="(it, i) in o.items" :key="i" class="flex gap-2 text-[15px] text-default">
+                <span class="font-bold text-primary tabular-nums min-w-[1.5rem]">{{ it.quantity }}×</span>
                 <span class="flex-1">
                   {{ it.title }}
-                  <span v-if="it.remarks" class="block text-xs text-amber-300/90">↳ {{ it.remarks }}</span>
+                  <span v-if="it.remarks" class="block text-xs text-warning">↳ {{ it.remarks }}</span>
                 </span>
               </li>
             </ul>
           </div>
 
-          <button
-            class="px-4 py-3 text-sm font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition-colors"
+          <UButton
+            color="success"
+            size="lg"
+            block
+            icon="i-lucide-check"
+            :label="t('sales.blocks.kitchenDisplay.ui.bump')"
+            class="rounded-none font-bold uppercase tracking-wide"
             @click="bump(o)"
-          >
-            ✓ {{ t('sales.blocks.kitchenDisplay.ui.bump') }}
-          </button>
+          />
         </div>
       </TransitionGroup>
     </div>
