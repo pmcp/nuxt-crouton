@@ -301,7 +301,7 @@ separate `orderInterfaceBlock` was later folded into the `eventWorkspaceBlock`:
 the customer-facing POS is now that block's **anonymous face** — the renderer
 mounts `<SalesPosPanel>` (inline helper PIN login + `<SalesClientOrderInterface>`)
 for visitors without a team session. The underlying public endpoints
-(`events/[teamId]/by-slug/[slug]`, `events/[eventId]/order-data`,
+(`events/[eventId]/by-slug/[slug]`, `events/[eventId]/order-data`,
 `events/[eventId]/orders`) are unchanged and consumed via that panel.
 
 ### Package-shipped Server Endpoints
@@ -317,7 +317,7 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` heads the remark blocks on kitchen tickets — the per-location remarks from the POS and legacy whole-order notes; `footer_text` only on `type: 'receipt'` printer jobs |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
-| `events/[teamId]/by-slug/[slug]` GET | public | Resolve event by slug (team param accepts UUID or slug) |
+| `events/[eventId]/by-slug/[slug]` GET | public | Resolve event by slug (first segment accepts the team's UUID or slug). The param is named `[eventId]` — not `[teamId]` — so it shares one name with its `events/[eventId]/…` siblings: h3 v1/radix3 keeps a single param node per position, and mixing names silently broke the deeper `orders/[orderId]/…` routes (#116) |
 | `events/[eventId]/orders` POST | helper token | Create order + generate print queues (kitchen tickets only — no customer receipt) |
 | `events/[eventId]/orders/[orderId]/print` POST | helper token | Re-queue prints for an existing order, **including the customer receipt** (`withReceipt: true` — the only per-order receipt path) |
 | `events/[eventId]/orders/[orderId]/print-status` GET | helper token | Slim per-order print job status for the POS order button's print watcher (`{ id, status, errorMessage, retryCount, printMode, printerTitle, completedAt }` — printer name joined server-side; order must belong to the event). **Excludes `display` jobs** (they're bumped on a screen, not printed — a display job stays "shown" until the kitchen acts and would hang the checkout button). Empty array = the order generated no tickets, a real answer not an error |
@@ -466,7 +466,7 @@ type and its `eventStorefrontBlock` were removed — the customer POS is the
 `eventWorkspaceBlock`'s anonymous face on a normal CMS page).
 
 All renderers are `clientOnly: true` — helper sessions live in localStorage
-and the public `events/[teamId]/by-slug/[slug]` endpoint is called at mount.
+and the public `events/[eventId]/by-slug/[slug]` endpoint is called at mount.
 
 **All block definitions in `app/app.config.ts` use i18n keys** for `name`,
 `description`, and every schema field `label`/`description` and select-option
