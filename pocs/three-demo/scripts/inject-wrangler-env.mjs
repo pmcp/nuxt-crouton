@@ -3,7 +3,7 @@
  * inject-wrangler-env.mjs — reference plumbing for #113 (apps/three-demo).
  *
  * NuxtHub/Nitro regenerate `.output/server/wrangler.json` on every build and
- * DROP named environments (nitro#3429), so `wrangler deploy --env preview`
+ * DROP named environments (nitro#3429), so `wrangler deploy --env staging`
  * has nothing to target. This re-merges the `env` block from the source
  * `wrangler.jsonc` into the generated config after the build.
  *
