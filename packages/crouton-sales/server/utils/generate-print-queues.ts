@@ -120,7 +120,8 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
     type: p.type ?? 'kitchen',
     // Drive the per-station output choice. Null/undefined ⇒ 'network-escpos'
     // (the thermal path) inside generatePrintJobsForOrder, so existing rows are
-    // unchanged. Without this, 'display' stations would never produce KDS jobs.
+    // unchanged. Carried through for a future browser-print/AirPrint driver; the
+    // KDS is decoupled and no longer rides this queue.
     driver: p.driver ?? undefined
   }))
 
@@ -167,14 +168,7 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
       createdBy: helperId,
       updatedBy: helperId
     })
-    // Display (KDS) jobs ride the same queue but are bumped on a screen, not
-    // printed — so they're excluded from the returned ids that drive the POS
-    // checkout print-watcher. Otherwise the volunteer's order button would
-    // hang at "printing" until the kitchen bumped the ticket. The KDS reads
-    // display jobs straight off the queue instead.
-    if (job.printMode !== 'display') {
-      queueIds.push(queueId)
-    }
+    queueIds.push(queueId)
   }
 
   return queueIds

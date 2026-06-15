@@ -75,47 +75,7 @@ export interface PrintJobData {
   printerId: string
   locationId?: string
   printData: string
-  printMode: 'kitchen' | 'receipt' | 'display'
-}
-
-/**
- * Display (KDS) payload — the JSON a screen renders instead of ESC/POS bytes.
- * Self-contained so the display job carries everything the screen needs.
- */
-export interface DisplayPayload {
-  orderNumber: string
-  clientName?: string
-  isPersonnel?: boolean
-  createdAt: string
-  items: Array<{ title: string, quantity: number, remarks?: string }>
-}
-
-/** Build the display payload for an order (driver: 'display'). */
-export function toDisplayPayload(
-  options: PrintQueueGeneratorOptions,
-  items: OrderItemForPrint[]
-): DisplayPayload {
-  return {
-    orderNumber: options.orderNumber,
-    clientName: options.clientName,
-    isPersonnel: options.isPersonnel,
-    createdAt: new Date().toISOString(),
-    items: items.map(i => ({ title: i.productTitle, quantity: i.quantity, remarks: i.remarks }))
-  }
-}
-
-/** Generate a display (KDS) job — printData is JSON, not ESC/POS bytes. */
-export function generateDisplayJobData(
-  options: PrintQueueGeneratorOptions,
-  items: OrderItemForPrint[],
-  station: PrinterConfig
-): PrintJobData {
-  return {
-    printerId: station.id,
-    locationId: undefined,
-    printData: JSON.stringify(toDisplayPayload(options, items)),
-    printMode: 'display'
-  }
+  printMode: 'kitchen' | 'receipt'
 }
 
 /**
@@ -284,10 +244,11 @@ export function generatePrintJobsForOrder(
   const itemsByLocation = groupItemsByLocation(orderItems)
 
   // Driver decides how a station is fulfilled. Null/undefined = 'network-escpos'
-  // (the thermal path), so existing stations behave exactly as before.
+  // (the thermal path), so existing stations behave exactly as before. Stations
+  // on any other (future) driver — e.g. browser-print/AirPrint — get no thermal
+  // jobs here until their drainer lands.
   const driverOf = (p: PrinterConfig) => p.driver || 'network-escpos'
   const escposPrinters = printers.filter(p => driverOf(p) === 'network-escpos')
-  const displayStations = printers.filter(p => driverOf(p) === 'display')
 
   // Separate kitchen printers (by location) and receipt printers (escpos only)
   const kitchenPrinters = escposPrinters.filter(p => p.type === 'kitchen' || !p.type)
@@ -332,17 +293,6 @@ export function generatePrintJobsForOrder(
     }
 
     jobs.push(generateReceiptData(options, allItems, receiptPrinter, receiptSettings))
-  }
-
-  // Display (KDS) stations: one job per station carrying the whole order as JSON.
-  if (displayStations.length > 0) {
-    const allItems: OrderItemForPrint[] = []
-    for (const [, locationData] of itemsByLocation) {
-      allItems.push(...locationData.items)
-    }
-    for (const station of displayStations) {
-      jobs.push(generateDisplayJobData(options, allItems, station))
-    }
   }
 
   return jobs

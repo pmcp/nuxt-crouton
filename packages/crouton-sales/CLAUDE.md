@@ -54,17 +54,14 @@ event receives jobs. Event duplication copies location-less printers as-is.
 
 **Output driver** (`salesPrinters.driver`, nullable — NULL ⇒ `network-escpos`): how a station is
 fulfilled (see `docs/architecture/venue-local-first-architecture.md` → "Output drivers"). The
-thermal path (`network-escpos`) is the default and unchanged. A **`display`** station (KDS) enqueues
-a `printMode: 'display'` job whose `printData` is a JSON `DisplayPayload` (`toDisplayPayload` in
-`print-queue-service.ts`) instead of ESC/POS bytes — `generatePrintJobsForOrder` emits one display
-job per display station carrying the whole order. **`generate-print-queues.ts` must pass `driver`
-through** to the `PrinterConfig` (it does), or display stations silently fall back to thermal.
-Display jobs ride the same `salesPrintqueues` table and the same numeric status codes
-(`pending '0' → shown '1' → bumped '2'`, where bumped reuses COMPLETED), so the admin order LEDs
-work unchanged — but they are **excluded from the returned `printQueueIds`** (and from the
-`print-status` watcher endpoint), so the volunteer's checkout button isn't held "printing" until the
-kitchen bumps a screen. The KDS (`kitchenDisplayBlock`) reads/bumps them via the `display-jobs`
-endpoints.
+thermal path (`network-escpos`) is the default and the **only** driver that produces jobs today.
+`generate-print-queues.ts` passes `driver` through to the `PrinterConfig`, and
+`generatePrintJobsForOrder` only emits thermal jobs for `network-escpos` stations — the column +
+its passthrough are kept for a **future** `browser-print`/AirPrint driver, which gets no jobs until
+its drainer lands. **The `display` driver was removed** when the KDS was decoupled (#61/#117): the
+KDS is no longer a printer and does **not** ride `salesPrintqueues`. The `kitchenDisplayBlock` reads
+orders directly per location and bumps via `salesKdsbumps` (see the `display-jobs` / `kds-bump`
+endpoints) — there is no `printMode: 'display'` job, `DisplayPayload`, or `toDisplayPayload` anymore.
 
 ### Database Tables (Convention)
 
