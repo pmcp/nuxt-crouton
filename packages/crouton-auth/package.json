@@ -93,14 +93,14 @@
     "@types/better-sqlite3": "^7.6.0",
     "@vitejs/plugin-vue": "^5.2.4",
     "better-sqlite3": "^11.0.0",
-    "drizzle-kit": "^0.20.0",
+    "drizzle-kit": "catalog:",
     "jsdom": "^25.0.1",
-    "nuxt": "^4.3.1",
+    "nuxt": "catalog:",
     "tsx": "^4.0.0",
-    "typescript": "^5.7.0",
+    "typescript": "catalog:",
     "unbuild": "^2.0.0",
     "vitest": "^2.1.9",
-    "vue": "^3.5.25"
+    "vue": "catalog:"
   },
   "peerDependencies": {
     "@nuxt/ui": "^4.3.0",

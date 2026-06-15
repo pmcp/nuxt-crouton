@@ -7,3 +7,19 @@ packages:
   - 'workers/*'
   # e2e test fixture apps (not real apps — kept out of apps/* deploy & typecheck sweeps)
   - 'fixtures/*'
+
+# Single source of truth for shared dependency versions (#142).
+# Reference from any package.json with "<dep>": "catalog:".
+# NOTE: vitest / @vitest/coverage-v8 / happy-dom and @nuxt/kit|schema are
+# intentionally NOT cataloged yet (version spreads require a real migration,
+# not a dedup) — see #141.
+catalog:
+  nuxt: ^4.3.1
+  vue: ^3.5.26
+  vue-router: ^4.6.4
+  typescript: ^5.7.0
+  wrangler: ^4.64.0
+  '@libsql/client': ^0.17.0
+  drizzle-orm: ^0.45.1
+  drizzle-kit: ^0.31.0
+  '@nuxt/ui': ^4.3.0

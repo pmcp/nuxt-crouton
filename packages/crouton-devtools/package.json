@@ -50,8 +50,8 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "^3.0.0",
-    "@nuxt/ui": "^4.3.0",
-    "nuxt": "^4.3.1",
+    "@nuxt/ui": "catalog:",
+    "nuxt": "catalog:",
     "unbuild": "^3.6.1"
   },
   "peerDependencies": {
