@@ -29,8 +29,29 @@ export interface CollectionSpec {
   create?: Record<string, string>
 }
 
+/**
+ * A package-specific surface to smoke beyond generic collection CRUD — e.g. the
+ * pages package's own `/admin/:team/workspace`. Lets a fixture assert that the
+ * package it exercises actually mounts its UI, not just that the app still boots.
+ */
+export interface SurfaceSpec {
+  /** Human label for the test title, e.g. "pages workspace". */
+  name: string
+  /** Route to visit. `{team}` is replaced with the active team slug. */
+  path: string
+  /** What must be visible for the surface to count as working. At least one. */
+  expect: {
+    /** CSS selector that must be visible, e.g. "#pages-sidebar". */
+    visible?: string
+    /** Visible heading (role=heading) name, matched case-insensitively. */
+    heading?: string
+  }
+}
+
 export interface FixtureManifest {
   collections: CollectionSpec[]
+  /** Optional package-specific surfaces; omit for fixtures with nothing extra. */
+  surfaces?: SurfaceSpec[]
 }
 
 /** Read the active fixture's e2e manifest (what to smoke). */
@@ -147,6 +168,11 @@ export async function ensureTeam(page: Page, base: string): Promise<string> {
 /** Build the admin URL for a generated collection (key, e.g. "mainItems"). */
 export function collectionUrl(base: string, teamSlug: string, collectionKey: string): string {
   return `${base}/admin/${teamSlug}/crouton/${collectionKey}`
+}
+
+/** Resolve a surface path against the base URL, substituting `{team}`. */
+export function surfaceUrl(base: string, teamSlug: string, path: string): string {
+  return `${base}${path.replace('{team}', teamSlug)}`
 }
 
 /**

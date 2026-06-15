@@ -5,5 +5,12 @@
       "heading": "Main Items",
       "create": { "name": "e2e item" }
     }
+  ],
+  "surfaces": [
+    {
+      "name": "pages workspace renders",
+      "path": "/admin/{team}/workspace",
+      "expect": { "visible": "[id$='-panel-pages-sidebar']" }
+    }
   ]
 }

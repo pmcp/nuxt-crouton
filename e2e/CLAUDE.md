@@ -12,6 +12,7 @@ e2e/                         # the harness (Playwright) — NOT a workspace pack
   helpers.ts                 # shared, non-test module (config, auth flow, manifest loader)
   auth.setup.ts              # 'setup' project: log in / register + create team, save state
   collection.smoke.spec.ts   # generic, manifest-driven list + CRUD checks
+  surface.smoke.spec.ts      # generic, manifest-driven package-surface checks (optional)
   .auth/                     # generated storageState + team slug (gitignored)
 
 fixtures/                    # the apps under test — real crouton apps, one per config
@@ -28,22 +29,34 @@ fixtures/                    # the apps under test — real crouton apps, one pe
 ## Running
 
 ```bash
-pnpm test:e2e                      # default fixture (minimal)
-E2E_FIXTURE=with-pages pnpm test:e2e
+BETTER_AUTH_SECRET=dev BETTER_AUTH_URL=http://localhost:3000 pnpm test:e2e   # default fixture (minimal)
+E2E_FIXTURE=with-pages BETTER_AUTH_SECRET=dev BETTER_AUTH_URL=http://localhost:3000 pnpm test:e2e
 ```
+
+> **`BETTER_AUTH_SECRET` is required** (any value locally; CI sets a placeholder).
+> Without it crouton-auth refuses to mint sessions and `auth.setup.ts` fails with
+> "Could not authenticate test user." Set `BETTER_AUTH_URL` to the server origin too.
 
 The config's `webServer` boots `pnpm --filter e2e-fixture-$E2E_FIXTURE dev` on
 `:3000` (or reuses a server already running there). One fixture per run — they
 all use port 3000. Each fixture has its own local sqlite DB under `.data/`.
+
+> A fresh checkout/worktree must **build the fixture's workspace deps first** (the
+> dist-consumed `@fyit/*` packages), or the dev server can't load `@fyit/crouton`:
+> `pnpm --filter "e2e-fixture-<name>^..." build` (this is what CI does).
 
 ## How it works
 
 1. **setup** (`auth.setup.ts`) runs first: logs the test user in (registering on
    first run), ensures a team exists, saves `storageState` → `.auth/user.json`
    and the team slug → `.auth/team.json`.
-2. **chromium** runs `*.smoke.spec.ts` with that storageState. The generic spec
-   reads the active fixture's `e2e.manifest.json` and, for each collection, checks
-   the list page loads and runs a create → see-in-list → delete cycle.
+2. **chromium** runs `*.smoke.spec.ts` with that storageState, both reading the
+   active fixture's `e2e.manifest.json`:
+   - `collection.smoke.spec.ts` — for each collection, checks the list page loads
+     and runs a create → see-in-list → delete cycle.
+   - `surface.smoke.spec.ts` — for each declared `surface`, visits the route and
+     asserts its element/heading renders. Fixtures with no `surfaces` register no
+     surface tests (the file is a no-op for them).
 
 ### crouton-auth realities the harness depends on
 - Login/register happen in a **RouteModal overlay**, not a form page.
@@ -88,9 +101,25 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
       "heading": "Main Items",      // visible list heading to assert
       "create": { "name": "e2e item" }  // text field label/name -> value; omit to skip CRUD
     }
+  ],
+  // Optional: package-specific UI a generic items CRUD doesn't reach. Omit when a
+  // fixture has nothing extra to assert (e.g. minimal). Proves the *package* mounts,
+  // not just that the app boots — e.g. with-pages asserts the pages workspace.
+  "surfaces": [
+    {
+      "name": "pages workspace renders",         // test title
+      "path": "/admin/{team}/workspace",          // route; {team} -> active team slug
+      "expect": { "visible": "[id$='-panel-pages-sidebar']" }  // CSS selector that must be visible
+      // or: "expect": { "heading": "Workspace" } // a role=heading name (case-insensitive)
+    }
   ]
 }
 ```
+
+> Surface selectors should hook something the *package* owns (here, the
+> `sidebar-id="pages-sidebar"` crouton-pages sets on `CroutonWorkspaceLayout` —
+> Nuxt UI renders the panel DOM id as `<storageKey>-panel-pages-sidebar`, hence
+> the ends-with match), so the assertion fails if that package's UI regresses.
 
 ## Gotchas
 - **Module format:** repo root is CommonJS, and Playwright 1.57 transpiles
@@ -104,6 +133,8 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   `test-results/` are all gitignored.
 
 ## Scope / follow-ups
-Current: list + CRUD per collection. Not yet: package-specific surfaces (e.g. the
-pages package's own admin UI) — extend the manifest with a `surfaces` field when
-needed. CI wiring is tracked separately (see the harness epic).
+Current: list + CRUD per collection, plus optional package-specific `surfaces`
+(e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
+over `fixtures/*` (see `.github/workflows/e2e.yml`). Next: lean on `surfaces` when
+adding a domain-package fixture (e.g. with-bookings) so it asserts that package's
+UI, not just generic items CRUD.
