@@ -1,0 +1,51 @@
+name: Deploy Docs
+
+# Thin caller for the reusable Workers deploy pipeline (#99, on #114's deploy-app.yml).
+# Push to `staging` (or a PR) → isolated staging env on docs.pmcp.dev (its own
+# auto-provisioned docs-staging-db). Manual dispatch with environment=production →
+# production (docs-db). The prod custom domain (docs.friendlyinter.net) is bound at
+# the DNS cutover (#134). Replaces the old Cloudflare Pages git-integration build —
+# disable that in the dashboard after the first successful Workers deploy.
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'apps/docs/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-docs.yml'
+      - '.github/workflows/deploy-app.yml'
+  pull_request:
+    paths:
+      - 'apps/docs/**'
+      - '.github/workflows/deploy-docs.yml'
+      - '.github/workflows/deploy-app.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    # The reusable workflow's PR-comment step needs pull-requests: write; a caller
+    # must grant it explicitly or the call fails to validate under restrictive
+    # default token permissions ("only allowed pull-requests: none").
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      app: docs
+      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'staging' }}
+      production-url: https://docs.friendlyinter.net
+      staging-url: https://docs.pmcp.dev
+      # docs is standalone (no @fyit/* layers) — build nothing before the app.
+      layer-packages: ''
+    secrets: inherit

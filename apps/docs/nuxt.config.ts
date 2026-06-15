@@ -29,9 +29,12 @@ export default defineNuxtConfig({
         }
       }
     },
+    // Production (Cloudflare Workers): content is served from D1, since the
+    // Workers runtime can't use a build-time better-sqlite3 file. Local dev keeps
+    // SQLite automatically via @nuxt/content's `_localDatabase` default.
     database: {
-      type: 'sqlite',
-      filename: '.data/content.sqlite'
+      type: 'd1',
+      bindingName: 'DB'
     }
   },
 

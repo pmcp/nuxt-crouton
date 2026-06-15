@@ -1,0 +1,44 @@
+{
+  // Cloudflare WORKERS (static assets) config for the docs site — migrated from
+  // Pages (#99). Nitro's `cloudflare_module` preset (NITRO_PRESET in cf:deploy)
+  // reads this at build and writes .output/server/wrangler.json, injecting `main`
+  // + the `assets` binding.
+  //
+  // The single D1 binding backs @nuxt/content (content.database.type = 'd1',
+  // bindingName 'DB'): content is dumped + loaded into D1 at runtime, so the
+  // dynamic /mcp + /raw routes work without a build-time sqlite file. No drizzle
+  // migrations (content owns its tables); no KV/R2/auth.
+  //
+  // Domain convention (#133): production → friendlyinter.net, staging → pmcp.dev.
+  // The prod custom domain (docs.friendlyinter.net) is bound at the DNS cutover
+  // (#134); until then prod deploys to *.workers.dev, staging is on docs.pmcp.dev.
+  //
+  // Bindings start id-LESS so the first deploy auto-provisions the D1; `pnpm
+  // sync:ids` then writes the ids back here.
+  "name": "docs",
+  "compatibility_date": "2024-07-11",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "docs-db"
+    }
+  ],
+
+  // Staging environment — its OWN isolated D1 (docs-staging-db), id-less so it
+  // auto-provisions on the first `pnpm cf:staging`. The env block is stripped from
+  // the generated .output config (nitro#3429), so cf:staging re-injects it via
+  // scripts/inject-wrangler-env.mjs.
+  "env": {
+    "staging": {
+      "routes": [{ "pattern": "docs.pmcp.dev", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "docs-staging-db"
+        }
+      ]
+    }
+  }
+}
