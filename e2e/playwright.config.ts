@@ -52,6 +52,7 @@ export default defineConfig({
     cwd: '..',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 120000
+    // Generous: a cold `nuxt dev` first build in CI can take a while.
+    timeout: 180000
   }
 })
