@@ -1,199 +1,113 @@
 /**
- * Crouton E2E Test Helpers
+ * Crouton E2E Helpers
  *
- * Reusable utilities for testing Crouton applications.
+ * Drives current crouton-auth (modal-based) against a fixture app:
+ *   - login/register happen in a RouteModal overlay (no dedicated form page)
+ *   - signup does NOT auto-create a team; we create one via the better-auth org API
+ *
+ * Target: fixtures/minimal (pkg "e2e-fixture-minimal").
  */
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { join } from 'node:path'
 
-// Test configuration
+// Saved-state paths, anchored to this e2e/ dir so setup-write and spec/config-read
+// always agree regardless of the cwd Playwright is invoked from.
+export const AUTH_DIR = join(__dirname, '.auth')
+export const AUTH_FILE = join(AUTH_DIR, 'user.json')
+export const TEAM_FILE = join(AUTH_DIR, 'team.json')
+
 export const config = {
   testUser: {
-    name: 'E2E Test User',
-    email: 'e2e-test@example.com',
+    name: 'E2E User',
+    email: 'e2e-user@example.com',
     password: 'TestPassword123!'
   },
-  multiTenant: true,
-  baseUrl: 'http://localhost:3000'
+  team: {
+    name: 'E2E Team',
+    slug: 'e2e-team'
+  }
+}
+
+/** Better-auth blocks state-changing requests without an Origin header (CSRF). */
+function authHeaders(base: string) {
+  return { Origin: base, Referer: `${base}/` }
+}
+
+/** True when a session exists for the current browser context. */
+export async function isAuthenticated(page: Page, base: string): Promise<boolean> {
+  const res = await page.request.get(`${base}/api/auth/get-session`).catch(() => null)
+  if (!res || !res.ok()) return false
+  const session = await res.json().catch(() => null)
+  return !!session?.user
+}
+
+/** Register the test user via the auth modal. Returns true if a session results. */
+async function register(page: Page, base: string): Promise<boolean> {
+  await page.goto(`${base}/auth/register`, { waitUntil: 'domcontentloaded' })
+  const name = page.locator('input[type="text"]').first()
+  await name.waitFor({ state: 'visible', timeout: 15000 })
+  await name.fill(config.testUser.name)
+  await page.locator('input[type="email"]').fill(config.testUser.email)
+  const pw = page.locator('input[type="password"]')
+  await pw.nth(0).fill(config.testUser.password)
+  await pw.nth(1).fill(config.testUser.password)
+  await page.getByRole('button', { name: /create account/i }).first().click()
+  await page.waitForTimeout(2500)
+  return isAuthenticated(page, base)
+}
+
+/** Log the test user in via the auth modal. Returns true if a session results. */
+async function login(page: Page, base: string): Promise<boolean> {
+  await page.goto(`${base}/auth/login`, { waitUntil: 'domcontentloaded' })
+  const email = page.locator('input[type="email"]')
+  await email.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {})
+  if (!(await email.isVisible().catch(() => false))) return false
+  await email.fill(config.testUser.email)
+  await page.locator('input[type="password"]').first().fill(config.testUser.password)
+  await page.getByRole('button', { name: /sign in/i }).first().click()
+  await page.waitForTimeout(2500)
+  return isAuthenticated(page, base)
+}
+
+/** Ensure the test user exists and is logged in (login first, register on miss). */
+export async function loginOrRegister(page: Page, base: string): Promise<void> {
+  if (await isAuthenticated(page, base)) return
+  if (await login(page, base)) return
+  if (await register(page, base)) return
+  throw new Error('Could not authenticate test user (login and register both failed)')
 }
 
 /**
- * Wait for page to be ready (no pending requests)
+ * Ensure the active session has a team (organization) and return its slug.
+ * Signup creates no team, so we create one via the better-auth org API if absent.
  */
-export async function waitForReady(page: Page) {
-  await page.waitForLoadState('domcontentloaded')
-  await page.waitForLoadState('networkidle').catch(() => {
-    // Network idle can timeout, that's ok
-  })
-}
+export async function ensureTeam(page: Page, base: string): Promise<string> {
+  const headers = authHeaders(base)
 
-/**
- * Navigate to a collection page
- */
-export async function navigateToCollection(page: Page, collectionName: string) {
-  await page.goto('/')
-  await waitForReady(page)
+  const listRes = await page.request.get(`${base}/api/auth/organization/list`, { headers })
+  const orgs = listRes.ok() ? await listRes.json().catch(() => []) : []
+  let org = Array.isArray(orgs) ? orgs[0] : null
 
-  // Try to find collection in sidebar
-  const collectionLink = page.getByRole('link', { name: new RegExp(collectionName, 'i') })
-
-  if (await collectionLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await collectionLink.click()
-    await waitForReady(page)
-    return true
-  }
-
-  // Try direct URL navigation
-  const currentUrl = page.url()
-  const teamMatch = currentUrl.match(/\/admin\/([^/]+)/)
-  const teamSlug = teamMatch?.[1] || ''
-
-  if (teamSlug) {
-    await page.goto(`/admin/${teamSlug}/${collectionName}`)
-  } else {
-    await page.goto(`/${collectionName}`)
-  }
-
-  await waitForReady(page)
-  return true
-}
-
-/**
- * Click the create/add button to open form
- */
-export async function clickCreateButton(page: Page): Promise<boolean> {
-  const createButton = page.getByRole('button', { name: /create|add|new/i })
-
-  if (await createButton.isVisible({ timeout: 10000 }).catch(() => false)) {
-    await createButton.click()
-    return true
-  }
-  return false
-}
-
-/**
- * Fill a form field by label or name
- */
-export async function fillField(page: Page, fieldName: string, value: string) {
-  // Try by label first
-  const byLabel = page.getByLabel(new RegExp(fieldName, 'i'))
-  if (await byLabel.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await byLabel.fill(value)
-    return true
-  }
-
-  // Try by name attribute
-  const byName = page.locator(`input[name="${fieldName}"], textarea[name="${fieldName}"]`)
-  if (await byName.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await byName.fill(value)
-    return true
-  }
-
-  // Try by placeholder
-  const byPlaceholder = page.locator(`input[placeholder*="${fieldName}" i], textarea[placeholder*="${fieldName}" i]`)
-  if (await byPlaceholder.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await byPlaceholder.fill(value)
-    return true
-  }
-
-  return false
-}
-
-/**
- * Submit the current form
- */
-export async function submitForm(page: Page): Promise<boolean> {
-  const submitButton = page.getByRole('button', { name: /save|create|submit|add/i })
-
-  if (await submitButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await submitButton.click()
-    await page.waitForTimeout(1000) // Wait for submission
-    return true
-  }
-  return false
-}
-
-/**
- * Create an item in a collection
- */
-export async function createItem(page: Page, fields: Record<string, string>): Promise<boolean> {
-  // Open create form
-  if (!await clickCreateButton(page)) {
-    return false
-  }
-
-  // Wait for form/modal
-  await page.waitForSelector('[role="dialog"], form', { timeout: 5000 }).catch(() => {})
-
-  // Fill fields
-  for (const [name, value] of Object.entries(fields)) {
-    await fillField(page, name, value)
-  }
-
-  // Submit
-  return await submitForm(page)
-}
-
-/**
- * Find an item in the list by text
- */
-export async function findItemInList(page: Page, text: string): Promise<boolean> {
-  const item = page.locator(`text=${text}`)
-  return await item.isVisible({ timeout: 5000 }).catch(() => false)
-}
-
-/**
- * Click an item in the list to open it
- */
-export async function clickItem(page: Page, text: string): Promise<boolean> {
-  const item = page.locator(`text=${text}`).first()
-
-  if (await item.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await item.click()
-    await waitForReady(page)
-    return true
-  }
-  return false
-}
-
-/**
- * Click the edit button for the current item
- */
-export async function clickEditButton(page: Page): Promise<boolean> {
-  const editButton = page.getByRole('button', { name: /edit/i })
-
-  if (await editButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await editButton.click()
-    return true
-  }
-  return false
-}
-
-/**
- * Click the delete button and confirm
- */
-export async function deleteItem(page: Page): Promise<boolean> {
-  const deleteButton = page.getByRole('button', { name: /delete|remove/i })
-
-  if (await deleteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await deleteButton.click()
-
-    // Look for confirmation dialog
-    const confirmButton = page.getByRole('button', { name: /confirm|yes|delete/i })
-    if (await confirmButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await confirmButton.click()
+  if (!org) {
+    const createRes = await page.request.post(`${base}/api/auth/organization/create`, {
+      headers,
+      data: { name: config.team.name, slug: config.team.slug }
+    })
+    if (!createRes.ok()) {
+      throw new Error(`Failed to create team: ${createRes.status()} ${await createRes.text()}`)
     }
-
-    await page.waitForTimeout(1000)
-    return true
+    org = await createRes.json()
   }
-  return false
+
+  await page.request.post(`${base}/api/auth/organization/set-active`, {
+    headers,
+    data: { organizationId: org.id }
+  })
+
+  return org.slug as string
 }
 
-/**
- * Get the current team slug from URL
- */
-export function getTeamSlug(page: Page): string | null {
-  const url = page.url()
-  const match = url.match(/\/admin\/([^/]+)/)
-  return match?.[1] || null
+/** Build the admin URL for a generated collection (key, e.g. "mainItems"). */
+export function collectionUrl(base: string, teamSlug: string, collectionKey: string): string {
+  return `${base}/admin/${teamSlug}/crouton/${collectionKey}`
 }
