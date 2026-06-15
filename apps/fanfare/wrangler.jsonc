@@ -29,15 +29,16 @@
     { "binding": "KV", "id": "b3183976e74846ff9913e1b6c641d951" }
   ],
 
-  // Preview/staging environment — a NEW, isolated D1 + KV (fanfare has none yet),
-  // left ID-LESS so the FIRST `cf:preview` deploy auto-provisions them; the ids are
-  // then written back here by scripts/sync-wrangler-ids.mjs. This is the disposable,
-  // demo-seeded acceptance DB (#110/#121) — every preview binds it, never prod.
-  // Deploying `--env preview` creates a `fanfare-preview` worker bound to these.
+  // Staging environment (#133: staging on pmcp.dev) — a NEW, isolated D1 + KV
+  // (fanfare has none yet), left ID-LESS so the FIRST `cf:staging` deploy
+  // auto-provisions them; the ids are then written back here by
+  // scripts/sync-wrangler-ids.mjs. This is the disposable, demo-seeded acceptance
+  // DB (#110/#121) — every staging deploy binds it, never prod.
+  // Deploying `--env staging` creates a `fanfare-staging` worker bound to these.
   // The env block is stripped from the generated .output config (nitro#3429), so
-  // cf:preview re-injects it via scripts/inject-wrangler-env.mjs.
+  // cf:staging re-injects it via scripts/inject-wrangler-env.mjs.
   "env": {
-    "preview": {
+    "staging": {
       "routes": [{ "pattern": "kassa-preview.pmcp.dev", "custom_domain": true }],
       "d1_databases": [
         {
