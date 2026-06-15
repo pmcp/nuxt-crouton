@@ -41,7 +41,8 @@
     "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules",
     "changelog": "changelogithub",
     "check:publint": "publint ./packages/crouton",
-    "check:attw": "attw --pack ./packages/crouton --ignore-rules cjs-resolves-to-esm"
+    "check:attw": "attw --pack ./packages/crouton --ignore-rules cjs-resolves-to-esm",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

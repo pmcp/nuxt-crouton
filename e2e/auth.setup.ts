@@ -1,111 +1,23 @@
 /**
- * Auth Setup
+ * Auth setup — runs before the authed specs.
  *
- * Handles user registration/login and saves auth state for other tests.
- * Works with any app using @crouton/auth.
+ * Logs in (or registers) the test user, ensures a team exists, and saves both
+ * the browser storage state and the team slug for the smoke specs to reuse.
  */
 import { test as setup, expect } from '@playwright/test'
-import { config, waitForReady } from './helpers'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { loginOrRegister, ensureTeam, isAuthenticated, AUTH_DIR, AUTH_FILE, TEAM_FILE } from './helpers'
 
-const AUTH_FILE = './.auth/user.json'
-const TEST_USER = config.testUser
+setup('authenticate', async ({ page, baseURL }) => {
+  const base = baseURL || 'http://localhost:3000'
 
-setup('authenticate', async ({ page }) => {
-  console.log('Starting authentication setup...')
+  await loginOrRegister(page, base)
+  expect(await isAuthenticated(page, base)).toBe(true)
 
-  // Go to login page
-  await page.goto('/auth/login')
-  await waitForReady(page)
-  await page.waitForSelector('form', { timeout: 15000 })
+  const slug = await ensureTeam(page, base)
+  expect(slug).toBeTruthy()
 
-  // Fill login form
-  const emailInput = page.locator('input[type="email"]')
-  const passwordInput = page.locator('input[type="password"]')
-
-  await expect(emailInput).toBeVisible({ timeout: 5000 })
-  await emailInput.fill(TEST_USER.email)
-
-  await expect(passwordInput).toBeVisible({ timeout: 5000 })
-  await passwordInput.fill(TEST_USER.password)
-
-  // Submit login
-  const submitButton = page.getByRole('button', { name: /sign in/i })
-  await submitButton.click()
-
-  // Wait for result
-  try {
-    await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
-    console.log('Login successful')
-  } catch {
-    // Check for error - user might not exist
-    const hasError = await page.locator('text=/invalid|error/i').isVisible({ timeout: 2000 }).catch(() => false)
-
-    if (hasError) {
-      console.log('User not found, registering...')
-      await registerUser(page)
-    } else {
-      throw new Error('Login failed without clear error')
-    }
-  }
-
-  // Handle onboarding (team creation) if needed
-  if (page.url().includes('/onboarding') && config.multiTenant) {
-    console.log('Creating team...')
-    await createTeam(page)
-  }
-
-  // Verify we've left auth pages
-  expect(page.url()).not.toContain('/auth/')
-  console.log('Authentication complete!')
-
-  // Save auth state
+  mkdirSync(AUTH_DIR, { recursive: true })
   await page.context().storageState({ path: AUTH_FILE })
+  writeFileSync(TEAM_FILE, JSON.stringify({ slug }, null, 2))
 })
-
-async function registerUser(page: any) {
-  await page.goto('/auth/register')
-  await waitForReady(page)
-  await page.waitForSelector('form', { timeout: 15000 })
-
-  // Fill registration form
-  const nameInput = page.locator('input[type="text"], input[name="name"]').first()
-  if (await nameInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await nameInput.fill(TEST_USER.name)
-  }
-
-  const emailInput = page.locator('input[type="email"]')
-  await emailInput.fill(TEST_USER.email)
-
-  // Password fields (might have confirmation)
-  const passwordInputs = page.locator('input[type="password"]')
-  const count = await passwordInputs.count()
-
-  if (count >= 2) {
-    await passwordInputs.nth(0).fill(TEST_USER.password)
-    await passwordInputs.nth(1).fill(TEST_USER.password)
-  } else {
-    await passwordInputs.first().fill(TEST_USER.password)
-  }
-
-  // Submit
-  const registerButton = page.getByRole('button', { name: /sign up|register|create/i })
-  await registerButton.click()
-
-  // Wait for redirect
-  await page.waitForURL(url => !url.pathname.startsWith('/auth/'), { timeout: 15000 })
-}
-
-async function createTeam(page: any) {
-  await waitForReady(page)
-
-  // Fill team name
-  const teamInput = page.locator('input').first()
-  if (await teamInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await teamInput.fill('E2E Test Team')
-
-    const createButton = page.getByRole('button', { name: /create|continue|next/i })
-    await createButton.click()
-
-    await page.waitForURL(url => !url.pathname.startsWith('/onboarding'), { timeout: 15000 })
-  }
-}
