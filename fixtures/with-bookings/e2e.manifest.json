@@ -1,0 +1,16 @@
+{
+  "collections": [
+    {
+      "key": "mainItems",
+      "heading": "Main Items",
+      "create": { "name": "e2e item" }
+    }
+  ],
+  "surfaces": [
+    {
+      "name": "bookings admin section renders",
+      "path": "/admin/{team}/bookings",
+      "expect": { "visible": "a[href$='/bookings/locations']" }
+    }
+  ]
+}
