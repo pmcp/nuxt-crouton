@@ -15,7 +15,7 @@
  *      every `env.*` scope — preserving the file's comments and formatting.
  *
  * Idempotent: re-running with the same provisioned resources is a no-op. Safe to
- * chain into `cf:deploy` / `cf:preview` (run AFTER the first provisioning deploy).
+ * chain into `cf:deploy` / `cf:staging` (run AFTER the first provisioning deploy).
  *
  * Matching conventions
  *   D1 : `database_name` is explicit in config → exact match against `d1 list`.

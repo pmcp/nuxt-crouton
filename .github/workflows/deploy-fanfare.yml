@@ -1,90 +1,68 @@
 name: Deploy Fanfare
 
-# One-click production deploy for fanfare (https://kassa.friendlyinter.net),
-# modelled on deploy-velo.yml / deploy-triage.yml. Manual trigger only for now;
-# to auto-deploy on merge, add a `push: { branches: [main], paths: [...] }`
-# trigger alongside workflow_dispatch.
-on:
-  workflow_dispatch:
+# Thin caller for the reusable Workers deploy pipeline (#121, on #114's deploy-app.yml).
+# Push to `staging` (or open a PR) → isolated, demo-seeded staging deploy
+# (auto-provisioned fanfare-staging-db + KV, bound to kassa-preview.pmcp.dev). Manual
+# dispatch with environment=production → production (reuses fanfare-db, kassa.pmcp.dev).
+#
+# Replaces the old Pages workflows (deploy-fanfare.yml production + the separate
+# deploy-fanfare-preview.yml that seeded the SHARED prod DB). The staging env now binds
+# its own isolated DB — a PR deploy never touches production data.
 
-# Never run two production deploys at once; let an in-flight one finish.
-concurrency:
-  group: fanfare-deploy
-  cancel-in-progress: false
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - 'apps/fanfare/**'
+      - 'packages/crouton/**'
+      - 'packages/crouton-core/**'
+      - 'packages/crouton-auth/**'
+      - 'packages/crouton-i18n/**'
+      - 'packages/crouton-charts/**'
+      - 'packages/crouton-pages/**'
+      - 'packages/crouton-sales/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-fanfare.yml'
+      - '.github/workflows/deploy-app.yml'
+  pull_request:
+    paths:
+      - 'apps/fanfare/**'
+      - 'packages/crouton/**'
+      - 'packages/crouton-core/**'
+      - 'packages/crouton-auth/**'
+      - 'packages/crouton-i18n/**'
+      - 'packages/crouton-charts/**'
+      - 'packages/crouton-pages/**'
+      - 'packages/crouton-sales/**'
+      - '.github/workflows/deploy-fanfare.yml'
+      - '.github/workflows/deploy-app.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   deploy:
-    name: Deploy to production
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Cache layer builds
-        id: layer-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            packages/crouton-auth/dist
-            packages/crouton-core/dist
-            packages/crouton/dist
-          key: layer-builds-${{ hashFiles('packages/crouton-auth/**/*.ts', 'packages/crouton-core/**/*.ts', 'packages/crouton/**/*.ts') }}
-
-      - name: Build module packages
-        if: steps.layer-cache.outputs.cache-hit != 'true'
-        run: |
-          pnpm --filter '@fyit/crouton-auth' build
-          pnpm --filter '@fyit/crouton-core' build
-          pnpm --filter '@fyit/crouton' build
-
-      # Single production environment — fanfare's wrangler.toml has no [env.preview].
-      - name: Run database migrations
-        run: npx wrangler d1 migrations apply fanfare-db --remote
-        working-directory: apps/fanfare
-
-      - name: Prepare Nuxt (generate tsconfig)
-        run: npx nuxt prepare
-        working-directory: apps/fanfare
-
-      - name: Build
-        working-directory: apps/fanfare
-        env:
-          NODE_OPTIONS: '--max-old-space-size=8192'
-          NITRO_PRESET: 'cloudflare-pages'
-          BETTER_AUTH_URL: https://kassa.friendlyinter.net
-          BETTER_AUTH_SECRET: prerender-placeholder
-        run: npx nuxt build
-
-      # Wrangler 4.64+ rejects an `env` block in the redirected config Nitro copies
-      # into dist/_worker.js/wrangler.json (fanfare has KV). Strip it (no-op if absent).
-      - name: Strip env from redirected wrangler config
-        working-directory: apps/fanfare
-        run: |
-          CONFIG="dist/_worker.js/wrangler.json"
-          if [ -f "$CONFIG" ] && grep -q '"env"' "$CONFIG"; then
-            node -e "
-              const fs = require('fs');
-              const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
-              delete cfg.env;
-              fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
-            "
-          fi
-
-      - name: Deploy to Cloudflare Pages (production)
-        working-directory: apps/fanfare
-        run: npx wrangler pages deploy dist/ --commit-dirty=true
+    # The reusable workflow's PR-comment step needs pull-requests: write; a caller
+    # must grant it explicitly or the call fails to validate under restrictive
+    # default token permissions ("only allowed pull-requests: none").
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      app: fanfare
+      environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.environment == 'production') && 'production' || 'staging' }}
+      production-url: https://kassa.pmcp.dev
+      staging-url: https://kassa-preview.pmcp.dev
+      # Only the dist-consumed packages with a build script. crouton-i18n/charts/
+      # pages/sales are pure source layers — the reusable workflow skips those.
+      layer-packages: '@fyit/crouton-core @fyit/crouton-auth @fyit/crouton'
+    secrets: inherit
