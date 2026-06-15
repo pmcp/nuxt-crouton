@@ -15,12 +15,12 @@ on:
     branches:
       - staging
     paths:
-      - 'apps/docs/**'
+      - 'docs/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-docs.yml'
   pull_request:
     paths:
-      - 'apps/docs/**'
+      - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -61,11 +61,11 @@ jobs:
       - name: Build + deploy
         if: github.event_name != 'pull_request'
         run: pnpm cf:deploy
-        working-directory: apps/docs
+        working-directory: docs
 
       # On PRs, build only (no deploy) as a smoke test that the cloudflare_module build
       # + content→D1 dump succeed.
       - name: Build only (PR smoke test)
         if: github.event_name == 'pull_request'
         run: NITRO_PRESET=cloudflare_module npx nuxt build
-        working-directory: apps/docs
+        working-directory: docs
