@@ -4,9 +4,11 @@ import { dirname, resolve } from 'node:path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
 
-// The Workers stubs only apply to the Cloudflare build. On the node-server
-// target (venue/Pi) we keep the real deps so passkeys etc. work.
-const isCloudflare = (process.env.NITRO_PRESET ?? 'cloudflare-pages') === 'cloudflare-pages'
+// The Workers stubs only apply to the Cloudflare build (cloudflare-pages OR the
+// cloudflare_module Workers preset). On the node-server target (venue/Pi) we keep
+// the real deps so passkeys etc. work.
+const preset = process.env.NITRO_PRESET ?? 'cloudflare-pages'
+const isCloudflare = preset.startsWith('cloudflare')
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -71,9 +73,10 @@ export default defineNuxtConfig({
     }
   },
 
-  // Cloudflare Pages deployment
+  // Cloudflare Workers deployment — the preset is supplied at build time via
+  // NITRO_PRESET (cloudflare_module in cf:deploy/cf:preview; node-server for the
+  // Pi target). Not pinned here so the same config serves both targets.
   nitro: {
-    preset: 'cloudflare-pages',
     sourceMap: false,
     alias: isCloudflare
       ? {

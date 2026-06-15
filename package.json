@@ -24,7 +24,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "build": "pnpm -r build",
+    "build": "pnpm -r --filter '!./pocs/**' build",
     "build:packages": "pnpm -r --filter './packages/*' build",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -14,11 +14,26 @@ first deploy, so there's no manual resource/project creation, no id-juggling.
 > or the Pages "strip env" step anymore. If you find those, the app is on the old
 > Pages path — see **Migrating a Pages app → Workers** below.
 
+## Environment & domain convention (#133)
+
+Two environments, two domains — kept on **separate registrable domains** so a
+staging session can never authenticate against production (cookie isolation):
+
+| Env | wrangler env | Worker | Domain |
+|-----|--------------|--------|--------|
+| **production** | top-level | `<app>` | `<app>.friendlyinter.net` |
+| **staging** | `env.staging` | `<app>-staging` | `<app>.pmcp.dev` (public) |
+
+The deploy-env is named **`staging`** (not `preview`): scripts are `cf:staging` /
+`db:migrate:staging`, deploys use `--env staging`. (The general `crouton` CLI stays
+domain-agnostic via `--domain <zone>`; the friendlyinter.net/pmcp.dev split is this
+monorepo's convention, applied per app at its production cutover — #136 for triage.)
+
 ## Usage
 
 ```
 /deploy              # Deploy current app (auto-detected from cwd)
-/deploy three-demo   # Deploy a specific app (preview/staging)
+/deploy three-demo   # Deploy a specific app (staging)
 /deploy velo prod    # Deploy to production
 ```
 
@@ -37,9 +52,9 @@ The deploy logic lives in the app's **`package.json` scripts** — the same comm
 you run locally and that CI runs. Don't reinvent them step-by-step:
 
 - **`cf:deploy`** (production): `build → wrangler deploy (auto-provision) → sync:ids → d1 migrations apply --remote`
-- **`cf:preview`** (isolated preview env): `build → inject-wrangler-env → wrangler deploy --env preview → sync:ids → inject-wrangler-env → d1 migrations apply --env preview --remote`
+- **`cf:staging`** (isolated staging env): `build → inject-wrangler-env → wrangler deploy --env staging → sync:ids → inject-wrangler-env → d1 migrations apply --env staging --remote`
 - **`sync:ids`** — queries wrangler, writes provisioned ids back into `wrangler.jsonc`
-- **`db:migrate` / `db:migrate:prod` / `db:migrate:preview`** — D1 migrations (local / remote / preview-remote)
+- **`db:migrate` / `db:migrate:prod` / `db:migrate:staging`** — D1 migrations (local / remote / staging-remote)
 
 A freshly scaffolded app (`crouton init`) already ships all of this:
 `wrangler.jsonc` (id-less), `scripts/sync-wrangler-ids.mjs`,
@@ -76,10 +91,10 @@ Then **commit the written-back ids** (bootstrap → committed):
 git add apps/{app}/wrangler.jsonc && git commit -m "chore({app}): commit provisioned D1/KV ids"
 ```
 
-For the isolated preview environment (its own auto-provisioned D1+KV):
+For the isolated staging environment (its own auto-provisioned D1+KV):
 ```bash
-pnpm cf:preview     # provisions + deploys the *-preview worker
-git add apps/{app}/wrangler.jsonc   # commit the preview ids too
+pnpm cf:staging     # provisions + deploys the *-staging worker
+git add apps/{app}/wrangler.jsonc   # commit the staging ids too
 ```
 
 > If you're an agent **without Cloudflare egress** (sandbox), you can't run these —
@@ -89,8 +104,8 @@ git add apps/{app}/wrangler.jsonc   # commit the preview ids too
 ### Step 4: Wire CI (per-app caller)
 Add a tiny caller that uses the reusable `deploy-app.yml`. **Model on
 `.github/workflows/deploy-three-demo.yml`.** Set: `app`, `production-url`,
-`preview-url`, and the `paths` filter (the app + its extended `crouton*` packages +
-lockfile + both workflow files). Push to `staging`/open a PR → isolated preview with
+`staging-url`, and the `paths` filter (the app + its extended `crouton*` packages +
+lockfile + both workflow files). Push to `staging`/open a PR → isolated staging with
 the URL commented on the PR; manual dispatch → production. Uses `secrets: inherit`.
 
 Ensure **repo-level** secrets `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` exist
@@ -100,22 +115,22 @@ Ensure **repo-level** secrets `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` e
 ### Step 4.5: App (Worker) secrets
 The app's own secrets (`BETTER_AUTH_SECRET`/`BETTER_AUTH_URL`, `NUXT_*`, etc.) live
 on the **Worker**, NOT in `wrangler.jsonc`. **Worker secrets persist across deploys**,
-so this is a one-time bootstrap per worker (prod + preview), not a per-deploy step.
+so this is a one-time bootstrap per worker (prod + staging), not a per-deploy step.
 
 Two ways:
 - **Manual (one-time):** `npx wrangler secret bulk secrets.json` (prod) /
-  `… --env preview` (preview). `BETTER_AUTH_URL`/`BASE_URL` must be the **production
+  `… --env staging` (staging). `BETTER_AUTH_URL`/`BASE_URL` must be the **production
   domain** (not localhost). Pages secrets do NOT carry over — re-provide the values.
 - **Automatic (CI):** store the whole bundle as a GitHub **Environment** secret
   `WORKER_SECRETS_JSON` (a JSON object of `{ "NAME": "value", … }`) under the
   `production` and `staging` environments (env-scoped so each can hold the right
   URLs). The reusable `deploy-app.yml` runs `wrangler secret bulk` from it on every
-  deploy (`--env preview` for non-prod). Omit it to manage secrets manually.
+  deploy (`--env staging` for non-prod). Omit it to manage secrets manually.
   Automation can't invent values — they must live in that secret once.
 
 ### Step 5: Routine deploys
 - **CI (preferred):** push to `staging` (or open a PR) → the caller runs the pipeline.
-- **Local:** `pnpm cf:deploy` (prod) / `pnpm cf:preview` (preview) from the app dir.
+- **Local:** `pnpm cf:deploy` (prod) / `pnpm cf:staging` (staging) from the app dir.
 
 ## Migrating a Pages app → Workers
 
@@ -124,12 +139,12 @@ For an app still on the Pages setup (`wrangler.toml`, `pages_build_output_dir`,
 
 1. **`wrangler.toml` → `wrangler.jsonc`** in the Workers shape (see `apps/three-demo`):
    drop `pages_build_output_dir`; keep `name`/`compatibility_*`; `d1_databases` (reuse
-   the existing prod `database_id`), `kv_namespaces`; add an `env.preview` block with a
-   **separate** `{app}-preview-db` + KV (id-less to auto-provision, or existing staging ids).
+   the existing prod `database_id`), `kv_namespaces`; add an `env.staging` block with a
+   **separate** `{app}-staging-db` + KV (id-less to auto-provision, or existing staging ids).
 2. **Add** `scripts/sync-wrangler-ids.mjs`, `scripts/inject-wrangler-env.mjs`,
    `drizzle.config.ts` (copy from `apps/three-demo`).
 3. **package.json** — replace the Pages `cf:*` scripts with the Workers chain
-   (`NITRO_PRESET=cloudflare_module`, `sync:ids`, `db:migrate:preview`); keep the
+   (`NITRO_PRESET=cloudflare_module`, `sync:ids`, `db:migrate:staging`); keep the
    guarded `postinstall`.
 4. **nuxt.config.ts** — remove `nitro.preset: 'cloudflare-pages'` (keep the `nitro.alias` stubs).
 5. **CI** — replace `deploy-{app}.yml` (+ any `-preview.yml`) with the thin caller from Step 4; delete the Pages strip-env step (not needed on Workers).
@@ -156,20 +171,20 @@ The job/shell needs **`CLOUDFLARE_ACCOUNT_ID`** + **`CLOUDFLARE_API_TOKEN`**.
 
 ### `Couldn't find a D1 DB … missing database_id` (on migrate)
 The first deploy provisioned the DB but the id isn't in `wrangler.jsonc` yet. Run
-`pnpm sync:ids` (after a deploy) and commit the result. `cf:deploy`/`cf:preview` do
+`pnpm sync:ids` (after a deploy) and commit the result. `cf:deploy`/`cf:staging` do
 this automatically.
 
 ### `Configuration file does not support "env"` / redirected config rejects env
 Wrangler 4.64+ rejects `env` in a *redirected* config. `scripts/inject-wrangler-env.mjs`
-(run by `cf:preview`) re-injects `env` into `.output/server/wrangler.json` and removes
-the redirect so `--env preview` deploys read it directly. No manual strip step.
+(run by `cf:staging`) re-injects `env` into `.output/server/wrangler.json` and removes
+the redirect so `--env staging` deploys read it directly. No manual strip step.
 
 ### `papaparse` RollupError / passkey/tsyringe errors
 Add the CF stubs + `nitro.alias` (see scaffolder output / `apps/three-demo`).
 
 ### KV namespace not found by `sync:ids`
 It matches the auto-provisioned title `<worker-name>-<binding>` (e.g.
-`{app}-KV`, `{app}-preview-KV`). The script logs the available titles if no match —
+`{app}-KV`, `{app}-staging-KV`). The script logs the available titles if no match —
 adjust only if your account names them differently.
 
 ### Build OOM
