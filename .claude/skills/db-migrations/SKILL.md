@@ -80,6 +80,14 @@ Mirror `packages/crouton-flow` exactly:
 Naming: package tables use the package's prefix (`flow_*`, `sales_*`); column
 names in package tables follow that table's own convention (flow uses snake_case).
 
+**The consuming app needs NO CLI step for a package table.** The crouton CLI
+(`crouton config`) has zero migration logic and is *not* involved here — don't
+add the table to the app's `crouton.config.js`. NuxtHub auto-discovers it from
+the package's `server/db/schema.ts` re-export; the app's only job is the normal
+migrate step below (`db:generate` auto-includes it, then `db:migrate`) — the same
+step any schema change needs. (A package may also ship its own `.sql` for direct
+apply via `wrangler d1 execute --file=node_modules/@fyit/<pkg>/server/database/migrations/<file>.sql`.)
+
 ## Generate the migration — and the gotcha
 
 `pnpm --filter <app> db:generate` reads `.nuxt/hub/db/schema.mjs`. On a freshly
