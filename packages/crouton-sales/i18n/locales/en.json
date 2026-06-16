@@ -22,6 +22,25 @@
           }
         }
       },
+      "liveDashboard": {
+        "name": "Live Dashboard",
+        "description": "Watch one event's live orders and sales online, read from the cloud mirror — with a 'last synced' indicator that goes stale when the till is offline. For signed-in team members.",
+        "fields": {
+          "eventSlug": {
+            "label": "Event",
+            "description": "Pick which event's live data this dashboard shows."
+          },
+          "title": {
+            "label": "Title",
+            "description": "Optional heading above the dashboard (defaults to the event name)."
+          }
+        },
+        "ui": {
+          "teamOnly": "Sign in as a team member to view the live dashboard.",
+          "eventNotFound": "Event not found",
+          "defaultTitle": "Live dashboard"
+        }
+      },
       "salesChart": {
         "name": "Sales Chart",
         "description": "Embed a sales analytics chart for one event or the whole team",
@@ -164,6 +183,27 @@
     "admin": {
       "sectionTitle": "Point of Sale",
       "overview": "Overview"
+    },
+    "sync": {
+      "live": "Live",
+      "stale": "Stale",
+      "waiting": "Connecting",
+      "unavailable": "Status unavailable",
+      "justNow": "just now",
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago",
+      "syncedAgo": "synced {ago}",
+      "staleDetail": "last synced {ago} — the till may be offline",
+      "waitingDetail": "waiting for the first sync from the till",
+      "unavailableDetail": "couldn't reach the sync status"
+    },
+    "dashboard": {
+      "revenue": "Revenue",
+      "orders": "Orders",
+      "avgOrder": "Avg. order",
+      "topProducts": "Top products",
+      "noSalesYet": "No sales yet"
     },
     "common": {
       "save": "Save",
