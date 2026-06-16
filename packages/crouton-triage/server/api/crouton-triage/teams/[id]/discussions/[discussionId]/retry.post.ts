@@ -116,6 +116,8 @@ export default defineEventHandler(async (event) => {
     const job = await createTriageJob({
       teamId: discussion.teamId as string,
       owner: SYSTEM_USER_ID,
+      createdBy: SYSTEM_USER_ID,
+      updatedBy: SYSTEM_USER_ID,
       discussionId: discussion.id as string,
       flowInputId: discussion.flowInputId as string,
       status: 'pending' as const,
