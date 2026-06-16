@@ -181,8 +181,16 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   (it forces ESM output → "exports is not defined").
 - **Specs can't import test files** (Playwright rule) — shared constants like
   `TEAM_FILE` live in `helpers.ts`, not `auth.setup.ts`.
-- **Cold dev-server compile:** first hit on a route/modal compiles on demand, so
-  auth + first navigation use generous (~30s) timeouts. Keep them.
+- **Cold dev-server compile (the big one for CI):** the smoke runs against
+  `nuxt dev`, which compiles each route/modal on first hit. CI runners are far
+  slower at this than locally — heavy package routes can take minutes — so the
+  first-hit assertions use **very generous** timeouts (180s, with a 240s per-test
+  budget and a 120s nav/modal cap). Keep them high: a high cap costs nothing when
+  a route compiles fast (the assertion resolves as soon as the element appears);
+  it only matters on a genuinely slow first compile. Tightening them back to
+  ~30-60s is what made the CI smoke flake. (Precompiled `nuxt preview` would dodge
+  this, but crouton collection pages currently 500 under production SSR — an
+  internal data-fetch loses the auth cookie — so the harness stays on `nuxt dev`.)
 - Fixtures are throwaway: `.data/`, `.auth/`, `playwright-report/`,
   `test-results/` are all gitignored.
 

@@ -36,11 +36,11 @@ test.describe(`fixture "${FIXTURE}"`, () => {
       // wait for its first text input to render.
       async function openCreateForm(page: import('@playwright/test').Page) {
         await expect(page.getByRole('button', { name: /create|add|new/i }).first())
-          .toBeVisible({ timeout: 60000 })
+          .toBeVisible({ timeout: 180000 })
         await page.getByRole('button', { name: /create|add|new/i }).first().click()
         const dialog = page.getByRole('dialog')
-        await expect(dialog).toBeVisible({ timeout: 30000 })
-        await dialog.getByRole('textbox').first().waitFor({ state: 'visible', timeout: 30000 })
+        await expect(dialog).toBeVisible({ timeout: 60000 })
+        await dialog.getByRole('textbox').first().waitFor({ state: 'visible', timeout: 60000 })
         return dialog
       }
 
@@ -50,7 +50,7 @@ test.describe(`fixture "${FIXTURE}"`, () => {
 
         // Generous timeout: the dev server compiles the route on first hit.
         await expect(page.getByRole('heading', { name: new RegExp(collection.heading, 'i') }))
-          .toBeVisible({ timeout: 60000 })
+          .toBeVisible({ timeout: 180000 })
         await expect(page.getByRole('table')).toBeVisible()
       })
 
@@ -78,7 +78,7 @@ test.describe(`fixture "${FIXTURE}"`, () => {
             await fillField(createDialog, field, value)
           }
           await createDialog.getByRole('button', { name: /create|save|add/i }).first().click()
-          await expect(page.getByRole('cell', { name: marker })).toBeVisible({ timeout: 30000 })
+          await expect(page.getByRole('cell', { name: marker })).toBeVisible({ timeout: 60000 })
 
           // --- EDIT --- open the row's pencil (last of the [delete, update] row
           // buttons), change the field, save, and assert the new value replaced
@@ -86,13 +86,13 @@ test.describe(`fixture "${FIXTURE}"`, () => {
           const row = page.getByRole('row', { name: new RegExp(marker) })
           await row.getByRole('button').last().click()
           const editDialog = page.getByRole('dialog')
-          await expect(editDialog).toBeVisible({ timeout: 30000 })
-          await editDialog.getByRole('textbox').first().waitFor({ state: 'visible', timeout: 30000 })
+          await expect(editDialog).toBeVisible({ timeout: 60000 })
+          await editDialog.getByRole('textbox').first().waitFor({ state: 'visible', timeout: 60000 })
           for (const [field, value] of Object.entries(editFields)) {
             await fillField(editDialog, field, value)
           }
           await editDialog.getByRole('button', { name: /update|save|create/i }).first().click()
-          await expect(page.getByRole('cell', { name: editedMarker })).toBeVisible({ timeout: 30000 })
+          await expect(page.getByRole('cell', { name: editedMarker })).toBeVisible({ timeout: 60000 })
           await expect(page.getByRole('cell', { name: marker, exact: true })).toHaveCount(0, { timeout: 20000 })
 
           // --- DELETE --- the row's trash (first button) opens a confirm dialog.

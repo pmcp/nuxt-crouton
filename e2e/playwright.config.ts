@@ -22,7 +22,12 @@ export default defineConfig({
   reporter: process.env.CI ? 'list' : 'html',
   // Generous per-test budget: a fixture's first hit on a route/modal compiles it
   // on demand (nuxt dev), which is markedly slower on CI runners than locally.
-  timeout: 120000,
+  // Generous per-test budget. `nuxt dev` compiles each route on first hit, and CI
+  // runners are far slower at this than locally (heavy package routes can take
+  // 2-3 min to compile cold). High timeouts are ~free for passing tests — they
+  // only cap how long a slow-but-valid first compile may take — so we set them
+  // well above the worst observed CI compile rather than chase a tight value.
+  timeout: 240000,
   expect: { timeout: 30000 },
 
   use: {
@@ -30,7 +35,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 20000,
-    navigationTimeout: 60000
+    navigationTimeout: 120000
   },
 
   projects: [

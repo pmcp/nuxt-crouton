@@ -172,8 +172,9 @@ export async function setActiveTeam(page: Page, base: string, organizationId: st
 }
 
 // Cold dev-server compiles the auth modal on first hit — be patient. CI runners
-// compile noticeably slower than local, so this is deliberately generous.
-const MODAL_TIMEOUT = 60000
+// compile much slower than local, so this is deliberately very generous (a high
+// cap is free when the route compiles fast; it only matters on a slow first hit).
+const MODAL_TIMEOUT = 120000
 
 /** Register the test user via the auth modal. Returns true if a session results. */
 async function register(page: Page, base: string): Promise<boolean> {

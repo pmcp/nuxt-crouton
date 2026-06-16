@@ -38,7 +38,7 @@ test.describe(`fixture "${FIXTURE}" i18n`, () => {
 
     // Default locale renders the known string in its original language.
     // Generous: the dev server compiles the route on first hit.
-    await expect(page.getByText(before, { exact: false }).first()).toBeVisible({ timeout: 60000 })
+    await expect(page.getByText(before, { exact: false }).first()).toBeVisible({ timeout: 180000 })
 
     // The package-owned control: crouton-i18n's LanguageSwitcher renders as a
     // Nuxt UI USelect, whose trigger is the page's locale combobox. Open it and
@@ -48,7 +48,7 @@ test.describe(`fixture "${FIXTURE}" i18n`, () => {
 
     // The same string now renders in the target language — proof the switcher
     // drove a real locale change, not just a cosmetic select value.
-    await expect(page.getByText(after, { exact: false }).first()).toBeVisible({ timeout: 30000 })
+    await expect(page.getByText(after, { exact: false }).first()).toBeVisible({ timeout: 60000 })
     await expect(page.getByText(before, { exact: true })).toHaveCount(0)
   })
 })

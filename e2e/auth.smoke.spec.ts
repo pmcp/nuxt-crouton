@@ -69,7 +69,7 @@ test.describe(`fixture "${FIXTURE}" auth`, () => {
       // The security-relevant invariant: the protected collection content is
       // never shown to an anonymous visitor (crouton-auth bounces them to the
       // login modal), and no session is silently established.
-      await expect(page.getByRole('table')).toHaveCount(0, { timeout: 60000 })
+      await expect(page.getByRole('table')).toHaveCount(0, { timeout: 180000 })
       await expect(page.getByRole('heading', { name: new RegExp(firstCollection.heading, 'i') }))
         .toHaveCount(0)
       expect(await isAuthenticated(page, base)).toBe(false)
