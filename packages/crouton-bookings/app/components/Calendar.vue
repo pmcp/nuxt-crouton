@@ -98,7 +98,7 @@ defineExpose({
 const currentView = computed(() => props.view)
 
 // For month view: track focused month (no selection)
-const monthFocusDate = ref<DateValue>(new CalendarDate(
+const monthFocusDate = ref<DateValue | undefined>(new CalendarDate(
   new Date().getFullYear(),
   new Date().getMonth() + 1,
   1

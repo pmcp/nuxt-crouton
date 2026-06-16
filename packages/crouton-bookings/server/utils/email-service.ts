@@ -265,7 +265,7 @@ export async function updateEmailLogStatus(
  */
 export function renderBookingEmail(
   template: { subject: string; body: string },
-  variables: ExtendedEmailVariables
+  variables: BookingEmailVariables
 ): { subject: string; body: string } {
   // Extend the base render function to handle all variable formats
   const allVariables = {
