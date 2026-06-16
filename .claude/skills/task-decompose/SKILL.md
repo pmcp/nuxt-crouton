@@ -39,6 +39,18 @@ flowchart TD
 To tune the limits, edit the numbers in `.claude/agents/task-decomposer.md` (and the
 orchestrator's MAX_CHILDREN).
 
+## Triggers (manual + automatic)
+
+- **Manual:** run `/task-decompose "<task>"` or `/task-decompose #NN` in any Claude Code
+  session (CLI, web, desktop, mobile app).
+- **Automatic — issue opt-in:** add the **`auto-decompose`** label to any issue and
+  `.github/workflows/decompose-on-issue.yml` runs `/task-decompose #NN` for you (no
+  command needed). Gate is the label, so only opted-in issues fire.
+- **Automatic — resume after a blocker:** when an agent @mentions you and sets
+  `status:blocked`, just **reply on the issue** — `.github/workflows/resume-on-comment.yml`
+  picks it back up, removes the block, and continues. (Both workflows need the
+  `ANTHROPIC_API_KEY` repo secret, same as `claude.yml`.)
+
 ## How to run
 
 `$ARGUMENTS` is either:
