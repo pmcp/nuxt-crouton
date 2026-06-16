@@ -2,7 +2,7 @@
   @crouton-generated
   @collection printqueues
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for printqueues collection
@@ -127,7 +127,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<SalesPrintqueueFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<SalesPrintqueueFormData & { id?: string | null }>(initialValues as SalesPrintqueueFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {

@@ -13,6 +13,22 @@
 const { t } = useT()
 const { teamSlug } = useTeamContext()
 
+interface EmailLogRow {
+  emailType: string
+  recipientEmail: string
+  status: string
+  sentAt: string | null
+  createdAt: string | null
+  error?: string | null
+}
+
+interface EmailLogStats {
+  total: number
+  sent: number
+  pending: number
+  failed: number
+}
+
 // Filters
 const selectedType = ref<string>('')
 const selectedStatus = ref<string>('')
@@ -30,7 +46,7 @@ const queryParams = computed(() => {
 })
 
 // Fetch stats
-const { data: stats, refresh: refreshStats } = useFetch(
+const { data: stats, refresh: refreshStats } = useFetch<EmailLogStats>(
   () => `/api/teams/${teamSlug.value}/email-logs/stats`,
   { key: `auth-email-stats-${teamSlug.value}` }
 )
@@ -44,9 +60,10 @@ const { data: logsData, pending, refresh: refreshLogs } = useFetch(
   }
 )
 
-const logs = computed(() => {
-  if (!logsData.value) return []
-  return Array.isArray(logsData.value) ? logsData.value : (logsData.value as any).items || []
+const logs = computed<EmailLogRow[]>(() => {
+  const d = logsData.value as { items?: EmailLogRow[] } | EmailLogRow[] | null | undefined
+  if (!d) return []
+  return Array.isArray(d) ? d : (d.items ?? [])
 })
 
 // Refresh on filter change
@@ -103,8 +120,8 @@ function formatDate(date: string | Date | null) {
   return new Date(date).toLocaleString()
 }
 
-function showError(error: string) {
-  selectedError.value = error
+function showError(error: string | null | undefined) {
+  selectedError.value = error ?? ''
   showErrorModal.value = true
 }
 </script>

@@ -33,6 +33,7 @@
             <USelectMenu
               v-model="state.statusCode"
               :items="statusCodeOptions"
+              value-key="value"
               class="w-full"
               size="xl"
             />

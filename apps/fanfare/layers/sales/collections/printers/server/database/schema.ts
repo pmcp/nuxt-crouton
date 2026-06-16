@@ -27,20 +27,14 @@ export const salesPrinters = sqliteTable('sales_printers', {
   teamId: text('teamId').notNull(),
   owner: text('owner').notNull(),
   eventId: text('eventId').notNull(),
-  // Nullable: receipt printers carry no location (kitchen routing key only)
-  locationId: text('locationId'),
+  locationId: text('locationId').notNull(),
   title: text('title').notNull(),
   ipAddress: text('ipAddress').notNull(),
   port: text('port'),
-  // kitchen = per-location tickets (default, also for NULL); receipt = combined customer receipt
-  type: text('type'),
-  // Output driver — how this station is fulfilled. Existing rows default to
-  // 'network-escpos' (the thermal TCP path), so nothing changes for current
-  // printers. Other drivers: 'browser-print' (AirPrint), 'display' (KDS), 'none'.
-  driver: text('driver').$default(() => 'network-escpos'),
-  // Driver-specific config (JSON) — e.g. display layout, browser-print options.
-  config: jsonColumn('config'),
   status: text('status'),
+  type: text('type'),
+  driver: text('driver'),
+  config: jsonColumn('config').$default(() => ({})),
   showPrices: integer('showPrices', { mode: 'boolean' }).$default(() => true),
   isActive: integer('isActive', { mode: 'boolean' }).$default(() => true),
 

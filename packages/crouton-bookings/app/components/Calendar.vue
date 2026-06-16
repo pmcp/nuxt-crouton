@@ -98,7 +98,7 @@ defineExpose({
 const currentView = computed(() => props.view)
 
 // For month view: track focused month (no selection)
-const monthFocusDate = ref<DateValue>(new CalendarDate(
+const monthFocusDate = ref<DateValue | undefined>(new CalendarDate(
   new Date().getFullYear(),
   new Date().getMonth() + 1,
   1
@@ -546,7 +546,8 @@ const monthCellHeight = computed(() => {
     <!-- Month View -->
     <div v-else class="w-full">
       <UCalendar
-        v-model="monthFocusDate"
+        :model-value="(monthFocusDate as any)"
+        @update:model-value="(value: any) => { monthFocusDate = value }"
         size="sm"
         :week-starts-on="1"
         :ui="{

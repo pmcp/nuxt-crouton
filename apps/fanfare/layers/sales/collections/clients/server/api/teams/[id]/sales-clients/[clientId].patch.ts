@@ -6,7 +6,8 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   title: z.string().min(1, 'title is required'),
-  isReusable: z.boolean().optional()
+  isReusable: z.boolean().optional(),
+  isActive: z.boolean().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {

@@ -34,10 +34,10 @@ export default defineNuxtPlugin(() => {
       isRedirecting = true
       const currentPath = window.location.pathname + window.location.search
 
-      navigateTo({
+      Promise.resolve(navigateTo({
         path: loginPath,
         query: { redirect: currentPath },
-      }).finally(() => {
+      })).finally(() => {
         setTimeout(() => { isRedirecting = false }, 2000)
       })
     },

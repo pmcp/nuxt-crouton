@@ -2,7 +2,7 @@
   @crouton-generated
   @collection bookings
   @layer bookings
-  @generated 2026-06-15
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for bookings collection
@@ -136,12 +136,15 @@ if (props.action === 'update' && props.activeItem?.id) {
   }
 }
 
-const state = ref<BookingsBookingFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<BookingsBookingFormData & { id?: string | null }>(initialValues as BookingsBookingFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
-    const serializedData = { ...state.value }
+    const serializedData: Record<string, any> = { ...state.value }
     if (serializedData.date instanceof Date) {
       serializedData.date = serializedData.date.toISOString()
     }

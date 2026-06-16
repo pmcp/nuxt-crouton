@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection pages
  * @layer pages
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Composable: usePagesPages
@@ -31,7 +31,7 @@ export const pagesPageSchema = z.object({
   config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
-  publishedAt: z.coerce.date().optional(),
+  publishedAt: z.coerce.date().nullish(),
   showInNavigation: z.boolean().optional(),
   layout: z.string().optional(),
   ogImage: z.string().optional(),

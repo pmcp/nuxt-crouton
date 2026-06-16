@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection orders
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesOrder
  * - Form data type: SalesOrderFormData
  * - New item type: NewSalesOrder
  * - Form props: SalesOrderFormProps
- * - Fields: id, eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+ * - Fields: id, eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -32,6 +32,7 @@ export interface SalesOrder {
   clientName?: string
   eventOrderNumber?: number
   overallRemarks?: string
+  locationRemarks?: Record<string, any> | null
   isPersonnel?: boolean
   status: string
   createdAt: Date

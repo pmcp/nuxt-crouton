@@ -57,11 +57,6 @@ export default defineNuxtConfig({
     }
   },
 
-  // Enable thermal receipt printing (crouton-sales)
-  croutonSales: {
-    print: { enabled: true }
-  },
-
   // Runtime config:
   // - printApiKey: shared key the polling spooler uses
   // - print.enabled: gate that controls whether order POST enqueues print jobs

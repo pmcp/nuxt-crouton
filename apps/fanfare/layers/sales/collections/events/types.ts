@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection events
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesEvent
  * - Form data type: SalesEventFormData
  * - New item type: NewSalesEvent
  * - Form props: SalesEventFormProps
- * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
+ * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, currency, metadata, archivedAt
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -38,7 +38,7 @@ export interface SalesEvent {
   requiresClient?: boolean
   helperPin?: string
   currency?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, any> | null
   archivedAt?: Date | null
   createdAt: Date
   updatedAt: Date

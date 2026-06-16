@@ -61,6 +61,22 @@ export async function getAllSalesPrinters(teamId: string, opts: { eventId?: stri
 
   const printers = await listQuery
 
+  // Post-query processing for JSON fields (repeater/json types)
+  printers.forEach((item: any) => {
+      // Parse config from JSON string
+      if (typeof item.config === 'string') {
+        try {
+          item.config = JSON.parse(item.config)
+        } catch (e) {
+          console.error('Error parsing config:', e)
+          item.config = null
+        }
+      }
+      if (item.config === null || item.config === undefined) {
+        item.config = null
+      }
+  })
+
   if (opts.limit != null) {
     const [countRow] = await (db as any)
       .select({ count: sql`count(*)` })
@@ -116,6 +132,22 @@ export async function getSalesPrintersByIds(teamId: string, printerIds: string[]
       )
     )
     .orderBy(desc(tables.salesPrinters.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  printers.forEach((item: any) => {
+      // Parse config from JSON string
+      if (typeof item.config === 'string') {
+        try {
+          item.config = JSON.parse(item.config)
+        } catch (e) {
+          console.error('Error parsing config:', e)
+          item.config = null
+        }
+      }
+      if (item.config === null || item.config === undefined) {
+        item.config = null
+      }
+  })
 
   return printers
 }

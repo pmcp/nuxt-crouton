@@ -2,14 +2,14 @@
   @crouton-generated
   @collection orders
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - List component for orders collection
   - Collection name: salesOrders
   - API endpoint: /api/teams/[id]/sales-orders
   - Columns composable: useSalesOrders()
-  - Column fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+  - Column fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
 
   ## Common Modifications
   - Add column: Update columns array in composable

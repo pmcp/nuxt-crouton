@@ -14,6 +14,12 @@
  */
 import { eq, and, or } from 'drizzle-orm'
 
+// Optionally auto-imported by Nitro from the consuming app's generated
+// server/utils/crouton-query-registry.ts. Apps that haven't generated a
+// registry yet won't have it, so usage is guarded with `typeof`. Declared
+// (module-scoped) so the guard type-checks without assuming the import exists.
+declare const queryRegistry: Record<string, unknown> | undefined
+
 /**
  * Strip internal/sensitive fields from a collection item.
  */

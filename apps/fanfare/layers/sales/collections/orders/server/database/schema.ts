@@ -31,10 +31,7 @@ export const salesOrders = sqliteTable('sales_orders', {
   clientName: text('clientName'),
   eventOrderNumber: integer('eventOrderNumber'),
   overallRemarks: text('overallRemarks'),
-  // Free-text remark per location (keyed by locationId), printed as REMARK: on
-  // that location's kitchen ticket. The package order POST persists it and the
-  // reprint endpoint reads it back — without this column reprints lose remarks.
-  locationRemarks: jsonColumn('locationRemarks'),
+  locationRemarks: jsonColumn('locationRemarks').$default(() => ({})),
   isPersonnel: integer('isPersonnel', { mode: 'boolean' }).$default(() => false),
   status: text('status').notNull(),
 

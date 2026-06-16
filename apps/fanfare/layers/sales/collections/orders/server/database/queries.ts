@@ -1,18 +1,17 @@
 // Generated with JSON field post-processing support (v2025-01-11)
-import { eq, and, desc, inArray, exists, sql } from 'drizzle-orm'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import * as tables from './schema'
 import type { SalesOrder, NewSalesOrder } from '../../types'
 import * as eventsSchema from '../../../events/server/database/schema'
 import * as clientsSchema from '../../../clients/server/database/schema'
-import * as printqueuesSchema from '../../../printqueues/server/database/schema'
 import { user } from '~~/server/db/schema'
 
 // Overload order matters: the paginated signature (required `limit`) must come
 // first so non-paginated calls fall through to the array overload.
-export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; owner?: string; printerId?: string; printStatus?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
-export async function getAllSalesOrders(teamId: string, opts?: { eventId?: string; clientId?: string; owner?: string; printerId?: string; printStatus?: string }): Promise<any[]>
-export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; owner?: string; printerId?: string; printStatus?: string; limit?: number; offset?: number } = {}) {
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit: number; offset?: number }): Promise<{ items: any[]; total: number }>
+export async function getAllSalesOrders(teamId: string, opts?: { eventId?: string; clientId?: string }): Promise<any[]>
+export async function getAllSalesOrders(teamId: string, opts: { eventId?: string; clientId?: string; limit?: number; offset?: number } = {}) {
   const db = useDB()
 
   const ownerUser = alias(user as any, 'ownerUser')
@@ -21,24 +20,6 @@ export async function getAllSalesOrders(teamId: string, opts: { eventId?: string
   const conditions = [eq(tables.salesOrders.teamId, teamId)]
   if (opts.eventId) conditions.push(eq(tables.salesOrders.eventId, opts.eventId))
   if (opts.clientId) conditions.push(eq(tables.salesOrders.clientId, opts.clientId))
-  // owner holds the helper displayName (set by the order POST) — used by the
-  // register's helper filter, which must apply server-side now that the list
-  // is paginated.
-  if (opts.owner) conditions.push(eq(tables.salesOrders.owner, opts.owner))
-  // Printer filters match orders through their print jobs. EXISTS (instead of
-  // a join) keeps the row set and the count query consistent under pagination.
-  // printStatus buckets the queue enum: busy = 0/1, done = 2, failed = 9.
-  if (opts.printerId || opts.printStatus) {
-    const pq = printqueuesSchema.salesPrintqueues
-    const jobConditions = [eq(pq.orderId, tables.salesOrders.id)]
-    if (opts.printerId) jobConditions.push(eq(pq.printerId, opts.printerId))
-    if (opts.printStatus === 'busy') jobConditions.push(inArray(pq.status, ['0', '1']))
-    else if (opts.printStatus === 'done') jobConditions.push(eq(pq.status, '2'))
-    else if (opts.printStatus === 'failed') jobConditions.push(eq(pq.status, '9'))
-    conditions.push(exists(
-      (db as any).select({ one: sql`1` }).from(pq).where(and(...jobConditions))
-    ))
-  }
   const whereExpr = and(...conditions)
 
   let listQuery = (db as any)
@@ -79,6 +60,22 @@ export async function getAllSalesOrders(teamId: string, opts: { eventId?: string
   }
 
   const orders = await listQuery
+
+  // Post-query processing for JSON fields (repeater/json types)
+  orders.forEach((item: any) => {
+      // Parse locationRemarks from JSON string
+      if (typeof item.locationRemarks === 'string') {
+        try {
+          item.locationRemarks = JSON.parse(item.locationRemarks)
+        } catch (e) {
+          console.error('Error parsing locationRemarks:', e)
+          item.locationRemarks = null
+        }
+      }
+      if (item.locationRemarks === null || item.locationRemarks === undefined) {
+        item.locationRemarks = null
+      }
+  })
 
   if (opts.limit != null) {
     const [countRow] = await (db as any)
@@ -135,6 +132,22 @@ export async function getSalesOrdersByIds(teamId: string, orderIds: string[]) {
       )
     )
     .orderBy(desc(tables.salesOrders.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  orders.forEach((item: any) => {
+      // Parse locationRemarks from JSON string
+      if (typeof item.locationRemarks === 'string') {
+        try {
+          item.locationRemarks = JSON.parse(item.locationRemarks)
+        } catch (e) {
+          console.error('Error parsing locationRemarks:', e)
+          item.locationRemarks = null
+        }
+      }
+      if (item.locationRemarks === null || item.locationRemarks === undefined) {
+        item.locationRemarks = null
+      }
+  })
 
   return orders
 }

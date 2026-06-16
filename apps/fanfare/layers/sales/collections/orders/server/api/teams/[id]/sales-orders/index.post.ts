@@ -10,6 +10,7 @@ const bodySchema = z.object({
   clientName: z.string().optional(),
   eventOrderNumber: z.number().optional(),
   overallRemarks: z.string().optional(),
+  locationRemarks: z.record(z.string(), z.any()).nullish(),
   isPersonnel: z.boolean().optional(),
   status: z.string().min(1, 'status is required')
 }).strip()

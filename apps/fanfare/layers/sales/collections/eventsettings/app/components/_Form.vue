@@ -2,7 +2,7 @@
   @crouton-generated
   @collection eventsettings
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for eventsettings collection
@@ -97,7 +97,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<SalesEventsettingFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<SalesEventsettingFormData & { id?: string | null }>(initialValues as SalesEventsettingFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {

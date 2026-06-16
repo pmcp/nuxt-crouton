@@ -157,12 +157,14 @@ export function createAuth(options: CreateAuthOptions) {
     // Still CSRF-safe: a cross-site attack carries a foreign Origin header that
     // won't match the request's own host (same guarantee as Better Auth's own
     // request-derived baseURL trust).
-    trustedOrigins: (request: Request) => {
+    trustedOrigins: (request?: Request) => {
       const origins = buildTrustedOrigins(baseURL)
-      try {
-        origins.push(new URL(request.url).origin)
-      } catch {
-        // Malformed request URL — fall back to the static list.
+      if (request) {
+        try {
+          origins.push(new URL(request.url).origin)
+        } catch {
+          // Malformed request URL — fall back to the static list.
+        }
       }
       return origins
     },

@@ -39,7 +39,7 @@ watch(() => route.fullPath, () => {
 // Normalize items from API response
 const logs = computed(() => {
   if (!emailLogs.value) return []
-  return Array.isArray(emailLogs.value) ? emailLogs.value : emailLogs.value.items || []
+  return Array.isArray(emailLogs.value) ? emailLogs.value : (emailLogs.value as { items?: any[] }).items || []
 })
 
 // Status badge config

@@ -7,3 +7,4 @@ export { mainItems } from '../../layers/main/collections/items/server/database/s
 export { bookingsBookings } from '../../layers/bookings/collections/bookings/server/database/schema'
 export { bookingsLocations } from '../../layers/bookings/collections/locations/server/database/schema'
 export { bookingsSettings } from '../../layers/bookings/collections/settings/server/database/schema'
+export * from './translations-ui'

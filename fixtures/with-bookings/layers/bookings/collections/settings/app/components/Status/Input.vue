@@ -7,7 +7,7 @@ interface BookingsSettingsStatusItem {
   value?: string
 }
 
-const model = defineModel<BookingsSettingsStatusItem>()
+const model = defineModel<BookingsSettingsStatusItem>({ required: true })
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {

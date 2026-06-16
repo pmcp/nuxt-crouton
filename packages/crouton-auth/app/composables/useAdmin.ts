@@ -121,7 +121,7 @@ export function useAdmin() {
     loading.value = true
     try {
       await Promise.allSettled(emails.map(email =>
-        authClient?.forgetPassword({ email, redirectTo: '/auth/reset-password' })
+        authClient?.requestPasswordReset({ email, redirectTo: '/auth/reset-password' })
       ))
       notify.success(t('admin.bulkPasswordResetSent'), { description: t('admin.bulkPasswordResetSentDescription', { count: emails.length }) })
     } catch (e: unknown) {

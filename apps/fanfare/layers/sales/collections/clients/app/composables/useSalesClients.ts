@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection clients
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Composable: useSalesClients
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-clients
  * - Form component: SalesClientsForm
  * - List component: SalesClientsList
- * - Fields: id, title, isReusable
+ * - Fields: id, title, isReusable, isActive
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -35,7 +35,8 @@ export const salesClientSchema = z.object({
 export const salesClientsColumns = [
   { accessorKey: 'id', header: 'Id' },
   { accessorKey: 'title', header: 'Title' },
-  { accessorKey: 'isReusable', header: 'IsReusable' }
+  { accessorKey: 'isReusable', header: 'IsReusable' },
+  { accessorKey: 'isActive', header: 'IsActive' }
 ]
 
 // Config object WITHOUT schema - safe for SSR serialization
@@ -46,7 +47,8 @@ const _salesClientsConfig = {
   componentName: 'SalesClientsForm',
   defaultValues: {
     title: '',
-    isReusable: false
+    isReusable: false,
+    isActive: false
   },
   columns: salesClientsColumns,
   fields: [
@@ -60,6 +62,12 @@ const _salesClientsConfig = {
           "name": "isReusable",
           "type": "boolean",
           "label": "Reusable",
+          "area": "main"
+      },
+      {
+          "name": "isActive",
+          "type": "boolean",
+          "label": "Active",
           "area": "main"
       }
   ],

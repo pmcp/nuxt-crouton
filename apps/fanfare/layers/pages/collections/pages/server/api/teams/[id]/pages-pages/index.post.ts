@@ -10,7 +10,7 @@ const bodySchema = z.object({
   config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
-  publishedAt: z.coerce.date().optional(),
+  publishedAt: z.coerce.date().nullish(),
   showInNavigation: z.boolean().optional(),
   layout: z.string().optional(),
   ogImage: z.string().optional(),

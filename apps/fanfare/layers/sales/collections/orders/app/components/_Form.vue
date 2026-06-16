@@ -2,14 +2,14 @@
   @crouton-generated
   @collection orders
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for orders collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/sales-orders
   - Zod schema: useSalesOrders() composable
-  - Fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+  - Fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -63,6 +63,15 @@
         <UFormField :label="t('sales.orders.fields.overallRemarks', 'Special Instructions')" name="overallRemarks" class="not-last:pb-4">
           <UTextarea v-model="state.overallRemarks" class="w-full" size="xl" />
         </UFormField>
+        <UFormField :label="t('sales.orders.fields.locationRemarks', 'Location Remarks')" name="locationRemarks" class="not-last:pb-4">
+          <UTextarea
+            :model-value="typeof state.locationRemarks === 'string' ? state.locationRemarks : JSON.stringify(state.locationRemarks, null, 2)"
+            @update:model-value="(val) => { try { state.locationRemarks = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
+            class="w-full font-mono text-sm"
+            :rows="8"
+            placeholder="Enter JSON object"
+          />
+        </UFormField>
         <UFormField :label="t('sales.orders.fields.isPersonnel', 'Staff Order')" name="isPersonnel" class="not-last:pb-4">
           <UCheckbox v-model="state.isPersonnel" />
         </UFormField>
@@ -110,7 +119,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<SalesOrderFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<SalesOrderFormData & { id?: string | null }>(initialValues as SalesOrderFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {

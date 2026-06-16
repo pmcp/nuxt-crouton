@@ -2,14 +2,14 @@
   @crouton-generated
   @collection events
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - List component for events collection
   - Collection name: salesEvents
   - API endpoint: /api/teams/[id]/sales-events
   - Columns composable: useSalesEvents()
-  - Column fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
+  - Column fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, currency, metadata, archivedAt
 
   ## Common Modifications
   - Add column: Update columns array in composable

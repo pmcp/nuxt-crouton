@@ -716,13 +716,16 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
 }`
     : ''}
 
-const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${scriptAdditions}
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues as ${prefixedPascalCase}FormData & { id?: string | null })${scriptAdditions}
 
 const handleSubmit = async () => {
   try {${hasDateFields
     ? `
     // Serialize Date objects to ISO strings for API submission
-    const serializedData = { ...state.value }${regularFields
+    const serializedData: Record<string, any> = { ...state.value }${regularFields
       .filter(f => f.type === 'date')
       .map(field => `
     if (serializedData.${field.name} instanceof Date) {

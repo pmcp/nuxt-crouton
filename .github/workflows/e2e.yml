@@ -55,6 +55,17 @@ jobs:
         # @fyit/* packages), excluding the fixture app itself.
         run: pnpm --filter "e2e-fixture-${{ matrix.fixture }}^..." build
 
+      # Type-safety gate for CLI output (#197): regenerate the fixture from its
+      # committed schemas with the current generator, then type-check it. This
+      # turns a generator regression (e.g. a malformed template) into a red CI
+      # run instead of code that only breaks once someone scaffolds a new app.
+      - name: Regenerate the fixture (prove current generator output)
+        working-directory: fixtures/${{ matrix.fixture }}
+        run: node ../../packages/crouton-cli/bin/crouton-generate.js config --force
+
+      - name: Type-check the generated fixture
+        run: pnpm --filter "e2e-fixture-${{ matrix.fixture }}" typecheck
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:

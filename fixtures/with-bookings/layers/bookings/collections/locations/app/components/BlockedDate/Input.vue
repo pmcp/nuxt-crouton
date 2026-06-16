@@ -7,7 +7,7 @@ interface BookingsLocationsBlockedDateItem {
   value?: string
 }
 
-const model = defineModel<BookingsLocationsBlockedDateItem>()
+const model = defineModel<BookingsLocationsBlockedDateItem>({ required: true })
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {

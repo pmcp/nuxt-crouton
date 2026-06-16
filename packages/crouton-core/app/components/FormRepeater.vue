@@ -4,7 +4,7 @@ import { useSortable } from '@vueuse/integrations/useSortable'
 import type { SortableEvent } from 'sortablejs'
 
 interface Props {
-  modelValue: any[] | null
+  modelValue: any[] | null | undefined
   componentName: string
   addLabel?: string
   sortable?: boolean

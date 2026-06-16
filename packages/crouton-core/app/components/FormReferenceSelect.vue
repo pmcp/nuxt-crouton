@@ -81,7 +81,7 @@
 import type { ComputedRef, Ref } from 'vue'
 
 interface Props {
-  modelValue: string | string[] | null
+  modelValue: string | string[] | null | undefined
   collection: string
   label?: string
   labelKey?: string
@@ -155,7 +155,7 @@ const getItemLabel = (id: string): string => {
 const localValue = ref<string | string[] | null>(
   props.multiple
     ? (Array.isArray(props.modelValue) ? props.modelValue : [])
-    : props.modelValue
+    : (props.modelValue ?? null)
 )
 
 // Watch props.modelValue for external changes
@@ -163,7 +163,7 @@ watch(() => props.modelValue, (newValue) => {
   if (props.multiple) {
     localValue.value = Array.isArray(newValue) ? newValue : []
   } else {
-    localValue.value = newValue
+    localValue.value = newValue ?? null
   }
 })
 

@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection bookings
  * @layer bookings
- * @generated 2026-06-15
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: BookingsBooking
@@ -28,8 +28,8 @@ export interface BookingsBooking {
   teamId: string
   owner: string
   location: string
-  date: Date | null
-  slot: string[] | null
+  date: Date
+  slot: string[]
   group?: string
   quantity: number
   status: string

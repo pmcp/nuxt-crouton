@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection events
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Composable: useSalesEvents
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-events
  * - Form component: SalesEventsForm
  * - List component: SalesEventsList
- * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
+ * - Fields: id, title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, currency, metadata, archivedAt
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -31,15 +31,15 @@ export const salesEventSchema = z.object({
   slug: z.string().min(1, 'slug is required'),
   description: z.string().optional(),
   eventType: z.string().optional(),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
+  startDate: z.coerce.date().nullish(),
+  endDate: z.coerce.date().nullish(),
   status: z.string().min(1, 'status is required'),
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
   currency: z.string().optional(),
   metadata: z.record(z.string(), z.any()).nullish(),
-  archivedAt: z.coerce.date().optional()
+  archivedAt: z.coerce.date().nullish()
 })
 
 export const salesEventsColumns = [
@@ -54,6 +54,7 @@ export const salesEventsColumns = [
   { accessorKey: 'isCurrent', header: 'IsCurrent' },
   { accessorKey: 'requiresClient', header: 'RequiresClient' },
   { accessorKey: 'helperPin', header: 'HelperPin' },
+  { accessorKey: 'currency', header: 'Currency' },
   { accessorKey: 'metadata', header: 'Metadata' },
   { accessorKey: 'archivedAt', header: 'ArchivedAt' }
 ]
@@ -73,8 +74,9 @@ const _salesEventsConfig = {
     endDate: null,
     status: '',
     isCurrent: false,
-    requiresClient: true,
+    requiresClient: false,
     helperPin: '',
+    currency: '',
     metadata: {},
     archivedAt: null
   },
@@ -138,6 +140,12 @@ const _salesEventsConfig = {
           "name": "helperPin",
           "type": "string",
           "label": "Helper PIN",
+          "area": "main"
+      },
+      {
+          "name": "currency",
+          "type": "string",
+          "label": "Currency",
           "area": "main"
       },
       {

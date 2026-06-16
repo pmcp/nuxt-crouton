@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection locations
  * @layer bookings
- * @generated 2026-06-15
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: BookingsLocation
@@ -33,7 +33,7 @@ export interface BookingsLocation {
   id: string
   teamId: string
   owner: string
-  title: string
+  title?: string
   color?: string
   street?: string
   zip?: string
@@ -42,9 +42,9 @@ export interface BookingsLocation {
   content?: string
   allowedMemberIds?: string[]
   slots?: any[]
-  openDays?: string[]
-  slotSchedule?: Record<string, any>
-  blockedDates?: any[]
+  openDays?: string[] | null
+  slotSchedule?: Record<string, any> | null
+  blockedDates?: any[] | null
   inventoryMode?: boolean
   quantity?: number
   maxBookingsPerMonth?: number

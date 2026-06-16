@@ -1,14 +1,14 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { deleteSalesOrderitem } from '../../../../database/queries'
+import { deleteSalesPrintqueue } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { orderItemId } = getRouterParams(event)
-  if (!orderItemId) {
-    throw createError({ status: 400, statusText: 'Missing orderitem ID' })
+  const { printqueueId } = getRouterParams(event)
+  if (!printqueueId) {
+    throw createError({ status: 400, statusText: 'Missing printqueue ID' })
   }
 
   const authTimer = timing.start('auth')
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   authTimer.end()
 
   const dbTimer = timing.start('db')
-  const result = await deleteSalesOrderitem(orderItemId, team.id, user.id, { role: membership.role })
+  const result = await deleteSalesPrintqueue(printqueueId, team.id, user.id, { role: membership.role })
   dbTimer.end()
   return result
 })

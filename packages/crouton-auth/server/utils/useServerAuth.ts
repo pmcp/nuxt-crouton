@@ -140,7 +140,7 @@ export async function getServerSession(event: H3Event) {
   if (!rawToken) return null
 
   // Better Auth signs cookies as "token.signature" — extract just the token part
-  const token = rawToken.includes('.') ? rawToken.split('.')[0] : rawToken
+  const token = rawToken.includes('.') ? (rawToken.split('.')[0] ?? rawToken) : rawToken
 
   try {
     const database = useDB()

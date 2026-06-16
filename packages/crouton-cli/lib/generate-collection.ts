@@ -491,7 +491,7 @@ function buildGeneratorData(params: {
           }
         } else {
           // json commonly arrives as null (empty config/metadata) — allow it.
-          const suffix = (f.meta?.nullable || f.type === 'json') ? '.nullish()' : '.optional()'
+          const suffix = (f.meta?.nullable || f.type === 'json' || f.type === 'date') ? '.nullish()' : '.optional()'
           return `${f.name}: ${baseZod}${suffix}`
         }
       })
@@ -559,11 +559,40 @@ ${translationsFieldSchema}
     return baseColumns + translationsColumn
   })()
 
-  const fieldsTypes = fields.filter(f => f.name !== 'id').map((f) => {
-    const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
-    const tsType = isDependentField ? 'string[] | null' : f.tsType
-    return `${f.name}${f.meta?.required ? '' : '?'}: ${tsType}`
-  }).join('\n  ')
+  const fieldsTypes = (() => {
+    const translatableFieldNames = config?.translations?.collections?.[cases.plural] || []
+    const typeLines = fields.filter(f => f.name !== 'id').map((f) => {
+      const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
+      let tsType = isDependentField ? 'string[] | null' : f.tsType
+      if (f.meta?.required) {
+        // Required ⇒ the zod schema enforces a present, non-null value, so the
+        // interface must not widen to null (some tsTypes, e.g. date, default to
+        // `T | null`). Otherwise FormData/New<Type> reject the validated body.
+        tsType = tsType.replace(/\s*\|\s*null\b/g, '')
+      } else if ((f.meta?.nullable || f.type === 'json') && !tsType.includes('null')) {
+        // Non-required json/nullable fields are `.nullish()` in the zod schema
+        // (the body may be null) — the interface must allow null to match.
+        tsType += ' | null'
+      }
+      // Translatable fields are validated as optional in the zod schema (the real
+      // value lives in translations.<locale>; the root column is a cache/fallback) —
+      // keep the interface optional to match, otherwise New<Type> rejects the body.
+      const optional = !f.meta?.required || translatableFieldNames.includes(f.name)
+      return `${f.name}${optional ? '?' : ''}: ${tsType}`
+    })
+    // Hierarchy system fields (parentId/path/depth/order) live in the DB schema and
+    // are set by the generated POST endpoint, but aren't declared collection fields —
+    // include them so New<Type> (used by create*) accepts them.
+    if (hierarchy?.enabled) {
+      typeLines.push(
+        `${hierarchy.parentField || 'parentId'}?: string | null`,
+        `${hierarchy.pathField || 'path'}?: string`,
+        `${hierarchy.depthField || 'depth'}?: number`,
+        `${hierarchy.orderField || 'order'}?: number`
+      )
+    }
+    return typeLines.join('\n  ')
+  })()
 
   // Repeater fields with properties reference a named item schema (e.g.
   // `...SlotItemSchema`) in fieldsSchema. The composable exports those, but
