@@ -49,6 +49,11 @@
       "fullHeight": "Pleine hauteur",
       "fullScreen": "Plein écran"
     },
+    "layoutDescriptions": {
+      "default": "En-tête, pied de page et navigation",
+      "fullHeight": "Le contenu remplit la hauteur de l'écran",
+      "fullScreen": "Sans habillage — contenu uniquement"
+    },
     "parent": {
       "root": "Racine (pas de parent)"
     },
@@ -90,6 +95,10 @@
     "editor": {
       "settings": "Paramètres",
       "pageSettings": "Paramètres de la page",
+      "sectionGeneral": "Général",
+      "sectionAppearance": "Apparence",
+      "sectionNavigation": "Navigation",
+      "sectionAccess": "Accès",
       "generate": "Générer",
       "preview": "Aperçu",
       "search": "Rechercher",

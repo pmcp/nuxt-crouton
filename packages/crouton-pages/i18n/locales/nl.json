@@ -63,6 +63,11 @@
       "fullHeight": "Volledige hoogte",
       "fullScreen": "Volledig scherm"
     },
+    "layoutDescriptions": {
+      "default": "Koptekst, voettekst en paginanavigatie",
+      "fullHeight": "Inhoud vult de volledige hoogte",
+      "fullScreen": "Geen randelementen — alleen inhoud"
+    },
     "parent": {
       "root": "Root (geen ouder)"
     },
@@ -104,6 +109,10 @@
     "editor": {
       "settings": "Instellingen",
       "pageSettings": "Pagina-instellingen",
+      "sectionGeneral": "Algemeen",
+      "sectionAppearance": "Weergave",
+      "sectionNavigation": "Navigatie",
+      "sectionAccess": "Toegang",
       "generate": "Genereren",
       "preview": "Voorbeeld",
       "search": "Zoeken",
