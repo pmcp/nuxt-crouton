@@ -12,6 +12,7 @@
  */
 import { requireCloudSyncKey } from '../../../utils/cloud-sync-auth'
 import { applyOutboxEvents, type IngestEvent } from '../../../utils/sync-ingest'
+import { recordSyncHeartbeat } from '../../../utils/sync-status'
 
 interface IngestBody {
   events?: IngestEvent[]
@@ -27,6 +28,12 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
   const result = await applyOutboxEvents(db, body.events)
+
+  // Stamp the freshness heartbeat the online dashboard (#179) reads. Advances on
+  // every call — a real batch or the pusher's idle ping (events: []) — so a
+  // quiet-but-online till still reads "connected". Best-effort: never fails the
+  // ingest (the mirrored data already landed; the clock is advisory).
+  await recordSyncHeartbeat(db, result.applied.length)
 
   return {
     received: body.events.length,
