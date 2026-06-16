@@ -97,6 +97,33 @@ pnpm test:e2e
 - First run is slow: cold `nuxt dev` compiles routes/auth-modal on demand (timeouts are deliberately ~30s). Don't lower them; give the run up to ~3 min before suspecting a hang.
 - Run in the background if it's long, and report when it returns.
 
+## Faster runs (the cold-compile tax)
+
+A run is slow (~5+ min for `with-pages`) almost entirely because it boots
+`nuxt dev`, which **compiles each route on first hit** — and a fresh
+checkout/remote container pays that cold every time. Levers, by payoff:
+
+- **Reuse a warm server (biggest win when iterating).** `webServer.reuseExistingServer`
+  is on, so start the fixture's dev server **once** and leave it up; every
+  subsequent `pnpm test:e2e` reuses it and the routes stay compiled (runs 2..N
+  are seconds, not minutes):
+  ```bash
+  # leave this running in the background:
+  pnpm --filter e2e-fixture-<name> dev
+  # then re-run the smoke as many times as you like — it attaches to :3000
+  ```
+- **Run only the specs the change touches.** A render/CRUD change doesn't need
+  the auth-smoke trio (logout/re-login/team-switch). `setup` must always run:
+  ```bash
+  pnpm test:e2e e2e/collection.smoke.spec.ts e2e/surface.smoke.spec.ts   # + setup runs automatically
+  ```
+- **Don't chase the font errors.** The `Could not initialize provider bunny/google`
+  lines are an instant egress 403 (fail-fast), not a timeout — log noise, not a
+  time sink. Disabling remote fonts cleans logs but won't speed the smoke.
+- **The structural fix (tens of seconds, not minutes): #246** — boot a *prebuilt*
+  app (`nuxt preview`) instead of `nuxt dev` so routes compile once. Blocked by a
+  prod-SSR auth-cookie 500; tracked there.
+
 ## Step 4 — Read the result
 
 - **Pass:** all `setup` + `*.smoke.spec.ts` projects green. Report which fixture, which collections/surfaces ran.
