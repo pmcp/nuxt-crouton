@@ -57,6 +57,20 @@ Every task in `/writeups/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `writeups/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
+### Task Decomposition Pipeline (`/task-decompose`)
+
+For a big/fuzzy initiative, you can let agents do the epic→sub-issue breakdown **and** the work. `/task-decompose "<task>"` (or `/task-decompose #NN` to reuse an existing epic) creates the epic, then spawns a recursive agent pipeline that builds out the whole issue tree and works the leaves:
+
+```
+/task-decompose '<task>'
+  └─ task-orchestrator (depth 0)   reads epic → 2–6 sub-issues → spawns a decomposer per child
+       └─ task-decomposer (depth 1+, RECURSIVE)   LEAF TEST one issue:
+            ├─ leaf / at depth cap → spawn task-worker (worktree) → PR (Closes #N)
+            └─ too big            → create sub-issues → spawn a decomposer per child (recurse)
+```
+
+**Stop-conditions** (so it can't run away): `MAX_DEPTH = 3`, `MAX_CHILDREN = 6`, and a four-part **LEAF TEST** (single coherent change · bounded files · clear/testable acceptance · doable in one focused run). All four true ⇒ build it, don't split. Tune in `.claude/agents/task-decomposer.md`. Everything persists as real GitHub issues (it obeys the same `github-tasks` + `/commit` + no-squash rules); it does **not** auto-merge. Details: `.claude/skills/task-decompose/SKILL.md` and `.claude/agents/CLAUDE.md`. (Epic #249.)
+
 ### Commit Format (enforced by /commit skill)
 ```
 <type>(<scope>): <description>
@@ -379,7 +393,11 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/e2e-smoke/SKILL.md` | Run the Playwright fixture smoke harness (boot + auth + CRUD) after a dep bump or `packages/` change |
 | Skill | `.claude/skills/db-migrations/SKILL.md` | The migrate step (`db:generate` schema.mjs-after-build gotcha) + package-owned infra tables. App collections use the `crouton` CLI, not this |
 | Skill | `.claude/skills/dependency-sweep/SKILL.md` | The "get dependencies current" flow — sweep, triage (safe/deliberate/wait), bump the pnpm catalog, prove it with the typecheck + e2e gate. No update bot by design (#141); run on-demand or when the quarterly sweep ticket is due |
+| Skill | `.claude/skills/task-decompose/SKILL.md` | Entry point to the recursive task-decomposition pipeline (`/task-decompose`) — one task → an epic + tree of sub-issues → agents. See "Task Decomposition Pipeline" below |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
+| Agent | `.claude/agents/task-orchestrator.md` | Reads an epic, fans it into 2–6 top-level sub-issues, spawns a decomposer per child |
+| Agent | `.claude/agents/task-decomposer.md` | Recursive: LEAF TEST one issue → spawn a worker (leaf) or split into sub-issues + spawn a decomposer per child |
+| Agent | `.claude/agents/task-worker.md` | Implements one leaf issue on an isolated worktree branch → `pnpm typecheck` → `/commit` → PR (`Closes #NN`) |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
 | Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |
 

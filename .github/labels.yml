@@ -154,6 +154,9 @@
 - name: "needs-triage"
   color: "e4e669"
   description: "Not yet scoped"
+- name: "meta:agents"
+  color: "5319e7"
+  description: "Claude Code agent/skill tooling (.claude/) serving the whole monorepo"
 
 # ── Status ──
 - name: "status:in-progress"
