@@ -54,6 +54,32 @@ pnpm --filter "e2e-fixture-<name>^..." build
 Skip this if you've been building/typechecking these packages this session and
 they're already current. If the dev server errors with `Could not load '@fyit/crouton'`, this build is the fix.
 
+## Step 2.5 — Browser binary in a sandbox (remote/CI env without the matching Chromium)
+
+In a remote/sandboxed env the run can fail at the `setup` project with
+`browserType.launch: Executable doesn't exist at /opt/pw-browsers/chromium…` and
+`pnpm exec playwright install` then **fails too** —
+`403 … Host not in allowlist: playwright.download.prss.microsoft.com` (the egress
+policy blocks the download). The cause is a version skew: the installed
+`@playwright/test` pins a browser build (e.g. 1200) that isn't on disk, while the
+sandbox ships a slightly older one (e.g. 1194). You can't download the exact build.
+
+**Fix — launch the build that *is* installed, via `PW_EXECUTABLE_PATH`** (the
+config honours it → `launchOptions.executablePath`):
+
+```bash
+ls /opt/pw-browsers                       # find the installed build, e.g. chromium-1194
+# full binary: /opt/pw-browsers/chromium-<build>/chrome-linux/chrome
+E2E_FIXTURE=<name> BETTER_AUTH_SECRET=dev BETTER_AUTH_URL=http://localhost:3000 \
+  PW_EXECUTABLE_PATH=/opt/pw-browsers/chromium-<build>/chrome-linux/chrome \
+  pnpm test:e2e
+```
+
+A one-build skew (1194 vs 1200) launches fine for a smoke. `PW_EXECUTABLE_PATH`
+is a committed escape hatch in `playwright.config.ts` — no source edit per run.
+Watch out: a piped `… | tail` masks the real failure (tail exits 0), so check the
+tail content for `Executable doesn't exist`, not just the exit code.
+
 ## Step 3 — Run
 
 **`BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` are required** — without the secret,
