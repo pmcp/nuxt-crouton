@@ -142,7 +142,8 @@ export function useFlowGroupManager(options: UseFlowGroupManagerOptions = {}) {
         const group = groups.value.find(g => g.id === n.parentNode)
         return {
           nodeId: n.id,
-          label: (n.data?.[labelField] as string) || n.label || n.id,
+          // Vue Flow's Node.label can be a Component/VNode — only accept a string
+          label: (n.data?.[labelField] as string) || (typeof n.label === 'string' ? n.label : '') || n.id,
           groupName: group?.name || '',
         }
       })

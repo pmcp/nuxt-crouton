@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, provide, reactive, ref, resolveComponent, watch, markRaw } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { VueFlow, useVueFlow, ConnectionMode } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import type { Node, NodeDragEvent, OnConnectStartParams, Connection } from '@vue-flow/core'
+import type { Node, GraphNode, NodeDragEvent, OnConnectStartParams, Connection } from '@vue-flow/core'
 import type { FlowConfig, FlowPosition, FlowDataMode, NodeTypeRegistration, FlowContainerOptions } from '../types/flow'
 import { useFlowData } from '../composables/useFlowData'
 import { useFlowLayout } from '../composables/useFlowLayout'
@@ -125,8 +125,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  /** Emitted when a node is clicked */
-  nodeClick: [nodeId: string, data: Record<string, unknown>, event: MouseEvent]
+  /** Emitted when a node is clicked (Vue Flow forwards mouse or touch events) */
+  nodeClick: [nodeId: string, data: Record<string, unknown>, event: MouseEvent | TouchEvent]
   /** Emitted when a node is double-clicked */
   nodeDblClick: [nodeId: string, data: Record<string, unknown>]
   /** Emitted when a node position changes (after drag) */
@@ -268,7 +268,7 @@ watch(() => props.selected, (newSelected) => {
   const toSelect = newSelected
     .filter((id) => !currentSelectedIds.has(id))
     .map((id) => findNode(id))
-    .filter(Boolean) as Node[]
+    .filter(Boolean) as GraphNode[]
   if (toSelect.length > 0) {
     addSelectedNodes(toSelect)
   }
@@ -679,7 +679,10 @@ watch(
     const rawEdges = (props.sync && syncState) ? syncEdges.value : dataEdges.value
     const extra = props.additionalEdges || []
     const type = edgeType.value
-    const dataEdgeList = [...rawEdges, ...extra].map(e => e.type === type ? e : { ...e, type })
+    // Normalize every edge (incl. additionalEdges, which carry no `type`) to the
+    // configured edge type.
+    const dataEdgeList: Array<{ id: string; source: string; target: string; type?: string }> =
+      [...rawEdges, ...extra].map(e => ({ ...e, type }))
     const newDataIds = new Set(dataEdgeList.map(e => e.id))
 
     // Edges that were removed from data since last sync
@@ -955,7 +958,7 @@ function selectSubtree(rootId: string): string[] {
   const ids = getSubtreeIds(rootId, edges)
   const nodeObjs = [...ids]
     .map(id => findNode(id))
-    .filter(Boolean) as Node[]
+    .filter(Boolean) as GraphNode[]
   addSelectedNodes(nodeObjs)
   const selectedIds = [...ids]
   emit('update:selected', selectedIds)
@@ -1038,7 +1041,7 @@ defineExpose({
       :min-zoom="0.1"
       :max-zoom="4"
       :fit-view-on-init="fitViewOnMount"
-      connection-mode="loose"
+      :connection-mode="ConnectionMode.Loose"
       :connect-on-click="false"
       class="crouton-vue-flow"
       @connect="onNewConnection"

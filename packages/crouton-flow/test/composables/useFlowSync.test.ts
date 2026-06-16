@@ -117,7 +117,7 @@ vi.mock('vue', async () => {
 })
 
 // Mock Nuxt composables
-vi.stubGlobal('useUserSession', () => ({
+vi.stubGlobal('useSession', () => ({
   user: ref({
     id: 'user-123',
     name: 'Test User',
