@@ -502,14 +502,17 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
 // name/description are i18n keys (see each app's app.config.ts pageTypes).
 // t() returns the key unchanged when missing, so dynamic collection-derived
 // types (plain-string names) stay safe.
-const pageTypeDropdownItems = computed(() => [
+// Page-type options for the Settings panel's stacked radio picker (create mode).
+// Description is an i18n key authored by the package that registers the type
+// (app.config pageTypes); collection-derived types may have none → name only.
+const pageTypeOptions = computed(() =>
   pageTypes.value.map((type: any) => ({
+    value: type.fullId,
     label: t(type.name),
     description: type.description ? t(type.description) : undefined,
-    icon: type.icon,
-    onSelect: () => { state.value.pageType = type.fullId }
+    icon: type.icon
   }))
-])
+)
 
 // Status config
 const statusConfig: Record<string, { color: string; icon: string; label: string }> = {
@@ -860,6 +863,9 @@ const fieldGroups = computed(() => ({
 // Preview drawer state
 const showPreview = ref(false)
 
+// Settings slideover state — opened from the toolbar's Settings button
+const settingsOpen = ref(false)
+
 // Detect optional packages via croutonApps registration
 const { hasApp } = useCroutonApps()
 const hasAssetsPicker = hasApp('assets')
@@ -991,47 +997,60 @@ defineExpose({ state })
       class="flex flex-col h-full"
       @submit="handleSubmit"
     >
-      <!-- Header Bar -->
+      <!-- Header Bar — slim: Status + Visibility + Settings on the left,
+           action group on the right. Page config lives in the SettingsPanel. -->
       <CroutonPagesEditorToolbar
         :action="action"
         :status="state.status"
         :visibility="state.visibility"
-        :show-in-navigation="state.showInNavigation"
-        :layout="state.layout"
-        :parent-id="state.parentId"
-        :selected-page-type="selectedPageType"
-        :page-type-dropdown-items="pageTypeDropdownItems"
         :status-config="statusConfig"
         :visibility-config="visibilityConfig"
         :status-dropdown-items="statusDropdownItems"
         :visibility-dropdown-items="visibilityDropdownItems"
-        :layout-options="layoutOptions"
-        :parent-options="parentOptions"
-        :pages-pending="pagesPending"
         :is-regular-page="isRegularPage"
         :has-ai="hasAI"
         :is-saving="isSaving"
         :show-close="showClose"
         :page-id="state.id"
         :public-url="publicUrl"
+        @update:status="state.status = $event"
+        @update:visibility="state.visibility = $event"
+        @show-settings="settingsOpen = true"
+        @show-ai-generator="showAiGenerator = true"
+        @show-preview="showPreview = true"
+        @cancel="emit('cancel')"
+        @delete="handleDelete"
+        @close="emit('close')"
+      />
+
+      <!-- Settings slideover — the roomy, organized home for all page config
+           (page type, parent, layout, navigation/chrome toggles, access code) -->
+      <CroutonPagesEditorSettingsPanel
+        v-model:open="settingsOpen"
+        :action="action"
+        :visibility="state.visibility"
+        :show-in-navigation="state.showInNavigation"
+        :layout="state.layout"
+        :parent-id="state.parentId"
+        :page-type="state.pageType"
+        :selected-page-type="selectedPageType"
+        :page-type-options="pageTypeOptions"
+        :layout-options="layoutOptions"
+        @update:page-type="state.pageType = $event"
+        :parent-options="parentOptions"
+        :pages-pending="pagesPending"
+        :page-id="state.id"
         :has-access-code="hasAccessCode"
         :access-code-pending="accessCodePending"
         :scope-provided-by-block="scopeProvidedByBlock"
         :hide-nav="chromeHideNav"
         :hide-auth-controls="chromeHideAuthControls"
-        @update:hide-nav="chromeHideNav = $event"
-        @update:hide-auth-controls="chromeHideAuthControls = $event"
-        @update:status="state.status = $event"
-        @update:visibility="state.visibility = $event"
         @update:show-in-navigation="state.showInNavigation = $event"
         @update:layout="state.layout = $event"
         @update:parent-id="state.parentId = $event"
-        @show-ai-generator="showAiGenerator = true"
-        @show-preview="showPreview = true"
+        @update:hide-nav="chromeHideNav = $event"
+        @update:hide-auth-controls="chromeHideAuthControls = $event"
         @layout-change="onLayoutChange"
-        @cancel="emit('cancel')"
-        @delete="handleDelete"
-        @close="emit('close')"
         @save-access-code="saveAccessCode"
         @remove-access-code="removeAccessCode"
       />

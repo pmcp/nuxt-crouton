@@ -28,6 +28,10 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/components/Footer.vue` | `CroutonPagesFooter` - Self-contained footer for layouts (uses UFooter) |
 | `app/components/FooterRenderer.vue` | `CroutonPagesFooterRenderer` - Footer page renderer (used by Renderer.vue) |
 | `app/components/Editor/BlockEditor.vue` | Block-based page editor |
+| `app/components/Editor/Toolbar.vue` | `CroutonPagesEditorToolbar` - Slim editor action bar: Status + Visibility + a Settings button (emits `show-settings`) on the left, action group (AI/preview/open/delete/save) on the right. All page config moved to SettingsPanel. |
+| `app/components/Editor/SettingsPanel.vue` | `CroutonPagesEditorSettingsPanel` - Roomy page-settings slideover (built on core's `CroutonFormExpandableSlideOver`). Sections: General (page type, parent), Appearance (layout), Navigation (in-menu + chrome toggles), Access (scoped access code). Owns no state — re-emits the same `update:*` events the old toolbar popover did. |
+| `app/components/Editor/LayoutPicker.vue` | `CroutonPagesEditorLayoutPicker` - Visual layout selector: a grid of selectable cards (wireframe thumbnail + icon + label + description) over `layoutOptions`. Emits `update:modelValue` + `layout-change`. |
+| `app/components/Editor/PageTypePicker.vue` | `CroutonPagesEditorPageTypePicker` - Vertically-stacked radio selector for page type (icon + name + description). Options come from `usePageTypes()` (descriptions are package-authored i18n keys in `app.config` pageTypes). |
 | `app/components/Form.vue` | Page creation/editing form |
 | `app/types/blocks.ts` | Block type definitions |
 | `app/utils/block-registry.ts` | Block definitions and schemas |
@@ -335,6 +339,10 @@ Components auto-import with `CroutonPages` prefix:
 - `Footer.vue` → `<CroutonPagesFooter />`
 - `FooterRenderer.vue` → `<CroutonPagesFooterRenderer />`
 - `Editor/BlockEditor.vue` → `<CroutonPagesEditorBlockEditor />`
+- `Editor/Toolbar.vue` → `<CroutonPagesEditorToolbar />`
+- `Editor/SettingsPanel.vue` → `<CroutonPagesEditorSettingsPanel />`
+- `Editor/LayoutPicker.vue` → `<CroutonPagesEditorLayoutPicker />`
+- `Editor/PageTypePicker.vue` → `<CroutonPagesEditorPageTypePicker />`
 - `Blocks/Render/HeroBlock.vue` → `<CroutonPagesBlocksRenderHeroBlock />`
 
 ## URL Structure
