@@ -7,8 +7,6 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
   claude:
@@ -33,36 +31,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: "--max-turns 25"
-
-  code-review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      pull-requests: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Pinned to commit with Claude Code 2.1.100 — fixes bun "directory mismatch" crash in 2.1.98 (v1.0.92)
-      # TODO: revert to @v1 once v1.0.93+ is released
-      - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: |
-            Review the changes in this PR. Focus on:
-            - Bugs, logic errors, and security issues
-            - TypeScript type safety
-            - Nuxt/Vue patterns (Composition API, Nuxt UI v4 component names)
-            - Missing error handling for async operations
-            - Any changes to packages/ that should have been flagged
-
-            Be concise. Only comment on things that matter — skip style nits.
-            If the PR looks good, say so briefly.
-          claude_args: "--max-turns 10"
 
 permissions:
   contents: read
