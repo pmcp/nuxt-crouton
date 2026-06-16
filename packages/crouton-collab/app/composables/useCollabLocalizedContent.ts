@@ -342,7 +342,7 @@ function jsonToYXmlElement(node: unknown): Y.XmlElement | Y.XmlText | null {
     // Set attributes
     if (nodeObj.attrs) {
       for (const [key, value] of Object.entries(nodeObj.attrs)) {
-        element.setAttribute(key, value)
+        element.setAttribute(key, String(value))
       }
     }
 

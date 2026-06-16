@@ -39,7 +39,9 @@ function emitCollabOperation(
  * Build a minimal H3Event-compatible object from a Web Request.
  * Only `headers` and basic node shim are needed for auth session/membership checks.
  */
-function createMinimalEvent(request: Request): H3Event {
+// Accepts both a standard Request and crossws's lighter UpgradeRequest variant
+// ({ url, headers }), which has no `method`.
+function createMinimalEvent(request: { url: string; headers: Headers; method?: string }): H3Event {
   const url = new URL(request.url || '', 'http://localhost')
   return {
     __is_event__: true,
@@ -49,7 +51,7 @@ function createMinimalEvent(request: Request): H3Event {
     node: {
       req: {
         headers: Object.fromEntries(request.headers.entries()),
-        method: request.method,
+        method: request.method ?? 'GET',
         url: request.url,
         originalUrl: url.pathname + url.search,
       },
