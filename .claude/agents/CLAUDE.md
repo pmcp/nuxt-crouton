@@ -18,11 +18,17 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
             └─ too big           →    create sub-issues → spawn a decomposer per child (RECURSE)
 ```
 
-| Agent | File | Recurses? | Writes code? |
-|-------|------|-----------|--------------|
-| `task-orchestrator` | `task-orchestrator.md` | no | no |
-| `task-decomposer`   | `task-decomposer.md`   | **yes** | no |
-| `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) |
+| Agent | File | Recurses? | Writes code? | Model |
+|-------|------|-----------|--------------|-------|
+| `task-orchestrator` | `task-orchestrator.md` | no | no | `sonnet` |
+| `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `sonnet` |
+| `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) | `opus` |
+
+**Model split (cost):** orchestrator + decomposer only read/write GitHub issues, so they
+run on **Sonnet**; only `task-worker` writes real code, so it runs on **Opus**. Each
+spawned agent re-pays the base context (system prompt + this repo's large `CLAUDE.md` +
+tool defs), so fan-out is the dominant cost — drop the issue-only agents to `haiku` for a
+cheaper (slightly blunter) split, or raise them to `opus` if decomposition quality slips.
 
 ### The agent contract
 
