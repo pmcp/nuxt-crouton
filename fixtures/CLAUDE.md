@@ -11,6 +11,7 @@ authenticates, and does CRUD** after a `packages/` change or dependency bump.
 | `with-pages` | + `@fyit/crouton-pages` → `@fyit/crouton-editor` (pages workspace surface) |
 | `with-bookings` | + `@fyit/crouton-bookings` (bookings admin surface) |
 | `with-assets` | + `@fyit/crouton-assets` (asserts the optional `CroutonAssetsPicker` mounts, not the core stub) |
+| `with-collab` | + `@fyit/crouton-collab` (spike: asserts the realtime collab UI mounts single-client) |
 
 ## What you need to know
 
