@@ -1,0 +1,4 @@
+{
+  "name": { "type": "string", "meta": { "required": true, "label": "Author Name", "maxLength": 100 } },
+  "bio": { "type": "text", "meta": { "label": "Biography" } }
+}

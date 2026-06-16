@@ -1,0 +1,29 @@
+{
+  "collections": [
+    {
+      "key": "mainAuthors",
+      "heading": "Main Authors",
+      "create": { "name": "e2e author" },
+      "requiredField": "name"
+    },
+    {
+      "key": "mainBooks",
+      "heading": "Main Books",
+      "create": { "title": "e2e book" },
+      "requiredField": "title"
+    }
+  ],
+  "surfaces": [
+    {
+      "name": "foreign-key reference select mounts and queries the parent collection",
+      "path": "/admin/{team}/relation-check",
+      "expect": { "visible": "[data-testid='relation-check'] button" }
+    }
+  ],
+  "i18n": {
+    "path": "/",
+    "switchTo": "NL",
+    "before": "Your teams",
+    "after": "Jouw teams"
+  }
+}
