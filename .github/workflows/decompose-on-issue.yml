@@ -24,6 +24,9 @@ jobs:
           fetch-depth: 1
 
       # Pinned to the same SHA as claude.yml — keep these in sync when bumping.
+      # AUTH: this is headless/unattended, so it MUST use an API key. Do NOT swap in a
+      # subscription CLAUDE_CODE_OAUTH_TOKEN — subscription OAuth is for interactive
+      # Claude Code use only, not CI automation (Anthropic Legal & Compliance terms).
       - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}

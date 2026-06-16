@@ -48,8 +48,22 @@ orchestrator's MAX_CHILDREN).
   command needed). Gate is the label, so only opted-in issues fire.
 - **Automatic — resume after a blocker:** when an agent @mentions you and sets
   `status:blocked`, just **reply on the issue** — `.github/workflows/resume-on-comment.yml`
-  picks it back up, removes the block, and continues. (Both workflows need the
-  `ANTHROPIC_API_KEY` repo secret, same as `claude.yml`.)
+  picks it back up, removes the block, and continues.
+
+### Auth & billing (read before changing the workflows)
+
+- **Interactive runs (you typing `/task-decompose` in a CLI / web / app session)** run on
+  **whatever your session is logged into** — a **Claude Pro/Max subscription is fine**;
+  this is ordinary interactive Claude Code use.
+- **The automated workflows are headless/unattended, so they MUST use an
+  `ANTHROPIC_API_KEY`** repo secret (same as `claude.yml`) — pay-per-token. **Do NOT wire
+  them to a subscription `CLAUDE_CODE_OAUTH_TOKEN`.** Per Anthropic's Legal & Compliance
+  terms, subscription OAuth is for *ordinary, individual, interactive* use of Claude Code,
+  **not** CI / Agent-SDK / headless automation (which bills at standard API rates). Using a
+  subscription token to drive these workflows would be against the terms.
+- Cost is therefore a real factor on the automated path — see the model split in
+  `.claude/agents/CLAUDE.md` (Sonnet for the issue-only agents, Opus only for the worker)
+  and the `MAX_DEPTH`/`MAX_CHILDREN` caps that bound fan-out.
 
 ## How to run
 
