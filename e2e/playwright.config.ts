@@ -20,14 +20,17 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI ? 'list' : 'html',
-  timeout: 60000,
+  // Generous per-test budget: a fixture's first hit on a route/modal compiles it
+  // on demand (nuxt dev), which is markedly slower on CI runners than locally.
+  timeout: 120000,
+  expect: { timeout: 30000 },
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    actionTimeout: 15000,
-    navigationTimeout: 30000
+    actionTimeout: 20000,
+    navigationTimeout: 60000
   },
 
   projects: [
