@@ -69,7 +69,7 @@ function formatDate(date: string | Date) {
 
       <template #memberCount-cell="{ row }">
         <UBadge variant="subtle" color="neutral">
-          {{ $t('superAdmin.teams.memberCount', row.original.memberCount, { count: row.original.memberCount }) }}
+          {{ $t('superAdmin.teams.memberCount', { count: row.original.memberCount }, row.original.memberCount) }}
         </UBadge>
       </template>
 
