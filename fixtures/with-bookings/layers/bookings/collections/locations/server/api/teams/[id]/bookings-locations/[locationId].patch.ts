@@ -38,7 +38,9 @@ const bodySchema = z.object({
   ).refine(
     (translations) => translations.en && translations.en.title,
     { message: 'Translations for title (en) are required' }
-  )
+  ),
+  // Transient hint: which locale the translation patch targets (not a column)
+  locale: z.string().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
@@ -72,6 +74,7 @@ export default defineEventHandler(async (event) => {
   // Only include fields that were actually sent in the request
   const updates: Record<string, any> = {}
   for (const [key, value] of Object.entries(body)) {
+    if (key === 'locale') continue // transient translation hint, not a column
     if (value !== undefined) {
       updates[key] = value
     }

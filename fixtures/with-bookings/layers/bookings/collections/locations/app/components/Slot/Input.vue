@@ -7,7 +7,7 @@ interface BookingsLocationsSlotItem {
   capacity?: number
 }
 
-const model = defineModel<BookingsLocationsSlotItem>()
+const model = defineModel<BookingsLocationsSlotItem>({ required: true })
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {

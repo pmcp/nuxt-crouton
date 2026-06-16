@@ -31,6 +31,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "typecheck": "pnpm -r --filter './apps/*' typecheck",
+    "typecheck:fixtures": "pnpm -r --filter './fixtures/*' typecheck",
     "typecheck:mcp": "pnpm --filter nuxt-crouton-mcp-server typecheck",
     "publish:packages": "./scripts/publish-packages.sh",
     "publish:packages:dry": "./scripts/publish-packages.sh --dry-run",

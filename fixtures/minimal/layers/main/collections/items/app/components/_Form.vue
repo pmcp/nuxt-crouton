@@ -2,7 +2,7 @@
   @crouton-generated
   @collection items
   @layer main
-  @generated 2026-06-15
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for items collection
@@ -87,7 +87,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<MainItemFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<MainItemFormData & { id?: string | null }>(initialValues as MainItemFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {

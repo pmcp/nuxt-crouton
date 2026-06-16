@@ -46,6 +46,25 @@ all use port 3000. Each fixture has its own local sqlite DB under `.data/`.
 > dist-consumed `@fyit/*` packages), or the dev server can't load `@fyit/crouton`:
 > `pnpm --filter "e2e-fixture-<name>^..." build` (this is what CI does).
 
+### Type-safety gate (#197)
+
+Each fixture carries a `tsconfig.json` (`extends ./.nuxt/tsconfig.json`) **so its
+type-check stays scoped to that fixture** — without it `vue-tsc` walks up to the
+root `tsconfig.json` (`include: ["**/*"]`) and type-checks the whole monorepo
+(10k+ false positives). Every fixture has a `typecheck` script:
+
+```bash
+pnpm --filter e2e-fixture-with-pages typecheck   # one fixture
+pnpm typecheck:fixtures                            # all fixtures (root script)
+```
+
+CI (`.github/workflows/e2e.yml`) **regenerates each fixture from its committed
+schemas, then type-checks it** before the Playwright smoke — so a generator
+template regression (the class of bug behind #195) turns CI red instead of only
+surfacing when someone scaffolds a new app. Keep the committed fixture output in
+sync: after changing a generator template, regenerate the fixtures
+(`cd fixtures/<name> && crouton config --force`) and commit the result.
+
 ## How it works
 
 1. **setup** (`auth.setup.ts`) runs first: logs the test user in (registering on
