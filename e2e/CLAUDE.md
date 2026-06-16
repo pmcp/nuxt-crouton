@@ -21,6 +21,7 @@ fixtures/                    # the apps under test — real crouton apps, one pe
   minimal/                   # core + auth + i18n, one 'items' collection
   with-pages/                # + @fyit/crouton-pages   (surface: pages workspace)
   with-bookings/             # + @fyit/crouton-bookings (surface: bookings admin)
+  with-assets/               # + @fyit/crouton-assets  (surface: CroutonAssetsPicker mounts, not the stub)
   <name>/                    # add more here
     e2e.manifest.json        # declares what to smoke (collections, fields)
 ```

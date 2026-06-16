@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fixture: [minimal, with-pages, with-bookings]
+        fixture: [minimal, with-pages, with-bookings, with-assets]
     env:
       # Better-auth needs a secret present; the value is irrelevant in CI.
       BETTER_AUTH_SECRET: ci-placeholder-secret
