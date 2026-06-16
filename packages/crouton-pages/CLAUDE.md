@@ -155,11 +155,16 @@ The generated layer should **NOT** have a `Form.vue` or `List.vue` - these are p
 
 ## Page Type Registration
 
-Apps register page types in `app.config.ts`. **`name` and `description` are i18n
-keys** (like `CroutonAppConfig.name`), translated at render via `useT()`'s `t()`.
-The page-type selector shows the `name` as the label and the `description` as a
-one-line explanation beneath it, so each contributing package owns its own copy
-in its locale files (e.g. `bookings.pageTypes.calendar.name` / `.description`).
+Apps register page types in `app.config.ts`. **`name`, `description` and `icon`
+are all REQUIRED** on `CroutonPageType` (enforced by the type — a registration
+missing `description` or `icon` is a TypeScript error). `name`/`description` are
+i18n keys (like `CroutonAppConfig.name`), translated at render via `useT()`'s
+`t()`; `icon` is a Lucide class (`i-lucide-*`). The page-type picker shows the
+`icon` + `name` as the label and the `description` as a one-line explanation
+beneath it, so each contributing package owns its own copy in its locale files
+(e.g. `bookings.pageTypes.calendar.name` / `.description`). **When you add a new
+page type to a package, always supply all three** — they're what make the type
+legible in the picker.
 
 ```typescript
 export default defineAppConfig({
