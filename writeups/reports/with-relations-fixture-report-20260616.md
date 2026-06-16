@@ -109,11 +109,23 @@ no-collection baseline, then regenerated cleanly.
   (regenerate from config like the registries do), or have `--force` reconcile
   removals. At minimum, document that collection *removal* requires `rollback`.
 
-### Finding 3 — `minimal` carries a stale `_Form.vue` the current generator no longer emits
-The current generator renders forms from the config (`fields` array) + a generated
-`_Form.vue` **only when no package `formComponent` is detected**. `minimal`'s
-committed `_Form.vue` predates a generator change; it's harmless but misleading
-when used as a reference. Not blocking — flagged for a cleanup regen of `minimal`.
+### Finding 3 — ~~`minimal` carries a stale `_Form.vue`~~ (RETRACTED — misdiagnosis)
+**Correction:** an earlier draft claimed `minimal`'s `_Form.vue` was stale. It is
+**not** — it's byte-for-byte the shape the current generator still emits. The
+generator produces `_Form.vue` whenever **no** package `formComponent` is detected
+(`generate-collection.ts:896`); when a package *does* supply one, it simply doesn't
+generate `_Form.vue` at all. `products`/`categories` lacked a `_Form.vue` earlier
+purely because of Finding 1 (the form got wrongly "claimed"), not a version drift.
+
+**Aside — the `_Form.vue` underscore is undocumented.** `.nuxt/components.d.ts`
+confirms `_Form.vue` is registered as the live `<MainXForm>` (Nuxt strips the
+leading underscore, so the name equals what plain `Form.vue` would yield — the
+underscore is functionally inert). It reads as a "generated base form, edit in
+place" convention, but no code comment or doc explains *why* the underscore. The
+generated header says "Safe to modify" but not what the file *is* or how it's
+referenced. **Cheap improvement:** add one line to the generated `_Form.vue` header
+— "this is the active form, auto-imported as `<MainXForm>`; a package-provided form
+replaces it" — so the convention is self-explaining where people actually read it.
 
 ### Finding 4 — environment: Playwright browser revision mismatch (env, not crouton)
 The sandbox ships chromium build **1194**; Playwright 1.57 wants **1200**, and the
