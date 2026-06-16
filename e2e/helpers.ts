@@ -27,6 +27,17 @@ export interface CollectionSpec {
   heading: string
   /** Field label/name -> value to fill when creating a row (text fields only). */
   create?: Record<string, string>
+  /**
+   * Field label/name -> value for the edit step. Omit to derive it: the first
+   * create field gets " edited" appended (enough to prove an update persists).
+   */
+  update?: Record<string, string>
+  /**
+   * Name of a required field to clear for the invalid-submit check. Set it only
+   * when the field is actually required (so validation blocks the submit);
+   * omit to skip that check for this collection.
+   */
+  requiredField?: string
 }
 
 /**

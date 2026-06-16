@@ -131,7 +131,9 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
     {
       "key": "mainItems",          // route segment + registered config key
       "heading": "Main Items",      // visible list heading to assert
-      "create": { "name": "e2e item" }  // text field label/name -> value; omit to skip CRUD
+      "create": { "name": "e2e item" },  // text field label/name -> value; omit to skip CRUD
+      "update": { "name": "renamed" },   // optional edit values; default = first field + " edited"
+      "requiredField": "name"            // optional: clear this field to assert validation blocks submit; omit to skip
     }
   ],
   // Optional: package-specific UI a generic items CRUD doesn't reach. Omit when a
@@ -165,8 +167,9 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   `test-results/` are all gitignored.
 
 ## Scope / follow-ups
-Current: list + CRUD per collection, plus optional package-specific `surfaces`
-(e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
+Current: list loads + full CRUD per collection (create → edit → delete, plus an
+optional `requiredField` invalid-submit check), plus optional package-specific
+`surfaces` (e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
 over `fixtures/*` (see `.github/workflows/e2e.yml`). `with-bookings` is the
 domain-package example: it boots a heavy package (locations/settings/slots) and
 asserts the bookings admin UI via `surfaces`. Adding such a fixture is also how the

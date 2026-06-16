@@ -3,7 +3,8 @@
     {
       "key": "mainItems",
       "heading": "Main Items",
-      "create": { "name": "e2e item" }
+      "create": { "name": "e2e item" },
+      "requiredField": "name"
     }
   ]
 }
