@@ -83,7 +83,7 @@ const yAxisNames = computed(() => categories.value.map((c) => c.name))
 // xFormatter for BarChart / AreaChart / LineChart: map array index → actual x-field value
 const xFormatter = computed(() => {
   const xKey = xAxisKey.value
-  return (_: number, i: number) => String(chartData.value[i]?.[xKey] ?? '')
+  return (_: number, i = 0) => String(chartData.value[i]?.[xKey] ?? '')
 })
 
 // DonutChart: data must be number[] (the Y values per row)

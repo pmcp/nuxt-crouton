@@ -47,7 +47,7 @@ const effectiveProps = computed(() => {
   }
   return {
     collection: props.attrs.collection,
-    type: props.attrs.chartType || 'bar',
+    type: (props.attrs.chartType || 'bar') as 'bar' | 'line' | 'area' | 'donut',
     xField: props.attrs.xField,
     yFields: props.attrs.yFields,
     title: props.attrs.title,
