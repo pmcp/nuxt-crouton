@@ -6,5 +6,11 @@
       "create": { "name": "e2e item" },
       "requiredField": "name"
     }
-  ]
+  ],
+  "i18n": {
+    "path": "/",
+    "switchTo": "NL",
+    "before": "Your teams",
+    "after": "Jouw teams"
+  }
 }

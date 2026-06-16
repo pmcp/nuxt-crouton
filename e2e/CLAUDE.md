@@ -11,8 +11,10 @@ e2e/                         # the harness (Playwright) — NOT a workspace pack
   playwright.config.ts       # config; targets a fixture, sets up projects + webServer
   helpers.ts                 # shared, non-test module (config, auth flow, manifest loader)
   auth.setup.ts              # 'setup' project: log in / register + create team, save state
+  auth.smoke.spec.ts         # auth feature itself: logout/re-login, logged-out guard, team switch
   collection.smoke.spec.ts   # generic, manifest-driven list + CRUD checks
   surface.smoke.spec.ts      # generic, manifest-driven package-surface checks (optional)
+  i18n.smoke.spec.ts         # generic, manifest-driven locale-switch check (optional)
   .auth/                     # generated storageState + team slug (gitignored)
 
 fixtures/                    # the apps under test — real crouton apps, one per config
@@ -146,7 +148,19 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
       "expect": { "visible": "[id$='-panel-pages-sidebar']" }  // CSS selector that must be visible
       // or: "expect": { "heading": "Workspace" } // a role=heading name (case-insensitive)
     }
-  ]
+  ],
+  // Optional: a locale-switch check (crouton-i18n). A `surface` can only assert a
+  // static element renders; this one *interacts* — flips locale via the
+  // package-owned LanguageSwitcher and asserts a known UI string changes
+  // language, so an i18n regression goes red. Needs ≥2 configured locales
+  // (set `locales`/`defaultLocale` in the fixture's crouton.config.js). Omit for
+  // single-locale fixtures (i18n.smoke.spec.ts then registers no test).
+  "i18n": {
+    "path": "/",            // page rendering the switcher + a translated string; {team} substituted
+    "switchTo": "NL",        // switcher option to pick (uppercase locale-code label)
+    "before": "Your teams",  // a known translated string in the default locale
+    "after": "Jouw teams"    // the same string in the target locale
+  }
 }
 ```
 
@@ -154,6 +168,10 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
 > `sidebar-id="pages-sidebar"` crouton-pages sets on `CroutonWorkspaceLayout` —
 > Nuxt UI renders the panel DOM id as `<storageKey>-panel-pages-sidebar`, hence
 > the ends-with match), so the assertion fails if that package's UI regresses.
+> The `i18n` check works the same way: the switcher is crouton-i18n's
+> `LanguageSwitcher` (a Nuxt UI `USelect` → the page's locale combobox) and the
+> asserted string is crouton's own `home.*` label, so a broken switcher or stuck
+> locale fails it.
 
 ## Gotchas
 - **Module format:** repo root is CommonJS, and Playwright 1.57 transpiles

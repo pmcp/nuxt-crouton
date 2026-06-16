@@ -59,10 +59,30 @@ export interface SurfaceSpec {
   }
 }
 
+/**
+ * A locale-switch check exercising the crouton-i18n LanguageSwitcher. A plain
+ * `surface` can only assert a static element renders; this one *interacts* —
+ * flips locale via the package-owned switcher and asserts a known UI string
+ * changes language — so an i18n regression (broken switcher, stuck locale,
+ * missing-key fallthrough) goes red. Needs a fixture with ≥2 configured locales.
+ */
+export interface I18nSpec {
+  /** Page that renders the switcher + a translated string. `{team}` is substituted. */
+  path: string
+  /** Switcher option to pick — the uppercase locale code label, e.g. "NL". */
+  switchTo: string
+  /** A known translated string visible in the *default* locale (before switching). */
+  before: string
+  /** The same string in the *target* locale (visible after switching). */
+  after: string
+}
+
 export interface FixtureManifest {
   collections: CollectionSpec[]
   /** Optional package-specific surfaces; omit for fixtures with nothing extra. */
   surfaces?: SurfaceSpec[]
+  /** Optional locale-switch check; omit for fixtures with a single locale. */
+  i18n?: I18nSpec
 }
 
 /** Read the active fixture's e2e manifest (what to smoke). */
