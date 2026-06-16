@@ -564,12 +564,16 @@ ${translationsFieldSchema}
     const typeLines = fields.filter(f => f.name !== 'id').map((f) => {
       const isDependentField = (f.meta?.dependsOn && f.meta?.dependsOnCollection) || f.meta?.displayAs === 'slotButtonGroup'
       let tsType = isDependentField ? 'string[] | null' : f.tsType
-      // Non-required json/nullable fields are emitted as `.nullish()` in the zod
-      // schema (so the validated body may be null) — the interface must allow null
-      // too, otherwise New<Type> (used by create*) rejects the body. (date tsType
-      // already includes null.)
-      const isNullish = f.meta?.nullable || f.type === 'json'
-      if (!f.meta?.required && isNullish && !tsType.includes('null')) tsType += ' | null'
+      if (f.meta?.required) {
+        // Required ⇒ the zod schema enforces a present, non-null value, so the
+        // interface must not widen to null (some tsTypes, e.g. date, default to
+        // `T | null`). Otherwise FormData/New<Type> reject the validated body.
+        tsType = tsType.replace(/\s*\|\s*null\b/g, '')
+      } else if ((f.meta?.nullable || f.type === 'json') && !tsType.includes('null')) {
+        // Non-required json/nullable fields are `.nullish()` in the zod schema
+        // (the body may be null) — the interface must allow null to match.
+        tsType += ' | null'
+      }
       // Translatable fields are validated as optional in the zod schema (the real
       // value lives in translations.<locale>; the root column is a cache/fallback) —
       // keep the interface optional to match, otherwise New<Type> rejects the body.

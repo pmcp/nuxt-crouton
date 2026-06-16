@@ -716,7 +716,10 @@ if (props.action === 'update' && props.activeItem?.id) {${regularFields
 }`
     : ''}
 
-const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues)${scriptAdditions}
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<${prefixedPascalCase}FormData & { id?: string | null }>(initialValues as ${prefixedPascalCase}FormData & { id?: string | null })${scriptAdditions}
 
 const handleSubmit = async () => {
   try {${hasDateFields
