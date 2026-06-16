@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-printers
  * - Form component: SalesPrintersForm
  * - List component: SalesPrintersList
- * - Fields: id, eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
+ * - Fields: id, eventId, locationId, title, ipAddress, port, status, type, driver, config, showPrices, isActive
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -33,7 +33,9 @@ export const salesPrinterSchema = z.object({
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
   status: z.string().optional(),
+  type: z.string().optional(),
   driver: z.string().optional(),
+  config: z.record(z.string(), z.any()).nullish(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()
 })
@@ -46,7 +48,9 @@ export const salesPrintersColumns = [
   { accessorKey: 'ipAddress', header: 'IpAddress' },
   { accessorKey: 'port', header: 'Port' },
   { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'driver', header: 'Driver' },
+  { accessorKey: 'config', header: 'Config' },
   { accessorKey: 'showPrices', header: 'ShowPrices' },
   { accessorKey: 'isActive', header: 'IsActive' }
 ]
@@ -64,7 +68,9 @@ const _salesPrintersConfig = {
     ipAddress: '',
     port: '',
     status: '',
+    type: '',
     driver: '',
+    config: {},
     showPrices: false,
     isActive: false
   },
@@ -107,9 +113,21 @@ const _salesPrintersConfig = {
           "area": "main"
       },
       {
+          "name": "type",
+          "type": "string",
+          "label": "Printer Type",
+          "area": "main"
+      },
+      {
           "name": "driver",
           "type": "string",
           "label": "Driver",
+          "area": "main"
+      },
+      {
+          "name": "config",
+          "type": "json",
+          "label": "Config",
           "area": "main"
       },
       {

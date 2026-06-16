@@ -61,6 +61,22 @@ export async function getAllSalesOrders(teamId: string, opts: { eventId?: string
 
   const orders = await listQuery
 
+  // Post-query processing for JSON fields (repeater/json types)
+  orders.forEach((item: any) => {
+      // Parse locationRemarks from JSON string
+      if (typeof item.locationRemarks === 'string') {
+        try {
+          item.locationRemarks = JSON.parse(item.locationRemarks)
+        } catch (e) {
+          console.error('Error parsing locationRemarks:', e)
+          item.locationRemarks = null
+        }
+      }
+      if (item.locationRemarks === null || item.locationRemarks === undefined) {
+        item.locationRemarks = null
+      }
+  })
+
   if (opts.limit != null) {
     const [countRow] = await (db as any)
       .select({ count: sql`count(*)` })
@@ -116,6 +132,22 @@ export async function getSalesOrdersByIds(teamId: string, orderIds: string[]) {
       )
     )
     .orderBy(desc(tables.salesOrders.createdAt))
+
+  // Post-query processing for JSON fields (repeater/json types)
+  orders.forEach((item: any) => {
+      // Parse locationRemarks from JSON string
+      if (typeof item.locationRemarks === 'string') {
+        try {
+          item.locationRemarks = JSON.parse(item.locationRemarks)
+        } catch (e) {
+          console.error('Error parsing locationRemarks:', e)
+          item.locationRemarks = null
+        }
+      }
+      if (item.locationRemarks === null || item.locationRemarks === undefined) {
+        item.locationRemarks = null
+      }
+  })
 
   return orders
 }

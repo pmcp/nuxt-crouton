@@ -11,7 +11,9 @@ const bodySchema = z.object({
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
   status: z.string().optional(),
+  type: z.string().optional(),
   driver: z.string().optional(),
+  config: z.record(z.string(), z.any()).nullish(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()
 }).strip()

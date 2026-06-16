@@ -52,7 +52,9 @@ collections/printers/
 | ipAddress | string | Yes |
 | port | string | No |
 | status | string | No |
+| type | string | No |
 | driver | string | No |
+| config | json | No |
 | showPrices | boolean | No |
 | isActive | boolean | No |
 | createdAt | timestamp | Auto |

@@ -9,7 +9,7 @@
   - Collection name: salesOrders
   - API endpoint: /api/teams/[id]/sales-orders
   - Columns composable: useSalesOrders()
-  - Column fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+  - Column fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
 
   ## Common Modifications
   - Add column: Update columns array in composable

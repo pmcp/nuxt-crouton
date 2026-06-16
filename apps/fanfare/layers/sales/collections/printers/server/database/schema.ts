@@ -32,7 +32,9 @@ export const salesPrinters = sqliteTable('sales_printers', {
   ipAddress: text('ipAddress').notNull(),
   port: text('port'),
   status: text('status'),
+  type: text('type'),
   driver: text('driver'),
+  config: jsonColumn('config').$default(() => ({})),
   showPrices: integer('showPrices', { mode: 'boolean' }).$default(() => true),
   isActive: integer('isActive', { mode: 'boolean' }).$default(() => true),
 

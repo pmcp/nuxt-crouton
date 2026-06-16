@@ -51,6 +51,7 @@ collections/orders/
 | clientName | string | No |
 | eventOrderNumber | number | No |
 | overallRemarks | text | No |
+| locationRemarks | json | No |
 | isPersonnel | boolean | No |
 | status | string | Yes |
 | createdAt | timestamp | Auto |

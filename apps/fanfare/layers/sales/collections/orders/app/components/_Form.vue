@@ -9,7 +9,7 @@
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/sales-orders
   - Zod schema: useSalesOrders() composable
-  - Fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+  - Fields: eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -62,6 +62,15 @@
         </UFormField>
         <UFormField :label="t('sales.orders.fields.overallRemarks', 'Special Instructions')" name="overallRemarks" class="not-last:pb-4">
           <UTextarea v-model="state.overallRemarks" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.orders.fields.locationRemarks', 'Location Remarks')" name="locationRemarks" class="not-last:pb-4">
+          <UTextarea
+            :model-value="typeof state.locationRemarks === 'string' ? state.locationRemarks : JSON.stringify(state.locationRemarks, null, 2)"
+            @update:model-value="(val) => { try { state.locationRemarks = val ? JSON.parse(val) : {} } catch (e) { console.error('Invalid JSON:', e) } }"
+            class="w-full font-mono text-sm"
+            :rows="8"
+            placeholder="Enter JSON object"
+          />
         </UFormField>
         <UFormField :label="t('sales.orders.fields.isPersonnel', 'Staff Order')" name="isPersonnel" class="not-last:pb-4">
           <UCheckbox v-model="state.isPersonnel" />

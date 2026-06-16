@@ -9,7 +9,7 @@
   - Collection name: salesPrinters
   - API endpoint: /api/teams/[id]/sales-printers
   - Columns composable: useSalesPrinters()
-  - Column fields: eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
+  - Column fields: eventId, locationId, title, ipAddress, port, status, type, driver, config, showPrices, isActive
 
   ## Common Modifications
   - Add column: Update columns array in composable

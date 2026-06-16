@@ -31,6 +31,7 @@ export const salesOrders = sqliteTable('sales_orders', {
   clientName: text('clientName'),
   eventOrderNumber: integer('eventOrderNumber'),
   overallRemarks: text('overallRemarks'),
+  locationRemarks: jsonColumn('locationRemarks').$default(() => ({})),
   isPersonnel: integer('isPersonnel', { mode: 'boolean' }).$default(() => false),
   status: text('status').notNull(),
 

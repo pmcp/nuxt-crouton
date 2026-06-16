@@ -9,7 +9,7 @@
  * - Form data type: SalesPrinterFormData
  * - New item type: NewSalesPrinter
  * - Form props: SalesPrinterFormProps
- * - Fields: id, eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
+ * - Fields: id, eventId, locationId, title, ipAddress, port, status, type, driver, config, showPrices, isActive
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -33,7 +33,9 @@ export interface SalesPrinter {
   ipAddress: string
   port?: string
   status?: string
+  type?: string
   driver?: string
+  config?: Record<string, any> | null
   showPrices?: boolean
   isActive?: boolean
   createdAt: Date

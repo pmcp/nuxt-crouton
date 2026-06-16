@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-orders
  * - Form component: SalesOrdersForm
  * - List component: SalesOrdersList
- * - Fields: id, eventId, clientId, clientName, eventOrderNumber, overallRemarks, isPersonnel, status
+ * - Fields: id, eventId, clientId, clientName, eventOrderNumber, overallRemarks, locationRemarks, isPersonnel, status
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -32,6 +32,7 @@ export const salesOrderSchema = z.object({
   clientName: z.string().optional(),
   eventOrderNumber: z.number().optional(),
   overallRemarks: z.string().optional(),
+  locationRemarks: z.record(z.string(), z.any()).nullish(),
   isPersonnel: z.boolean().optional(),
   status: z.string().min(1, 'status is required')
 })
@@ -43,6 +44,7 @@ export const salesOrdersColumns = [
   { accessorKey: 'clientName', header: 'ClientName' },
   { accessorKey: 'eventOrderNumber', header: 'EventOrderNumber' },
   { accessorKey: 'overallRemarks', header: 'OverallRemarks' },
+  { accessorKey: 'locationRemarks', header: 'LocationRemarks' },
   { accessorKey: 'isPersonnel', header: 'IsPersonnel' },
   { accessorKey: 'status', header: 'Status' }
 ]
@@ -59,6 +61,7 @@ const _salesOrdersConfig = {
     clientName: '',
     eventOrderNumber: 0,
     overallRemarks: '',
+    locationRemarks: {},
     isPersonnel: false,
     status: ''
   },
@@ -92,6 +95,12 @@ const _salesOrdersConfig = {
           "name": "overallRemarks",
           "type": "text",
           "label": "Special Instructions",
+          "area": "main"
+      },
+      {
+          "name": "locationRemarks",
+          "type": "json",
+          "label": "Location Remarks",
           "area": "main"
       },
       {
