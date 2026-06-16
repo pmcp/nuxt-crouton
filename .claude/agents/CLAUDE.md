@@ -36,6 +36,12 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
   children, check `get_sub_issues` and don't duplicate — re-spawn for unworked children.
 - **Stop-conditions live in `task-decomposer.md`:** `MAX_DEPTH = 3`, `MAX_CHILDREN = 6`,
   and the four-part LEAF TEST. Tune them there (+ orchestrator's MAX_CHILDREN).
+- **Async human-in-the-loop (`NOTIFY_HANDLE = @pmcp`).** Agents may run headless, so they
+  **never block on `AskUserQuestion`** (it times out). On a real blocker they
+  `add_issue_comment` with the question, **@mention `NOTIFY_HANDLE`** (so the owner gets a
+  GitHub/app notification), apply `status:blocked`, and stop — the human answers by
+  replying on the issue. Small ambiguities are decided with a default + a noted
+  assumption (no ping). Change the handle in this file and in the task-decompose skill.
 - **Workers are isolated.** The decomposer spawns workers with `isolation: "worktree"`
   so parallel leaves never collide on branches/files. One issue → one branch → one PR
   with `Closes #NN`. Workers obey the `packages/` HARD GATE and the `/commit` + no-squash

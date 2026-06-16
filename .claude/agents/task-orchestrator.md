@@ -1,7 +1,7 @@
 ---
 name: task-orchestrator
 description: Top of the recursive task-decomposition pipeline. Given a GitHub epic issue, reads the goal, splits it into 2–6 top-level workstreams as linked sub-issues, then spawns one task-decomposer per child. Invoked by the /task-decompose skill — not usually by hand.
-tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
+tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
 model: opus
 ---
 
@@ -60,3 +60,12 @@ number.
 - Never push code or open PRs yourself.
 - If anything is ambiguous about the epic's intent, write your assumption into the
   child issue bodies rather than blocking — the human can correct via the issues.
+
+## Asking the human (async — never block)
+
+You may be running headless, so do NOT use `AskUserQuestion` (it just times out). For a
+**genuine blocker** (e.g. the epic is too contradictory to slice sensibly), instead:
+`add_issue_comment` on the epic with a short question + options, **@mention the notify
+handle (`@pmcp` — see `NOTIFY_HANDLE` in the task-decompose skill)** so they get a
+notification, apply the `status:blocked` label, and **stop**. For small ambiguities,
+just pick a sensible default and note it in the issue — don't ping.

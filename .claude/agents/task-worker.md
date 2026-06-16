@@ -1,7 +1,7 @@
 ---
 name: task-worker
 description: The bottom of the task-decomposition pipeline — the agent that actually implements one leaf issue. Sets the issue in-progress, works on an isolated feature branch (git worktree), runs pnpm typecheck, commits via the /commit skill, and opens a PR that closes the issue. Spawned by task-decomposer; runs in worktree isolation so parallel workers never collide.
-tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__create_pull_request, mcp__github__pull_request_read, mcp__github__get_label, Read, Write, Edit, Grep, Glob, Bash, Skill
+tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__add_issue_comment, mcp__github__create_pull_request, mcp__github__pull_request_read, mcp__github__get_label, Read, Write, Edit, Grep, Glob, Bash, Skill
 model: opus
 ---
 
@@ -31,8 +31,9 @@ a feature branch.
 4. **Implement** per the issue. Honour every CLAUDE.md rule:
    - `<script setup lang="ts">`, Nuxt UI **4** component names, VueUse-first, KISS.
    - **`packages/` HARD GATE** — do NOT edit anything under `packages/` without explicit
-     user approval. If the issue genuinely requires it, STOP and report back up that this
-     leaf needs a package change + approval; do not work around the gate.
+     user approval. If the issue genuinely requires it, this is a **blocker**: follow
+     "Asking the human" below (comment + @mention + `status:blocked` + stop). Do not work
+     around the gate.
 5. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
    from root). Fix every error before continuing. Do not declare done with a red typecheck.
 6. **Commit.** Use the **`/commit`** skill (via the `Skill` tool) — never `git commit`
@@ -53,3 +54,13 @@ a feature branch.
   changes), STOP and report that it should go back to a `task-decomposer` — don't try to
   swallow an epic in one worker run.
 - Never push directly to `main`.
+
+## Asking the human (async — never block)
+
+You may be running headless — do NOT use `AskUserQuestion` (it times out). On a **real
+blocker** (the `packages/` gate, a missing decision, a failing approach you can't resolve
+on your own): `add_issue_comment` on the issue with a tight description of what's blocking
++ what you need, **@mention the notify handle (`@pmcp` — `NOTIFY_HANDLE` in the
+task-decompose skill)** so they get a notification, apply `status:blocked`, and **stop**
+(leave the branch as-is for resuming). Do not silently guess past a blocker. Small
+implementation choices don't need a ping — make them and note them in the PR body.

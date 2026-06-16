@@ -63,6 +63,25 @@ orchestrator's MAX_CHILDREN).
 3. **Report** the epic url and that orchestration has started. The tree then builds itself
    (decomposers recurse; workers open PRs with `Closes #NN`).
 
+## Notifications & async Q&A (`NOTIFY_HANDLE = @pmcp`)
+
+Headless/automation runs (a webhook- or Action-triggered session) have **no human
+attached**, so agents must **never block-and-wait** on a question — `AskUserQuestion`
+just times out there. Instead the pattern is **comment-and-stop**, and the comment
+**@mentions the notify handle** so the owner gets a real GitHub notification (which
+surfaces in the GitHub / Claude mobile app):
+
+- **Small ambiguity** → decide with a sensible default, record the assumption in the
+  issue body, keep going. *No mention* (don't spam).
+- **Real blocker / decision needed** → `add_issue_comment` on the issue with a tight
+  question + options, **@mention `NOTIFY_HANDLE`**, apply the `status:blocked` label,
+  then **stop** that branch. The owner replies on the issue; a resume trigger (or a
+  human re-running `/task-decompose #NN`) picks the thread back up.
+- **Epic done** → when the last child merges, the verify-rollup comment on the epic
+  also @mentions `NOTIFY_HANDLE` (per `github-tasks`).
+
+To change who gets pinged, edit `NOTIFY_HANDLE` here and in `.claude/agents/CLAUDE.md`.
+
 ## Notes
 
 - Everything persists as real GitHub issues (epic → sub-issues → sub-sub-issues), so the

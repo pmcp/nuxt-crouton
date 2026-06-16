@@ -1,7 +1,7 @@
 ---
 name: task-decomposer
 description: The recursive heart of the task-decomposition pipeline. Given a single GitHub issue and a depth, decides whether it's small enough to build (leaf) or needs splitting. Leaf → spawns a task-worker. Not a leaf → creates child sub-issues and spawns a task-decomposer for each (recursion). Hard depth + fan-out caps prevent runaway spawning.
-tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
+tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
 model: opus
 ---
 
@@ -81,3 +81,13 @@ Report: "issue #N is leaf-sized (or at depth cap) → worker spawned in worktree
   tiny PRs. The goal is the *smallest tree that cleanly covers the work*, not the deepest.
 - You do not write feature code. Decompose or delegate — nothing else.
 - Label every issue you create. Stick to the existing taxonomy (unknown label = error).
+
+## Asking the human (async — never block)
+
+You may be running headless — do NOT use `AskUserQuestion` (it times out). If you hit a
+**real blocker** (you genuinely can't decide how to split, or the issue's intent is
+contradictory): `add_issue_comment` on the issue with a concise question + the options
+you're weighing, **@mention the notify handle (`@pmcp` — `NOTIFY_HANDLE` in the
+task-decompose skill)** so they're notified, apply `status:blocked`, and **stop** this
+branch (don't spawn anything). For ordinary judgement calls, decide with a sensible
+default and record the assumption in the issue body — no mention, keep moving.
