@@ -14,7 +14,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { surfaceUrl, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
+import { surfaceUrl, ensureAuthed, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
 
 const manifest = fixtureManifest()
 const surfaces = manifest.surfaces ?? []
@@ -31,6 +31,9 @@ test.describe(`fixture "${FIXTURE}" surfaces`, () => {
   for (const surface of surfaces) {
     test(surface.name, async ({ page, baseURL }) => {
       const base = baseURL || 'http://localhost:3000'
+      // The reused storageState session may have been invalidated by the auth
+      // smoke specs; re-establish it before hitting a protected surface route.
+      await ensureAuthed(page, base)
       await page.goto(surfaceUrl(base, slug, surface.path), { waitUntil: 'domcontentloaded' })
       await page.waitForLoadState('networkidle').catch(() => {})
 

@@ -231,6 +231,23 @@ export async function ensureTeam(page: Page, base: string): Promise<string> {
   return org.slug as string
 }
 
+/**
+ * Ensure the current page's context is authenticated, re-establishing the
+ * session if the reused storageState one is dead.
+ *
+ * The auth smoke specs log the *shared* test user in and out in their own
+ * contexts; better-auth's session lifecycle is per-user and server-side, so that
+ * churn can invalidate the setup session before the content specs (which run
+ * after it) reuse it via storageState. Rather than depend on the setup session
+ * surviving the whole run, the content specs call this first so they re-login
+ * on demand — self-healing regardless of what invalidated the session.
+ */
+export async function ensureAuthed(page: Page, base: string): Promise<void> {
+  if (await isAuthenticated(page, base)) return
+  await loginOrRegister(page, base)
+  await ensureTeam(page, base)
+}
+
 /** Build the admin URL for a generated collection (key, e.g. "mainItems"). */
 export function collectionUrl(base: string, teamSlug: string, collectionKey: string): string {
   return `${base}/admin/${teamSlug}/crouton/${collectionKey}`

@@ -14,7 +14,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { collectionUrl, fixtureManifest, fillField, TEAM_FILE, FIXTURE } from './helpers'
+import { collectionUrl, ensureAuthed, fixtureManifest, fillField, TEAM_FILE, FIXTURE } from './helpers'
 
 const manifest = fixtureManifest()
 
@@ -28,6 +28,9 @@ test.describe(`fixture "${FIXTURE}"`, () => {
     test.describe(collection.key, () => {
       // Navigate to the list and wait out the cold route compile on first hit.
       async function gotoList(page: import('@playwright/test').Page, base: string) {
+        // The reused storageState session may have been invalidated by the auth
+        // smoke specs; re-establish it before hitting a protected route.
+        await ensureAuthed(page, base)
         await page.goto(collectionUrl(base, slug, collection.key), { waitUntil: 'domcontentloaded' })
         await page.waitForLoadState('networkidle').catch(() => {})
       }

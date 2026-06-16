@@ -16,7 +16,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { surfaceUrl, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
+import { surfaceUrl, ensureAuthed, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
 
 const i18n = fixtureManifest().i18n
 
@@ -33,6 +33,9 @@ test.describe(`fixture "${FIXTURE}" i18n`, () => {
     const base = baseURL || 'http://localhost:3000'
     const { path, switchTo, before, after } = i18n!
 
+    // The reused storageState session may have been invalidated by the auth
+    // smoke specs; re-establish it before asserting authenticated content.
+    await ensureAuthed(page, base)
     await page.goto(surfaceUrl(base, slug, path), { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('networkidle').catch(() => {})
 
