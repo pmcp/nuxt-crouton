@@ -8,7 +8,8 @@
  * NOTE: This component must NOT use top-level await (no async setup) — the
  * async model load happens inside CroutonThreeModelViewer's <Suspense>.
  */
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
 
 interface ModelBlockAttrs {
   src?: string
@@ -46,6 +47,15 @@ const autoRotate = computed(() => {
 })
 
 const hasModel = computed(() => !!props.attrs.src)
+
+// Defer the heavy 3D viewer (three.js / WebGL) until it scrolls into view, then
+// keep it mounted. The `Lazy` prefix code-splits the viewer chunk; the
+// visibility latch defers its first mount. On a long CMS page a below-the-fold
+// model no longer loads three.js or spins up a WebGL context on initial load.
+const viewerEl = ref<HTMLElement | null>(null)
+const isVisible = useElementVisibility(viewerEl)
+const hasBeenVisible = ref(false)
+watch(isVisible, (v) => { if (v) hasBeenVisible.value = true }, { immediate: true })
 </script>
 
 <template>
@@ -64,12 +74,25 @@ const hasModel = computed(() => !!props.attrs.src)
       v-else
       class="space-y-2"
     >
-      <CroutonThreeModelViewer
-        :src="attrs.src"
-        :height="height"
-        :background="background"
-        :auto-rotate="autoRotate"
-      />
+      <div
+        ref="viewerEl"
+        :style="{ minHeight: `${height}px` }"
+      >
+        <LazyCroutonThreeModelViewer
+          v-if="hasBeenVisible"
+          :src="attrs.src"
+          :height="height"
+          :background="background"
+          :auto-rotate="autoRotate"
+        />
+        <div
+          v-else
+          class="flex items-center justify-center rounded-lg bg-muted/10"
+          :style="{ height: `${height}px` }"
+        >
+          <USkeleton class="h-full w-full" />
+        </div>
+      </div>
       <figcaption
         v-if="attrs.title"
         class="text-center text-sm text-muted"

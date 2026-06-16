@@ -22,7 +22,7 @@ This is an **addon layer** — apps extend it explicitly alongside crouton-core.
 | `app/components/Scene.vue` | `CroutonThreeScene` — canvas + camera + lights + optional orbit controls; default slot rendered inside the canvas |
 | `app/components/ModelViewer.vue` | `CroutonThreeModelViewer` — loads a glTF/.glb model with orbit controls + auto-rotate |
 | `app/components/StarterScene.vue` | `CroutonThreeStarterScene` — runnable WASD/arrow-controllable cube on a ground plane |
-| `app/components/Blocks/ModelBlockRender.vue` | `CroutonThreeBlocksModelBlockRender` — public renderer for the model block |
+| `app/components/Blocks/ModelBlockRender.vue` | `CroutonThreeBlocksModelBlockRender` — public renderer for the model block. Defers the heavy viewer until it scrolls into view (`useElementVisibility` latch + `LazyCroutonThreeModelViewer` + skeleton), so a below-the-fold model loads three.js / spins up WebGL only when visible. |
 | `app/components/Blocks/ModelBlockView.vue` | `CroutonThreeBlocksModelBlockView` — editor NodeView (static preview) |
 | `app/components/Blocks/ModelSourcePicker.vue` | `CroutonThreeBlocksModelSourcePicker` — `three-model` field: assets picker if present, URL fallback |
 | `app/composables/useThreeControls.ts` | WASD/arrow-key movement → reactive `position` for `<TresMesh>` |
