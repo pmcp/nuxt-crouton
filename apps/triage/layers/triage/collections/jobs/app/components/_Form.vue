@@ -225,7 +225,7 @@ const state = ref<TriageJobFormData & { id?: string | null }>(initialValues)
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
-    const serializedData = { ...state.value }
+    const serializedData: Record<string, unknown> = { ...state.value }
     if (serializedData.startedAt instanceof Date) {
       serializedData.startedAt = serializedData.startedAt.toISOString()
     }

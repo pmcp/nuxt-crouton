@@ -22,7 +22,9 @@ const selectedLayoutId = ref<string | null>(null)
 const toast = useToast()
 
 // ─── Connected accounts ───
-const { accounts, createManualAccount, fetchAccounts } = useTriageConnectedAccounts(teamId)
+const { accounts, createManualAccount, fetchAccounts } = useTriageConnectedAccounts(
+  computed(() => teamId.value ?? ''),
+)
 
 const notionAccounts = computed(() => accounts.value.filter(a => a.provider === 'notion'))
 const accountItems = computed(() =>
@@ -373,7 +375,6 @@ const allProperties = computed(() => {
   return Object.entries(schema.value).map(([name, prop]) => ({
     label: `${name} (${prop.type})`,
     value: name,
-    type: prop.type,
     disabled: !['select', 'status', 'multi_select'].includes(prop.type),
   }))
 })
@@ -1433,7 +1434,7 @@ async function saveToNotion() {
                   :data="riceBarData"
                   :y-axis="['RICE']"
                   :categories="riceBarCategories"
-                  :x-formatter="(_: number, i: number) => String(riceBarData[i]?.name ?? '')"
+                  :x-formatter="(_: number, i = 0) => String(riceBarData[i]?.name ?? '')"
                   :height="Math.max(250, riceBarData.length * 28)"
                 />
               </ClientOnly>
@@ -1450,7 +1451,7 @@ async function saveToNotion() {
                   :data="riceComponentsData"
                   :y-axis="['Reach', 'Impact', 'Confidence', 'Effort']"
                   :categories="riceComponentCategories"
-                  :x-formatter="(_: number, i: number) => String(riceComponentsData[i]?.name ?? '')"
+                  :x-formatter="(_: number, i = 0) => String(riceComponentsData[i]?.name ?? '')"
                   :height="Math.max(250, riceComponentsData.length * 28)"
                   :stacked="true"
                 />
@@ -1469,7 +1470,7 @@ async function saveToNotion() {
                   :data="riceByCategoryData.map(d => ({ name: d.name, 'Avg RICE': d.avgRice }))"
                   :y-axis="['Avg RICE']"
                   :categories="{ 'Avg RICE': { name: 'Avg RICE', color: '#8b5cf6' } }"
-                  :x-formatter="(_: number, i: number) => String(riceByCategoryData[i]?.name ?? '')"
+                  :x-formatter="(_: number, i = 0) => String(riceByCategoryData[i]?.name ?? '')"
                   :height="250"
                 />
               </ClientOnly>
@@ -1645,7 +1646,7 @@ async function saveToNotion() {
                   :data="cardRice.chartData"
                   :y-axis="['Value']"
                   :categories="{ Value: { name: 'Value', color: '#6366f1' } }"
-                  :x-formatter="(_: number, i: number) => String(cardRice.chartData[i]?.name ?? '')"
+                  :x-formatter="(_: number, i = 0) => String(cardRice?.chartData[i]?.name ?? '')"
                   :height="120"
                   class="mt-3"
                 />

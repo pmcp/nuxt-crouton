@@ -35,8 +35,8 @@ export const triageJobSchema = z.object({
   maxAttempts: z.number(),
   error: z.string().optional(),
   errorStack: z.string().optional(),
-  startedAt: z.date().optional(),
-  completedAt: z.date().optional(),
+  startedAt: z.date().nullable().optional(),
+  completedAt: z.date().nullable().optional(),
   processingTime: z.number().optional(),
   taskIds: z.array(z.string()).optional(),
   metadata: z.record(z.string(), z.any()).optional()

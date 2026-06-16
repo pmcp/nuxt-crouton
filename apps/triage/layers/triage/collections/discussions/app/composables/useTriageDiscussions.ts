@@ -46,7 +46,7 @@ export const triageDiscussionSchema = z.object({
   notionTaskIds: z.array(z.string()).optional(),
   rawPayload: z.record(z.string(), z.any()).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
-  processedAt: z.date().optional()
+  processedAt: z.date().nullable().optional()
 })
 
 export const triageDiscussionsColumns = [
