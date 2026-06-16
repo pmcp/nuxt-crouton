@@ -83,12 +83,61 @@ function authHeaders(base: string) {
   return { Origin: base, Referer: `${base}/` }
 }
 
+/**
+ * The current better-auth session payload (`{ user, session }`) or null.
+ *
+ * crouton-auth enables better-auth's cookie cache (a signed `session_data`
+ * cookie, 5-min TTL), so the default get-session can report a *stale* user for
+ * up to 5 min after sign-out. We pass `disableCookieCache=true` to force a DB
+ * read, so this always reflects the true session state — essential for the auth
+ * smoke to observe logout.
+ */
+export async function getSession(page: Page, base: string): Promise<any | null> {
+  const res = await page.request
+    .get(`${base}/api/auth/get-session?disableCookieCache=true`)
+    .catch(() => null)
+  if (!res || !res.ok()) return null
+  return res.json().catch(() => null)
+}
+
 /** True when a session exists for the current browser context. */
 export async function isAuthenticated(page: Page, base: string): Promise<boolean> {
-  const res = await page.request.get(`${base}/api/auth/get-session`).catch(() => null)
-  if (!res || !res.ok()) return false
-  const session = await res.json().catch(() => null)
+  const session = await getSession(page, base)
   return !!session?.user
+}
+
+/**
+ * Sign the active session out. Clears the context's session cookie.
+ *
+ * Passes an empty JSON body so Playwright sets `Content-Type: application/json`
+ * — better-auth rejects the POST with 415 otherwise (it requires that header).
+ */
+export async function signOut(page: Page, base: string): Promise<void> {
+  await page.request.post(`${base}/api/auth/sign-out`, { headers: authHeaders(base), data: {} })
+}
+
+/** The active organization (team) id on the current session, or null. */
+export async function activeTeamId(page: Page, base: string): Promise<string | null> {
+  const session = await getSession(page, base)
+  return session?.session?.activeOrganizationId ?? null
+}
+
+/** Create an organization (team) and return it. Needs an Origin header (CSRF). */
+export async function createTeam(page: Page, base: string, name: string, slug: string): Promise<{ id: string; slug: string }> {
+  const res = await page.request.post(`${base}/api/auth/organization/create`, {
+    headers: authHeaders(base),
+    data: { name, slug }
+  })
+  if (!res.ok()) throw new Error(`Failed to create team: ${res.status()} ${await res.text()}`)
+  return res.json()
+}
+
+/** Make an organization (team) the active one for the session. */
+export async function setActiveTeam(page: Page, base: string, organizationId: string): Promise<void> {
+  await page.request.post(`${base}/api/auth/organization/set-active`, {
+    headers: authHeaders(base),
+    data: { organizationId }
+  })
 }
 
 // Cold dev-server compiles the auth modal on first hit — be patient.
@@ -140,28 +189,12 @@ export async function loginOrRegister(page: Page, base: string): Promise<void> {
  * Signup creates no team, so we create one via the better-auth org API if absent.
  */
 export async function ensureTeam(page: Page, base: string): Promise<string> {
-  const headers = authHeaders(base)
-
-  const listRes = await page.request.get(`${base}/api/auth/organization/list`, { headers })
+  const listRes = await page.request.get(`${base}/api/auth/organization/list`, { headers: authHeaders(base) })
   const orgs = listRes.ok() ? await listRes.json().catch(() => []) : []
-  let org = Array.isArray(orgs) ? orgs[0] : null
+  const org = (Array.isArray(orgs) ? orgs[0] : null)
+    ?? await createTeam(page, base, config.team.name, config.team.slug)
 
-  if (!org) {
-    const createRes = await page.request.post(`${base}/api/auth/organization/create`, {
-      headers,
-      data: { name: config.team.name, slug: config.team.slug }
-    })
-    if (!createRes.ok()) {
-      throw new Error(`Failed to create team: ${createRes.status()} ${await createRes.text()}`)
-    }
-    org = await createRes.json()
-  }
-
-  await page.request.post(`${base}/api/auth/organization/set-active`, {
-    headers,
-    data: { organizationId: org.id }
-  })
-
+  await setActiveTeam(page, base, org.id)
   return org.slug as string
 }
 

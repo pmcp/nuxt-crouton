@@ -84,6 +84,18 @@ sync: after changing a generator template, regenerate the fixtures
 - **Signup creates no team.** We create one via the better-auth org API
   (`POST /api/auth/organization/create` + `/set-active`), which **requires an
   `Origin` header** (CSRF) — see `ensureTeam()`.
+- **Better-auth POSTs require `Content-Type: application/json`** — it rejects a
+  bodyless POST with 415. Pass `data: {}` to `page.request.post` so Playwright
+  sets the header (this bit `signOut()`; the team helpers already send a body).
+- **get-session is cookie-cached** (better-auth `session.cookieCache`, 5-min
+  signed cookie), so it can report a *stale* user for up to 5 min after sign-out.
+  `getSession()` passes `?disableCookieCache=true` to force a DB read — use it
+  (via `isAuthenticated`) whenever a spec needs the *true* post-logout state.
+- **Auth specs must run in their own context, not the shared `storageState`.**
+  Every spec reuses setup's saved session token; better-auth sign-out destroys
+  the *current* session, so logging out (or switching team on) the shared session
+  invalidates the token every other spec depends on. `auth.smoke.spec.ts` mints a
+  separate session per test via `browser.newContext()` + `loginOrRegister`.
 - Generated collections render at `/admin/{teamSlug}/crouton/{collectionKey}`
   (e.g. `mainItems`).
 
