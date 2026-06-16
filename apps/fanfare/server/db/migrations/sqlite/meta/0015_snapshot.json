@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1ed05dd4-a5ec-408b-98a5-69cc31a0d5ed",
+  "id": "f1e85289-017e-4f23-afe5-12bdc598fc93",
   "prevId": "275f18c2-cbe3-48ac-a681-38057278d74a",
   "tables": {
     "account": {
@@ -1234,6 +1234,14 @@
           "notNull": false,
           "autoincrement": false
         },
+        "isActive": {
+          "name": "isActive",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "integer",
@@ -1358,6 +1366,13 @@
         },
         "helperPin": {
           "name": "helperPin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1828,6 +1843,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "locationRemarks": {
+          "name": "locationRemarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "isPersonnel": {
           "name": "isPersonnel",
           "type": "integer",
@@ -1912,7 +1934,7 @@
           "name": "locationId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "title": {
@@ -1931,6 +1953,27 @@
         },
         "port": {
           "name": "port",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "driver": {
+          "name": "driver",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "config": {
+          "name": "config",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -2027,7 +2070,7 @@
           "name": "orderId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "printerId": {
@@ -2370,6 +2413,51 @@
           "isUnique": false
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sales_sync_status": {
+      "name": "sales_sync_status",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_contact_at": {
+          "name": "last_contact_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_event_at": {
+          "name": "last_event_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_batch_applied": {
+          "name": "last_batch_applied",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

@@ -21,6 +21,25 @@
           }
         }
       },
+      "liveDashboard": {
+        "name": "Tableau de bord en direct",
+        "description": "Suivez en ligne les commandes et les ventes en direct d'un événement, lues depuis la copie cloud — avec un indicateur « dernière synchronisation » qui devient obsolète lorsque la caisse est hors ligne. Pour les membres de l'équipe connectés.",
+        "fields": {
+          "eventSlug": {
+            "label": "Événement",
+            "description": "Choisissez l'événement dont ce tableau de bord affiche les données en direct."
+          },
+          "title": {
+            "label": "Titre",
+            "description": "Titre facultatif au-dessus du tableau de bord (par défaut le nom de l'événement)."
+          }
+        },
+        "ui": {
+          "teamOnly": "Connectez-vous en tant que membre de l'équipe pour voir le tableau de bord en direct.",
+          "eventNotFound": "Événement introuvable",
+          "defaultTitle": "Tableau de bord en direct"
+        }
+      },
       "salesChart": {
         "name": "Graphique de ventes",
         "description": "Intégrer un graphique d'analyse des ventes pour un événement ou toute l'équipe",
@@ -163,6 +182,27 @@
     "admin": {
       "sectionTitle": "Point de vente",
       "overview": "Aperçu"
+    },
+    "sync": {
+      "live": "En direct",
+      "stale": "Obsolète",
+      "waiting": "Connexion",
+      "unavailable": "Statut indisponible",
+      "justNow": "à l'instant",
+      "secondsAgo": "il y a {n}s",
+      "minutesAgo": "il y a {n}min",
+      "hoursAgo": "il y a {n}h",
+      "syncedAgo": "synchronisé {ago}",
+      "staleDetail": "dernière synchronisation {ago} — la caisse est peut-être hors ligne",
+      "waitingDetail": "en attente de la première synchronisation depuis la caisse",
+      "unavailableDetail": "impossible d'obtenir le statut de synchronisation"
+    },
+    "dashboard": {
+      "revenue": "Chiffre d'affaires",
+      "orders": "Commandes",
+      "avgOrder": "Commande moy.",
+      "topProducts": "Meilleurs produits",
+      "noSalesYet": "Pas encore de ventes"
     },
     "common": {
       "save": "Enregistrer",

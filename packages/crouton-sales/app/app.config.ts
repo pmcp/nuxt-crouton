@@ -207,6 +207,56 @@ const eventWorkspaceBlock: CroutonBlockDefinition = {
   }
 }
 
+// Live Dashboard for crouton-pages (#179, epic #175 — D1 live mirror): one
+// event's mirror-fresh orders + sales, read from the Cloudflare D1 mirror. A
+// composition of existing pieces — a mirror-freshness banner (the only new
+// part), a sales summary on the chart endpoints, and the workspace orders list
+// — so an admin can open a browser anywhere and watch the venue live, with a
+// clear "last synced" indicator that goes stale when the Pi is offline.
+// Team-members-only (the renderer gates on useAuth().loggedIn — mirror data is
+// team-scoped). The editor fixes the event by slug. name/description and field
+// labels are i18n keys (see i18n/locales/*.json).
+const salesLiveDashboardBlock: CroutonBlockDefinition = {
+  type: 'salesLiveDashboardBlock',
+  name: 'sales.blocks.liveDashboard.name',
+  description: 'sales.blocks.liveDashboard.description',
+  icon: 'i-lucide-layout-dashboard',
+  category: 'data',
+  clientOnly: true,
+  defaultAttrs: {
+    eventSlug: '',
+    title: ''
+  },
+  components: {
+    editorView: 'SalesBlocksLiveDashboardView',
+    renderer: 'SalesBlocksLiveDashboardRender'
+  },
+  propertyComponents: {
+    eventSlug: 'SalesBlocksPropertiesEventSlugPicker'
+  },
+  schema: [
+    {
+      name: 'eventSlug',
+      type: 'eventSlug',
+      label: 'sales.blocks.liveDashboard.fields.eventSlug.label',
+      description: 'sales.blocks.liveDashboard.fields.eventSlug.description'
+    },
+    {
+      name: 'title',
+      type: 'text',
+      label: 'sales.blocks.liveDashboard.fields.title.label',
+      description: 'sales.blocks.liveDashboard.fields.title.description'
+    }
+  ],
+  tiptap: {
+    parseHTMLTag: 'div[data-type="sales-live-dashboard-block"]',
+    attributes: {
+      eventSlug: { default: '' },
+      title: { default: '' }
+    }
+  }
+}
+
 // Standalone Orders block for crouton-pages: one event's live orders list
 // (the same view as the workspace "Bestellingen" pane) on its own page, so an
 // admin can build a dedicated orders / kitchen-status screen. Team-members-only
@@ -435,6 +485,7 @@ export default defineAppConfig({
   },
   croutonBlocks: {
     eventWorkspaceBlock,
+    salesLiveDashboardBlock,
     salesOrdersBlock,
     salesClientsBlock,
     kitchenDisplayBlock,

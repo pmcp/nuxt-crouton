@@ -65,6 +65,15 @@ Types: `feat` | `fix` | `refactor` | `docs` | `test` | `chore`
 
 Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-editor` | `crouton-flow` | `crouton-three` | `crouton-assets` | `crouton-devtools` | `crouton-auth` | `docs` | `playground` | `test` | `root`
 
+### Merge Policy (preserve curated commits — don't squash by default)
+
+**Default: merge a PR preserving its commits (merge commit or rebase) — do NOT squash.** Optimise history for an *AI agent doing archaeology later* (`git blame` a line → read that commit's *why*; `git bisect` a regression → land on a small diff). That rewards small, single-concern, green commits with rich messages — which `/commit` already produces.
+
+- **Squash collapses signal here.** A typical PR bundles an epic's several sub-issues (each its own atomic `/commit` with a 👤/🤖 body). Squashing turns that into one giant, multi-concern megacommit: `blame` lands on a 1000+-line blob spanning unrelated changes, and the per-issue rationale is blurred into one summary.
+- **Squash ONLY when a PR's own history is noisy** — `wip`, `fix typo`, `oops`, half-broken intermediate states. Messy-granular is the *worst* case for an agent (bisect hits broken commits); squashing that is an improvement. Clean-granular beats both.
+- **The real requirement** (not the merge button): every commit landing on `main` is atomic, **green/buildable**, single-concern, and carries a real "why". Keep that true and granular history is strictly more useful than squashed.
+- **Corollary:** don't bundle many unrelated concerns into one PR and then squash — that's how you get an unblameable megacommit. One PR = one coherent change set (an epic + its sub-issues is fine; the commits stay separate).
+
 ### Progress Tracker Updates
 - Task Status: `[ ]` → `🔄` → `[x] ✅`
 - Update Quick Stats table (tasks completed, hours logged)
