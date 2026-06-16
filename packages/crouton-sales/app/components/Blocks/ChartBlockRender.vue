@@ -66,6 +66,15 @@ const chartQuery = computed(() =>
 // static placeholder rather than the live chart — see header comment.
 const route = useRoute()
 const isEditorPreview = computed(() => route.path.startsWith('/admin'))
+
+// Defer the chart lib (vue-chrts) + mount until the chart scrolls into view,
+// then keep it mounted. The `Lazy` prefix code-splits the widget chunk; the
+// visibility latch defers its first render, so a below-the-fold chart costs
+// nothing on initial page load.
+const chartEl = ref<HTMLElement | null>(null)
+const isChartVisible = useElementVisibility(chartEl)
+const hasChartBeenVisible = ref(false)
+watch(isChartVisible, (v) => { if (v) hasChartBeenVisible.value = true }, { immediate: true })
 </script>
 
 <template>
@@ -106,17 +115,30 @@ const isEditorPreview = computed(() => route.path.startsWith('/admin'))
       <p class="text-xs">{{ t('sales.block.chartRendersOnPage') }}</p>
     </div>
 
-    <!-- Public page: the live charts widget -->
-    <CroutonChartsWidget
+    <!-- Public page: the live charts widget (deferred until scrolled into view) -->
+    <div
       v-else
-      :api-path="kind.apiPath"
-      :type="chartType"
-      :x-field="kind.xField"
-      :y-fields="kind.yFields"
-      :title="props.attrs.title || kind.title"
-      :height="height"
-      :stacked="kind.stacked ?? false"
-      :query="chartQuery"
-    />
+      ref="chartEl"
+      :style="{ minHeight: `${height}px` }"
+    >
+      <LazyCroutonChartsWidget
+        v-if="hasChartBeenVisible"
+        :api-path="kind.apiPath"
+        :type="chartType"
+        :x-field="kind.xField"
+        :y-fields="kind.yFields"
+        :title="props.attrs.title || kind.title"
+        :height="height"
+        :stacked="kind.stacked ?? false"
+        :query="chartQuery"
+      />
+      <div
+        v-else
+        class="flex items-center justify-center rounded-lg bg-muted/10"
+        :style="{ height: `${height}px` }"
+      >
+        <USkeleton class="h-full w-full" />
+      </div>
+    </div>
   </div>
 </template>

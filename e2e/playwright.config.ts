@@ -32,6 +32,13 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    // Escape hatch for sandboxes that block the Playwright browser download
+    // (egress allowlist) and only ship a slightly-off chromium build: point
+    // PW_EXECUTABLE_PATH at an installed binary (e.g. one under /opt/pw-browsers)
+    // to launch it instead of the version Playwright would otherwise fetch.
+    ...(process.env.PW_EXECUTABLE_PATH
+      ? { launchOptions: { executablePath: process.env.PW_EXECUTABLE_PATH } }
+      : {}),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 20000,

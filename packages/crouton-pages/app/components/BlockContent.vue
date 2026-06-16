@@ -80,6 +80,17 @@ function getBlockComponent(type: string): string | null {
   return addonDef?.components?.renderer || null
 }
 
+// Resolve the `Lazy`-prefixed variant so each block renderer is a code-split
+// chunk, loaded only when a page actually contains that block type. Without
+// this, resolving renderers by dynamic string name pulls *every* registered
+// block renderer (charts, gallery, video, 3D, …) into the initial bundle.
+// SSR markup is preserved — Nuxt resolves async components server-side — so
+// this defers JS/hydration without affecting first paint.
+function getLazyBlockComponent(type: string): string | null {
+  const name = getBlockComponent(type)
+  return name ? `Lazy${name}` : null
+}
+
 // Check if a block requires client-only rendering
 function isClientOnlyBlock(type: string): boolean {
   // Core blocks that need ClientOnly
@@ -238,7 +249,7 @@ const headingClasses: Record<number, string> = {
             v-if="isClientOnlyBlock(block.type)"
           >
             <component
-              :is="getBlockComponent(block.type)"
+              :is="getLazyBlockComponent(block.type)"
               :attrs="block.attrs"
               :is-first="index === 0"
             />
@@ -247,10 +258,11 @@ const headingClasses: Record<number, string> = {
             </template>
           </ClientOnly>
 
-          <!-- Static blocks: SSR/prerender safe, render as-is -->
+          <!-- Static blocks: SSR/prerender safe; renderer chunk is code-split
+               (Lazy) but resolved server-side so SSR markup is preserved -->
           <component
             v-else-if="getBlockComponent(block.type)"
-            :is="getBlockComponent(block.type)"
+            :is="getLazyBlockComponent(block.type)"
             :attrs="block.attrs"
             :is-first="index === 0"
           />

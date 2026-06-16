@@ -24,7 +24,7 @@ CMS-like page management system for Nuxt Crouton. Provides:
 | `app/components/Renderer.vue` | `CroutonPagesRenderer` - Renders page based on type |
 | `app/components/CollectionPageRenderer.vue` | `CroutonPagesCollectionPageRenderer` - Bridge for publishable collection pages |
 | `app/components/RegularContent.vue` | `CroutonPagesRegularContent` - Rich text content display |
-| `app/components/BlockContent.vue` | `CroutonPagesBlockContent` - Block-based content display |
+| `app/components/BlockContent.vue` | `CroutonPagesBlockContent` - Block-based content display. **Lazy-resolves every block renderer** (`getLazyBlockComponent` → `Lazy{Name}`) so each renderer is a per-block code-split chunk, loaded only when a page contains that block type; SSR markup is preserved (async components resolve server-side, so first paint/LCP is unaffected). |
 | `app/components/Footer.vue` | `CroutonPagesFooter` - Self-contained footer for layouts (uses UFooter) |
 | `app/components/FooterRenderer.vue` | `CroutonPagesFooterRenderer` - Footer page renderer (used by Renderer.vue) |
 | `app/components/Editor/BlockEditor.vue` | Block-based page editor |
