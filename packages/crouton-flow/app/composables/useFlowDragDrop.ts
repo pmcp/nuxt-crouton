@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import type { Ref } from 'vue'
 import { useThrottleFn, useTimeoutFn } from '@vueuse/core'
 import type { Node } from '@vue-flow/core'
@@ -34,8 +34,12 @@ export function useFlowDragDrop(
   // Visual feedback for drag over
   const isDragOver = ref(false)
 
-  // Local ghost node state (what this user is dragging)
-  const localGhostNode = ref<Node | null>(null)
+  // Local ghost node state (what this user is dragging).
+  // shallowRef (not ref) is deliberate: the ghost is always reassigned as a
+  // whole object, never deep-mutated, so shallow reactivity is sufficient — and
+  // it avoids Vue 3.5.3x's deep UnwrapRef of @vue-flow's Node tripping TS2589
+  // ("excessively deep") here (#242).
+  const localGhostNode = shallowRef<Node | null>(null)
 
   // Delayed ghost cleanup (auto-cancels on unmount via useTimeoutFn)
   const { start: startGhostCleanup, stop: stopGhostCleanup } = useTimeoutFn(() => {
