@@ -22,6 +22,25 @@
           }
         }
       },
+      "liveDashboard": {
+        "name": "Live dashboard",
+        "description": "Volg de live bestellingen en verkoop van één evenement online, gelezen uit de cloud-kopie — met een 'laatst gesynchroniseerd'-indicator die verouderd wordt als de kassa offline is. Voor ingelogde teamleden.",
+        "fields": {
+          "eventSlug": {
+            "label": "Evenement",
+            "description": "Kies van welk evenement dit dashboard de live data toont."
+          },
+          "title": {
+            "label": "Titel",
+            "description": "Optionele kop boven het dashboard (standaard de naam van het evenement)."
+          }
+        },
+        "ui": {
+          "teamOnly": "Log in als teamlid om het live dashboard te bekijken.",
+          "eventNotFound": "Evenement niet gevonden",
+          "defaultTitle": "Live dashboard"
+        }
+      },
       "salesChart": {
         "name": "Verkoopgrafiek",
         "description": "Sluit een verkoopanalysegrafiek in voor één evenement of het hele team",
@@ -164,6 +183,27 @@
     "admin": {
       "sectionTitle": "Kassa",
       "overview": "Overzicht"
+    },
+    "sync": {
+      "live": "Live",
+      "stale": "Verouderd",
+      "waiting": "Verbinden",
+      "unavailable": "Status onbeschikbaar",
+      "justNow": "zojuist",
+      "secondsAgo": "{n}s geleden",
+      "minutesAgo": "{n}m geleden",
+      "hoursAgo": "{n}u geleden",
+      "syncedAgo": "gesynchroniseerd {ago}",
+      "staleDetail": "laatst gesynchroniseerd {ago} — de kassa is mogelijk offline",
+      "waitingDetail": "wachten op de eerste synchronisatie vanaf de kassa",
+      "unavailableDetail": "kon de synchronisatiestatus niet ophalen"
+    },
+    "dashboard": {
+      "revenue": "Omzet",
+      "orders": "Bestellingen",
+      "avgOrder": "Gem. bestelling",
+      "topProducts": "Topproducten",
+      "noSalesYet": "Nog geen verkoop"
     },
     "common": {
       "save": "Opslaan",

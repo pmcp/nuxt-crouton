@@ -106,3 +106,29 @@ export async function pushPendingOutbox(db: any, opts: PushOptions = {}): Promis
 
   return { claimed: rows.length, applied: applied.length, skippedRetry: retryCount, skippedPermanent: permanentIds.length }
 }
+
+/**
+ * Idle heartbeat ping (#179, epic #175). POSTs an empty batch to the ingest so
+ * the cloud's freshness clock (`sales_sync_status.lastContactAt`) keeps advancing
+ * even when the till is quiet (no orders to push). Without it, the online
+ * dashboard couldn't tell "Pi online but no sales right now" from "Pi offline".
+ *
+ * The plugin calls this only when there's nothing pending and the ping interval
+ * has elapsed — a real push already refreshes the same clock cloud-side. Throws
+ * on transport failure so the plugin backs off, exactly like a data push.
+ */
+export async function pingHeartbeat(opts: PushOptions = {}): Promise<void> {
+  const url = opts.url || process.env.CROUTON_SALES_CLOUD_SYNC_URL
+  const secret = opts.secret || process.env.NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET
+  if (!url) throw new Error('CROUTON_SALES_CLOUD_SYNC_URL not set')
+  if (!secret) throw new Error('NUXT_CROUTON_SALES_CLOUD_SYNC_SECRET not set')
+
+  const doFetch = opts.fetcher ?? (globalThis as any).$fetch
+  await doFetch(url, {
+    method: 'POST',
+    headers: { 'x-sync-key': secret },
+    body: { events: [] },
+    timeout: opts.timeoutMs ?? 15000,
+    retry: 0,
+  })
+}

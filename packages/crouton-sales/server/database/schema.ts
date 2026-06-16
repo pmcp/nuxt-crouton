@@ -46,3 +46,36 @@ export const salesSyncOutbox = sqliteTable('sales_sync_outbox', {
   index('idx_sales_sync_outbox_pending').on(table.syncedAt, table.seq),
   index('idx_sales_sync_outbox_entity').on(table.entityType, table.entityId),
 ])
+
+/**
+ * Cloud-side sync heartbeat (#179, epic #175 — D1 live mirror).
+ *
+ * The mirror is a copy of the venue till, so a row looks identical whether it
+ * arrived two seconds or two hours ago. The online dashboard (#179) needs to
+ * tell "the Pi is connected and syncing now" from "the Pi went offline, this is
+ * a stale snapshot". This single-row table is that signal: the cloud ingest
+ * endpoint (#178) stamps `lastContactAt` on *every* call — real batches and the
+ * pusher's periodic idle ping alike — so the dashboard can show "last synced
+ * Xs ago" and flag staleness once the clock stops advancing.
+ *
+ * Single global row (`id = 'live'`): one venue Pi pushes to one cloud
+ * deployment, so a per-team key would only complicate the idle ping (which
+ * carries no team). A multi-tenant mirror would key this by team — noted as a
+ * follow-up, out of scope for one venue's live view.
+ *
+ * Cloud-only: written exclusively by the ingest, never by the till. The Pi's
+ * own DB simply never has a row here.
+ */
+export const salesSyncStatus = sqliteTable('sales_sync_status', {
+  // Single global heartbeat row.
+  id: text('id').primaryKey().$default(() => 'live'),
+  // Last time the cloud heard from the Pi at all (data batch OR idle ping) —
+  // the liveness clock the dashboard reads to detect an offline Pi.
+  lastContactAt: integer('last_contact_at', { mode: 'timestamp' }),
+  // Last time the cloud applied actual mirrored data (applied > 0) — distinct
+  // from a bare ping, so the UI can say "last change synced Xs ago" too.
+  lastEventAt: integer('last_event_at', { mode: 'timestamp' }),
+  // Rows applied in the most recent non-empty batch (informational hint).
+  lastBatchApplied: integer('last_batch_applied').notNull().$default(() => 0),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$default(() => new Date()),
+})

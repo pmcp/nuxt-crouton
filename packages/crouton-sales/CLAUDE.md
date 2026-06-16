@@ -20,12 +20,17 @@ Event-based Point of Sale (POS) system for Nuxt Crouton. Provides products, cate
 | `server/utils/sync-outbox.ts` | Pi-side capture for the D1 live mirror (#176) — `recordOutboxEvents()` + `isCloudSyncEnabled()`; gated by `CROUTON_SALES_CLOUD_SYNC` |
 | `server/utils/sync-ingest.ts` | Cloud-side apply (#178) — `applyOutboxEvents()` idempotent upsert by nanoid |
 | `server/utils/cloud-sync-auth.ts` | Fail-closed `x-sync-key` auth for the ingest (#178) |
-| `server/utils/cloud-sync-pusher.ts` | Pi-side push loop (#177) — `pushPendingOutbox()` drains outbox → ingest |
-| `server/plugins/cloud-sync-pusher.ts` | Nitro plugin running the push loop (gated, backoff) |
-| `server/api/crouton-sales/sync/ingest.post.ts` | Cloud D1 ingest endpoint (#178) |
-| `server/database/schema.ts` | Package-owned Drizzle schema: `salesSyncOutbox` (`sales_sync_outbox` table) |
-| `server/db/schema.ts` | Re-export NuxtHub scans so consuming apps auto-pick-up `sales_sync_outbox` in `db:generate` |
+| `server/utils/cloud-sync-pusher.ts` | Pi-side push loop (#177) — `pushPendingOutbox()` drains outbox → ingest; `pingHeartbeat()` idle empty-batch ping (#179) |
+| `server/plugins/cloud-sync-pusher.ts` | Nitro plugin running the push loop (gated, backoff) + idle heartbeat ping (#179) |
+| `server/utils/sync-status.ts` | Cloud-side freshness heartbeat (#179) — `recordSyncHeartbeat()` (best-effort upsert on every ingest) + `readSyncStatus()` |
+| `server/api/crouton-sales/sync/ingest.post.ts` | Cloud D1 ingest endpoint (#178); also stamps the freshness heartbeat (#179) |
+| `server/api/crouton-sales/teams/[id]/sync-status.get.ts` | Live-dashboard freshness read (#179) — `{ lastContactAt, lastEventAt, lastBatchApplied, serverNow }` |
+| `app/components/Sync/Status.vue` | `SalesSyncStatus` — mirror freshness banner (#179): "synced Xs ago" / stale, polls sync-status |
+| `app/components/Dashboard/SalesSummary.vue` | `SalesDashboardSalesSummary` — live revenue/orders/avg + top products (#179), built on the chart endpoints |
+| `server/database/schema.ts` | Package-owned Drizzle schema: `salesSyncOutbox` (`sales_sync_outbox`) + `salesSyncStatus` (`sales_sync_status`, #179 heartbeat) |
+| `server/db/schema.ts` | Re-export NuxtHub scans so consuming apps auto-pick-up `sales_sync_outbox` + `sales_sync_status` in `db:generate` |
 | `server/database/migrations/0001_sales_sync_outbox.sql` | Package migration creating `sales_sync_outbox` |
+| `server/database/migrations/0002_sales_sync_status.sql` | Package migration creating `sales_sync_status` (#179 heartbeat) |
 | `schemas/` | JSON schema files for crouton generate |
 | `seed/index.ts` | Seed provider (`@fyit/crouton-sales/seed`) — event `vlaamsekermis` (PIN `1234`) + categories/products + a scoped kassa demo page |
 
@@ -333,7 +338,8 @@ All package endpoints live under `/api/crouton-sales/` with an explicit split:
 | `teams/[id]/events/[eventId]/admin-helper-token` POST | team member | Issue a helper scoped-access token without PIN (displayName = user name) — lets logged-in admins open the POS directly |
 | `teams/[id]/events/[eventId]/active-helpers` GET | team admin | List currently-logged-in helpers for one event |
 | `teams/[id]/active-helpers` GET | team admin | List active helpers across all team events |
-| `sync/ingest` POST | `x-sync-key` secret (fail-closed) | Cloud D1 ingest (#178): idempotent upsert of batched outbox events from the Pi pusher. See "Cloud ingest" above |
+| `sync/ingest` POST | `x-sync-key` secret (fail-closed) | Cloud D1 ingest (#178): idempotent upsert of batched outbox events from the Pi pusher. See "Cloud ingest" above. Also stamps the freshness heartbeat (#179) on every call (real batch or idle ping) |
+| `teams/[id]/sync-status` GET | team member | Mirror freshness for the live dashboard (#179): `{ lastContactAt, lastEventAt, lastBatchApplied, serverNow }` (epoch ms; `serverNow` lets the client compute age skew-free). Single global heartbeat row; backs `SalesSyncStatus` |
 | `teams/[id]/events/[eventId]/receipt-settings` GET/PUT | team admin | Per-event receipt text customization. Reachability: `staff_order_header` prints only on `isPersonnel` orders (Cart's Staff order switch); `special_instructions_title` heads the remark blocks on kitchen tickets — the per-location remarks from the POS and legacy whole-order notes; `footer_text` only on `type: 'receipt'` printer jobs |
 | `teams/[id]/events/[eventId]/printqueues/retry-failed` POST | team admin | Requeue missed print jobs (status 9, plus jobs stuck at status 1 "printing" for >2 min — fetched by the spooler but never confirmed) back to 0; optional body `{ printerId }` and/or `{ jobId }` (single-line retry). Backs the "Resend failed jobs" button in SettingsTab's printers card and the per-job re-print button in the expanded order |
 | `events/[eventId]/order-data` GET | helper token | All data needed by POS UI (categories are event-scoped — team-wide fetching showed duplicate tabs after event duplication) |
@@ -485,6 +491,37 @@ The Pi-side background loop that actually sends the outbox up to the cloud.
   nanoid downstream, so a push that's uncertain (network dropped after apply) is
   re-sent harmlessly and converges. `fetcher` option is injectable for tests.
 
+### Online dashboard + freshness heartbeat (#179)
+
+The cloud-side read view that closes epic #175: **"see the venue's live data
+online."** A mirror row reveals nothing about *when* it arrived, so the
+dashboard's defining feature is a **freshness signal** — is the Pi connected and
+syncing now, or is this a stale snapshot?
+
+- **Heartbeat table `sales_sync_status`** (`server/database/schema.ts`,
+  package-owned, migration `0002`). A **single global row** (`id = 'live'`): one
+  venue Pi → one cloud deploy, so a per-team key would only complicate the idle
+  ping (which carries no team). Multi-tenant keying is a noted follow-up.
+- **`recordSyncHeartbeat()`** (`server/utils/sync-status.ts`) — the ingest
+  endpoint stamps it on **every** call: `lastContactAt` always advances (data
+  batch OR idle ping → liveness clock), `lastEventAt` + `lastBatchApplied` only
+  when real data landed. **Best-effort** (swallows its own errors): a heartbeat
+  write can never fail an otherwise-successful ingest.
+- **Idle ping** — `pingHeartbeat()` POSTs an empty `{ events: [] }`; the pusher
+  plugin fires it only when nothing is pending **and** `CROUTON_SALES_CLOUD_SYNC_HEARTBEAT_MS`
+  (default 30000) has elapsed since the last contact. Without it, an online-but-
+  quiet till (no orders to push) would look offline. A real push already
+  refreshes the same clock, so the ping is purely a no-traffic keepalive.
+- **Read** — `GET teams/[id]/sync-status` (team member) returns the heartbeat as
+  epoch-ms plus `serverNow` so the client computes age **against the server
+  clock** (skew-proof). Backs `SalesSyncStatus`.
+- **UI** — `salesLiveDashboardBlock` composes `SalesSyncStatus` (green "Live ·
+  synced Xs ago" → amber "Stale · last synced … — the till may be offline" once
+  age ≥ 90s ≈ 3 missed pings), `SalesDashboardSalesSummary` (revenue/orders/avg +
+  top products off the chart endpoints), and the workspace `OrdersTab` live list.
+  All read the same mirrored tables the ingest writes; the orders list's existing
+  2s poll already reflects a successful sync within seconds.
+
 ## Configuration
 
 ```typescript
@@ -556,6 +593,7 @@ the event field's `propertyComponents` editor.
 | `eventWorkspaceBlock` | `SalesBlocksEventWorkspaceView` | `SalesBlocksEventWorkspaceRender` | **The single sales surface for CMS pages — one block, two faces by session.** Anonymous visitors (volunteers) get the kassa only: `<SalesPosPanel>` with inline helper PIN login (this absorbed the removed `orderInterfaceBlock`, incl. its `height` attr — compact/tall/fill, fill grows to the viewport bottom; the height applies to the volunteer kassa only, and **phones (`max-width: 639px`) ignore the attr: the kassa becomes a fixed inset-0 full-screen takeover** with `env(safe-area-inset-top/bottom)` paddings — header under the status bar, cart bar above iOS Safari's floating bottom bar. The layer's `app/plugins/viewport-meta.ts` sets `viewport-fit=cover` (env() insets) + `maximum-scale=1` (suppresses iOS input-focus auto-zoom; pinch still works) via `useHead` — a layer nuxt.config's `app.head` cannot override Nuxt's default viewport meta). Signed-in team members get the full workspace shell (`<SalesEventWorkspaceShell>` — kassa + settings/orders/clients panes; `useAuth().loggedIn` is the discriminator), switcher hidden (event fixed by the editor), header shown for the toggles — **inline only on a wide screen**. On phones/tablets (`max-width: 1023px`, matching Shell's own breakpoint) the inline shell is cramped in the scrolling CMS page, so members instead get the same "Open kassa" launcher → fullscreen modal as volunteers, but the modal hosts the **workspace shell** (with an added close button), not the POS panel (`showInlineShell = loggedIn && !isNarrow`). The shell uses top-level `await`, so the renderer wraps it in its own `<Suspense>` (inline and in the modal). Carries `providesScope: true`: on a `scoped` page the derive-scope hook gates the page behind the event's helper PIN (one login, adopted by the panel) and the page editor hides the access-code field; `EventSlugPicker` warns inline when the picked event has no `helperPin`. category `kassa`. |
 | `salesOrdersBlock` | `SalesBlocksOrdersView` | `SalesBlocksOrdersRender` | **Standalone Orders list** — one event's live orders (the same view as the workspace's "Bestellingen" pane: filters + per-order printer LEDs) on its own CMS page, so an admin can build a dedicated orders / kitchen-status screen without the rest of the register. **Team-members-only**: the renderer gates on `useAuth().loggedIn` (orders come from team-scoped admin endpoints) — non-members get a hint, not an error. The event is resolved member-side via the shared `SalesBlocksEventResolver` (a slot component that `await`s `useCollectionQuery('salesEvents')` and hands the full `SalesEvent` to its slot), which the renderer wraps in `<Suspense>` along with the async-setup `SalesEventWorkspaceOrdersTab`. Editor fixes the event by slug (`EventSlugPicker`). `clientOnly`; category `kassa`. |
 | `salesClientsBlock` | `SalesBlocksClientsView` | `SalesBlocksClientsRender` | **Standalone Clients list** — one event's open client tabs (the same view as the workspace's "Klanten" pane: active clients with the two-step settle / print-receipt action) on its own CMS page. **Team-members-only** (renderer gates on `useAuth().loggedIn`) and only meaningful for **recurring-client events** — a member on a non-`requiresClient` event gets an explanatory note. Resolves the event member-side via the shared `SalesBlocksEventResolver` inside `<Suspense>`, then renders `SalesEventWorkspaceClientsPanel`. Editor fixes the event by slug (`EventSlugPicker`). `clientOnly`; category `kassa`. |
+| `salesLiveDashboardBlock` | `SalesBlocksLiveDashboardView` | `SalesBlocksLiveDashboardRender` | **Live Dashboard (#179, epic #175 — D1 live mirror)** — "see the venue's live data online": one event's mirror-fresh orders + sales on a CMS page, read from the Cloudflare D1 mirror. Deliberately a **composition** of existing pieces: a `SalesSyncStatus` freshness banner (the only new-to-#179 part — "synced Xs ago" / goes stale when the Pi is offline), a `SalesDashboardSalesSummary` (revenue/orders/avg + top products, on the chart endpoints), and the workspace `SalesEventWorkspaceOrdersTab` live orders list. **Team-members-only** (renderer gates on `useAuth().loggedIn` — mirror data is team-scoped); event resolved member-side via `SalesBlocksEventResolver` inside `<Suspense>`. Editor fixes event by slug + optional `title`. `clientOnly`; category `data`. |
 | `salesChartBlock` | `SalesBlocksChartBlockView` | `SalesBlocksChartBlockRender` | Sales analytics chart. Editor picks a chart kind + event scope (one event or All events). Renders via `CroutonChartsWidget` **only when `@fyit/crouton-charts` is installed** (`hasApp('charts')` guard); otherwise shows a "Charts package required" notice. In the admin editor the renderer shows a static placeholder (vue-chrts can't survive the property-panel live preview); the real chart renders on the public page. |
 | `salesProductMatrixBlock` | `SalesBlocksProductMatrixView` | `SalesBlocksProductMatrixRender` | Pivot **table** (Nuxt UI `UTable`): rows = products, columns = days, last column = Total, with an interactive Units/Revenue toggle. No charts dependency. Data from `product-day-matrix`. |
 | `kitchenDisplayBlock` | `SalesBlocksKitchenDisplayView` | `SalesBlocksKitchenDisplayRender` | **Kitchen Display (KDS)** — a drop-on-a-page screen (typically an iPad), **decoupled from printers** (#61/#117). The editor fixes the event by slug (`EventSlugPicker`) and optionally which locations to show (`LocationsPicker`); the renderer resolves the slug to an id via the public `by-slug` endpoint (same as `SalesPosPanel`), then **reads orders directly** off the `display-jobs` GET — one ticket per `(order × location)`, polled every 2s, NOT off `salesPrintqueues`. "Bump" POSTs `kds-bump` (per-`(order, location)` row in `salesKdsbumps`; optimistic local hide). `clientOnly`; category `kassa`. Not a separate `/kds` app route — the block is the only surface. |
