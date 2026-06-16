@@ -15,7 +15,7 @@ packages:
 # not a dedup) — see #141.
 catalog:
   nuxt: ^4.3.1
-  vue: ^3.5.26
+  vue: ^3.5.38
   vue-router: ^4.6.4
   typescript: ^5.7.0
   wrangler: ^4.64.0
