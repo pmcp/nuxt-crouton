@@ -3,7 +3,14 @@
     {
       "key": "mainItems",
       "heading": "Main Items",
-      "create": { "name": "e2e item" }
+      "create": { "name": "e2e item" },
+      "requiredField": "name"
     }
-  ]
+  ],
+  "i18n": {
+    "path": "/",
+    "switchTo": "NL",
+    "before": "Your teams",
+    "after": "Jouw teams"
+  }
 }

@@ -27,6 +27,17 @@ export interface CollectionSpec {
   heading: string
   /** Field label/name -> value to fill when creating a row (text fields only). */
   create?: Record<string, string>
+  /**
+   * Field label/name -> value for the edit step. Omit to derive it: the first
+   * create field gets " edited" appended (enough to prove an update persists).
+   */
+  update?: Record<string, string>
+  /**
+   * Name of a required field to clear for the invalid-submit check. Set it only
+   * when the field is actually required (so validation blocks the submit);
+   * omit to skip that check for this collection.
+   */
+  requiredField?: string
 }
 
 /**
@@ -48,10 +59,30 @@ export interface SurfaceSpec {
   }
 }
 
+/**
+ * A locale-switch check exercising the crouton-i18n LanguageSwitcher. A plain
+ * `surface` can only assert a static element renders; this one *interacts* —
+ * flips locale via the package-owned switcher and asserts a known UI string
+ * changes language — so an i18n regression (broken switcher, stuck locale,
+ * missing-key fallthrough) goes red. Needs a fixture with ≥2 configured locales.
+ */
+export interface I18nSpec {
+  /** Page that renders the switcher + a translated string. `{team}` is substituted. */
+  path: string
+  /** Switcher option to pick — the uppercase locale code label, e.g. "NL". */
+  switchTo: string
+  /** A known translated string visible in the *default* locale (before switching). */
+  before: string
+  /** The same string in the *target* locale (visible after switching). */
+  after: string
+}
+
 export interface FixtureManifest {
   collections: CollectionSpec[]
   /** Optional package-specific surfaces; omit for fixtures with nothing extra. */
   surfaces?: SurfaceSpec[]
+  /** Optional locale-switch check; omit for fixtures with a single locale. */
+  i18n?: I18nSpec
 }
 
 /** Read the active fixture's e2e manifest (what to smoke). */
@@ -83,16 +114,67 @@ function authHeaders(base: string) {
   return { Origin: base, Referer: `${base}/` }
 }
 
+/**
+ * The current better-auth session payload (`{ user, session }`) or null.
+ *
+ * crouton-auth enables better-auth's cookie cache (a signed `session_data`
+ * cookie, 5-min TTL), so the default get-session can report a *stale* user for
+ * up to 5 min after sign-out. We pass `disableCookieCache=true` to force a DB
+ * read, so this always reflects the true session state — essential for the auth
+ * smoke to observe logout.
+ */
+export async function getSession(page: Page, base: string): Promise<any | null> {
+  const res = await page.request
+    .get(`${base}/api/auth/get-session?disableCookieCache=true`)
+    .catch(() => null)
+  if (!res || !res.ok()) return null
+  return res.json().catch(() => null)
+}
+
 /** True when a session exists for the current browser context. */
 export async function isAuthenticated(page: Page, base: string): Promise<boolean> {
-  const res = await page.request.get(`${base}/api/auth/get-session`).catch(() => null)
-  if (!res || !res.ok()) return false
-  const session = await res.json().catch(() => null)
+  const session = await getSession(page, base)
   return !!session?.user
 }
 
-// Cold dev-server compiles the auth modal on first hit — be patient.
-const MODAL_TIMEOUT = 30000
+/**
+ * Sign the active session out. Clears the context's session cookie.
+ *
+ * Passes an empty JSON body so Playwright sets `Content-Type: application/json`
+ * — better-auth rejects the POST with 415 otherwise (it requires that header).
+ */
+export async function signOut(page: Page, base: string): Promise<void> {
+  await page.request.post(`${base}/api/auth/sign-out`, { headers: authHeaders(base), data: {} })
+}
+
+/** The active organization (team) id on the current session, or null. */
+export async function activeTeamId(page: Page, base: string): Promise<string | null> {
+  const session = await getSession(page, base)
+  return session?.session?.activeOrganizationId ?? null
+}
+
+/** Create an organization (team) and return it. Needs an Origin header (CSRF). */
+export async function createTeam(page: Page, base: string, name: string, slug: string): Promise<{ id: string; slug: string }> {
+  const res = await page.request.post(`${base}/api/auth/organization/create`, {
+    headers: authHeaders(base),
+    data: { name, slug }
+  })
+  if (!res.ok()) throw new Error(`Failed to create team: ${res.status()} ${await res.text()}`)
+  return res.json()
+}
+
+/** Make an organization (team) the active one for the session. */
+export async function setActiveTeam(page: Page, base: string, organizationId: string): Promise<void> {
+  await page.request.post(`${base}/api/auth/organization/set-active`, {
+    headers: authHeaders(base),
+    data: { organizationId }
+  })
+}
+
+// Cold dev-server compiles the auth modal on first hit — be patient. CI runners
+// compile much slower than local, so this is deliberately very generous (a high
+// cap is free when the route compiles fast; it only matters on a slow first hit).
+const MODAL_TIMEOUT = 120000
 
 /** Register the test user via the auth modal. Returns true if a session results. */
 async function register(page: Page, base: string): Promise<boolean> {
@@ -140,29 +222,30 @@ export async function loginOrRegister(page: Page, base: string): Promise<void> {
  * Signup creates no team, so we create one via the better-auth org API if absent.
  */
 export async function ensureTeam(page: Page, base: string): Promise<string> {
-  const headers = authHeaders(base)
-
-  const listRes = await page.request.get(`${base}/api/auth/organization/list`, { headers })
+  const listRes = await page.request.get(`${base}/api/auth/organization/list`, { headers: authHeaders(base) })
   const orgs = listRes.ok() ? await listRes.json().catch(() => []) : []
-  let org = Array.isArray(orgs) ? orgs[0] : null
+  const org = (Array.isArray(orgs) ? orgs[0] : null)
+    ?? await createTeam(page, base, config.team.name, config.team.slug)
 
-  if (!org) {
-    const createRes = await page.request.post(`${base}/api/auth/organization/create`, {
-      headers,
-      data: { name: config.team.name, slug: config.team.slug }
-    })
-    if (!createRes.ok()) {
-      throw new Error(`Failed to create team: ${createRes.status()} ${await createRes.text()}`)
-    }
-    org = await createRes.json()
-  }
-
-  await page.request.post(`${base}/api/auth/organization/set-active`, {
-    headers,
-    data: { organizationId: org.id }
-  })
-
+  await setActiveTeam(page, base, org.id)
   return org.slug as string
+}
+
+/**
+ * Ensure the current page's context is authenticated, re-establishing the
+ * session if the reused storageState one is dead.
+ *
+ * The auth smoke specs log the *shared* test user in and out in their own
+ * contexts; better-auth's session lifecycle is per-user and server-side, so that
+ * churn can invalidate the setup session before the content specs (which run
+ * after it) reuse it via storageState. Rather than depend on the setup session
+ * surviving the whole run, the content specs call this first so they re-login
+ * on demand — self-healing regardless of what invalidated the session.
+ */
+export async function ensureAuthed(page: Page, base: string): Promise<void> {
+  if (await isAuthenticated(page, base)) return
+  await loginOrRegister(page, base)
+  await ensureTeam(page, base)
 }
 
 /** Build the admin URL for a generated collection (key, e.g. "mainItems"). */

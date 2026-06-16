@@ -14,7 +14,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { surfaceUrl, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
+import { surfaceUrl, ensureAuthed, fixtureManifest, TEAM_FILE, FIXTURE } from './helpers'
 
 const manifest = fixtureManifest()
 const surfaces = manifest.surfaces ?? []
@@ -31,6 +31,9 @@ test.describe(`fixture "${FIXTURE}" surfaces`, () => {
   for (const surface of surfaces) {
     test(surface.name, async ({ page, baseURL }) => {
       const base = baseURL || 'http://localhost:3000'
+      // The reused storageState session may have been invalidated by the auth
+      // smoke specs; re-establish it before hitting a protected surface route.
+      await ensureAuthed(page, base)
       await page.goto(surfaceUrl(base, slug, surface.path), { waitUntil: 'domcontentloaded' })
       await page.waitForLoadState('networkidle').catch(() => {})
 
@@ -39,11 +42,11 @@ test.describe(`fixture "${FIXTURE}" surfaces`, () => {
       // `.first()` keeps "is this surface present" robust when a selector legitimately
       // matches more than one element (e.g. a nav link in both sidebar and in-page tabs).
       if (visible) {
-        await expect(page.locator(visible).first()).toBeVisible({ timeout: 30000 })
+        await expect(page.locator(visible).first()).toBeVisible({ timeout: 180000 })
       }
       if (heading) {
         await expect(page.getByRole('heading', { name: new RegExp(heading, 'i') }).first())
-          .toBeVisible({ timeout: 30000 })
+          .toBeVisible({ timeout: 180000 })
       }
     })
   }

@@ -11,14 +11,18 @@ e2e/                         # the harness (Playwright) — NOT a workspace pack
   playwright.config.ts       # config; targets a fixture, sets up projects + webServer
   helpers.ts                 # shared, non-test module (config, auth flow, manifest loader)
   auth.setup.ts              # 'setup' project: log in / register + create team, save state
+  auth.smoke.spec.ts         # auth feature itself: logout/re-login, logged-out guard, team switch
   collection.smoke.spec.ts   # generic, manifest-driven list + CRUD checks
   surface.smoke.spec.ts      # generic, manifest-driven package-surface checks (optional)
+  i18n.smoke.spec.ts         # generic, manifest-driven locale-switch check (optional)
   .auth/                     # generated storageState + team slug (gitignored)
 
 fixtures/                    # the apps under test — real crouton apps, one per config
   minimal/                   # core + auth + i18n, one 'items' collection
   with-pages/                # + @fyit/crouton-pages   (surface: pages workspace)
   with-bookings/             # + @fyit/crouton-bookings (surface: bookings admin)
+  with-assets/               # + @fyit/crouton-assets  (surface: CroutonAssetsPicker mounts, not the stub)
+  with-collab/               # + @fyit/crouton-collab  (spike surface: realtime collab UI mounts single-client)
   <name>/                    # add more here
     e2e.manifest.json        # declares what to smoke (collections, fields)
 ```
@@ -84,6 +88,18 @@ sync: after changing a generator template, regenerate the fixtures
 - **Signup creates no team.** We create one via the better-auth org API
   (`POST /api/auth/organization/create` + `/set-active`), which **requires an
   `Origin` header** (CSRF) — see `ensureTeam()`.
+- **Better-auth POSTs require `Content-Type: application/json`** — it rejects a
+  bodyless POST with 415. Pass `data: {}` to `page.request.post` so Playwright
+  sets the header (this bit `signOut()`; the team helpers already send a body).
+- **get-session is cookie-cached** (better-auth `session.cookieCache`, 5-min
+  signed cookie), so it can report a *stale* user for up to 5 min after sign-out.
+  `getSession()` passes `?disableCookieCache=true` to force a DB read — use it
+  (via `isAuthenticated`) whenever a spec needs the *true* post-logout state.
+- **Auth specs must run in their own context, not the shared `storageState`.**
+  Every spec reuses setup's saved session token; better-auth sign-out destroys
+  the *current* session, so logging out (or switching team on) the shared session
+  invalidates the token every other spec depends on. `auth.smoke.spec.ts` mints a
+  separate session per test via `browser.newContext()` + `loginOrRegister`.
 - Generated collections render at `/admin/{teamSlug}/crouton/{collectionKey}`
   (e.g. `mainItems`).
 
@@ -119,7 +135,9 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
     {
       "key": "mainItems",          // route segment + registered config key
       "heading": "Main Items",      // visible list heading to assert
-      "create": { "name": "e2e item" }  // text field label/name -> value; omit to skip CRUD
+      "create": { "name": "e2e item" },  // text field label/name -> value; omit to skip CRUD
+      "update": { "name": "renamed" },   // optional edit values; default = first field + " edited"
+      "requiredField": "name"            // optional: clear this field to assert validation blocks submit; omit to skip
     }
   ],
   // Optional: package-specific UI a generic items CRUD doesn't reach. Omit when a
@@ -132,7 +150,19 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
       "expect": { "visible": "[id$='-panel-pages-sidebar']" }  // CSS selector that must be visible
       // or: "expect": { "heading": "Workspace" } // a role=heading name (case-insensitive)
     }
-  ]
+  ],
+  // Optional: a locale-switch check (crouton-i18n). A `surface` can only assert a
+  // static element renders; this one *interacts* — flips locale via the
+  // package-owned LanguageSwitcher and asserts a known UI string changes
+  // language, so an i18n regression goes red. Needs ≥2 configured locales
+  // (set `locales`/`defaultLocale` in the fixture's crouton.config.js). Omit for
+  // single-locale fixtures (i18n.smoke.spec.ts then registers no test).
+  "i18n": {
+    "path": "/",            // page rendering the switcher + a translated string; {team} substituted
+    "switchTo": "NL",        // switcher option to pick (uppercase locale-code label)
+    "before": "Your teams",  // a known translated string in the default locale
+    "after": "Jouw teams"    // the same string in the target locale
+  }
 }
 ```
 
@@ -140,6 +170,10 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
 > `sidebar-id="pages-sidebar"` crouton-pages sets on `CroutonWorkspaceLayout` —
 > Nuxt UI renders the panel DOM id as `<storageKey>-panel-pages-sidebar`, hence
 > the ends-with match), so the assertion fails if that package's UI regresses.
+> The `i18n` check works the same way: the switcher is crouton-i18n's
+> `LanguageSwitcher` (a Nuxt UI `USelect` → the page's locale combobox) and the
+> asserted string is crouton's own `home.*` label, so a broken switcher or stuck
+> locale fails it.
 
 ## Gotchas
 - **Module format:** repo root is CommonJS, and Playwright 1.57 transpiles
@@ -147,14 +181,23 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   (it forces ESM output → "exports is not defined").
 - **Specs can't import test files** (Playwright rule) — shared constants like
   `TEAM_FILE` live in `helpers.ts`, not `auth.setup.ts`.
-- **Cold dev-server compile:** first hit on a route/modal compiles on demand, so
-  auth + first navigation use generous (~30s) timeouts. Keep them.
+- **Cold dev-server compile (the big one for CI):** the smoke runs against
+  `nuxt dev`, which compiles each route/modal on first hit. CI runners are far
+  slower at this than locally — heavy package routes can take minutes — so the
+  first-hit assertions use **very generous** timeouts (180s, with a 240s per-test
+  budget and a 120s nav/modal cap). Keep them high: a high cap costs nothing when
+  a route compiles fast (the assertion resolves as soon as the element appears);
+  it only matters on a genuinely slow first compile. Tightening them back to
+  ~30-60s is what made the CI smoke flake. (Precompiled `nuxt preview` would dodge
+  this, but crouton collection pages currently 500 under production SSR — an
+  internal data-fetch loses the auth cookie — so the harness stays on `nuxt dev`.)
 - Fixtures are throwaway: `.data/`, `.auth/`, `playwright-report/`,
   `test-results/` are all gitignored.
 
 ## Scope / follow-ups
-Current: list + CRUD per collection, plus optional package-specific `surfaces`
-(e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
+Current: list loads + full CRUD per collection (create → edit → delete, plus an
+optional `requiredField` invalid-submit check), plus optional package-specific
+`surfaces` (e.g. with-pages asserts the pages workspace mounts). CI wiring runs the matrix
 over `fixtures/*` (see `.github/workflows/e2e.yml`). `with-bookings` is the
 domain-package example: it boots a heavy package (locations/settings/slots) and
 asserts the bookings admin UI via `surfaces`. Adding such a fixture is also how the

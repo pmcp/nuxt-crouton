@@ -1,0 +1,17 @@
+{
+  "collections": [
+    {
+      "key": "mainItems",
+      "heading": "Main Items",
+      "create": { "name": "e2e item" },
+      "requiredField": "name"
+    }
+  ],
+  "surfaces": [
+    {
+      "name": "crouton-assets picker mounts (not the core stub)",
+      "path": "/admin/{team}/assets-check",
+      "expect": { "visible": "[data-testid='assets-picker-check'] button" }
+    }
+  ]
+}
