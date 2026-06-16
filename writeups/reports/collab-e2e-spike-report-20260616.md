@@ -46,8 +46,31 @@ The status dot renders for **any** connection state (synced/syncing/
 disconnected/error). The local WS handler rejects a connection without a
 team-scoped session (close `4401`), so single-client `connected` may stay
 false — but the dot still renders, so the assertion does **not** depend on a
-live realtime connection. No realtime timing → no flake. Because of this it was
-safe to add `with-collab` to the CI matrix.
+live realtime connection. No realtime timing → no flake.
+
+## CI status — local-only for now (the #197 typecheck gate)
+
+`with-collab` is **not** in the CI matrix yet, despite the runtime smoke passing
+5/5. The reason is the **#197 type-safety gate**: CI regenerates each fixture and
+runs `nuxt typecheck` on it before the Playwright smoke, and that type-checks the
+*extended layer source* too. `@fyit/crouton-collab` currently has **pre-existing
+type errors** — `CollabCursors.vue` (`firstName` possibly undefined),
+`useCollabPresence.ts` (unused `@ts-expect-error`, an unsound `User` cast),
+`useFormCollabPresence.ts` (unused directives), `avatar.ts` (possibly-undefined),
+`server/routes/api/collab/[roomId]/ws.ts` (`UpgradeRequest` vs `Request`). They
+are unrelated to this fixture (its own `collab-check.vue` type-checks clean) and
+predate this branch (untouched on `main`; #193's type-fix didn't reach this
+package).
+
+Per this issue's own rule — *add to the CI matrix only once stable* — the fixture
+stays a **local-only spike** until `crouton-collab` is type-clean. The fixture,
+its `tsconfig.json`/`typecheck` script, and this spike all remain; re-add the
+`with-collab` matrix entry in `.github/workflows/e2e.yml` once the package
+type-checks. (with-assets, by contrast, passes the gate and *is* in CI.)
+
+**Follow-up:** fixing the crouton-collab type errors is a `packages/` change
+(most are trivial — undefined guards, removing stale `@ts-expect-error`); track
+it separately so this fixture can join CI.
 
 ## What was deferred (Step 2 — two-client)
 
