@@ -12,6 +12,7 @@ authenticates, and does CRUD** after a `packages/` change or dependency bump.
 | `with-bookings` | + `@fyit/crouton-bookings` (bookings admin surface) |
 | `with-assets` | + `@fyit/crouton-assets` (asserts the optional `CroutonAssetsPicker` mounts, not the core stub) |
 | `with-collab` | + `@fyit/crouton-collab` (spike: asserts the realtime collab UI mounts single-client) |
+| `with-relations` | core only, **two related collections** (`authors` → `books` via an `authorId` FK) → exercises the generator's relation handling (FK column, multi-table migration, `CroutonFormReferenceSelect`) — no extra package |
 
 ## What you need to know
 

@@ -23,6 +23,7 @@ fixtures/                    # the apps under test — real crouton apps, one pe
   with-bookings/             # + @fyit/crouton-bookings (surface: bookings admin)
   with-assets/               # + @fyit/crouton-assets  (surface: CroutonAssetsPicker mounts, not the stub)
   with-collab/               # + @fyit/crouton-collab  (spike surface: realtime collab UI mounts single-client)
+  with-relations/            # core only, two related collections (authors -> books FK); relation surface
   <name>/                    # add more here
     e2e.manifest.json        # declares what to smoke (collections, fields)
 ```
@@ -193,6 +194,20 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   internal data-fetch loses the auth cookie — so the harness stays on `nuxt dev`.)
 - Fixtures are throwaway: `.data/`, `.auth/`, `playwright-report/`,
   `test-results/` are all gitignored.
+- **Avoid reserved collection names in a fixture** (`products`, `categories`,
+  `printers`, `locations`, `pages`, `booking`, …): the CLI's `formComponent`
+  auto-detect scans **every** package manifest in the monorepo, not just the
+  fixture's deps, so a collection named `products` adopts crouton-sales'
+  `SalesProductForm` (and skips generating `_Form.vue`) even when crouton-sales
+  isn't installed — leaving a dangling component reference. `with-relations` uses
+  neutral names (`authors`/`books`) for this reason. See the #224 report in
+  `writeups/reports/`. (Root cause: `generate-collection.ts` iterates
+  `allContributions` instead of the filtered `contributions` — a generator bug.)
+- **Removing a collection isn't fully automated:** `crouton config --force` after
+  deleting a collection from `crouton.config.js` regenerates the query/type
+  registries but **append-merges** the schema barrel, `app.config.ts`, and layer
+  `extends` (stale entries linger → broken build). Use `crouton rollback <name>`,
+  or hand-reset those three files to a no-collection baseline before regenerating.
 
 ## Scope / follow-ups
 Current: list loads + full CRUD per collection (create → edit → delete, plus an
