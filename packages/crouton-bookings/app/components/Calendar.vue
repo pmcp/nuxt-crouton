@@ -546,7 +546,8 @@ const monthCellHeight = computed(() => {
     <!-- Month View -->
     <div v-else class="w-full">
       <UCalendar
-        v-model="monthFocusDate"
+        :model-value="(monthFocusDate as any)"
+        @update:model-value="(value: any) => { monthFocusDate = value }"
         size="sm"
         :week-starts-on="1"
         :ui="{
