@@ -64,7 +64,7 @@ const templatesByTrigger = computed(() => {
   }
 
   // API returns array directly
-  const items = Array.isArray(templates.value) ? templates.value : templates.value?.items || []
+  const items = Array.isArray(templates.value) ? templates.value : (templates.value as { items?: any[] } | null)?.items || []
   for (const template of items) {
     const trigger = template.triggerType || 'booking_created'
     if (grouped[trigger]) {
