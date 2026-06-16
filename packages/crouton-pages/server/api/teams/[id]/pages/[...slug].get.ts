@@ -102,7 +102,7 @@ export default defineEventHandler(async (event) => {
           .where(
             and(
               eq(pagesSchema.pagesPages.teamId as any, team.id),
-              sql`json_extract(${pagesSchema.pagesPages.translations as any}, '$.' || ${locale} || '.slug') = ${slugValue}`
+              sql`json_extract(${(pagesSchema.pagesPages as any).translations}, '$.' || ${locale} || '.slug') = ${slugValue}`
             )
           )
           .limit(1)

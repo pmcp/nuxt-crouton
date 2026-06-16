@@ -145,9 +145,12 @@ let collabLocalizedContent: any = null
 
 // Set up localized content sync
 try {
-  // @ts-expect-error - useCollabLocalizedContent may not exist
+  // @ts-ignore - useCollabLocalizedContent only exists when crouton-collab is
+  // installed (e.g. triage). Apps without it (e.g. velo) can't resolve the name,
+  // so the runtime typeof-guard is suppressed here. @ts-expect-error can't be used:
+  // it would be flagged as unused in apps where collab IS present.
   if (typeof useCollabLocalizedContent === 'function') {
-    // @ts-expect-error - conditional call
+    // @ts-ignore - see note above (symbol absent without crouton-collab)
     collabLocalizedContent = useCollabLocalizedContent({
       roomId: collabRoomIdForContent.value,
       roomType: 'pagesPages',
