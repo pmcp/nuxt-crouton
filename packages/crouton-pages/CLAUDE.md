@@ -207,6 +207,40 @@ Collections with `publishable: true` in their config auto-register as page types
 
 **Example:** A collection `shopBikes` with `publishable: true` creates page type `shop:shopBikes-detail`.
 
+### Describing the derived page type (name / description / icon)
+
+A publishable collection can describe how its derived page type appears in the
+page-type picker — the same `name`/`description`/`icon` a package-registered
+page type carries — via an optional `pageType` block on the collection config
+(typed on `CollectionConfig` in crouton-core). Every field is optional and
+falls back gracefully:
+
+```typescript
+croutonCollections: {
+  shopBikes: {
+    publishable: true,
+    adminNav: { icon: 'i-lucide-bike' },     // reused as the page-type icon
+    pageType: {
+      description: 'shop.bikes.pageType.description', // i18n key (or plain text)
+      icon: 'i-lucide-bike',                  // overrides adminNav.icon if set
+      // name / category optional
+    }
+  }
+}
+```
+
+Resolution in `usePageTypes()`:
+- **name** → `pageType.name` ?? generated `"{Capitalized Name} Page"`
+- **description** → `pageType.description` ?? the generic key
+  `pages.pageTypes.collectionDerived.description` (kept as a **raw key** so the
+  consumer's `t()` resolves it, like package descriptions)
+- **icon** → `pageType.icon` ?? `adminNav.icon` ?? `i-lucide-file-text`
+
+So a publishable collection's page type is never description-less, and picks up
+its admin icon automatically. Names/descriptions are passed through `t(value,
+value)` at render (Workspace/Editor `pageTypeOptions`), so plain-string names
+don't get this app's missing-key `[…]` bracketing.
+
 ## usePageTypes() Composable
 
 ```typescript

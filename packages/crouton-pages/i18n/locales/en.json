@@ -14,6 +14,9 @@
       "footer": {
         "name": "Footer",
         "description": "The site footer, composed from blocks. One per site; shown on every page."
+      },
+      "collectionDerived": {
+        "description": "Publishes items from this collection as standalone pages."
       }
     },
     "workspace": {

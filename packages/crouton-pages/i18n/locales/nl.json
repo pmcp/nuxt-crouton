@@ -14,6 +14,9 @@
       "footer": {
         "name": "Voettekst",
         "description": "De voettekst van de site, samengesteld uit blokken. Eén per site; verschijnt op elke pagina."
+      },
+      "collectionDerived": {
+        "description": "Publiceert items uit deze collectie als zelfstandige pagina's."
       }
     },
     "workspace": {

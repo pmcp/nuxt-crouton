@@ -2,6 +2,11 @@
   "pages": {
     "title": "Pages",
     "search": "Rechercher des pages...",
+    "pageTypes": {
+      "collectionDerived": {
+        "description": "Publie les éléments de cette collection en tant que pages autonomes."
+      }
+    },
     "workspace": {
       "title": "Espace de travail Pages",
       "emptyTitle": "Sélectionnez une page",

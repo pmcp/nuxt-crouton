@@ -184,10 +184,10 @@ const showAccessSection = computed(() => props.visibility === 'scoped')
             <UIcon :name="selectedPageType?.icon || 'i-lucide-file'" class="size-4 text-muted" />
             <div class="min-w-0">
               <div class="truncate text-sm font-medium text-default">
-                {{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.regularPage') }}
+                {{ selectedPageType?.name ? t(selectedPageType.name, selectedPageType.name) : t('pages.editor.regularPage') }}
               </div>
               <div v-if="selectedPageType?.description" class="truncate text-xs text-muted">
-                {{ t(selectedPageType.description) }}
+                {{ t(selectedPageType.description, selectedPageType.description) }}
               </div>
             </div>
           </div>

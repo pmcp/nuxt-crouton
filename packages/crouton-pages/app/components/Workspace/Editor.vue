@@ -508,8 +508,11 @@ watch(selectedCollectionItem, (item: Record<string, any> | null) => {
 const pageTypeOptions = computed(() =>
   pageTypes.value.map((type: any) => ({
     value: type.fullId,
-    label: t(type.name),
-    description: type.description ? t(type.description) : undefined,
+    // Pass the raw value as fallback: package types use i18n keys (resolved),
+    // collection-derived types use plain strings — t(value, value) returns them
+    // verbatim instead of this app's missing-key "[value]" bracketing.
+    label: t(type.name, type.name),
+    description: type.description ? t(type.description, type.description) : undefined,
     icon: type.icon
   }))
 )
