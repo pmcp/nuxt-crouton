@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printers
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Composable: useSalesPrinters
@@ -10,7 +10,7 @@
  * - API endpoint: /api/teams/[id]/sales-printers
  * - Form component: SalesPrintersForm
  * - List component: SalesPrintersList
- * - Fields: id, eventId, locationId, title, ipAddress, port, status, showPrices, isActive
+ * - Fields: id, eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
  *
  * ## Common Modifications
  * - Add field: Add to schema object and defaultValues
@@ -28,23 +28,14 @@ import { z } from 'zod'
 // Keep schema outside of objects that might be serialized/cloned during SSR
 export const salesPrinterSchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  // Only kitchen printers need a location (routing key) — PrinterForm enforces
-  // that conditionally via superRefine; receipt printers store null.
-  locationId: z.string().nullish(),
+  locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
-  // nullish, not optional: these DB columns are nullable, and existing rows
-  // come back as null — .optional() rejects null, failing the update form on
-  // fields it doesn't even render.
-  port: z.string().nullish(),
-  type: z.enum(['kitchen', 'receipt']).nullish(),
-  // Output driver — how the station is fulfilled. Null ⇒ 'network-escpos'
-  // (thermal). 'browser-print' fulfils via the OS/AirPrint print dialog.
-  // nullish: existing rows may be null and the DB column is nullable.
-  driver: z.enum(['network-escpos', 'browser-print']).nullish(),
-  status: z.string().nullish(),
-  showPrices: z.boolean().nullish(),
-  isActive: z.boolean().nullish()
+  port: z.string().optional(),
+  status: z.string().optional(),
+  driver: z.string().optional(),
+  showPrices: z.boolean().optional(),
+  isActive: z.boolean().optional()
 })
 
 export const salesPrintersColumns = [
@@ -55,6 +46,7 @@ export const salesPrintersColumns = [
   { accessorKey: 'ipAddress', header: 'IpAddress' },
   { accessorKey: 'port', header: 'Port' },
   { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'driver', header: 'Driver' },
   { accessorKey: 'showPrices', header: 'ShowPrices' },
   { accessorKey: 'isActive', header: 'IsActive' }
 ]
@@ -71,9 +63,8 @@ const _salesPrintersConfig = {
     title: '',
     ipAddress: '',
     port: '',
-    type: 'kitchen',
-    driver: 'network-escpos',
     status: '',
+    driver: '',
     showPrices: false,
     isActive: false
   },
@@ -110,15 +101,15 @@ const _salesPrintersConfig = {
           "area": "main"
       },
       {
-          "name": "type",
-          "type": "string",
-          "label": "Printer Type",
-          "area": "main"
-      },
-      {
           "name": "status",
           "type": "string",
           "label": "Status",
+          "area": "main"
+      },
+      {
+          "name": "driver",
+          "type": "string",
+          "label": "Driver",
           "area": "main"
       },
       {

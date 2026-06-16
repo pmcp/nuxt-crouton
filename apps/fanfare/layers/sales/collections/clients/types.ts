@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection clients
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesClient
  * - Form data type: SalesClientFormData
  * - New item type: NewSalesClient
  * - Form props: SalesClientFormProps
- * - Fields: id, title, isReusable
+ * - Fields: id, title, isReusable, isActive
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches

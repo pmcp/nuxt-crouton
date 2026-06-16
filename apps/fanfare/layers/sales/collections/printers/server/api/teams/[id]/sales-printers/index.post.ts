@@ -6,15 +6,12 @@ import { z } from 'zod'
 
 const bodySchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  // Nullable: receipt printers carry no location (kitchen routing key only)
-  locationId: z.string().nullish(),
+  locationId: z.string().min(1, 'locationId is required'),
   title: z.string().min(1, 'title is required'),
   ipAddress: z.string().min(1, 'ipAddress is required'),
   port: z.string().optional(),
-  type: z.enum(['kitchen', 'receipt']).optional(),
-  // Output driver — null/absent ⇒ 'network-escpos' (thermal).
-  driver: z.enum(['network-escpos', 'browser-print']).optional(),
   status: z.string().optional(),
+  driver: z.string().optional(),
   showPrices: z.boolean().optional(),
   isActive: z.boolean().optional()
 }).strip()

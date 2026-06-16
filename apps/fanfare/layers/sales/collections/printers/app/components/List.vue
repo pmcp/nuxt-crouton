@@ -2,14 +2,14 @@
   @crouton-generated
   @collection printers
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - List component for printers collection
   - Collection name: salesPrinters
   - API endpoint: /api/teams/[id]/sales-printers
   - Columns composable: useSalesPrinters()
-  - Column fields: eventId, locationId, title, ipAddress, port, status, showPrices, isActive
+  - Column fields: eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
 
   ## Common Modifications
   - Add column: Update columns array in composable

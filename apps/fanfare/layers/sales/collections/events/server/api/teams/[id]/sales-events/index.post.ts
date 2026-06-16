@@ -9,14 +9,15 @@ const bodySchema = z.object({
   slug: z.string().min(1, 'slug is required'),
   description: z.string().optional(),
   eventType: z.string().optional(),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
+  startDate: z.coerce.date().nullish(),
+  endDate: z.coerce.date().nullish(),
   status: z.string().min(1, 'status is required'),
   isCurrent: z.boolean().optional(),
   requiresClient: z.boolean().optional(),
   helperPin: z.string().optional(),
+  currency: z.string().optional(),
   metadata: z.record(z.string(), z.any()).nullish(),
-  archivedAt: z.coerce.date().optional()
+  archivedAt: z.coerce.date().nullish()
 }).strip()
 
 export default defineEventHandler(async (event) => {

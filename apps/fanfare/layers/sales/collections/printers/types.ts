@@ -2,14 +2,14 @@
  * @crouton-generated
  * @collection printers
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesPrinter
  * - Form data type: SalesPrinterFormData
  * - New item type: NewSalesPrinter
  * - Form props: SalesPrinterFormProps
- * - Fields: id, eventId, locationId, title, ipAddress, port, status, showPrices, isActive
+ * - Fields: id, eventId, locationId, title, ipAddress, port, status, driver, showPrices, isActive
  *
  * ## Common Modifications
  * - Add field: Add to interface and ensure schema matches
@@ -28,14 +28,12 @@ export interface SalesPrinter {
   teamId: string
   owner: string
   eventId: string
-  /** Kitchen routing key — null for receipt printers (they print the whole order) */
-  locationId: string | null
+  locationId: string
   title: string
   ipAddress: string
   port?: string
-  /** kitchen = per-location tickets (default, also NULL); receipt = combined customer receipt */
-  type?: 'kitchen' | 'receipt'
   status?: string
+  driver?: string
   showPrices?: boolean
   isActive?: boolean
   createdAt: Date
@@ -49,7 +47,7 @@ export interface SalesPrinter {
 export type SalesPrinterFormData = z.infer<typeof salesPrinterSchema>
 // New* allows the server-set fields (id, createdBy, updatedBy) as optional — the
 // generated POST endpoint provides them; other callers (e.g. seed) may omit them.
-export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'locationId'> & { id?: string; createdBy?: string; updatedBy?: string; locationId?: string | null }
+export type NewSalesPrinter = Omit<SalesPrinter, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> & { id?: string; createdBy?: string; updatedBy?: string }
 
 // Props type for the Form component
 export interface SalesPrinterFormProps {

@@ -2,14 +2,14 @@
   @crouton-generated
   @collection events
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for events collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/sales-events
   - Zod schema: useSalesEvents() composable
-  - Fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, metadata, archivedAt
+  - Fields: title, slug, description, eventType, startDate, endDate, status, isCurrent, requiresClient, helperPin, currency, metadata, archivedAt
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -52,6 +52,12 @@
         <UFormField :label="t('sales.events.fields.eventType', 'Event Type')" name="eventType" class="not-last:pb-4">
           <UInput v-model="state.eventType" class="w-full" size="xl" />
         </UFormField>
+        <UFormField :label="t('sales.events.fields.startDate', 'Start Date')" name="startDate" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.startDate" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.endDate', 'End Date')" name="endDate" class="not-last:pb-4">
+          <CroutonCalendar v-model:date="state.endDate" />
+        </UFormField>
         <UFormField :label="t('sales.events.fields.status', 'Status')" name="status" class="not-last:pb-4">
           <UInput v-model="state.status" class="w-full" size="xl" />
         </UFormField>
@@ -63,6 +69,9 @@
         </UFormField>
         <UFormField :label="t('sales.events.fields.helperPin', 'Helper PIN')" name="helperPin" class="not-last:pb-4">
           <UInput v-model="state.helperPin" class="w-full" size="xl" />
+        </UFormField>
+        <UFormField :label="t('sales.events.fields.currency', 'Currency')" name="currency" class="not-last:pb-4">
+          <UInput v-model="state.currency" class="w-full" size="xl" />
         </UFormField>
         <UFormField :label="t('sales.events.fields.metadata', 'Metadata')" name="metadata" class="not-last:pb-4">
           <UTextarea
@@ -135,7 +144,7 @@ const state = ref<SalesEventFormData & { id?: string | null }>(initialValues)
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
-    const serializedData = { ...state.value }
+    const serializedData: Record<string, any> = { ...state.value }
     if (serializedData.startDate instanceof Date) {
       serializedData.startDate = serializedData.startDate.toISOString()
     }

@@ -7,7 +7,7 @@ interface SalesProductsOptionItem {
   value?: string
 }
 
-const model = defineModel<SalesProductsOptionItem>()
+const model = defineModel<SalesProductsOptionItem>({ required: true })
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {

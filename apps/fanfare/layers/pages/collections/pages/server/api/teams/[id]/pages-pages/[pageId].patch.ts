@@ -9,7 +9,7 @@ const bodySchema = z.object({
   config: z.record(z.string(), z.any()).nullish(),
   status: z.string().min(1, 'status is required'),
   visibility: z.string().min(1, 'visibility is required'),
-  publishedAt: z.coerce.date().optional(),
+  publishedAt: z.coerce.date().nullish(),
   showInNavigation: z.boolean().optional(),
   layout: z.string().optional(),
   ogImage: z.string().optional(),
@@ -32,7 +32,9 @@ const bodySchema = z.object({
   ).refine(
     (translations) => translations.nl && translations.nl.title && translations.nl.slug,
     { message: 'Translations for title, slug (nl) are required' }
-  )
+  ),
+  // Transient hint: which locale the translation patch targets (not a column)
+  locale: z.string().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
@@ -66,6 +68,7 @@ export default defineEventHandler(async (event) => {
   // Only include fields that were actually sent in the request
   const updates: Record<string, any> = {}
   for (const [key, value] of Object.entries(body)) {
+    if (key === 'locale') continue // transient translation hint, not a column
     if (value !== undefined) {
       updates[key] = value
     }

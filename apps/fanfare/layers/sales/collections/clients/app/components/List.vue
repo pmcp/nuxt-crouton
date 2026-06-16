@@ -2,14 +2,14 @@
   @crouton-generated
   @collection clients
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - List component for clients collection
   - Collection name: salesClients
   - API endpoint: /api/teams/[id]/sales-clients
   - Columns composable: useSalesClients()
-  - Column fields: title, isReusable
+  - Column fields: title, isReusable, isActive
 
   ## Common Modifications
   - Add column: Update columns array in composable
@@ -38,6 +38,9 @@
     </template>
     <template #isReusable-cell="{ row }">
       <CroutonBoolean :value="row.original.isReusable" />
+    </template>
+    <template #isActive-cell="{ row }">
+      <CroutonBoolean :value="row.original.isActive" />
     </template>
   </CroutonCollection>
 </template>

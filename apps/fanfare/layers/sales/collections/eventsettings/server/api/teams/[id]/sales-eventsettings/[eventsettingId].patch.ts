@@ -1,28 +1,22 @@
 // Team-based endpoint - requires @fyit/crouton-auth package
 // The resolveTeamAndCheckMembership utility handles team resolution and auth
-import { updateSalesPrintqueue } from '../../../../database/queries'
+import { updateSalesEventsetting } from '../../../../database/queries'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { z } from 'zod'
 
 const bodySchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
-  orderId: z.string().min(1, 'orderId is required'),
-  printerId: z.string().min(1, 'printerId is required'),
-  locationId: z.string().optional(),
-  status: z.string().min(1, 'status is required'),
-  printData: z.string().min(1, 'printData is required'),
-  printMode: z.string().optional(),
-  errorMessage: z.string().optional(),
-  retryCount: z.string().optional(),
-  completedAt: z.string().optional()
+  settingKey: z.string().min(1, 'settingKey is required'),
+  settingValue: z.string().optional(),
+  description: z.string().optional()
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
   const timing = useServerTiming(event)
 
-  const { printQueueId } = getRouterParams(event)
-  if (!printQueueId) {
-    throw createError({ status: 400, statusText: 'Missing printqueue ID' })
+  const { eventsettingId } = getRouterParams(event)
+  if (!eventsettingId) {
+    throw createError({ status: 400, statusText: 'Missing eventsetting ID' })
   }
 
   const authTimer = timing.start('auth')
@@ -40,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const dbTimer = timing.start('db')
-  const result = await updateSalesPrintqueue(printQueueId, team.id, user.id, updates, { role: membership.role })
+  const result = await updateSalesEventsetting(eventsettingId, team.id, user.id, updates, { role: membership.role })
   dbTimer.end()
   return result
 })

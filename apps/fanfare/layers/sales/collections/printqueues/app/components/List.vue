@@ -2,7 +2,7 @@
   @crouton-generated
   @collection printqueues
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - List component for printqueues collection

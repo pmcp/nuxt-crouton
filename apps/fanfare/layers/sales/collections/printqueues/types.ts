@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection printqueues
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesPrintqueue
@@ -28,7 +28,7 @@ export interface SalesPrintqueue {
   teamId: string
   owner: string
   eventId: string
-  orderId: string | null
+  orderId: string
   printerId: string
   locationId?: string
   status: string

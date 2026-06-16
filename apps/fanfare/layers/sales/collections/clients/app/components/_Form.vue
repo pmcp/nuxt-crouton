@@ -2,14 +2,14 @@
   @crouton-generated
   @collection clients
   @layer sales
-  @generated 2026-06-09
+  @generated 2026-06-16
 
   ## AI Context
   - Form component for clients collection
   - Handles: create, update, delete actions
   - API endpoint: /api/teams/[id]/sales-clients
   - Zod schema: useSalesClients() composable
-  - Fields: title, isReusable
+  - Fields: title, isReusable, isActive
 
   ## Common Modifications
   - Add field: Add UFormField in template, update schema in composable
@@ -45,6 +45,9 @@
         </UFormField>
         <UFormField :label="t('sales.clients.fields.isReusable', 'Reusable')" name="isReusable" class="not-last:pb-4">
           <UCheckbox v-model="state.isReusable" />
+        </UFormField>
+        <UFormField :label="t('sales.clients.fields.isActive', 'Active')" name="isActive" class="not-last:pb-4">
+          <UCheckbox v-model="state.isActive" />
         </UFormField>
       </div>
       </template>

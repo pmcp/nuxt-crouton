@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection eventsettings
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Composable: useSalesEventsettings

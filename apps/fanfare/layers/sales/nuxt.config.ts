@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     './collections/clients',
     './collections/eventsettings',
     './collections/printers',
-    './collections/printqueues'
+    './collections/printqueues',
+    './collections/kdsbumps'
   ]
 })

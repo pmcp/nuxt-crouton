@@ -6,6 +6,7 @@
   "ipAddress": { "type": "string", "meta": { "required": true, "label": "IP Address" } },
   "port": { "type": "string", "meta": { "label": "Port", "default": "9100", "helpText": "ESC/POS raw TCP port. 9100 is universal." } },
   "status": { "type": "string", "meta": { "label": "Status", "default": "idle", "helpText": "Last-known printer state. Not updated by the spooler." } },
+  "driver": { "type": "string", "meta": { "label": "Driver", "default": "network-escpos", "helpText": "Print transport: network-escpos (drained on-site) or browser-print." } },
   "showPrices": { "type": "boolean", "meta": { "label": "Show Prices on Receipt", "default": true } },
   "isActive": { "type": "boolean", "meta": { "label": "Active", "default": true } }
 }

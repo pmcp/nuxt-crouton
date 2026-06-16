@@ -2,7 +2,7 @@
  * @crouton-generated
  * @collection orderitems
  * @layer sales
- * @generated 2026-06-09
+ * @generated 2026-06-16
  *
  * ## AI Context
  * - Main interface: SalesOrderitem
@@ -33,7 +33,7 @@ export interface SalesOrderitem {
   unitPrice: number
   totalPrice: number
   remarks?: string
-  selectedOptions?: Record<string, any>
+  selectedOptions?: Record<string, any> | null
   createdAt: Date
   updatedAt: Date
   createdBy: string

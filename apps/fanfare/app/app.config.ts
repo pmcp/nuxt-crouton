@@ -13,6 +13,8 @@ import { salesPrintqueuesConfig } from '../layers/sales/collections/printqueues/
 
 import {pagesPagesConfig} from '../layers/pages/collections/pages/app/composables/usePagesPages';
 
+import {salesKdsbumpsConfig} from '../layers/sales/collections/kdsbumps/app/composables/useSalesKdsbumps';
+
 export default defineAppConfig({
   croutonCollections: {
     translationsUi: translationsUiConfig,
@@ -26,6 +28,7 @@ export default defineAppConfig({
     salesEventsettings: salesEventsettingsConfig,
     salesPrinters: salesPrintersConfig,
     salesPrintqueues: salesPrintqueuesConfig,
-    pagesPages: pagesPagesConfig
+    pagesPages: pagesPagesConfig,
+    salesKdsbumps: salesKdsbumpsConfig
   }
 })
