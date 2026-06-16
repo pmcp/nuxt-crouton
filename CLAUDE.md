@@ -275,6 +275,8 @@ pnpm install           # then verify: pnpm -r --filter './apps/*' typecheck
 npx taze major -r      # majors: review only (-w to write), one family at a time
 ```
 
+For the full flow — sweep → triage (safe/deliberate/wait) → catalog bump → typecheck + e2e gate → tracking — invoke the **`dependency-sweep` skill** (don't hand-roll it). It encodes the gotchas (caret ranges don't downgrade; stale-install `@vue/compiler-sfc` false error; framework minors aren't auto-safe). A recurring **quarterly sweep ticket** keeps it on the calendar.
+
 ## E2E Fixture Harness
 
 A Playwright smoke that boots a **real generated crouton app** and verifies it
@@ -376,6 +378,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/ecosystem-check/SKILL.md` | Check Nuxt/UnJS/Vite/OSS prior art before building |
 | Skill | `.claude/skills/e2e-smoke/SKILL.md` | Run the Playwright fixture smoke harness (boot + auth + CRUD) after a dep bump or `packages/` change |
 | Skill | `.claude/skills/db-migrations/SKILL.md` | The migrate step (`db:generate` schema.mjs-after-build gotcha) + package-owned infra tables. App collections use the `crouton` CLI, not this |
+| Skill | `.claude/skills/dependency-sweep/SKILL.md` | The "get dependencies current" flow — sweep, triage (safe/deliberate/wait), bump the pnpm catalog, prove it with the typecheck + e2e gate. No update bot by design (#141); run on-demand or when the quarterly sweep ticket is due |
 | Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
 | MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
 | Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |
