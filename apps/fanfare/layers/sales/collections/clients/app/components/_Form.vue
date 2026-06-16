@@ -90,7 +90,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<SalesClientFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<SalesClientFormData & { id?: string | null }>(initialValues as SalesClientFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {
