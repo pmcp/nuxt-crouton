@@ -1,0 +1,40 @@
+name: Decompose on issue
+
+# Auto-run the task-decomposition pipeline when an issue is opted in via the
+# `auto-decompose` label (added at creation or any time after). The pipeline spawns
+# the orchestrator → decomposer → worker agents (see .claude/skills/task-decompose).
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  decompose:
+    # Only fire for issues explicitly opted in. (On `labeled` this also covers the case
+    # where the label is added later; on `opened` the label must already be present.)
+    if: contains(github.event.issue.labels.*.name, 'auto-decompose')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Pinned to the same SHA as claude.yml — keep these in sync when bumping.
+      # AUTH: this is headless/unattended, so it MUST use an API key. Do NOT swap in a
+      # subscription CLAUDE_CODE_OAUTH_TOKEN — subscription OAuth is for interactive
+      # Claude Code use only, not CI automation (Anthropic Legal & Compliance terms).
+      - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "/task-decompose #${{ github.event.issue.number }}"
+          claude_args: "--max-turns 30"
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write

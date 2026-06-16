@@ -154,6 +154,12 @@
 - name: "needs-triage"
   color: "e4e669"
   description: "Not yet scoped"
+- name: "meta:agents"
+  color: "5319e7"
+  description: "Claude Code agent/skill tooling (.claude/) serving the whole monorepo"
+- name: "auto-decompose"
+  color: "0e8a16"
+  description: "Opt this issue into the auto task-decomposition pipeline (decompose-on-issue.yml)"
 
 # ── Status ──
 - name: "status:in-progress"

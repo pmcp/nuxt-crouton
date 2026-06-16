@@ -1,0 +1,47 @@
+name: Resume blocked decomposition
+
+# When an agent in the task-decomposition pipeline gets stuck it comments a question,
+# @mentions the owner, labels the issue `status:blocked`, and stops. This workflow lets
+# the owner resume simply by REPLYING on that issue — no slash command, no @claude needed.
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  resume:
+    # Resume only when: the issue carries `status:blocked`, the comment is a human's
+    # (not a bot — avoids the agent answering itself / loops), and it's an issue not a PR.
+    if: |
+      !github.event.issue.pull_request &&
+      github.event.comment.user.type != 'Bot' &&
+      contains(github.event.issue.labels.*.name, 'status:blocked')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Pinned to the same SHA as claude.yml — keep these in sync when bumping.
+      # AUTH: this is headless/unattended, so it MUST use an API key. Do NOT swap in a
+      # subscription CLAUDE_CODE_OAUTH_TOKEN — subscription OAuth is for interactive
+      # Claude Code use only, not CI automation (Anthropic Legal & Compliance terms).
+      - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Resume the task-decomposition pipeline for issue #${{ github.event.issue.number }}.
+            The owner has replied to a blocking question — read the full issue comment
+            thread (the latest comment is their answer), incorporate it, remove the
+            `status:blocked` label, then continue via /task-decompose #${{ github.event.issue.number }}.
+          claude_args: "--max-turns 30"
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
