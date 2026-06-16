@@ -19,7 +19,9 @@ logs
 .idea
 
 # Local env files
-.env
+# NB: .env IS committed for fixtures (throwaway, never-deployed test apps) so a
+# bare `pnpm dev` works without exporting BETTER_AUTH_SECRET. Do NOT do this in
+# real apps under apps/ — there the random scaffolded secret stays gitignored.
 .env.*
 !.env.example
 .wrangler/

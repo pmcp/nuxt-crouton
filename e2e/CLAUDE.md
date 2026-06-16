@@ -34,13 +34,18 @@ fixtures/                    # the apps under test — real crouton apps, one pe
 ## Running
 
 ```bash
-BETTER_AUTH_SECRET=dev BETTER_AUTH_URL=http://localhost:3000 pnpm test:e2e   # default fixture (minimal)
-E2E_FIXTURE=with-pages BETTER_AUTH_SECRET=dev BETTER_AUTH_URL=http://localhost:3000 pnpm test:e2e
+pnpm test:e2e                          # default fixture (minimal)
+E2E_FIXTURE=with-pages pnpm test:e2e   # another fixture
 ```
 
-> **`BETTER_AUTH_SECRET` is required** (any value locally; CI sets a placeholder).
-> Without it crouton-auth refuses to mint sessions and `auth.setup.ts` fails with
-> "Could not authenticate test user." Set `BETTER_AUTH_URL` to the server origin too.
+> **The auth env is now self-provided** — `webServer.env` in `playwright.config.ts`
+> defaults `BETTER_AUTH_SECRET` to `dev` and `BETTER_AUTH_URL` to
+> `http://localhost:3000`, and each fixture also commits a dummy `.env`. So no
+> env prefix is needed locally. Exporting `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL`
+> still works and **overrides** the defaults (this is how CI passes its
+> placeholder). If a fixture's committed `.env` is wiped *and* nothing is
+> exported, crouton-auth refuses to mint sessions and `auth.setup.ts` fails with
+> "Could not authenticate test user."
 
 The config's `webServer` boots `pnpm --filter e2e-fixture-$E2E_FIXTURE dev` on
 `:3000` (or reuses a server already running there). One fixture per run — they

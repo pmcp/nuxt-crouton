@@ -45,6 +45,10 @@ coverage
 .env
 .env.*
 !.env.example
+# Fixtures are throwaway test apps (never deployed) and commit a dummy .env with
+# the dev auth secret so `pnpm dev` boots with no env setup. Real apps keep .env
+# ignored — this exception is scoped to fixtures only.
+!fixtures/*/.env
 
 # Build
 *.tsbuildinfo

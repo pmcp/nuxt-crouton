@@ -26,6 +26,25 @@ authenticates, and does CRUD** after a `packages/` change or dependency bump.
   `pnpm --filter`.
 - **They're kept out of `apps/`** so they're never deployed or swept by app
   typecheck.
+- **Each fixture commits a dummy `.env`** (`BETTER_AUTH_SECRET=dev-fixture-…`).
+  Unlike real apps (where the scaffolded random secret stays gitignored), these
+  are throwaway and never deployed, so the dev secret is committed — that's what
+  lets a bare `pnpm dev` boot without anyone exporting `BETTER_AUTH_SECRET`. The
+  e2e harness also injects the secret via `webServer.env`, so it works either way.
+
+## Running a fixture standalone
+
+To boot a fixture by hand (outside the Playwright harness), the committed `.env`
+already supplies the auth secret, so just:
+
+```bash
+pnpm --filter e2e-fixture-minimal dev   # → http://localhost:3000
+```
+
+If you ever wipe the `.env`, the app fails with `[crouton/auth] BETTER_AUTH_SECRET
+is required` — restore it (or export the var inline:
+`BETTER_AUTH_SECRET=dev pnpm --filter e2e-fixture-minimal dev`). Running via the
+`e2e-smoke` skill / `pnpm test:e2e` needs no env setup at all.
 
 ## Where the real docs are
 

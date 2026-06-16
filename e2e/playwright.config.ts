@@ -60,6 +60,14 @@ export default defineConfig({
     cwd: '..',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
+    // Self-contained auth env so the harness no longer silently depends on the
+    // caller exporting BETTER_AUTH_SECRET (the #1 "why won't the fixture boot"
+    // foot-gun). A real value still wins; otherwise fall back to the dev secret.
+    env: {
+      ...process.env,
+      BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || 'dev',
+      BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:3000'
+    },
     // Generous: a cold `nuxt dev` first build in CI can take a while.
     timeout: 180000
   }
