@@ -136,12 +136,15 @@ if (props.action === 'update' && props.activeItem?.id) {
   }
 }
 
-const state = ref<ShopProductFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<ShopProductFormData & { id?: string | null }>(initialValues as ShopProductFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {
     // Serialize Date objects to ISO strings for API submission
-    const serializedData = { ...state.value }
+    const serializedData: Record<string, any> = { ...state.value }
     if (serializedData.publishedAt instanceof Date) {
       serializedData.publishedAt = serializedData.publishedAt.toISOString()
     }
@@ -261,7 +264,10 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
-const state = ref<ShopProductFormData & { id?: string | null }>(initialValues)
+// Draft state: seeded from defaults (required fields may start null/empty until
+// the user fills them; the zod schema validates on submit), so cast the initial
+// values to the validated shape.
+const state = ref<ShopProductFormData & { id?: string | null }>(initialValues as ShopProductFormData & { id?: string | null })
 
 const handleSubmit = async () => {
   try {

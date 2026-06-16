@@ -140,7 +140,7 @@ describe('generateFormComponent', () => {
 
     it('generates ref for state with correct type', () => {
       const result = generateFormComponent(formComponentData, minimalConfig)
-      expect(result).toContain('const state = ref<ShopProductFormData & { id?: string | null }>(initialValues)')
+      expect(result).toContain('const state = ref<ShopProductFormData & { id?: string | null }>(initialValues as ShopProductFormData & { id?: string | null })')
     })
   })
 
