@@ -65,19 +65,35 @@ export function usePageTypes() {
 
       const layer = config.layer || 'app'
       const displayName = config.displayName || config.name || collectionName
-      // Convert camelCase collection name to readable label (e.g., "storeBikes" -> "Bike Page")
-      const singularName = displayName.replace(/([A-Z])/g, ' $1').trim()
+      // Convert camelCase collection name to a readable, capitalized label
+      // (e.g. "shopBikes" -> "Shop Bikes", "mainItems" -> "Main Items").
+      const spaced = displayName.replace(/([A-Z])/g, ' $1').trim()
+      const singularName = spaced.charAt(0).toUpperCase() + spaced.slice(1)
       const fullId = `${layer}:${collectionName}-detail`
 
       // Skip if a manually registered page type already exists with this ID
       if (types.some(t => t.fullId === fullId)) continue
 
+      // A publishable collection may describe its derived page type via a
+      // `pageType` config block (name/description/icon/category) — the same
+      // shape packages register. Each is optional and falls back gracefully:
+      // icon → the collection's admin icon → generic file; description → a
+      // generic i18n key (kept as a RAW key so the consumer's t() resolves it,
+      // matching how package-registered descriptions flow).
+      const pageTypeMeta = (config.pageType ?? {}) as {
+        name?: string
+        description?: string
+        icon?: string
+        category?: string
+      }
+
       types.push({
         id: `${collectionName}-detail`,
-        name: `${singularName} Page`,
+        name: pageTypeMeta.name || `${singularName} Page`,
+        description: pageTypeMeta.description || 'pages.pageTypes.collectionDerived.description',
         component: 'CroutonPagesCollectionPageRenderer',
-        icon: 'i-lucide-file-text',
-        category: 'collections',
+        icon: pageTypeMeta.icon || config.adminNav?.icon || 'i-lucide-file-text',
+        category: pageTypeMeta.category || 'collections',
         collection: collectionName,
         appId: layer,
         appName: layer.charAt(0).toUpperCase() + layer.slice(1),

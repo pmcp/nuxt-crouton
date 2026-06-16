@@ -127,6 +127,25 @@ interface CollectionConfig {
    */
   publishable?: boolean
   /**
+   * Describe the page type auto-derived from this publishable collection
+   * (only used when `publishable: true`). Mirrors how packages register
+   * page types — `name`/`description` are i18n keys, `icon` is a Lucide class.
+   * Each field is optional; crouton-pages falls back to a generated name, the
+   * collection's `adminNav.icon`, and a generic description when omitted.
+   *
+   * @example
+   * pageType: {
+   *   description: 'shop.bikes.pageType.description',
+   *   icon: 'i-lucide-bike'
+   * }
+   */
+  pageType?: {
+    name?: string
+    description?: string
+    icon?: string
+    category?: string
+  }
+  /**
    * When true, this collection supports public (unauthenticated) access
    * when bound via a binder page.
    */

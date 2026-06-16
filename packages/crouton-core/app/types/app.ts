@@ -140,16 +140,19 @@ export interface CroutonPageType {
 
   /**
    * Description of what this page type provides.
+   * REQUIRED — shown beneath the name in the page-type picker so authors and
+   * editors can tell types apart. Use an i18n key (translated at render).
    * @example 'Shows an interactive calendar for customers to make bookings'
    */
-  description?: string
+  description: string
 
   /**
    * Icon for the page type.
-   * Uses Lucide icons with 'i-lucide-' prefix.
+   * REQUIRED — shown in the page-type picker. Uses Lucide icons with the
+   * 'i-lucide-' prefix.
    * @example 'i-lucide-calendar', 'i-lucide-list'
    */
-  icon?: string
+  icon: string
 
   /**
    * The Vue component name to render for this page type.

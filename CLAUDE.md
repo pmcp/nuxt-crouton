@@ -341,6 +341,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Add generator feature | `packages/nuxt-crouton-cli/CLAUDE.md` |
 | Change CLI command | Generator's `CLAUDE.md` + `.claude/skills/crouton.md` |
 | Add new field type | `.claude/skills/crouton.md` (Field Types table) |
+| Add/modify a page type (in a package or via `publishable`) | Always supply `name` + `description` + `icon` (required on `CroutonPageType`; surface in the pages page-type picker). See `packages/crouton-pages/CLAUDE.md` (Page Type Registration / Publishable Collections) |
 | Add new package | Create `packages/{name}/CLAUDE.md` |
 
 ## Claude Code Configuration

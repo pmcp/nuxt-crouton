@@ -2,36 +2,31 @@
 /**
  * PageEditor Toolbar
  *
- * The action bar at the top of the workspace editor. Handles status, page type,
- * visibility, navigation toggle, settings popover (layout + parent), AI generator
- * trigger, preview, external link, delete (two-click confirm) and save.
+ * The action bar at the top of the workspace editor. Deliberately slim: the
+ * left side holds only the two controls you flip often — Status and Visibility
+ * — plus a single Settings button that opens the roomy SettingsPanel slideover
+ * (page type, parent, layout, navigation/chrome toggles and the scoped access
+ * code all live there now, not inline). The right side keeps the action group:
+ * AI generator, preview, open-in-public, delete/cancel and save.
  *
  * @example
  * <CroutonPagesEditorToolbar
  *   v-model:status="state.status"
  *   v-model:visibility="state.visibility"
- *   v-model:show-in-navigation="state.showInNavigation"
- *   v-model:layout="state.layout"
- *   v-model:parent-id="state.parentId"
  *   :action="action"
- *   :selected-page-type="selectedPageType"
- *   :page-type-dropdown-items="pageTypeDropdownItems"
  *   :status-config="statusConfig"
  *   :visibility-config="visibilityConfig"
  *   :status-dropdown-items="statusDropdownItems"
  *   :visibility-dropdown-items="visibilityDropdownItems"
- *   :layout-options="layoutOptions"
- *   :parent-options="parentOptions"
- *   :pages-pending="pagesPending"
  *   :is-regular-page="isRegularPage"
  *   :is-saving="isSaving"
  *   :show-close="showClose"
  *   :page-id="state.id"
  *   :public-url="publicUrl"
  *   :status="state.status"
+ *   @show-settings="showSettings = true"
  *   @show-ai-generator="showAiGenerator = true"
  *   @show-preview="showPreview = true"
- *   @layout-change="onLayoutChange"
  *   @cancel="emit('cancel')"
  *   @delete="handleDelete"
  *   @close="emit('close')"
@@ -45,13 +40,6 @@ interface DropdownItem {
   onSelect?: () => void
 }
 
-interface PageTypeInfo {
-  icon?: string
-  name?: string
-  description?: string
-  fullId?: string
-}
-
 interface StatusConfigEntry {
   color: string
   icon: string
@@ -63,12 +51,6 @@ interface VisibilityConfigEntry {
   label: string
 }
 
-interface SelectOption {
-  value: string | null
-  label: string
-  disabled?: boolean
-}
-
 interface Props {
   /** 'create' or 'update' */
   action: 'create' | 'update'
@@ -76,16 +58,6 @@ interface Props {
   status: string
   /** Current page visibility */
   visibility: string
-  /** Whether page is shown in navigation */
-  showInNavigation: boolean
-  /** Current page layout */
-  layout: string
-  /** Current parent page ID */
-  parentId: string | null
-  /** The resolved page type object */
-  selectedPageType?: PageTypeInfo | null
-  /** Dropdown items for page type selector */
-  pageTypeDropdownItems: DropdownItem[][]
   /** Status config map */
   statusConfig: Record<string, StatusConfigEntry>
   /** Visibility config map */
@@ -94,12 +66,6 @@ interface Props {
   statusDropdownItems: DropdownItem[][]
   /** Dropdown items for visibility selector */
   visibilityDropdownItems: DropdownItem[][]
-  /** Layout options for the settings popover */
-  layoutOptions: SelectOption[]
-  /** Parent page options for the settings popover */
-  parentOptions: SelectOption[]
-  /** Whether parent pages list is loading */
-  pagesPending: boolean
   /** Whether to show the AI generator button (regular pages only) */
   isRegularPage: boolean
   /** Whether AI package is available */
@@ -112,67 +78,32 @@ interface Props {
   pageId?: string | null
   /** Public URL for the open-in-public button */
   publicUrl?: string | null
-  /** Whether the page currently has an access code grant (scoped visibility) */
-  hasAccessCode?: boolean
-  /** Whether an access-code save/remove is in flight */
-  accessCodePending?: boolean
-  /**
-   * Whether the page content contains a scope-providing block (e.g. a kassa
-   * block gated by the event's helper PIN). The server derives the scope from
-   * the block at read time, so the page's own access code is inert — the
-   * field is replaced by an explanatory hint. One trust level per page.
-   */
-  scopeProvidedByBlock?: boolean
-  /** Per-page chrome: hide the page-navigation pill on the public page */
-  hideNav?: boolean
-  /** Per-page chrome: hide the login/account/admin controls on the public page (language + color mode stay) */
-  hideAuthControls?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showClose: false,
   pageId: null,
   publicUrl: null,
-  selectedPageType: null,
   hasAi: false
 })
 
 const emit = defineEmits<{
   'update:status': [value: string]
   'update:visibility': [value: string]
-  'update:showInNavigation': [value: boolean]
-  'update:layout': [value: string]
-  'update:parentId': [value: string | null]
+  'show-settings': []
   'show-ai-generator': []
   'show-preview': []
-  'layout-change': []
   'cancel': []
   'delete': []
   'close': []
-  'save-access-code': [code: string]
-  'remove-access-code': []
-  'update:hideNav': [value: boolean]
-  'update:hideAuthControls': [value: boolean]
 }>()
 
 const { t } = useT()
-
-// Local input for the scoped-visibility access code — the stored code is
-// hashed server-side and never round-trips; hasAccessCode only reports
-// existence, so the field always starts empty.
-const accessCodeInput = ref('')
-
-function saveAccessCode() {
-  const code = accessCodeInput.value.trim()
-  if (!code) return
-  emit('save-access-code', code)
-  accessCodeInput.value = ''
-}
 </script>
 
 <template>
   <div class="flex flex-wrap items-center gap-3 min-h-12 px-4 py-2 border-b border-default bg-elevated/30">
-    <!-- Left group: Status, Page Type, Visibility, Nav toggle, Settings -->
+    <!-- Left group: Status, Visibility, Settings -->
     <UFieldGroup>
       <!-- Status -->
       <UDropdownMenu
@@ -208,39 +139,6 @@ function saveAccessCode() {
           </span>
         </template>
       </UDropdownMenu>
-
-      <!-- Page Type — items carry icon + label + description, rendered natively
-           by UDropdownMenu (two-line items) so users see what each type does -->
-      <UDropdownMenu
-        v-if="action === 'create'"
-        :items="pageTypeDropdownItems"
-        :content="{ align: 'start' }"
-      >
-        <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-          <UIcon
-            :name="selectedPageType?.icon || 'i-lucide-file'"
-            class="size-4"
-          />
-          <span class="hidden lg:inline">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.defaultPageType') }}</span>
-        </UButton>
-      </UDropdownMenu>
-      <UPopover v-else>
-        <UButton variant="ghost" color="neutral" size="xs" class="px-2 lg:px-3">
-          <UIcon
-            :name="selectedPageType?.icon || 'i-lucide-file'"
-            class="size-4"
-          />
-          <span class="hidden lg:inline">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.defaultPageType') }}</span>
-        </UButton>
-        <template #content>
-          <div class="p-3 text-sm">
-            <div class="font-medium">{{ selectedPageType?.name ? t(selectedPageType.name) : t('pages.editor.regularPage') }}</div>
-            <div v-if="selectedPageType?.description" class="text-muted text-xs mt-1">
-              {{ t(selectedPageType.description) }}
-            </div>
-          </div>
-        </template>
-      </UPopover>
 
       <!-- Visibility -->
       <UDropdownMenu
@@ -287,144 +185,18 @@ function saveAccessCode() {
         </template>
       </UDropdownMenu>
 
-      <!-- Show in Navigation -->
-      <UTooltip :text="showInNavigation ? t('pages.editor.shownInMenu') : t('pages.editor.hiddenFromMenu')" :delay-duration="0">
+      <!-- Settings — opens the roomy SettingsPanel slideover -->
+      <UTooltip :text="t('pages.editor.settings')" :delay-duration="0">
         <UButton
           variant="ghost"
           color="neutral"
+          icon="i-lucide-settings"
           size="xs"
-          class="px-2"
-          @click="emit('update:showInNavigation', !showInNavigation)"
+          class="px-2 lg:px-3"
+          @click="emit('show-settings')"
         >
-          <UIcon
-            name="i-lucide-menu"
-            :class="['size-4', showInNavigation ? 'text-muted' : 'opacity-30']"
-          />
-          <span :class="['hidden lg:inline', showInNavigation ? '' : 'opacity-30']">
-            {{ showInNavigation ? t('pages.editor.inMenu') : t('pages.editor.noMenu') }}
-          </span>
+          <span class="hidden lg:inline">{{ t('pages.editor.settings') }}</span>
         </UButton>
-      </UTooltip>
-
-      <!-- Settings -->
-      <UTooltip :text="t('pages.editor.settings')" :delay-duration="0">
-        <UPopover>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-settings"
-            size="xs"
-          >
-            <span class="hidden lg:inline">{{ t('pages.editor.settings') }}</span>
-          </UButton>
-          <template #content>
-            <div class="p-4 w-72 space-y-4">
-              <div class="text-sm font-medium text-default mb-3">{{ t('pages.editor.pageSettings') }}</div>
-
-              <UFormField :label="t('pages.fields.layout')" name="layout">
-                <USelect
-                  :model-value="layout"
-                  :items="layoutOptions"
-                  value-key="value"
-                  size="sm"
-                  class="w-full"
-                  @update:model-value="(val: any) => { emit('update:layout', val); emit('layout-change') }"
-                />
-              </UFormField>
-
-              <UFormField :label="t('pages.fields.parent')" name="parentId">
-                <USelect
-                  :model-value="parentId"
-                  :items="parentOptions"
-                  value-key="value"
-                  :loading="pagesPending"
-                  :placeholder="t('pages.editor.noParent')"
-                  size="sm"
-                  class="w-full"
-                  @update:model-value="(val: string | null) => emit('update:parentId', val)"
-                />
-              </UFormField>
-
-              <!-- Per-page chrome: hide nav pill / login controls on the
-                   public page (language + color mode always stay) -->
-              <UFormField
-                :label="t('pages.editor.chromeHideNav')"
-                :description="t('pages.editor.chromeHideNavDescription')"
-                name="hideNav"
-              >
-                <USwitch
-                  :model-value="hideNav ?? false"
-                  size="sm"
-                  @update:model-value="emit('update:hideNav', $event)"
-                />
-              </UFormField>
-
-              <UFormField
-                :label="t('pages.editor.chromeHideAuth')"
-                :description="t('pages.editor.chromeHideAuthDescription')"
-                name="hideAuthControls"
-              >
-                <USwitch
-                  :model-value="hideAuthControls ?? false"
-                  size="sm"
-                  @update:model-value="emit('update:hideAuthControls', $event)"
-                />
-              </UFormField>
-
-              <!-- Scope provided by a content block (e.g. kassa → event helper
-                   PIN): the page access code is inert, show the hint instead -->
-              <UAlert
-                v-if="visibility === 'scoped' && scopeProvidedByBlock"
-                color="info"
-                variant="subtle"
-                icon="i-lucide-key-round"
-                :title="t('pages.editor.scopeFromBlockTitle')"
-                :description="t('pages.editor.scopeFromBlockDescription')"
-              />
-
-              <!-- Access code — only for scoped visibility on a saved page -->
-              <UFormField
-                v-else-if="visibility === 'scoped' && pageId"
-                :label="t('pages.editor.accessCode')"
-                name="accessCode"
-                :description="hasAccessCode ? t('pages.editor.accessCodeSet') : t('pages.editor.accessCodeUnset')"
-              >
-                <div class="flex gap-2">
-                  <UInput
-                    v-model="accessCodeInput"
-                    :placeholder="hasAccessCode ? '••••••' : t('pages.editor.accessCodePlaceholder')"
-                    icon="i-lucide-key-round"
-                    size="sm"
-                    class="flex-1"
-                    autocomplete="off"
-                    @keydown.enter.prevent="saveAccessCode"
-                  />
-                  <UButton
-                    size="sm"
-                    color="primary"
-                    variant="soft"
-                    :loading="accessCodePending"
-                    :disabled="!accessCodeInput.trim()"
-                    @click="saveAccessCode"
-                  >
-                    {{ t('pages.editor.accessCodeSave') }}
-                  </UButton>
-                </div>
-                <UButton
-                  v-if="hasAccessCode"
-                  size="xs"
-                  color="error"
-                  variant="link"
-                  class="mt-1 px-0"
-                  :loading="accessCodePending"
-                  @click="emit('remove-access-code')"
-                >
-                  {{ t('pages.editor.accessCodeRemove') }}
-                </UButton>
-              </UFormField>
-            </div>
-          </template>
-        </UPopover>
       </UTooltip>
     </UFieldGroup>
 

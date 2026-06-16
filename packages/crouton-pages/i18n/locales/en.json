@@ -14,6 +14,9 @@
       "footer": {
         "name": "Footer",
         "description": "The site footer, composed from blocks. One per site; shown on every page."
+      },
+      "collectionDerived": {
+        "description": "Publishes items from this collection as standalone pages."
       }
     },
     "workspace": {
@@ -63,6 +66,11 @@
       "fullHeight": "Full Height",
       "fullScreen": "Full Screen"
     },
+    "layoutDescriptions": {
+      "default": "Header, footer and page navigation",
+      "fullHeight": "Content fills the viewport height",
+      "fullScreen": "No chrome — content only"
+    },
     "parent": {
       "root": "Root (No Parent)"
     },
@@ -104,6 +112,10 @@
     "editor": {
       "settings": "Settings",
       "pageSettings": "Page Settings",
+      "sectionGeneral": "General",
+      "sectionAppearance": "Appearance",
+      "sectionNavigation": "Navigation",
+      "sectionAccess": "Access",
       "generate": "Generate",
       "preview": "Preview",
       "search": "Search",

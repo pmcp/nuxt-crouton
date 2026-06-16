@@ -178,7 +178,11 @@ export default defineAppConfig({
       references: { categoryId: 'categories' }, // Auto-refresh on mutation
       dependentFieldComponents: { slots: 'SlotPicker' },
       display: { title: 'name', subtitle: 'category', image: 'coverImage', badge: 'status' },
-      publishable: true // Auto-registers as page type in crouton-pages
+      publishable: true, // Auto-registers as page type in crouton-pages
+      // Optional: describe the derived page type shown in the pages editor's
+      // page-type picker (name/description are i18n keys; icon falls back to
+      // adminNav.icon, then a generic file icon). See crouton-pages CLAUDE.md.
+      pageType: { description: 'shop.products.pageType.description', icon: 'i-lucide-shirt' }
     }
   }
 })
