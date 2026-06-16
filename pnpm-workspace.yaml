@@ -19,7 +19,7 @@ catalog:
   vue-router: ^4.6.4
   typescript: ^5.7.0
   wrangler: ^4.64.0
-  '@libsql/client': ^0.17.0
-  drizzle-orm: ^0.45.1
-  drizzle-kit: ^0.31.0
+  '@libsql/client': ^0.17.4
+  drizzle-orm: ^0.45.2
+  drizzle-kit: ^0.31.10
   '@nuxt/ui': ^4.3.0
