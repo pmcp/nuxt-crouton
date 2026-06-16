@@ -5,10 +5,12 @@
 export function getInitials(name: string): string {
   if (!name) return '?'
   const parts = name.trim().split(/\s+/)
+  const first = parts[0] ?? ''
   if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase()
+    return first.charAt(0).toUpperCase()
   }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+  const last = parts[parts.length - 1] ?? ''
+  return (first.charAt(0) + last.charAt(0)).toUpperCase()
 }
 
 /**

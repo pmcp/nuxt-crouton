@@ -318,7 +318,7 @@ npx wrangler d1 execute <DB_NAME> \
 
 ### 4. Authentication
 
-Users are auto-detected via `useUserSession()` from crouton-auth.
+Users are auto-detected via `useSession()` from crouton-auth.
 
 ## Architecture
 

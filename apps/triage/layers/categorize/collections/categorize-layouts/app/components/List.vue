@@ -26,7 +26,7 @@
     :layout="layout"
     collection="categorizeCategorizeLayouts"
     :columns="columns"
-    :rows="categorize-layouts || []"
+    :rows="categorizeLayouts || []"
     :loading="pending"
   >
     <template #header>

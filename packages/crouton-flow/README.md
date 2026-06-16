@@ -101,7 +101,7 @@ tag = "v1"
 new_classes = ["FlowRoom"]
 ```
 
-3. **Authentication**: Users must be authenticated via `useUserSession()` for presence features.
+3. **Authentication**: Users must be authenticated via `useSession()` for presence features.
 
 ## Props
 

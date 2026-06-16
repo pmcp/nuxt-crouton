@@ -57,20 +57,30 @@ const layoutRef = ref<{ select: (item: any) => void; create: () => void; focusSe
 // Sidebar ref for refresh after create
 const sidebarRef = ref<{ refresh: () => Promise<void>; focusSearch: () => void } | null>(null)
 
-// Fetch selected flow config
+// Fetch selected flow config — gated until a flow is selected; the reactive
+// URL key then drives (re)fetches as the selection changes.
 const { data: flow, pending: flowPending, refresh: refreshFlow } = await useFetch(
   () => selectedFlowId.value && teamId.value
     ? `/api/crouton-flow/teams/${teamId.value}/flows/${selectedFlowId.value}`
-    : null,
-  { default: () => null as any, watch: [selectedFlowId] }
+    : '',
+  {
+    default: () => null as any,
+    immediate: !!(selectedFlowId.value && teamId.value),
+    watch: [selectedFlowId]
+  }
 )
 
-// Fetch collection rows when not in sync mode
+// Fetch collection rows when not in sync mode — gated until a non-sync flow
+// is loaded (the empty branch also avoids dereferencing a null flow).
 const { data: rows, pending: rowsPending } = await useFetch(
   () => flow.value && !flow.value.syncEnabled && teamId.value
     ? `/api/teams/${teamId.value}/${flow.value.collection}`
-    : null,
-  { default: () => [] as any[], watch: [flow] }
+    : '',
+  {
+    default: () => [] as any[],
+    immediate: !!(flow.value && !flow.value.syncEnabled && teamId.value),
+    watch: [flow]
+  }
 )
 
 const loading = computed(() => flowPending.value || rowsPending.value)

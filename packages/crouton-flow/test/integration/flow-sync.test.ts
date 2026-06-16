@@ -171,7 +171,7 @@ vi.mock('vue', async () => {
   }
 })
 
-vi.stubGlobal('useUserSession', () => ({
+vi.stubGlobal('useSession', () => ({
   user: ref({
     id: 'user-123',
     name: 'Test User',

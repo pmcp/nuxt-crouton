@@ -39,7 +39,7 @@ const usersWithCursors = computed(() =>
 // Get display name (first name or truncated)
 function getDisplayName(name: string): string {
   if (!name) return ''
-  const firstName = name.split(' ')[0]
+  const firstName = name.split(' ')[0] ?? ''
   return firstName.length > 12 ? firstName.slice(0, 12) + '...' : firstName
 }
 </script>

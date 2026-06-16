@@ -80,12 +80,11 @@ export function useCollabPresence(options: UseCollabPresenceOptions): UseCollabP
     // Try to get user from session (nuxt-crouton-auth)
     if (!providedUser) {
       try {
-        // @ts-expect-error - useSession may not be available if auth module not installed
         const sessionResult = useSession()
 
         const sessionUser = sessionResult?.user
         if (sessionUser?.value) {
-          const userRecord = sessionUser.value as Record<string, unknown>
+          const userRecord = sessionUser.value as unknown as Record<string, unknown>
 
           const userId = String(userRecord.id || userRecord.sub || 'anonymous')
           const userName = String(userRecord.name || userRecord.email || 'Anonymous')

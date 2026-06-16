@@ -21,9 +21,11 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { teamId } = useTeamContext()
 
+// Gate on teamId: skip the initial request until a team is in context, then
+// the reactive URL key drives the fetch once teamId resolves.
 const { data: flows, pending, refresh } = await useFetch(
-  () => teamId.value ? `/api/crouton-flow/teams/${teamId.value}/flows` : null,
-  { default: () => [] as any[] }
+  () => `/api/crouton-flow/teams/${teamId.value}/flows`,
+  { default: () => [] as any[], immediate: !!teamId.value }
 )
 
 // Search

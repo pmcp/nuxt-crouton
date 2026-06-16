@@ -38,9 +38,7 @@ export interface UseFormCollabPresenceReturn {
  */
 function getCurrentUser(): { id: string; name: string } {
   try {
-    // @ts-expect-error - useSession may not exist if auth package not installed
     if (typeof useSession === 'function') {
-      // @ts-expect-error - conditional call
       const { user } = useSession()
       if (user?.value) {
         return {
@@ -188,7 +186,6 @@ export function useFormCollabPresence(): UseFormCollabPresenceReturn {
 
   // Watch for crouton states - only if useCrouton is available
   try {
-    // @ts-expect-error - useCrouton may not be available during setup
     const crouton = useCrouton()
 
     if (crouton?.croutonStates) {

@@ -34,10 +34,10 @@ export const triageMessageSchema = z.object({
   subject: z.string().min(1, 'subject is required'),
   htmlBody: z.string().optional(),
   textBody: z.string().optional(),
-  receivedAt: z.date({ required_error: 'receivedAt is required' }),
+  receivedAt: z.date().nullable(),
   read: z.boolean().optional(),
   forwardedTo: z.string().optional(),
-  forwardedAt: z.date().optional(),
+  forwardedAt: z.date().nullable().optional(),
   resendEmailId: z.string().optional()
 })
 
