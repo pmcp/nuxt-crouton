@@ -14,7 +14,7 @@ interface ${componentName}Item {
   // value: string
 }
 
-const model = defineModel<${componentName}Item>()
+const model = defineModel<${componentName}Item>({ required: true })
 
 // Ensure stable ID on first creation
 if (!model.value.id) {

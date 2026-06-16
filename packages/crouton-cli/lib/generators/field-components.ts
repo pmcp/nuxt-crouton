@@ -110,7 +110,7 @@ interface ${interfaceName} {
   ${interfaceFields.join('\n  ')}
 }
 
-const model = defineModel<${interfaceName}>()
+const model = defineModel<${interfaceName}>({ required: true })
 
 // Ensure stable ID on first creation
 if (model.value && !model.value.id) {
@@ -182,7 +182,7 @@ interface ${interfaceName} {
   ${interfaceFields.join('\n  ')}
 }
 
-const model = defineModel<${interfaceName}>()
+const model = defineModel<${interfaceName}>({ required: true })
 
 const { locale, locales } = useI18n()
 

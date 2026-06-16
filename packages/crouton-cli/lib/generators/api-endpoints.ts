@@ -216,7 +216,7 @@ import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/t
 import { z } from 'zod'
 
 ${itemSchemasPrefix}const bodySchema = z.object({
-  ${data.fieldsSchema}
+  ${data.fieldsSchema}${hasTranslations ? ',\n  // Transient hint: which locale the translation patch targets (not a column)\n  locale: z.string().optional()' : ''}
 }).partial().strip()
 
 export default defineEventHandler(async (event) => {
@@ -251,7 +251,8 @@ export default defineEventHandler(async (event) => {
 
   // Only include fields that were actually sent in the request
   const updates: Record<string, any> = {}
-  for (const [key, value] of Object.entries(body)) {
+  for (const [key, value] of Object.entries(body)) {${hasTranslations ? `
+    if (key === 'locale') continue // transient translation hint, not a column` : ''}
     if (value !== undefined) {
       updates[key] = value
     }
