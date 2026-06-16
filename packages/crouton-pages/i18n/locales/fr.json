@@ -3,6 +3,18 @@
     "title": "Pages",
     "search": "Rechercher des pages...",
     "pageTypes": {
+      "regular": {
+        "name": "Page standard",
+        "description": "Une page de contenu standard que vous construisez avec l'éditeur de blocs — texte, images, sections et plus encore."
+      },
+      "collectionBinder": {
+        "name": "Classeur de collection",
+        "description": "Publie chaque élément d'une collection sous forme de sous-pages liées dans votre navigation."
+      },
+      "footer": {
+        "name": "Pied de page",
+        "description": "Le pied de page du site, composé de blocs. Un seul par site ; affiché sur chaque page."
+      },
       "collectionDerived": {
         "description": "Publie les éléments de cette collection en tant que pages autonomes."
       }
