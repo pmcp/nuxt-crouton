@@ -177,17 +177,24 @@ jobs:
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed: ${URL:-<url not parsed>}"
 
-      # Push Worker secrets from the (optional) WORKER_SECRETS_JSON bundle. Runs
-      # after the worker exists; secrets persist across deploys, so this is a no-op
-      # re-upload when unchanged. Skipped entirely if the secret isn't provided.
-      # Targets the staging worker with --env staging for non-production deploys.
-      - name: Sync Worker secrets
+      # (Optional) explicit Worker secrets from the WORKER_SECRETS_JSON bundle —
+      # an OVERRIDE for known/shared values (e.g. a deliberate production secret).
+      # The "Ensure BETTER_AUTH_SECRET" step below covers the common case, so this
+      # is only for values you want to pin. Runs first so an explicit BETTER_AUTH_SECRET
+      # wins over the auto-generated one. Secrets persist across deploys (no-op re-upload).
+      #
+      # IMPORTANT — scoping: WORKER_SECRETS_JSON MUST be a *repository-level* Actions
+      # secret, NOT an *Environment* secret. This job is reached via `secrets: inherit`
+      # from a thin caller whose calling job declares no `environment:`, so
+      # Environment-scoped secrets are never in scope to inherit and resolve to EMPTY
+      # (they silently skip). Repository-level secrets inherit correctly.
+      - name: Sync explicit Worker secrets (optional override)
         working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
         env:
           SECRETS_JSON: ${{ secrets.WORKER_SECRETS_JSON }}
         run: |
           if [ -z "$SECRETS_JSON" ]; then
-            echo "No WORKER_SECRETS_JSON provided — skipping secret sync (manage Worker secrets manually)."
+            echo "No WORKER_SECRETS_JSON provided — the Ensure BETTER_AUTH_SECRET step below covers auth."
             exit 0
           fi
           printf '%s' "$SECRETS_JSON" > "$RUNNER_TEMP/worker-secrets.json"
@@ -197,6 +204,34 @@ jobs:
             npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json" --env staging
           fi
           rm -f "$RUNNER_TEMP/worker-secrets.json"
+
+      # Guarantee a new app can AUTHENTICATE on first deploy with ZERO per-app setup.
+      # A freshly provisioned Worker has no secrets, so member login 500s with
+      # "[crouton/auth] BETTER_AUTH_SECRET is required". If the Worker lacks one,
+      # generate a strong secret and set it. Worker secrets persist across deploys,
+      # so this runs exactly once per Worker and is a no-op afterwards — it NEVER
+      # rotates an existing secret (which would invalidate live sessions). If the
+      # secret list can't be read (e.g. an app whose wrangler.jsonc has no `name`),
+      # we skip generation rather than risk clobbering. BETTER_AUTH_URL isn't needed:
+      # better-auth infers it from the request for email/password login.
+      - name: Ensure BETTER_AUTH_SECRET (auto-generate if missing)
+        working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -o pipefail
+          ENV_FLAG=""
+          if [ "$ENVIRONMENT" != "production" ]; then ENV_FLAG="--env staging"; fi
+          if ! existing=$(npx wrangler secret list $ENV_FLAG 2>/dev/null); then
+            echo "::warning::Could not list Worker secrets for ${{ inputs.app }} ($ENVIRONMENT) — skipping auto-generate to avoid clobbering an existing BETTER_AUTH_SECRET."
+            exit 0
+          fi
+          if echo "$existing" | grep -q 'BETTER_AUTH_SECRET'; then
+            echo "✓ BETTER_AUTH_SECRET already present on the Worker — leaving it untouched."
+          else
+            echo "::notice::No BETTER_AUTH_SECRET on ${{ inputs.app }} ($ENVIRONMENT) — generating one (persists; override anytime via a repo-level WORKER_SECRETS_JSON)."
+            printf '%s' "$(openssl rand -hex 32)" | npx wrangler secret put BETTER_AUTH_SECRET $ENV_FLAG
+          fi
 
       # On PRs, post/update a sticky comment with the isolated staging URL.
       - name: Comment staging URL on PR
