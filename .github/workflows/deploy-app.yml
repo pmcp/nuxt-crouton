@@ -19,8 +19,13 @@ on:
   workflow_call:
     inputs:
       app:
-        description: App directory name under apps/ (e.g. three-demo)
+        description: App/POC directory name (e.g. velo, blog)
         required: true
+        type: string
+      workspace:
+        description: "Workspace dir holding the app: 'apps' (launched, default) or 'pocs' (preview)."
+        required: false
+        default: apps
         type: string
       environment:
         description: 'production | staging'
@@ -137,9 +142,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            apps/${{ inputs.app }}/node_modules/.cache
-            apps/${{ inputs.app }}/.nuxt/cache
-          key: nuxt-build-${{ inputs.app }}-${{ hashFiles(format('apps/{0}/**', inputs.app), 'packages/**/*.ts') }}
+            ${{ inputs.workspace }}/${{ inputs.app }}/node_modules/.cache
+            ${{ inputs.workspace }}/${{ inputs.app }}/.nuxt/cache
+          key: nuxt-build-${{ inputs.app }}-${{ hashFiles(format('{0}/{1}/**', inputs.workspace, inputs.app), 'packages/**/*.ts') }}
           restore-keys: |
             nuxt-build-${{ inputs.app }}-
 
@@ -147,7 +152,7 @@ jobs:
       # (see deploy-learnings); cf:deploy/cf:staging only run `nuxt build`.
       - name: Prepare Nuxt (generate tsconfig)
         run: npx nuxt prepare
-        working-directory: apps/${{ inputs.app }}
+        working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
 
       # The one real step: run the SAME script a developer runs locally. It builds
       # with NITRO_PRESET=cloudflare_module, deploys (auto-provisioning id-less
@@ -155,7 +160,7 @@ jobs:
       # and applies remote D1 migrations.
       - name: Deploy (build → provision → sync ids → migrate)
         id: deploy
-        working-directory: apps/${{ inputs.app }}
+        working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
         env:
           # BETTER_AUTH_* are only needed by the prerender pass at build time.
           BETTER_AUTH_SECRET: prerender-placeholder
@@ -177,7 +182,7 @@ jobs:
       # re-upload when unchanged. Skipped entirely if the secret isn't provided.
       # Targets the staging worker with --env staging for non-production deploys.
       - name: Sync Worker secrets
-        working-directory: apps/${{ inputs.app }}
+        working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
         env:
           SECRETS_JSON: ${{ secrets.WORKER_SECRETS_JSON }}
         run: |
