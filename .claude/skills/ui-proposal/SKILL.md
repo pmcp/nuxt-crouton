@@ -1,0 +1,59 @@
+---
+name: ui-proposal
+description: Generate a before/after UI mockup (pure HTML/CSS/SVG, offline) for a proposed UI change, render it to a PNG, and commit the source — so a human can sign off on the look-and-feel BEFORE the real component is built. Use when a task adds or changes UI (a .vue component, a layout, a screen), or when asked to "mock this up", "show me a proposal", "what would this look like".
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+---
+
+# UI Proposal — mock it before you build it
+
+Turns "I'm about to add/change this screen" into a **visual artifact a human can approve**: a self-contained before/after HTML mockup (pure CSS + inline SVG — **no JS, no CDN**, so it renders anywhere, including a phone file-preview), plus a rendered **PNG** that can be posted in a PR comment.
+
+This is the foundation of the UI sign-off loop (epic #307): produce the mockup → it gets posted on the PR → iterate on feedback → only then build the real thing.
+
+> **Why a PNG?** GitHub comments can't render raw HTML/CSS. The committed `.html` is the editable source; the `.png` is what gets posted.
+
+## When to use
+- A task's diff adds or changes a **visual surface**: a `.vue` component, a layout, a page, a theme.
+- The user asks to "mock up", "propose", "show what it'd look like", or wants design sign-off.
+- **Skip** for pure logic/types/server changes with no visible result.
+
+## What it produces
+| Artifact | Path | Committed? |
+|----------|------|-----------|
+| Mockup source | `writeups/ui-proposals/<slug>.html` | ✅ yes (editable source of truth) |
+| Rendered image | `screenshots/ui-proposal-<slug>.png` | ❌ no — `screenshots/` is gitignored; it's posted to the PR, not committed |
+
+`<slug>` = kebab of the surface, e.g. `mobile-collection-viewer`.
+
+## Step 1 — Understand the surface
+Read the component(s) you're about to change (and any real data/screenshots the user gave). The mockup must reflect the **actual** current UI for "before" and your **intended** design for "after". Use real labels/data where you have them — it makes the proposal trustworthy.
+
+## Step 2 — Build the mockup from the template
+Copy `template.html` (next to this skill) to `writeups/ui-proposals/<slug>.html` and fill the slots:
+- **Frame**: use the **phone** frame for mobile surfaces, the **desktop** frame for wide ones (both are in the template).
+- **Before**: mirror today's UI honestly (including the rough edges the change fixes).
+- **After**: your proposed design.
+- **"What changes"** list: 3–5 plain-language bullets.
+
+Rules (keep it portable):
+- **No JavaScript, no external/CDN assets.** Inline SVG icons only (the template ships a set). This is non-negotiable — the artifact must render offline.
+- Match the app's look: dark Nuxt-UI palette, emerald primary, the variables already in the template.
+- One file, self-contained.
+
+`example.html` (next to this skill) is a complete worked reference — the mobile collection viewer before/after.
+
+## Step 3 — Render to PNG
+```bash
+node .claude/skills/ui-proposal/render.mjs writeups/ui-proposals/<slug>.html screenshots/ui-proposal-<slug>.png
+# optional: --width 1100   (default 1000)   --selector ".stage"   (crop to an element)
+```
+Uses the repo's Playwright (`@playwright/test`) headless Chromium — no network. Renders at 2× for a crisp image.
+
+## Step 4 — Hand off
+- **Commit** the `.html` (via `/commit`, scope `docs`).
+- The **PNG** is the thing to post in the PR comment (handled by the worker gate / revision-loop sub-issues #309/#310). When running this skill by hand, attach/post the PNG yourself.
+
+## Conventions
+- Before **and** after side-by-side for a *change*; **after-only** for net-new UI (no "before" exists).
+- Keep the mockup focused on the surface under discussion — don't redraw the whole app.
+- Re-render after every edit so the PNG never drifts from the HTML.
