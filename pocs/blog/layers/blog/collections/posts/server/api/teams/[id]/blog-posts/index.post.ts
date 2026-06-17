@@ -9,7 +9,7 @@ const bodySchema = z.object({
   slug: z.string().min(1, 'slug is required'),
   body: z.string().optional(),
   author: z.string().optional(),
-  publishedAt: z.date().optional(),
+  publishedAt: z.coerce.date().nullish(),
   status: z.string().min(1, 'status is required'),
   tags: z.array(z.string()).optional()
 }).strip()
@@ -26,6 +26,10 @@ export default defineEventHandler(async (event) => {
   // body is the validated payload (id is not part of the schema) — the database generates the id
   const dataWithoutId = body
 
+  // Convert date string to Date object
+  if (dataWithoutId.publishedAt) {
+    dataWithoutId.publishedAt = new Date(dataWithoutId.publishedAt)
+  }
   const dbTimer = timing.start('db')
   const result = await createBlogPost({
     ...dataWithoutId,

@@ -30,7 +30,7 @@ export const blogPosts = sqliteTable('blog_posts', {
   slug: text('slug').notNull(),
   body: text('body'),
   author: text('author'),
-  publishedAt: text('publishedAt'),
+  publishedAt: integer('publishedAt', { mode: 'timestamp' }).$default(() => new Date()),
   status: text('status').notNull(),
   tags: jsonColumn('tags').$default(() => (null)),
 
