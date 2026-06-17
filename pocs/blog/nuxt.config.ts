@@ -19,7 +19,8 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-auth',
-    '@fyit/crouton-i18n'
+    '@fyit/crouton-i18n',
+    './layers/blog'
   ],
 
   hub: {
