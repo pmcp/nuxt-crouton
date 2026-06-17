@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, markRaw, provide } from 'vue'
+import { ref, shallowRef, computed, watch, markRaw, provide } from 'vue'
 import type { Node } from '@vue-flow/core'
 import { LAYOUT_ACTION_KEY } from '../../../utils/layoutAction'
 import NotionCardNode from '../../../components/NotionCardNode.vue'
@@ -360,7 +360,11 @@ const nodeTypeComponents = {
 }
 
 // ─── Canvas nodes ───
-const nodes = ref<Node[]>([])
+// shallowRef (not ref) is deliberate: nodes is always reassigned as a whole
+// array, so shallow reactivity is sufficient — and it keeps .value as plain
+// Node[] instead of UnwrapRef<Node[]>, which Vue 3.5.3x makes deep enough to
+// trip TS2589 ("excessively deep") on every .value access (#242).
+const nodes = shallowRef<Node[]>([])
 
 // ─── Auth params helper ───
 const authParams = computed(() => {
@@ -715,7 +719,8 @@ function createGroup() {
   if (!newGroupName.value.trim()) return
 
   const groupNode = groupManager.createGroup(newGroupName.value.trim())
-  nodes.value.push(groupNode)
+  // Reassign (not push): shallowRef only reacts to .value replacement.
+  nodes.value = [...nodes.value, groupNode]
 
   newGroupName.value = ''
   showGroupModal.value = false

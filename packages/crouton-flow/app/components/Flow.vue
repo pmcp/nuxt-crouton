@@ -57,8 +57,14 @@ import '@vue-flow/minimap/dist/style.css'
  */
 
 interface Props {
-  /** Collection rows to display as nodes (not needed when sync=true) */
-  rows?: Record<string, unknown>[]
+  /**
+   * Collection rows to display as nodes (not needed when sync=true).
+   * In ephemeral mode (data-mode="ephemeral") these are pre-built Vue Flow
+   * Node[] rather than raw collection rows — hence the union. The component
+   * consumes them as records internally (see the cast at the ephemeral branch).
+   * Widened so consumers can v-model:rows a typed Node[] ref without TS2322 (#233).
+   */
+  rows?: Record<string, unknown>[] | Node[]
   /** Collection name for component resolution and mutations */
   collection: string
   /** Field containing parent ID (default: 'parentId') */
@@ -368,7 +374,7 @@ function onNewConnection(connection: Connection) {
   }]
 
   // Persist to DB
-  const targetRow = (props.rows || []).find(r => (r as any).id === connection.target)
+  const targetRow = rowsRef.value.find(r => (r as any).id === connection.target)
   const existingParent = targetRow?.[props.parentField] as string | null | undefined
 
   if (existingParent && existingParent !== connection.source) {
@@ -419,7 +425,8 @@ const {
   remoteGhostNodes
 } = useFlowSyncBridge({
   syncState,
-  rows: computed(() => props.rows),
+  // Bridge handles rows as records; ephemeral Node[] is record-shaped at runtime (#233)
+  rows: computed(() => props.rows as Record<string, unknown>[] | undefined),
   labelField: props.labelField,
   parentField: props.parentField,
   positionField: props.positionField,
@@ -438,7 +445,8 @@ const positionSyncOtherUsers = computed(() => {
 // ============================================
 // STANDALONE MODE: Props-based data
 // ============================================
-const rowsRef = computed(() => props.rows || [])
+// useFlowData reads rows by field key; treat them as records (#233)
+const rowsRef = computed(() => (props.rows || []) as Record<string, unknown>[])
 
 const { nodes: dataNodes, edges: dataEdges, getItem } = useFlowData(
   rowsRef,
@@ -763,7 +771,7 @@ onNodeDragStop((event: NodeDragEvent) => {
   // In ephemeral mode, emit updated rows so parent can track position changes
   if (props.dataMode === 'ephemeral' && props.rows) {
     const movedIds = new Set(draggedNodes.map(n => n.id))
-    const updatedRows = props.rows.map(r => {
+    const updatedRows = rowsRef.value.map(r => {
       const id = (r as any).id
       if (movedIds.has(id)) {
         const n = draggedNodes.find(dn => dn.id === id)!
@@ -830,7 +838,7 @@ onEdgesChange((changes) => {
 })
 
 function deleteEdge(edge: { id: string; source: string; target: string }) {
-  const targetRow = (props.rows || []).find(r => (r as any).id === edge.target)
+  const targetRow = rowsRef.value.find(r => (r as any).id === edge.target)
   const isParentEdge = targetRow?.[props.parentField] === edge.source
 
   if (isParentEdge) {
