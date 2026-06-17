@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crouton — Deployment Topology</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #121a2e;
+    --panel-2: #0f1626;
+    --border: #243049;
+    --text: #e6ebf5;
+    --muted: #9aa7bd;
+    --accent: #4ade80;
+    --accent-2: #60a5fa;
+    --prod: #34d399;
+    --stg: #60a5fa;
+    --radius: 16px;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, #16213c 0%, var(--bg) 55%);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  header.hero {
+    display: flex; flex-direction: column; gap: 10px;
+    padding-bottom: 28px; margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: .18em; font-size: 12px;
+    color: var(--accent); font-weight: 700;
+  }
+  h1 { font-size: clamp(28px, 4vw, 44px); margin: 0; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: 17px; max-width: 70ch; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 999px; font-size: 13px; color: var(--muted);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.prod { background: var(--prod); }
+  .dot.stg { background: var(--stg); }
+  .dot.pkg { background: #f59e0b; }
+  .dot.none { background: #64748b; }
+
+  section { margin-top: 44px; }
+  .step-no {
+    display: inline-grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent-2), #2563eb);
+    color: #051; color: #04121f; font-weight: 800; font-size: 15px;
+    box-shadow: var(--shadow);
+  }
+  h2 { font-size: 24px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  h2 .step-no { color: #fff; }
+  .section-sub { color: var(--muted); margin: 0 0 18px; padding-left: 42px; }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    overflow-x: auto;
+  }
+  .mermaid { display: flex; justify-content: center; min-height: 60px; }
+
+  .callouts { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 20px; }
+  @media (min-width: 760px) { .callouts { grid-template-columns: 1fr 1fr; } }
+  .callout {
+    background: var(--panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-2);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .callout h3 { margin: 0 0 6px; font-size: 15px; }
+  .callout p { margin: 0; color: var(--muted); font-size: 14px; }
+  .callout.warn { border-left-color: #fbbf24; }
+  .callout.good { border-left-color: var(--prod); }
+
+  code, .mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .92em;
+    background: rgba(96,165,250,.12);
+    color: #cfe3ff;
+    padding: 1px 6px; border-radius: 6px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  td .mono { font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">nuxt-crouton · architecture</span>
+    <h1>Deployment Topology</h1>
+    <p class="sub">The paths code takes from the monorepo to a live URL — fixtures, packages, POCs and launched apps, and the three triggers that drive a Cloudflare&nbsp;Workers deploy across <strong>staging / preview</strong> and <strong>production</strong>.</p>
+    <div class="legend">
+      <span class="pill"><span class="dot prod"></span> Production · manual only</span>
+      <span class="pill"><span class="dot stg"></span> Staging / Preview · PR &amp; push</span>
+      <span class="pill"><span class="dot pkg"></span> Shared package · ripples into apps</span>
+      <span class="pill"><span class="dot none"></span> Never deployed</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="step-no">1</span> Where code lives → how it ships</h2>
+    <p class="section-sub">Packages and fixtures never deploy on their own. A POC only reaches staging; it earns production by being promoted into <code>apps/</code>.</p>
+    <div class="card">
+      <pre class="mermaid">
+flowchart TD
+    subgraph SRC["Where code lives in the monorepo"]
+      FIX["fixtures/NAME<br/><i>e2e harness</i>"]
+      PKG["packages/NAME<br/><i>shared layers · pkg:*</i>"]
+      POC["pocs/NAME<br/><i>incubator · poc:*</i>"]
+      APP["apps/NAME<br/><i>launched · app:*</i>"]
+    end
+
+    FIX -.->|"never deployed —<br/>boot + auth + CRUD smoke"| E2E([E2E smoke CI])
+    PKG ==>|"consumed by<br/>(path-filter ripple)"| POC
+    PKG ==>|"consumed by<br/>(path-filter ripple)"| APP
+    POC ==>|"promote at launch<br/>poc: → app:"| APP
+
+    POC -->|"PR / push"| STGP["Staging ONLY<br/>NAME.pmcp.dev"]
+    APP -->|"PR / push→staging"| STGA["Staging / Preview<br/>NAME.pmcp.dev"]
+    APP -->|"manual dispatch"| PROD["Production<br/>NAME.friendlyinter.net"]
+
+    classDef prod fill:#0f3d22,stroke:#34d399,color:#eafff2;
+    classDef stg fill:#102542,stroke:#60a5fa,color:#eaf2ff;
+    classDef none fill:#1a2233,stroke:#475569,color:#cbd5e1;
+    class PROD prod;
+    class STGP,STGA stg;
+    class FIX none;
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">2</span> How a deploy is triggered</h2>
+    <p class="section-sub">All three triggers funnel into one reusable workflow, <code>deploy-app.yml</code>, which simply runs the same <code>cf:*</code> script a developer runs locally.</p>
+    <div class="card">
+      <pre class="mermaid">
+flowchart LR
+    PR["Pull request<br/>(path-filtered)"] --> RW
+    PUSH["Push to<br/>staging branch"] --> RW
+    DISP["Manual dispatch<br/>env = production"] --> RW
+
+    RW{{"reusable<br/>deploy-app.yml"}}
+    RW -->|"PR · push→staging"| CFS["pnpm cf:staging"]
+    RW -->|"dispatch=production"| CFD["pnpm cf:deploy"]
+
+    subgraph STAGING["Staging / Preview environment"]
+      direction TB
+      CFS --> S1["build<br/>cloudflare_module"] --> S2["wrangler deploy --env staging<br/>auto-provision id-less D1+KV"] --> S3["sync ids"] --> S4["migrate staging --remote"] --> S5["db:seed:staging<br/>--with-staff ⇒ admin login"] --> S6["sticky PR comment: URL"]
+    end
+
+    subgraph PRODUCTION["Production environment"]
+      direction TB
+      CFD --> P1["build"] --> P2["wrangler deploy<br/>auto-provision"] --> P3["sync ids"] --> P4["migrate prod --remote<br/>NO seed"]
+    end
+
+    classDef stg fill:#102542,stroke:#60a5fa,color:#eaf2ff;
+    classDef prod fill:#0f3d22,stroke:#34d399,color:#eafff2;
+    class S1,S2,S3,S4,S5,S6,CFS stg;
+    class P1,P2,P3,P4,CFD prod;
+      </pre>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">3</span> The mental model</h2>
+    <p class="section-sub">The parts that trip people up.</p>
+    <div class="callouts">
+      <div class="callout">
+        <h3>Preview <em>is</em> Staging</h3>
+        <p>Same Workers env, same <code>NAME.pmcp.dev</code> domain, same <code>NAME-staging-db</code>. They differ only by <strong>trigger</strong>: a PR previews that PR; a push to the <code>staging</code> branch refreshes the shared env. It's <strong>one long-lived environment</strong>, not a per-PR throwaway.</p>
+      </div>
+      <div class="callout good">
+        <h3>Production is manual-only</h3>
+        <p><code>workflow_dispatch</code> with env=production → <code>cf:deploy</code> → <code>NAME.friendlyinter.net</code>. No seed step ever runs against prod.</p>
+      </div>
+      <div class="callout">
+        <h3>First deploy auto-provisions</h3>
+        <p>An id-less <code>wrangler.jsonc</code> lets the first deploy create D1 + KV; <code>sync:ids</code> writes the real ids back. No manual resource juggling.</p>
+      </div>
+      <div class="callout warn">
+        <h3>The seed lives in the app script</h3>
+        <p><code>cf:staging</code> ends with <code>db:seed:staging</code> — not CI. That's why adding <code>--with-staff</code> makes the admin login appear on staging.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">4</span> Per-app domains &amp; preview scope</h2>
+    <p class="section-sub">Concrete domains today, and one real nuance: the PR-preview path filter differs per app.</p>
+    <div class="card" style="padding:6px 4px;">
+      <table>
+        <thead>
+          <tr><th>App</th><th>Production</th><th>Staging / Preview</th><th>PR preview triggers on</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>velo</strong></td>
+            <td><span class="mono">velo.friendlyinter.net</span></td>
+            <td><span class="mono">velo.pmcp.dev</span></td>
+            <td><span class="tag">apps/velo/** only</span></td>
+          </tr>
+          <tr>
+            <td><strong>triage</strong></td>
+            <td><span class="mono">triage.friendlyinter.net</span></td>
+            <td><span class="mono">triage.pmcp.dev</span></td>
+            <td><span class="tag">apps/triage/**</span></td>
+          </tr>
+          <tr>
+            <td><strong>fanfare</strong></td>
+            <td><span class="mono">kassa.pmcp.dev</span> <span class="tag">legacy naming</span></td>
+            <td><span class="mono">kassa-preview.pmcp.dev</span></td>
+            <td><span class="tag">apps/** + packages/**</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callouts" style="margin-top:16px;">
+      <div class="callout warn" style="grid-column:1 / -1;">
+        <h3>Why a package change previews on fanfare but not velo</h3>
+        <p>fanfare's <code>pull_request</code> trigger lists <code>packages/**</code> in its path filter, so a shared-package change (e.g. a <code>crouton-core</code> UI fix) auto-deploys a fanfare preview on the PR. velo's <code>pull_request</code> trigger only watches <code>apps/velo/**</code> — package changes deploy velo only on a push to the <code>staging</code> branch, never on the PR itself.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Generated for <strong>pmcp/nuxt-crouton</strong> · Cloudflare Workers (static assets) · NuxtHub = storage abstraction (D1 / KV / R2), not the deploy tool. Diagrams render via Mermaid.
+  </footer>
+
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      primaryColor: '#1b2742',
+      primaryBorderColor: '#3b4a6b',
+      primaryTextColor: '#e6ebf5',
+      lineColor: '#6b7da3',
+      tertiaryColor: '#0f1626'
+    },
+    flowchart: { curve: 'basis', padding: 14, nodeSpacing: 45, rankSpacing: 55 }
+  });
+</script>
+</body>
+</html>
