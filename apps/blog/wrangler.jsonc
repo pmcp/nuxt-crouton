@@ -1,0 +1,43 @@
+{
+  // Cloudflare WORKERS (static assets) config for blog — crouton standard (#108/#114).
+  //
+  // Nitro's `cloudflare_module` preset (NITRO_PRESET in cf:deploy/cf:staging) reads
+  // this file at build time and writes the deployable config to
+  // .output/server/wrangler.json, injecting `main` + the `assets` binding automatically.
+  //
+  // Bindings are intentionally ID-LESS so the first `wrangler deploy` AUTO-PROVISIONS
+  // the D1 database; `scripts/sync-wrangler-ids.mjs` then writes the resolved ids back
+  // here for remote migrations. Domain convention (#133): production →
+  // friendlyinter.net, staging → pmcp.dev. This is a local-dev spike (#258) — no deploy
+  // is wired in CI yet; the skeleton just keeps the deploy flow consistent with velo/fanfare.
+  "name": "blog",
+  "compatibility_date": "2024-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Production custom domain (#133): bound on the first `pnpm cf:deploy`.
+  "routes": [{ "pattern": "blog.friendlyinter.net", "custom_domain": true }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-db",
+      "migrations_dir": "server/db/migrations/sqlite"
+    }
+  ],
+
+  // Staging environment — deploying `--env staging` creates a `blog-staging` worker
+  // on blog.pmcp.dev. The env block is stripped from the generated .output config
+  // (nitro#3429), so cf:staging re-injects it via scripts/inject-wrangler-env.mjs.
+  "env": {
+    "staging": {
+      "routes": [{ "pattern": "blog.pmcp.dev", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "blog-staging-db",
+          "migrations_dir": "server/db/migrations/sqlite"
+        }
+      ]
+    }
+  }
+}
