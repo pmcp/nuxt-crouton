@@ -1,6 +1,6 @@
 <template>
-  <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
-    <div class="flex items-center gap-1.5">
+  <div class="flex flex-col gap-3 border-t border-default pt-4 mt-auto sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
       <span class="text-sm text-muted">{{ t('table.rowsPerPageColon') }}</span>
       <USelect
         :label="tString('table.rowsPerPage')"
@@ -10,7 +10,13 @@
         size="xs"
         @update:model-value="handlePageCountChange"
       />
-      <span class="text-sm text-muted">
+      <!-- Compact count on mobile -->
+      <span class="text-sm text-muted sm:hidden">
+        <span class="font-medium">{{ pageFrom }}</span>–<span class="font-medium">{{ pageTo }}</span>
+        / <span class="font-medium">{{ totalItems }}</span>
+      </span>
+      <!-- Full sentence on larger screens -->
+      <span class="hidden text-sm text-muted sm:inline">
         {{ t('table.showing') }}
         <span class="font-medium">{{ pageFrom }}</span>
         {{ t('table.to') }}
@@ -21,7 +27,7 @@
       </span>
     </div>
 
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center justify-end gap-1.5">
       <UPagination
         :page="page"
         :items-per-page="pageCount"
