@@ -410,19 +410,27 @@ Repeater fields can support per-item translations using `translatableProperties`
 
 ### Type Aliases
 
-Some types accept aliases (defined via `aliases` in `crouton-core/crouton.manifest.ts` and
-normalized in `mapType`). A schema can use the alias and it resolves to the canonical type —
-**column type, zod, ts, and seed all follow the canonical type**:
+Some types accept aliases (defined via `aliases` in each package's `crouton.manifest.ts`).
+A schema can use the alias and it resolves to the **canonical** type — so **column type, zod,
+ts, the form control, and seed all follow the canonical type**:
 
-| Alias | Canonical | SQLite column |
-|-------|-----------|---------------|
-| `integer` | `number` | `integer()` |
-| `datetime` | `date` | `integer({ mode: 'timestamp' })` |
+| Alias | Canonical | SQLite column | Form control |
+|-------|-----------|---------------|--------------|
+| `integer` | `number` | `integer()` | `UInputNumber` |
+| `datetime` | `date` | `integer({ mode: 'timestamp' })` | `CroutonCalendar` |
 
-⚠️ Before the alias was normalized in `mapType`, a field declared `"type": "integer"` fell
-through to `text()` (the schema generator only branches on `number`/`decimal`). Use `number`
-for integer columns; `decimal` is the float/`real` type. A value the spooler/endpoints write
-as a **string** (e.g. a status enum `'0'/'1'/'2'`) should be `string`, not `number`.
+**How resolution works (#285):** `getTypeMapping()` (in `lib/utils/manifest-loader.ts`)
+tags every entry — canonical *and* alias keys — with a `canonical` field, and `loadFields`
+resolves `field.type` through it before any generator runs. So a field's `type` is always the
+canonical name and every generator that branches on it (schema column, `form-component`'s
+`type === 'date'` → `CroutonCalendar`, the date-serialization logic) sees the canonical type.
+
+⚠️ Aliases must be resolved *before* the generators, not inside `mapType` (which only
+validates). Earlier, only `integer` was special-cased and `datetime` leaked through unresolved,
+so date fields silently generated a raw `<UInput>` (typecheck error: `Date` vs
+`AcceptableValue`) + a `text` column instead of a timestamp. Use `number` for integer columns;
+`decimal` is the float/`real` type. A value written as a **string** (e.g. a status enum
+`'0'/'1'/'2'`) should be `string`, not `number`.
 
 ## i18n Field Labels
 

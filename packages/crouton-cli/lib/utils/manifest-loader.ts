@@ -294,17 +294,30 @@ export function getModuleRegistryMap(
  */
 export function getTypeMapping(
   manifests: CroutonManifest[],
-): Record<string, { db: string; drizzle: string; zod: string; default: string; tsType: string }> {
-  const registry = getFieldTypeRegistry(manifests)
-  const mapping: Record<string, { db: string; drizzle: string; zod: string; default: string; tsType: string }> = {}
+): Record<string, { db: string; drizzle: string; zod: string; default: string; tsType: string; canonical: string }> {
+  const mapping: Record<string, { db: string; drizzle: string; zod: string; default: string; tsType: string; canonical: string }> = {}
 
-  for (const [name, def] of Object.entries(registry)) {
-    mapping[name] = {
-      db: def.db,
-      drizzle: def.drizzle,
-      zod: def.zod,
-      default: def.defaultValue,
-      tsType: def.tsType,
+  for (const manifest of manifests) {
+    if (!manifest.fieldTypes) continue
+    for (const [name, def] of Object.entries(manifest.fieldTypes)) {
+      // `canonical` lets callers resolve an alias (e.g. `datetime`) back to its
+      // canonical type (`date`). Without it, downstream generators that branch on
+      // `field.type === 'date'` silently miss alias-typed fields — emitting a raw
+      // UInput + text column instead of CroutonCalendar + a timestamp column (#285).
+      const entry = {
+        db: def.db,
+        drizzle: def.drizzle,
+        zod: def.zod,
+        default: def.defaultValue,
+        tsType: def.tsType,
+        canonical: name,
+      }
+      mapping[name] = entry
+      if (def.aliases) {
+        for (const alias of def.aliases) {
+          mapping[alias] = { ...entry, canonical: name }
+        }
+      }
     }
   }
 
