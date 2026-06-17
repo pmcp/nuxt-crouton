@@ -152,6 +152,8 @@ After each task: announce completion, say the code word, STOP. User runs `/clear
 
 **Two-domain topology (#133):** production → **`<app>.friendlyinter.net`**, staging → **`<app>.pmcp.dev`** (separate registrable domains = bulletproof session/cookie isolation). The deploy env is named **`staging`** (not `preview`).
 
+**🟦 STANDING RULE — deploy to STAGING, never production (#318).** The default deploy target is **always staging**: agents, skills, and routine work deploy to staging only (`/deploy` skill / `cf:staging` / push to `staging`). **NEVER deploy to production** except via the dedicated **`/deploy-production`** skill, invoked on an **explicit human request** to ship to prod. Production stays a deliberate, manual `workflow_dispatch` (env=production) — never a side effect of an agent flow.
+
 The pattern, end to end:
 - **`wrangler.jsonc`** (Workers): **no** `pages_build_output_dir`; `compatibility_flags: ["nodejs_compat"]`; bindings `DB` (D1), `KV`/`BLOB` (R2) as needed — **id-less** so the first deploy auto-provisions them; plus an **`env.staging`** block with **separate** staging ids + a `<app>.pmcp.dev` custom-domain `route` (bindings do NOT inherit across envs). `name`/`main`/`assets` are injected by the preset at build.
 - **Build preset**: `NITRO_PRESET=cloudflare_module nuxt build` → output in `.output/`.
