@@ -1,0 +1,18 @@
+[
+  {
+    "collection": "posts",
+    "fields": [
+      "title",
+      "slug",
+      "body",
+      "author",
+      "publishedAt",
+      "status",
+      "tags"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-17T08:18:04.141Z",
+    "layer": "blog",
+    "gitSha": "c2620244"
+  }
+]

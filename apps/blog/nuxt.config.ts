@@ -11,10 +11,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   devServer: { port: 3008 },
-  extends: [
-    '@fyit/crouton-core',
-    '@fyit/crouton-i18n'
-  ],
+  extends: ['@fyit/crouton-core', '@fyit/crouton-i18n', './layers/blog'],
   hub: {
     db: 'sqlite'
   },
