@@ -42,6 +42,7 @@ import { generateNuxtConfig } from './generators/nuxt-config.ts'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.ts'
 import { generateFieldComponents } from './generators/field-components.ts'
 import { generateSeedFile } from './generators/seed-data.ts'
+import { generateSeedFixture } from './generators/collection-seed-fixture.ts'
 import { generateCollectionTypesRegistry } from './generators/collection-types-registry.ts'
 import { generateQueryRegistryFile } from './generators/query-registry.ts'
 
@@ -1019,6 +1020,19 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       })
     })
     console.log(`  Generating seed.ts (${seedCount} records)`)
+  }
+
+  // Always emit an editable seed.json fixture with a few auto-derived sample
+  // rows, so a freshly deployed app's public surfaces aren't empty (#298). The
+  // app seed runner (crouton-seed) loads it; edit it to replace the samples with
+  // real content. Skipped for hierarchy collections (returns null).
+  const seedFixture = generateSeedFixture(data)
+  if (seedFixture) {
+    files.push({
+      path: path.join(base, 'seed.json'),
+      content: `${JSON.stringify(seedFixture, null, 2)}\n`,
+    })
+    console.log(`  Generating seed.json (${seedFixture.rows.length} sample rows)`)
   }
 
   // Write all files
