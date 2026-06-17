@@ -109,6 +109,7 @@ test-results/
 # Claude Code projects
 .claude/projects/
 .claude/.package-edit-approved
+.claude/worktrees/
 apps/kvr/.data
 apps/fanfare/.data
 apps/three-demo/.data
