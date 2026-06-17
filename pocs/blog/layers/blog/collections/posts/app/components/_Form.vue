@@ -60,7 +60,7 @@
           <UInput v-model="state.author" class="w-full" size="xl" />
         </UFormField>
         <UFormField :label="t('blog.posts.fields.publishedAt', 'Published At')" name="publishedAt" class="not-last:pb-4">
-          <CroutonCalendar v-model:date="state.publishedAt" picker class="w-full" />
+          <CroutonCalendar v-model:date="state.publishedAt" />
         </UFormField>
         <UFormField :label="t('blog.posts.fields.status', 'Status')" name="status" class="not-last:pb-4">
           <USelect
@@ -127,6 +127,13 @@ const initialValues = props.action === 'update' && props.activeItem?.id
   ? { ...defaultValue, ...props.activeItem }
   : { ...defaultValue }
 
+// Convert date strings to Date objects for date fields during editing
+if (props.action === 'update' && props.activeItem?.id) {
+  if (initialValues.publishedAt) {
+    initialValues.publishedAt = new Date(initialValues.publishedAt)
+  }
+}
+
 // Draft state: seeded from defaults (required fields may start null/empty until
 // the user fills them; the zod schema validates on submit), so cast the initial
 // values to the validated shape.
@@ -134,10 +141,16 @@ const state = ref<BlogPostFormData & { id?: string | null }>(initialValues as Bl
 
 const handleSubmit = async () => {
   try {
+    // Serialize Date objects to ISO strings for API submission
+    const serializedData: Record<string, any> = { ...state.value }
+    if (serializedData.publishedAt instanceof Date) {
+      serializedData.publishedAt = serializedData.publishedAt.toISOString()
+    }
+
     if (props.action === 'create') {
-      await create(state.value)
+      await create(serializedData)
     } else if (props.action === 'update' && state.value.id) {
-      await update(state.value.id, state.value)
+      await update(state.value.id, serializedData)
     } else if (props.action === 'delete') {
       await deleteItems(props.items)
     }

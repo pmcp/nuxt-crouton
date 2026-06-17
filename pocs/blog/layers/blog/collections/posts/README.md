@@ -46,7 +46,7 @@ collections/posts/
 | slug | string | Yes |
 | body | text | No |
 | author | string | No |
-| publishedAt | datetime | No |
+| publishedAt | date | No |
 | status | string | Yes |
 | tags | array | No |
 | createdAt | timestamp | Auto |

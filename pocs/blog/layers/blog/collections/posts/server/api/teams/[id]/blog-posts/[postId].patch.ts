@@ -9,7 +9,7 @@ const bodySchema = z.object({
   slug: z.string().min(1, 'slug is required'),
   body: z.string().optional(),
   author: z.string().optional(),
-  publishedAt: z.date().optional(),
+  publishedAt: z.coerce.date().nullish(),
   status: z.string().min(1, 'status is required'),
   tags: z.array(z.string()).optional()
 }).partial().strip()

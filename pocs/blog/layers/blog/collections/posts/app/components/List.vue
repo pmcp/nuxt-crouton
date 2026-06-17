@@ -50,6 +50,9 @@
       </div>
       <span v-else class="text-gray-400">—</span>
     </template>
+    <template #publishedAt-cell="{ row }">
+      <CroutonDate :date="row.original.publishedAt"></CroutonDate>
+    </template>
     <template #body-cell="{ row }">
       <CroutonEditorPreview :content="row.original.body" mode="thumbnail" />
     </template>
