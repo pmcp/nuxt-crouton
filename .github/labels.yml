@@ -116,6 +116,26 @@
   color: "0e8a16"
   description: "App: apps/velo"
 
+# ── POCs (pocs/*) — experimental incubator apps (safe-to-break; staging-only) ──
+- name: "poc:blog"
+  color: "fef2c0"
+  description: "POC: pocs/blog"
+- name: "poc:alexdeforce"
+  color: "fef2c0"
+  description: "POC: pocs/alexdeforce"
+- name: "poc:kvr"
+  color: "fef2c0"
+  description: "POC: pocs/kvr"
+- name: "poc:sintlukas"
+  color: "fef2c0"
+  description: "POC: pocs/sintlukas"
+- name: "poc:thinkgraph"
+  color: "fef2c0"
+  description: "POC: pocs/thinkgraph"
+- name: "poc:three-demo"
+  color: "fef2c0"
+  description: "POC: pocs/three-demo"
+
 # ── Workers (workers/*) ──
 - name: "worker:collab-worker"
   color: "5319e7"
