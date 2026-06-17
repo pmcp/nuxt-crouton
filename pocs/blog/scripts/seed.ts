@@ -27,10 +27,11 @@
  *   tsx scripts/seed.ts --db blog-db --dry-run   # print SQL, don't execute
  */
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, rmSync, readFileSync, existsSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { hashPassword } from 'better-auth/crypto'
+import { buildUpsert, seedId } from '@fyit/crouton-core/shared/seed'
 
 // ── Args ─────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2)
@@ -97,7 +98,60 @@ ON CONFLICT(id) DO UPDATE SET role = excluded.role;`
   return [organization, user, account, member].join('\n\n')
 }
 
-const sql = await buildSql()
+/**
+ * Seed the app's generated collections from their editable seed.json fixtures
+ * (#298). The standard `crouton-seed` runner does this, but the blog uses this
+ * bespoke admin seeder instead — and `crouton-seed` over-discovers seed
+ * providers (pages/sales) the blog doesn't have. So we load this app's own
+ * collection fixtures directly, scoped to its `blog` team so the rows show in
+ * both /blog and the admin list. Idempotent (stable seed ids).
+ */
+function buildCollectionsSql(): string {
+  const layersDir = 'layers'
+  if (!existsSync(layersDir)) return ''
+
+  const nowSec = Math.floor(Date.now() / 1000)
+  const stmts: string[] = []
+
+  for (const layer of readdirSync(layersDir)) {
+    const collectionsDir = join(layersDir, layer, 'collections')
+    if (!existsSync(collectionsDir)) continue
+
+    for (const collection of readdirSync(collectionsDir)) {
+      const fixturePath = join(collectionsDir, collection, 'seed.json')
+      if (!existsSync(fixturePath)) continue
+
+      let fixture: any
+      try {
+        fixture = JSON.parse(readFileSync(fixturePath, 'utf8'))
+      } catch {
+        continue
+      }
+
+      const { table, key, rows } = fixture ?? {}
+      if (!table || !Array.isArray(rows)) continue
+
+      rows.forEach((row: Record<string, unknown>, i: number) => {
+        const keyVal = key && row[key] != null ? row[key] : i
+        const id = seedId(layer, collection, String(keyVal))
+        const values = {
+          teamId, // the seeded `blog` org
+          owner: 'seed',
+          createdBy: 'seed',
+          updatedBy: 'seed',
+          createdAt: nowSec,
+          updatedAt: nowSec,
+          ...row,
+        }
+        stmts.push(buildUpsert(table, { id }, values, { immutable: ['createdAt'] }))
+      })
+    }
+  }
+
+  return stmts.join('\n')
+}
+
+const sql = [await buildSql(), buildCollectionsSql()].filter(s => s.trim()).join('\n\n')
 
 if (dryRun) {
   console.log(sql)
@@ -120,4 +174,4 @@ if (res.status !== 0) {
   console.error('✗ seed failed')
   process.exit(res.status ?? 1)
 }
-console.log(`✓ admin seeded — log in at the preview with ${ADMIN.email} / ${ADMIN.password}`)
+console.log(`✓ seeded admin + sample posts — log in at the preview with ${ADMIN.email} / ${ADMIN.password}`)
