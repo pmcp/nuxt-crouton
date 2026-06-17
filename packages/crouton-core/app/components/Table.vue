@@ -14,18 +14,20 @@
     <!-- Filters - fixed height (hidden in stateless mode) -->
     <div
       v-if="!stateless"
-      class="flex items-center justify-between gap-3 shrink-0 px-4 py-3"
+      class="flex items-center gap-2 shrink-0 px-4 py-3"
     >
       <CroutonTableSearch
         v-model="search"
         :placeholder="tString('table.search')"
         :debounce-ms="300"
+        class="flex-1 min-w-0"
       />
 
       <CroutonTableActions
         :selected-rows="selectedRows"
         :collection="collection"
         :table="tableRef"
+        class="shrink-0"
       />
     </div>
 

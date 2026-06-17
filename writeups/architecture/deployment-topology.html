@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crouton — Deployment Topology</title>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #121a2e; --panel-2: #0f1626; --border: #243049;
+    --text: #e6ebf5; --muted: #9aa7bd; --accent: #4ade80; --accent-2: #60a5fa;
+    --prod: #34d399; --stg: #60a5fa; --radius: 16px; --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, #16213c 0%, var(--bg) 55%);
+    color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  header.hero { display: flex; flex-direction: column; gap: 10px; padding-bottom: 28px; margin-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 12px; color: var(--accent); font-weight: 700; }
+  h1 { font-size: clamp(28px, 4vw, 44px); margin: 0; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: 17px; max-width: 70ch; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.prod { background: var(--prod); } .dot.stg { background: var(--stg); }
+  .dot.pkg { background: #f59e0b; } .dot.none { background: #64748b; }
+
+  section { margin-top: 44px; }
+  .step-no { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent-2), #2563eb); color: #fff; font-weight: 800; font-size: 15px; box-shadow: var(--shadow); }
+  h2 { font-size: 24px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  .section-sub { color: var(--muted); margin: 0 0 18px; padding-left: 42px; }
+
+  .card { background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; overflow-x: auto; }
+
+  /* Inline-SVG diagram styling (no JS / no network) */
+  .diagram { width: 100%; height: auto; display: block; }
+  .diagram text { fill: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .svg-t { font-size: 13px; font-weight: 700; }
+  .svg-step { font-size: 12px; font-weight: 600; }
+  .svg-s { font-size: 10.5px; fill: var(--muted); }
+  .svg-lbl { font-size: 10.5px; fill: var(--muted); font-style: italic; }
+  .edge { stroke: #6b7da3; stroke-width: 1.7; fill: none; }
+  .edge.dash { stroke-dasharray: 5 4; }
+  .b-none { fill: #1a2233; stroke: #46556e; }
+  .b-pkg  { fill: #3a2e12; stroke: #c08a2a; }
+  .b-src  { fill: #1b2742; stroke: #3b4a6b; }
+  .b-stg  { fill: #13294d; stroke: #3b6fb0; }
+  .b-prod { fill: #123524; stroke: #2f9e66; }
+  .b-hub  { fill: #1e2a47; stroke: #5b6fa0; }
+  .band   { fill: rgba(96,165,250,.06); stroke: #243049; }
+  .band-p { fill: rgba(52,211,153,.06); stroke: #243049; }
+
+  .callouts { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 20px; }
+  @media (min-width: 760px) { .callouts { grid-template-columns: 1fr 1fr; } }
+  .callout { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent-2); border-radius: 12px; padding: 16px 18px; }
+  .callout h3 { margin: 0 0 6px; font-size: 15px; } .callout p { margin: 0; color: var(--muted); font-size: 14px; }
+  .callout.warn { border-left-color: #fbbf24; } .callout.good { border-left-color: var(--prod); }
+
+  code, .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; background: rgba(96,165,250,.12); color: #cfe3ff; padding: 1px 6px; border-radius: 6px; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  td .mono { font-size: 13px; } tr:last-child td { border-bottom: none; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">nuxt-crouton · architecture</span>
+    <h1>Deployment Topology</h1>
+    <p class="sub">The paths code takes from the monorepo to a live URL — fixtures, packages, POCs and launched apps, and the three triggers that drive a Cloudflare&nbsp;Workers deploy across <strong>staging / preview</strong> and <strong>production</strong>.</p>
+    <div class="legend">
+      <span class="pill"><span class="dot prod"></span> Production · manual only</span>
+      <span class="pill"><span class="dot stg"></span> Staging / Preview · PR &amp; push</span>
+      <span class="pill"><span class="dot pkg"></span> Shared package · ripples into apps</span>
+      <span class="pill"><span class="dot none"></span> Never deployed</span>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="step-no">1</span> Where code lives → how it ships</h2>
+    <p class="section-sub">Packages and fixtures never deploy on their own. A POC only reaches staging; it earns production by being promoted into <code>apps/</code>.</p>
+    <div class="card">
+      <svg class="diagram" viewBox="0 0 920 400" role="img" aria-label="Lifecycle from source folders to deploy environments">
+        <defs>
+          <marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6b7da3"/>
+          </marker>
+        </defs>
+
+        <!-- edges (drawn first, under boxes) -->
+        <path class="edge dash" d="M95,88 L95,150" marker-end="url(#ah1)"/>
+        <path class="edge" d="M425,88 L360,185" marker-end="url(#ah1)"/>
+        <path class="edge" d="M500,88 L632,185" marker-end="url(#ah1)"/>
+        <path class="edge" d="M430,212 L556,212" marker-end="url(#ah1)"/>
+        <path class="edge" d="M322,239 L305,320" marker-end="url(#ah1)"/>
+        <path class="edge" d="M628,239 L548,320" marker-end="url(#ah1)"/>
+        <path class="edge" d="M695,239 L780,320" marker-end="url(#ah1)"/>
+
+        <!-- edge labels -->
+        <text class="svg-lbl" x="104" y="124">never deployed</text>
+        <text class="svg-lbl" x="372" y="138">consumed by</text>
+        <text class="svg-lbl" x="556" y="138" text-anchor="end">consumed by</text>
+        <text class="svg-lbl" x="493" y="204" text-anchor="middle">promote</text>
+        <text class="svg-lbl" x="250" y="288" text-anchor="end">PR / push</text>
+        <text class="svg-lbl" x="775" y="288">manual</text>
+
+        <!-- source boxes -->
+        <g>
+          <rect class="b-none" x="20" y="34" width="150" height="54" rx="10"/>
+          <text class="svg-t" x="95" y="60" text-anchor="middle">fixtures/NAME</text>
+          <text class="svg-s" x="95" y="77" text-anchor="middle">e2e harness</text>
+        </g>
+        <g>
+          <rect class="b-none" x="20" y="150" width="150" height="44" rx="10"/>
+          <text class="svg-step" x="95" y="177" text-anchor="middle">E2E smoke CI</text>
+        </g>
+        <g>
+          <rect class="b-pkg" x="365" y="34" width="190" height="54" rx="10"/>
+          <text class="svg-t" x="460" y="60" text-anchor="middle">packages/NAME</text>
+          <text class="svg-s" x="460" y="77" text-anchor="middle">shared · pkg:*</text>
+        </g>
+        <g>
+          <rect class="b-src" x="245" y="185" width="185" height="54" rx="10"/>
+          <text class="svg-t" x="337" y="211" text-anchor="middle">pocs/NAME</text>
+          <text class="svg-s" x="337" y="228" text-anchor="middle">incubator · poc:*</text>
+        </g>
+        <g>
+          <rect class="b-src" x="560" y="185" width="185" height="54" rx="10"/>
+          <text class="svg-t" x="652" y="211" text-anchor="middle">apps/NAME</text>
+          <text class="svg-s" x="652" y="228" text-anchor="middle">launched · app:*</text>
+        </g>
+
+        <!-- environment boxes -->
+        <g>
+          <rect class="b-stg" x="200" y="320" width="205" height="60" rx="10"/>
+          <text class="svg-t" x="302" y="346" text-anchor="middle">Staging ONLY</text>
+          <text class="svg-s" x="302" y="364" text-anchor="middle">NAME.pmcp.dev</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="425" y="320" width="215" height="60" rx="10"/>
+          <text class="svg-t" x="532" y="346" text-anchor="middle">Staging / Preview</text>
+          <text class="svg-s" x="532" y="364" text-anchor="middle">NAME.pmcp.dev</text>
+        </g>
+        <g>
+          <rect class="b-prod" x="685" y="320" width="215" height="60" rx="10"/>
+          <text class="svg-t" x="792" y="346" text-anchor="middle">Production</text>
+          <text class="svg-s" x="792" y="364" text-anchor="middle">NAME.friendlyinter.net</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">2</span> How a collection becomes reusable code</h2>
+    <p class="section-sub">The authoring path: scaffold collections with the <strong>crouton CLI</strong> inside a POC, finetune the generated Form/List, then either <strong>extract them into a package</strong> (reused by many apps) or <strong>promote the whole POC into an app</strong>.</p>
+    <div class="card">
+      <svg class="diagram" viewBox="0 0 900 320" role="img" aria-label="Authoring pipeline: schema to CLI to POC, finetune, then extract to a package or promote to an app">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6b7da3"/>
+          </marker>
+        </defs>
+
+        <!-- edges -->
+        <path class="edge" d="M136,169 L172,169" marker-end="url(#ah3)"/>
+        <path class="edge" d="M326,169 L362,169" marker-end="url(#ah3)"/>
+        <path class="edge" d="M566,150 L642,98" marker-end="url(#ah3)"/>
+        <path class="edge" d="M566,190 L642,242" marker-end="url(#ah3)"/>
+        <path class="edge" d="M746,116 L746,224" marker-end="url(#ah3)"/>
+        <path class="edge" d="M432,128 C430,96 502,96 500,128" marker-end="url(#ah3)"/>
+
+        <!-- edge labels -->
+        <text class="svg-lbl" x="612" y="116" text-anchor="end">extract → package</text>
+        <text class="svg-lbl" x="612" y="228" text-anchor="end">promote → app</text>
+        <text class="svg-lbl" x="756" y="174">consumed by</text>
+        <text class="svg-lbl" x="466" y="90" text-anchor="middle">finetune form &amp; list</text>
+
+        <!-- boxes -->
+        <g>
+          <rect class="b-none" x="16" y="140" width="120" height="58" rx="10"/>
+          <text class="svg-step" x="76" y="166" text-anchor="middle">schema JSON</text>
+          <text class="svg-s" x="76" y="183" text-anchor="middle">+ field types</text>
+        </g>
+        <g>
+          <rect class="b-hub" x="176" y="140" width="150" height="58" rx="10"/>
+          <text class="svg-t" x="251" y="166" text-anchor="middle">crouton CLI</text>
+          <text class="svg-s" x="251" y="183" text-anchor="middle">config · generate</text>
+        </g>
+        <g>
+          <rect class="b-src" x="366" y="128" width="200" height="84" rx="10"/>
+          <text class="svg-t" x="466" y="152" text-anchor="middle">pocs/NAME</text>
+          <text class="svg-s" x="466" y="172" text-anchor="middle">Form.vue · List.vue</text>
+          <text class="svg-s" x="466" y="189" text-anchor="middle">API · schema · composable</text>
+        </g>
+        <g>
+          <rect class="b-pkg" x="646" y="56" width="200" height="60" rx="10"/>
+          <text class="svg-t" x="746" y="82" text-anchor="middle">packages/NAME</text>
+          <text class="svg-s" x="746" y="99" text-anchor="middle">reusable layer · pkg:*</text>
+        </g>
+        <g>
+          <rect class="b-src" x="646" y="224" width="200" height="60" rx="10"/>
+          <text class="svg-t" x="746" y="250" text-anchor="middle">apps/NAME</text>
+          <text class="svg-s" x="746" y="267" text-anchor="middle">launched · app:*</text>
+        </g>
+      </svg>
+    </div>
+    <div class="callouts" style="margin-top:16px;">
+      <div class="callout good" style="grid-column:1 / -1;">
+        <h3>Two ways a POC matures</h3>
+        <p><strong>Extract → package:</strong> the generated + finetuned collections graduate into a reusable <code>@fyit/crouton-*</code> layer in <code>packages/</code> that many apps then <code>extend</code>. <strong>Promote → app:</strong> the whole POC graduates into <code>apps/</code> as a launched app. The CLI is the entry point either way — you scaffold in the safe-to-break POC, refine the Form/List, then decide whether the value is <em>reusable code</em> (package) or <em>a product</em> (app).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">3</span> How a deploy is triggered</h2>
+    <p class="section-sub">All three triggers funnel into one reusable workflow, <code>deploy-app.yml</code>, which simply runs the same <code>cf:*</code> script a developer runs locally.</p>
+    <div class="card">
+      <svg class="diagram" viewBox="0 0 780 650" role="img" aria-label="Deploy triggers funnel into deploy-app.yml then staging or production step chains">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6b7da3"/>
+          </marker>
+        </defs>
+
+        <!-- environment bands -->
+        <rect class="band" x="22" y="268" width="336" height="364" rx="14"/>
+        <text class="svg-lbl" x="36" y="288">STAGING / PREVIEW</text>
+        <rect class="band-p" x="410" y="268" width="336" height="252" rx="14"/>
+        <text class="svg-lbl" x="424" y="288">PRODUCTION</text>
+
+        <!-- trigger → hub edges -->
+        <path class="edge" d="M110,70 L342,120" marker-end="url(#ah2)"/>
+        <path class="edge" d="M300,70 L380,120" marker-end="url(#ah2)"/>
+        <path class="edge" d="M505,70 L418,120" marker-end="url(#ah2)"/>
+        <!-- hub → script edges -->
+        <path class="edge" d="M322,170 L192,205" marker-end="url(#ah2)"/>
+        <path class="edge" d="M440,170 L548,205" marker-end="url(#ah2)"/>
+        <text class="svg-lbl" x="232" y="192" text-anchor="end">PR · push→staging</text>
+        <text class="svg-lbl" x="470" y="192">dispatch=production</text>
+        <!-- script → first step -->
+        <path class="edge" d="M180,249 L190,300" marker-end="url(#ah2)"/>
+        <path class="edge" d="M550,249 L578,300" marker-end="url(#ah2)"/>
+        <!-- staging step chain -->
+        <path class="edge" d="M190,344 L190,356" marker-end="url(#ah2)"/>
+        <path class="edge" d="M190,400 L190,412" marker-end="url(#ah2)"/>
+        <path class="edge" d="M190,456 L190,468" marker-end="url(#ah2)"/>
+        <path class="edge" d="M190,512 L190,524" marker-end="url(#ah2)"/>
+        <path class="edge" d="M190,568 L190,580" marker-end="url(#ah2)"/>
+        <!-- prod step chain -->
+        <path class="edge" d="M578,344 L578,356" marker-end="url(#ah2)"/>
+        <path class="edge" d="M578,400 L578,412" marker-end="url(#ah2)"/>
+        <path class="edge" d="M578,456 L578,468" marker-end="url(#ah2)"/>
+
+        <!-- trigger boxes -->
+        <g>
+          <rect class="b-src" x="20" y="20" width="180" height="50" rx="10"/>
+          <text class="svg-step" x="110" y="42" text-anchor="middle">Pull request</text>
+          <text class="svg-s" x="110" y="58" text-anchor="middle">(path-filtered)</text>
+        </g>
+        <g>
+          <rect class="b-src" x="215" y="20" width="170" height="50" rx="10"/>
+          <text class="svg-step" x="300" y="42" text-anchor="middle">Push to</text>
+          <text class="svg-s" x="300" y="58" text-anchor="middle">staging branch</text>
+        </g>
+        <g>
+          <rect class="b-src" x="400" y="20" width="210" height="50" rx="10"/>
+          <text class="svg-step" x="505" y="42" text-anchor="middle">Manual dispatch</text>
+          <text class="svg-s" x="505" y="58" text-anchor="middle">env = production</text>
+        </g>
+
+        <!-- hub -->
+        <g>
+          <rect class="b-hub" x="255" y="120" width="250" height="50" rx="12"/>
+          <text class="svg-t" x="380" y="150" text-anchor="middle">reusable deploy-app.yml</text>
+        </g>
+
+        <!-- scripts -->
+        <g>
+          <rect class="b-stg" x="92" y="205" width="200" height="44" rx="10"/>
+          <text class="svg-step" x="192" y="232" text-anchor="middle">pnpm cf:staging</text>
+        </g>
+        <g>
+          <rect class="b-prod" x="450" y="205" width="200" height="44" rx="10"/>
+          <text class="svg-step" x="550" y="232" text-anchor="middle">pnpm cf:deploy</text>
+        </g>
+
+        <!-- staging steps -->
+        <g>
+          <rect class="b-stg" x="40" y="300" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="319" text-anchor="middle">build</text>
+          <text class="svg-s" x="190" y="335" text-anchor="middle">cloudflare_module</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="40" y="356" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="375" text-anchor="middle">wrangler deploy --env staging</text>
+          <text class="svg-s" x="190" y="391" text-anchor="middle">auto-provision D1 + KV</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="40" y="412" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="439" text-anchor="middle">sync ids</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="40" y="468" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="495" text-anchor="middle">migrate staging --remote</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="40" y="524" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="543" text-anchor="middle">db:seed:staging</text>
+          <text class="svg-s" x="190" y="559" text-anchor="middle">--with-staff ⇒ admin login</text>
+        </g>
+        <g>
+          <rect class="b-stg" x="40" y="580" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="190" y="607" text-anchor="middle">sticky PR comment: URL</text>
+        </g>
+
+        <!-- prod steps -->
+        <g>
+          <rect class="b-prod" x="428" y="300" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="578" y="327" text-anchor="middle">build</text>
+        </g>
+        <g>
+          <rect class="b-prod" x="428" y="356" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="578" y="375" text-anchor="middle">wrangler deploy</text>
+          <text class="svg-s" x="578" y="391" text-anchor="middle">auto-provision</text>
+        </g>
+        <g>
+          <rect class="b-prod" x="428" y="412" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="578" y="439" text-anchor="middle">sync ids</text>
+        </g>
+        <g>
+          <rect class="b-prod" x="428" y="468" width="300" height="44" rx="9"/>
+          <text class="svg-step" x="578" y="487" text-anchor="middle">migrate prod --remote</text>
+          <text class="svg-s" x="578" y="503" text-anchor="middle">NO seed</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">4</span> The mental model</h2>
+    <p class="section-sub">The parts that trip people up.</p>
+    <div class="callouts">
+      <div class="callout">
+        <h3>Preview <em>is</em> Staging</h3>
+        <p>Same Workers env, same <code>NAME.pmcp.dev</code> domain, same <code>NAME-staging-db</code>. They differ only by <strong>trigger</strong>: a PR previews that PR; a push to the <code>staging</code> branch refreshes the shared env. It's <strong>one long-lived environment</strong>, not a per-PR throwaway.</p>
+      </div>
+      <div class="callout good">
+        <h3>Production is manual-only</h3>
+        <p><code>workflow_dispatch</code> with env=production → <code>cf:deploy</code> → <code>NAME.friendlyinter.net</code>. No seed step ever runs against prod.</p>
+      </div>
+      <div class="callout">
+        <h3>First deploy auto-provisions</h3>
+        <p>An id-less <code>wrangler.jsonc</code> lets the first deploy create D1 + KV; <code>sync:ids</code> writes the real ids back. No manual resource juggling.</p>
+      </div>
+      <div class="callout warn">
+        <h3>The seed lives in the app script</h3>
+        <p><code>cf:staging</code> ends with <code>db:seed:staging</code> — not CI. That's why adding <code>--with-staff</code> makes the admin login appear on staging.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="step-no">5</span> Per-app domains &amp; preview scope</h2>
+    <p class="section-sub">Concrete domains today, and one real nuance: the PR-preview path filter differs per app.</p>
+    <div class="card" style="padding:6px 4px;">
+      <table>
+        <thead>
+          <tr><th>App</th><th>Production</th><th>Staging / Preview</th><th>PR preview triggers on</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>velo</strong></td><td><span class="mono">velo.friendlyinter.net</span></td><td><span class="mono">velo.pmcp.dev</span></td><td><span class="tag">apps/velo/** only</span></td></tr>
+          <tr><td><strong>triage</strong></td><td><span class="mono">triage.friendlyinter.net</span></td><td><span class="mono">triage.pmcp.dev</span></td><td><span class="tag">apps/triage/**</span></td></tr>
+          <tr><td><strong>fanfare</strong></td><td><span class="mono">kassa.pmcp.dev</span> <span class="tag">legacy naming</span></td><td><span class="mono">kassa-preview.pmcp.dev</span></td><td><span class="tag">apps/** + packages/**</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callouts" style="margin-top:16px;">
+      <div class="callout warn" style="grid-column:1 / -1;">
+        <h3>Why a package change previews on fanfare but not velo</h3>
+        <p>fanfare's <code>pull_request</code> trigger lists <code>packages/**</code> in its path filter, so a shared-package change (e.g. a <code>crouton-core</code> UI fix) auto-deploys a fanfare preview on the PR. velo's <code>pull_request</code> trigger only watches <code>apps/velo/**</code> — package changes deploy velo only on a push to the <code>staging</code> branch, never on the PR itself.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Generated for <strong>pmcp/nuxt-crouton</strong> · Cloudflare Workers (static assets) · NuxtHub = storage abstraction (D1 / KV / R2), not the deploy tool. Diagrams are inline SVG — no JavaScript, renders offline.
+  </footer>
+
+</div>
+</body>
+</html>

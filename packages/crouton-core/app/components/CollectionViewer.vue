@@ -1,12 +1,12 @@
 <template>
   <div class="flex flex-col h-full min-h-0">
     <!-- Header with title and layout switcher - fixed height -->
-    <div class="px-6 py-4 flex items-center justify-between shrink-0">
-      <h2 class="text-xl font-semibold">
+    <div class="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-2 shrink-0">
+      <h2 class="text-lg sm:text-xl font-semibold truncate min-w-0">
         {{ camelToTitleCase(collectionName) }}
       </h2>
       <!-- Layout Switcher -->
-      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg">
+      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0 overflow-x-auto">
         <UButton
           v-for="layoutOption in layoutOptions"
           :key="layoutOption.value"

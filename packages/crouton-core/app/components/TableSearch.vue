@@ -1,10 +1,10 @@
 <template>
-  <div class="flex items-center gap-1.5">
+  <div class="flex items-center gap-1.5 w-full">
     <UInput
       :model-value="modelValue"
       icon="i-lucide-search"
       :placeholder="placeholder"
-      class="max-w-sm"
+      class="w-full sm:max-w-sm"
       @update:model-value="handleSearch"
     />
   </div>

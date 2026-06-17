@@ -8,7 +8,7 @@
       :disabled="selectedRows.length === 0"
       @click="handleDelete"
     >
-      {{ t('common.delete') }}
+      <span class="hidden sm:inline">{{ t('common.delete') }}</span>
       <span v-if="selectedRows.length > 0">
         {{ selectedRows.length }}
       </span>
@@ -19,11 +19,12 @@
       :content="{ align: 'end' }"
     >
       <UButton
-        :label="tString('table.display')"
         color="neutral"
         variant="outline"
         trailing-icon="i-lucide-settings-2"
-      />
+      >
+        <span class="hidden sm:inline">{{ tString('table.display') }}</span>
+      </UButton>
     </UDropdownMenu>
   </div>
 </template>
