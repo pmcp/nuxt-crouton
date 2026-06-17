@@ -1,0 +1,27 @@
+name: skills-doc
+
+# Keep writeups/architecture/skills-and-triggers.html in sync with .claude/skills/.
+# The generator uses only Node built-ins, so no install step is needed.
+
+on:
+  pull_request:
+    paths:
+      - '.claude/skills/**'
+      - 'scripts/gen-skills-doc.mjs'
+      - 'writeups/architecture/skills-and-triggers.html'
+  push:
+    branches: [main]
+    paths:
+      - '.claude/skills/**'
+      - 'scripts/gen-skills-doc.mjs'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify skills doc is up to date
+        run: node scripts/gen-skills-doc.mjs --check
