@@ -36,8 +36,13 @@ a feature branch.
      around the gate.
 5. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
    from root). Fix every error before continuing. Do not declare done with a red typecheck.
-6. **Commit.** Use the **`/commit`** skill (via the `Skill` tool) — never `git commit`
-   directly, never `git add .`. Reference the issue in the body, e.g. `(#<issue_number>)`.
+6. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
+   `Skill` tool) — never `git commit` directly, never `git add .`. Reference the issue in
+   the body, e.g. `(#<issue_number>)`. **Then push the branch right away**
+   (`git push -u origin <branch>`), the moment the work is written and typecheck is green —
+   **before any long step** (dev boot, deploy, extended verification). Sessions can be
+   suspended mid-run: an unpushed worktree is lost work, a pushed branch is recoverable.
+   Never sit on uncommitted changes across a long-running command.
 7. **Open a PR.** `mcp__github__create_pull_request` from your branch into the repo's base
    branch. The body MUST contain `Closes #<issue_number>` so the issue auto-closes on
    merge. Body follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the PR body with
