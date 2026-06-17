@@ -114,6 +114,11 @@ Only update if:
 - A file path changed that a skill uses
 - A new feature was added that an existing skill should know about
 
+**Added / changed / removed a skill** (anything under `.claude/skills/`) → regenerate the
+skills overview HTML: `node scripts/gen-skills-doc.mjs`. For a brand-new skill, also add it
+to that script's `META` map (group + trigger) or it lands under "Uncategorised". CI
+(`skills-doc.yml`) fails if the HTML is stale.
+
 ## Workflow
 
 ### Step 1: Identify What Changed
