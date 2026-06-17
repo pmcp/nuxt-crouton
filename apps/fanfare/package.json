@@ -18,9 +18,9 @@
     "db:migrate:prod": "npx wrangler d1 migrations apply fanfare-db --remote",
     "db:migrate:staging": "npx wrangler d1 migrations apply fanfare-staging-db --env staging --remote",
     "db:seed": "pnpm db:seed:local",
-    "db:seed:local": "crouton-seed --db fanfare-db",
+    "db:seed:local": "crouton-seed --db fanfare-db --with-staff",
     "db:seed:remote": "crouton-seed --db fanfare-db --remote",
-    "db:seed:staging": "crouton-seed --db fanfare-staging-db --remote",
+    "db:seed:staging": "crouton-seed --db fanfare-staging-db --remote --with-staff",
     "logs": "npx wrangler tail fanfare"
   },
   "dependencies": {
