@@ -189,6 +189,16 @@ const comp = resolveComponent('CroutonAssetsPicker')
 
 Addon packages must register in `croutonApps` (in `app/app.config.ts`) to be detectable via `hasApp()`.
 
+### Where new apps live: `pocs/` first, `apps/` on launch
+
+**A new experimental / proof-of-concept app goes in `pocs/`, NOT `apps/`.** The two folders carry different rules on purpose, so it's always clear what's safe to break:
+
+- **`pocs/`** — the incubator. Experimental, churny, **safe to fail**; deploys are staging-only previews. This is where a "build an app" request (incl. `/task-decompose "build X"`) scaffolds **by default**. See `pocs/CLAUDE.md`.
+- **`apps/`** — **launched** apps with a production counterpart and full CI / two-domain deploy / issue rigor. An app earns its way here only when promoted to production.
+- **`fixtures/`** — throwaway e2e harness apps (not real apps).
+
+So: scaffold a new app at **`pocs/<name>`** (label `poc:<name>`); **promote `pocs/<name>` → `apps/<name>` only at production launch** (then it takes on the `apps/` rules, the `app:<name>` label, and prod deploy). Mirror `apps/velo` / `apps/fanfare` for structure either way. The endpoint of building a POC is a **deployed staging preview URL** (see the `/deploy` skill), not just merged code.
+
 ### New App `postinstall` Must Be Guarded
 
 **Every app in `apps/` MUST use `"postinstall": "nuxt prepare 2>/dev/null || true"` — NEVER a bare `nuxt prepare`.**
