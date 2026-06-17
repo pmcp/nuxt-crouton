@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+  ui-proposal TEMPLATE — copy to writeups/ui-proposals/<slug>.html and fill the slots.
+  RULES: no JavaScript, no external/CDN assets. Inline SVG icons only. Self-contained.
+  Frames provided: .phone (mobile surfaces) and .deviceframe (desktop surfaces) — keep
+  the one you need, delete the other. Replace BEFORE/AFTER content with the real UI.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Proposal — {{TITLE}}</title>
+<style>
+  :root{
+    --page:#0a0e17; --ink:#e8edf6; --muted:#8b97ad;
+    --app-bg:#0b0f1a; --card:#151b27; --card-2:#11161f; --line:#222b3a; --line-soft:#1b2230;
+    --green:#34d399; --green-d:#0e3a2a; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(1100px 500px at 75% -10%, #16213c 0%, var(--page) 55%);
+    color:var(--ink); line-height:1.55; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px; margin:0 auto; padding:40px 20px 80px;}
+  .eyebrow{text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--green); font-weight:700;}
+  h1{font-size:clamp(26px,4vw,38px); margin:6px 0 6px; line-height:1.1;}
+  .lede{color:var(--muted); font-size:16px; max-width:64ch; margin:0 0 28px;}
+
+  .stage{display:flex; flex-wrap:wrap; gap:32px; justify-content:center; align-items:flex-start;}
+  .col{display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .col h2{font-size:15px; margin:0; display:flex; align-items:center; gap:8px;}
+  .tag{font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  .tag.bad{color:#f6a; border-color:#5b2740;} .tag.good{color:var(--green); border-color:#1f5e47;}
+  .note{font-size:12.5px; color:var(--muted); max-width:320px; text-align:center;}
+
+  /* ---- phone frame (mobile surfaces) ---- */
+  .phone{width:320px; border-radius:40px; padding:10px; background:linear-gradient(#1c2433,#11161f); border:1px solid #2b3852; box-shadow:0 24px 60px rgba(0,0,0,.5);}
+  .phone .screen{background:var(--app-bg); border-radius:31px; overflow:hidden; height:640px; display:flex; flex-direction:column; position:relative;}
+  .statusbar{display:flex; justify-content:space-between; align-items:center; padding:10px 18px 4px; font-size:12px;}
+
+  /* ---- desktop frame (wide surfaces) ---- */
+  .deviceframe{width:640px; max-width:100%; border-radius:14px; overflow:hidden; border:1px solid #2b3852; box-shadow:0 24px 60px rgba(0,0,0,.5); background:var(--app-bg);}
+  .deviceframe .bar{display:flex; gap:6px; padding:10px 14px; background:#11161f; border-bottom:1px solid var(--line);}
+  .deviceframe .bar i{width:11px; height:11px; border-radius:50%; background:#33405a; display:inline-block;}
+  .deviceframe .body{padding:0;}
+
+  /* ---- shared UI atoms (reuse in BEFORE/AFTER) ---- */
+  .ic{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+  .ic.sm{width:15px;height:15px;}
+  .btn{display:inline-flex; align-items:center; gap:6px; border-radius:9px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); font-size:13px; padding:7px 10px;}
+  .btn.icon{padding:7px;} .btn.green{background:var(--green); border-color:var(--green); color:#04231a; font-weight:700;} .btn.ghost{background:transparent; border-color:transparent; color:var(--muted);}
+  .appbar{display:flex; align-items:center; gap:10px; padding:10px 14px;}
+  .appbar .title{font-size:18px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .spacer{flex:1;}
+  .badge{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; background:var(--green-d); color:var(--green); border:1px solid #1f5e47;}
+  .card-row{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin:0 12px 10px;}
+
+  .changes{margin-top:40px; background:#101725; border:1px solid var(--line); border-radius:16px; padding:20px 22px;}
+  .changes h3{margin:0 0 12px; font-size:16px;}
+  .changes ul{margin:0; padding-left:0; list-style:none; display:grid; gap:10px;}
+  .changes li{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:#cdd6e6;}
+  .changes li b{color:#fff;} .check{color:var(--green); flex:none; margin-top:2px;}
+  .changes code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em; background:rgba(52,211,153,.12); color:#a9f0d2; padding:1px 6px; border-radius:6px;}
+  footer.fin{margin-top:30px; color:var(--muted); font-size:12.5px; text-align:center;}
+
+  /* Icon reference (copy into BEFORE/AFTER as needed):
+     search:  <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+     plus:    <path d="M12 5v14M5 12h14"/>
+     upload:  <path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>
+     menu:    <path d="M3 6h18M3 12h18M3 18h18"/>
+     kebab:   <circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>
+     check:   <path d="M20 6 9 17l-5-5"/>
+     grid:    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+     tag:     <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/>
+  */
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">nuxt-crouton · proposal</span>
+  <h1>{{TITLE}}</h1>
+  <p class="lede">{{ONE_LINE_SUMMARY of the proposed change}}</p>
+
+  <div class="stage">
+
+    <!-- ============ BEFORE (delete this column for net-new UI) ============ -->
+    <div class="col">
+      <h2>Before <span class="tag bad">today</span></h2>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>23:45</span><span>···· 32</span></div>
+        <!-- TODO: mirror the CURRENT UI honestly -->
+      </div></div>
+      <p class="note">{{what's wrong today}}</p>
+    </div>
+
+    <!-- ============ AFTER ============ -->
+    <div class="col">
+      <h2>After <span class="tag good">proposed</span></h2>
+      <div class="phone"><div class="screen">
+        <div class="statusbar"><span>23:45</span><span>···· 32</span></div>
+        <!-- TODO: the PROPOSED UI -->
+      </div></div>
+      <p class="note">{{what's better}}</p>
+    </div>
+
+  </div>
+
+  <div class="changes">
+    <h3>What changes (and what doesn't)</h3>
+    <ul>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>{{Change 1.}}</b> {{detail}}</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>{{Change 2.}}</b> {{detail}}</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Scope.</b> {{what stays the same / what's untouched}}</span></li>
+    </ul>
+  </div>
+
+  <footer class="fin">Mockup only · pure HTML/CSS/SVG, no JS · {{data source note}}</footer>
+
+</div>
+</body>
+</html>
