@@ -89,6 +89,14 @@ orchestrator's MAX_CHILDREN).
 3. **Report** the epic url and that orchestration has started. The tree then builds itself
    (decomposers recurse; workers open PRs with `Closes #NN`).
 
+## Building an app? It's a POC — end at a preview URL
+
+When the task is **"build an app / build X"** (a runnable app, not a package or tooling change):
+
+- **Scaffold under `pocs/<name>`, NOT `apps/`** — the safe-to-break incubator (root `CLAUDE.md`). Label its issues `poc:<name>`. `apps/` is only for launched apps with a production counterpart.
+- **The endpoint is a deployed, testable preview URL — not merged code.** The orchestrator MUST make the **last workstream a deploy-preview issue**: run `pnpm poc:scaffold-deploy <name>` and open the PR so CI deploys an isolated staging Worker and posts the **`https://<name>.pmcp.dev`** URL (auth-working). See the **`poc-deploy`** skill.
+- **Testable with auth:** the POC's `seed` provisions a known admin; the epic's verify rollup hands back the URL **and** the login. Don't call an app build "done" until the preview URL is live.
+
 ## Notifications & async Q&A (`NOTIFY_HANDLE = @pmcp`)
 
 Headless/automation runs (a webhook- or Action-triggered session) have **no human

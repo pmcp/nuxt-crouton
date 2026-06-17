@@ -37,6 +37,13 @@ number.
    Fewer, well-bounded streams beat many thin ones. Hard cap: **MAX_CHILDREN = 6**.
    If the epic is genuinely a single concern, create exactly one child (the decomposer
    will still evaluate it and likely send it straight to a worker).
+   - **App-build epics scaffold in `pocs/` and END AT A PREVIEW URL.** If the epic is
+     "build an app / build X" (a runnable app), the app lives at **`pocs/<name>`** (label
+     `poc:<name>`, never `apps/` — see root `CLAUDE.md`), and the **final workstream is
+     always a deploy-preview issue**: run `pnpm poc:scaffold-deploy <name>` and open the
+     PR so CI deploys a staging Worker and posts the `https://<name>.pmcp.dev` URL. The
+     epic's acceptance is that live, auth-working preview URL — not just merged code.
+     (See the `poc-deploy` skill.)
 4. **Create + link each workstream.** For each:
    - `mcp__github__issue_write` (method `create`) — title is plain human English; body
      has `## 👤 For humans`, `## 🤖 For agents`, `## 🧪 How to test`; `labels` = the
