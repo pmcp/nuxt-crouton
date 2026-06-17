@@ -1,0 +1,73 @@
+{
+  "title": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 255,
+      "label": "Title",
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "slug": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "maxLength": 255,
+      "label": "Slug",
+      "help": "Public URL segment, must be unique",
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "body": {
+    "type": "text",
+    "meta": {
+      "required": true,
+      "label": "Body",
+      "component": "EditorSimple",
+      "area": "main",
+      "group": "content"
+    }
+  },
+  "author": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 255,
+      "label": "Author",
+      "area": "sidebar",
+      "group": "meta"
+    }
+  },
+  "publishedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Published At",
+      "area": "sidebar",
+      "group": "meta"
+    }
+  },
+  "status": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "default": "draft",
+      "label": "Status",
+      "options": ["draft", "published"],
+      "displayAs": "optionsSelect",
+      "area": "sidebar",
+      "group": "meta"
+    }
+  },
+  "tags": {
+    "type": "array",
+    "meta": {
+      "label": "Tags",
+      "help": "Comma-separated list of tags",
+      "area": "sidebar",
+      "group": "meta"
+    }
+  }
+}

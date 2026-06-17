@@ -4,3 +4,4 @@
 // Export auth schema from crouton-auth package (includes teamSettings, userProfile)
 export * from '@fyit/crouton-auth/server/database/schema/auth'
 export * from './translations-ui'
+export { blogPosts } from '../../layers/blog/collections/posts/server/database/schema'
