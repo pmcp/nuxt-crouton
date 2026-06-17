@@ -7,6 +7,10 @@ on:
   issue_comment:
     types: [created]
 
+# NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
+# OVERRIDES (does not merge with) any workflow-level block, so `id-token: write` has to
+# be here or the claude-code-action OIDC token request fails
+# ("Could not fetch an OIDC token"). A workflow-level block would be silently shadowed.
 jobs:
   resume:
     # Resume only when: the issue carries `status:blocked`, the comment is a human's
@@ -21,6 +25,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,9 +44,3 @@ jobs:
             thread (the latest comment is their answer), incorporate it, remove the
             `status:blocked` label, then continue via /task-decompose #${{ github.event.issue.number }}.
           claude_args: "--max-turns 30"
-
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-  id-token: write
