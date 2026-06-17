@@ -15,10 +15,19 @@ workstreams build content collections + admin surfaces on top of this baseline.
   come from `crouton-core` (each uses `middleware: ['auth', ...]`); `app/pages/admin/index.vue`
   adds a bare `/admin` landing that the `auth` middleware gates and that forwards
   authenticated users to `/admin/<team>/translations`.
-- **Deploy stub**: `wrangler.jsonc` is an id-less auto-provisioning placeholder
-  with an `env.staging` block on `blog.pmcp.dev`. The `/poc-deploy` skill generates
-  the canonical version; `scripts/sync-wrangler-ids.mjs` + `inject-wrangler-env.mjs`
+- **Deploy (#278)**: `wrangler.jsonc` is an id-less auto-provisioning Workers config
+  with an `env.staging` block on `blog.pmcp.dev`. CI deploys staging via
+  `.github/workflows/deploy-blog.yml` — a thin caller of the reusable `deploy-app.yml`
+  (`workspace: pocs`), triggered by a push to `staging` (path-filtered to `pocs/blog/**`)
+  or a manual `workflow_dispatch`. The real deploy runs only on a machine with the
+  `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` repo secrets; CI posts the
+  `https://blog.pmcp.dev` URL. `scripts/sync-wrangler-ids.mjs` + `inject-wrangler-env.mjs`
   are the standard Workers deploy helpers (copied from `apps/velo`).
+- **Seed admin**: `scripts/seed.ts` provisions a known admin (`admin@blog.pmcp.dev` /
+  `Admin1234!`) so a fresh preview is testable with auth — better-auth `user` +
+  credential `account` (scrypt hash via `better-auth/crypto`) + the `blog` `organization`
+  + an owner `member`, all idempotent (stable `seed:*` ids). `cf:staging` runs
+  `db:seed:staging` after the remote migrate.
 
 ## Commands
 
@@ -26,7 +35,11 @@ workstreams build content collections + admin surfaces on top of this baseline.
 pnpm --filter pocs-blog dev          # local dev (port 3014)
 pnpm -r --filter './apps/*' typecheck # repo-wide typecheck (this app is filtered in too)
 pnpm --filter pocs-blog cf:staging   # deploy a staging preview (see /poc-deploy)
+pnpm --filter pocs-blog db:seed      # seed the admin into the local D1
+pnpm --filter pocs-blog db:seed:staging # seed the admin into the remote staging D1
 ```
+
+Admin login (after seed): `admin@blog.pmcp.dev` / `Admin1234!`.
 
 ## Adding collections
 
