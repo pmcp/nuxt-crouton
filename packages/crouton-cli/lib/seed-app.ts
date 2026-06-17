@@ -12,7 +12,7 @@
 import { createJiti } from 'jiti'
 import consola from 'consola'
 import { execFileSync } from 'node:child_process'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -137,6 +137,61 @@ async function discoverProviders(
 }
 
 /**
+ * Turn the app's generated collection fixtures (`layers/*​/collections/*​/seed.json`,
+ * emitted by the CLI) into idempotent upsert SQL (#298). Each row gets a stable,
+ * namespace-derived id and the standard crouton system columns (teamId, owner,
+ * audit, timestamps) injected — the fixture itself only carries user fields, so
+ * re-runs upsert in place. `core` is `@fyit/crouton-core/shared/seed`.
+ */
+function collectCollectionFixtureSql(appDir: string, core: any, teamId: string): string {
+  const layersDir = join(appDir, 'layers')
+  if (!existsSync(layersDir)) return ''
+
+  const now = Math.floor(Date.now() / 1000)
+  const stmts: string[] = []
+
+  for (const layer of readdirSync(layersDir)) {
+    const collectionsDir = join(layersDir, layer, 'collections')
+    if (!existsSync(collectionsDir)) continue
+
+    for (const collection of readdirSync(collectionsDir)) {
+      const fixturePath = join(collectionsDir, collection, 'seed.json')
+      if (!existsSync(fixturePath)) continue
+
+      let fixture: any
+      try {
+        fixture = JSON.parse(readFileSync(fixturePath, 'utf8'))
+      } catch {
+        consola.warn(`Skipping unparseable fixture: ${layer}/${collection}/seed.json`)
+        continue
+      }
+
+      const { table, key, rows } = fixture ?? {}
+      if (!table || !Array.isArray(rows) || rows.length === 0) continue
+
+      rows.forEach((row: Record<string, unknown>, i: number) => {
+        const keyVal = key && row[key] != null ? row[key] : i
+        const id = core.seedId(layer, collection, String(keyVal))
+        const values = {
+          teamId,
+          owner: 'seed',
+          createdBy: 'seed',
+          updatedBy: 'seed',
+          createdAt: now,
+          updatedAt: now,
+          ...row,
+        }
+        stmts.push(core.buildUpsert(table, { id }, values, { immutable: ['createdAt'] }))
+      })
+
+      consola.info(`Discovered collection fixture: ${layer}/${collection} (${rows.length} rows → ${table})`)
+    }
+  }
+
+  return stmts.join('\n')
+}
+
+/**
  * Run the seed: discover → order → collect SQL → execute via wrangler.
  * Returns the generated SQL (handy for tests / dry runs).
  */
@@ -156,25 +211,28 @@ export async function seedApp(options: SeedAppOptions): Promise<string> {
   const croutonDeps = discoverCroutonPackageNames(appDir)
   const { providers, createPageWithBlocks } = await discoverProviders(jiti, croutonDeps)
 
-  if (providers.length === 0) {
-    consola.warn('No seed providers found among the app\'s @fyit/crouton-* packages — nothing to seed.')
-    return ''
-  }
-
   const core: any = await tsImport(jiti, '@fyit/crouton-core/shared/seed')
   const teamId = core.seedOrgId(teamSlug)
 
-  const sql: string = await core.collectSeedSql({
-    providers,
-    teamSlug,
-    teamId,
-    locale,
-    withStaff: options.withStaff,
-    createPageWithBlocks
-  })
+  // 1) Package providers — auth org + demo content shipped by extended packages.
+  const providerSql: string = providers.length > 0
+    ? await core.collectSeedSql({
+        providers,
+        teamSlug,
+        teamId,
+        locale,
+        withStaff: options.withStaff,
+        createPageWithBlocks
+      })
+    : ''
+
+  // 2) App-local generated collections' editable seed.json fixtures (#298).
+  const fixtureSql = collectCollectionFixtureSql(appDir, core, teamId)
+
+  const sql = [providerSql, fixtureSql].filter(s => s.trim()).join('\n')
 
   if (!sql.trim()) {
-    consola.warn('Providers produced no statements — nothing to seed.')
+    consola.warn('No seed providers or collection fixtures found — nothing to seed.')
     return sql
   }
 

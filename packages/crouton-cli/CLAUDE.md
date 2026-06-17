@@ -57,6 +57,16 @@ The contract (`SeedProvider`, `SeedContext`, `createPageWithBlocks`) lives in
 Wire it into an app with `db:seed:local` / `db:seed:remote` scripts (see
 `apps/fanfare/package.json`).
 
+**Plus app-local collection fixtures (#298):** after the package providers, the
+runner also loads every generated collection's `layers/*/collections/*/seed.json`
+— a small, **editable** fixture of auto-derived sample rows the generator emits
+(see `collection-seed-fixture.ts`). For each row it injects a stable
+`seedId(layer, collection, key)` id + the standard system columns (`teamId`,
+`owner`, audit, timestamps) and upserts via `buildUpsert`, so a freshly deployed
+app's public surfaces aren't empty. Idempotent (stable ids) — re-deploys upsert
+in place. Edit `seed.json` to replace the samples with real content, or delete it
+to seed nothing for that collection. Hierarchy collections get no fixture.
+
 ## Add Command (Module Installation)
 
 Add Crouton modules with automatic configuration:
@@ -271,7 +281,8 @@ lib/generators/
 ├── api-endpoints.ts       → GET/POST/PATCH/DELETE
 ├── database-schema.ts     → Drizzle schema
 ├── database-queries.ts    → Query functions
-├── seed-data.ts           → seed.ts (drizzle-seed data)
+├── seed-data.ts           → seed.ts (drizzle-seed data, --seed flag)
+├── collection-seed-fixture.ts → seed.json (editable auto-derived sample rows, #298)
 ├── types.ts               → TypeScript interfaces
 ├── nuxt-config.ts         → Layer config
 ├── field-components.ts    → Dependent field components
@@ -472,6 +483,7 @@ layers/[layer]/collections/[collection]/
 │       ├── schema.ts
 │       ├── queries.ts
 │       └── seed.ts          # Only with --seed flag
+├── seed.json                # Editable auto-derived sample rows (#298)
 ├── types.ts
 └── nuxt.config.ts
 
