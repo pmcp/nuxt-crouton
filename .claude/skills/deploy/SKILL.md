@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Deploy a crouton app to Cloudflare Workers (auto-provisioning). Handles the first bootstrap deploy (auto-creates D1+KV, syncs ids, migrates), wiring CI, and routine deploys. Also migrates an older Pages app to Workers. Use when deploying any app in apps/.
+description: Deploy a crouton app to Cloudflare Workers STAGING (auto-provisioning) — the DEFAULT deploy, staging only, never production. Handles the staging bootstrap (auto-creates D1+KV, syncs ids, migrates), wiring CI, routine staging deploys, and Pages→Workers migration. For production use the separate /deploy-production skill. Use when deploying any app in apps/.
 allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, AskUserQuestion
 ---
 
@@ -9,6 +9,10 @@ allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, AskUserQuestion
 Deploys a crouton app to **Cloudflare Workers (static assets)** — the crouton
 deploy standard (#108). Wrangler **auto-provisions** the app's D1 + KV on the
 first deploy, so there's no manual resource/project creation, no id-juggling.
+
+> **🟦 STAGING ONLY — this skill never deploys to production.** "Deploy" defaults to
+> **staging** here. Shipping to production is a deliberate, human-initiated action handled
+> by the separate **`/deploy-production`** skill. Never deploy production as part of routine work.
 
 > **Not Cloudflare Pages.** We do NOT use `wrangler pages …`, `pages_build_output_dir`,
 > or the Pages "strip env" step anymore. If you find those, the app is on the old
@@ -32,14 +36,14 @@ monorepo's convention, applied per app at its production cutover — #136 for tr
 ## Usage
 
 ```
-/deploy              # Deploy current app (auto-detected from cwd)
-/deploy three-demo   # Deploy a specific app (staging)
-/deploy velo prod    # Deploy to production
+/deploy              # Deploy current app to STAGING (auto-detected from cwd)
+/deploy three-demo   # Deploy a specific app to STAGING
+# production → use the separate /deploy-production skill
 ```
 
 ## Rules
 
-1. **NEVER deploy without confirming the target app and environment.**
+1. **STAGING ONLY.** This skill deploys to **staging**, never production (that's the separate `/deploy-production` skill). Always confirm the target app first.
 2. **Workers, not Pages** — `NITRO_PRESET=cloudflare_module`, output in `.output/`, deploy with `wrangler deploy` (never `wrangler pages deploy`).
 3. **NEVER manually create D1/KV** — they auto-provision from the **id-less** `wrangler.jsonc` on first deploy. After provisioning, run `sync:ids` and **commit** the written-back ids (remote `d1 migrations apply` needs them — workers-sdk#13632).
 4. **NEVER skip `nuxt prepare` before build** in CI — rolldown tsconfig bug. (Locally, the `cf:*` scripts assume `node_modules`/`.nuxt` are prepared from `pnpm install`.)
@@ -51,7 +55,7 @@ monorepo's convention, applied per app at its production cutover — #136 for tr
 The deploy logic lives in the app's **`package.json` scripts** — the same commands
 you run locally and that CI runs. Don't reinvent them step-by-step:
 
-- **`cf:deploy`** (production): `build → wrangler deploy (auto-provision) → sync:ids → d1 migrations apply --remote`
+- **`cf:deploy`** (production — run **only** via the `/deploy-production` skill): `build → wrangler deploy (auto-provision) → sync:ids → d1 migrations apply --remote`
 - **`cf:staging`** (isolated staging env): `build → inject-wrangler-env → wrangler deploy --env staging → sync:ids → inject-wrangler-env → d1 migrations apply --env staging --remote`
 - **`sync:ids`** — queries wrangler, writes provisioned ids back into `wrangler.jsonc`
 - **`db:migrate` / `db:migrate:prod` / `db:migrate:staging`** — D1 migrations (local / remote / staging-remote)
@@ -78,24 +82,22 @@ Confirm the app is Workers-ready:
 
 If anything is missing and the app is on the old Pages setup → **Migrating a Pages app → Workers**. If it's just missing files, copy them from `apps/three-demo` (the reference) or re-run the scaffolder.
 
-### Step 3: First (bootstrap) deploy
-The id-less bindings auto-provision here. Confirm with the user, then:
+### Step 3: First (bootstrap) staging deploy
+The id-less bindings auto-provision here. Confirm with the user, then deploy the
+isolated **staging** environment (its own auto-provisioned D1+KV):
 
 ```bash
 cd apps/{app}
-pnpm cf:deploy      # prod: builds, AUTO-PROVISIONS D1+KV, syncs ids, migrates
+pnpm cf:staging     # provisions + deploys the *-staging worker, migrates --env staging
 ```
 
 Then **commit the written-back ids** (bootstrap → committed):
 ```bash
-git add apps/{app}/wrangler.jsonc && git commit -m "chore({app}): commit provisioned D1/KV ids"
+git add apps/{app}/wrangler.jsonc && git commit -m "chore({app}): commit provisioned staging D1/KV ids"
 ```
 
-For the isolated staging environment (its own auto-provisioned D1+KV):
-```bash
-pnpm cf:staging     # provisions + deploys the *-staging worker
-git add apps/{app}/wrangler.jsonc   # commit the staging ids too
-```
+> The **production** bootstrap (`cf:deploy`, prod D1+KV, `<app>.friendlyinter.net`) is a
+> deliberate, separate step — see the **`/deploy-production`** skill. This skill stops at staging.
 
 > If you're an agent **without Cloudflare egress** (sandbox), you can't run these —
 > verify what's verifiable (config, `pnpm sync:ids --dry-run` logic) and have the
@@ -128,9 +130,10 @@ Two ways:
   deploy (`--env staging` for non-prod). Omit it to manage secrets manually.
   Automation can't invent values — they must live in that secret once.
 
-### Step 5: Routine deploys
-- **CI (preferred):** push to `staging` (or open a PR) → the caller runs the pipeline.
-- **Local:** `pnpm cf:deploy` (prod) / `pnpm cf:staging` (staging) from the app dir.
+### Step 5: Routine deploys (staging)
+- **CI (preferred):** push to `staging` (or open a PR) → the caller runs the staging pipeline.
+- **Local:** `pnpm cf:staging` from the app dir.
+- **Production is never routine** — ship it deliberately via the **`/deploy-production`** skill.
 
 ## Migrating a Pages app → Workers
 
