@@ -109,6 +109,8 @@ test-results/
 # Claude Code projects
 .claude/projects/
 .claude/.package-edit-approved
+# task-decompose worker worktrees (agent scratch — never committed)
+.claude/worktrees/
 apps/kvr/.data
 apps/fanfare/.data
 apps/three-demo/.data
