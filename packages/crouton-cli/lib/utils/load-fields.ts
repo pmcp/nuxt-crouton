@@ -52,7 +52,11 @@ export async function loadFields(p: string, typeMapping: Record<string, any>): P
       fieldMeta.area = 'main'
     }
 
-    const resolvedType = mapType(meta?.type, validTypes)
+    // Resolve aliases (e.g. `datetime` → `date`, `integer` → `number`) to the
+    // canonical type so every downstream generator that branches on `field.type`
+    // sees the canonical name. typeMapping carries `canonical` for both canonical
+    // and alias keys; fall back to mapType for unknown types (#285).
+    const resolvedType = typeMapping[meta?.type]?.canonical ?? mapType(meta?.type, validTypes)
     return {
       name,
       type: resolvedType,
