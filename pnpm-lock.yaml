@@ -22,8 +22,8 @@ catalogs:
       specifier: ^5.7.0
       version: 5.9.3
     vue-router:
-      specifier: ^4.6.4
-      version: 4.6.4
+      specifier: ^5.1.0
+      version: 5.1.0
     wrangler:
       specifier: ^4.101.0
       version: 4.101.0
@@ -128,7 +128,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -217,7 +217,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -1327,7 +1327,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -1367,7 +1367,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -1425,7 +1425,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -1471,7 +1471,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
@@ -1604,7 +1604,7 @@ importers:
         version: 3.5.38(typescript@5.9.3)
       vue-router:
         specifier: 'catalog:'
-        version: 4.6.4(vue@3.5.38(typescript@5.9.3))
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
     devDependencies:
       '@fyit/crouton-cli':
         specifier: workspace:*
