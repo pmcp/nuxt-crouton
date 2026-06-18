@@ -1,6 +1,25 @@
 // Minimal Theme Configuration
 // Super clean, black lines, white background, minimal aesthetic
 
+// Subtractive-theming helper (Nuxt UI >= 4.9, PR #6562).
+// A slot value that is a `(defaults) => classes` function REPLACES the resolved
+// default classes instead of merging onto them. We keep Nuxt UI's layout/sizing
+// and remove only the decorative utilities (rounded-* / shadow-* / ring-*, incl.
+// variant-prefixed ones like `focus-visible:ring-2`), then tag the element with
+// `minimal-flat`. Pure + deterministic, so SSR and client compute the identical
+// class string -> no hydration mismatch.
+const isDecorative = (cls: string): boolean => {
+  const util = cls.split(':').pop() ?? cls // drop variant prefixes (hover:, focus-visible:, dark:)
+  return /^-?(rounded|shadow|ring)(-|$)/.test(util)
+}
+
+const stripDecorative = (defaults: string): string =>
+  defaults
+    .split(/\s+/)
+    .filter(c => c && !isDecorative(c))
+    .concat('minimal-flat')
+    .join(' ')
+
 export default defineAppConfig({
   ui: {
     colors: {
@@ -9,7 +28,15 @@ export default defineAppConfig({
     },
 
     button: {
-      // Note: No slots.base override - let Nuxt UI handle base classes to avoid hydration mismatches
+      // Subtractive base via a slot-class replacer (see stripDecorative above).
+      // NOTE: this is GLOBAL to every <UButton> in an app that extends this
+      // theme -- it is NOT scoped to `variant="minimal"`. Replacers are only read
+      // at the top-level base/slots or the per-instance :ui prop, never inside
+      // variants/compoundVariants, so a theme that wants to *subtract* defaults
+      // does it here, while the named `minimal*` variants below stay additive.
+      slots: {
+        base: stripDecorative
+      },
       variants: {
         variant: {
           minimal: '',

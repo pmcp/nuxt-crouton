@@ -405,6 +405,53 @@ export default defineAppConfig({
 })
 ```
 
+### Two theming modes: additive (variants) vs subtractive (replacers)
+
+The pattern above is **additive** — a named `variant` + `compoundVariants` *add*
+CSS classes on top of Nuxt UI's defaults, which still get merged in via
+`tailwind-merge`. You can override conflicting utilities, but you **cannot remove**
+a default (rounded/shadow/ring), which is why the older theme CSS leans on
+`!important` to win the specificity war.
+
+**Nuxt UI ≥ 4.9 ([PR #6562](https://github.com/nuxt/ui/pull/6562)) adds the missing
+"subtract" lever:** a slot value can be a `(defaults) => classes` **function** that
+**replaces** the slot's resolved defaults instead of merging onto them (a string
+still merges). It works in `app.config.ui`, the per-instance `:ui` prop, and
+`<UTheme>`. Because the function receives the *fully resolved* default string, you
+can transform rather than blank it (keep layout, drop only decorative utilities):
+
+```ts
+// minimal/app.config.ts — strip rounded/shadow/ring, keep layout, no !important
+const stripDecorative = (defaults: string) =>
+  defaults.split(/\s+/).filter(c => !/^-?(rounded|shadow|ring)(-|$)/.test(c.split(':').pop()!))
+    .concat('minimal-flat').join(' ')
+
+export default defineAppConfig({
+  ui: { button: { slots: { base: stripDecorative } } }
+})
+```
+
+**Hard constraints (verified against `@nuxt/ui` `dist/runtime/utils/tv.ts`):**
+
+| | Additive (variant) | Subtractive (replacer) |
+|---|---|---|
+| Where read | `variants` / `compoundVariants` | top-level `base`/`slots`, per-instance `:ui`, `<UTheme>` |
+| Scope | per **named variant** (opt-in: `variant="minimal"`) | **global** to every instance / a `<UTheme>` subtree / one component |
+| Can subtract defaults | ❌ merge-only | ✅ replaces |
+| Runtime theme switching (`ThemeSwitcher`) | ✅ per-component `:variant` | ⚠️ a global `app.config` replacer can't be switched off per-component; use `<UTheme>` for a switchable subtree |
+
+- **Replacers are NOT variant-scoped.** `extractDirectives` only reads top-level
+  `base`/`slots` — a function inside `variants.variant.minimal.base` is ignored. So
+  subtractive theming is a *global/subtree/per-instance* tool, orthogonal to the
+  variant system; the two modes coexist (the `minimal` button uses both).
+- **Keep replacers pure & deterministic** so SSR and client compute the same string
+  (no hydration mismatch) — the original reason this package avoided base overrides.
+- **Multi-theme caveat:** a global `app.config` base replacer applies to *all*
+  buttons, so an app that `extends` several themes + flips them at runtime should
+  prefer `<UTheme>` (subtree) over a global replacer. Single-theme apps are clean.
+
+Spike: #364.
+
 ## Dependencies
 
 - **Peer deps**: `@nuxt/ui ^4.0.0`, `nuxt ^4.0.0`

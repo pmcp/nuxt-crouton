@@ -54,6 +54,14 @@
    BUTTON STYLES
    ============================================ */
 
+/* Applied by the slot-class replacer in app.config.ts, which has already
+   stripped Nuxt UI's rounded-*/shadow-*/ring-* defaults from the base slot.
+   Because those defaults are gone (not merged), this flattens corners with
+   NO !important -- the proof that subtractive theming ends the specificity war. */
+.minimal-flat {
+  border-radius: var(--minimal-radius);
+}
+
 .minimal-btn {
   font-family: var(--minimal-font) !important;
   font-weight: 500 !important;
