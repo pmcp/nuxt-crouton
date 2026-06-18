@@ -34,6 +34,7 @@
     "typecheck:fixtures": "pnpm -r --filter './fixtures/*' typecheck",
     "typecheck:mcp": "pnpm --filter nuxt-crouton-mcp-server typecheck",
     "poc:scaffold-deploy": "node scripts/scaffold-poc-deploy.mjs",
+    "db:clone": "node scripts/db-clone.mjs",
     "app:shots": "node scripts/app-shots.mjs",
     "publish:packages": "./scripts/publish-packages.sh",
     "publish:packages:dry": "./scripts/publish-packages.sh --dry-run",
