@@ -431,6 +431,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/dependency-sweep/SKILL.md` | The "get dependencies current" flow — sweep, triage (safe/deliberate/wait), bump the pnpm catalog, prove it with the typecheck + e2e gate. No update bot by design (#141); run on-demand or when the quarterly sweep ticket is due |
 | Skill | `.claude/skills/task-decompose/SKILL.md` | Entry point to the recursive task-decomposition pipeline (`/task-decompose`) — one task → an epic + tree of sub-issues → agents. See "Task Decomposition Pipeline" below |
 | Skill | `.claude/skills/ui-proposal/SKILL.md` | Generate a before/after UI mockup (offline HTML/CSS/SVG) + render it to PNG for design sign-off before building UI. Part of the UI sign-off loop (#307) |
+| Skill | `.claude/skills/schema-review/SKILL.md` | Render a collection schema (field-definition JSON) into a human-readable field table + relationships (HTML + PNG + Markdown) for data-model sign-off before `crouton config` generates code. Part of the schema sign-off loop (#314) |
 | Agent | `.claude/agents/task-orchestrator.md` | Reads an epic, fans it into 2–6 top-level sub-issues, spawns a decomposer per child |
 | Agent | `.claude/agents/task-decomposer.md` | Recursive: LEAF TEST one issue → spawn a worker (leaf) or split into sub-issues + spawn a decomposer per child |
 | Agent | `.claude/agents/task-worker.md` | Implements one leaf issue on an isolated worktree branch → `pnpm typecheck` → `/commit` → PR (`Closes #NN`) |
