@@ -1,0 +1,86 @@
+name: Deploy Sandbox (manual, Cloudflare Workers)
+
+# On-demand preview deploys for sandboxes/* (throwaway, human-eyeball apps).
+#
+# Deliberately NOT the reusable deploy-app.yml: sandboxes have no auth/D1/KV and
+# no custom domain, so the app pipeline's layer-package builds, auto-provisioning,
+# BETTER_AUTH_SECRET and --env staging injection are all irrelevant. This is the
+# stripped-down path — build with the cloudflare_module preset and `wrangler deploy`
+# to the zero-config *.workers.dev subdomain. Staging-only by nature; there is no
+# production target for a sandbox (root CLAUDE.md standing rule).
+#
+# Manual only (workflow_dispatch): you deploy a sandbox when you actually want to
+# look at it, not on every push. The deployed URL is written to the run summary.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sandbox:
+        description: Sandbox directory name under sandboxes/ (e.g. minimal-theme-demo)
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy sandbox ${{ inputs.sandbox }}
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-sandbox-${{ inputs.sandbox }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NODE_OPTIONS: '--max-old-space-size=8192'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Guard — sandbox exists
+        run: |
+          if [ ! -d "sandboxes/${{ inputs.sandbox }}" ]; then
+            echo "::error::sandboxes/${{ inputs.sandbox }} not found"
+            exit 1
+          fi
+
+      # --ignore-scripts: skip every workspace postinstall during the monorepo
+      # install; the sandbox's own prepare runs below.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Rolldown's tsconfig generation needs an explicit prepare before build.
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: sandboxes/${{ inputs.sandbox }}
+
+      - name: Deploy to Workers (staging, *.workers.dev)
+        id: deploy
+        working-directory: sandboxes/${{ inputs.sandbox }}
+        run: |
+          set -o pipefail
+          pnpm run cf:staging | tee deploy.log
+          URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | tail -1 || true)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Write deploy URL to summary
+        if: always()
+        run: |
+          {
+            echo "### 🧪 Sandbox preview — ${{ inputs.sandbox }}"
+            echo ""
+            if [ -n "${{ steps.deploy.outputs.url }}" ]; then
+              echo "🚀 ${{ steps.deploy.outputs.url }}"
+            else
+              echo "URL not parsed — check the **Deploy to Workers** step log."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -7,6 +7,8 @@ packages:
   - 'workers/*'
   # e2e test fixture apps (not real apps — kept out of apps/* deploy & typecheck sweeps)
   - 'fixtures/*'
+  # throwaway, human-eyeball test apps (not products — see sandboxes/CLAUDE.md)
+  - 'sandboxes/*'
 
 # Single source of truth for shared dependency versions (#142).
 # Reference from any package.json with "<dep>": "catalog:".

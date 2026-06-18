@@ -139,6 +139,11 @@
   color: "fef2c0"
   description: "POC: pocs/three-demo"
 
+# ── Sandboxes (sandboxes/*) — throwaway, human-eyeball test apps (delete-after) ──
+- name: "sandbox:minimal-theme-demo"
+  color: "d4c5f9"
+  description: "Sandbox: sandboxes/minimal-theme-demo"
+
 # ── Workers (workers/*) ──
 - name: "worker:collab-worker"
   color: "5319e7"
