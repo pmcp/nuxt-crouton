@@ -43,6 +43,39 @@ export default defineNuxtConfig({
 })
 ```
 
+## Mobile DevTools (eruda) layer — `@fyit/crouton-devtools/eruda`
+
+A separate, **opt-in Nuxt layer** (not the DevTools module above) that adds
+[eruda](https://github.com/liriliri/eruda) — an **in-page** devtools panel for
+**mobile** browsers (console incl. Vue hydration warnings, Elements/DOM, Network).
+Use it to debug a preview on a phone where desktop DevTools aren't available.
+
+```typescript
+// nuxt.config.ts — opt in (apps/pocs choose this; it is NOT auto-applied)
+export default defineNuxtConfig({
+  extends: ['@fyit/crouton-devtools/eruda']
+})
+```
+
+**Gating — staging/dev only, NEVER production:** the layer's client plugin loads
+eruda only when `import.meta.dev` (local) **or** the public flag
+`croutonEruda` is true. Enable it for a staging build by setting the env var in the
+app's `cf:staging` script; leave `cf:deploy` (production) untouched:
+
+```jsonc
+// app package.json
+"cf:staging": "NUXT_PUBLIC_CROUTON_ERUDA=true NITRO_PRESET=cloudflare_module nuxt build && …",
+"cf:deploy":  "NITRO_PRESET=cloudflare_module nuxt build && …"   // no flag → eruda never loads
+```
+
+- eruda is a **dynamic import** → its own chunk, **never fetched** when the flag is
+  false, so production pays ~nothing.
+- `NUXT_PUBLIC_CROUTON_ERUDA` maps to `runtimeConfig.public.croutonEruda` (Nuxt env
+  convention).
+- Files: `eruda/nuxt.config.ts` (layer entry + flag), `eruda/plugins/eruda.client.ts`
+  (gated loader). For *arbitrary* sites on the go, a dedicated inspector app (e.g.
+  Inspect Browser) stays the companion. Epic #387.
+
 ## What You'll See
 
 ### Collection Inspector
