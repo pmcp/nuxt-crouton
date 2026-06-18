@@ -19,7 +19,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: process.env.CI ? 'list' : 'html',
+  // CI emits the self-contained HTML report (bundles video + trace + screenshots)
+  // alongside the line reporter, so each run uploads one reviewable artifact (#356).
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'html',
   // Generous per-test budget: a fixture's first hit on a route/modal compiles it
   // on demand (nuxt dev), which is markedly slower on CI runners than locally.
   // Generous per-test budget. `nuxt dev` compiles each route on first hit, and CI
@@ -39,8 +41,14 @@ export default defineConfig({
     ...(process.env.PW_EXECUTABLE_PATH
       ? { launchOptions: { executablePath: process.env.PW_EXECUTABLE_PATH } }
       : {}),
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    // Visual-QA capture (#356): record on every run so each PR yields reviewable
+    // proof, not just a green check. trace = a step-by-step timeline with a
+    // before/after screenshot of every action plus DOM snapshots and console logs
+    // (the part that matters most for a UI-library bump); video = a watchable clip;
+    // screenshot = a final shot per test. The CI HTML report bundles all three.
+    trace: 'on',
+    video: 'on',
+    screenshot: 'on',
     actionTimeout: 20000,
     navigationTimeout: 120000
   },
