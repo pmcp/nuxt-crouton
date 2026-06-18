@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-The code word is a random song of the beatles.
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Your Role
@@ -121,10 +119,10 @@ If a feature genuinely requires a package change:
 
 The approval file is gitignored and session-scoped. Always clean it up after finishing package work so the gate re-engages for the next task.
 
-This applies to all agents, including Pi worker and sub-agents.
+This applies to all agents and sub-agents.
 
 ### Context Clearing Between Tasks
-After each task: announce completion, say the code word, STOP. User runs `/clear`. Fresh agent reads the relevant GitHub issue/epic (and PROGRESS_TRACKER.md if a phase rollup exists) and continues.
+After each task: announce completion, STOP. User runs `/clear`. Fresh agent reads the relevant GitHub issue/epic (and PROGRESS_TRACKER.md if a phase rollup exists) and continues.
 
 ## Technology Stack
 
