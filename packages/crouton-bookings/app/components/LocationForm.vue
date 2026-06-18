@@ -46,14 +46,14 @@
               {{ hasMaps ? t('bookings.locationForm.addressHintWithMap') : t('bookings.locationForm.addressHint') }}
             </p>
             <UFormField :label="t('bookings.locationForm.street')" name="street">
-              <UInput v-model="state.street" class="w-full" />
+              <UInput v-model="(state.street as any)" class="w-full" />
             </UFormField>
             <div class="grid grid-cols-2 gap-4">
               <UFormField :label="t('bookings.locationForm.zipCode')" name="zip">
-                <UInput v-model="state.zip" class="w-full" />
+                <UInput v-model="(state.zip as any)" class="w-full" />
               </UFormField>
               <UFormField :label="t('bookings.locationForm.city')" name="city">
-                <UInput v-model="state.city" class="w-full" />
+                <UInput v-model="(state.city as any)" class="w-full" />
               </UFormField>
             </div>
             <UFormField v-if="hasMaps" :label="t('bookings.locationForm.locationMap')" name="location">

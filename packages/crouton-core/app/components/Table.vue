@@ -71,7 +71,7 @@
         </template>
 
         <!-- Default column templates -->
-        <template #createdBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #createdBy-cell="{ row }">
           <CroutonUsersCardMini
             v-if="row.original.createdByUser"
             :item="row.original.createdByUser"
@@ -79,11 +79,11 @@
           />
         </template>
 
-        <template #createdAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #createdAt-cell="{ row }">
           <CroutonDate :date="row.original.createdAt" />
         </template>
 
-        <template #updatedBy-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #updatedBy-cell="{ row }">
           <CroutonUsersCardMini
             v-if="row.original.updatedByUser"
             :item="row.original.updatedByUser"
@@ -91,11 +91,11 @@
           />
         </template>
 
-        <template #updatedAt-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #updatedAt-cell="{ row }">
           <CroutonDate :date="row.original.updatedAt" />
         </template>
 
-        <template #presence-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #presence-cell="{ row }">
           <component
             v-if="collabEditingBadgeComponent && row.original?.id"
             :is="collabEditingBadgeComponent"
@@ -109,7 +109,7 @@
           />
         </template>
 
-        <template #actions-cell="{ row }: { row: { original: CroutonBaseRow } }">
+        <template #actions-cell="{ row }">
           <div class="flex items-center gap-2">
             <CroutonItemButtonsMini
               delete
