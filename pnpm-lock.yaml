@@ -31,6 +31,7 @@ catalogs:
 overrides:
   vue: ^3.5.38
   nuxt: ^4.4.8
+  '@nuxt/schema': ^4.4.8
   '@nuxt/devtools': ^3.0.0
   '@nuxt/devtools-kit': ^3.0.0
   unimport: 4.1.1
@@ -536,8 +537,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(ce1f968cd35ce8cd93587952ae298975)
@@ -607,8 +608,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(ce1f968cd35ce8cd93587952ae298975)
@@ -668,8 +669,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       '@types/better-sqlite3':
         specifier: ^7.6.0
         version: 7.6.13
@@ -953,8 +954,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(ce1f968cd35ce8cd93587952ae298975)
@@ -1024,8 +1025,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(ce1f968cd35ce8cd93587952ae298975)
@@ -1157,8 +1158,8 @@ importers:
         specifier: ^3.14.0
         version: 3.20.2(magicast@0.5.2)
       '@nuxt/schema':
-        specifier: ^3.14.0
-        version: 3.20.2
+        specifier: ^4.4.8
+        version: 4.4.8
       '@nuxtjs/mcp-toolkit':
         specifier: ^0.6.0
         version: 0.6.4(magicast@0.5.2)(zod@4.2.1)
@@ -4524,7 +4525,7 @@ packages:
     engines: {node: ^16.14.0 || >=18.0.0}
     hasBin: true
     peerDependencies:
-      '@nuxt/schema': ^4.4.5
+      '@nuxt/schema': ^4.4.8
     peerDependenciesMeta:
       '@nuxt/schema':
         optional: true
@@ -4652,14 +4653,6 @@ packages:
         optional: true
       '@rollup/plugin-babel':
         optional: true
-
-  '@nuxt/schema@3.20.2':
-    resolution: {integrity: sha512-fp584AiXON7vI6NDDpNTjxiJ485iM/ztJSPX9CqptKUNjULhBy9qlacF9+NiwQqxlEs3zvbxHpo/1qLPNSb4MQ==}
-    engines: {node: ^14.18.0 || >=16.10.0}
-
-  '@nuxt/schema@4.2.2':
-    resolution: {integrity: sha512-lW/1MNpO01r5eR/VoeanQio8Lg4QpDklMOHa4mBHhhPNlBO1qiRtVYzjcnNdun3hujGauRaO9khGjv93Z5TZZA==}
-    engines: {node: ^14.18.0 || >=16.10.0}
 
   '@nuxt/schema@4.4.8':
     resolution: {integrity: sha512-igfWuMF0x0Pmx/XwhPwH/bcXgbuwNnjUjqxCAsY6VQhmGKo0e9soJq3Q0ohj+rBkBfX6o2ysTP1/t2M82aK4qA==}
@@ -14385,11 +14378,6 @@ packages:
     engines: {node: '>=20.16.0'}
     hasBin: true
 
-  srvx@0.11.5:
-    resolution: {integrity: sha512-MbQgu/gbLcXjg1bhUhPXXOpeMfmDMTGSKPWeht5acXnlQNldD925eS4+bIH/qESecSkP71dU3Fmvunlai1+yzw==}
-    engines: {node: '>=20.16.0'}
-    hasBin: true
-
   stable-hash-x@0.2.0:
     resolution: {integrity: sha512-o3yWv49B/o4QZk5ZcsALc6t0+eCelPc44zZsLtCQnZPDwFpDYSWcDnrv2TtMmMbQ7uKo3J0HTURCqckw23czNQ==}
     engines: {node: '>=12.0.0'}
@@ -19958,7 +19946,7 @@ snapshots:
     dependencies:
       c12: 3.3.3(magicast@0.5.2)
       consola: 3.4.2
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.5
       errx: 0.1.0
       exsolve: 1.0.8
@@ -19968,7 +19956,7 @@ snapshots:
       mlly: 1.8.2
       ohash: 2.0.11
       pathe: 2.0.3
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
       rc9: 3.0.0
       scule: 1.3.0
       semver: 7.7.4
@@ -20498,22 +20486,6 @@ snapshots:
       - uploadthing
       - xml2js
 
-  '@nuxt/schema@3.20.2':
-    dependencies:
-      '@vue/shared': 3.5.26
-      defu: 6.1.4
-      pathe: 2.0.3
-      pkg-types: 2.3.0
-      std-env: 3.10.0
-
-  '@nuxt/schema@4.2.2':
-    dependencies:
-      '@vue/shared': 3.5.38
-      defu: 6.1.4
-      pathe: 2.0.3
-      pkg-types: 2.3.0
-      std-env: 3.10.0
-
   '@nuxt/schema@4.4.8':
     dependencies:
       '@vue/shared': 3.5.38
@@ -20601,7 +20573,7 @@ snapshots:
       '@vueuse/core': 13.9.0(vue@3.5.38(typescript@5.9.3))
       '@vueuse/integrations': 13.9.0(change-case@5.4.4)(fuse.js@7.1.0)(sortablejs@1.15.6)(vue@3.5.38(typescript@5.9.3))
       '@vueuse/math': 13.9.0(vue@3.5.38(typescript@5.9.3))
-      defu: 6.1.4
+      defu: 6.1.7
       fuse.js: 7.1.0
       ohash: 2.0.11
       pathe: 2.0.3
@@ -20637,7 +20609,7 @@ snapshots:
       '@nuxt/fonts': 0.11.4(db0@0.3.4(@libsql/client@0.17.4)(better-sqlite3@12.6.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.11)(pg@8.17.1)))(ioredis@5.11.1)(magicast@0.5.2)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/icon': 1.15.0(magicast@0.5.2)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
       '@nuxt/kit': 4.2.2(magicast@0.5.2)
-      '@nuxt/schema': 4.2.2
+      '@nuxt/schema': 4.4.8
       '@nuxtjs/color-mode': 3.5.2(magicast@0.5.2)
       '@standard-schema/spec': 1.1.0
       '@tailwindcss/postcss': 4.1.18
@@ -20725,7 +20697,7 @@ snapshots:
       '@nuxt/fonts': 0.12.1(db0@0.3.4(@libsql/client@0.17.4)(better-sqlite3@11.10.0)(drizzle-orm@0.41.0(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.11)(pg@8.17.1)))(ioredis@5.11.1)(magicast@0.5.2)(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))
       '@nuxt/icon': 2.2.0(magicast@0.5.2)(vite@5.4.21(@types/node@22.19.7)(lightningcss@1.30.2)(terser@5.46.0))(vue@3.5.38(typescript@5.9.3))
       '@nuxt/kit': 4.2.2(magicast@0.5.2)
-      '@nuxt/schema': 4.2.2
+      '@nuxt/schema': 4.4.8
       '@nuxtjs/color-mode': 3.5.2(magicast@0.5.2)
       '@standard-schema/spec': 1.1.0
       '@tailwindcss/postcss': 4.1.18
@@ -20834,7 +20806,7 @@ snapshots:
       '@nuxt/fonts': 0.12.1(db0@0.3.4(@libsql/client@0.17.4)(better-sqlite3@12.6.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260118.0)(@libsql/client@0.17.4)(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.11)(pg@8.17.1)))(ioredis@5.11.1)(magicast@0.5.2)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@nuxt/icon': 2.2.0(magicast@0.5.2)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
       '@nuxt/kit': 4.2.2(magicast@0.5.2)
-      '@nuxt/schema': 4.2.2
+      '@nuxt/schema': 4.4.8
       '@nuxtjs/color-mode': 3.5.2(magicast@0.5.2)
       '@standard-schema/spec': 1.1.0
       '@tailwindcss/postcss': 4.1.18
@@ -21536,7 +21508,7 @@ snapshots:
       '@vue/compiler-core': 3.5.32
       consola: 3.4.2
       debug: 4.4.3
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.5
       detab: 3.0.2
       github-slugger: 2.0.0
@@ -21714,12 +21686,12 @@ snapshots:
       autoprefixer: 10.4.24(postcss@8.5.15)
       c12: 3.3.3(magicast@0.5.2)
       consola: 3.4.2
-      defu: 6.1.4
+      defu: 6.1.7
       h3: 1.15.5
       klona: 2.0.6
       ohash: 2.0.11
       pathe: 2.0.3
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
       postcss: 8.5.15
       postcss-nesting: 13.0.2(postcss@8.5.15)
       tailwind-config-viewer: 2.0.4(tailwindcss@3.4.19(tsx@4.21.0)(yaml@2.9.0))
@@ -25542,7 +25514,7 @@ snapshots:
       c12: 3.3.3(magicast@0.5.2)
       citty: 0.1.6
       consola: 3.4.2
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.5
       didyoumean2: 7.0.4
       magic-string: 0.30.21
@@ -25551,7 +25523,7 @@ snapshots:
       ofetch: 1.5.1
       pathe: 2.0.3
       perfect-debounce: 2.1.0
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
       scule: 1.3.0
       tinyglobby: 0.2.15
       untyped: 2.0.0
@@ -25901,7 +25873,7 @@ snapshots:
     dependencies:
       chokidar: 3.6.0
       confbox: 0.1.8
-      defu: 6.1.4
+      defu: 6.1.7
       dotenv: 16.6.1
       giget: 1.2.5
       jiti: 1.21.7
@@ -28008,7 +27980,7 @@ snapshots:
     dependencies:
       consola: 3.4.2
       css-tree: 3.1.0
-      defu: 6.1.4
+      defu: 6.1.7
       esbuild: 0.25.12
       fontaine: 0.7.0
       jiti: 2.6.1
@@ -28046,7 +28018,7 @@ snapshots:
     dependencies:
       consola: 3.4.2
       css-tree: 3.1.0
-      defu: 6.1.4
+      defu: 6.1.7
       esbuild: 0.25.12
       fontaine: 0.7.0
       jiti: 2.6.1
@@ -28248,7 +28220,7 @@ snapshots:
     dependencies:
       citty: 0.1.6
       consola: 3.4.2
-      defu: 6.1.4
+      defu: 6.1.7
       node-fetch-native: 1.6.7
       nypm: 0.5.4
       pathe: 2.0.3
@@ -28440,7 +28412,7 @@ snapshots:
   h3@2.0.1-rc.14:
     dependencies:
       rou3: 0.7.12
-      srvx: 0.11.5
+      srvx: 0.11.16
 
   happy-dom@15.11.7:
     dependencies:
@@ -29505,7 +29477,7 @@ snapshots:
       clipboardy: 4.0.0
       consola: 3.4.2
       crossws: 0.3.5
-      defu: 6.1.4
+      defu: 6.1.7
       get-port-please: 3.2.0
       h3: 1.15.5
       http-shutdown: 1.2.2
@@ -31088,7 +31060,7 @@ snapshots:
   nuxt-site-config-kit@3.2.17(magicast@0.5.2)(vue@3.5.38(typescript@5.9.3)):
     dependencies:
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
       site-config-stack: 3.2.17(vue@3.5.38(typescript@5.9.3))
       std-env: 3.10.0
       ufo: 1.6.3
@@ -32022,7 +31994,7 @@ snapshots:
       citty: 0.1.6
       consola: 3.4.2
       pathe: 2.0.3
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
       tinyexec: 1.0.2
 
   nypm@0.6.5:
@@ -34171,8 +34143,6 @@ snapshots:
 
   srvx@0.11.16: {}
 
-  srvx@0.11.5: {}
-
   stable-hash-x@0.2.0: {}
 
   stackback@0.0.2: {}
@@ -34869,7 +34839,7 @@ snapshots:
   unconfig@0.6.1:
     dependencies:
       '@antfu/utils': 8.1.1
-      defu: 6.1.4
+      defu: 6.1.7
       importx: 0.5.2
     transitivePeerDependencies:
       - supports-color
@@ -35272,7 +35242,7 @@ snapshots:
       magic-string: 0.30.21
       mlly: 1.8.2
       pathe: 2.0.3
-      pkg-types: 2.3.0
+      pkg-types: 2.3.1
 
   update-browserslist-db@1.2.3(browserslist@4.28.1):
     dependencies:
@@ -36032,14 +36002,14 @@ snapshots:
 
   webpack@5.107.2(esbuild@0.25.12)(lightningcss@1.30.2)(postcss@8.5.15):
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.16.0
       acorn-import-phases: 1.0.4(acorn@8.16.0)
-      browserslist: 4.28.1
+      browserslist: 4.28.2
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.0
       es-module-lexer: 2.1.0
