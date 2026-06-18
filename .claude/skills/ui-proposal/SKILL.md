@@ -49,9 +49,16 @@ node .claude/skills/ui-proposal/render.mjs writeups/ui-proposals/<slug>.html scr
 ```
 Uses the repo's Playwright (`@playwright/test`) headless Chromium — no network. Renders at 2× for a crisp image.
 
-## Step 4 — Hand off
-- **Commit** the `.html` (via `/commit`, scope `docs`).
-- The **PNG** is the thing to post in the PR comment (handled by the worker gate / revision-loop sub-issues #309/#310). When running this skill by hand, attach/post the PNG yourself.
+## Step 4 — Hand off (review happens on the DIFF)
+**Commit a text artifact so feedback can be inline.** Alongside the `.html`, write a
+`writeups/ui-proposals/<slug>.md` — the **"what changes"** list, one item per line. Committed,
+it lands in the PR's "Files changed", so the reviewer can click any line and comment on that
+specific change ("make this a switch", "drop this one") with no copying.
+
+- **Commit** the `.html` + `.md` (via `/commit`, scope `docs`).
+- The **PNG** is the at-a-glance visual to post as a PR comment (handled by the worker gate /
+  revision-loop #309/#310); steer feedback to **inline comments on the committed `.md`**. When
+  running this skill by hand, post the PNG and point the reviewer at the `.md` in the diff.
 
 ## Conventions
 - Before **and** after side-by-side for a *change*; **after-only** for net-new UI (no "before" exists).

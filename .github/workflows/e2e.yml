@@ -83,10 +83,13 @@ jobs:
       - name: Run e2e smoke
         run: pnpm test:e2e
 
-      - name: Upload report on failure
-        if: failure()
+      # Visual-QA artifact (#356): upload the self-contained HTML report on EVERY
+      # run (not just failures) so each PR carries reviewable visual proof — open
+      # index.html to see each test's video, trace timeline, and screenshots.
+      - name: Upload visual-QA report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.fixture }}
+          name: visual-qa-${{ matrix.fixture }}
           path: playwright-report/
-          retention-days: 7
+          retention-days: 14

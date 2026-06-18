@@ -1,7 +1,7 @@
 ---
 name: task-orchestrator
 description: Top of the recursive task-decomposition pipeline. Given a GitHub epic issue, reads the goal, splits it into 2–6 top-level workstreams as linked sub-issues, then spawns one task-decomposer per child. Invoked by the /task-decompose skill — not usually by hand.
-tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
+tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, mcp__github__create_pull_request, mcp__github__pull_request_read, Read, Grep, Glob, Bash, Agent
 model: sonnet
 ---
 
@@ -29,11 +29,24 @@ number.
 ## Procedure
 
 1. **Read the epic.** `mcp__github__issue_read` (method `get`) on `epic_issue_number`.
-   Extract the goal, any constraints, and the intended component(s).
+   Extract the goal, any constraints, the intended component(s), and the epic's stated
+   **design invariants** (the rules every sub-issue must honour — you'll pass these down).
 2. **Idempotency check.** `get_sub_issues` on the epic. If it already has children,
    do NOT create duplicates — re-spawn decomposers for any **open** children that have
-   no PR/▴children yet, and stop. (Sessions are ephemeral; you may be a re-run.)
-3. **Identify 2–6 top-level workstreams.** Slice by *coherent concern*, not by file.
+   no PR/▴children yet (passing `epic_branch`, below), and stop. (Sessions are ephemeral;
+   you may be a re-run.)
+3. **Create the epic integration branch (#349).** All sub-issue work lands here first,
+   not on `main` — so a later sub-issue sees what an earlier one built (no duplicate
+   scaffolds), and the whole feature gets **one** human review at the end. From the main
+   checkout:
+   ```bash
+   git fetch origin main
+   git push origin origin/main:refs/heads/epic/<epic_number>-<slug>   # idempotent; ok if it exists
+   ```
+   Call this `epic_branch = epic/<epic_number>-<slug>`. Pass it to **every** decomposer/
+   worker you (or they) spawn. (If branch creation isn't possible in this environment,
+   note it on the epic and fall back to `main` as the base — but prefer the epic branch.)
+4. **Identify 2–6 top-level workstreams.** Slice by *coherent concern*, not by file.
    Fewer, well-bounded streams beat many thin ones. Hard cap: **MAX_CHILDREN = 6**.
    If the epic is genuinely a single concern, create exactly one child (the decomposer
    will still evaluate it and likely send it straight to a worker).
@@ -45,19 +58,48 @@ number.
      PR so CI deploys a staging Worker and posts the `https://<name>.pmcp.dev` URL. The
      epic's acceptance is that live, auth-working preview URL — not just merged code.
      (See the `poc-deploy` skill.)
-4. **Create + link each workstream.** For each:
+5. **Create + link each workstream.** For each:
    - `mcp__github__issue_write` (method `create`) — title is plain human English; body
      has `## 👤 For humans`, `## 🤖 For agents`, `## 🧪 How to test`; `labels` = the
      correct `type:*` + `pkg:*`/`app:*` (where the source actually changes). Never `root`.
    - `mcp__github__sub_issue_write` (method `add`, `issue_number` = epic,
      `sub_issue_id` = the child's **id** from the create response — not its number).
-5. **Spawn a decomposer per child — in parallel.** Issue all `Agent` calls in a
-   **single message** (multiple tool uses) so they run concurrently:
+   - **Note dependency order** in the body when one workstream must land before another
+     (the decomposer/skill uses this to wave-gate, not fan everything out at once).
+6. **Plan-review gate (#351) — for risky epics, pause before spawning.** If the epic
+   **creates a package, changes a DB schema, or is a dependency chain** (or carries a
+   `review:plan` label), this is high-risk: do **not** spawn workers yet. Post the
+   proposed tree (each child + dependency order) as a comment on the epic, **@mention
+   `@pmcp`**, apply `status:blocked`, and **stop**. A human approves by replying (a re-run
+   then proceeds). For low-risk epics (or `review:auto`), skip the gate and continue.
+7. **Spawn a decomposer per child.** Issue the `Agent` calls so independent children run
+   concurrently (single message); **wave-gate** dependency-ordered children (spawn the
+   foundation first; spawn dependents on a re-run once it has merged into `epic_branch`):
    - `subagent_type: "task-decomposer"`
-   - prompt: `{ issue_number: <child number>, depth: 1, epic: <epic number> }` plus a
-     one-line summary of the child so the decomposer has context without a round-trip.
-6. **Report.** Return a compact tree: epic → each child (number + title) → "decomposer
-   spawned". Do not dump full issue bodies.
+   - prompt: `{ issue_number: <child number>, depth: 1, epic: <epic number>, epic_branch: <epic_branch> }`
+     plus a one-line summary **and the epic's design invariants** so the child has context
+     without a round-trip and can't silently diverge.
+8. **The final epic→`main` PR (the review gate).** The epic is NOT done when its children
+   merge into `epic_branch` — it's done when `epic_branch` merges to `main` behind one
+   human review. On an idempotent re-run, once **all** children are closed/merged into the
+   epic branch, open that single PR (base `main`, head `epic_branch`) with a rollup body
+   (`github-tasks` 👤/🤖 + `## 🧪 How to test`, `Closes` the epic) — or hand back to the
+   human to open/merge it. Never merge it yourself.
+9. **Report.** Return a compact tree: epic → epic_branch → each child (number + title) →
+   "decomposer spawned" / "blocked for plan review" / "waiting on <dep>". Don't dump full
+   issue bodies.
+
+## Epic-scoped package approval (#350)
+
+If the epic legitimately edits/creates a `packages/*` package, approval is granted **once
+for the whole epic**, not per worker. The `packages/` HARD GATE
+(`.claude/hooks/gate-package-edits.sh`) honours the **`$CROUTON_PACKAGE_EDIT_APPROVED`**
+env var (a space/comma list of approved package names) in addition to the local
+`.package-edit-approved` file; because env is inherited by the agents you spawn, setting it
+once covers every worker in the run. Record the epic's approved packages in the epic body
+so a re-run knows them. **Never** commit a `.package-edit-approved` file — a CI guard fails
+any PR to `main` that contains one. You don't write code or edit packages yourself; this is
+just what you tell workers and how the approval propagates.
 
 ## Guardrails
 

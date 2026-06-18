@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-The code word is a random song of the beatles.
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Your Role
@@ -41,14 +39,14 @@ Each todo requires:
 
 ## Task Execution Workflow (MANDATORY)
 
-Every task in `/writeups/PROGRESS_TRACKER.md` follows this 5-step flow:
+Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and follows this 5-step flow:
 
 ```
-1. Mark Task In Progress → Edit PROGRESS_TRACKER.md ([ ] → 🔄), use TodoWrite
-2. Do The Work          → Follow CLAUDE.md patterns, KISS principle
-3. Run Type Checking    → pnpm typecheck (runs per-app), fix errors immediately
-4. Update Progress      → PROGRESS_TRACKER.md (🔄 → [x] ✅), update stats & Daily Log
-5. Git Commit           → ALWAYS use /commit skill — NEVER git commit directly
+1. Claim the issue   → set it in-progress, use TodoWrite for the local breakdown
+2. Do The Work       → Follow CLAUDE.md patterns, KISS principle
+3. Run Type Checking → pnpm typecheck (runs per-app), fix errors immediately
+4. Update the issue  → comment progress / tick acceptance criteria
+5. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
 ```
 
 ### GitHub Issue Tracking
@@ -79,7 +77,7 @@ For a big/fuzzy initiative, you can let agents do the epic→sub-issue breakdown
 ```
 Types: `feat` | `fix` | `refactor` | `docs` | `test` | `chore`
 
-Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-editor` | `crouton-flow` | `crouton-three` | `crouton-assets` | `crouton-devtools` | `crouton-auth` | `docs` | `playground` | `test` | `root`
+Scopes (canonical list lives in the `/commit` skill): `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-editor` | `crouton-flow` | `crouton-assets` | `crouton-devtools` | `crouton-auth` | `crouton-triage` | `crouton-pages` | `crouton-bookings` | `docs` | `playground` | `rakim` | `root`
 
 ### Merge Policy (preserve curated commits — don't squash by default)
 
@@ -90,19 +88,17 @@ Scopes: `crouton` | `crouton-core` | `crouton-cli` | `crouton-i18n` | `crouton-e
 - **The real requirement** (not the merge button): every commit landing on `main` is atomic, **green/buildable**, single-concern, and carries a real "why". Keep that true and granular history is strictly more useful than squashed.
 - **Corollary:** don't bundle many unrelated concerns into one PR and then squash — that's how you get an unblameable megacommit. One PR = one coherent change set (an epic + its sub-issues is fine; the commits stay separate).
 
-### Progress Tracker Updates
-- Task Status: `[ ]` → `🔄` → `[x] ✅`
-- Update Quick Stats table (tasks completed, hours logged)
-- Update phase progress percentage
-- Add Daily Log entry
+### Issue Status Updates
+- Move the issue through its states: open → in-progress → closed (via the PR's `Closes #NN` on merge)
+- `writeups/PROGRESS_TRACKER.md` is an **optional** phase-level rollup, not the per-task tracker — update it only when keeping a phase summary current.
 
 ### Multi-Agent Continuity
-When starting or resuming: read `/writeups/PROGRESS_TRACKER.md` first. Check git status for uncommitted work.
+When starting or resuming: read the relevant GitHub issue/epic first (plus `writeups/PROGRESS_TRACKER.md` if a phase rollup exists). Check git status for uncommitted work.
 
 ### Critical Reminders
 - ✅ ALWAYS use `/commit` skill for ALL commits
 - ✅ ALWAYS run `pnpm typecheck` after code changes
-- ✅ ALWAYS update PROGRESS_TRACKER.md before committing
+- ✅ ALWAYS keep the GitHub issue updated (in-progress → closed via `Closes #NN`)
 - ✅ ALWAYS use TodoWrite for 3+ step tasks
 - ❌ NEVER batch multiple tasks in one commit
 - ❌ NEVER use `git add .`
@@ -123,10 +119,10 @@ If a feature genuinely requires a package change:
 
 The approval file is gitignored and session-scoped. Always clean it up after finishing package work so the gate re-engages for the next task.
 
-This applies to all agents, including Pi worker and sub-agents.
+This applies to all agents and sub-agents.
 
 ### Context Clearing Between Tasks
-After each task: announce completion, say the code word, STOP. User runs `/clear`. Fresh agent reads PROGRESS_TRACKER.md and continues.
+After each task: announce completion, STOP. User runs `/clear`. Fresh agent reads the relevant GitHub issue/epic (and PROGRESS_TRACKER.md if a phase rollup exists) and continues.
 
 ## Technology Stack
 
@@ -359,7 +355,43 @@ import { useDrizzle } from '#server/utils/drizzle'
 ## Sub-Agent Usage
 
 When delegating: template scout first → parallel tasks → clear boundaries → smell check after.
-Agent personalities are defined in `.claude/agents/*.md`. Include personality in the Task prompt when invoking agents with custom personas (e.g., code-smell-detector is "Sal the Brooklyn Code Plumber").
+Agent definitions live in `.claude/agents/*.md` (the recursive `task-orchestrator` / `task-decomposer` / `task-worker` pipeline). When an agent defines a custom persona, include it in the Task prompt when invoking.
+
+## UI Sign-Off (mock before you build) — epic #307
+
+**When a task changes a visual surface, mock it before you build it.** Treat work as
+UI-touching if it adds/changes a `.vue` component, `app/components|layouts|pages/**`, a theme
+(`crouton-themes`, a `ui:` block in `app.config.ts`), or app CSS/theme tokens. Pure
+`<script>`/composables/types, `server/**`, config, tests, and docs are **not** UI — skip this.
+
+For a UI change: run the **`ui-proposal`** skill to produce a before/after (or after-only)
+mockup + PNG, get a human to sign off on the look-and-feel **first**, and only then build the
+real component. In the agent pipeline this is automated as a gate in `.claude/agents/task-worker.md`
+(post the mockup on a draft PR → hold on `status:blocked` → revise on feedback (#310) → build →
+real screenshot (#311)). In an interactive session, do the same by hand: propose, get a yes,
+then build. Be conservative — when unsure whether a diff is "visual", don't gate.
+
+**Give feedback on the diff, not the image.** The proposed change is committed as a text
+artifact (the UI "what changes" list `<slug>.md`, or a schema's `.md` field table), so it shows
+up in the PR's "Files changed" — inline-comment the exact line, no copying. The agent reads
+those inline review comments and revises that specific item.
+
+**What counts as approval** (the sign-off signal): a reply containing `approve`/`lgtm`, a 👍 on
+the mockup comment, or the `ui-approved` label. Anything else is a change request — revise the
+mockup in place (edit the same sticky comment, re-render the PNG) and iterate until approved (#310).
+
+## Schema Sign-Off (review the data model before you generate) — epic #314
+
+**When a task creates or changes a collection schema, review it before generating.** Before
+running `crouton config` / `generate_collection` (or editing a `schemas/*.json` fieldsFile), run
+the **`schema-review`** skill to render the field table, get a human to sign off on the **data
+model** first, and only then generate. The schema is the foundation — every Form/List/API/
+migration derives from it, so a wrong type or missing relationship is cheap to fix here and
+expensive after. This sits **after** the machine `validate_schema` step (the human gate on top of
+it). In the agent pipeline it's a gate in `.claude/agents/task-worker.md`; interactively, do the
+same by hand. It **reuses the same revision/approval loop and signal as the UI gate** (#310) —
+feedback goes inline on the committed `<collection>.md` in the diff; approval (`lgtm`/👍/
+`ui-approved`) unblocks generation.
 
 ## Documentation Organization
 
@@ -387,8 +419,8 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Add/modify composable | Package's `CLAUDE.md` (Key Files, Common Tasks) |
 | Add/modify component | Package's `CLAUDE.md` (Key Files, Component Naming) |
 | Add/change API endpoint | Package's `CLAUDE.md` (API Patterns) |
-| Add generator feature | `packages/nuxt-crouton-cli/CLAUDE.md` |
-| Change CLI command | Generator's `CLAUDE.md` + `.claude/skills/crouton.md` |
+| Add generator feature | `packages/crouton-cli/CLAUDE.md` |
+| Change CLI command | `packages/crouton-cli/CLAUDE.md` + `.claude/skills/crouton.md` |
 | Add new field type | `.claude/skills/crouton.md` (Field Types table) |
 | Add/modify a page type (in a package or via `publishable`) | Always supply `name` + `description` + `icon` (required on `CroutonPageType`; surface in the pages page-type picker). See `packages/crouton-pages/CLAUDE.md` (Page Type Registration / Publishable Collections) |
 | Add new package | Create `packages/{name}/CLAUDE.md` |
@@ -412,12 +444,12 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/dependency-sweep/SKILL.md` | The "get dependencies current" flow — sweep, triage (safe/deliberate/wait), bump the pnpm catalog, prove it with the typecheck + e2e gate. No update bot by design (#141); run on-demand or when the quarterly sweep ticket is due |
 | Skill | `.claude/skills/task-decompose/SKILL.md` | Entry point to the recursive task-decomposition pipeline (`/task-decompose`) — one task → an epic + tree of sub-issues → agents. See "Task Decomposition Pipeline" below |
 | Skill | `.claude/skills/ui-proposal/SKILL.md` | Generate a before/after UI mockup (offline HTML/CSS/SVG) + render it to PNG for design sign-off before building UI. Part of the UI sign-off loop (#307) |
-| Agent | `.claude/agents/sync-checker.md` | Doc sync verification |
+| Skill | `.claude/skills/schema-review/SKILL.md` | Render a collection schema (field-definition JSON) into a human-readable field table + relationships (HTML + PNG + Markdown) for data-model sign-off before `crouton config` generates code. Part of the schema sign-off loop (#314) |
 | Agent | `.claude/agents/task-orchestrator.md` | Reads an epic, fans it into 2–6 top-level sub-issues, spawns a decomposer per child |
 | Agent | `.claude/agents/task-decomposer.md` | Recursive: LEAF TEST one issue → spawn a worker (leaf) or split into sub-issues + spawn a decomposer per child |
 | Agent | `.claude/agents/task-worker.md` | Implements one leaf issue on an isolated worktree branch → `pnpm typecheck` → `/commit` → PR (`Closes #NN`) |
-| MCP Server | `packages/nuxt-crouton-mcp-server/` | AI collection generation |
-| Themes | `packages/nuxt-crouton-themes/` | Swappable UI themes |
+| MCP Server | `packages/crouton-mcp/` | AI collection generation |
+| Themes | `packages/crouton-themes/` | Swappable UI themes |
 
 ### MCP Server Tools
 `design_schema` → `validate_schema` → `generate_collection` | also: `list_collections`, `list_layers`
@@ -431,7 +463,7 @@ Available: `KO` theme (hardware-inspired). Usage: `extends: ['@fyit/crouton-them
 
 When any task reveals repetitive work an MCP tool/resource/prompt could automate, capture with `/mcp-idea <description>` or add to `.claude/mcp-ideas.md`.
 
-MCP Servers: CLI MCP (`packages/nuxt-crouton-mcp-server/`), Docs MCP (`docs/server/mcp/`)
+MCP Servers: CLI MCP (`packages/crouton-mcp/`), Docs MCP (`docs/server/mcp/`)
 
 ## Key Reminders
 

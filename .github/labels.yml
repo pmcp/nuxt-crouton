@@ -196,3 +196,6 @@
 - name: "status:blocked"
   color: "d93f0b"
   description: "Blocked / waiting on something"
+- name: "ui-approved"
+  color: "0e8a16"
+  description: "UI sign-off given — the mockup is approved, build may proceed (#307/#310)"
