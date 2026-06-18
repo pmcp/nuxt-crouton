@@ -155,6 +155,26 @@ While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` comment
 **Ignore bot and self-authored comments** to avoid loops — same `user.type != 'Bot'` filter as
 `resume-on-comment.yml`.
 
+### Post-build screenshot (#311)
+
+After the approved UI is actually built (step 6) and typecheck is green, **prove the mockup
+became reality**: capture a real before/after of the changed surface and post it as a *separate*
+sticky comment marked `<!-- ui-screenshot:<slug> -->` (distinct from the mockup's
+`<!-- ui-proposal:<slug> -->` comment) so the mockup → real comparison is visible on the PR.
+
+- **Use the existing harness — don't hand-roll.** Boot the surface (a `fixtures/` app or the
+  relevant `apps/` app) and capture with **`scripts/app-shots.mjs`**:
+  `node scripts/app-shots.mjs <baseUrl> <route>:<slug>-after --out screenshots`. For the
+  **before**, capture the same route from the base branch (check out base / use the deployed
+  base) → `<slug>-before.png`. Both land in `screenshots/` (the gitignored hard-gate) — they're
+  posted to the PR, not committed.
+- **Be honest about reachability.** If the changed surface **isn't reachable** in a fixture or a
+  running app (no route, needs unavailable data/auth), **say so explicitly** in the comment
+  rather than implying verification — post the after-only shot or a plain note, never a fake
+  "before".
+- This is the closing step: once the screenshot comment is posted, mark the draft PR **ready
+  for review**.
+
 ## Epic-scoped package approval
 
 The `packages/` HARD GATE (`.claude/hooks/gate-package-edits.sh`) blocks edits under
