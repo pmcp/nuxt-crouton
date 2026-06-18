@@ -57,6 +57,8 @@ Every task in `/writeups/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `writeups/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
+**Write issues & epics as bets, not task lists (default).** Frame work as an assumption — *We think that* if we do X, then Y will happen (and Y is what we want) · *We'll do that by* … · *We'll be right if* … · *We'll know by* … — so we can later check whether we were right. It's a lens over the existing 👤/🤖/🧪 sections (open with `## 🎯 The bet`), not a new heading. Use it for every epic/issue as much as possible; trivial chores may opt out. Full template + worked examples in the `github-tasks` skill (epic #359).
+
 ### Task Decomposition Pipeline (`/task-decompose`)
 
 For a big/fuzzy initiative, you can let agents do the epic→sub-issue breakdown **and** the work. `/task-decompose "<task>"` (or `/task-decompose #NN` to reuse an existing epic) creates the epic, then spawns a recursive agent pipeline that builds out the whole issue tree and works the leaves:
