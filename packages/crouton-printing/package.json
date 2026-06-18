@@ -14,7 +14,6 @@
   ],
   "exports": {
     ".": "./nuxt.config.ts",
-    "./schemas/*": "./schemas/*",
     "./server/database/schema": {
       "import": "./server/database/schema.ts",
       "types": "./server/database/schema.ts"
@@ -27,6 +26,7 @@
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
+    "test": "vitest run",
     "prepack": "pnpm build"
   },
   "keywords": [
@@ -60,6 +60,7 @@
     "nanoid": "^5.0.0"
   },
   "devDependencies": {
-    "unbuild": "^3.6.1"
+    "unbuild": "^3.6.1",
+    "vitest": "^4.0.0"
   }
 }
