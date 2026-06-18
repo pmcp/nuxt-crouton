@@ -57,13 +57,16 @@ a feature branch.
    - **Not UI → skip cleanly.** No mockup, no comment, no hold — go straight to implementation.
    - **UI → gate (HOLD, do not build yet):**
      1. Run the **`ui-proposal`** skill (`Skill` tool) to produce the mockup
-        `writeups/ui-proposals/<slug>.html` and render `screenshots/ui-proposal-<slug>.png`
-        (before/after for a change; after-only for net-new UI).
-     2. Commit the `.html` via **`/commit`** (scope `docs`) and **push** the branch.
+        `writeups/ui-proposals/<slug>.html`, a committed **`<slug>.md`** ("what changes" list,
+        one item per line — the commentable surface), and render
+        `screenshots/ui-proposal-<slug>.png` (before/after for a change; after-only for net-new).
+     2. Commit the `.html` + `.md` via **`/commit`** (scope `docs`) and **push** the branch —
+        the `.md` lands in the PR diff so it can be reviewed line-by-line.
      3. **Open the PR early as a draft** (`create_pull_request` with `draft: true`, same base
-        rules as the "Open a PR" step) so there's a surface to review on, then post the rendered
-        PNG as a **sticky** comment marked `<!-- ui-proposal:<slug> -->` — one comment, edited
-        in place on later rounds, never a flood.
+        rules as the "Open a PR" step). Post the rendered PNG as a **sticky** comment marked
+        `<!-- ui-proposal:<slug> -->` (the at-a-glance visual; one comment, edited in place,
+        never a flood) — but **steer feedback to inline comments on the committed `<slug>.md`
+        in the diff**, where each note pins to a specific change.
      4. Apply `status:blocked`, @mention the notify handle (`@pmcp`) noting it's **awaiting UI
         sign-off**, and **STOP** — do not implement. The revision/approval loop (#310) iterates
         the mockup on feedback and resumes the build on an approval signal; the real before/after
@@ -116,14 +119,19 @@ you **mock it before you build it**: generate a before/after (or after-only) moc
 waits for human sign-off. A non-visual diff (logic/types/`server/**`/config/tests/docs)
 skips the gate entirely: no mockup, no comment, no hold.
 
+- **Review happens on the diff, not the image.** A PNG can't be commented on. The committed
+  `<slug>.md` ("what changes", one item per line) is the **actionable** surface — the reviewer
+  inline-comments a specific change in "Files changed", no copying. The PNG is just the glance.
 - **One sticky comment.** The mockup PNG goes in a single comment carrying the marker
   `<!-- ui-proposal:<slug> -->`. On later rounds, **edit that comment in place** — never post
   a new one per revision.
 - **The hold is `status:blocked`** (the existing human-hold label), with an @mention of the
   notify handle so the owner is pinged. You stop after posting; you do not implement.
 - **Where the loop continues:** the revision/approval loop (#310) watches the PR, revises the
-  mockup on change-requests (re-rendering the PNG into the same sticky comment), and resumes
-  the build on an approval signal; the post-build before/after screenshot (#311) closes it.
+  mockup on change-requests — reading **inline review comments on the committed `<slug>.md`** in
+  the diff (plus top-level comments), re-rendering the PNG into the same sticky comment, and
+  replying to/resolving each thread — then resumes the build on an approval signal; the
+  post-build before/after screenshot (#311) closes it.
 - **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
   than false-positive (gating a pure-logic PR). When unsure, don't gate.
 
@@ -138,11 +146,14 @@ separately under #336 — don't build it here.
 While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` comment), each human
 (non-bot) reply is one of two things:
 
-- **Change request** (anything asking for a different look): revise
-  `writeups/ui-proposals/<slug>.html`, re-render the PNG (`render.mjs`), and **edit the same
-  sticky comment in place** — never post a new one. Append a one-line revision-history entry to
-  that comment (`- rN: <what changed>`) so the thread shows each round. The hold stays. Commit
-  the revised `.html` (`/commit`, scope `docs`) and push.
+- **Change request.** Feedback arrives two ways — **inline review comments on the committed
+  `<slug>.md`/`.html` in the diff** (the primary, low-friction channel: each note is pinned to a
+  specific change) and top-level PR comments. Read **both** via `pull_request_read` (review
+  comments + threads). For each: revise the mockup (`<slug>.html` **and** the `<slug>.md` list),
+  re-render the PNG (`render.mjs`), **edit the sticky comment in place** (append
+  `- rN: <what changed>`), and **reply to / resolve each inline thread** you addressed so it's
+  clear what's done. Commit (`/commit`, scope `docs`) and push — the diff updates in place. The
+  hold stays.
 - **Approval signal** — **any one of**:
   - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
   - a **👍 reaction** on the sticky mockup comment, or

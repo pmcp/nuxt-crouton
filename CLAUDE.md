@@ -371,6 +371,11 @@ real component. In the agent pipeline this is automated as a gate in `.claude/ag
 real screenshot (#311)). In an interactive session, do the same by hand: propose, get a yes,
 then build. Be conservative — when unsure whether a diff is "visual", don't gate.
 
+**Give feedback on the diff, not the image.** The proposed change is committed as a text
+artifact (the UI "what changes" list `<slug>.md`, or a schema's `.md` field table), so it shows
+up in the PR's "Files changed" — inline-comment the exact line, no copying. The agent reads
+those inline review comments and revises that specific item.
+
 **What counts as approval** (the sign-off signal): a reply containing `approve`/`lgtm`, a 👍 on
 the mockup comment, or the `ui-approved` label. Anything else is a change request — revise the
 mockup in place (edit the same sticky comment, re-render the PNG) and iterate until approved (#310).
