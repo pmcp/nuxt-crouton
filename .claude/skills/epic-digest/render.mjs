@@ -150,7 +150,8 @@ function epicCard(e) {
           <td style="white-space:nowrap;${muted}font-size:12px;font-weight:600">${e.done}/${e.total} · ${p}%</td>
         </tr></table>
 
-        ${labeledLine('What it is', e.whatItIs)}
+        ${labeledLine('The bet', e.theBet || e.whatItIs)}
+        ${labeledLine("We'll know by", e.weWillKnowBy)}
         ${labeledLine('Where we are', e.whereWeAre || e.recentActivity)}
 
         ${
@@ -236,11 +237,13 @@ const txt =
           const kids = (e.children || [])
             .map((c) => `      ${c.state === 'closed' ? '[x]' : '[ ]'} #${c.number} ${c.title}`)
             .join('\n')
+          const theBet = e.theBet || e.whatItIs
           const whereWeAre = e.whereWeAre || e.recentActivity
           return (
             `${head}\n  ${bar(e)}\n` +
-            (e.whatItIs ? `  What it is:   ${e.whatItIs}\n` : '') +
-            (whereWeAre ? `  Where we are: ${whereWeAre}\n` : '') +
+            (theBet ? `  The bet:       ${theBet}\n` : '') +
+            (e.weWillKnowBy ? `  We'll know by: ${e.weWillKnowBy}\n` : '') +
+            (whereWeAre ? `  Where we are:  ${whereWeAre}\n` : '') +
             (kids ? `${kids}\n` : '')
           )
         })

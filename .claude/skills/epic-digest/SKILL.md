@@ -51,15 +51,19 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
    - Merged PRs: `search_issues` → `repo:pmcp/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
      (note: `search_issues` is scoped to issues; for PRs use `mcp__github__search_pull_requests`
      if available, else `list_pull_requests` filtered client-side.)
-4. Write the **two human lines** per epic — these are the heart of the digest, the
-   part a busy person actually reads. Keep them plain English, no file paths, no jargon:
-   - `whatItIs` — one or two sentences on **what this epic is for** and why it matters.
-     Derive it from the epic's "👤 For humans" section / title — don't just restate the title.
-   - `whereWeAre` — the **current status in plain words**: what's done, what's next, and
-     any blocker (e.g. "Almost done — only X left", "Stuck waiting on Y"). This is where
-     the last-24h movement gets folded in.
-   - `recentActivity` (optional) — kept for back-compat; if `whereWeAre` is absent the
-     renderer falls back to it. Prefer writing `whereWeAre`.
+4. Write the **human lines** per epic — these are the heart of the digest, the part a
+   busy person actually reads. We write issues as **bets** (see the `github-tasks` skill),
+   so the digest surfaces the bet and its signal. Keep them plain English, no file paths,
+   no jargon:
+   - `theBet` — the epic's bet, pulled from its "## 🎯 The bet" / "We think that…" line:
+     *if we do X, then Y will happen — and Y is what we want*. This is the lead line.
+   - `weWillKnowBy` — the bet's signal, from the epic's "We'll know by…": how we'll know
+     the assumption paid off (a measurable/checkable outcome).
+   - `whereWeAre` — the **current status in plain words**: what's done, what's next, any
+     blocker. This is where the last-24h movement gets folded in.
+   - `whatItIs` (optional) / `recentActivity` (optional) — back-compat fallbacks: `theBet`
+     falls back to `whatItIs`, `whereWeAre` falls back to `recentActivity`. Prefer the
+     bet-framed fields.
 
 Keep it lean: titles, numbers, URLs, states. Don't fetch comment bodies.
 
@@ -83,9 +87,11 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
       "status": "in-progress",          // in-progress | blocked | open | done
       "blocked": false,
       "total": 5, "done": 4,            // sub-issue counts → drives the progress bar
-      "whatItIs": "One or two plain sentences: what this epic is for and why it matters.",
+      "theBet": "We think that if we do X, then Y will happen — and Y is what we want.",
+      "weWillKnowBy": "The signal that tells us the bet paid off.",
       "whereWeAre": "Plain status: what's done, what's next, any blocker.",
-      "recentActivity": "(optional, back-compat) one line about what moved.",
+      "whatItIs": "(optional, back-compat) → theBet falls back to this.",
+      "recentActivity": "(optional, back-compat) → whereWeAre falls back to this.",
       "children": [
         { "number": 254, "title": "...", "url": "...", "state": "open", "status": "in-progress" },
         { "number": 253, "title": "...", "url": "...", "state": "closed" }
