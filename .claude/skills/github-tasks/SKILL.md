@@ -63,7 +63,18 @@ Sub-issues are the **work** unit; the **epic** is the **verification** unit. Whe
 
 Close the epic **only after that pass passes** (or the owner confirms). This turns "a bunch of merged PRs" into a single "now go click these and confirm it all works" checklist for a non-technical owner. If a sub-issue couldn't be auto-verified (e.g. needs a device), say so explicitly in the rollup rather than implying it's confirmed.
 
-### Closing a child? Always check the parent (REQUIRED — do it the moment the PR merges)
+### Human-action tasks: assign them, and close them when answered (REQUIRED)
+
+**Not every task ends in a PR.** When something needs **the owner** to act — a visual sign-off, a decision, an approval, a manual run/deploy — capture it as a **discrete issue assigned to them**, *never* as a bare comment buried on another issue. The owner's **"assigned to me" filter is their entire to-do list**; an action that lives only in a comment is invisible to it. Trackers/epics stay **unassigned** — only actionable tasks carry an assignee, so "assigned" always means "you, now".
+
+These tasks are resolved by a **comment/confirmation, not a merge**, so they need their own closing path — and it's the agent's job, not the owner's:
+
+- **Close it the instant the action is confirmed done** — the owner says "looks good", the deploy goes green, the question is answered — in that *same turn*, and drop its `status:*` label. Then run the parent/epic walk-up below.
+- An action **answered in a comment but left open is a tracking leak**: the assignee filter fills with done-but-open noise and stops being trustworthy. Closing travels *with* the answer, exactly as closing a leaf travels with its merge.
+
+So an issue closes by **either** path — `Closes #NN` on a merged PR, **or** a confirmed human-action task the agent closes on the spot — and **both** then walk up the tree:
+
+### Closing a child? Always check the parent (REQUIRED — do it the moment the PR merges *or the task is answered*)
 
 A merged PR auto-closes the issues in its `Closes #NN` lines — but **a parent epic has no `Closes` line of its own, so it never auto-closes**, and a fully-delivered epic left open is the most common stale-tracking bug. So **the instant you close an issue — or a PR merges that auto-closes one — walk up the tree, unprompted.** Don't wait to be asked and don't defer it to a later task: closing the leaf is not "done" until you've checked the branch above it. Closing the epic travels *with* the merge that closes its last child — same logical step, not a follow-up someone has to remember.
 
