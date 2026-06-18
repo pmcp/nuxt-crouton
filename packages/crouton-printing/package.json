@@ -1,0 +1,55 @@
+{
+  "name": "@fyit/crouton-printing",
+  "version": "0.1.0",
+  "description": "Shared printing engine for Nuxt Crouton - ESC/POS thermal receipt formatter and pluggable output-driver registry",
+  "type": "module",
+  "files": [
+    "server",
+    "schemas",
+    "README.md"
+  ],
+  "exports": {
+    "./server/utils/receipt-formatter": {
+      "import": "./server/utils/receipt-formatter.ts",
+      "types": "./server/utils/receipt-formatter.ts"
+    },
+    "./server/utils/print-queue-service": {
+      "import": "./server/utils/print-queue-service.ts",
+      "types": "./server/utils/print-queue-service.ts"
+    },
+    "./server/utils/driver-registry": {
+      "import": "./server/utils/driver-registry.ts",
+      "types": "./server/utils/driver-registry.ts"
+    },
+    "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "nuxt",
+    "crouton",
+    "printing",
+    "escpos",
+    "thermal-printing",
+    "receipt"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-printing"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}

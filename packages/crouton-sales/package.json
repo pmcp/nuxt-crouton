@@ -65,7 +65,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@fyit/crouton-i18n": "workspace:*"
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-printing": "workspace:*"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
