@@ -44,8 +44,25 @@ pnpm install                       # registers the new workspace (sandboxes/* gl
 pnpm --filter <name> dev           # open the printed localhost URL
 ```
 
-For a shareable **preview URL** (review from a phone / share a link), wire a staging
-Cloudflare Workers deploy — see `minimal-theme-demo` and epic #367 / #369.
+## Preview URL (shareable, from a phone / a link)
+
+A sandbox preview deploys **only through CI** — that's where the Cloudflare
+credentials live (`CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` repo secrets);
+you can't produce a stable URL from a local/agent run without the token. Trigger it
+**manually**, on demand:
+
+> **Actions → "Deploy Sandbox (manual, Cloudflare Workers)" → Run workflow → enter the
+> sandbox dir name** (e.g. `minimal-theme-demo`). The run summary prints the
+> `https://<name>.workers.dev` URL.
+
+To make a new sandbox deployable, give it (copy `minimal-theme-demo`):
+- a minimal **`wrangler.jsonc`** — `name`, `compatibility_date`, `compatibility_flags: ["nodejs_compat"]`. No bindings, no routes, no `env` block → publishes to the zero-config `*.workers.dev` (no DNS/zone token scope, nothing to provision/migrate).
+- a **`cf:staging`** script — `NITRO_PRESET=cloudflare_module nuxt build && npx wrangler deploy --config .output/server/wrangler.json`.
+- **`wrangler`** in `devDependencies` (`catalog:`).
+
+The deploy uses the thin **`.github/workflows/deploy-sandbox.yml`** (workflow_dispatch),
+*not* the full `deploy-app.yml` app pipeline — sandboxes have no auth/DB to provision.
+Staging-only; there is no production target for a sandbox.
 
 ## Tracking
 

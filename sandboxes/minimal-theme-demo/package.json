@@ -8,7 +8,8 @@
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare 2>/dev/null || true",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "cf:staging": "NITRO_PRESET=cloudflare_module nuxt build && npx wrangler deploy .output/server/index.mjs --assets .output/public"
   },
   "dependencies": {
     "@fyit/crouton-themes": "workspace:*",
@@ -16,5 +17,8 @@
     "nuxt": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
   }
 }
