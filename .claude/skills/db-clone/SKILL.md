@@ -19,6 +19,14 @@ node scripts/db-clone.mjs --app <app> --from <env> --to <env> [--dry-run] [--yes
 `<env>` is `prod` (the wrangler.jsonc top level) or any key under `env.*`
 (`staging`, `preview`, …).
 
+**Mobile / no-laptop:** there's also a `db-clone` GitHub Action
+(`.github/workflows/db-clone.yml`) — *Actions → Run workflow → app/from/to* from
+the GitHub app. It reuses the repo's `CLOUDFLARE_*` secrets (no Cloudflare site
+needed); a prod target requires the `confirm_target_db` input (passed as
+`--confirm`), and the pre-clone backup is uploaded as an artifact. For
+non-interactive runs the script takes `--confirm <db>` in place of the typed
+prompt.
+
 ## When to use this — and when NOT to
 
 | Situation | Use |

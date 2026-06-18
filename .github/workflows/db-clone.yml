@@ -1,0 +1,111 @@
+name: db-clone
+
+# Mobile-friendly D1 clone (#382). Trigger from the GitHub app:
+# Actions → "db-clone" → Run workflow → pick app / from / to.
+#
+# Reuses the CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN repo secrets the deploy
+# workflows already use (that token has D1 Edit), so there is nothing to set up on
+# Cloudflare. Wraps scripts/db-clone.mjs (full mirror: source → target).
+#
+# Cloning INTO prod is guarded: set `confirm_target_db` to the exact target db
+# name or the run aborts. The pre-clone prod backup is uploaded as an artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App whose databases to clone'
+        required: true
+        type: choice
+        options:
+          - velo
+          - fanfare
+          - triage
+          - alexdeforce
+          - blog
+          - kvr
+          - sintlukas
+          - three-demo
+      from:
+        description: 'Source environment (the keeper — read only)'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - staging
+          - preview
+      to:
+        description: 'Target environment (OVERWRITTEN — becomes a copy of source)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - preview
+          - prod
+      confirm_target_db:
+        description: 'Only when target is PROD: type the exact target db name to confirm'
+        required: false
+        type: string
+
+jobs:
+  clone:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Never let two clones race on the same target database.
+    concurrency:
+      group: db-clone-${{ inputs.app }}-${{ inputs.to }}
+      cancel-in-progress: false
+    env:
+      APP: ${{ inputs.app }}
+      FROM: ${{ inputs.from }}
+      TO: ${{ inputs.to }}
+      CONFIRM: ${{ inputs.confirm_target_db }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The script shells out to `npx wrangler`; install it globally so there's no
+      # interactive download prompt and no full monorepo install needed.
+      - name: Install wrangler
+        run: npm install --global wrangler@4
+
+      - name: Clone database
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # Inputs come in via env (not inline interpolation) to avoid injection.
+          ARGS=(--app "$APP" --from "$FROM" --to "$TO")
+          if [ -n "$CONFIRM" ]; then ARGS+=(--confirm "$CONFIRM"); fi
+          node scripts/db-clone.mjs "${ARGS[@]}"
+
+      # Prod-target runs write a timestamped backup to .db-backups/ before
+      # overwriting — keep it as a downloadable artifact.
+      - name: Upload pre-clone backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-clone-backup-${{ inputs.app }}-${{ github.run_id }}
+          path: .db-backups/**
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### db-clone — \`$APP\`"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| source | \`$FROM\` (read-only) |"
+            echo "| target | \`$TO\` (overwritten) |"
+            echo "| result | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
