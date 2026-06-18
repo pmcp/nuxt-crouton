@@ -316,9 +316,10 @@ export function generatePrintJobsForOrder(
   return jobs
 }
 
-// Re-export the registry surface so consumers can register/inspect drivers
-// without a second import.
-export { DEFAULT_DRIVER, getDriver, isDriverRegistered, registerDriver, registeredDriverIds, type OutputDriver } from './driver-registry'
+// The driver registry (DEFAULT_DRIVER, getDriver, registerDriver, …) is its own
+// auto-imported module (driver-registry.ts) — import from there directly. We
+// deliberately do NOT re-export it here: re-exporting auto-imported symbols
+// makes Nitro see them twice and warn ("Duplicated imports").
 
 // Note: formatReceipt, formatTestReceipt, DEFAULT_RECEIPT_SETTINGS and types
 // are exported from ./receipt-formatter.ts - import from there directly
