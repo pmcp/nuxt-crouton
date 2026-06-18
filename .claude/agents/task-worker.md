@@ -47,30 +47,28 @@ a feature branch.
    `claude/issue-<issue_number>-<slug>` off the current base (the **epic branch** when one
    was passed — see "Epic integration branch" below; otherwise the repo base). One branch
    = one issue.
-5. **UI sign-off gate — mock before you build (visual changes only).** Before implementing,
-   decide whether this issue changes a **visual surface**. Treat it as UI-touching if the work
-   will add or change any of: `**/*.vue`, `**/app/components/**`, `**/app/layouts/**`,
-   `**/app/pages/**`, a theme (`packages/crouton-themes/**`, a `ui:` block in `app.config.ts`),
-   or app CSS / Tailwind theme tokens. It is **not** UI (skip the gate) for pure
-   `<script>`/composables/types, `server/**`, config, tests, or docs — anything with no visible
-   result. Keep the test **conservative**: visual surfaces only; when unsure, it's not UI.
-   - **Not UI → skip cleanly.** No mockup, no comment, no hold — go straight to implementation.
-   - **UI → gate (HOLD, do not build yet):**
-     1. Run the **`ui-proposal`** skill (`Skill` tool) to produce the mockup
-        `writeups/ui-proposals/<slug>.html`, a committed **`<slug>.md`** ("what changes" list,
-        one item per line — the commentable surface), and render
-        `screenshots/ui-proposal-<slug>.png` (before/after for a change; after-only for net-new).
-     2. Commit the `.html` + `.md` via **`/commit`** (scope `docs`) and **push** the branch —
-        the `.md` lands in the PR diff so it can be reviewed line-by-line.
-     3. **Open the PR early as a draft** (`create_pull_request` with `draft: true`, same base
-        rules as the "Open a PR" step). Post the rendered PNG as a **sticky** comment marked
-        `<!-- ui-proposal:<slug> -->` (the at-a-glance visual; one comment, edited in place,
-        never a flood) — but **steer feedback to inline comments on the committed `<slug>.md`
-        in the diff**, where each note pins to a specific change.
-     4. Apply `status:blocked`, @mention the notify handle (`@pmcp`) noting it's **awaiting UI
-        sign-off**, and **STOP** — do not implement. The revision/approval loop (#310) iterates
-        the mockup on feedback and resumes the build on an approval signal; the real before/after
-        screenshot (#311) closes the loop after the build.
+5. **Sign-off gates — propose before you build / generate.** Before implementing, check whether
+   this issue changes a **visual surface** or a **collection schema**. Either one is posted for
+   human sign-off on a **draft** PR and **holds** until approved (both run the shared loop
+   below). Neither applies → skip cleanly and go straight to implementation.
+   - **(a) UI sign-off (visual changes).** UI-touching = adds/changes `**/*.vue`,
+     `**/app/components|layouts|pages/**`, a theme (`packages/crouton-themes/**`, a `ui:` block in
+     `app.config.ts`), or app CSS / Tailwind tokens. **Not** UI: pure `<script>`/types,
+     `server/**`, config, tests, docs. → Run the **`ui-proposal`** skill (mockup `<slug>.html` +
+     a `<slug>.md` "what changes" list + PNG); commit the `.html`+`.md`; post the PNG as a sticky
+     `<!-- ui-proposal:<slug> -->` comment.
+   - **(b) Schema sign-off (data model).** Fires when the issue **creates or changes a collection
+     schema** — i.e. you'll run `crouton config` / `generate_collection`, or add/edit a
+     `schemas/*.json` fieldsFile. **After** the machine `validate_schema` step and **before**
+     generating anything: → Run the **`schema-review`** skill (field-table `<collection>.md` +
+     `.html` + PNG); commit the `.md`+`.html`; post the PNG as a sticky
+     `<!-- schema-review:<collection> -->` comment. **Do not run `crouton config` / write any
+     generated files until approved.**
+   - For whichever gate fired: **open the PR early as a draft** (same base rules as the "Open a
+     PR" step), steer feedback to **inline comments on the committed `.md`** in the diff, apply
+     `status:blocked`, @mention `@pmcp` noting what's awaiting sign-off, and **STOP** — do not
+     build/generate. The shared revision/approval loop (below, #310) iterates on feedback and
+     resumes you on approval.
 6. **Implement** per the issue. Honour every CLAUDE.md rule:
    - `<script setup lang="ts">`, Nuxt UI **4** component names, VueUse-first, KISS.
    - **`packages/` HARD GATE** — do NOT edit anything under `packages/` unless this epic
@@ -92,9 +90,9 @@ a feature branch.
    auto-closes on merge. Body follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the
    PR body with the Generated-with-Claude-Code footer.
    - **Do not squash by default** (merge policy) — your commits are curated and atomic.
-   - **If the UI gate already opened a draft PR** (step 5), don't open a second one — reuse it:
-     push the implementation, then mark it ready for review (and let #311 post the real
-     screenshot). One issue still = one PR.
+   - **If a sign-off gate already opened a draft PR** (step 5 — UI or schema), don't open a
+     second one — reuse it: push the implementation/generated files, then mark it ready for
+     review (for UI, let #311 post the real screenshot). One issue still = one PR.
 10. **Report.** Return: branch name, PR url, **PR base (epic branch or main)**, typecheck
    status (green/red), and whether you hit the `packages/` gate. Keep it tight.
 
@@ -135,33 +133,57 @@ skips the gate entirely: no mockup, no comment, no hold.
 - **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
   than false-positive (gating a pure-logic PR). When unsure, don't gate.
 
-### Revision & approval loop (#310)
+## Schema sign-off gate (#314)
 
-Posting the mockup is not the end. The ephemeral worker has already stopped, so an **attended
+No collection is generated unseen. When the work **creates or changes a collection schema**
+(you'll run `crouton config` / `generate_collection`, or touch a `schemas/*.json` fieldsFile),
+you **review the data model before you generate it**: after the machine `validate_schema` check
+and **before** generation, run the **`schema-review`** skill, post the field-table PNG on a
+**draft** PR, and **hold** for sign-off. The schema is the foundation — every Form/List/API/
+migration derives from it, so a wrong type or missing relationship is cheap to fix here and
+expensive after generation. A task with no schema change skips this gate.
+
+- **Review happens on the diff.** The committed `writeups/schema-reviews/<collection>.md` field
+  table (one field per row) is the **actionable** surface — the reviewer inline-comments a field
+  ("make this `decimal`", "add a `slug`") in "Files changed". The PNG (sticky comment marked
+  `<!-- schema-review:<collection> -->`) is the at-a-glance visual.
+- **The hold is `status:blocked`** — you stop after posting and do **not** run `crouton config`
+  or write any generated files.
+- **Same loop, same approval signal** as the UI gate (below). On approval, **generate** the
+  collection (`crouton config`), then continue (typecheck → commit → PR ready).
+- **Conservative:** only gate a real schema/field change; don't gate unrelated edits.
+
+## Sign-off revision & approval loop (#310, shared by both gates)
+
+Posting the proposal — a UI mockup **or** a schema review — is not the end. The ephemeral worker
+has already stopped, so an **attended
 session owns the loop** via `subscribe_pr_activity` on the draft PR (the orchestrator or the
 human's session subscribes and drives it per the harness's "Handling PR Activity Events"
 rules). Fully-headless, workflow-driven watching of the autonomous pipeline is tracked
 separately under #336 — don't build it here.
 
-While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` comment), each human
-(non-bot) reply is one of two things:
+While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` or
+`<!-- schema-review:<collection> -->` sticky comment), each human (non-bot) reply is one of two
+things:
 
 - **Change request.** Feedback arrives two ways — **inline review comments on the committed
-  `<slug>.md`/`.html` in the diff** (the primary, low-friction channel: each note is pinned to a
-  specific change) and top-level PR comments. Read **both** via `pull_request_read` (review
-  comments + threads). For each: revise the mockup (`<slug>.html` **and** the `<slug>.md` list),
-  re-render the PNG (`render.mjs`), **edit the sticky comment in place** (append
-  `- rN: <what changed>`), and **reply to / resolve each inline thread** you addressed so it's
-  clear what's done. Commit (`/commit`, scope `docs`) and push — the diff updates in place. The
-  hold stays.
+  review file in the diff** (the `<slug>.md`/`.html` for UI, or the `<collection>.md`/schema JSON
+  for a schema — the primary, low-friction channel: each note is pinned to a specific change) and
+  top-level PR comments. Read **both** via `pull_request_read` (review comments + threads). For
+  each: revise the proposal (the mockup files, **or** the schema's `schemas/<collection>.json`),
+  re-render (`ui-proposal`'s `render.mjs` / `schema-review`'s `render-schema.mjs` → PNG), **edit
+  the sticky comment in place** (append `- rN: <what changed>`), and **reply to / resolve each
+  inline thread** you addressed so it's clear what's done. Commit (`/commit`, scope `docs`) and
+  push — the diff updates in place. The hold stays.
 - **Approval signal** — **any one of**:
   - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
   - a **👍 reaction** on the sticky mockup comment, or
   - the **`ui-approved`** label on the PR.
 
-  On approval: remove `status:blocked`, drop a short "approved → building" note on the sticky
-  comment, and **resume the build** (step 6 onward). The post-build before/after screenshot
-  (#311) closes the loop and the draft PR is marked ready.
+  On approval: remove `status:blocked`, drop a short "approved → building/generating" note on the
+  sticky comment, and **resume** (step 6 onward) — build the UI, or run `crouton config` to
+  generate the collection. For a UI change the post-build before/after screenshot (#311) closes
+  the loop; the draft PR is then marked ready.
 
 **Ignore bot and self-authored comments** to avoid loops — same `user.type != 'Bot'` filter as
 `resume-on-comment.yml`.

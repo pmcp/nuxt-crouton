@@ -59,7 +59,10 @@ If the Crouton MCP server is configured, you can use these tools for AI-assisted
 2. Build schema using returned field types
 3. Call `validate_schema` to check schema
 4. Call `dry_run` to preview what will be generated
-5. Call `generate_collection` to create files
+5. **Schema sign-off gate (#314)** — run the **`schema-review`** skill and get **human sign-off**
+   on the field table **before** generating (see the `schema-review` skill + the "Schema Sign-Off"
+   rule in root `CLAUDE.md`). `validate_schema` is the machine check; this is the human one.
+6. Call `generate_collection` to create files — **only after approval**
 
 **Quick Commands:**
 - Need CLI help? Call `cli_help({ command: "generate" })`
@@ -264,6 +267,15 @@ export default {
   }
 }
 ```
+
+### Step 3.5: Schema Sign-Off Gate (review before generating) — #314
+
+**Before running the generator, review the data model with a human.** Run the **`schema-review`**
+skill on the fieldsFile to render a readable field table + relationships, post it, and **wait for
+sign-off** — a wrong type or missing relationship is cheap to fix now and expensive after
+generation. Feedback goes inline on the committed `writeups/schema-reviews/<collection>.md`;
+revise the schema JSON and re-render until approved (`lgtm`/👍/`ui-approved`). Only then run Step
+4. (This is the human gate on top of the machine `validate_schema`; reuses the #310 loop.)
 
 ### Step 4: Run Generator
 

@@ -380,6 +380,19 @@ those inline review comments and revises that specific item.
 the mockup comment, or the `ui-approved` label. Anything else is a change request — revise the
 mockup in place (edit the same sticky comment, re-render the PNG) and iterate until approved (#310).
 
+## Schema Sign-Off (review the data model before you generate) — epic #314
+
+**When a task creates or changes a collection schema, review it before generating.** Before
+running `crouton config` / `generate_collection` (or editing a `schemas/*.json` fieldsFile), run
+the **`schema-review`** skill to render the field table, get a human to sign off on the **data
+model** first, and only then generate. The schema is the foundation — every Form/List/API/
+migration derives from it, so a wrong type or missing relationship is cheap to fix here and
+expensive after. This sits **after** the machine `validate_schema` step (the human gate on top of
+it). In the agent pipeline it's a gate in `.claude/agents/task-worker.md`; interactively, do the
+same by hand. It **reuses the same revision/approval loop and signal as the UI gate** (#310) —
+feedback goes inline on the committed `<collection>.md` in the diff; approval (`lgtm`/👍/
+`ui-approved`) unblocks generation.
+
 ## Documentation Organization
 
 ```
