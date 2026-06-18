@@ -230,12 +230,14 @@ export function applyThemeSettings(settings: TeamThemeSettings) {
   else {
     const primary = settings.primary ?? DEFAULT_THEME.primary
     const neutral = settings.neutral ?? DEFAULT_THEME.neutral
-    updateAppConfig({
-      ui: {
-        ...NUXT_UI_STRUCTURAL_DEFAULTS,
-        colors: { primary, neutral }
-      }
-    })
+    // Typed as Record<string, unknown> to match THEME_PRESETS[].ui — Nuxt UI 4.9's
+    // AppConfig `ui` type structurally rejects this concrete literal, but accepts
+    // the loose record (same path the preset branch above takes).
+    const customUi: Record<string, unknown> = {
+      ...NUXT_UI_STRUCTURAL_DEFAULTS,
+      colors: { primary, neutral }
+    }
+    updateAppConfig({ ui: customUi })
   }
 
   if (import.meta.client) {
