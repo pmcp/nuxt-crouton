@@ -106,9 +106,10 @@ function statBox(n, label, color) {
 function labeledLine(label, text) {
   if (!text) return ''
   return (
-    `<div style="margin-top:10px;font-size:13px;line-height:1.55">` +
-    `<span style="display:inline-block;min-width:88px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:top">${label}</span>` +
-    `<span style="color:#334155">${esc(text)}</span></div>`
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>` +
+    `<td valign="top" style="width:104px;padding-right:10px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.55;white-space:nowrap">${label}</td>` +
+    `<td valign="top" style="color:#334155;font-size:13px;line-height:1.55">${esc(text)}</td>` +
+    `</tr></table>`
   )
 }
 
