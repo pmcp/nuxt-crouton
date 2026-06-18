@@ -24,19 +24,15 @@
  * WITHOUT invoking wrangler (and needs no Cloudflare credentials).
  *
  * A real run needs CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN in the env.
- * D1 databases are resolved by NAME at the account level, so this runs from the
- * repo root and does not depend on a wrangler config being present.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs'
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline'
+import { PROD_ENVS, resolveAppDb, runWrangler, queryD1Json } from './lib/wrangler-d1.mjs'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
-const PROD_ENVS = new Set(['prod', 'production'])
-const APP_ROOTS = ['apps', 'pocs', 'workers']
 
 // ---------------------------------------------------------------------------
 // args
@@ -87,78 +83,19 @@ Examples:
 `
 
 // ---------------------------------------------------------------------------
-// wrangler.jsonc resolution
+// helpers
 // ---------------------------------------------------------------------------
 
-/** Minimal JSONC → JSON (strips // and block comments + trailing commas, keeps strings). */
-function parseJsonc(text) {
-  const noComments = text.replace(
-    /("(?:\\.|[^"\\])*")|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
-    (_m, str) => str ?? ''
-  )
-  return JSON.parse(noComments.replace(/,(\s*[}\]])/g, '$1'))
-}
-
-function findWranglerConfig(app) {
-  for (const root of APP_ROOTS) {
-    const p = join(repoRoot, root, app, 'wrangler.jsonc')
-    if (existsSync(p)) return p
-  }
-  return null
-}
-
-/** Resolve the D1 database name for an app + env from its wrangler.jsonc. */
-function resolveDb(config, app, env) {
-  const isProd = PROD_ENVS.has(env)
-  const scope = isProd ? config : config.env?.[env]
-  if (!scope) {
-    const envs = ['prod', ...Object.keys(config.env ?? {})]
-    throw new Error(
-      `App "${app}" has no environment "${env}". Available: ${envs.join(', ')}`
-    )
-  }
-  const db = scope.d1_databases?.[0]
-  if (!db?.database_name) {
-    throw new Error(`App "${app}" env "${env}" has no d1_databases[0].database_name in wrangler.jsonc`)
-  }
-  return { name: db.database_name, isProd }
-}
-
-// ---------------------------------------------------------------------------
-// wrangler invocation
-// ---------------------------------------------------------------------------
-
-function wranglerArgs(args) {
-  return ['wrangler', ...args]
-}
+const wrangler = (args, opts) => runWrangler(args, { cwd: repoRoot, ...opts })
 
 function printCmd(args) {
-  console.log(`    $ npx ${wranglerArgs(args).join(' ')}`)
+  console.log(`    $ npx wrangler ${args.join(' ')}`)
 }
 
-function runWrangler(args, { capture = false } = {}) {
-  const res = spawnSync('npx', wranglerArgs(args), {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    stdio: capture ? ['inherit', 'pipe', 'inherit'] : 'inherit'
-  })
-  if (res.status !== 0) {
-    throw new Error(`wrangler exited with code ${res.status}: npx ${wranglerArgs(args).join(' ')}`)
-  }
-  return res.stdout ?? ''
-}
-
-/** Query the target's user tables so we can drop them for a clean mirror. */
+/** List the db's user tables (so we can drop them for a clean mirror). */
 function listTables(dbName) {
-  const out = runWrangler(
-    ['d1', 'execute', dbName, '--remote', '--json',
-      '--command', 'SELECT name FROM sqlite_master WHERE type=\'table\' AND name NOT LIKE \'sqlite_%\''],
-    { capture: true }
-  )
-  // wrangler --json emits an array of result sets: [{ results: [{ name }], ... }]
-  const parsed = JSON.parse(out)
-  const rows = Array.isArray(parsed) ? (parsed[0]?.results ?? []) : (parsed.results ?? [])
-  return rows.map(r => r.name)
+  const sql = `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`
+  return queryD1Json(dbName, sql, { cwd: repoRoot }).map(r => r.name)
 }
 
 function confirmTyped(expected) {
@@ -182,17 +119,10 @@ async function main() {
     process.exit(args.help ? 0 : 1)
   }
 
-  const configPath = findWranglerConfig(args.app)
-  if (!configPath) {
-    console.error(`Unknown app "${args.app}": no wrangler.jsonc under ${APP_ROOTS.map(r => `${r}/${args.app}`).join(', ')}`)
-    process.exit(1)
-  }
-  const config = parseJsonc(readFileSync(configPath, 'utf8'))
-
   let source, target
   try {
-    source = resolveDb(config, args.app, args.from)
-    target = resolveDb(config, args.app, args.to)
+    source = resolveAppDb(args.app, args.from, repoRoot)
+    target = resolveAppDb(args.app, args.to, repoRoot)
   } catch (err) {
     console.error(err.message)
     process.exit(1)
@@ -249,11 +179,11 @@ async function main() {
     }
     mkdirSync(backupDir, { recursive: true })
     console.log(`  Backing up target → ${backupPath}`)
-    runWrangler(['d1', 'export', target.name, '--remote', '--output', backupPath])
+    wrangler(['d1', 'export', target.name, '--remote', '--output', backupPath])
   }
 
   console.log(`  Exporting source ${source.name} → ${dumpPath}`)
-  runWrangler(['d1', 'export', source.name, '--remote', '--output', dumpPath])
+  wrangler(['d1', 'export', source.name, '--remote', '--output', dumpPath])
 
   console.log(`  Resetting target ${target.name} …`)
   const tables = listTables(target.name)
@@ -262,7 +192,7 @@ async function main() {
       + tables.map(t => `DROP TABLE IF EXISTS "${t}";`).join('\n') + '\n'
     const dropPath = join(tmpdir(), `db-clone-drop-${target.name}-${stamp}.sql`)
     writeFileSync(dropPath, dropSql)
-    runWrangler(['d1', 'execute', target.name, '--remote', '--file', dropPath])
+    wrangler(['d1', 'execute', target.name, '--remote', '--file', dropPath])
     rmSync(dropPath, { force: true })
     console.log(`    dropped ${tables.length} table(s)`)
   } else {
@@ -270,7 +200,7 @@ async function main() {
   }
 
   console.log(`  Importing into target ${target.name} …`)
-  runWrangler(['d1', 'execute', target.name, '--remote', '--file', dumpPath])
+  wrangler(['d1', 'execute', target.name, '--remote', '--file', dumpPath])
   rmSync(dumpPath, { force: true })
 
   const newTables = listTables(target.name)
