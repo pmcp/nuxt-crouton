@@ -63,11 +63,21 @@ node .claude/skills/ui-proposal/render.mjs \
 ```
 Uses the repo's Playwright headless Chromium — offline, no network.
 
-## Step 4 — Hand off
-- **Commit** the `.html` + `.md` (via `/commit`, scope `docs`).
-- **Post** the PNG (and/or the Markdown table) for review. The gate + revision loop that
-  hold `crouton config` until approval are wired in **#316** (which reuses the generic
-  approval loop from #310). When running this skill by hand, post the PNG/table yourself.
+## Step 4 — Hand off (review happens on the DIFF)
+**The committed Markdown is the actionable review surface — not the image.** A PNG can't be
+commented on; the reviewer would have to copy text and describe which field they mean. The
+`.md` lands in the PR's "Files changed", one field per row, so the reviewer can click the `+`
+on any line and leave an **inline comment pinned to that exact field** ("make this `decimal`",
+"add a `slug` field here") — no copying, no describing.
+
+- **Commit** `writeups/schema-reviews/<collection>.md` **and** `.html` (via `/commit`, scope
+  `docs`) so the `.md` appears in the PR diff. This is where feedback goes.
+- The **PNG** is the optional at-a-glance visual — post it in the PR description/comment, but
+  steer feedback to the diff.
+- The gate + revision loop that hold `crouton config` until approval are wired in **#316**
+  (reusing the generic approval loop from #310): it reads the **inline review comments** on the
+  committed `.md`, revises the schema field-by-field, re-renders, and replies to/resolves each
+  thread. When running this skill by hand, point the reviewer at the committed `.md` in the diff.
 
 ## Conventions
 - One review per collection; re-render after every schema edit so the artifact never drifts.
