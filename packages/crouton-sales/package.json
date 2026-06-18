@@ -22,14 +22,6 @@
       "types": "./seed/index.ts"
     },
     "./schemas/*": "./schemas/*",
-    "./server/utils/print-queue-service": {
-      "import": "./server/utils/print-queue-service.ts",
-      "types": "./server/utils/print-queue-service.ts"
-    },
-    "./server/utils/receipt-formatter": {
-      "import": "./server/utils/receipt-formatter.ts",
-      "types": "./server/utils/receipt-formatter.ts"
-    },
     "./server/utils/generate-print-queues": {
       "import": "./server/utils/generate-print-queues.ts",
       "types": "./server/utils/generate-print-queues.ts"
@@ -38,6 +30,7 @@
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
+    "test": "vitest run",
     "prepack": "pnpm build"
   },
   "keywords": [
@@ -65,7 +58,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@fyit/crouton-i18n": "workspace:*"
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-printing": "workspace:*"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",
@@ -75,6 +69,7 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
-    "unbuild": "^3.6.1"
+    "unbuild": "^3.6.1",
+    "vitest": "^4.0.0"
   }
 }

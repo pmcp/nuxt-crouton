@@ -3,20 +3,22 @@
  * non-cancelled order the client placed at this event, then deactivate the
  * client (they disappear from the POS picker and the clients panel).
  *
- * The print job is queued to the event's receipt printer (fallback: the
- * first printer) with orderId = null — it belongs to the whole tab, not to
- * one order, so the order auto-complete callbacks skip it.
+ * The print job is enqueued to the event's receipt printer (fallback: the
+ * first printer) through the generic crouton-printing queue (epic #325) with
+ * refType='tab'/refId=clientId — it belongs to the whole tab, not one order, so
+ * the order auto-complete reactions (which only act on refType='order') skip it.
+ *
+ * The ESC/POS engine (`encodeTicket`, `receiptCurrencySymbol`,
+ * `DEFAULT_RECEIPT_SETTINGS`, the Receipt* types, `enqueuePrintJob`) is provided
+ * as auto-imported globals by the crouton-printing layer.
  */
 import { eq, and } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { formatReceipt, DEFAULT_RECEIPT_SETTINGS, type ReceiptItem, type ReceiptSettings } from '../../../../../../../../utils/receipt-formatter'
-import { PRINT_STATUS, receiptCurrencySymbol } from '../../../../../../../../utils/print-queue-service'
+import type { ReceiptData, ReceiptItem, ReceiptSettings } from '@fyit/crouton-printing/server/utils/receipt-formatter'
 import { aggregateClientTab } from '../../../../../../../../utils/client-tab'
 import { salesEvents } from '~~/layers/sales/collections/events/server/database/schema'
 import { salesClients } from '~~/layers/sales/collections/clients/server/database/schema'
 import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
-import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 import { salesEventsettings } from '~~/layers/sales/collections/eventsettings/server/database/schema'
 
 export default defineEventHandler(async (event) => {
@@ -96,7 +98,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const formatted = formatReceipt({
+  const receiptData: ReceiptData = {
     orderNumber: '',
     orderId: '',
     teamName: team.name || 'POS',
@@ -111,24 +113,26 @@ export default defineEventHandler(async (event) => {
     receiptSettings,
     currencySymbol: receiptCurrencySymbol(salesEvent.currency || undefined),
     clientTab: { orderCount: tab.orderIds.length }
-  })
+  }
 
-  const queueId = nanoid()
-  const ownerName = user.name || user.email || 'admin'
-  await db.insert(salesPrintqueues).values({
-    id: queueId,
-    teamId: team.id,
-    owner: ownerName,
-    eventId,
-    orderId: null,
+  // Encode for the receipt printer's output driver (network-escpos = base64
+  // ESC/POS, browser-print = JSON) and enqueue onto the generic print_jobs
+  // queue. refType='tab' so the order auto-complete reactions skip it.
+  const driver = printer.driver ?? 'network-escpos'
+  const queueId = await enqueuePrintJob(db, {
+    source: 'sales',
     printerId: printer.id,
-    locationId: null,
-    status: String(PRINT_STATUS.PENDING),
-    printData: formatted.base64,
+    printerIp: printer.ipAddress ?? null,
+    printerPort: printer.port != null ? Number(printer.port) : null,
+    printerTitle: printer.title ?? null,
+    driver,
+    payload: encodeTicket(receiptData, driver),
     printMode: 'receipt',
-    retryCount: '0',
-    createdBy: user.id,
-    updatedBy: user.id
+    locationId: null,
+    refType: 'tab',
+    refId: clientId,
+    eventId,
+    teamId: team.id
   })
 
   // Settled: hide the client from the POS picker and the clients panel.

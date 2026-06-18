@@ -20,7 +20,8 @@ interface PrintBridgeAttrs {
 
 interface BridgeJob {
   id: string
-  orderId: string | null
+  // The job's opaque domain back-reference (the orderId for sales 'order' jobs).
+  refId: string | null
   stationId: string
   stationTitle: string | null
   printMode: string
@@ -61,7 +62,7 @@ async function refresh() {
   if (!eventId.value) return
   try {
     const res = await $fetch<{ jobs: BridgeJob[] }>(
-      `/api/crouton-sales/events/${eventId.value}/browser-print-jobs`
+      `/api/crouton-printing/events/${eventId.value}/browser-print-jobs`
     )
     jobs.value = res.jobs
   }
@@ -92,7 +93,7 @@ function printHtml(html: string): Promise<void> {
 }
 
 async function markDone(job: BridgeJob) {
-  await $fetch(`/api/crouton-sales/events/${eventId.value}/browser-print-jobs/${job.id}/done`, { method: 'POST' })
+  await $fetch(`/api/crouton-printing/events/${eventId.value}/browser-print-jobs/${job.id}/done`, { method: 'POST' })
 }
 
 async function printJob(job: BridgeJob) {
@@ -102,7 +103,7 @@ async function printJob(job: BridgeJob) {
     if (!job.html) {
       // Payload couldn't be rendered server-side — fail it so it stops looping
       // and surfaces on the order (admin can reprint).
-      await $fetch(`/api/crouton-sales/events/${eventId.value}/browser-print-jobs/${job.id}/fail`, {
+      await $fetch(`/api/crouton-printing/events/${eventId.value}/browser-print-jobs/${job.id}/fail`, {
         method: 'POST',
         body: { errorMessage: 'Ticket payload could not be rendered' }
       })

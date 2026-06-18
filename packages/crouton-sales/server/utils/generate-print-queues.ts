@@ -1,21 +1,28 @@
 /**
  * @crouton-package crouton-sales
- * Higher-level helper that generates print jobs for an order and inserts
- * one `salesPrintqueues` row per job. Used by both the order-create endpoint
- * and the manual re-print endpoint.
+ * Higher-level helper that generates print jobs for an order and enqueues
+ * one generic `print_jobs` row per job via the crouton-printing queue
+ * (epic #325, #329). Used by both the order-create endpoint and the manual
+ * re-print endpoint.
  *
- * Imports drizzle schema lazily from the consuming app's generated sales layer.
+ * The print engine (`generatePrintJobsForOrder`, `enqueuePrintJob`,
+ * `PRINT_STATUS`, `DEFAULT_RECEIPT_SETTINGS`) is provided as auto-imported
+ * globals by the crouton-printing layer; only the types are pulled via
+ * `import type` for the signatures below. Drizzle schema for the sales
+ * collections is imported lazily from the consuming app's generated sales layer.
+ *
+ * The print-status cloud-sync outbox is no longer recorded here — the
+ * `printing:job:created` subscriber (`server/plugins/printing-subscriber.ts`)
+ * mirrors newly-created jobs to the outbox now, so creation capture rides the
+ * generic queue lifecycle instead of this choke point.
  */
 import { and, eq } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
-import {
-  generatePrintJobsForOrder,
-  PRINT_STATUS,
-  type OrderItemForPrint,
-  type PrinterConfig
-} from './print-queue-service'
-import { DEFAULT_RECEIPT_SETTINGS, type ReceiptSettings } from './receipt-formatter'
-import { recordOutboxEvents, type OutboxEvent } from './sync-outbox'
+import type {
+  OrderItemForPrint,
+  PrinterConfig,
+  PrintJobData
+} from '@fyit/crouton-printing/server/utils/print-queue-service'
+import type { ReceiptSettings } from '@fyit/crouton-printing/server/utils/receipt-formatter'
 
 interface GenerateInsertOptions {
   db: any
@@ -45,7 +52,6 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
   const { salesProducts } = await import('~~/layers/sales/collections/products/server/database/schema')
   const { salesLocations } = await import('~~/layers/sales/collections/locations/server/database/schema')
   const { salesPrinters } = await import('~~/layers/sales/collections/printers/server/database/schema')
-  const { salesPrintqueues } = await import('~~/layers/sales/collections/printqueues/server/database/schema')
   const { salesEventsettings } = await import('~~/layers/sales/collections/eventsettings/server/database/schema')
 
   const printers = await db.select().from(salesPrinters).where(eq(salesPrinters.eventId, eventId))
@@ -121,12 +127,12 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
     type: p.type ?? 'kitchen',
     // Drive the per-station output choice. Null/undefined ⇒ 'network-escpos'
     // (the thermal path) inside generatePrintJobsForOrder, so existing rows are
-    // unchanged. Carried through for a future browser-print/AirPrint driver; the
+    // unchanged. Carried through for the browser-print/AirPrint driver; the
     // KDS is decoupled and no longer rides this queue.
     driver: p.driver ?? undefined
   }))
 
-  const jobs = generatePrintJobsForOrder(
+  const jobs: PrintJobData[] = generatePrintJobsForOrder(
     {
       orderId,
       eventId,
@@ -148,46 +154,33 @@ export async function generateAndInsertPrintQueues(opts: GenerateInsertOptions):
     opts.locationRemarks
   )
 
+  // Enqueue each job into the generic print_jobs queue (crouton-printing). The
+  // printer transport details (ip/port/title/driver) are denormalized onto the
+  // job at enqueue time so the transport stays self-contained — look them up
+  // from the salesPrinter that produced the job. `printing:job:created` fires
+  // per insert, which the sales subscriber mirrors to the cloud-sync outbox.
+  const printerById = new Map(printers.map((p: any) => [p.id, p]))
   const queueIds: string[] = []
-  const outboxEvents: OutboxEvent[] = []
   for (const job of jobs) {
-    const queueId = nanoid()
-    const row = {
-      id: queueId,
-      teamId,
-      owner: helperDisplayName,
-      eventId,
-      orderId,
+    const printer: any = printerById.get(job.printerId)
+    const id = await enqueuePrintJob(db, {
+      source: 'sales',
       printerId: job.printerId,
-      locationId: job.locationId,
-      // CLI-generated schema declares status/retryCount as TEXT despite the
-      // JSON schema saying integer. Cast to string so equality with string
-      // literals (e.g. '0' for STATUS_PENDING in the jobs endpoint) works.
-      status: String(PRINT_STATUS.PENDING),
-      printData: job.printData,
-      printMode: job.printMode || 'normal',
-      retryCount: '0',
-      createdBy: helperId,
-      updatedBy: helperId
-    }
-    await db.insert(salesPrintqueues).values(row)
-    queueIds.push(queueId)
-
-    // Mirror the print-status row (#176) without the bulky base64 printData —
-    // the cloud shows status, it never prints, so the event stays kilobytes.
-    const { printData: _printData, ...mirror } = row
-    outboxEvents.push({
-      entityType: 'printstatus',
-      entityId: queueId,
-      orderId,
-      teamId,
+      printerIp: printer?.ipAddress ?? null,
+      // salesPrinters.port is text-typed in the generated schema; coerce to a number.
+      printerPort: printer?.port != null ? Number(printer.port) : null,
+      printerTitle: printer?.title ?? null,
+      driver: printer?.driver ?? 'network-escpos',
+      payload: job.printData,
+      printMode: job.printMode,
+      locationId: job.locationId ?? null,
+      refType: 'order',
+      refId: orderId,
       eventId,
-      payload: mirror
+      teamId
     })
+    queueIds.push(id)
   }
-
-  // No-op unless CROUTON_SALES_CLOUD_SYNC is on; best-effort, never throws.
-  await recordOutboxEvents(db, outboxEvents)
 
   return queueIds
 }

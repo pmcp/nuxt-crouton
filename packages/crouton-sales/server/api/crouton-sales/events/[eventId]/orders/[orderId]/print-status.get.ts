@@ -2,16 +2,16 @@
  * Slim per-order print job status for the POS checkout button's print watcher.
  *
  * Helper-token equivalent of the team-authed `printqueues/status` GET: any
- * token that could create the order can watch it print. Returns only that
- * order's jobs with the printer name joined server-side — the volunteer UI
- * has no printers query to enrich from. An empty array is a real answer
- * (the order generated no tickets), not an error.
+ * token that could create the order can watch it print. Reads the generic
+ * crouton-printing `print_jobs` queue (epic #325) for this order's jobs
+ * (refType='order', refId=orderId, source='sales'). The printer name comes from
+ * the job's denormalized `printerTitle` (no join — the job is self-contained).
+ * An empty array is a real answer (the order generated no tickets), not an error.
  */
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { requireScopedAccessToResource } from '@fyit/crouton-auth/server/utils/scoped-access'
 import { salesOrders } from '~~/layers/sales/collections/orders/server/database/schema'
-import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
-import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
+import { printJobs } from '@fyit/crouton-printing/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, 'eventId')
@@ -36,22 +36,25 @@ export default defineEventHandler(async (event) => {
 
   const jobs = await db
     .select({
-      id: salesPrintqueues.id,
-      status: salesPrintqueues.status,
-      errorMessage: salesPrintqueues.errorMessage,
-      retryCount: salesPrintqueues.retryCount,
-      printMode: salesPrintqueues.printMode,
-      printerTitle: salesPrinters.title,
-      completedAt: salesPrintqueues.completedAt
+      id: printJobs.id,
+      status: printJobs.status,
+      errorMessage: printJobs.errorMessage,
+      retryCount: printJobs.retryCount,
+      printMode: printJobs.printMode,
+      // Denormalized on the job at enqueue time — no printers join needed.
+      printerTitle: printJobs.printerTitle,
+      completedAt: printJobs.completedAt
     })
-    .from(salesPrintqueues)
-    .leftJoin(salesPrinters, eq(salesPrintqueues.printerId, salesPrinters.id))
-    .where(eq(salesPrintqueues.orderId, orderId))
+    .from(printJobs)
+    .where(and(
+      eq(printJobs.source, 'sales'),
+      eq(printJobs.refType, 'order'),
+      eq(printJobs.refId, orderId)
+    ))
 
   // Display (KDS) jobs are bumped on a screen, not printed — they stay "shown"
   // until the kitchen acts, which is not the ordering volunteer's concern. This
-  // endpoint feeds only the checkout print-watcher, so drop them here (the KDS
-  // reads display jobs straight off the queue). Kitchen/receipt jobs never have
-  // a null printMode, so this filter only ever removes display rows.
+  // endpoint feeds only the checkout print-watcher, so drop them here. Kitchen/
+  // receipt jobs never have a 'display' printMode, so this only removes display rows.
   return jobs.filter((j: any) => j.printMode !== 'display')
 })

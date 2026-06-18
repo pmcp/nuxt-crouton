@@ -46,8 +46,12 @@ const VALID_TYPES: OutboxEntityType[] = ['order', 'orderitem', 'printstatus']
 async function loadTables(): Promise<Record<OutboxEntityType, any>> {
   const { salesOrders } = await import('~~/layers/sales/collections/orders/server/database/schema')
   const { salesOrderitems } = await import('~~/layers/sales/collections/orderitems/server/database/schema')
-  const { salesPrintqueues } = await import('~~/layers/sales/collections/printqueues/server/database/schema')
-  return { order: salesOrders, orderitem: salesOrderitems, printstatus: salesPrintqueues }
+  // printstatus mirrors the generic crouton-printing `print_jobs` table (the
+  // cloud deploy also extends crouton-printing). The outbox printstatus payload
+  // is a print_jobs row, so the mirror target must be print_jobs — not the old
+  // salesPrintqueues (#325/#329 migration).
+  const { printJobs } = await import('@fyit/crouton-printing/server/database/schema')
+  return { order: salesOrders, orderitem: salesOrderitems, printstatus: printJobs }
 }
 
 /**
