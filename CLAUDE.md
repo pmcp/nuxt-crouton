@@ -55,6 +55,8 @@ Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and fol
 
 Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `writeups/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
+**Always link issues & PRs when you mention them in chat.** Whenever you reference an issue or PR to the user (in prose, lists, or tables), include its full URL so it's one click to open — `#NN` alone isn't clickable. Format: `#303` → `[#303](https://github.com/pmcp/nuxt-crouton/issues/303)` for issues, `…/pull/376` for PRs. This is a **chat-reply** convention only — keep bare `(#NN)` in commit messages, and use `Closes #NN` (not a URL) in PR bodies so GitHub's auto-close works.
+
 **Write issues & epics as bets, not task lists (default).** Frame work as an assumption — *We think that* if we do X, then Y will happen (and Y is what we want) · *We'll do that by* … · *We'll be right if* … · *We'll know by* … — so we can later check whether we were right. It's a lens over the existing 👤/🤖/🧪 sections (open with `## 🎯 The bet`), not a new heading. Use it for every epic/issue as much as possible; trivial chores may opt out. Full template + worked examples in the `github-tasks` skill (epic #359).
 
 ### Task Decomposition Pipeline (`/task-decompose`)
@@ -99,6 +101,7 @@ When starting or resuming: read the relevant GitHub issue/epic first (plus `writ
 - ✅ ALWAYS use `/commit` skill for ALL commits
 - ✅ ALWAYS run `pnpm typecheck` after code changes
 - ✅ ALWAYS keep the GitHub issue updated (in-progress → closed via `Closes #NN`)
+- ✅ ALWAYS link the full issue/PR URL when mentioning one in chat (e.g. `[#303](https://github.com/pmcp/nuxt-crouton/issues/303)`) — bare `#NN` isn't clickable
 - ✅ ALWAYS use TodoWrite for 3+ step tasks
 - ❌ NEVER batch multiple tasks in one commit
 - ❌ NEVER use `git add .`
