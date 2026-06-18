@@ -1,13 +1,15 @@
 /**
  * Slim per-event print job status for the register overview's printer LEDs.
  *
- * The generated sales-printqueues GET returns every column — including each
- * job's full base64 ESC/POS payload — which is far too heavy to poll every
- * couple of seconds. This returns only the fields the LEDs/popovers render.
+ * Reads the generic crouton-printing `print_jobs` queue (epic #325) filtered to
+ * this team's sales jobs. The orderId the UI expects is the job's opaque
+ * `refId` (refType='order'). Returns only the fields the LEDs/popovers render —
+ * never the bulky base64 payload — so it stays cheap to poll every couple of
+ * seconds.
  */
 import { eq, and } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
-import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
+import { printJobs } from '@fyit/crouton-printing/server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -21,22 +23,24 @@ export default defineEventHandler(async (event) => {
 
   return db
     .select({
-      id: salesPrintqueues.id,
-      orderId: salesPrintqueues.orderId,
-      printerId: salesPrintqueues.printerId,
-      status: salesPrintqueues.status,
+      id: printJobs.id,
+      // The job's domain back-reference IS the orderId (refType='order').
+      orderId: printJobs.refId,
+      printerId: printJobs.printerId,
+      status: printJobs.status,
       // locationId + printMode let OrderItems list what each ticket printed
       // (kitchen jobs = that location's items, receipt jobs = whole order).
-      locationId: salesPrintqueues.locationId,
-      printMode: salesPrintqueues.printMode,
-      errorMessage: salesPrintqueues.errorMessage,
-      retryCount: salesPrintqueues.retryCount,
-      createdAt: salesPrintqueues.createdAt,
-      completedAt: salesPrintqueues.completedAt
+      locationId: printJobs.locationId,
+      printMode: printJobs.printMode,
+      errorMessage: printJobs.errorMessage,
+      retryCount: printJobs.retryCount,
+      createdAt: printJobs.createdAt,
+      completedAt: printJobs.completedAt
     })
-    .from(salesPrintqueues)
+    .from(printJobs)
     .where(and(
-      eq(salesPrintqueues.teamId, team.id),
-      eq(salesPrintqueues.eventId, eventId)
+      eq(printJobs.teamId, team.id),
+      eq(printJobs.eventId, eventId),
+      eq(printJobs.source, 'sales')
     ))
 })
