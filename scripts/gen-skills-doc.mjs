@@ -38,6 +38,7 @@ const META = {
   'e2e-smoke': { group: 'verify', triggers: ['ask'] },
   'dependency-sweep': { group: 'verify', triggers: ['ask', 'auto'] },
   'db-migrations': { group: 'verify', triggers: ['ask'] },
+  'db-clone': { group: 'verify', triggers: ['ask'] },
   'think-aloud': { group: 'meta', triggers: ['ask'] }
 }
 
