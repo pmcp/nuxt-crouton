@@ -180,6 +180,32 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
 > asserted string is crouton's own `home.*` label, so a broken switcher or stuck
 > locale fails it.
 
+## Visual-QA artifacts (#356)
+
+The smoke doesn't just gate green/red — it records what it does, so any PR (a dep
+bump, a `packages/` change, a UI tweak) yields **reviewable visual proof**. This is
+Playwright-native capture, no custom infra (`use` in `playwright.config.ts`):
+
+- `trace: 'on'` — an interactive step-by-step timeline with a before/after
+  **screenshot of every action**, DOM snapshots, network, and **console logs**
+  (the console matters most for a component-library bump — silent Vue warnings show
+  here). Open with `npx playwright show-trace <trace.zip>` or drag onto
+  [trace.playwright.dev](https://trace.playwright.dev).
+- `video: 'on'` — a `.webm` clip of the full boot → login → CRUD → surface run,
+  watchable like a Loom.
+- `screenshot: 'on'` — a final screenshot per test.
+
+In CI the **HTML reporter** bundles all three into one self-contained
+`playwright-report/`, uploaded as artifact **`visual-qa-<fixture>` on every run**
+(`if: always()`, 14-day retention — see `.github/workflows/e2e.yml`). To review:
+PR → Actions run → **Artifacts** → download `visual-qa-<fixture>` → open
+`index.html`. (Artifacts download as a zip; they don't render inline in the PR.)
+
+Locally, `pnpm test:e2e` writes the same HTML report to `playwright-report/`
+(`npx playwright show-report` to open). Out of scope for now: `toHaveScreenshot()`
+pixel-diff baselines (flake-prone, separate follow-up) and screenshotting the live
+staging deploys.
+
 ## Gotchas
 - **Module format:** repo root is CommonJS, and Playwright 1.57 transpiles
   config/specs to CJS — use `__dirname`/`join`, **not** `import.meta.url`
