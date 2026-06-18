@@ -50,9 +50,17 @@ async function tsImport(jiti: ReturnType<typeof createJiti>, specifier: string):
   return mod
 }
 
-/** The `@fyit/crouton-*` dependency names declared in a package.json object. */
+/**
+ * The `@fyit/crouton-*` *runtime* dependency names declared in a package.json
+ * object — `dependencies` + `peerDependencies` only. `devDependencies` are
+ * deliberately excluded: a package contributes runtime tables only if the app
+ * actually extends it, whereas build-time devDeps (e.g. `@fyit/crouton-cli` and
+ * the `@fyit/crouton-*` packages it transitively pulls in) ship no migrations
+ * for this app. Including them made the BFS over-discover providers and emit
+ * `INSERT`s into non-existent tables (#303).
+ */
 function croutonDepNames(pkg: any): string[] {
-  const deps = { ...pkg?.dependencies, ...pkg?.devDependencies, ...pkg?.peerDependencies }
+  const deps = { ...pkg?.dependencies, ...pkg?.peerDependencies }
   return Object.keys(deps).filter(name => name.startsWith('@fyit/crouton'))
 }
 
