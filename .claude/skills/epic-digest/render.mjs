@@ -75,9 +75,12 @@ const epics = (data.epics || []).slice().sort((a, b) => {
 const card = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;'
 const muted = 'color:#64748b;'
 
-function activityList(items, emptyText) {
+const ACTIVITY_CAP = 8
+function activityList(items, emptyText, cap = ACTIVITY_CAP) {
   if (!items || !items.length) return `<div style="${muted}font-size:13px;margin:2px 0 0">${emptyText}</div>`
-  return items
+  const shown = items.slice(0, cap)
+  const rest = items.length - shown.length
+  const rows = shown
     .map(
       (it) =>
         `<div style="font-size:13px;line-height:1.6;margin:1px 0">` +
@@ -85,6 +88,10 @@ function activityList(items, emptyText) {
         `<span style="color:#334155">${esc(it.title)}</span></div>`
     )
     .join('')
+  const more = rest > 0
+    ? `<div style="${muted}font-size:12px;margin:3px 0 0;font-style:italic">+ ${rest} more</div>`
+    : ''
+  return rows + more
 }
 
 function statBox(n, label, color) {
@@ -99,9 +106,10 @@ function statBox(n, label, color) {
 function labeledLine(label, text) {
   if (!text) return ''
   return (
-    `<div style="margin-top:10px;font-size:13px;line-height:1.55">` +
-    `<span style="display:inline-block;min-width:88px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:top">${label}</span>` +
-    `<span style="color:#334155">${esc(text)}</span></div>`
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>` +
+    `<td valign="top" style="width:104px;padding-right:10px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.55;white-space:nowrap">${label}</td>` +
+    `<td valign="top" style="color:#334155;font-size:13px;line-height:1.55">${esc(text)}</td>` +
+    `</tr></table>`
   )
 }
 
@@ -189,12 +197,17 @@ const html = `<!doctype html>
       </tr></table>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;${card}"><tr><td style="padding:14px 18px">
-        <div style="font-size:12px;font-weight:600;color:#047857;margin-bottom:2px">Closed</div>
-        ${activityList(activity.closed, 'Nothing closed.')}
-        <div style="font-size:12px;font-weight:600;color:#7c3aed;margin:12px 0 2px">PRs merged</div>
-        ${activityList(activity.mergedPRs, 'No PRs merged.')}
-        <div style="font-size:12px;font-weight:600;color:#0f172a;margin:12px 0 2px">Opened</div>
-        ${activityList(activity.opened, 'Nothing new opened.')}
+        <details>
+          <summary style="cursor:pointer;color:#0f766e;font-size:12px;font-weight:600;outline:none;list-style:none">Show detail — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
+          <div style="margin-top:10px">
+            <div style="font-size:12px;font-weight:600;color:#047857;margin-bottom:2px">Closed</div>
+            ${activityList(activity.closed, 'Nothing closed.')}
+            <div style="font-size:12px;font-weight:600;color:#7c3aed;margin:12px 0 2px">PRs merged</div>
+            ${activityList(activity.mergedPRs, 'No PRs merged.')}
+            <div style="font-size:12px;font-weight:600;color:#0f172a;margin:12px 0 2px">Opened</div>
+            ${activityList(activity.opened, 'Nothing new opened.')}
+          </div>
+        </details>
       </td></tr></table>
     </td></tr>
 
@@ -213,7 +226,12 @@ const html = `<!doctype html>
 
 // ── plain text ────────────────────────────────────────────────────────────
 const line = (it) => `  #${it.number}  ${it.title}\n      ${it.url}`
-const txtList = (items, empty) => (items && items.length ? items.map(line).join('\n') : `  (${empty})`)
+const txtList = (items, empty, cap = 8) => {
+  if (!items || !items.length) return `  (${empty})`
+  const shown = items.slice(0, cap).map(line).join('\n')
+  const rest = items.length - Math.min(items.length, cap)
+  return rest > 0 ? `${shown}\n  … + ${rest} more` : shown
+}
 const bar = (e) => {
   const p = pct(e)
   const filled = Math.round(p / 5)
