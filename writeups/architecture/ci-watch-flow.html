@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CI Watch &amp; Merge Loop — Orchestrator Pipeline</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121a30; --panel2:#0f1628; --ink:#e8edf7; --muted:#9aa7c2;
+    --line:#2a3656; --cheap:#39c08a; --agent:#f0a23b; --human:#7aa2ff; --danger:#ef5a6f;
+    --chip:#1c2742; --radius:16px;
+    --sans:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#16203b 0,var(--bg) 55%);
+    color:var(--ink);font-family:var(--sans);padding:40px 28px 56px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto}
+  header{margin-bottom:26px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:14px;max-width:760px}
+  .principles{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 28px}
+  .principle{background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .principle b{font-weight:600}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.cheap{background:var(--cheap)} .dot.agent{background:var(--agent)}
+  .dot.human{background:var(--human)} .dot.danger{background:var(--danger)}
+
+  /* pipeline strip */
+  .strip{display:flex;align-items:center;gap:10px;background:#101a33;border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:30px;flex-wrap:wrap}
+  .strip .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-right:6px}
+  .pill{font-family:var(--mono);font-size:12.5px;background:#16213c;border:1px solid var(--line);
+    padding:6px 11px;border-radius:9px;white-space:nowrap}
+  .arrow{color:var(--muted);font-size:14px}
+
+  .flow{position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
+  .node{width:min(620px,100%);background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;position:relative;
+    box-shadow:0 10px 30px rgba(0,0,0,.28)}
+  .node .title{font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:10px}
+  .node .desc{color:var(--muted);font-size:13px;margin-top:5px}
+  .node .tag{margin-left:auto;font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;letter-spacing:.3px}
+  .accent{position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:4px}
+  .a-cheap{background:var(--cheap)} .a-agent{background:var(--agent)}
+  .a-human{background:var(--human)} .a-danger{background:var(--danger)} .a-neutral{background:#5566aa}
+  .tag.cheap{background:rgba(57,192,138,.16);color:var(--cheap)}
+  .tag.agent{background:rgba(240,162,59,.16);color:var(--agent)}
+  .tag.human{background:rgba(122,162,255,.16);color:var(--human)}
+  .tag.danger{background:rgba(239,90,111,.16);color:var(--danger)}
+  .tag.neutral{background:rgba(120,140,200,.16);color:#aab6e0}
+
+  .conn{width:2px;height:26px;background:var(--line);position:relative}
+  .conn::after{content:"";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);
+    border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid var(--line)}
+  .conn.short{height:18px}
+
+  .diamond{width:min(620px,100%);text-align:center;margin:4px 0}
+  .diamond .q{display:inline-block;background:#161f38;border:1px dashed #3a4a72;border-radius:12px;padding:9px 16px;font-weight:600;font-size:14px}
+
+  .branches{width:min(900px,100%);display:flex;gap:22px;justify-content:center;align-items:flex-start;margin-top:6px;flex-wrap:wrap}
+  .branch{flex:1 1 280px;min-width:260px;display:flex;flex-direction:column;align-items:center}
+  .branchlabel{font-size:12px;font-weight:700;letter-spacing:.4px;padding:4px 12px;border-radius:999px;margin-bottom:10px}
+  .bl-green{background:rgba(57,192,138,.16);color:var(--cheap);border:1px solid rgba(57,192,138,.4)}
+  .bl-red{background:rgba(239,90,111,.16);color:var(--danger);border:1px solid rgba(239,90,111,.4)}
+
+  .loopnote{font-size:11.5px;color:var(--agent);margin-top:8px;display:flex;align-items:center;gap:6px}
+  .loopnote .curl{font-size:14px}
+
+  .legend{margin-top:34px;display:flex;gap:18px;flex-wrap:wrap;background:#0f1730;
+    border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px}
+  .legend .item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink)}
+  .legend .item span.k{color:var(--muted);font-size:12px}
+
+  .surfaces{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap}
+  .surf{flex:1 1 200px;background:#0f1730;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .surf .h{font-size:12.5px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .surf .b{font-size:12px;color:var(--muted);margin-top:4px}
+  code{font-family:var(--mono);background:#16213c;padding:1px 6px;border-radius:5px;font-size:12px}
+  .foot{margin-top:26px;color:#6c7a9c;font-size:11.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>CI Watch &amp; Merge Loop <span style="color:var(--muted);font-weight:400">— orchestrator pipeline</span></h1>
+    <div class="sub">How a leaf PR from the task-decomposition pipeline gets watched to merge.
+      The rule: <b>always leave a record (cheap), only summon an agent on red.</b></div>
+  </header>
+
+  <div class="principles">
+    <div class="principle"><span class="dot cheap"></span><b>Always a record</b> · never silent</div>
+    <div class="principle"><span class="dot agent"></span><b>Agent only on red</b> · LLM spend follows judgment</div>
+    <div class="principle"><span class="dot human"></span><b>Human on stuck</b> · <code>@pmcp</code> + <code>status:blocked</code></div>
+    <div class="principle"><span class="dot danger"></span><b>Post-merge red → new issue</b></div>
+  </div>
+
+  <div class="strip">
+    <span class="lbl">pipeline</span>
+    <span class="pill">/task-decompose</span><span class="arrow">→</span>
+    <span class="pill">orchestrator</span><span class="arrow">→</span>
+    <span class="pill">decomposer</span><span class="arrow">→</span>
+    <span class="pill">task-worker</span><span class="arrow">→</span>
+    <span class="pill">opens PR · Closes #NN</span>
+  </div>
+
+  <div class="flow">
+
+    <div class="node">
+      <div class="accent a-neutral"></div>
+      <div class="title">① PR opened &amp; CI runs<span class="tag neutral">github</span></div>
+      <div class="desc">Required checks + the staging deploy fire on the <code>claude/issue-*</code> branch. No agent yet.</div>
+    </div>
+
+    <div class="conn"></div>
+
+    <div class="node">
+      <div class="accent a-cheap"></div>
+      <div class="title">② Sticky status comment updated<span class="tag cheap">cheap · no LLM</span></div>
+      <div class="desc">Workflow <i>edits one</i> comment on the <b>PR</b> &amp; rolls up the <b>epic</b>
+        (<code>3/5 merged · 1 red · 1 blocked</code>). This is your always-on "view" — never silence, never 40 comments.</div>
+    </div>
+
+    <div class="conn"></div>
+
+    <div class="diamond"><span class="q">◇ CI outcome?</span></div>
+
+    <div class="branches">
+      <!-- GREEN -->
+      <div class="branch">
+        <div class="branchlabel bl-green">✓ GREEN</div>
+        <div class="node">
+          <div class="accent a-cheap"></div>
+          <div class="title">Auto-merge<span class="tag cheap">deterministic</span></div>
+          <div class="desc">Merge-commit / rebase (never squash). Issue auto-closes via <code>Closes #NN</code>;
+            epic rollup ticks ✓. <b>packages/</b> touch → hold for human approval.</div>
+        </div>
+        <div class="conn short"></div>
+        <div class="node">
+          <div class="accent a-danger"></div>
+          <div class="title">Post-merge deploy<span class="tag danger">the real gap</span></div>
+          <div class="desc">Deploy to <code>staging</code>/<code>main</code> can still break — but the PR is merged
+            &amp; the leaf issue closed. No open surface left.</div>
+        </div>
+        <div class="conn short"></div>
+        <div class="node">
+          <div class="accent a-danger"></div>
+          <div class="title">Red → open a NEW issue<span class="tag danger">@pmcp</span></div>
+          <div class="desc">The new issue <i>is</i> the durable record where none would exist —
+            labelled, and able to re-enter the pipeline.</div>
+        </div>
+      </div>
+
+      <!-- RED -->
+      <div class="branch">
+        <div class="branchlabel bl-red">✕ RED</div>
+        <div class="node">
+          <div class="accent a-agent"></div>
+          <div class="title">Fix agent (event-triggered)<span class="tag agent">LLM · capped</span></div>
+          <div class="desc"><code>workflow_run: failure</code> → headless <code>claude-code-action</code> reads the
+            failing logs, pushes a fix to the branch, updates the sticky line.</div>
+          <div class="loopnote"><span class="curl">↻</span> fix pushed → CI re-runs (back to ②) · max ~3 attempts</div>
+        </div>
+        <div class="conn short"></div>
+        <div class="node">
+          <div class="accent a-human"></div>
+          <div class="title">Stuck / &gt;N retries / packages gate<span class="tag human">human</span></div>
+          <div class="desc">Comment + <code>@pmcp</code> + <code>status:blocked</code>, then stop.</div>
+        </div>
+        <div class="conn short"></div>
+        <div class="node">
+          <div class="accent a-human"></div>
+          <div class="title">Human replies → resume<span class="tag human">resume-on-comment.yml</span></div>
+          <div class="desc">A plain reply on the blocked issue re-enters the loop — no slash command, no <code>@claude</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="item"><span class="dot cheap"></span> Cheap / deterministic <span class="k">workflow step, no LLM</span></div>
+      <div class="item"><span class="dot agent"></span> Agent <span class="k">LLM, failure-only, capped</span></div>
+      <div class="item"><span class="dot human"></span> Human-in-the-loop <span class="k">@pmcp + status:blocked</span></div>
+      <div class="item"><span class="dot danger"></span> Danger zone <span class="k">post-merge orphan failure</span></div>
+    </div>
+
+    <div class="surfaces">
+      <div class="surf"><div class="h"><span class="dot neutral" style="background:#5566aa"></span>PR</div>
+        <div class="b">Per-run CI status — sticky comment, while the PR is open.</div></div>
+      <div class="surf"><div class="h"><span class="dot cheap"></span>Epic</div>
+        <div class="b">Rollup only — tree health at a glance, never per-run noise.</div></div>
+      <div class="surf"><div class="h"><span class="dot danger"></span>New issue</div>
+        <div class="b">Post-merge failure — the only honest home when PR+issue are closed.</div></div>
+    </div>
+
+  </div>
+
+  <div class="foot">writeups/architecture/ci-watch-flow.html · design sketch for the orchestrator's build/merge watching (epic candidate under #249)</div>
+</div>
+</body>
+</html>
