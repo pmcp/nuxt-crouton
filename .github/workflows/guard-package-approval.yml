@@ -1,0 +1,27 @@
+name: Guard package-edit approval
+
+# Safety net for the packages/ HARD GATE (#350). The override file
+# `.claude/.package-edit-approved` is session-scoped + gitignored and must NEVER
+# reach main — committing it would silently disable the gate for everyone. This
+# fails any PR to main that contains it (e.g. via `git add -f`). Epic-scoped
+# approval rides the CROUTON_PACKAGE_EDIT_APPROVED env var instead, which can't
+# be committed.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  no-approval-file:
+    name: No committed approval file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if .claude/.package-edit-approved is committed
+        run: |
+          if git ls-files --error-unmatch .claude/.package-edit-approved >/dev/null 2>&1; then
+            echo "::error file=.claude/.package-edit-approved::This file disables the packages/ HARD GATE and must never be committed. Remove it from the PR; use the CROUTON_PACKAGE_EDIT_APPROVED env var for epic-scoped approval instead."
+            exit 1
+          fi
+          echo "OK — no committed package-edit approval file."

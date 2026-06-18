@@ -39,6 +39,36 @@ flowchart TD
 To tune the limits, edit the numbers in `.claude/agents/task-decomposer.md` (and the
 orchestrator's MAX_CHILDREN).
 
+## Integration-branch flow & safety (#348 hardening)
+
+Learned from the #325 run, where parallel workers — branching off `main`, unable to see
+each other's unmerged work — each re-created the same new package and a couple silently
+chose a different design. Four rules now prevent that:
+
+1. **Epic integration branch (#349).** The orchestrator creates `epic/<NN>-<slug>` off
+   `main`. Every sub-issue branches off **that** branch and targets its PR **at** it (not
+   `main`), so a later sub-issue sees what an earlier one built — no duplicate scaffolds.
+   The whole feature gets **one** human review when `epic/<NN>` is PR'd into `main` at the
+   end (the epic is "done" only then, not when its children merge into the epic branch).
+   Dependency-ordered children are **wave-gated** (foundation merges first, then dependents
+   on an idempotent re-run); independent ones still run in parallel.
+
+2. **Epic-scoped package approval (#350).** A package-touching epic is approved **once**:
+   the `packages/` gate honours the **`CROUTON_PACKAGE_EDIT_APPROVED`** env var (inherited
+   by every spawned worker), so you don't unlock per-worker. **Never** commit the
+   `.claude/.package-edit-approved` file — `guard-package-approval.yml` fails any PR to
+   `main` that contains it (env can't leak; a committed file would disable the gate for all).
+
+3. **Review dial (#351).** Risky epics (create a package / change schema / dependency
+   chain, or labelled `review:plan`) **pause for human plan-approval before any worker
+   runs** — the orchestrator posts the proposed tree, @mentions `@pmcp`, blocks. Plus the
+   epic→`main` PR is the integration review. Low-risk epics (`review:auto`) skip the gate.
+
+4. **Block, don't improvise (#352).** A worker that finds a prerequisite missing (a
+   package/table/symbol a sibling owns, not yet merged) **stops and waits** — it never
+   scaffolds the missing thing itself, and never silently diverges from the epic's stated
+   design invariants. Missing prerequisite = blocker, not a DIY.
+
 ## Triggers (manual + automatic)
 
 - **Manual:** run `/task-decompose "<task>"` or `/task-decompose #NN` in any Claude Code
@@ -86,8 +116,10 @@ orchestrator's MAX_CHILDREN).
    - `subagent_type: "task-orchestrator"`
    - prompt: `{ epic_issue_number: <epic number>, depth: 0 }` + a short restatement of the
      task so it doesn't need an extra read.
-3. **Report** the epic url and that orchestration has started. The tree then builds itself
-   (decomposers recurse; workers open PRs with `Closes #NN`).
+3. **Report** the epic url and that orchestration has started. The orchestrator creates the
+   `epic/<NN>-<slug>` integration branch; the tree then builds itself onto it (decomposers
+   recurse; workers open PRs into the epic branch with `Closes #NN`); a single epic→`main`
+   PR lands the lot behind one review.
 
 ## Building an app? It's a POC by default — end at a preview URL
 
@@ -122,7 +154,9 @@ To change who gets pinged, edit `NOTIFY_HANDLE` here and in `.claude/agents/CLAU
 
 - Everything persists as real GitHub issues (epic → sub-issues → sub-sub-issues), so the
   tree survives across sessions and shows progress bars on each parent.
-- Workers run in **git worktree isolation** — parallel leaves never collide.
+- Workers run in **git worktree isolation** — parallel leaves never collide; they branch
+  off and PR into the **epic branch**, not `main` (see "Integration-branch flow").
 - This plugs into the repo's ISSUE-FIRST + `github-tasks` + `/commit` + merge-policy
   workflow; the agents enforce those rules themselves.
-- It does **not** auto-merge PRs. Review/merge (or have a PR watcher do it) as usual.
+- Sub-PRs may auto-merge into the **epic branch** (a staging area). The final
+  **epic→`main`** PR is **not** auto-merged — that's the human review/merge gate.
