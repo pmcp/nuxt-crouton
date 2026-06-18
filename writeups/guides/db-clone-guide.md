@@ -48,6 +48,15 @@ workflows already use, so there's nothing to set up on Cloudflare.
 
 Defined in `.github/workflows/db-clone.yml`.
 
+### Check before you clone (read-only `db-counts`)
+
+To *inspect* a database without changing it, use the **`db-counts`** button
+(Actions → "db-counts" → app/env) or `pnpm db:counts --app <app> --env <env>`.
+It prints the row count of every table (users, organizations, bookings, …) to
+the run summary — SELECT only, nothing written. Use it to confirm whether data
+is present before deciding to clone/restore. Defined in
+`.github/workflows/db-counts.yml` / `scripts/db-counts.mjs`.
+
 ## Safety
 
 Cloning **overwrites the target**, so the dangerous direction is writing *into*

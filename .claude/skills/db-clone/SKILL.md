@@ -31,6 +31,7 @@ prompt.
 
 | Situation | Use |
 |-----------|-----|
+| "Is the data still there?" / "how many rows / bookings / users" — *check before cloning* | **`pnpm db:counts --app <app> --env <env>`** (read-only) or the `db-counts` Action |
 | "Make staging look exactly like prod" / "refresh staging" / "seed a preview from staging" | **this skill** |
 | "Reconstitute the wiped staging DB" (and prod still has the data) | **this skill** (`--from prod --to staging`) |
 | Load a *specific* org / CSV import into a fresh DB | the app's `seedData/` + seed endpoints — NOT this |
