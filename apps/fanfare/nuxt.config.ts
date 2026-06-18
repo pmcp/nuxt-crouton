@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-i18n',
     '@fyit/crouton-charts',
     '@fyit/crouton-pages',
+    '@fyit/crouton-printing',
     '@fyit/crouton-sales',
     './layers/sales',
     './layers/pages'

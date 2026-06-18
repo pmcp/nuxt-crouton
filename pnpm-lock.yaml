@@ -107,6 +107,9 @@ importers:
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
+      '@fyit/crouton-printing':
+        specifier: workspace:*
+        version: link:../../packages/crouton-printing
       '@fyit/crouton-sales':
         specifier: workspace:*
         version: link:../../packages/crouton-sales
