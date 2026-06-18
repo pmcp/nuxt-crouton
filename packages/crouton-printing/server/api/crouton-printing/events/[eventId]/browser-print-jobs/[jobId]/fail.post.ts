@@ -8,7 +8,7 @@
  */
 import { and, eq } from 'drizzle-orm'
 import { failPrintJob } from '../../../../../../utils/print-job-status'
-import { printJobs, printers } from '../../../../../../database/schema'
+import { printJobs } from '../../../../../../database/schema'
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, 'eventId')
@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
   const [row] = await db
     .select({ id: printJobs.id })
     .from(printJobs)
-    .innerJoin(printers, eq(printJobs.printerId, printers.id))
     .where(and(
       eq(printJobs.id, jobId),
       eq(printJobs.eventId, eventId),

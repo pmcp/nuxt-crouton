@@ -10,7 +10,7 @@
  */
 import { eq, and, inArray } from 'drizzle-orm'
 import { requirePrintServerKey } from '../../../../utils/print-server-auth'
-import { printJobs, printers } from '../../../../database/schema'
+import { printJobs } from '../../../../database/schema'
 import { PRINT_STATUS } from '../../../../utils/print-job-queue'
 
 export default defineEventHandler(async (event) => {
@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
 
+  // Self-contained job: printer ip/port/title live on the row (no printers join).
   const rows = await db
     .select({
       id: printJobs.id,
@@ -34,12 +35,11 @@ export default defineEventHandler(async (event) => {
       locationId: printJobs.locationId,
       printerId: printJobs.printerId,
       retryCount: printJobs.retryCount,
-      printerIp: printers.ipAddress,
-      printerPort: printers.port,
-      printerTitle: printers.title
+      printerIp: printJobs.printerIp,
+      printerPort: printJobs.printerPort,
+      printerTitle: printJobs.printerTitle
     })
     .from(printJobs)
-    .leftJoin(printers, eq(printJobs.printerId, printers.id))
     .where(
       and(
         eq(printJobs.eventId, eventId),

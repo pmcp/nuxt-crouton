@@ -126,7 +126,7 @@ export interface DrainOptions {
  * must not run two ticks concurrently.
  */
 export async function drainPendingEscposJobs(db: any, opts: DrainOptions = {}): Promise<{ processed: number }> {
-  const { printJobs, printers } = await import('../database/schema')
+  const { printJobs } = await import('../database/schema')
 
   const where = [
     eq(printJobs.status, PRINT_STATUS.PENDING),
@@ -135,15 +135,15 @@ export async function drainPendingEscposJobs(db: any, opts: DrainOptions = {}): 
   ]
   if (opts.eventId) where.push(eq(printJobs.eventId, opts.eventId))
 
+  // Self-contained job: ip/port live on the row (no printers join).
   const rows = await db
     .select({
       id: printJobs.id,
       payload: printJobs.payload,
-      printerIp: printers.ipAddress,
-      printerPort: printers.port
+      printerIp: printJobs.printerIp,
+      printerPort: printJobs.printerPort
     })
     .from(printJobs)
-    .innerJoin(printers, eq(printJobs.printerId, printers.id))
     .where(and(...where))
     .limit(opts.batchSize ?? 25)
 

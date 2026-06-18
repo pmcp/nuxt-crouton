@@ -17,7 +17,7 @@
  */
 import { and, asc, eq } from 'drizzle-orm'
 import { renderTicketHtml, type ReceiptData } from '../../../../../utils/receipt-formatter'
-import { printJobs, printers } from '../../../../../database/schema'
+import { printJobs } from '../../../../../database/schema'
 import { PRINT_STATUS } from '../../../../../utils/print-job-queue'
 
 export default defineEventHandler(async (event) => {
@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDB()
 
+  // Self-contained job: station title lives on the row (no printers join).
   const rows = await db
     .select({
       id: printJobs.id,
@@ -38,10 +39,9 @@ export default defineEventHandler(async (event) => {
       printMode: printJobs.printMode,
       locationId: printJobs.locationId,
       printData: printJobs.payload,
-      stationTitle: printers.title
+      stationTitle: printJobs.printerTitle
     })
     .from(printJobs)
-    .innerJoin(printers, eq(printJobs.printerId, printers.id))
     .where(and(
       eq(printJobs.eventId, eventId),
       eq(printJobs.status, PRINT_STATUS.PENDING),

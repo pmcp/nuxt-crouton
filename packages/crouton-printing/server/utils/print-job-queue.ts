@@ -34,8 +34,12 @@ export type PrintDriver = 'network-escpos' | 'browser-print' | (string & {})
 export interface EnqueuePrintJobInput {
   /** Domain that produced the job ('sales' | 'bookings' | …). */
   source: string
-  /** Target printer row id. */
+  /** Opaque printer reference — for grouping/status; the job is self-contained. */
   printerId: string
+  /** Denormalized printer transport (copied onto the job; null for browser-print). */
+  printerIp?: string | null
+  printerPort?: number | null
+  printerTitle?: string | null
   /** Opaque encoded ticket (base64 ESC/POS for thermal, JSON for browser-print). */
   payload: string
   /** Output driver; defaults to the printer's network-escpos path. */
@@ -57,13 +61,14 @@ export interface EnqueuePrintJobInput {
  * a failed enqueue means the ticket would silently never print, so the caller
  * decides how to handle it.
  */
-export async function enqueuePrintJob(db: any, input: EnqueuePrintJobInput): Promise<string> {
-  const { printJobs } = await import('../database/schema')
-  const id = nanoid()
-  await db.insert(printJobs).values({
-    id,
+function buildRow(input: EnqueuePrintJobInput) {
+  return {
+    id: nanoid(),
     source: input.source,
     printerId: input.printerId,
+    printerIp: input.printerIp ?? null,
+    printerPort: input.printerPort ?? 9100,
+    printerTitle: input.printerTitle ?? null,
     locationId: input.locationId ?? null,
     teamId: input.teamId ?? null,
     eventId: input.eventId ?? null,
@@ -74,8 +79,14 @@ export async function enqueuePrintJob(db: any, input: EnqueuePrintJobInput): Pro
     payload: input.payload,
     printMode: input.printMode ?? 'normal',
     retryCount: '0'
-  })
-  return id
+  }
+}
+
+export async function enqueuePrintJob(db: any, input: EnqueuePrintJobInput): Promise<string> {
+  const { printJobs } = await import('../database/schema')
+  const row = buildRow(input)
+  await db.insert(printJobs).values(row)
+  return row.id
 }
 
 /**
@@ -85,21 +96,7 @@ export async function enqueuePrintJob(db: any, input: EnqueuePrintJobInput): Pro
 export async function enqueuePrintJobs(db: any, inputs: EnqueuePrintJobInput[]): Promise<string[]> {
   if (inputs.length === 0) return []
   const { printJobs } = await import('../database/schema')
-  const rows = inputs.map(input => ({
-    id: nanoid(),
-    source: input.source,
-    printerId: input.printerId,
-    locationId: input.locationId ?? null,
-    teamId: input.teamId ?? null,
-    eventId: input.eventId ?? null,
-    refType: input.refType ?? null,
-    refId: input.refId ?? null,
-    driver: input.driver ?? 'network-escpos',
-    status: input.status ?? PRINT_STATUS.PENDING,
-    payload: input.payload,
-    printMode: input.printMode ?? 'normal',
-    retryCount: '0'
-  }))
+  const rows = inputs.map(buildRow)
   await db.insert(printJobs).values(rows)
   return rows.map(r => r.id)
 }

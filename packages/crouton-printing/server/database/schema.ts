@@ -65,7 +65,15 @@ export const printJobs = sqliteTable('print_jobs', {
   id: text('id').primaryKey().$default(() => nanoid()),
   // Domain that produced the job ('sales' | 'bookings' | …) — the discriminator.
   source: text('source').notNull().$default(() => 'sales'),
+  // Opaque printer reference — used for grouping/status (LEDs per printer). The
+  // job does NOT join a printers table: the transport is fully self-contained.
   printerId: text('printer_id').notNull(),
+  // Denormalized printer transport details, copied onto the job at enqueue time
+  // so the transport (drainer/spooler) needs no domain printer table. Null for
+  // drivers that don't address a network device (e.g. browser-print).
+  printerIp: text('printer_ip'),
+  printerPort: integer('printer_port').notNull().$default(() => 9100),
+  printerTitle: text('printer_title'),
   locationId: text('location_id'),
   teamId: text('team_id'),
   eventId: text('event_id'),
