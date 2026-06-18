@@ -25,6 +25,7 @@ const META = {
   'ui-proposal': { group: 'build', triggers: ['flow', 'ask'] },
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
+  'epic-digest': { group: 'plan', triggers: ['ask'] },
   'ecosystem-check': { group: 'plan', triggers: ['ask'] },
   'sync-docs': { group: 'commit', triggers: ['auto'] },
   'i18n-check': { group: 'commit', triggers: ['auto'] },
