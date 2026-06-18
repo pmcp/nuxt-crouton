@@ -34,6 +34,20 @@ node scripts/db-clone.mjs --app velo --from staging --to prod
 node scripts/db-clone.mjs --app velo --from prod --to staging --dry-run
 ```
 
+## Run it from your phone (no Cloudflare site, no laptop)
+
+There's a **`db-clone` GitHub Action** for mobile use: in the GitHub app go to
+**Actions → "db-clone" → Run workflow**, pick *app / from / to*, and run. It uses
+the `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` repo secrets the deploy
+workflows already use, so there's nothing to set up on Cloudflare.
+
+- Cloning **into prod** requires the `confirm_target_db` input to equal the exact
+  target db name, or the run aborts (the workflow passes it as `--confirm`).
+- The pre-clone prod backup is uploaded as a **downloadable artifact**
+  (`db-clone-backup-<app>-<run_id>`).
+
+Defined in `.github/workflows/db-clone.yml`.
+
 ## Safety
 
 Cloning **overwrites the target**, so the dangerous direction is writing *into*

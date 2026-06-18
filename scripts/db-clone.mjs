@@ -52,9 +52,11 @@ function parseArgs(argv) {
     else if (a === '--app') out.app = argv[++i]
     else if (a === '--from') out.from = argv[++i]
     else if (a === '--to') out.to = argv[++i]
+    else if (a === '--confirm') out.confirm = argv[++i]
     else if (a.startsWith('--app=')) out.app = a.slice(6)
     else if (a.startsWith('--from=')) out.from = a.slice(7)
     else if (a.startsWith('--to=')) out.to = a.slice(5)
+    else if (a.startsWith('--confirm=')) out.confirm = a.slice(10)
     else {
       console.error(`Unknown argument: ${a}`)
       out.help = true
@@ -73,6 +75,8 @@ Options:
   --from <env>   Source environment: "prod" (top-level config) or any env.<name>
   --to <env>     Target environment (overwritten — becomes an exact copy of source)
   --dry-run      Print the planned wrangler commands and exit; touches nothing
+  --confirm <db> Non-interactive prod confirmation: must equal the target db name
+                 (use in CI in place of the typed prompt)
   --yes, -y      Skip the typed confirmation when the target is prod (still backs up)
   -h, --help     Show this help
 
@@ -229,11 +233,19 @@ async function main() {
   if (target.isProd) {
     console.log('  ⚠  The TARGET is a PRODUCTION database. It will be overwritten.')
     if (!args.yes) {
-      const ok = await confirmTyped(target.name)
-      if (!ok) {
-        console.error('  Confirmation did not match — aborting.')
-        process.exit(1)
+      let ok
+      if (args.confirm !== undefined) {
+        // Non-interactive (CI): the provided value must match the target db name.
+        ok = args.confirm.trim() === target.name
+        if (!ok) console.error(`  --confirm "${args.confirm}" does not match target db name "${target.name}" — aborting.`)
+      } else if (process.stdin.isTTY) {
+        ok = await confirmTyped(target.name)
+        if (!ok) console.error('  Confirmation did not match — aborting.')
+      } else {
+        ok = false
+        console.error(`  Target is prod. In a non-interactive run, pass --confirm "${target.name}" (or --yes) to proceed.`)
       }
+      if (!ok) process.exit(1)
     }
     mkdirSync(backupDir, { recursive: true })
     console.log(`  Backing up target → ${backupPath}`)
