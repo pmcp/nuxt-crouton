@@ -379,6 +379,20 @@ are `real` (no cast).
 
 ### Print-Server Polling Endpoints
 
+> **Moved to `@fyit/crouton-printing` (#328, epic #325).** The on-site physical
+> transport — the in-process ESC/POS drainer (`escpos-drainer.ts` + its Nitro
+> plugin), the `/api/print-server/*` HTTP spooler endpoints + `print-server-auth.ts`,
+> the `browser-print-jobs` drainer endpoints, and the RUT956 `print-server/` shell
+> scripts — now live in **`packages/crouton-printing/`**. crouton-sales still owns
+> the print **engine** (`receipt-formatter.ts`, `print-job-complete.ts`,
+> `print-queue-service.ts`, `generate-print-queues.ts`) + the `salesPrintqueues`
+> queue; crouton-printing imports those via `@fyit/crouton-sales/server/utils/*`
+> and drives the same lifecycle. Env gates (`CROUTON_SALES_PRINT_*`,
+> `NUXT_CROUTON_SALES_PRINT_API_KEY`) are unchanged — an app gets the transport by
+> also extending `@fyit/crouton-printing`. The description below stays for the
+> engine/lifecycle context (the queue + callbacks behavior is shared); see
+> `packages/crouton-printing/CLAUDE.md` for the transport itself.
+
 Separate route prefix: `/api/print-server/*`. Designed for a local LAN spooler that polls our server for jobs, sends ESC/POS bytes to thermal printers, then calls back with status. **Recovery-ready spooler + boot service + setup guide live in this package at `print-server/`** (`teltonika-simple-spooler-fast.sh`, `print_server.init`, `README.md`) — validated on a RUT956 over 5G with the printer on the router LAN. Key field notes: minimal BusyBox has no `base64` applet (spooler uses a pure-awk decoder) and only `nc IP PORT`; RutOS `curl` has working TLS; the spooler's `EVENT_ID` is per-event. The `/jobs` GET **excludes non-`network-escpos` jobs** (driver-filtered) so the spooler never receives a browser-print job.
 
 **In-process drainer (Node target, no external spooler)** — when the app runs on a Node box ON the venue LAN (a Pi/mini-PC), it can open TCP `:9100` to the printers itself instead of running the RUT spooler. `server/utils/escpos-drainer.ts` is a faithful port of the spooler (DLE-EOT pre-flight on its own connection → send ESC/POS + confirmation pass → `classifyStatus` → `completePrintJob`/`failPrintJob`, the **same** queue lifecycle/LEDs — no HTTP callback, it has direct DB access). The `server/plugins/escpos-drainer.ts` Nitro plugin runs it on a poll loop **only when `CROUTON_SALES_PRINT_DRAINER` is set** (`CROUTON_SALES_PRINT_DRAINER_EVENT`, `_POLL_MS` optional) — OFF by default, so existing deploys + Cloudflare are unchanged. `node:net` is imported **lazily** (inside `exchange`), keeping the module import-safe on Workers. Claims jobs pending → printing (recoverable by retry-failed on crash) and prints sequentially (one `:9100` connection per Epson TM). **Run EITHER the spooler OR the in-process drainer for a printer set, never both.**

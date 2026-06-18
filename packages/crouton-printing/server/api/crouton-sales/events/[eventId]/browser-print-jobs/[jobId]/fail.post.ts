@@ -1,13 +1,14 @@
 /**
- * Browser-print drainer callback: a ticket reached the OS / AirPrint dialog.
- * Marks the job completed and auto-completes the order (shared with the thermal
- * path's lifecycle via `completePrintJob`). Scoped to the event + a
- * `browser-print` station so it can only ever close a browser-print job.
+ * Browser-print drainer callback: a ticket could not be printed (payload
+ * unrenderable, operator reported a failure). Marks the job failed and flags
+ * the order `print_failed` (shared lifecycle via `failPrintJob`). Scoped to the
+ * event + a `browser-print` station.
  *
- * Auth: none (unattended venue screen, like the KDS bump) — see the GET.
+ * Auth: none (unattended venue screen) — see the GET.
  */
 import { and, eq } from 'drizzle-orm'
-import { completePrintJob } from '../../../../../../utils/print-job-complete'
+// Shared queue lifecycle stays in crouton-sales; imported via the package export.
+import { failPrintJob } from '@fyit/crouton-sales/server/utils/print-job-complete'
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
 
@@ -18,9 +19,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'eventId and jobId are required' })
   }
 
+  const body = await readBody<{ errorMessage?: string }>(event).catch(() => null)
+  const errorMessage = body?.errorMessage || 'Browser print failed'
+
   const db = useDB()
 
-  // Guard: the job must belong to this event AND a browser-print station.
   const [row] = await db
     .select({ id: salesPrintqueues.id })
     .from(salesPrintqueues)
@@ -35,6 +38,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Browser-print job not found' })
   }
 
-  const { orderCompleted } = await completePrintJob(db, jobId)
-  return { success: true, id: jobId, orderCompleted }
+  await failPrintJob(db, jobId, errorMessage)
+  return { success: true, id: jobId, errorMessage }
 })

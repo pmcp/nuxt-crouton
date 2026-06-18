@@ -19,7 +19,9 @@
  * Reads the consuming app's generated `sales` layer schemas.
  */
 import { and, asc, eq } from 'drizzle-orm'
-import { renderTicketHtml, type ReceiptData } from '../../../../../utils/receipt-formatter'
+// receipt-formatter (the ESC/POS + HTML ticket encoder) stays in crouton-sales as
+// part of the print engine; imported via the package export.
+import { renderTicketHtml, type ReceiptData } from '@fyit/crouton-sales/server/utils/receipt-formatter'
 import { salesPrintqueues } from '~~/layers/sales/collections/printqueues/server/database/schema'
 import { salesPrinters } from '~~/layers/sales/collections/printers/server/database/schema'
 

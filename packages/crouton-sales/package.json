@@ -26,6 +26,10 @@
       "import": "./server/utils/print-queue-service.ts",
       "types": "./server/utils/print-queue-service.ts"
     },
+    "./server/utils/print-job-complete": {
+      "import": "./server/utils/print-job-complete.ts",
+      "types": "./server/utils/print-job-complete.ts"
+    },
     "./server/utils/receipt-formatter": {
       "import": "./server/utils/receipt-formatter.ts",
       "types": "./server/utils/receipt-formatter.ts"

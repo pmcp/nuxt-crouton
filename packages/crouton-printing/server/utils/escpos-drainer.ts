@@ -1,7 +1,7 @@
 /**
- * @crouton-package crouton-sales
+ * @crouton-package crouton-printing
  * @description In-process ESC/POS print drainer for the venue-local / self-host
- *   target (epic #61, moved from #63).
+ *   target (epic #61, moved from #63; relocated to crouton-printing in #328).
  *
  * The default `network-escpos` driver is normally drained by the on-site RUT956
  * shell spooler, which polls the HTTP `print-server` endpoints (the only option
@@ -25,7 +25,10 @@
  * `generate-print-queues.ts`).
  */
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
-import { completePrintJob, failPrintJob } from './print-job-complete'
+// print-job-complete is the shared queue-lifecycle layer; it stays in crouton-sales
+// (it owns the salesPrintqueues/order auto-complete + cloud-sync mirror). Imported
+// via the package export so this transport converges on the exact same lifecycle.
+import { completePrintJob, failPrintJob } from '@fyit/crouton-sales/server/utils/print-job-complete'
 
 // salesPrintqueues.status is text-typed in the generated schema — string literals.
 const STATUS_PENDING = '0'

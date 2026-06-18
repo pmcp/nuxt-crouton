@@ -37,13 +37,13 @@ export default defineNitroPlugin(() => {
       await drainPendingEscposJobs(useDB(), { eventId })
     }
     catch (err) {
-      console.error('[crouton-sales] ESC/POS drainer tick failed:', err)
+      console.error('[crouton-printing] ESC/POS drainer tick failed:', err)
     }
     finally {
       running = false
     }
   }
 
-  console.log(`🍞 crouton:sales in-process ESC/POS drainer ON (poll ${pollMs}ms${eventId ? `, event ${eventId}` : ', all events'})`)
+  console.log(`🍞 crouton:printing in-process ESC/POS drainer ON (poll ${pollMs}ms${eventId ? `, event ${eventId}` : ', all events'})`)
   setInterval(tick, pollMs)
 })

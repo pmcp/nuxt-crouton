@@ -1,0 +1,61 @@
+{
+  "name": "@fyit/crouton-printing",
+  "version": "0.1.0",
+  "description": "On-site physical print delivery for Nuxt Crouton - in-process ESC/POS drainer + HTTP spooler endpoints (Workers-safe, OFF by default)",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "files": [
+    "server",
+    "print-server",
+    "dist",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./server/utils/escpos-drainer": {
+      "import": "./server/utils/escpos-drainer.ts",
+      "types": "./server/utils/escpos-drainer.ts"
+    },
+    "./server/utils/print-server-auth": {
+      "import": "./server/utils/print-server-auth.ts",
+      "types": "./server/utils/print-server-auth.ts"
+    }
+  },
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "crouton",
+    "printing",
+    "escpos",
+    "thermal-printing",
+    "spooler"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "directory": "packages/crouton-printing"
+  },
+  "bugs": {
+    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nuxt": "^4.0.0",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-sales": "workspace:*"
+  },
+  "devDependencies": {
+    "unbuild": "^3.6.1"
+  }
+}
