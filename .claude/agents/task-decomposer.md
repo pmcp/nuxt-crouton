@@ -21,8 +21,12 @@ Repo: `pmcp/nuxt-crouton`. Honour the `github-tasks` skill for everything writte
 ## Input (from the prompt)
 
 ```
-{ issue_number: <int>, depth: <int>, epic: <int>, summary?: <string> }
+{ issue_number: <int>, depth: <int>, epic: <int>, summary?: <string>, epic_branch?: <string> }
 ```
+
+`epic_branch` (when present, e.g. `epic/325-printing`) is the integration branch the
+pipeline is building on — pass it straight through to any child decomposer **and** to the
+worker you spawn, so everything branches off it (not `main`). See the task-decompose skill.
 
 ## Step 1 — Read & understand
 
@@ -60,8 +64,15 @@ To split:
    the **current** issue (`issue_number` = this issue, `sub_issue_id` = child id).
 3. Spawn one `task-decomposer` **per child, in parallel** (all `Agent` calls in a
    single message): `subagent_type: "task-decomposer"`, prompt
-   `{ issue_number: <child>, depth: <depth + 1>, epic: <epic>, summary: "<one line>" }`.
+   `{ issue_number: <child>, depth: <depth + 1>, epic: <epic>, summary: "<one line>", epic_branch: <epic_branch> }`.
 4. Report the children created + that decomposers were spawned. Stop.
+
+**Dependency order (when children depend on each other).** If one child must land before a
+sibling (e.g. "scaffold the package" before "move code into it"), do **not** fan them all
+out at once — that's how the #325 run produced duplicate scaffolds. Spawn the foundation
+child first; note the dependent children in a comment and spawn them only once the
+foundation has merged into the epic branch (a re-run of this decomposer, idempotent, picks
+them up). Independent children still go out in parallel.
 
 ## Step 4 — Spawn a worker (leaf, or depth cap reached)
 
@@ -69,8 +80,10 @@ Spawn one `task-worker` via the `Agent` tool:
 - `subagent_type: "task-worker"`
 - `isolation: "worktree"` — workers run in isolated git worktrees so parallel workers
   never collide on branches/files.
-- prompt: `{ issue_number: <this issue>, epic: <epic> }` plus a tight restatement of the
-  acceptance criteria so the worker doesn't need an extra round-trip.
+- prompt: `{ issue_number: <this issue>, epic: <epic>, epic_branch: <epic_branch> }` plus a
+  tight restatement of the acceptance criteria **and the epic's design invariants** (e.g.
+  "use the generic `print_jobs` table") so the worker neither needs a round-trip nor
+  silently diverges. The worker branches off `epic_branch` and targets its PR there.
 
 Report: "issue #N is leaf-sized (or at depth cap) → worker spawned in worktree". Stop.
 

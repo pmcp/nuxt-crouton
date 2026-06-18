@@ -53,6 +53,24 @@ cheaper (slightly blunter) split, or raise them to `opus` if decomposition quali
   with `Closes #NN`. Workers obey the `packages/` HARD GATE and the `/commit` + no-squash
   merge policy.
 
+### Integration-branch flow & safety (#348)
+
+Hardening from the #325 post-mortem (parallel workers off `main` re-created the same
+package). Threaded through `epic_branch` in the agent contract:
+
+- **Epic integration branch (#349).** The orchestrator creates `epic/<NN>-<slug>` off
+  `main` and passes `epic_branch` down to every decomposer/worker. Workers branch off it
+  and target their PRs **at it**, not `main` — so later sub-issues see earlier ones' merged
+  work. One **epic→`main`** PR at the end is the single human review; the epic isn't "done"
+  until that lands. Dependency-ordered children are **wave-gated** (foundation first).
+- **Epic-scoped approval (#350).** The `packages/` gate also honours the
+  `CROUTON_PACKAGE_EDIT_APPROVED` env var (inherited by spawned workers) — approve a
+  package-touching epic once, not per worker. The `.package-edit-approved` file must never
+  be committed (`guard-package-approval.yml` enforces it).
+- **Block, don't improvise (#352).** A worker missing a prerequisite a sibling owns
+  **stops** (blocker) — it never scaffolds the missing thing or silently diverges from the
+  epic's stated design invariants (which the decomposer passes into the worker prompt).
+
 ### Adding a new agent
 
 Create `<name>.md` with frontmatter + body, keep `tools` minimal (grant `Agent` only to
