@@ -57,6 +57,8 @@ Every task in `/writeups/PROGRESS_TRACKER.md` follows this 5-step flow:
 
 Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github-tasks` skill. The issue is the unit of work: open an **epic + sub-issues** for an initiative, label each by **package or app** (never `root`; exactly one `type:*`). Work lands via a **PR** on a feature branch (commit with `/commit`, reference `(#NN)`, put `Closes #NN` in the PR body to auto-close on merge) — not direct pushes to `main`. `writeups/PROGRESS_TRACKER.md` becomes an optional phase-level rollup, not the per-task tracker.
 
+**Write issues & epics as bets, not task lists (default).** Frame work as an assumption — *We think that* if we do X, then Y will happen (and Y is what we want) · *We'll do that by* … · *We'll be right if* … · *We'll know by* … — so we can later check whether we were right. It's a lens over the existing 👤/🤖/🧪 sections (open with `## 🎯 The bet`), not a new heading. Use it for every epic/issue as much as possible; trivial chores may opt out. Full template + worked examples in the `github-tasks` skill (epic #359).
+
 ### Task Decomposition Pipeline (`/task-decompose`)
 
 For a big/fuzzy initiative, you can let agents do the epic→sub-issue breakdown **and** the work. `/task-decompose "<task>"` (or `/task-decompose #NN` to reuse an existing epic) creates the epic, then spawns a recursive agent pipeline that builds out the whole issue tree and works the leaves:
@@ -402,6 +404,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
 | Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |
+| Skill | `.claude/skills/epic-digest/SKILL.md` | Daily "where are we?" digest — render-only HTML+text email of last-24h activity + a progress snapshot of every open epic (gathers via GitHub MCP, renders dependency-free). For a status rapport / "what moved this week". Sending + scheduling are follow-ups (#357) |
 | Skill | `.claude/skills/ecosystem-check/SKILL.md` | Check Nuxt/UnJS/Vite/OSS prior art before building |
 | Skill | `.claude/skills/e2e-smoke/SKILL.md` | Run the Playwright fixture smoke harness (boot + auth + CRUD) after a dep bump or `packages/` change |
 | Skill | `.claude/skills/db-migrations/SKILL.md` | The migrate step (`db:generate` schema.mjs-after-build gotcha) + package-owned infra tables. App collections use the `crouton` CLI, not this |

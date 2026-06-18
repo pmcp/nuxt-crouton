@@ -8,6 +8,27 @@ allowed-tools: mcp__github__issue_write, mcp__github__sub_issue_write, mcp__gith
 
 The canonical task tracker for this repo is **GitHub Issues** (`pmcp/nuxt-crouton`). This skill defines how to create and label them consistently so every task maps to a real part of the monorepo.
 
+## Write it as a bet (assumption-first — the default for every epic & issue)
+
+**Frame work as an assumption, not a task list.** A task says "do X". A bet says "we think *if* we do X, *then* Y will happen — and Y is what we want", so later we can look back and honestly say whether we were right. It's more human, it forces the *why* and the *how-we'll-know* up front, and it's what the daily digest surfaces. Use it for **every epic and issue as much as possible**; only trivial chores (a typo, a dep bump) may fall back to a plain task description.
+
+The bet has **4 parts**:
+
+1. **We think that** — *if* we [do/change X], *then* [outcome Y] will happen — and Y is what we want. *(the bet)*
+2. **We'll do that by** — [this, this, and that]. *(the work)*
+3. **We'll be right if** — [these things turn out to be true]. *(success conditions)*
+4. **We'll know by** — [measuring / checking these signals]. *(measurement)*
+
+**It's a lens over the sections below, not a new competing heading.** Don't bolt a 5th section on — map the bet onto what's already required:
+
+| Bet part | Lives in |
+|----------|----------|
+| 1–2 · the bet + the work (plain) | the **👤 For humans** lead (open the body with "We think that…") |
+| 2 · the work (precise) | the **🤖 For agents** block |
+| 3–4 · we'll be right if / we'll know by | the **🧪 How to test** section (retitle it `## 🧪 We'll be right if / We'll know by` when it reads more naturally as the bet's check) |
+
+A good epic body therefore *opens* with a `## 🎯 The bet` block, then the 👤/🤖 sections expand it, then the check closes it. See epic #359 and #357 / issues #358, #360, #361 for worked examples.
+
 ## Writing for two audiences (REQUIRED — applies to issues, PRs, and commits)
 
 Everything that lands in GitHub is written for **two readers**, in this order:
