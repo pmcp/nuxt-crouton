@@ -51,9 +51,15 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
    - Merged PRs: `search_issues` → `repo:pmcp/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
      (note: `search_issues` is scoped to issues; for PRs use `mcp__github__search_pull_requests`
      if available, else `list_pull_requests` filtered client-side.)
-4. Set `recentActivity` per epic to a **one-line, human** summary of what moved in
-   the window (a closed child, a merged PR, "no movement", "blocked on X"). This is
-   the line a busy person reads — keep it plain, no file paths.
+4. Write the **two human lines** per epic — these are the heart of the digest, the
+   part a busy person actually reads. Keep them plain English, no file paths, no jargon:
+   - `whatItIs` — one or two sentences on **what this epic is for** and why it matters.
+     Derive it from the epic's "👤 For humans" section / title — don't just restate the title.
+   - `whereWeAre` — the **current status in plain words**: what's done, what's next, and
+     any blocker (e.g. "Almost done — only X left", "Stuck waiting on Y"). This is where
+     the last-24h movement gets folded in.
+   - `recentActivity` (optional) — kept for back-compat; if `whereWeAre` is absent the
+     renderer falls back to it. Prefer writing `whereWeAre`.
 
 Keep it lean: titles, numbers, URLs, states. Don't fetch comment bodies.
 
@@ -77,7 +83,9 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
       "status": "in-progress",          // in-progress | blocked | open | done
       "blocked": false,
       "total": 5, "done": 4,            // sub-issue counts → drives the progress bar
-      "recentActivity": "One plain line about what moved.",
+      "whatItIs": "One or two plain sentences: what this epic is for and why it matters.",
+      "whereWeAre": "Plain status: what's done, what's next, any blocker.",
+      "recentActivity": "(optional, back-compat) one line about what moved.",
       "children": [
         { "number": 254, "title": "...", "url": "...", "state": "open", "status": "in-progress" },
         { "number": 253, "title": "...", "url": "...", "state": "closed" }

@@ -96,6 +96,15 @@ function statBox(n, label, color) {
   )
 }
 
+function labeledLine(label, text) {
+  if (!text) return ''
+  return (
+    `<div style="margin-top:10px;font-size:13px;line-height:1.55">` +
+    `<span style="display:inline-block;min-width:88px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:top">${label}</span>` +
+    `<span style="color:#334155">${esc(text)}</span></div>`
+  )
+}
+
 function epicCard(e) {
   const s = statusOf(e)
   const p = pct(e)
@@ -141,7 +150,8 @@ function epicCard(e) {
           <td style="white-space:nowrap;${muted}font-size:12px;font-weight:600">${e.done}/${e.total} · ${p}%</td>
         </tr></table>
 
-        ${e.recentActivity ? `<div style="${muted}font-size:13px;margin-top:10px">${esc(e.recentActivity)}</div>` : ''}
+        ${labeledLine('What it is', e.whatItIs)}
+        ${labeledLine('Where we are', e.whereWeAre || e.recentActivity)}
 
         ${
           children.length
@@ -226,9 +236,11 @@ const txt =
           const kids = (e.children || [])
             .map((c) => `      ${c.state === 'closed' ? '[x]' : '[ ]'} #${c.number} ${c.title}`)
             .join('\n')
+          const whereWeAre = e.whereWeAre || e.recentActivity
           return (
             `${head}\n  ${bar(e)}\n` +
-            (e.recentActivity ? `  ${e.recentActivity}\n` : '') +
+            (e.whatItIs ? `  What it is:   ${e.whatItIs}\n` : '') +
+            (whereWeAre ? `  Where we are: ${whereWeAre}\n` : '') +
             (kids ? `${kids}\n` : '')
           )
         })

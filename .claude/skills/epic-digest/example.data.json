@@ -23,6 +23,8 @@
       "blocked": true,
       "total": 4,
       "done": 1,
+      "whatItIs": "Make staging the default deploy target everywhere, so an agent or a routine push can never ship to production by accident — production stays a deliberate, manual action.",
+      "whereWeAre": "The default staging script is in. The production gate and the CI guard are still open, and the whole thing is stuck waiting on a production API token with the right scope.",
       "recentActivity": "Blocked on the production token scope — waiting on account access.",
       "children": [
         { "number": 319, "title": "Add cf:staging as the default deploy script", "url": "https://github.com/pmcp/nuxt-crouton/issues/319", "state": "closed" },
@@ -39,6 +41,8 @@
       "blocked": false,
       "total": 5,
       "done": 4,
+      "whatItIs": "Let one fuzzy task be broken into a tree of GitHub issues automatically and worked by agents end-to-end — orchestrator splits the epic, decomposers recurse, workers build the leaves on isolated branches.",
+      "whereWeAre": "Almost done — the orchestrator, recursive decomposer, worktree-isolated worker, and the leaf-test stop conditions all merged. Only tuning the depth and fan-out defaults is left.",
       "recentActivity": "Worker isolation via git worktrees merged yesterday; only the depth-cap tuning is left.",
       "children": [
         { "number": 250, "title": "task-orchestrator agent", "url": "https://github.com/pmcp/nuxt-crouton/issues/250", "state": "closed" },
@@ -56,6 +60,8 @@
       "blocked": false,
       "total": 1,
       "done": 0,
+      "whatItIs": "This very digest — a daily at-a-glance email of where every epic stands and what moved in the last 24h, so you don't have to piece it together from the issues board.",
+      "whereWeAre": "Just kicked off. The render-only skill (HTML + text) is the first sub-issue and is in progress now; email sending and scheduling come after.",
       "recentActivity": "Epic opened today; the render-only skill is the first sub-issue, in progress now.",
       "children": [
         { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/pmcp/nuxt-crouton/issues/358", "state": "open", "status": "in-progress" }
