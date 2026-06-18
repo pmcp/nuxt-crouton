@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import type { LocaleObject } from '@nuxtjs/i18n'
 import { getCroutonLocales, getCroutonDefaultLocale } from './config-utils'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
@@ -74,7 +75,7 @@ export default defineNuxtConfig({
     bundle: {
       optimizeTranslationDirective: false
     },
-    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
+    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })) as LocaleObject[],
     langDir: '../locales', // Relative to srcDir (app/)
     defaultLocale: croutonDefaultLocale as any,
     strategy: 'no_prefix', // Team routes handle locale manually: /team/en/page, /team/fr/page

@@ -3,6 +3,7 @@ import { join, dirname } from 'node:path'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
 import type { NitroConfig } from 'nitropack'
+import type { LocaleObject } from '@nuxtjs/i18n'
 import { getCroutonLocales } from '@fyit/crouton-i18n/config-utils'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
@@ -144,7 +145,7 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
+    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })) as LocaleObject[],
     langDir: '../i18n/locales'
   },
 

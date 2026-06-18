@@ -14,7 +14,7 @@ packages:
 # intentionally NOT cataloged yet (version spreads require a real migration,
 # not a dedup) — see #141.
 catalog:
-  nuxt: ^4.3.1
+  nuxt: ^4.4.8
   vue: ^3.5.38
   vue-router: ^4.6.4
   typescript: ^5.7.0
