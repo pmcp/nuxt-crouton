@@ -14,12 +14,12 @@ packages:
 # intentionally NOT cataloged yet (version spreads require a real migration,
 # not a dedup) — see #141.
 catalog:
-  nuxt: ^4.3.1
+  nuxt: ^4.4.8
   vue: ^3.5.38
-  vue-router: ^4.6.4
+  vue-router: ^5.1.0
   typescript: ^5.7.0
-  wrangler: ^4.64.0
+  wrangler: ^4.101.0
   '@libsql/client': ^0.17.4
   drizzle-orm: ^0.45.2
   drizzle-kit: ^0.31.10
-  '@nuxt/ui': ^4.3.0
+  '@nuxt/ui': ^4.9.0

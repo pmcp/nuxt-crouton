@@ -18,6 +18,9 @@ dist
 **/.data/
 **/.wrangler/
 
+# db-clone backups of overwritten D1 databases (scripts/db-clone.mjs)
+.db-backups/
+
 # Logs
 *.log
 npm-debug.log*

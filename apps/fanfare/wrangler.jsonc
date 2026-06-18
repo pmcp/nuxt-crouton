@@ -39,7 +39,7 @@
   // cf:staging re-injects it via scripts/inject-wrangler-env.mjs.
   "env": {
     "staging": {
-      "routes": [{ "pattern": "kassa-preview.pmcp.dev", "custom_domain": true }],
+      "routes": [{ "pattern": "kassa.pmcp.dev", "custom_domain": true }],
       "d1_databases": [
         {
           "binding": "DB",

@@ -34,6 +34,7 @@
     "typecheck:fixtures": "pnpm -r --filter './fixtures/*' typecheck",
     "typecheck:mcp": "pnpm --filter nuxt-crouton-mcp-server typecheck",
     "poc:scaffold-deploy": "node scripts/scaffold-poc-deploy.mjs",
+    "db:clone": "node scripts/db-clone.mjs",
     "app:shots": "node scripts/app-shots.mjs",
     "publish:packages": "./scripts/publish-packages.sh",
     "publish:packages:dry": "./scripts/publish-packages.sh --dry-run",
@@ -67,15 +68,17 @@
   "pnpm": {
     "overrides": {
       "vue": "^3.5.38",
-      "nuxt": "^4.3.1",
+      "nuxt": "^4.4.8",
+      "@nuxt/schema": "^4.4.8",
+      "@nuxt/ui": "^4.9.0",
       "@nuxt/devtools": "^3.0.0",
       "@nuxt/devtools-kit": "^3.0.0",
       "unimport": "4.1.1",
       "youch": "4.1.0-beta.13",
       "zod": "4.2.1",
-      "@tiptap/core": "3.20.0",
-      "@tiptap/pm": "3.20.0",
-      "@tiptap/vue-3": "3.20.0"
+      "@tiptap/core": "3.27.0",
+      "@tiptap/pm": "3.27.0",
+      "@tiptap/vue-3": "3.27.0"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"

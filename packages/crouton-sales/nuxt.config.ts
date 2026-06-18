@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
+import type { LocaleObject } from '@nuxtjs/i18n'
 import { getCroutonLocales, getCroutonDefaultLocale } from '@fyit/crouton-i18n/config-utils'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
@@ -54,7 +55,7 @@ export default defineNuxtConfig({
 
   // i18n configuration
   i18n: {
-    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })),
+    locales: croutonLocales.map(l => ({ code: l.code, name: l.name, file: l.file })) as LocaleObject[],
     langDir: '../i18n/locales',
     defaultLocale: croutonDefaultLocale as any,
     strategy: 'no_prefix'

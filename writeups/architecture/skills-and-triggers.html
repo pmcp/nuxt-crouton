@@ -36,6 +36,20 @@
   .b.ask{background:rgba(96,165,250,.14); color:var(--ask); border:1px solid #29456f;}
   .b.flow{background:rgba(167,139,250,.14); color:var(--flow); border:1px solid #443a6b;}
   .what{font-size:12.5px; color:var(--muted); margin:0;}
+  .cif-wrap{margin-top:42px;}
+  .cif-promises{display:flex; flex-wrap:wrap; gap:10px; margin:2px 0 18px;}
+  .cif-promise{display:inline-flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); padding:8px 14px; border-radius:999px; font-size:13px; color:var(--ink);}
+  .cif-flow{display:flex; flex-direction:column; gap:10px;}
+  .cif-step{display:flex; gap:14px; align-items:flex-start; background:var(--panel); border:1px solid var(--line); border-left:4px solid #5566aa; border-radius:var(--radius); padding:14px 16px;}
+  .cif-step .ico{font-size:22px; line-height:1.2;}
+  .cif-step .body{flex:1; min-width:0;}
+  .cif-step .h{font-size:15px; font-weight:700; margin:0 0 3px;}
+  .cif-step .p{font-size:13px; color:var(--muted); margin:0;}
+  .cif-step .tech{display:inline-block; margin-top:8px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:#8493b4; background:#0e1626; border:1px solid var(--line); border-radius:6px; padding:2px 8px;}
+  .cif-good{border-left-color:var(--auto);}
+  .cif-bad{border-left-color:#f0a23b;}
+  .cif-human{border-left-color:var(--ask); margin-left:26px;}
+  .cif-danger{border-left-color:#ef5a6f;}
   footer{margin-top:46px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:12.5px;}
 </style>
 </head>
@@ -165,6 +179,10 @@
     <p class="grp-sub">Prove nothing broke; keep the repo current.</p>
     <div class="grid">
       <div class="skill">
+        <div class="skill-head"><span class="name">/db-clone</span><span class="badges"><span class="b ask">on ask</span></span></div>
+        <p class="what">Copy one Cloudflare D1 database into another of the same app's environments — refresh STAGING from prod, seed a PREVIEW from staging, or (guarded) push staging up to prod. Full mirror via scripts/db-clone.mjs. Use when asked to "clone a db", "refresh staging from prod", "copy prod data to staging", "seed a preview db", or to reconstitute a wiped staging DB. NOT for per-collection seeding (use the app's seedData/seed endpoints) or for schema migrations (use db-migrations).</p>
+      </div>
+      <div class="skill">
         <div class="skill-head"><span class="name">/db-migrations</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">The migration step and the package-owned-table exception — NOT the normal collection flow. For app collections use the crouton CLI/skill (schema JSON → `crouton config`); reach here when you then need to generate/apply the Drizzle migration and hit the schema.mjs-only-after-build gotcha ("No schema files found"), or when adding a package-owned infra table (the crouton-flow pattern) that does NOT go through `crouton config`.</p>
       </div>
@@ -186,6 +204,73 @@
       <div class="skill">
         <div class="skill-head"><span class="name">/think-aloud</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">Think through a problem live on the ThinkGraph canvas. Each reasoning step appears as a node in real-time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cif-wrap">
+    <h2><span class="num">★</span> When a robot opens a PR — how it reaches merge</h2>
+    <p class="grp-sub">The agent pipeline can finish a task on its own. This is the safety net around it, in plain terms — so a change never ships unseen, and a problem never disappears quietly.</p>
+
+    <div class="cif-promises">
+      <span class="cif-promise">👀 You always see a status — never silence</span>
+      <span class="cif-promise">🤖 A robot only steps in when something breaks</span>
+      <span class="cif-promise">🙋 You're pinged only when a human is truly needed</span>
+    </div>
+
+    <div class="cif-flow">
+      <div class="cif-step">
+        <span class="ico">🧩</span>
+        <div class="body">
+          <p class="h">1 · A robot finishes a task</p>
+          <p class="p">It opens a pull request — a proposed change, ready for testing.</p>
+          <span class="tech">task-worker → opens PR (Closes #NN)</span>
+        </div>
+      </div>
+
+      <div class="cif-step">
+        <span class="ico">⚙️</span>
+        <div class="body">
+          <p class="h">2 · Tests run — and you always get a status note</p>
+          <p class="p">One short note is posted and kept updated, so you can glance and see how it's going. No digging, and no flood of comments.</p>
+          <span class="tech">one sticky comment on the PR + a roll-up line on the epic</span>
+        </div>
+      </div>
+
+      <div class="cif-step cif-good">
+        <span class="ico">✅</span>
+        <div class="body">
+          <p class="h">3a · Everything passes → it merges itself</p>
+          <p class="p">The change lands and the task is marked done. The happy path needs no robot at all.</p>
+          <span class="tech">auto-merge · the task issue auto-closes</span>
+        </div>
+      </div>
+
+      <div class="cif-step cif-bad">
+        <span class="ico">🤖</span>
+        <div class="body">
+          <p class="h">3b · Something fails → a fix-bot tries to fix it</p>
+          <p class="p">It reads the error, makes a fix, and lets the tests run again — for a few attempts.</p>
+          <span class="tech">wakes only on failure · capped at ~3 tries</span>
+        </div>
+      </div>
+
+      <div class="cif-step cif-human">
+        <span class="ico">🙋</span>
+        <div class="body">
+          <p class="h">… still stuck? → it tags you and waits</p>
+          <p class="p">It never guesses past a real problem. You reply whenever you're ready, and that simply restarts it — no special command.</p>
+          <span class="tech">@you + marks it “blocked” · your reply resumes it</span>
+        </div>
+      </div>
+
+      <div class="cif-step cif-danger">
+        <span class="ico">🚨</span>
+        <div class="body">
+          <p class="h">4 · Breaks after merging? → it opens a new ticket</p>
+          <p class="p">If the live site breaks once the change is already in, a fresh ticket is created so the problem is never lost.</p>
+          <span class="tech">the only honest record once the PR is closed</span>
+        </div>
       </div>
     </div>
   </section>
