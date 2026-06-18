@@ -20,6 +20,11 @@ export default defineNuxtConfig({
   // Usage:
   // extends: ['@fyit/crouton-core', '@fyit/crouton-sales', './layers/sales']
 
+  // Sales prints through the generic crouton-printing queue (epic #325): it
+  // provides the print_jobs/printers tables, the enqueue/lifecycle API, and the
+  // ESC/POS engine + transport that sales used to ship itself.
+  extends: ['@fyit/crouton-printing'],
+
   modules: ['@nuxtjs/i18n'],
 
   $meta: {
