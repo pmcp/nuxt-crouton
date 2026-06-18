@@ -1,0 +1,17 @@
+{
+  "collection": "products",
+  "fields": {
+    "id": { "type": "string", "meta": { "primaryKey": true } },
+    "name": { "type": "string", "meta": { "required": true, "maxLength": 255 }, "translatable": true },
+    "description": { "type": "text", "translatable": true },
+    "price": { "type": "decimal", "meta": { "required": true, "precision": 10, "scale": 2 } },
+    "active": { "type": "boolean", "meta": { "default": true } },
+    "status": {
+      "type": "string",
+      "meta": { "required": true, "displayAs": "optionsSelect", "options": ["draft", "published", "archived"] }
+    },
+    "sku": { "type": "string", "meta": { "unique": true } },
+    "categoryId": { "type": "string", "refTarget": "categories" },
+    "supplierId": { "type": "string", "refTarget": "suppliers", "refScope": "adapter" }
+  }
+}
