@@ -78,7 +78,10 @@ export interface JobOutcome {
 export async function onJobCreated(db: any, job: CreatedJob, deps: PrintingReactionDeps): Promise<void> {
   if (!deps.isCloudSyncEnabled()) return
 
-  const { payload: _payload, ...mirror } = job
+  // Mirror the new job, blanking the bulky base64 `payload` — the cloud shows
+  // status, it never prints (keeps events kilobytes, #176). `payload: ''` (not
+  // dropped) because the mirror target print_jobs.payload is NOT NULL.
+  const mirror = { ...job, payload: '' }
   await deps.recordOutboxEvents(db, [{
     entityType: 'printstatus',
     entityId: job.id,

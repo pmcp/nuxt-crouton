@@ -165,7 +165,7 @@ describe('onJobFailed', () => {
 })
 
 describe('onJobCreated', () => {
-  it('records a printstatus outbox row without the bulky payload', async () => {
+  it('records a printstatus outbox row with the bulky payload blanked', async () => {
     const { db } = makeFakeDb()
     const { deps, recordOutboxEvents } = makeDeps()
 
@@ -187,8 +187,9 @@ describe('onJobCreated', () => {
     expect(events).toHaveLength(1)
     expect(events[0].entityType).toBe('printstatus')
     expect(events[0].orderId).toBe('order-1')
-    // payload mirrored MINUS the base64 ticket.
-    expect(events[0].payload.payload).toBeUndefined()
+    // payload mirrored with the base64 ticket blanked (cloud shows status, never
+    // prints), but PRESENT as '' since print_jobs.payload is NOT NULL.
+    expect(events[0].payload.payload).toBe('')
     expect(events[0].payload.id).toBe('job-1')
     expect(events[0].payload.printerId).toBe('printer-1')
   })
