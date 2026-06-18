@@ -47,28 +47,55 @@ a feature branch.
    `claude/issue-<issue_number>-<slug>` off the current base (the **epic branch** when one
    was passed — see "Epic integration branch" below; otherwise the repo base). One branch
    = one issue.
-5. **Implement** per the issue. Honour every CLAUDE.md rule:
+5. **UI sign-off gate — mock before you build (visual changes only).** Before implementing,
+   decide whether this issue changes a **visual surface**. Treat it as UI-touching if the work
+   will add or change any of: `**/*.vue`, `**/app/components/**`, `**/app/layouts/**`,
+   `**/app/pages/**`, a theme (`packages/crouton-themes/**`, a `ui:` block in `app.config.ts`),
+   or app CSS / Tailwind theme tokens. It is **not** UI (skip the gate) for pure
+   `<script>`/composables/types, `server/**`, config, tests, or docs — anything with no visible
+   result. Keep the test **conservative**: visual surfaces only; when unsure, it's not UI.
+   - **Not UI → skip cleanly.** No mockup, no comment, no hold — go straight to implementation.
+   - **UI → gate (HOLD, do not build yet):**
+     1. Run the **`ui-proposal`** skill (`Skill` tool) to produce the mockup
+        `writeups/ui-proposals/<slug>.html`, a committed **`<slug>.md`** ("what changes" list,
+        one item per line — the commentable surface), and render
+        `screenshots/ui-proposal-<slug>.png` (before/after for a change; after-only for net-new).
+     2. Commit the `.html` + `.md` via **`/commit`** (scope `docs`) and **push** the branch —
+        the `.md` lands in the PR diff so it can be reviewed line-by-line.
+     3. **Open the PR early as a draft** (`create_pull_request` with `draft: true`, same base
+        rules as the "Open a PR" step). Post the rendered PNG as a **sticky** comment marked
+        `<!-- ui-proposal:<slug> -->` (the at-a-glance visual; one comment, edited in place,
+        never a flood) — but **steer feedback to inline comments on the committed `<slug>.md`
+        in the diff**, where each note pins to a specific change.
+     4. Apply `status:blocked`, @mention the notify handle (`@pmcp`) noting it's **awaiting UI
+        sign-off**, and **STOP** — do not implement. The revision/approval loop (#310) iterates
+        the mockup on feedback and resumes the build on an approval signal; the real before/after
+        screenshot (#311) closes the loop after the build.
+6. **Implement** per the issue. Honour every CLAUDE.md rule:
    - `<script setup lang="ts">`, Nuxt UI **4** component names, VueUse-first, KISS.
    - **`packages/` HARD GATE** — do NOT edit anything under `packages/` unless this epic
      was approved to (epic-scoped approval — see "Epic-scoped package approval" below; the
      gate honours `$CROUTON_PACKAGE_EDIT_APPROVED`). If the edit isn't covered by the
      epic's approval, it's a **blocker**: comment + @mention + `status:blocked` + stop.
      Do not work around the gate.
-6. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
+7. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
    from root). Fix every error before continuing. Do not declare done with a red typecheck.
-7. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
+8. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
    `Skill` tool) — never `git commit` directly, never `git add .`. Reference the issue in
    the body, e.g. `(#<issue_number>)`. **Then push the branch right away**
    (`git push -u origin <branch>`), the moment the work is written and typecheck is green —
    **before any long step** (dev boot, deploy, extended verification). Sessions can be
    suspended mid-run: an unpushed worktree is lost work, a pushed branch is recoverable.
    Never sit on uncommitted changes across a long-running command.
-8. **Open a PR.** `mcp__github__create_pull_request` **into the epic branch** when one was
+9. **Open a PR.** `mcp__github__create_pull_request` **into the epic branch** when one was
    passed (else the repo base). The body MUST contain `Closes #<issue_number>` so the issue
    auto-closes on merge. Body follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the
    PR body with the Generated-with-Claude-Code footer.
    - **Do not squash by default** (merge policy) — your commits are curated and atomic.
-9. **Report.** Return: branch name, PR url, **PR base (epic branch or main)**, typecheck
+   - **If the UI gate already opened a draft PR** (step 5), don't open a second one — reuse it:
+     push the implementation, then mark it ready for review (and let #311 post the real
+     screenshot). One issue still = one PR.
+10. **Report.** Return: branch name, PR url, **PR base (epic branch or main)**, typecheck
    status (green/red), and whether you hit the `packages/` gate. Keep it tight.
 
 ## Epic integration branch
@@ -83,6 +110,81 @@ in **integration-branch mode** (see the task-decompose skill):
   `main`. Sub-PRs merge into the epic branch; one final epic→`main` PR (opened per the
   skill) is where the whole feature gets its human review.
 - If no `epic_branch` is passed, fall back to the repo base (`main`) as before.
+
+## UI sign-off gate (#307)
+
+No UI lands unseen. When the work changes a **visual surface** (the heuristic in step 5),
+you **mock it before you build it**: generate a before/after (or after-only) mockup with the
+`ui-proposal` skill, post the rendered PNG on a **draft** PR, and **hold** — implementation
+waits for human sign-off. A non-visual diff (logic/types/`server/**`/config/tests/docs)
+skips the gate entirely: no mockup, no comment, no hold.
+
+- **Review happens on the diff, not the image.** A PNG can't be commented on. The committed
+  `<slug>.md` ("what changes", one item per line) is the **actionable** surface — the reviewer
+  inline-comments a specific change in "Files changed", no copying. The PNG is just the glance.
+- **One sticky comment.** The mockup PNG goes in a single comment carrying the marker
+  `<!-- ui-proposal:<slug> -->`. On later rounds, **edit that comment in place** — never post
+  a new one per revision.
+- **The hold is `status:blocked`** (the existing human-hold label), with an @mention of the
+  notify handle so the owner is pinged. You stop after posting; you do not implement.
+- **Where the loop continues:** the revision/approval loop (#310) watches the PR, revises the
+  mockup on change-requests — reading **inline review comments on the committed `<slug>.md`** in
+  the diff (plus top-level comments), re-rendering the PNG into the same sticky comment, and
+  replying to/resolving each thread — then resumes the build on an approval signal; the
+  post-build before/after screenshot (#311) closes it.
+- **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
+  than false-positive (gating a pure-logic PR). When unsure, don't gate.
+
+### Revision & approval loop (#310)
+
+Posting the mockup is not the end. The ephemeral worker has already stopped, so an **attended
+session owns the loop** via `subscribe_pr_activity` on the draft PR (the orchestrator or the
+human's session subscribes and drives it per the harness's "Handling PR Activity Events"
+rules). Fully-headless, workflow-driven watching of the autonomous pipeline is tracked
+separately under #336 — don't build it here.
+
+While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` comment), each human
+(non-bot) reply is one of two things:
+
+- **Change request.** Feedback arrives two ways — **inline review comments on the committed
+  `<slug>.md`/`.html` in the diff** (the primary, low-friction channel: each note is pinned to a
+  specific change) and top-level PR comments. Read **both** via `pull_request_read` (review
+  comments + threads). For each: revise the mockup (`<slug>.html` **and** the `<slug>.md` list),
+  re-render the PNG (`render.mjs`), **edit the sticky comment in place** (append
+  `- rN: <what changed>`), and **reply to / resolve each inline thread** you addressed so it's
+  clear what's done. Commit (`/commit`, scope `docs`) and push — the diff updates in place. The
+  hold stays.
+- **Approval signal** — **any one of**:
+  - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
+  - a **👍 reaction** on the sticky mockup comment, or
+  - the **`ui-approved`** label on the PR.
+
+  On approval: remove `status:blocked`, drop a short "approved → building" note on the sticky
+  comment, and **resume the build** (step 6 onward). The post-build before/after screenshot
+  (#311) closes the loop and the draft PR is marked ready.
+
+**Ignore bot and self-authored comments** to avoid loops — same `user.type != 'Bot'` filter as
+`resume-on-comment.yml`.
+
+### Post-build screenshot (#311)
+
+After the approved UI is actually built (step 6) and typecheck is green, **prove the mockup
+became reality**: capture a real before/after of the changed surface and post it as a *separate*
+sticky comment marked `<!-- ui-screenshot:<slug> -->` (distinct from the mockup's
+`<!-- ui-proposal:<slug> -->` comment) so the mockup → real comparison is visible on the PR.
+
+- **Use the existing harness — don't hand-roll.** Boot the surface (a `fixtures/` app or the
+  relevant `apps/` app) and capture with **`scripts/app-shots.mjs`**:
+  `node scripts/app-shots.mjs <baseUrl> <route>:<slug>-after --out screenshots`. For the
+  **before**, capture the same route from the base branch (check out base / use the deployed
+  base) → `<slug>-before.png`. Both land in `screenshots/` (the gitignored hard-gate) — they're
+  posted to the PR, not committed.
+- **Be honest about reachability.** If the changed surface **isn't reachable** in a fixture or a
+  running app (no route, needs unavailable data/auth), **say so explicitly** in the comment
+  rather than implying verification — post the after-only shot or a plain note, never a fake
+  "before".
+- This is the closing step: once the screenshot comment is posted, mark the draft PR **ready
+  for review**.
 
 ## Epic-scoped package approval
 
