@@ -82,10 +82,29 @@ function buildRow(input: EnqueuePrintJobInput) {
   }
 }
 
+/**
+ * Emit `printing:job:created` per inserted job so domain subscribers can mirror
+ * new jobs (e.g. the sales cloud-sync outbox). `db` rides the hook so the
+ * subscriber reuses the connection. Best-effort — never fails the enqueue.
+ */
+async function emitCreated(db: any, rows: ReturnType<typeof buildRow>[]): Promise<void> {
+  try {
+    const { useNitroApp } = await import('nitropack/runtime')
+    const app = useNitroApp() as any
+    for (const job of rows) {
+      await app.hooks.callHook('printing:job:created', { db, job })
+    }
+  }
+  catch {
+    /* no nitro app / no subscriber — fine */
+  }
+}
+
 export async function enqueuePrintJob(db: any, input: EnqueuePrintJobInput): Promise<string> {
   const { printJobs } = await import('../database/schema')
   const row = buildRow(input)
   await db.insert(printJobs).values(row)
+  await emitCreated(db, [row])
   return row.id
 }
 
@@ -98,5 +117,6 @@ export async function enqueuePrintJobs(db: any, inputs: EnqueuePrintJobInput[]):
   const { printJobs } = await import('../database/schema')
   const rows = inputs.map(buildRow)
   await db.insert(printJobs).values(rows)
+  await emitCreated(db, rows)
   return rows.map(r => r.id)
 }

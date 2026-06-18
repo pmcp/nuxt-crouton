@@ -28,14 +28,15 @@ export interface PrintJobOutcome {
   errorMessage?: string
 }
 
-async function emitLifecycle(event: 'completed' | 'failed', outcome: PrintJobOutcome): Promise<void> {
-  // #329 wires domain subscribers (e.g. sales order auto-complete + cloud-sync
-  // mirror) onto these Nitro hooks. Emitting is best-effort — a missing/erroring
-  // subscriber must never fail the print transition. crouton-printing never
-  // imports a domain package; the domain registers the listener.
+async function emitLifecycle(event: 'completed' | 'failed', db: any, outcome: PrintJobOutcome): Promise<void> {
+  // Domain subscribers (e.g. sales order auto-complete + cloud-sync mirror) hang
+  // off these Nitro hooks (#329). `db` is passed through the hook so the
+  // subscriber reuses the same connection rather than depending on useDB()
+  // request context. Emitting is best-effort — a missing/erroring subscriber
+  // must never fail the print transition. crouton-printing never imports a domain.
   try {
     const { useNitroApp } = await import('nitropack/runtime')
-    await (useNitroApp() as any).hooks.callHook(`printing:job:${event}`, outcome)
+    await (useNitroApp() as any).hooks.callHook(`printing:job:${event}`, { db, ...outcome })
   }
   catch {
     /* no nitro app / no subscriber — fine */
@@ -62,7 +63,7 @@ export async function completePrintJob(db: any, jobId: string): Promise<PrintJob
 
   if (result.length === 0) return null
   const outcome: PrintJobOutcome = { ...result[0], status: PRINT_STATUS.COMPLETED }
-  await emitLifecycle('completed', outcome)
+  await emitLifecycle('completed', db, outcome)
   return outcome
 }
 
@@ -90,6 +91,6 @@ export async function failPrintJob(db: any, jobId: string, errorMessage = 'Print
 
   if (result.length === 0) return null
   const outcome: PrintJobOutcome = { ...result[0], status: PRINT_STATUS.FAILED, errorMessage }
-  await emitLifecycle('failed', outcome)
+  await emitLifecycle('failed', db, outcome)
   return outcome
 }

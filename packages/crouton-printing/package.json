@@ -21,6 +21,18 @@
     "./server/utils/print-job-queue": {
       "import": "./server/utils/print-job-queue.ts",
       "types": "./server/utils/print-job-queue.ts"
+    },
+    "./server/utils/print-job-status": {
+      "import": "./server/utils/print-job-status.ts",
+      "types": "./server/utils/print-job-status.ts"
+    },
+    "./server/utils/receipt-formatter": {
+      "import": "./server/utils/receipt-formatter.ts",
+      "types": "./server/utils/receipt-formatter.ts"
+    },
+    "./server/utils/print-queue-service": {
+      "import": "./server/utils/print-queue-service.ts",
+      "types": "./server/utils/print-queue-service.ts"
     }
   },
   "scripts": {
