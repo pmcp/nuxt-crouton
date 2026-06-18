@@ -127,6 +127,34 @@ skips the gate entirely: no mockup, no comment, no hold.
 - **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
   than false-positive (gating a pure-logic PR). When unsure, don't gate.
 
+### Revision & approval loop (#310)
+
+Posting the mockup is not the end. The ephemeral worker has already stopped, so an **attended
+session owns the loop** via `subscribe_pr_activity` on the draft PR (the orchestrator or the
+human's session subscribes and drives it per the harness's "Handling PR Activity Events"
+rules). Fully-headless, workflow-driven watching of the autonomous pipeline is tracked
+separately under #336 — don't build it here.
+
+While the PR is held (`status:blocked` + a `<!-- ui-proposal:<slug> -->` comment), each human
+(non-bot) reply is one of two things:
+
+- **Change request** (anything asking for a different look): revise
+  `writeups/ui-proposals/<slug>.html`, re-render the PNG (`render.mjs`), and **edit the same
+  sticky comment in place** — never post a new one. Append a one-line revision-history entry to
+  that comment (`- rN: <what changed>`) so the thread shows each round. The hold stays. Commit
+  the revised `.html` (`/commit`, scope `docs`) and push.
+- **Approval signal** — **any one of**:
+  - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
+  - a **👍 reaction** on the sticky mockup comment, or
+  - the **`ui-approved`** label on the PR.
+
+  On approval: remove `status:blocked`, drop a short "approved → building" note on the sticky
+  comment, and **resume the build** (step 6 onward). The post-build before/after screenshot
+  (#311) closes the loop and the draft PR is marked ready.
+
+**Ignore bot and self-authored comments** to avoid loops — same `user.type != 'Bot'` filter as
+`resume-on-comment.yml`.
+
 ## Epic-scoped package approval
 
 The `packages/` HARD GATE (`.claude/hooks/gate-package-edits.sh`) blocks edits under
