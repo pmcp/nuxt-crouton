@@ -47,28 +47,52 @@ a feature branch.
    `claude/issue-<issue_number>-<slug>` off the current base (the **epic branch** when one
    was passed — see "Epic integration branch" below; otherwise the repo base). One branch
    = one issue.
-5. **Implement** per the issue. Honour every CLAUDE.md rule:
+5. **UI sign-off gate — mock before you build (visual changes only).** Before implementing,
+   decide whether this issue changes a **visual surface**. Treat it as UI-touching if the work
+   will add or change any of: `**/*.vue`, `**/app/components/**`, `**/app/layouts/**`,
+   `**/app/pages/**`, a theme (`packages/crouton-themes/**`, a `ui:` block in `app.config.ts`),
+   or app CSS / Tailwind theme tokens. It is **not** UI (skip the gate) for pure
+   `<script>`/composables/types, `server/**`, config, tests, or docs — anything with no visible
+   result. Keep the test **conservative**: visual surfaces only; when unsure, it's not UI.
+   - **Not UI → skip cleanly.** No mockup, no comment, no hold — go straight to implementation.
+   - **UI → gate (HOLD, do not build yet):**
+     1. Run the **`ui-proposal`** skill (`Skill` tool) to produce the mockup
+        `writeups/ui-proposals/<slug>.html` and render `screenshots/ui-proposal-<slug>.png`
+        (before/after for a change; after-only for net-new UI).
+     2. Commit the `.html` via **`/commit`** (scope `docs`) and **push** the branch.
+     3. **Open the PR early as a draft** (`create_pull_request` with `draft: true`, same base
+        rules as the "Open a PR" step) so there's a surface to review on, then post the rendered
+        PNG as a **sticky** comment marked `<!-- ui-proposal:<slug> -->` — one comment, edited
+        in place on later rounds, never a flood.
+     4. Apply `status:blocked`, @mention the notify handle (`@pmcp`) noting it's **awaiting UI
+        sign-off**, and **STOP** — do not implement. The revision/approval loop (#310) iterates
+        the mockup on feedback and resumes the build on an approval signal; the real before/after
+        screenshot (#311) closes the loop after the build.
+6. **Implement** per the issue. Honour every CLAUDE.md rule:
    - `<script setup lang="ts">`, Nuxt UI **4** component names, VueUse-first, KISS.
    - **`packages/` HARD GATE** — do NOT edit anything under `packages/` unless this epic
      was approved to (epic-scoped approval — see "Epic-scoped package approval" below; the
      gate honours `$CROUTON_PACKAGE_EDIT_APPROVED`). If the edit isn't covered by the
      epic's approval, it's a **blocker**: comment + @mention + `status:blocked` + stop.
      Do not work around the gate.
-6. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
+7. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
    from root). Fix every error before continuing. Do not declare done with a red typecheck.
-7. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
+8. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
    `Skill` tool) — never `git commit` directly, never `git add .`. Reference the issue in
    the body, e.g. `(#<issue_number>)`. **Then push the branch right away**
    (`git push -u origin <branch>`), the moment the work is written and typecheck is green —
    **before any long step** (dev boot, deploy, extended verification). Sessions can be
    suspended mid-run: an unpushed worktree is lost work, a pushed branch is recoverable.
    Never sit on uncommitted changes across a long-running command.
-8. **Open a PR.** `mcp__github__create_pull_request` **into the epic branch** when one was
+9. **Open a PR.** `mcp__github__create_pull_request` **into the epic branch** when one was
    passed (else the repo base). The body MUST contain `Closes #<issue_number>` so the issue
    auto-closes on merge. Body follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the
    PR body with the Generated-with-Claude-Code footer.
    - **Do not squash by default** (merge policy) — your commits are curated and atomic.
-9. **Report.** Return: branch name, PR url, **PR base (epic branch or main)**, typecheck
+   - **If the UI gate already opened a draft PR** (step 5), don't open a second one — reuse it:
+     push the implementation, then mark it ready for review (and let #311 post the real
+     screenshot). One issue still = one PR.
+10. **Report.** Return: branch name, PR url, **PR base (epic branch or main)**, typecheck
    status (green/red), and whether you hit the `packages/` gate. Keep it tight.
 
 ## Epic integration branch
@@ -83,6 +107,25 @@ in **integration-branch mode** (see the task-decompose skill):
   `main`. Sub-PRs merge into the epic branch; one final epic→`main` PR (opened per the
   skill) is where the whole feature gets its human review.
 - If no `epic_branch` is passed, fall back to the repo base (`main`) as before.
+
+## UI sign-off gate (#307)
+
+No UI lands unseen. When the work changes a **visual surface** (the heuristic in step 5),
+you **mock it before you build it**: generate a before/after (or after-only) mockup with the
+`ui-proposal` skill, post the rendered PNG on a **draft** PR, and **hold** — implementation
+waits for human sign-off. A non-visual diff (logic/types/`server/**`/config/tests/docs)
+skips the gate entirely: no mockup, no comment, no hold.
+
+- **One sticky comment.** The mockup PNG goes in a single comment carrying the marker
+  `<!-- ui-proposal:<slug> -->`. On later rounds, **edit that comment in place** — never post
+  a new one per revision.
+- **The hold is `status:blocked`** (the existing human-hold label), with an @mention of the
+  notify handle so the owner is pinged. You stop after posting; you do not implement.
+- **Where the loop continues:** the revision/approval loop (#310) watches the PR, revises the
+  mockup on change-requests (re-rendering the PNG into the same sticky comment), and resumes
+  the build on an approval signal; the post-build before/after screenshot (#311) closes it.
+- **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
+  than false-positive (gating a pure-logic PR). When unsure, don't gate.
 
 ## Epic-scoped package approval
 

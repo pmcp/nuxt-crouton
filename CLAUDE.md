@@ -357,6 +357,20 @@ import { useDrizzle } from '#server/utils/drizzle'
 When delegating: template scout first → parallel tasks → clear boundaries → smell check after.
 Agent definitions live in `.claude/agents/*.md` (the recursive `task-orchestrator` / `task-decomposer` / `task-worker` pipeline). When an agent defines a custom persona, include it in the Task prompt when invoking.
 
+## UI Sign-Off (mock before you build) — epic #307
+
+**When a task changes a visual surface, mock it before you build it.** Treat work as
+UI-touching if it adds/changes a `.vue` component, `app/components|layouts|pages/**`, a theme
+(`crouton-themes`, a `ui:` block in `app.config.ts`), or app CSS/theme tokens. Pure
+`<script>`/composables/types, `server/**`, config, tests, and docs are **not** UI — skip this.
+
+For a UI change: run the **`ui-proposal`** skill to produce a before/after (or after-only)
+mockup + PNG, get a human to sign off on the look-and-feel **first**, and only then build the
+real component. In the agent pipeline this is automated as a gate in `.claude/agents/task-worker.md`
+(post the mockup on a draft PR → hold on `status:blocked` → revise on feedback (#310) → build →
+real screenshot (#311)). In an interactive session, do the same by hand: propose, get a yes,
+then build. Be conservative — when unsure whether a diff is "visual", don't gate.
+
 ## Documentation Organization
 
 ```
