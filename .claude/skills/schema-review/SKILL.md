@@ -26,6 +26,12 @@ is cheap and fixing it after is not.
 - The user asks to "review the schema", "show the data model", "check these fields".
 - **Skip** for non-schema work (no collection / field defs involved).
 
+**Review the `crouton.config.js` alongside the fields.** The schema is the *data model*;
+`crouton.config.js` is the *generation plan* — collections, target `layer`, `features`,
+`locales`, `dialect` — and it decides the generated forms / lists / API surface. So the
+config is part of the **same** sign-off, presented next to the field tables, not a
+separate step.
+
 It sits **after** the machine `validate_schema` step (which checks the JSON is well-formed)
 — this is the **human** gate on top of it.
 
