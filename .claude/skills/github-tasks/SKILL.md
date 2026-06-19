@@ -41,6 +41,20 @@ A precise, structured block an AI can act on without guessing: scope, exact file
 
 Use explicit headings (`## 👤 For humans` / `## 🤖 For agents`) so both are obvious. Scale to the change — a one-line human summary is fine for something small — but **always include both**.
 
+## Record what you *didn't* do (Considered & rejected)
+
+A **"why not" is as load-bearing as a "why"** — it's the evidence the chosen path beat *something*, with reasons that may later expire. Whenever a decision had genuine alternatives, **write them down**, so future-us (and agents doing archaeology) stop re-litigating settled questions and understand the *shape* of a decision, not just its outcome.
+
+- Add a short **`Considered & rejected`** note — one line per option: `option → ❌ why not`. It lives in the **🤖 For agents** block by default (or its own small block, or a comment on the issue/epic).
+- **Required only when alternatives were actually weighed** — trivial chores opt out (same as the bet framing).
+- The **epic** is the natural home for a cross-cutting "why not": post it as a comment *when the decision is made*, while the reasoning is fresh.
+
+Worked example (from epic #392):
+> **Considered & rejected — E2E perf**
+> - Bump Playwright workers → ❌ the harness shares one dev server + SQLite *per job*; parallel workers race on mutated state → flaky.
+> - Shared "build packages once" prebuild job → ❌ serialises a parallel matrix; saves CI *minutes*, not wall-clock.
+> - Cache the built packages → ❌ a stale cache makes the regression smoke pass *falsely* — defeating its purpose.
+
 ## How to test (REQUIRED on every closeable issue/PR — written for a human)
 
 Every issue that changes observable behaviour, and every PR, MUST carry a **`## 🧪 How to test`** section written for someone who knows the *app concept* but not the code. It is not "run the unit tests" — it is *where a person clicks and what they should see*. Treat it as the acceptance check: if a non-developer can't follow it to confirm the change, it's not done.
