@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<!-- Hand-authored. The agent task flow: how /task-decompose fans a task into a tree of
-     issues, works the leaves, and surfaces help-pings / sign-offs / screenshots / preview
-     links on the ticket. Sources: .claude/agents/{CLAUDE.md,task-orchestrator,task-decomposer,
-     task-worker}.md · poc-deploy skill · agent-orchestration-architecture.md. Offline · no JS.
+<!-- Hand-authored. The user journey for the agent pipeline: what YOU do, what the AGENTS do,
+     the gates where you decide, the skill that fires at each stop, and the daily digest that
+     rolls up across all of it. Sources: .claude/agents/*.md · .claude/skills/* · poc-deploy ·
+     epic-digest (#357) · screenshots #311 · e2e video #356 · watch-to-merge #336.
      Style: clean line art — white ground, thick black lines, one highlight (human-in-the-loop). -->
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>nuxt-crouton — the agent task flow</title>
+<title>nuxt-crouton — the user journey</title>
 <style>
-  :root{ --ink:#111316; --muted:#555a63; --faint:#8a909a; --hair:#e3e5e9; --hl:#ffe14d; --radius:10px; }
+  :root{ --ink:#111316; --muted:#555a63; --faint:#8a909a; --hair:#e3e5e9; --hl:#ffe14d; --hl-bg:#fffdf2; --radius:10px; }
   *{box-sizing:border-box;}
   body{margin:0; background:#fff; color:var(--ink); line-height:1.55;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
@@ -20,15 +20,45 @@
   .lede{color:var(--muted); font-size:16px; max-width:72ch; margin:0 0 20px;}
   .lede strong{color:var(--ink);}
   code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.86em; color:var(--ink); background:#f4f5f6; border:1px solid var(--hair); border-radius:4px; padding:.5px 5px;}
-  .hl{background:var(--hl); padding:0 4px; border-radius:2px; box-decoration-break:clone; -webkit-box-decoration-break:clone;}
+  .hl{background:var(--hl); padding:0 4px; border-radius:2px;}
   .keynote{display:inline-flex; align-items:center; gap:9px; font-size:13px; color:var(--ink); border:2px solid var(--ink); border-radius:8px; padding:7px 13px; margin-bottom:6px;}
   .keynote .sw{width:15px;height:13px;border:1.5px solid var(--ink);background:var(--hl);border-radius:2px;flex:none;}
-  /* shared section heads */
-  h2{font-size:19px; margin:46px 0 4px; display:flex; align-items:center; gap:11px;}
+  h2{font-size:19px; margin:48px 0 4px; display:flex; align-items:center; gap:11px;}
   h2 .num{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:7px;background:#fff;border:2px solid var(--ink);font-size:14px;color:var(--ink);font-weight:700;}
   .grp-sub{color:var(--muted); font-size:13.5px; margin:0 0 16px; max-width:82ch;}
   .grp-sub strong{color:var(--ink);}
-  /* fan-out canvas */
+
+  /* ── swimlane ── */
+  .lanes{display:grid; grid-template-columns:1fr 1fr; column-gap:40px; margin:6px 0 0;}
+  .lane-head{font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.1em; border:2px solid var(--ink); border-radius:8px; padding:9px; text-align:center;}
+  .lane-head.you{background:var(--hl);}
+  .journey{position:relative; margin-top:14px;}
+  .journey::before{content:""; position:absolute; left:50%; top:2px; bottom:2px; width:2px; background:var(--ink); transform:translateX(-1px);}
+  .row{display:grid; grid-template-columns:1fr 1fr; column-gap:40px; margin-bottom:14px; position:relative;}
+  .row::after{content:""; position:absolute; left:50%; top:19px; width:9px; height:9px; border:2px solid var(--ink); background:#fff; border-radius:50%; transform:translateX(-50%);}
+  .jcard{background:#fff; border:2px solid var(--ink); border-radius:var(--radius); padding:12px 14px; position:relative;}
+  .row.left .jcard{grid-column:1; border-left:6px solid var(--hl);}
+  .row.right .jcard{grid-column:2;}
+  .row.left .jcard::after{content:""; position:absolute; top:21px; right:-20px; width:20px; height:2px; background:var(--ink);}
+  .row.right .jcard::after{content:""; position:absolute; top:21px; left:-20px; width:20px; height:2px; background:var(--ink);}
+  .row.gate{grid-template-columns:1fr;}
+  .row.gate::after{display:none;}
+  .row.gate .jcard{grid-column:1; justify-self:center; max-width:68%; border-left:6px solid var(--hl); background:var(--hl-bg);}
+  .who{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:10px; font-weight:700; letter-spacing:.05em; border:1.5px solid var(--ink); border-radius:999px; padding:1px 8px; display:inline-block; margin-bottom:6px;}
+  .who.hl{background:var(--hl);}
+  .jcard .h{font-size:14px; font-weight:700; margin:0 0 4px;}
+  .jcard .p{font-size:12.5px; color:var(--muted); margin:0;}
+  .jcard .p strong{color:var(--ink);}
+  .skill{display:inline-block; margin-top:9px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--muted); background:#f4f5f6; border:1px solid var(--hair); border-radius:5px; padding:2px 8px;}
+
+  /* ── ambient daily digest band ── */
+  .ambient{margin:18px 0 4px; border:2px dashed var(--ink); border-radius:var(--radius); padding:15px 17px; background:var(--hl-bg); display:flex; gap:14px; align-items:flex-start;}
+  .ambient .who{margin-bottom:0; flex:none;}
+  .ambient .h{font-size:14.5px; font-weight:700; margin:0 0 4px;}
+  .ambient .p{font-size:12.8px; color:var(--muted); margin:0;}
+  .ambient .p strong{color:var(--ink);}
+
+  /* ── fan-out canvas ── */
   .strip{margin:22px 0 8px; background:#fff; border:2px solid var(--ink); border-radius:var(--radius); padding:20px 16px; overflow-x:auto;}
   .strip svg{width:100%; height:auto; min-width:860px; display:block;}
   .strip text{fill:var(--ink); font-family:inherit;}
@@ -39,25 +69,19 @@
   .band{fill:none; stroke:var(--ink); stroke-width:1.4; stroke-dasharray:3 5;}
   .cap{color:var(--muted); font-size:13.5px; margin:12px 2px 0; max-width:82ch;}
   .cap strong{color:var(--ink);}
-  /* worker lifecycle */
-  .flow{display:flex; flex-direction:column; gap:10px;}
-  .step{display:flex; gap:14px; align-items:flex-start; background:#fff; border:2px solid var(--ink); border-radius:var(--radius); padding:14px 16px;}
-  .step .n{font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:700; font-size:13px; width:22px; flex:none; padding-top:1px;}
-  .step .body{flex:1; min-width:0;}
-  .step .h{font-size:14.5px; font-weight:700; margin:0 0 3px;}
-  .step .p{font-size:13px; color:var(--muted); margin:0;}
-  .step .p strong{color:var(--ink);}
-  .step .tech{display:inline-block; margin-top:9px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--muted); background:#f4f5f6; border:1px solid var(--hair); border-radius:5px; padding:2px 8px;}
-  .tag{font-size:10.5px; font-weight:700; padding:1.5px 8px; border-radius:999px; margin-left:8px; white-space:nowrap; background:var(--hl); border:1.5px solid var(--ink); vertical-align:middle;}
-  /* touchpoint cards */
+
+  /* ── touchpoint cards ── */
   .grid{display:grid; grid-template-columns:1fr; gap:14px;}
   @media(min-width:720px){.grid{grid-template-columns:1fr 1fr;}}
   .card{background:#fff; border:2px solid var(--ink); border-radius:var(--radius); padding:16px;}
+  .card.future{border-style:dashed;}
   .card .h{font-size:15px; font-weight:700; margin:0 0 7px;}
+  .card .tagf{font-size:10px; font-weight:700; letter-spacing:.05em; border:1.5px solid var(--ink); border-radius:999px; padding:1px 7px; margin-left:8px;}
   .card .p{font-size:12.8px; color:var(--muted); margin:0;}
   .card .p strong{color:var(--ink);}
-  .card .tech{display:inline-block; margin-top:11px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--muted); background:#f4f5f6; border:1px solid var(--hair); border-radius:5px; padding:2px 8px;}
-  /* safety + note */
+  .card .skill{margin-top:11px;}
+
+  /* ── safety + note ── */
   .safety{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
   .pill{display:flex; gap:11px; align-items:baseline; background:#fff; border:2px solid var(--ink); padding:10px 14px; border-radius:8px; font-size:13px; color:var(--muted);}
   .pill b{color:var(--ink); white-space:nowrap;}
@@ -70,16 +94,148 @@
 <body>
 <div class="wrap">
 
-  <span class="eyebrow">nuxt-crouton · agent orchestration</span>
-  <h1>How one task becomes shipped code</h1>
-  <p class="lede">A request like <code>/task-decompose "build X"</code> doesn't go to one agent — it
-    <strong>fans out</strong> into a tree of GitHub issues, and each leaf is built, sign-off-gated, and
-    turned into a PR by its own worker. This is that flow in one frame: the fan-out, and the four moments
-    the work surfaces back <strong>on the ticket</strong>.</p>
+  <span class="eyebrow">nuxt-crouton · the user journey</span>
+  <h1>From your ticket to shipped code — the road</h1>
+  <p class="lede">You write a ticket; the agents take it from there — fanning it out, pausing at
+    <strong>gates</strong> where only you can decide, and handing the result back as something you can see
+    and click. This is that road, lane by lane: <strong>what you do</strong>, <strong>what the agents
+    do</strong>, and <strong>the skill that fires</strong> at each stop.</p>
 
-  <div class="keynote"><span class="sw"></span> <span><span class="hl">Highlighted</span> = a moment a human is in the loop. Everything else runs on its own.</span></div>
+  <div class="keynote"><span class="sw"></span> <span><span class="hl">Highlighted</span> = a moment <strong>you</strong> are in the loop. Everything else the agents run on their own.</span></div>
 
-  <!-- ───────────────────────── FAN-OUT TREE ───────────────────────── -->
+  <!-- ───────────────────────── THE SWIMLANE ───────────────────────── -->
+  <div class="lanes">
+    <div class="lane-head you">👤 You</div>
+    <div class="lane-head">🤖 The agents</div>
+  </div>
+
+  <div class="journey">
+
+    <div class="row left"><div class="jcard">
+      <span class="who hl">YOU</span>
+      <p class="h">Create the ticket</p>
+      <p class="p">Describe the work as a <strong>bet</strong> — what you want, and how you'll know it worked. One issue, or a whole epic.</p>
+      <span class="skill">/github-tasks &nbsp;·&nbsp; /task-decompose</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">ORCHESTRATOR</span>
+      <p class="h">Fan the epic out</p>
+      <p class="p">Reads the goal and opens <strong>2–6 sub-issues</strong> on a shared epic branch.</p>
+      <span class="skill">/task-decompose &nbsp;·&nbsp; Sonnet</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">DECOMPOSER</span>
+      <p class="h">Split, or decide it's small enough</p>
+      <p class="p">Runs the <strong>LEAF TEST</strong> on each issue. Too big → splits again (recurses). Small enough → hands it to a worker.</p>
+      <span class="skill">LEAF TEST · MAX_DEPTH 3 · MAX_CHILDREN 6</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Pick up a leaf</p>
+      <p class="p">Claims one issue in its own git worktree and checks its prerequisites exist.</p>
+      <span class="skill">label status:in-progress · Opus</span>
+    </div></div>
+
+    <div class="row gate"><div class="jcard">
+      <span class="who hl">GATE · YOU ANSWER</span>
+      <p class="h">If it's stuck, it asks — it never guesses</p>
+      <p class="p">A missing prerequisite or a real decision → it pings you and waits. Your reply restarts it; no special command.</p>
+      <span class="skill">comment + @you + status:blocked</span>
+    </div></div>
+
+    <div class="row gate"><div class="jcard">
+      <span class="who hl">GATE · YOU APPROVE</span>
+      <p class="h">Sign off on the data model <em>(only if it changes a schema)</em></p>
+      <p class="p">You get a <strong>field table</strong> on a draft PR <strong>before any code is generated</strong> — cheap to fix a wrong type here, expensive after.</p>
+      <span class="skill">/schema-review → draft PR + status:blocked</span>
+    </div></div>
+
+    <div class="row gate"><div class="jcard">
+      <span class="who hl">GATE · YOU APPROVE</span>
+      <p class="h">Sign off on the look <em>(only if it changes a screen)</em></p>
+      <p class="p">You get a <strong>mockup</strong> before the real component is built. Feedback goes inline on the committed file; resumes on <code>lgtm</code> / 👍.</p>
+      <span class="skill">/ui-proposal → draft PR + status:blocked</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Build it</p>
+      <p class="p">Generates the collection and writes the real code on its branch.</p>
+      <span class="skill">/crouton</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Tidy up before committing</p>
+      <p class="p">Docs synced to the change; translations checked — automatically, before the commit lands.</p>
+      <span class="skill">/sync-docs &nbsp;·&nbsp; /i18n-check</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Typecheck, then commit</p>
+      <p class="p">Green typecheck is non-negotiable; small atomic commits, <strong>never squashed</strong>.</p>
+      <span class="skill">/commit</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Open the pull request</p>
+      <p class="p">Body carries <code>Closes #NN</code>, so the issue closes itself on merge. Targets the epic branch.</p>
+      <span class="skill">create_pull_request · base: epic/&lt;NN&gt;-slug</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Show the result</p>
+      <p class="p">Posts a real <strong>before/after screenshot</strong> of the change on the PR. (A full e2e <em>video</em> + trace is also captured — but as a downloadable CI artifact, not inline yet.)</p>
+      <span class="skill">app-shots.mjs (#311) · e2e video (#356)</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">WORKER</span>
+      <p class="h">Hand back a clickable preview</p>
+      <p class="p">For a POC, CI deploys a staging copy and posts an <strong>auth-working URL</strong> — a link you can log into and click around, not just a diff.</p>
+      <span class="skill">/poc-deploy → https://&lt;name&gt;.pmcp.dev</span>
+    </div></div>
+
+    <div class="row right"><div class="jcard">
+      <span class="who">CI · partly built</span>
+      <p class="h">Drive it to merged</p>
+      <p class="p">Green → it merges itself; red → a fix-bot tries (~3×); touches shared <code>packages/</code> → it waits for you.</p>
+      <span class="skill">watch-to-merge (#336)</span>
+    </div></div>
+
+    <div class="row left"><div class="jcard">
+      <span class="who hl">YOU</span>
+      <p class="h">Verify the whole thing &amp; close</p>
+      <p class="p">When all sub-issues merge, you get a single <strong>"verify the whole thing"</strong> pass on the deployed result — then the epic closes.</p>
+      <span class="skill">epic verify rollup</span>
+    </div></div>
+
+  </div>
+
+  <!-- daily digest: ambient, spans the whole road -->
+  <div class="ambient">
+    <span class="who hl">EVERY DAY · FOR YOU</span>
+    <div>
+      <p class="h">📊 Meanwhile — the daily digest</p>
+      <p class="p">Running <em>across</em> every ticket on the road, not a single step: a once-a-day
+        <strong>"where are we?"</strong> rollup — what moved in the last 24h plus a progress snapshot of
+        every open epic — so you glance instead of hunting the board. Render-only today (HTML + text);
+        email + scheduling are planned follow-ups.</p>
+      <span class="skill">/epic-digest (#357)</span>
+    </div>
+  </div>
+
+  <!-- ───────────────────────── ZOOM: FAN-OUT ───────────────────────── -->
+  <h2><span class="num">▸</span> Zoom: the recursive fan-out</h2>
+  <p class="grp-sub">Steps 2–4 above, drawn out. One task becomes a tree — each node decides
+    <strong>split</strong> or <strong>build</strong>, and workers run as isolated parallel leaves.</p>
+
   <div class="strip">
     <svg viewBox="0 0 880 412" role="img" aria-label="The recursive fan-out from a task to a tree of issues and workers">
       <defs>
@@ -145,108 +301,50 @@
         <text class="s-s" x="730" y="380" text-anchor="middle">→ PR (Closes #N)</text></g>
     </svg>
   </div>
-  <p class="cap"><strong>Every node runs the LEAF TEST.</strong> A single coherent change with bounded
-    files, clear acceptance, doable in one focused run → build it (spawn a worker). Otherwise → split it
-    into sub-issues and recurse. Hard stops keep it from running away: <code>MAX_DEPTH = 3</code>,
-    <code>MAX_CHILDREN = 6</code>. Orchestrator and decomposer only read/write issues, so they run on
-    <strong>Sonnet</strong>; only the worker writes real code, on <strong>Opus</strong>.</p>
+  <p class="cap"><strong>Every node runs the LEAF TEST.</strong> Orchestrator and decomposer only read/write
+    issues, so they run on <strong>Sonnet</strong>; only the worker writes real code, on <strong>Opus</strong>.</p>
 
-  <!-- ───────────────────────── WORKER LIFECYCLE ───────────────────────── -->
-  <h2><span class="num">▸</span> Inside one worker — a leaf, end to end</h2>
-  <p class="grp-sub">Each leaf runs in its own git worktree, off the shared <code>epic/&lt;NN&gt;-slug</code>
-    branch so it sees its siblings' merged work.</p>
-
-  <div class="flow">
-    <div class="step">
-      <span class="n">1</span><div class="body">
-        <p class="h">Claim the issue</p>
-        <p class="p">Reads the issue + its epic, sets the board moving.</p>
-        <span class="tech">label status:in-progress</span></div>
-    </div>
-    <div class="step">
-      <span class="n">2</span><div class="body">
-        <p class="h">Prerequisite &amp; invariant check — block, don't improvise<span class="tag">asks for help</span></p>
-        <p class="p">If something a sibling issue was meant to create isn't there yet, it does <strong>not</strong>
-          scaffold a second copy — it stops and asks. (The #325 post-mortem fix: parallel workers once built
-          three conflicting copies of one package.)</p>
-        <span class="tech">comment + @pmcp + status:blocked → STOP</span></div>
-    </div>
-    <div class="step">
-      <span class="n">3</span><div class="body">
-        <p class="h">Branch off the epic branch</p>
-        <p class="p">One issue → one branch → one PR.</p>
-        <span class="tech">claude/issue-&lt;N&gt;-&lt;slug&gt;</span></div>
-    </div>
-    <div class="step">
-      <span class="n">4</span><div class="body">
-        <p class="h">Sign-off gate — propose before you build<span class="tag">you approve</span></p>
-        <p class="p">Changing a screen or a data model? It mocks it first — a UI mockup or a schema
-          field-table — posts it on a <strong>draft</strong> PR, and <strong>holds</strong>. You review on
-          the committed <code>.md</code> in the diff; it resumes on <code>lgtm</code> / 👍 / <code>ui-approved</code>.</p>
-        <span class="tech">ui-proposal · schema-review → draft PR + status:blocked</span></div>
-    </div>
-    <div class="step">
-      <span class="n">5</span><div class="body">
-        <p class="h">Implement → typecheck → commit</p>
-        <p class="p">Builds it, makes typecheck green (non-negotiable), commits in small atomic pieces, pushes immediately.</p>
-        <span class="tech">pnpm typecheck · /commit (no git add .) · never squash</span></div>
-    </div>
-    <div class="step">
-      <span class="n">6</span><div class="body">
-        <p class="h">Open the PR — into the epic branch</p>
-        <p class="p">Body carries <code>Closes #NN</code> so the issue auto-closes on merge; one epic→main PR is the single human review.</p>
-        <span class="tech">create_pull_request · base: epic/&lt;NN&gt;-slug</span></div>
-    </div>
-    <div class="step">
-      <span class="n">7</span><div class="body">
-        <p class="h">Prove the mockup became reality<span class="tag">screenshot</span></p>
-        <p class="p">After an approved UI build, it captures a real before/after of the changed surface and posts it on the PR.</p>
-        <span class="tech">scripts/app-shots.mjs → before/after on the PR (#311)</span></div>
-    </div>
-    <div class="step">
-      <span class="n">8</span><div class="body">
-        <p class="h">Hand back a clickable preview<span class="tag">preview link</span></p>
-        <p class="p">For a POC, CI auto-provisions and deploys a staging Worker, then posts the
-          <strong>auth-working</strong> URL on the PR — a link you can log into, not just code on a branch.</p>
-        <span class="tech">poc-deploy → https://&lt;name&gt;.pmcp.dev on the PR</span></div>
-    </div>
-  </div>
-
-  <!-- ───────────────────────── FOUR TOUCHPOINTS ───────────────────────── -->
-  <h2><span class="num">★</span> The four moments it reaches you</h2>
-  <p class="grp-sub">The agents are headless, so they never pop a dialog. Everything that needs a human
-    happens <strong>as a comment, label, or attachment on the GitHub issue/PR</strong> — which is exactly
-    why this surface ports cleanly (Linear can mirror it, Slack can notify on it, pi can post to it).</p>
+  <!-- ───────────────────────── FOUR + 1 TOUCHPOINTS ───────────────────────── -->
+  <h2><span class="num">★</span> Where the work reaches you</h2>
+  <p class="grp-sub">The agents are headless — they never pop a dialog. Everything that needs you happens
+    <strong>as a comment, label, or attachment on the ticket</strong> — which is exactly why this surface
+    ports cleanly (Linear can mirror it, Slack can notify on it, pi can post to it).</p>
 
   <div class="grid">
     <div class="card">
       <p class="h">Asks for help — never guesses</p>
-      <p class="p">On a real blocker, it comments what's blocking, @mentions you, and marks the ticket blocked.
-        Your reply resumes it — no special command.</p>
-      <span class="tech">add_issue_comment + @pmcp + status:blocked</span>
+      <p class="p">On a real blocker it comments what's wrong, @mentions you, and marks the ticket blocked. Your reply resumes it.</p>
+      <span class="skill">add_issue_comment + @you + status:blocked</span>
     </div>
     <div class="card">
       <p class="h">Shows you a change before building it</p>
-      <p class="p">UI and schema changes get a rendered mockup / field-table on a draft PR. You give feedback
-        inline on the committed <code>.md</code> — pinned to the exact line — and approve when it's right.</p>
-      <span class="tech">sticky comment · lgtm / 👍 / ui-approved</span>
+      <p class="p">UI / schema changes get a rendered mockup or field-table on a draft PR; you approve inline.</p>
+      <span class="skill">/ui-proposal · /schema-review</span>
     </div>
     <div class="card">
       <p class="h">Proves it built what it showed</p>
-      <p class="p">After the build, a real before/after screenshot of the surface lands on the PR — no checking
-        out the branch to see it.</p>
-      <span class="tech">app-shots.mjs · separate sticky comment</span>
+      <p class="p">A real before/after screenshot of the surface lands on the PR after the build.</p>
+      <span class="skill">app-shots.mjs (#311)</span>
     </div>
     <div class="card">
       <p class="h">Hands back a link you can click</p>
-      <p class="p">Every POC PR deploys an isolated staging environment and posts a working, loggable-in URL —
-        the deliverable is a preview, not a diff.</p>
-      <span class="tech">https://&lt;name&gt;.pmcp.dev · auth seeded</span>
+      <p class="p">Every POC PR posts a working, loggable-in preview URL — the deliverable is a preview, not a diff.</p>
+      <span class="skill">/poc-deploy</span>
+    </div>
+    <div class="card">
+      <p class="h">Tells you where everything stands</p>
+      <p class="p">The daily digest rolls up the last 24h + every open epic, so status is a glance, not a hunt.</p>
+      <span class="skill">/epic-digest (#357)</span>
+    </div>
+    <div class="card future">
+      <p class="h">Shows the feature in motion <span class="tagf">PLANNED</span></p>
+      <p class="p">A short clip of how the feature <em>looks &amp; reacts</em>, posted inline on the ticket — the demo-video evolution of the screenshot. (Recording is easy; inline upload is the piece to solve.)</p>
+      <span class="skill">demo clip · evolves #311 / #356</span>
     </div>
   </div>
 
   <!-- ───────────────────────── SAFETY RAILS ───────────────────────── -->
-  <h2><span class="num">⛨</span> What keeps the fan-out safe</h2>
+  <h2><span class="num">⛨</span> What keeps the road safe</h2>
   <p class="grp-sub">The pipeline can run unattended, so the guardrails are structural, not vibes.</p>
   <div class="safety">
     <span class="pill"><b>epic branch</b> siblings integrate before main — no duplicate scaffolding</span>
@@ -257,16 +355,15 @@
   </div>
 
   <div class="note">
-    <strong>Today vs. nearly-there.</strong> The fan-out, sign-off gates, help-pings, screenshots, and
-    preview links above are live. The fully-autonomous <em>watch-to-merged</em> loop — sticky CI status,
-    auto-merge on green, a fix-bot on red — is partially built (epic <a href="https://github.com/pmcp/nuxt-crouton/issues/336">#336</a>);
-    until it lands, an attended session babysits the PR to merge.
+    <strong>Today vs. nearly-there.</strong> Everything solid above is live. Drawn as <em>partly built</em> or
+    <em>planned</em>: the autonomous <a href="https://github.com/pmcp/nuxt-crouton/issues/336">watch-to-merge</a> loop,
+    digest email/scheduling (<a href="https://github.com/pmcp/nuxt-crouton/issues/357">#357</a>), and the inline feature-demo clip.
   </div>
 
   <footer>
     Hand-authored companion to <code>skills-and-triggers.html</code> ("what fires when"). Sources:
-    <code>.claude/agents/{CLAUDE.md, task-orchestrator, task-decomposer, task-worker}.md</code>,
-    the <code>poc-deploy</code> / <code>ui-proposal</code> / <code>schema-review</code> skills, and
+    <code>.claude/agents/*.md</code>, the <code>task-decompose · github-tasks · schema-review · ui-proposal ·
+    crouton · sync-docs · i18n-check · commit · poc-deploy · epic-digest</code> skills, and
     <code>agent-orchestration-architecture.md</code>. Inline SVG · no JS · renders offline.
   </footer>
 
