@@ -12,7 +12,7 @@
 
 ---
 
-## TL;DR — the bet
+## TL;DR — the hypothesis
 
 **Rent the orchestration, own the agents, self-host only what the cloud can't do, and let
 the loop improve itself.**
