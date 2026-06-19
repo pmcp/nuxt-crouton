@@ -57,17 +57,29 @@ sections:
 
 Post it with `add_issue_comment` on the epic.
 
-## Step 4 — Offer to turn proposals into work
-Ask the human (plain): *"Open these as `workflow` tasks?"* On a yes, for each
-accepted proposal create an issue with `issue_write`:
-- Labels: **`workflow`** + **`meta:agents`** + one `type:*` (usually `type:chore`
-  or `type:feat`).
-- Body: the proposal as a small **bet** (what we change, why, how we'll know it
-  helped). Reference the source epic.
+## Step 4 — Dedup against existing follow-ups, then offer to turn proposals into work
+
+**First, dedup — don't mint duplicates.** Before proposing anything new, search for an
+existing home for each proposal: an open follow-up / "harden X" **epic** or issues that
+already capture it. Use `search_issues` with the proposal's keywords (and `label:epic`),
+and check the source epic's own linked follow-ups. If a proposal is already tracked,
+**link to that issue/epic in the roundup instead of opening a new one**; add only a
+*genuinely-new* proposal to that epic as a sub-issue (`sub_issue_write`). The roundup
+should state, per proposal, **where it's tracked** (existing #NN, or "new").
+
+> Why this matters: the #274 dogfood found its proposals already lived in epic #291 —
+> the right move was to link #291, not open parallel `workflow` issues.
+
+Then ask the human (plain): *"Open the remaining (untracked) proposals as `workflow`
+tasks?"* On a yes, for each accepted, **not-already-tracked** proposal create an issue
+with `issue_write`:
+- Labels: **`workflow`** + **`meta:agents`** + one `type:*` (usually `type:chore` or `type:feat`).
+- Body: the proposal as a small **bet** (what we change, why, how we'll know it helped). Reference the source epic.
 - If several relate, group them under a small tracking parent via `sub_issue_write`.
 
-Don't open issues the human didn't accept; don't pad with filler proposals — 1–3
-real ones beat ten generic ones.
+Don't open issues the human didn't accept; don't pad with filler — 1–3 real ones beat ten
+generic ones; and **never open a `workflow` issue that duplicates an existing follow-up
+epic** — link it instead.
 
 ## Step 5 — Hand off
 Report: the epic comment URL, and the list of `workflow` issues opened (with URLs).
@@ -84,3 +96,6 @@ picked up like any other work.
   trip the agent-resume triggers (`resume-on-comment.yml` ignores bot authors).
 - **Signals are best-effort.** Prefer a smaller, true set of evidence over a
   complete-looking but guessed one.
+- **Dedup first.** A proposal already owned by a follow-up/hardening epic gets a
+  link in the roundup, not a fresh `workflow` issue (proven by the #274 dogfood,
+  whose learnings already lived in #291).
