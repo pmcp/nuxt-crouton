@@ -343,6 +343,78 @@
   </div>
 
   <!-- ───────────────────────── SAFETY RAILS ───────────────────────── -->
+  <!-- ───────────────────────── COMMENTS = THE BUS ───────────────────────── -->
+  <h2><span class="num">💬</span> Comments are the steering wheel</h2>
+  <p class="grp-sub">There's no dashboard and no buttons — <strong>the whole thing is driven by comments and
+    labels on issues and PRs</strong>. That's how you direct it, and how it talks back. Each of these is a
+    real GitHub Action listening for a real comment.</p>
+
+  <div class="grid">
+    <div class="card">
+      <p class="h"><span class="hl">You</span> → <code>@claude</code> on any issue or PR</p>
+      <p class="p">Type <code>@claude</code> with what you want; an agent picks up that comment and acts on it.</p>
+      <span class="skill">claude.yml · issue_comment / review_comment</span>
+    </div>
+    <div class="card">
+      <p class="h"><span class="hl">You</span> → reply on a blocked issue</p>
+      <p class="p">Any comment on a <code>status:blocked</code> issue wakes the paused agent and it continues — no command needed.</p>
+      <span class="skill">resume-on-comment.yml</span>
+    </div>
+    <div class="card">
+      <p class="h"><span class="hl">You</span> → label an issue <code>auto-decompose</code></p>
+      <p class="p">Open or tag an issue with <code>auto-decompose</code> and the whole fan-out pipeline kicks off on its own.</p>
+      <span class="skill">decompose-on-issue.yml · opened / labeled</span>
+    </div>
+    <div class="card">
+      <p class="h"><span class="hl">You</span> → inline-comment a draft PR</p>
+      <p class="p">Comment on the committed mockup or schema; the agent revises it in place, then resumes when you reply <code>lgtm</code> / 👍.</p>
+      <span class="skill">sign-off revision loop (#310)</span>
+    </div>
+    <div class="card">
+      <p class="h">Agent → comments back</p>
+      <p class="p">The agent's own comments <em>are</em> the output: it asks for help, posts the screenshot, the preview URL, and the CI status.</p>
+      <span class="skill">add_issue_comment</span>
+    </div>
+  </div>
+
+  <!-- ───────────────────────── IT KEEPS FLOWING ───────────────────────── -->
+  <h2><span class="num">↻</span> It keeps flowing — work creates work</h2>
+  <p class="grp-sub">The road isn't a dead end. A finished task routinely <strong>mints the next one</strong> —
+    so the pipeline loops instead of stopping.</p>
+
+  <div class="strip">
+    <svg viewBox="0 0 880 192" role="img" aria-label="The pipeline loops: merged work mints new issues that feed back onto the board">
+      <defs>
+        <marker id="arL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#111316"/>
+        </marker>
+      </defs>
+
+      <line class="edge" x1="200" y1="57" x2="232" y2="57" marker-end="url(#arL)"/>
+      <line class="edge" x1="420" y1="57" x2="452" y2="57" marker-end="url(#arL)"/>
+      <line class="edge" x1="640" y1="57" x2="672" y2="57" marker-end="url(#arL)"/>
+      <path class="edge" d="M770,84 L770,156 L106,156 L106,86" marker-end="url(#arL)"/>
+      <text class="s-d" x="438" y="148" text-anchor="middle">…and it flows again — every merge can mint the next issue</text>
+
+      <g><rect class="node" x="12"  y="30" width="188" height="54" rx="9"/>
+        <text class="s-t" x="106" y="61" text-anchor="middle">Issues on the board</text></g>
+      <g><rect class="node" x="232" y="30" width="188" height="54" rx="9"/>
+        <text class="s-t" x="326" y="53" text-anchor="middle">Agents work the leaves</text>
+        <text class="s-s" x="326" y="69" text-anchor="middle">claim → build → PR</text></g>
+      <g><rect class="node" x="452" y="30" width="188" height="54" rx="9"/>
+        <text class="s-t" x="546" y="53" text-anchor="middle">Review → merge</text>
+        <text class="s-s" x="546" y="69" text-anchor="middle">Closes #NN</text></g>
+      <g><rect class="node" x="672" y="30" width="196" height="54" rx="9"/>
+        <text class="s-t" x="770" y="53" text-anchor="middle">New work is born</text>
+        <text class="s-s" x="770" y="69" text-anchor="middle">new issues &amp; epics</text></g>
+    </svg>
+  </div>
+  <p class="cap"><strong>New issues &amp; epics get minted four ways</strong> — <strong>recursion</strong> (a
+    decomposer opens sub-issues), a <strong>request</strong> (your <code>@claude</code> or
+    <code>auto-decompose</code> comment spins up a task or a whole epic), a <strong>regression</strong> (a
+    post-merge break opens a fresh issue, #336), and a <strong>follow-up</strong> (the verify or review pass
+    surfaces more). Each drops a new issue on the board — and the agents pick it up again.</p>
+
   <h2><span class="num">⛨</span> What keeps the road safe</h2>
   <p class="grp-sub">The pipeline can run unattended, so the guardrails are structural, not vibes.</p>
   <div class="safety">
