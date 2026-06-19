@@ -81,7 +81,7 @@ Then ask the human (plain): *"Open the remaining (untracked) proposals as `workf
 tasks?"* On a yes, for each accepted, **not-already-tracked** proposal create an issue
 with `issue_write`:
 - Labels: **`workflow`** + **`meta:agents`** + one `type:*` (usually `type:chore` or `type:feat`).
-- Body: the proposal as a small **bet** (what we change, why, how we'll know it helped). Reference the source epic.
+- Body: the proposal as a small **hypothesis** (what we change, why, how we'll know it helped). Reference the source epic.
 - If several relate, group them under a small tracking parent via `sub_issue_write`.
 
 Don't open issues the human didn't accept; don't pad with filler — 1–3 real ones beat ten

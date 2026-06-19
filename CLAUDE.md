@@ -59,7 +59,7 @@ Tasks are tracked as **GitHub issues** (`pmcp/nuxt-crouton`) — see the `github
 
 **Always link issues & PRs when you mention them in chat.** Whenever you reference an issue or PR to the user (in prose, lists, or tables), include its full URL so it's one click to open — `#NN` alone isn't clickable. Format: `#303` → `[#303](https://github.com/pmcp/nuxt-crouton/issues/303)` for issues, `…/pull/376` for PRs. This is a **chat-reply** convention only — keep bare `(#NN)` in commit messages, and use `Closes #NN` (not a URL) in PR bodies so GitHub's auto-close works.
 
-**Write issues & epics as bets, not task lists (default).** Frame work as an assumption — *We think that* if we do X, then Y will happen (and Y is what we want) · *We'll do that by* … · *We'll be right if* … · *We'll know by* … — so we can later check whether we were right. It's a lens over the existing 👤/🤖/🧪 sections (open with `## 🎯 The bet`), not a new heading. Use it for every epic/issue as much as possible; trivial chores may opt out. Full template + worked examples in the `github-tasks` skill (epic #359).
+**Write issues & epics as hypotheses, not task lists (default).** Frame work as an assumption — *We think that* if we do X, then Y will happen (and Y is what we want) · *We'll do that by* … · *We'll be right if* … · *We'll know by* … — so we can later check whether we were right. It's a lens over the existing 👤/🤖/🧪 sections (open with `## Hypothesis`), not a new heading. Use it for every epic/issue as much as possible; trivial chores may opt out. Full template + worked examples in the `github-tasks` skill (epic #359).
 
 ### Task Decomposition Pipeline (`/task-decompose`)
 

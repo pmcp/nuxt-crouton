@@ -182,7 +182,7 @@ function epicCard(e) {
           <td style="white-space:nowrap;${muted}font-size:12px;font-weight:600">${e.done}/${e.total} · ${p}%</td>
         </tr></table>
 
-        ${labeledLine('The bet', e.theBet || e.whatItIs)}
+        ${labeledLine('Hypothesis', e.theHypothesis || e.theBet || e.whatItIs)}
         ${labeledLine("We'll know by", e.weWillKnowBy)}
         ${labeledLine('Where we are', e.whereWeAre || e.recentActivity)}
 
@@ -308,11 +308,11 @@ const txt =
           const kids = (e.children || [])
             .map((c) => `      ${c.state === 'closed' ? '[x]' : '[ ]'} #${c.number} ${c.title}`)
             .join('\n')
-          const theBet = e.theBet || e.whatItIs
+          const theHypothesis = e.theHypothesis || e.theBet || e.whatItIs
           const whereWeAre = e.whereWeAre || e.recentActivity
           return (
             `${head}\n  ${bar(e)}\n` +
-            (theBet ? `  The bet:       ${theBet}\n` : '') +
+            (theHypothesis ? `  Hypothesis:    ${theHypothesis}\n` : '') +
             (e.weWillKnowBy ? `  We'll know by: ${e.weWillKnowBy}\n` : '') +
             (whereWeAre ? `  Where we are:  ${whereWeAre}\n` : '') +
             (kids ? `${kids}\n` : '')
@@ -342,7 +342,7 @@ const mdList = (items, empty, cap = 8) => {
   return shown.join('\n')
 }
 const mdEpic = (e) => {
-  const theBet = e.theBet || e.whatItIs
+  const theHypothesis = e.theHypothesis || e.theBet || e.whatItIs
   const whereWeAre = e.whereWeAre || e.recentActivity
   const kids = (e.children || [])
     .map((c) => {
@@ -353,7 +353,7 @@ const mdEpic = (e) => {
     .join('\n')
   return (
     `#### [#${e.number}](${e.url}) · ${e.title} — \`${e.done}/${e.total} · ${pct(e)}%\` · ${statusOf(e).label}\n` +
-    (theBet ? `- **The bet:** ${theBet}\n` : '') +
+    (theHypothesis ? `- **Hypothesis:** ${theHypothesis}\n` : '') +
     (e.weWillKnowBy ? `- **We'll know by:** ${e.weWillKnowBy}\n` : '') +
     (whereWeAre ? `- **Where we are:** ${whereWeAre}\n` : '') +
     (kids ? `<details><summary>Sub-issues (${e.children.length})</summary>\n\n${kids}\n</details>\n` : '')

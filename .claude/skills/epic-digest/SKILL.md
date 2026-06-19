@@ -52,18 +52,19 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
      (note: `search_issues` is scoped to issues; for PRs use `mcp__github__search_pull_requests`
      if available, else `list_pull_requests` filtered client-side.)
 4. Write the **human lines** per epic — these are the heart of the digest, the part a
-   busy person actually reads. We write issues as **bets** (see the `github-tasks` skill),
-   so the digest surfaces the bet and its signal. Keep them plain English, no file paths,
+   busy person actually reads. We write issues as **hypotheses** (see the `github-tasks` skill),
+   so the digest surfaces the hypothesis and its signal. Keep them plain English, no file paths,
    no jargon:
-   - `theBet` — the epic's bet, pulled from its "## 🎯 The bet" / "We think that…" line:
-     *if we do X, then Y will happen — and Y is what we want*. This is the lead line.
-   - `weWillKnowBy` — the bet's signal, from the epic's "We'll know by…": how we'll know
+   - `theHypothesis` — the epic's hypothesis, pulled from its "## Hypothesis" (or legacy
+     "## 🎯 The bet") / "We think that…" line: *if we do X, then Y will happen — and Y is
+     what we want*. This is the lead line.
+   - `weWillKnowBy` — the hypothesis's signal, from the epic's "We'll know by…": how we'll know
      the assumption paid off (a measurable/checkable outcome).
    - `whereWeAre` — the **current status in plain words**: what's done, what's next, any
      blocker. This is where the last-24h movement gets folded in.
-   - `whatItIs` (optional) / `recentActivity` (optional) — back-compat fallbacks: `theBet`
-     falls back to `whatItIs`, `whereWeAre` falls back to `recentActivity`. Prefer the
-     bet-framed fields.
+   - `whatItIs` (optional) / `recentActivity` (optional) — back-compat fallbacks: `theHypothesis`
+     falls back to the legacy `theBet`, then to `whatItIs`; `whereWeAre` falls back to
+     `recentActivity`. Prefer the hypothesis-framed fields.
 
 5. **Loose tickets** (the "no epic" band) — open issues tracked under *no* epic, so
    they don't vanish from the roundup. `search_issues` →
@@ -96,10 +97,10 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
       "status": "in-progress",          // in-progress | blocked | open | done
       "blocked": false,
       "total": 5, "done": 4,            // sub-issue counts → drives the progress bar
-      "theBet": "We think that if we do X, then Y will happen — and Y is what we want.",
-      "weWillKnowBy": "The signal that tells us the bet paid off.",
+      "theHypothesis": "We think that if we do X, then Y will happen — and Y is what we want.",
+      "weWillKnowBy": "The signal that tells us the hypothesis paid off.",
       "whereWeAre": "Plain status: what's done, what's next, any blocker.",
-      "whatItIs": "(optional, back-compat) → theBet falls back to this.",
+      "whatItIs": "(optional, back-compat) → theHypothesis falls back to this.",
       "recentActivity": "(optional, back-compat) → whereWeAre falls back to this.",
       "children": [
         { "number": 254, "title": "...", "url": "...", "state": "open", "status": "in-progress" },
@@ -130,7 +131,7 @@ GITHUB_TOKEN=… node .claude/skills/epic-digest/gather.mjs > digest.data.json  
 node .claude/skills/epic-digest/render.mjs digest.data.json --format md --out-dir .
 GH_TOKEN=… DIGEST_BODY_FILE=epic-digest-<date>.md bash .claude/skills/epic-digest/post-comment.sh
 ```
-- **`gather.mjs`** parses `The bet` / `We'll know by` from each epic body and
+- **`gather.mjs`** parses `Hypothesis` (or legacy `The bet`) / `We'll know by` from each epic body and
   **computes** `whereWeAre` from child counts — no model in the loop.
 - **`post-comment.sh`** posts the Markdown as a comment on the single standing
   **"📊 Daily epic digest"** issue (creating it if missing) via `gh` + the built-in

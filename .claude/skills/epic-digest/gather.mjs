@@ -6,7 +6,7 @@
  *
  * Pulls the open-epic tree, the last-24h activity band, and the loose
  * (unparented) tickets straight from the GitHub REST API, parses each epic's
- * "The bet" / "We'll know by" out of its body, computes a plain "Where we are"
+ * "Hypothesis" / "We'll know by" out of its body, computes a plain "Where we are"
  * from the child counts, and emits the exact JSON shape render.mjs consumes.
  *
  * This is the engine behind the scheduled daily run (.github/workflows/epic-digest.yml).
@@ -73,8 +73,10 @@ const firstSentence = (s) => {
   const m = s.match(/^(.*?[.!?])(\s|$)/)
   return (m ? m[1] : s).trim()
 }
-function parseBet(body) {
-  const sec = section(body, /^##\s.*bet/i)
+function parseHypothesis(body) {
+  // Match the new `## Hypothesis` heading and the legacy `## 🎯 The bet` so the
+  // digest keeps surfacing the framing for epics written before the rename (#426).
+  const sec = section(body, /^##\s.*(hypothesis|bet)/i)
   if (!sec) return ''
   const flat = sec.replace(/\*\*/g, '')
   const m = flat.match(/We think that[\s\S]*?(?:that'?s what we want\.?|that is what we want\.?)/i)
@@ -136,7 +138,7 @@ for (const e of epicItems) {
   epics.push({
     number: e.number, title: e.title, url: e.html_url,
     status, blocked, total, done,
-    theBet: parseBet(e.body),
+    theHypothesis: parseHypothesis(e.body),
     weWillKnowBy: parseKnowBy(e.body),
     whereWeAre,
     children
