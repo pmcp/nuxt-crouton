@@ -49,6 +49,8 @@ Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and fol
 5. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
 ```
 
+**ARCHAEOLOGY-FIRST for bugs (HARD GATE): research how & when a bug was introduced BEFORE fixing it.** The moment a bug, crash, failed build, broken test, or "this used to work" is reported, step 0 is to find the first-bad commit (`git log -S`/`-G`, `git blame`, `git bisect`) — or determine it's *not* a code regression (stale install, env, data) — and **record that finding on the tracking issue/PR** (open one if none exists). A symptom-first fix can "repair" code that was never broken. Run the **`bug-archaeology`** skill; it carries the protocol + the finding template. (#424)
+
 ### GitHub Issue Tracking
 
 **ISSUE-FIRST (HARD GATE): open the tracking issue BEFORE writing code.** For any new feature/package/app/initiative, the *first* action is creating the GitHub issue (epic + sub-issues for anything multi-step) via the `github-tasks` skill — not after the work, not at PR time. If you catch yourself editing files for an initiative that has no issue, STOP and open it first. New package or app? It also needs its `pkg:`/`app:` label in `.github/labels.yml`. This is the step most easily skipped — treat a missing issue like a failing build.
@@ -450,6 +452,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/ui-proposal/SKILL.md` | Generate a before/after UI mockup (offline HTML/CSS/SVG) + render it to PNG for design sign-off before building UI. Part of the UI sign-off loop (#307) |
 | Skill | `.claude/skills/schema-review/SKILL.md` | Render a collection schema (field-definition JSON) into a human-readable field table + relationships (HTML + PNG + Markdown) for data-model sign-off before `crouton config` generates code. Part of the schema sign-off loop (#314) |
 | Skill | `.claude/skills/postmortem/SKILL.md` | At epic close (after the verify rollup, before closing): post a retro comment — what went well / what was hard (evidence-backed) / 1–3 proposals — and offer to mint accepted proposals as `workflow` issues. Tightens the loop over time (#403) |
+| Skill | `.claude/skills/bug-archaeology/SKILL.md` | First step of bug work (HARD GATE): research how & when a bug was introduced — `git log -S`/`blame`/`bisect` to the first-bad commit, or rule it a non-code cause (stale install/env/data) — and record the finding on the issue/PR before fixing. Use the moment a bug/regression/broken build is reported (#424) |
 | Agent | `.claude/agents/task-orchestrator.md` | Reads an epic, fans it into 2–6 top-level sub-issues, spawns a decomposer per child |
 | Agent | `.claude/agents/task-decomposer.md` | Recursive: LEAF TEST one issue → spawn a worker (leaf) or split into sub-issues + spawn a decomposer per child |
 | Agent | `.claude/agents/task-worker.md` | Implements one leaf issue on an isolated worktree branch → `pnpm typecheck` → `/commit` → PR (`Closes #NN`) |

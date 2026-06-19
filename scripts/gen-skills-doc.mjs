@@ -35,6 +35,7 @@ const META = {
   audit: { group: 'review', triggers: ['ask'] },
   'i18n-audit': { group: 'review', triggers: ['ask'] },
   postmortem: { group: 'review', triggers: ['flow', 'ask'] },
+  'bug-archaeology': { group: 'review', triggers: ['flow', 'ask'] },
   deploy: { group: 'deploy', triggers: ['ask'] },
   'deploy-production': { group: 'deploy', triggers: ['ask'] },
   'poc-deploy': { group: 'deploy', triggers: ['ask'] },
