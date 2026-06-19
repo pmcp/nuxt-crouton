@@ -383,30 +383,52 @@
     so the pipeline loops instead of stopping.</p>
 
   <div class="strip">
-    <svg viewBox="0 0 880 192" role="img" aria-label="The pipeline loops: merged work mints new issues that feed back onto the board">
+    <svg viewBox="0 0 880 300" role="img" aria-label="The pipeline loops: merged work and four sources mint new issues that feed back onto the board">
       <defs>
         <marker id="arL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="#111316"/>
         </marker>
       </defs>
 
-      <line class="edge" x1="200" y1="57" x2="232" y2="57" marker-end="url(#arL)"/>
-      <line class="edge" x1="420" y1="57" x2="452" y2="57" marker-end="url(#arL)"/>
-      <line class="edge" x1="640" y1="57" x2="672" y2="57" marker-end="url(#arL)"/>
-      <path class="edge" d="M770,84 L770,156 L106,156 L106,86" marker-end="url(#arL)"/>
-      <text class="s-d" x="438" y="148" text-anchor="middle">…and it flows again — every merge can mint the next issue</text>
+      <!-- forward chain -->
+      <line class="edge" x1="248" y1="52" x2="328" y2="52" marker-end="url(#arL)"/>
+      <line class="edge" x1="552" y1="52" x2="632" y2="52" marker-end="url(#arL)"/>
 
-      <g><rect class="node" x="12"  y="30" width="188" height="54" rx="9"/>
-        <text class="s-t" x="106" y="61" text-anchor="middle">Issues on the board</text></g>
-      <g><rect class="node" x="232" y="30" width="188" height="54" rx="9"/>
-        <text class="s-t" x="326" y="53" text-anchor="middle">Agents work the leaves</text>
-        <text class="s-s" x="326" y="69" text-anchor="middle">claim → build → PR</text></g>
-      <g><rect class="node" x="452" y="30" width="188" height="54" rx="9"/>
-        <text class="s-t" x="546" y="53" text-anchor="middle">Review → merge</text>
-        <text class="s-s" x="546" y="69" text-anchor="middle">Closes #NN</text></g>
-      <g><rect class="node" x="672" y="30" width="196" height="54" rx="9"/>
-        <text class="s-t" x="770" y="53" text-anchor="middle">New work is born</text>
-        <text class="s-s" x="770" y="69" text-anchor="middle">new issues &amp; epics</text></g>
+      <!-- merge drops into the regeneration hub; hub loops back up to the board -->
+      <path class="edge" d="M744,78 L744,178 L582,178" marker-end="url(#arL)"/>
+      <path class="edge" d="M300,178 L136,178 L136,80" marker-end="url(#arL)"/>
+      <text class="s-d" x="146" y="150" text-anchor="start">loops back ↑</text>
+
+      <!-- four feeders into the hub -->
+      <line class="edge" x1="332" y1="238" x2="332" y2="208" marker-end="url(#arL)"/>
+      <line class="edge" x1="404" y1="238" x2="404" y2="208" marker-end="url(#arL)"/>
+      <line class="edge" x1="476" y1="238" x2="476" y2="208" marker-end="url(#arL)"/>
+      <line class="edge" x1="548" y1="238" x2="548" y2="208" marker-end="url(#arL)"/>
+
+      <!-- top chain -->
+      <g><rect class="node" x="24"  y="26" width="224" height="52" rx="9"/>
+        <text class="s-t" x="136" y="56" text-anchor="middle">Issues on the board</text></g>
+      <g><rect class="node" x="328" y="26" width="224" height="52" rx="9"/>
+        <text class="s-t" x="440" y="48" text-anchor="middle">Agents work the leaves</text>
+        <text class="s-s" x="440" y="64" text-anchor="middle">claim → build → PR</text></g>
+      <g><rect class="node" x="632" y="26" width="224" height="52" rx="9"/>
+        <text class="s-t" x="744" y="48" text-anchor="middle">Review → merge</text>
+        <text class="s-s" x="744" y="64" text-anchor="middle">Closes #NN</text></g>
+
+      <!-- regeneration hub -->
+      <g><rect class="node" x="300" y="150" width="280" height="56" rx="9"/>
+        <text class="s-t" x="440" y="174" text-anchor="middle">New issues &amp; epics are born</text>
+        <text class="s-s" x="440" y="191" text-anchor="middle">…then drop back onto the board</text></g>
+
+      <!-- feeder sources -->
+      <g><rect class="node" x="300" y="238" width="64" height="40" rx="8"/>
+        <text class="s-s" x="332" y="262" text-anchor="middle">recursion</text></g>
+      <g><rect class="node" x="372" y="238" width="64" height="40" rx="8"/>
+        <text class="s-s" x="404" y="262" text-anchor="middle">a request</text></g>
+      <g><rect class="node" x="444" y="238" width="64" height="40" rx="8"/>
+        <text class="s-s" x="476" y="262" text-anchor="middle">a break</text></g>
+      <g><rect class="node" x="516" y="238" width="64" height="40" rx="8"/>
+        <text class="s-s" x="548" y="262" text-anchor="middle">a follow-up</text></g>
     </svg>
   </div>
   <p class="cap"><strong>New issues &amp; epics get minted four ways</strong> — <strong>recursion</strong> (a
