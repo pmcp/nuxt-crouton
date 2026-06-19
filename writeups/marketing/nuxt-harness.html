@@ -228,6 +228,40 @@
   </div>
 </div></section>
 
+<section id="opinionated"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">Honest about it</span>
+    <h2>Opinionated by design — and every opinion is optional</h2>
+    <p>Crouton ships a full-stack opinion so you start fast. Don't share the taste? Peel it off.
+      The core is just <em>schema → a typed backend</em> — bring any front end you like.</p>
+  </div>
+  <div class="vs">
+    <div class="panel">
+      <div class="k">Core · always generated</div>
+      <h3>The typed backend</h3>
+      <p>Drizzle schema · migrations · DB wiring · logical CRUD API · typed composables.
+        Stack-neutral — useful even if you never touch our UI.</p>
+    </div>
+    <div class="arrow">+</div>
+    <div class="panel dim">
+      <div class="k">Layer · opt-out</div>
+      <h3>The UI — our taste</h3>
+      <p>Nuxt UI 4 forms, lists, and the CRUD UX. Batteries included by default,
+        removed with one flag when they're not your batteries.</p>
+    </div>
+  </div>
+  <div class="term" style="margin-top:34px;">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+      <span class="t mono">crouton.config.js</span></div>
+    <pre class="mono"><span class="c-ink">collections</span>: [
+  { name: <span class="c-grn">'books'</span>, fieldsFile: <span class="c-grn">'schemas/books.json'</span>,
+    generate: [<span class="c-vi">'schema'</span>, <span class="c-vi">'api'</span>, <span class="c-vi">'composables'</span>] },  <span class="c-mut">// backend only — bring your own UI</span>
+
+  { name: <span class="c-grn">'authors'</span>, fieldsFile: <span class="c-grn">'schemas/authors.json'</span> },  <span class="c-mut">// default: full-stack (forms + lists too)</span>
+]</pre>
+  </div>
+</div></section>
+
 <section id="flow"><div class="wrap">
   <div class="lead">
     <span class="eyebrow">The flow</span>
