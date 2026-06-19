@@ -1,0 +1,6 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "name": { "type": "string", "meta": { "required": true, "label": "Name", "maxLength": 200 } },
+  "bio": { "type": "text", "meta": { "label": "Biography", "component": "EditorSimple" } },
+  "bornYear": { "type": "number", "meta": { "label": "Birth Year" } }
+}
