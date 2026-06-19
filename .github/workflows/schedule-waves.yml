@@ -46,15 +46,28 @@ jobs:
             const { owner, repo } = context.repo
 
             // 1) What just completed?
-            let done = null
-            if (context.eventName === 'issues') {
-              done = context.payload.issue.number
-            } else if (context.eventName === 'pull_request') {
-              if (!context.payload.pull_request.merged) { core.info('PR closed unmerged — nothing to release.'); return }
-              const m = (context.payload.pull_request.body || '').match(/\bCloses\s+#(\d+)/i)
-              if (!m) { core.info('Merged PR has no `Closes #NN` — nothing to release.'); return }
-              done = Number(m[1])
+            // On a merged PR: sub-PRs merge into the EPIC branch, so GitHub does NOT
+            // auto-close their `Closes #NN` issues (auto-close is default-branch only).
+            // Close them here — that resulting `issues: closed` event then drives the
+            // release path below. (Keeps one release codepath.)
+            if (context.eventName === 'pull_request') {
+              if (!context.payload.pull_request.merged) { core.info('PR closed unmerged — nothing to do.'); return }
+              const closes = [...(context.payload.pull_request.body || '').matchAll(/\bCloses\s+#(\d+)/gi)].map(x => Number(x[1]))
+              if (!closes.length) { core.info('Merged PR has no `Closes #NN` — nothing to do.'); return }
+              for (const n of closes) {
+                try {
+                  const gi = await github.rest.issues.get({ owner, repo, issue_number: n })
+                  if (gi.data.state !== 'closed') {
+                    await github.rest.issues.update({ owner, repo, issue_number: n, state: 'closed', state_reason: 'completed' })
+                    core.info(`Closed #${n} (its PR merged into the epic branch) — release runs on the issues:closed event.`)
+                  }
+                } catch (e) { core.warning(`Could not close #${n}: ${e.message}`) }
+              }
+              return
             }
+
+            // issues: closed → release dependents
+            const done = context.payload.issue.number
             if (!done) return
             core.info(`Completed workstream: #${done}`)
 
