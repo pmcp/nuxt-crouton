@@ -25,12 +25,12 @@ jobs:
   e2e:
     name: E2E (${{ matrix.fixture }})
     runs-on: ubuntu-latest
-    # Canary (#393): only `with-assets` runs inside the official, version-matched
-    # Playwright image (Chromium + system libs baked in) to prove the container
-    # approach kills the flaky `--with-deps` apt step before we roll it out to all
-    # four fixtures (#394). An empty value (the other three) means "run on the
-    # host", unchanged. The tag must track @playwright/test ^1.57 — see #395.
-    container: ${{ matrix.container }}
+    # Every fixture runs inside the official, version-matched Playwright image
+    # (Chromium + system libs baked in) — proven on with-assets in #393. This
+    # drops the flaky `playwright install --with-deps` apt step that
+    # intermittently hung CI for ~an hour. The tag must track @playwright/test
+    # ^1.57 — keep them in sync (#395).
+    container: mcr.microsoft.com/playwright:v1.57.0-jammy
     strategy:
       fail-fast: false
       matrix:
@@ -40,9 +40,6 @@ jobs:
         # CI once stable"), with-collab stays a local-only spike until the package
         # is type-clean. Its runtime smoke passes; only the typecheck gate blocks it.
         fixture: [minimal, with-pages, with-bookings, with-assets]
-        include:
-          - fixture: with-assets
-            container: mcr.microsoft.com/playwright:v1.57.0-jammy
     env:
       # Better-auth needs a secret present; the value is irrelevant in CI.
       BETTER_AUTH_SECRET: ci-placeholder-secret
@@ -52,11 +49,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # In-container only (canary #393): the repo is checked out as root inside the
-      # Playwright image, so mark the workspace safe to keep git from tripping on
-      # dubious ownership. No-op on the host fixtures (guarded by matrix.container).
+      # The repo is checked out as root inside the Playwright image, so mark the
+      # workspace safe to keep git from tripping on dubious ownership.
       - name: Trust workspace dir (container)
-        if: ${{ matrix.container }}
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Setup pnpm
@@ -87,21 +82,9 @@ jobs:
       - name: Type-check the generated fixture
         run: pnpm --filter "e2e-fixture-${{ matrix.fixture }}" typecheck
 
-      # Host path only: fetch the browser + apt system deps at runtime. Skipped
-      # in-container (#393) — the Playwright image already ships Chromium at
+      # No browser-install step: the Playwright image already ships Chromium at
       # /ms-playwright (PLAYWRIGHT_BROWSERS_PATH preset), so there's nothing to
-      # install and no flaky `--with-deps` apt step to hang on.
-      - name: Cache Playwright browsers
-        if: ${{ !matrix.container }}
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Playwright (chromium)
-        if: ${{ !matrix.container }}
-        run: pnpm exec playwright install --with-deps chromium
-
+      # download and no apt step to hang on. Proven on with-assets in #393.
       - name: Run e2e smoke
         run: pnpm test:e2e
 
