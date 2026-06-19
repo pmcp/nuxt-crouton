@@ -48,6 +48,11 @@ cheaper (slightly blunter) split, or raise them to `opus` if decomposition quali
   GitHub/app notification), apply `status:blocked`, and stop — the human answers by
   replying on the issue. Small ambiguities are decided with a default + a noted
   assumption (no ping). Change the handle in this file and in the task-decompose skill.
+- **An @mention is a request for action, not a broadcast.** Only @mention `NOTIFY_HANDLE`
+  when you need the human to *do* something: answer a blocking question, give a sign-off,
+  or unblock you. **Pure progress/status updates** ("spawning the worker for #NN", "wave 2
+  of 4 starting", "preview deploying") are posted as **plain comments with no @mention** —
+  they're FYIs, not asks. If nothing is required of the human, do not ping them.
 - **Workers are isolated.** The decomposer spawns workers with `isolation: "worktree"`
   so parallel leaves never collide on branches/files. One issue → one branch → one PR
   with `Closes #NN`. Workers obey the `packages/` HARD GATE and the `/commit` + no-squash
