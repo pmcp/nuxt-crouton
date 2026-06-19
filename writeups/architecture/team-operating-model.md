@@ -23,6 +23,7 @@ native sync) bridges the seams.
 | 📋 **Linear** | Planning view | The board humans triage/prioritise in — a live two-way **mirror** of GitHub. |
 | 💬 **Slack** | The front door | Ask in plain language, get replies. Routes intent to the right tool. |
 | 📣 **HubSpot** | The outside world | Where customer requests come in — and where "here's the change" goes back out. |
+| 📊 **PostHog** | The evidence | Measures real user journeys + analytics in production. Tells us whether what we shipped actually *worked*. |
 
 **The two seams that matter:**
 - **Linear ↔ GitHub** = first-class **native** two-way sync (free, automatic).
@@ -58,6 +59,23 @@ why it matters* — is produced and routed back to **whoever asked**:
 - **Everyone** → it accumulates into a release changelog / the daily digest.
 
 This is the payoff line of the whole system: **"we listened to you — here's the change."**
+
+## The measurement loop (did it actually work?)
+
+Closing the loop with the *requester* isn't the end. **PostHog** measures what real users do with the
+shipped change — funnels, drop-offs, the actual user journeys through the product. That evidence feeds
+**two things**:
+
+- **Validate the bet.** Every epic is framed as a bet (*"we'll be right if X · we'll know by Y"*).
+  PostHog is the **"we'll know by"** instrument — it tells us whether the change moved the needle, and
+  it feeds the **postmortem** at epic close.
+- **Generate new intent.** Observed friction in the product (a drop-off, an unused feature) becomes a
+  **new captured story** in Notion — re-entering the loop at the capture step.
+
+So there are two return paths, and the master diagram draws them symmetrically: **results** flow back
+up the **right** (preview links → Slack/Linear, for sign-off), **evidence** flows back up the **left**
+(PostHog → new stories / validate the bet). The inner agent loop ships; the outer measurement loop
+tells us if it was worth shipping.
 
 ---
 
