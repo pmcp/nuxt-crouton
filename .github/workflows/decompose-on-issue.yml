@@ -9,9 +9,13 @@ on:
 
 jobs:
   decompose:
-    # Only fire for issues explicitly opted in. (On `labeled` this also covers the case
-    # where the label is added later; on `opened` the label must already be present.)
-    if: contains(github.event.issue.labels.*.name, 'delegate')
+    # Fire ONLY when `delegate` is freshly applied (or present at creation) — NOT on every
+    # later label change while `delegate` happens to still be on the issue. Otherwise the
+    # worker adding `status:in-progress` re-fires this workflow as claude[bot], which then
+    # dies on the bot-actor guard (the mystery duplicate failures). Gate on the *added* label.
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == 'delegate') ||
+      (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'delegate'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
