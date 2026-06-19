@@ -1,0 +1,9 @@
+{
+  "collection": "authors",
+  "fields": {
+    "id": { "type": "string", "meta": { "primaryKey": true } },
+    "name": { "type": "string", "meta": { "required": true, "maxLength": 255 } },
+    "bio": { "type": "text", "meta": {} },
+    "bornYear": { "type": "number", "meta": {} }
+  }
+}

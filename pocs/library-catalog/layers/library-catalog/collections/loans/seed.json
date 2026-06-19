@@ -1,0 +1,18 @@
+{
+  "table": "library_catalog_loans",
+  "key": null,
+  "rows": [
+    {
+      "collection": "Sample collection 1",
+      "fields": "Sample fields 1"
+    },
+    {
+      "collection": "Sample collection 2",
+      "fields": "Sample fields 2"
+    },
+    {
+      "collection": "Sample collection 3",
+      "fields": "Sample fields 3"
+    }
+  ]
+}

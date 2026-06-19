@@ -1,0 +1,46 @@
+[
+  {
+    "collection": "loans",
+    "fields": [
+      "collection",
+      "fields"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-19T18:50:30.604Z",
+    "layer": "library-catalog",
+    "gitSha": "ef9369e0"
+  },
+  {
+    "collection": "genres",
+    "fields": [
+      "collection",
+      "fields"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-19T18:50:30.592Z",
+    "layer": "library-catalog",
+    "gitSha": "ef9369e0"
+  },
+  {
+    "collection": "authors",
+    "fields": [
+      "collection",
+      "fields"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-19T18:50:30.578Z",
+    "layer": "library-catalog",
+    "gitSha": "ef9369e0"
+  },
+  {
+    "collection": "books",
+    "fields": [
+      "collection",
+      "fields"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-19T18:50:30.564Z",
+    "layer": "library-catalog",
+    "gitSha": "ef9369e0"
+  }
+]
