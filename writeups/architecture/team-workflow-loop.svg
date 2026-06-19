@@ -142,19 +142,24 @@
   <path d="M640,360 L830,440" fill="none" stroke="#8b949e" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="720" y="420" fill="#9aa7b4" font-size="10">docs</text>
 
-  <!-- ===================== BAND 4: RUNNERS ===================== -->
+  <!-- ===================== BAND 4: RUNNERS & PREVIEW TARGETS ===================== -->
   <rect x="180" y="700" width="920" height="120" rx="12" fill="#10151c" stroke="#2a3038"/>
-  <text x="196" y="720" fill="#9aa7b4" font-size="12" letter-spacing="1.2">🖥️ RUNNERS — WHERE WORK EXECUTES</text>
+  <text x="196" y="720" fill="#9aa7b4" font-size="12" letter-spacing="1.2">🖥️ RUNNERS &amp; PREVIEW TARGETS — WHERE WORK EXECUTES &amp; DEPLOYS</text>
 
   <g>
-    <rect x="240" y="740" width="380" height="60" rx="8" fill="#1b2230" stroke="#3d4856"/>
-    <text x="430" y="766" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">Cloud Linux</text>
-    <text x="430" y="784" text-anchor="middle" fill="#9aa7b4" font-size="10.5">web builds · Playwright e2e · screenshots</text>
+    <rect x="210" y="740" width="280" height="60" rx="8" fill="#1b2230" stroke="#3d4856"/>
+    <text x="350" y="764" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">Cloud CI + Cloudflare</text>
+    <text x="350" y="782" text-anchor="middle" fill="#9aa7b4" font-size="10">crouton apps · e2e · staging preview</text>
   </g>
   <g>
-    <rect x="660" y="740" width="380" height="60" rx="8" fill="#241a10" stroke="#8a5a1a"/>
-    <text x="850" y="766" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-weight="600">🍎 Mac mini</text>
-    <text x="850" y="784" text-anchor="middle" fill="#f0a020" font-size="10.5">macOS / Apple builds + physical tests</text>
+    <rect x="510" y="740" width="280" height="60" rx="8" fill="#0d1620" stroke="#4a4a4a"/>
+    <text x="650" y="764" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">▲ Vercel</text>
+    <text x="650" y="782" text-anchor="middle" fill="#9aa7b4" font-size="10">marketing site · dashboards · preview deploys</text>
+  </g>
+  <g>
+    <rect x="810" y="740" width="280" height="60" rx="8" fill="#241a10" stroke="#8a5a1a"/>
+    <text x="950" y="764" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">🍎 Mac mini</text>
+    <text x="950" y="782" text-anchor="middle" fill="#f0a020" font-size="10">macOS / Apple builds + physical tests</text>
   </g>
 
   <!-- engine -> runners (center spine, between the two loops) -->
@@ -162,8 +167,8 @@
   <text x="652" y="690" fill="#9aa7b4" font-size="10">dispatch work</text>
 
   <!-- results return channel (far right, runners -> back to humans) -->
-  <path d="M1040,758 L1200,758 L1200,136 L928,136" fill="none" stroke="#2ea043" stroke-width="2.2" marker-end="url(#arrow)"/>
-  <text x="1212" y="450" fill="#7ee787" font-size="11" transform="rotate(90 1212 450)" text-anchor="middle">results → preview · screenshots · video · test outcomes  (→ Slack &amp; Linear)</text>
+  <path d="M1090,758 L1200,758 L1200,136 L928,136" fill="none" stroke="#2ea043" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <text x="1212" y="450" fill="#7ee787" font-size="11" transform="rotate(90 1212 450)" text-anchor="middle">results → Cloudflare + Vercel preview links · screenshots · video · test outcomes  (→ Slack &amp; Linear)</text>
 
   <!-- postmortem -> notion -->
   <path d="M940,288 L860,188 L820,168" fill="none" stroke="#9aa7b4" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrow)"/>

@@ -30,6 +30,22 @@ native sync) bridges the seams.
   "work page" + its stories and creates a GitHub epic + sub-issues, backlinked both ways. *(Whether
   Notion stories then stay editable-and-resynced or go read-only is still an open decision.)*
 
+### Where things run & preview
+
+Work executes and deploys onto a few surfaces — but they all feed the **same loop**: a PR produces a
+**clickable preview link** that drops into the PR / Slack for sign-off, then ships.
+
+| Surface | Hosts | We leverage |
+|---|---|---|
+| **Cloud CI + Cloudflare Workers** | the crouton apps | e2e/screenshots in CI · staging preview per PR |
+| **▲ Vercel** | the marketing site · homemade dashboards | **per-PR preview deployments** + everything Vercel gives us out of the box |
+| **🍎 Mac mini** (self-hosted) | macOS / Apple builds | the only runner that can build/sign Apple apps + drive physical hardware |
+
+The win from Vercel: marketing-page and dashboard changes get **automatic preview URLs** with zero
+extra plumbing — so a non-technical teammate can click and approve the look before it ships, exactly
+like the crouton apps' Cloudflare staging links. It plugs straight into the sign-off gates and the
+"results back to Slack/Linear" channel.
+
 ---
 
 ## Closing the loop (the part everyone forgets)
