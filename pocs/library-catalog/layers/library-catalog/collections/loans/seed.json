@@ -1,0 +1,24 @@
+{
+  "table": "library_catalog_loans",
+  "key": "borrowerName",
+  "rows": [
+    {
+      "borrowerName": "Sample borrowerName 1",
+      "borrowedAt": 1781906606,
+      "dueAt": 1781906606,
+      "returnedAt": 1781906606
+    },
+    {
+      "borrowerName": "Sample borrowerName 2",
+      "borrowedAt": 1781820206,
+      "dueAt": 1781820206,
+      "returnedAt": 1781820206
+    },
+    {
+      "borrowerName": "Sample borrowerName 3",
+      "borrowedAt": 1781733806,
+      "dueAt": 1781733806,
+      "returnedAt": 1781733806
+    }
+  ]
+}
