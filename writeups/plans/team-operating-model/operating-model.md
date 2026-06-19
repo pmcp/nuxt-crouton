@@ -5,9 +5,9 @@
 
 > This is the *operating model*, told mostly through **user journeys**. It's the companion to the
 > diagrams in this folder:
-> - `team-workflow-loop.svg` — the whole picture (tools · engine · loops · runners)
-> - `team-idea-to-shipped.svg` — how Notion · GitHub · Linear fit together
-> - `team-journey-feature-request.svg` — the flagship journey below, drawn out
+> - `diagram-1-workflow-loop.svg` — the whole picture (tools · engine · loops · runners · measurement)
+> - `diagram-2-idea-to-shipped.svg` — how Notion · GitHub · Linear fit together
+> - `diagram-3-friction-map.svg` — the flagship journey below, drawn out with friction flagged
 
 ---
 
@@ -90,7 +90,7 @@ story** (title · persona · the underlying need · rough acceptance). The human
 Notion is therefore the **normalized inbox**: many messy inputs in, one consistent shape out.
 
 This capture step is also where **most of the friction lives** — see the flags (⚠️) below and the
-`team-journey-feature-request.svg` friction map.
+`diagram-3-friction-map.svg` friction map.
 
 ---
 
