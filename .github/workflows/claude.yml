@@ -16,10 +16,15 @@ jobs:
       (github.event_name == 'issues' && contains(github.event.issue.body, '@claude'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
+    # OVERRIDES (does not merge with) any workflow-level block, so `id-token: write` has to
+    # be here or the claude-code-action OIDC token request fails
+    # ("Could not fetch an OIDC token"). A workflow-level block would be silently shadowed.
     permissions:
       contents: write
       pull-requests: write
       issues: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,9 +36,3 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: "--max-turns 25"
-
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-  id-token: write
