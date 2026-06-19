@@ -76,6 +76,25 @@ package). Threaded through `epic_branch` in the agent contract:
   **stops** (blocker) — it never scaffolds the missing thing or silently diverges from the
   epic's stated design invariants (which the decomposer passes into the worker prompt).
 
+### Claude-action workflow standard (any `anthropics/claude-code-action` workflow)
+
+When you add or copy a workflow that runs `anthropics/claude-code-action` (the event→agent
+glue like `claude.yml` / `decompose-on-issue.yml` / `resume-on-comment.yml`), it MUST carry
+all of these by **default** — they're not optional extras; each one has burned us:
+
+- **`id-token: write` at the JOB level.** Job-level `permissions` *fully overrides* (does
+  not merge with) the workflow-level block, so a workflow-level `id-token` is silently
+  shadowed and the action's OIDC request fails (`Could not fetch an OIDC token`). #284 fixed
+  one workflow; the identical bug survived in two siblings until #429. Put it in the job.
+- **`anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}`** — a real API key, NEVER a
+  subscription `CLAUDE_CODE_OAUTH_TOKEN` (subscription OAuth is interactive-only and
+  disallowed for CI — Anthropic Legal & Compliance).
+- **`show_full_output: true`** — the full agent log prints inline; debugging a run must not
+  require a debug re-run.
+- **Pin the action to a SHA, kept in sync** across these workflows (bump them together).
+
+A new claude-action workflow that omits any of these is treated like a failing build.
+
 ### Adding a new agent
 
 Create `<name>.md` with frontmatter + body, keep `tools` minimal (grant `Agent` only to
