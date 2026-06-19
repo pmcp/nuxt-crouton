@@ -141,6 +141,10 @@ surfaces in the GitHub / Claude mobile app):
 
 - **Small ambiguity** → decide with a sensible default, record the assumption in the
   issue body, keep going. *No mention* (don't spam).
+- **Progress / status update** ("spawning the worker for #NN", "wave 2 of 4 starting",
+  "preview deploying") → a plain `add_issue_comment` with **no @mention**. An @mention is
+  a request for the human to *act*; an FYI is not. If nothing is required of the owner,
+  do not ping them — post the update unmentioned (or skip it).
 - **Real blocker / decision needed** → `add_issue_comment` on the issue with a tight
   question + options, **@mention `NOTIFY_HANDLE`**, apply the `status:blocked` label,
   then **stop** that branch. The owner replies on the issue; a resume trigger (or a
