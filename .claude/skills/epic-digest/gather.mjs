@@ -30,6 +30,10 @@ if (!token) {
 const cutoffMs = Date.now() - windowHours * 3600 * 1000
 const cutoff = new Date(cutoffMs).toISOString().slice(0, 10) // YYYY-MM-DD
 
+// The digest posts to its own standing issue — don't let it list itself.
+const STANDING_TITLE = process.env.DIGEST_ISSUE_TITLE || '📊 Daily epic digest'
+const notStanding = (i) => i.title !== STANDING_TITLE
+
 async function gh(path) {
   const res = await fetch('https://api.github.com' + path, {
     headers: {
@@ -147,7 +151,7 @@ const [closed, opened, mergedPRs, openNonEpic] = await Promise.all([
 ])
 
 const loose = openNonEpic
-  .filter((i) => !i.parent_issue_url && !childNumbers.has(i.number))
+  .filter((i) => !i.parent_issue_url && !childNumbers.has(i.number) && notStanding(i))
   .map((i) => ({ number: i.number, title: i.title, url: i.html_url, type: typeOfLabels(labelNames(i)) || 'other' }))
 
 const data = {
@@ -155,8 +159,8 @@ const data = {
   windowHours,
   repo: REPO,
   activity: {
-    opened: opened.map((i) => slim(i, 'issue')),
-    closed: closed.map((i) => slim(i, 'issue')),
+    opened: opened.filter(notStanding).map((i) => slim(i, 'issue')),
+    closed: closed.filter(notStanding).map((i) => slim(i, 'issue')),
     mergedPRs: mergedPRs.map((i) => slim(i, 'pr'))
   },
   epics,
