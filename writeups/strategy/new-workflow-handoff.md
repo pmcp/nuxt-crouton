@@ -77,7 +77,7 @@ flow back to where humans see them; the postmortem feeds improvements back into 
 | Capability | What it does | Status today | Evidence / where |
 |---|---|---|---|
 | **GitHub agent loop** | task → fan-out → workers → PR, with sign-off gates + comment steering | ✅ **Exists** | `.claude/agents/*`, `.claude/skills/*`, `agent-flow.html` |
-| **Comment-driven control** | `@claude`, reply-to-resume, `auto-decompose` label | ✅ Exists | `claude.yml`, `resume-on-comment.yml`, `decompose-on-issue.yml` |
+| **Comment-driven control** | `@claude`, reply-to-resume, `delegate` label | ✅ Exists | `claude.yml`, `resume-on-comment.yml`, `decompose-on-issue.yml` |
 | **UI / schema sign-off** | mockup / field-table on a draft PR, human approves | ✅ Exists | `ui-proposal`, `schema-review` skills (#307/#314) |
 | **Preview URLs** | every POC PR posts an auth-working staging link | ✅ Exists | `poc-deploy` skill (#265) |
 | **Software e2e + video** | Playwright boot→login→CRUD, video/trace as CI artifact | ✅ Exists | `e2e/`, `e2e.yml` (#356) |
@@ -112,7 +112,7 @@ flow back to where humans see them; the postmortem feeds improvements back into 
 - **Out:** CI status, help-pings (`status:blocked` + @you), preview URLs, the daily digest
   (`epic-digest`, #357) → Slack channels.
 - **In:** a Slack command / `@bot` that opens or labels a GitHub issue (e.g.
-  `auto-decompose`) to start the pipeline.
+  `delegate`) to start the pipeline.
 
 ### Mac mini + physical tests (the self-hosted path)
 - The **only** runner that can build/sign macOS apps **and** is physically wired to the CDJ.
