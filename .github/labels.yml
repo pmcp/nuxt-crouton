@@ -188,6 +188,9 @@
 - name: "auto-decompose"
   color: "0e8a16"
   description: "Opt this issue into the auto task-decomposition pipeline (decompose-on-issue.yml)"
+- name: "workflow"
+  color: "006b75"
+  description: "Loop/skill/flow improvement (often minted by a postmortem)"
 
 # ── Status ──
 - name: "status:in-progress"
