@@ -1,7 +1,7 @@
 ---
 name: postmortem
 description: At the close of an epic (or a difficult issue), post a postmortem roundup comment — what went well, what was hard (backed by evidence), and 1–3 concrete proposals to improve the skills/flows — then offer to turn accepted proposals into their own `workflow`-labeled tasks. Use at epic close, after the "verify the whole thing" rollup, or when asked to "do a retro", "postmortem this epic", "what did we learn", "how do we improve the workflow".
-allowed-tools: mcp__github__issue_read, mcp__github__add_issue_comment, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, Read, Bash
+allowed-tools: mcp__github__issue_read, mcp__github__add_issue_comment, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__list_commits, Read, Bash
 ---
 
 # Postmortem — learn from the epic, tighten the loop
@@ -31,17 +31,24 @@ A single **comment on the epic** (`add_issue_comment`) with three sections, and
 - Read it + its children: `issue_read` (`get`, `get_sub_issues`). Note which
   children merged cleanly vs. needed re-work.
 
-## Step 2 — Gather the difficulty signals (evidence, not vibes)
-Pull what's available so "what was hard" is backed by facts. (Deeper mining is
-tracked in #406; until then, best-effort from labels/timeline + the PRs.)
-- **Blocked time** — how long any child carried `status:blocked`.
-- **Sign-off rounds** — revision iterations on UI/schema gates (sticky-comment
-  edits / review threads on the draft PR).
-- **Fix-bot attempts** — `claude/issue-*` retries before green (when #336 is live).
-- **Reopens** — issues/PRs reopened after close.
-- **Time-in-progress** — `status:in-progress` → closed duration per child.
-**Be honest:** where a signal isn't available, say so — never imply a measurement
-you didn't make.
+## Step 2 — Mine the difficulty signals (evidence, not vibes)
+For each child issue (and its PR), pull what the available tools can give. Each signal
+below lists **how** to get it and how **precise** it is — be honest about the gaps, and
+**never imply a measurement you didn't make**.
+
+| Signal | How to get it (GitHub MCP) | Precision |
+|---|---|---|
+| **Time-in-progress** | `get_sub_issues` → per child `created_at` → `closed_at` | rough (proxy for build effort) |
+| **Sign-off rounds** | `issue_read get_comments` on the child's PR → count revisions on the `<!-- ui-proposal:* -->` / `<!-- schema-review:* -->` sticky thread + review replies | good (markers are explicit) |
+| **Asked-for-help / blocks** | `get_comments` → count `@`-mention + "blocked" comments; `get_labels` → is `status:blocked` still on it | good for *count* |
+| **Blocked duration** | not exposed directly (label add/remove timestamps aren't in these MCP methods) → approximate from the gap between the blocking comment and the resuming comment | weak — **state it's an approximation** |
+| **Re-work / commit churn** | `list_commits` on the PR branch → many "fix"/"oops" rounds = friction | available now |
+| **Fix-bot attempts** | the `claude/issue-*` retry count (from #336 watch-to-merge) | only when #336 is live → say "n/a" otherwise |
+| **Reopens** | `issue_read get` per child → reopened-after-close | approx |
+
+Aggregate into **3–5 "what was hard" lines**, each tied to a specific child + its signal.
+Prefer a few true signals over a complete-looking guess; where a signal is unavailable,
+write "n/a (not measurable with current tooling)" rather than inventing a number.
 
 ## Step 3 — Write the roundup comment
 Keep it terse and human-first (the `github-tasks` two-audience convention). Three
