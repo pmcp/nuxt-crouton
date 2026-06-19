@@ -1,0 +1,12 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "title": { "type": "string", "meta": { "required": true, "label": "Title", "maxLength": 500 } },
+  "isbn": { "type": "string", "meta": { "unique": true, "label": "ISBN", "maxLength": 20 } },
+  "publishedYear": { "type": "number", "meta": { "label": "Published Year" } },
+  "coverImage": { "type": "image", "meta": { "label": "Cover Image" } },
+  "description": { "type": "text", "meta": { "label": "Description", "component": "EditorSimple" } },
+  "authorId": { "type": "uuid", "refTarget": "authors", "meta": { "label": "Author" } },
+  "genreId": { "type": "uuid", "refTarget": "genres", "meta": { "label": "Genre" } },
+  "copiesTotal": { "type": "number", "meta": { "label": "Total Copies", "default": 1 } },
+  "copiesAvailable": { "type": "number", "meta": { "label": "Available Copies", "default": 1 } }
+}

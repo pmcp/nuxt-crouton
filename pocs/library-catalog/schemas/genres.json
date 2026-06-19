@@ -1,0 +1,5 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "name": { "type": "string", "meta": { "unique": true, "required": true, "label": "Name", "maxLength": 100 } },
+  "description": { "type": "string", "meta": { "label": "Description", "maxLength": 500 } }
+}

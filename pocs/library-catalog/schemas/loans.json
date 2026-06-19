@@ -1,0 +1,8 @@
+{
+  "id": { "type": "uuid", "meta": { "primaryKey": true } },
+  "bookId": { "type": "uuid", "refTarget": "books", "meta": { "required": true, "label": "Book" } },
+  "borrowerName": { "type": "string", "meta": { "required": true, "label": "Borrower Name", "maxLength": 200 } },
+  "borrowedAt": { "type": "date", "meta": { "label": "Borrowed At" } },
+  "dueAt": { "type": "date", "meta": { "label": "Due At" } },
+  "returnedAt": { "type": "date", "meta": { "label": "Returned At", "nullable": true } }
+}
