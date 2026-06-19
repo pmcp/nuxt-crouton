@@ -88,6 +88,13 @@ number.
    - prompt: `{ issue_number: <child number>, depth: 1, epic: <epic number>, epic_branch: <epic_branch> }`
      plus a one-line summary **and the epic's design invariants** so the child has context
      without a round-trip and can't silently diverge.
+   - **The `Agent` call is SYNCHRONOUS — it returns only when the child has finished.** There
+     is no background continuation (the #455 root cause: the orchestrator said "the worker is
+     running in the background, watch for the PR" at `num_turns: 1` and nothing ran). When a
+     child returns, **verify its deliverable actually exists** — the child's PR (`Closes #N`),
+     or its sign-off comment + `status:blocked` — before you report. A child that returned
+     without producing it is **not done**: re-spawn it (and wait). Never end your turn on a
+     described-but-unverified handoff.
 8. **The final epic→`main` PR (the review gate).** The epic is NOT done when its children
    merge into `epic_branch` — it's done when `epic_branch` merges to `main` behind one
    human review. On an idempotent re-run, once **all** children are closed/merged into the
