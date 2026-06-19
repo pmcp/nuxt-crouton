@@ -69,8 +69,12 @@ number.
      correct `type:*` + `pkg:*`/`app:*` (where the source actually changes). Never `root`.
    - `mcp__github__sub_issue_write` (method `add`, `issue_number` = epic,
      `sub_issue_id` = the child's **id** from the create response — not its number).
-   - **Note dependency order** in the body when one workstream must land before another
-     (the decomposer/skill uses this to wave-gate, not fan everything out at once).
+   - **Encode dependency order as a machine-readable `Blocked-by:` line** in the body of
+     each dependent workstream — e.g. `Blocked-by: #455` (or `Blocked-by: #275, #276` for a
+     fan-in). The **wave scheduler** (`schedule-waves.yml`, #283) reads this to auto-release
+     the next wave when **all** its blockers close — that's the baton pass that removes the
+     manual per-wave `delegate`. Put it on its own line; list every blocker. (Prose like
+     "depends on #N" is unparseable — use the exact `Blocked-by:` form.)
 6. **Plan-review gate (#351) — for risky epics, pause before spawning.** If the epic
    **creates a package, changes a DB schema, or is a dependency chain** (or carries a
    `review:plan` label), this is high-risk: do **not** spawn workers yet. Post the
