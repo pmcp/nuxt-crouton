@@ -1,0 +1,15 @@
+{
+  "collection": "books",
+  "fields": {
+    "id": { "type": "string", "meta": { "primaryKey": true } },
+    "title": { "type": "string", "meta": { "required": true, "maxLength": 512 } },
+    "isbn": { "type": "string", "meta": { "unique": true, "maxLength": 20 } },
+    "publishedYear": { "type": "number", "meta": {} },
+    "description": { "type": "text", "meta": { "component": "EditorSimple" } },
+    "coverImage": { "type": "image", "meta": {} },
+    "authorId": { "type": "string", "refTarget": "authors", "meta": { "required": true, "label": "Author" } },
+    "genreId": { "type": "string", "refTarget": "genres", "meta": { "label": "Genre" } },
+    "copiesTotal": { "type": "number", "meta": { "required": true, "default": 1 } },
+    "copiesAvailable": { "type": "number", "meta": { "required": true, "default": 1 } }
+  }
+}

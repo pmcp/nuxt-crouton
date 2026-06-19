@@ -1,0 +1,11 @@
+{
+  "collection": "loans",
+  "fields": {
+    "id": { "type": "string", "meta": { "primaryKey": true } },
+    "bookId": { "type": "string", "refTarget": "books", "meta": { "required": true, "label": "Book" } },
+    "borrowerName": { "type": "string", "meta": { "required": true, "maxLength": 255 } },
+    "borrowedAt": { "type": "date", "meta": { "required": true } },
+    "dueAt": { "type": "date", "meta": { "required": true } },
+    "returnedAt": { "type": "date", "meta": {} }
+  }
+}
