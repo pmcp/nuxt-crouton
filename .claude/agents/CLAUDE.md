@@ -40,6 +40,12 @@ cheaper (slightly blunter) split, or raise them to `opus` if decomposition quali
   one `pkg:*`/`app:*`; `epic` carries no type; never `root`).
 - **Idempotency.** Agents may be re-run (sessions are ephemeral). Before creating
   children, check `get_sub_issues` and don't duplicate — re-spawn for unworked children.
+- **Verify, don't narrate (artifact-gate, #461).** NEVER report a step done from *intent*.
+  Re-read the issue/PR and confirm the artifact actually exists — the comment posted, the PR
+  opened, the file written — before you say it's done or end your turn. Describing the plan
+  ("the worker is now creating the schemas…") is **not** doing it: that exact no-op (a run
+  that exits `success` having produced nothing) is what the **artifact-gate** in
+  `decompose-on-issue.yml` now turns into a **red** run. Do the work, then prove it landed.
 - **Stop-conditions live in `task-decomposer.md`:** `MAX_DEPTH = 3`, `MAX_CHILDREN = 6`,
   and the four-part LEAF TEST. Tune them there (+ orchestrator's MAX_CHILDREN).
 - **Async human-in-the-loop (`NOTIFY_HANDLE = @pmcp`).** Agents may run headless, so they
