@@ -25,8 +25,11 @@ a feature branch.
 1. **Read the issue.** `mcp__github__issue_read` (method `get`). The acceptance criteria
    and `## 🧪 How to test` are your spec. Also read the **epic** (the `epic` number in
    your prompt) so you know the epic's stated design/invariants.
-2. **Mark in progress.** `issue_write` (method `update`) adding the `status:in-progress`
-   label (keep its existing labels).
+2. **Mark in progress — do this FIRST, never skip.** Your *first* write on the issue is
+   `issue_write` (method `update`) adding the `status:in-progress` label (keep its existing
+   labels). This is what lifts the board card out of Backlog; a worker that jumps straight
+   to coding leaves its issue stuck in Backlog and looking abandoned (the #442 failure
+   mode). Non-negotiable, even for a one-file leaf.
 3. **Prerequisite & invariant check — BLOCK, don't improvise (HARD RULE).** Before you
    write anything, confirm the ground you're building on exists and matches the plan:
    - **Missing prerequisite ⇒ STOP.** If the issue depends on something a *sibling* issue
@@ -85,10 +88,17 @@ a feature branch.
    **before any long step** (dev boot, deploy, extended verification). Sessions can be
    suspended mid-run: an unpushed worktree is lost work, a pushed branch is recoverable.
    Never sit on uncommitted changes across a long-running command.
-9. **Open a PR.** `mcp__github__create_pull_request` **into the epic branch** when one was
-   passed (else the repo base). The body MUST contain `Closes #<issue_number>` so the issue
-   auto-closes on merge. Body follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the
-   PR body with the Generated-with-Claude-Code footer.
+9. **Open a PR, then leave a breadcrumb on the issue.** `mcp__github__create_pull_request`
+   **into the epic branch** when one was passed (else the repo base). The body MUST contain
+   `Closes #<issue_number>` (for linkage). **Then `add_issue_comment` on the issue itself
+   with the PR link** (e.g. `→ built in #<pr>`) so the ticket shows where its work went —
+   never leave the issue blank while the work lives in a PR (the #442 failure mode). Body
+   follows `github-tasks` (👤/🤖 + `## 🧪 How to test`). End the PR body with the
+   Generated-with-Claude-Code footer.
+   - **`Closes` does NOT auto-close on an epic-branch PR.** GitHub only auto-closes the
+     linked issue when the PR merges into the **default branch** (`main`); an epic-branch
+     PR won't — the epic→`main` PR closes them later. So the breadcrumb comment (above) is
+     how the issue reflects "done-for-now," not the merge.
    - **Do not squash by default** (merge policy) — your commits are curated and atomic.
    - **If a sign-off gate already opened a draft PR** (step 5 — UI or schema), don't open a
      second one — reuse it: push the implementation/generated files, then mark it ready for
