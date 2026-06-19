@@ -46,6 +46,15 @@ cheaper (slightly blunter) split, or raise them to `opus` if decomposition quali
   ("the worker is now creating the schemas…") is **not** doing it: that exact no-op (a run
   that exits `success` having produced nothing) is what the **artifact-gate** in
   `decompose-on-issue.yml` now turns into a **red** run. Do the work, then prove it landed.
+- **Spawned agents are SYNCHRONOUS — there is NO "background" execution (the #455 root cause).**
+  The `Agent`/Task tool runs a sub-agent **to completion and returns its result within your
+  turn**. Nothing keeps running after you stop: when your turn ends, the GitHub Action **job
+  ends and all work halts**. So you must **NEVER** end your turn saying *"the worker is running
+  in the background — watch for the PR"* — that belief is **false** and is exactly how the #455
+  build burned `$0.52` at `num_turns: 1` and produced nothing. After you spawn a worker you
+  **already hold its result** — read it, confirm the PR/comment actually exists, and only then
+  report. If the spawn didn't deliver, you are **not done**: spawn again (and wait), or do the
+  work yourself. There is no fire-and-forget.
 - **Stop-conditions live in `task-decomposer.md`:** `MAX_DEPTH = 3`, `MAX_CHILDREN = 6`,
   and the four-part LEAF TEST. Tune them there (+ orchestrator's MAX_CHILDREN).
 - **Async human-in-the-loop (`NOTIFY_HANDLE = @pmcp`).** Agents may run headless, so they
