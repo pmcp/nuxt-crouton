@@ -116,10 +116,26 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
 ## Step 4 — Render
 ```bash
 node .claude/skills/epic-digest/render.mjs writeups/reports/.epic-digest.data.json
-# options: --out-dir writeups/reports   --date 20260618   (default: out-dir=writeups/reports, date=today)
+# options: --out-dir DIR   --date 20260618   --format md   (default: out-dir=writeups/reports, date=today, format=all)
 ```
-Dependency-free (no npm deps, no network). Writes the `.html` + `.txt` and prints
-their paths.
+Dependency-free (no npm deps, no network). Default writes the `.html` + `.txt`;
+`--format md` writes a GitHub-flavoured `.md` instead (used by the daily job).
+
+## Automated daily run (no LLM, no secrets)
+The interactive flow above gathers via GitHub MCP. The **scheduled** daily digest
+runs entirely deterministically — `.github/workflows/epic-digest.yml` (cron
+`0 5 * * *`, ~06:00 Europe/Brussels) does:
+```bash
+GITHUB_TOKEN=… node .claude/skills/epic-digest/gather.mjs > digest.data.json   # API → same JSON shape
+node .claude/skills/epic-digest/render.mjs digest.data.json --format md --out-dir .
+GH_TOKEN=… DIGEST_BODY_FILE=epic-digest-<date>.md bash .claude/skills/epic-digest/post-comment.sh
+```
+- **`gather.mjs`** parses `The bet` / `We'll know by` from each epic body and
+  **computes** `whereWeAre` from child counts — no model in the loop.
+- **`post-comment.sh`** posts the Markdown as a comment on the single standing
+  **"📊 Daily epic digest"** issue (creating it if missing) via `gh` + the built-in
+  `GITHUB_TOKEN`. No email provider, no secret to provision (#408).
+- The render is the same `render.mjs`, so the hand-run and the cron stay in lockstep.
 
 ## Step 5 — Hand off
 - Show the user where the files landed and a short text summary of the headline
@@ -132,7 +148,8 @@ their paths.
 ## Conventions & gotchas
 - **Epics are the unit.** Lead with epics + progress, not a flat issue list — that's
   the whole point ("focus on epics").
-- **Render-only.** Don't try to send mail; that's a separate follow-up (#357).
+- **Interactive = render-only.** A by-hand run just writes files and shows them; the
+  *scheduled* job is what delivers (posts to the standing issue, see above).
 - **`<details>` in email:** the collapsible sub-issue section renders expanded in
   mail clients that strip `<details>` — that's fine, it degrades gracefully.
 - The renderer sorts **blocked epics first**, then by % complete, so attention

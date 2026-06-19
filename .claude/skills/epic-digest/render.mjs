@@ -333,12 +333,65 @@ const txt =
     : '') +
   `\n${'='.repeat(64)}\nGenerated ${generated.toISOString()} by /epic-digest\n`
 
+// ── markdown (for posting as a GitHub issue comment — renders natively) ───────
+const mdList = (items, empty, cap = 8) => {
+  if (!items || !items.length) return `_${empty}_`
+  const shown = items.slice(0, cap).map((it) => `- [#${it.number}](${it.url}) ${it.title}`)
+  const rest = items.length - shown.length
+  if (rest > 0) shown.push(`- _+ ${rest} more_`)
+  return shown.join('\n')
+}
+const mdEpic = (e) => {
+  const theBet = e.theBet || e.whatItIs
+  const whereWeAre = e.whereWeAre || e.recentActivity
+  const kids = (e.children || [])
+    .map((c) => {
+      const cs = c.status && c.state !== 'closed' && STATUS[c.status]
+      const tag = cs ? ` — _${cs.label}_` : ''
+      return `- ${c.state === 'closed' ? '✅' : '⬜'} [#${c.number}](${c.url}) ${c.title}${tag}`
+    })
+    .join('\n')
+  return (
+    `#### [#${e.number}](${e.url}) · ${e.title} — \`${e.done}/${e.total} · ${pct(e)}%\` · ${statusOf(e).label}\n` +
+    (theBet ? `- **The bet:** ${theBet}\n` : '') +
+    (e.weWillKnowBy ? `- **We'll know by:** ${e.weWillKnowBy}\n` : '') +
+    (whereWeAre ? `- **Where we are:** ${whereWeAre}\n` : '') +
+    (kids ? `<details><summary>Sub-issues (${e.children.length})</summary>\n\n${kids}\n</details>\n` : '')
+  )
+}
+const md =
+  `## 📊 Daily epic digest — ${prettyDate}\n` +
+  `_${repo} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}_\n\n` +
+  `**Since yesterday:** ${(activity.opened || []).length} opened · ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} PRs merged\n\n` +
+  `<details><summary>Activity detail</summary>\n\n` +
+  `**Closed**\n${mdList(activity.closed, 'nothing closed')}\n\n` +
+  `**PRs merged**\n${mdList(activity.mergedPRs, 'none')}\n\n` +
+  `**Opened**\n${mdList(activity.opened, 'nothing new')}\n</details>\n\n` +
+  `### Open epics\n\n` +
+  (epics.length ? epics.map(mdEpic).join('\n') : '_No open epics._ 🎉\n') +
+  (loose.length
+    ? `\n### Loose tickets · no epic\n_${loose.length} open issue${loose.length === 1 ? '' : 's'} not tracked under any epic_\n\n` +
+      looseGroups(loose)
+        .map(([k, rows]) => `**${TYPE_LABEL[k] || k}**\n` + rows.map((it) => `- [#${it.number}](${it.url}) ${it.title}`).join('\n'))
+        .join('\n\n') +
+      '\n'
+    : '') +
+  `\n<sub>Generated ${generated.toISOString()} by the <code>/epic-digest</code> skill.</sub>\n`
+
 // ── write ────────────────────────────────────────────────────────────────────
 mkdirSync(resolve(outDir), { recursive: true })
-const htmlPath = join(outDir, `epic-digest-${stamp}.html`)
-const txtPath = join(outDir, `epic-digest-${stamp}.txt`)
-writeFileSync(resolve(htmlPath), html)
-writeFileSync(resolve(txtPath), txt)
-console.log(`✓ HTML  → ${htmlPath}`)
-console.log(`✓ Text  → ${txtPath}`)
-console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+const format = flag('format', 'all')
+if (format === 'md') {
+  const mdPath = join(outDir, `epic-digest-${stamp}.md`)
+  writeFileSync(resolve(mdPath), md)
+  console.log(`✓ Markdown → ${mdPath}`)
+  console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+} else {
+  const htmlPath = join(outDir, `epic-digest-${stamp}.html`)
+  const txtPath = join(outDir, `epic-digest-${stamp}.txt`)
+  writeFileSync(resolve(htmlPath), html)
+  writeFileSync(resolve(txtPath), txt)
+  console.log(`✓ HTML  → ${htmlPath}`)
+  console.log(`✓ Text  → ${txtPath}`)
+  console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+}

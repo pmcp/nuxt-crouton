@@ -1,0 +1,59 @@
+name: epic-digest
+
+# Daily "where are we?" roundup, posted as a comment on the standing
+# "📊 Daily epic digest" issue. Deterministic (no LLM, no secrets) — gathers via
+# the GitHub API with the built-in GITHUB_TOKEN, renders Markdown, posts a comment.
+# See .claude/skills/epic-digest/ (gather.mjs → render.mjs → post-comment.sh).
+
+on:
+  schedule:
+    # ~06:00 Europe/Brussels. Cron is UTC and can't track DST: 06:00 CET (winter)
+    # = 05:00 UTC; in summer (CEST) this lands at 07:00 local. Adjust if it matters.
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: epic-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Gather the issue tree
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+        run: node .claude/skills/epic-digest/gather.mjs > digest.data.json
+
+      - name: Render Markdown
+        run: |
+          node .claude/skills/epic-digest/render.mjs digest.data.json --format md --out-dir .
+          cp epic-digest-*.md digest.md
+
+      - name: Post to the standing issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+          DIGEST_BODY_FILE: digest.md
+        run: bash .claude/skills/epic-digest/post-comment.sh
+
+      - name: Upload digest artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epic-digest
+          path: |
+            digest.data.json
+            epic-digest-*.md
+          if-no-files-found: ignore
