@@ -166,9 +166,11 @@
   <path d="M645,398 L645,700" fill="none" stroke="#8b949e" stroke-width="2.4" marker-end="url(#arrow)"/>
   <text x="652" y="690" fill="#9aa7b4" font-size="10">dispatch work</text>
 
-  <!-- results return channel (far right, runners -> back to humans) -->
-  <path d="M1090,758 L1200,758 L1200,136 L928,136" fill="none" stroke="#2ea043" stroke-width="2.2" marker-end="url(#arrow)"/>
-  <text x="1212" y="450" fill="#7ee787" font-size="11" transform="rotate(90 1212 450)" text-anchor="middle">results → Cloudflare + Vercel preview links · screenshots · video · test outcomes  (→ Slack &amp; Linear)</text>
+  <!-- results/feedback return channel (far right, up and over into Slack + Linear) -->
+  <path d="M1090,758 L1242,758 L1242,62 L175,62 L175,70" fill="none" stroke="#2ea043" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <path d="M490,62 L490,70" fill="none" stroke="#2ea043" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <text x="1254" y="430" fill="#7ee787" font-size="11" transform="rotate(90 1254 430)" text-anchor="middle">feedback → preview links · screenshots · CI status · test outcomes · blocked-needs-you</text>
+  <text x="640" y="57" fill="#7ee787" font-size="11.5" font-weight="600">🔔 ping + 💬 reply → lands in Slack &amp; Linear</text>
 
   <!-- postmortem -> notion -->
   <path d="M940,288 L860,188 L820,168" fill="none" stroke="#9aa7b4" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrow)"/>

@@ -191,6 +191,19 @@ Slack is the conversational layer over everything above. Conceptually it does tw
 - **Asks that report** — *"what's outstanding on epic X?"*, *"what shipped this week?"* (→ reads
   GitHub / Linear and **replies in-thread**).
 
+And Slack is also where feedback **comes back to you**, two distinct ways:
+
+- **💬 Reply** — you asked something in Slack, so the answer returns **in that thread** (status, a
+  preview link, "here's the change").
+- **🔔 Ping** — a *proactive* nudge nobody asked for: CI went red, a PR needs your sign-off, a preview
+  is ready, something is `status:blocked` and needs a human, the daily digest. These get pushed to the
+  right person/channel so you don't have to go looking.
+
+So the same outcomes (preview links, screenshots, CI status, test results) that the diagram shows
+flowing back up the right-hand channel **surface in Slack** — as a reply if you started the
+conversation there, or as a ping if the system needs you. *(Linear gets the same as state changes on
+its board.)*
+
 It's the single place a non-technical teammate can stand and reach the whole machine in plain language.
 *(We're deliberately not designing the implementation yet — just agreeing on what it should feel like.)*
 

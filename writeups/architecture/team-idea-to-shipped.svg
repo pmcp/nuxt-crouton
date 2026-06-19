@@ -118,8 +118,9 @@
 
   <!-- replies back to Slack -->
   <path d="M1145,252 L1145,176" fill="none" stroke="#2ea043" stroke-width="2.2" marker-end="url(#ag)"/>
-  <text x="1155" y="220" fill="#7ee787" font-size="10.5">status &amp; results</text>
-  <text x="1155" y="234" fill="#7ee787" font-size="10.5">→ Slack reply</text>
+  <text x="1155" y="214" fill="#7ee787" font-size="10.5">🔔 ping +</text>
+  <text x="1155" y="228" fill="#7ee787" font-size="10.5">💬 reply</text>
+  <text x="1155" y="242" fill="#7ee787" font-size="10.5">→ Slack</text>
 
   <!-- ============ OWNERSHIP SUMMARY ============ -->
   <line x1="40" y1="582" x2="1240" y2="582" stroke="#2a3038"/>
