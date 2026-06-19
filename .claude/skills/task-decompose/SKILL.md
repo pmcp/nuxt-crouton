@@ -73,7 +73,7 @@ chose a different design. Four rules now prevent that:
 
 - **Manual:** run `/task-decompose "<task>"` or `/task-decompose #NN` in any Claude Code
   session (CLI, web, desktop, mobile app).
-- **Automatic — issue opt-in:** add the **`auto-decompose`** label to any issue and
+- **Automatic — issue opt-in:** add the **`delegate`** label to any issue and
   `.github/workflows/decompose-on-issue.yml` runs `/task-decompose #NN` for you (no
   command needed). Gate is the label, so only opted-in issues fire.
 - **Automatic — resume after a blocker:** when an agent @mentions you and sets
