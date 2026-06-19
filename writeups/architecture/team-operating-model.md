@@ -18,7 +18,7 @@ native sync) bridges the seams.
 
 | Tool | Owns | In one line |
 |---|---|---|
-| 📚 **Notion** | Product intent | Personas, user stories, the *why*. Where we decide **what** to build. |
+| 📚 **Notion** | Product intent | The **normalized inbox of intent** — personas, user stories, the *why*. Any request, from anywhere, lands here as a story (you don't hand-author it). |
 | ⚙️ **GitHub** | Execution truth | Issues, code, agents, PRs. Authoritative for the **state of the work**. |
 | 📋 **Linear** | Planning view | The board humans triage/prioritise in — a live two-way **mirror** of GitHub. |
 | 💬 **Slack** | The front door | Ask in plain language, get replies. Routes intent to the right tool. |
@@ -45,30 +45,66 @@ This is the payoff line of the whole system: **"we listened to you — here's th
 
 ---
 
+## Capture from anywhere → Notion (intake is *not* "write a story")
+
+The system has **no single front door**. Intent can appear on *any* surface — a **Slack** message, a
+remark inside a **Claude** session, a note dropped in **Codex**, a **customer email** in HubSpot, a
+voice memo. Wherever it lands, a **capture agent** picks it up and turns it into a **draft Notion user
+story** (title · persona · the underlying need · rough acceptance). The human never sits down to
+"author a story" — they just express a need where they already are, and confirm the draft.
+
+Notion is therefore the **normalized inbox**: many messy inputs in, one consistent shape out.
+
+This capture step is also where **most of the friction lives** — see the flags (⚠️) below and the
+`team-journey-feature-request.svg` friction map.
+
+---
+
 ## The journeys
 
-Legend: 👤 = a human does this · 🤖 = an agent does this · 🔁 = closing the loop.
+Legend: 👤 = human · 🤖 = agent · 🔁 = closing the loop · ⚠️ = **friction** (manual, lossy, ambiguous, or a place work stalls).
 
-### Journey 1 — Feature request (customer → PM → product → ship → notify) · *the flagship*
+### Journey 1 — Feature request, granular (capture-anywhere → ship → notify) · *the flagship*
 
-1. 📧 A customer emails sales/support → it lands in **HubSpot**.
-2. 👤 **PM** reads it, recognises a real need, and writes a **user story** in **Notion**, attached to
-   a persona — keeping the HubSpot contact linked so we remember *who asked*.
-3. 👤 PM sees it relates to a few stories already in Notion → groups them into an **epic "work page"**
-   for the next sprint.
-4. 👤 PM marks the epic **ready** (or just says so in **Slack**: *"kick off this epic"*).
-5. 🤖 The **agent bridge** reads the epic page + its stories → creates a **GitHub** epic + sub-issues,
-   backlinked to the Notion stories.
-6. 👤🤖 Work is split: **devs** take the gnarly sub-issues, **agents** take the well-scoped ones
-   (CRUD scaffolding, tests, docs). The team plans/assigns the sprint in **Linear**.
-7. 🤖 Agents open PRs with **preview URLs + screenshots**; UI/schema **sign-off gates** pause for 👤
-   approval; devs review the diffs.
-8. 👤 Approve → merge → deploy to staging → preview link.
-9. 🔁 A changelog entry is generated → posted to **Slack** for the team **and** sent back through
-   **HubSpot** to the customer: *"we heard you; this shipped."*
+**Phase A · Capture (from anywhere → Notion)**
+1. ✳️ Intent appears on *some* surface (Slack / Claude / Codex / HubSpot email / voice note).
+   ⚠️ *Is this a request or just chatter?* Something has to decide "this is actionable."
+2. 🤖 A **capture agent** normalizes the free-form text into a **draft Notion story** (persona + need + rough acceptance).
+   ⚠️ *Extracting a clean need from messy input; guessing the persona; surfaces carry uneven context.*
+3. 🤖 **Dedup** check — new story, or a sibling/duplicate of an existing one?
+   ⚠️ *Fuzzy matching: a false "new" clutters Notion; a false "dup" loses the signal.*
+4. 👤 PM is pinged: *"captured this as a draft — right?"* — confirms / edits / merges.
+   ⚠️ *Needs a human to validate or garbage accumulates.* 🪪 *Who asked? The requester's identity must ride along from the origin surface so we can close the loop later.*
 
-**Value:** an outside request becomes shipped, sign-off-checked software — with the requester told —
-and humans only spent time on judgement (priorities, reviews, approvals), not boilerplate.
+**Phase B · Shape (stories → epic → ready)**
+5. 👤 PM links the story to **related stories** (Notion relations).
+   ⚠️ *Relations are manual; easy to miss an existing related story.*
+6. 👤 PM groups a cluster into an **epic "work page"** for a sprint.
+   ⚠️ *"When is a cluster ready?" is judgement, not a rule — premature grouping = churn.*
+7. 👤 PM marks the epic **ready** (or says so in Slack).
+   ⚠️ *"Ready" is a fuzzy gate; missing acceptance criteria here cascade downstream.*
+
+**Phase C · Bridge (Notion → GitHub)**
+8. 🤖 The **agent bridge** reads the epic + stories → creates a **GitHub epic + sub-issues**, backlinked.
+   ⚠️ *Mapping fidelity (one story → one issue, or several?); acceptance criteria must translate.* ⚠️ *It's a handoff — if the Notion story later changes, do the issues update? (open decision)*
+9. 🤖 Writes back Notion↔GitHub backlinks; mirrors to **Linear** (native two-way).
+   ⚠️ *Bot identity — synced comments arrive as a bot user, which our agent triggers may ignore.*
+
+**Phase D · Do the work (humans + agents)**
+10. 👤🤖 Sub-issues are **routed**: agents take well-scoped ones, devs take gnarly ones; planned in Linear.
+    ⚠️ *Who decides the split? Capacity/assignment is judgement; mis-routing wastes a worker.*
+11. 🤖 Agents work in worktrees → **PRs with preview URLs + screenshots**.
+12. 🚦 UI/schema **sign-off gates** pause for 👤 approval; devs review diffs; 🤖 revises.
+    ⚠️ ***Latency — the gate blocks until a human looks. This is the #1 throughput bottleneck.*** ⚠️ *Review round-trips cost context each time.*
+
+**Phase E · Ship + close the loop**
+13. 👤 Approve → merge → deploy to staging → preview link.
+14. 🤖 Generate a plain-language **changelog** ("what changed & why").
+    ⚠️ *Phrasing for a customer vs the team; mapping the shipped change back to the original requester across surfaces (the identity from step 4).*
+15. 🔁 Route it back: **HubSpot/email** to the customer, **Slack** to the team, **digest** for everyone.
+    ⚠️ ***"Did we actually tell them?" — closing the loop is the step most likely to silently drop.***
+
+**Friction hotspots (where to focus first):** ① capture & normalization (steps 1–4) · ② the "ready" judgement (7) · ③ the Notion→GitHub handoff fidelity (8) · ④ sign-off latency (12) · ⑤ closing the loop (15).
 
 ### Journey 2 — Bug (support report → fast fix → notify) · *the dev view*
 
