@@ -1,0 +1,92 @@
+name: Wave scheduler
+
+# Auto-advances a decomposed waterfall (#283). When a workstream completes — its PR
+# merges (`Closes #NN`), or its issue closes — release any dependent workstream whose
+# blockers are now ALL closed by applying the `delegate` label, which dispatches its
+# worker via decompose-on-issue.yml. This is the "baton pass" that removes the manual
+# per-wave label so the chain self-advances.
+#
+# Dependency edges are machine-readable: each dependent issue body carries a
+#   Blocked-by: #454            (or:  Blocked-by: #275, #276)
+# line. Fan-in matters — a dependent is only released when EVERY listed blocker is
+# closed (diamonds, not just lines).
+#
+# AUTH (critical): the label is applied with a PAT (DISPATCH_TOKEN, or PROJECTS_TOKEN)
+# so the resulting decompose run is attributed to a HUMAN actor and passes
+# claude-code-action's bot-actor guard. With only GITHUB_TOKEN the dispatched run would
+# be bot-initiated and die on that guard — so without a PAT this workflow no-ops (green).
+
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN }}
+        with:
+          # Use the PAT for ALL calls so the addLabels event is human-actored.
+          github-token: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            if (!process.env.DISPATCH_TOKEN) {
+              core.warning('No DISPATCH_TOKEN/PROJECTS_TOKEN set. Labeling via GITHUB_TOKEN would make the '
+                + 'dispatched decompose run bot-initiated and fail the bot-actor guard. Set a PAT with '
+                + 'issues:write to enable wave auto-advance. Skipping (no-op).')
+              return
+            }
+            const { owner, repo } = context.repo
+
+            // 1) What just completed?
+            let done = null
+            if (context.eventName === 'issues') {
+              done = context.payload.issue.number
+            } else if (context.eventName === 'pull_request') {
+              if (!context.payload.pull_request.merged) { core.info('PR closed unmerged — nothing to release.'); return }
+              const m = (context.payload.pull_request.body || '').match(/\bCloses\s+#(\d+)/i)
+              if (!m) { core.info('Merged PR has no `Closes #NN` — nothing to release.'); return }
+              done = Number(m[1])
+            }
+            if (!done) return
+            core.info(`Completed workstream: #${done}`)
+
+            // 2) Candidate dependents: open issues with a Blocked-by line.
+            const q = `repo:${owner}/${repo} is:issue is:open in:body "Blocked-by:"`
+            const found = await github.paginate(github.rest.search.issuesAndPullRequests, { q, per_page: 100 })
+            const reLine = /Blocked-by:\s*([#\d,\s]+)/i
+
+            for (const it of found) {
+              const mm = (it.body || '').match(reLine)
+              if (!mm) continue
+              const blockers = [...new Set((mm[1].match(/\d+/g) || []).map(Number))]
+              if (!blockers.includes(done)) continue
+
+              // Idempotency: already dispatched / in-flight?
+              const names = it.labels.map(l => (typeof l === 'string' ? l : l.name))
+              if (names.includes('delegate') || names.includes('status:in-progress')) {
+                core.info(`#${it.number} already dispatched — skip.`); continue
+              }
+
+              // 3) Fan-in: ALL blockers closed?
+              let allClosed = true
+              for (const b of blockers) {
+                const bi = await github.rest.issues.get({ owner, repo, issue_number: b })
+                if (bi.data.state !== 'closed') { allClosed = false; break }
+              }
+              if (!allClosed) { core.info(`#${it.number} still has open blockers — wait.`); continue }
+
+              // 4) Release: apply `delegate` (as the PAT user → human-actor trigger).
+              await github.rest.issues.addLabels({ owner, repo, issue_number: it.number, labels: ['delegate'] })
+              await github.rest.issues.createComment({ owner, repo, issue_number: it.number,
+                body: `▶️ All blockers closed (#${done} just completed) — auto-dispatching this workstream `
+                  + `(applied \`delegate\`). Wave scheduler (#283).` })
+              core.info(`Released #${it.number}`)
+            }
