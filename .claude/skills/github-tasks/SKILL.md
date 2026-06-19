@@ -81,7 +81,8 @@ A merged PR auto-closes the issues in its `Closes #NN` lines — but **a parent 
 1. Resolve the parent: `mcp__github__issue_read` (`method: get`) → `parent_issue_url`, or read the epic's `get_sub_issues`.
 2. If the issue has a parent, check whether **all** of the parent's children are now `closed` (`get_sub_issues` → every child's `state`).
 3. **If they are, the epic is ready to close — but the epic is the *verification* unit, so never silently close it.** Post the `## 🧪 Verify the whole thing` rollup (above) as a comment on the epic, then **explicitly ask the owner to close it** (e.g. "All N sub-issues are merged — close the epic?") and close it as `completed` **only on their confirmation** (or after the end-to-end pass passes). If a sub-issue couldn't be auto-verified (needs a device, a manual check), say so in the rollup rather than implying it's confirmed.
-4. Recurse: a parent can itself be a child of a grander epic — keep walking up until you hit one with open siblings or no parent.
+4. **Postmortem before closing (verify = *does it work?*; postmortem = *how did it go?*).** After the verify rollup and **before** the epic is closed, run the **`postmortem`** skill on the epic — it posts a retro (what went well / what was hard, evidence-backed / 1–3 improvement proposals) and offers to mint accepted, not-already-tracked proposals as `workflow` issues. This is how the loop tightens over time (epic #403). Skip only for a trivial epic.
+5. Recurse: a parent can itself be a child of a grander epic — keep walking up until you hit one with open siblings or no parent.
 
 Don't stop at the issue you were asked about; closing the leaf without checking the branch above it leaves the epic falsely "in progress".
 
@@ -133,7 +134,7 @@ GitHub issues slot into the repo's task-execution flow (see `CLAUDE.md`):
 4. **Commit** — use the `/commit` skill, referencing the issue in the body (e.g. `(#NN)`).
 5. **Open a PR** — early is fine. Put `Closes #NN` in the body so the issue auto-closes on merge. Let CI run and fix failures (the PR can be watched/autofixed).
 6. **Squash-merge** → the issue closes automatically and the branch is deleted. Don't push feature work straight to `main`.
-7. **Walk up the epic tree (REQUIRED — part of the merge, not an afterthought).** The moment the merge auto-closes the leaf issue, run the parent check in *"Closing a child? Always check the parent"* above. If that merge closed the epic's **last** open child, post the `## 🧪 Verify the whole thing` rollup on the epic and **ask the owner to close it** (close on confirmation). A merge is not "done" until the parent epic is either closed or explicitly handed off for the verify pass. When watching/auto-merging a PR, do this walk-up as soon as the merge lands.
+7. **Walk up the epic tree (REQUIRED — part of the merge, not an afterthought).** The moment the merge auto-closes the leaf issue, run the parent check in *"Closing a child? Always check the parent"* above. If that merge closed the epic's **last** open child, post the `## 🧪 Verify the whole thing` rollup on the epic, run the **`postmortem`** skill (retro + improvement proposals — see step 4 there), and **ask the owner to close it** (close on confirmation). A merge is not "done" until the parent epic is either closed or explicitly handed off for the verify + postmortem pass. When watching/auto-merging a PR, do this walk-up as soon as the merge lands.
 
 Work lands via **PRs**, not direct pushes to `main`. Issues are the source of truth for *what* to do; `docs/PROGRESS_TRACKER.md` (if used) becomes an optional phase-level rollup, not the per-task tracker.
 
