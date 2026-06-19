@@ -100,6 +100,8 @@ A merged PR auto-closes the issues in its `Closes #NN` lines — but **a parent 
 
 Don't stop at the issue you were asked about; closing the leaf without checking the branch above it leaves the epic falsely "in progress".
 
+**Recurring/standing chores are standalone, never epic sub-issues.** A ticket that's re-armed on a cadence and intentionally never permanently closed (e.g. the quarterly dependency sweep) must **not** be a sub-issue of a deliverable epic. A future-dated child that legitimately never closes silently defeats the "are all children closed?" check above, so a fully-delivered epic is pinned open forever and never reaches its verify + postmortem close-out — the most common stale-tracking bug, just slower to spot (the #233 → #244 case: the epic sat done-but-open for days behind the next quarterly sweep). File the recurring chore **standalone** (it may *link* the originating epic for context, not parent to it), and when it re-arms, open the next occurrence standalone too. (#422)
+
 **Titles are human-first too.** Issue/PR titles read like plain English that anyone grasps at a glance ("Run the whole app on a Raspberry Pi and print directly"), not jargon ("node-server preset + in-process TCP drainer"). Keep the technical specifics in the 🤖 body, never the title.
 
 ## Core rules
