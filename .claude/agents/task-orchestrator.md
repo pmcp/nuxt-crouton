@@ -56,7 +56,8 @@ number.
      explicit production launch — see root `CLAUDE.md`). Slice the workstreams in the
      **canonical crouton-app order** (see the `task-decompose` skill — do NOT hand-mirror
      another app): **(1)** design `schemas/*.json` + `crouton.config.js` → **`schema-review`
-     sign-off on both**; **(2)** **`crouton init <name>`** to scaffold *and* generate from
+     sign-off on both, posted on that workstream's OWN issue/PR — never on the epic**;
+     **(2)** **`crouton init <name>`** to scaffold *and* generate from
      the approved schema+config (deterministic, no drift); **(3)** refine forms/UI;
      **(4)** deploy-preview. The **final workstream is always a deploy-preview issue**: run
      `pnpm poc:scaffold-deploy <name>` and open the PR so CI deploys a staging Worker and
