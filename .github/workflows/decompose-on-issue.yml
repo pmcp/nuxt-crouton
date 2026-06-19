@@ -32,6 +32,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      # Timestamp the run start so the artifact-gate can tell "produced during this run"
+      # from pre-existing comments/PRs.
+      - id: t0
+        run: echo "ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       # Pinned to the same SHA as claude.yml — keep these in sync when bumping.
       # AUTH: this is headless/unattended, so it MUST use an API key. Do NOT swap in a
       # subscription CLAUDE_CODE_OAUTH_TOKEN — subscription OAuth is for interactive
@@ -42,3 +47,50 @@ jobs:
           prompt: "/task-decompose #${{ github.event.issue.number }}"
           claude_args: "--max-turns 30"
           show_full_output: true
+
+      # ── Artifact-gate (#461) ──────────────────────────────────────────────────
+      # A run is only allowed to be GREEN if the agent produced an OBSERVABLE
+      # deliverable on the issue during this run: a comment (sign-off / breadcrumb /
+      # orchestration note) OR a linked PR (`Closes #NN`). A worker that narrates
+      # "I'm now creating X / posting Y…" and then stops — exiting `success` with
+      # nothing to show (the #454 no-op: 8/30 turns, $0.74, zero output) — must go
+      # RED, not masquerade as done. Deterministic, no LLM. Uses GITHUB_TOKEN (not
+      # the claude OIDC), so it never trips the bot-actor guard.
+      - name: Artifact-gate — fail if the agent produced nothing
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number
+            const since = '${{ steps.t0.outputs.ts }}'
+            const sinceMs = new Date(since).getTime()
+
+            // (a) any comment posted on this issue during the run
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo, issue_number, since,
+            })
+            const newComment = comments.length > 0
+
+            // (b) any PR that cross-references this issue, created during the run
+            const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
+              ...context.repo, issue_number,
+            })
+            const linkedPR = timeline.some(e =>
+              e.event === 'cross-referenced' &&
+              e.source && e.source.issue && e.source.issue.pull_request &&
+              new Date(e.created_at).getTime() >= sinceMs
+            )
+
+            if (newComment || linkedPR) {
+              core.info(`Artifact-gate OK for #${issue_number}: newComment=${newComment} linkedPR=${linkedPR}`)
+              return
+            }
+
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number,
+              body: '⚠️ **Artifact-gate failed (#461).** This run finished without producing any '
+                + 'observable deliverable on this issue — no new comment, no linked PR. That is the '
+                + '"narrate-the-plan-then-stop" no-op: the agent described work it never did. The run '
+                + 'is marked **failed** so it is not mistaken for done. Re-apply `delegate` to retry.',
+            })
+            core.setFailed(`Artifact-gate: run on #${issue_number} produced no deliverable (no comment, no linked PR).`)
