@@ -70,5 +70,11 @@
         { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/pmcp/nuxt-crouton/issues/358", "state": "open", "status": "in-progress" }
       ]
     }
+  ],
+  "loose": [
+    { "number": 226, "title": "crouton-cli: `crouton config` doesn't prune removed collections from schema barrel / app.config / layer extends", "url": "https://github.com/pmcp/nuxt-crouton/issues/226", "type": "fix" },
+    { "number": 246, "title": "Make the e2e smoke run on a prebuilt app (nuxt preview) — fix the prod-SSR auth-cookie 500", "url": "https://github.com/pmcp/nuxt-crouton/issues/246", "type": "fix" },
+    { "number": 322, "title": "Rename the fanfare app/worker to \"kassa\"", "url": "https://github.com/pmcp/nuxt-crouton/issues/322", "type": "chore" },
+    { "number": 378, "title": "Prune CLAUDE.md", "url": "https://github.com/pmcp/nuxt-crouton/issues/378", "type": "docs" }
   ]
 }

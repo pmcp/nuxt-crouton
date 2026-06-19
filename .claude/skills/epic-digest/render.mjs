@@ -71,6 +71,30 @@ const epics = (data.epics || []).slice().sort((a, b) => {
   return pct(b) - pct(a)
 })
 
+// Loose tickets: open issues that belong to no epic (no `epic` label, no parent).
+// Grouped by type so a pile of chores reads as one block, not noise.
+const loose = (data.loose || []).slice()
+const TYPE_LABEL = {
+  feat: 'Features', fix: 'Fixes', refactor: 'Refactors', perf: 'Performance',
+  test: 'Tests', docs: 'Docs', chore: 'Chores'
+}
+const TYPE_ORDER = ['feat', 'fix', 'refactor', 'perf', 'test', 'docs', 'chore']
+const normType = (t) => String(t ?? '').replace(/^type:/, '') || 'other'
+function looseGroups(items) {
+  const m = new Map()
+  for (const it of items) {
+    const k = normType(it.type)
+    if (!m.has(k)) m.set(k, [])
+    m.get(k).push(it)
+  }
+  return [...m.keys()]
+    .sort((a, b) => {
+      const ia = TYPE_ORDER.indexOf(a), ib = TYPE_ORDER.indexOf(b)
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+    })
+    .map((k) => [k, m.get(k)])
+}
+
 // ── HTML ─────────────────────────────────────────────────────────────────────
 const card = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;'
 const muted = 'color:#64748b;'
@@ -175,6 +199,33 @@ function epicCard(e) {
   </td></tr>`
 }
 
+function looseSection(items) {
+  if (!items || !items.length) return ''
+  const blocks = looseGroups(items)
+    .map(([k, rows]) => {
+      const lines = rows
+        .map(
+          (it) =>
+            `<div style="font-size:13px;line-height:1.6;margin:1px 0">` +
+            `<a href="${esc(it.url)}" style="color:#0f766e;text-decoration:none">#${esc(it.number)}</a> ` +
+            `<span style="color:#334155">${esc(it.title)}</span></div>`
+        )
+        .join('')
+      return `<div style="font-size:12px;font-weight:600;color:#0f172a;margin:10px 0 2px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
+    })
+    .join('')
+  return `
+    <tr><td style="padding:6px 0 10px">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}">Loose tickets · no epic</div>
+    </td></tr>
+    <tr><td style="padding:0 0 14px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}"><tr><td style="padding:14px 18px">
+        <div style="${muted}font-size:12px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} not tracked under any epic</div>
+        ${blocks}
+      </td></tr></table>
+    </td></tr>`
+}
+
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Epic digest · ${esc(prettyDate)}</title></head>
@@ -215,6 +266,8 @@ const html = `<!doctype html>
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}">Open epics</div>
     </td></tr>
     ${epics.length ? epics.map(epicCard).join('') : `<tr><td style="${muted}font-size:14px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
+
+    ${looseSection(loose)}
 
     <tr><td style="padding:10px 0 0;border-top:1px solid #e2e8f0;${muted}font-size:12px">
       Generated ${esc(generated.toISOString())} by the <code>/epic-digest</code> skill.
@@ -267,6 +320,17 @@ const txt =
         })
         .join('\n')
     : '  No open epics.\n') +
+  (loose.length
+    ? `\n${'='.repeat(64)}\n\nLOOSE TICKETS (no epic) — ${loose.length}\n\n` +
+      looseGroups(loose)
+        .map(
+          ([k, rows]) =>
+            `${(TYPE_LABEL[k] || k)}:\n` +
+            rows.map((it) => `  #${it.number}  ${it.title}\n      ${it.url}`).join('\n')
+        )
+        .join('\n\n') +
+      '\n'
+    : '') +
   `\n${'='.repeat(64)}\nGenerated ${generated.toISOString()} by /epic-digest\n`
 
 // ── write ────────────────────────────────────────────────────────────────────
@@ -277,4 +341,4 @@ writeFileSync(resolve(htmlPath), html)
 writeFileSync(resolve(txtPath), txt)
 console.log(`✓ HTML  → ${htmlPath}`)
 console.log(`✓ Text  → ${txtPath}`)
-console.log(`  ${epics.length} epic(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)

@@ -65,6 +65,15 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
      falls back to `whatItIs`, `whereWeAre` falls back to `recentActivity`. Prefer the
      bet-framed fields.
 
+5. **Loose tickets** (the "no epic" band) — open issues tracked under *no* epic, so
+   they don't vanish from the roundup. `search_issues` →
+   `repo:pmcp/nuxt-crouton is:issue is:open -label:epic`, then **drop anything with a
+   `parent_issue_url`** (those already roll up under an epic). For each survivor keep
+   `number`, `title`, `url`, and its `type:*` label (as `type`). The renderer groups
+   them by type so a pile of chores reads as one block. Omit the section entirely when
+   there are none — re-parent strays into epics first; this only catches the genuinely
+   standalone.
+
 Keep it lean: titles, numbers, URLs, states. Don't fetch comment bodies.
 
 ## Step 3 — Write the data file
@@ -97,6 +106,9 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
         { "number": 253, "title": "...", "url": "...", "state": "closed" }
       ]
     }
+  ],
+  "loose": [                            // optional — open issues under no epic, grouped by type
+    { "number": 322, "title": "...", "url": "https://github.com/...", "type": "chore" }
   ]
 }
 ```
