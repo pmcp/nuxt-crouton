@@ -52,6 +52,12 @@ issue and hold the floor. Don't force a red bump into the safe PR.
   (#140). If you bump `vue`/`nuxt`, bump their `pnpm.overrides` floor to match so
   the lockfile actually moves.
 - Keep package **peer** ranges wide (`^3 || ^4`) — untouched.
+- **`@playwright/test` is special — sync the E2E container tag.** If you bump it,
+  also bump the CI image tag in `.github/workflows/e2e.yml`
+  (`container: mcr.microsoft.com/playwright:v<x.y.z>-jammy`) to the **same**
+  version. The image ships the matching Chromium + system libs, so a drift makes
+  Playwright warn about a browser/library version mismatch — and the whole point
+  of that container is to be version-matched (#392/#395).
 
 ```bash
 pnpm install            # regenerates the lockfile
