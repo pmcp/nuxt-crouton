@@ -17,6 +17,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-ai',
     '@fyit/crouton-mcp-toolkit',
     '@fyit/crouton-email',
+    '@fyit/crouton-devtools/eruda',
     // Generated layer must come last
     './layers/thinkgraph'
   ],

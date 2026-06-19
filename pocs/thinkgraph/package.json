@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-devtools": "workspace:*",
     "@fyit/crouton-email": "workspace:*",
     "@libsql/client": "catalog:",
     "@nuxtjs/mdc": "^0.21.1",

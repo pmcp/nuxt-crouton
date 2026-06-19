@@ -1336,6 +1336,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
@@ -1379,6 +1382,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
@@ -1422,6 +1428,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-email':
         specifier: workspace:*
         version: link:../../packages/crouton-email
@@ -1477,6 +1486,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
@@ -1517,6 +1529,9 @@ importers:
       '@fyit/crouton':
         specifier: workspace:*
         version: link:../../packages/crouton
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-email':
         specifier: workspace:*
         version: link:../../packages/crouton-email
@@ -1610,6 +1625,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-devtools':
+        specifier: workspace:*
+        version: link:../../packages/crouton-devtools
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
