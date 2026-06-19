@@ -17,6 +17,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-i18n',
     '@fyit/crouton-three',
     '@fyit/crouton-pages',
+    '@fyit/crouton-devtools/eruda',
     // Generated collection layers must come last
     './layers/pages'
   ],

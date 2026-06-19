@@ -15,6 +15,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-i18n',
     '@fyit/crouton-assets',
     '@fyit/crouton-pages',
+    '@fyit/crouton-devtools/eruda',
     './layers/content',
     './layers/pages',
     './layers/crouton',

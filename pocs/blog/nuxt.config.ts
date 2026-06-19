@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-core',
     '@fyit/crouton-auth',
     '@fyit/crouton-i18n',
+    '@fyit/crouton-devtools/eruda',
     './layers/blog'
   ],
 
