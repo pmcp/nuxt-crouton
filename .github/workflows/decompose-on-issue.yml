@@ -37,3 +37,4 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: "/task-decompose #${{ github.event.issue.number }}"
           claude_args: "--max-turns 30"
+          show_full_output: true

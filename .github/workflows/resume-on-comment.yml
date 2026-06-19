@@ -44,3 +44,4 @@ jobs:
             thread (the latest comment is their answer), incorporate it, remove the
             `status:blocked` label, then continue via /task-decompose #${{ github.event.issue.number }}.
           claude_args: "--max-turns 30"
+          show_full_output: true
