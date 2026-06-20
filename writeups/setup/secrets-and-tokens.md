@@ -133,7 +133,28 @@ The **one** durable secret is the **private key** (no expiry; it never touches t
 > headroom. The short life is the **point**: if one leaks it's one repo for under an hour, vs a PAT
 > valid for months. `@octokit/auth-app` auto-refreshes, so even a long-running job never hits the wall.
 
-So: **PAT-now, App-later.** Today's Tier-2 PATs are scaffolding to be torn out once the App lands.
+**Decision: build the App now (dogfooding).** Crouton's whole direction is teams installing on their own repos — so building the App now means crouton runs on its *own* target architecture, with you as tenant #1. While **single-tenant** (one installation) the private key can live in the Worker (≈as simple as a PAT, but the *right* code path); the **central mint** (one holder of the key, handing out scoped 1-hour tokens) becomes a real task only when the *second* team installs. A raw PAT stays a legitimate **stopgap** only if a feature must ship before the App is wired.
+
+### Why the App — beyond replacing credentials
+
+Swapping two PATs is the least of it. The App is a GitHub-native **identity + webhook receiver + per-tenant permission grant**, which unlocks:
+
+**Fixes things we currently do wrong**
+- **Posts as `crouton[bot]`, not @pmcp** — the *real* fix for the provenance problem we band-aided with the `require-comment-provenance` hook. Bot comments become unmistakable at the source.
+- **Retires the scattered per-feature PATs** and the **unauthenticated `/api/_review`** (actions tie to a real installation, not an open URL + shared low-trust token).
+- **Exact permissions** — no more "the bot token lacks `workflows`/`actions`" walls; grant only what's chosen.
+
+**New capabilities**
+- **GitHub Checks instead of bot comments** — the artifact-gate, schema-review, UI sign-off, and deploy status become proper **Check Runs** (PR checks bar, inline annotations, re-run button) instead of comment spam. A direct DX win for the #479 "readable tickets" goal.
+- **Webhook-driven automation** — the App receives events at its own endpoint, so `/delegate`, `/deploy`, preview-on-PR, resume-on-reply can be App-driven and **portable to any repo that installs it** — no committed `.github/workflows/` to copy (sidesteps the epic-branch-CI gap).
+- **Multi-tenant = the product** — a team installs "Crouton" → they get previews, the diagram editor, deploys, the pipeline, with **zero per-team provisioning**. This is how crouton becomes installable software, not private plumbing; everything else is downstream of it.
+- **Act-as-the-reviewer (user OAuth)**, **separate higher rate limits**, **per-repo audit + revoke**.
+
+**Doesn't fix / costs**
+- The **pipeline's human-actor need stays** — claude-code-action rejects bot actors and the App is a bot; the Tier-1 `delegate`-trigger PAT isn't replaced unless that guard changes.
+- Needs a small always-on **Worker endpoint** (webhooks / token mint / checks) — but that's the same Worker the Tier-2 features already run in.
+
+**Punchline:** the App is the **productization substrate** for the teams version of crouton — which is why building it now (and dogfooding it on this repo) is the right call.
 
 *(Tier 1's pipeline PAT can't become this App — the agent pipeline needs a **human** actor to pass the bot-actor guard, which an App token isn't. Tier 1 keeps its human PAT.)*
 
