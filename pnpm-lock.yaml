@@ -1688,6 +1688,8 @@ importers:
         specifier: 'catalog:'
         version: 4.101.0(@cloudflare/workers-types@4.20260118.0)
 
+  workers/ticket-editor: {}
+
 packages:
 
   '@acemir/cssom@0.9.31':
