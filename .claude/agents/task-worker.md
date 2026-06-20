@@ -142,6 +142,13 @@ skips the gate entirely: no mockup, no comment, no hold.
   post-build before/after screenshot (#311) closes it.
 - **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
   than false-positive (gating a pure-logic PR). When unsure, don't gate.
+- **Higher-fidelity option (live preview, #488).** When the look-and-feel depends on real
+  rendering a static mockup can't fake, the `ui-proposal` skill's *live-preview* path is an
+  alternative **capture channel** into this same gate: deploy a rough build to staging with
+  `NUXT_PUBLIC_CROUTON_REVIEW=true` (via `/poc-deploy`), post the preview URL on the draft PR,
+  and the reviewer pins comments on the running page. Those pins arrive as `🎯 Preview feedback`
+  PR comments (naming the source file) and feed the **same** revision/approval loop below — same
+  `status:blocked` hold, same 👍 / `ui-approved` signal. See `@fyit/crouton-devtools` CLAUDE.md.
 
 ## Schema sign-off gate (#314)
 

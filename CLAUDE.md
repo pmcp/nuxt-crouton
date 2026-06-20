@@ -377,6 +377,12 @@ real component. In the agent pipeline this is automated as a gate in `.claude/ag
 real screenshot (#311)). In an interactive session, do the same by hand: propose, get a yes,
 then build. Be conservative — when unsure whether a diff is "visual", don't gate.
 
+**Higher-fidelity option (live preview, #488):** when look-and-feel depends on real rendering a
+static mockup can't fake, the `ui-proposal` skill's *live-preview* path lets a reviewer pin
+comments directly on a deployed staging page (build with `NUXT_PUBLIC_CROUTON_REVIEW=true`); each
+pin becomes a `🎯 Preview feedback` PR comment naming the source file, feeding the **same**
+revision/approval loop. Capture machinery lives in `@fyit/crouton-devtools`.
+
 **Give feedback on the diff, not the image.** The proposed change is committed as a text
 artifact (the UI "what changes" list `<slug>.md`, or a schema's `.md` field table), so it shows
 up in the PR's "Files changed" — inline-comment the exact line, no copying. The agent reads
