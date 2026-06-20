@@ -90,13 +90,22 @@ export default defineNuxtPlugin(() => {
   // --- submit -------------------------------------------------------------
   const submit = async (annotation: ReviewAnnotation) => {
     try {
-      await $fetch('/api/_review', { method: 'POST', body: annotation })
-      toast('Sent to PR ✓')
+      const res = await $fetch<{ data?: { ok?: boolean, commentUrl?: string } | null, error?: string | null }>(
+        '/api/_review',
+        { method: 'POST', body: annotation }
+      )
+      if (res?.data?.ok) {
+        toast('Sent to PR ✓')
+      }
+      else {
+        // 200 with an error body (e.g. bridge not configured) — don't claim success.
+        console.warn('[crouton-review] not sent:', res?.error, annotation)
+        toast(res?.error ? `Not sent: ${res.error.slice(0, 60)}` : 'Not sent')
+      }
     }
-    catch {
-      // The endpoint lands in #491; until then prove capture works on its own.
-      console.warn('[crouton-review] /api/_review not available yet (#491). Annotation:', annotation)
-      toast('Captured (endpoint pending #491)')
+    catch (err) {
+      console.warn('[crouton-review] request failed:', err, annotation)
+      toast('Request failed')
     }
   }
 
