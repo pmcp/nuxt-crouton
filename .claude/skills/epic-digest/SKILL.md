@@ -7,8 +7,10 @@ allowed-tools: mcp__github__search_issues, mcp__github__list_issues, mcp__github
 # Epic Digest — the daily "where are we?" email
 
 Turns the GitHub issue tree (`pmcp/nuxt-crouton`) into a **skimmable digest**: a
-**"🧪 Needs your eyes"** band up top (what *landed* + the human How-to-test steps, so the
-owner has a ready QA checklist), then a short "since yesterday" activity band, then one card
+**"🧪 Needs your eyes"** band up top (what *landed*, one skimmable line per item — title, type
+badge, 👁 for visual changes, PR/preview link — with the How-to-test steps folded into a
+tap-to-expand `🧪 How to test (N)` dropdown so the band stays light on mobile), then a short
+"since yesterday" activity band, then one card
 per open **epic** with a progress bar and a one-line status — the sub-issue breakdown tucked
 into a collapsible section so the overview stays clean. Built to be **read at a glance, drilled
 into if needed**.

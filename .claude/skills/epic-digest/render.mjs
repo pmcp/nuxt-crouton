@@ -117,9 +117,15 @@ function actionableCard(a) {
   const visual = a.hasVisual
     ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#4338ca">👁 visual change</span> `
     : ''
-  const steps = (a.testSteps && a.testSteps.length)
-    ? `<ol style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.7">${a.testSteps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>`
-    : `<div style="${muted}font-size:12px;font-style:italic">No test steps — author should add a “🧪 How to test” section.</div>`
+  const stepCount = (a.testSteps && a.testSteps.length) || 0
+  const stepsBlock = stepCount
+    ? `<details style="margin-top:12px">
+         <summary style="cursor:pointer;color:#b45309;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;outline:none">🧪 How to test (${stepCount})</summary>
+         <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;padding:12px 14px;margin-top:8px">
+           <ol style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.7">${a.testSteps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+         </div>
+       </details>`
+    : `<div style="${muted}font-size:12px;font-style:italic;margin-top:10px">No test steps — author should add a “🧪 How to test” section.</div>`
   const links = [
     `<a href="${esc(a.url)}" style="color:#0f766e;text-decoration:none">→ ${isEpic ? `Verify rollup (#${esc(a.number)})` : `PR #${esc(a.number)}`}</a>`
   ]
@@ -133,10 +139,7 @@ function actionableCard(a) {
         </td>
         <td align="right" style="white-space:nowrap">${visual}<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;${badgeStyle}">${esc(badge)}</span></td>
       </tr></table>
-      <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;padding:12px 14px;margin-top:12px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#b45309;margin-bottom:6px">🧪 How to test</div>
-        ${steps}
-      </div>
+      ${stepsBlock}
       <div style="margin-top:10px;font-size:12px">${links.join(' · ')}</div>
     </td></tr></table>
   </td></tr>`
@@ -438,22 +441,26 @@ const mdEpic = (e) => {
 }
 const mdActionables = (items) => {
   if (!items || !items.length) return ''
+  // One skimmable line per item (title · badge · 👁 · links); the numbered test
+  // steps fold into a tappable <details> so the band reads at a glance on mobile.
   const block = items
     .map((a) => {
       const isEpic = a.kind === 'epic'
       const badge = a.label || (isEpic ? '✓ Epic complete · do one QA pass' : 'merged')
-      const visual = a.hasVisual ? ' · 👁 visual change' : ''
-      const steps = (a.testSteps && a.testSteps.length)
-        ? a.testSteps.map((s, i) => `   ${i + 1}. ${s}`).join('\n')
-        : `   _No test steps — author should add a “🧪 How to test” section._`
+      const visual = a.hasVisual ? ' · 👁' : ''
+      const stepCount = (a.testSteps && a.testSteps.length) || 0
       const refLabel = isEpic ? `Verify rollup (#${a.number})` : `PR #${a.number}`
-      const links = `   → [${refLabel}](${a.url})` + (a.previewUrl ? ` · [staging preview](${a.previewUrl})` : '')
-      return `- **[#${a.number}](${a.url}) · ${a.title}** — _${badge}${visual}_\n   **🧪 How to test:**\n${steps}\n${links}`
+      const links = `[${refLabel}](${a.url})` + (a.previewUrl ? ` · [preview](${a.previewUrl})` : '')
+      const meta = stepCount ? `${badge}${visual}` : `${badge}${visual} · ⚠️ no test steps`
+      const summary = `**[#${a.number}](${a.url}) · ${a.title}** — _${meta}_ · ${links}`
+      if (!stepCount) return summary
+      const steps = a.testSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')
+      return `${summary}\n<details><summary>🧪 How to test (${stepCount})</summary>\n\n${steps}\n</details>`
     })
-    .join('\n')
+    .join('\n\n')
   return (
     `### 🧪 Needs your eyes — test what landed\n` +
-    `_${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h, ready to click through and sign off on._\n\n` +
+    `_${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h — open a card to see how to test it._\n\n` +
     block +
     `\n\n`
   )
