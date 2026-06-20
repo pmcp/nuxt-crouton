@@ -113,7 +113,9 @@ const parseTestSteps = (body) =>
   stepsFrom(section(body, /^##\s.*how to test/i) || section(body, /^##\s.*🧪/i))
 // A staging/prod preview link if the author dropped one in the body.
 const parsePreviewUrl = (body) => {
-  const m = String(body || '').match(/https?:\/\/[^\s)]+\.(?:pmcp\.dev|friendlyinter\.net)[^\s)]*/)
+  // Exclude backtick/quotes/angle-brackets too, so a Markdown inline-code or
+  // linked URL (`https://…dev`) doesn't capture a trailing ` / " / > delimiter.
+  const m = String(body || '').match(/https?:\/\/[^\s)`"'<>]+\.(?:pmcp\.dev|friendlyinter\.net)[^\s)`"'<>]*/)
   return m ? m[0] : undefined
 }
 // A `fix · merged` / `feat · merged` badge from a conventional-commit title.
