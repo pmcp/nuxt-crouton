@@ -1,0 +1,60 @@
+name: Comment dispatch
+
+# Hand an issue to the agent pipeline by COMMENTING — mobile-friendly, no label UI.
+# Comment `/delegate` (or `/deploy`) on an issue and this applies the `delegate` label,
+# which fires decompose-on-issue.yml. Only the repo owner / members / collaborators can
+# trigger it.
+#
+# AUTH (critical): the label is applied with a PAT (DISPATCH_TOKEN, or PROJECTS_TOKEN) so
+# the dispatched decompose run is attributed to a HUMAN actor and passes claude-code-action's
+# bot-actor guard. With only GITHUB_TOKEN the run would be bot-initiated and fail. Without a
+# PAT this workflow no-ops (green) with a warning.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  dispatch:
+    # Owner/member/collaborator comment, on an issue (not a PR), containing the command.
+    if: |
+      !github.event.issue.pull_request &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR') &&
+      (contains(github.event.comment.body, '/delegate') ||
+       contains(github.event.comment.body, '/deploy'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN }}
+        with:
+          github-token: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            if (!process.env.DISPATCH_TOKEN) {
+              core.warning('No DISPATCH_TOKEN/PROJECTS_TOKEN — applying `delegate` via GITHUB_TOKEN would make '
+                + 'the dispatched run bot-initiated and fail the bot-actor guard. Set a PAT with issues:write. Skipping.')
+              return
+            }
+            const { owner, repo } = context.repo
+            const issue_number = context.payload.issue.number
+            const comment_id = context.payload.comment.id
+
+            // Fire a FRESH `delegate` labeled event: decompose-on-issue only triggers on the
+            // label being *added* (not merely present), so if it's already there, remove first.
+            const cur = (context.payload.issue.labels || []).map(l => (typeof l === 'string' ? l : l.name))
+            if (cur.includes('delegate')) {
+              try { await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'delegate' }) } catch (e) {}
+            }
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['delegate'] })
+
+            // Acknowledge so the commenter sees it registered (handy on mobile).
+            try { await github.rest.reactions.createForIssueComment({ owner, repo, comment_id, content: 'rocket' }) } catch (e) {}
+            await github.rest.issues.createComment({ owner, repo, issue_number,
+              body: `▶️ Dispatched by comment — applied \`delegate\`, the agent pipeline is picking up #${issue_number}.` })
+            core.info(`Dispatched #${issue_number} via comment.`)
