@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<!--
+  ui-proposal: library-catalog-ui
+  Issue #471: Library catalog POC — four UI surfaces
+  After-only (net-new UI; scaffold has bare generated tables)
+  Surfaces: Book browse, Book detail, Author detail, Loan form
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Proposal — Library Catalog POC</title>
+<style>
+  :root{
+    --page:#0a0e17; --ink:#e8edf6; --muted:#8b97ad;
+    --app-bg:#0b0f1a; --card:#151b27; --card-2:#11161f; --line:#222b3a; --line-soft:#1b2230;
+    --green:#34d399; --green-d:#0e3a2a; --radius:16px;
+    --amber:#fbbf24; --amber-d:#3a2800;
+    --blue:#60a5fa; --blue-d:#1e2f50;
+    --red:#f87171; --red-d:#3a1515;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(1100px 500px at 75% -10%, #16213c 0%, var(--page) 55%);
+    color:var(--ink); line-height:1.55; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1100px; margin:0 auto; padding:40px 20px 80px;}
+  .eyebrow{text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--green); font-weight:700;}
+  h1{font-size:clamp(24px,3.5vw,34px); margin:6px 0 6px; line-height:1.1;}
+  h2.section{font-size:13px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin:48px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+  .lede{color:var(--muted); font-size:15px; max-width:64ch; margin:0 0 32px;}
+
+  .stage{display:flex; flex-wrap:wrap; gap:32px; justify-content:center; align-items:flex-start;}
+  .col{display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .col-label{font-size:13px; color:var(--green); font-weight:600; text-align:center;}
+  .note{font-size:12px; color:var(--muted); max-width:480px; text-align:center;}
+
+  /* desktop frame */
+  .deviceframe{width:680px; max-width:100%; border-radius:14px; overflow:hidden; border:1px solid #2b3852; box-shadow:0 24px 60px rgba(0,0,0,.5); background:var(--app-bg);}
+  .bar{display:flex; gap:6px; padding:10px 14px; background:#11161f; border-bottom:1px solid var(--line); align-items:center;}
+  .bar i{width:11px; height:11px; border-radius:50%; background:#33405a; display:inline-block;}
+  .bar .url{margin-left:12px; font-size:11px; color:var(--muted); background:#0d1117; border-radius:6px; padding:3px 10px; flex:1; max-width:260px;}
+  .body{padding:0; height:520px; overflow:hidden; display:flex; flex-direction:column;}
+
+  /* shared atoms */
+  .ic{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; display:inline-block;}
+  .btn{display:inline-flex; align-items:center; gap:6px; border-radius:8px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); font-size:12px; padding:6px 10px; white-space:nowrap;}
+  .btn.primary{background:var(--green); border-color:var(--green); color:#04231a; font-weight:700;}
+  .btn.ghost{background:transparent; border-color:transparent; color:var(--muted);}
+  .btn.sm{padding:4px 8px; font-size:11px;}
+  .badge{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; white-space:nowrap;}
+  .badge.green{background:var(--green-d); color:var(--green); border:1px solid #1f5e47;}
+  .badge.amber{background:var(--amber-d); color:var(--amber); border:1px solid #7a5800;}
+  .badge.red{background:var(--red-d); color:var(--red); border:1px solid #7a2020;}
+  .badge.blue{background:var(--blue-d); color:var(--blue); border:1px solid #2a4a80;}
+
+  input.search{background:var(--card-2); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-size:13px; padding:7px 10px 7px 30px; width:200px; outline:none;}
+  .search-wrap{position:relative; display:inline-flex; align-items:center;}
+  .search-wrap svg{position:absolute; left:8px; color:var(--muted);}
+
+  /* scrollable inner */
+  .scroll{flex:1; overflow:hidden; padding:0;}
+  .padded{padding:16px;}
+
+  /* topbar */
+  .topbar{display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--card-2); flex-shrink:0;}
+  .topbar .page-title{font-size:15px; font-weight:700;}
+  .spacer{flex:1;}
+
+  /* ── Book browse ── */
+  .filters{display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .chip{font-size:11px; padding:4px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--card-2); cursor:pointer;}
+  .chip.active{border-color:var(--green); color:var(--green); background:var(--green-d);}
+  .book-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:14px 16px; overflow-y:auto; flex:1;}
+  .book-card{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;}
+  .book-cover{height:90px; background:linear-gradient(135deg,#1a2540,#0d1a2e); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .book-cover svg{opacity:.35;}
+  .book-cover.has-img{background:#111;} 
+  .book-info{padding:10px; flex:1; display:flex; flex-direction:column; gap:4px;}
+  .book-title{font-size:12px; font-weight:600; line-height:1.3;}
+  .book-author{font-size:11px; color:var(--muted);}
+  .book-meta{margin-top:auto; display:flex; align-items:center; justify-content:space-between;}
+
+  /* ── Book detail ── */
+  .detail-hero{display:flex; gap:16px; padding:16px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .cover-thumb{width:72px; height:100px; background:linear-gradient(135deg,#1a2540,#0d1a2e); border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .detail-meta{flex:1; min-width:0;}
+  .detail-title{font-size:16px; font-weight:700; line-height:1.2; margin-bottom:4px;}
+  .detail-sub{font-size:12px; color:var(--muted); margin-bottom:8px;}
+  .meta-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .detail-body{padding:16px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px;}
+  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:6px;}
+  .richtext-preview{font-size:12px; color:#b0bec5; line-height:1.6; background:var(--card); border-radius:8px; padding:10px 12px; border:1px solid var(--line);}
+  .author-chip{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 12px;}
+  .author-avatar{width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--green-d),#0a2a1a); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--green); font-weight:700; flex-shrink:0;}
+  .avail-row{display:flex; gap:10px;}
+  .avail-box{flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; text-align:center;}
+  .avail-num{font-size:22px; font-weight:700;}
+  .avail-label{font-size:11px; color:var(--muted);}
+
+  /* ── Author detail ── */
+  .author-hero{padding:16px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:flex-start; flex-shrink:0;}
+  .author-avatar-lg{width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--green-d),#0a2a1a); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--green); font-weight:700; flex-shrink:0;}
+  .author-bio{font-size:12px; color:#b0bec5; line-height:1.6;}
+  .book-list-scroll{overflow-y:auto; flex:1; padding:12px 16px; display:flex; flex-direction:column; gap:8px;}
+  .book-row{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
+  .book-row-cover{width:32px; height:44px; background:linear-gradient(135deg,#1a2540,#0d1a2e); border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .book-row-info{flex:1; min-width:0;}
+  .book-row-title{font-size:13px; font-weight:600;}
+  .book-row-year{font-size:11px; color:var(--muted);}
+
+  /* ── Loan form ── */
+  .loan-header{padding:14px 16px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .loan-book-row{display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:14px;}
+  .loan-book-cover{width:40px; height:56px; background:linear-gradient(135deg,#1a2540,#0d1a2e); border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .form-body{padding:14px 16px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px;}
+  .form-field{display:flex; flex-direction:column; gap:4px;}
+  .form-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;}
+  .form-input{background:var(--card-2); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-size:13px; padding:8px 10px; width:100%;}
+  .form-input:focus{border-color:var(--green); outline:none;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .form-actions{display:flex; gap:8px; padding:12px 16px; border-top:1px solid var(--line); flex-shrink:0;}
+  .loan-row{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:0 16px 8px;}
+  .loan-row-info{flex:1;}
+  .loan-row-name{font-size:13px; font-weight:600;}
+  .loan-row-dates{font-size:11px; color:var(--muted);}
+
+  /* changes */
+  .changes{margin-top:48px; background:#101725; border:1px solid var(--line); border-radius:16px; padding:20px 22px;}
+  .changes h3{margin:0 0 12px; font-size:15px;}
+  .changes ul{margin:0; padding-left:0; list-style:none; display:grid; gap:10px;}
+  .changes li{display:flex; gap:10px; align-items:flex-start; font-size:13px; color:#cdd6e6;}
+  .changes li b{color:#fff;} .check{color:var(--green); flex:none; margin-top:2px;}
+  .changes code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em; background:rgba(52,211,153,.12); color:#a9f0d2; padding:1px 6px; border-radius:6px;}
+  footer.fin{margin-top:30px; color:var(--muted); font-size:12px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">nuxt-crouton · ui proposal · issue #471</span>
+  <h1>Library Catalog POC — UI Proposal</h1>
+  <p class="lede">After-only proposal for the four new surfaces. The scaffold currently has bare generated tables; these are the refined browse, detail, and action UIs for the book catalog.</p>
+
+  <!-- ── Surface 1: Book Browse ── -->
+  <h2 class="section">Surface 1 — Book browse / list</h2>
+  <div class="stage">
+    <div class="col">
+      <div class="deviceframe">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <span class="url">library-catalog.pmcp.dev/books</span>
+        </div>
+        <div class="body">
+          <div class="topbar">
+            <span class="page-title">Books</span>
+            <span class="spacer"></span>
+            <div class="search-wrap">
+              <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input class="search" placeholder="Search by title…" style="font-size:12px;padding:6px 8px 6px 28px;" />
+            </div>
+            <button class="btn primary sm">
+              <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Add book
+            </button>
+          </div>
+          <div class="filters">
+            <span style="font-size:11px;color:var(--muted);align-self:center;margin-right:2px;">Genre:</span>
+            <span class="chip active">All</span>
+            <span class="chip">Fiction</span>
+            <span class="chip">Non-fiction</span>
+            <span class="chip">Sci-Fi</span>
+            <span class="chip">History</span>
+          </div>
+          <div class="book-grid">
+            <!-- Card 1 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">The Great Gatsby</div>
+                <div class="book-author">F. Scott Fitzgerald</div>
+                <div class="book-meta">
+                  <span class="badge green">3 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">1925</span>
+                </div>
+              </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">Dune</div>
+                <div class="book-author">Frank Herbert</div>
+                <div class="book-meta">
+                  <span class="badge amber">1 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">1965</span>
+                </div>
+              </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">1984</div>
+                <div class="book-author">George Orwell</div>
+                <div class="book-meta">
+                  <span class="badge red">0 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">1949</span>
+                </div>
+              </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">To Kill a Mockingbird</div>
+                <div class="book-author">Harper Lee</div>
+                <div class="book-meta">
+                  <span class="badge green">2 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">1960</span>
+                </div>
+              </div>
+            </div>
+            <!-- Card 5 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">Sapiens</div>
+                <div class="book-author">Yuval Noah Harari</div>
+                <div class="book-meta">
+                  <span class="badge green">5 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">2011</span>
+                </div>
+              </div>
+            </div>
+            <!-- Card 6 -->
+            <div class="book-card">
+              <div class="book-cover">
+                <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-info">
+                <div class="book-title">The Martian</div>
+                <div class="book-author">Andy Weir</div>
+                <div class="book-meta">
+                  <span class="badge amber">1 avail.</span>
+                  <span style="font-size:10px;color:var(--muted);">2011</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Card grid with cover placeholder, availability badge (green/amber/red), genre filter chips, title search.</p>
+    </div>
+  </div>
+
+  <!-- ── Surface 2: Book Detail ── -->
+  <h2 class="section">Surface 2 — Book detail page</h2>
+  <div class="stage">
+    <div class="col">
+      <div class="deviceframe">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <span class="url">library-catalog.pmcp.dev/books/[id]</span>
+        </div>
+        <div class="body">
+          <div class="detail-hero">
+            <div class="cover-thumb">
+              <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+            <div class="detail-meta">
+              <div class="detail-title">Dune</div>
+              <div class="detail-sub">Frank Herbert · 1965 · ISBN 978-0441013593</div>
+              <div class="meta-row">
+                <span class="badge blue">Sci-Fi</span>
+                <span class="badge amber">1 copy available</span>
+              </div>
+            </div>
+            <button class="btn primary sm" style="align-self:flex-start">Borrow</button>
+          </div>
+          <div class="detail-body">
+            <div>
+              <div class="section-label">Description</div>
+              <div class="richtext-preview">
+                Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides — who would become the mysterious man known as Muad'Dib — and of a great family's ambition to bring to fruition mankind's oldest and most unattainable dream...
+              </div>
+            </div>
+            <div>
+              <div class="section-label">Author</div>
+              <div class="author-chip">
+                <div class="author-avatar">FH</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;">Frank Herbert</div>
+                  <div style="font-size:11px;color:var(--muted);">Born 1920 · 5 books in catalog</div>
+                </div>
+                <button class="btn ghost sm" style="margin-left:auto">View →</button>
+              </div>
+            </div>
+            <div>
+              <div class="section-label">Availability</div>
+              <div class="avail-row">
+                <div class="avail-box">
+                  <div class="avail-num" style="color:var(--green)">1</div>
+                  <div class="avail-label">Available now</div>
+                </div>
+                <div class="avail-box">
+                  <div class="avail-num" style="color:var(--muted)">3</div>
+                  <div class="avail-label">Total copies</div>
+                </div>
+                <div class="avail-box">
+                  <div class="avail-num" style="color:var(--amber)">2</div>
+                  <div class="avail-label">On loan</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Hero cover + metadata, richtext description, linked author chip, availability counter boxes, inline Borrow CTA.</p>
+    </div>
+  </div>
+
+  <!-- ── Surface 3: Author Detail ── -->
+  <h2 class="section">Surface 3 — Author detail page</h2>
+  <div class="stage">
+    <div class="col">
+      <div class="deviceframe">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <span class="url">library-catalog.pmcp.dev/authors/[id]</span>
+        </div>
+        <div class="body">
+          <div class="author-hero">
+            <div class="author-avatar-lg">FH</div>
+            <div style="flex:1;">
+              <div style="font-size:16px;font-weight:700;margin-bottom:2px;">Frank Herbert</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Born 1920 · Died 1986</div>
+              <div class="author-bio">American science fiction author best known for the novel Dune (1965) and its five sequels. Herbert's works touch on ecology, religion, politics, and philosophy of mind.</div>
+            </div>
+          </div>
+          <div style="padding:12px 16px 8px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);font-weight:600;flex-shrink:0;">Books by Frank Herbert in this catalog</div>
+          <div class="book-list-scroll">
+            <div class="book-row">
+              <div class="book-row-cover">
+                <svg width="16" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-row-info">
+                <div class="book-row-title">Dune</div>
+                <div class="book-row-year">1965</div>
+              </div>
+              <span class="badge amber">1 avail.</span>
+              <button class="btn ghost sm">View →</button>
+            </div>
+            <div class="book-row">
+              <div class="book-row-cover">
+                <svg width="16" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-row-info">
+                <div class="book-row-title">Dune Messiah</div>
+                <div class="book-row-year">1969</div>
+              </div>
+              <span class="badge green">3 avail.</span>
+              <button class="btn ghost sm">View →</button>
+            </div>
+            <div class="book-row">
+              <div class="book-row-cover">
+                <svg width="16" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="book-row-info">
+                <div class="book-row-title">Children of Dune</div>
+                <div class="book-row-year">1976</div>
+              </div>
+              <span class="badge green">2 avail.</span>
+              <button class="btn ghost sm">View →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Author bio block with initials avatar, born/died year, scrollable book list with availability badges and direct links.</p>
+    </div>
+  </div>
+
+  <!-- ── Surface 4: Loan Form ── -->
+  <h2 class="section">Surface 4 — Loan form (borrow + return)</h2>
+  <div class="stage">
+    <div class="col">
+      <div class="col-label">Create loan (borrow)</div>
+      <div class="deviceframe" style="width:480px;">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <span class="url">library-catalog.pmcp.dev/books/[id] → Borrow</span>
+        </div>
+        <div class="body">
+          <div class="loan-header">
+            <div style="font-size:15px;font-weight:700;margin-bottom:10px;">Borrow this book</div>
+            <div class="loan-book-row">
+              <div class="loan-book-cover">
+                <svg width="18" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:600;">Dune</div>
+                <div style="font-size:11px;color:var(--muted);">Frank Herbert · 1965</div>
+                <span class="badge amber" style="margin-top:4px;display:inline-block;">1 copy available</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-body">
+            <div class="form-field">
+              <label class="form-label">Borrower name</label>
+              <input class="form-input" type="text" placeholder="Full name" style="font-size:12px;" />
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label class="form-label">Borrowed at</label>
+                <input class="form-input" type="date" value="2026-06-20" style="font-size:12px;" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Due at</label>
+                <input class="form-input" type="date" value="2026-07-04" style="font-size:12px;" />
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn ghost" style="font-size:12px;">Cancel</button>
+            <button class="btn primary" style="font-size:12px;margin-left:auto">Confirm borrow</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label">Active loans — return action</div>
+      <div class="deviceframe" style="width:480px;">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <span class="url">library-catalog.pmcp.dev/loans</span>
+        </div>
+        <div class="body">
+          <div class="topbar">
+            <span class="page-title">Active Loans</span>
+            <span class="spacer"></span>
+            <span class="badge amber">3 overdue</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding-top:8px;">
+            <!-- Overdue -->
+            <div class="loan-row" style="border-color:#5b2740;">
+              <div style="flex:1;">
+                <div class="loan-row-name">Alice Dupont</div>
+                <div style="font-size:12px;font-weight:500;margin:2px 0;">Dune</div>
+                <div class="loan-row-dates">Borrowed 2026-06-01 · Due 2026-06-15</div>
+              </div>
+              <span class="badge red" style="margin-right:8px;">Overdue</span>
+              <button class="btn sm" style="font-size:11px;border-color:var(--green);color:var(--green);">Return</button>
+            </div>
+            <!-- On time -->
+            <div class="loan-row">
+              <div style="flex:1;">
+                <div class="loan-row-name">Bob Martin</div>
+                <div style="font-size:12px;font-weight:500;margin:2px 0;">The Great Gatsby</div>
+                <div class="loan-row-dates">Borrowed 2026-06-10 · Due 2026-06-24</div>
+              </div>
+              <span class="badge blue" style="margin-right:8px;">Active</span>
+              <button class="btn sm" style="font-size:11px;border-color:var(--green);color:var(--green);">Return</button>
+            </div>
+            <!-- Returned -->
+            <div class="loan-row" style="opacity:.55;">
+              <div style="flex:1;">
+                <div class="loan-row-name">Clara Zhou</div>
+                <div style="font-size:12px;font-weight:500;margin:2px 0;">Sapiens</div>
+                <div class="loan-row-dates">Returned 2026-06-18</div>
+              </div>
+              <span class="badge green">Returned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changes summary -->
+  <div class="changes">
+    <h3>What changes (and what doesn't)</h3>
+    <ul>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Book browse replaces bare table.</b> Card grid with cover placeholder (book-icon SVG, replaced by real <code>coverImage</code> when present), availability badge (green/amber/red by <code>copiesAvailable</code>), title search, genre filter chips.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Book detail adds hero, richtext, author chip, availability boxes.</b> Cover thumbnail, richtext description via <code>CroutonEditorPreview</code>, linked author section (avatar initials + name + year born + book count), 3-box availability summary, inline Borrow CTA.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Author detail shows bio and books list.</b> Avatar initials, bio text, born/died years, scrollable grid of that author's books with availability badges and View links.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Loan form: borrow + return flows.</b> Borrow: modal/slide with book summary, borrower name, borrowed-at + due-at date fields, confirm action. Return: active-loans list with overdue highlight (red), active (blue), returned (dimmed green) states; inline Return button sets <code>returnedAt</code>.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Scope.</b> All changes land in <code>pocs/library-catalog/app/</code>. Generated admin tables (<code>CroutonCollection</code>) remain unchanged — these are new browse/public-facing pages layered on top. No <code>packages/</code> changes.</span></li>
+    </ul>
+  </div>
+
+  <footer class="fin">Mockup only · pure HTML/CSS/SVG, no JS · issue #471 · epic #453 · library-catalog POC</footer>
+
+</div>
+</body>
+</html>
