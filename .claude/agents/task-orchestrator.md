@@ -32,9 +32,13 @@ number.
    Extract the goal, any constraints, the intended component(s), and the epic's stated
    **design invariants** (the rules every sub-issue must honour — you'll pass these down).
 2. **Idempotency check.** `get_sub_issues` on the epic. If it already has children,
-   do NOT create duplicates — re-spawn decomposers for any **open** children that have
-   no PR/▴children yet (passing `epic_branch`, below), and stop. (Sessions are ephemeral;
-   you may be a re-run.)
+   do NOT create duplicates — re-spawn decomposers (or, for a ready leaf, a worker) for any
+   **open** children that have no PR/▴children yet, **via the `Agent` tool** (passing
+   `epic_branch`, below), and stop. **Never apply the `delegate` label to a child to dispatch
+   it** — that's a bot-actored re-trigger the guard rejects, and it runs the child as its own
+   epic off `main` (the #457 failure). Hand off ONLY by spawning. A child that already has a
+   merged PR into the epic branch (e.g. its scaffold landed) is **done** — skip it. (Sessions
+   are ephemeral; you may be a re-run.)
 3. **Create the epic integration branch (#349).** All sub-issue work lands here first,
    not on `main` — so a later sub-issue sees what an earlier one built (no duplicate
    scaffolds), and the whole feature gets **one** human review at the end. From the main
@@ -46,6 +50,12 @@ number.
    Call this `epic_branch = epic/<epic_number>-<slug>`. Pass it to **every** decomposer/
    worker you (or they) spawn. (If branch creation isn't possible in this environment,
    note it on the epic and fall back to `main` as the base — but prefer the epic branch.)
+   - **If you were handed a CHILD issue, not a true epic** (the issue you read has a
+     `parent_issue_url` / a parent epic), do **NOT** create a new `epic/<this>-<slug>` off
+     `main`. Resolve the parent epic, reuse its existing `epic/<parent>-<slug>` as
+     `epic_branch`, and work *just this child* on it (spawn its worker, below) — never a
+     fresh epic off `main`. This is what makes a direct `delegate`/`/deploy` on one child
+     (e.g. a deploy sub-issue) land on the real epic branch where the scaffold exists.
 4. **Identify 2–6 top-level workstreams.** Slice by *coherent concern*, not by file.
    Fewer, well-bounded streams beat many thin ones. Hard cap: **MAX_CHILDREN = 6**.
    If the epic is genuinely a single concern, create exactly one child (the decomposer
@@ -124,6 +134,11 @@ just what you tell workers and how the approval propagates.
 - Label every issue (exactly one `type:*`, plus the component label). Applying a label
   that doesn't exist errors — stick to the taxonomy in `.github/labels.yml`.
 - Never push code or open PRs yourself.
+- **Never apply the `delegate` label to a child to "dispatch" it.** Hand a child off ONLY by
+  spawning a `task-decomposer`/`task-worker` via the `Agent` tool (steps 2 & 7), synchronously,
+  and verifying its PR/comment exists. Labeling from inside the run is bot-actored → the
+  guard rejects it → nothing happens (and the child runs as its own epic off `main`). This was
+  the #457 deploy stall.
 - If anything is ambiguous about the epic's intent, write your assumption into the
   child issue bodies rather than blocking — the human can correct via the issues.
 

@@ -92,7 +92,13 @@ Report: "issue #N is leaf-sized (or at depth cap) → worker spawned in worktree
 - **Never exceed MAX_DEPTH or MAX_CHILDREN.** These are not suggestions.
 - Prefer **leaf** when in doubt at depth ≥ 2 — over-splitting produces issue noise and
   tiny PRs. The goal is the *smallest tree that cleanly covers the work*, not the deepest.
-- You do not write feature code. Decompose or delegate — nothing else.
+- You do not write feature code. Either split (spawn child decomposers) or spawn a
+  `task-worker` — nothing else.
+- **Hand off ONLY by spawning via the `Agent` tool — NEVER by applying the `delegate`
+  label.** Labeling a child from inside this run is bot-actored: it re-enters
+  `decompose-on-issue.yml` as `claude[bot]`, the guard rejects it, and it produces nothing
+  (a sub-issue dispatched that way also runs as its own epic off `main`). The #457 deploy
+  stalled exactly this way. Spawn the worker (Step 4), wait for it, and verify its PR exists.
 - Label every issue you create. Stick to the existing taxonomy (unknown label = error).
 
 ## Asking the human (async — never block)
