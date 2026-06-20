@@ -11,7 +11,9 @@ import { createCroutonSrcTransform } from '../src/runtime/transform/croutonSrc'
 function render(template: string, filename: string, rootDir = '/repo') {
   return compile(template, {
     filename,
-    nodeTransforms: [createCroutonSrcTransform(rootDir)]
+    // Cast at the boundary: the monorepo resolves two @vue/compiler-core versions
+    // (3.5.x), so NodeTransform isn't nominally identical across them at typecheck.
+    nodeTransforms: [createCroutonSrcTransform(rootDir) as never]
   }).code
 }
 

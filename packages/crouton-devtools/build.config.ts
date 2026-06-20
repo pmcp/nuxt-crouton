@@ -25,6 +25,22 @@ export default defineBuildConfig({
       builder: 'mkdist',
       pattern: ['**/*.ts'],
       loaders: ['js']
+    },
+    // Client review-overlay plugin (#489)
+    {
+      input: 'src/runtime/plugins',
+      outDir: 'dist/runtime/plugins',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Pure capture helpers shared by the overlay (#489)
+    {
+      input: 'src/runtime/overlay',
+      outDir: 'dist/runtime/overlay',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
     }
   ],
   declaration: true,

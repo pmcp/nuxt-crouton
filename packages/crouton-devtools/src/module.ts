@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addServerHandler } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addServerHandler, addPlugin } from '@nuxt/kit'
 import { addCustomTab } from '@nuxt/devtools-kit'
 import { createCroutonSrcTransform } from './runtime/transform/croutonSrc'
 
@@ -24,6 +24,9 @@ export default defineNuxtModule<ModuleOptions>({
     // → zero attributes in the build. Runs BEFORE the dev-only early return below
     // because staging is a non-dev build.
     if (process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true') {
+      const reviewResolver = createResolver(import.meta.url)
+
+      // 1. Stamp components with their source path (#490).
       nuxt.options.vite ||= {}
       const vite = nuxt.options.vite as Record<string, any>
       vite.vue ||= {}
@@ -34,6 +37,14 @@ export default defineNuxtModule<ModuleOptions>({
         ...(compilerOptions.nodeTransforms || []),
         createCroutonSrcTransform(nuxt.options.rootDir)
       ]
+
+      // 2. Expose the flag to the client + mount the in-page review overlay (#489).
+      nuxt.options.runtimeConfig.public ||= {}
+      ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonReview = true
+      addPlugin({
+        src: reviewResolver.resolve('./runtime/plugins/review-overlay.client'),
+        mode: 'client'
+      })
     }
 
     // Only enable in development mode

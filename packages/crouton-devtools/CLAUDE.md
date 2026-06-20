@@ -10,6 +10,8 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 |------|---------|
 | `src/module.ts` | Nuxt module entry point |
 | `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
+| `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
+| `src/runtime/overlay/capture.ts` | Pure capture helpers (selector / source-file / annotation), unit-tested (#489) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
@@ -133,6 +135,24 @@ app's `cf:staging` script, never `cf:deploy`). Flag absent → transform not reg
 
 Registered in `module.ts` *before* the dev-only early return (staging is a non-dev
 build). Verified by `test/croutonSrc.test.ts`.
+
+### The in-page overlay (#489)
+
+Under the same `NUXT_PUBLIC_CROUTON_REVIEW` gate, the module registers a client
+plugin (`runtime/plugins/review-overlay.client.ts`) that renders a self-contained
+feedback toolbar on the preview: toggle select-mode → hover highlights elements →
+click freezes one and opens a comment box. On send it builds a `ReviewAnnotation`
+(`route`, `cssSelector`, `componentFile` from the nearest `data-crouton-src`,
+`boundingBox`, `commentText`) and POSTs it to `/api/_review`.
+
+- **Vanilla DOM on purpose** — no dependency on the host app's UI library, so it
+  renders identically on any crouton app/sandbox preview.
+- **The `/api/_review` endpoint → GitHub PR comment bridge lands in #491.** Until
+  then the overlay logs + toasts the payload so capture is verifiable standalone.
+- Pure capture logic lives in `runtime/overlay/capture.ts` (DOM-pure, happy-dom
+  unit tests in `test/capture.test.ts`); the plugin is the DOM/UX glue around it.
+- Runtime Nuxt composables are imported from `nuxt/app` (not `#imports`) so the
+  file typechecks even when pulled into a consuming app's program.
 
 ## Architecture
 
