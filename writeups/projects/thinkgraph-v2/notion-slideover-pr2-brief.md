@@ -291,4 +291,3 @@ existing API. State survives reload, syncs across tabs, and doesn't
 disturb the existing dispatch pipeline. Old skills that don't use
 `appendBlock` keep working.
 
-Code word: report back when done.
