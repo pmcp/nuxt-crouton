@@ -1,0 +1,33 @@
+{
+  "table": "library_catalog_books",
+  "key": "title",
+  "rows": [
+    {
+      "title": "Sample title 1",
+      "isbn": "Sample isbn 1",
+      "publishedYear": 1,
+      "coverImage": "",
+      "description": "Sample description content for row 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "copiesTotal": 1,
+      "copiesAvailable": 1
+    },
+    {
+      "title": "Sample title 2",
+      "isbn": "Sample isbn 2",
+      "publishedYear": 2,
+      "coverImage": "",
+      "description": "Sample description content for row 2. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "copiesTotal": 2,
+      "copiesAvailable": 2
+    },
+    {
+      "title": "Sample title 3",
+      "isbn": "Sample isbn 3",
+      "publishedYear": 3,
+      "coverImage": "",
+      "description": "Sample description content for row 3. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "copiesTotal": 3,
+      "copiesAvailable": 3
+    }
+  ]
+}
