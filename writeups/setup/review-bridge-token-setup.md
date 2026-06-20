@@ -4,6 +4,14 @@
 > credential** needed by the preview-review feature, the minimal scope, where it's
 > consumed, and why it's **interim**. Source feature: epic #488 / PR #499.
 
+> ⚠️ **Read this first — this documents the path we are trying to AVOID.** Handing the
+> anonymous preview its *own* GitHub credential (a shared PAT) is the **interim** option.
+> The preferred design is **no service token at all**: the reviewer (or the consuming
+> agent) — both of whom already have GitHub identities — posts the comment. Provision a PAT
+> only as a short-lived stopgap, and expect to retire it (see *Intended end state* and
+> *Future: teams*). For key-consolidation purposes: **do not adopt this as a durable,
+> centrally-managed credential.**
+
 ## TL;DR
 
 A deployed **staging** preview needs to post a `🎯 Preview feedback` comment onto
@@ -70,6 +78,24 @@ follow-up to PR #499):
 
 Provision the PAT as **temporary** and expect to retire it.
 
+## Future: teams / multi-tenant (NOT NOW — design constraint only)
+
+This flow may later be offered to **teams**: many teams, each reviewing their own app's
+previews and posting feedback to their own destination (their repo / their PRs). A single
+shared PAT **does not extend to that** — it can't represent N reviewers/teams, can't be
+scoped per-team, and becomes one high-value secret spanning every tenant. The multi-tenant
+requirement makes the *identity-you-already-have* model effectively mandatory:
+
+- **OAuth (post as the reviewer)** — each team member posts as themselves; no shared secret.
+- **GitHub App** — each team/org **installs** the app on their repo; the app mints
+  per-installation, short-lived tokens. One app, N installations, zero shared PAT.
+
+**Implication for key consolidation:** do **not** standardize on a single long-lived PAT as
+the canonical credential for this feature — it is a dead end the moment teams arrive. Treat
+any PAT provisioned now as throwaway / per-developer, and plan the durable credential as a
+**GitHub App** (or OAuth client) registered once and installed/authorized per team. (Scope
+of *this* doc is the single-repo interim only; the teams build is later.)
+
 ## Machine-readable summary
 
 ```yaml
@@ -95,5 +121,10 @@ credential:
     NUXT_CROUTON_REVIEW_PR: "<pr-number>"
   storage: cloudflare_worker_secret   # wrangler secret put ... --env staging
   rotation_days: 30-90
-  status: interim_retire_for_github_app_or_oauth
+  status: interim_AVOID_prefer_reviewer_or_agent_identity
+  do_not_centralize: true             # not a durable, centrally-managed credential
+  future_multitenant:
+    planned: true                     # teams may use this flow later (not now)
+    single_shared_pat_scales: false
+    durable_model: github_app_per_installation | oauth_per_reviewer
 ```
