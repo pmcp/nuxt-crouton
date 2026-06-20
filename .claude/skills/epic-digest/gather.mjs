@@ -211,9 +211,13 @@ const loose = openNonEpic
 // Actionables — built from data already in flight: merged PRs in the window get
 // their `🧪 How to test` steps + a visual flag; epics that hit 100% (done, but
 // still open → awaiting QA + close) get their `🧪 Verify the whole thing` rollup.
-const PR_ACTIONABLE_CAP = 15
-const prActionables = await Promise.all(
-  mergedPRs.slice(0, PR_ACTIONABLE_CAP).map(async (pr) => {
+const PR_ACTIONABLE_CAP = 15 // how many merged PRs to surface in the band
+const PR_DETAIL_FETCH_CAP = 40 // bound the body-fetch work in wide (backfill) windows
+// Fetch details first, THEN trim — so when a wide window blows past the display
+// cap we keep the PRs that actually carry test steps rather than whatever the
+// search happened to return first (a 24h window is well under the cap → no-op).
+const prDetailed = await Promise.all(
+  mergedPRs.slice(0, PR_DETAIL_FETCH_CAP).map(async (pr) => {
     const { body, labels, files } = await prDetail(pr.number)
     return {
       number: pr.number,
@@ -227,6 +231,8 @@ const prActionables = await Promise.all(
     }
   })
 )
+prDetailed.sort((a, b) => (b.testSteps.length ? 1 : 0) - (a.testSteps.length ? 1 : 0))
+const prActionables = prDetailed.slice(0, PR_ACTIONABLE_CAP)
 const completeEpics = epics.filter((e) => e.total > 0 && e.done >= e.total)
 const epicActionables = await Promise.all(
   completeEpics.map(async (e) => {
