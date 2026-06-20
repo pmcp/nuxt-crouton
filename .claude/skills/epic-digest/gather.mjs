@@ -95,6 +95,60 @@ const statusOfLabels = (names) =>
   : undefined
 const typeOfLabels = (names) => (names.find((n) => n.startsWith('type:')) || '').replace(/^type:/, '')
 
+// ── actionables (the "Needs your eyes" band) ────────────────────────────────
+// Surface what LANDED with the human "How to test" steps the author already
+// wrote — every closeable PR/issue is required to carry a `## 🧪 How to test`
+// section, and a completed epic gets a `## 🧪 Verify the whole thing` rollup.
+// Turn a `🧪`-section's body into a clean list of numbered/bulleted steps.
+const stepsFrom = (sec) =>
+  String(sec || '')
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => /^(\d+[.)]|[-*])\s+/.test(l))
+    .map((l) => l.replace(/^(\d+[.)]|[-*])\s+/, '').replace(/\*\*/g, '').replace(/`/g, '').trim())
+    .filter(Boolean)
+// Prefer the literal "How to test"; fall back to any other 🧪 section (e.g. an
+// epic that titled it "We'll be right if / We'll know by").
+const parseTestSteps = (body) =>
+  stepsFrom(section(body, /^##\s.*how to test/i) || section(body, /^##\s.*🧪/i))
+// A staging/prod preview link if the author dropped one in the body.
+const parsePreviewUrl = (body) => {
+  // Exclude backtick/quotes/angle-brackets too, so a Markdown inline-code or
+  // linked URL (`https://…dev`) doesn't capture a trailing ` / " / > delimiter.
+  const m = String(body || '').match(/https?:\/\/[^\s)`"'<>]+\.(?:pmcp\.dev|friendlyinter\.net)[^\s)`"'<>]*/)
+  return m ? m[0] : undefined
+}
+// A `fix · merged` / `feat · merged` badge from a conventional-commit title.
+const prBadge = (title) => {
+  const m = String(title || '').match(/^(\w+)(?:\([^)]*\))?!?:/)
+  return m ? `${m[1]} · merged` : 'merged'
+}
+// "Visual change" = the PR touched a UI surface or wears a UI sign-off label.
+const VISUAL_FILE = /\.(?:vue|css)$|app\/(?:components|layouts|pages)\//
+const VISUAL_PKG = /crouton-(?:themes|editor)/
+const isVisualPR = (files, names) =>
+  files.some((f) => VISUAL_FILE.test(f.filename) || VISUAL_PKG.test(f.filename)) ||
+  names.some((n) => n === 'ui-approved' || n.startsWith('ui:'))
+
+async function prDetail(number) {
+  try {
+    const [pr, files] = await Promise.all([
+      gh(`/repos/${OWNER}/${NAME}/pulls/${number}`),
+      gh(`/repos/${OWNER}/${NAME}/pulls/${number}/files?per_page=100`).catch(() => [])
+    ])
+    return { body: pr.body || '', labels: labelNames(pr), files: Array.isArray(files) ? files : [] }
+  } catch {
+    return { body: '', labels: [], files: [] }
+  }
+}
+async function issueComments(number) {
+  try {
+    return await gh(`/repos/${OWNER}/${NAME}/issues/${number}/comments?per_page=100`)
+  } catch {
+    return []
+  }
+}
+
 async function subIssues(number) {
   try {
     return await gh(`/repos/${OWNER}/${NAME}/issues/${number}/sub_issues?per_page=100`)
@@ -156,6 +210,48 @@ const loose = openNonEpic
   .filter((i) => !i.parent_issue_url && !childNumbers.has(i.number) && notStanding(i))
   .map((i) => ({ number: i.number, title: i.title, url: i.html_url, type: typeOfLabels(labelNames(i)) || 'other' }))
 
+// Actionables — built from data already in flight: merged PRs in the window get
+// their `🧪 How to test` steps + a visual flag; epics that hit 100% (done, but
+// still open → awaiting QA + close) get their `🧪 Verify the whole thing` rollup.
+const PR_ACTIONABLE_CAP = 15 // how many merged PRs to surface in the band
+const PR_DETAIL_FETCH_CAP = 40 // bound the body-fetch work in wide (backfill) windows
+// Fetch details first, THEN trim — so when a wide window blows past the display
+// cap we keep the PRs that actually carry test steps rather than whatever the
+// search happened to return first (a 24h window is well under the cap → no-op).
+const prDetailed = await Promise.all(
+  mergedPRs.slice(0, PR_DETAIL_FETCH_CAP).map(async (pr) => {
+    const { body, labels, files } = await prDetail(pr.number)
+    return {
+      number: pr.number,
+      title: pr.title,
+      url: pr.html_url,
+      kind: 'pr',
+      label: prBadge(pr.title),
+      hasVisual: isVisualPR(files, labels),
+      testSteps: parseTestSteps(body),
+      ...(parsePreviewUrl(body) ? { previewUrl: parsePreviewUrl(body) } : {})
+    }
+  })
+)
+prDetailed.sort((a, b) => (b.testSteps.length ? 1 : 0) - (a.testSteps.length ? 1 : 0))
+const prActionables = prDetailed.slice(0, PR_ACTIONABLE_CAP)
+const completeEpics = epics.filter((e) => e.total > 0 && e.done >= e.total)
+const epicActionables = await Promise.all(
+  completeEpics.map(async (e) => {
+    const cmts = await issueComments(e.number)
+    const rollup = [...cmts].reverse().find((c) => /##\s.*verify the whole thing/i.test(c.body || ''))
+    return {
+      number: e.number,
+      title: e.title,
+      url: e.url,
+      kind: 'epic',
+      hasVisual: false,
+      testSteps: rollup ? stepsFrom(section(rollup.body, /^##\s.*verify the whole thing/i)) : []
+    }
+  })
+)
+const actionables = [...epicActionables, ...prActionables]
+
 const data = {
   generatedAt: new Date().toISOString(),
   windowHours,
@@ -165,6 +261,7 @@ const data = {
     closed: closed.filter(notStanding).map((i) => slim(i, 'issue')),
     mergedPRs: mergedPRs.map((i) => slim(i, 'pr'))
   },
+  actionables,
   epics,
   loose
 }

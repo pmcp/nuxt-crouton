@@ -45,12 +45,12 @@ In local dev, everything runs in-process — the crossws handler at `/api/collab
 Client → ws://localhost:3000/api/collab/{roomId}/ws → crossws handler (in-process)
 ```
 
-### Production (Cloudflare Pages)
+### Production (Cloudflare Workers)
 
-Two hard constraints force a split architecture in production:
+Two facts force a split architecture in production:
 
-1. **Cloudflare Pages cannot host Durable Objects** — DO classes must live in a separate Worker
-2. **Nitro cannot proxy WebSocket frames** — a Nitro middleware can forward the 101 upgrade, but no messages flow through
+1. **Nitro cannot proxy WebSocket frames** — a Nitro middleware can forward the 101 upgrade, but no messages flow through, so the client must reach the Durable Object directly.
+2. **The Durable Object ships as its own standalone Worker** — decoupled from the Nuxt app's deploy lifecycle; the app's Nitro `cloudflare_module` worker doesn't export DO classes, so `CollabRoom` lives in a dedicated Worker bound via `script_name`.
 
 The client must connect **directly** to a standalone collab worker, bypassing Nitro entirely:
 
@@ -68,7 +68,7 @@ CollabRoom Durable Object
   ├── DO storage (fast) + D1 (durable)
   └── Auth: HMAC token verification
 
-App (Cloudflare Pages)
+Nuxt app (Cloudflare Workers)
   └── /api/collab/token → HMAC-signed {userId, exp} using BETTER_AUTH_SECRET
 ```
 
@@ -115,10 +115,10 @@ The `type` query parameter differentiates room types:
 ### Known Constraints
 
 - **Nitro cannot proxy WebSocket frames** — The 101 upgrade succeeds but no messages flow. Clients must connect directly to the collab worker in production.
-- **Cloudflare Pages cannot host Durable Objects** — CollabRoom must live in a separate Worker, referenced via `script_name`.
+- **CollabRoom ships as a dedicated Worker** — the DO lives in its own standalone Worker (decoupled deploy lifecycle; the app's Nitro worker doesn't export DO classes), referenced via `script_name`.
 - **`NUXT_PUBLIC_COLLAB_WORKER_URL` is build-time** — It's baked into the client bundle. Changing it requires a rebuild.
 - **Token expiry is 60 seconds** — Enough for initial connection. Reconnections auto-fetch a fresh token.
-- **`BETTER_AUTH_SECRET` must match** — Both the Pages app and collab worker use the same secret for HMAC signing/verification.
+- **`BETTER_AUTH_SECRET` must match** — Both the Nuxt app and collab worker use the same secret for HMAC signing/verification.
 
 ## Real-Time Collection Sync
 
@@ -191,7 +191,7 @@ export default defineNuxtConfig({
 
 ### 2. Deploy a Collab Worker (Production)
 
-Cloudflare Pages cannot host Durable Objects. You need a standalone Worker:
+The collab Durable Object ships as a standalone Worker:
 
 ```
 workers/collab-worker/
@@ -221,7 +221,7 @@ new_classes = ["CollabRoom"]
 Deploy the worker and set the shared secret:
 ```bash
 cd workers/collab-worker
-npx wrangler secret put BETTER_AUTH_SECRET  # Same value as your Pages app
+npx wrangler secret put BETTER_AUTH_SECRET  # Same value as your Nuxt app
 npx wrangler deploy
 ```
 
@@ -249,9 +249,9 @@ npx wrangler d1 execute <DB_NAME> --remote \
 
 ### 5. Deploy Order
 
-1. Deploy collab worker first (Pages app references it via `script_name`)
+1. Deploy collab worker first (the Nuxt app references it via `script_name`)
 2. Run D1 migration (first time only)
-3. Deploy Pages app with `NUXT_PUBLIC_COLLAB_WORKER_URL` set
+3. Deploy the Nuxt app with `NUXT_PUBLIC_COLLAB_WORKER_URL` set
 
 ### 4. Connect from Client
 
