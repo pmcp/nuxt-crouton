@@ -61,6 +61,11 @@ line in the body. Then build:
   URL). The generator wires every terminal node into it and colours it violet.
 - **ref** (optional, per node) — a top-line label override (e.g. `"W2"`) for nodes that aren't
   real issues, like an epic's workstreams before it's decomposed. Defaults to `#<id>`.
+- **feedbackUrl** (optional) — turns the diagram's footer into a clickable **"💬 Comment or send
+  edits"** link (in the `.excalidraw` *and* the PNG), pointing at where the diagram is discussed —
+  pass the **PR URL**. Defaults to the epic issue URL. Note an Excalidraw link can only *navigate*:
+  it lands the human on the thread to comment; it can't capture edited geometry on its own — for
+  that they paste an excalidraw Copy-link or attach the exported PNG there.
 - **slug** — kebab-case; drives the output filenames. Reuse the same slug every regeneration so
   the diff stays small and the sticky comment keeps pointing at the same files.
 

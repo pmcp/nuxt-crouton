@@ -253,8 +253,14 @@ function arrowEl(id, from, to) {
   }
 }
 
+// Where in-diagram "comment / send edits" links point: an explicit feedbackUrl, else the epic issue.
+export function feedbackUrl(graph) {
+  return graph.feedbackUrl || (graph.epic != null ? `https://github.com/pmcp/nuxt-crouton/issues/${graph.epic}` : null)
+}
+
 // A free-standing (unbound) text label — used for the scene's title/subtitle/footer chrome.
-function labelEl(id, x, y, text, { fontSize = 16, color = '#1e1e1e', align = 'left', width = 600 } = {}) {
+// `link` (optional) makes the whole label a clickable hyperlink in Excalidraw.
+function labelEl(id, x, y, text, { fontSize = 16, color = '#1e1e1e', align = 'left', width = 600, link = null } = {}) {
   const lineHeight = 1.25
   return {
     id,
@@ -280,7 +286,7 @@ function labelEl(id, x, y, text, { fontSize = 16, color = '#1e1e1e', align = 'le
     isDeleted: false,
     boundElements: null,
     updated: FIXED_UPDATED,
-    link: null,
+    link,
     locked: false,
     text,
     fontSize,
@@ -360,14 +366,23 @@ export function toExcalidraw(graph) {
     )
     lx += 22 + c.label.length * 7.2 + 24
   })
+  const fbUrl = feedbackUrl(graph)
   elements.push(
-    labelEl(
-      'chrome-foot',
-      MARGIN,
-      canvasH - 28,
-      'Generated from the GitHub sub-issue tree · rearrange freely, then commit this .excalidraw back.',
-      { fontSize: 12, color: '#9ca3af', width: canvasW - MARGIN * 2 },
-    ),
+    fbUrl
+      ? labelEl(
+          'chrome-foot',
+          MARGIN,
+          canvasH - 28,
+          '💬 Tap to comment or send edits → opens the discussion (then paste a Copy-link or attach the exported PNG)',
+          { fontSize: 12, color: '#1971c2', width: canvasW - MARGIN * 2, link: fbUrl },
+        )
+      : labelEl(
+          'chrome-foot',
+          MARGIN,
+          canvasH - 28,
+          'Generated from the GitHub sub-issue tree · rearrange freely, then commit this .excalidraw back.',
+          { fontSize: 12, color: '#9ca3af', width: canvasW - MARGIN * 2 },
+        ),
   )
 
   // Resolve a rect id per node (and the goal), record bound element ids.
@@ -561,6 +576,7 @@ export function toSvg(graph) {
     .t-heading{font-size:20px;font-weight:800;fill:#111827;}
     .t-sub{font-size:12.5px;fill:#6b7280;}
     .t-foot{font-size:11px;fill:#9ca3af;}
+    .t-foot-link{font-size:11.5px;fill:#1971c2;text-decoration:underline;}
   </style>
   <rect x="0" y="0" width="${canvasW}" height="${canvasH}" fill="#ffffff"/>
   <text x="${MARGIN}" y="30" class="t-heading">${heading}</text>
@@ -568,7 +584,11 @@ export function toSvg(graph) {
   ${legendSvg}
   ${arrowParts.join('\n  ')}
   ${boxParts.join('\n  ')}
-  <text x="${MARGIN}" y="${canvasH - 12}" class="t-foot">Generated from the GitHub sub-issue tree · edit the .excalidraw to change the layout, then commit it back.</text>
+  ${
+    feedbackUrl(graph)
+      ? `<a href="${esc(feedbackUrl(graph))}"><text x="${MARGIN}" y="${canvasH - 12}" class="t-foot-link">💬 Comment or send edits → open the discussion (paste a Copy-link or attach this PNG)</text></a>`
+      : `<text x="${MARGIN}" y="${canvasH - 12}" class="t-foot">Generated from the GitHub sub-issue tree · edit the .excalidraw to change the layout, then commit it back.</text>`
+  }
 </svg>`
 }
 
