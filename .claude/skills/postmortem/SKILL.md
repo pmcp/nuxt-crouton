@@ -88,10 +88,27 @@ Don't open issues the human didn't accept; don't pad with filler — 1–3 real 
 generic ones; and **never open a `workflow` issue that duplicates an existing follow-up
 epic** — link it instead.
 
-## Step 5 — Hand off
-Report: the epic comment URL, and the list of `workflow` issues opened (with URLs).
-This closes the learning loop — the proposals are now on the board, ready to be
-picked up like any other work.
+## Step 5 — Propagate the change to neighbouring issues
+
+The epic's decisions often land on *other* tickets — a sibling epic, a consumer, something it
+supersedes. Tell them, so nobody works around a change they didn't know happened.
+
+- **Find neighbours:** issues/PRs referenced by the epic, its sub-issues, and their PR bodies;
+  plus a keyword `search_issues` on the change (reuse the Step-4 dedup search).
+- **Open neighbour → always comment:** one line of *what changed for you* + the link
+  (e.g. "#515's release now wires to this App — see #NN"). This is how live work wires *into* the
+  change instead of around it.
+- **Closed neighbour → comment ONLY if the change supersedes/contradicts what it decided** — a
+  terse "superseded / updated by #NN" forward-pointer for later archaeology. **Never** for mere
+  topical relevance (dead-ticket noise).
+- Keep it to the genuinely-affected few — a couple of true cross-links beat ten tangential
+  mentions (same spirit as the Step-4 dedup). Each comment carries the `🤖` provenance header and
+  is informational (won't trip agent-resume triggers).
+
+## Step 6 — Hand off
+Report: the epic comment URL, the list of `workflow` issues opened (with URLs), and the neighbour
+issues you cross-linked. This closes the learning loop — the proposals are on the board and the
+change is wired to everything it touches.
 
 ## Conventions & gotchas
 - **After verify, before close.** Don't close the epic until the postmortem is
