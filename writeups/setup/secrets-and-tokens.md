@@ -51,6 +51,17 @@ Less privilege, fewer secrets — keep it this way.
 
 When a **deployed staging Worker** needs to talk to GitHub *by itself* (no human, no login on the user's phone), it carries its own token — stored as a **Cloudflare Worker secret**, never in CI or the repo. Each feature gets the **narrowest** token, with a short expiry, and is treated as **interim**.
 
+> ### 🟢 Per *capability*, NOT per app — and most apps need **none**
+> A Tier-2 token is only needed when a deployed Worker **calls the GitHub API itself at runtime**.
+> A normal app or POC (library-catalog, a bookmarks app, velo, fanfare…) just serves itself and
+> **never touches GitHub** → **0 Tier-2 tokens** (its only secret is `BETTER_AUTH_SECRET`). So:
+> - The number of distinct tokens you manage = the number of **capabilities** (today **2**:
+>   ticket-editor `Contents:R/W`, review-bridge `PRs:write`) — **not** the number of apps/POCs.
+> - The **same** token value is reused across every Worker that runs that capability (identical
+>   scope). E.g. review-bridge turned on for 5 staging apps = **one** token, `wrangler secret put`
+>   into each of the 5 — *not* 5 tokens.
+> - A wave of new POCs adds **nothing** to this list. The GitHub App (below) later removes even the 2.
+
 | Feature (component) | Worker secret name | Action | Minimal scope |
 |---|---|---|---|
 | **ticket-editor** (`workers/ticket-editor`) — commits an edited Excalidraw diagram back | `GITHUB_TOKEN` | commit files via Contents API | fine-grained PAT, repo-only · **Contents: R/W** |
@@ -108,6 +119,19 @@ The convergent answer for **all of Tier 2** is a single **Crouton GitHub App** (
 - replaces *both* the ticket-editor and review-bridge PATs,
 - scales to teams (one App, N installations, **zero shared secret**),
 - and fixes the unauthenticated-endpoint risk (the action is tied to a real install/identity).
+
+**How it authenticates** (why there's no long-lived token to leak):
+1. Sign a short JWT with the App's **private key** → "I am the Crouton App".
+2. Exchange it for an **installation token**, scoped to one repo, valid ~1 hour.
+3. Use that token for the commit/comment — it then expires on its own.
+
+The **one** durable secret is the **private key** (no expiry; it never touches the API directly — it only signs JWTs to mint tokens). `@octokit/auth-app` does all three steps and caches/refreshes for you.
+
+> **"Is ~1 hour too short — can I prolong it?"** No need, and no: GitHub fixes installation tokens
+> at ~1 hour and you **can't** extend them — but you never *store* one. You **mint a fresh token
+> just-in-time** right before each action (a commit/comment takes *seconds*), so 1 hour is enormous
+> headroom. The short life is the **point**: if one leaks it's one repo for under an hour, vs a PAT
+> valid for months. `@octokit/auth-app` auto-refreshes, so even a long-running job never hits the wall.
 
 So: **PAT-now, App-later.** Today's Tier-2 PATs are scaffolding to be torn out once the App lands.
 
