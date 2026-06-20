@@ -1,0 +1,135 @@
+# Secrets & Tokens — what this repo needs (and how to keep it sane)
+
+> **Single source of truth** for every credential `pmcp/nuxt-crouton` uses: what it is,
+> why it exists, the *minimal* scope, where it's stored, and how to (re)create it.
+> Written because the credentials were sprawling — multiple tokens for one job, and
+> scope gaps discovered only by failed deploys. This doc is the antidote.
+
+## The one idea: there are **two tiers** of credential
+
+Almost all the confusion comes from mixing these up. They have opposite rules.
+
+| | **Tier 1 — Build/CI infra** | **Tier 2 — Runtime (a deployed Worker acts on GitHub)** |
+|---|---|---|
+| Who uses it | GitHub Actions (deploy, the agent pipeline) | The *running* Cloudflare Worker, on its own, with no human present |
+| How many | **Few — consolidate to a handful** | **One per feature — do NOT centralize** |
+| Stored in | GitHub Actions secrets | **Cloudflare Worker secrets only** (never CI, never the repo) |
+| Lifetime | Stable, managed once | **Interim / disposable** — short expiry, rotate hard |
+| Durable target | Stays as-is | **One GitHub App** (see the end) |
+
+If you remember nothing else: **Tier 1 = a small fixed set you set up once. Tier 2 = throwaway per-feature tokens that a GitHub App will eventually replace.**
+
+---
+
+## Tier 1 — Build / CI infra credentials
+
+These live as **GitHub Actions secrets** (repo Settings → Secrets and variables → Actions). This is the whole set the repo's CI actually reads:
+
+| Secret | System | Used by (workflows) | Why | Minimal scope |
+|---|---|---|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic | `claude`, `decompose-on-issue`, `resume-on-comment`, `sync-changelogs` | The agent pipeline runs headless → **API-billed** (never a subscription token) | a standard Anthropic API key |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare | `deploy-app` (+ every `deploy-*`), `db-clone`, `db-counts` | `wrangler` deploys Workers + runs D1 ops | Account: Workers Scripts / D1 / KV / R2 **Edit** · **Zone: Workers Routes + DNS Edit** for `pmcp.dev` (+ `friendlyinter.net` for prod) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare | same | which account to deploy into | an identifier — **not secret**, just stored alongside |
+| `PROJECTS_TOKEN` | GitHub | `comment-dispatch`, `schedule-waves`, `project-status` | Applies the `delegate` label **as a human** so the dispatched agent run passes claude-code-action's bot-actor guard; updates the project board | fine-grained PAT, repo `pmcp/nuxt-crouton` only · **Issues: R/W**, **Pull requests: R/W** · expiry set |
+| `GITHUB_TOKEN` | GitHub | `comment-dispatch`, `schedule-waves`, `epic-digest`, `sync-changelogs` | The **built-in** Actions token | **automatic — you never create or store this** |
+| `WORKER_SECRETS_JSON` | Cloudflare/app | `deploy-app` | Bundle of per-app **runtime** secrets pushed to the Worker on deploy (`wrangler secret bulk`) | a JSON object of `{ NAME: value }`; store as a GitHub **Environment** secret (so staging/prod differ) |
+| `THINKGRAPH_*` (×4) | app-specific | `thinkgraph-*` | One app's integration (team id, webhook secret, api url) | scoped to that app only — **not core**; ignore unless touching thinkgraph |
+
+### Why the agent pipeline needs a *human* PAT (`PROJECTS_TOKEN`)
+claude-code-action refuses runs triggered by **bot** actors. The pipeline is triggered by applying the `delegate` label — so that label must be applied by a *human-attributed* token (the PAT), not the built-in `GITHUB_TOKEN` (bot) or the `claude[bot]` App (bot). That's the one place a human PAT is unavoidable in Tier 1.
+
+### What we deliberately do NOT grant (and why that's good)
+The `claude[bot]` GitHub App (used by claude-code-action) **cannot** push `.github/workflows/` files (`workflows` scope) or dispatch workflows (`actions` scope). Rather than grant those, we **designed around them**:
+- POC deploys are **config-only** (`pocs/<name>/deploy.config.json`, which the bot *can* push) read by one shared `deploy-pocs.yml` — no per-POC workflow file.
+- Deploys auto-fire on the **`pull_request`** event, so no `workflow_dispatch` is needed.
+
+Less privilege, fewer secrets — keep it this way.
+
+---
+
+## Tier 2 — Runtime credentials (a deployed Worker acts on GitHub)
+
+When a **deployed staging Worker** needs to talk to GitHub *by itself* (no human, no login on the user's phone), it carries its own token — stored as a **Cloudflare Worker secret**, never in CI or the repo. Each feature gets the **narrowest** token, with a short expiry, and is treated as **interim**.
+
+| Feature (component) | Worker secret name | Action | Minimal scope |
+|---|---|---|---|
+| **ticket-editor** (`workers/ticket-editor`) — commits an edited Excalidraw diagram back | `GITHUB_TOKEN` | commit files via Contents API | fine-grained PAT, repo-only · **Contents: R/W** |
+| **review-bridge** (`@fyit/crouton-devtools` → `POST /api/_review`) — posts a `🎯 Preview feedback` PR comment | `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` | comment on a PR | fine-grained PAT, repo-only · **Pull requests: write** · **staging only** |
+
+Rules for **every** Tier-2 token:
+- **Cloudflare Worker secret only** — `wrangler secret put <NAME> --env staging`. Never bake into the bundle, never expose to the client, **never on a production Worker**.
+- **Fine-grained, single-repo, least permission, short expiry (30–90 days), rotate hard.**
+- Prefer a **dedicated bot/machine account** over a person's PAT (attributable; doesn't impersonate a human's full access).
+- **Interim by design** — provision as disposable; do not adopt as "the credential."
+
+> ⚠️ Security note (review-bridge): `/api/_review` is currently **unauthenticated** — anyone who reaches the staging URL can trigger a comment. Keep staging behind login, treat the token as low-trust, and rotate aggressively until the App/OAuth model lands.
+
+---
+
+## App **runtime** secrets (every crouton app)
+
+Not GitHub/Cloudflare *platform* creds — these are what the app itself needs at runtime, pushed to the Worker via `WORKER_SECRETS_JSON` (or `wrangler secret`):
+
+| Var | Secret? | What |
+|---|---|---|
+| `BETTER_AUTH_SECRET` | **yes** | signing secret for auth; per-app (or per-environment) |
+| `BETTER_AUTH_URL` | no | the app's public URL — **must match the deployed URL** or auth breaks (this is why the `pmcp.dev` domain binding matters) |
+
+## Local development
+
+The **only** secret local dev needs is `BETTER_AUTH_SECRET`, and the session-start hook already exports a dev value. No Cloudflare creds, no tokens — `pnpm dev` runs on local SQLite (`hub: { db: 'sqlite' }`). Per-app `.env.example` files document the rest.
+
+---
+
+## The sprawl to clean up (why it felt heavy)
+
+1. **Two PAT names for one job** — `DISPATCH_TOKEN` *and* `PROJECTS_TOKEN` (workflows use `DISPATCH_TOKEN || PROJECTS_TOKEN`). Keep **one** (`PROJECTS_TOKEN`); drop the other.
+2. **Multiple Cloudflare deploy tokens** — `workers-deploy`, `three-demo-deploy`, `fanfare-deploy`… all do the same job. Collapse to **one** `crouton-deploy` token (the scope in the Tier-1 table).
+3. **Scope discovered by failure** — the CF token lacked Zone perms, so `*.pmcp.dev` silently didn't bind. Fixed by giving the one token the full least-privilege scope **up front** + a verifier (below).
+
+---
+
+## One-time setup checklist (~15 min)
+
+1. **Cloudflare token** — create one `crouton-deploy` (custom token) with: Account → Workers Scripts/D1/KV/R2 **Edit**; Zone → Workers Routes + DNS **Edit** for `pmcp.dev` (+ `friendlyinter.net` for prod). Set repo secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Delete the redundant per-app CF tokens.
+2. **Pipeline PAT** — fine-grained, repo-only, Issues + Pull requests **R/W**, expiry. Set repo secret `PROJECTS_TOKEN`. (Drop `DISPATCH_TOKEN`.)
+3. **Anthropic** — set `ANTHROPIC_API_KEY`.
+4. **Per-environment app secrets** — set `WORKER_SECRETS_JSON` (incl. `BETTER_AUTH_SECRET`, env-specific `BETTER_AUTH_URL`) as a **GitHub Environment** secret on `staging` (and `production`).
+5. **Tier-2 (only when a feature needs it)** — create a narrow fine-grained PAT, `wrangler secret put` it on the **staging** Worker. Don't add it to CI.
+6. **Verify** — run the secrets/scope check (proposed below) so setup is *proven*, not discovered by a failed deploy.
+
+---
+
+## Durable direction: one **Crouton GitHub App** (retires Tier 2)
+
+A shared PAT is a dead end the moment this goes **multi-tenant** (teams reviewing their own apps): one PAT can't represent N reviewers/teams and becomes a single high-value secret spanning every tenant.
+
+The convergent answer for **all of Tier 2** is a single **Crouton GitHub App** (permissions: Contents: write + Pull requests: write), **installed per repo/org**, minting **short-lived per-installation tokens**. One App:
+- replaces *both* the ticket-editor and review-bridge PATs,
+- scales to teams (one App, N installations, **zero shared secret**),
+- and fixes the unauthenticated-endpoint risk (the action is tied to a real install/identity).
+
+So: **PAT-now, App-later.** Today's Tier-2 PATs are scaffolding to be torn out once the App lands.
+
+*(Tier 1's pipeline PAT can't become this App — the agent pipeline needs a **human** actor to pass the bot-actor guard, which an App token isn't. Tier 1 keeps its human PAT.)*
+
+---
+
+## Quick reference
+
+```
+Tier 1 (GitHub Actions secrets — set up once, consolidate):
+  ANTHROPIC_API_KEY            agent pipeline (API-billed)
+  CLOUDFLARE_API_TOKEN         1 token: Account Workers/D1/KV/R2 + Zone Routes/DNS
+  CLOUDFLARE_ACCOUNT_ID        identifier (not secret)
+  PROJECTS_TOKEN               1 human PAT: Issues+PRs R/W (label dispatch; drop DISPATCH_TOKEN)
+  WORKER_SECRETS_JSON          per-env bundle → Worker runtime secrets (Environment secret)
+  GITHUB_TOKEN                 built-in, automatic — do nothing
+
+Tier 2 (Cloudflare Worker secrets — per feature, disposable, → GitHub App):
+  ticket-editor   GITHUB_TOKEN                       Contents: R/W
+  review-bridge   NUXT_CROUTON_REVIEW_GITHUB_TOKEN   Pull requests: write (staging only)
+
+App runtime:  BETTER_AUTH_SECRET (secret) · BETTER_AUTH_URL (= deploy URL)
+Local dev:    BETTER_AUTH_SECRET only (hook exports a dev value)
+```
