@@ -1,5 +1,6 @@
 import { defineNuxtModule, createResolver, addServerHandler } from '@nuxt/kit'
 import { addCustomTab } from '@nuxt/devtools-kit'
+import { createCroutonSrcTransform } from './runtime/transform/croutonSrc'
 
 export interface ModuleOptions {}
 
@@ -13,6 +14,28 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {},
   async setup(_options, nuxt) {
+    // --- Preview-review source stamping (epic #488, #490) -------------------
+    // Inject `data-crouton-src="<relative .vue path>"` on each component's root
+    // element at COMPILE time, so a click on a deployed staging preview resolves
+    // to the owning source file (the capture half of the agent sign-off loop).
+    //
+    // Gated like the eruda layer: opt-in via NUXT_PUBLIC_CROUTON_REVIEW (set by a
+    // `cf:staging` build), NEVER production. Flag absent → transform not installed
+    // → zero attributes in the build. Runs BEFORE the dev-only early return below
+    // because staging is a non-dev build.
+    if (process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true') {
+      nuxt.options.vite ||= {}
+      const vite = nuxt.options.vite as Record<string, any>
+      vite.vue ||= {}
+      vite.vue.template ||= {}
+      vite.vue.template.compilerOptions ||= {}
+      const compilerOptions = vite.vue.template.compilerOptions
+      compilerOptions.nodeTransforms = [
+        ...(compilerOptions.nodeTransforms || []),
+        createCroutonSrcTransform(nuxt.options.rootDir)
+      ]
+    }
+
     // Only enable in development mode
     if (nuxt.options.dev === false) {
       return

@@ -9,6 +9,7 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | File | Purpose |
 |------|---------|
 | `src/module.ts` | Nuxt module entry point |
+| `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
@@ -104,6 +105,34 @@ When `nuxt-crouton-events` is installed, the Activity tab appears automatically:
 - **Event ↔ Operation Correlation** - Link HTTP operations to events via itemId
 
 The module auto-detects the events package via layer inspection.
+
+## Preview-review source stamping — `data-crouton-src` (epic #488, #490)
+
+A build-time Vue **compiler** transform that injects
+`data-crouton-src="<relative .vue path>"` onto each component's *root* element, so
+a click on a deployed staging preview resolves to the owning source file. This is
+the capture primitive behind the agent UI sign-off loop (annotate a preview →
+structured PR comment → agent edits *that* file).
+
+Why a compiler transform (not Vue DevTools' inspector): DevTools' `data-v-inspector`
+is injected by a **dev-only** Vite middleware and is stripped from `nuxt build`, so
+it can't help on a deployed Workers preview. A compiler `nodeTransform` runs during
+SFC compilation, so the attribute is present in the built SSR + client output.
+
+**Gating — staging only, NEVER production** (mirrors the eruda layer): the transform
+is installed only when `NUXT_PUBLIC_CROUTON_REVIEW=true` at build time (set it in an
+app's `cf:staging` script, never `cf:deploy`). Flag absent → transform not registered
+→ zero attributes in the build. It also skips third-party components under
+`node_modules`, so a click only ever resolves to a file in this repo.
+
+```jsonc
+// app package.json
+"cf:staging": "NUXT_PUBLIC_CROUTON_REVIEW=true NITRO_PRESET=cloudflare_module nuxt build && …",
+"cf:deploy":  "NITRO_PRESET=cloudflare_module nuxt build && …"   // no flag → never stamped
+```
+
+Registered in `module.ts` *before* the dev-only early return (staging is a non-dev
+build). Verified by `test/croutonSrc.test.ts`.
 
 ## Architecture
 
