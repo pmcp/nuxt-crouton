@@ -120,6 +120,13 @@ chose a different design. Four rules now prevent that:
    - `subagent_type: "task-orchestrator"`
    - prompt: `{ epic_issue_number: <epic number>, depth: 0 }` + a short restatement of the
      task so it doesn't need an extra read.
+   - **If `#NN` is a CHILD issue (it has a `parent_issue_url`), not an epic** — e.g. someone
+     `delegate`'d / `/deploy`'d a single sub-issue from the mobile app — pass its parent epic
+     as `epic_issue_number` and name the child to work, OR pass the child with a note that it
+     is a child: the orchestrator must work it on the **parent's** `epic/<parent>-<slug>`
+     branch, **never** mint a new epic off `main` (where the scaffold wouldn't exist). The
+     pipeline hands off by **spawning** agents (`Agent` tool), never by applying the
+     `delegate` label from inside a run (that's bot-actored and self-rejecting).
 3. **Report** the epic url and that orchestration has started. The orchestrator creates the
    `epic/<NN>-<slug>` integration branch; the tree then builds itself onto it (decomposers
    recurse; workers open PRs into the epic branch with `Closes #NN`); a single epic→`main`

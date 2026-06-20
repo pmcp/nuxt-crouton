@@ -55,6 +55,24 @@ cheaper (slightly blunter) split, or raise them to `opus` if decomposition quali
   **already hold its result** — read it, confirm the PR/comment actually exists, and only then
   report. If the spawn didn't deliver, you are **not done**: spawn again (and wait), or do the
   work yourself. There is no fire-and-forget.
+- **Hand off by SPAWNING, never by LABELING (the #457 root cause).** To get a child issue
+  worked you **spawn** it with the `Agent` tool (a `task-decomposer` or `task-worker`) in
+  THIS run and wait for its result. **NEVER apply the `delegate` label to a sub-issue to
+  "dispatch" it.** `delegate` is the *human* entry trigger only: applied from inside a run
+  you are `claude[bot]`, so it re-enters `decompose-on-issue.yml` as a **bot actor** → the
+  bot-actor guard rejects that child run → it produces nothing; worse, a sub-issue dispatched
+  that way runs `/task-decompose` on *itself as a fresh epic off `main`*, where the real
+  epic's scaffold doesn't exist. (This is exactly how the #457 deploy stalled: the
+  orchestrator applied `delegate` to #456/#457 instead of spawning workers — both child runs
+  were bot-rejected, no PR, no deploy.) There is no label-based hand-off: spawn the agent, or
+  do the leaf's work yourself in this run.
+- **A directly-dispatched child resolves to its parent's epic branch — never a new epic off
+  `main`.** When `/task-decompose` is invoked on an issue that is itself a **sub-issue** (its
+  `parent_issue_url` is set / it carries a parent epic), do **NOT** mint a fresh
+  `epic/<child>-<slug>` off `main`. Resolve the parent epic and use its existing
+  `epic/<parent>-<slug>` as the integration base, then work just that child there. Only a
+  true top-level epic creates a new epic branch. (This is what makes a human/`comment-dispatch`
+  `delegate`/`/deploy` on a single child issue land on the right branch instead of off `main`.)
 - **Stop-conditions live in `task-decomposer.md`:** `MAX_DEPTH = 3`, `MAX_CHILDREN = 6`,
   and the four-part LEAF TEST. Tune them there (+ orchestrator's MAX_CHILDREN).
 - **Async human-in-the-loop (`NOTIFY_HANDLE = @pmcp`).** Agents may run headless, so they
