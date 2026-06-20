@@ -14,6 +14,46 @@
       { "number": 352, "title": "fix(crouton-auth): clear session cookie on the staging domain", "url": "https://github.com/pmcp/nuxt-crouton/pull/352", "kind": "pr" }
     ]
   },
+  "actionables": [
+    {
+      "number": 357,
+      "title": "Daily epic-progress digest",
+      "url": "https://github.com/pmcp/nuxt-crouton/issues/357",
+      "kind": "epic",
+      "hasVisual": false,
+      "testSteps": [
+        "Open today's \"📊 Daily epic digest\" issue comment.",
+        "Confirm the new \"Needs your eyes\" band sits at the top.",
+        "Click a test-step's PR link → it jumps to the merged PR."
+      ]
+    },
+    {
+      "number": 391,
+      "title": "New booking-status badges",
+      "url": "https://github.com/pmcp/nuxt-crouton/pull/391",
+      "kind": "pr",
+      "label": "feat · merged",
+      "hasVisual": true,
+      "previewUrl": "https://velo.pmcp.dev/bookings",
+      "testSteps": [
+        "Open Bookings in the velo app.",
+        "Each row shows a coloured status pill (confirmed / pending / cancelled).",
+        "Filter by \"pending\" → only amber rows remain."
+      ]
+    },
+    {
+      "number": 352,
+      "title": "Fix stale staging cookie on logout",
+      "url": "https://github.com/pmcp/nuxt-crouton/pull/352",
+      "kind": "pr",
+      "label": "fix · merged",
+      "hasVisual": false,
+      "testSteps": [
+        "Log in on staging, then log out.",
+        "Cookie is cleared — log straight back in, no stale session."
+      ]
+    }
+  ],
   "epics": [
     {
       "number": 318,

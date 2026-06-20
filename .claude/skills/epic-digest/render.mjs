@@ -95,9 +95,62 @@ function looseGroups(items) {
     .map((k) => [k, m.get(k)])
 }
 
+// Actionables: things that LANDED in the window and want the owner's eyes — each
+// carrying the human "How to test" steps the author already wrote. `kind` is
+// "pr" (a merged PR) or "epic" (one that just hit 100% → do one QA pass).
+const actionables = (data.actionables || []).slice().sort((a, b) => {
+  // completed epics first (the "do one QA pass" cards), then visual changes
+  const ka = a.kind === 'epic' ? 0 : 1, kb = b.kind === 'epic' ? 0 : 1
+  if (ka !== kb) return ka - kb
+  return (b.hasVisual ? 1 : 0) - (a.hasVisual ? 1 : 0)
+})
+
 // ── HTML ─────────────────────────────────────────────────────────────────────
 const card = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;'
 const muted = 'color:#64748b;'
+
+function actionableCard(a) {
+  const isEpic = a.kind === 'epic'
+  const badge = a.label || (isEpic ? '✓ Epic complete · do one QA pass' : 'merged')
+  const badgeStyle = isEpic ? 'background:#ecfdf5;color:#047857' : 'background:#f1f5f9;color:#475569'
+  const accent = isEpic ? 'border-left:4px solid #10b981;' : ''
+  const visual = a.hasVisual
+    ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#4338ca">👁 visual change</span> `
+    : ''
+  const steps = (a.testSteps && a.testSteps.length)
+    ? `<ol style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.7">${a.testSteps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>`
+    : `<div style="${muted}font-size:12px;font-style:italic">No test steps — author should add a “🧪 How to test” section.</div>`
+  const links = [
+    `<a href="${esc(a.url)}" style="color:#0f766e;text-decoration:none">→ ${isEpic ? `Verify rollup (#${esc(a.number)})` : `PR #${esc(a.number)}`}</a>`
+  ]
+  if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" style="color:#0f766e;text-decoration:none">staging preview</a>`)
+  return `
+  <tr><td style="padding:0 0 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}${accent}"><tr><td style="padding:16px 18px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="font-size:15px;font-weight:600">
+          <a href="${esc(a.url)}" style="color:#0f172a;text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
+        </td>
+        <td align="right" style="white-space:nowrap">${visual}<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;${badgeStyle}">${esc(badge)}</span></td>
+      </tr></table>
+      <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;padding:12px 14px;margin-top:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#b45309;margin-bottom:6px">🧪 How to test</div>
+        ${steps}
+      </div>
+      <div style="margin-top:10px;font-size:12px">${links.join(' · ')}</div>
+    </td></tr></table>
+  </td></tr>`
+}
+
+function actionablesSection(items) {
+  if (!items || !items.length) return ''
+  return `
+    <tr><td style="padding:0 0 10px">
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#b45309">🧪 Needs your eyes — test what landed</div>
+      <div style="${muted}font-size:13px;margin-top:4px">${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h, ready for you to click through and sign off on.</div>
+    </td></tr>
+    ${items.map(actionableCard).join('')}`
+}
 
 const ACTIVITY_CAP = 8
 function activityList(items, emptyText, cap = ACTIVITY_CAP) {
@@ -239,6 +292,8 @@ const html = `<!doctype html>
       <div style="${muted}font-size:13px;margin-top:2px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
+    ${actionablesSection(actionables)}
+
     <tr><td style="padding:0 0 22px">
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}margin:0 0 10px">Since yesterday</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="8" style="margin:-8px"><tr>
@@ -291,10 +346,32 @@ const bar = (e) => {
   return `[${'#'.repeat(filled)}${'.'.repeat(20 - filled)}] ${e.done}/${e.total}  ${p}%`
 }
 
+const txtActionables = (items) => {
+  if (!items || !items.length) return ''
+  return (
+    `NEEDS YOUR EYES — TEST WHAT LANDED (${items.length})\n\n` +
+    items
+      .map((a) => {
+        const isEpic = a.kind === 'epic'
+        const badge = a.label || (isEpic ? 'Epic complete · do one QA pass' : 'merged')
+        const head = `#${a.number}  ${a.title}  [${badge}]${a.hasVisual ? '  (visual change)' : ''}`
+        const steps = (a.testSteps && a.testSteps.length)
+          ? a.testSteps.map((s, i) => `    ${i + 1}. ${s}`).join('\n')
+          : '    (no test steps — author should add a "How to test" section)'
+        const refLabel = isEpic ? `Verify rollup #${a.number}` : `PR #${a.number}`
+        const links = `    ${refLabel}: ${a.url}` + (a.previewUrl ? `\n    staging preview: ${a.previewUrl}` : '')
+        return `${head}\n  How to test:\n${steps}\n${links}`
+      })
+      .join('\n\n') +
+    `\n\n${'='.repeat(64)}\n\n`
+  )
+}
+
 const txt =
   `DAILY EPIC DIGEST — ${prettyDate}\n` +
   `${repo} · last ${windowHours}h · ${epics.length} open epic(s)\n` +
   `${'='.repeat(64)}\n\n` +
+  txtActionables(actionables) +
   `SINCE YESTERDAY\n` +
   `  ${(activity.opened || []).length} opened · ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} PRs merged\n\n` +
   `Closed:\n${txtList(activity.closed, 'nothing closed')}\n\n` +
@@ -359,9 +436,33 @@ const mdEpic = (e) => {
     (kids ? `<details><summary>Sub-issues (${e.children.length})</summary>\n\n${kids}\n</details>\n` : '')
   )
 }
+const mdActionables = (items) => {
+  if (!items || !items.length) return ''
+  const block = items
+    .map((a) => {
+      const isEpic = a.kind === 'epic'
+      const badge = a.label || (isEpic ? '✓ Epic complete · do one QA pass' : 'merged')
+      const visual = a.hasVisual ? ' · 👁 visual change' : ''
+      const steps = (a.testSteps && a.testSteps.length)
+        ? a.testSteps.map((s, i) => `   ${i + 1}. ${s}`).join('\n')
+        : `   _No test steps — author should add a “🧪 How to test” section._`
+      const refLabel = isEpic ? `Verify rollup (#${a.number})` : `PR #${a.number}`
+      const links = `   → [${refLabel}](${a.url})` + (a.previewUrl ? ` · [staging preview](${a.previewUrl})` : '')
+      return `- **[#${a.number}](${a.url}) · ${a.title}** — _${badge}${visual}_\n   **🧪 How to test:**\n${steps}\n${links}`
+    })
+    .join('\n')
+  return (
+    `### 🧪 Needs your eyes — test what landed\n` +
+    `_${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h, ready to click through and sign off on._\n\n` +
+    block +
+    `\n\n`
+  )
+}
+
 const md =
   `## 📊 Daily epic digest — ${prettyDate}\n` +
   `_${repo} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}_\n\n` +
+  mdActionables(actionables) +
   `**Since yesterday:** ${(activity.opened || []).length} opened · ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} PRs merged\n\n` +
   `<details><summary>Activity detail</summary>\n\n` +
   `**Closed**\n${mdList(activity.closed, 'nothing closed')}\n\n` +
@@ -385,7 +486,7 @@ if (format === 'md') {
   const mdPath = join(outDir, `epic-digest-${stamp}.md`)
   writeFileSync(resolve(mdPath), md)
   console.log(`✓ Markdown → ${mdPath}`)
-  console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+  console.log(`  ${epics.length} epic(s), ${actionables.length} actionable(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
 } else {
   const htmlPath = join(outDir, `epic-digest-${stamp}.html`)
   const txtPath = join(outDir, `epic-digest-${stamp}.txt`)
@@ -393,5 +494,5 @@ if (format === 'md') {
   writeFileSync(resolve(txtPath), txt)
   console.log(`✓ HTML  → ${htmlPath}`)
   console.log(`✓ Text  → ${txtPath}`)
-  console.log(`  ${epics.length} epic(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
+  console.log(`  ${epics.length} epic(s), ${actionables.length} actionable(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
 }
