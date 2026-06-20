@@ -1,0 +1,9 @@
+{
+  "name": "@fyit/ticket-editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes wrangler@3 dev",
+    "deploy": "npx --yes wrangler@3 deploy"
+  }
+}

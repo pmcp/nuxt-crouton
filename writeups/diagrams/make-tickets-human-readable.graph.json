@@ -1,0 +1,63 @@
+{
+  "epic": 479,
+  "slug": "make-tickets-human-readable",
+  "title": "Make tickets human-readable",
+  "feedbackUrl": "https://github.com/pmcp/nuxt-crouton/pull/487",
+  "nodes": [
+    {
+      "id": 1,
+      "ref": "W1",
+      "title": "Template redesign — TL;DR + fold",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "ref": "W2",
+      "title": "Auto-render dep graph → PNG (#483)",
+      "status": "in_progress"
+    },
+    {
+      "id": 3,
+      "ref": "W3",
+      "title": "Surface visuals in epic rollup",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "ref": "W4",
+      "title": "Status-at-a-glance table",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "ref": "W5",
+      "title": "Mobile pass (acceptance bar)",
+      "status": "pending"
+    }
+  ],
+  "edges": [
+    {
+      "from": 2,
+      "to": 3
+    },
+    {
+      "from": 1,
+      "to": 5
+    },
+    {
+      "from": 2,
+      "to": 5
+    },
+    {
+      "from": 3,
+      "to": 5
+    },
+    {
+      "from": 4,
+      "to": 5
+    }
+  ],
+  "goal": {
+    "label": "Epic reads at a glance on mobile · no Loading"
+  }
+}

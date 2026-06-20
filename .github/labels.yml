@@ -148,6 +148,9 @@
 - name: "worker:collab-worker"
   color: "5319e7"
   description: "Worker: workers/collab-worker"
+- name: "worker:ticket-editor"
+  color: "5319e7"
+  description: "Worker: workers/ticket-editor"
 
 # ── Change type (matches commit convention) ──
 - name: "type:feat"
