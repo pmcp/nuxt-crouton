@@ -124,3 +124,5 @@ fixtures/with-pages/.data
 fixtures/with-bookings/.data
 fixtures/with-assets/.data
 fixtures/with-collab/.data
+# Loose Excalidraw scenes — the editable scene is embedded in the committed PNG instead
+writeups/diagrams/*.excalidraw

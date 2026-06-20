@@ -600,3 +600,92 @@ export function toHtml(graph) {
 <style>html,body{margin:0;padding:0;background:#ffffff;}svg{display:block;}</style>
 </head><body>${svg}</body></html>`
 }
+
+// ── Render an actual Excalidraw SCENE (not a graph) to SVG ────────────────────
+// Used by the import path: a human may have dragged boxes / added elements, so we draw the
+// real elements at their real coordinates rather than re-laying-out from the graph. Generic
+// over the element types our generator emits (rectangle/text/arrow) plus common manual ones.
+function fontStack(fontFamily) {
+  if (fontFamily === 3) return 'ui-monospace, Menlo, Consolas, monospace'
+  return "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+}
+
+function elementBounds(el) {
+  if (Array.isArray(el.points) && el.points.length) {
+    const xs = el.points.map((p) => el.x + p[0])
+    const ys = el.points.map((p) => el.y + p[1])
+    return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }
+  }
+  return { x0: el.x, y0: el.y, x1: el.x + (el.width || 0), y1: el.y + (el.height || 0) }
+}
+
+export function sceneToSvg(scene) {
+  const els = (scene.elements || []).filter((e) => e && !e.isDeleted)
+  if (!els.length) return `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="60"></svg>`
+
+  const pad = 28
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+  for (const el of els) {
+    const b = elementBounds(el)
+    x0 = Math.min(x0, b.x0); y0 = Math.min(y0, b.y0); x1 = Math.max(x1, b.x1); y1 = Math.max(y1, b.y1)
+  }
+  x0 -= pad; y0 -= pad; x1 += pad; y1 += pad
+  const w = Math.max(1, Math.round(x1 - x0))
+  const h = Math.max(1, Math.round(y1 - y0))
+  const bg = (scene.appState && scene.appState.viewBackgroundColor) || '#ffffff'
+
+  // Draw containers/shapes first, then arrows/lines, then text on top (z-order-ish).
+  const shapes = []
+  const lines = []
+  const texts = []
+
+  for (const el of els) {
+    const stroke = el.strokeColor || '#1e1e1e'
+    const fill = el.backgroundColor && el.backgroundColor !== 'transparent' ? el.backgroundColor : 'none'
+    const sw = el.strokeWidth || 2
+    const dash = el.strokeStyle === 'dashed' ? ' stroke-dasharray="8 6"' : el.strokeStyle === 'dotted' ? ' stroke-dasharray="2 6"' : ''
+    if (el.type === 'rectangle') {
+      const rx = el.roundness ? 10 : 0
+      shapes.push(`<rect x="${el.x}" y="${el.y}" width="${el.width}" height="${el.height}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash}/>`)
+    } else if (el.type === 'ellipse') {
+      shapes.push(`<ellipse cx="${el.x + el.width / 2}" cy="${el.y + el.height / 2}" rx="${el.width / 2}" ry="${el.height / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash}/>`)
+    } else if (el.type === 'diamond') {
+      const cx = el.x + el.width / 2, cy = el.y + el.height / 2
+      shapes.push(`<polygon points="${cx},${el.y} ${el.x + el.width},${cy} ${cx},${el.y + el.height} ${el.x},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${dash}/>`)
+    } else if ((el.type === 'arrow' || el.type === 'line' || el.type === 'freedraw') && Array.isArray(el.points)) {
+      const d = el.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${el.x + p[0]} ${el.y + p[1]}`).join(' ')
+      const marker = el.type === 'arrow' && el.endArrowhead !== null ? ' marker-end="url(#sc-arrow)"' : ''
+      lines.push(`<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}"${dash}${marker} stroke-linecap="round" stroke-linejoin="round"/>`)
+    }
+    if (typeof el.text === 'string' && el.text.length && (el.type === 'text' || el.type === 'rectangle')) {
+      const t = el.type === 'text' ? el : null
+      if (t) {
+        const fs = t.fontSize || 16
+        const lh = (t.lineHeight || 1.25) * fs
+        const align = t.textAlign === 'center' ? 'middle' : t.textAlign === 'right' ? 'end' : 'start'
+        const tx = align === 'middle' ? t.x + (t.width || 0) / 2 : align === 'end' ? t.x + (t.width || 0) : t.x
+        const linesArr = String(t.text).split('\n')
+        const block = linesArr
+          .map((ln, i) => `<text x="${tx}" y="${t.y + fs + i * lh}" text-anchor="${align}" font-size="${fs}" font-family="${fontStack(t.fontFamily)}" fill="${t.strokeColor || '#1e1e1e'}">${esc(ln)}</text>`)
+          .join('')
+        texts.push(block)
+      }
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${x0} ${y0} ${w} ${h}">
+  <defs><marker id="sc-arrow" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#868e96"/></marker></defs>
+  <rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="${bg}"/>
+  ${shapes.join('\n  ')}
+  ${lines.join('\n  ')}
+  ${texts.join('\n  ')}
+</svg>`
+}
+
+export function sceneToHtml(scene) {
+  return `<!DOCTYPE html>
+<!-- ticket-diagram scene render — scripts/ticket-excalidraw-import.mjs. Offline, no JS/CDN. -->
+<html lang="en"><head><meta charset="UTF-8"/>
+<style>html,body{margin:0;padding:0;background:#ffffff;}svg{display:block;}</style>
+</head><body>${sceneToSvg(scene)}</body></html>`
+}

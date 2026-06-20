@@ -34,6 +34,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { toExcalidraw, toHtml } from './lib/excalidraw.mjs'
+import { embedScene } from './lib/excalidraw-png.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
@@ -48,6 +49,10 @@ function opt(flag, def) {
 }
 const noPng = argv.includes('--no-png')
 if (noPng) argv.splice(argv.indexOf('--no-png'), 1)
+// By default the editable scene is embedded INTO the PNG (no separate .excalidraw committed).
+// Pass --excalidraw to also dump the loose <slug>.excalidraw for local use.
+const dumpExcalidraw = argv.includes('--excalidraw')
+if (dumpExcalidraw) argv.splice(argv.indexOf('--excalidraw'), 1)
 const outDir = opt('--out-dir', 'writeups/diagrams')
 const [input] = argv.filter((a) => !a.startsWith('--'))
 
@@ -101,13 +106,14 @@ const htmlPath = join(tmpdir(), `ticket-diagram-${slug}.html`)
 
 const scene = toExcalidraw(graph)
 writeFileSync(resolve(REPO_ROOT, graphPath), JSON.stringify(graph, null, 2) + '\n')
-writeFileSync(resolve(REPO_ROOT, excalidrawPath), JSON.stringify(scene, null, 2) + '\n')
 writeFileSync(htmlPath, toHtml(graph))
-
 console.log(`✓ graph → ${graphPath}  (auditable input — re-run to regenerate)`)
-console.log(`✓ scene → ${excalidrawPath}  (${scene.elements.length} elements — editable source of truth)`)
+if (dumpExcalidraw) {
+  writeFileSync(resolve(REPO_ROOT, excalidrawPath), JSON.stringify(scene, null, 2) + '\n')
+  console.log(`✓ scene → ${excalidrawPath}  (${scene.elements.length} elements)`)
+}
 
-// ── PNG via the shared offline renderer ──────────────────────────────────────
+// ── PNG via the shared offline renderer, with the editable scene EMBEDDED ─────
 if (noPng) {
   console.log(`→ PNG (skipped). Render with:`)
   console.log(`    node .claude/skills/ui-proposal/render.mjs ${htmlPath} ${pngPath}`)
@@ -120,10 +126,13 @@ if (noPng) {
   )
   if (r.status !== 0) {
     console.error(
-      `\n⚠ PNG render failed (exit ${r.status}). The .excalidraw + .html are written; ` +
-        `render the PNG manually with:\n    node ${renderer} ${htmlPath} ${pngPath}`,
+      `\n⚠ PNG render failed (exit ${r.status}). Render manually with:\n` +
+        `    node ${renderer} ${htmlPath} ${pngPath}`,
     )
     process.exit(r.status || 1)
   }
-  console.log(`✓ png   → ${pngPath}  (embed THIS in the issue/PR body — renders on mobile)`)
+  // Embed the scene into the PNG → the image IS the editable source (open it in Excalidraw).
+  const rendered = readFileSync(resolve(REPO_ROOT, pngPath))
+  writeFileSync(resolve(REPO_ROOT, pngPath), embedScene(rendered, scene))
+  console.log(`✓ png   → ${pngPath}  (render + ${scene.elements.length}-element editable scene embedded)`)
 }
