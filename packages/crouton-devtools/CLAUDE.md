@@ -11,7 +11,8 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | `src/module.ts` | Nuxt module entry point |
 | `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
 | `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
-| `src/runtime/overlay/capture.ts` | Pure capture helpers (selector / source-file / annotation), unit-tested (#489) |
+| `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
+| `src/runtime/server/api/review.post.ts` | `POST /api/_review` → GitHub PR comment bridge (#491) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
@@ -153,6 +154,28 @@ click freezes one and opens a comment box. On send it builds a `ReviewAnnotation
   unit tests in `test/capture.test.ts`); the plugin is the DOM/UX glue around it.
 - Runtime Nuxt composables are imported from `nuxt/app` (not `#imports`) so the
   file typechecks even when pulled into a consuming app's program.
+
+### The GitHub bridge — `POST /api/_review` (#491)
+
+`runtime/server/api/review.post.ts` turns a posted `ReviewAnnotation` into a PR
+comment via `formatReviewComment` (the `🎯 Preview feedback` Markdown the agent
+keys off) + the GitHub issues-comments API, so the subscribed agent
+(`subscribe_pr_activity`) wakes on it. Registered (staging-only) under the same
+gate; absent from production builds. Returns `{ data, error }`; failures surface a
+status-coded message that never echoes the token.
+
+Config is server-side `runtimeConfig.croutonReview`, populated at **runtime** from
+Worker env so the token never ships in the bundle or reaches the client:
+
+| Env var | Maps to | Notes |
+|---------|---------|-------|
+| `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` | `croutonReview.githubToken` | Worker **secret** — never baked |
+| `NUXT_CROUTON_REVIEW_REPOSITORY` | `croutonReview.repository` | `owner/repo` (may bake from build env) |
+| `NUXT_CROUTON_REVIEW_PR` | `croutonReview.pr` | PR number (or per-request `body.prNumber`) |
+
+Wiring these into an app's `cf:staging` + the `ui-proposal` gate is #492. Server
+imports use `nitropack/runtime` (not `#imports`) for the same typecheck reason as
+the client plugin.
 
 ## Architecture
 

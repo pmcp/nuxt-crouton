@@ -45,6 +45,21 @@ export default defineNuxtModule<ModuleOptions>({
         src: reviewResolver.resolve('./runtime/plugins/review-overlay.client'),
         mode: 'client'
       })
+
+      // 3. Server bridge: POST /api/_review → GitHub PR comment (#491).
+      // Token stays server-side; populated at runtime from Worker env
+      // (NUXT_CROUTON_REVIEW_GITHUB_TOKEN / _REPOSITORY / _PR) so it never
+      // ships in the bundle. repository/pr may be baked from the build env.
+      ;(nuxt.options.runtimeConfig as Record<string, any>).croutonReview = {
+        githubToken: '',
+        repository: process.env.GITHUB_REPOSITORY || '',
+        pr: process.env.CROUTON_REVIEW_PR || ''
+      }
+      addServerHandler({
+        route: '/api/_review',
+        handler: reviewResolver.resolve('./runtime/server/api/review.post'),
+        method: 'post'
+      })
     }
 
     // Only enable in development mode

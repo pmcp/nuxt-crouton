@@ -78,6 +78,25 @@ export function boundingBoxFor(el: Element): ReviewAnnotationBox {
   }
 }
 
+/**
+ * Render an annotation into the agent-readable Markdown the #491 endpoint posts
+ * as a PR comment. Pure (no DOM) so it's shared by the server handler and unit-
+ * tested directly. The `🎯 Preview feedback` header + `Component:` line are the
+ * contract the subscribed agent keys off to find the file to edit.
+ */
+export function formatReviewComment(a: ReviewAnnotation): string {
+  const b = a.boundingBox
+  return [
+    '🎯 **Preview feedback**',
+    '',
+    `- **Component:** ${a.componentFile ? `\`${a.componentFile}\`` : '_unknown_'}`,
+    `- **Element:** \`${a.cssSelector}\`${b ? ` _(bbox ${b.x},${b.y} ${b.width}×${b.height})_` : ''}`,
+    `- **Page:** \`${a.route}\``,
+    '',
+    `> ${a.commentText.replace(/\n/g, '\n> ')}`
+  ].join('\n')
+}
+
 /** Assemble the full annotation payload from a clicked element. */
 export function buildAnnotation(el: Element, commentText: string, route: string): ReviewAnnotation {
   return {
