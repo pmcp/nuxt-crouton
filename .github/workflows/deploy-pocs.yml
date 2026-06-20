@@ -1,0 +1,100 @@
+name: Deploy POCs (preview)
+
+# ONE generic preview-deploy for every pocs/<name> (epic #481). Replaces the per-POC
+# deploy-<name>.yml callers so the agent pipeline never has to push a .github/workflows/
+# file (its App token lacks the `workflows` scope — what blocked #457). A POC opts in by
+# committing pocs/<name>/deploy.config.json (which the bot CAN push, it's under pocs/).
+#
+# Triggers:
+#   • pull_request touching pocs/**  → deploy each CHANGED, opted-in POC (auto preview).
+#   • workflow_dispatch(app)         → deploy one named POC (the bot can call this via the
+#                                      API with only `actions` perms — no `workflows` scope).
+#
+# Each POC is deployed by the reusable deploy-app.yml (workspace: pocs, staging only).
+# Staging-only and safe-to-fail; promote pocs/<name> → apps/<name> for production.
+
+on:
+  pull_request:
+    paths:
+      - 'pocs/**'
+      - '.github/workflows/deploy-pocs.yml'
+      - '.github/workflows/deploy-app.yml'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: POC directory name under pocs/ (e.g. library-catalog)
+        required: true
+        type: string
+
+jobs:
+  # Figure out which opted-in POCs to deploy → a matrix the deploy job fans out over.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      any: ${{ steps.set.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: set
+        env:
+          EVENT: ${{ github.event_name }}
+          DISPATCH_APP: ${{ github.event.inputs.app }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          names=()
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            [ -n "${DISPATCH_APP:-}" ] && names+=("$DISPATCH_APP")
+          else
+            changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)
+            while IFS= read -r f; do
+              case "$f" in
+                pocs/*/*) names+=("$(printf '%s' "$f" | cut -d/ -f2)");;
+              esac
+            done <<< "$changed"
+          fi
+
+          include='[]'
+          seen=' '
+          for p in "${names[@]:-}"; do
+            [ -z "$p" ] && continue
+            case "$seen" in *" $p "*) continue;; esac
+            seen="$seen$p "
+            cfg="pocs/$p/deploy.config.json"
+            if [ -f "$cfg" ]; then
+              su=$(jq -r '.stagingUrl // ""' "$cfg")
+              lp=$(jq -r '.layerPackages // ""' "$cfg")
+              include=$(printf '%s' "$include" | jq --arg a "$p" --arg su "$su" --arg lp "$lp" \
+                '. + [{app:$a, stagingUrl:$su, layerPackages:$lp}]')
+            else
+              echo "skip: pocs/$p has no deploy.config.json (not opted in)"
+            fi
+          done
+
+          matrix=$(jq -cn --argjson inc "$include" '{include:$inc}')
+          if [ "$(printf '%s' "$include" | jq 'length')" -gt 0 ]; then any=true; else any=false; fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "any=$any" >> "$GITHUB_OUTPUT"
+          echo "Detected matrix: $matrix"
+
+  # One deploy-app.yml call per detected POC. Skipped cleanly when nothing opted-in changed.
+  deploy:
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    permissions:
+      contents: read
+      pull-requests: write   # reusable workflow comments the preview URL on the PR
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      app: ${{ matrix.app }}
+      workspace: pocs
+      environment: staging
+      staging-url: ${{ matrix.stagingUrl }}
+      layer-packages: ${{ matrix.layerPackages }}
+    secrets: inherit
