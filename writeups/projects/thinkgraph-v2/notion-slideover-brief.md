@@ -318,4 +318,3 @@ The commit is single and explains why. The brief field, chat panel,
 dispatch path, and agent activity feed all still work exactly as
 they did before.
 
-Code word: report back when done.
