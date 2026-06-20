@@ -27,6 +27,7 @@ const META = {
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
+  'ticket-diagram': { group: 'plan', triggers: ['flow', 'ask'] },
   'ecosystem-check': { group: 'plan', triggers: ['ask'] },
   'sync-docs': { group: 'commit', triggers: ['auto'] },
   'i18n-check': { group: 'commit', triggers: ['auto'] },

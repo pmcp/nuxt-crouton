@@ -32,15 +32,18 @@ For a given epic issue `#NN`:
 
 1. **`writeups/diagrams/<epic-slug>.excalidraw`** — the **editable source of truth**.
    Boxes coloured by status; arrows **bound** to boxes (so dragging a box keeps the graph
-   connected). A working generator prototype already exists at
-   **`scripts/proto-ticket-excalidraw.mjs`** — start from it; replace its hard-coded fixture
-   with the GitHub-read graph above, and parameterise by epic number.
+   connected). **Built** — the generator is `scripts/ticket-excalidraw.mjs` (pure emitters in
+   `scripts/lib/excalidraw.mjs`): feed it the GitHub-read graph JSON (see Inputs) and it lays
+   out the DAG and emits the scene. Drive it via the **`ticket-diagram` skill** — don't
+   hand-author the JSON.
 2. **`writeups/diagrams/<epic-slug>.png`** — a static export of that scene, for embedding in
    the issue/PR body (this is what renders on **mobile**; the `.excalidraw` does not embed).
-   Render offline the same way the `schema-review` / `ui-proposal` skills render their PNGs
-   (headless browser + `@excalidraw/utils` `exportToBlob`, or `@excalidraw/excalidraw`
-   `exportToSvg` → PNG). Export with the scene **embedded** in the PNG metadata so a human
-   can drag the PNG back into excalidraw.com to edit.
+   **Built** — rendered **offline** the same way `schema-review` / `ui-proposal` do, via the
+   shared headless-Chromium renderer (`.claude/skills/ui-proposal/render.mjs`); the generator
+   shells out to it automatically. The generator also writes `<epic-slug>.graph.json` (the
+   auditable input). The round-trip back to excalidraw.com is via the **committed
+   `.excalidraw`** (the human edits that file and commits it), not via scene-in-PNG metadata —
+   so the PNG stays a plain, reliable, dependency-free raster.
 
 ## Where it lands + the iteration loop (reuse the sign-off loop, epic #310)
 
