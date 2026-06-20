@@ -50,6 +50,13 @@ number.
    Call this `epic_branch = epic/<epic_number>-<slug>`. Pass it to **every** decomposer/
    worker you (or they) spawn. (If branch creation isn't possible in this environment,
    note it on the epic and fall back to `main` as the base — but prefer the epic branch.)
+   - **The epic branch MUST carry `main`'s current CI** — especially `schedule-waves.yml`
+     (wave auto-advance) and `deploy-pocs.yml` (the POC deploy trigger). `pull_request` workflows
+     run from the **base branch's** copy, so a missing/stale one silently won't fire. The
+     idempotent push above does **nothing if the branch already exists**, so an epic branch cut
+     from an *older* `main` lacks newer workflows — this is the #500/WS3 gap (schedule-waves was
+     absent on `epic/453`, so #455 closing released no next wave). **If reusing an existing epic
+     branch, merge current `main` into it first** (`git merge origin/main`).
    - **If you were handed a CHILD issue, not a true epic** (the issue you read has a
      `parent_issue_url` / a parent epic), do **NOT** create a new `epic/<this>-<slug>` off
      `main`. Resolve the parent epic, reuse its existing `epic/<parent>-<slug>` as

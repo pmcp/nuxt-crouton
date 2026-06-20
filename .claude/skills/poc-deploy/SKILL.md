@@ -13,10 +13,16 @@ For **launched `apps/` apps** (production counterpart, two-domain deploy) use th
 ## How it works
 
 ```
-PR touches pocs/<name>/**  →  deploy-<name>.yml (caller)  →  deploy-app.yml (reusable, workspace: pocs)
+PR touches pocs/<name>/** (POC has a deploy.config.json)  →  deploy-pocs.yml (generic; detects
+   the changed/dispatched opted-in POCs)  →  deploy-app.yml (reusable, workspace: pocs)
    →  build (cloudflare_module) → wrangler deploy --env staging → auto-provision id-less D1/KV
    →  sync ids → remote D1 migrate → sticky PR comment: 🚀 <name> staging deployed: <url>
 ```
+
+> **One generic workflow, no per-POC file (#481).** There is a single committed
+> `.github/workflows/deploy-pocs.yml`; a POC opts in with `pocs/<name>/deploy.config.json`
+> (which the agent pipeline **can** push — it's under `pocs/`, not `.github/workflows/`, which
+> needs the `workflows` scope the bot lacks). Do **not** generate a per-POC `deploy-<name>.yml`.
 
 - The reusable `deploy-app.yml` takes a **`workspace`** input (`apps` default, or `pocs`) — that's the only thing that lets a `pocs/` app reuse the same pipeline as `apps/`.
 - The preview is stable at **`https://<name>.pmcp.dev`** (the #133 staging domain), so `BETTER_AUTH_URL` is predictable and **auth works on the preview**.
@@ -24,12 +30,13 @@ PR touches pocs/<name>/**  →  deploy-<name>.yml (caller)  →  deploy-app.yml 
 ## Wire a POC for previews
 
 1. **Scaffold the POC first** (it must exist at `pocs/<name>` with a `wrangler.jsonc` that has an `env.staging` block: id-less `<name>-staging-db` + route `<name>.pmcp.dev`, and `cf:staging` in its `package.json` — the app scaffold produces these, mirroring `apps/velo`).
-2. **Generate the deploy workflow:**
+2. **Generate + commit the initial D1 migrations.** Collections are **not** migrated by `crouton config`/`crouton init`, so a fresh POC has none — and the deploy's remote-migrate step then fails with *"No migrations present"*. Use the **`db-migrations`** build-first workaround: `NITRO_PRESET=node-server nuxt build` until `.nuxt/hub/db/schema.mjs` appears → `pnpm db:generate` → **commit** `pocs/<name>/server/db/migrations/sqlite/**`. (Don't skip this — it's the step that bit library-catalog, #457.)
+3. **Opt the POC in — config only, NO workflow file:**
    ```bash
-   pnpm poc:scaffold-deploy <name>      # → .github/workflows/deploy-<name>.yml
+   pnpm poc:scaffold-deploy <name>      # → pocs/<name>/deploy.config.json  (NOT a workflow file)
    ```
-   It writes a thin caller of `deploy-app.yml` (`workspace: pocs`, `pull_request` + `workflow_dispatch`, `staging-url: https://<name>.pmcp.dev`, `secrets: inherit`).
-3. **Open a PR.** CI deploys the staging Worker and posts the preview URL. First deploy auto-provisions the D1/KV (no manual resource creation).
+   It writes `pocs/<name>/deploy.config.json` (`{ stagingUrl, layerPackages }`), read by the shared `deploy-pocs.yml`.
+4. **Open a PR touching `pocs/<name>/**`** (e.g. the `deploy.config.json` + migrations). `deploy-pocs.yml` — which must be on the PR's **base** branch (an epic branch must carry it; see #481) — auto-fires → CI deploys the staging Worker and posts the preview URL. First deploy auto-provisions D1/KV. (`workflow_dispatch(app=<name>)` also works if the token has `actions` scope.)
 
 ## Auth on a fresh preview (so it's testable)
 
@@ -40,4 +47,5 @@ A freshly deployed Worker has no users. To make the preview testable *with auth*
 - **CI-only:** real Cloudflare deploys run in GitHub Actions — the `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` repo secrets must exist (same as the `apps/` deploys), and the token needs account Workers/D1/KV **and** zone Workers-Routes/DNS edit for the `<name>.pmcp.dev` custom domain. There are no CF creds in the dev sandbox; you cannot produce the URL locally — open the PR and let CI do it, then babysit to green.
 - **Staging only.** No production block — pocs are previews. Promote `pocs/<name>` → `apps/<name>` and use `/deploy` for production.
 - **Worker secrets** (e.g. `BETTER_AUTH_SECRET`) persist across deploys; set them once via `WORKER_SECRETS_JSON` (an Environment secret) or `wrangler secret bulk --env staging`.
-- The workflow is **auto-generated** — re-run `pnpm poc:scaffold-deploy <name>` to update it rather than hand-editing.
+- The POC opts in via `pocs/<name>/deploy.config.json` (re-run `pnpm poc:scaffold-deploy <name>` to refresh it). The generic `deploy-pocs.yml` is **shared** — never add a per-POC workflow file. For a `pull_request` deploy to fire, that workflow must be present on the PR's **base** branch (cut/refresh epic branches from current `main` so they carry it — #500/WS3).
+- **Migrations must be committed** (`pocs/<name>/server/db/migrations/sqlite/**`) before the deploy, or the remote-migrate step fails — see step 2.
