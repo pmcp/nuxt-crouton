@@ -152,7 +152,7 @@ function rectEl(id, box, colors, boundIds) {
     fillStyle: 'solid',
     strokeWidth: 2,
     strokeStyle: 'solid',
-    roughness: 1,
+    roughness: 0,
     opacity: 100,
     groupIds: [],
     frameId: null,
@@ -186,7 +186,7 @@ function textEl(id, containerId, box, text) {
     fillStyle: 'solid',
     strokeWidth: 2,
     strokeStyle: 'solid',
-    roughness: 1,
+    roughness: 0,
     opacity: 100,
     groupIds: [],
     frameId: null,
@@ -201,7 +201,7 @@ function textEl(id, containerId, box, text) {
     locked: false,
     text,
     fontSize,
-    fontFamily: 1,
+    fontFamily: 2,
     textAlign: 'center',
     verticalAlign: 'middle',
     containerId,
@@ -228,7 +228,7 @@ function arrowEl(id, from, to) {
     fillStyle: 'solid',
     strokeWidth: 2,
     strokeStyle: 'solid',
-    roughness: 1,
+    roughness: 0,
     opacity: 100,
     groupIds: [],
     frameId: null,
@@ -253,9 +253,122 @@ function arrowEl(id, from, to) {
   }
 }
 
+// A free-standing (unbound) text label — used for the scene's title/subtitle/footer chrome.
+function labelEl(id, x, y, text, { fontSize = 16, color = '#1e1e1e', align = 'left', width = 600 } = {}) {
+  const lineHeight = 1.25
+  return {
+    id,
+    type: 'text',
+    x,
+    y,
+    width,
+    height: Math.round(fontSize * lineHeight),
+    angle: 0,
+    strokeColor: color,
+    backgroundColor: 'transparent',
+    fillStyle: 'solid',
+    strokeWidth: 2,
+    strokeStyle: 'solid',
+    roughness: 0,
+    opacity: 100,
+    groupIds: [],
+    frameId: null,
+    roundness: null,
+    seed: seedFor(id),
+    version: 1,
+    versionNonce: seedFor(id + ':n'),
+    isDeleted: false,
+    boundElements: null,
+    updated: FIXED_UPDATED,
+    link: null,
+    locked: false,
+    text,
+    fontSize,
+    fontFamily: 2,
+    textAlign: align,
+    verticalAlign: 'top',
+    containerId: null,
+    originalText: text,
+    lineHeight,
+  }
+}
+
+// A small legend swatch (filled rounded square) — pairs with a labelEl beside it.
+function swatchEl(id, x, y, colors) {
+  return {
+    id,
+    type: 'rectangle',
+    x,
+    y,
+    width: 16,
+    height: 16,
+    angle: 0,
+    strokeColor: colors.stroke,
+    backgroundColor: colors.bg,
+    fillStyle: 'solid',
+    strokeWidth: 1.5,
+    strokeStyle: 'solid',
+    roughness: 0,
+    opacity: 100,
+    groupIds: [],
+    frameId: null,
+    roundness: { type: 3 },
+    seed: seedFor(id),
+    version: 1,
+    versionNonce: seedFor(id + ':n'),
+    isDeleted: false,
+    boundElements: null,
+    updated: FIXED_UPDATED,
+    link: null,
+    locked: false,
+  }
+}
+
 export function toExcalidraw(graph) {
-  const { placed, goal, edges } = layout(graph)
+  const { placed, goal, edges, canvasW, canvasH } = layout(graph)
   const elements = []
+
+  // ── Chrome: title + subtitle + legend + footer (matches the PNG render) ──
+  const counts = { done: 0, in_progress: 0, blocked: 0, pending: 0 }
+  for (const b of placed.values()) counts[b.node.status] = (counts[b.node.status] || 0) + 1
+  const total = placed.size
+  elements.push(
+    labelEl('chrome-title', MARGIN, 16, `Epic #${graph.epic ?? ''} — ${graph.title || graph.slug || ''}`, {
+      fontSize: 28,
+      color: '#111827',
+      width: canvasW - MARGIN * 2,
+    }),
+  )
+  elements.push(
+    labelEl(
+      'chrome-sub',
+      MARGIN,
+      54,
+      `${total} issue${total === 1 ? '' : 's'} · ${counts.done} done · ${counts.in_progress} in progress · ${counts.blocked} blocked · ${counts.pending} pending`,
+      { fontSize: 14, color: '#6b7280', width: canvasW - MARGIN * 2 },
+    ),
+  )
+  const present = new Set([...placed.values()].map((b) => b.node.status))
+  const legendKeys = ['done', 'in_progress', 'blocked', 'pending'].filter((s) => present.has(s))
+  if (goal) legendKeys.push('goal')
+  let lx = MARGIN
+  legendKeys.forEach((s) => {
+    const c = STATUS[s]
+    elements.push(swatchEl(`chrome-legend-sw-${s}`, lx, 80, c))
+    elements.push(
+      labelEl(`chrome-legend-tx-${s}`, lx + 22, 80, c.label, { fontSize: 13, color: '#495057', width: 140 }),
+    )
+    lx += 22 + c.label.length * 7.2 + 24
+  })
+  elements.push(
+    labelEl(
+      'chrome-foot',
+      MARGIN,
+      canvasH - 28,
+      'Generated from the GitHub sub-issue tree · rearrange freely, then commit this .excalidraw back.',
+      { fontSize: 12, color: '#9ca3af', width: canvasW - MARGIN * 2 },
+    ),
+  )
 
   // Resolve a rect id per node (and the goal), record bound element ids.
   const rectIdOf = new Map()
