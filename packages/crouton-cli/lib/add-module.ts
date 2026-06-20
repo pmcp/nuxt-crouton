@@ -10,6 +10,7 @@ import { loadModules, getModule, listModules } from './module-registry.ts'
 import { detectPackageManager, getInstallCommand } from './utils/detect-package-manager.ts'
 import { addToNuxtConfigExtends, isInNuxtConfigExtends } from './utils/update-nuxt-config.ts'
 import { addSchemaExport, getSchemaPath } from './utils/update-schema-index.ts'
+import { generateMigrations, manualMigrationSteps } from './utils/generate-migrations.ts'
 
 interface AddModuleOptions {
   skipInstall?: boolean
@@ -174,55 +175,49 @@ export async function addModule(moduleName: string, options: AddModuleOptions = 
   // Step 4: Generate & apply migrations (if module has tables)
   if (!skipMigrations && module.schemaExport && module.tables && module.tables.length > 0) {
     if (dryRun) {
-      console.log('   • Would run: npx nuxt db:generate')
+      console.log('   • Would build the schema bundle, then run: db:generate')
       console.log('   • Would run: npx nuxt db:migrate')
     } else {
-      // Generate migrations
-      consola.start('Generating migrations...')
-      try {
-        const genResult = spawnSync('npx', ['nuxt', 'db:generate'], {
-          cwd,
-          stdio: 'pipe',
-          encoding: 'utf-8'
-        })
-
-        if (genResult.status !== 0) {
-          consola.warn('Migration generation may have issues')
-          if (genResult.stderr) {
-            console.log(`   ${genResult.stderr.trim()}`)
-          }
-        } else {
-          consola.success('Generated migrations')
-        }
-      } catch (error) {
-        consola.warn('Could not generate migrations')
-        console.log(`   ${error.message}`)
+      // Generate migrations — BUILD-FIRST. drizzle-kit reads the bundled schema
+      // at .nuxt/hub/db/schema.mjs, which only exists after `nuxt build`; running
+      // db:generate without building emits zero migrations (the #523 root cause).
+      const genResult = await generateMigrations(cwd)
+      const migrationsGenerated = genResult.generated
+      if (!genResult.generated) {
+        consola.warn(`Could not generate migrations (${genResult.reason})`)
+        if (genResult.detail) console.log(`   ${genResult.detail}`)
+        console.log('   Run manually when ready:')
+        for (const step of manualMigrationSteps()) console.log(`     ${step}`)
       }
 
-      // Apply migrations
-      consola.start('Applying migrations...')
-      try {
-        const migrateResult = spawnSync('npx', ['nuxt', 'db:migrate'], {
-          cwd,
-          stdio: 'pipe',
-          encoding: 'utf-8'
-        })
+      // Apply migrations (only if we actually generated some)
+      if (!migrationsGenerated) {
+        console.log('   • Skipping migrate (no migrations generated)')
+      } else {
+        consola.start('Applying migrations...')
+        try {
+          const migrateResult = spawnSync('npx', ['nuxt', 'db:migrate'], {
+            cwd,
+            stdio: 'pipe',
+            encoding: 'utf-8'
+          })
 
-        if (migrateResult.status !== 0) {
-          consola.warn('Migration application may have issues')
-          if (migrateResult.stderr) {
-            console.log(`   ${migrateResult.stderr.trim()}`)
+          if (migrateResult.status !== 0) {
+            consola.warn('Migration application may have issues')
+            if (migrateResult.stderr) {
+              console.log(`   ${migrateResult.stderr.trim()}`)
+            }
+          } else {
+            consola.success('Applied migrations')
           }
-        } else {
-          consola.success('Applied migrations')
+        } catch (error) {
+          consola.warn('Could not apply migrations')
+          console.log(`   ${error.message}`)
         }
-      } catch (error) {
-        consola.warn('Could not apply migrations')
-        console.log(`   ${error.message}`)
       }
     }
   } else if (module.schemaExport) {
-    console.log('   • Skipping migrations (use npx nuxt db:generate && npx nuxt db:migrate when ready)')
+    console.log('   • Skipping migrations (build the schema bundle, then run db:generate && db:migrate when ready)')
   }
 
   // Success message

@@ -133,8 +133,25 @@ and SSR errors like `$setup.t is not a function`.
 2. **Installs** package via detected package manager (pnpm/yarn/npm)
 3. **Updates** `nuxt.config.ts` - adds to `extends` array
 4. **Updates** `server/db/schema.ts` - adds schema export (if applicable)
-5. **Generates** migrations with `npx nuxt db:generate` (if applicable)
+5. **Generates** migrations **build-first** (if applicable) — see below
 6. **Applies** migrations with `npx nuxt db:migrate` (if applicable)
+
+#### Build-first migration generation (the schema.mjs gotcha, #523)
+
+`drizzle-kit generate` (the app's `db:generate` script) reads the **bundled**
+schema at `.nuxt/hub/db/schema.mjs`, which NuxtHub only writes during
+**`nuxt build`** — `nuxt prepare` emits `schema.entry.ts`, NOT the `.mjs`. So
+running `db:generate` on a fresh tree finds no schema and emits **zero**
+migrations; the first deploy then fails the remote-migrate step with *"No
+migrations present"* (the #457 library-catalog failure).
+
+`lib/utils/generate-migrations.ts` (`generateMigrations(cwd)`) fixes this: it
+starts `NITRO_PRESET=node-server nuxt build`, waits for the bundle to appear
+(written early, before the slow Nitro stage), stops the build, then runs the
+app's own `db:generate`. Used by both `crouton add` (step 5) and `crouton init`
+(step 3). It **requires installed deps** (it builds); on a bare tree with no
+`node_modules` it returns `deps-missing` and the caller prints the exact manual
+sequence (`manualMigrationSteps()`) instead of silently shipping no migrations.
 
 ## Init Command (Full Pipeline)
 
@@ -166,8 +183,13 @@ crouton init my-app --dry-run
 
 1. **scaffold-app** — Creates the app skeleton (nuxt.config, package.json, schemas/, etc.)
 2. **generate** — Generates collections from `crouton.config.js` (if collections are defined)
-3. **doctor** — Validates everything is wired correctly
-4. **Summary** — Prints next steps (dev server, deploy)
+3. **migrations** — Generates the initial D1 migrations **build-first** (see the
+   `crouton add` section). Runs only when deps are already installed; on a bare
+   scaffold (no `node_modules`) it defers and the summary prints the exact
+   `pnpm install` → build → `db:generate` sequence — so a fresh app is never
+   silently shipped without its migrations (#523).
+4. **doctor** — Validates everything is wired correctly
+5. **Summary** — Prints next steps (dev server, deploy)
 
 ## Deploy Scaffolding — Cloudflare Workers (the crouton standard)
 
@@ -265,6 +287,7 @@ crouton db-pull --config ./custom-wrangler.jsonc
 | `lib/db-pull.ts` | Remote D1 → local dev pull |
 | `lib/module-registry.ts` | Module definitions for `crouton add` |
 | `lib/add-module.ts` | Module installation implementation |
+| `lib/utils/generate-migrations.ts` | Build-first migration generation (`generateMigrations`) — emits the `.nuxt/hub/db/schema.mjs` bundle, then `db:generate`; used by `add`+`init` (#523) |
 | `lib/utils/helpers.ts` | Case conversion, type mapping |
 | `lib/utils/dialects.ts` | PostgreSQL/SQLite configs |
 | `lib/utils/detect-package-manager.ts` | Detect pnpm/yarn/npm |
