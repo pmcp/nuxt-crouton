@@ -76,6 +76,10 @@ chose a different design. Four rules now prevent that:
 - **Automatic — issue opt-in:** add the **`delegate`** label to any issue and
   `.github/workflows/decompose-on-issue.yml` runs `/task-decompose #NN` for you (no
   command needed). Gate is the label, so only opted-in issues fire.
+- **By comment (mobile-friendly):** comment **`/delegate`** (or **`/deploy`**) on an issue —
+  `.github/workflows/comment-dispatch.yml` applies the `delegate` label for you (via a PAT, so
+  the run is human-actored). Same effect as labelling, but you can do it from the GitHub mobile
+  app where the label UI is awkward. Owner/members only.
 - **Automatic — resume after a blocker:** when an agent @mentions you and sets
   `status:blocked`, just **reply on the issue** — `.github/workflows/resume-on-comment.yml`
   picks it back up, removes the block, and continues.
