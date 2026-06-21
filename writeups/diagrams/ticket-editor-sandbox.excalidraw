@@ -438,8 +438,8 @@
     },
     {
       "type": "rectangle",
-      "version": 76,
-      "versionNonce": 1486645936,
+      "version": 100,
+      "versionNonce": 1123229889,
       "isDeleted": false,
       "id": "rect-1",
       "fillStyle": "solid",
@@ -448,8 +448,8 @@
       "roughness": 0,
       "opacity": 100,
       "angle": 0,
-      "x": 153.66666666666669,
-      "y": 164.33333333333331,
+      "x": 236.66666666666669,
+      "y": 334,
       "strokeColor": "#1971c2",
       "backgroundColor": "#a5d8ff",
       "width": 230,
@@ -470,14 +470,14 @@
           "id": "arrow-1-3"
         }
       ],
-      "updated": 1782060889127,
+      "updated": 1782062226489,
       "link": null,
       "locked": false
     },
     {
       "type": "text",
-      "version": 76,
-      "versionNonce": 421237936,
+      "version": 100,
+      "versionNonce": 1815306401,
       "isDeleted": false,
       "id": "text-1",
       "fillStyle": "solid",
@@ -486,8 +486,8 @@
       "roughness": 0,
       "opacity": 100,
       "angle": 0,
-      "x": 161.66666666666669,
-      "y": 192.33333333333331,
+      "x": 244.66666666666669,
+      "y": 362,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
       "width": 214,
@@ -497,7 +497,7 @@
       "frameId": null,
       "roundness": null,
       "boundElements": [],
-      "updated": 1782060889127,
+      "updated": 1782062226489,
       "link": null,
       "locked": false,
       "fontSize": 16,
@@ -820,8 +820,8 @@
     },
     {
       "type": "arrow",
-      "version": 151,
-      "versionNonce": 711076016,
+      "version": 199,
+      "versionNonce": 1064987745,
       "isDeleted": false,
       "id": "arrow-1-3",
       "fillStyle": "solid",
@@ -830,12 +830,12 @@
       "roughness": 0,
       "opacity": 100,
       "angle": 0,
-      "x": 323.64759031060134,
-      "y": 264.3333333333333,
+      "x": 314.0133633180594,
+      "y": 330,
       "strokeColor": "#495057",
       "backgroundColor": "transparent",
-      "width": 54.500397112079725,
-      "height": 51.666666666666686,
+      "width": 0.013363318059418816,
+      "height": 0.004267757291245289,
       "seed": 585299702,
       "groupIds": [],
       "frameId": null,
@@ -843,7 +843,7 @@
         "type": 2
       },
       "boundElements": [],
-      "updated": 1782060889128,
+      "updated": 1782062226490,
       "link": null,
       "locked": false,
       "startBinding": {
@@ -865,8 +865,8 @@
           0
         ],
         [
-          54.500397112079725,
-          51.666666666666686
+          -0.013363318059418816,
+          -0.004267757291245289
         ]
       ]
     },
