@@ -783,10 +783,14 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     || enabledFeatures.has(packageId.replace(/^crouton-/, ''))
     || detectedPackages.has(packageId)
   )
-  // Auto-detect formComponent from package contributions (when not explicitly configured)
+  // Auto-detect formComponent from package contributions (when not explicitly configured).
+  // Scope to `contributions` (core + enabled features + detector-matched), NOT
+  // `allContributions` — otherwise a package the app doesn't use (e.g. crouton-sales
+  // reserving "location"/"product"/"category"/"printer") forces its bespoke form on
+  // an unrelated collection and skips Form.vue generation (#558).
   if (!collectionConfig?.formComponent) {
     const formComponentCtx = { collectionName: collection, fields, detected }
-    for (const { contribution } of allContributions) {
+    for (const { contribution } of contributions) {
       const result = contribution.getFormComponent?.(formComponentCtx)
       if (result) {
         collectionConfig = { ...collectionConfig, formComponent: result }
