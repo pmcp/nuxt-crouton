@@ -1,0 +1,18 @@
+{
+  "table": "library_catalog_genres",
+  "key": "name",
+  "rows": [
+    {
+      "name": "Sample name 1",
+      "description": "Sample description 1"
+    },
+    {
+      "name": "Sample name 2",
+      "description": "Sample description 2"
+    },
+    {
+      "name": "Sample name 3",
+      "description": "Sample description 3"
+    }
+  ]
+}
