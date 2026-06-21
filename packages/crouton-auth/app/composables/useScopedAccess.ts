@@ -301,21 +301,22 @@ export function useScopedAccess(
   }
 
   /**
-   * Refresh session expiration
+   * Refresh session expiration.
    *
-   * @param additionalHours - Hours to add to expiration (default: 8)
+   * The new expiry is governed server-side by the token's GRANT policy (its
+   * tokenTtl) — the client no longer chooses the duration, and the token is sent
+   * via the canonical `x-scoped-token` header rather than the body.
+   *
+   * @param _additionalHours - retained for backward compatibility; ignored.
    * @returns True if refresh succeeded
    */
-  async function refreshSession(additionalHours = 8): Promise<boolean> {
+  async function refreshSession(_additionalHours = 8): Promise<boolean> {
     if (!session.value?.token) return false
 
     try {
       const response = await $fetch<{ expiresAt: string }>('/api/auth/scoped-access/refresh', {
         method: 'POST',
-        body: {
-          token: session.value.token,
-          additionalTime: additionalHours * 60 * 60 * 1000
-        }
+        headers: { 'x-scoped-token': session.value.token }
       })
 
       if (response.expiresAt) {
