@@ -365,37 +365,36 @@ import { useDrizzle } from '#server/utils/drizzle'
 When delegating: template scout first → parallel tasks → clear boundaries → smell check after.
 Agent definitions live in `.claude/agents/*.md` (the recursive `task-orchestrator` / `task-decomposer` / `task-worker` pipeline). When an agent defines a custom persona, include it in the Task prompt when invoking.
 
-## UI Sign-Off (mock before you build) — epic #307
+## UI Sign-Off (deploy a live preview before you build) — epic #307
 
-**When a task changes a visual surface, mock it before you build it.** Treat work as
+**When a task changes a visual surface, get sign-off before you build it.** Treat work as
 UI-touching if it adds/changes a `.vue` component, `app/components|layouts|pages/**`, a theme
 (`crouton-themes`, a `ui:` block in `app.config.ts`), or app CSS/theme tokens. Pure
 `<script>`/composables/types, `server/**`, config, tests, and docs are **not** UI — skip this.
 
-For a UI change: run the **`ui-proposal`** skill to produce a before/after (or after-only)
-mockup + PNG, get a human to sign off on the look-and-feel **first**, and only then build the
-real component. In the agent pipeline this is automated as a gate in `.claude/agents/task-worker.md`
-(post the mockup on a draft PR → hold on `status:blocked` → revise on feedback (#310) → build →
-real screenshot (#311)). In an interactive session, do the same by hand: propose, get a yes,
-then build. Be conservative — when unsure whether a diff is "visual", don't gate.
+**Default gate — live preview:** run the **`ui-proposal`** skill to deploy a rough build to
+staging with `NUXT_PUBLIC_CROUTON_REVIEW=true` (via `/poc-deploy` or `pnpm cf:staging`), post the
+preview URL on a draft PR, and hold on `status:blocked`. The reviewer opens the running page,
+pins comments on elements they want changed; each pin arrives as a `🎯 Preview feedback` PR
+comment naming the source file. The agent fixes the named file, redeploys, and iterates. Capture
+machinery lives in `@fyit/crouton-devtools` (wired by epic #590 WS1+WS2).
 
-**Higher-fidelity option (live preview, #488):** when look-and-feel depends on real rendering a
-static mockup can't fake, the `ui-proposal` skill's *live-preview* path lets a reviewer pin
-comments directly on a deployed staging page (build with `NUXT_PUBLIC_CROUTON_REVIEW=true`); each
-pin becomes a `🎯 Preview feedback` PR comment naming the source file, feeding the **same**
-revision/approval loop. Capture machinery lives in `@fyit/crouton-devtools`.
+**Fallback — static mockup (`--static`):** when a live deploy isn't available (packages-only
+change with no runnable app, or deploy pipeline is down), pass `--static` to the `ui-proposal`
+skill. It produces an offline HTML/CSS mockup + PNG. Commit the `<slug>.html` + `<slug>.md`
+"what changes" list; post the PNG as a sticky comment on the draft PR. Steer feedback to **inline
+comments on the committed `.md`** in the diff (the PNG is a glance, not the feedback surface).
 
-**Give feedback on the diff, not the image.** The proposed change is committed as a text
-artifact (the UI "what changes" list `<slug>.md`, or a schema's `.md` field table), so it shows
-up in the PR's "Files changed" — inline-comment the exact line, no copying. The agent reads
-those inline review comments and revises that specific item.
+In the agent pipeline both paths are automated as a gate in `.claude/agents/task-worker.md`
+(deploy or mockup → draft PR → hold → revise on feedback (#310) → build → screenshot (#311)).
+In an interactive session, do the same by hand. Be conservative — when unsure whether a diff is
+"visual", don't gate.
 
 **What counts as approval** (the sign-off signal): a **reply comment** containing `approve`/`lgtm`.
 That comment is the *only* thing that resumes the pipeline — a 👍 reaction and the `ui-approved`
 label do **not** trigger anything (`resume-on-comment.yml` fires only on `issue_comment`; reactions
 raise no event and no workflow listens for the label) (#572). Anything else is a change request —
-revise the mockup in place (edit the same sticky comment, re-render the PNG) and iterate until
-approved (#310).
+iterate (redeploy for live-preview, re-render for `--static`) until approved (#310).
 
 ## Schema Sign-Off (review the data model before you generate) — epic #314
 
@@ -477,7 +476,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/db-clone/SKILL.md` | Mirror one Cloudflare D1 database into another env (`scripts/db-clone.mjs` / `pnpm db:clone`) — refresh staging from prod, seed a preview. Full mirror; `--dry-run` first; prod target needs typed-confirm + backup. Not for per-collection seeding (use `seedData/`) or migrations (use db-migrations) |
 | Skill | `.claude/skills/dependency-sweep/SKILL.md` | The "get dependencies current" flow — sweep, triage (safe/deliberate/wait), bump the pnpm catalog, prove it with the typecheck + e2e gate. No update bot by design (#141); run on-demand or when the quarterly sweep ticket is due |
 | Skill | `.claude/skills/task-decompose/SKILL.md` | Entry point to the recursive task-decomposition pipeline (`/task-decompose`) — one task → an epic + tree of sub-issues → agents. See "Task Decomposition Pipeline" below |
-| Skill | `.claude/skills/ui-proposal/SKILL.md` | Generate a before/after UI mockup (offline HTML/CSS/SVG) + render it to PNG for design sign-off before building UI. Part of the UI sign-off loop (#307) |
+| Skill | `.claude/skills/ui-proposal/SKILL.md` | Deploy a live staging preview (with `NUXT_PUBLIC_CROUTON_REVIEW=true`) for design sign-off before building UI — the default gate. `--static` fallback generates an offline HTML/CSS mockup + PNG. Part of the UI sign-off loop (#307, #488) |
 | Skill | `.claude/skills/schema-review/SKILL.md` | Render a collection schema (field-definition JSON) into a human-readable field table + relationships (HTML + PNG + Markdown) for data-model sign-off before `crouton config` generates code. Part of the schema sign-off loop (#314) |
 | Skill | `.claude/skills/postmortem/SKILL.md` | At epic close (after the verify rollup, before closing): post a retro comment — what went well / what was hard (evidence-backed) / 1–3 proposals — and offer to mint accepted proposals as `workflow` issues. Tightens the loop over time (#403) |
 | Skill | `.claude/skills/bug-archaeology/SKILL.md` | First step of bug work (HARD GATE): research how & when a bug was introduced — `git log -S`/`blame`/`bisect` to the first-bad commit, or rule it a non-code cause (stale install/env/data) — and record the finding on the issue/PR before fixing. Use the moment a bug/regression/broken build is reported (#424) |
