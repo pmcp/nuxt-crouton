@@ -21,14 +21,14 @@ cd workers/ticket-editor
 pnpm install
 npx wrangler secret put GITHUB_APP_PRIVATE_KEY   # the Crouton App's PEM private key (only secret)
 # set GITHUB_APP_ID + GITHUB_APP_INSTALLATION_ID as wrangler vars (not sensitive)
-npx wrangler deploy                              # → https://excalidraw.pmcp.dev (+ the .workers.dev URL)
+npx wrangler deploy                              # → https://diagram.pmcp.dev (+ the .workers.dev URL)
 ```
 
-The custom domain `excalidraw.pmcp.dev` is declared in `wrangler.jsonc` (`routes` with
+The custom domain `diagram.pmcp.dev` is declared in `wrangler.jsonc` (`routes` with
 `custom_domain: true`); Wrangler provisions the route + DNS on deploy — no manual dashboard step
 (the `pmcp.dev` zone must be in the account, and the API token needs zone Workers Routes + DNS edit).
 
-Then open `https://excalidraw.pmcp.dev/?slug=make-tickets-human-readable&branch=<branch>&issue=<NN>`
+Then open `https://diagram.pmcp.dev/?slug=make-tickets-human-readable&branch=<branch>&issue=<NN>`
 on your phone → edit → **Save** → a commit (authored by `nuxt-harness[bot]`) lands on the branch, and
 (with `&issue=<NN>`) a comment with the frozen diagram is posted on that issue. Link that URL from each
 diagram's comment as a one-tap **✏️ Edit**.
