@@ -126,3 +126,9 @@ fixtures/with-assets/.data
 fixtures/with-collab/.data
 # Loose Excalidraw scenes — the editable scene is embedded in the committed PNG instead
 writeups/diagrams/*.excalidraw
+
+# Red-team scan reports — security findings kept OUT of git (public repo).
+# The daily/skill flows surface findings via a private disclosure channel, not
+# committed files. See epic #540 / the public-repo disclosure note on PR #548.
+writeups/reports/red-team-*.md
+!writeups/reports/red-team-TEMPLATE.md
