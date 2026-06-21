@@ -6,7 +6,7 @@ authorizes anything). On Save, Excalidraw exports the PNG in-browser, so the com
 exactly what you edited (WYSIWYG). Sub-issue #503 of epic #483.
 
 Auth = the **Crouton GitHub App** (#519): the Worker mints a short-lived (~1h) installation token
-just-in-time (WebCrypto, dependency-free) and commits as `crouton[bot]` — no stored PAT. See
+just-in-time (WebCrypto, dependency-free) and commits as `nuxt-harness[bot]` — no stored PAT. See
 `SECRETS.md` and `writeups/setup/secrets-and-tokens.md`.
 
 ## Routes
@@ -25,7 +25,7 @@ npx wrangler deploy                              # → https://ticket-editor.<ac
 ```
 
 Then open `https://ticket-editor.<account>.workers.dev/?slug=make-tickets-human-readable&branch=<branch>`
-on your phone → edit → **Save** → a commit (authored by `crouton[bot]`) lands on the branch. Link
+on your phone → edit → **Save** → a commit (authored by `nuxt-harness[bot]`) lands on the branch. Link
 that URL from each diagram's sticky comment as a one-tap **✏️ Edit**.
 
 ## Notes

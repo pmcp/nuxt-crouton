@@ -113,6 +113,10 @@ The **only** secret local dev needs is `BETTER_AUTH_SECRET`, and the session-sta
 
 ## Durable direction: one **Crouton GitHub App** (retires Tier 2)
 
+> 📋 **Setup runbook:** [`crouton-github-app.md`](./crouton-github-app.md) — register / key / install /
+> wire (step by step). The App is live: registered as **"Nuxt Harness"** (`nuxt-harness[bot]`, App ID
+> `4107840`, FriendlyInternet org), powering the ticket-editor Worker with no PAT.
+
 A shared PAT is a dead end the moment this goes **multi-tenant** (teams reviewing their own apps): one PAT can't represent N reviewers/teams and becomes a single high-value secret spanning every tenant.
 
 The convergent answer for **all of Tier 2** is a single **Crouton GitHub App** (permissions: Contents: write + Pull requests: write), **installed per repo/org**, minting **short-lived per-installation tokens**. One App:
@@ -140,7 +144,7 @@ The **one** durable secret is the **private key** (no expiry; it never touches t
 Swapping two PATs is the least of it. The App is a GitHub-native **identity + webhook receiver + per-tenant permission grant**, which unlocks:
 
 **Fixes things we currently do wrong**
-- **Posts as `crouton[bot]`, not @pmcp** — the *real* fix for the provenance problem we band-aided with the `require-comment-provenance` hook. Bot comments become unmistakable at the source.
+- **Posts as `nuxt-harness[bot]`, not @pmcp** — the *real* fix for the provenance problem we band-aided with the `require-comment-provenance` hook. Bot comments become unmistakable at the source.
 - **Retires the scattered per-feature PATs** and the **unauthenticated `/api/_review`** (actions tie to a real installation, not an open URL + shared low-trust token).
 - **Exact permissions** — no more "the bot token lacks `workflows`/`actions`" walls; grant only what's chosen.
 
