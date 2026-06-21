@@ -17,6 +17,12 @@ import { formatReviewComment, type ReviewAnnotation } from '../../overlay/captur
  *   - NUXT_CROUTON_REVIEW_PR            → pr (the staging PR number)
  * The PR number may also be supplied per-request via `prNumber` in the body.
  *
+ * ⚠️ DIRECTION (epic #519): this PAT in `githubToken` is INTERIM. The bridge is
+ * workstream #2 of the Crouton GitHub App — it will mint a short-lived installation
+ * token via `@octokit/auth-app` and post as `crouton[bot]` instead of a standalone
+ * PAT. `repository`/`pr` (routing, not secrets) stay. See #519 and
+ * `writeups/setup/secrets-and-tokens.md`.
+ *
  * Returns `{ data, error }`; on failure `error` is a safe message that never
  * echoes the token.
  */
