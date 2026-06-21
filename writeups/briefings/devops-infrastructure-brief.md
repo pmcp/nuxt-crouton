@@ -273,7 +273,7 @@ Install Renovate GitHub App with monorepo-optimized config.
 - **pnpmDedupe** — keeps lockfile clean in monorepo
 
 ### Setup
-1. Install Renovate GitHub App on `pmcp/nuxt-crouton`
+1. Install Renovate GitHub App on `FriendlyInternet/nuxt-crouton`
 2. Add `renovate.json` to repo root
 3. Renovate creates initial "Configure Renovate" PR
 4. Merge it — Renovate starts creating PRs
@@ -426,7 +426,7 @@ Configure via GitHub API — one-time setup.
 **Script: `scripts/setup-branch-protection.sh`:**
 ```bash
 #!/bin/bash
-REPO="pmcp/nuxt-crouton"
+REPO="FriendlyInternet/nuxt-crouton"
 
 gh api repos/$REPO/branches/main/protection \
   --method PUT \

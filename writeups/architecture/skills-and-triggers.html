@@ -92,6 +92,10 @@
         <p class="what">This skill helps generate complete CRUD collections for Nuxt Crouton applications.</p>
       </div>
       <div class="skill">
+        <div class="skill-head"><span class="name">/provider-swap</span><span class="badges"><span class="b ask">on ask</span></span></div>
+        <p class="what">Swap the external provider/library that backs a crouton package (e.g. the map renderer, geocoder, editor engine, storage SDK) while keeping the package's public API stable so consuming apps need no changes. Use when asked to "change the X provider", "replace library Y in package Z", "switch from &lt;vendor A&gt; to &lt;vendor B&gt;" inside packages/. Encodes the keep-the-API-stable playbook + the gotchas (dist .d.ts over docs, generator templates, fixtures, dup-dep type clashes).</p>
+      </div>
+      <div class="skill">
         <div class="skill-head"><span class="name">/schema-review</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
         <p class="what">Render a crouton collection schema (the field-definition JSON) into a human-readable field table + relationships sketch (HTML + PNG + a terse Markdown table), so a human can sign off on the DATA MODEL before any code is generated. Use when an agent drafts or changes a collection schema (before `crouton config` / `generate_collection`), or when asked to "review a schema", "show the data model", "check these fields".</p>
       </div>
@@ -121,6 +125,10 @@
       <div class="skill">
         <div class="skill-head"><span class="name">/github-tasks</span><span class="badges"><span class="b ask">on ask</span><span class="b flow">in flow</span></span></div>
         <p class="what">Track work as GitHub issues in this monorepo — create epics + child/sub-issues, label them consistently by package/app, and tie them into the commit workflow. Use when planning a feature, breaking work into tasks, or asked to "track this in GitHub", "make issues", "set up tracking".</p>
+      </div>
+      <div class="skill">
+        <div class="skill-head"><span class="name">/ticket-diagram</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
+        <p class="what">Attach a self-contained Excalidraw status diagram to a GitHub epic — read the epic + its sub-issue tree, render boxes-coloured-by-status with dependency arrows to a committed PNG that (a) renders on the GitHub mobile app and (b) has the editable Excalidraw scene embedded inside it, post it as a sticky comment, and round-trip human edits back in from a comment. Use when asked to "diagram an epic", "draw the ticket tree", "show the epic on mobile", "add a status graph to #NN", or to keep an epic's diagram current as its children change.</p>
       </div>
     </div>
   </section>
@@ -163,6 +171,10 @@
       <div class="skill">
         <div class="skill-head"><span class="name">/postmortem</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
         <p class="what">At the close of an epic (or a difficult issue), post a postmortem roundup comment — what went well, what was hard (backed by evidence), and 1–3 concrete proposals to improve the skills/flows — then offer to turn accepted proposals into their own `workflow`-labeled tasks. Use at epic close, after the "verify the whole thing" rollup, or when asked to "do a retro", "postmortem this epic", "what did we learn", "how do we improve the workflow".</p>
+      </div>
+      <div class="skill">
+        <div class="skill-head"><span class="name">/red-team</span><span class="badges"><span class="b ask">on ask</span><span class="b auto">auto</span></span></div>
+        <p class="what">Adversarially probe this monorepo for security flaws at the right depth. Steers the red-team subagent — picks quick/standard/deep from the request, spawns it (fanning out for a wide deep sweep), collates findings into a dated report, and files security/sec:* issues for confirmed high/critical findings. Use when asked to "red-team", "try to hack this", "find security holes", "pentest this package/app", or as the brain behind the CI + daily security runs.</p>
       </div>
       <div class="skill">
         <div class="skill-head"><span class="name">/review</span><span class="badges"><span class="b ask">on ask</span></span></div>

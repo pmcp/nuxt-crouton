@@ -1,10 +1,9 @@
-import type { Map, MapOptions, Marker, MarkerOptions, Popup, PopupOptions, LngLatLike } from 'mapbox-gl'
+import type { Map, MapOptions, Marker, MarkerOptions, Popup, PopupOptions, LngLatLike } from 'maplibre-gl'
 
 /**
- * Configuration for Mapbox maps
+ * Configuration for MapLibre maps
  */
 export interface MapConfig {
-  accessToken: string
   style?: string
   center?: LngLatLike
   zoom?: number
@@ -35,7 +34,6 @@ export interface PopupInstance {
  */
 export interface UseMapOptions {
   container: string | HTMLElement
-  accessToken?: string
   style?: string
   center?: LngLatLike
   zoom?: number
@@ -77,7 +75,7 @@ export interface MapFlyToOptions {
   flyToEasing?: EasingFunction
 }
 
-// Re-export Mapbox GL JS types for convenience
+// Re-export MapLibre GL types for convenience
 export type {
   Map,
   Marker,
@@ -88,5 +86,5 @@ export type {
   LngLatLike
 }
 
-// Re-export style types from composable
-export type { MapboxStylePreset } from '../composables/useMapboxStyles'
+// Re-export style types from composable (MapboxStylePreset kept as a deprecated alias)
+export type { MapStylePreset, MapboxStylePreset } from '../composables/useMapStyles'

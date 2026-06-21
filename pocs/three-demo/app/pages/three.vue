@@ -77,7 +77,7 @@ const modelSrc = '/models/duck.glb'
 
       <footer class="text-center text-sm text-muted">
         Built with
-        <NuxtLink to="https://github.com/pmcp/nuxt-crouton" target="_blank" class="text-primary hover:underline">
+        <NuxtLink to="https://github.com/FriendlyInternet/nuxt-crouton" target="_blank" class="text-primary hover:underline">
           nuxt-crouton
         </NuxtLink>
         · the 3D Model block becomes available in the page editor when

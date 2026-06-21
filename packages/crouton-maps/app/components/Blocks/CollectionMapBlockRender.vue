@@ -32,7 +32,7 @@ const collectionConfig = computed(() => {
   return getConfig(props.attrs.collection)
 })
 
-const styleUrl = computed(() => getMapboxStyle(props.attrs.style || 'streets'))
+const styleUrl = computed(() => getMapStyle(props.attrs.style || 'liberty'))
 
 // Parse numeric values (may come as strings from select schema)
 const zoom = computed(() => {

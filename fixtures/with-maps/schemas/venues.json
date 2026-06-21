@@ -1,0 +1,7 @@
+{
+  "name": { "type": "string", "meta": { "required": true, "maxLength": 200, "label": "Name" } },
+  "street": { "type": "string", "meta": { "maxLength": 200, "label": "Street", "group": "address" } },
+  "city": { "type": "string", "meta": { "maxLength": 120, "label": "City", "group": "address" } },
+  "postcode": { "type": "string", "meta": { "maxLength": 20, "label": "Postcode", "group": "address" } },
+  "coordinates": { "type": "string", "meta": { "label": "Coordinates", "group": "address" } }
+}

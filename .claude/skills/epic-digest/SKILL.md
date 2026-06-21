@@ -6,11 +6,14 @@ allowed-tools: mcp__github__search_issues, mcp__github__list_issues, mcp__github
 
 # Epic Digest — the daily "where are we?" email
 
-Turns the GitHub issue tree (`pmcp/nuxt-crouton`) into a **skimmable digest**: a short
-"since yesterday" activity band, then one card per open **epic** with a progress
-bar and a one-line status — the sub-issue breakdown tucked into a collapsible
-section so the overview stays clean. Built to be **read at a glance, drilled into
-if needed**.
+Turns the GitHub issue tree (`FriendlyInternet/nuxt-crouton`) into a **skimmable digest**: a
+**"🧪 Needs your eyes"** band up top (what *landed*, one skimmable line per item — title, type
+badge, 👁 for visual changes, PR/preview link — with the How-to-test steps folded into a
+tap-to-expand `🧪 How to test (N)` dropdown so the band stays light on mobile), then a short
+"since yesterday" activity band, then one card
+per open **epic** with a progress bar and a one-line status — the sub-issue breakdown tucked
+into a collapsible section so the overview stays clean. Built to be **read at a glance, drilled
+into if needed**.
 
 **This is render-only.** It *makes* the digest (HTML + plain text under
 `writeups/reports/`) and shows you where it landed — it does **not** send email
@@ -38,7 +41,7 @@ below. Set `windowHours` in the data accordingly (24 / 72 / 168).
 Build the JSON object described in **Step 3** using these calls (all `owner: pmcp`,
 `repo: nuxt-crouton`):
 
-1. **Open epics** — `search_issues`, query `repo:pmcp/nuxt-crouton is:issue is:open label:epic`.
+1. **Open epics** — `search_issues`, query `repo:FriendlyInternet/nuxt-crouton is:issue is:open label:epic`.
 2. **Each epic's children** — `issue_read` with `method: get_sub_issues`. Count
    `done` = children with `state: "closed"`, `total` = all children. Read each
    child's labels (or the `get_sub_issues` state) to set its `status`
@@ -46,9 +49,9 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
    Mark the epic `blocked` if it carries `status:blocked` or any child is blocked.
 3. **Activity in the window** (the "since yesterday" band) — use date-filtered search,
    substituting `<cutoff>` (YYYY-MM-DD):
-   - Closed: `search_issues` → `repo:pmcp/nuxt-crouton is:issue is:closed closed:>=<cutoff>`
-   - Opened: `search_issues` → `repo:pmcp/nuxt-crouton is:issue created:>=<cutoff>`
-   - Merged PRs: `search_issues` → `repo:pmcp/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
+   - Closed: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:issue is:closed closed:>=<cutoff>`
+   - Opened: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:issue created:>=<cutoff>`
+   - Merged PRs: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
      (note: `search_issues` is scoped to issues; for PRs use `mcp__github__search_pull_requests`
      if available, else `list_pull_requests` filtered client-side.)
 4. Write the **human lines** per epic — these are the heart of the digest, the part a
@@ -68,14 +71,30 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
 
 5. **Loose tickets** (the "no epic" band) — open issues tracked under *no* epic, so
    they don't vanish from the roundup. `search_issues` →
-   `repo:pmcp/nuxt-crouton is:issue is:open -label:epic`, then **drop anything with a
+   `repo:FriendlyInternet/nuxt-crouton is:issue is:open -label:epic`, then **drop anything with a
    `parent_issue_url`** (those already roll up under an epic). For each survivor keep
    `number`, `title`, `url`, and its `type:*` label (as `type`). The renderer groups
    them by type so a pile of chores reads as one block. Omit the section entirely when
    there are none — re-parent strays into epics first; this only catches the genuinely
    standalone.
 
-Keep it lean: titles, numbers, URLs, states. Don't fetch comment bodies.
+6. **Actionables** (the "🧪 Needs your eyes" band) — the things that *landed* and want the
+   owner's eyes, each carrying the human **How to test** steps the author already wrote (no
+   LLM needed — every closeable PR/issue is required to have a `## 🧪 How to test` section):
+   - **Merged PRs in the window** — for each, read its body, pull the `## 🧪 How to test`
+     section into `testSteps` (a list of plain step strings). Set `hasVisual: true` if the PR
+     touched a UI surface (a `.vue`/`.css` file, `app/components|layouts|pages/**`, `crouton-themes`/
+     `crouton-editor`) or carries a `ui-approved` / `ui:*` label. Capture a `previewUrl` if the
+     body links a `*.pmcp.dev` / `*.friendlyinter.net` URL. `label` = `<type> · merged` from the
+     conventional-commit title (`fix · merged`).
+   - **Epics that hit 100% but are still open** (done = total, awaiting QA + close) — one
+     `kind: "epic"` actionable whose `testSteps` come from the epic's `## 🧪 Verify the whole thing`
+     rollup comment.
+   - Keep an item even with no steps — the renderer shows a "_author should add 🧪 How to test_"
+     nudge rather than dropping it. Omit the whole section only when there are no actionables.
+
+Keep the rest lean: titles, numbers, URLs, states. (Actionables are the one place we *do* read
+PR/rollup bodies — that's where the test steps live.)
 
 ## Step 3 — Write the data file
 Write the gathered object to a temp path (e.g. `writeups/reports/.epic-digest.data.json`).
@@ -85,12 +104,22 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
 {
   "generatedAt": "<ISO now>",
   "windowHours": 24,
-  "repo": "pmcp/nuxt-crouton",
+  "repo": "FriendlyInternet/nuxt-crouton",
   "activity": {
     "opened":    [{ "number": 358, "title": "...", "url": "https://github.com/...", "kind": "issue" }],
     "closed":    [{ "number": 351, "title": "...", "url": "...", "kind": "issue" }],
     "mergedPRs": [{ "number": 352, "title": "...", "url": "...", "kind": "pr" }]
   },
+  "actionables": [                        // optional — the "🧪 Needs your eyes" band (rendered first)
+    {
+      "number": 391, "title": "...", "url": "https://github.com/...",
+      "kind": "pr",                       // "pr" (merged) | "epic" (hit 100%, do one QA pass)
+      "label": "feat · merged",           // optional badge; epics default to "✓ Epic complete · do one QA pass"
+      "hasVisual": true,                  // → 👁 visual-change badge + preview link
+      "previewUrl": "https://velo.pmcp.dev/bookings",   // optional
+      "testSteps": ["Open Bookings…", "Each row shows a status pill", "Filter by pending → amber only"]
+    }
+  ],
   "epics": [
     {
       "number": 249, "title": "...", "url": "https://github.com/...",
@@ -147,6 +176,10 @@ GH_TOKEN=… DIGEST_BODY_FILE=epic-digest-<date>.md bash .claude/skills/epic-dig
   preview it inline.)
 
 ## Conventions & gotchas
+- **Actionables surface, don't author.** The "Needs your eyes" steps come verbatim from each
+  PR/epic's required `🧪 How to test` / `🧪 Verify the whole thing` section. If an item lands
+  with no steps, that's a signal the *author* skipped the required section — the nudge in the
+  digest is intentional, don't paper over it by inventing steps.
 - **Epics are the unit.** Lead with epics + progress, not a flat issue list — that's
   the whole point ("focus on epics").
 - **Interactive = render-only.** A by-hand run just writes files and shows them; the

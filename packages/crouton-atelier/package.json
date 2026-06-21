@@ -45,7 +45,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git",
     "directory": "packages/crouton-atelier"
   },
   "keywords": [

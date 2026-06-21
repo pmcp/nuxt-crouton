@@ -27,8 +27,8 @@ Cloudflare. No env vars required beyond `BETTER_AUTH_SECRET`.
 
 ## Deploy — Cloudflare **Workers** (static assets) — pilot for #109
 
-> This app is the pilot for [#109](https://github.com/pmcp/nuxt-crouton/issues/109)
-> (epic [#108](https://github.com/pmcp/nuxt-crouton/issues/108)): deploying via
+> This app is the pilot for [#109](https://github.com/FriendlyInternet/nuxt-crouton/issues/109)
+> (epic [#108](https://github.com/FriendlyInternet/nuxt-crouton/issues/108)): deploying via
 > the **Workers** static-assets preset instead of Pages, so D1 + KV are
 > **auto-provisioned** instead of created by hand. Other apps stay on Pages
 > unless/until this proves clearly better.

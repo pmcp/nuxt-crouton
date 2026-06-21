@@ -477,11 +477,11 @@ export async function getOrganizationMembershipDirect(
   const db = useDB()
 
   const result = await db
-    .select({ role: member.role })
-    .from(member)
+    .select({ role: memberTable.role })
+    .from(memberTable)
     .where(and(
-      eq(member.organizationId, organizationId),
-      eq(member.userId, userId)
+      eq(memberTable.organizationId, organizationId),
+      eq(memberTable.userId, userId)
     ))
     .limit(1)
 

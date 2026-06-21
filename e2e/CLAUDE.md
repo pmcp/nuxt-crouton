@@ -15,6 +15,7 @@ e2e/                         # the harness (Playwright) — NOT a workspace pack
   collection.smoke.spec.ts   # generic, manifest-driven list + CRUD checks
   surface.smoke.spec.ts      # generic, manifest-driven package-surface checks (optional)
   i18n.smoke.spec.ts         # generic, manifest-driven locale-switch check (optional)
+  maps.smoke.spec.ts         # generic, manifest-driven maps mount + live geocode check (optional)
   .auth/                     # generated storageState + team slug (gitignored)
 
 fixtures/                    # the apps under test — real crouton apps, one per config
@@ -23,6 +24,7 @@ fixtures/                    # the apps under test — real crouton apps, one pe
   with-bookings/             # + @fyit/crouton-bookings (surface: bookings admin)
   with-assets/               # + @fyit/crouton-assets  (surface: CroutonAssetsPicker mounts, not the stub)
   with-collab/               # + @fyit/crouton-collab  (spike surface: realtime collab UI mounts single-client)
+  with-maps/                 # + @fyit/crouton-maps    (maps: map mounts in form + live Nominatim geocode)
   <name>/                    # add more here
     e2e.manifest.json        # declares what to smoke (collections, fields)
 ```
@@ -167,6 +169,21 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
     "switchTo": "NL",        // switcher option to pick (uppercase locale-code label)
     "before": "Your teams",  // a known translated string in the default locale
     "after": "Jouw teams"    // the same string in the target locale
+  },
+  // Optional: a maps + geocoding check (crouton-maps). Two assertions —
+  // (1) the CroutonMapsMap mounts inside the collection's generated create form
+  // (offline-safe; always runs), and (2) the /api/maps/geocode proxy forward-
+  // geocodes an address. The geocode step hits LIVE public Nominatim, so it
+  // skips gracefully when the network is blocked (a CI runner must not go red).
+  // Omit for fixtures that don't extend crouton-maps.
+  "maps": {
+    "collectionKey": "mainVenues",   // collection whose generated form embeds the map
+    "heading": "Main Venues",         // that collection's list heading
+    "geocode": {
+      "query": "Eiffel Tower, Paris, France", // address to forward-geocode
+      "near": [2.2945, 48.8584],              // expected [lng, lat]
+      "tolerance": 2                           // allowed deviation in degrees (generous)
+    }
   }
 }
 ```

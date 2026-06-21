@@ -47,6 +47,10 @@ jobs:
           prompt: "/task-decompose #${{ github.event.issue.number }}"
           claude_args: "--max-turns 30"
           show_full_output: true
+          # WS5 (#535): the `delegate` label is now applied by the Nuxt Harness App, so this run is
+          # actored as nuxt-harness[bot]. Allow exactly that bot past the bot-actor guard — nothing
+          # else. (The pinned SHA already supports allowed_bots.)
+          allowed_bots: "nuxt-harness[bot]"
 
       # ── Artifact-gate (#461) ──────────────────────────────────────────────────
       # A run is only allowed to be GREEN if the agent produced an OBSERVABLE
@@ -75,22 +79,39 @@ jobs:
             const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
               ...context.repo, issue_number,
             })
-            const linkedPR = timeline.some(e =>
+            const prRefs = timeline.filter(e =>
               e.event === 'cross-referenced' &&
-              e.source && e.source.issue && e.source.issue.pull_request &&
-              new Date(e.created_at).getTime() >= sinceMs
+              e.source && e.source.issue && e.source.issue.pull_request
             )
+            const linkedPR = prRefs.some(e => new Date(e.created_at).getTime() >= sinceMs) // a PR opened THIS run
+            const alreadyLinkedPR = prRefs.length > 0 // issue ALREADY has a linked PR (a prior run finished it)
 
             // (c) is the issue now HELD as a sign-off gate? (worker posted a review + status:blocked)
             const issue = await github.rest.issues.get({ ...context.repo, issue_number })
             const blocked = issue.data.labels.some(l => (typeof l === 'string' ? l : l.name) === 'status:blocked')
+            const alreadyClosed = issue.data.state === 'closed' // already done
 
-            // KIND-AWARE pass: a build/deploy issue must yield a PR; a sign-off gate must
-            // post a review AND hold (status:blocked + a comment). A bare progress comment
-            // ("spawning the worker…") with no PR and no hold is the no-op → FAIL.
+            // (d) did THIS run create sub-issues? An orchestrator/epic run's deliverable is a
+            // tree of newly-created sub-issues, NOT a PR — so creating them this run is a real
+            // artifact (#572: the #566 epic decompose was falsely failed for "no PR"). Scope to
+            // `created_at >= since` so a re-run that creates nothing still fails honestly.
+            let createdSubIssues = false
+            try {
+              const subs = await github.paginate('GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues', {
+                ...context.repo, issue_number, per_page: 100,
+              })
+              createdSubIssues = subs.some(s => new Date(s.created_at).getTime() >= sinceMs)
+            } catch (e) { core.warning(`sub-issue check skipped: ${e.message}`) }
+
+            // KIND-AWARE pass: a build/deploy issue must yield a PR; a sign-off gate must post a
+            // review AND hold (status:blocked + a comment); an orchestrator/epic run yields
+            // sub-issues. A bare progress comment with no PR, no hold, and no sub-issues is the
+            // no-op → FAIL. BUT a re-dispatch of an ALREADY-satisfied issue (it already has a
+            // linked PR, or is closed) correctly reports "already done" — pass it, don't red-flag
+            // (#500/WS4: the #457 re-dispatch false-failure).
             const signoffHeld = blocked && newComment
-            if (linkedPR || signoffHeld) {
-              core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld}`)
+            if (linkedPR || signoffHeld || alreadyLinkedPR || alreadyClosed || createdSubIssues) {
+              core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld} alreadyLinkedPR=${alreadyLinkedPR} alreadyClosed=${alreadyClosed} createdSubIssues=${createdSubIssues}`)
               return
             }
 

@@ -11,7 +11,7 @@ You implement **one** leaf issue end to end and open a PR. You are spawned by a
 `task-decomposer` (usually with `isolation: "worktree"`). You do **not** decompose, and
 you do **not** spawn other agents.
 
-Repo: `pmcp/nuxt-crouton`. Follow CLAUDE.md to the letter — this is real code landing on
+Repo: `FriendlyInternet/nuxt-crouton`. Follow CLAUDE.md to the letter — this is real code landing on
 a feature branch.
 
 ## Input (from the prompt)
@@ -192,10 +192,11 @@ things:
   the sticky comment in place** (append `- rN: <what changed>`), and **reply to / resolve each
   inline thread** you addressed so it's clear what's done. Commit (`/commit`, scope `docs`) and
   push — the diff updates in place. The hold stays.
-- **Approval signal** — **any one of**:
-  - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
-  - a **👍 reaction** on the sticky mockup comment, or
-  - the **`ui-approved`** label on the PR.
+- **Approval signal** — a human **comment** on the issue whose body contains **`approve`** or
+  **`lgtm`** (case-insensitive). This is the ONLY signal that resumes the pipeline: only
+  `issue_comment` fires `resume-on-comment.yml` — a 👍 **reaction** raises no workflow event, and
+  nothing listens for an `ui-approved` label, so neither one will unblock a gate (#572). Tell the
+  reviewer to *reply* `lgtm`/`approve`, not react.
 
   On approval: remove `status:blocked`, drop a short "approved → building/generating" note on the
   sticky comment, and **resume** (step 6 onward) — build the UI, or run `crouton config` to

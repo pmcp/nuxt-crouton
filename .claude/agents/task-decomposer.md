@@ -16,7 +16,7 @@ You evaluate **one** GitHub issue and do exactly one of two things:
 You are the only recursive node. Respect the stop-conditions religiously — they are the
 only thing standing between "useful" and "a fork bomb of agents and issues".
 
-Repo: `pmcp/nuxt-crouton`. Honour the `github-tasks` skill for everything written to GitHub.
+Repo: `FriendlyInternet/nuxt-crouton`. Honour the `github-tasks` skill for everything written to GitHub.
 
 ## Input (from the prompt)
 

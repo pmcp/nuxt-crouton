@@ -1,0 +1,44 @@
+{
+  "epic": 581,
+  "slug": "ticket-editor-sandbox",
+  "title": "Try the editor — drag, recolour, Save",
+  "nodes": [
+    {
+      "id": 1,
+      "title": "Drag me around",
+      "status": "in_progress"
+    },
+    {
+      "id": 2,
+      "title": "Recolour me",
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "title": "I'm done",
+      "status": "done"
+    },
+    {
+      "id": 4,
+      "title": "Pretend I'm blocked",
+      "status": "blocked"
+    }
+  ],
+  "edges": [
+    {
+      "from": 1,
+      "to": 3
+    },
+    {
+      "from": 2,
+      "to": 3
+    },
+    {
+      "from": 4,
+      "to": 3
+    }
+  ],
+  "goal": {
+    "label": "Tap Save → commits to the repo"
+  }
+}

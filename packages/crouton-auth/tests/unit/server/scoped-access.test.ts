@@ -518,38 +518,38 @@ describe('server/utils/scoped-access', () => {
   })
 
   describe('extendScopedToken', () => {
-    it('should extend token expiration', async () => {
+    it('should slide expiry forward, bounded by the grant TTL', async () => {
+      // First select → the valid token; second select → its grant (tokenTtl).
       const currentExpiry = new Date(Date.now() + 3600000)
-      selectResults = [{ id: 'token-id-1', expiresAt: currentExpiry }]
+      selectResults = [{ id: 'token-id-1', organizationId: 'org-1', resourceType: 'event', resourceId: 'event-1', expiresAt: currentExpiry, tokenTtl: 2 * 60 * 60 * 1000 }]
 
-      const additionalTime = 2 * 60 * 60 * 1000 // 2 hours
-      const result = await extendScopedToken('token-to-extend', additionalTime)
+      const before = Date.now()
+      const result = await extendScopedToken('token-to-extend')
+      const after = Date.now()
 
       expect(result).not.toBeNull()
-      expect(result!.getTime()).toBeGreaterThan(currentExpiry.getTime())
+      // New expiry is now + grant tokenTtl (2h) — a policy-bounded sliding window,
+      // NOT an unbounded client-supplied extension.
+      expect(result!.getTime()).toBeGreaterThanOrEqual(before + 2 * 60 * 60 * 1000)
+      expect(result!.getTime()).toBeLessThanOrEqual(after + 2 * 60 * 60 * 1000)
     })
 
     it('should return null for non-existent token', async () => {
       selectResults = []
 
-      const result = await extendScopedToken('non-existent-token', 3600000)
+      const result = await extendScopedToken('non-existent-token')
 
       expect(result).toBeNull()
     })
 
-    it('should use current time if token already expired', async () => {
-      const expiredTime = new Date(Date.now() - 3600000) // 1 hour ago
-      selectResults = [{ id: 'token-id-1', expiresAt: expiredTime }]
+    it('should NOT refresh an expired token (query excludes it → null)', async () => {
+      // The handler filters on expiresAt > now, so an expired token is not found.
+      // Expiry is the revocation mechanism — a lapsed token must stay dead.
+      selectResults = []
 
-      const additionalTime = 60 * 60 * 1000 // 1 hour
-      const before = Date.now()
-      const result = await extendScopedToken('token', additionalTime)
-      const after = Date.now()
+      const result = await extendScopedToken('expired-token')
 
-      expect(result).not.toBeNull()
-      // Should be based on current time, not expired time
-      expect(result!.getTime()).toBeGreaterThanOrEqual(before + additionalTime)
-      expect(result!.getTime()).toBeLessThanOrEqual(after + additionalTime)
+      expect(result).toBeNull()
     })
   })
 

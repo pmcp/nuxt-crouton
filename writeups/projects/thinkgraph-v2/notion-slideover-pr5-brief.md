@@ -438,4 +438,3 @@ session entry point in the worker. Old skills, full-node dispatches,
 file diffs, action buttons, and text-selection comments all keep
 working unchanged.
 
-Code word: report back when done.

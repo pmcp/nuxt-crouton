@@ -1,6 +1,6 @@
 # @fyit/crouton-three
 
-TresJS (Three.js for Vue) integration for [Nuxt Crouton](https://github.com/pmcp/nuxt-crouton).
+TresJS (Three.js for Vue) integration for [Nuxt Crouton](https://github.com/FriendlyInternet/nuxt-crouton).
 
 Spin up 3D inside a crouton app — build interactive scenes and games, drop a
 glTF/.glb model viewer anywhere, and add a **3D Model** block to your CMS pages.

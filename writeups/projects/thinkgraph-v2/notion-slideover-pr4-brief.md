@@ -345,4 +345,3 @@ and doesn't disturb the existing dispatch pipeline, comment threads,
 or action buttons. Old skills that don't call `appendFileDiff` keep
 working.
 
-Code word: report back when done.
