@@ -2,7 +2,7 @@
 
 > **Updated for the Crouton GitHub App (#519).** This Worker no longer uses a stored GitHub PAT.
 > It authenticates as the **Crouton GitHub App**, minting a short-lived (~1h) installation token
-> just-in-time and committing as `crouton[bot]`. See `writeups/setup/secrets-and-tokens.md` (Tier 2
+> just-in-time and committing as `nuxt-harness[bot]`. See `writeups/setup/secrets-and-tokens.md` (Tier 2
 > + the GitHub App section).
 
 This Worker (`workers/ticket-editor`) serves a mobile Excalidraw editor and, on Save, commits the
