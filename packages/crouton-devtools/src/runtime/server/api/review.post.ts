@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { formatReviewComment, type ReviewAnnotation } from '../../overlay/capture'
+import { mintInstallationToken } from '../utils/githubApp'
 
 /**
  * Preview-review GitHub bridge (epic #488, #491).
@@ -11,20 +12,24 @@ import { formatReviewComment, type ReviewAnnotation } from '../../overlay/captur
  * `NUXT_PUBLIC_CROUTON_REVIEW` gate; never present in a production build.
  *
  * Config comes from server runtimeConfig (`croutonReview`), populated at runtime
- * from Worker env so the token never ships in the bundle or reaches the client:
- *   - NUXT_CROUTON_REVIEW_GITHUB_TOKEN  → githubToken (Worker secret)
- *   - NUXT_CROUTON_REVIEW_REPOSITORY    → repository ("owner/repo")
- *   - NUXT_CROUTON_REVIEW_PR            → pr (the staging PR number)
- * The PR number may also be supplied per-request via `prNumber` in the body.
+ * from Worker env so no credential ships in the bundle or reaches the client.
  *
- * ⚠️ DIRECTION (epic #519): this PAT in `githubToken` is INTERIM. The bridge is
- * workstream #2 of the Crouton GitHub App — it will mint a short-lived installation
- * token via `@octokit/auth-app` and post as `crouton[bot]` instead of a standalone
- * PAT. `repository`/`pr` (routing, not secrets) stay. See #519 and
- * `writeups/setup/secrets-and-tokens.md`.
+ * AUTH (epic #519): the bridge posts as the shared **Crouton GitHub App**
+ * (`crouton[bot]`) by minting a short-lived installation token just-in-time — no
+ * stored PAT, no person-impersonation. Set the App credentials as Worker secrets:
+ *   - NUXT_CROUTON_REVIEW_GITHUB_APP_ID              → githubAppId
+ *   - NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY     → githubAppPrivateKey (the secret)
+ *   - NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID → githubAppInstallationId
+ * Routing (not secrets):
+ *   - NUXT_CROUTON_REVIEW_REPOSITORY → repository ("owner/repo")
+ *   - NUXT_CROUTON_REVIEW_PR         → pr (the staging PR number; or body.prNumber)
  *
- * Returns `{ data, error }`; on failure `error` is a safe message that never
- * echoes the token.
+ * INTERIM FALLBACK: `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` (a standalone PAT) is still
+ * honoured *only* when App credentials are absent — a dev/throwaway stopgap, never
+ * production. App credentials take precedence. See `writeups/setup/secrets-and-tokens.md`.
+ *
+ * Returns `{ data, error }`; on failure `error` is a safe message that never echoes
+ * a token or the private key.
  */
 interface ReviewBody extends Partial<ReviewAnnotation> {
   prNumber?: number | string
@@ -37,6 +42,9 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event as Parameters<typeof useRuntimeConfig>[0])
   const review = (config.croutonReview || {}) as {
     githubToken?: string
+    githubAppId?: string
+    githubAppPrivateKey?: string
+    githubAppInstallationId?: string
     repository?: string
     pr?: string
   }
@@ -53,17 +61,37 @@ export default defineEventHandler(async (event) => {
     return { data: null, error: 'Missing required fields (commentText, route, cssSelector)' }
   }
 
-  const token = review.githubToken
   const repository = review.repository
   const pr = String(body.prNumber ?? review.pr ?? '').trim()
 
-  if (!token || !repository || !pr) {
+  const hasApp = !!(review.githubAppId && review.githubAppPrivateKey && review.githubAppInstallationId)
+  const hasPat = !!review.githubToken
+
+  if ((!hasApp && !hasPat) || !repository || !pr) {
     return {
       data: null,
-      error: 'Review bridge not configured: set NUXT_CROUTON_REVIEW_GITHUB_TOKEN + '
-        + 'NUXT_CROUTON_REVIEW_REPOSITORY and provide a PR number '
+      error: 'Review bridge not configured: set the Crouton App credentials '
+        + '(NUXT_CROUTON_REVIEW_GITHUB_APP_ID / _PRIVATE_KEY / _INSTALLATION_ID) '
+        + 'or the interim NUXT_CROUTON_REVIEW_GITHUB_TOKEN, plus '
+        + 'NUXT_CROUTON_REVIEW_REPOSITORY and a PR number '
         + '(NUXT_CROUTON_REVIEW_PR or body.prNumber).'
     }
+  }
+
+  // Prefer a short-lived App installation token (#519); fall back to the interim PAT.
+  let token: string
+  try {
+    token = hasApp
+      ? await mintInstallationToken({
+          appId: review.githubAppId!,
+          privateKey: review.githubAppPrivateKey!,
+          installationId: review.githubAppInstallationId!
+        })
+      : review.githubToken!
+  }
+  catch {
+    // Minting failed (bad key / installation) — never surface the key or JWT.
+    return { data: null, error: 'Failed to authenticate as the Crouton GitHub App' }
   }
 
   const markdown = formatReviewComment(body as ReviewAnnotation)

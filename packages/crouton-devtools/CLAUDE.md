@@ -13,6 +13,7 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
 | `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
 | `src/runtime/server/api/review.post.ts` | `POST /api/_review` → GitHub PR comment bridge (#491) |
+| `src/runtime/server/utils/githubApp.ts` | Crouton App auth: WebCrypto, dependency-free installation-token mint for the bridge (#519) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
@@ -162,16 +163,33 @@ comment via `formatReviewComment` (the `🎯 Preview feedback` Markdown the agen
 keys off) + the GitHub issues-comments API, so the subscribed agent
 (`subscribe_pr_activity`) wakes on it. Registered (staging-only) under the same
 gate; absent from production builds. Returns `{ data, error }`; failures surface a
-status-coded message that never echoes the token.
+status-coded message that never echoes a token or the private key.
+
+**Auth — the Crouton GitHub App (#519).** The bridge posts as `crouton[bot]`, not a
+person: it mints a short-lived (~1h) **installation token** just-in-time from the
+shared App's credentials, uses it for the one comment, and lets it expire. No PAT is
+stored; the one durable secret is the App private key (it only signs JWTs to mint
+tokens). The sign-JWT → exchange-for-installation-token flow is done with
+**WebCrypto, dependency-free** in `runtime/server/utils/githubApp.ts` (mirrors
+`workers/ticket-editor`, the sibling App consumer), so the package adds nothing to
+the lockfile and runs unchanged on Workers + Node 18+.
 
 Config is server-side `runtimeConfig.croutonReview`, populated at **runtime** from
-Worker env so the token never ships in the bundle or reaches the client:
+Worker env so nothing ships in the bundle or reaches the client:
 
 | Env var | Maps to | Notes |
 |---------|---------|-------|
-| `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` | `croutonReview.githubToken` | Worker **secret** — never baked |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_ID` | `croutonReview.githubAppId` | Crouton App id (not secret) |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY` | `croutonReview.githubAppPrivateKey` | Worker **secret** — the App PEM; the one durable secret |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID` | `croutonReview.githubAppInstallationId` | installation to mint tokens for (not secret) |
+| `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` | `croutonReview.githubToken` | **interim** PAT fallback (#519) — honoured only if no App creds; dev/throwaway, never production |
 | `NUXT_CROUTON_REVIEW_REPOSITORY` | `croutonReview.repository` | `owner/repo` (may bake from build env) |
 | `NUXT_CROUTON_REVIEW_PR` | `croutonReview.pr` | PR number (or per-request `body.prNumber`) |
+
+App credentials take precedence over the PAT; the PAT path stays only so the bridge
+keeps working before the App is wired (retire it on App wiring). Verified by
+`test/githubApp.test.ts` (the JWT signing path) — see also
+`writeups/setup/review-bridge-token-setup.md`.
 
 Wiring these into an app's `cf:staging` + the `ui-proposal` gate is #492. Server
 imports use `nitropack/runtime` (not `#imports`) for the same typecheck reason as

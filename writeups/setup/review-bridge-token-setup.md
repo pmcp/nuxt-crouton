@@ -1,6 +1,6 @@
-# Review-Bridge GitHub Credential — defers to the Crouton GitHub App
+# Review-Bridge GitHub Credential — runs on the Crouton GitHub App
 
-> **Status: realigned (was a PAT brief).** The review-bridge does **not** get a standalone
+> **Status: implemented (#519 workstream #2).** The review-bridge does **not** use a standalone
 > PAT. Per **epic [#519](https://github.com/pmcp/nuxt-crouton/issues/519)** (Crouton GitHub
 > App) the bridge mints a **short-lived installation token** from the shared App and posts as
 > **`crouton[bot]`**. Credential provisioning is owned by the canonical
@@ -8,13 +8,17 @@
 > review-bridge-specific slice. The earlier "provision a PAT" guidance is **rejected/interim**,
 > preserved below as *Considered & rejected*.
 
-## What the review-bridge needs (decided direction)
+## What the review-bridge needs (implemented)
 
-- **Auth:** at runtime the Worker mints a 1-hour **installation token** via `@octokit/auth-app`
-  from the **shared App** (App ID + private key) — *not* a per-feature PAT — and posts as
-  `crouton[bot]`. Single-tenant now: the private key may live in the Worker; the central mint is
-  the teams-era step (#519). The bridge code reads whatever token the mint provides; **it owns no
-  secret of its own.**
+- **Auth:** at runtime the Worker mints a ~1-hour **installation token** from the **shared App**
+  (App ID + private key + installation id) — *not* a per-feature PAT — and posts as
+  `crouton[bot]`. The mint (sign an App JWT → exchange for an installation token) is done with
+  **WebCrypto, dependency-free**, in
+  `packages/crouton-devtools/src/runtime/server/utils/githubApp.ts` — mirroring
+  `workers/ticket-editor` (the sibling App consumer) so the package adds **nothing** to the
+  monorepo lockfile (no `@octokit/auth-app`) and runs unchanged on Workers + Node 18+. The
+  signing path is unit-tested (`test/githubApp.test.ts`). Single-tenant now: the private key may
+  live in the Worker; the central mint is the teams-era step (#519).
 - **App permission used:** *Pull requests: write* (PR conversation comment). The App also holds
   *Contents: write* for the ticket-editor (#503) — not used here.
 - **Consumer:** `@fyit/crouton-devtools` → `POST /api/_review`
@@ -22,17 +26,32 @@
 - **Action:** `POST /repos/{owner}/{repo}/issues/{pr}/comments` (a `🎯 Preview feedback` comment).
 - **Gate:** staging only — behind `NUXT_PUBLIC_CROUTON_REVIEW=true`; absent from production builds.
 
-## Config the review-bridge still owns (NOT secrets)
+## Config — set on the staging Worker
 
-Routing, not credentials — these stay regardless of the auth mechanism:
+The **App credentials** (mint the installation token). Only the private key is a secret; the two
+ids are identifiers. All three live behind the `NUXT_CROUTON_REVIEW_` prefix so Nuxt maps them
+onto `runtimeConfig.croutonReview`:
+
+| Var | Secret? | Purpose |
+|---|---|---|
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_ID` | no | the Crouton App id |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY` | **yes** | the App PEM — the one durable secret (`wrangler secret put`) |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID` | no | the installation to mint a token for |
+
+Routing — not credentials — stay regardless of the auth mechanism:
 
 | Var | Secret? | Purpose |
 |---|---|---|
 | `NUXT_CROUTON_REVIEW_REPOSITORY` | no | `owner/repo` to comment on |
 | `NUXT_CROUTON_REVIEW_PR` | no | PR number (or per-request `body.prNumber`) |
 
-The **credential** (App ID + private key) is provisioned **centrally** — see the canonical doc,
-not this one.
+The App private key may be the same one the ticket-editor uses (same App); see the canonical
+secrets doc for central provisioning. Set it once on the staging Worker, e.g.:
+
+```bash
+wrangler secret put NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY --env staging
+# the two ids + routing are not secrets — plain vars (or WORKER_SECRETS_JSON)
+```
 
 ## Multi-tenant / teams
 
@@ -45,10 +64,10 @@ first team — which is why #519 builds the App now (dogfooded on this repo as t
 The original #491 implementation used a fine-grained PAT as a Worker secret. **Rejected** in
 favour of the App (#519) because it is: (a) a long-lived secret on a public-ish preview behind an
 **unauthenticated** endpoint; (b) an *impersonation* of a person rather than a named bot
-(`crouton[bot]`); (c) **non-scaling to teams** (can't be scoped per-tenant). The current bridge
-code still reads `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` as an **interim/dev fallback** until the App
-wiring lands (#519 workstream #2); treat it as throwaway, never production, and retire it on App
-wiring.
+(`crouton[bot]`); (c) **non-scaling to teams** (can't be scoped per-tenant). App auth is now the
+implemented path; the bridge still reads `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` **only as a fallback
+when no App credentials are set** (App creds take precedence) — a dev/throwaway stopgap, never
+production. Drop it once the App env is wired everywhere.
 
 ## References
 

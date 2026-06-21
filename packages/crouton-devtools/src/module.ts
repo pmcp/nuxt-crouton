@@ -47,11 +47,18 @@ export default defineNuxtModule<ModuleOptions>({
       })
 
       // 3. Server bridge: POST /api/_review → GitHub PR comment (#491).
-      // Token stays server-side; populated at runtime from Worker env
-      // (NUXT_CROUTON_REVIEW_GITHUB_TOKEN / _REPOSITORY / _PR) so it never
-      // ships in the bundle. repository/pr may be baked from the build env.
+      // Credentials stay server-side; populated at runtime from Worker env so
+      // nothing ships in the bundle. The bridge posts as the Crouton GitHub App
+      // (#519) — it mints a short-lived installation token from these keys; the
+      // standalone PAT (githubToken) remains only as an interim fallback.
+      // Empty-string defaults exist so the NUXT_CROUTON_REVIEW_* env vars can
+      // override them at runtime (Nuxt only maps env onto keys already present).
+      // repository/pr may be baked from the build env.
       ;(nuxt.options.runtimeConfig as Record<string, any>).croutonReview = {
-        githubToken: '',
+        githubAppId: '',
+        githubAppPrivateKey: '',
+        githubAppInstallationId: '',
+        githubToken: '', // interim PAT fallback (#519) — never production
         repository: process.env.GITHUB_REPOSITORY || '',
         pr: process.env.CROUTON_REVIEW_PR || ''
       }
