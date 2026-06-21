@@ -175,6 +175,13 @@ const PAGE = `<!DOCTYPE html>
   #hint h2{margin:0 0 10px;font-size:20px;} #hint p{margin:8px 0;line-height:1.5;color:#c2ccdd;}
   #hint code{background:#0a0e17;border:1px solid #1f2a3d;border-radius:6px;padding:2px 7px;font-size:13px;color:#7ee0c0;}
   #hint .muted{color:#8b97ad;font-size:13px;}
+  #boot{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;gap:12px;align-items:center;
+    justify-content:center;padding:24px;text-align:center;background:#0a0e17;color:#e8edf6;
+    font-family:-apple-system,Segoe UI,Roboto,sans-serif;}
+  #boot .big{font-size:20px;font-weight:700;}
+  #boot.err .big{color:#fca5a5;}
+  #boot pre{max-width:90vw;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0;
+    font-size:12px;color:#8b97ad;background:#121826;border:1px solid #1f2a3d;border-radius:10px;padding:12px 14px;}
 </style>
 </head><body>
 <div id="bar"><b>✏️ Diagram editor</b><span id="status">loading…</span><span class="sp"></span>
@@ -187,6 +194,30 @@ const PAGE = `<!DOCTYPE html>
   <p><code>/?slug=&lt;diagram&gt;&amp;branch=&lt;branch&gt;</code></p>
   <p class="muted">e.g. <code>/?slug=make-tickets-human-readable&amp;branch=main</code> — usually you reach this from a diagram's ✏️ Edit link, not by hand.</p>
 </div></div>
+<div id="boot"><div class="big">Loading editor…</div></div>
+<!-- Global error capture: any uncaught JS error or promise rejection (e.g. an Excalidraw render
+     failure, which React rethrows to window in dev builds) is shown as big on-screen text instead
+     of a silent white canvas — so a screenshot is enough to diagnose. -->
+<script>
+  window.__umdFail = [];
+  function hideBoot(){ var b = document.getElementById('boot'); if (b) b.style.display = 'none'; }
+  function showBootError(title, detail){
+    var b = document.getElementById('boot'); if (!b) return;
+    b.className = 'err'; b.style.display = 'flex'; b.innerHTML = '';
+    var h = document.createElement('div'); h.className = 'big'; h.textContent = title; b.appendChild(h);
+    if (detail){ var p = document.createElement('pre'); p.textContent = detail; b.appendChild(p); }
+  }
+  window.addEventListener('error', function(e){
+    // Resource (<script>/<link>) load failures are handled by their inline onerror — ignore here.
+    if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) return;
+    var m = (e && e.message) || (e && e.error && e.error.stack) || String(e && e.error || e);
+    if (e && e.filename) m += '\n@ ' + e.filename + ':' + e.lineno + ':' + e.colno;
+    showBootError('JavaScript error', m);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason; showBootError('Unhandled promise rejection', (r && (r.stack || r.message)) || String(r));
+  });
+</script>
 <!-- Excalidraw's official no-build recipe: React, ReactDOM and Excalidraw as UMD globals
      (window.React / window.ReactDOM / window.ExcalidrawLib). This replaces the esm.sh ESM +
      ?external import-map path, whose dynamic import('react-dom/client') failed to fetch on both
@@ -195,11 +226,10 @@ const PAGE = `<!DOCTYPE html>
      Pinned to React 18.2.0 — the versions in Excalidraw's own no-build docs (React 19 dropped UMD
      builds). Each <script onerror> records its failure by name so the status bar can say exactly
      what didn't load instead of a generic "failed to load editor". -->
-<script>window.__umdFail = [];</script>
 <script>window.EXCALIDRAW_ASSET_PATH = 'https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/';</script>
-<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onerror="window.__umdFail.push('react')"></script>
-<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="window.__umdFail.push('react-dom')"></script>
-<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js" onerror="window.__umdFail.push('@excalidraw/excalidraw')"></script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js" onerror="window.__umdFail.push('react')"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js" onerror="window.__umdFail.push('react-dom')"></script>
+<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.development.js" onerror="window.__umdFail.push('@excalidraw/excalidraw')"></script>
 <script>
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
@@ -217,10 +247,12 @@ const PAGE = `<!DOCTYPE html>
   if ((!Exc || !Exc.Excalidraw) && missing.indexOf('@excalidraw/excalidraw') < 0) missing.push('@excalidraw/excalidraw');
 
   if (missing.length) {
-    setStatus('editor failed to load (CDN blocked these): ' + missing.join(', '));
+    setStatus('editor failed to load');
+    showBootError('Editor failed to load (CDN)', 'These scripts did not load:\n  ' + missing.join('\n  '));
   } else if (!slug) {
     // Bare "/" — nothing to edit. Explain the tool instead of a confusing blank canvas.
     setStatus('no diagram selected');
+    hideBoot();
     hintEl.style.display = 'flex';
   } else {
     var createRoot = ReactDOM.createRoot;
@@ -233,14 +265,22 @@ const PAGE = `<!DOCTYPE html>
     loadScene().then(function(scene){
       var initialData = scene ? { elements: scene.elements || [], appState: { viewBackgroundColor: '#ffffff' }, files: scene.files || {} } : null;
       function App(){
-        return React.createElement(Exc.Excalidraw, {
-          initialData: initialData,
-          excalidrawAPI: function(a){ api = a; }
-        });
+        // Excalidraw fills its parent — give it a concretely-sized box (a common blank-canvas cause).
+        return React.createElement('div', { style: { position: 'absolute', inset: 0 } },
+          React.createElement(Exc.Excalidraw, {
+            initialData: initialData,
+            // Fires only on a successful mount — our signal that the editor is truly live.
+            excalidrawAPI: function(a){
+              api = a;
+              hideBoot();
+              setStatus(scene ? 'editing ' + slug : slug + ' (new)');
+              saveEl.disabled = false;
+            }
+          })
+        );
       }
       createRoot(document.getElementById('root')).render(React.createElement(App));
-      setStatus(scene ? 'editing ' + slug : slug + ' (new)');
-      saveEl.disabled = false;
+      setStatus('rendering ' + slug + '…');
 
       saveEl.onclick = function(){
         if (!api) return;
