@@ -1,0 +1,21 @@
+{
+  "table": "library_catalog_authors",
+  "key": "name",
+  "rows": [
+    {
+      "name": "Sample name 1",
+      "bio": "Sample bio content for row 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "bornYear": 1
+    },
+    {
+      "name": "Sample name 2",
+      "bio": "Sample bio content for row 2. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "bornYear": 2
+    },
+    {
+      "name": "Sample name 3",
+      "bio": "Sample bio content for row 3. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "bornYear": 3
+    }
+  ]
+}

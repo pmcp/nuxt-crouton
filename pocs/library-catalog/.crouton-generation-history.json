@@ -1,0 +1,57 @@
+[
+  {
+    "collection": "loans",
+    "fields": [
+      "bookId",
+      "borrowerName",
+      "borrowedAt",
+      "dueAt",
+      "returnedAt"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-21T16:40:51.502Z",
+    "layer": "library-catalog",
+    "gitSha": "3fe4dfa5"
+  },
+  {
+    "collection": "books",
+    "fields": [
+      "title",
+      "isbn",
+      "publishedYear",
+      "coverImage",
+      "description",
+      "authorId",
+      "genreId",
+      "copiesTotal",
+      "copiesAvailable"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-21T16:40:51.488Z",
+    "layer": "library-catalog",
+    "gitSha": "3fe4dfa5"
+  },
+  {
+    "collection": "genres",
+    "fields": [
+      "name",
+      "description"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-21T16:40:51.469Z",
+    "layer": "library-catalog",
+    "gitSha": "3fe4dfa5"
+  },
+  {
+    "collection": "authors",
+    "fields": [
+      "name",
+      "bio",
+      "bornYear"
+    ],
+    "generator": "crouton-cli",
+    "timestamp": "2026-06-21T16:40:51.454Z",
+    "layer": "library-catalog",
+    "gitSha": "3fe4dfa5"
+  }
+]
