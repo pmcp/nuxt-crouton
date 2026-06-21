@@ -7,28 +7,34 @@
 
 ## Decisions (recorded)
 
-- **Owner = a GitHub organisation, not a personal account.** An org-owned App survives any one person
-  leaving, allows multiple admins, and is the correct home for a product others install. GitHub has
-  **no "transfer App ownership"** flow, so starting under the org avoids recreating the App (and
-  re-wiring every secret) later.
+- **Owner = a GitHub organisation (eventually), not a personal account.** An org-owned App survives any
+  one person leaving, allows multiple admins, and is the correct home for a product others install.
+  **Ownership IS transferable** (App settings → Advanced → Transfer ownership; user→org supported, not
+  to a team) — App ID, private key, and installations all carry over. So it's fine to register under a
+  personal account to dogfood and **transfer to the org later** with no recreate/re-wire.
 - **Tenants do NOT need an org.** A GitHub App installs onto *any* account — personal or org. Owning
   the App in an org is purely our side (durability/branding); it imposes nothing on installers.
-- **Visibility: private now → public at productization.** Register **"Only on this account"**? No —
-  see the install-scope catch below. Because we dogfood on the **personal** `pmcp/nuxt-crouton` repo
-  while the App is **org-owned**, the App must be **public ("Any account")** to install on it. That's
-  fine: we're going public eventually, and during dogfood only we install it. (A public App can't be
-  made private once *others* install it — irrelevant until real tenants exist.)
-  - *Alternative (not chosen now):* move `nuxt-crouton` into the org, keep the App private. Cleaner
-    long-term home but a disruptive repo move (redirects, CI/Cloudflare secrets) — defer as tidy-up.
+- **Dogfood under the personal `pmcp` account now; transfer to the org later.** Since ownership is
+  transferable (above), the simplest path is: register the App under **@pmcp** (personal), keep it
+  **private ("Only on this account")** — a personal-owned private App installs cleanly on the personal
+  `pmcp/nuxt-crouton` repo, no public listing, no repo move. When productizing, **transfer to
+  `FriendlyInternet`** and flip to **public ("Any account")** so external tenants can install.
+  - *Install-scope rule to remember:* a **private** App can only be installed on the account that
+    **owns** it. So after transferring to the org, the App must be **public** to keep installing on the
+    personal `pmcp/nuxt-crouton` repo (or move the repo into the org). Irrelevant while dogfooding
+    personal+private.
 
-## A. Create the org (if it doesn't exist)
+## A. (Later) the org
 
-GitHub → **+ (top-right) → New organization** → pick the **Free** plan → choose a handle
-(`<ORG>` — e.g. `fyit` to match the existing `@fyit/*` npm scope, or `crouton`). One-time.
+The product home is the **`FriendlyInternet`** org. You don't need it to dogfood — register under your
+personal account now and **transfer** when productizing (see Decisions). To create the org when ready:
+GitHub → **+ (top-right) → New organization** → **Free** plan.
 
 ## B. Register the App
 
-Navigate: `https://github.com/organizations/<ORG>/settings/apps` → **New GitHub App**.
+Navigate: **Settings → Developer settings → GitHub Apps → New GitHub App** (under your personal @pmcp
+account for dogfood; or `https://github.com/organizations/FriendlyInternet/settings/apps` if registering
+directly under the org).
 
 Fill the form (verbatim field labels; required marked):
 
@@ -43,13 +49,13 @@ Fill the form (verbatim field labels; required marked):
 | **Repository permissions** | **Contents → Read & write**, **Pull requests → Read & write**. *(Metadata auto-forces to Read-only — expected.)* |
 | *(futureproof, optional)* | **Checks → Read & write** — WS4 needs it; setting now saves a re-approval later (cheap while you're the only installer). |
 | **Subscribe to events** | none (Active is off) |
-| **Where can this GitHub App be installed?** | **Any account** (public) — required so the org-owned App can install on the personal `pmcp/nuxt-crouton` repo. |
+| **Where can this GitHub App be installed?** | **Only on this account** — fine while the App is personal-owned (@pmcp) and dogfooded on `pmcp/nuxt-crouton`. Flip to **Any account** (public) when you transfer it to the org for real tenants. |
 
 → **Create GitHub App.**
 
-> **Install-scope catch (why public):** a *private* App ("Only on this account") can only be installed
-> on the account that **owns** it. Org-owned + private ⇒ installable only on the org's repos, **not** on
-> personal `pmcp/nuxt-crouton`. Public sidesteps this.
+> **Install-scope rule:** a *private* App ("Only on this account") can only be installed on the account
+> that **owns** it. Personal-owned + private installs cleanly on `pmcp/nuxt-crouton` (same account). After
+> transferring to the org, go **public** to keep installing on the personal repo (or move the repo in).
 
 ## C. Generate & convert the private key
 
