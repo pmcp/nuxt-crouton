@@ -46,7 +46,27 @@ Routing — not credentials — stay regardless of the auth mechanism:
 | `NUXT_CROUTON_REVIEW_PR` | no | PR number (or per-request `body.prNumber`) |
 
 The App private key may be the same one the ticket-editor uses (same App); see the canonical
-secrets doc for central provisioning. Set it once on the staging Worker, e.g.:
+secrets doc for central provisioning.
+
+### CI wires this automatically (#607) — no manual `wrangler secret put`
+
+For apps/POCs deployed through the reusable **`deploy-app.yml`**, the bridge config is set
+**automatically on every staging, PR-tied deploy** — you do **not** run `wrangler secret put` by
+hand. `deploy-pocs.yml` passes the triggering PR number as the `review-pr` input; `deploy-app.yml`
+then resolves the Harness App installation id (`actions/create-github-app-token`) and pushes the
+full `croutonReview` config to the staging Worker via `wrangler secret bulk --env staging`:
+
+| Var | Source in CI |
+|---|---|
+| `NUXT_CROUTON_REVIEW_REPOSITORY` | `github.repository` |
+| `NUXT_CROUTON_REVIEW_PR` | the triggering PR number (`review-pr` input) |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_ID` | `secrets.HARNESS_APP_ID` |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID` | resolved from the App + owner at deploy time |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY` | `secrets.HARNESS_APP_PRIVATE_KEY` |
+
+It's gated to **staging + PR-tied** deploys (a `workflow_dispatch` deploy has no PR → the bridge
+stays unconfigured, which is correct). The bridge then posts as **`nuxt-harness[bot]`** (the shared
+App). To wire it manually for a one-off / non-CI Worker, set the same vars yourself:
 
 ```bash
 wrangler secret put NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY --env staging
