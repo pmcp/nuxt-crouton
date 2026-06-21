@@ -11,9 +11,10 @@
   // Custom domain — Wrangler auto-provisions the route + DNS on deploy (the pmcp.dev zone must be
   // in this Cloudflare account; the API token needs zone Workers Routes + DNS edit). The .workers.dev
   // URL keeps working too. The editor builds its Edit links from the request origin, so links posted
-  // when reached via this host use https://excalidraw.pmcp.dev automatically.
+  // when reached via this host use https://diagram.pmcp.dev automatically. Name is provider-agnostic
+  // (not "excalidraw") so the renderer can be swapped without changing the URL.
   "routes": [
-    { "pattern": "excalidraw.pmcp.dev", "custom_domain": true }
+    { "pattern": "diagram.pmcp.dev", "custom_domain": true }
   ],
   "vars": {
     "REPO": "FriendlyInternet/nuxt-crouton",
