@@ -1,0 +1,73 @@
+name: Red-Team (daily deep sweep)
+
+# Scheduled whole-repo adversarial sweep (epic #540). Runs the red-team probe at
+# depth=deep — static across every app/package, with best-effort dynamic confirmation
+# of high/critical candidates against a fixture — then posts the day's report to a
+# standing issue and files security/sec:* issues for confirmed high/criticals.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'   # 06:17 UTC daily, before the working day
+  workflow_dispatch:        # manual run
+
+concurrency:
+  group: red-team-daily
+  cancel-in-progress: false
+
+jobs:
+  red-team-daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Job-level permissions (see red-team.yml for why id-token MUST be here).
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # The deep pass may boot a fixture for dynamic confirmation — give it node + pnpm + deps.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Pinned to the same SHA as the repo's other claude-code-action workflows — bump together.
+      - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
+          claude_args: "--max-turns 60"
+          prompt: |
+            Run the **`/red-team`** skill (`.claude/skills/red-team/SKILL.md`) at
+            **depth=deep, scope=repo**. Follow it exactly: fan out the `red-team` subagent
+            across the apps/packages, collate one whole-repo report to
+            `writeups/reports/red-team-repo-<YYYYMMDD>.md`, and attempt dynamic confirmation
+            of high/critical candidates against a `fixtures/` app (reuse the `e2e-smoke`
+            harness — boot it, authenticate, send the malicious request). Only probe this
+            repo's own local fixtures — never any external or production host.
+
+            Then:
+
+            1. **Post the report to the standing issue.** Find an open issue titled
+               `🔴 Red-team daily report` (search issues by that title). If none exists,
+               create it (labels: `security`, `meta:agents`) with a short preamble explaining
+               it's the rolling home for daily sweeps. Post TODAY's report as a NEW comment on
+               it (newest-comment-on-top convention): the summary table, then each finding,
+               marking confirmed vs suspected. Lead the comment with the 🤖 provenance header
+               required by `CLAUDE.md` for agent-posted comments.
+
+            2. **File issues for confirmed high/criticals** exactly as the skill's step 4
+               (dedupe via search first; labels `security` + `sec:<severity>` + the owning
+               `pkg:`/`app:` label; `github-tasks` body). Medium/low stay in the report.
+               NOTE: if the `security`/`sec:*` labels don't exist yet (this epic not merged to
+               `main`), say so in the standing-issue comment and skip filing rather than erroring.
+
+            Do NOT edit any `apps/`/`packages/` product code. The report + standing-issue
+            comment + filed issues are the deliverables.
