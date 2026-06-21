@@ -44,6 +44,12 @@ jobs:
 
       # Pinned to the same SHA as the repo's other claude-code-action workflows — bump together.
       - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        # The VERDICT FILE is the gate — NOT this step's exit code. The agent can exit non-zero
+        # on `max_turns` (it flails writing the verdict / the SDK errors) even when it found
+        # nothing high/critical, which was turning every PR red on a flake (#499, #602; #603 P1).
+        # `continue-on-error` makes the "Gate on high/critical" step below the sole decider:
+        # no verdict ⇒ inconclusive pass; a high/critical in the verdict ⇒ fail.
+        continue-on-error: true
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
