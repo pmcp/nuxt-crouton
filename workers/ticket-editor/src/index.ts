@@ -169,20 +169,37 @@ const PAGE = `<!DOCTYPE html>
   #save:disabled{opacity:.5;}
   #status{font-size:12px;color:#8b97ad;}
   #stage{position:absolute;top:48px;bottom:0;left:0;right:0;}
+  #hint{display:none;position:absolute;inset:0;align-items:center;justify-content:center;padding:20px;
+    background:#0a0e17;color:#e8edf6;font-family:-apple-system,Segoe UI,Roboto,sans-serif;}
+  #hint .card{max-width:520px;background:#121826;border:1px solid #1f2a3d;border-radius:14px;padding:24px 26px;}
+  #hint h2{margin:0 0 10px;font-size:20px;} #hint p{margin:8px 0;line-height:1.5;color:#c2ccdd;}
+  #hint code{background:#0a0e17;border:1px solid #1f2a3d;border-radius:6px;padding:2px 7px;font-size:13px;color:#7ee0c0;}
+  #hint .muted{color:#8b97ad;font-size:13px;}
 </style>
 </head><body>
 <div id="bar"><b>✏️ Diagram editor</b><span id="status">loading…</span><span class="sp"></span>
   <button id="save" disabled>Save</button></div>
 <div id="stage"><div id="root"></div></div>
+<div id="hint"><div class="card">
+  <h2>✏️ Ticket diagram editor</h2>
+  <p>Edit an epic's Excalidraw status diagram on any device and commit it straight back to the repo — no login.</p>
+  <p>Open it with a diagram <b>slug</b> and a <b>branch</b>:</p>
+  <p><code>/?slug=&lt;diagram&gt;&amp;branch=&lt;branch&gt;</code></p>
+  <p class="muted">e.g. <code>/?slug=make-tickets-human-readable&amp;branch=main</code> — usually you reach this from a diagram's ✏️ Edit link, not by hand.</p>
+</div></div>
 <!-- Excalidraw's official no-build recipe: React, ReactDOM and Excalidraw as UMD globals
      (window.React / window.ReactDOM / window.ExcalidrawLib). This replaces the esm.sh ESM +
      ?external import-map path, whose dynamic import('react-dom/client') failed to fetch on both
      desktop and mobile (#563). Plain (non-module) scripts execute in order, so the globals exist
-     by the time the init script below runs — no import map, no dynamic import. -->
+     by the time the init script below runs — no import map, no dynamic import.
+     Pinned to React 18.2.0 — the versions in Excalidraw's own no-build docs (React 19 dropped UMD
+     builds). Each <script onerror> records its failure by name so the status bar can say exactly
+     what didn't load instead of a generic "failed to load editor". -->
+<script>window.__umdFail = [];</script>
 <script>window.EXCALIDRAW_ASSET_PATH = 'https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/';</script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js"></script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onerror="window.__umdFail.push('react')"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="window.__umdFail.push('react-dom')"></script>
+<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js" onerror="window.__umdFail.push('@excalidraw/excalidraw')"></script>
 <script>
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
@@ -190,13 +207,21 @@ const PAGE = `<!DOCTYPE html>
   var RAW = 'https://raw.githubusercontent.com/__REPO__/' + branch + '/writeups/diagrams/' + slug + '.excalidraw';
   var statusEl = document.getElementById('status');
   var saveEl = document.getElementById('save');
+  var hintEl = document.getElementById('hint');
   function setStatus(t){ statusEl.textContent = t; }
 
-  var React = window.React;
-  var ReactDOM = window.ReactDOM;
-  var Exc = window.ExcalidrawLib;
-  if (!React || !ReactDOM || !ReactDOM.createRoot || !Exc) {
-    setStatus('failed to load editor: React/Excalidraw UMD scripts did not load');
+  var React = window.React, ReactDOM = window.ReactDOM, Exc = window.ExcalidrawLib;
+  var missing = (window.__umdFail || []).slice();
+  if (!React && missing.indexOf('react') < 0) missing.push('react');
+  if ((!ReactDOM || !ReactDOM.createRoot) && missing.indexOf('react-dom') < 0) missing.push('react-dom');
+  if ((!Exc || !Exc.Excalidraw) && missing.indexOf('@excalidraw/excalidraw') < 0) missing.push('@excalidraw/excalidraw');
+
+  if (missing.length) {
+    setStatus('editor failed to load (CDN blocked these): ' + missing.join(', '));
+  } else if (!slug) {
+    // Bare "/" — nothing to edit. Explain the tool instead of a confusing blank canvas.
+    setStatus('no diagram selected');
+    hintEl.style.display = 'flex';
   } else {
     var createRoot = ReactDOM.createRoot;
     var api = null;
@@ -214,7 +239,7 @@ const PAGE = `<!DOCTYPE html>
         });
       }
       createRoot(document.getElementById('root')).render(React.createElement(App));
-      setStatus(slug ? (scene ? 'editing ' + slug : slug + ' (new)') : 'no slug');
+      setStatus(scene ? 'editing ' + slug : slug + ' (new)');
       saveEl.disabled = false;
 
       saveEl.onclick = function(){
