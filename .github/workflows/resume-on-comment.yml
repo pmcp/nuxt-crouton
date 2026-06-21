@@ -46,20 +46,35 @@ jobs:
           claude_args: "--max-turns 30"
           show_full_output: true
 
+      # Mint a Nuxt Harness App token for the merge step. CRUCIAL: the merge MUST use the
+      # App token, NOT the default GITHUB_TOKEN — GitHub suppresses workflow triggers for
+      # events initiated by GITHUB_TOKEN, so a GITHUB_TOKEN merge's `pull_request: closed`
+      # event would NOT reach schedule-waves and the chain stalls (the #572 first-attempt
+      # regression). An App installation token is a non-GITHUB_TOKEN actor, so its merge
+      # fires schedule-waves → close issue → release next workstream. (#535/#519 WS5.)
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        if: always()
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: FriendlyInternet
+
       # ── Merge-on-approval (#572) ───────────────────────────────────────────────
       # The pipeline's design is that a sign-off gate's sub-PR merges into the EPIC
       # branch once approved — the owner's `approve`/`lgtm` IS the review. Nothing
       # implemented that, so approved gates STALLED: the gate PR stayed a draft, its
       # issue never closed, and schedule-waves never released the next workstream.
       # This deterministically completes the handoff on an approval comment, regardless
-      # of what the agent step above did. Uses GITHUB_TOKEN (not OIDC) so it never trips
-      # the bot-actor guard. Merge commit — NOT squash (preserve curated commits; merge
-      # policy). Once merged, schedule-waves (pull_request: closed) closes the issue and
-      # releases the next workstream — no other machinery needed.
+      # of what the agent step above did. Merge commit — NOT squash (preserve curated
+      # commits; merge policy). Merges with the App token so the resulting
+      # `pull_request: closed` event TRIGGERS schedule-waves → close issue → release the
+      # next workstream (a GITHUB_TOKEN merge does NOT cascade — #572).
       - name: Merge the gate PR on approval
         if: always()
         uses: actions/github-script@v7
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const issue_number = context.payload.issue.number
             const body = context.payload.comment.body || ''
