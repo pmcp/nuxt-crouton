@@ -1,0 +1,26 @@
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 255,
+      "label": "Name",
+      "area": "main"
+    }
+  },
+  "bio": {
+    "type": "text",
+    "meta": {
+      "label": "Biography",
+      "area": "main",
+      "component": "EditorSimple"
+    }
+  },
+  "bornYear": {
+    "type": "number",
+    "meta": {
+      "label": "Born Year",
+      "area": "sidebar"
+    }
+  }
+}
