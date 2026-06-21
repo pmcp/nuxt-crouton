@@ -42,6 +42,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 403, statusText: 'Not a team member' })
   }
 
+  // Minting a delegation token is an administrative act: it stamps a trusted
+  // resource `role` onto the token. Restrict to admins/owners so a plain member
+  // cannot mint a token carrying an elevated role for the resource.
+  if (!['admin', 'owner'].includes(membership.role)) {
+    throw createError({ status: 403, statusText: 'Only team admins can mint scoped tokens' })
+  }
+
   const { token, expiresAt } = await createScopedToken({
     organizationId: team.id,
     resourceType,
