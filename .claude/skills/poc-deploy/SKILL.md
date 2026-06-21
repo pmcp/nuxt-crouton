@@ -14,10 +14,18 @@ For **launched `apps/` apps** (production counterpart, two-domain deploy) use th
 
 ```
 PR touches pocs/<name>/** (POC has a deploy.config.json)  →  deploy-pocs.yml (generic; detects
-   the changed/dispatched opted-in POCs)  →  deploy-app.yml (reusable, workspace: pocs)
-   →  build (cloudflare_module) → wrangler deploy --env staging → auto-provision id-less D1/KV
-   →  sync ids → remote D1 migrate → sticky PR comment: 🚀 <name> staging deployed: <url>
+   the changed/dispatched opted-in POCs)  →  deploy-app.yml (reusable, workspace: pocs, enable-review: true)
+   →  build (cloudflare_module, NUXT_PUBLIC_CROUTON_REVIEW=true) → wrangler deploy --env staging
+   →  auto-provision id-less D1/KV → sync review bridge secrets → sync ids → remote D1 migrate
+   →  sticky PR comment: 🚀 <name> staging deployed: <url> + overlay usage instructions
 ```
+
+> **Review overlay is ON by default for all POC staging deploys (#596).** `deploy-pocs.yml` passes
+> `enable-review: true` to `deploy-app.yml`, so every POC preview is built with
+> `NUXT_PUBLIC_CROUTON_REVIEW=true` (the `@fyit/crouton-devtools` overlay + source stamper + `/api/_review`
+> bridge). The PR comment includes overlay usage instructions. For the bridge to post `🎯 Preview feedback`
+> comments, set the `NUXT_CROUTON_REVIEW_GITHUB_APP_*` repo-level secrets (see
+> `writeups/setup/review-bridge-token-setup.md`); the overlay still renders without them.
 
 > **One generic workflow, no per-POC file (#481).** There is a single committed
 > `.github/workflows/deploy-pocs.yml`; a POC opts in with `pocs/<name>/deploy.config.json`
