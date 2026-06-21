@@ -159,7 +159,6 @@ const PAGE = `<!DOCTYPE html>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Ticket diagram editor</title>
-<link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.17.6/index.css" />
 <style>
   html,body,#root{margin:0;height:100%;width:100%;}
   #bar{position:fixed;z-index:10;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:10px;
@@ -211,7 +210,7 @@ const PAGE = `<!DOCTYPE html>
     // Resource (<script>/<link>) load failures are handled by their inline onerror — ignore here.
     if (e && e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) return;
     var m = (e && e.message) || (e && e.error && e.error.stack) || String(e && e.error || e);
-    if (e && e.filename) m += '\n@ ' + e.filename + ':' + e.lineno + ':' + e.colno;
+    if (e && e.filename) m += '\\n@ ' + e.filename + ':' + e.lineno + ':' + e.colno;
     showBootError('JavaScript error', m);
   });
   window.addEventListener('unhandledrejection', function(e){
@@ -279,7 +278,7 @@ const PAGE = `<!DOCTYPE html>
 
   if (missing.length) {
     setStatus('editor failed to load');
-    showBootError('Editor failed to load (CDN)', 'These scripts did not load:\n  ' + missing.join('\n  '));
+    showBootError('Editor failed to load (CDN)', 'These scripts did not load:\\n  ' + missing.join('\\n  '));
   } else if (!slug) {
     // Bare "/" — nothing to edit. Explain the tool instead of a confusing blank canvas.
     setStatus('no diagram selected');

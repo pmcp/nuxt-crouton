@@ -35,7 +35,10 @@ that URL from each diagram's sticky comment as a one-tap **✏️ Edit**.
   token); **no stored PAT**. The one durable secret is the App private key. Full model in
   `SECRETS.md` + `writeups/setup/secrets-and-tokens.md`.
 - The editor loads React, ReactDOM and Excalidraw as **UMD `<script>` globals** from the unpkg CDN
-  (Excalidraw's official no-build recipe; the CSS still comes from esm.sh). This is a runtime web
-  app, so CDN loads are fine — unlike our build-time renders, which stay offline. We moved off the
-  esm.sh ESM + `?external` import-map path because its dynamic `import('react-dom/client')` failed
-  to fetch on both desktop and mobile (#563).
+  (Excalidraw's official no-build recipe). `window.EXCALIDRAW_ASSET_PATH` points at the same unpkg
+  `dist/` so Excalidraw's lazy-loaded chunks + fonts resolve (pointing it at esm.sh 404s the chunks
+  → `Excalidraw` is undefined → React #130 → blank canvas). `window.process.env.NODE_ENV` is shimmed
+  before the scripts (the browser build reads it). Styles are injected by the UMD bundle — no
+  separate CSS link. This is a runtime web app, so CDN loads are fine, unlike our build-time renders.
+  We moved off the esm.sh ESM + `?external` import-map path because its dynamic
+  `import('react-dom/client')` failed to fetch on both desktop and mobile (#563).
