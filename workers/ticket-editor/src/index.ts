@@ -121,6 +121,18 @@ const PAGE = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Ticket diagram editor</title>
 <link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.17.6/index.css" />
+<!-- Import map so excalidraw's bare "react"/"react-dom" specifiers (it's loaded with
+     ?external=react,react-dom) resolve to the SAME esm.sh instances we import below. -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+  }
+}
+</script>
 <style>
   html,body,#root{margin:0;height:100%;width:100%;}
   #bar{position:fixed;z-index:10;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:10px;
@@ -146,8 +158,8 @@ const PAGE = `<!DOCTYPE html>
   function setStatus(t){ statusEl.textContent = t; }
 
   Promise.all([
-    import('https://esm.sh/react@18.3.1'),
-    import('https://esm.sh/react-dom@18.3.1/client'),
+    import('react'),
+    import('react-dom/client'),
     import('https://esm.sh/@excalidraw/excalidraw@0.17.6?external=react,react-dom')
   ]).then(function(mods){
     var React = mods[0].default || mods[0];
