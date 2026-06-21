@@ -217,6 +217,32 @@ const PAGE = `<!DOCTYPE html>
   window.addEventListener('unhandledrejection', function(e){
     var r = e && e.reason; showBootError('Unhandled promise rejection', (r && (r.stack || r.message)) || String(r));
   });
+  // Excalidraw has its own internal error boundary that logs to console.error instead of throwing
+  // to window — capture those so a silent mount failure still has a trail.
+  window.__logs = [];
+  ['error', 'warn'].forEach(function(level){
+    var orig = console[level];
+    console[level] = function(){
+      try {
+        window.__logs.push(level + ': ' + Array.prototype.map.call(arguments, function(a){
+          return (a && a.stack) ? a.stack : (typeof a === 'object' ? JSON.stringify(a) : String(a));
+        }).join(' '));
+      } catch (_) {}
+      return orig && orig.apply(console, arguments);
+    };
+  });
+  // Watchdog: if the editor never reports a successful mount, stop showing "Loading…" forever and
+  // dump what we know (loaded globals, failed scripts, captured console errors).
+  setTimeout(function(){
+    if (window.__api) return; // mounted fine
+    showBootError('Editor stuck — did not mount in 12s',
+      'inited=' + !!window.__inited + '  api=' + !!window.__api +
+      '\\nReact=' + (window.React ? (window.React.version || 'yes') : 'NO') +
+      '  ReactDOM=' + (window.ReactDOM ? 'yes' : 'NO') +
+      '  ExcalidrawLib=' + (window.ExcalidrawLib ? 'yes' : 'NO') +
+      '  failedScripts=' + JSON.stringify(window.__umdFail) +
+      '\\n\\nlast console errors:\\n' + (window.__logs.slice(-8).join('\\n\\n') || '(none captured)'));
+  }, 12000);
 </script>
 <!-- Excalidraw's official no-build recipe: React, ReactDOM and Excalidraw as UMD globals
      (window.React / window.ReactDOM / window.ExcalidrawLib). This replaces the esm.sh ESM +
@@ -226,11 +252,16 @@ const PAGE = `<!DOCTYPE html>
      Pinned to React 18.2.0 — the versions in Excalidraw's own no-build docs (React 19 dropped UMD
      builds). Each <script onerror> records its failure by name so the status bar can say exactly
      what didn't load instead of a generic "failed to load editor". -->
+<!-- Excalidraw's browser build reads process.env.NODE_ENV; without this shim it throws during
+     render (caught by Excalidraw's internal error boundary → silent blank canvas). Must be set
+     BEFORE the UMD scripts run. -->
+<script>window.process = { env: { NODE_ENV: 'production' } };</script>
 <script>window.EXCALIDRAW_ASSET_PATH = 'https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/';</script>
-<script src="https://unpkg.com/react@18.2.0/umd/react.development.js" onerror="window.__umdFail.push('react')"></script>
-<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js" onerror="window.__umdFail.push('react-dom')"></script>
-<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.development.js" onerror="window.__umdFail.push('@excalidraw/excalidraw')"></script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onerror="window.__umdFail.push('react')"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="window.__umdFail.push('react-dom')"></script>
+<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js" onerror="window.__umdFail.push('@excalidraw/excalidraw')"></script>
 <script>
+  window.__inited = true;
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
   var branch = params.get('branch') || 'main';
@@ -272,6 +303,7 @@ const PAGE = `<!DOCTYPE html>
             // Fires only on a successful mount — our signal that the editor is truly live.
             excalidrawAPI: function(a){
               api = a;
+              window.__api = a;
               hideBoot();
               setStatus(scene ? 'editing ' + slug : slug + ' (new)');
               saveEl.disabled = false;
