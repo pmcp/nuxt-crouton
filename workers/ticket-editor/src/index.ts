@@ -145,6 +145,7 @@ async function upsertComment(token: string, env: Env, issue: number, slug: strin
     marker + '\n' +
     '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`.\n\n' +
     '![' + slug + '](' + png + ')\n\n' +
+    'When it looks right, reply **`approve`** / **`lgtm`** to sign off — nothing continues automatically.\n\n' +
     '_Updated ' + new Date().toISOString() + ' · this comment refreshes in place on each save._'
   // Find an existing sticky for this slug (first page of comments is plenty).
   const listRes = await fetch(
