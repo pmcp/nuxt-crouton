@@ -4,14 +4,24 @@
  *   GET  /?slug=<slug>&branch=<branch>   → the editor page (loads <slug>.excalidraw from the repo)
  *   POST /api/save  { slug, branch, scene, png }   → commits <slug>.excalidraw (+ <slug>.png) to the branch
  *
- * Mobile round-trip with ZERO third-party login: the GitHub token lives here as a Worker secret,
- * so the phone never authorizes anything. On Save, Excalidraw exports the PNG in-browser
- * (exportToBlob, scene embedded) — so the committed image is exactly what you edited (WYSIWYG).
+ * Mobile round-trip with ZERO third-party login: the phone never authorizes anything. On Save,
+ * Excalidraw exports the PNG in-browser (exportToBlob, scene embedded) — so the committed image
+ * is exactly what you edited (WYSIWYG).
  *
- * Setup:  wrangler secret put GITHUB_TOKEN   (a fine-grained PAT with contents:write on the repo)
+ * Auth = the **Crouton GitHub App** (#519): we mint a short-lived (~1h) installation token
+ * just-in-time and commit with it — no stored PAT, and commits post as `crouton[bot]`. The one
+ * durable secret is the App private key. The mint (sign an App JWT → exchange for an installation
+ * token) is done directly with WebCrypto — dependency-free, so the worker adds nothing to the
+ * monorepo lockfile (and the signing path is unit-testable in plain Node).
+ *
+ * Setup (Worker secrets / vars):
+ *   wrangler secret put GITHUB_APP_PRIVATE_KEY   (the App's PEM private key — the only secret)
+ *   GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID    (not sensitive — set as vars or secrets)
  */
 interface Env {
-  GITHUB_TOKEN: string
+  GITHUB_APP_ID: string
+  GITHUB_APP_PRIVATE_KEY: string // PEM; the one durable secret
+  GITHUB_APP_INSTALLATION_ID: string
   REPO: string // "pmcp/nuxt-crouton"
   DIAGRAMS_DIR: string // "writeups/diagrams"
 }
@@ -39,10 +49,69 @@ function toB64(str: string): string {
   return btoa(bin)
 }
 
-async function putFile(env: Env, branch: string, path: string, contentB64: string, message: string): Promise<void> {
+// ── GitHub App auth (WebCrypto, dependency-free) ─────────────────────────────
+function b64url(bytes: Uint8Array): string {
+  let bin = ''
+  for (const b of bytes) bin += String.fromCharCode(b)
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// DER length octets for a given content length.
+function derLen(n: number): number[] {
+  if (n < 0x80) return [n]
+  const out: number[] = []
+  let x = n
+  while (x > 0) {
+    out.unshift(x & 0xff)
+    x >>= 8
+  }
+  return [0x80 | out.length, ...out]
+}
+
+// Wrap a PKCS#1 RSA key (GitHub's `BEGIN RSA PRIVATE KEY`) into PKCS#8, which WebCrypto requires.
+function pkcs1ToPkcs8(pkcs1: Uint8Array): Uint8Array {
+  const version = [0x02, 0x01, 0x00]
+  const algId = [0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00]
+  const octet = [0x04, ...derLen(pkcs1.length), ...Array.from(pkcs1)]
+  const body = [...version, ...algId, ...octet]
+  return new Uint8Array([0x30, ...derLen(body.length), ...body])
+}
+
+async function importPrivateKey(pem: string): Promise<CryptoKey> {
+  const isPkcs1 = pem.includes('BEGIN RSA PRIVATE KEY')
+  const b64 = pem.replace(/-----BEGIN [A-Z ]+-----/, '').replace(/-----END [A-Z ]+-----/, '').replace(/\s+/g, '')
+  const bin = atob(b64)
+  const der = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) der[i] = bin.charCodeAt(i)
+  const pkcs8 = isPkcs1 ? pkcs1ToPkcs8(der) : der
+  return crypto.subtle.importKey('pkcs8', pkcs8, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
+}
+
+// Sign a short App JWT (RS256) — iat backdated 30s for clock skew, ~9min expiry.
+async function appJwt(appId: string, pem: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const enc = (o: unknown) => b64url(new TextEncoder().encode(JSON.stringify(o)))
+  const data = `${enc({ alg: 'RS256', typ: 'JWT' })}.${enc({ iat: now - 30, exp: now + 540, iss: appId })}`
+  const key = await importPrivateKey(pem)
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(data))
+  return `${data}.${b64url(new Uint8Array(sig))}`
+}
+
+// Mint a short-lived (~1h) installation token for the Crouton App — minted just-in-time, no PAT.
+async function installationToken(env: Env): Promise<string> {
+  const jwt = await appJwt(env.GITHUB_APP_ID, env.GITHUB_APP_PRIVATE_KEY)
+  const res = await fetch(
+    'https://api.github.com/app/installations/' + env.GITHUB_APP_INSTALLATION_ID + '/access_tokens',
+    { method: 'POST', headers: { authorization: 'Bearer ' + jwt, accept: 'application/vnd.github+json', 'user-agent': 'ticket-editor' } },
+  )
+  if (!res.ok) throw new Error('mint installation token → ' + res.status + ' ' + (await res.text()))
+  return ((await res.json()) as { token: string }).token
+}
+
+async function putFile(token: string, env: Env, branch: string, path: string, contentB64: string, message: string): Promise<void> {
   const api = 'https://api.github.com/repos/' + env.REPO + '/contents/' + path
   const headers = {
-    authorization: 'Bearer ' + env.GITHUB_TOKEN,
+    authorization: 'Bearer ' + token,
     accept: 'application/vnd.github+json',
     'user-agent': 'ticket-editor',
     'content-type': 'application/json',
@@ -70,10 +139,11 @@ async function save(req: Request, env: Env): Promise<Response> {
     if (!/^[a-z0-9][a-z0-9._-]*$/i.test(slug)) return json({ error: 'bad slug' }, 400)
     const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
     const msg = 'chore(diagrams): edit ' + slug + ' via ticket-editor'
-    await putFile(env, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
+    const token = await installationToken(env) // one fresh ~1h token for both commits
+    await putFile(token, env, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
     if (png) {
       const b64 = png.includes(',') ? png.split(',')[1] : png
-      await putFile(env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
+      await putFile(token, env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
     }
     return json({ ok: true })
   } catch (e) {

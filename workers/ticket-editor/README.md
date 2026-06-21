@@ -1,9 +1,13 @@
 # ticket-editor
 
 A tiny Excalidraw editor that commits edits **straight back to the repo** — the mobile
-round-trip for `ticket-diagram` diagrams with **zero third-party login** (the GitHub token is a
-Worker secret; your phone never authorizes anything). On Save, Excalidraw exports the PNG
-in-browser, so the committed image is exactly what you edited (WYSIWYG). Sub-issue #503 of epic #483.
+round-trip for `ticket-diagram` diagrams with **zero third-party login** (your phone never
+authorizes anything). On Save, Excalidraw exports the PNG in-browser, so the committed image is
+exactly what you edited (WYSIWYG). Sub-issue #503 of epic #483.
+
+Auth = the **Crouton GitHub App** (#519): the Worker mints a short-lived (~1h) installation token
+just-in-time (WebCrypto, dependency-free) and commits as `crouton[bot]` — no stored PAT. See
+`SECRETS.md` and `writeups/setup/secrets-and-tokens.md`.
 
 ## Routes
 
@@ -15,17 +19,20 @@ in-browser, so the committed image is exactly what you edited (WYSIWYG). Sub-iss
 ```bash
 cd workers/ticket-editor
 pnpm install
-npx wrangler secret put GITHUB_TOKEN     # fine-grained PAT, Contents: Read/Write on pmcp/nuxt-crouton
-npx wrangler deploy                       # → https://ticket-editor.<account>.workers.dev
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY   # the Crouton App's PEM private key (only secret)
+# set GITHUB_APP_ID + GITHUB_APP_INSTALLATION_ID as wrangler vars (not sensitive)
+npx wrangler deploy                              # → https://ticket-editor.<account>.workers.dev
 ```
 
-Then open `https://ticket-editor.<account>.workers.dev/?slug=make-tickets-human-readable&branch=claude/excalidraw-ticket-diagrams`
-on your phone → edit → **Save** → a commit lands on the branch. Link that URL from each diagram's
-sticky comment as a one-tap **✏️ Edit**.
+Then open `https://ticket-editor.<account>.workers.dev/?slug=make-tickets-human-readable&branch=<branch>`
+on your phone → edit → **Save** → a commit (authored by `crouton[bot]`) lands on the branch. Link
+that URL from each diagram's sticky comment as a one-tap **✏️ Edit**.
 
 ## Notes
 
+- Auth is the **Crouton GitHub App** (#519) — short-lived installation tokens minted at runtime
+  directly with **WebCrypto** (dependency-free; sign an App JWT → exchange for an installation
+  token); **no stored PAT**. The one durable secret is the App private key. Full model in
+  `SECRETS.md` + `writeups/setup/secrets-and-tokens.md`.
 - The editor loads Excalidraw from the esm.sh CDN (runtime web app — fine; unlike our build-time
   renders, which stay offline). The exact ESM/CSS pins may need a small tweak after first deploy.
-- Token scope: a **fine-grained PAT** limited to this repo's Contents is enough. Keep it a Worker
-  secret — never commit it.
