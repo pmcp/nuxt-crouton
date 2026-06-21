@@ -132,9 +132,11 @@ async function putFile(token: string, env: Env, branch: string, path: string, co
   return { commitSha: data.commit?.sha || '', parentSha: data.commit?.parents?.[0]?.sha }
 }
 
-// Create-or-update a per-slug sticky comment on the linked issue, so a Save is a visible handoff
-// marker in the timeline (not just a silent bot commit). Updates in place on repeated saves. (#583)
-async function upsertComment(token: string, env: Env, issue: number, slug: string, branch: string, origin: string, beforeSha?: string, afterSha?: string): Promise<void> {
+// Post a NEW comment on the linked issue for each Save, with the diagram pinned to the commit it
+// was saved at — `raw.githubusercontent.com/<repo>/<sha>/<path>` is immutable, so every comment
+// keeps its own version forever. The result is a timeline of frozen diagrams (the original/proposal
+// comment stays the original; each edit is its own comment). (#583)
+async function postSaveComment(token: string, env: Env, issue: number, slug: string, branch: string, origin: string, commitSha?: string): Promise<void> {
   const headers = {
     authorization: 'Bearer ' + token,
     accept: 'application/vnd.github+json',
@@ -142,41 +144,16 @@ async function upsertComment(token: string, env: Env, issue: number, slug: strin
     'content-type': 'application/json',
   }
   const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
-  const marker = '<!-- ticket-editor-saved:' + slug + ' -->'
   const path = dir + '/' + slug + '.png'
-  // Immutable raw URL pinned to a commit — that commit's version of the file never changes, so the
-  // before (proposal) image can't drift when later edits overwrite the file. Falls back to a
-  // cache-busted branch URL if we somehow don't have a sha.
-  const rawAt = (sha?: string) =>
-    sha
-      ? 'https://raw.githubusercontent.com/' + env.REPO + '/' + sha + '/' + path
-      : 'https://raw.githubusercontent.com/' + env.REPO + '/' + branch + '/' + path + '?v=' + Date.now()
+  const img = commitSha
+    ? 'https://raw.githubusercontent.com/' + env.REPO + '/' + commitSha + '/' + path // immutable
+    : 'https://raw.githubusercontent.com/' + env.REPO + '/' + branch + '/' + path + '?v=' + Date.now()
   const editUrl = origin + '/?slug=' + encodeURIComponent(slug) + '&branch=' + encodeURIComponent(branch) + '&issue=' + issue
-  const images = beforeSha
-    ? '**Before — what was there:**\n\n![before](' + rawAt(beforeSha) + ')\n\n**After — your edit:**\n\n![after](' + rawAt(afterSha) + ')\n\n'
-    : '![' + slug + '](' + rawAt(afterSha) + ')\n\n'
   const body =
-    marker + '\n' +
-    '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`. Each image is pinned to its commit, so you can compare them even after more edits.\n\n' +
-    images +
-    'When it looks right, reply **`approve`** / **`lgtm`** to sign off — nothing continues automatically.\n\n' +
-    '_Updated ' + new Date().toISOString() + ' · refreshes in place on each save._'
-  // Find an existing sticky for this slug (first page of comments is plenty).
-  const listRes = await fetch(
-    'https://api.github.com/repos/' + env.REPO + '/issues/' + issue + '/comments?per_page=100',
-    { headers },
-  )
-  if (listRes.ok) {
-    const comments = (await listRes.json()) as Array<{ id: number; body?: string }>
-    const existing = comments.find((c) => (c.body || '').includes(marker))
-    if (existing) {
-      const patch = await fetch('https://api.github.com/repos/' + env.REPO + '/issues/comments/' + existing.id, {
-        method: 'PATCH', headers, body: JSON.stringify({ body }),
-      })
-      if (!patch.ok) throw new Error('PATCH comment → ' + patch.status + ' ' + (await patch.text()))
-      return
-    }
-  }
+    '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`.\n\n' +
+    '![' + slug + '](' + img + ')\n\n' +
+    'Reply **`approve`** / **`lgtm`** to sign off — nothing continues automatically.\n\n' +
+    '_' + new Date().toISOString() + '_'
   const post = await fetch('https://api.github.com/repos/' + env.REPO + '/issues/' + issue + '/comments', {
     method: 'POST', headers, body: JSON.stringify({ body }),
   })
@@ -204,12 +181,12 @@ async function save(req: Request, env: Env): Promise<Response> {
       pngCommit = await putFile(token, env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
     }
     // Optional handoff comment: the commit is the source of truth, so a comment failure is non-fatal.
-    // before = the png as it was prior to this save (the parent commit); after = the new commit.
+    // Each save posts its OWN comment, with the diagram pinned to this commit (immutable → frozen).
     let comment: string | undefined
     const issueNum = issue != null && /^[0-9]+$/.test(String(issue)) ? Number(issue) : undefined
     if (issueNum) {
       try {
-        await upsertComment(token, env, issueNum, slug, branch, new URL(req.url).origin, pngCommit?.parentSha, pngCommit?.commitSha)
+        await postSaveComment(token, env, issueNum, slug, branch, new URL(req.url).origin, pngCommit?.commitSha)
         comment = 'commented on #' + issueNum
       } catch (e) {
         comment = 'comment failed: ' + String((e as Error)?.message || e)

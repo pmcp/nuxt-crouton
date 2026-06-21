@@ -12,7 +12,7 @@ just-in-time (WebCrypto, dependency-free) and commits as `nuxt-harness[bot]` —
 ## Routes
 
 - `GET /?slug=<slug>&branch=<branch>[&issue=<NN>]` — the editor (loads `writeups/diagrams/<slug>.excalidraw`). Pass `issue` to get a handoff comment on Save.
-- `POST /api/save` `{ slug, branch, scene, png, issue? }` — commits `<slug>.excalidraw` (+ `<slug>.png`) to `<branch>`. If `issue` is set, it also **creates-or-updates a sticky comment** (`<!-- ticket-editor-saved:<slug> -->`) on that issue showing a **before/after** (the diagram prior to this save vs your edit), each image pinned to an **immutable commit** URL so the proposal can't drift when later edits overwrite the file — letting a reviewer compare and reply `approve`/`lgtm` (#583). The comment is non-fatal — a commit always wins.
+- `POST /api/save` `{ slug, branch, scene, png, issue? }` — commits `<slug>.excalidraw` (+ `<slug>.png`) to `<branch>`. If `issue` is set, each Save also **posts a new comment** on that issue with the diagram **pinned to the commit it was saved at** (`raw.githubusercontent.com/<repo>/<sha>/<path>` is immutable, so the image never drifts). Result: a **timeline of frozen diagrams** — the original proposal comment keeps the original, each edit is its own comment — that a reviewer can compare and reply `approve`/`lgtm` to (#583). The comment is non-fatal — a commit always wins.
 
 ## Deploy (Cloudflare Workers)
 

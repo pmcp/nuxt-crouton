@@ -166,10 +166,15 @@ human has hand-arranged the scene, prefer the importer in §4 to preserve their 
   generator with `--excalidraw`, commit the loose file, and link `https://excalidraw.com/#url=<raw
   url>`.)
 - **One-tap mobile editing = the hosted `ticket-editor` Worker** (`workers/ticket-editor`, epic
-  #483). Link `…/?slug=<slug>&branch=<branch>&issue=<NN>` — pass **`&issue=<NN>`** so that on Save
-  the editor posts/refreshes a handoff comment on issue `NN` (the edit shows in the timeline, not
-  just a `nuxt-harness[bot]` commit). Requires the loose `<slug>.excalidraw` committed (generate
+  #483). Link `…/?slug=<slug>&branch=<branch>&issue=<NN>` — pass **`&issue=<NN>`** so each Save
+  posts a **new** comment on issue `NN` with that edit's diagram (a timeline of versions, not just
+  silent `nuxt-harness[bot]` commits). Requires the loose `<slug>.excalidraw` committed (generate
   with `--excalidraw`), since the editor reads it.
+- **Pin a diagram image you want to stay put to its commit, not the branch.** A
+  `raw.githubusercontent.com/<repo>/<branch>/…png` URL re-renders whenever the file is later
+  edited (so a "proposal" comment's picture drifts); `…/<commit-sha>/…png` is immutable and frozen.
+  Post the proposal/sticky image pinned to the commit that produced it so the timeline reads
+  correctly (the editor's per-save comments already do this).
 - **Round-trip needs "Embed scene" ON** in Excalidraw's export, or the importer can't find the
   scene (it errors clearly).
 - **Reuse the slug** across regenerations, or you'll orphan the old PNG and the sticky image link.
