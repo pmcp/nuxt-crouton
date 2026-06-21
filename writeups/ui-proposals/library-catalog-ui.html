@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!-- ui-proposal: library-catalog UI polish (issue #569) -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Proposal — Library Catalog browse/search/detail polish</title>
+<style>
+  :root{
+    --page:#0a0e17; --ink:#e8edf6; --muted:#8b97ad;
+    --app-bg:#0b0f1a; --card:#151b27; --card-2:#11161f; --line:#222b3a; --line-soft:#1b2230;
+    --green:#34d399; --green-d:#0e3a2a; --radius:16px;
+    --red:#f87171; --red-d:#3a0e0e; --amber:#fbbf24; --amber-d:#3a2a0e;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(1100px 500px at 75% -10%, #16213c 0%, var(--page) 55%);
+    color:var(--ink); line-height:1.55; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px; margin:0 auto; padding:40px 20px 80px;}
+  .eyebrow{text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--green); font-weight:700;}
+  h1{font-size:clamp(24px,4vw,36px); margin:6px 0 6px; line-height:1.1;}
+  .lede{color:var(--muted); font-size:16px; max-width:64ch; margin:0 0 36px;}
+
+  /* Section headers */
+  .section-label{font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); font-weight:700; margin:40px 0 16px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+
+  /* Stage */
+  .stage{display:flex; flex-wrap:wrap; gap:32px; justify-content:center; align-items:flex-start; margin-bottom:12px;}
+  .col{display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .col h2{font-size:15px; margin:0; display:flex; align-items:center; gap:8px;}
+  .tag{font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  .tag.bad{color:#f6a; border-color:#5b2740;} .tag.good{color:var(--green); border-color:#1f5e47;}
+  .note{font-size:12.5px; color:var(--muted); max-width:420px; text-align:center;}
+
+  /* Desktop device frame */
+  .deviceframe{width:560px; max-width:100%; border-radius:14px; overflow:hidden; border:1px solid #2b3852; box-shadow:0 24px 60px rgba(0,0,0,.5); background:var(--app-bg);}
+  .deviceframe .bar{display:flex; gap:6px; padding:10px 14px; background:#11161f; border-bottom:1px solid var(--line);}
+  .deviceframe .bar i{width:11px; height:11px; border-radius:50%; background:#33405a; display:inline-block;}
+  .deviceframe .body{padding:0;}
+
+  /* Shared atoms */
+  .ic{width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+  .ic.sm{width:14px;height:14px;}
+  .btn{display:inline-flex; align-items:center; gap:6px; border-radius:9px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); font-size:13px; padding:7px 10px;}
+  .btn.green{background:var(--green); border-color:var(--green); color:#04231a; font-weight:700;}
+  .btn.ghost{background:transparent; border-color:transparent; color:var(--muted);}
+  .spacer{flex:1;}
+
+  /* App chrome */
+  .appbar{display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--card-2); border-bottom:1px solid var(--line);}
+  .appbar .title{font-size:16px; font-weight:700;}
+  .searchrow{display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line-soft);}
+  .search{flex:1; min-width:0; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 11px; color:var(--muted); font-size:13px;}
+  .search span{opacity:.6;}
+
+  /* Table */
+  .tbl-wrap{overflow:auto;}
+  table{border-collapse:collapse; width:100%;}
+  th,td{text-align:left; padding:9px 14px; font-size:12.5px; white-space:nowrap; border-bottom:1px solid var(--line-soft);}
+  th{color:var(--muted); font-weight:600; background:var(--card-2); font-size:11.5px; text-transform:uppercase; letter-spacing:.06em;}
+  tr:hover td{background:rgba(255,255,255,.02);}
+
+  /* Cover thumb */
+  .cover{width:32px; height:44px; border-radius:5px; background:linear-gradient(135deg,#1f2d40,#2a3b52); flex:none; display:flex; align-items:center; justify-content:center; border:1px solid var(--line);}
+  .cover.sm{width:24px; height:33px; border-radius:3px;}
+  .book-cell{display:flex; align-items:center; gap:10px;}
+  .book-cell .meta{display:flex; flex-direction:column; gap:1px;}
+  .book-cell .title{font-weight:600; font-size:13px;}
+  .book-cell .author{font-size:11.5px; color:var(--muted);}
+
+  /* Badges */
+  .badge{font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; display:inline-flex; align-items:center; gap:4px;}
+  .badge.avail{background:var(--green-d); color:var(--green); border:1px solid #1f5e47;}
+  .badge.none{background:rgba(248,113,113,.12); color:var(--red); border:1px solid var(--red-d);}
+  .badge.active{background:var(--green-d); color:var(--green); border:1px solid #1f5e47;}
+  .badge.overdue{background:rgba(248,113,113,.12); color:var(--red); border:1px solid var(--red-d);}
+  .badge.returned{background:rgba(139,151,173,.12); color:var(--muted); border:1px solid #2b3852;}
+  .badge.genre{background:rgba(96,165,250,.12); color:#93c5fd; border:1px solid rgba(96,165,250,.3); font-weight:500;}
+
+  /* Detail page */
+  .detail-hero{display:flex; gap:16px; padding:16px; border-bottom:1px solid var(--line);}
+  .detail-cover{width:56px; height:78px; border-radius:6px; background:linear-gradient(135deg,#1f2d40,#2a3b52); flex:none; border:1px solid var(--line);}
+  .detail-meta{flex:1; min-width:0;}
+  .detail-meta h3{font-size:15px; font-weight:700; margin:0 0 4px;}
+  .detail-meta .by{font-size:12.5px; color:var(--green); text-decoration:underline; cursor:pointer;}
+  .detail-meta .tags{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .detail-body{padding:16px; font-size:13px; color:#cdd6e6; line-height:1.7;}
+  .detail-section{padding:10px 16px; border-top:1px solid var(--line);}
+  .detail-section h4{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:0 0 8px;}
+  .loan-row{display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line-soft); font-size:12.5px;}
+  .loan-row .borrower{font-weight:500;}
+  .loan-row .dates{color:var(--muted);}
+
+  /* Genres grid */
+  .genre-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px;}
+  .genre-card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center;}
+  .genre-card .name{font-weight:600; font-size:13px;}
+  .genre-card .count{font-size:11px; color:var(--muted); background:var(--card-2); border:1px solid var(--line); border-radius:6px; padding:2px 8px;}
+
+  /* Authors list */
+  .author-row{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line-soft);}
+  .avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1f3a50,#0e1f30); flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--green);}
+  .author-info .name{font-weight:600; font-size:13px;}
+  .author-info .year{font-size:11.5px; color:var(--muted);}
+
+  /* Changes */
+  .changes{margin-top:48px; background:#101725; border:1px solid var(--line); border-radius:16px; padding:20px 22px;}
+  .changes h3{margin:0 0 12px; font-size:16px;}
+  .changes ul{margin:0; padding-left:0; list-style:none; display:grid; gap:10px;}
+  .changes li{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:#cdd6e6;}
+  .changes li b{color:#fff;} .check{color:var(--green); flex:none; margin-top:2px;}
+  .changes code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em; background:rgba(52,211,153,.12); color:#a9f0d2; padding:1px 6px; border-radius:6px;}
+  footer.fin{margin-top:30px; color:var(--muted); font-size:12.5px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">nuxt-crouton · ui proposal</span>
+  <h1>Library Catalog — Browse / Search / Detail polish</h1>
+  <p class="lede">The generated crouton scaffold produces functional but generic tables. This proposal refines six surfaces: Books list with cover thumbnails + availability badge, Books search/filter, Book detail (cover + richtext + author link + genre tag + loan history), Authors list, Genres grid, and Loans list with status indicator.</p>
+
+  <!-- ==================== BOOKS LIST ==================== -->
+  <div class="section-label">1 · Books list</div>
+  <div class="stage">
+    <div class="col">
+      <h2>Before <span class="tag bad">raw scaffold</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">LibraryCatalogBooks</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <tr><th>Title</th><th>Isbn</th><th>PublishedYear</th><th>CoverImage</th><th>AuthorId</th><th>GenreId</th><th>Copies…</th></tr>
+              <tr><td>The Great Gatsby</td><td>978-0-7432</td><td>1925</td><td style="color:var(--muted);font-size:11px;">[img]</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td>5</td></tr>
+              <tr><td>Dune</td><td>978-0-4412</td><td>1965</td><td style="color:var(--muted);font-size:11px;">[img]</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td>3</td></tr>
+              <tr><td>1984</td><td>978-0-4525</td><td>1949</td><td style="color:var(--muted);font-size:11px;">[img]</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td style="color:var(--muted);font-size:11px;">Card mini</td><td>2</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="note">Raw scaffold: generic title, ISBN column, no cover preview, no availability, raw field IDs as card-minis</p>
+    </div>
+    <div class="col">
+      <h2>After <span class="tag good">proposed</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">Books</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add book</button></div>
+          <div class="searchrow">
+            <div class="search"><svg class="ic sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>Search by title or author…</span></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <tr><th>Book</th><th>Year</th><th>Genre</th><th>Availability</th></tr>
+              <tr><td><div class="book-cell"><div class="cover"><svg class="ic sm" style="color:#3a5070;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div><div class="meta"><span class="title">The Great Gatsby</span><span class="author">F. Scott Fitzgerald</span></div></div></td><td style="color:var(--muted);">1925</td><td><span class="badge genre">Fiction</span></td><td><span class="badge avail">3/5 available</span></td></tr>
+              <tr><td><div class="book-cell"><div class="cover"><svg class="ic sm" style="color:#3a5070;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div><div class="meta"><span class="title">Dune</span><span class="author">Frank Herbert</span></div></div></td><td style="color:var(--muted);">1965</td><td><span class="badge genre">Sci-Fi</span></td><td><span class="badge none">0/3 available</span></td></tr>
+              <tr><td><div class="book-cell"><div class="cover"><svg class="ic sm" style="color:#3a5070;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div><div class="meta"><span class="title">1984</span><span class="author">George Orwell</span></div></div></td><td style="color:var(--muted);">1949</td><td><span class="badge genre">Dystopian</span></td><td><span class="badge avail">1/2 available</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="note">Polished list: cover thumb, title+author in one cell, genre tag, availability badge (green = available, red = none)</p>
+    </div>
+  </div>
+
+  <!-- ==================== BOOK DETAIL ==================== -->
+  <div class="section-label">2 · Book detail</div>
+  <div class="stage">
+    <div class="col">
+      <h2>Before <span class="tag bad">raw scaffold</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">Book detail</span></div>
+          <div style="padding:16px; font-size:12.5px; color:var(--muted);">
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Title:</strong> The Great Gatsby</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">ISBN:</strong> 978-0-7432-7356-5</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Published Year:</strong> 1925</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Cover Image:</strong> [image url]</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Description:</strong> [richtext block]</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Author ID:</strong> <span style="font-size:11px;">CroutonItemCardMini</span></div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Genre ID:</strong> <span style="font-size:11px;">CroutonItemCardMini</span></div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Copies Total:</strong> 5</div>
+            <div style="margin-bottom:8px;"><strong style="color:var(--ink);">Copies Available:</strong> 3</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Generic field-dump, no cover render, no author link, no loan history</p>
+    </div>
+    <div class="col">
+      <h2>After <span class="tag good">proposed</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="detail-hero">
+            <div class="detail-cover"><svg class="ic" style="color:#3a5070;margin:auto;display:block;margin-top:27px;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></div>
+            <div class="detail-meta">
+              <h3>The Great Gatsby</h3>
+              <div class="by">F. Scott Fitzgerald →</div>
+              <div style="font-size:11.5px; color:var(--muted); margin-top:4px;">1925 · ISBN 978-0-7432-7356-5</div>
+              <div class="tags">
+                <span class="badge genre">Fiction</span>
+                <span class="badge avail">3/5 available</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-body" style="max-height:80px;overflow:hidden;">A story of the fabulously wealthy Jay Gatsby and his love for the beautiful Daisy Buchanan…</div>
+          <div class="detail-section">
+            <h4>Loan history</h4>
+            <div class="loan-row"><span class="borrower">Alice M.</span><span class="dates">Jun 1 – Jun 14</span><span class="badge returned">Returned</span></div>
+            <div class="loan-row"><span class="borrower">Bob K.</span><span class="dates">Jun 15 – Jun 28</span><span class="badge active">Active</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Polished detail: cover render, author as clickable link, genre tag, availability badge, richtext description, inline loan history</p>
+    </div>
+  </div>
+
+  <!-- ==================== LOANS LIST ==================== -->
+  <div class="section-label">3 · Loans list</div>
+  <div class="stage">
+    <div class="col">
+      <h2>Before <span class="tag bad">raw scaffold</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">LibraryCatalogLoans</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <tr><th>BookId</th><th>BorrowerName</th><th>BorrowedAt</th><th>DueAt</th><th>ReturnedAt</th></tr>
+              <tr><td style="font-size:11px; color:var(--muted);">CroutonItemCardMini</td><td>Alice M.</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td></tr>
+              <tr><td style="font-size:11px; color:var(--muted);">CroutonItemCardMini</td><td>Bob K.</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="color:var(--muted);font-size:11px;">—</td></tr>
+              <tr><td style="font-size:11px; color:var(--muted);">CroutonItemCardMini</td><td>Carol R.</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="font-size:11px; color:var(--muted);">CroutonDate</td><td style="color:var(--muted);font-size:11px;">—</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="note">No loan status — no way to tell active vs overdue vs returned at a glance</p>
+    </div>
+    <div class="col">
+      <h2>After <span class="tag good">proposed</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">Loans</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New loan</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <tr><th>Book</th><th>Borrower</th><th>Due</th><th>Status</th></tr>
+              <tr><td><div class="book-cell"><div class="cover sm"><svg class="ic" style="color:#3a5070;width:12px;height:12px;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/></svg></div><span style="font-size:12.5px;">The Great Gatsby</span></div></td><td>Alice M.</td><td style="color:var(--muted);font-size:12px;">Jun 14</td><td><span class="badge returned">Returned</span></td></tr>
+              <tr><td><div class="book-cell"><div class="cover sm"><svg class="ic" style="color:#3a5070;width:12px;height:12px;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/></svg></div><span style="font-size:12.5px;">Dune</span></div></td><td>Bob K.</td><td style="color:var(--muted);font-size:12px;">Jun 28</td><td><span class="badge active">Active</span></td></tr>
+              <tr><td><div class="book-cell"><div class="cover sm"><svg class="ic" style="color:#3a5070;width:12px;height:12px;" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/></svg></div><span style="font-size:12.5px;">1984</span></div></td><td>Carol R.</td><td style="color:var(--red);font-size:12px;">Jun 10 !</td><td><span class="badge overdue">Overdue</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="note">Computed status badge: active (green), overdue (red, due date highlighted), returned (muted). Book title inline in row.</p>
+    </div>
+  </div>
+
+  <!-- ==================== AUTHORS + GENRES ==================== -->
+  <div class="section-label">4 · Authors list &amp; Genres grid</div>
+  <div class="stage">
+    <div class="col">
+      <h2>Authors <span class="tag good">proposed</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">Authors</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button></div>
+          <div class="searchrow">
+            <div class="search"><svg class="ic sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>Search authors…</span></div>
+          </div>
+          <div class="author-row"><div class="avatar">F</div><div class="author-info"><div class="name">F. Scott Fitzgerald</div><div class="year">b. 1896</div></div><span class="spacer"></span><span class="badge avail">3 books</span></div>
+          <div class="author-row"><div class="avatar">F</div><div class="author-info"><div class="name">Frank Herbert</div><div class="year">b. 1920</div></div><span class="spacer"></span><span class="badge avail">2 books</span></div>
+          <div class="author-row"><div class="avatar">G</div><div class="author-info"><div class="name">George Orwell</div><div class="year">b. 1903</div></div><span class="spacer"></span><span class="badge avail">4 books</span></div>
+        </div>
+      </div>
+      <p class="note">Author initials avatar, name + birth year, book count badge. Replaces raw table with BioCroutonEditorPreview thumbnail.</p>
+    </div>
+    <div class="col">
+      <h2>Genres <span class="tag good">proposed</span></h2>
+      <div class="deviceframe">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <div class="body">
+          <div class="appbar"><span class="title">Genres</span><span class="spacer"></span><button class="btn green"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button></div>
+          <div class="genre-grid">
+            <div class="genre-card"><span class="name">Fiction</span><span class="count">12 books</span></div>
+            <div class="genre-card"><span class="name">Sci-Fi</span><span class="count">7 books</span></div>
+            <div class="genre-card"><span class="name">Dystopian</span><span class="count">4 books</span></div>
+            <div class="genre-card"><span class="name">Mystery</span><span class="count">9 books</span></div>
+            <div class="genre-card"><span class="name">Biography</span><span class="count">3 books</span></div>
+            <div class="genre-card"><span class="name">History</span><span class="count">5 books</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Grid layout with book count badge. Each card is clickable to a genre detail page listing its books.</p>
+    </div>
+  </div>
+
+  <!-- ==================== CHANGES ==================== -->
+  <div class="changes">
+    <h3>What changes (and what doesn't)</h3>
+    <ul>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Books list header.</b> Title changes from <code>LibraryCatalogBooks</code> → <code>Books</code>; ISBN column removed; title+author merged into one cell with cover thumbnail; <code>copiesAvailable/copiesTotal</code> shown as an availability badge.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Books search bar.</b> A text filter input added above the table; filters by title or author name client-side (no new API endpoint — uses existing composable data).</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Book detail page.</b> Cover image rendered (CroutonImage); author name as a navigable link (not raw CroutonItemCardMini); genre tag badge; richtext description via CroutonEditorPreview; inline loan history section showing all loans for this book.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Loans list — computed status.</b> A new <code>status</code> computed column: <code>returned</code> when <code>returnedAt</code> is set, <code>overdue</code> when <code>dueAt</code> &lt; today and not returned, <code>active</code> otherwise. Badge coloured green/red/muted. Due date cell highlighted red for overdue rows.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Authors list.</b> Initial avatar (first letter of name), birth year subline, book count badge. <code>Bio</code> column replaced by avatar+meta layout; bio visible in the detail slide-over (CroutonEditorPreview full mode).</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Genres grid.</b> Two-column card grid replaces the plain table; each card shows name + book count. Genre detail navigates to a filtered books view for that genre.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Scope.</b> All changes are in <code>pocs/library-catalog/layers/library-catalog/collections/*/app/components/</code>. No schema changes, no new API routes, no packages/ edits. Auth and CRUD forms are untouched.</span></li>
+    </ul>
+  </div>
+
+  <footer class="fin">Mockup only · pure HTML/CSS/SVG, no JS · representative data</footer>
+
+</div>
+</body>
+</html>
