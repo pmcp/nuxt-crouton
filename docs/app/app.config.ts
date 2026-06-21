@@ -31,7 +31,7 @@ export default defineAppConfig({
       'aria-label': 'Changelog Tracker'
     }, {
       'icon': 'i-lucide-github',
-      'to': 'https://github.com/pmcp/nuxt-crouton',
+      'to': 'https://github.com/FriendlyInternet/nuxt-crouton',
       'target': '_blank',
       'aria-label': 'Nuxt Crouton on GitHub'
     }]
@@ -41,7 +41,7 @@ export default defineAppConfig({
     colorMode: false,
     links: [{
       'icon': 'i-lucide-github',
-      'to': 'https://github.com/pmcp/nuxt-crouton',
+      'to': 'https://github.com/FriendlyInternet/nuxt-crouton',
       'target': '_blank',
       'aria-label': 'Nuxt Crouton on GitHub'
     }, {
@@ -55,11 +55,11 @@ export default defineAppConfig({
     title: 'Table of Contents',
     bottom: {
       title: 'Community',
-      edit: 'https://github.com/pmcp/nuxt-crouton/edit/main/docs',
+      edit: 'https://github.com/FriendlyInternet/nuxt-crouton/edit/main/docs',
       links: [{
         icon: 'i-lucide-star',
         label: 'Star on GitHub',
-        to: 'https://github.com/pmcp/nuxt-crouton',
+        to: 'https://github.com/FriendlyInternet/nuxt-crouton',
         target: '_blank'
       }, {
         icon: 'i-lucide-package',

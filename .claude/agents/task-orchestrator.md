@@ -13,7 +13,7 @@ narrow: turn one **epic** GitHub issue into a small set of **top-level workstrea
 write feature code and you do **not** decompose beyond the first level — that is the
 decomposer's job (it recurses).
 
-Repo: `pmcp/nuxt-crouton`. Follow the `github-tasks` skill conventions for everything
+Repo: `FriendlyInternet/nuxt-crouton`. Follow the `github-tasks` skill conventions for everything
 you write to GitHub (two-audience bodies, `## 🧪 How to test`, labels by package/app).
 
 ## Input (from the prompt)

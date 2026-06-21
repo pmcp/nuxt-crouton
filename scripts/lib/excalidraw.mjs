@@ -255,7 +255,7 @@ function arrowEl(id, from, to) {
 
 // Where in-diagram "comment / send edits" links point: an explicit feedbackUrl, else the epic issue.
 export function feedbackUrl(graph) {
-  return graph.feedbackUrl || (graph.epic != null ? `https://github.com/pmcp/nuxt-crouton/issues/${graph.epic}` : null)
+  return graph.feedbackUrl || (graph.epic != null ? `https://github.com/FriendlyInternet/nuxt-crouton/issues/${graph.epic}` : null)
 }
 
 // A free-standing (unbound) text label — used for the scene's title/subtitle/footer chrome.
@@ -450,7 +450,7 @@ export function toExcalidraw(graph) {
   return {
     type: 'excalidraw',
     version: 2,
-    source: 'https://github.com/pmcp/nuxt-crouton',
+    source: 'https://github.com/FriendlyInternet/nuxt-crouton',
     elements,
     appState: { viewBackgroundColor: '#ffffff', gridSize: null },
     files: {},

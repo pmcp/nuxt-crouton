@@ -22,7 +22,7 @@ interface Env {
   GITHUB_APP_ID: string
   GITHUB_APP_PRIVATE_KEY: string // PEM; the one durable secret
   GITHUB_APP_INSTALLATION_ID: string
-  REPO: string // "pmcp/nuxt-crouton"
+  REPO: string // "FriendlyInternet/nuxt-crouton"
   DIAGRAMS_DIR: string // "writeups/diagrams"
 }
 

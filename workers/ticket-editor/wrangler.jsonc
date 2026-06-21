@@ -9,7 +9,7 @@
   "compatibility_date": "2024-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "REPO": "pmcp/nuxt-crouton",
+    "REPO": "FriendlyInternet/nuxt-crouton",
     "DIAGRAMS_DIR": "writeups/diagrams"
   }
 }

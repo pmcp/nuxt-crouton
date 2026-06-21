@@ -14,11 +14,11 @@
  *
  * Env:
  *   GITHUB_TOKEN          (required) repo-scoped token; the Action passes the built-in one
- *   DIGEST_REPO           default "pmcp/nuxt-crouton"
+ *   DIGEST_REPO           default "FriendlyInternet/nuxt-crouton"
  *   DIGEST_WINDOW_HOURS   default 24
  */
 
-const REPO = process.env.DIGEST_REPO || 'pmcp/nuxt-crouton'
+const REPO = process.env.DIGEST_REPO || 'FriendlyInternet/nuxt-crouton'
 const [OWNER, NAME] = REPO.split('/')
 const windowHours = Number(process.env.DIGEST_WINDOW_HOURS || 24)
 const token = process.env.GITHUB_TOKEN

@@ -5,7 +5,7 @@
 #   GH_TOKEN=... DIGEST_BODY_FILE=digest.md bash post-comment.sh
 set -euo pipefail
 
-REPO="${DIGEST_REPO:-pmcp/nuxt-crouton}"
+REPO="${DIGEST_REPO:-FriendlyInternet/nuxt-crouton}"
 TITLE="${DIGEST_ISSUE_TITLE:-📊 Daily epic digest}"
 BODY_FILE="${DIGEST_BODY_FILE:-digest.md}"
 

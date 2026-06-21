@@ -1,6 +1,6 @@
 # Secrets & Tokens — what this repo needs (and how to keep it sane)
 
-> **Single source of truth** for every credential `pmcp/nuxt-crouton` uses: what it is,
+> **Single source of truth** for every credential `FriendlyInternet/nuxt-crouton` uses: what it is,
 > why it exists, the *minimal* scope, where it's stored, and how to (re)create it.
 > Written because the credentials were sprawling — multiple tokens for one job, and
 > scope gaps discovered only by failed deploys. This doc is the antidote.
@@ -23,20 +23,28 @@ If you remember nothing else: **Tier 1 = a small fixed set you set up once. Tier
 
 ## Tier 1 — Build / CI infra credentials
 
-These live as **GitHub Actions secrets** (repo Settings → Secrets and variables → Actions). This is the whole set the repo's CI actually reads:
+> 🏢 **Org-owned (#546).** The repo lives under the **FriendlyInternet** org. Store these as
+> **org-level** secrets with visibility **Selected repositories → `nuxt-crouton`** (least exposure —
+> don't leave them org-wide-visible). The **5 required** secrets below are the whole set the repo's
+> CI actually reads; `GITHUB_TOKEN` is automatic, and `WORKER_SECRETS_JSON` is optional. The repo is
+> **fully PAT-free** — `PROJECTS_TOKEN` and `DISPATCH_TOKEN` are retired (replaced by the Nuxt Harness
+> App, which also writes the org board).
+
+**Required (5):** `ANTHROPIC_API_KEY` · `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` · `HARNESS_APP_ID` · `HARNESS_APP_PRIVATE_KEY`.
 
 | Secret | System | Used by (workflows) | Why | Minimal scope |
 |---|---|---|---|---|
 | `ANTHROPIC_API_KEY` | Anthropic | `claude`, `decompose-on-issue`, `resume-on-comment`, `sync-changelogs` | The agent pipeline runs headless → **API-billed** (never a subscription token) | a standard Anthropic API key |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare | `deploy-app` (+ every `deploy-*`), `db-clone`, `db-counts` | `wrangler` deploys Workers + runs D1 ops | Account: Workers Scripts / D1 / KV / R2 **Edit** · **Zone: Workers Routes + DNS Edit** for `pmcp.dev` (+ `friendlyinter.net` for prod) |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare | same | which account to deploy into | an identifier — **not secret**, just stored alongside |
-| `PROJECTS_TOKEN` | GitHub | `comment-dispatch`, `schedule-waves`, `project-status` | Applies the `delegate` label **as a human** so the dispatched agent run passes claude-code-action's bot-actor guard; updates the project board | fine-grained PAT, repo `pmcp/nuxt-crouton` only · **Issues: R/W**, **Pull requests: R/W** · expiry set |
+| `HARNESS_APP_ID` | GitHub | `comment-dispatch`, `schedule-waves`, `project-status` | App **id** for the Nuxt Harness App — used to mint installation tokens at runtime so dispatch + the board write are **App-actored, not a human PAT** | an identifier (`4107840`) — **not secret**, stored alongside the key |
+| `HARNESS_APP_PRIVATE_KEY` | GitHub | `comment-dispatch`, `schedule-waves`, `project-status` | App **private key** (PEM). `actions/create-github-app-token` signs a JWT → short-lived installation token: applies the `delegate` label (passes the bot-actor guard via `allowed_bots`) and writes the **org** Projects board | the App's PEM private key · App installed on **FriendlyInternet** with Issues: write + Organization → Projects: R/W |
 | `GITHUB_TOKEN` | GitHub | `comment-dispatch`, `schedule-waves`, `epic-digest`, `sync-changelogs` | The **built-in** Actions token | **automatic — you never create or store this** |
-| `WORKER_SECRETS_JSON` | Cloudflare/app | `deploy-app` | Bundle of per-app **runtime** secrets pushed to the Worker on deploy (`wrangler secret bulk`) | a JSON object of `{ NAME: value }`; store as a GitHub **Environment** secret (so staging/prod differ) |
-| `THINKGRAPH_*` (×4) | app-specific | `thinkgraph-*` | One app's integration (team id, webhook secret, api url) | scoped to that app only — **not core**; ignore unless touching thinkgraph |
+| `WORKER_SECRETS_JSON` *(optional)* | Cloudflare/app | `deploy-app` | **Optional** bundle of per-app **runtime** secrets pushed to the Worker on deploy (`wrangler secret bulk`) | a JSON object of `{ NAME: value }`; a **repo-level** secret. *(Not Environment-scoped — `deploy-app` reads it at the repo level. Only add it if an app actually needs bundled runtime secrets.)* |
+| ~~`THINKGRAPH_*` / `WEBHOOK_SECRET`~~ | app-specific | `thinkgraph-*` | One app's integration (team id, webhook secret, api url) | **ThinkGraph is parked/dead — do NOT re-add** these 5 (incl. `WEBHOOK_SECRET`); not core |
 
-### Why the agent pipeline needs a *human* PAT (`PROJECTS_TOKEN`)
-claude-code-action refuses runs triggered by **bot** actors. The pipeline is triggered by applying the `delegate` label — so that label must be applied by a *human-attributed* token (the PAT), not the built-in `GITHUB_TOKEN` (bot) or the `claude[bot]` App (bot). That's the one place a human PAT is unavoidable in Tier 1.
+### Dispatch + board are App-actored now (no human PAT) — #546 / WS5
+claude-code-action refuses runs triggered by **bot** actors. The pipeline is triggered by applying the `delegate` label — that label must be applied by an actor on claude-code-action's `allowed_bots` allow-list. The **Nuxt Harness App** (`nuxt-harness[bot]`) is on that list, so `comment-dispatch`, `schedule-waves`, **and** `project-status` mint an App installation token (`actions/create-github-app-token`, `owner: FriendlyInternet`) instead of using a human PAT. An App installation token also (unlike the built-in `GITHUB_TOKEN`) triggers the downstream `labeled` workflow and can write the org Projects v2 board. → **`PROJECTS_TOKEN`/`DISPATCH_TOKEN` retired; Tier 1 is PAT-free.**
 
 ### What we deliberately do NOT grant (and why that's good)
 The `claude[bot]` GitHub App (used by claude-code-action) **cannot** push `.github/workflows/` files (`workflows` scope) or dispatch workflows (`actions` scope). Rather than grant those, we **designed around them**:
@@ -94,7 +102,7 @@ The **only** secret local dev needs is `BETTER_AUTH_SECRET`, and the session-sta
 
 ## The sprawl to clean up (why it felt heavy)
 
-1. **Two PAT names for one job** — `DISPATCH_TOKEN` *and* `PROJECTS_TOKEN` (workflows use `DISPATCH_TOKEN || PROJECTS_TOKEN`). Keep **one** (`PROJECTS_TOKEN`); drop the other.
+1. **Two PAT names for one job** — `DISPATCH_TOKEN` *and* `PROJECTS_TOKEN` (workflows used `DISPATCH_TOKEN || PROJECTS_TOKEN`). ✅ **Resolved (#546):** both retired — the Nuxt Harness App now mints the dispatch + board token, so the repo carries **no** label/board PAT at all.
 2. **Multiple Cloudflare deploy tokens** — `workers-deploy`, `three-demo-deploy`, `fanfare-deploy`… all do the same job. Collapse to **one** `crouton-deploy` token (the scope in the Tier-1 table).
 3. **Scope discovered by failure** — the CF token lacked Zone perms, so `*.pmcp.dev` silently didn't bind. Fixed by giving the one token the full least-privilege scope **up front** + a verifier (below).
 
@@ -102,12 +110,14 @@ The **only** secret local dev needs is `BETTER_AUTH_SECRET`, and the session-sta
 
 ## One-time setup checklist (~15 min)
 
-1. **Cloudflare token** — create one `crouton-deploy` (custom token) with: Account → Workers Scripts/D1/KV/R2 **Edit**; Zone → Workers Routes + DNS **Edit** for `pmcp.dev` (+ `friendlyinter.net` for prod). Set repo secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Delete the redundant per-app CF tokens.
-2. **Pipeline PAT** — fine-grained, repo-only, Issues + Pull requests **R/W**, expiry. Set repo secret `PROJECTS_TOKEN`. (Drop `DISPATCH_TOKEN`.)
+Set all of these as **org** secrets (FriendlyInternet) with visibility **Selected → `nuxt-crouton`**.
+
+1. **Cloudflare token** — create one `crouton-deploy` (custom token) with: Account → Workers Scripts/D1/KV/R2 **Edit**; Zone → Workers Routes + DNS **Edit** for `pmcp.dev` (+ `friendlyinter.net` for prod). Set secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Delete the redundant per-app CF tokens.
+2. **Nuxt Harness App** — set `HARNESS_APP_ID` (`4107840`) + `HARNESS_APP_PRIVATE_KEY` (the App's PEM). Install the App on the org with `nuxt-crouton` in scope, granting **Issues: write** + **Organization → Projects: Read & write**. *(No `PROJECTS_TOKEN`/`DISPATCH_TOKEN` — retired.)*
 3. **Anthropic** — set `ANTHROPIC_API_KEY`.
-4. **Per-environment app secrets** — set `WORKER_SECRETS_JSON` (incl. `BETTER_AUTH_SECRET`, env-specific `BETTER_AUTH_URL`) as a **GitHub Environment** secret on `staging` (and `production`).
-5. **Tier-2 (only when a feature needs it)** — create a narrow fine-grained PAT, `wrangler secret put` it on the **staging** Worker. Don't add it to CI.
-6. **Verify** — run the secrets/scope check (proposed below) so setup is *proven*, not discovered by a failed deploy.
+4. **App runtime secrets (optional)** — only if an app bundles runtime secrets, set `WORKER_SECRETS_JSON` (incl. `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`) as a **repo-level** secret. *(Not an Environment secret — `deploy-app` reads it at the repo level; **no environment recreation needed** for it.)*
+5. **Tier-2 (only when a feature needs it)** — create a narrow fine-grained PAT, `wrangler secret put` it on the **staging** Worker. Don't add it to CI. *(The ticket-editor already runs on the App, not a PAT.)*
+6. **Verify** — a deploy runs, the ticket-editor commits as `nuxt-harness[bot]`, the board moves on a `status:*` label, and `/delegate` dispatches.
 
 ---
 
@@ -155,25 +165,27 @@ Swapping two PATs is the least of it. The App is a GitHub-native **identity + we
 - **Act-as-the-reviewer (user OAuth)**, **separate higher rate limits**, **per-repo audit + revoke**.
 
 **Doesn't fix / costs**
-- The **pipeline's human-actor need stays** — claude-code-action rejects bot actors and the App is a bot; the Tier-1 `delegate`-trigger PAT isn't replaced unless that guard changes.
+- ~~The pipeline's human-actor need stays~~ → ✅ **resolved (WS5/#535):** claude-code-action's `allowed_bots` allow-list now accepts `nuxt-harness[bot]`, so the App token can trigger the pipeline — the human PAT is gone.
 - Needs a small always-on **Worker endpoint** (webhooks / token mint / checks) — but that's the same Worker the Tier-2 features already run in.
 
 **Punchline:** the App is the **productization substrate** for the teams version of crouton — which is why building it now (and dogfooding it on this repo) is the right call.
 
-*(Tier 1's pipeline PAT can't become this App — the agent pipeline needs a **human** actor to pass the bot-actor guard, which an App token isn't. Tier 1 keeps its human PAT.)*
+*(Update #546/WS5: the App **did** become Tier 1's dispatch identity — claude-code-action's `allowed_bots` allow-list accepts `nuxt-harness[bot]`, so the `delegate`-trigger PAT and the board PAT are both retired. Tier 1 is now PAT-free.)*
 
 ---
 
 ## Quick reference
 
 ```
-Tier 1 (GitHub Actions secrets — set up once, consolidate):
+Tier 1 (org secrets, FriendlyInternet, Selected → nuxt-crouton — 5 required):
   ANTHROPIC_API_KEY            agent pipeline (API-billed)
   CLOUDFLARE_API_TOKEN         1 token: Account Workers/D1/KV/R2 + Zone Routes/DNS
   CLOUDFLARE_ACCOUNT_ID        identifier (not secret)
-  PROJECTS_TOKEN               1 human PAT: Issues+PRs R/W (label dispatch; drop DISPATCH_TOKEN)
-  WORKER_SECRETS_JSON          per-env bundle → Worker runtime secrets (Environment secret)
+  HARNESS_APP_ID               Nuxt Harness App id (4107840) — not secret
+  HARNESS_APP_PRIVATE_KEY      App PEM → mints dispatch + org-board tokens (PAT-free)
+  WORKER_SECRETS_JSON          OPTIONAL, repo-level — bundled app runtime secrets
   GITHUB_TOKEN                 built-in, automatic — do nothing
+  (retired: PROJECTS_TOKEN, DISPATCH_TOKEN — replaced by the App)
 
 Tier 2 (Cloudflare Worker secrets — per feature, disposable, → GitHub App):
   ticket-editor   GITHUB_TOKEN                       Contents: R/W

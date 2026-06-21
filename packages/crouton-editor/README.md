@@ -189,8 +189,8 @@ For full documentation on all editor features, see:
 ## Support
 
 For issues, questions, or contributions:
-- GitHub: [https://github.com/pmcp/nuxt-crouton](https://github.com/pmcp/nuxt-crouton)
-- Issues: [https://github.com/pmcp/nuxt-crouton/issues](https://github.com/pmcp/nuxt-crouton/issues)
+- GitHub: [https://github.com/FriendlyInternet/nuxt-crouton](https://github.com/FriendlyInternet/nuxt-crouton)
+- Issues: [https://github.com/FriendlyInternet/nuxt-crouton/issues](https://github.com/FriendlyInternet/nuxt-crouton/issues)
 
 ## License
 

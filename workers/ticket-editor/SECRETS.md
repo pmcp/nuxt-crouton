@@ -6,7 +6,7 @@
 > + the GitHub App section).
 
 This Worker (`workers/ticket-editor`) serves a mobile Excalidraw editor and, on Save, commits the
-edited diagram back to `pmcp/nuxt-crouton`. It touches **two systems for two reasons**:
+edited diagram back to `FriendlyInternet/nuxt-crouton`. It touches **two systems for two reasons**:
 
 - **Cloudflare = deploy-time** — push the Worker's code.
 - **GitHub = run-time** — the deployed Worker commits edits back on its own (no login on the
@@ -20,7 +20,7 @@ edited diagram back to `pmcp/nuxt-crouton`. It touches **two systems for two rea
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare | Which account to deploy into | identifier (not sensitive) | GitHub Actions repo secret / env | **Existing** |
 | `GITHUB_APP_PRIVATE_KEY` | GitHub App | Signs a JWT to mint installation tokens at runtime | the **Crouton App** private key (PEM) | **Cloudflare Worker secret** (`wrangler secret put`) | **From #519** — the App's one durable secret, shared by all Tier-2 Workers |
 | `GITHUB_APP_ID` | GitHub App | Identifies the App when signing | not sensitive | Worker **var** (or secret) | from #519 |
-| `GITHUB_APP_INSTALLATION_ID` | GitHub App | The install on `pmcp/nuxt-crouton` to scope the token to | not sensitive | Worker **var** (or secret) | from #519 |
+| `GITHUB_APP_INSTALLATION_ID` | GitHub App | The install on `FriendlyInternet/nuxt-crouton` to scope the token to | not sensitive | Worker **var** (or secret) | from #519 |
 
 **No PAT.** The old `GITHUB_TOKEN` (fine-grained PAT, Contents: R/W) is **retired** for this Worker —
 replaced by the App. (If the App isn't registered yet, a PAT is only a legitimate *stopgap*; the
@@ -40,7 +40,7 @@ The private key never hits the API — it only signs the App JWT.
 ## App registration (one-time, #519 WS1)
 
 Register one **Crouton GitHub App** — permissions **Contents: write** (this Worker) **+ Pull
-requests: write** (the review-bridge half) — install it on `pmcp/nuxt-crouton`, then:
+requests: write** (the review-bridge half) — install it on `FriendlyInternet/nuxt-crouton`, then:
 
 ```bash
 cd workers/ticket-editor

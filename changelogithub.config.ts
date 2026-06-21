@@ -41,7 +41,7 @@ export default {
     ci: { title: '🔧 CI' },
   },
   // GitHub configuration
-  repo: 'pmcp/nuxt-crouton',
+  repo: 'FriendlyInternet/nuxt-crouton',
   from: '', // Auto-detect from last tag
   to: 'HEAD',
 }

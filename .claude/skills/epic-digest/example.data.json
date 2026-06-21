@@ -1,24 +1,24 @@
 {
   "generatedAt": "2026-06-18T09:00:00Z",
   "windowHours": 24,
-  "repo": "pmcp/nuxt-crouton",
+  "repo": "FriendlyInternet/nuxt-crouton",
   "activity": {
     "opened": [
-      { "number": 357, "title": "Daily epic-progress digest: an at-a-glance email of what moved and what's left", "url": "https://github.com/pmcp/nuxt-crouton/issues/357", "kind": "issue" },
-      { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/pmcp/nuxt-crouton/issues/358", "kind": "issue" }
+      { "number": 357, "title": "Daily epic-progress digest: an at-a-glance email of what moved and what's left", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/357", "kind": "issue" },
+      { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/358", "kind": "issue" }
     ],
     "closed": [
-      { "number": 351, "title": "Fix stale staging cookie on logout", "url": "https://github.com/pmcp/nuxt-crouton/issues/351", "kind": "issue" }
+      { "number": 351, "title": "Fix stale staging cookie on logout", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/351", "kind": "issue" }
     ],
     "mergedPRs": [
-      { "number": 352, "title": "fix(crouton-auth): clear session cookie on the staging domain", "url": "https://github.com/pmcp/nuxt-crouton/pull/352", "kind": "pr" }
+      { "number": 352, "title": "fix(crouton-auth): clear session cookie on the staging domain", "url": "https://github.com/FriendlyInternet/nuxt-crouton/pull/352", "kind": "pr" }
     ]
   },
   "actionables": [
     {
       "number": 357,
       "title": "Daily epic-progress digest",
-      "url": "https://github.com/pmcp/nuxt-crouton/issues/357",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/357",
       "kind": "epic",
       "hasVisual": false,
       "testSteps": [
@@ -30,7 +30,7 @@
     {
       "number": 391,
       "title": "New booking-status badges",
-      "url": "https://github.com/pmcp/nuxt-crouton/pull/391",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/pull/391",
       "kind": "pr",
       "label": "feat · merged",
       "hasVisual": true,
@@ -44,7 +44,7 @@
     {
       "number": 352,
       "title": "Fix stale staging cookie on logout",
-      "url": "https://github.com/pmcp/nuxt-crouton/pull/352",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/pull/352",
       "kind": "pr",
       "label": "fix · merged",
       "hasVisual": false,
@@ -58,7 +58,7 @@
     {
       "number": 318,
       "title": "Standing rule: deploy to staging, never production by default",
-      "url": "https://github.com/pmcp/nuxt-crouton/issues/318",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/318",
       "status": "blocked",
       "blocked": true,
       "total": 4,
@@ -68,16 +68,16 @@
       "whereWeAre": "The default staging script is in. The production gate and the CI guard are still open, and the whole thing is stuck waiting on a production API token with the right scope.",
       "recentActivity": "Blocked on the production token scope — waiting on account access.",
       "children": [
-        { "number": 319, "title": "Add cf:staging as the default deploy script", "url": "https://github.com/pmcp/nuxt-crouton/issues/319", "state": "closed" },
-        { "number": 320, "title": "Gate /deploy-production behind an explicit human request", "url": "https://github.com/pmcp/nuxt-crouton/issues/320", "state": "open", "status": "blocked" },
-        { "number": 321, "title": "Document the two-domain topology", "url": "https://github.com/pmcp/nuxt-crouton/issues/321", "state": "open", "status": "in-progress" },
-        { "number": 322, "title": "Add a CI guard that refuses prod from a non-dispatch trigger", "url": "https://github.com/pmcp/nuxt-crouton/issues/322", "state": "open" }
+        { "number": 319, "title": "Add cf:staging as the default deploy script", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/319", "state": "closed" },
+        { "number": 320, "title": "Gate /deploy-production behind an explicit human request", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/320", "state": "open", "status": "blocked" },
+        { "number": 321, "title": "Document the two-domain topology", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/321", "state": "open", "status": "in-progress" },
+        { "number": 322, "title": "Add a CI guard that refuses prod from a non-dispatch trigger", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/322", "state": "open" }
       ]
     },
     {
       "number": 249,
       "title": "Recursive task-decomposition pipeline (epic → sub-issues → workers)",
-      "url": "https://github.com/pmcp/nuxt-crouton/issues/249",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/249",
       "status": "in-progress",
       "blocked": false,
       "total": 5,
@@ -87,17 +87,17 @@
       "whereWeAre": "Almost done — the orchestrator, recursive decomposer, worktree-isolated worker, and the leaf-test stop conditions all merged. Only tuning the depth and fan-out defaults is left.",
       "recentActivity": "Worker isolation via git worktrees merged yesterday; only the depth-cap tuning is left.",
       "children": [
-        { "number": 250, "title": "task-orchestrator agent", "url": "https://github.com/pmcp/nuxt-crouton/issues/250", "state": "closed" },
-        { "number": 251, "title": "task-decomposer recursive agent", "url": "https://github.com/pmcp/nuxt-crouton/issues/251", "state": "closed" },
-        { "number": 252, "title": "task-worker on worktree isolation", "url": "https://github.com/pmcp/nuxt-crouton/issues/252", "state": "closed" },
-        { "number": 253, "title": "LEAF TEST + stop-conditions", "url": "https://github.com/pmcp/nuxt-crouton/issues/253", "state": "closed" },
-        { "number": 254, "title": "Tune MAX_DEPTH / MAX_CHILDREN defaults", "url": "https://github.com/pmcp/nuxt-crouton/issues/254", "state": "open", "status": "in-progress" }
+        { "number": 250, "title": "task-orchestrator agent", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/250", "state": "closed" },
+        { "number": 251, "title": "task-decomposer recursive agent", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/251", "state": "closed" },
+        { "number": 252, "title": "task-worker on worktree isolation", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/252", "state": "closed" },
+        { "number": 253, "title": "LEAF TEST + stop-conditions", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/253", "state": "closed" },
+        { "number": 254, "title": "Tune MAX_DEPTH / MAX_CHILDREN defaults", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/254", "state": "open", "status": "in-progress" }
       ]
     },
     {
       "number": 357,
       "title": "Daily epic-progress digest: an at-a-glance email of what moved and what's left",
-      "url": "https://github.com/pmcp/nuxt-crouton/issues/357",
+      "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/357",
       "status": "in-progress",
       "blocked": false,
       "total": 1,
@@ -107,14 +107,14 @@
       "whereWeAre": "Just kicked off. The render-only skill (HTML + text) is the first sub-issue and is in progress now; email sending and scheduling come after.",
       "recentActivity": "Epic opened today; the render-only skill is the first sub-issue, in progress now.",
       "children": [
-        { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/pmcp/nuxt-crouton/issues/358", "state": "open", "status": "in-progress" }
+        { "number": 358, "title": "Build the /epic-digest skill — render a daily epic-progress digest (HTML + text)", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/358", "state": "open", "status": "in-progress" }
       ]
     }
   ],
   "loose": [
-    { "number": 226, "title": "crouton-cli: `crouton config` doesn't prune removed collections from schema barrel / app.config / layer extends", "url": "https://github.com/pmcp/nuxt-crouton/issues/226", "type": "fix" },
-    { "number": 246, "title": "Make the e2e smoke run on a prebuilt app (nuxt preview) — fix the prod-SSR auth-cookie 500", "url": "https://github.com/pmcp/nuxt-crouton/issues/246", "type": "fix" },
-    { "number": 322, "title": "Rename the fanfare app/worker to \"kassa\"", "url": "https://github.com/pmcp/nuxt-crouton/issues/322", "type": "chore" },
-    { "number": 378, "title": "Prune CLAUDE.md", "url": "https://github.com/pmcp/nuxt-crouton/issues/378", "type": "docs" }
+    { "number": 226, "title": "crouton-cli: `crouton config` doesn't prune removed collections from schema barrel / app.config / layer extends", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/226", "type": "fix" },
+    { "number": 246, "title": "Make the e2e smoke run on a prebuilt app (nuxt preview) — fix the prod-SSR auth-cookie 500", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/246", "type": "fix" },
+    { "number": 322, "title": "Rename the fanfare app/worker to \"kassa\"", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/322", "type": "chore" },
+    { "number": 378, "title": "Prune CLAUDE.md", "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues/378", "type": "docs" }
   ]
 }

@@ -56,13 +56,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmcp/nuxt-crouton.git",
+    "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git",
     "directory": "packages/crouton-flow"
   },
   "bugs": {
-    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+    "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues"
   },
-  "homepage": "https://github.com/pmcp/nuxt-crouton#readme",
+  "homepage": "https://github.com/FriendlyInternet/nuxt-crouton#readme",
   "publishConfig": {
     "access": "public"
   }

@@ -11,8 +11,8 @@ arrows bound to the boxes**, committed as a **single PNG** that renders in the i
 on mobile **and** carries the **editable Excalidraw scene embedded inside it** — open that PNG
 in Excalidraw and you get the live scene to rearrange and hand back.
 
-This is workstream #2 of the human-readable-tickets epic ([#479](https://github.com/pmcp/nuxt-crouton/issues/479))
-made concrete, tracked under epic [#483](https://github.com/pmcp/nuxt-crouton/issues/483). It
+This is workstream #2 of the human-readable-tickets epic ([#479](https://github.com/FriendlyInternet/nuxt-crouton/issues/479))
+made concrete, tracked under epic [#483](https://github.com/FriendlyInternet/nuxt-crouton/issues/483). It
 reuses the **sign-off / revision loop** of #310 (the same loop `ui-proposal` and `schema-review`
 use): generate → post on the PR → iterate on feedback → approve.
 
@@ -58,7 +58,7 @@ line in the body. Then build:
   "epic": 479,
   "slug": "make-tickets-human-readable",
   "title": "Make tickets human-readable",
-  "feedbackUrl": "https://github.com/pmcp/nuxt-crouton/pull/487",
+  "feedbackUrl": "https://github.com/FriendlyInternet/nuxt-crouton/pull/487",
   "nodes": [{ "id": 454, "title": "Schemas + config", "status": "done" }],
   "edges": [{ "from": 454, "to": 455 }],
   "goal": { "label": "library-catalog.pmcp.dev" }
@@ -96,7 +96,7 @@ the image a link that opens the scene in Excalidraw:
 ```markdown
 <!-- ticket-diagram:make-tickets-human-readable -->
 ### 🗺️ Epic diagram — Make tickets human-readable
-![epic diagram](https://raw.githubusercontent.com/pmcp/nuxt-crouton/<branch>/writeups/diagrams/make-tickets-human-readable.png)
+![epic diagram](https://raw.githubusercontent.com/FriendlyInternet/nuxt-crouton/<branch>/writeups/diagrams/make-tickets-human-readable.png)
 
 **✏️ To edit:** download this PNG and **open it in Excalidraw** — the scene is embedded, so it
 opens live; drag boxes (arrows follow), then **export it (Embed scene ON) and attach the PNG to a

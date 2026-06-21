@@ -152,7 +152,7 @@ Mapbox env vars and stop passing `mapbox://` style URLs.
 
 ## License
 
-MIT — Issues and PRs welcome at https://github.com/pmcp/nuxt-crouton
+MIT — Issues and PRs welcome at https://github.com/FriendlyInternet/nuxt-crouton
 
 ---
 

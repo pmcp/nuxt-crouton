@@ -95,7 +95,7 @@ Designed to work with [SuperSaaS](https://supersaas.dev/), a Nuxt 4 starter temp
 
 ## Related Links
 
-- GitHub: https://github.com/pmcp/nuxt-crouton
+- GitHub: https://github.com/FriendlyInternet/nuxt-crouton
 - Nuxt: https://nuxt.com
 - SuperSaaS: https://supersaas.dev/
 - Drizzle ORM: https://orm.drizzle.team
