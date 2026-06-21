@@ -13,7 +13,7 @@ touches **two systems for two reasons**:
 The Worker holds the App's **private key** and mints a short-lived (~1h) **installation token**
 just-in-time per request with `@octokit/auth-app`, then uses that token for the commit. The token
 expires on its own; the **one** durable secret is the private key (it never hits the API — it only
-signs JWTs to mint tokens). Commits then show as **`crouton[bot]`**. See the canonical rationale in
+signs JWTs to mint tokens). Commits then show as **`nuxt-harness[bot]`**. See the canonical rationale in
 `writeups/setup/secrets-and-tokens.md`.
 
 > Requires the Crouton GitHub App to be registered + installed on `pmcp/nuxt-crouton` (epic #519,
@@ -68,4 +68,4 @@ npx wrangler secret put GITHUB_APP_INSTALLATION_ID  # the installation id on pmc
 
 - **Reuse:** `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 - **App auth:** one durable secret = `GITHUB_APP_PRIVATE_KEY` (Worker secret) + `GITHUB_APP_ID` +
-  `GITHUB_APP_INSTALLATION_ID`. No PAT. Commits post as `crouton[bot]`.
+  `GITHUB_APP_INSTALLATION_ID`. No PAT. Commits post as `nuxt-harness[bot]`.

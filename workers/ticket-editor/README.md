@@ -2,7 +2,7 @@
 
 A tiny Excalidraw editor that commits edits **straight back to the repo** — the mobile
 round-trip for `ticket-diagram` diagrams with **zero third-party login** (the Worker authenticates
-as the **Crouton GitHub App** and commits as `crouton[bot]`; your phone never authorizes anything).
+as the **Crouton GitHub App** and commits as `nuxt-harness[bot]`; your phone never authorizes anything).
 On Save, Excalidraw exports the PNG in-browser, so the committed image is exactly what you edited
 (WYSIWYG). Sub-issue #503 of epic #483; App auth is #530 of epic #519.
 

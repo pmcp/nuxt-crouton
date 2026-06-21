@@ -143,7 +143,7 @@ The **one** durable secret is the **private key** (no expiry; it never touches t
 Swapping two PATs is the least of it. The App is a GitHub-native **identity + webhook receiver + per-tenant permission grant**, which unlocks:
 
 **Fixes things we currently do wrong**
-- **Posts as `crouton[bot]`, not @pmcp** — the *real* fix for the provenance problem we band-aided with the `require-comment-provenance` hook. Bot comments become unmistakable at the source.
+- **Posts as `nuxt-harness[bot]`, not @pmcp** — the *real* fix for the provenance problem we band-aided with the `require-comment-provenance` hook. Bot comments become unmistakable at the source.
 - **Retires the scattered per-feature PATs** and the **unauthenticated `/api/_review`** (actions tie to a real installation, not an open URL + shared low-trust token).
 - **Exact permissions** — no more "the bot token lacks `workflows`/`actions`" walls; grant only what's chosen.
 

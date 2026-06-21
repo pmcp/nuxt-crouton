@@ -5,7 +5,7 @@
  *   POST /api/save  { slug, branch, scene, png }   → commits <slug>.excalidraw (+ <slug>.png) to the branch
  *
  * Mobile round-trip with ZERO third-party login: the Worker authenticates as the **Crouton GitHub
- * App** and commits as crouton[bot], so the phone never authorizes anything. On Save, Excalidraw
+ * App** and commits as nuxt-harness[bot], so the phone never authorizes anything. On Save, Excalidraw
  * exports the PNG in-browser (exportToBlob, scene embedded) — the committed image is exactly what
  * you edited (WYSIWYG).
  *

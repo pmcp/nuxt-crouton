@@ -1,9 +1,13 @@
 # Crouton GitHub App — registration & wiring runbook (epic #519)
 
+> **Naming:** the App is registered as **"Nuxt Harness"** and posts as **`nuxt-harness[bot]`**
+> (App ID `4107840`, owned by the **FriendlyInternet** org). "Crouton GitHub App" is the project's
+> name for this same App in epic #519.
+
 > The one-time human setup (WS1) for the **Crouton GitHub App**: the Tier-2 / multi-tenant identity
 > that replaces per-feature PATs. Rationale lives in [`secrets-and-tokens.md`](./secrets-and-tokens.md);
 > this is the *do-it* checklist. After this, the ticket-editor Worker (#530) authenticates as the App
-> and commits as `crouton[bot]` with no stored PAT.
+> and commits as `nuxt-harness[bot]` with no stored PAT.
 
 ## Decisions (recorded)
 
@@ -97,7 +101,7 @@ npx wrangler deploy
 `wrangler.jsonc`'s `vars` and keep only `GITHUB_APP_PRIVATE_KEY` as a secret.)
 
 **Verify (the epic's "we'll know by"):** open the editor on your phone → edit a diagram → **Save** →
-the commit on the branch is authored by **`crouton[bot]`**, no PAT anywhere. That closes #530's smoke
+the commit on the branch is authored by **`nuxt-harness[bot]`**, no PAT anywhere. That closes #530's smoke
 test and proves WS3 (single-tenant key-in-Worker).
 
 ## Forward-compat (so this setup carries to the product)
@@ -112,7 +116,7 @@ test and proves WS3 (single-tenant key-in-Worker).
   sign-off / deploy) become Check Runs instead of bot comments.
 - **review-bridge (other half of WS2):** the `/api/_review` endpoint (#491, in `packages/crouton-devtools`)
   swaps its PAT for an App installation token the same way — tracked separately (package HARD GATE).
-- **Provenance:** once comments post as `crouton[bot]`, the `require-comment-provenance` hook band-aid
+- **Provenance:** once comments post as `nuxt-harness[bot]`, the `require-comment-provenance` hook band-aid
   (#497) can be retired for App-posted comments.
 
 ## Sources
