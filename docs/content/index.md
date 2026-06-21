@@ -33,7 +33,7 @@ Generate working forms, tables, and TypeScript types in 30 seconds. **Nuxt Crout
   color: neutral
   variant: outline
   size: xl
-  to: https://github.com/pmcp/nuxt-crouton
+  to: https://github.com/FriendlyInternet/nuxt-crouton
   target: _blank
   ---
   View on GitHub

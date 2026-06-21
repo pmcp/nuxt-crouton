@@ -13,13 +13,13 @@
   ],
   "author": "FYIT",
   "license": "MIT",
-  "homepage": "https://github.com/pmcp/nuxt-crouton",
+  "homepage": "https://github.com/FriendlyInternet/nuxt-crouton",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmcp/nuxt-crouton.git"
+    "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git"
   },
   "bugs": {
-    "url": "https://github.com/pmcp/nuxt-crouton/issues"
+    "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues"
   },
   "scripts": {
     "lint": "eslint .",

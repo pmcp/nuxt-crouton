@@ -10,7 +10,7 @@
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 QUERY="$1"
-REPO="pmcp/nuxt-crouton"
+REPO="FriendlyInternet/nuxt-crouton"
 
 case "$QUERY" in
   triage)

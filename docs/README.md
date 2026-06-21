@@ -2,7 +2,7 @@
 
 [![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
 
-Documentation site for [Nuxt Crouton](https://github.com/pmcp/nuxt-crouton) - a code generator and composable library for building CRUD applications in Nuxt 4.
+Documentation site for [Nuxt Crouton](https://github.com/FriendlyInternet/nuxt-crouton) - a code generator and composable library for building CRUD applications in Nuxt 4.
 
 **Live Site**: https://nuxt-crouton.dev/
 
@@ -85,6 +85,6 @@ Deployed to Cloudflare Pages. See `wrangler.toml` for configuration.
 
 ## Related Links
 
-- [Nuxt Crouton GitHub](https://github.com/pmcp/nuxt-crouton)
+- [Nuxt Crouton GitHub](https://github.com/FriendlyInternet/nuxt-crouton)
 - [SuperSaaS](https://supersaas.dev/) - Starter template Crouton is designed for
 - [Nuxt UI](https://ui.nuxt.com) - Component library used

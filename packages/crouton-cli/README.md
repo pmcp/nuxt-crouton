@@ -473,6 +473,6 @@ MIT © FYIT
 
 ## Links
 
-- [GitHub Repository](https://github.com/pmcp/nuxt-crouton)
+- [GitHub Repository](https://github.com/FriendlyInternet/nuxt-crouton)
 - [Nuxt Crouton Package](https://www.npmjs.com/package/@fyit/crouton)
-- [Report Issues](https://github.com/pmcp/nuxt-crouton/issues)
+- [Report Issues](https://github.com/FriendlyInternet/nuxt-crouton/issues)

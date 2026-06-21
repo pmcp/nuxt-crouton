@@ -6,7 +6,7 @@ allowed-tools: mcp__github__search_issues, mcp__github__list_issues, mcp__github
 
 # Epic Digest — the daily "where are we?" email
 
-Turns the GitHub issue tree (`pmcp/nuxt-crouton`) into a **skimmable digest**: a
+Turns the GitHub issue tree (`FriendlyInternet/nuxt-crouton`) into a **skimmable digest**: a
 **"🧪 Needs your eyes"** band up top (what *landed*, one skimmable line per item — title, type
 badge, 👁 for visual changes, PR/preview link — with the How-to-test steps folded into a
 tap-to-expand `🧪 How to test (N)` dropdown so the band stays light on mobile), then a short
@@ -41,7 +41,7 @@ below. Set `windowHours` in the data accordingly (24 / 72 / 168).
 Build the JSON object described in **Step 3** using these calls (all `owner: pmcp`,
 `repo: nuxt-crouton`):
 
-1. **Open epics** — `search_issues`, query `repo:pmcp/nuxt-crouton is:issue is:open label:epic`.
+1. **Open epics** — `search_issues`, query `repo:FriendlyInternet/nuxt-crouton is:issue is:open label:epic`.
 2. **Each epic's children** — `issue_read` with `method: get_sub_issues`. Count
    `done` = children with `state: "closed"`, `total` = all children. Read each
    child's labels (or the `get_sub_issues` state) to set its `status`
@@ -49,9 +49,9 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
    Mark the epic `blocked` if it carries `status:blocked` or any child is blocked.
 3. **Activity in the window** (the "since yesterday" band) — use date-filtered search,
    substituting `<cutoff>` (YYYY-MM-DD):
-   - Closed: `search_issues` → `repo:pmcp/nuxt-crouton is:issue is:closed closed:>=<cutoff>`
-   - Opened: `search_issues` → `repo:pmcp/nuxt-crouton is:issue created:>=<cutoff>`
-   - Merged PRs: `search_issues` → `repo:pmcp/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
+   - Closed: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:issue is:closed closed:>=<cutoff>`
+   - Opened: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:issue created:>=<cutoff>`
+   - Merged PRs: `search_issues` → `repo:FriendlyInternet/nuxt-crouton is:pr is:merged merged:>=<cutoff>`
      (note: `search_issues` is scoped to issues; for PRs use `mcp__github__search_pull_requests`
      if available, else `list_pull_requests` filtered client-side.)
 4. Write the **human lines** per epic — these are the heart of the digest, the part a
@@ -71,7 +71,7 @@ Build the JSON object described in **Step 3** using these calls (all `owner: pmc
 
 5. **Loose tickets** (the "no epic" band) — open issues tracked under *no* epic, so
    they don't vanish from the roundup. `search_issues` →
-   `repo:pmcp/nuxt-crouton is:issue is:open -label:epic`, then **drop anything with a
+   `repo:FriendlyInternet/nuxt-crouton is:issue is:open -label:epic`, then **drop anything with a
    `parent_issue_url`** (those already roll up under an epic). For each survivor keep
    `number`, `title`, `url`, and its `type:*` label (as `type`). The renderer groups
    them by type so a pile of chores reads as one block. Omit the section entirely when
@@ -104,7 +104,7 @@ Shape (`example.data.json` next to this skill is a complete, renderable sample):
 {
   "generatedAt": "<ISO now>",
   "windowHours": 24,
-  "repo": "pmcp/nuxt-crouton",
+  "repo": "FriendlyInternet/nuxt-crouton",
   "activity": {
     "opened":    [{ "number": 358, "title": "...", "url": "https://github.com/...", "kind": "issue" }],
     "closed":    [{ "number": 351, "title": "...", "url": "...", "kind": "issue" }],

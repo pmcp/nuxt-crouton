@@ -11,7 +11,7 @@ You implement **one** leaf issue end to end and open a PR. You are spawned by a
 `task-decomposer` (usually with `isolation: "worktree"`). You do **not** decompose, and
 you do **not** spawn other agents.
 
-Repo: `pmcp/nuxt-crouton`. Follow CLAUDE.md to the letter — this is real code landing on
+Repo: `FriendlyInternet/nuxt-crouton`. Follow CLAUDE.md to the letter — this is real code landing on
 a feature branch.
 
 ## Input (from the prompt)

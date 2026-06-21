@@ -37,9 +37,9 @@ From `diagram-3-friction-map.svg` — these are where work stalls or leaks today
 ## Foundational substrate: identity & auth — PAT → GitHub App (#519)
 
 **This underpins almost everything below**, so it's called out separately. Per epic
-[#519](https://github.com/pmcp/nuxt-crouton/issues/519) (sub-issue
-[#530](https://github.com/pmcp/nuxt-crouton/issues/530) ticket-editor + review-bridge in `packages/`;
-Tier-1 cleanup in [#521](https://github.com/pmcp/nuxt-crouton/issues/521)), all GitHub automation moves
+[#519](https://github.com/FriendlyInternet/nuxt-crouton/issues/519) (sub-issue
+[#530](https://github.com/FriendlyInternet/nuxt-crouton/issues/530) ticket-editor + review-bridge in `packages/`;
+Tier-1 cleanup in [#521](https://github.com/FriendlyInternet/nuxt-crouton/issues/521)), all GitHub automation moves
 **from personal access tokens to the Crouton GitHub App**:
 
 - Acts as **`crouton[bot]`** — a clean automation identity (the backbone of the 🪪 "who asked / who did

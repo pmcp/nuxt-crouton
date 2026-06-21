@@ -4,7 +4,7 @@
 > (App ID `4107840`, owned by the **FriendlyInternet** org). "Crouton GitHub App" is the project's
 > name for this same App in epic #519.
 
-> **Status:** already set up and verified for `pmcp/nuxt-crouton` (the ticket-editor Worker commits
+> **Status:** already set up and verified for `FriendlyInternet/nuxt-crouton` (the ticket-editor Worker commits
 > as `nuxt-harness[bot]` with no PAT). This runbook is the canonical reference — for re-provisioning,
 > rotating the key, or onboarding a second tenant.
 
@@ -22,7 +22,7 @@ per-feature PATs. Rationale lives in [`secrets-and-tokens.md`](./secrets-and-tok
 - **Tenants do NOT need an org.** A GitHub App installs onto *any* account — personal or org. Owning
   the App in an org is purely our side (durability/branding); it imposes nothing on installers.
 - **Visibility: public.** Because the org owns the App but it's installed on the personal
-  `pmcp/nuxt-crouton` repo, the App must be **"Any account"** (public). *Install-scope rule:* a
+  `FriendlyInternet/nuxt-crouton` repo, the App must be **"Any account"** (public). *Install-scope rule:* a
   *private* App can only be installed on the account that **owns** it.
 
 ## A. The org
@@ -42,7 +42,7 @@ Fill the form (verbatim field labels; required marked):
 |---|---|
 | **GitHub App name** *(req · global-unique · ≤~34 chars)* | `Nuxt Harness`. Commits/comments show as **`nuxt-harness[bot]`**. |
 | **Description** | optional — e.g. "Crouton runtime GitHub identity (diagram editor, review bridge, gates)." |
-| **Homepage URL** *(req)* | `https://github.com/pmcp/nuxt-crouton` |
+| **Homepage URL** *(req)* | `https://github.com/FriendlyInternet/nuxt-crouton` |
 | **Identifying & authorizing users → Callback URL** | leave blank (no user-OAuth yet) |
 | **Webhook → Active** | **UNCHECK** — no endpoint yet (turn on for WS5; one webhook per App, toggleable later) |
 | Webhook URL / Webhook secret | leave blank (Active is off) |
@@ -50,7 +50,7 @@ Fill the form (verbatim field labels; required marked):
 | *(WS5)* | **Issues → Read & write** — needed so the App can apply the `delegate` label. |
 | *(futureproof, optional)* | **Checks → Read & write** — WS4 needs it; setting now saves a re-approval later. |
 | **Subscribe to events** | none (Active is off) |
-| **Where can this GitHub App be installed?** | **Any account** (public) — required so the org-owned App can install on the personal `pmcp/nuxt-crouton` repo. |
+| **Where can this GitHub App be installed?** | **Any account** (public) — required so the org-owned App can install on the personal `FriendlyInternet/nuxt-crouton` repo. |
 
 → **Create GitHub App.**
 

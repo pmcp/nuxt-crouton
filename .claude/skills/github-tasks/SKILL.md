@@ -6,7 +6,7 @@ allowed-tools: mcp__github__issue_write, mcp__github__sub_issue_write, mcp__gith
 
 # GitHub Task Tracking
 
-The canonical task tracker for this repo is **GitHub Issues** (`pmcp/nuxt-crouton`). This skill defines how to create and label them consistently so every task maps to a real part of the monorepo.
+The canonical task tracker for this repo is **GitHub Issues** (`FriendlyInternet/nuxt-crouton`). This skill defines how to create and label them consistently so every task maps to a real part of the monorepo.
 
 ## Write it as a hypothesis (assumption-first — the default for every epic & issue)
 
@@ -114,7 +114,7 @@ Don't stop at the issue you were asked about; closing the leaf without checking 
    - `worker:<name>` for `workers/*`
    - Package work that also lands a schema/config change in an app gets **both** (e.g. `pkg:crouton-sales` + `app:fanfare`).
 4. Use meta labels where they apply: `epic`, `spike`, `needs-triage`.
-5. **Link issues & PRs when talking to the user.** Any time you mention an issue/PR in a chat reply, render it as a clickable link to the full URL (`[#303](https://github.com/pmcp/nuxt-crouton/issues/303)`, `[#376](https://github.com/pmcp/nuxt-crouton/pull/376)`) so the owner can open it in one click. This is a **chat-reply** convention only — commit messages keep bare `(#NN)`, and PR bodies use `Closes #NN` (not a URL) so GitHub auto-closes the issue on merge.
+5. **Link issues & PRs when talking to the user.** Any time you mention an issue/PR in a chat reply, render it as a clickable link to the full URL (`[#303](https://github.com/FriendlyInternet/nuxt-crouton/issues/303)`, `[#376](https://github.com/FriendlyInternet/nuxt-crouton/pull/376)`) so the owner can open it in one click. This is a **chat-reply** convention only — commit messages keep bare `(#NN)`, and PR bodies use `Closes #NN` (not a URL) so GitHub auto-closes the issue on merge.
 
 ## Structure
 

@@ -84,4 +84,4 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please see the [main repository](https://github.com/pmcp/nuxt-crouton) for guidelines.
+Contributions are welcome! Please see the [main repository](https://github.com/FriendlyInternet/nuxt-crouton) for guidelines.

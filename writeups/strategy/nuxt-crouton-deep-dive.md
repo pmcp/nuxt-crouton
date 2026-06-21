@@ -2,7 +2,7 @@
 
 ## 1. Repository Overview
 
-**Repository**: `pmcp/nuxt-crouton`  
+**Repository**: `FriendlyInternet/nuxt-crouton`  
 **License**: MIT  
 **Stack**: Nuxt 4 · Nuxt UI 4 · Cloudflare Pages · Drizzle ORM · SQLite/D1 · Better Auth · pnpm workspaces  
 **Structure**: Monorepo — 22 packages in `packages/`, apps in `apps/`

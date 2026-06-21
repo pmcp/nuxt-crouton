@@ -208,7 +208,7 @@ Unlike Nuxt Modules that require complex build steps and configurations, Nuxt La
 
 ```bash
 # Clone the repository
-git clone https://github.com/pmcp/nuxt-crouton.git
+git clone https://github.com/FriendlyInternet/nuxt-crouton.git
 cd nuxt-crouton
 
 # Install dependencies

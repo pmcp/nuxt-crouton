@@ -96,7 +96,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<NominatimResult | NominatimResult[] | { error: unknown }>(endpoint, {
       query: params,
       headers: {
-        'User-Agent': 'nuxt-crouton-maps (https://github.com/pmcp/nuxt-crouton)',
+        'User-Agent': 'nuxt-crouton-maps (https://github.com/FriendlyInternet/nuxt-crouton)',
         'Accept-Language': 'en'
       }
     })

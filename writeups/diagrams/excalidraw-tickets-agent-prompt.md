@@ -1,7 +1,7 @@
 # Agent prompt — Excalidraw diagrams connected to GitHub tickets (iterative)
 
 > Copy everything below the line and hand it to another agent. It is self-contained.
-> Repo context: `pmcp/nuxt-crouton`, GitHub access via the GitHub MCP tools
+> Repo context: `FriendlyInternet/nuxt-crouton`, GitHub access via the GitHub MCP tools
 > (`mcp__github__*`). Related epic: #479 (make tickets human-readable).
 
 ---

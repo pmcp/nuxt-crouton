@@ -145,7 +145,7 @@ echo '{}' > ~/.pi/agent/auth.json
 sudo systemctl cat thinkgraph-worker | grep EnvironmentFile
 ```
 
-Edit that file (likely `/home/pmcp/nuxt-crouton/apps/thinkgraph-worker/.env`):
+Edit that file (likely `/home/FriendlyInternet/nuxt-crouton/apps/thinkgraph-worker/.env`):
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
