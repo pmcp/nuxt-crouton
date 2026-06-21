@@ -20,13 +20,14 @@ name: Project status automation
 # to Done too — including a parent epic once you close it.
 # (Item added -> Backlog is still handled by the Project's built-in workflow.)
 #
-# ── One-time setup (required) ──────────────────────────────────────────────
-# GITHUB_TOKEN cannot write a user-owned Projects v2 board, so this needs a PAT:
-#   1. Create a token with Projects read/write + repo scope
-#      (classic: `project` + `repo`; or fine-grained: Projects RW + Issues/PRs read).
-#   2. Add it as the repo secret  PROJECTS_TOKEN.
-#   3. (optional) Set repo variable PROJECT_NAME if the board isn't named "Crouton".
-# Until PROJECTS_TOKEN exists the script returns early (green run, no-op).
+# ── Auth (#546): org-scoped Nuxt Harness App token, no PAT ──────────────────
+# The board is now the FriendlyInternet **org** Projects v2 board ("Crouton").
+# GITHUB_TOKEN can't write a Projects v2 board, but the Nuxt Harness App can:
+# installed on the org with Organization → Projects: Read & write, it mints a
+# short-lived installation token at runtime. This retires the PROJECTS_TOKEN PAT
+# (the repo is fully PAT-free). Needs Actions secrets HARNESS_APP_ID +
+# HARNESS_APP_PRIVATE_KEY (org-level). Set repo variable PROJECT_NAME only if
+# the board isn't named "Crouton".
 
 on:
   pull_request:
@@ -41,23 +42,22 @@ jobs:
   set-status:
     runs-on: ubuntu-latest
     steps:
+      # Mint an org-scoped Nuxt Harness App installation token. `owner` (no
+      # `repositories`) yields a token carrying the org-level grants — here
+      # Organization → Projects: Read & write — which is what writing the
+      # org board requires. (#546)
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: FriendlyInternet
       - uses: actions/github-script@v7
         env:
           PROJECT_NAME: ${{ vars.PROJECT_NAME || 'Crouton' }}
-          # The `secrets` context is NOT allowed in a job/step `if:` — using it
-          # there makes the run fail to evaluate (0 jobs, red run) instead of
-          # skipping. Surface the token as an env var and gate inside the script.
-          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
         with:
-          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            // No PAT configured → nothing to do (GITHUB_TOKEN can't write a
-            // user-owned Projects v2 board). Return cleanly so the run is green.
-            if (!process.env.PROJECTS_TOKEN) {
-              core.info('PROJECTS_TOKEN not set — skipping board update')
-              return
-            }
-
             const projectName = process.env.PROJECT_NAME
             const { owner, repo } = context.repo
 
