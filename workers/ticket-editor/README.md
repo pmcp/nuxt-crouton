@@ -1,9 +1,10 @@
 # ticket-editor
 
 A tiny Excalidraw editor that commits edits **straight back to the repo** — the mobile
-round-trip for `ticket-diagram` diagrams with **zero third-party login** (the GitHub token is a
-Worker secret; your phone never authorizes anything). On Save, Excalidraw exports the PNG
-in-browser, so the committed image is exactly what you edited (WYSIWYG). Sub-issue #503 of epic #483.
+round-trip for `ticket-diagram` diagrams with **zero third-party login** (the Worker authenticates
+as the **Crouton GitHub App** and commits as `crouton[bot]`; your phone never authorizes anything).
+On Save, Excalidraw exports the PNG in-browser, so the committed image is exactly what you edited
+(WYSIWYG). Sub-issue #503 of epic #483; App auth is #530 of epic #519.
 
 ## Routes
 
@@ -15,8 +16,11 @@ in-browser, so the committed image is exactly what you edited (WYSIWYG). Sub-iss
 ```bash
 cd workers/ticket-editor
 pnpm install
-npx wrangler secret put GITHUB_TOKEN     # fine-grained PAT, Contents: Read/Write on pmcp/nuxt-crouton
-npx wrangler deploy                       # → https://ticket-editor.<account>.workers.dev
+# Crouton GitHub App auth (epic #519) — see SECRETS.md. Needs the App registered + installed first.
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY      # the App's PEM private key
+npx wrangler secret put GITHUB_APP_ID
+npx wrangler secret put GITHUB_APP_INSTALLATION_ID
+npx wrangler deploy                                 # → https://ticket-editor.<account>.workers.dev
 ```
 
 Then open `https://ticket-editor.<account>.workers.dev/?slug=make-tickets-human-readable&branch=claude/excalidraw-ticket-diagrams`
@@ -27,5 +31,6 @@ sticky comment as a one-tap **✏️ Edit**.
 
 - The editor loads Excalidraw from the esm.sh CDN (runtime web app — fine; unlike our build-time
   renders, which stay offline). The exact ESM/CSS pins may need a small tweak after first deploy.
-- Token scope: a **fine-grained PAT** limited to this repo's Contents is enough. Keep it a Worker
-  secret — never commit it.
+- Auth: the Worker mints a short-lived (~1h) **installation token** per request from the Crouton
+  GitHub App's private key (`@octokit/auth-app`) — no stored PAT. Only the private key is durable;
+  keep it a Worker secret, never commit it. Rationale: `writeups/setup/secrets-and-tokens.md`.

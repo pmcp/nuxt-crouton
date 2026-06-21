@@ -5,5 +5,8 @@
   "scripts": {
     "dev": "npx --yes wrangler@3 dev",
     "deploy": "npx --yes wrangler@3 deploy"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "^7.1.5"
   }
 }

@@ -4,16 +4,44 @@
  *   GET  /?slug=<slug>&branch=<branch>   → the editor page (loads <slug>.excalidraw from the repo)
  *   POST /api/save  { slug, branch, scene, png }   → commits <slug>.excalidraw (+ <slug>.png) to the branch
  *
- * Mobile round-trip with ZERO third-party login: the GitHub token lives here as a Worker secret,
- * so the phone never authorizes anything. On Save, Excalidraw exports the PNG in-browser
- * (exportToBlob, scene embedded) — so the committed image is exactly what you edited (WYSIWYG).
+ * Mobile round-trip with ZERO third-party login: the Worker authenticates as the **Crouton GitHub
+ * App** and commits as crouton[bot], so the phone never authorizes anything. On Save, Excalidraw
+ * exports the PNG in-browser (exportToBlob, scene embedded) — the committed image is exactly what
+ * you edited (WYSIWYG).
  *
- * Setup:  wrangler secret put GITHUB_TOKEN   (a fine-grained PAT with contents:write on the repo)
+ * Auth (epic #519, WS2): no stored PAT. The Worker holds the App's private key and mints a
+ * short-lived (~1h) installation token just-in-time per request with @octokit/auth-app — the only
+ * durable secret is the private key. Setup (per workers/ticket-editor/SECRETS.md):
+ *   wrangler secret put GITHUB_APP_PRIVATE_KEY   (the App's PEM private key)
+ *   wrangler secret put GITHUB_APP_ID            (or set as a var)
+ *   wrangler secret put GITHUB_APP_INSTALLATION_ID
  */
+import { createAppAuth } from '@octokit/auth-app'
+
 interface Env {
-  GITHUB_TOKEN: string
+  GITHUB_APP_ID: string // the Crouton GitHub App's id
+  GITHUB_APP_PRIVATE_KEY: string // the App's PEM private key (the one durable secret)
+  GITHUB_APP_INSTALLATION_ID: string // the installation on pmcp/nuxt-crouton
   REPO: string // "pmcp/nuxt-crouton"
   DIAGRAMS_DIR: string // "writeups/diagrams"
+}
+
+// Cache the auth instance across requests in the isolate so @octokit/auth-app can reuse/refresh the
+// installation token (GitHub caps it at ~1h; the lib mints a fresh one just-in-time when needed).
+let cachedAuth: ReturnType<typeof createAppAuth> | null = null
+let cachedKey: string | null = null
+
+async function installationToken(env: Env): Promise<string> {
+  if (!cachedAuth || cachedKey !== env.GITHUB_APP_PRIVATE_KEY) {
+    cachedAuth = createAppAuth({
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+      installationId: env.GITHUB_APP_INSTALLATION_ID,
+    })
+    cachedKey = env.GITHUB_APP_PRIVATE_KEY
+  }
+  const { token } = await cachedAuth({ type: 'installation' })
+  return token
 }
 
 export default {
@@ -39,10 +67,10 @@ function toB64(str: string): string {
   return btoa(bin)
 }
 
-async function putFile(env: Env, branch: string, path: string, contentB64: string, message: string): Promise<void> {
+async function putFile(env: Env, token: string, branch: string, path: string, contentB64: string, message: string): Promise<void> {
   const api = 'https://api.github.com/repos/' + env.REPO + '/contents/' + path
   const headers = {
-    authorization: 'Bearer ' + env.GITHUB_TOKEN,
+    authorization: 'Bearer ' + token,
     accept: 'application/vnd.github+json',
     'user-agent': 'ticket-editor',
     'content-type': 'application/json',
@@ -70,10 +98,12 @@ async function save(req: Request, env: Env): Promise<Response> {
     if (!/^[a-z0-9][a-z0-9._-]*$/i.test(slug)) return json({ error: 'bad slug' }, 400)
     const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
     const msg = 'chore(diagrams): edit ' + slug + ' via ticket-editor'
-    await putFile(env, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
+    // Mint a fresh ~1h installation token just-in-time, reuse it for both commits.
+    const token = await installationToken(env)
+    await putFile(env, token, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
     if (png) {
       const b64 = png.includes(',') ? png.split(',')[1] : png
-      await putFile(env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
+      await putFile(env, token, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
     }
     return json({ ok: true })
   } catch (e) {

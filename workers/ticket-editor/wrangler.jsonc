@@ -1,6 +1,9 @@
 {
   // Minimal Worker that serves the Excalidraw ticket-editor and commits edits back to the repo.
-  // Secret (not in this file):  wrangler secret put GITHUB_TOKEN   (fine-grained PAT, contents:write)
+  // Auth = Crouton GitHub App (epic #519). Secrets (not in this file):
+  //   wrangler secret put GITHUB_APP_PRIVATE_KEY        (the App's PEM private key — the one durable secret)
+  //   wrangler secret put GITHUB_APP_ID                 (or move to "vars" below if you prefer it non-secret)
+  //   wrangler secret put GITHUB_APP_INSTALLATION_ID
   "name": "ticket-editor",
   "main": "src/index.ts",
   "compatibility_date": "2024-11-01",
