@@ -194,9 +194,8 @@ const PAGE = `<!DOCTYPE html>
   <p class="muted">e.g. <code>/?slug=make-tickets-human-readable&amp;branch=main</code> — usually you reach this from a diagram's ✏️ Edit link, not by hand.</p>
 </div></div>
 <div id="boot"><div class="big">Loading editor…</div></div>
-<!-- Global error capture: any uncaught JS error or promise rejection (e.g. an Excalidraw render
-     failure, which React rethrows to window in dev builds) is shown as big on-screen text instead
-     of a silent white canvas — so a screenshot is enough to diagnose. -->
+<!-- Turn any uncaught error/rejection into a readable on-screen message instead of a silent white
+     canvas. Also a 12s safety-net below if Excalidraw never reports a mount. -->
 <script>
   window.__umdFail = [];
   function hideBoot(){ var b = document.getElementById('boot'); if (b) b.style.display = 'none'; }
@@ -216,31 +215,12 @@ const PAGE = `<!DOCTYPE html>
   window.addEventListener('unhandledrejection', function(e){
     var r = e && e.reason; showBootError('Unhandled promise rejection', (r && (r.stack || r.message)) || String(r));
   });
-  // Excalidraw has its own internal error boundary that logs to console.error instead of throwing
-  // to window — capture those so a silent mount failure still has a trail.
-  window.__logs = [];
-  ['error', 'warn'].forEach(function(level){
-    var orig = console[level];
-    console[level] = function(){
-      try {
-        window.__logs.push(level + ': ' + Array.prototype.map.call(arguments, function(a){
-          return (a && a.stack) ? a.stack : (typeof a === 'object' ? JSON.stringify(a) : String(a));
-        }).join(' '));
-      } catch (_) {}
-      return orig && orig.apply(console, arguments);
-    };
-  });
-  // Watchdog: if the editor never reports a successful mount, stop showing "Loading…" forever and
-  // dump what we know (loaded globals, failed scripts, captured console errors).
+  // Safety net: if the editor never reports a successful mount, replace "Loading…" with a hint
+  // (plus which scripts, if any, failed to load) rather than spinning forever.
   setTimeout(function(){
     if (window.__api) return; // mounted fine
-    showBootError('Editor stuck — did not mount in 12s',
-      'inited=' + !!window.__inited + '  api=' + !!window.__api +
-      '\\nReact=' + (window.React ? (window.React.version || 'yes') : 'NO') +
-      '  ReactDOM=' + (window.ReactDOM ? 'yes' : 'NO') +
-      '  ExcalidrawLib=' + (window.ExcalidrawLib ? 'yes' : 'NO') +
-      '  failedScripts=' + JSON.stringify(window.__umdFail) +
-      '\\n\\nlast console errors:\\n' + (window.__logs.slice(-8).join('\\n\\n') || '(none captured)'));
+    var failed = (window.__umdFail || []).length ? ' (failed: ' + window.__umdFail.join(', ') + ')' : '';
+    showBootError('Editor did not load', 'Check your connection and reload.' + failed);
   }, 12000);
 </script>
 <!-- Excalidraw's official no-build recipe: React, ReactDOM and Excalidraw as UMD globals
