@@ -113,6 +113,9 @@ The **only** secret local dev needs is `BETTER_AUTH_SECRET`, and the session-sta
 
 ## Durable direction: one **Crouton GitHub App** (retires Tier 2)
 
+> 📋 **Setup runbook:** [`crouton-github-app.md`](./crouton-github-app.md) — the step-by-step WS1
+> registration + key + install + Worker-wiring checklist (org-owned, public-when-productized).
+
 A shared PAT is a dead end the moment this goes **multi-tenant** (teams reviewing their own apps): one PAT can't represent N reviewers/teams and becomes a single high-value secret spanning every tenant.
 
 The convergent answer for **all of Tier 2** is a single **Crouton GitHub App** (permissions: Contents: write + Pull requests: write), **installed per repo/org**, minting **short-lived per-installation tokens**. One App:
