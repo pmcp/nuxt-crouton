@@ -31,7 +31,7 @@ export default {
     const url = new URL(req.url)
     if (req.method === 'POST' && url.pathname === '/api/save') return save(req, env)
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/edit')) {
-      return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } })
+      return new Response(PAGE.replace(/__REPO__/g, env.REPO), { headers: { 'content-type': 'text/html; charset=utf-8' } })
     }
     return new Response('Not found', { status: 404 })
   },
@@ -190,7 +190,7 @@ const PAGE = `<!DOCTYPE html>
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
   var branch = params.get('branch') || 'main';
-  var RAW = 'https://raw.githubusercontent.com/pmcp/nuxt-crouton/' + branch + '/writeups/diagrams/' + slug + '.excalidraw';
+  var RAW = 'https://raw.githubusercontent.com/__REPO__/' + branch + '/writeups/diagrams/' + slug + '.excalidraw';
   window.EXCALIDRAW_ASSET_PATH = 'https://esm.sh/@excalidraw/excalidraw@0.17.6/dist/';
   var statusEl = document.getElementById('status');
   var saveEl = document.getElementById('save');
