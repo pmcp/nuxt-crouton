@@ -30,6 +30,23 @@ spawned agent re-pays the base context (system prompt + this repo's large `CLAUD
 tool defs), so fan-out is the dominant cost — drop the issue-only agents to `haiku` for a
 cheaper (slightly blunter) split, or raise them to `opus` if decomposition quality slips.
 
+## The red-team agent (standalone — not part of the pipeline)
+
+`red-team.md` is an **adversarial security prober** (epic #540), independent of the
+decomposition pipeline above. Given `{ scope, depth }` it reads the code as an attacker
+would — cross-team IDOR, auth bypass, injection, secret exposure, SSRF, upload/cache/
+rate-limit gaps — and **returns structured findings** (it never edits product code).
+Static-first; at `depth=deep` it may dynamically confirm high/criticals against a fixture.
+
+| Agent | File | Recurses? | Writes code? | Model |
+|-------|------|-----------|--------------|-------|
+| `red-team` | `red-team.md` | no | no (reports only) | `opus` |
+
+It's steered by the **`/red-team` skill** (on demand) and run by
+`.github/workflows/red-team.yml` (per-PR `quick`, fails the check on high+) and
+`red-team-daily.yml` (daily `deep`). Findings → a report under `writeups/reports/` + (for
+confirmed high/criticals) `security`/`sec:*` GitHub issues.
+
 ### The agent contract
 
 - **Input is passed in the prompt** as a small JSON-ish object — e.g.
