@@ -45,3 +45,59 @@ jobs:
             `status:blocked` label, then continue via /task-decompose #${{ github.event.issue.number }}.
           claude_args: "--max-turns 30"
           show_full_output: true
+
+      # ── Merge-on-approval (#572) ───────────────────────────────────────────────
+      # The pipeline's design is that a sign-off gate's sub-PR merges into the EPIC
+      # branch once approved — the owner's `approve`/`lgtm` IS the review. Nothing
+      # implemented that, so approved gates STALLED: the gate PR stayed a draft, its
+      # issue never closed, and schedule-waves never released the next workstream.
+      # This deterministically completes the handoff on an approval comment, regardless
+      # of what the agent step above did. Uses GITHUB_TOKEN (not OIDC) so it never trips
+      # the bot-actor guard. Merge commit — NOT squash (preserve curated commits; merge
+      # policy). Once merged, schedule-waves (pull_request: closed) closes the issue and
+      # releases the next workstream — no other machinery needed.
+      - name: Merge the gate PR on approval
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number
+            const body = context.payload.comment.body || ''
+            // Approval only — a change-request reply must NOT merge anything.
+            if (!/\b(approve|approved|lgtm)\b/i.test(body)) {
+              core.info('Comment is not an approval — nothing to merge.'); return
+            }
+            // Find the PR(s) that close THIS issue, via the issue timeline cross-references.
+            const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
+              ...context.repo, issue_number,
+            })
+            const prNums = [...new Set(timeline
+              .filter(e => e.event === 'cross-referenced' && e.source && e.source.issue && e.source.issue.pull_request)
+              .map(e => e.source.issue.number))]
+            let merged = false
+            for (const n of prNums) {
+              let pr
+              try { pr = (await github.rest.pulls.get({ ...context.repo, pull_number: n })).data } catch { continue }
+              if (pr.state !== 'open' || pr.merged) continue
+              // Only the gate PR: it says "Closes #<issue>" and targets an epic branch.
+              if (!new RegExp(`\\bcloses\\s+#${issue_number}\\b`, 'i').test(pr.body || '')) continue
+              if (!/^epic\//.test(pr.base.ref)) {
+                core.info(`PR #${n} base ${pr.base.ref} is not an epic branch — skipping.`); continue
+              }
+              // Mark ready (REST can't flip draft→ready; GraphQL can), then merge.
+              if (pr.draft) {
+                try {
+                  await github.graphql(
+                    `mutation($id:ID!){ markPullRequestReadyForReview(input:{pullRequestId:$id}){ pullRequest { id } } }`,
+                    { id: pr.node_id })
+                } catch (e) { core.warning(`markReady #${n}: ${e.message}`) }
+              }
+              try {
+                await github.rest.pulls.merge({ ...context.repo, pull_number: n, merge_method: 'merge' })
+                merged = true
+                core.info(`Merged gate PR #${n} into ${pr.base.ref}.`)
+              } catch (e) { core.warning(`merge #${n} failed: ${e.message}`) }
+            }
+            // Clear the block defensively so the issue can close cleanly.
+            try { await github.rest.issues.removeLabel({ ...context.repo, issue_number, name: 'status:blocked' }) } catch (e) {}
+            core.info(merged ? 'Gate PR merged — schedule-waves will advance the chain.' : 'No gate PR merged (none matched / already merged).')

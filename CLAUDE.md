@@ -384,9 +384,12 @@ artifact (the UI "what changes" list `<slug>.md`, or a schema's `.md` field tabl
 up in the PR's "Files changed" — inline-comment the exact line, no copying. The agent reads
 those inline review comments and revises that specific item.
 
-**What counts as approval** (the sign-off signal): a reply containing `approve`/`lgtm`, a 👍 on
-the mockup comment, or the `ui-approved` label. Anything else is a change request — revise the
-mockup in place (edit the same sticky comment, re-render the PNG) and iterate until approved (#310).
+**What counts as approval** (the sign-off signal): a **reply comment** containing `approve`/`lgtm`.
+That comment is the *only* thing that resumes the pipeline — a 👍 reaction and the `ui-approved`
+label do **not** trigger anything (`resume-on-comment.yml` fires only on `issue_comment`; reactions
+raise no event and no workflow listens for the label) (#572). Anything else is a change request —
+revise the mockup in place (edit the same sticky comment, re-render the PNG) and iterate until
+approved (#310).
 
 ## Schema Sign-Off (review the data model before you generate) — epic #314
 
@@ -398,8 +401,8 @@ migration derives from it, so a wrong type or missing relationship is cheap to f
 expensive after. This sits **after** the machine `validate_schema` step (the human gate on top of
 it). In the agent pipeline it's a gate in `.claude/agents/task-worker.md`; interactively, do the
 same by hand. It **reuses the same revision/approval loop and signal as the UI gate** (#310) —
-feedback goes inline on the committed `<collection>.md` in the diff; approval (`lgtm`/👍/
-`ui-approved`) unblocks generation.
+feedback goes inline on the committed `<collection>.md` in the diff; approval (a **comment**
+containing `lgtm`/`approve` — not a reaction or label, #572) unblocks generation.
 
 ## Documentation Organization
 

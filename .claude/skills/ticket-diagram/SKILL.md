@@ -111,8 +111,9 @@ The human reviews **on the diff**: they inline-comment, or they edit the scene a
 exported PNG** to a comment. Both are change requests. **Ignore bot/self comments**
 (`user.type === 'Bot'`).
 
-**Approval** = a comment containing `approve`/`lgtm`, a 👍 on the sticky comment, or an `approved`
-label. On approval, mark the PR ready / merge per the epic flow.
+**Approval** = a **comment** containing `approve`/`lgtm`. (A 👍 reaction or a label does **not**
+resume the pipeline — only `issue_comment` triggers `resume-on-comment.yml`, #572.) On approval,
+mark the PR ready / merge per the epic flow.
 
 ## 4 · Round-trip a human edit back IN
 
