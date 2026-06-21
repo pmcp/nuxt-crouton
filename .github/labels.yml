@@ -196,6 +196,23 @@
   color: "006b75"
   description: "Loop/skill/flow improvement (often minted by a postmortem)"
 
+# ── Security (red-team agent findings — epic #540) ──
+- name: "security"
+  color: "b60205"
+  description: "Security finding from the red-team agent (.claude/agents/red-team)"
+- name: "sec:critical"
+  color: "b60205"
+  description: "Red-team severity: critical — auth bypass, cross-team data leak, RCE"
+- name: "sec:high"
+  color: "d93f0b"
+  description: "Red-team severity: high — likely-exploitable authz/injection flaw"
+- name: "sec:medium"
+  color: "fbca04"
+  description: "Red-team severity: medium — defence-in-depth gap, conditional risk"
+- name: "sec:low"
+  color: "fef2c0"
+  description: "Red-team severity: low — hardening / informational"
+
 # ── Status ──
 - name: "status:in-progress"
   color: "fbca04"
