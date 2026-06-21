@@ -47,6 +47,10 @@ jobs:
           prompt: "/task-decompose #${{ github.event.issue.number }}"
           claude_args: "--max-turns 30"
           show_full_output: true
+          # WS5 (#535): the `delegate` label is now applied by the Nuxt Harness App, so this run is
+          # actored as nuxt-harness[bot]. Allow exactly that bot past the bot-actor guard — nothing
+          # else. (The pinned SHA already supports allowed_bots.)
+          allowed_bots: "nuxt-harness[bot]"
 
       # ── Artifact-gate (#461) ──────────────────────────────────────────────────
       # A run is only allowed to be GREEN if the agent produced an OBSERVABLE
