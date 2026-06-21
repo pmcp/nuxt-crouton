@@ -48,6 +48,8 @@ export default defineNuxtConfig({
 })
 ```
 
+**Auto-included in `crouton init` scaffolds (#595):** `@fyit/crouton-devtools` is automatically added to the generated app's `devDependencies` and `modules` array. The generated `cf:staging` script prefixes `NUXT_PUBLIC_CROUTON_REVIEW=true` so staging builds activate the review overlay without any extra configuration. Production builds (`cf:deploy`) omit the flag, so there is zero production footprint.
+
 ## Mobile DevTools (eruda) layer — `@fyit/crouton-devtools/eruda`
 
 A separate, **opt-in Nuxt layer** (not the DevTools module above) that adds
