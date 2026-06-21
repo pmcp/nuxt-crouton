@@ -151,27 +151,15 @@ async function save(req: Request, env: Env): Promise<Response> {
   }
 }
 
-// ── Editor page (no build step; Excalidraw via ESM CDN). Client JS uses string concatenation
-// (no template literals) so it survives this server-side template literal unescaped. ──
+// ── Editor page (no build step; React/ReactDOM/Excalidraw as UMD CDN scripts — Excalidraw's
+// official no-build recipe). Client JS uses string concatenation (no template literals) so it
+// survives this server-side template literal unescaped. ──
 const PAGE = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Ticket diagram editor</title>
 <link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.17.6/index.css" />
-<!-- Import map so excalidraw's bare "react"/"react-dom" specifiers (it's loaded with
-     ?external=react,react-dom) resolve to the SAME esm.sh instances we import below.
-     Without this the page fails with "Failed to resolve module specifier react". -->
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
-    "react-dom": "https://esm.sh/react-dom@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
-  }
-}
-</script>
 <style>
   html,body,#root{margin:0;height:100%;width:100%;}
   #bar{position:fixed;z-index:10;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:10px;
@@ -186,29 +174,36 @@ const PAGE = `<!DOCTYPE html>
 <div id="bar"><b>✏️ Diagram editor</b><span id="status">loading…</span><span class="sp"></span>
   <button id="save" disabled>Save</button></div>
 <div id="stage"><div id="root"></div></div>
-<script type="module">
+<!-- Excalidraw's official no-build recipe: React, ReactDOM and Excalidraw as UMD globals
+     (window.React / window.ReactDOM / window.ExcalidrawLib). This replaces the esm.sh ESM +
+     ?external import-map path, whose dynamic import('react-dom/client') failed to fetch on both
+     desktop and mobile (#563). Plain (non-module) scripts execute in order, so the globals exist
+     by the time the init script below runs — no import map, no dynamic import. -->
+<script>window.EXCALIDRAW_ASSET_PATH = 'https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/';</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js"></script>
+<script>
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
   var branch = params.get('branch') || 'main';
   var RAW = 'https://raw.githubusercontent.com/__REPO__/' + branch + '/writeups/diagrams/' + slug + '.excalidraw';
-  window.EXCALIDRAW_ASSET_PATH = 'https://esm.sh/@excalidraw/excalidraw@0.17.6/dist/';
   var statusEl = document.getElementById('status');
   var saveEl = document.getElementById('save');
   function setStatus(t){ statusEl.textContent = t; }
 
-  Promise.all([
-    import('react'),
-    import('react-dom/client'),
-    import('https://esm.sh/@excalidraw/excalidraw@0.17.6?external=react,react-dom')
-  ]).then(function(mods){
-    var React = mods[0].default || mods[0];
-    var createRoot = mods[1].createRoot;
-    var Exc = mods[2];
+  var React = window.React;
+  var ReactDOM = window.ReactDOM;
+  var Exc = window.ExcalidrawLib;
+  if (!React || !ReactDOM || !ReactDOM.createRoot || !Exc) {
+    setStatus('failed to load editor: React/Excalidraw UMD scripts did not load');
+  } else {
+    var createRoot = ReactDOM.createRoot;
     var api = null;
 
-    function loadScene(){
+    var loadScene = function(){
       return fetch(RAW).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
-    }
+    };
 
     loadScene().then(function(scene){
       var initialData = scene ? { elements: scene.elements || [], appState: { viewBackgroundColor: '#ffffff' }, files: scene.files || {} } : null;
@@ -242,6 +237,6 @@ const PAGE = `<!DOCTYPE html>
           .catch(function(e){ setStatus('error: ' + e); saveEl.disabled = false; });
       };
     });
-  }).catch(function(e){ setStatus('failed to load editor: ' + e); });
+  }
 </script>
 </body></html>`

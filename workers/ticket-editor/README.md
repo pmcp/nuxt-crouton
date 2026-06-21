@@ -34,5 +34,8 @@ that URL from each diagram's sticky comment as a one-tap **✏️ Edit**.
   directly with **WebCrypto** (dependency-free; sign an App JWT → exchange for an installation
   token); **no stored PAT**. The one durable secret is the App private key. Full model in
   `SECRETS.md` + `writeups/setup/secrets-and-tokens.md`.
-- The editor loads Excalidraw from the esm.sh CDN (runtime web app — fine; unlike our build-time
-  renders, which stay offline). The exact ESM/CSS pins may need a small tweak after first deploy.
+- The editor loads React, ReactDOM and Excalidraw as **UMD `<script>` globals** from the unpkg CDN
+  (Excalidraw's official no-build recipe; the CSS still comes from esm.sh). This is a runtime web
+  app, so CDN loads are fine — unlike our build-time renders, which stay offline. We moved off the
+  esm.sh ESM + `?external` import-map path because its dynamic `import('react-dom/client')` failed
+  to fetch on both desktop and mobile (#563).
