@@ -114,7 +114,7 @@ export const generatorContribution = defineGeneratorContribution({
           <template #default="{ map }">
             <CroutonMapsMarker
               v-if="mapCenter[0] !== 0 || mapCenter[1] !== 0"
-              :map="map"
+              :map="map as any"
               :position="mapCenter"
               :color="markerColor"
               :options="{ draggable: true }"
