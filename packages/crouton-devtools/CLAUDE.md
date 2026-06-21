@@ -9,6 +9,11 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | File | Purpose |
 |------|---------|
 | `src/module.ts` | Nuxt module entry point |
+| `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
+| `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
+| `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
+| `src/runtime/server/api/review.post.ts` | `POST /api/_review` → GitHub PR comment bridge (#491) |
+| `src/runtime/server/utils/githubApp.ts` | Crouton App auth: WebCrypto, dependency-free installation-token mint for the bridge (#519) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
@@ -42,6 +47,8 @@ export default defineNuxtConfig({
   }
 })
 ```
+
+**Auto-included in `crouton init` scaffolds (#595):** `@fyit/crouton-devtools` is automatically added to the generated app's `devDependencies` and `modules` array. The generated `cf:staging` script prefixes `NUXT_PUBLIC_CROUTON_REVIEW=true` so staging builds activate the review overlay without any extra configuration. Production builds (`cf:deploy`) omit the flag, so there is zero production footprint.
 
 ## Mobile DevTools (eruda) layer — `@fyit/crouton-devtools/eruda`
 
@@ -104,6 +111,91 @@ When `nuxt-crouton-events` is installed, the Activity tab appears automatically:
 - **Event ↔ Operation Correlation** - Link HTTP operations to events via itemId
 
 The module auto-detects the events package via layer inspection.
+
+## Preview-review source stamping — `data-crouton-src` (epic #488, #490)
+
+A build-time Vue **compiler** transform that injects
+`data-crouton-src="<relative .vue path>"` onto each component's *root* element, so
+a click on a deployed staging preview resolves to the owning source file. This is
+the capture primitive behind the agent UI sign-off loop (annotate a preview →
+structured PR comment → agent edits *that* file).
+
+Why a compiler transform (not Vue DevTools' inspector): DevTools' `data-v-inspector`
+is injected by a **dev-only** Vite middleware and is stripped from `nuxt build`, so
+it can't help on a deployed Workers preview. A compiler `nodeTransform` runs during
+SFC compilation, so the attribute is present in the built SSR + client output.
+
+**Gating — staging only, NEVER production** (mirrors the eruda layer): the transform
+is installed only when `NUXT_PUBLIC_CROUTON_REVIEW=true` at build time (set it in an
+app's `cf:staging` script, never `cf:deploy`). Flag absent → transform not registered
+→ zero attributes in the build. It also skips third-party components under
+`node_modules`, so a click only ever resolves to a file in this repo.
+
+```jsonc
+// app package.json
+"cf:staging": "NUXT_PUBLIC_CROUTON_REVIEW=true NITRO_PRESET=cloudflare_module nuxt build && …",
+"cf:deploy":  "NITRO_PRESET=cloudflare_module nuxt build && …"   // no flag → never stamped
+```
+
+Registered in `module.ts` *before* the dev-only early return (staging is a non-dev
+build). Verified by `test/croutonSrc.test.ts`.
+
+### The in-page overlay (#489)
+
+Under the same `NUXT_PUBLIC_CROUTON_REVIEW` gate, the module registers a client
+plugin (`runtime/plugins/review-overlay.client.ts`) that renders a self-contained
+feedback toolbar on the preview: toggle select-mode → hover highlights elements →
+click freezes one and opens a comment box. On send it builds a `ReviewAnnotation`
+(`route`, `cssSelector`, `componentFile` from the nearest `data-crouton-src`,
+`boundingBox`, `commentText`) and POSTs it to `/api/_review`.
+
+- **Vanilla DOM on purpose** — no dependency on the host app's UI library, so it
+  renders identically on any crouton app/sandbox preview.
+- **The `/api/_review` endpoint → GitHub PR comment bridge lands in #491.** Until
+  then the overlay logs + toasts the payload so capture is verifiable standalone.
+- Pure capture logic lives in `runtime/overlay/capture.ts` (DOM-pure, happy-dom
+  unit tests in `test/capture.test.ts`); the plugin is the DOM/UX glue around it.
+- Runtime Nuxt composables are imported from `nuxt/app` (not `#imports`) so the
+  file typechecks even when pulled into a consuming app's program.
+
+### The GitHub bridge — `POST /api/_review` (#491)
+
+`runtime/server/api/review.post.ts` turns a posted `ReviewAnnotation` into a PR
+comment via `formatReviewComment` (the `🎯 Preview feedback` Markdown the agent
+keys off) + the GitHub issues-comments API, so the subscribed agent
+(`subscribe_pr_activity`) wakes on it. Registered (staging-only) under the same
+gate; absent from production builds. Returns `{ data, error }`; failures surface a
+status-coded message that never echoes a token or the private key.
+
+**Auth — the Crouton GitHub App (#519).** The bridge posts as `crouton[bot]`, not a
+person: it mints a short-lived (~1h) **installation token** just-in-time from the
+shared App's credentials, uses it for the one comment, and lets it expire. No PAT is
+stored; the one durable secret is the App private key (it only signs JWTs to mint
+tokens). The sign-JWT → exchange-for-installation-token flow is done with
+**WebCrypto, dependency-free** in `runtime/server/utils/githubApp.ts` (mirrors
+`workers/ticket-editor`, the sibling App consumer), so the package adds nothing to
+the lockfile and runs unchanged on Workers + Node 18+.
+
+Config is server-side `runtimeConfig.croutonReview`, populated at **runtime** from
+Worker env so nothing ships in the bundle or reaches the client:
+
+| Env var | Maps to | Notes |
+|---------|---------|-------|
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_ID` | `croutonReview.githubAppId` | Crouton App id (not secret) |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY` | `croutonReview.githubAppPrivateKey` | Worker **secret** — the App PEM; the one durable secret |
+| `NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID` | `croutonReview.githubAppInstallationId` | installation to mint tokens for (not secret) |
+| `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` | `croutonReview.githubToken` | **interim** PAT fallback (#519) — honoured only if no App creds; dev/throwaway, never production |
+| `NUXT_CROUTON_REVIEW_REPOSITORY` | `croutonReview.repository` | `owner/repo` (may bake from build env) |
+| `NUXT_CROUTON_REVIEW_PR` | `croutonReview.pr` | PR number (or per-request `body.prNumber`) |
+
+App credentials take precedence over the PAT; the PAT path stays only so the bridge
+keeps working before the App is wired (retire it on App wiring). Verified by
+`test/githubApp.test.ts` (the JWT signing path) — see also
+`writeups/setup/review-bridge-token-setup.md`.
+
+Wiring these into an app's `cf:staging` + the `ui-proposal` gate is #492. Server
+imports use `nitropack/runtime` (not `#imports`) for the same typecheck reason as
+the client plugin.
 
 ## Architecture
 

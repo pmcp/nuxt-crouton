@@ -208,7 +208,7 @@ Both `scripts/*.mjs` are **app-name-agnostic** (they read the app's own
 `wrangler.jsonc`), shipped as raw templates in `lib/templates/wrangler/` and copied
 verbatim. The generated `package.json` chains them:
 `cf:deploy` = build → deploy (auto-provision) → `sync:ids` → migrate prod;
-`cf:staging` = build → inject-env → deploy `--env staging` → `sync:ids` →
+`cf:staging` = `NUXT_PUBLIC_CROUTON_REVIEW=true` build → inject-env → deploy `--env staging` → `sync:ids` →
 re-inject-env → migrate staging. `nuxt.config` pins **no** nitro preset (supplied via
 `NITRO_PRESET=cloudflare_module` in the scripts); `postinstall` is the guarded
 `nuxt prepare 2>/dev/null || true`. Reference app: `apps/three-demo`.

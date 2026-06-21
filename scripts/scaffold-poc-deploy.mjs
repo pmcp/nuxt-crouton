@@ -17,6 +17,11 @@
 // BETTER_AUTH_URL is predictable and auth works. The POC's wrangler.jsonc (env.staging
 // route + id-less D1) is produced by the app scaffold; this script only writes the
 // deploy config and sanity-checks the wrangler.
+//
+// Review overlay (#590/#596): deploy-pocs.yml passes enable-review: true to deploy-app.yml
+// for every POC staging deploy, so the @fyit/crouton-devtools overlay is always active on
+// previews — every preview URL is review-ready. The NUXT_CROUTON_REVIEW_GITHUB_APP_*
+// repo secrets enable the /api/_review bridge (GitHub App-based PR commenting).
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -73,3 +78,6 @@ console.log(`  → the generic .github/workflows/deploy-pocs.yml deploys this PO
 console.log(`     (or via workflow_dispatch with app=${name}); preview at https://${name}.pmcp.dev.`)
 console.log(`  → no per-POC workflow file is needed; the bot can commit this config (it's under pocs/, not .github/).`)
 console.log(`  → needs the CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN CI secrets + the pmcp.dev zone.`)
+console.log(`  → review overlay is ON for all POC staging deploys (#596): the in-page click-to-comment`)
+console.log(`     overlay is active at the preview URL. For PR commenting to work, set the`)
+console.log(`     NUXT_CROUTON_REVIEW_GITHUB_APP_* repo-level secrets (see writeups/setup/review-bridge-token-setup.md).`)

@@ -111,8 +111,9 @@ The human reviews **on the diff**: they inline-comment, or they edit the scene a
 exported PNG** to a comment. Both are change requests. **Ignore bot/self comments**
 (`user.type === 'Bot'`).
 
-**Approval** = a comment containing `approve`/`lgtm`, a 👍 on the sticky comment, or an `approved`
-label. On approval, mark the PR ready / merge per the epic flow.
+**Approval** = a **comment** containing `approve`/`lgtm`. (A 👍 reaction or a label does **not**
+resume the pipeline — only `issue_comment` triggers `resume-on-comment.yml`, #572.) On approval,
+mark the PR ready / merge per the epic flow.
 
 ## 4 · Round-trip a human edit back IN
 
@@ -164,6 +165,16 @@ human has hand-arranged the scene, prefer the importer in §4 to preserve their 
   `.excalidraw`, which we no longer commit. (If you want one-tap deep-link editing back, run the
   generator with `--excalidraw`, commit the loose file, and link `https://excalidraw.com/#url=<raw
   url>`.)
+- **One-tap mobile editing = the hosted `ticket-editor` Worker** (`workers/ticket-editor`, epic
+  #483). Link `…/?slug=<slug>&branch=<branch>&issue=<NN>` — pass **`&issue=<NN>`** so each Save
+  posts a **new** comment on issue `NN` with that edit's diagram (a timeline of versions, not just
+  silent `nuxt-harness[bot]` commits). Requires the loose `<slug>.excalidraw` committed (generate
+  with `--excalidraw`), since the editor reads it.
+- **Pin a diagram image you want to stay put to its commit, not the branch.** A
+  `raw.githubusercontent.com/<repo>/<branch>/…png` URL re-renders whenever the file is later
+  edited (so a "proposal" comment's picture drifts); `…/<commit-sha>/…png` is immutable and frozen.
+  Post the proposal/sticky image pinned to the commit that produced it so the timeline reads
+  correctly (the editor's per-save comments already do this).
 - **Round-trip needs "Embed scene" ON** in Excalidraw's export, or the importer can't find the
   scene (it errors clearly).
 - **Reuse the slug** across regenerations, or you'll orphan the old PNG and the sticky image link.

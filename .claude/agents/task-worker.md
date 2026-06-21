@@ -57,9 +57,11 @@ a feature branch.
    - **(a) UI sign-off (visual changes).** UI-touching = adds/changes `**/*.vue`,
      `**/app/components|layouts|pages/**`, a theme (`packages/crouton-themes/**`, a `ui:` block in
      `app.config.ts`), or app CSS / Tailwind tokens. **Not** UI: pure `<script>`/types,
-     `server/**`, config, tests, docs. → Run the **`ui-proposal`** skill (mockup `<slug>.html` +
-     a `<slug>.md` "what changes" list + PNG); commit the `.html`+`.md`; post the PNG as a sticky
-     `<!-- ui-proposal:<slug> -->` comment.
+     `server/**`, config, tests, docs. → Run the **`ui-proposal`** skill. **Default**: deploy a
+     rough build to staging with `NUXT_PUBLIC_CROUTON_REVIEW=true` (via `/poc-deploy` or
+     `cf:staging`), post the preview URL on the draft PR, hold on `status:blocked`. **Fallback
+     (`--static`)**: when staging is unavailable — generate a static mockup (`<slug>.html` +
+     `<slug>.md` + PNG), commit, post the PNG as a `<!-- ui-proposal:<slug> -->` sticky comment.
    - **(b) Schema sign-off (data model).** Fires when the issue **creates or changes a collection
      schema** — i.e. you'll run `crouton config` / `generate_collection`, or add/edit a
      `schemas/*.json` fieldsFile. **After** the machine `validate_schema` step and **before**
@@ -122,26 +124,46 @@ in **integration-branch mode** (see the task-decompose skill):
 ## UI sign-off gate (#307)
 
 No UI lands unseen. When the work changes a **visual surface** (the heuristic in step 5),
-you **mock it before you build it**: generate a before/after (or after-only) mockup with the
-`ui-proposal` skill, post the rendered PNG on a **draft** PR, and **hold** — implementation
-waits for human sign-off. A non-visual diff (logic/types/`server/**`/config/tests/docs)
-skips the gate entirely: no mockup, no comment, no hold.
+you **propose it before you build it** and **hold** — implementation waits for human sign-off.
+A non-visual diff (logic/types/`server/**`/config/tests/docs) skips the gate entirely.
 
-- **Review happens on the diff, not the image.** A PNG can't be commented on. The committed
-  `<slug>.md` ("what changes", one item per line) is the **actionable** surface — the reviewer
-  inline-comments a specific change in "Files changed", no copying. The PNG is just the glance.
-- **One sticky comment.** The mockup PNG goes in a single comment carrying the marker
-  `<!-- ui-proposal:<slug> -->`. On later rounds, **edit that comment in place** — never post
-  a new one per revision.
-- **The hold is `status:blocked`** (the existing human-hold label), with an @mention of the
-  notify handle so the owner is pinged. You stop after posting; you do not implement.
-- **Where the loop continues:** the revision/approval loop (#310) watches the PR, revises the
-  mockup on change-requests — reading **inline review comments on the committed `<slug>.md`** in
-  the diff (plus top-level comments), re-rendering the PNG into the same sticky comment, and
-  replying to/resolving each thread — then resumes the build on an approval signal; the
+### Default: live-preview path
+
+Deploy a rough build to staging with `NUXT_PUBLIC_CROUTON_REVIEW=true` (via the `/poc-deploy`
+skill for POC apps, or `pnpm cf:staging` for `apps/`). Run the **`ui-proposal`** skill
+(live-preview mode). Then:
+
+1. Post the preview URL on the draft PR: `🔍 Live preview: https://<name>.pmcp.dev`
+2. Apply `status:blocked`, @mention `@pmcp`, and **stop**.
+3. On each `🎯 Preview feedback` comment (pinned by the reviewer on the running page): read
+   the named source file, fix it, commit, redeploy. Reply to the comment when done.
+4. On `approve` / `lgtm` reply: remove `status:blocked`, note "approved → building" on the
+   PR, and resume implementation.
+
+### Fallback: static mockup (`--static`)
+
+Use when staging is unavailable (e.g. packages-only change with no runnable app, or the
+deploy pipeline is down). Run the **`ui-proposal`** skill with `--static`. Then:
+
+- Commit the `<slug>.html` + `<slug>.md` "what changes" list (via `/commit`, scope `docs`).
+- Post the rendered PNG as a `<!-- ui-proposal:<slug> -->` sticky comment on the draft PR.
+  **Steer feedback to inline comments on the committed `.md`** — the PNG is the glance, the
+  `.md` diff is the actionable surface.
+- Apply `status:blocked`, @mention `@pmcp`, and **stop**.
+- On change requests: revise the mockup files, re-render the PNG, **edit the sticky comment
+  in place** (never post a new one), and reply to/resolve each inline thread you addressed.
+- On `approve` / `lgtm` reply: remove `status:blocked` and resume.
+
+### Both paths share these rules
+
+- **Conservative by design.** False-negative (treat borderline as non-UI) is cheaper than
+  false-positive. When unsure, don't gate.
+- **The hold is `status:blocked`** — with an @mention of the notify handle so the owner is
+  pinged. You stop after posting; you do not implement further.
+- **Where the loop continues:** the revision/approval loop (#310) watches the PR; the
   post-build before/after screenshot (#311) closes it.
-- **Conservative by design.** False-negative (treat a borderline diff as non-UI) is cheaper
-  than false-positive (gating a pure-logic PR). When unsure, don't gate.
+- **Approval signal is a reply comment** containing `approve` or `lgtm` (case-insensitive).
+  A 👍 reaction or `ui-approved` label does **not** unblock the pipeline (#572).
 
 ## Schema sign-off gate (#314)
 
@@ -185,10 +207,11 @@ things:
   the sticky comment in place** (append `- rN: <what changed>`), and **reply to / resolve each
   inline thread** you addressed so it's clear what's done. Commit (`/commit`, scope `docs`) and
   push — the diff updates in place. The hold stays.
-- **Approval signal** — **any one of**:
-  - a human PR comment whose body contains **`approve`** or **`lgtm`** (case-insensitive), or
-  - a **👍 reaction** on the sticky mockup comment, or
-  - the **`ui-approved`** label on the PR.
+- **Approval signal** — a human **comment** on the issue whose body contains **`approve`** or
+  **`lgtm`** (case-insensitive). This is the ONLY signal that resumes the pipeline: only
+  `issue_comment` fires `resume-on-comment.yml` — a 👍 **reaction** raises no workflow event, and
+  nothing listens for an `ui-approved` label, so neither one will unblock a gate (#572). Tell the
+  reviewer to *reply* `lgtm`/`approve`, not react.
 
   On approval: remove `status:blocked`, drop a short "approved → building/generating" note on the
   sticky comment, and **resume** (step 6 onward) — build the UI, or run `crouton config` to

@@ -274,7 +274,8 @@ export default {
 skill on the fieldsFile to render a readable field table + relationships, post it, and **wait for
 sign-off** — a wrong type or missing relationship is cheap to fix now and expensive after
 generation. Feedback goes inline on the committed `writeups/schema-reviews/<collection>.md`;
-revise the schema JSON and re-render until approved (`lgtm`/👍/`ui-approved`). Only then run Step
+revise the schema JSON and re-render until approved (a **comment** containing `lgtm`/`approve` —
+a reaction/label won't resume the pipeline, #572). Only then run Step
 4. (This is the human gate on top of the machine `validate_schema`; reuses the #310 loop.)
 
 ### Step 4: Run Generator
