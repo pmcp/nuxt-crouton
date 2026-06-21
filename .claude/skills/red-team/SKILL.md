@@ -51,6 +51,14 @@ a structured findings list.
 
 ## 4. File issues for confirmed high/critical findings
 
+> **⚠️ Public-repo disclosure.** This repo is **public** — a `security`/`sec:*` issue is a
+> *public* disclosure of an unfixed flaw. Only file public issues when the human driving you
+> has OK'd it (or the finding is a fail-closed correctness bug, not an exploitable vuln). When
+> in doubt, deliver findings **privately** (hand the report back, or email it) and ask before
+> filing. The **daily automation never posts publicly** — it emails the report
+> (`red-team-daily.yml`). Treat that as the default posture; the steps below apply once a
+> private channel or human OK is in place.
+
 For **every finding with `severity ∈ {high, critical}` AND `confidence == confirmed`**:
 
 1. **Dedupe first** — `mcp__github__search_issues` for an open issue with the `security`
