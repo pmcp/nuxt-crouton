@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Map, LngLatLike, PopupOptions, Popup } from 'mapbox-gl'
+import type { Map, LngLatLike, PopupOptions, Popup } from 'maplibre-gl'
 
 interface Props {
   /** Map instance to add popup to */
@@ -36,11 +36,11 @@ const createPopup = async () => {
 
   try {
     // Dynamic import for client-side only
-    const mapboxgl = await import('mapbox-gl')
-    const Popup = mapboxgl.Popup || mapboxgl.default?.Popup
+    const maplibregl = await import('maplibre-gl')
+    const Popup = maplibregl.Popup || maplibregl.default?.Popup
 
     if (!Popup) {
-      console.error('[CroutonMapPopup] Failed to load Mapbox Popup')
+      console.error('[CroutonMapPopup] Failed to load MapLibre Popup')
       return
     }
 

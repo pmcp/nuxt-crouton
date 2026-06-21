@@ -3,7 +3,7 @@ import { defineCroutonManifest, defineGeneratorContribution } from '@fyit/crouto
 export default defineCroutonManifest({
   id: 'crouton-maps',
   name: 'Maps',
-  description: 'Mapbox GL JS integration with map components, markers, geocoding, and style presets. Used by crouton-bookings for location maps.',
+  description: 'MapLibre GL integration (@geoql/v-maplibre) with map components, markers, Nominatim geocoding, and OpenFreeMap style presets — no API key required. Used by crouton-bookings for location maps.',
   icon: 'i-lucide-map',
   version: '0.1.0',
   category: 'addon',
@@ -21,25 +21,24 @@ export default defineCroutonManifest({
   collections: [],
 
   configuration: {
-    'accessToken': {
-      type: 'string',
-      label: 'Mapbox Access Token',
-      description: 'Set via MAPBOX_TOKEN environment variable in .env. Get a free token at https://account.mapbox.com/access-tokens/',
-      default: ''
-    },
     'style': {
       type: 'select',
       label: 'Default Map Style',
-      description: 'Default Mapbox style for all maps. Can be overridden per component.',
-      default: 'streets',
+      description: 'Default OpenFreeMap style for all maps. Keyless — no token required. Can be overridden per component or via MAPS_STYLE env var.',
+      default: 'liberty',
       options: [
-        { value: 'streets', label: 'Streets (default)' },
-        { value: 'light', label: 'Light' },
+        { value: 'liberty', label: 'Liberty (default)' },
+        { value: 'positron', label: 'Positron (light)' },
+        { value: 'bright', label: 'Bright' },
         { value: 'dark', label: 'Dark' },
-        { value: 'satellite', label: 'Satellite' },
-        { value: 'outdoors', label: 'Outdoors' },
-        { value: 'standard', label: 'Standard (3D)' }
+        { value: 'fiord', label: 'Fiord (muted)' }
       ]
+    },
+    'geocodingUrl': {
+      type: 'string',
+      label: 'Nominatim URL',
+      description: 'Base URL for the Nominatim geocoding server. Set via NOMINATIM_URL env var. Defaults to the public OpenStreetMap instance; point at a self-hosted instance to avoid rate limits.',
+      default: 'https://nominatim.openstreetmap.org'
     }
   },
 
@@ -47,15 +46,15 @@ export default defineCroutonManifest({
 
   provides: {
     composables: [
-      'useMap',
       'useGeocode',
       'useMapConfig',
       'useMarkerColor',
-      'useMapboxStyles'
+      'useMapStyles',
+      'useCurrentLocation'
     ],
     components: [
       // Component prefix is 'CroutonMaps' — Map.vue → CroutonMapsMap, etc.
-      { name: 'CroutonMapsMap', description: 'Main map container with Mapbox GL JS — graceful placeholder when unconfigured', props: ['center', 'zoom', 'style', 'height', 'flyToOnCenterChange'] },
+      { name: 'CroutonMapsMap', description: 'Main map container with MapLibre GL (@geoql/v-maplibre, OpenFreeMap tiles)', props: ['center', 'zoom', 'style', 'height', 'flyToOnCenterChange'] },
       { name: 'CroutonMapsMarker', description: 'Map marker with optional popup text and drag support', props: ['map', 'position', 'color', 'options', 'popupText', 'animateTransitions'] },
       { name: 'CroutonMapsPopup', description: 'Map popup with custom slot content', props: ['map', 'position'] },
       { name: 'CroutonMapsPreview', description: 'Location preview thumbnail with modal — used in collection list cells', props: ['location'] }
@@ -102,7 +101,7 @@ export const generatorContribution = defineGeneratorContribution({
     const coordGroup = (coordinateField.meta?.group as string) || 'address'
 
     const mapSection = `
-       <!-- MapBox Map Display -->
+       <!-- MapLibre Map Display -->
       <UFormField label="Location Map" name="${coordinateFieldName}" class="not-last:pb-4">
         <CroutonMapsMap
           :center="mapCenter"

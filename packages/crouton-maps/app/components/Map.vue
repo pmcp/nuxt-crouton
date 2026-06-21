@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import type { LngLatLike, Map as MapboxMap } from 'mapbox-gl'
+import { VMap } from '@geoql/v-maplibre'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import '@geoql/v-maplibre/style.css'
+import type { LngLatLike, Map as MaplibreMap } from 'maplibre-gl'
 
 interface Props {
-  /** Map container ID (default: auto-generated) */
+  /** Map container ID (default: auto-generated) — must be unique per map */
   id?: string
   /** Initial center coordinates [lng, lat] */
   center?: LngLatLike
   /** Initial zoom level */
   zoom?: number
-  /** Mapbox style URL */
+  /** Style preset name (e.g. 'dark') or full MapLibre style URL */
   style?: string
   /** Container height (CSS value) */
   height?: string
@@ -31,40 +34,40 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  load: [map: MapboxMap]
+  load: [map: MaplibreMap]
   error: [error: string]
 }>()
 
-// Get map config
+// Get map config (style/center/zoom defaults)
 const config = useMapConfig()
 
 // Dark mode detection — auto-switch map style
 const colorMode = useColorMode()
 const autoStyle = computed(() => {
-  // If explicit style prop is set, use it as-is
-  if (props.style) return props.style
-  // If config has a style, use it
-  if (config.style) return config.style
-  // Auto-detect dark mode
+  // Explicit style prop wins — resolve preset names to URLs
+  if (props.style) return getMapStyle(props.style)
+  // Otherwise pick light/dark based on color mode
   return colorMode.value === 'dark'
-    ? 'mapbox://styles/mapbox/dark-v11'
-    : 'mapbox://styles/mapbox/streets-v12'
+    ? MAP_STYLES.dark
+    : (config.style || MAP_STYLES.liberty)
 })
 
 // Map state
-const mapInstance = ref<MapboxMap | null>(null)
+const mapInstance = ref<MaplibreMap | null>(null)
 const isLoaded = ref(false)
 const error = ref<string | null>(null)
 
-// Compute map options for MapboxMap component
+// Options passed to VMap (maplibre MapOptions). VMap renders a <div :id="container">
+// and mounts the map there, so `container` must match a unique id.
 const mapOptions = computed(() => ({
+  container: props.id,
   style: autoStyle.value,
-  center: props.center || config.center || [-122.4194, 37.7749],
+  center: (props.center || config.center || [4.9041, 52.3676]) as LngLatLike,
   zoom: props.zoom || config.zoom || 12
 }))
 
-// Handle map load
-const handleMapLoad = (map: MapboxMap) => {
+// Handle map load (VMap emits `loaded` with the maplibre Map instance)
+const handleMapLoad = (map: MaplibreMap) => {
   mapInstance.value = map
   isLoaded.value = true
   error.value = null
@@ -72,19 +75,12 @@ const handleMapLoad = (map: MapboxMap) => {
 }
 
 // Handle map error
-const handleMapError = (err: Error | { message?: string }) => {
-  const errorMessage = err?.message || 'Failed to load map'
+const handleMapError = (err: Error | { message?: string } | unknown) => {
+  const errorMessage = (err as { message?: string })?.message || 'Failed to load map'
   error.value = errorMessage
   isLoaded.value = false
   emit('error', errorMessage)
 }
-
-// Use Nuxt-Mapbox composable to get map instance using callback
-useMapbox(props.id, (map) => {
-  if (map && !isLoaded.value) {
-    handleMapLoad(map)
-  }
-})
 
 // Default easing function for flyTo
 const defaultEasing = (t: number): number => {
@@ -100,11 +96,9 @@ watch(autoStyle, (newStyle) => {
 
 // Watch for center changes and optionally animate with flyTo
 watch(() => props.center, (newCenter, oldCenter) => {
-  // Only animate if flyToOnCenterChange is enabled and map is loaded
   if (!props.flyToOnCenterChange || !mapInstance.value || !isLoaded.value) return
   if (!newCenter || !oldCenter) return
 
-  // Convert to array format for comparison
   const getCoords = (center: LngLatLike): [number, number] => {
     if (Array.isArray(center)) return center as [number, number]
     if ('lng' in center) return [center.lng, center.lat]
@@ -113,11 +107,8 @@ watch(() => props.center, (newCenter, oldCenter) => {
 
   const oldCoords = getCoords(oldCenter)
   const newCoords = getCoords(newCenter)
-
-  // Only animate if coordinates actually changed
   if (oldCoords[0] === newCoords[0] && oldCoords[1] === newCoords[1]) return
 
-  // Use Mapbox's native flyTo for smooth panning
   mapInstance.value.flyTo({
     center: newCenter,
     duration: props.flyToDuration ?? 800,
@@ -140,33 +131,19 @@ defineExpose({
     :class="props.class"
   >
     <ClientOnly>
-      <!-- Show placeholder when Mapbox is not configured -->
-      <div
-        v-if="!config.isConfigured"
-        class="flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-500 dark:text-gray-400"
-        :style="{ height: props.height, width: props.width }"
-      >
-        <div class="text-center p-4">
-          <div class="i-lucide-map-pin-off h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p>Map unavailable — set MAPBOX_TOKEN in .env</p>
-        </div>
-      </div>
-
-      <!-- Nuxt-Mapbox map component -->
-      <MapboxMap
-        v-else
-        :map-id="props.id"
+      <!-- MapLibre map via @geoql/v-maplibre -->
+      <VMap
         :options="mapOptions"
         :style="{ height: props.height, width: props.width }"
-        @mb-created="handleMapLoad"
-        @mb-error="handleMapError"
+        @loaded="handleMapLoad"
+        @error="handleMapError"
       >
         <!-- Pass through default slot for markers, popups, etc. -->
         <slot
           v-if="isLoaded && mapInstance"
           :map="mapInstance"
         />
-      </MapboxMap>
+      </VMap>
 
       <!-- Loading state (client-side while map loads) -->
       <div
@@ -299,46 +276,45 @@ defineExpose({
 }
 </style>
 
-<!-- Global styles for Mapbox popups (not scoped to allow dark mode support) -->
+<!-- Global styles for MapLibre popups (not scoped to allow dark mode support) -->
 <style>
 /* Dark mode popup styles using Nuxt UI CSS variables */
-.dark .mapboxgl-popup-content {
+.dark .maplibregl-popup-content {
   background-color: var(--ui-bg-elevated);
   color: var(--ui-text);
   border-radius: 0.5rem;
   box-shadow: var(--ui-shadow-lg);
 }
 
-.dark .mapboxgl-popup-tip {
+.dark .maplibregl-popup-tip {
   border-top-color: var(--ui-bg-elevated);
   border-bottom-color: var(--ui-bg-elevated);
 }
 
 /* Also handle anchor positions */
-.dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip {
   border-bottom-color: var(--ui-bg-elevated);
 }
 
-.dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
   border-top-color: var(--ui-bg-elevated);
 }
 
-.dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+.dark .maplibregl-popup-anchor-left .maplibregl-popup-tip {
   border-right-color: var(--ui-bg-elevated);
 }
 
-.dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+.dark .maplibregl-popup-anchor-right .maplibregl-popup-tip {
   border-left-color: var(--ui-bg-elevated);
 }
 
 /* Close button in dark mode */
-.dark .mapboxgl-popup-close-button {
+.dark .maplibregl-popup-close-button {
   color: var(--ui-text-muted);
 }
 
-.dark .mapboxgl-popup-close-button:hover {
+.dark .maplibregl-popup-close-button:hover {
   color: var(--ui-text);
   background-color: var(--ui-bg-accented);
 }
-
 </style>
