@@ -1,0 +1,41 @@
+{
+  "bookId": {
+    "type": "string",
+    "refTarget": "books",
+    "meta": {
+      "required": true,
+      "label": "Book",
+      "area": "main"
+    }
+  },
+  "borrowerName": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "maxLength": 255,
+      "label": "Borrower Name",
+      "area": "main"
+    }
+  },
+  "borrowedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Borrowed At",
+      "area": "sidebar"
+    }
+  },
+  "dueAt": {
+    "type": "date",
+    "meta": {
+      "label": "Due At",
+      "area": "sidebar"
+    }
+  },
+  "returnedAt": {
+    "type": "date",
+    "meta": {
+      "label": "Returned At",
+      "area": "sidebar"
+    }
+  }
+}

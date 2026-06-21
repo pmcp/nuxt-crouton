@@ -1,0 +1,20 @@
+{
+  "name": {
+    "type": "string",
+    "meta": {
+      "required": true,
+      "unique": true,
+      "maxLength": 100,
+      "label": "Name",
+      "area": "main"
+    }
+  },
+  "description": {
+    "type": "string",
+    "meta": {
+      "maxLength": 500,
+      "label": "Description",
+      "area": "main"
+    }
+  }
+}
