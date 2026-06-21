@@ -17,7 +17,9 @@ On Save, Excalidraw exports the PNG in-browser, so the committed image is exactl
 cd workers/ticket-editor
 pnpm install
 # Crouton GitHub App auth (epic #519) — see SECRETS.md. Needs the App registered + installed first.
-npx wrangler secret put GITHUB_APP_PRIVATE_KEY      # the App's PEM private key
+# Convert GitHub's PKCS#1 key to PKCS#8 first (Workers WebCrypto won't accept PKCS#1):
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in app-private-key.pem -out app-private-key.pkcs8.pem
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY      # paste the PKCS#8 key
 npx wrangler secret put GITHUB_APP_ID
 npx wrangler secret put GITHUB_APP_INSTALLATION_ID
 npx wrangler deploy                                 # → https://ticket-editor.<account>.workers.dev

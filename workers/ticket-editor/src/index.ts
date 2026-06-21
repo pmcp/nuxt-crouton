@@ -11,8 +11,10 @@
  *
  * Auth (epic #519, WS2): no stored PAT. The Worker holds the App's private key and mints a
  * short-lived (~1h) installation token just-in-time per request with @octokit/auth-app — the only
- * durable secret is the private key. Setup (per workers/ticket-editor/SECRETS.md):
- *   wrangler secret put GITHUB_APP_PRIVATE_KEY   (the App's PEM private key)
+ * durable secret is the private key. Signing runs on WebCrypto (crypto.subtle), so the key MUST be
+ * PKCS#8 (-----BEGIN PRIVATE KEY-----); convert GitHub's PKCS#1 key first (see SECRETS.md).
+ * Setup (per workers/ticket-editor/SECRETS.md):
+ *   wrangler secret put GITHUB_APP_PRIVATE_KEY   (the App's PKCS#8 private key)
  *   wrangler secret put GITHUB_APP_ID            (or set as a var)
  *   wrangler secret put GITHUB_APP_INSTALLATION_ID
  */

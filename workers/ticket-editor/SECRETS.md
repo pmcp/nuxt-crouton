@@ -35,13 +35,24 @@ After the App is registered + installed (epic #519 WS1), set the Worker secrets:
 
 ```bash
 cd workers/ticket-editor
-npx wrangler secret put GITHUB_APP_PRIVATE_KEY      # paste the App's PEM private key
+
+# ⚠️ Convert the key first. GitHub gives a PKCS#1 PEM (-----BEGIN RSA PRIVATE KEY-----),
+# but the Workers WebCrypto path @octokit/auth-app uses only accepts PKCS#8
+# (-----BEGIN PRIVATE KEY-----) and does NOT auto-convert. Convert once:
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt \
+  -in app-private-key.pem -out app-private-key.pkcs8.pem
+
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY      # paste the PKCS#8 key (the .pkcs8.pem)
 npx wrangler secret put GITHUB_APP_ID               # the App id
 npx wrangler secret put GITHUB_APP_INSTALLATION_ID  # the installation id on pmcp/nuxt-crouton
 ```
 
 `GITHUB_APP_ID` / `GITHUB_APP_INSTALLATION_ID` aren't sensitive — you may instead put them in
 `wrangler.jsonc`'s `vars` and keep only `GITHUB_APP_PRIVATE_KEY` as a secret.
+
+> **Why PKCS#8:** signing happens via `crypto.subtle` (WebCrypto) in the isolate, which can't
+> import PKCS#1. A key that works locally under Node can still fail on the deployed Worker — always
+> store the converted PKCS#8 key. (The lib only auto-fixes escaped `\n` → real newlines, nothing more.)
 
 ## Key distinctions (so nothing gets conflated)
 
