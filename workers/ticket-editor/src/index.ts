@@ -108,7 +108,10 @@ async function installationToken(env: Env): Promise<string> {
   return ((await res.json()) as { token: string }).token
 }
 
-async function putFile(token: string, env: Env, branch: string, path: string, contentB64: string, message: string): Promise<void> {
+// Returns the created commit's sha + its parent's sha, so callers can build immutable
+// raw URLs (`raw.githubusercontent.com/<repo>/<sha>/<path>`) that never drift — the basis
+// for a stable before/after comparison.
+async function putFile(token: string, env: Env, branch: string, path: string, contentB64: string, message: string): Promise<{ commitSha: string; parentSha?: string }> {
   const api = 'https://api.github.com/repos/' + env.REPO + '/contents/' + path
   const headers = {
     authorization: 'Bearer ' + token,
@@ -125,11 +128,13 @@ async function putFile(token: string, env: Env, branch: string, path: string, co
     body: JSON.stringify({ message, content: contentB64, branch, sha }),
   })
   if (!putRes.ok) throw new Error('PUT ' + path + ' → ' + putRes.status + ' ' + (await putRes.text()))
+  const data = (await putRes.json()) as { commit?: { sha?: string; parents?: Array<{ sha?: string }> } }
+  return { commitSha: data.commit?.sha || '', parentSha: data.commit?.parents?.[0]?.sha }
 }
 
 // Create-or-update a per-slug sticky comment on the linked issue, so a Save is a visible handoff
 // marker in the timeline (not just a silent bot commit). Updates in place on repeated saves. (#583)
-async function upsertComment(token: string, env: Env, issue: number, slug: string, branch: string, origin: string): Promise<void> {
+async function upsertComment(token: string, env: Env, issue: number, slug: string, branch: string, origin: string, beforeSha?: string, afterSha?: string): Promise<void> {
   const headers = {
     authorization: 'Bearer ' + token,
     accept: 'application/vnd.github+json',
@@ -138,15 +143,24 @@ async function upsertComment(token: string, env: Env, issue: number, slug: strin
   }
   const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
   const marker = '<!-- ticket-editor-saved:' + slug + ' -->'
-  // Cache-bust the raw PNG so GitHub's image cache shows the just-saved version.
-  const png = 'https://raw.githubusercontent.com/' + env.REPO + '/' + branch + '/' + dir + '/' + slug + '.png?v=' + Date.now()
+  const path = dir + '/' + slug + '.png'
+  // Immutable raw URL pinned to a commit — that commit's version of the file never changes, so the
+  // before (proposal) image can't drift when later edits overwrite the file. Falls back to a
+  // cache-busted branch URL if we somehow don't have a sha.
+  const rawAt = (sha?: string) =>
+    sha
+      ? 'https://raw.githubusercontent.com/' + env.REPO + '/' + sha + '/' + path
+      : 'https://raw.githubusercontent.com/' + env.REPO + '/' + branch + '/' + path + '?v=' + Date.now()
   const editUrl = origin + '/?slug=' + encodeURIComponent(slug) + '&branch=' + encodeURIComponent(branch) + '&issue=' + issue
+  const images = beforeSha
+    ? '**Before — what was there:**\n\n![before](' + rawAt(beforeSha) + ')\n\n**After — your edit:**\n\n![after](' + rawAt(afterSha) + ')\n\n'
+    : '![' + slug + '](' + rawAt(afterSha) + ')\n\n'
   const body =
     marker + '\n' +
-    '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`.\n\n' +
-    '![' + slug + '](' + png + ')\n\n' +
+    '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`. Each image is pinned to its commit, so you can compare them even after more edits.\n\n' +
+    images +
     'When it looks right, reply **`approve`** / **`lgtm`** to sign off — nothing continues automatically.\n\n' +
-    '_Updated ' + new Date().toISOString() + ' · this comment refreshes in place on each save._'
+    '_Updated ' + new Date().toISOString() + ' · refreshes in place on each save._'
   // Find an existing sticky for this slug (first page of comments is plenty).
   const listRes = await fetch(
     'https://api.github.com/repos/' + env.REPO + '/issues/' + issue + '/comments?per_page=100',
@@ -184,16 +198,18 @@ async function save(req: Request, env: Env): Promise<Response> {
     const msg = 'chore(diagrams): edit ' + slug + ' via ticket-editor'
     const token = await installationToken(env) // one fresh ~1h token for the commits + comment
     await putFile(token, env, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
+    let pngCommit: { commitSha: string; parentSha?: string } | undefined
     if (png) {
       const b64 = png.includes(',') ? png.split(',')[1] : png
-      await putFile(token, env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
+      pngCommit = await putFile(token, env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
     }
     // Optional handoff comment: the commit is the source of truth, so a comment failure is non-fatal.
+    // before = the png as it was prior to this save (the parent commit); after = the new commit.
     let comment: string | undefined
     const issueNum = issue != null && /^[0-9]+$/.test(String(issue)) ? Number(issue) : undefined
     if (issueNum) {
       try {
-        await upsertComment(token, env, issueNum, slug, branch, new URL(req.url).origin)
+        await upsertComment(token, env, issueNum, slug, branch, new URL(req.url).origin, pngCommit?.parentSha, pngCommit?.commitSha)
         comment = 'commented on #' + issueNum
       } catch (e) {
         comment = 'comment failed: ' + String((e as Error)?.message || e)
