@@ -1,0 +1,70 @@
+name: Auto-merge epic sub-PRs
+
+# The decompose pipeline's design (task-decompose SKILL): a NON-GATE sub-PR merges
+# into its epic branch automatically. The epic branch is a staging area — the only
+# human gates are (a) each sign-off gate (schema/UI, handled by resume-on-comment on
+# approval) and (b) the eventual epic→main PR. That auto-merge was documented but never
+# implemented, so build workstreams (scaffold, deploy) stalled with their PR left open
+# (#586 — the non-gate half of #572).
+#
+# GATE vs NON-GATE: a sign-off gate PR is opened as a DRAFT and held; a build PR is
+# opened READY. So `!draft` cleanly selects only the non-gate PRs here — gate PRs stay
+# untouched and are merged by resume-on-comment.yml when the owner comments `approve`.
+# No double-merge.
+#
+# Merges with the Nuxt Harness App token (NOT GITHUB_TOKEN): GitHub suppresses workflow
+# triggers for GITHUB_TOKEN-initiated events, so a GITHUB_TOKEN merge's
+# `pull_request: closed` event would not reach schedule-waves and the chain would stall
+# (#572). An App installation token cascades. Merge commit — NOT squash (merge policy).
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  automerge:
+    # Non-draft, pipeline-authored PR targeting an epic branch.
+    if: |
+      !github.event.pull_request.draft &&
+      startsWith(github.event.pull_request.base.ref, 'epic/') &&
+      (github.event.pull_request.user.login == 'claude[bot]' ||
+       github.event.pull_request.user.login == 'nuxt-harness[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: FriendlyInternet
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const pull_number = context.payload.pull_request.number
+            // GitHub computes mergeability asynchronously after a PR event — poll until known.
+            let pr, state
+            for (let i = 0; i < 6; i++) {
+              pr = (await github.rest.pulls.get({ ...context.repo, pull_number })).data
+              if (pr.merged) { core.info(`#${pull_number} already merged.`); return }
+              if (pr.state !== 'open') { core.info(`#${pull_number} not open (${pr.state}).`); return }
+              state = pr.mergeable_state
+              if (state && state !== 'unknown') break
+              await new Promise(r => setTimeout(r, 5000))
+            }
+            // 'dirty' = merge conflicts; 'blocked' = a required check/approval is still pending.
+            // Don't force either — leave it for a human. (Epic branches normally have no required
+            // checks, so a non-gate sub-PR is 'clean' or 'unstable' = mergeable.)
+            if (['dirty', 'blocked'].includes(state)) {
+              core.info(`#${pull_number} not auto-mergeable (state=${state}) — leaving for a human.`)
+              return
+            }
+            try {
+              await github.rest.pulls.merge({ ...context.repo, pull_number, merge_method: 'merge' })
+              core.info(`Auto-merged non-gate sub-PR #${pull_number} into ${pr.base.ref}.`)
+            } catch (e) {
+              core.warning(`merge #${pull_number} failed: ${e.message}`)
+            }
