@@ -11,10 +11,10 @@ name: Wave scheduler
 # line. Fan-in matters — a dependent is only released when EVERY listed blocker is
 # closed (diamonds, not just lines).
 #
-# AUTH (critical): the label is applied with a PAT (DISPATCH_TOKEN, or PROJECTS_TOKEN)
-# so the resulting decompose run is attributed to a HUMAN actor and passes
-# claude-code-action's bot-actor guard. With only GITHUB_TOKEN the dispatched run would
-# be bot-initiated and die on that guard — so without a PAT this workflow no-ops (green).
+# AUTH (#519 WS5): the label is applied with a Nuxt Harness GitHub App installation token, so
+# the resulting decompose run is attributed to `nuxt-harness[bot]` and passes claude-code-action's
+# bot-actor guard via its `allowed_bots` allow-list (see decompose-on-issue.yml). Retires the human
+# PAT. Needs Actions secrets HARNESS_APP_ID + HARNESS_APP_PRIVATE_KEY, and the App granted Issues: write.
 
 on:
   issues:
@@ -30,19 +30,19 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
-        env:
-          DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN }}
+      # Mint a Nuxt Harness App installation token so the released `delegate` label is applied by
+      # `nuxt-harness[bot]` → the dispatched decompose run passes the bot-actor guard via
+      # `allowed_bots` (decompose-on-issue.yml). Retires the human PAT here. (#535 / #519 WS5)
+      - uses: actions/create-github-app-token@v1
+        id: app-token
         with:
-          # Use the PAT for ALL calls so the addLabels event is human-actored.
-          github-token: ${{ secrets.DISPATCH_TOKEN || secrets.PROJECTS_TOKEN || secrets.GITHUB_TOKEN }}
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+      - uses: actions/github-script@v7
+        with:
+          # All calls use the App token so the addLabels event is actored as nuxt-harness[bot].
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            if (!process.env.DISPATCH_TOKEN) {
-              core.warning('No DISPATCH_TOKEN/PROJECTS_TOKEN set. Labeling via GITHUB_TOKEN would make the '
-                + 'dispatched decompose run bot-initiated and fail the bot-actor guard. Set a PAT with '
-                + 'issues:write to enable wave auto-advance. Skipping (no-op).')
-              return
-            }
             const { owner, repo } = context.repo
 
             // 1) What just completed?
