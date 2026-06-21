@@ -97,4 +97,7 @@ jobs:
       environment: staging
       staging-url: ${{ matrix.stagingUrl }}
       layer-packages: ${{ matrix.layerPackages }}
+      # PR-tied deploys wire the preview-review bridge to this PR (#607); empty on
+      # workflow_dispatch (no PR) → the bridge stays unconfigured, which is fine.
+      review-pr: ${{ github.event.pull_request.number }}
     secrets: inherit
