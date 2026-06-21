@@ -117,6 +117,7 @@ function tmplPackageJson(vars: ScaffoldVars): string {
   const deps = buildDependencies(vars.features, vars.modules)
   const devDeps = {
     '@fyit/crouton-cli': 'workspace:*',
+    '@fyit/crouton-devtools': 'workspace:*',
     'drizzle-kit': '^0.31.0'
   }
   if (vars.cf) {
@@ -146,7 +147,7 @@ function tmplPackageJson(vars: ScaffoldVars): string {
     // wrangler resolves migrations_dir relative to the config dir, doubling
     // `server/server/…` → "No migrations present" (#138). Drop --config so it
     // resolves from the app-root source config (where the synced ids live).
-    scripts['cf:staging'] = `NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env staging && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply ${vars.name}-staging-db --env staging --remote`
+    scripts['cf:staging'] = `NUXT_PUBLIC_CROUTON_REVIEW=true NITRO_PRESET=cloudflare_module nuxt build && node scripts/inject-wrangler-env.mjs && npx wrangler deploy --config .output/server/wrangler.json --env staging && node scripts/sync-wrangler-ids.mjs && node scripts/inject-wrangler-env.mjs && npx wrangler d1 migrations apply ${vars.name}-staging-db --env staging --remote`
     scripts['sync:ids'] = 'node scripts/sync-wrangler-ids.mjs'
     scripts['db:generate'] = 'drizzle-kit generate'
     scripts['db:migrate'] = `npx wrangler d1 migrations apply ${vars.name}-db --local`
@@ -208,7 +209,7 @@ const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
 
   return `${cfImports}// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@fyit/crouton'],
+  modules: ['@fyit/crouton', '@fyit/crouton-devtools'],
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
