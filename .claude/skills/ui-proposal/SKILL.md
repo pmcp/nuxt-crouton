@@ -60,6 +60,29 @@ specific change ("make this a switch", "drop this one") with no copying.
   revision-loop #309/#310); steer feedback to **inline comments on the committed `.md`**. When
   running this skill by hand, post the PNG and point the reviewer at the `.md` in the diff.
 
+## Higher-fidelity option — sign off on a live preview (epic #488)
+
+The static mockup above is the cheap default. When the design depends on **real rendering** the mockup can't fake — actual Nuxt UI styling, real data, spacing, responsive behaviour — build a rough real version and let the reviewer pin comments **directly on the running staging page**. Each pin becomes a PR comment you act on, and it ends at the **same** approval signal (👍 / `ui-approved`). It's cheap when the builder is an agent (you were going to build a draft anyway), so prefer it for fidelity; keep the static mockup for speed.
+
+The loop (capture half provided by `@fyit/crouton-devtools` — see its CLAUDE.md):
+1. Build a rough real version of the surface (into a `sandboxes/` app, or the feature app).
+2. Deploy to staging with the review flag on (below); reuse the **`/poc-deploy`** skill for a sandbox. Post the **preview URL** on the draft PR next to the mockup.
+3. Reviewer opens the URL → clicks an element → types a change. The in-page overlay POSTs to `/api/_review`, which posts a **`🎯 Preview feedback`** comment naming the **source file** (via the build-time `data-crouton-src` stamp).
+4. You (subscribed via `subscribe_pr_activity`) wake on that comment, edit the **named file**, redeploy. Repeat until approved — the **same revision/approval loop** as the static mockup.
+
+Enabling it (the env contract):
+- Build with **`NUXT_PUBLIC_CROUTON_REVIEW=true`** so the overlay + `data-crouton-src` stamp + `/api/_review` endpoint are included — **staging only, never `cf:deploy`/production** (the flag is absent there, so zero footprint).
+- Runtime GitHub-bridge env (a Worker **secret** + vars; the token never ships in the bundle):
+  - `NUXT_CROUTON_REVIEW_GITHUB_TOKEN` — a token that can comment on the repo (secret)
+  - `NUXT_CROUTON_REVIEW_REPOSITORY` — `owner/repo`
+  - `NUXT_CROUTON_REVIEW_PR` — the PR this preview belongs to (from the deploy's CI context), or per-request `body.prNumber`
+
+```jsonc
+// app/sandbox package.json — staging carries the flag; production never does
+"cf:staging": "NUXT_PUBLIC_CROUTON_REVIEW=true NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy --env staging && …",
+"cf:deploy":  "NITRO_PRESET=cloudflare_module nuxt build && …"
+```
+
 ## Conventions
 - Before **and** after side-by-side for a *change*; **after-only** for net-new UI (no "before" exists).
 - Keep the mockup focused on the surface under discussion — don't redraw the whole app.
