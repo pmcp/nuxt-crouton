@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify the current user is an admin or owner of the organization
-  const membership = await getOrganizationMembershipDirect(currentUserId, result.organizationId)
+  const membership = await getOrganizationMembershipDirect(result.organizationId, currentUserId)
   if (!membership || !['admin', 'owner'].includes(membership.role)) {
     throw createError({ status: 403, statusText: 'Only team admins can resend invitations' })
   }
