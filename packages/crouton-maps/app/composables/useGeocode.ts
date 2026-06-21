@@ -1,8 +1,10 @@
 /**
  * Composable for geocoding addresses to coordinates
  *
- * Geocoding requests are proxied through /api/maps/geocode (server-side)
- * so the Mapbox access token is never exposed in client-side network requests.
+ * Geocoding requests are proxied through /api/maps/geocode (server-side), which
+ * calls Nominatim (OpenStreetMap). Keyless — no access token required. Proxying
+ * server-side keeps the (optionally self-hosted) geocoder URL and User-Agent
+ * policy in one place.
  *
  * Usage:
  * const { geocode, reverseGeocode, loading, error } = useGeocode()
@@ -15,15 +17,15 @@
  * const result = await reverseGeocode([-122.0840575, 37.4220656])
  */
 
-interface MapboxFeature {
+interface GeocodeFeature {
   center: [number, number]
   place_name: string
   text: string
   context?: Array<{ id: string; text: string }>
 }
 
-interface MapboxGeocodeResponse {
-  features: MapboxFeature[]
+interface GeocodeApiResponse {
+  features: GeocodeFeature[]
 }
 
 export interface GeocodeResult {
@@ -45,7 +47,7 @@ export function useGeocode() {
 
   /**
    * Forward geocoding: Convert address to coordinates
-   * Proxied via /api/maps/geocode to keep the Mapbox token server-side.
+   * Proxied via /api/maps/geocode (Nominatim).
    */
   const geocode = async (query: string): Promise<GeocodeResult | null> => {
     if (!config.isConfigured) return null
@@ -54,8 +56,8 @@ export function useGeocode() {
       loading.value = true
       error.value = null
 
-      // Call our server-side proxy — token never appears in client network logs
-      const response = await $fetch<MapboxGeocodeResponse>('/api/maps/geocode', {
+      // Call our server-side proxy (Nominatim)
+      const response = await $fetch<GeocodeApiResponse>('/api/maps/geocode', {
         query: { q: query }
       })
 
@@ -85,7 +87,7 @@ export function useGeocode() {
 
   /**
    * Reverse geocoding: Convert coordinates to address
-   * Proxied via /api/maps/geocode to keep the Mapbox token server-side.
+   * Proxied via /api/maps/geocode (Nominatim).
    */
   const reverseGeocode = async (coordinates: [number, number]): Promise<GeocodeResult | null> => {
     if (!config.isConfigured) return null
@@ -96,8 +98,8 @@ export function useGeocode() {
 
       const [lng, lat] = coordinates
 
-      // Call our server-side proxy — token never appears in client network logs
-      const response = await $fetch<MapboxGeocodeResponse>('/api/maps/geocode', {
+      // Call our server-side proxy (Nominatim)
+      const response = await $fetch<GeocodeApiResponse>('/api/maps/geocode', {
         query: { lng, lat }
       })
 

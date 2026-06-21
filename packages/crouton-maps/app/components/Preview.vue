@@ -103,12 +103,12 @@ const coordinates = computed<[number, number] | null>(() => {
 
 <style scoped>
 /* Scale down the marker in preview mode */
-.preview-map :deep(.mapboxgl-marker) {
+.preview-map :deep(.maplibregl-marker) {
   width: 20px !important;
   height: 28px !important;
 }
 
-.preview-map :deep(.mapboxgl-marker svg) {
+.preview-map :deep(.maplibregl-marker svg) {
   width: 20px !important;
   height: 28px !important;
 }

@@ -24,7 +24,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const styleUrl = computed(() => getMapboxStyle(props.attrs.style || 'streets'))
+const styleUrl = computed(() => getMapStyle(props.attrs.style || 'liberty'))
 
 // Parse numeric values (may come as strings from select schema)
 const lat = computed(() => {

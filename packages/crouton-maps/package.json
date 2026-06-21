@@ -1,7 +1,7 @@
 {
   "name": "@fyit/crouton-maps",
-  "version": "0.1.0",
-  "description": "Map integration layer for Nuxt Crouton with Mapbox support",
+  "version": "0.2.0",
+  "description": "Map integration layer for Nuxt Crouton with MapLibre GL (@geoql/v-maplibre), OpenFreeMap tiles, and Nominatim geocoding — no API keys required",
   "type": "module",
   "main": "./nuxt.config.ts",
   "files": [
@@ -14,8 +14,11 @@
     "nuxt-layer",
     "crouton",
     "maps",
-    "mapbox",
-    "mapbox-gl",
+    "maplibre",
+    "maplibre-gl",
+    "v-maplibre",
+    "openfreemap",
+    "nominatim",
     "geolocation"
   ],
   "author": "FYIT",
@@ -33,10 +36,8 @@
     "access": "public"
   },
   "dependencies": {
-    "nuxt-mapbox": "^1.6.4"
-  },
-  "devDependencies": {
-    "mapbox-gl": "^3.0.0"
+    "@geoql/v-maplibre": "^2.0.1",
+    "maplibre-gl": "^5.24.0"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0",

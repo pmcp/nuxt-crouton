@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Map, LngLatLike, MarkerOptions } from 'mapbox-gl'
+import type { Map, LngLatLike, MarkerOptions } from 'maplibre-gl'
 
 interface Props {
   /** Map instance to add marker to */
@@ -61,11 +61,11 @@ onMounted(() => {
   }
 
   // Create marker instance directly
-  import('mapbox-gl').then((mapboxgl) => {
-    const Marker = mapboxgl.Marker || mapboxgl.default?.Marker
+  import('maplibre-gl').then((maplibregl) => {
+    const Marker = maplibregl.Marker || maplibregl.default?.Marker
 
     if (!Marker) {
-      console.error('[CroutonMapMarker] Failed to load Mapbox Marker')
+      console.error('[CroutonMapMarker] Failed to load MapLibre Marker')
       return
     }
 
@@ -74,8 +74,8 @@ onMounted(() => {
       .addTo(props.map)
 
     // Add popup if specified — use setText (not setHTML) to avoid XSS
-    if (props.popupText && mapboxgl.Popup) {
-      const Popup = mapboxgl.Popup || mapboxgl.default?.Popup
+    if (props.popupText && (maplibregl.Popup || maplibregl.default?.Popup)) {
+      const Popup = maplibregl.Popup || maplibregl.default?.Popup
       const popup = new Popup().setText(props.popupText)
       marker.value.setPopup(popup)
     }
@@ -200,5 +200,5 @@ defineExpose({
 </script>
 
 <template>
-  <!-- Marker is rendered by Mapbox GL JS, no template needed -->
+  <!-- Marker is rendered by MapLibre GL JS, no template needed -->
 </template>

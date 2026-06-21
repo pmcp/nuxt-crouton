@@ -2,33 +2,37 @@
 
 ## Package Purpose
 
-Map integration layer for Nuxt Crouton with Mapbox GL JS. Provides map components, markers, geocoding composables, and style presets.
+Map integration layer for Nuxt Crouton built on **MapLibre GL** via
+[`@geoql/v-maplibre`](https://v-maplibre.geoql.in). Provides map components,
+markers, geocoding composables, and style presets. **Keyless by default** —
+base tiles come from [OpenFreeMap](https://openfreemap.org) and geocoding from
+[Nominatim](https://nominatim.org) (OpenStreetMap), so no access token is needed.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `crouton.manifest.ts` | Package manifest (components, composables, config) |
-| `nuxt.config.ts` | Layer config — private `config.mapbox.accessToken` (server key) + public browser key |
-| `server/api/maps/geocode.get.ts` | Server-side geocoding proxy — keeps token out of client network requests |
-| `app/components/Map.vue` | Main map container (graceful placeholder when unconfigured) |
-| `app/components/Marker.vue` | Map marker component |
-| `app/components/Popup.vue` | Popup component |
+| `crouton.manifest.ts` | Package manifest (components, composables, config) + form/list generator contribution |
+| `nuxt.config.ts` | Layer config — keyless `public.maps` defaults (style/center/zoom) + private `maps.geocodingUrl` (Nominatim base) |
+| `server/api/maps/geocode.get.ts` | Server-side geocoding proxy → Nominatim; normalises to a `{ features: [...] }` shape |
+| `app/components/Map.vue` | Main map container — renders `VMap` from `@geoql/v-maplibre`, emits `@load` with the maplibre `Map` |
+| `app/components/Marker.vue` | Map marker (imperative `maplibre-gl` Marker — color, drag, popup text) |
+| `app/components/Popup.vue` | Popup component (imperative `maplibre-gl` Popup with slot content) |
 | `app/components/Preview.vue` | Location preview thumbnail with modal |
 | `app/components/CurrentLocationButton.vue` | "Use my location" button — geolocation + reverse-geocode in one click |
-| `app/composables/useMapConfig.ts` | Reads Mapbox config, returns `isConfigured` flag |
-| `app/composables/useMap.ts` | Map management |
-| `app/composables/useGeocode.ts` | Geocoding (address ↔ coords), no-ops when unconfigured |
+| `app/components/Blocks/*Render.vue` | Editor block renderers (map block, collection map block) |
+| `app/composables/useMapConfig.ts` | Reads `public.maps` config; `isConfigured` is always `true` (keyless) |
+| `app/composables/useGeocode.ts` | Geocoding (address ↔ coords) via the server proxy |
 | `app/composables/useCurrentLocation.ts` | Browser geolocation + reverse-geocode in one call |
 | `app/composables/useMarkerColor.ts` | Derives marker color from CSS `--ui-primary` |
-| `app/composables/useMapboxStyles.ts` | Style presets |
+| `app/composables/useMapStyles.ts` | OpenFreeMap style presets (`MAP_STYLES`, `getMapStyle`) + legacy `MAPBOX_STYLES`/`getMapboxStyle` aliases |
 
 ## Configuration
 
 ### Quick Start
 
 1. Add `@fyit/crouton-maps` to your `extends` array
-2. Set `MAPBOX_TOKEN` in your `.env` file
+2. That's it — maps work with **no environment variables**.
 
 ```typescript
 // nuxt.config.ts
@@ -37,49 +41,42 @@ export default defineNuxtConfig({
     '@fyit/crouton',
     '@fyit/crouton-maps'
   ]
-  // No runtimeConfig needed — the layer defines it automatically
-  // Just set MAPBOX_TOKEN in your .env
+  // No runtimeConfig and no tokens needed.
 })
 ```
 
-### Environment Variables
-
-The layer uses two env vars with different security scopes:
+### Environment Variables (all optional)
 
 ```bash
 # .env
 
-# PRIVATE server key — used only by the /api/maps/geocode proxy (never in client bundle)
-# Can be your full/unrestricted Mapbox token
-MAPBOX_TOKEN=sk.eyJ1IjoieW91ciIsImEiOiJ0b2tlbiJ9...
+# Override the default OpenFreeMap base style (preset name or full style URL)
+MAPS_STYLE=https://tiles.openfreemap.org/styles/positron
 
-# PUBLIC browser key — embedded in client bundle for Mapbox GL JS tile loading
-# Create a domain-restricted key at https://account.mapbox.com/access-tokens/
-# Scope it to your domain (e.g. *.yourdomain.com) to limit misuse
-# Falls back to MAPBOX_TOKEN if not set (acceptable for local dev)
-MAPBOX_PUBLIC_TOKEN=pk.eyJ1IjoieW91ciIsImEiOiJ0b2tlbiJ9...
+# Point geocoding at a self-hosted Nominatim instance to avoid the public
+# server's usage policy / rate limits (defaults to the public OSM instance)
+NOMINATIM_URL=https://nominatim.example.com
 ```
 
-Get tokens at https://account.mapbox.com/access-tokens/
+On Cloudflare these map to `NUXT_PUBLIC_MAPS_STYLE` and `NUXT_MAPS_GEOCODING_URL`.
 
-**Why two tokens?** Mapbox GL JS must authenticate tile requests client-side — this is an inherent Mapbox architecture constraint. The geocoding API calls, however, go through `/api/maps/geocode` (a server proxy) so that token never appears in client network logs. Use a domain-restricted browser key for `MAPBOX_PUBLIC_TOKEN` to limit exposure.
+### No Graceful-Degradation Needed
 
-### Graceful Degradation
+Because tiles and geocoding are keyless, maps always render — there is no
+"set your token" placeholder. `useMapConfig().isConfigured` remains in the
+return shape (always `true`) for backwards compatibility.
 
-If neither token is set:
-- Map components show a placeholder ("Map unavailable — set MAPBOX_TOKEN in .env")
-- `useGeocode()` returns `null` silently (no crash)
-- Forms with map pickers remain fully functional (minus the map)
+> Note: OpenFreeMap and the public Nominatim instance are community services.
+> For production volume, self-host (set `NOMINATIM_URL`) or use a paid tile host
+> by overriding `MAPS_STYLE` with that provider's style URL.
 
 ### Optional Overrides
-
-To customize defaults, you can override in your app's `nuxt.config.ts`:
 
 ```typescript
 runtimeConfig: {
   public: {
-    mapbox: {
-      style: 'mapbox://styles/mapbox/dark-v11',
+    maps: {
+      style: 'https://tiles.openfreemap.org/styles/dark',
       center: [4.9041, 52.3676],  // Amsterdam [lng, lat]
       zoom: 10
     }
@@ -89,123 +86,80 @@ runtimeConfig: {
 
 ## Components
 
-### CroutonMapMap
+### CroutonMapsMap
 
 ```vue
-<CroutonMapMap
+<CroutonMapsMap
   :center="[-122.4194, 37.7749]"
   :zoom="12"
   height="500px"
   @load="handleMapLoad"
 >
   <template #default="{ map }">
-    <CroutonMapMarker :map="map" :position="position" color="red" />
+    <CroutonMapsMarker :map="map" :position="position" color="red" />
   </template>
-</CroutonMapMap>
+</CroutonMapsMap>
 ```
 
-### CroutonMapMarker
+`@load` emits the underlying **maplibre-gl `Map`** instance. The `style` prop
+accepts a preset name (`'dark'`, `'positron'`, …) or a full style URL. Without
+an explicit `style`, the map auto-switches between light/dark with color mode.
+
+### CroutonMapsMarker
 
 ```vue
 <!-- Safe: popupText renders as plain text (no XSS risk) -->
-<CroutonMapMarker
+<CroutonMapsMarker
   :map="map"
   :position="[-122.4194, 37.7749]"
   :popup-text="locationName"
   color="red"
   @click="handleClick"
-/>
-
-<!-- For rich popup content, use CroutonMapsPopup instead -->
-```
-
-### CroutonMapPopup
-
-```vue
-<CroutonMapPopup :map="map" :position="position">
-  <h3>Custom Content</h3>
-</CroutonMapPopup>
-```
-
-### CroutonMapsCurrentLocationButton
-
-One-click "use my location" button — asks the browser for the user's current
-position, reverse-geocodes it, and emits a structured `GeocodeResult`.
-
-```vue
-<CroutonMapsCurrentLocationButton
-  label="Use my location"
-  icon="i-lucide-map-pin"
-  color="neutral"
-  variant="outline"
-  @located="onLocated"
-  @failed="onFailed"
+  @dragEnd="handleDragEnd"
 />
 ```
 
-Event payload (`@located`):
-```typescript
-{
-  coordinates: [lng, lat],
-  address: 'Full place name',
-  placeName: 'Short name',
-  context?: { postcode?, place?, region?, country? }
-}
-```
+Markers are imperative `maplibre-gl` markers (the library's `VMarker` emits no
+events), so drag (`@dragStart`/`@drag`/`@dragEnd`), `@click`, and animated
+position transitions are all supported.
 
-Use it to autofill a multi-field address form:
+### CroutonMapsPopup / CroutonMapsPreview / CroutonMapsCurrentLocationButton
 
-```typescript
-function onLocated(r: GeocodeResult) {
-  state.lng = r.coordinates[0]
-  state.lat = r.coordinates[1]
-  state.postcode = r.context?.postcode ?? state.postcode
-  state.gemeente = r.context?.place ?? state.gemeente
-  // Mapbox doesn't always split street/number — first part of `address` is usually street.
-  const [streetWithNumber] = r.address.split(',')
-  state.straat = streetWithNumber?.replace(/\s+\d+\w*$/, '').trim() ?? state.straat
-  const num = streetWithNumber?.match(/\s+(\d+\w*)$/)?.[1]
-  if (num) state.huisnummer = num
-}
-```
-
-The button shows a graceful warning toast on permission-denied / timeout
-(disable with `:notify-on-error="false"` if you want to handle it yourself).
+Unchanged public API — see the component files. `CurrentLocationButton` emits a
+`GeocodeResult` from one click (geolocation → reverse-geocode).
 
 ## Composables
 
 ```typescript
-// Map management
-const { map, isLoaded, initialize, destroy } = useMap()
-
-// Geocoding
+// Geocoding (proxied to Nominatim server-side)
 const { geocode, reverseGeocode, loading, error } = useGeocode()
 const coords = await geocode('1600 Amphitheatre Parkway')
 const address = await reverseGeocode([-122.0840575, 37.4220656])
 
 // Browser geolocation → reverse-geocode in one call
-const { getCurrentLocation, loading, error } = useCurrentLocation()
-const result = await getCurrentLocation()  // null on permission-denied / failure
+const { getCurrentLocation } = useCurrentLocation()
 
 // Style presets
-const { styles, getStyle } = useMapboxStyles()
+import { MAP_STYLES, getMapStyle } from '#imports'
 ```
 
-## Style Presets
+## Style Presets (OpenFreeMap)
 
 ```typescript
-import { MAPBOX_STYLES } from '#imports'
+import { MAP_STYLES } from '#imports'
 
-MAPBOX_STYLES.standard      // 3D customizable
-MAPBOX_STYLES.streets       // Classic (default)
-MAPBOX_STYLES.outdoors      // Topographic
-MAPBOX_STYLES.light         // Light theme
-MAPBOX_STYLES.dark          // Dark theme
-MAPBOX_STYLES.satellite     // Satellite imagery
-MAPBOX_STYLES.satelliteStreets
-MAPBOX_STYLES.navigationDay
-MAPBOX_STYLES.navigationNight
+MAP_STYLES.liberty   // Full-detail default (recommended)
+MAP_STYLES.positron  // Ultra-clean light
+MAP_STYLES.bright    // High-contrast
+MAP_STYLES.dark      // Dark
+MAP_STYLES.fiord     // Muted
+
+// Legacy preset names still resolve (mapped to closest OpenFreeMap style):
+// streets/standard/outdoors → liberty, light → positron, satellite → liberty
 ```
+
+`MAPBOX_STYLES` / `getMapboxStyle` are kept as deprecated aliases of
+`MAP_STYLES` / `getMapStyle`.
 
 ## Component Naming
 
@@ -218,38 +172,43 @@ Components auto-import with `CroutonMaps` prefix (defined in `nuxt.config.ts`):
 
 ## Common Tasks
 
-### Add custom marker icon
-Use `options` prop with Mapbox MarkerOptions.
+### Use a custom / paid tile provider
+Set `MAPS_STYLE` (or `public.maps.style`) to that provider's MapLibre style URL,
+or pass a `style` URL per `<CroutonMapsMap>`.
 
 ### Add geocoding autocomplete
 Combine `useGeocode()` with `UInput` and debounced search.
 
-### Use custom style
-Pass Mapbox Studio style URL to `style` prop.
-
-## API Limits (Free Tier)
-
-- 50,000 map loads/month
-- 100,000 geocoding requests/month
-- Unlimited static maps
+### Self-host geocoding
+Run Nominatim and set `NOMINATIM_URL` — the server proxy uses it transparently.
 
 ## Dependencies
 
 - **Extends**: `@fyit/crouton`
-- **Core**: `nuxt-mapbox ^1.6.4`
-- **Peer deps**: `nuxt ^4.0.0`, `@nuxt/ui ^4.0.0`
+- **Core**: `@geoql/v-maplibre ^2.0.1`, `maplibre-gl ^5.24.0`
+- **Peer deps**: `nuxt ^4.0.0`, `@nuxt/ui ^4.3.0`
+- `@geoql/v-maplibre`'s deck.gl / GeoTIFF / LiDAR / wind peers are **optional** —
+  not installed unless you import those subpaths (we only use `VMap`).
 
 ## Environment
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `MAPBOX_TOKEN` | Yes (for map features) | Full/unrestricted key — server only (geocoding proxy). Never exposed to client. |
-| `MAPBOX_PUBLIC_TOKEN` | Recommended for production | Domain-restricted browser key for Mapbox GL JS tile loading. Falls back to `MAPBOX_TOKEN` if unset (fine for local dev). |
+| `MAPS_STYLE` | No | Default OpenFreeMap style URL (or preset). Defaults to `liberty`. |
+| `NOMINATIM_URL` | No | Nominatim base URL for geocoding. Defaults to the public OSM instance. |
 
-The layer reads both vars automatically. Consuming apps only need the `.env` entries — no `runtimeConfig` setup required.
+No tokens are required for the maps to render or geocode.
+
+## Migration note (Mapbox → MapLibre)
+
+`MAPBOX_TOKEN` / `MAPBOX_PUBLIC_TOKEN` and the `nuxt-mapbox` module are gone.
+The public component/composable API is unchanged (`CroutonMapsMap`,
+`CroutonMapsMarker`, `useGeocode`, `getMapboxStyle` alias), so consumers like
+`crouton-bookings` need no changes. The main behavioural change: `mapbox://…`
+style URLs are no longer valid — use OpenFreeMap presets/URLs.
 
 ## Testing
 
 ```bash
-npx nuxt typecheck  # MANDATORY after changes
+pnpm -r --filter './apps/*' typecheck  # MANDATORY after changes
 ```

@@ -12,6 +12,7 @@ authenticates, and does CRUD** after a `packages/` change or dependency bump.
 | `with-bookings` | + `@fyit/crouton-bookings` (bookings admin surface) |
 | `with-assets` | + `@fyit/crouton-assets` (asserts the optional `CroutonAssetsPicker` mounts, not the core stub) |
 | `with-collab` | + `@fyit/crouton-collab` (spike: asserts the realtime collab UI mounts single-client) |
+| `with-maps` | + `@fyit/crouton-maps` (a `venues` collection with address+coordinate fields → asserts the MapLibre map mounts in the generated form + the `/api/maps/geocode` proxy geocodes against live Nominatim) |
 
 ## What you need to know
 

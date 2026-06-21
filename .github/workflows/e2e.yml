@@ -39,7 +39,7 @@ jobs:
         # errors (CollabCursors/useCollabPresence/avatar/ws.ts). Per #210 ("add to
         # CI once stable"), with-collab stays a local-only spike until the package
         # is type-clean. Its runtime smoke passes; only the typecheck gate blocks it.
-        fixture: [minimal, with-pages, with-bookings, with-assets]
+        fixture: [minimal, with-pages, with-bookings, with-assets, with-maps]
     env:
       # Better-auth needs a secret present; the value is irrelevant in CI.
       BETTER_AUTH_SECRET: ci-placeholder-secret

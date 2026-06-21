@@ -1,0 +1,27 @@
+{
+  "table": "main_venues",
+  "key": "name",
+  "rows": [
+    {
+      "name": "Sample name 1",
+      "street": "Sample street 1",
+      "city": "Sample city 1",
+      "postcode": "Sample postcode 1",
+      "coordinates": "Sample coordinates 1"
+    },
+    {
+      "name": "Sample name 2",
+      "street": "Sample street 2",
+      "city": "Sample city 2",
+      "postcode": "Sample postcode 2",
+      "coordinates": "Sample coordinates 2"
+    },
+    {
+      "name": "Sample name 3",
+      "street": "Sample street 3",
+      "city": "Sample city 3",
+      "postcode": "Sample postcode 3",
+      "coordinates": "Sample coordinates 3"
+    }
+  ]
+}

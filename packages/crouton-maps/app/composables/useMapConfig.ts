@@ -1,53 +1,36 @@
 import type { MapConfig } from '../types'
 
+const DEFAULT_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
+
 /**
- * Access Mapbox configuration from runtime config
- * Compatible with both Nuxt-Mapbox module and custom config
+ * Access map configuration from public runtime config.
+ *
+ * Maps are keyless (OpenFreeMap tiles + Nominatim geocoding), so `isConfigured`
+ * is always true — it remains in the return shape for backwards compatibility
+ * with components that branched on it. There is always a usable default style.
  *
  * Usage:
- * const { accessToken, style } = useMapConfig()
+ * const { style, center, zoom } = useMapConfig()
  */
 export function useMapConfig(): MapConfig & { isConfigured: boolean } {
   const config = useRuntimeConfig()
 
-  // Safely access the mapbox config
-  let mapboxConfig: {
-    accessToken?: string
+  let mapsConfig: {
     style?: string
     center?: any
     zoom?: number
   } | undefined
 
   try {
-    // Access public config - this must be defined in the parent app's nuxt.config
-    mapboxConfig = config.public.mapbox as typeof mapboxConfig
+    mapsConfig = config.public.maps as typeof mapsConfig
   } catch (_e) {
-    // Config not available
-  }
-
-  // Access token must be in public config for client-side access
-  const accessToken = mapboxConfig?.accessToken
-
-  if (!accessToken) {
-    console.warn(
-      '[nuxt-crouton-maps] Mapbox public browser token not found. '
-      + 'Map features will be disabled. Set MAPBOX_PUBLIC_TOKEN (or MAPBOX_TOKEN) in .env.\n'
-      + 'Use a domain-restricted browser key from https://account.mapbox.com/access-tokens/'
-    )
-    return {
-      isConfigured: false,
-      accessToken: '',
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: undefined,
-      zoom: 12
-    }
+    // Config not available — fall through to defaults
   }
 
   return {
     isConfigured: true,
-    accessToken,
-    style: mapboxConfig?.style || 'mapbox://styles/mapbox/streets-v12',
-    center: mapboxConfig?.center,
-    zoom: mapboxConfig?.zoom || 12
+    style: mapsConfig?.style || DEFAULT_STYLE,
+    center: mapsConfig?.center,
+    zoom: mapsConfig?.zoom || 12
   }
 }
