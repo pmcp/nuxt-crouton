@@ -31,6 +31,24 @@ native sync) bridges the seams.
   "work page" + its stories and creates a GitHub epic + sub-issues, backlinked both ways. *(Whether
   Notion stories then stay editable-and-resynced or go read-only is still an open decision.)*
 
+### Who the automation is — the Crouton GitHub App (identity & auth)
+
+All the GitHub actions in this model (fan-out, sub-issues, labels, commits, comments, Checks) are done
+by the **Crouton GitHub App**, not a personal access token — decided in **#519** (sub-issues #530 +
+review-bridge; Tier-1 cleanup in #521). It matters here for three reasons:
+
+- **One bot identity.** Automation posts as **`crouton[bot]`** — cleanly separable from humans, which
+  is the backbone of the 🪪 *"who did what / who asked"* thread (friction hotspot ①).
+- **Short-lived tokens.** It mints ~1h **installation tokens** just-in-time; the only durable secret is
+  the App private key. No long-lived PAT to leak.
+- **It's the automation substrate.** The App unlocks **Checks** (the right surface for our sign-off
+  gates, vs bot comments → eases hotspot ④), **webhooks** (the trigger for Slack pings, resume-on-reply,
+  preview-on-PR, `/deploy`), and **multi-tenant install** (the productization story).
+
+> ⚠️ One seam (from #519): App-native actions need no PAT, but kicking off the **code-writing agent
+> run** still trips claude-code-action's bot-actor guard unless a human *appoints* the work or we move
+> that run off GitHub Actions onto our own compute (the Mac mini — see below). That's an **open fork.**
+
 ### Where things run & preview
 
 Work executes and deploys onto a few surfaces — but they all feed the **same loop**: a PR produces a

@@ -47,7 +47,7 @@
   <!-- ===================== BAND 2: ENGINE ===================== -->
   <rect x="180" y="248" width="920" height="150" rx="12" fill="#0d1a26" stroke="#1f6feb"/>
   <text x="196" y="268" fill="#58a6ff" font-size="12" letter-spacing="1.2">⚙️ GITHUB — THE ENGINE</text>
-  <text x="420" y="268" fill="#f0a020" font-size="12">❓ proposed source of truth</text>
+  <text x="420" y="268" fill="#7ee787" font-size="12">· acts as Crouton GitHub App → crouton[bot] (#519)</text>
 
   <g>
     <rect x="205" y="288" width="190" height="72" rx="8" fill="#16202c" stroke="#3d5266"/>
@@ -159,7 +159,7 @@
   <g>
     <rect x="810" y="740" width="280" height="60" rx="8" fill="#241a10" stroke="#8a5a1a"/>
     <text x="950" y="764" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">🍎 Mac mini</text>
-    <text x="950" y="782" text-anchor="middle" fill="#f0a020" font-size="10">macOS / Apple builds + physical tests</text>
+    <text x="950" y="782" text-anchor="middle" fill="#f0a020" font-size="10">Apple builds · physical tests · App agent compute (tunnel)</text>
   </g>
 
   <!-- engine -> runners (center spine, between the two loops) -->

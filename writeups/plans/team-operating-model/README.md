@@ -34,6 +34,28 @@ From `diagram-3-friction-map.svg` — these are where work stalls or leaks today
 
 ---
 
+## Foundational substrate: identity & auth — PAT → GitHub App (#519)
+
+**This underpins almost everything below**, so it's called out separately. Per epic
+[#519](https://github.com/pmcp/nuxt-crouton/issues/519) (sub-issue
+[#530](https://github.com/pmcp/nuxt-crouton/issues/530) ticket-editor + review-bridge in `packages/`;
+Tier-1 cleanup in [#521](https://github.com/pmcp/nuxt-crouton/issues/521)), all GitHub automation moves
+**from personal access tokens to the Crouton GitHub App**:
+
+- Acts as **`crouton[bot]`** — a clean automation identity (the backbone of the 🪪 "who asked / who did
+  what" thread, friction hotspot ①).
+- Mints **short-lived (~1h) installation tokens** JIT (`@octokit/auth-app`); only durable secret = the
+  App private key. No long-lived PAT to leak.
+- Unlocks the substrate the later phases need: **Checks** (sign-off gates), **webhooks** (Slack pings,
+  resume-on-reply, preview-on-PR, `/deploy`), and **multi-tenant install** (productization).
+
+How it maps onto the phases: it's the **identity** for Phase 0's agent loop, the **trigger** for Phase
+1's Slack feedback (webhooks) and the **gate surface** (Checks → hotspot ④), the **committer** for
+Phase 3's bridge, and — via the open compute fork — the reason the **Mac mini (Phase 5)** may host the
+agent runs themselves.
+
+---
+
 ## The rollout plan
 
 Sequenced for **value-first, lowest-risk-first** — read-only/notify before write/automate.
@@ -48,6 +70,7 @@ already measures the product; Vercel already hosts the marketing site + dashboar
 Wire Slack as the **feedback surface**: 🔔 pings (CI red · needs sign-off · preview ready ·
 `status:blocked` · daily digest) and 💬 replies to status queries (*"what's outstanding on epic X?"*).
 Read-only — no writes yet. *Addresses hotspot ④ (surfaces blocked work fast).*
+*Substrate: best driven by the **App's webhooks** (#519) once it lands; interim can poll.*
 **Done when:** a CI failure and a "needs sign-off" both ping the right channel, and a status question gets an in-thread reply.
 
 ### Phase 2 — Capture from anywhere → Notion ✳️→📚
@@ -72,7 +95,10 @@ and closes the outer measurement loop.*
 ### Phase 5 — Mac mini runner + physical tests 🍎
 Stand up the **Mac mini** as an always-on runner for macOS/Apple builds and **physical device tests**
 (e.g. the CDJ spike). A ticket can route work to it and get a result back on the PR. *(From the
-original handoff briefing's Phase 1/3.)*
+original handoff briefing's Phase 1/3.)* **Also the compute fork from #519:** the App's Worker →
+**Cloudflare Tunnel + Access** → Mac mini runs the agent in a container with a JIT install token, posting
+as `crouton[bot]` — which removes the bot-actor-guard PAT for autonomous runs. *(Caveat: single box =
+single point of failure + one-run-at-a-time; fine for dogfooding, not the teams product.)*
 **Done when:** a ticket routes a job to the Mac mini and an asserted result posts back on the PR.
 
 *(Phases 1–2 can overlap. 3 depends on 2. 4 depends on 3. 5 is independent and can run in parallel.)*
@@ -81,12 +107,20 @@ original handoff briefing's Phase 1/3.)*
 
 ## Open decisions (carried, not yet locked)
 
+**From our design conversation:**
 1. **Slack intake target** — does a captured request default to Notion (product) vs straight to GitHub (execution)? Likely "triage by type."
-2. **Source of truth** — confirmed direction: *layered ownership* (Notion=product, GitHub=execution, Linear=planning), not one tool.
+2. **Source of truth** — confirmed direction: *layered ownership* (Notion=product, GitHub=execution, Linear=planning), not one tool. ✅ *resolved*
 3. **Notion handoff** — read-only after bridge, or editable + re-sync? *(blocks Phase 3 detail)*
 4. **Slack-bot first capability** — pings vs status-replies vs create-story vs kick-off-epic. *(Phase 1 picks one)*
 5. **Changelog mechanics** — how the summary is generated and where it's stored. *(Phase 4)*
-6. **Mac mini** — which box, where it lives, who administers it; CDJ device/protocol. *(Phase 5)*
+6. **Mac mini** — which box, where it lives, who administers it; CDJ device/protocol. *(Phase 5 — now also the App compute host, see #7–8)*
+
+**From the GitHub App epic (#519) — the auth substrate forks:**
+7. **Do we run our own agent compute?** Dogfood = Mac mini via Cloudflare Tunnel + Access; multi-tenant later = cloud (Fargate/Fly/K8s). *(ties to decision #6)*
+8. **How to drop the PAT for *autonomous* runs** — (a) allow-list the Crouton App in claude-code-action's bot-actor guard, or (b) take the code-writing run off GitHub Actions entirely (App owns the compute). *(App-native actions already need no PAT; this only affects bot-initiated agent runs)*
+9. **Central token mint** — deferred to the 2nd tenant; *when* do we build it?
+10. **review-bridge** lives in `packages/crouton-devtools` → `packages/` **HARD GATE** (needs explicit approval); tracked separately from #530.
+11. **"Appoint-to-release" seam (#515)** — appointing the App covers App-native actions, but spinning the agent run to address remarks still hits the bot-actor guard unless #8 is solved (interim: a `/go` comment + human PAT delegate).
 
 ## Next steps in the design conversation (not yet done)
 
