@@ -55,6 +55,8 @@ export interface CreateScopedTokenOptions {
 export interface ScopedAccessResult {
   /** Token ID */
   id: string
+  /** The token string itself (used by refresh to slide its own expiry) */
+  token: string
   /** Organization/team ID */
   organizationId: string
   /** Resource type */
@@ -162,6 +164,7 @@ export async function validateScopedToken(
 
   return {
     id: record.id,
+    token: record.token,
     organizationId: record.organizationId,
     resourceType: record.resourceType,
     resourceId: record.resourceId,
@@ -393,26 +396,62 @@ export async function listScopedTokensForResource(
   return records
 }
 
+/** Fallback token lifetime when a token has no backing grant (mint-issued). */
+const DEFAULT_SCOPED_TOKEN_TTL = 8 * 60 * 60 * 1000 // 8 hours
+
 /**
- * Extend token expiration
+ * Look up the grant governing a token's resource, for its TTL policy.
+ * Returns null when no active grant backs the resource (e.g. mint-issued tokens).
+ */
+async function getScopedGrant(
+  organizationId: string,
+  resourceType: string,
+  resourceId: string,
+  credentialType = 'pin'
+): Promise<{ tokenTtl: number | null } | null> {
+  const db = useDB()
+  const [grant] = await db
+    .select({ tokenTtl: scopedAccessGrant.tokenTtl })
+    .from(scopedAccessGrant)
+    .where(
+      and(
+        eq(scopedAccessGrant.organizationId, organizationId),
+        eq(scopedAccessGrant.resourceType, resourceType),
+        eq(scopedAccessGrant.resourceId, resourceId),
+        eq(scopedAccessGrant.credentialType, credentialType),
+        eq(scopedAccessGrant.isActive, true)
+      )
+    )
+    .limit(1)
+  return grant ?? null
+}
+
+/**
+ * Extend (slide forward) a scoped token's expiration.
  *
- * @param token - Token string
- * @param additionalTime - Additional time in milliseconds
- * @returns New expiration date or null if token not found
+ * The new expiry is bounded by the token's grant policy (its tokenTtl), and an
+ * already-expired token cannot be refreshed — see the body for the rationale.
+ *
+ * @param token - Token string (of a currently-valid token)
+ * @returns New expiration date, or null if the token is missing/inactive/expired
  */
 export async function extendScopedToken(
-  token: string,
-  additionalTime: number
+  token: string
 ): Promise<Date | null> {
   const db = useDB()
+  const now = new Date()
 
+  // Only a still-active, NOT-yet-expired token can be refreshed. Expiry is the
+  // revocation mechanism for scoped tokens, so a lapsed token must stay dead —
+  // the holder must re-redeem the grant rather than reviving it here.
   const [record] = await db
     .select()
     .from(scopedAccessToken)
     .where(
       and(
         eq(scopedAccessToken.token, token),
-        eq(scopedAccessToken.isActive, true)
+        eq(scopedAccessToken.isActive, true),
+        gt(scopedAccessToken.expiresAt, now)
       )
     )
     .limit(1)
@@ -421,7 +460,12 @@ export async function extendScopedToken(
     return null
   }
 
-  const newExpiresAt = new Date(Math.max(record.expiresAt.getTime(), Date.now()) + additionalTime)
+  // Slide the expiry forward to a window bounded by the token's GRANT policy
+  // (its tokenTtl), never an unbounded client-supplied amount. Tokens with no
+  // backing grant (e.g. mint-issued) fall back to the default ceiling.
+  const grant = await getScopedGrant(record.organizationId, record.resourceType, record.resourceId)
+  const ttl = grant?.tokenTtl ?? DEFAULT_SCOPED_TOKEN_TTL
+  const newExpiresAt = new Date(now.getTime() + ttl)
 
   await db
     .update(scopedAccessToken)
