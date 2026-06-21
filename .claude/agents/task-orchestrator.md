@@ -75,11 +75,15 @@ number.
      another app): **(1)** design `schemas/*.json` + `crouton.config.js` → **`schema-review`
      sign-off on both, posted on that workstream's OWN issue/PR — never on the epic**;
      **(2)** **`crouton init <name>`** to scaffold *and* generate from
-     the approved schema+config (deterministic, no drift); **(3)** refine forms/UI;
-     **(4)** deploy-preview. The **final workstream is always a deploy-preview issue**: run
-     `pnpm poc:scaffold-deploy <name>` and open the PR so CI deploys a staging Worker and
-     posts the `https://<name>.pmcp.dev` URL. The epic's acceptance is that live,
-     auth-working preview URL — not just merged code. (See the `poc-deploy` skill.)
+     the approved schema+config (deterministic, no drift); **(3)** **deploy a review-on
+     preview** — `pnpm poc:scaffold-deploy <name>` so CI deploys a staging Worker (review
+     flag on) and posts the `https://<name>.pmcp.dev` URL; **(4)** **refine the UI on that
+     live preview** (the #590 sign-off gate: click an element → `🎯 Preview feedback` comment
+     → fix → redeploy → `approve`). **Deploy comes BEFORE refine** — the UI sign-off happens
+     on the live page, so ordering refine first creates a chicken-and-egg (the review needs a
+     running page; the page needs the deploy). Never make the deploy-preview `Blocked-by` the
+     refine step. The epic's acceptance is that live, auth-working preview URL with the UI
+     signed off — not just merged code. (See the `poc-deploy` skill.)
 5. **Create + link each workstream.** For each:
    - `mcp__github__issue_write` (method `create`) — title is plain human English; body
      has `## 👤 For humans`, `## 🤖 For agents`, `## 🧪 How to test`; `labels` = the
