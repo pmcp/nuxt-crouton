@@ -127,25 +127,78 @@ async function putFile(token: string, env: Env, branch: string, path: string, co
   if (!putRes.ok) throw new Error('PUT ' + path + ' → ' + putRes.status + ' ' + (await putRes.text()))
 }
 
+// Create-or-update a per-slug sticky comment on the linked issue, so a Save is a visible handoff
+// marker in the timeline (not just a silent bot commit). Updates in place on repeated saves. (#583)
+async function upsertComment(token: string, env: Env, issue: number, slug: string, branch: string, origin: string): Promise<void> {
+  const headers = {
+    authorization: 'Bearer ' + token,
+    accept: 'application/vnd.github+json',
+    'user-agent': 'ticket-editor',
+    'content-type': 'application/json',
+  }
+  const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
+  const marker = '<!-- ticket-editor-saved:' + slug + ' -->'
+  // Cache-bust the raw PNG so GitHub's image cache shows the just-saved version.
+  const png = 'https://raw.githubusercontent.com/' + env.REPO + '/' + branch + '/' + dir + '/' + slug + '.png?v=' + Date.now()
+  const editUrl = origin + '/?slug=' + encodeURIComponent(slug) + '&branch=' + encodeURIComponent(branch) + '&issue=' + issue
+  const body =
+    marker + '\n' +
+    '✏️ **`' + slug + '`** edited via the [ticket-editor](' + editUrl + ') — committed to `' + branch + '`.\n\n' +
+    '![' + slug + '](' + png + ')\n\n' +
+    '_Updated ' + new Date().toISOString() + ' · this comment refreshes in place on each save._'
+  // Find an existing sticky for this slug (first page of comments is plenty).
+  const listRes = await fetch(
+    'https://api.github.com/repos/' + env.REPO + '/issues/' + issue + '/comments?per_page=100',
+    { headers },
+  )
+  if (listRes.ok) {
+    const comments = (await listRes.json()) as Array<{ id: number; body?: string }>
+    const existing = comments.find((c) => (c.body || '').includes(marker))
+    if (existing) {
+      const patch = await fetch('https://api.github.com/repos/' + env.REPO + '/issues/comments/' + existing.id, {
+        method: 'PATCH', headers, body: JSON.stringify({ body }),
+      })
+      if (!patch.ok) throw new Error('PATCH comment → ' + patch.status + ' ' + (await patch.text()))
+      return
+    }
+  }
+  const post = await fetch('https://api.github.com/repos/' + env.REPO + '/issues/' + issue + '/comments', {
+    method: 'POST', headers, body: JSON.stringify({ body }),
+  })
+  if (!post.ok) throw new Error('POST comment → ' + post.status + ' ' + (await post.text()))
+}
+
 async function save(req: Request, env: Env): Promise<Response> {
   try {
-    const { slug, branch, scene, png } = (await req.json()) as {
+    const { slug, branch, scene, png, issue } = (await req.json()) as {
       slug?: string
       branch?: string
       scene?: unknown
       png?: string
+      issue?: number | string
     }
     if (!slug || !branch || !scene) return json({ error: 'slug, branch and scene are required' }, 400)
     if (!/^[a-z0-9][a-z0-9._-]*$/i.test(slug)) return json({ error: 'bad slug' }, 400)
     const dir = env.DIAGRAMS_DIR || 'writeups/diagrams'
     const msg = 'chore(diagrams): edit ' + slug + ' via ticket-editor'
-    const token = await installationToken(env) // one fresh ~1h token for both commits
+    const token = await installationToken(env) // one fresh ~1h token for the commits + comment
     await putFile(token, env, branch, dir + '/' + slug + '.excalidraw', toB64(JSON.stringify(scene, null, 2) + '\n'), msg)
     if (png) {
       const b64 = png.includes(',') ? png.split(',')[1] : png
       await putFile(token, env, branch, dir + '/' + slug + '.png', b64, msg + ' (png)')
     }
-    return json({ ok: true })
+    // Optional handoff comment: the commit is the source of truth, so a comment failure is non-fatal.
+    let comment: string | undefined
+    const issueNum = issue != null && /^[0-9]+$/.test(String(issue)) ? Number(issue) : undefined
+    if (issueNum) {
+      try {
+        await upsertComment(token, env, issueNum, slug, branch, new URL(req.url).origin)
+        comment = 'commented on #' + issueNum
+      } catch (e) {
+        comment = 'comment failed: ' + String((e as Error)?.message || e)
+      }
+    }
+    return json({ ok: true, comment })
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500)
   }
@@ -244,6 +297,7 @@ const PAGE = `<!DOCTYPE html>
   var params = new URLSearchParams(location.search);
   var slug = params.get('slug') || '';
   var branch = params.get('branch') || 'main';
+  var issue = params.get('issue') || '';
   var RAW = 'https://raw.githubusercontent.com/__REPO__/' + branch + '/writeups/diagrams/' + slug + '.excalidraw';
   var statusEl = document.getElementById('status');
   var saveEl = document.getElementById('save');
@@ -306,10 +360,10 @@ const PAGE = `<!DOCTYPE html>
             for (var i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
             var pngB64 = btoa(bin);
             var scene = { type:'excalidraw', version:2, source:location.origin, elements: elements, appState:{ viewBackgroundColor:'#ffffff' }, files: files };
-            return fetch('/api/save', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ slug: slug, branch: branch, scene: scene, png: pngB64 }) });
+            return fetch('/api/save', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ slug: slug, branch: branch, scene: scene, png: pngB64, issue: issue }) });
           })
           .then(function(r){ return r.json(); })
-          .then(function(res){ setStatus(res.ok ? 'saved ✓ committed to ' + branch : 'error: ' + (res.error||'?')); saveEl.disabled = false; })
+          .then(function(res){ setStatus(res.ok ? ('saved ✓ committed to ' + branch + (res.comment ? ' · ' + res.comment : '')) : 'error: ' + (res.error||'?')); saveEl.disabled = false; })
           .catch(function(e){ setStatus('error: ' + e); saveEl.disabled = false; });
       };
     });

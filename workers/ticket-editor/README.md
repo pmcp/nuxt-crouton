@@ -11,8 +11,8 @@ just-in-time (WebCrypto, dependency-free) and commits as `nuxt-harness[bot]` —
 
 ## Routes
 
-- `GET /?slug=<slug>&branch=<branch>` — the editor (loads `writeups/diagrams/<slug>.excalidraw`).
-- `POST /api/save` `{ slug, branch, scene, png }` — commits `<slug>.excalidraw` (+ `<slug>.png`) to `<branch>`.
+- `GET /?slug=<slug>&branch=<branch>[&issue=<NN>]` — the editor (loads `writeups/diagrams/<slug>.excalidraw`). Pass `issue` to get a handoff comment on Save.
+- `POST /api/save` `{ slug, branch, scene, png, issue? }` — commits `<slug>.excalidraw` (+ `<slug>.png`) to `<branch>`. If `issue` is set, it also **creates-or-updates a sticky comment** (`<!-- ticket-editor-saved:<slug> -->`) on that issue with the refreshed diagram, so a Save is a visible handoff marker, not just a bot commit (#583). The comment is non-fatal — a commit always wins.
 
 ## Deploy (Cloudflare Workers)
 
