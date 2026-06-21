@@ -77,12 +77,39 @@ export interface I18nSpec {
   after: string
 }
 
+/**
+ * A maps + geocoding check exercising crouton-maps. A `surface` can only assert a
+ * static element renders; this one proves the package's two live behaviours:
+ *   1. the CroutonMapsMap (MapLibre) actually mounts inside a generated form, and
+ *   2. the /api/maps/geocode proxy converts an address to coordinates.
+ * The geocode step hits the live public Nominatim, so it skips gracefully when
+ * the network is unavailable (a blocked CI runner must not go red). Omit for
+ * fixtures that don't extend crouton-maps.
+ */
+export interface MapsSpec {
+  /** Collection whose generated form embeds the map picker (e.g. "mainVenues"). */
+  collectionKey: string
+  /** That collection's visible list heading, e.g. "Main Venues". */
+  heading: string
+  /** Address → coordinates check against the /api/maps/geocode proxy. */
+  geocode: {
+    /** Free-text address to forward-geocode. */
+    query: string
+    /** Expected result, [lng, lat] — asserted within `tolerance` degrees. */
+    near: [number, number]
+    /** Allowed deviation in degrees (generous, to avoid brittleness). */
+    tolerance: number
+  }
+}
+
 export interface FixtureManifest {
   collections: CollectionSpec[]
   /** Optional package-specific surfaces; omit for fixtures with nothing extra. */
   surfaces?: SurfaceSpec[]
   /** Optional locale-switch check; omit for fixtures with a single locale. */
   i18n?: I18nSpec
+  /** Optional maps + geocoding check; omit for fixtures without crouton-maps. */
+  maps?: MapsSpec
 }
 
 /** Read the active fixture's e2e manifest (what to smoke). */

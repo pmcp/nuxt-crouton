@@ -1,0 +1,24 @@
+{
+  "collections": [
+    {
+      "key": "mainItems",
+      "heading": "Main Items",
+      "create": { "name": "e2e item" },
+      "requiredField": "name"
+    },
+    {
+      "key": "mainVenues",
+      "heading": "Main Venues",
+      "create": { "name": "e2e venue" }
+    }
+  ],
+  "maps": {
+    "collectionKey": "mainVenues",
+    "heading": "Main Venues",
+    "geocode": {
+      "query": "Eiffel Tower, Paris, France",
+      "near": [2.2945, 48.8584],
+      "tolerance": 2
+    }
+  }
+}
