@@ -25,6 +25,7 @@ const META = {
   'ui-proposal': { group: 'build', triggers: ['flow', 'ask'] },
   'schema-review': { group: 'build', triggers: ['flow', 'ask'] },
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
+  'provider-swap': { group: 'build', triggers: ['ask'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   'ticket-diagram': { group: 'plan', triggers: ['flow', 'ask'] },
