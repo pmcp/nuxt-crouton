@@ -107,8 +107,8 @@ git add apps/{app}/wrangler.jsonc && git commit -m "chore({app}): commit provisi
 Add a tiny caller that uses the reusable `deploy-app.yml`. **Model on
 `.github/workflows/deploy-three-demo.yml`.** Set: `app`, `production-url`,
 `staging-url`, and the `paths` filter (the app + its extended `crouton*` packages +
-lockfile + both workflow files). Push to `staging`/open a PR → isolated staging with
-the URL commented on the PR; manual dispatch → production. Uses `secrets: inherit`.
+lockfile + both workflow files). Merge to `main`/open a PR → isolated staging with
+the URL commented on the PR; manual dispatch → production (#347). Uses `secrets: inherit`.
 
 Ensure **repo-level** secrets `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` exist
 (Settings → Secrets and variables → Actions). The reusable workflow maps the GitHub
@@ -131,7 +131,7 @@ Two ways:
   Automation can't invent values — they must live in that secret once.
 
 ### Step 5: Routine deploys (staging)
-- **CI (preferred):** push to `staging` (or open a PR) → the caller runs the staging pipeline.
+- **CI (preferred):** merge to `main` (or open a PR) → the caller runs the staging pipeline (#347).
 - **Local:** `pnpm cf:staging` from the app dir.
 - **Production is never routine** — ship it deliberately via the **`/deploy-production`** skill.
 

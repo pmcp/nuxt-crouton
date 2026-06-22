@@ -1,9 +1,14 @@
 name: Deploy ThinkGraph
 
+# Trunk = staging (#347): retargeted from the retired `staging` branch to `main`.
+# A push (merge to main) carries no `environment` input, so it resolves to staging
+# (`inputs.environment || 'staging'`) — never production. Production stays a
+# deliberate workflow_dispatch (env=production) per STANDING RULE #318.
+
 on:
   push:
     branches:
-      - staging
+      - main
     paths:
       - 'pocs/thinkgraph/**'
       - 'packages/crouton/**'

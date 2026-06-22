@@ -1,15 +1,20 @@
 name: Deploy Velo
 
 # Thin caller for the reusable Workers deploy pipeline (#120, on #114's deploy-app.yml).
-# Push to `staging` (or a PR) → isolated staging env on velo.pmcp.dev (reuses
+# Merge to `main` (or a PR) → isolated staging env on velo.pmcp.dev (reuses
 # velo-staging-db + velo-staging-blob). Manual dispatch with environment=production
 # → production (reuses velo-db + velo-blob). The prod custom domain
 # (velo.friendlyinter.net) is bound at the DNS cutover (#134).
+#
+# Trunk = staging (#347): a merge to `main` touching the paths below auto-deploys
+# the STAGING env — never production. Production stays a deliberate, human-only
+# workflow_dispatch (env=production) per STANDING RULE #318; a push can never reach
+# it (the `environment` input requires workflow_dispatch — see the `with:` block).
 
 on:
   push:
     branches:
-      - staging
+      - main
     paths:
       - 'apps/velo/**'
       - 'packages/crouton/**'

@@ -9,11 +9,17 @@ name: Deploy Docs
 # Single environment (public docs has no per-PR data to isolate). The custom domain
 # (docs.pmcp.dev now → docs.friendlyinter.net at the DNS cutover, #134) is attached
 # separately; this just deploys the worker.
+#
+# Trunk = staging (#347): retargeted from the retired `staging` branch to `main`, so
+# a docs change continuously ships on merge (its long-standing behaviour — just on the
+# trunk branch now). docs is a single-env public content site, NOT a gated crouton app
+# production env, so this is not the #318 prod gate (that guards <app>.friendlyinter.net
+# cash-register apps, which stay manual-dispatch only).
 
 on:
   push:
     branches:
-      - staging
+      - main
     paths:
       - 'docs/**'
       - 'pnpm-lock.yaml'
