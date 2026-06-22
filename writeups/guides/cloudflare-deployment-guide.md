@@ -347,7 +347,10 @@ Several patterns that work in SPA mode break under SSR on Cloudflare:
 
 ## CI/CD: GitHub Actions Workflow
 
-See `.github/workflows/deploy-velo.yml` for the full reference. Key points:
+Per-app callers were retired (#481): every `apps/<name>` now deploys via the single generic
+`.github/workflows/deploy-apps.yml`, which reads each app's `apps/<name>/deploy.config.json`
+(`stagingUrl` / `productionUrl` / `layerPackages` / `watchPaths`) and fans out to the reusable
+`.github/workflows/deploy-app.yml`. See those two files for the full reference. Key points:
 
 1. **Path filters** — only deploy when relevant packages change
 2. **Layer caching** — cache built layer packages across runs

@@ -12,24 +12,27 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 QUERY="$1"
 REPO="FriendlyInternet/nuxt-crouton"
 
+# Apps now deploy via the single generic deploy-apps.yml (epic #481); pass the app
+# directory name + environment as inputs instead of a per-app workflow file.
+WORKFLOW="deploy-apps.yml"
 case "$QUERY" in
   triage)
-    WORKFLOW="deploy-triage.yml"
+    APP="triage"
     ENV="production"
     LABEL="Triage production"
     ;;
   velo-staging)
-    WORKFLOW="deploy-velo.yml"
+    APP="velo"
     ENV="staging"
     LABEL="Velo staging"
     ;;
   velo-prod)
-    WORKFLOW="deploy-velo.yml"
+    APP="velo"
     ENV="production"
     LABEL="Velo production"
     ;;
   alex)
-    WORKFLOW="deploy-alexdeforce.yml"
+    APP="alexdeforce"
     ENV="production"
     LABEL="Alexdeforce production"
     ;;
@@ -43,7 +46,7 @@ LOG="/tmp/deploy.log"
 echo "$(date) - Starting deploy: $QUERY" > "$LOG"
 
 # Trigger the workflow
-gh workflow run "$WORKFLOW" --ref main -f environment="$ENV" -R "$REPO"
+gh workflow run "$WORKFLOW" --ref main -f app="$APP" -f environment="$ENV" -R "$REPO"
 
 # Wait for GitHub to register it
 sleep 10
