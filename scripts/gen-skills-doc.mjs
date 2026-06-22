@@ -42,6 +42,7 @@ const META = {
   deploy: { group: 'deploy', triggers: ['ask'] },
   'deploy-production': { group: 'deploy', triggers: ['ask'] },
   'poc-deploy': { group: 'deploy', triggers: ['ask'] },
+  'remove-app': { group: 'deploy', triggers: ['ask'] },
   'e2e-smoke': { group: 'verify', triggers: ['ask'] },
   'dependency-sweep': { group: 'verify', triggers: ['ask', 'auto'] },
   'db-migrations': { group: 'verify', triggers: ['ask'] },

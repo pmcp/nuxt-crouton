@@ -199,6 +199,10 @@
         <div class="skill-head"><span class="name">/poc-deploy</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">Give a pocs/ app a Cloudflare Workers preview deploy so a PR returns a testable staging URL (auth-working). Use when wiring a POC for previews, or when "build X as a poc" needs to end at a clickable link. For launched apps/ apps use the /deploy skill instead.</p>
       </div>
+      <div class="skill">
+        <div class="skill-head"><span class="name">/remove-app</span><span class="badges"><span class="b ask">on ask</span></span></div>
+        <p class="what">Cleanly tear down a crouton poc/app — the inverse of /deploy. Removes the code, the Cloudflare Worker + D1 + KV (both env scopes), the app's stray branches, and closes its epic/sub-issues — with a --dry-run first and a typed confirm for anything destructive. Use when asked to "remove an app", "tear down a poc", "delete app X and its resources", or to clean up after an abandoned proof-of-concept. Counterpart to /deploy, /poc-deploy, crouton init.</p>
+      </div>
     </div>
   </section>
 
