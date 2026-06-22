@@ -51,7 +51,10 @@ chose a different design. Four rules now prevent that:
    The whole feature gets **one** human review when `epic/<NN>` is PR'd into `main` at the
    end (the epic is "done" only then, not when its children merge into the epic branch).
    Dependency-ordered children are **wave-gated** (foundation merges first, then dependents
-   on an idempotent re-run); independent ones still run in parallel.
+   on an idempotent re-run); independent ones still run in parallel. **The branch is keyed by
+   the epic NUMBER, not the slug (#611):** a re-dispatch resolves and **reuses** any existing
+   `epic/<NN>-*` (merging `main` into it), never minting a second slug — so re-runs can't leave
+   sibling epic branches behind.
 
 2. **Epic-scoped package approval (#350).** A package-touching epic is approved **once**:
    the `packages/` gate honours the **`CROUTON_PACKAGE_EDIT_APPROVED`** env var (inherited

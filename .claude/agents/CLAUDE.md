@@ -118,6 +118,9 @@ package). Threaded through `epic_branch` in the agent contract:
   and target their PRs **at it**, not `main` — so later sub-issues see earlier ones' merged
   work. One **epic→`main`** PR at the end is the single human review; the epic isn't "done"
   until that lands. Dependency-ordered children are **wave-gated** (foundation first).
+  **Idempotent re-dispatch (#611):** the branch is keyed by the epic **number** — a re-run
+  resolves and **reuses** any existing `epic/<NN>-*` (merging `main` in), never minting a
+  second slug, so re-dispatching can't spawn sibling epic branches (the #590 failure).
 - **Lockfile in sync after a dep change (#614).** A worker that adds/bumps a dependency in
   any `package.json` MUST run `pnpm install` and commit the updated `pnpm-lock.yaml` in the
   same PR — the deploy's `pnpm install --frozen-lockfile` rejects a `package.json` whose
