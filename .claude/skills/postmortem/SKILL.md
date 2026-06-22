@@ -1,6 +1,6 @@
 ---
 name: postmortem
-description: At the close of an epic (or a difficult issue), post a postmortem roundup comment — what went well, what was hard (backed by evidence), and 1–3 concrete proposals to improve the skills/flows — then offer to turn accepted proposals into their own `workflow`-labeled tasks. Use at epic close, after the "verify the whole thing" rollup, or when asked to "do a retro", "postmortem this epic", "what did we learn", "how do we improve the workflow".
+description: At the close of an epic (or a difficult issue), post a postmortem roundup comment — what went well, what was hard (backed by evidence), and 1–3 concrete proposals to improve the skills/flows — then offer to turn accepted proposals into their own `workflow`-labeled tasks, and end with a `🔭 Next` handoff (a paste-ready next-session prompt + the next epic to start). Use at epic close, after the "verify the whole thing" rollup, or when asked to "do a retro", "postmortem this epic", "what did we learn", "how do we improve the workflow".
 allowed-tools: mcp__github__issue_read, mcp__github__add_issue_comment, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__list_commits, Read, Bash
 ---
 
@@ -61,6 +61,9 @@ sections:
 - **🔧 Proposals (1–3)** — concrete, actionable changes to a **skill / agent /
   flow** that would remove that friction next time. Each proposal = a candidate
   `workflow` task with a one-line "why".
+- **🔭 Next** — the handoff (composed in Step 6): the next epic to start + a
+  paste-ready next-session prompt. End the roundup with this so it's the first
+  thing visible when the epic is reopened.
 
 Post it with `add_issue_comment` on the epic.
 
@@ -105,10 +108,33 @@ supersedes. Tell them, so nobody works around a change they didn't know happened
   mentions (same spirit as the Step-4 dedup). Each comment carries the `🤖` provenance header and
   is informational (won't trip agent-resume triggers).
 
-## Step 6 — Hand off
-Report: the epic comment URL, the list of `workflow` issues opened (with URLs), and the neighbour
-issues you cross-linked. This closes the learning loop — the proposals are on the board and the
-change is wired to everything it touches.
+## Step 6 — Hand off the next session (the `🔭 Next` block)
+
+A postmortem must not dead-end — it points at what to do next, so there's no "now what?" gap
+between sessions (#615). Compose a **`🔭 Next` block** and include it as the closing section of
+the Step-3 roundup (so it's visible the moment the epic is reopened), **and echo the same block in
+your chat reply** so it can be pasted straight into a new session.
+
+1. **Pick the next epic.** From the initiative tree this epic belongs to (e.g. the `[Initiative]`
+   parent) and the open `label:epic` list, choose the most sensible next one:
+   - prefer an **unblocked sibling under the same initiative** (no open `Blocked-by:`), then the
+     highest-priority open flow epic;
+   - skip epics already in progress with an owner.
+   State the choice + a one-line **why**. If there's **no obvious next epic**, say so and offer
+   2–3 candidates rather than guessing.
+2. **Emit a paste-ready prompt.** A fenced block a human can drop into a fresh session, containing:
+   - **CONTEXT (done, don't redo):** 2–4 lines — what this epic delivered + any live state the next
+     session needs (branch, preview URL, an open PR left as a testbed).
+   - **NEXT:** the chosen issue `#NN` + its full URL, and "read it first, then propose a short plan".
+   - **RULES:** ISSUE-FIRST · `/commit` skill, reference `(#NN)` · PRs not direct-to-`main` · never
+     touch `packages/` without approval · deploy STAGING only.
+3. **Post + echo.** The `🔭 Next` block is the last section of the roundup comment (Step 3); repeat
+   it verbatim in the chat reply.
+
+Then **report:** the epic comment URL, the `workflow` issues opened (with URLs), the neighbour
+issues cross-linked, and the chosen next epic. This closes the learning loop *and* opens the next —
+the proposals are on the board, the change is wired to everything it touches, and the next session
+has a runway.
 
 ## Conventions & gotchas
 - **After verify, before close.** Don't close the epic until the postmortem is
