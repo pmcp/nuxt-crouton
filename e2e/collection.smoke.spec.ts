@@ -83,11 +83,16 @@ test.describe(`fixture "${FIXTURE}"`, () => {
           await createDialog.getByRole('button', { name: /create|save|add/i }).first().click()
           await expect(page.getByRole('cell', { name: marker })).toBeVisible({ timeout: 60000 })
 
-          // --- EDIT --- open the row's pencil (last of the [delete, update] row
-          // buttons), change the field, save, and assert the new value replaced
-          // the old one in the list.
+          // --- EDIT --- open the row's pencil (the LAST button in the row's ACTIONS
+          // cell — the [delete, update] pair). Scope to that cell (the one holding the
+          // delete button, reliably the row's first button — the select checkbox is
+          // role=checkbox, not button) rather than the whole row, so extra buttons in
+          // other cells (e.g. the crouton-maps preview button in the coordinates
+          // column) don't make `.last()` grab the wrong control (#624). Then change the
+          // field, save, and assert the new value replaced the old one in the list.
           const row = page.getByRole('row', { name: new RegExp(marker) })
-          await row.getByRole('button').last().click()
+          const rowActionsCell = row.getByRole('button').first().locator('xpath=ancestor::td[1]')
+          await rowActionsCell.getByRole('button').last().click()
           const editDialog = page.getByRole('dialog')
           await expect(editDialog).toBeVisible({ timeout: 60000 })
           await editDialog.getByRole('textbox').first().waitFor({ state: 'visible', timeout: 60000 })

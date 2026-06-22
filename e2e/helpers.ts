@@ -91,6 +91,14 @@ export interface MapsSpec {
   collectionKey: string
   /** That collection's visible list heading, e.g. "Main Venues". */
   heading: string
+  /**
+   * Optional name of the form tab the map field lives on (e.g. "Address"). The
+   * generated form groups fields into tabs (CroutonFormLayout → UTabs) and tab
+   * content is lazily rendered, so when the map isn't on the default tab the smoke
+   * must activate this tab before `.crouton-map-wrapper` exists. Omit if the map is
+   * on the first/default tab.
+   */
+  formTab?: string
   /** Address → coordinates check against the /api/maps/geocode proxy. */
   geocode: {
     /** Free-text address to forward-geocode. */
