@@ -5,8 +5,8 @@
       <h2 class="text-lg sm:text-xl font-semibold truncate min-w-0">
         {{ camelToTitleCase(collectionName) }}
       </h2>
-      <!-- Layout Switcher -->
-      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0 overflow-x-auto">
+      <!-- Layout Switcher: inline icon group on desktop -->
+      <div class="hidden sm:flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0 overflow-x-auto">
         <UButton
           v-for="layoutOption in layoutOptions"
           :key="layoutOption.value"
@@ -17,6 +17,21 @@
           @click="currentLayout = layoutOption.value"
         />
       </div>
+
+      <!-- Layout Switcher: single menu button on mobile -->
+      <UDropdownMenu
+        :items="switcherMenuItems"
+        :content="{ align: 'end' }"
+        class="sm:hidden shrink-0"
+      >
+        <UButton
+          :icon="currentLayoutIcon"
+          color="neutral"
+          variant="outline"
+          size="sm"
+          trailing-icon="i-lucide-chevron-down"
+        />
+      </UDropdownMenu>
     </div>
 
     <!-- Content area - fills remaining space -->
@@ -43,7 +58,7 @@
         <component
           :is="componentName"
           v-else-if="componentName"
-          :layout="currentLayout"
+          :layout="effectiveLayout"
           class="h-full"
         />
 
@@ -193,6 +208,30 @@ const layoutOptions = computed(() => {
 
   return options
 })
+
+// On mobile the table scrolls sideways and feels broken, so fall back to the
+// card/list layout below `sm` while keeping the table at `sm+`. The switcher
+// still reports `table` as selected; other layouts pass through unchanged.
+const effectiveLayout = computed(() =>
+  currentLayout.value === 'table'
+    ? { base: 'list' as const, sm: 'table' as const }
+    : currentLayout.value
+)
+
+// Icon for the current layout, shown on the mobile switcher menu button
+const currentLayoutIcon = computed(() =>
+  allLayoutOptions.find(o => o.value === currentLayout.value)?.icon
+    ?? 'i-lucide-table'
+)
+
+// Mobile switcher: same options as the desktop group, as a dropdown menu
+const switcherMenuItems = computed(() =>
+  layoutOptions.value.map(o => ({
+    label: camelToTitleCase(o.value),
+    icon: o.icon,
+    onSelect: () => { currentLayout.value = o.value }
+  }))
+)
 
 // Convert collection name to component name
 // e.g., translationsUi -> TranslationsUiList
