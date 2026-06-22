@@ -43,6 +43,16 @@ test.describe(`fixture "${FIXTURE}" maps`, () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible({ timeout: 60000 })
 
+    // The map field may live on a secondary form tab (CroutonFormLayout → UTabs),
+    // whose content is lazily rendered — so the `.crouton-map-wrapper` only exists
+    // once that tab is active. Activate it when the manifest names one.
+    if (maps!.formTab) {
+      const tab = new RegExp(maps!.formTab, 'i')
+      await dialog.getByRole('tab', { name: tab })
+        .or(dialog.getByRole('button', { name: tab }))
+        .first().click()
+    }
+
     // The crouton-maps form picker renders its wrapper regardless of whether the
     // tiles load — so this asserts the package mounted, not that the network is up.
     await expect(dialog.locator('.crouton-map-wrapper').first())

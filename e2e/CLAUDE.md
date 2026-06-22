@@ -179,6 +179,8 @@ E2E_FIXTURE=with-i18n pnpm test:e2e
   "maps": {
     "collectionKey": "mainVenues",   // collection whose generated form embeds the map
     "heading": "Main Venues",         // that collection's list heading
+    "formTab": "Address",             // optional: form tab the map field lives on (UTabs
+                                      //   content is lazy; omit if the map is on the first tab)
     "geocode": {
       "query": "Eiffel Tower, Paris, France", // address to forward-geocode
       "near": [2.2945, 48.8584],              // expected [lng, lat]

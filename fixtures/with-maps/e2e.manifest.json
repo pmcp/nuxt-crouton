@@ -15,6 +15,7 @@
   "maps": {
     "collectionKey": "mainVenues",
     "heading": "Main Venues",
+    "formTab": "Address",
     "geocode": {
       "query": "Eiffel Tower, Paris, France",
       "near": [2.2945, 48.8584],
