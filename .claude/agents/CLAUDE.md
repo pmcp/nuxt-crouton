@@ -98,6 +98,23 @@ confirmed high/criticals) `security`/`sec:*` GitHub issues.
   GitHub/app notification), apply `status:blocked`, and stop — the human answers by
   replying on the issue. Small ambiguities are decided with a default + a noted
   assumption (no ping). Change the handle in this file and in the task-decompose skill.
+- **A block comment is a HANDOFF, not just a question (#639).** The owner's reply spawns a
+  **brand-new session** (`resume-on-comment.yml`) that has **zero memory** of your reasoning
+  and checks out `main` — not your worktree, which is gone. So the blocking comment must be
+  self-contained enough for a cold agent to resume from. Post this structured block (it
+  doubles as the question *and* the resume brief):
+  ```
+  ## 🔀 Blocked — need a decision (handoff)
+  **Question for @pmcp:** <the one thing only you can decide>
+  **Why it blocks:** <what cannot proceed until answered>
+  **State so far:** <what's done · branch name + pushed? · what's NOT done>
+  **After you answer:** a NEW session resumes from THIS ticket —
+    Option A → <next steps> · Option B → <next steps>
+  **Don't lose:** <decisions/assumptions already made the next agent must keep>
+  ```
+  And **push before you block**: if you've written anything, `git push -u origin <branch>`
+  first and name that branch under *State so far* — an unpushed worktree is lost on stop, a
+  pushed branch is recoverable by the resuming session.
 - **An @mention is a request for action, not a broadcast.** Only @mention `NOTIFY_HANDLE`
   when you need the human to *do* something: answer a blocking question, give a sign-off,
   or unblock you. **Pure progress/status updates** ("spawning the worker for #NN", "wave 2
