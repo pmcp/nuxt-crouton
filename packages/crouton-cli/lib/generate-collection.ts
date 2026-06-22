@@ -16,11 +16,10 @@ import { detectRequiredDependencies, displayMissingDependencies, ensureLayersExt
 import { setupCroutonCssSource, displayManualCssSetupInstructions } from './utils/css-setup.ts'
 import { syncFrameworkPackages, addToNuxtConfigExtends, addRuntimeConfig } from './utils/update-nuxt-config.ts'
 import { addNamedSchemaExport } from './utils/update-schema-index.ts'
-import { addToAppConfig, resolveAppConfigPath } from './utils/update-app-config.ts'
+import { addToAppConfig, resolveAppConfigPath, registerTranslationsUiCollection } from './utils/update-app-config.ts'
 import { loadFields } from './utils/load-fields.ts'
 import { validateConfig } from './utils/validate-config.ts'
 import { updateLayerRootConfig, setupLayerI18n } from './utils/layer-config.ts'
-import { exportI18nSchema } from './utils/i18n-schema.ts'
 
 // Import generators
 import { generateFormComponent } from './generators/form-component.ts'
@@ -1080,9 +1079,10 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
   if (!noDb) {
     await createDatabaseTable({ name: collection, layer, fields, force })
 
-    // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
-    console.log(`↻ Ensuring translations_ui table...`)
-    await exportI18nSchema(force)
+    // Register the translationsUi runtime collection in app.config.ts. The
+    // translations_ui *table* is owned by @fyit/crouton-i18n via its shipped
+    // migration (no per-app schema/migration emission needed). (#680)
+    await registerTranslationsUiCollection()
   }
 
   // Update collection registry
@@ -1149,10 +1149,11 @@ async function runPostGeneration(opts: PostGenerationOptions): Promise<void> {
       }
     }
 
-    // Always export i18n schema since crouton-i18n is bundled with @fyit/crouton
-    // Note: exportI18nSchema() already calls registerTranslationsUiCollection() internally
-    console.log(`\n↻ Ensuring translations_ui table...`)
-    await exportI18nSchema(force)
+    // Register the translationsUi runtime collection in app.config.ts. The
+    // translations_ui *table* is owned by @fyit/crouton-i18n via its shipped
+    // migration (packages/crouton-i18n/server/db/migrations), which NuxtHub
+    // auto-applies — so no per-app schema export or migration emission. (#680)
+    await registerTranslationsUiCollection()
 
     // Run database migration once for all collections
     console.log(`\nRunning database migration...`)

@@ -443,57 +443,11 @@ function tmplSchemaTs(): string {
 
 // Export auth schema from crouton-auth package (includes teamSettings)
 export * from '@fyit/crouton-auth/server/database/schema/auth'
-export * from './translations-ui'
-`
-}
 
-function tmplTranslationsUi(vars: ScaffoldVars): string {
-  if (vars.dialect === 'pg') {
-    return `import { nanoid } from 'nanoid'
-import { pgTable, text, boolean, timestamp, unique } from 'drizzle-orm/pg-core'
-
-export const translationsUi = pgTable('translations_ui', {
-  id: text('id').primaryKey().$default(() => nanoid()),
-  userId: text('user_id').notNull(),
-  teamId: text('team_id'),
-  namespace: text('namespace').notNull().default('ui'),
-  keyPath: text('key_path').notNull(),
-  category: text('category').notNull(),
-  values: text('values').$type<Record<string, string>>().notNull(),
-  description: text('description'),
-  isOverrideable: boolean('is_overrideable').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().$default(() => new Date()),
-  updatedAt: timestamp('updated_at').notNull().$onUpdate(() => new Date())
-}, (table) => ({
-  uniqueTeamNamespaceKey: unique().on(table.teamId, table.namespace, table.keyPath)
-}))
-
-export type TranslationsUi = typeof translationsUi.$inferSelect
-export type NewTranslationsUi = typeof translationsUi.$inferInsert
-`
-  }
-
-  return `import { nanoid } from 'nanoid'
-import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core'
-
-export const translationsUi = sqliteTable('translations_ui', {
-  id: text('id').primaryKey().$default(() => nanoid()),
-  userId: text('user_id').notNull(),
-  teamId: text('team_id'),
-  namespace: text('namespace').notNull().default('ui'),
-  keyPath: text('key_path').notNull(),
-  category: text('category').notNull(),
-  values: text('values', { mode: 'json' }).$type<Record<string, string>>().notNull(),
-  description: text('description'),
-  isOverrideable: integer('is_overrideable', { mode: 'boolean' }).notNull().default(true),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$default(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$onUpdate(() => new Date())
-}, (table) => ({
-  uniqueTeamNamespaceKey: unique().on(table.teamId, table.namespace, table.keyPath)
-}))
-
-export type TranslationsUi = typeof translationsUi.$inferSelect
-export type NewTranslationsUi = typeof translationsUi.$inferInsert
+// NOTE: translations_ui is NOT exported here. @fyit/crouton-i18n owns that table
+// and ships its own idempotent migration (packages/crouton-i18n/server/db/migrations),
+// which NuxtHub auto-applies to every app — so no per-app schema export or local
+// copy is needed. Re-exporting it here would collide with the package's own table. (#680)
 `
 }
 
@@ -602,7 +556,7 @@ export async function scaffoldApp(
     { path: 'app/app.config.ts', content: tmplAppConfig() },
     { path: 'app/assets/css/main.css', content: tmplMainCss() },
     { path: 'server/db/schema.ts', content: tmplSchemaTs() },
-    { path: 'server/db/translations-ui.ts', content: tmplTranslationsUi(vars) },
+    // translations_ui table is owned by @fyit/crouton-i18n via its shipped migration (#680)
     { path: 'schemas/.gitkeep', content: '' }
   ]
 

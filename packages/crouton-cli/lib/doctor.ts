@@ -244,10 +244,9 @@ async function checkSchemaExports(appDir: string): Promise<DoctorCheck[]> {
     results.push({ name: 'schema', status: 'warn', message: 'schema.ts missing auth schema export' })
   }
 
-  // Check for translations-ui export
-  if (!content.includes('translations-ui')) {
-    results.push({ name: 'schema', status: 'warn', message: 'schema.ts missing translations-ui export' })
-  }
+  // NOTE: translations_ui is no longer expected in schema.ts. @fyit/crouton-i18n
+  // owns that table via its shipped migration (packages/crouton-i18n/server/db/
+  // migrations), so apps don't re-export it locally. (#680)
 
   if (results.length === 0) {
     results.push({ name: 'schema', status: 'pass', message: 'schema.ts exports look good' })

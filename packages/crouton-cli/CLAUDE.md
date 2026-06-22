@@ -136,6 +136,15 @@ and SSR errors like `$setup.t is not a function`.
 5. **Generates** migrations **build-first** (if applicable) — see below
 6. **Applies** migrations with `npx nuxt db:migrate` (if applicable)
 
+> **i18n is the exception (#680).** `@fyit/crouton-i18n` owns its `translations_ui`
+> table via a **shipped migration** (`packages/crouton-i18n/server/db/migrations/
+> 0000_i18n_translations_ui.sql`), not a per-app schema export. NuxtHub auto-applies
+> it (it scans every layer's `server/db/migrations` dir), so the scaffolder/generator
+> no longer emit a local `server/db/translations-ui.ts` copy or its barrel export —
+> they only register the `translationsUi` runtime collection in `app.config.ts`. This
+> fixes fresh / no-language apps (e.g. the links POC) that 500'd with
+> `no such table: translations_ui`.
+
 #### Build-first migration generation (the schema.mjs gotcha, #523)
 
 `drizzle-kit generate` (the app's `db:generate` script) reads the **bundled**
