@@ -81,6 +81,14 @@ a feature branch.
      gate honours `$CROUTON_PACKAGE_EDIT_APPROVED`). If the edit isn't covered by the
      epic's approval, it's a **blocker**: comment + @mention + `status:blocked` + stop.
      Do not work around the gate.
+   - **Changed a `package.json` dependency? Run `pnpm install` and commit the lockfile
+     (HARD RULE, #614).** Any add/remove/bump of a dep, devDep, or workspace `@fyit/*` link
+     in *any* `package.json` MUST be followed by `pnpm install` so **`pnpm-lock.yaml` updates
+     in the same change** — and the lockfile goes in the PR. The deploy installs with
+     `pnpm install --frozen-lockfile`; a `package.json` whose lockfile wasn't regenerated
+     fails it with `ERR_PNPM_OUTDATED_LOCKFILE` and the deploy dies before it starts. This is
+     exactly what broke the library-catalog deploy (#570 → needed the manual #606 regen). Never
+     hand-edit `pnpm-lock.yaml` — let `pnpm install` write it.
 7. **Typecheck.** Run `pnpm -r --filter './apps/*' typecheck` (never `npx nuxt typecheck`
    from root). Fix every error before continuing. Do not declare done with a red typecheck.
 8. **Commit + push immediately (CHECKPOINT).** Use the **`/commit`** skill (via the
@@ -90,6 +98,12 @@ a feature branch.
    **before any long step** (dev boot, deploy, extended verification). Sessions can be
    suspended mid-run: an unpushed worktree is lost work, a pushed branch is recoverable.
    Never sit on uncommitted changes across a long-running command.
+   - **Lockfile-in-sync pre-PR check (#614).** Before you call the work done, verify: if the
+     diff touches any `package.json` dependency block, the diff MUST also include
+     `pnpm-lock.yaml`. Quick check: `git diff --name-only origin/<base>...HEAD` — if a
+     `package.json` changed but `pnpm-lock.yaml` did not, run `pnpm install`, then commit the
+     updated lockfile (same PR). A dep change without a matching lockfile change is a broken
+     PR — the deploy's frozen-lockfile install will reject it.
 9. **Open a PR, then leave a breadcrumb on the issue.** `mcp__github__create_pull_request`
    **into the epic branch** when one was passed (else the repo base). The body MUST contain
    `Closes #<issue_number>` (for linkage). **Then `add_issue_comment` on the issue itself
@@ -145,8 +159,11 @@ skill for POC apps, or `pnpm cf:staging` for `apps/`). Run the **`ui-proposal`**
 Use when staging is unavailable (e.g. packages-only change with no runnable app, or the
 deploy pipeline is down). Run the **`ui-proposal`** skill with `--static`. Then:
 
-- Commit the `<slug>.html` + `<slug>.md` "what changes" list (via `/commit`, scope `docs`).
-- Post the rendered PNG as a `<!-- ui-proposal:<slug> -->` sticky comment on the draft PR.
+- Commit the `<slug>.html` + `<slug>.md` "what changes" list **+ the rendered
+  `writeups/ui-proposals/<slug>.png`** (via `/commit`, scope `docs`) and push.
+- Post the PNG **inline** (Markdown image via its `raw.githubusercontent.com/<repo>/<branch>/…png`
+  URL) in a `<!-- ui-proposal:<slug> -->` sticky comment — never a link to the `.html`, which
+  "opens as code" on mobile (#569/#613). See the `ui-proposal` skill step 4 for the exact comment.
   **Steer feedback to inline comments on the committed `.md`** — the PNG is the glance, the
   `.md` diff is the actionable surface.
 - Apply `status:blocked`, @mention `@pmcp`, and **stop**.
@@ -256,6 +273,8 @@ package edit isn't covered by the epic's approval, that's a blocker — comment 
 ## Guardrails
 
 - Green typecheck is non-negotiable before the PR is "ready".
+- **Dep change ⇒ lockfile change (#614).** Touched a `package.json` dependency? `pnpm install`
+  and commit `pnpm-lock.yaml` in the same PR, or the frozen-lockfile deploy install fails.
 - One issue → one branch → one PR. Never bundle unrelated work.
 - **Block, don't improvise** — a missing prerequisite (a package/module/table/symbol a
   sibling issue owns) is a STOP, never a "I'll just scaffold it". Inventing it is how the

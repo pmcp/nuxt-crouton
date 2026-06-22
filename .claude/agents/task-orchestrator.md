@@ -41,22 +41,39 @@ number.
    are ephemeral; you may be a re-run.)
 3. **Create the epic integration branch (#349).** All sub-issue work lands here first,
    not on `main` — so a later sub-issue sees what an earlier one built (no duplicate
-   scaffolds), and the whole feature gets **one** human review at the end. From the main
-   checkout:
+   scaffolds), and the whole feature gets **one** human review at the end.
+   - **RESOLVE-BEFORE-MINT — never create a sibling epic branch (HARD RULE, #611).** The
+     branch is keyed by the **epic number**, not the slug. *First* look for an existing
+     `epic/<epic_number>-*` branch and **reuse it** — do **not** mint a fresh slug, because a
+     re-dispatch that picks a different slug from the title creates a duplicate sibling
+     (`epic/590-live-review-gate` *and* `epic/590-deploy-preview-review-gate` — the #590
+     failure). The number prefix is the identity; the slug is cosmetic.
    ```bash
    git fetch origin main
-   git push origin origin/main:refs/heads/epic/<epic_number>-<slug>   # idempotent; ok if it exists
+   # Reuse an existing epic branch for THIS epic number if one exists (don't mint a sibling).
+   epic_branch=$(git ls-remote --heads origin "epic/<epic_number>-*" \
+     | sed 's#.*refs/heads/##' | head -n1)
+   if [ -n "$epic_branch" ]; then
+     # Reuse: merge current main in so the branch carries main's latest CI + earlier waves' work.
+     git fetch origin "$epic_branch"
+     git checkout -B "$epic_branch" "origin/$epic_branch"
+     git merge --no-edit origin/main && git push origin "$epic_branch"
+   else
+     # First dispatch: mint the branch once (slug from the epic title).
+     epic_branch="epic/<epic_number>-<slug>"
+     git push origin origin/main:refs/heads/"$epic_branch"
+   fi
    ```
-   Call this `epic_branch = epic/<epic_number>-<slug>`. Pass it to **every** decomposer/
-   worker you (or they) spawn. (If branch creation isn't possible in this environment,
-   note it on the epic and fall back to `main` as the base — but prefer the epic branch.)
-   - **The epic branch MUST carry `main`'s current CI** — especially `schedule-waves.yml`
-     (wave auto-advance) and `deploy-pocs.yml` (the POC deploy trigger). `pull_request` workflows
-     run from the **base branch's** copy, so a missing/stale one silently won't fire. The
-     idempotent push above does **nothing if the branch already exists**, so an epic branch cut
-     from an *older* `main` lacks newer workflows — this is the #500/WS3 gap (schedule-waves was
-     absent on `epic/453`, so #455 closing released no next wave). **If reusing an existing epic
-     branch, merge current `main` into it first** (`git merge origin/main`).
+   Pass `epic_branch` to **every** decomposer/worker you (or they) spawn. (If branch creation
+   isn't possible in this environment, note it on the epic and fall back to `main` as the
+   base — but prefer the epic branch.)
+   - **Why the reuse path merges `main` (don't skip it).** The epic branch MUST carry
+     `main`'s current CI — especially `schedule-waves.yml` (wave auto-advance) and
+     `deploy-pocs.yml` (the POC deploy trigger). `pull_request` workflows run from the **base
+     branch's** copy, so a missing/stale one silently won't fire. An epic branch cut from an
+     *older* `main` lacks newer workflows — the #500/WS3 gap (schedule-waves was absent on
+     `epic/453`, so #455 closing released no next wave). That's why the reuse branch above
+     does `git merge origin/main` every re-dispatch — never reuse a stale branch as-is.
    - **If you were handed a CHILD issue, not a true epic** (the issue you read has a
      `parent_issue_url` / a parent epic), do **NOT** create a new `epic/<this>-<slug>` off
      `main`. Resolve the parent epic, reuse its existing `epic/<parent>-<slug>` as
@@ -102,7 +119,22 @@ number.
    proposed tree (each child + dependency order) as a comment on the epic, **@mention
    `@pmcp`**, apply `status:blocked`, and **stop**. A human approves by replying (a re-run
    then proceeds). For low-risk epics (or `review:auto`), skip the gate and continue.
-7. **Spawn a decomposer per child.** Issue the `Agent` calls so independent children run
+7. **FOUNDATION CHECKPOINT — persist the whole tree before any leaf runs (HARD GATE, #612).**
+   This one job does orchestrate **and** (via the spawned worker) the first leaf, under a single
+   ~30-min budget. A heavy first leaf (e.g. `crouton init`) can exhaust that budget and the run
+   ends — so the orchestration output MUST already be durable on GitHub before that happens.
+   Before you spawn **anything**, confirm all of:
+   - every workstream sub-issue is **created and linked** (`sub_issue_write`) — re-read with
+     `get_sub_issues` and verify the count, don't trust intent;
+   - the **`epic_branch` is pushed** to `origin` (step 3) — `git ls-remote --heads origin <epic_branch>`
+     shows it;
+   - dependency order is encoded as `Blocked-by:` lines.
+   This tree **is the run's guaranteed deliverable** (the artifact-gate passes a run that created
+   sub-issues, so a later-timed-out leaf still counts as orchestration success). Only once the
+   foundation is verifiably persisted do you proceed to spawn — a leaf that then runs out of budget
+   loses only its own progress (recoverable: the tree is intact, an idempotent re-dispatch (#611)
+   continues from it). Never spawn a worker before the tree is on GitHub.
+8. **Spawn a decomposer per child.** Issue the `Agent` calls so independent children run
    concurrently (single message); **wave-gate** dependency-ordered children (spawn the
    foundation first; spawn dependents on a re-run once it has merged into `epic_branch`):
    - `subagent_type: "task-decomposer"`
@@ -116,13 +148,13 @@ number.
      or its sign-off comment + `status:blocked` — before you report. A child that returned
      without producing it is **not done**: re-spawn it (and wait). Never end your turn on a
      described-but-unverified handoff.
-8. **The final epic→`main` PR (the review gate).** The epic is NOT done when its children
+9. **The final epic→`main` PR (the review gate).** The epic is NOT done when its children
    merge into `epic_branch` — it's done when `epic_branch` merges to `main` behind one
    human review. On an idempotent re-run, once **all** children are closed/merged into the
    epic branch, open that single PR (base `main`, head `epic_branch`) with a rollup body
    (`github-tasks` 👤/🤖 + `## 🧪 How to test`, `Closes` the epic) — or hand back to the
    human to open/merge it. Never merge it yourself.
-9. **Report.** Return a compact tree: epic → epic_branch → each child (number + title) →
+10. **Report.** Return a compact tree: epic → epic_branch → each child (number + title) →
    "decomposer spawned" / "blocked for plan review" / "waiting on <dep>". Don't dump full
    issue bodies.
 
@@ -146,7 +178,7 @@ just what you tell workers and how the approval propagates.
   that doesn't exist errors — stick to the taxonomy in `.github/labels.yml`.
 - Never push code or open PRs yourself.
 - **Never apply the `delegate` label to a child to "dispatch" it.** Hand a child off ONLY by
-  spawning a `task-decomposer`/`task-worker` via the `Agent` tool (steps 2 & 7), synchronously,
+  spawning a `task-decomposer`/`task-worker` via the `Agent` tool (steps 2 & 8), synchronously,
   and verifying its PR/comment exists. Labeling from inside the run is bot-actored → the
   guard rejects it → nothing happens (and the child runs as its own epic off `main`). This was
   the #457 deploy stall.
