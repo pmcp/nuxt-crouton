@@ -1,11 +1,12 @@
 name: Deploy Blog (POC preview)
 
 # Thin caller of the reusable Workers deploy pipeline (deploy-app.yml, #114) for the
-# blog POC (epic #265/#274). Pushing to `staging` (path-filtered to pocs/blog/**) — or a
+# blog POC (epic #265/#274). Merging to `main` (path-filtered to pocs/blog/**) — or a
 # manual dispatch — deploys an isolated, auto-provisioned Cloudflare Workers *staging*
 # env (its own id-less D1) and posts the preview URL on the run. Stable at
 # https://blog.pmcp.dev so BETTER_AUTH_URL is predictable and auth works on the preview.
 #
+# Trunk = staging (#347): retargeted from the retired `staging` branch to `main`.
 # Safe-to-fail — staging only, no production. Promote pocs/blog → apps/blog and use the
 # /deploy skill for a prod deploy. Requires the CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN
 # repo secrets (account Workers/D1 edit + zone Workers-Routes/DNS edit for blog.pmcp.dev).
@@ -13,7 +14,7 @@ name: Deploy Blog (POC preview)
 on:
   push:
     branches:
-      - staging
+      - main
     paths:
       - 'pocs/blog/**'
       - 'pnpm-lock.yaml'

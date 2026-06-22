@@ -1,13 +1,18 @@
 name: Deploy Triage
 
 # Thin caller for the reusable Workers deploy pipeline (#115, on #114's deploy-app.yml).
-# Push to `staging` (or a PR) → isolated staging env (reuses triage-staging-db).
+# Merge to `main` (or a PR) → isolated staging env (reuses triage-staging-db).
 # Manual dispatch with environment=production → production (reuses triage-db).
+#
+# Trunk = staging (#347): a merge to `main` touching the paths below auto-deploys
+# the STAGING env — never production. Production stays a deliberate, human-only
+# workflow_dispatch (env=production) per STANDING RULE #318; a push can never reach
+# it (the `environment` input requires workflow_dispatch — see the `with:` block).
 
 on:
   push:
     branches:
-      - staging
+      - main
     paths:
       - 'apps/triage/**'
       - 'packages/crouton/**'

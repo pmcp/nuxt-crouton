@@ -247,7 +247,7 @@
         <!-- hub → script edges -->
         <path class="edge" d="M322,170 L192,205" marker-end="url(#ah2)"/>
         <path class="edge" d="M440,170 L548,205" marker-end="url(#ah2)"/>
-        <text class="svg-lbl" x="232" y="192" text-anchor="end">PR · push→staging</text>
+        <text class="svg-lbl" x="232" y="192" text-anchor="end">PR · push→main</text>
         <text class="svg-lbl" x="470" y="192">dispatch=production</text>
         <!-- script → first step -->
         <path class="edge" d="M180,249 L190,300" marker-end="url(#ah2)"/>
@@ -271,8 +271,8 @@
         </g>
         <g>
           <rect class="b-src" x="215" y="20" width="170" height="50" rx="10"/>
-          <text class="svg-step" x="300" y="42" text-anchor="middle">Push to</text>
-          <text class="svg-s" x="300" y="58" text-anchor="middle">staging branch</text>
+          <text class="svg-step" x="300" y="42" text-anchor="middle">Merge to</text>
+          <text class="svg-s" x="300" y="58" text-anchor="middle">main branch</text>
         </g>
         <g>
           <rect class="b-src" x="400" y="20" width="210" height="50" rx="10"/>
@@ -354,7 +354,7 @@
     <div class="callouts">
       <div class="callout">
         <h3>Preview <em>is</em> Staging</h3>
-        <p>Same Workers env, same <code>NAME.pmcp.dev</code> domain, same <code>NAME-staging-db</code>. They differ only by <strong>trigger</strong>: a PR previews that PR; a push to the <code>staging</code> branch refreshes the shared env. It's <strong>one long-lived environment</strong>, not a per-PR throwaway.</p>
+        <p>Same Workers env, same <code>NAME.pmcp.dev</code> domain, same <code>NAME-staging-db</code>. They differ only by <strong>trigger</strong>: a PR previews that PR; a <strong>merge to <code>main</code></strong> refreshes the shared env (trunk = staging, #347). It's <strong>one long-lived environment</strong>, not a per-PR throwaway.</p>
       </div>
       <div class="callout good">
         <h3>Production is manual-only</h3>
@@ -389,7 +389,7 @@
     <div class="callouts" style="margin-top:16px;">
       <div class="callout warn" style="grid-column:1 / -1;">
         <h3>Why a package change previews on fanfare but not velo</h3>
-        <p>fanfare's <code>pull_request</code> trigger lists <code>packages/**</code> in its path filter, so a shared-package change (e.g. a <code>crouton-core</code> UI fix) auto-deploys a fanfare preview on the PR. velo's <code>pull_request</code> trigger only watches <code>apps/velo/**</code> — package changes deploy velo only on a push to the <code>staging</code> branch, never on the PR itself.</p>
+        <p>fanfare's <code>pull_request</code> trigger lists <code>packages/**</code> in its path filter, so a shared-package change (e.g. a <code>crouton-core</code> UI fix) auto-deploys a fanfare preview on the PR. velo's <code>pull_request</code> trigger only watches <code>apps/velo/**</code> — package changes deploy velo only on a merge to <code>main</code>, never on the PR itself.</p>
       </div>
     </div>
   </section>
