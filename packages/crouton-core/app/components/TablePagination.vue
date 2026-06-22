@@ -1,12 +1,13 @@
 <template>
   <div class="flex flex-col gap-3 border-t border-default pt-4 mt-auto sm:flex-row sm:items-center sm:justify-between">
     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <span class="text-sm text-muted">{{ t('table.rowsPerPageColon') }}</span>
+      <!-- Rows-per-page selector: hidden on mobile to keep the footer lean -->
+      <span class="hidden text-sm text-muted sm:inline">{{ t('table.rowsPerPageColon') }}</span>
       <USelect
         :label="tString('table.rowsPerPage')"
         :model-value="pageCount"
         :items="pageSizeItems"
-        class="w-20"
+        class="hidden w-20 sm:block"
         size="xs"
         @update:model-value="handlePageCountChange"
       />
