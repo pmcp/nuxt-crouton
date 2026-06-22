@@ -80,9 +80,16 @@ invoking this skill, or when the `task-worker` agent determines staging isn't re
 |----------|------|-----------|
 | Mockup source | `writeups/ui-proposals/<slug>.html` | yes (editable source of truth) |
 | "What changes" list | `writeups/ui-proposals/<slug>.md` | yes (inline-commentable diff surface) |
-| Rendered image | `screenshots/ui-proposal-<slug>.png` | no — gitignored; posted to the PR |
+| Rendered image | `writeups/ui-proposals/<slug>.png` | **yes** — committed so it can be **embedded inline** in the sticky comment (#613) |
 
 `<slug>` = kebab of the surface, e.g. `mobile-collection-viewer`.
+
+> **Why the PNG is committed (not in `screenshots/`).** A GitHub comment can only show an
+> image inline if it has a fetchable URL. The PNG is committed to `writeups/ui-proposals/`
+> (gitignore-excepted, like `ticket-diagram`'s renders) and referenced by its
+> **`raw.githubusercontent.com/<repo>/<branch>/…png`** URL, so it renders as an image on web
+> **and mobile**. Linking the `.html` instead made the proposal "open as code" on mobile —
+> the #569 papercut this fixes.
 
 ### Step 1 — Understand the surface
 Read the component(s) you're about to change. The mockup must reflect the **actual** current
@@ -107,19 +114,33 @@ Rules (keep it portable):
 
 ### Step 3 — Render to PNG
 ```bash
-node .claude/skills/ui-proposal/render.mjs writeups/ui-proposals/<slug>.html screenshots/ui-proposal-<slug>.png
+node .claude/skills/ui-proposal/render.mjs writeups/ui-proposals/<slug>.html writeups/ui-proposals/<slug>.png
 # optional: --width 1100   (default 1000)   --selector ".stage"   (crop to element)
 ```
 Uses the repo's Playwright (`@playwright/test`) headless Chromium — no network, 2× for crisp
-image.
+image. Render **into `writeups/ui-proposals/`** (not `screenshots/`) so the PNG is committed and
+can be embedded inline (step 4).
 
 ### Step 4 — Hand off (review happens on the DIFF)
 **Commit a text artifact so feedback can be inline.** Alongside the `.html`, write the
 `writeups/ui-proposals/<slug>.md` — the "what changes" list, one item per line. Committed,
 it lands in "Files changed" so the reviewer can inline-comment a specific change.
 
-- **Commit** the `.html` + `.md` (via `/commit`, scope `docs`).
-- **Post the PNG** as a sticky `<!-- ui-proposal:<slug> -->` PR comment (at-a-glance visual).
+- **Commit** the `.html` + `.md` + **`.png`** (via `/commit`, scope `docs`) and **push the
+  branch** — the PNG must be on the branch before you can reference its raw URL.
+- **Post the PNG inline** in a sticky `<!-- ui-proposal:<slug> -->` PR comment using a
+  Markdown image (NOT a link to the `.html` — that "opens as code" on mobile, the #569/#613
+  papercut). Reference it by its raw URL **on the PR's head branch**:
+  ```markdown
+  <!-- ui-proposal:<slug> -->
+  ### 🎨 UI proposal — <slug>
+  ![<slug> mockup](https://raw.githubusercontent.com/FriendlyInternet/nuxt-crouton/<branch>/writeups/ui-proposals/<slug>.png)
+
+  Review the **"what changes"** list in _Files changed_ (`writeups/ui-proposals/<slug>.md`) and
+  inline-comment any change. Reply `lgtm` / `approve` when satisfied.
+  ```
+  Use the actual PR **head branch** in the URL (e.g. `claude/issue-<NN>-<slug>`); the image
+  re-renders whenever the committed file changes, so editing in place (step 5) just works.
 - **Steer feedback to the `.md`** — inline comments in the diff, not the image.
 - Apply `status:blocked`, @mention `@pmcp`, and **stop**.
 

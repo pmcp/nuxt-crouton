@@ -159,8 +159,11 @@ skill for POC apps, or `pnpm cf:staging` for `apps/`). Run the **`ui-proposal`**
 Use when staging is unavailable (e.g. packages-only change with no runnable app, or the
 deploy pipeline is down). Run the **`ui-proposal`** skill with `--static`. Then:
 
-- Commit the `<slug>.html` + `<slug>.md` "what changes" list (via `/commit`, scope `docs`).
-- Post the rendered PNG as a `<!-- ui-proposal:<slug> -->` sticky comment on the draft PR.
+- Commit the `<slug>.html` + `<slug>.md` "what changes" list **+ the rendered
+  `writeups/ui-proposals/<slug>.png`** (via `/commit`, scope `docs`) and push.
+- Post the PNG **inline** (Markdown image via its `raw.githubusercontent.com/<repo>/<branch>/…png`
+  URL) in a `<!-- ui-proposal:<slug> -->` sticky comment — never a link to the `.html`, which
+  "opens as code" on mobile (#569/#613). See the `ui-proposal` skill step 4 for the exact comment.
   **Steer feedback to inline comments on the committed `.md`** — the PNG is the glance, the
   `.md` diff is the actionable surface.
 - Apply `status:blocked`, @mention `@pmcp`, and **stop**.
