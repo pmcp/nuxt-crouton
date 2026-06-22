@@ -1,0 +1,166 @@
+name: Deploy Apps (Cloudflare Workers)
+
+# ONE generic deploy for every apps/<name> (epic #481, WS2). Replaces the per-app
+# deploy-<name>.yml callers (deploy-velo/triage/fanfare.yml) so the agent pipeline never
+# has to push a .github/workflows/ file (its App token lacks the `workflows` scope — what
+# blocked #457). An app opts in by committing apps/<name>/deploy.config.json (which the bot
+# CAN push, it's under apps/, not .github/).
+#
+# Triggers:
+#   • push to main touching apps/** or a watched package → STAGING for each app whose
+#     deploy.config.json `watchPaths` match the changed files (trunk = staging, #347).
+#   • pull_request touching the same → STAGING preview for each matching app.
+#   • workflow_dispatch(app, environment) → deploy ONE named app to staging OR production.
+#
+# 🟦 STANDING RULE #318 — production is reachable ONLY via a deliberate workflow_dispatch
+# with environment=production. push/pull_request NEVER set `environment`, so they always
+# resolve to staging: the detect job below hard-codes env=staging for those events, and a
+# `push` can never produce a production matrix entry. This holds structurally, not by
+# convention. For prod, use the /deploy-production skill (which dispatches this with
+# environment=production).
+#
+# Each app is deployed by the reusable deploy-app.yml (workspace: apps). Per-app settings
+# (stagingUrl / productionUrl / layerPackages / watchPaths) live in deploy.config.json.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-apps.yml'
+      - '.github/workflows/deploy-app.yml'
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-apps.yml'
+      - '.github/workflows/deploy-app.yml'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: App directory name under apps/ (e.g. velo)
+        required: true
+        type: string
+      environment:
+        description: 'Deploy target — production is GATED (deliberate dispatch only, #318)'
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+      review_pr:
+        description: >-
+          Optional PR number to wire the preview-review bridge to (#607). Set it to
+          make a manually-dispatched staging preview's in-page overlay comments post to
+          that PR. Leave empty to deploy without the bridge. Ignored for production.
+        required: false
+        type: string
+
+jobs:
+  # Figure out which opted-in apps to deploy (and to which env) → a matrix the deploy
+  # job fans out over. push/pull_request → STAGING only (env hard-coded below, #318).
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      any: ${{ steps.set.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: set
+        env:
+          EVENT: ${{ github.event_name }}
+          DISPATCH_APP: ${{ github.event.inputs.app }}
+          DISPATCH_ENV: ${{ github.event.inputs.environment }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.after }}
+        run: |
+          set -euo pipefail
+          include='[]'
+
+          # Append one app (read from its deploy.config.json) to the matrix include.
+          add_app() {
+            local app="$1" env="$2"
+            local cfg="apps/$app/deploy.config.json"
+            if [ ! -f "$cfg" ]; then
+              echo "skip: apps/$app has no deploy.config.json (not opted in)"
+              return
+            fi
+            local su pu lp
+            su=$(jq -r '.stagingUrl // ""' "$cfg")
+            pu=$(jq -r '.productionUrl // ""' "$cfg")
+            lp=$(jq -r '.layerPackages // ""' "$cfg")
+            include=$(printf '%s' "$include" | jq \
+              --arg a "$app" --arg e "$env" --arg su "$su" --arg pu "$pu" --arg lp "$lp" \
+              '. + [{app:$a, environment:$e, stagingUrl:$su, productionUrl:$pu, layerPackages:$lp}]')
+          }
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            # Single named app. environment honours the input; anything other than the
+            # explicit "production" choice falls back to staging (defensive whitelist).
+            env="staging"
+            [ "${DISPATCH_ENV:-staging}" = "production" ] && env="production"
+            [ -n "${DISPATCH_APP:-}" ] && add_app "$DISPATCH_APP" "$env"
+          else
+            # push / pull_request → STAGING ONLY (#318). Deploy each opted-in app whose
+            # watchPaths match a changed file.
+            if [ -z "${BASE_SHA:-}" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+              changed=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)
+            else
+              changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" 2>/dev/null || true)
+            fi
+            echo "Changed files:"; printf '%s\n' "$changed"
+
+            for cfg in apps/*/deploy.config.json; do
+              [ -f "$cfg" ] || continue
+              app=$(basename "$(dirname "$cfg")")
+              mapfile -t pats < <(jq -r '.watchPaths[]? // empty' "$cfg")
+              hit=false
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                for pat in "${pats[@]:-}"; do
+                  [ -z "$pat" ] && continue
+                  # In [[ ]] pattern matching '*' spans '/', so 'packages/foo/**'
+                  # matches any file under packages/foo and 'pnpm-lock.yaml' is exact.
+                  if [[ "$f" == $pat ]]; then hit=true; break; fi
+                done
+                $hit && break
+              done <<< "$changed"
+              if $hit; then add_app "$app" "staging"; fi
+            done
+          fi
+
+          matrix=$(jq -cn --argjson inc "$include" '{include:$inc}')
+          if [ "$(printf '%s' "$include" | jq 'length')" -gt 0 ]; then any=true; else any=false; fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "any=$any" >> "$GITHUB_OUTPUT"
+          echo "Detected matrix: $matrix"
+
+  # One deploy-app.yml call per detected app. Skipped cleanly when nothing opted-in changed.
+  deploy:
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    permissions:
+      contents: read
+      pull-requests: write   # reusable workflow comments the preview URL on the PR
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    uses: ./.github/workflows/deploy-app.yml
+    with:
+      app: ${{ matrix.app }}
+      workspace: apps
+      environment: ${{ matrix.environment }}
+      staging-url: ${{ matrix.stagingUrl }}
+      production-url: ${{ matrix.productionUrl }}
+      layer-packages: ${{ matrix.layerPackages }}
+      # PR-tied deploys wire the preview-review bridge to this PR (#607); on a manual
+      # dispatch use the optional review_pr input; empty → the bridge stays off.
+      review-pr: ${{ github.event.pull_request.number || github.event.inputs.review_pr }}
+    secrets: inherit

@@ -14,9 +14,7 @@ name: Report failed post-merge deploy
 on:
   workflow_run:
     workflows:
-      - "Deploy Velo"
-      - "Deploy Triage"
-      - "Deploy Fanfare"
+      - "Deploy Apps (Cloudflare Workers)"
       - "Deploy Docs"
       - "Deploy ThinkGraph"
       - "Deploy Blog (POC preview)"
@@ -55,8 +53,12 @@ jobs:
               core.info(`Issue for run ${run.id} already exists — no duplicate.`); return
             }
 
-            // App slug from the workflow file: .github/workflows/deploy-<slug>.yml
-            const slug = (run.path.match(/deploy-([a-z0-9-]+)\.yml$/) || [])[1] || null
+            // App slug from the workflow file: .github/workflows/deploy-<slug>.yml.
+            // The generic per-workspace workflows (deploy-apps.yml / deploy-pocs.yml, #481)
+            // carry no app in their path — the app lives in the matrix, not the filename —
+            // so treat their "slug" as none (one issue per failing RUN, no app label).
+            const rawSlug = (run.path.match(/deploy-([a-z0-9-]+)\.yml$/) || [])[1] || null
+            const slug = (rawSlug === 'apps' || rawSlug === 'pocs') ? null : rawSlug
 
             // Apply an app:/poc: label only if it actually exists (don't auto-create a wrong one).
             const labels = ['type:fix', 'meta:agents']
