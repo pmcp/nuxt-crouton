@@ -12,6 +12,14 @@ name: Auto-merge epic sub-PRs
 # untouched and are merged by resume-on-comment.yml when the owner comments `approve`.
 # No double-merge.
 #
+# GREEN GATE (#339): don't auto-merge a PR whose checks are RED. We block on any FAILED
+# check-run / commit status for the head SHA; we deliberately do NOT block on merely
+# PENDING checks — this workflow's own check-run is in-progress while it evaluates, so
+# waiting on "all green" would deadlock on itself. The `check_suite: success` trigger
+# re-fires this when a suite goes green, so a PR that was red/pending gets another look.
+# (Epic branches carry no REQUIRED checks, so mergeable_state never gates on CI — this
+# is what gives "merge once it's green" real teeth there.)
+#
 # SHARED-CODE PAUSE (#339): a build sub-PR that touches packages/ (shared code) is NOT
 # auto-merged — it's held for a human. The packages/ HARD GATE (#350) means a change there
 # ripples across every consuming app, so it must never land unreviewed, not even onto an
@@ -27,18 +35,19 @@ name: Auto-merge epic sub-PRs
 on:
   pull_request:
     types: [opened, ready_for_review, synchronize]
+  check_suite:
+    types: [completed]
 
 permissions:
   contents: read
 
 jobs:
   automerge:
-    # Non-draft, pipeline-authored PR targeting an epic branch.
-    if: |
-      !github.event.pull_request.draft &&
-      startsWith(github.event.pull_request.base.ref, 'epic/') &&
-      (github.event.pull_request.user.login == 'claude[bot]' ||
-       github.event.pull_request.user.login == 'nuxt-harness[bot]')
+    # On a PR event, evaluate it directly; on a check_suite, only when it went green
+    # (a red/again-pending suite will re-fire this when it next completes green).
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v1
@@ -51,43 +60,84 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const pull_number = context.payload.pull_request.number
-            // GitHub computes mergeability asynchronously after a PR event — poll until known.
-            let pr, state
-            for (let i = 0; i < 6; i++) {
-              pr = (await github.rest.pulls.get({ ...context.repo, pull_number })).data
-              if (pr.merged) { core.info(`#${pull_number} already merged.`); return }
-              if (pr.state !== 'open') { core.info(`#${pull_number} not open (${pr.state}).`); return }
-              state = pr.mergeable_state
-              if (state && state !== 'unknown') break
-              await new Promise(r => setTimeout(r, 5000))
+            const { owner, repo } = context.repo
+            const BOTS = ['claude[bot]', 'nuxt-harness[bot]']
+
+            // Any RED check for this SHA? (failed check-run or failed commit status.)
+            async function isRed(ref) {
+              const runs = await github.paginate(github.rest.checks.listForRef, { owner, repo, ref, per_page: 100 })
+              const RED = ['failure', 'cancelled', 'timed_out', 'action_required', 'stale']
+              if (runs.some(r => r.status === 'completed' && RED.includes(r.conclusion))) return true
+              try {
+                const combined = (await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref })).data
+                if ((combined.statuses || []).some(s => ['failure', 'error'].includes(s.state))) return true
+              } catch (e) { core.warning(`combined status for ${ref}: ${e.message}`) }
+              return false
             }
-            // 'dirty' = merge conflicts; 'blocked' = a required check/approval is still pending.
-            // Don't force either — leave it for a human. (Epic branches normally have no required
-            // checks, so a non-gate sub-PR is 'clean' or 'unstable' = mergeable.)
-            if (['dirty', 'blocked'].includes(state)) {
-              core.info(`#${pull_number} not auto-mergeable (state=${state}) — leaving for a human.`)
-              return
+
+            // Resolve candidate PR numbers from whatever event fired.
+            const candidates = new Set()
+            if (context.eventName === 'pull_request') {
+              candidates.add(context.payload.pull_request.number)
+            } else {
+              for (const p of (context.payload.check_suite.pull_requests || [])) candidates.add(p.number)
+              if (!candidates.size) {
+                const assoc = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
+                  { owner, repo, commit_sha: context.payload.check_suite.head_sha, per_page: 100 })
+                assoc.forEach(p => candidates.add(p.number))
+              }
             }
-            // Shared-code pause (#339): hold any PR that touches packages/ for a human review.
-            const files = await github.paginate(github.rest.pulls.listFiles, { ...context.repo, pull_number })
-            const sharedCode = files.filter(f => f.filename.startsWith('packages/'))
-            if (sharedCode.length) {
-              core.info(`#${pull_number} touches packages/ (${sharedCode.length} file(s)) — holding for a human.`)
-              try { await github.rest.issues.addLabels({ ...context.repo, issue_number: pull_number, labels: ['status:blocked'] }) } catch (e) { core.warning(`addLabel #${pull_number}: ${e.message}`) }
-              const list = sharedCode.slice(0, 10).map(f => `- \`${f.filename}\``).join('\n')
-              const more = sharedCode.length > 10 ? `\n…and ${sharedCode.length - 10} more.` : ''
-              await github.rest.issues.createComment({ ...context.repo, issue_number: pull_number,
-                body: '> 🤖 **Claude Code** · agent pipeline (CI) · _auto-merge shared-code guard (#339)_\n\n'
-                  + '⏸️ **Held — this build PR changes shared code under `packages/`.** Per the `packages/` '
-                  + 'HARD GATE (#350) a change here ripples across every consuming app, so it is **not** '
-                  + 'auto-merged. A human must review and merge it (and confirm `pnpm typecheck` across apps).\n\n'
-                  + `Shared-code files in this PR:\n${list}${more}` })
-              return
-            }
-            try {
-              await github.rest.pulls.merge({ ...context.repo, pull_number, merge_method: 'merge' })
-              core.info(`Auto-merged non-gate sub-PR #${pull_number} into ${pr.base.ref}.`)
-            } catch (e) {
-              core.warning(`merge #${pull_number} failed: ${e.message}`)
+            if (!candidates.size) { core.info('No candidate PRs — nothing to do.'); return }
+
+            for (const pull_number of candidates) {
+              // Poll mergeability — GitHub computes it asynchronously after an event.
+              let pr, state
+              for (let i = 0; i < 6; i++) {
+                pr = (await github.rest.pulls.get({ owner, repo, pull_number })).data
+                if (pr.merged || pr.state !== 'open') break
+                state = pr.mergeable_state
+                if (state && state !== 'unknown') break
+                await new Promise(r => setTimeout(r, 5000))
+              }
+              if (pr.merged) { core.info(`#${pull_number} already merged.`); continue }
+              if (pr.state !== 'open') { core.info(`#${pull_number} not open (${pr.state}).`); continue }
+
+              // Only a non-draft, pipeline-authored, non-gate PR targeting an epic branch.
+              if (pr.draft) { core.info(`#${pull_number} is a draft (gate PR) — skip.`); continue }
+              if (!pr.base.ref.startsWith('epic/')) { core.info(`#${pull_number} base ${pr.base.ref} not an epic branch — skip.`); continue }
+              if (!BOTS.includes(pr.user.login)) { core.info(`#${pull_number} not pipeline-authored (${pr.user.login}) — skip.`); continue }
+
+              // 'dirty' = merge conflicts; 'blocked' = a required check/approval pending. Leave both.
+              if (['dirty', 'blocked'].includes(state)) {
+                core.info(`#${pull_number} not auto-mergeable (state=${state}) — leaving for a human.`); continue
+              }
+
+              // Green gate (#339): never merge a red PR; pending is fine (see header).
+              if (await isRed(pr.head.sha)) {
+                core.info(`#${pull_number} has a failing check — leaving for a human / fix-bot.`); continue
+              }
+
+              // Shared-code pause (#339): hold any PR that touches packages/ for a human.
+              const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number })
+              const sharedCode = files.filter(f => f.filename.startsWith('packages/'))
+              if (sharedCode.length) {
+                core.info(`#${pull_number} touches packages/ (${sharedCode.length} file(s)) — holding for a human.`)
+                try { await github.rest.issues.addLabels({ owner, repo, issue_number: pull_number, labels: ['status:blocked'] }) } catch (e) { core.warning(`addLabel #${pull_number}: ${e.message}`) }
+                const list = sharedCode.slice(0, 10).map(f => `- \`${f.filename}\``).join('\n')
+                const more = sharedCode.length > 10 ? `\n…and ${sharedCode.length - 10} more.` : ''
+                await github.rest.issues.createComment({ owner, repo, issue_number: pull_number,
+                  body: '> 🤖 **Claude Code** · agent pipeline (CI) · _auto-merge shared-code guard (#339)_\n\n'
+                    + '⏸️ **Held — this build PR changes shared code under `packages/`.** Per the `packages/` '
+                    + 'HARD GATE (#350) a change here ripples across every consuming app, so it is **not** '
+                    + 'auto-merged. A human must review and merge it (and confirm `pnpm typecheck` across apps).\n\n'
+                    + `Shared-code files in this PR:\n${list}${more}` })
+                continue
+              }
+
+              try {
+                await github.rest.pulls.merge({ owner, repo, pull_number, merge_method: 'merge' })
+                core.info(`Auto-merged non-gate sub-PR #${pull_number} into ${pr.base.ref}.`)
+              } catch (e) {
+                core.warning(`merge #${pull_number} failed: ${e.message}`)
+              }
             }
