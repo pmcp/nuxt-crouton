@@ -1,0 +1,65 @@
+name: housekeeping
+
+# Weekly "🧹 Housekeeping" digest (#633) — the periodic backstop that catches the drift the
+# event-driven jobs miss. Deterministic (no LLM, no secrets): gathers via git + the GitHub
+# API with the built-in GITHUB_TOKEN, renders Markdown, posts a comment to one standing
+# "🧹 Housekeeping" issue. REPORT-ONLY — it never deletes a branch or edits a label/issue.
+# See .claude/skills/housekeeping/ (gather.mjs → render.mjs → post-comment.sh).
+
+on:
+  schedule:
+    # ~07:00 Europe/Brussels on Wednesdays. Cron is UTC: 06:00 UTC = 07:00 CET / 08:00 CEST.
+    - cron: '0 6 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: housekeeping
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so `git branch --merged main` is accurate
+
+      # Bring every remote branch into refs/remotes/origin so the stale-branch scan sees them.
+      - name: Fetch all remote branches
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Gather repo drift
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+        run: node .claude/skills/housekeeping/gather.mjs > housekeeping.data.json
+
+      - name: Render Markdown
+        run: |
+          node .claude/skills/housekeeping/render.mjs housekeeping.data.json --out-dir .
+          cp housekeeping-*.md housekeeping.md
+
+      - name: Post to the standing issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+          DIGEST_BODY_FILE: housekeeping.md
+        run: bash .claude/skills/housekeeping/post-comment.sh
+
+      - name: Upload digest artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: housekeeping-digest
+          path: |
+            housekeeping.data.json
+            housekeeping-*.md
+          if-no-files-found: ignore
