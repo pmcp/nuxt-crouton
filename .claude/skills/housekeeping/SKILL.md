@@ -65,6 +65,26 @@ housekeeping:
   # to: [you@example.com]  # required only when deliver includes email
 ```
 
+## Lossless branch sweep (separate workflow — the only auto-delete)
+
+The digest is **report-only**. The one auto-destructive action lives in its own workflow
+(`.github/workflows/cleanup-merged-branches.yml` → `prune-merged-branches.mjs`), split off by
+blast radius so a digest bug can never delete a branch. It deletes a branch **only** if it is
+provably contained in `main` (`git branch -r --merged origin/main`, 0 commits ahead) — lossless
+by construction. It also skips any branch with an **open PR**, anything newer than
+`BRANCH_MIN_AGE_DAYS` (default 1), and `main`/protected refs.
+
+**Report-only until enabled:** it runs dry-run (lists what it *would* delete) unless `APPLY` is
+on — set the repo variable `CLEANUP_BRANCHES_APPLY=true`, or run it via `workflow_dispatch` with
+`apply: true`. Confirm a dry-run looks right before flipping the variable. Complements
+`cleanup-epic-branches.yml` (which deletes `epic/*` on PR merge) by sweeping whatever slipped
+past an event trigger.
+
+```bash
+GITHUB_TOKEN=$(gh auth token) node .claude/skills/housekeeping/prune-merged-branches.mjs        # dry-run
+GITHUB_TOKEN=$(gh auth token) APPLY=true node .claude/skills/housekeeping/prune-merged-branches.mjs  # delete
+```
+
 ## Tuning
 
 - `HOUSEKEEPING_STALE_DAYS` (env, default `14`) — the "no activity in N days" threshold.
