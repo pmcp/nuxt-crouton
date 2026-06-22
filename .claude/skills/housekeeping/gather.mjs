@@ -19,6 +19,7 @@
  */
 
 import { execSync } from 'node:child_process'
+import { readdirSync, readFileSync, existsSync } from 'node:fs'
 
 const REPO = process.env.DIGEST_REPO || 'FriendlyInternet/nuxt-crouton'
 const [OWNER, NAME] = REPO.split('/')
@@ -96,6 +97,46 @@ function staleBranches() {
     .sort((a, b) => b.ageDays - a.ageDays)
 }
 
+// ── Label coverage (#636) ─────────────────────────────────────────────────────
+// CLAUDE.md treats a missing pkg:/app:/poc:/worker: label as a build failure, but nothing
+// checks that .github/labels.yml keeps up with the folders on disk. Compare each source
+// dir against the declared labels. REPORT-ONLY — never auto-prune (deleting a label strips
+// it from every issue, which is why labels.yml itself runs `skip_delete: true`).
+function labelCoverage() {
+  const labelsFile = '.github/labels.yml'
+  if (!existsSync(labelsFile)) return null
+  // No YAML dep — pull every declared `name: "..."` value (the file is a flat label list).
+  const declared = new Set(
+    [...readFileSync(labelsFile, 'utf8').matchAll(/^\s*-?\s*name:\s*["']?([^"'\n]+)["']?/gm)].map(
+      (m) => m[1].trim()
+    )
+  )
+  const dirs = (p) => {
+    try {
+      return readdirSync(p, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+        .map((d) => d.name)
+    } catch {
+      return []
+    }
+  }
+  // dir-prefix → label-prefix
+  const map = [
+    ['packages', 'pkg'],
+    ['apps', 'app'],
+    ['pocs', 'poc'],
+    ['workers', 'worker']
+  ]
+  const missing = []
+  for (const [dir, prefix] of map) {
+    for (const name of dirs(dir)) {
+      const label = `${prefix}:${name}`
+      if (!declared.has(label)) missing.push({ dir: `${dir}/${name}`, expected: label })
+    }
+  }
+  return missing.sort((a, b) => a.expected.localeCompare(b.expected))
+}
+
 // ── Issue / PR drift (API) ───────────────────────────────────────────────────
 const COMPONENT_RE = /^(pkg|app|worker|poc):/
 
@@ -155,6 +196,7 @@ const data = {
   repo: REPO,
   staleDays,
   staleBranches: staleBranches(),
+  labelCoverage: labelCoverage(),
   ...drift
 }
 

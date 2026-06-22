@@ -56,6 +56,16 @@ if (data.unlabeled?.length) {
   ])
 }
 
+if (data.labelCoverage?.length) {
+  sections.push([
+    '🏗️ Label coverage',
+    [
+      'Source dirs with no matching label in `.github/labels.yml` (add the label — CLAUDE.md treats a missing one as a build failure):',
+      ...data.labelCoverage.map((m) => `- \`${m.dir}\` — missing label \`${m.expected}\``)
+    ]
+  ])
+}
+
 if (data.stuck?.length) {
   sections.push([
     '⏳ Stuck in-progress',
