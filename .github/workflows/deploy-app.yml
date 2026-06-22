@@ -75,6 +75,11 @@ on:
       # (they persist across deploys, so a one-time `wrangler secret bulk` also works).
       WORKER_SECRETS_JSON:
         required: false
+      # Optional repo-level secret used only to derive the throwaway review login's
+      # password (#608). Absent → a fixed fallback salt is used (fine: staging is
+      # throwaway + isolated and the creds are posted publicly on the PR anyway).
+      REVIEW_SEED_SECRET:
+        required: false
 
 jobs:
   deploy:
@@ -288,6 +293,43 @@ jobs:
             printf '%s' "$(openssl rand -hex 32)" | npx wrangler secret put BETTER_AUTH_SECRET $ENV_FLAG
           fi
 
+      # Seed a throwaway, loginable test account on the (isolated, staging-only)
+      # preview so a reviewer can open the URL and be inside the app in one step —
+      # no register → create-team wall (#608). Drives the app's own HTTP auth on the
+      # deployed Worker (no raw SQL). Idempotent: deterministic creds per preview, so
+      # a redeploy reprints the SAME working login instead of piling up users; an
+      # existing user is detected and reused. Best-effort — a seed hiccup never fails
+      # the deploy. Staging only; production seeds nothing.
+      - name: Seed review login (staging only)
+        id: seed
+        if: ${{ inputs.environment != 'production' && steps.deploy.outputs.url != '' }}
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          APP: ${{ inputs.app }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.ref_name }}
+          REVIEW_SEED_SECRET: ${{ secrets.REVIEW_SEED_SECRET }}
+        run: |
+          set -o pipefail
+          # Stable per-preview key: the PR number when this is a PR, else the ref.
+          if [ -n "$PR_NUMBER" ]; then KEY="pr${PR_NUMBER}"; else KEY="$(printf '%s' "$REF_NAME" | tr -c 'a-zA-Z0-9' '-')"; fi
+          EMAIL="review+${APP}-${KEY}@example.com"
+          # Deterministic password so redeploys reprint the same working login.
+          SALT="${REVIEW_SEED_SECRET:-crouton-review-seed}"
+          PW="$(printf '%s' "${SALT}:${APP}:${KEY}" | sha256sum | cut -c1-24)"
+          echo "::add-mask::$PW"
+          node scripts/seed-review-login.mjs --url "$DEPLOY_URL" --email "$EMAIL" --password "$PW" --team "Review Team" || true
+          # Surface for the PR comment + the run summary (the password is masked in logs).
+          echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
+          echo "password=$PW" >> "$GITHUB_OUTPUT"
+          {
+            echo "### 🔑 Review test login (${APP})"
+            echo "- **URL:** $DEPLOY_URL"
+            echo "- **Email:** \`$EMAIL\`"
+            echo "- **Password:** \`$PW\`"
+            echo "_Disposable account on an isolated, throwaway staging DB._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # On PRs, post/update a sticky comment with the isolated staging URL.
       - name: Comment staging URL on PR
         if: ${{ inputs.environment != 'production' && github.event_name == 'pull_request' && steps.deploy.outputs.url != '' }}
@@ -296,8 +338,14 @@ jobs:
           script: |
             const url = '${{ steps.deploy.outputs.url }}'
             const app = '${{ inputs.app }}'
+            const email = `${{ steps.seed.outputs.email }}`
+            const password = `${{ steps.seed.outputs.password }}`
             const marker = `<!-- deploy-staging:${app} -->`
-            const body = `${marker}\n🚀 **${app}** staging deployed: ${url}\n\n_Isolated, auto-provisioned Workers staging env (its own D1 + KV)._`
+            // Disposable test login (#608) — only present when the seed step ran + produced creds.
+            const login = (email && password)
+              ? `\n\n🔑 **Test login** — paste straight in, no registration:\n\`\`\`\nEmail:    ${email}\nPassword: ${password}\n\`\`\`\n_Disposable account on this isolated, throwaway staging DB._`
+              : ''
+            const body = `${marker}\n🚀 **${app}** staging deployed: ${url}${login}\n\n_Isolated, auto-provisioned Workers staging env (its own D1 + KV)._`
             const { owner, repo } = context.repo
             const issue_number = context.issue.number
             const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number })
