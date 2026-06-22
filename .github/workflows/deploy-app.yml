@@ -343,6 +343,58 @@ jobs:
             echo "_Disposable account on an isolated, throwaway staging DB._"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Prove the DEPLOYED preview actually works — log in with the seeded account, run
+      # any app-declared CRUD + public read, and screenshot it (#293). This is the
+      # acceptance typecheck/boot can't give: auth + a data round-trip on the real Worker
+      # (D1 + secrets + better-auth). Report-only by DEFAULT — a brittle smoke must never
+      # red a previously-green deploy across velo/fanfare/triage; an app opts into gating
+      # with `"smoke": { "required": true }` in its deploy.config.json. Login proof + CRUD
+      # use plain fetch (always available); the screenshot is best-effort (skips cleanly
+      # when no browser is present on the runner).
+      - name: Verify deployed preview (smoke)
+        id: smoke
+        if: ${{ inputs.environment != 'production' && steps.deploy.outputs.url != '' }}
+        continue-on-error: true
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+          EMAIL: ${{ steps.seed.outputs.email }}
+          PW: ${{ steps.seed.outputs.password }}
+          APP: ${{ inputs.app }}
+          WORKSPACE: ${{ inputs.workspace }}
+        run: |
+          MANIFEST="$WORKSPACE/$APP/deploy.config.json"
+          if node scripts/smoke-deployed.mjs --url "$URL" --email "$EMAIL" --password "$PW" --app "$APP" --manifest "$MANIFEST"; then
+            echo "result=pass" >> "$GITHUB_OUTPUT"
+            echo "### ✅ Deployed-preview smoke ($APP) — passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "result=fail" >> "$GITHUB_OUTPUT"
+            echo "### ❌ Deployed-preview smoke ($APP) — failed (see step log)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload smoke screenshot
+        if: ${{ always() && steps.smoke.outputs.result != '' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ inputs.app }}
+          path: screenshots/${{ inputs.app }}-smoke.png
+          if-no-files-found: ignore
+
+      # Gate the deploy on the smoke ONLY when the app opted in (smoke.required: true).
+      # Otherwise a failing smoke is a loud warning, not a red deploy.
+      - name: Gate on smoke result (opt-in)
+        if: ${{ steps.smoke.outputs.result == 'fail' }}
+        env:
+          APP: ${{ inputs.app }}
+          WORKSPACE: ${{ inputs.workspace }}
+        run: |
+          REQUIRED=$(jq -r '.smoke.required // false' "$WORKSPACE/$APP/deploy.config.json" 2>/dev/null || echo false)
+          if [ "$REQUIRED" = "true" ]; then
+            echo "::error::Deployed-preview smoke failed and $APP sets smoke.required=true."
+            exit 1
+          fi
+          echo "::warning::Deployed-preview smoke failed (report-only; set smoke.required=true in $APP/deploy.config.json to gate)."
+
       # On PRs, post/update a sticky comment with the isolated staging URL.
       - name: Comment staging URL on PR
         if: ${{ inputs.environment != 'production' && github.event_name == 'pull_request' && steps.deploy.outputs.url != '' }}
