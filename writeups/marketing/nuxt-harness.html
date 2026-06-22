@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<!-- Nuxt Harness — marketing site. Self-contained, offline (no JS deps / no CDN). -->
+<html lang="en"><head><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nuxt Harness — the best of the ecosystem, made legible to LLMs</title>
+<style>
+  :root{
+    --bg:#06080d; --bg2:#0a0e17; --ink:#eaf0fb; --muted:#8b97ad; --faint:#5b6679;
+    --card:#0e1420; --card2:#11182648; --line:#1c2636; --line2:#27344a;
+    --grn:#34d399; --grn-d:#0c3a2a; --grn-ink:#a9f0d2; --cyan:#22d3ee; --violet:#8b7bff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -8%, #15233f 0%, transparent 55%),
+      radial-gradient(900px 500px at 5% 8%, #0e2a23 0%, transparent 50%),
+      var(--bg);
+    color:var(--ink); line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+  .grad{background:linear-gradient(100deg,#fff 0%,#a9f0d2 45%,#7fe7ff 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--grn);font-weight:700;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;
+    font-weight:650;font-size:14.5px;transition:.2s transform,.2s box-shadow,.2s background,.2s border-color;}
+  .btn-p{background:linear-gradient(180deg,#3ee9aa,#19c389);color:#04231a;
+    box-shadow:0 8px 26px -10px #20d99a88;}
+  .btn-p:hover{transform:translateY(-2px);box-shadow:0 14px 32px -10px #20d99aaa;}
+  .btn-g{border:1px solid var(--line2);color:var(--ink);background:#0c1320;}
+  .btn-g:hover{border-color:var(--grn);transform:translateY(-2px);color:var(--grn-ink);}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:#06080dcc;border-bottom:1px solid #131c2a;}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:-.01em;font-size:16px;}
+  .logo .mark{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(150deg,#0e3a2a,#0a1422);border:1px solid #1f4a3a;color:var(--grn);font-size:15px;}
+  .navlinks{display:flex;gap:26px;font-size:14px;color:var(--muted);}
+  .navlinks a:hover{color:var(--ink);}
+  @media(max-width:720px){.navlinks{display:none;}}
+
+  /* hero */
+  header{padding:84px 0 38px;text-align:center;}
+  .badge{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);background:#0b1220;border-radius:999px;padding:6px 14px;margin-bottom:26px;}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 10px var(--grn);}
+  h1{font-size:clamp(38px,6.4vw,68px);line-height:1.03;letter-spacing:-.03em;font-weight:800;}
+  .sub{max-width:660px;margin:22px auto 0;color:#aeb9cc;font-size:clamp(16px,2.2vw,19px);}
+  .cta{display:flex;gap:14px;justify-content:center;margin-top:34px;flex-wrap:wrap;}
+  .note{margin-top:16px;font-size:12.5px;color:var(--faint);}
+
+  /* terminal */
+  .term{max-width:720px;margin:54px auto 0;border:1px solid var(--line2);border-radius:14px;
+    background:linear-gradient(180deg,#0b111c,#080c14);overflow:hidden;
+    box-shadow:0 40px 90px -40px #000, 0 0 0 1px #0c1420;text-align:left;}
+  .term .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid #131c2a;background:#0a0f1a;}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:block;}
+  .term .bar .t{margin-left:10px;font-size:12px;color:var(--faint);}
+  .term pre{padding:18px 20px;font-size:13px;line-height:1.75;overflow:auto;}
+  .c-mut{color:var(--faint);} .c-grn{color:var(--grn);} .c-cy{color:var(--cyan);} .c-vi{color:var(--violet);} .c-ink{color:#cdd8ea;}
+
+  /* sections */
+  section{padding:64px 0;border-top:1px solid #0e1622;}
+  .lead{text-align:center;max-width:680px;margin:0 auto 44px;}
+  .lead h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.02em;font-weight:780;}
+  .lead p{margin-top:14px;color:var(--muted);font-size:16px;}
+
+  /* runtime vs app */
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:center;}
+  @media(max-width:720px){.vs{grid-template-columns:1fr;}.vs .arrow{transform:rotate(90deg);justify-self:center;}}
+  .panel{border:1px solid var(--line);border-radius:16px;padding:24px;background:var(--card);}
+  .panel.dim{opacity:.72;}
+  .panel .k{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .panel h3{font-size:20px;margin:6px 0 8px;letter-spacing:-.01em;}
+  .panel p{color:var(--muted);font-size:14px;}
+  .arrow{color:var(--grn);font-size:26px;font-weight:700;}
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:11px;justify-content:center;}
+  .chip{border:1px solid var(--line2);background:#0c1320;border-radius:11px;padding:10px 15px;font-size:14px;
+    color:#c4cfe0;display:flex;align-items:center;gap:9px;transition:.18s;}
+  .chip:hover{border-color:var(--grn);color:var(--grn-ink);transform:translateY(-2px);}
+  .chip b{color:#fff;font-weight:650;}
+  .chip .d{width:6px;height:6px;border-radius:50%;background:var(--grn);}
+
+  /* mapping grid */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:860px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:540px){.grid{grid-template-columns:1fr;}}
+  .cell{border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--card);transition:.2s;}
+  .cell:hover{border-color:var(--line2);transform:translateY(-3px);background:#0f1622;}
+  .cell .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;margin-bottom:13px;
+    background:#0c2a20;border:1px solid #194a38;color:var(--grn);font-size:17px;}
+  .cell h4{font-size:15.5px;}
+  .cell h4 span{color:var(--faint);font-weight:500;}
+  .cell p{color:var(--muted);font-size:13.5px;margin-top:6px;}
+
+  /* pipeline */
+  .pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;}
+  .step{flex:1;min-width:150px;border:1px solid var(--line);border-radius:13px;padding:16px 16px;background:var(--card);
+    margin:6px;position:relative;transition:.2s;}
+  .step:hover{border-color:var(--grn);transform:translateY(-3px);}
+  .step .n{font-size:11px;color:var(--grn);font-weight:700;letter-spacing:.1em;}
+  .step h4{font-size:14.5px;margin-top:4px;}
+  .step p{font-size:12.5px;color:var(--muted);margin-top:5px;}
+  .step .gate{margin-top:9px;display:inline-block;font-size:10.5px;color:var(--grn-ink);
+    background:#0c2a20;border:1px solid #194a38;border-radius:6px;padding:2px 7px;}
+
+  /* pillars */
+  .pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  @media(max-width:720px){.pillars{grid-template-columns:1fr;}}
+  .pillar{border:1px solid var(--line);border-radius:15px;padding:22px;background:
+    linear-gradient(180deg,#0e1623,#0a1019);transition:.2s;}
+  .pillar:hover{transform:translateY(-3px);border-color:var(--line2);}
+  .pillar h4{font-size:16.5px;display:flex;align-items:center;gap:9px;}
+  .pillar h4 .b{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;
+    background:#0c2a20;border:1px solid #194a38;color:var(--grn);font-size:13px;}
+  .pillar p{color:var(--muted);font-size:14px;margin-top:9px;}
+
+  /* cta band */
+  .band{border:1px solid #16402f;border-radius:20px;padding:48px 28px;text-align:center;
+    background:radial-gradient(700px 300px at 50% -40%, #0f3a2b 0%, transparent 70%), #0a1119;}
+  .band h2{font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;}
+  .band p{color:var(--muted);margin:14px auto 0;max-width:520px;}
+
+  footer{padding:42px 0 60px;border-top:1px solid #0e1622;color:var(--faint);font-size:13px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+  footer a:hover{color:var(--ink);}
+</style></head>
+<body>
+
+<nav><div class="wrap">
+  <div class="logo"><span class="mark">⛓</span> Nuxt&nbsp;Harness</div>
+  <div class="navlinks">
+    <a href="#what">What it is</a>
+    <a href="#blocks">Building blocks</a>
+    <a href="#flow">The flow</a>
+    <a href="#why">Why</a>
+  </div>
+  <a class="btn btn-g" href="#start">Get started →</a>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="badge"><span class="dot"></span> An app made for LLMs · runs on Claude Code, Codex &amp; Pi</span>
+  <h1>The best of the ecosystem,<br/><span class="grad">made legible to your LLM.</span></h1>
+  <p class="sub">Nuxt Harness binds the strongest pieces of the Nuxt / UnJS / Cloudflare world into one
+    opinionated surface — and expresses it as skills, agents and workflows an AI agent can actually drive.
+    Point it at a task; it ships a Nuxt app.</p>
+  <div class="cta">
+    <a class="btn btn-p" href="#start">Get started</a>
+    <a class="btn btn-g" href="#flow">See the flow</a>
+  </div>
+  <p class="note">Single source · runs on Claude Code, Codex, or Pi — even a free local model · zero drift</p>
+
+  <div class="term">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+      <span class="t mono">~/my-app — nuxt harness</span></div>
+    <pre class="mono"><span class="c-mut"># hand an issue to the agent pipeline</span>
+<span class="c-grn">$</span> <span class="c-ink">gh issue edit 42 --add-label</span> <span class="c-vi">delegate</span>
+
+<span class="c-cy">→</span> decompose        <span class="c-mut">tree of issues, wave-gated</span>
+<span class="c-cy">→</span> schema sign-off   <span class="c-mut">field tables + crouton.config  </span><span class="c-grn">✓ approved</span>
+<span class="c-cy">→</span> <span class="c-ink">crouton init</span>      <span class="c-mut">scaffold + generate, no hand-mirror</span>
+<span class="c-cy">→</span> refine · deploy   <span class="c-mut">staging preview</span>
+<span class="c-grn">✓</span> <span class="c-ink">https://my-app.pmcp.dev</span>  <span class="c-mut">auth-working, live</span></pre>
+  </div>
+</div></header>
+
+<section id="what"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">The idea</span>
+    <h2>The CLI is the runtime. The Harness is the app.</h2>
+    <p>Claude Code and Codex are powerful, empty engines. The Harness is the curated application that
+      runs on them — so a new project starts from a battle-tested path, not a blank prompt.</p>
+  </div>
+  <div class="vs">
+    <div class="panel dim">
+      <div class="k">Runtime</div>
+      <h3>The CLI</h3>
+      <p>Executes agents, skills, MCP, hooks, worktrees. Brilliant — and completely unopinionated about <em>your</em> stack.</p>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel">
+      <div class="k">Application</div>
+      <h3>Nuxt Harness</h3>
+      <p>The opinions, the wiring, the guardrails — versioned, tested, and written so an LLM follows them reliably.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="binds"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">Curation</span>
+    <h2>It binds the best of the ecosystem</h2>
+    <p>No reinvention. The Harness picks the strongest OSS pieces and makes them work <em>together</em>, under an agent.</p>
+  </div>
+  <div class="chips">
+    <span class="chip"><span class="d"></span><b>Nuxt</b> layers &amp; DDD</span>
+    <span class="chip"><span class="d"></span><b>crouton</b> generators</span>
+    <span class="chip"><span class="d"></span><b>NuxtHub</b> → Cloudflare D1 / KV / R2</span>
+    <span class="chip"><span class="d"></span><b>Drizzle</b> schema &amp; migrations</span>
+    <span class="chip"><span class="d"></span><b>MCP</b> tools</span>
+    <span class="chip"><span class="d"></span><b>db0 · unstorage</b></span>
+    <span class="chip"><span class="d"></span><b>Nuxt UI 4</b></span>
+    <span class="chip"><span class="d"></span><b>Vitest · Playwright</b></span>
+  </div>
+</div></section>
+
+<section id="blocks"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">Building blocks</span>
+    <h2>An app, with the parts you'd expect</h2>
+    <p>Familiar software anatomy — just authored for a probabilistic runtime.</p>
+  </div>
+  <div class="grid">
+    <div class="cell"><div class="ic">ƒ</div><h4>Skills <span>= functions</span></h4><p>Repeatable workflows the agent calls — the curated know-how, written once.</p></div>
+    <div class="cell"><div class="ic">⚙</div><h4>Agents <span>= services</span></h4><p>Orchestrator → decomposer → worker. They spawn, isolate, and ship PRs.</p></div>
+    <div class="cell"><div class="ic">⚡</div><h4>Workflows <span>= event handlers</span></h4><p>A label, a comment, a merge — each fires the right run, hands-off.</p></div>
+    <div class="cell"><div class="ic">🔌</div><h4>MCP <span>= drivers</span></h4><p>Typed access to your DB, docs, and tools — same servers across both CLIs.</p></div>
+    <div class="cell"><div class="ic">📜</div><h4>AGENTS.md <span>= constitution</span></h4><p>One instructions file both tools read. The rules of the road.</p></div>
+    <div class="cell"><div class="ic">✓</div><h4>Gates <span>= tests</span></h4><p>Schema &amp; UI sign-offs, the packages guard, evals over run logs.</p></div>
+  </div>
+</div></section>
+
+<section id="opinionated"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">Honest about it</span>
+    <h2>Opinionated by design — and every opinion is optional</h2>
+    <p>Crouton ships a full-stack opinion so you start fast. Don't share the taste? Peel it off.
+      The core is just <em>schema → a typed backend</em> — bring any front end you like.</p>
+  </div>
+  <div class="vs">
+    <div class="panel">
+      <div class="k">Core · always generated</div>
+      <h3>The typed backend</h3>
+      <p>Drizzle · migrations · DB wiring · CRUD API · typed composables — on your pick of
+        <b style="color:#cdd8ea">SQLite or Postgres</b>. Fewer opinions than the UI, but not zero:
+        it's Drizzle, team-scoped. We label that — we don't hide it.</p>
+    </div>
+    <div class="arrow">+</div>
+    <div class="panel dim">
+      <div class="k">Layer · opt-out</div>
+      <h3>The UI — our taste</h3>
+      <p>Nuxt UI 4 forms, lists, and the CRUD UX. Batteries included by default,
+        removed with one flag when they're not your batteries.</p>
+    </div>
+  </div>
+  <div class="term" style="margin-top:34px;">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+      <span class="t mono">crouton.config.js</span></div>
+    <pre class="mono"><span class="c-ink">collections</span>: [
+  { name: <span class="c-grn">'books'</span>, fieldsFile: <span class="c-grn">'schemas/books.json'</span>,
+    generate: [<span class="c-vi">'schema'</span>, <span class="c-vi">'api'</span>, <span class="c-vi">'composables'</span>] },  <span class="c-mut">// backend only — bring your own UI</span>
+
+  { name: <span class="c-grn">'authors'</span>, fieldsFile: <span class="c-grn">'schemas/authors.json'</span> },  <span class="c-mut">// default: full-stack (forms + lists too)</span>
+]</pre>
+  </div>
+</div></section>
+
+<section id="flow"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">The flow</span>
+    <h2>From one issue to a live preview</h2>
+    <p>The canonical path — gated where a human should decide, automatic everywhere else.</p>
+  </div>
+  <div class="pipe">
+    <div class="step"><div class="n">01</div><h4>Decompose</h4><p>Task → an epic + a tree of wave-gated issues.</p></div>
+    <div class="step"><div class="n">02</div><h4>Schema sign-off</h4><p>Field tables + <span class="mono">crouton.config</span>.</p><span class="gate">human gate</span></div>
+    <div class="step"><div class="n">03</div><h4>crouton init</h4><p>Scaffold <em>and</em> generate. Never hand-mirror.</p></div>
+    <div class="step"><div class="n">04</div><h4>Refine UI</h4><p>Mockup, approve, build.</p><span class="gate">human gate</span></div>
+    <div class="step"><div class="n">05</div><h4>Deploy</h4><p>Staging Worker → a clickable URL.</p></div>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <div class="lead">
+    <span class="eyebrow">Why it holds together</span>
+    <h2>Built like software, because it is</h2>
+  </div>
+  <div class="pillars">
+    <div class="pillar"><h4><span class="b">◇</span> One source, any runtime</h4><p>Author once; run on Claude Code, Codex, or <b>Pi (pi.dev)</b> — same conventions, your pick of model. The runtimes differ; your harness doesn't.</p></div>
+    <div class="pillar"><h4><span class="b">⤿</span> Zero drift</h4><p>A regenerate-and-diff CI gate makes divergence impossible. No more hand-copied configs going stale.</p></div>
+    <div class="pillar"><h4><span class="b">▤</span> Layered &amp; ownable</h4><p>A base Harness layer + your project layer. Local overrides survive every sync; fixes flow back upstream.</p></div>
+    <div class="pillar"><h4><span class="b">◎</span> Tested by evals</h4><p>A probabilistic runtime needs gates + observation. Weekly run-log analysis is the regression suite.</p></div>
+    <div class="pillar"><h4><span class="b">⛁</span> Free on your own hardware</h4><p>Run a small local model via <b>Pi + Ollama</b> on your own box — zero per-token cost, fully private. Your stack, your model, no mandatory SaaS.</p></div>
+    <div class="pillar"><h4><span class="b">⚑</span> Human where it counts</h4><p>It pings you only to decide — sign-offs and unblocks. Status is silent. Your attention is the scarce resource.</p></div>
+  </div>
+</div></section>
+
+<section id="start"><div class="wrap">
+  <div class="band">
+    <span class="eyebrow">Get started</span>
+    <h2 style="margin-top:10px;">Give an empty CLI a stack it understands.</h2>
+    <p>Drop the Harness into a repo, label an issue <span class="mono" style="color:var(--grn-ink)">delegate</span>, and watch it ship.</p>
+    <div class="cta" style="margin-top:26px;">
+      <a class="btn btn-p" href="#">Read the docs</a>
+      <a class="btn btn-g" href="#">View on GitHub</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:14px;">
+  <div class="logo" style="font-size:14px;"><span class="mark" style="width:22px;height:22px;font-size:13px;">⛓</span> Nuxt Harness</div>
+  <div>The best of the ecosystem · bound for LLMs · <span class="mono">@fyit/nuxt-harness</span></div>
+  <div>Runs on Claude Code · Codex · Pi · your own hardware</div>
+</div></footer>
+
+</body></html>
