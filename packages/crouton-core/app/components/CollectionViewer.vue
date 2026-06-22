@@ -5,8 +5,8 @@
       <h2 class="text-lg sm:text-xl font-semibold truncate min-w-0">
         {{ camelToTitleCase(collectionName) }}
       </h2>
-      <!-- Layout Switcher -->
-      <div class="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0 overflow-x-auto">
+      <!-- Layout Switcher: inline icon group on desktop -->
+      <div class="hidden sm:flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0 overflow-x-auto">
         <UButton
           v-for="layoutOption in layoutOptions"
           :key="layoutOption.value"
@@ -15,6 +15,46 @@
           :variant="currentLayout === layoutOption.value ? 'solid' : 'ghost'"
           size="sm"
           @click="currentLayout = layoutOption.value"
+        />
+      </div>
+
+      <!--
+        Mobile: single consolidated header. The layout switcher collapses to a
+        menu button, and the import/create actions (shown in the table navbar on
+        desktop) appear here as compact icon buttons so there's one header row,
+        not two. Export stays desktop-only (needs the row data). (#691, #692)
+      -->
+      <div class="flex sm:hidden items-center gap-1 shrink-0">
+        <UDropdownMenu
+          :items="switcherMenuItems"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            :icon="currentLayoutIcon"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            trailing-icon="i-lucide-chevron-down"
+          />
+        </UDropdownMenu>
+
+        <CroutonImportButton
+          :collection="collectionName"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+        >
+          <template #default>
+            <span class="sr-only">{{ t('common.import') }}</span>
+          </template>
+        </CroutonImportButton>
+
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          size="sm"
+          :aria-label="t('common.create')"
+          @click="handleItemAction('create')"
         />
       </div>
     </div>
@@ -41,11 +81,13 @@
         />
 
         <!-- Async generated List component — boundaried by Suspense so the
-             skeleton holds until its data resolves, then reveals at once -->
+             skeleton holds until its data resolves, then reveals at once.
+             effectiveLayout gives the component cards-on-mobile (#690); the
+             skeleton takes the plain-string currentLayout. -->
         <Suspense v-else-if="componentName">
           <component
             :is="componentName"
-            :layout="currentLayout"
+            :layout="effectiveLayout"
             class="h-full"
           />
           <template #fallback>
@@ -199,6 +241,30 @@ const layoutOptions = computed(() => {
 
   return options
 })
+
+// On mobile the table scrolls sideways and feels broken, so fall back to the
+// card/list layout below `sm` while keeping the table at `sm+`. The switcher
+// still reports `table` as selected; other layouts pass through unchanged.
+const effectiveLayout = computed(() =>
+  currentLayout.value === 'table'
+    ? { base: 'list' as const, sm: 'table' as const }
+    : currentLayout.value
+)
+
+// Icon for the current layout, shown on the mobile switcher menu button
+const currentLayoutIcon = computed(() =>
+  allLayoutOptions.find(o => o.value === currentLayout.value)?.icon
+    ?? 'i-lucide-table'
+)
+
+// Mobile switcher: same options as the desktop group, as a dropdown menu
+const switcherMenuItems = computed(() =>
+  layoutOptions.value.map(o => ({
+    label: camelToTitleCase(o.value),
+    icon: o.icon,
+    onSelect: () => { currentLayout.value = o.value }
+  }))
+)
 
 // Convert collection name to component name
 // e.g., translationsUi -> TranslationsUiList

@@ -1,36 +1,43 @@
 <template>
-  <UDashboardNavbar :title="collection || 'Data'">
-    <template #left>
-      <h2>
-        {{ title }}
-      </h2>
-    </template>
-    <template #right>
-      <slot name="extraButtons" />
+  <!--
+    Hidden on mobile: CollectionViewer surfaces compact import/create icon
+    buttons in its single header row below `sm`, so this navbar would be a
+    redundant second bar. Restored at `sm+`. (#691)
+  -->
+  <div class="hidden sm:block">
+    <UDashboardNavbar :title="collection || 'Data'">
+      <template #left>
+        <h2>
+          {{ title }}
+        </h2>
+      </template>
+      <template #right>
+        <slot name="extraButtons" />
 
-      <CroutonImportButton
-        v-if="importButton && collection"
-        :collection="collection"
-        @import-complete="$emit('import-complete')"
-      />
+        <CroutonImportButton
+          v-if="importButton && collection"
+          :collection="collection"
+          @import-complete="$emit('import-complete')"
+        />
 
-      <CroutonExportButton
-        v-if="exportButton && rows?.length"
-        :collection="collection"
-        :rows="rows"
-      />
+        <CroutonExportButton
+          v-if="exportButton && rows?.length"
+          :collection="collection"
+          :rows="rows"
+        />
 
-      <UButton
-        v-if="createButton"
-        color="primary"
-        size="md"
-        :variant="getVariant('solid')"
-        @click="handleCreate"
-      >
-        <span>{{ t('common.create') }} <span class="hidden md:inline">{{ useFormatCollections().collectionWithCapitalSingular(collection) }}</span></span>
-      </UButton>
-    </template>
-  </UDashboardNavbar>
+        <UButton
+          v-if="createButton"
+          color="primary"
+          size="md"
+          :variant="getVariant('solid')"
+          @click="handleCreate"
+        >
+          <span>{{ t('common.create') }} <span class="hidden md:inline">{{ useFormatCollections().collectionWithCapitalSingular(collection) }}</span></span>
+        </UButton>
+      </template>
+    </UDashboardNavbar>
+  </div>
 </template>
 
 <script setup lang="ts">
