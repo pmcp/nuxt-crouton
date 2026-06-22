@@ -135,6 +135,17 @@ Two ways:
 - **Local:** `pnpm cf:staging` from the app dir.
 - **Production is never routine** — ship it deliberately via the **`/deploy-production`** skill.
 
+### Auto-seeded review login on staging previews (#608)
+Every **staging** deploy auto-seeds a throwaway, loginable test account on the
+preview's isolated D1 so a reviewer can open the URL and be **inside the app in one
+step** — no register → create-team wall. `deploy-app.yml` runs
+`scripts/seed-review-login.mjs` against the deployed Worker (the app's own
+`/api/auth/sign-up/email` + a team via `organization/create` when the app doesn't
+auto-make one), then prints a `🔑 Test login` block in the PR's staging comment.
+Creds are **deterministic per preview** (so redeploys reprint the same working login,
+no user pile-up) and the step is best-effort (never fails the deploy). Optional repo
+secret `REVIEW_SEED_SECRET` salts the password; **production seeds nothing**.
+
 ## Migrating a Pages app → Workers
 
 For an app still on the Pages setup (`wrangler.toml`, `pages_build_output_dir`,
