@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: apps/docs

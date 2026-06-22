@@ -26,7 +26,7 @@ jobs:
     if: >
       github.event.pull_request.draft == false &&
       github.event.pull_request.user.type != 'Bot'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 20
     # NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
     # OVERRIDES (does not merge with) any workflow-level block, so `id-token: write` has to

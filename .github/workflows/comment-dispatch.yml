@@ -29,7 +29,7 @@ jobs:
        github.event.comment.author_association == 'COLLABORATOR') &&
       (contains(github.event.comment.body, '/delegate') ||
        contains(github.event.comment.body, '/deploy'))
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
     steps:
       # Mint a Nuxt Harness App installation token so the `delegate` label is applied by
       # `nuxt-harness[bot]`. That makes the dispatched decompose run App-actored, which passes
