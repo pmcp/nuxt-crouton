@@ -80,12 +80,20 @@
           class="h-full"
         />
 
-        <component
-          :is="componentName"
-          v-else-if="componentName"
-          :layout="effectiveLayout"
-          class="h-full"
-        />
+        <!-- Async generated List component — boundaried by Suspense so the
+             skeleton holds until its data resolves, then reveals at once.
+             effectiveLayout gives the component cards-on-mobile (#690); the
+             skeleton takes the plain-string currentLayout. -->
+        <Suspense v-else-if="componentName">
+          <component
+            :is="componentName"
+            :layout="effectiveLayout"
+            class="h-full"
+          />
+          <template #fallback>
+            <CroutonCollectionSkeleton :layout="currentLayout" />
+          </template>
+        </Suspense>
 
         <div
           v-else

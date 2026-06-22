@@ -57,6 +57,7 @@ export default defineNuxtConfig({
 | `app/composables/useCollectionImport.ts` | CSV/JSON import with column mapping, validation, and batched POST |
 | `app/composables/useDisplayConfig.ts` | Resolves display config (title/subtitle/image/badge/description) with auto-inference |
 | `app/components/Collection.vue` | Multi-layout display (table, list, grid, tree, kanban) |
+| `app/components/CollectionSkeleton.vue` | `CroutonCollectionSkeleton` — layout-aware shimmer (table/list/grid) used as the `<Suspense>` fallback in `CollectionViewer` so the viewer reveals the populated result at once instead of flashing a loader + filling in row-by-row |
 | `app/components/Form.vue` | Main CRUD form handler with nested modal support |
 | `app/components/Detail.vue` | `CroutonDetail` — Generic detail view using display config and runtime field metadata |
 | `app/components/DefaultCard.vue` | `CroutonDefaultCard` — Display-aware card (title/image/badge from display config) |
