@@ -28,6 +28,11 @@ name: Project status automation
 # (the repo is fully PAT-free). Needs Actions secrets HARNESS_APP_ID +
 # HARNESS_APP_PRIVATE_KEY (org-level). Set repo variable PROJECT_NAME only if
 # the board isn't named "Crouton".
+#
+# The board is resolved by title at the ORG level (organization.projectsV2), NOT via
+# repository.projectsV2 — a private org board isn't reliably returned by the repo-link
+# lookup to an App token even when linked, which silently no-op'd this on every event.
+# So card-moving no longer depends on the repo<->project link. (#646)
 
 on:
   pull_request:
@@ -98,17 +103,29 @@ jobs:
               ?? context.payload.issue?.node_id
             if (!contentNodeId) return
 
-            // 1) Find the project + its Status field/options (by title, among repo-linked projects)
-            const projQ = await github.graphql(`
-              query($owner:String!,$repo:String!){
-                repository(owner:$owner,name:$repo){
-                  projectsV2(first:20){ nodes {
-                    id title
-                    field(name:"Status"){ ... on ProjectV2SingleSelectField { id options { id name } } }
-                  } }
-                }
-              }`, { owner, repo })
-            const project = projQ.repository.projectsV2.nodes.find(p => p.title === projectName)
+            // 1) Find the project + its Status field/options by title, among the ORG's
+            //    Projects v2 boards. Resolving at the org level (not repository.projectsV2)
+            //    keeps this working without the repo<->project link, which doesn't reliably
+            //    surface a private org board to the App token even when linked. (#646)
+            let project = null
+            let pcursor = null
+            do {
+              const projQ = await github.graphql(`
+                query($org:String!,$cursor:String){
+                  organization(login:$org){
+                    projectsV2(first:100, after:$cursor){
+                      pageInfo{ hasNextPage endCursor }
+                      nodes {
+                        id title
+                        field(name:"Status"){ ... on ProjectV2SingleSelectField { id options { id name } } }
+                      }
+                    }
+                  }
+                }`, { org: owner, cursor: pcursor })
+              const conn = projQ.organization.projectsV2
+              project = conn.nodes.find(p => p.title === projectName)
+              pcursor = (!project && conn.pageInfo.hasNextPage) ? conn.pageInfo.endCursor : null
+            } while (pcursor)
             if (!project || !project.field) { core.warning(`Project "${projectName}" or its Status field not found`); return }
             const option = project.field.options.find(o => o.name.toLowerCase() === target.toLowerCase())
             if (!option) { core.warning(`Status option "${target}" not found`); return }
