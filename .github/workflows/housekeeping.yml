@@ -1,0 +1,109 @@
+name: housekeeping
+
+# Weekly "🧹 Housekeeping" digest (#633) — the periodic backstop that catches the drift the
+# event-driven jobs miss. Deterministic (no LLM): gathers via git + the GitHub API with the
+# built-in GITHUB_TOKEN, renders Markdown, delivers per .github/digests.yml. REPORT-ONLY — it
+# never deletes a branch or edits a label/issue. See .claude/skills/housekeeping/.
+#
+# Cadence-as-data (#637): the cron fires DAILY (cheap wake-up); the `gate` step reads
+# .github/digests.yml via schedule.mjs and exits the run early on non-send days. Change the
+# cadence in digests.yml — never this cron. A manual workflow_dispatch always sends (FORCE).
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily wake-up; digests.yml decides the real send day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: housekeeping
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so `git branch --merged main` is accurate
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Cadence gate: is today a send day for `housekeeping` per .github/digests.yml?
+      # Manual dispatch forces a send. Everything below is skipped when send=false.
+      - name: Schedule gate
+        id: gate
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: node .claude/skills/housekeeping/schedule.mjs housekeeping
+
+      # Bring every remote branch into refs/remotes/origin so the stale-branch scan sees them.
+      - name: Fetch all remote branches
+        if: steps.gate.outputs.send == 'true'
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Gather repo drift
+        if: steps.gate.outputs.send == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+        run: node .claude/skills/housekeeping/gather.mjs > housekeeping.data.json
+
+      - name: Render Markdown
+        if: steps.gate.outputs.send == 'true'
+        run: |
+          node .claude/skills/housekeeping/render.mjs housekeeping.data.json --out-dir .
+          cp housekeeping-*.md housekeeping.md
+
+      # Delivery: issue (standing-issue rail). Selected via digests.yml `deliver`.
+      - name: Post to the standing issue
+        if: steps.gate.outputs.send == 'true' && contains(steps.gate.outputs.deliver, 'issue')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST_REPO: ${{ github.repository }}
+          DIGEST_BODY_FILE: housekeeping.md
+        run: bash .claude/skills/housekeeping/post-comment.sh
+
+      # Delivery: email (Resend rail, mirrors red-team-daily.yml). Recipients come from
+      # digests.yml `to:`. Degrades to a green no-op when RESEND_API_KEY / recipients are unset.
+      - name: Email the digest (Resend)
+        if: steps.gate.outputs.send == 'true' && contains(steps.gate.outputs.deliver, 'email')
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ vars.DIGEST_EMAIL_FROM }}
+          EMAIL_TO: ${{ steps.gate.outputs.recipients }}
+        run: |
+          if [ ! -f housekeeping.md ]; then
+            echo "::warning::No rendered digest to email."; exit 0
+          fi
+          if [ -z "$RESEND_API_KEY" ] || [ -z "$EMAIL_FROM" ] || [ -z "$EMAIL_TO" ]; then
+            echo "::warning::RESEND_API_KEY / DIGEST_EMAIL_FROM / recipients not set — skipping email (run stays green)."
+            exit 0
+          fi
+          SUBJECT="🧹 Housekeeping digest — $(date -u +%F)"
+          # Comma-separated recipients → a JSON array for Resend's `to`.
+          jq -n \
+            --arg from "$EMAIL_FROM" \
+            --arg to "$EMAIL_TO" \
+            --arg subject "$SUBJECT" \
+            --rawfile body housekeeping.md \
+            '{from:$from, to:($to|split(",")), subject:$subject, text:$body, html:("<pre style=\"font-family:ui-monospace,monospace;white-space:pre-wrap\">"+($body|@html)+"</pre>")}' \
+          | curl -sS -X POST https://api.resend.com/emails \
+              -H "Authorization: Bearer $RESEND_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d @- -w '\nHTTP %{http_code}\n'
+
+      - name: Upload digest artifacts
+        if: always() && steps.gate.outputs.send == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: housekeeping-digest
+          path: |
+            housekeeping.data.json
+            housekeeping-*.md
+          if-no-files-found: ignore

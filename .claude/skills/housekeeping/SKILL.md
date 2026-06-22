@@ -1,0 +1,93 @@
+---
+name: housekeeping
+description: Generate the weekly "🧹 Housekeeping" digest — a render-only report of repo drift that needs a human eye (stale unmerged branches, mislabeled issues, stuck in-progress tickets, epics ready to close, idle PRs, label-coverage gaps). Reports only, never mutates. Use when asked for a "housekeeping report", "repo drift", "what's stale", or to run the weekly sweep by hand.
+---
+
+# Housekeeping digest
+
+A weekly, **report-only** sweep that catches the drift the event-driven jobs miss — the
+periodic backstop behind epic #633. It posts one rolling comment to a standing
+"🧹 Housekeeping" issue listing everything that needs judgment but is too risky to auto-fix.
+**It never deletes a branch, changes a label, or edits an issue** — the digest issue body is
+the only thing it writes.
+
+## What it reports (each section omitted when empty)
+
+- **🌿 Stale unmerged branches** — not contained in `main` (still hold unmerged commits) and
+  untouched for >N days. Merged-into-`main` branches are *out of scope* (lossless, not a
+  human-eye item).
+- **🏷️ Issues missing labels** — open issues without a `type:*` and/or a component
+  (`pkg:`/`app:`/`worker:`/`poc:`) label.
+- **🏗️ Label coverage** — `packages/*`·`apps/*`·`pocs/*`·`workers/*` dirs with no matching
+  label declared in `.github/labels.yml` (CLAUDE.md treats a missing label as a build
+  failure). Report-only — never auto-prune (a destructive label sync strips the label from
+  every issue).
+- **⏳ Stuck in-progress** — `status:in-progress` issues with no activity in >N days.
+- **✅ Epics ready to close** — all sub-issues closed but the epic still open.
+- **🔀 Idle PRs** — open PRs with no activity in >N days.
+
+## Pipeline (deterministic — no LLM, no secrets)
+
+Mirrors `.claude/skills/epic-digest/`:
+
+```
+gather.mjs  → housekeeping.data.json   (git for branches + GitHub REST for issues/PRs/labels)
+render.mjs  → housekeeping-<date>.md   (JSON → Markdown, sections dropped when empty)
+post-comment.sh                        (upsert the one standing "🧹 Housekeeping" issue)
+schedule.mjs                           (cadence-as-data: is today a send day per .github/digests.yml?)
+```
+
+### Run it by hand
+
+```bash
+GITHUB_TOKEN=$(gh auth token) node .claude/skills/housekeeping/gather.mjs > housekeeping.data.json
+node .claude/skills/housekeeping/render.mjs housekeeping.data.json --out-dir .
+cp housekeeping-*.md housekeeping.md
+GH_TOKEN=$(gh auth token) DIGEST_BODY_FILE=housekeeping.md bash .claude/skills/housekeeping/post-comment.sh
+```
+
+Branch data needs a full checkout with remote branches present (`git fetch origin
+'+refs/heads/*:refs/remotes/origin/*'`); without it the branch section is skipped, not guessed.
+
+## Scheduling & delivery — `.github/digests.yml`
+
+Cadence and delivery channel are **config-as-data**, not workflow plumbing (#637). The
+workflow cron fires **daily** (cheap wake-up); `schedule.mjs` reads `digests.yml` and exits
+early when today isn't a send day — so changing "weekly → daily" or "Wed → Mon" is a one-line
+edit, never a `cron` change. Delivery is selection over rails that already exist: `issue`
+(this standing-issue path) and `email` (Resend, mirrors `red-team-daily.yml`; degrades to a
+green no-op when `RESEND_API_KEY` is unset).
+
+```yaml
+housekeeping:
+  schedule: weekly:wed   # daily | weekly:<dow> ; dow = mon|tue|wed|thu|fri|sat|sun
+  deliver: [issue]       # issue | email
+  # to: [you@example.com]  # required only when deliver includes email
+```
+
+## Lossless branch sweep (separate workflow — the only auto-delete)
+
+The digest is **report-only**. The one auto-destructive action lives in its own workflow
+(`.github/workflows/cleanup-merged-branches.yml` → `prune-merged-branches.mjs`), split off by
+blast radius so a digest bug can never delete a branch. It deletes a branch **only** if it is
+provably contained in `main` (`git branch -r --merged origin/main`, 0 commits ahead) — lossless
+by construction. It also skips any branch with an **open PR**, anything newer than
+`BRANCH_MIN_AGE_DAYS` (default 1), and `main`/protected refs.
+
+**Report-only until enabled:** it runs dry-run (lists what it *would* delete) unless `APPLY` is
+on — set the repo variable `CLEANUP_BRANCHES_APPLY=true`, or run it via `workflow_dispatch` with
+`apply: true`. Confirm a dry-run looks right before flipping the variable. Complements
+`cleanup-epic-branches.yml` (which deletes `epic/*` on PR merge) by sweeping whatever slipped
+past an event trigger.
+
+```bash
+GITHUB_TOKEN=$(gh auth token) node .claude/skills/housekeeping/prune-merged-branches.mjs        # dry-run
+GITHUB_TOKEN=$(gh auth token) APPLY=true node .claude/skills/housekeeping/prune-merged-branches.mjs  # delete
+```
+
+## Tuning
+
+- `HOUSEKEEPING_STALE_DAYS` (env, default `14`) — the "no activity in N days" threshold.
+- `HOUSEKEEPING_ISSUE_TITLE` (env, default `🧹 Housekeeping`) — the standing issue title.
+
+The scheduled run lives in `.github/workflows/housekeeping.yml`.
