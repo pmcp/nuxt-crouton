@@ -186,8 +186,21 @@ jobs:
           else
             pnpm run cf:staging | tee deploy.log
           fi
-          # Surface the deployed *.workers.dev URL (best-effort) for the PR comment.
-          URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | tail -1 || true)
+          # Surface the deployed URL for the PR comment, seed-login + review steps.
+          # Prefer the configured custom-domain URL (staging-url/production-url input):
+          # the workflow already knows it, and it's the actual deploy target (the route
+          # in wrangler.jsonc env.staging). The log-grep only matches *.workers.dev,
+          # which a custom-domain deploy NEVER emits — so grepping left the URL empty,
+          # which in turn skipped the seed-login + PR-comment steps (gated on url != '').
+          # Fall back to the log-grep only when no URL was configured (#293).
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            URL="${{ inputs['production-url'] }}"
+          else
+            URL="${{ inputs['staging-url'] }}"
+          fi
+          if [ -z "$URL" ]; then
+            URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | tail -1 || true)
+          fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed: ${URL:-<url not parsed>}"
 
