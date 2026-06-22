@@ -12,6 +12,13 @@ name: Auto-merge epic sub-PRs
 # untouched and are merged by resume-on-comment.yml when the owner comments `approve`.
 # No double-merge.
 #
+# SHARED-CODE PAUSE (#339): a build sub-PR that touches packages/ (shared code) is NOT
+# auto-merged — it's held for a human. The packages/ HARD GATE (#350) means a change there
+# ripples across every consuming app, so it must never land unreviewed, not even onto an
+# epic branch. A task-worker isn't supposed to touch packages/ at all; if one slips such a
+# change into a build PR, this guard catches it (defence-in-depth, fail-safe: it only ever
+# leaves more for a human, never auto-merges more).
+#
 # Merges with the Nuxt Harness App token (NOT GITHUB_TOKEN): GitHub suppresses workflow
 # triggers for GITHUB_TOKEN-initiated events, so a GITHUB_TOKEN merge's
 # `pull_request: closed` event would not reach schedule-waves and the chain would stall
@@ -60,6 +67,22 @@ jobs:
             // checks, so a non-gate sub-PR is 'clean' or 'unstable' = mergeable.)
             if (['dirty', 'blocked'].includes(state)) {
               core.info(`#${pull_number} not auto-mergeable (state=${state}) — leaving for a human.`)
+              return
+            }
+            // Shared-code pause (#339): hold any PR that touches packages/ for a human review.
+            const files = await github.paginate(github.rest.pulls.listFiles, { ...context.repo, pull_number })
+            const sharedCode = files.filter(f => f.filename.startsWith('packages/'))
+            if (sharedCode.length) {
+              core.info(`#${pull_number} touches packages/ (${sharedCode.length} file(s)) — holding for a human.`)
+              try { await github.rest.issues.addLabels({ ...context.repo, issue_number: pull_number, labels: ['status:blocked'] }) } catch (e) { core.warning(`addLabel #${pull_number}: ${e.message}`) }
+              const list = sharedCode.slice(0, 10).map(f => `- \`${f.filename}\``).join('\n')
+              const more = sharedCode.length > 10 ? `\n…and ${sharedCode.length - 10} more.` : ''
+              await github.rest.issues.createComment({ ...context.repo, issue_number: pull_number,
+                body: '> 🤖 **Claude Code** · agent pipeline (CI) · _auto-merge shared-code guard (#339)_\n\n'
+                  + '⏸️ **Held — this build PR changes shared code under `packages/`.** Per the `packages/` '
+                  + 'HARD GATE (#350) a change here ripples across every consuming app, so it is **not** '
+                  + 'auto-merged. A human must review and merge it (and confirm `pnpm typecheck` across apps).\n\n'
+                  + `Shared-code files in this PR:\n${list}${more}` })
               return
             }
             try {
