@@ -289,8 +289,28 @@ package edit isn't covered by the epic's approval, that's a blocker — comment 
 
 You may be running headless — do NOT use `AskUserQuestion` (it times out). On a **real
 blocker** (the `packages/` gate, a missing decision, a failing approach you can't resolve
-on your own): `add_issue_comment` on the issue with a tight description of what's blocking
-+ what you need, **@mention the notify handle (`@pmcp` — `NOTIFY_HANDLE` in the
-task-decompose skill)** so they get a notification, apply `status:blocked`, and **stop**
-(leave the branch as-is for resuming). Do not silently guess past a blocker. Small
-implementation choices don't need a ping — make them and note them in the PR body.
+on your own): `add_issue_comment` on the issue, **@mention the notify handle (`@pmcp` —
+`NOTIFY_HANDLE` in the task-decompose skill)** so they get a notification, apply
+`status:blocked`, and **stop**. Do not silently guess past a blocker. Small implementation
+choices don't need a ping — make them and note them in the PR body.
+
+**The comment is a HANDOFF, not just a question (#639).** The owner's reply spawns a
+**brand-new session** (`resume-on-comment.yml`) with **zero memory** of your reasoning — it
+checks out `main`, not this worktree (which is gone on stop). So the comment must let a cold
+agent resume without re-deriving or diverging. Use the canonical handoff block (see
+`.claude/agents/CLAUDE.md` → "A block comment is a HANDOFF"):
+
+```
+## 🔀 Blocked — need a decision (handoff)
+**Question for @pmcp:** <the one thing only you can decide>
+**Why it blocks:** <what cannot proceed until answered>
+**State so far:** <what's done · branch name + pushed? · what's NOT done>
+**After you answer:** a NEW session resumes from THIS ticket —
+  Option A → <next steps> · Option B → <next steps>
+**Don't lose:** <decisions/assumptions already made the next agent must keep>
+```
+
+**Push before you block.** If you've written *any* code before hitting the blocker,
+`git push -u origin <branch>` **first**, then name that branch under *State so far*. An
+unpushed worktree is lost when you stop; a pushed branch is what the resuming session picks
+up. (This extends the step-8 "push immediately" checkpoint to the block path.)
