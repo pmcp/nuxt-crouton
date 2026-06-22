@@ -95,6 +95,11 @@ jobs:
             // tree of newly-created sub-issues, NOT a PR — so creating them this run is a real
             // artifact (#572: the #566 epic decompose was falsely failed for "no PR"). Scope to
             // `created_at >= since` so a re-run that creates nothing still fails honestly.
+            // This is also what decouples a slow first leaf (#612): the orchestrator persists the
+            // whole tree (sub-issues + pushed epic branch) BEFORE spawning the first leaf, so even
+            // if a heavy leaf (e.g. `crouton init`) later exhausts the job budget, the orchestration
+            // output survives here as a GREEN deliverable and an idempotent re-dispatch (#611)
+            // continues from it.
             let createdSubIssues = false
             try {
               const subs = await github.paginate('GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues', {

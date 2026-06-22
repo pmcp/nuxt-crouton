@@ -125,6 +125,13 @@ package). Threaded through `epic_branch` in the agent contract:
   any `package.json` MUST run `pnpm install` and commit the updated `pnpm-lock.yaml` in the
   same PR — the deploy's `pnpm install --frozen-lockfile` rejects a `package.json` whose
   lockfile wasn't regenerated (`ERR_PNPM_OUTDATED_LOCKFILE`, the #570 → #606 break).
+- **Foundation-first, so a slow first leaf can't cost the tree (#612).** The
+  `decompose-on-issue` job orchestrates **and** runs the first leaf under one ~30-min budget;
+  a heavy leaf (e.g. `crouton init`) can time it out. The orchestrator therefore persists the
+  **entire tree** (all sub-issues created+linked + the epic branch pushed) and verifies it
+  **before** spawning any worker — the tree is the run's guaranteed deliverable (the
+  artifact-gate passes a run that created sub-issues), so a later-timed-out leaf loses only its
+  own progress and an idempotent re-dispatch (#611) continues from the intact tree.
 - **Epic-scoped approval (#350).** The `packages/` gate also honours the
   `CROUTON_PACKAGE_EDIT_APPROVED` env var (inherited by spawned workers) — approve a
   package-touching epic once, not per worker. The `.package-edit-approved` file must never
