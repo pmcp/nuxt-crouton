@@ -1,0 +1,91 @@
+name: Report failed post-merge deploy
+
+# (#340, epic #336) The dangerous failures happen AFTER merge: a staging/prod deploy
+# breaks once the PR is already closed and the task ticket is done, so it can vanish
+# silently. This opens exactly ONE new, labelled issue (pinging the owner) whenever a
+# post-merge deploy fails — nothing is lost.
+#
+# Trigger: workflow_run[completed] of the per-app/poc deploy workflows. We act only on
+# conclusion==failure for a deploy that ran off staging/main (i.e. post-merge — these
+# workflows don't run on PRs). Idempotent: a hidden `run:<id>` marker in the issue body
+# means a re-run of the same failed deploy never opens a duplicate.
+
+on:
+  workflow_run:
+    workflows:
+      - "Deploy Velo"
+      - "Deploy Triage"
+      - "Deploy Fanfare"
+      - "Deploy Docs"
+      - "Deploy ThinkGraph"
+      - "Deploy Blog (POC preview)"
+      - "Deploy POCs (preview)"
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: report-failed-deploy-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      (github.event.workflow_run.head_branch == 'staging' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const run = context.payload.workflow_run
+            const MARKER = `<!-- failed-deploy run:${run.id} -->`
+            const HEADER = '> 🤖 **Claude Code** · agent pipeline (CI) · _post-merge deploy watchdog (#340)_'
+
+            // Idempotency: scan recent OPEN issues for this run's marker (listForRepo is
+            // immediately consistent, unlike the search index). One issue per failing run.
+            const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString()
+            const recent = await github.paginate(github.rest.issues.listForRepo,
+              { owner, repo, state: 'open', since, per_page: 100 })
+            if (recent.some(i => !i.pull_request && (i.body || '').includes(MARKER))) {
+              core.info(`Issue for run ${run.id} already exists — no duplicate.`); return
+            }
+
+            // App slug from the workflow file: .github/workflows/deploy-<slug>.yml
+            const slug = (run.path.match(/deploy-([a-z0-9-]+)\.yml$/) || [])[1] || null
+
+            // Apply an app:/poc: label only if it actually exists (don't auto-create a wrong one).
+            const labels = ['type:fix', 'meta:agents']
+            if (slug) {
+              const all = await github.paginate(github.rest.issues.listLabelsForRepo, { owner, repo, per_page: 100 })
+              const names = new Set(all.map(l => l.name))
+              const appLabel = [`app:${slug}`, `poc:${slug}`].find(n => names.has(n))
+              if (appLabel) labels.push(appLabel)
+            }
+
+            const sha7 = (run.head_sha || '').slice(0, 7)
+            const commitUrl = `https://github.com/${owner}/${repo}/commit/${run.head_sha}`
+            const title = `🚨 ${run.name} failed on ${run.head_branch} (post-merge)`
+            const body = [
+              HEADER,
+              '',
+              `**A post-merge deploy failed.** \`${run.name}\` broke on \`${run.head_branch}\` — the change is`,
+              `already merged, so this is surfaced as a fresh ticket so it isn't lost. @pmcp`,
+              '',
+              `- **Failing run:** ${run.html_url}`,
+              `- **Landed commit:** [\`${sha7}\`](${commitUrl})${run.head_commit?.message ? ' — ' + run.head_commit.message.split('\n')[0] : ''}`,
+              `- **Branch / env:** \`${run.head_branch}\``,
+              slug ? `- **App:** \`${slug}\`` : null,
+              '',
+              '## 🧪 How to verify the fix',
+              `1. Reproduce: re-run \`${run.name}\` or run the app's deploy locally and watch for the same error.`,
+              `2. Fix the cause on a branch, open a PR (\`Closes #<this>\`), and confirm the deploy goes green.`,
+              '',
+              MARKER,
+            ].filter(l => l !== null).join('\n')
+
+            const issue = await github.rest.issues.create({ owner, repo, title, body, labels })
+            core.info(`Opened #${issue.data.number} for failed deploy run ${run.id}.`)
