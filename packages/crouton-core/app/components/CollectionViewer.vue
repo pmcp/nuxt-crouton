@@ -40,12 +40,18 @@
           class="h-full"
         />
 
-        <component
-          :is="componentName"
-          v-else-if="componentName"
-          :layout="currentLayout"
-          class="h-full"
-        />
+        <!-- Async generated List component — boundaried by Suspense so the
+             skeleton holds until its data resolves, then reveals at once -->
+        <Suspense v-else-if="componentName">
+          <component
+            :is="componentName"
+            :layout="currentLayout"
+            class="h-full"
+          />
+          <template #fallback>
+            <CroutonCollectionSkeleton :layout="currentLayout" />
+          </template>
+        </Suspense>
 
         <div
           v-else
