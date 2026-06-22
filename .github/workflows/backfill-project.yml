@@ -1,0 +1,99 @@
+name: Backfill project board
+
+# One-off / on-demand: add every OPEN issue + PR in this repo to the org
+# "Crouton" Projects v2 board.
+#
+# Why this exists (#546/#564): `gh project copy` (used in the org migration) copies
+# the board's STRUCTURE — fields, views, Status options — but NOT its items. So the
+# new org board starts empty, and project-status.yml only adds a card when an event
+# fires for a single issue/PR — it never backfills the pre-existing ones. Dispatch
+# this to bulk-add them, and re-run it any time the board drifts.
+#
+# Auth (#546): org-scoped Nuxt Harness App token — the same PAT-free mechanism as
+# project-status.yml. GITHUB_TOKEN can't write a Projects v2 board; the App can
+# (installed on FriendlyInternet with Organization → Projects: Read & write). Needs
+# Actions secrets HARNESS_APP_ID + HARNESS_APP_PRIVATE_KEY.
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: Project board title (defaults to the PROJECT_NAME var or "Crouton")
+        required: false
+        default: Crouton
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      # Mint an org-scoped Nuxt Harness App installation token. `owner` (no
+      # `repositories`) carries the org-level grant (Projects: R/W) needed to
+      # write the org board. (#546)
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: FriendlyInternet
+      - uses: actions/github-script@v7
+        env:
+          PROJECT_NAME: ${{ inputs.project_name || vars.PROJECT_NAME || 'Crouton' }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const projectName = process.env.PROJECT_NAME
+            const { owner, repo } = context.repo
+
+            // 1) Resolve the project by title among the repo-linked projects.
+            const projQ = await github.graphql(`
+              query($owner:String!,$repo:String!){
+                repository(owner:$owner,name:$repo){
+                  projectsV2(first:20){ nodes { id title } }
+                }
+              }`, { owner, repo })
+            const project = projQ.repository.projectsV2.nodes.find(p => p.title === projectName)
+            if (!project) {
+              core.setFailed(`Project "${projectName}" not found among repo-linked projects — link the board to the repo first.`)
+              return
+            }
+
+            // 2) Collect the content node-ids already on the board so we skip them.
+            //    (addProjectV2ItemById is idempotent anyway, but this avoids needless calls.)
+            const existing = new Set()
+            let cursor = null
+            do {
+              const q = await github.graphql(`
+                query($id:ID!,$cursor:String){ node(id:$id){ ... on ProjectV2 {
+                  items(first:100, after:$cursor){
+                    pageInfo{ hasNextPage endCursor }
+                    nodes{ content{ ... on Issue { id } ... on PullRequest { id } } }
+                  } } } }`, { id: project.id, cursor })
+              const items = q.node.items
+              for (const it of items.nodes) if (it.content?.id) existing.add(it.content.id)
+              cursor = items.pageInfo.hasNextPage ? items.pageInfo.endCursor : null
+            } while (cursor)
+
+            // 3) Every OPEN issue + PR (search returns the global node_id we need as contentId).
+            const contentIds = []
+            for (const type of ['issue', 'pr']) {
+              const q = `repo:${owner}/${repo} is:${type} is:open`
+              const found = await github.paginate(github.rest.search.issuesAndPullRequests, { q, per_page: 100 })
+              for (const it of found) contentIds.push(it.node_id)
+            }
+
+            // 4) Add the ones not already present.
+            let added = 0
+            for (const cid of contentIds) {
+              if (existing.has(cid)) continue
+              try {
+                await github.graphql(`
+                  mutation($project:ID!,$content:ID!){
+                    addProjectV2ItemById(input:{projectId:$project,contentId:$content}){ item { id } }
+                  }`, { project: project.id, content: cid })
+                added++
+              } catch (e) { core.warning(`add ${cid} failed: ${e.message}`) }
+            }
+            core.info(`Backfill "${projectName}": added ${added} item(s); ${existing.size} already present; ${contentIds.length} open issues/PRs scanned.`)
