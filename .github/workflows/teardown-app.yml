@@ -1,0 +1,185 @@
+name: teardown-app
+
+# One-command app teardown — the destructive half of the /remove-app skill (#618),
+# the inverse of /deploy. Trigger from the GitHub app:
+#   Actions → "teardown-app" → Run workflow → pick app / scope / patterns.
+#
+# This runs in CI because the interactive agent CANNOT do these two things itself:
+#   1. Cloudflare deletes — needs CLOUDFLARE_API_TOKEN (no creds in the chat env).
+#   2. Branch deletes / issue closes — the chat git proxy 403s on ref deletion.
+# So both run here, reusing the same secrets the deploy + db-clone workflows use.
+#
+# Cloudflare:  wraps scripts/teardown-app.mjs (Worker + D1 + KV per env scope).
+# GitHub:      deletes branches matching `branch_patterns` and closes `close_issues`
+#              with a "torn down" note — via a Nuxt Harness App token (like
+#              comment-dispatch.yml), so the ops are attributed to nuxt-harness[bot].
+#
+# ALWAYS dry-run first (the default): it lists exactly what WOULD be removed and
+# touches nothing. Tearing down a PROD scope is guarded — set `confirm` to the prod
+# worker name or the prod half aborts (mirrors db-clone's prod guard). Code removal
+# (rm pocs/<app>) is NOT done here — that lands as a normal PR via the /remove-app skill.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to tear down (name under pocs/ or apps/)'
+        required: true
+        type: string
+      scope:
+        description: 'Which Cloudflare env to remove'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - prod
+          - both
+      dry_run:
+        description: 'Dry run — list everything, delete nothing (run this first)'
+        required: true
+        default: true
+        type: boolean
+      delete_cloudflare:
+        description: 'Delete the Cloudflare Worker + D1 + KV'
+        required: true
+        default: true
+        type: boolean
+      branch_patterns:
+        description: 'Comma-separated substrings; branches containing any are deleted (default: the app name). e.g. "library-catalog,libcat"'
+        required: false
+        type: string
+      close_issues:
+        description: 'Comma-separated issue/PR numbers to close with a "torn down" note (optional)'
+        required: false
+        type: string
+      confirm:
+        description: 'Only when scope includes PROD: type the exact prod worker name to confirm'
+        required: false
+        type: string
+
+jobs:
+  teardown:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Never let two teardowns of the same app race.
+    concurrency:
+      group: teardown-app-${{ inputs.app }}
+      cancel-in-progress: false
+    env:
+      APP: ${{ inputs.app }}
+      SCOPE: ${{ inputs.scope }}
+      DRY: ${{ inputs.dry_run }}
+      CONFIRM: ${{ inputs.confirm }}
+      PATTERNS: ${{ inputs.branch_patterns }}
+      ISSUES: ${{ inputs.close_issues }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The script shells out to `npx wrangler`; install it globally so there's no
+      # interactive download prompt and no full monorepo install needed.
+      - name: Install wrangler
+        if: ${{ inputs.delete_cloudflare }}
+        run: npm install --global wrangler@4
+
+      - name: Delete Cloudflare resources
+        if: ${{ inputs.delete_cloudflare }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # Inputs come in via env (not inline interpolation) to avoid injection.
+          ARGS=(--app "$APP" --scope "$SCOPE")
+          if [ "$DRY" = "true" ]; then ARGS+=(--dry-run); fi
+          if [ -n "$CONFIRM" ]; then ARGS+=(--confirm "$CONFIRM"); fi
+          node scripts/teardown-app.mjs "${ARGS[@]}"
+
+      # Mint a Nuxt Harness App installation token so branch deletes + issue closes
+      # are attributed to nuxt-harness[bot] (same pattern as comment-dispatch.yml).
+      # Needs Actions secrets HARNESS_APP_ID + HARNESS_APP_PRIVATE_KEY; the App must
+      # have Contents: write (branch refs) + Issues: write (close + comment).
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+
+      - name: Delete branches + close issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { owner, repo } = context.repo
+            const app = process.env.APP
+            const dry = process.env.DRY === 'true'
+            // Default match = the app name; allow extra aliases (e.g. "libcat").
+            const patterns = (process.env.PATTERNS || app)
+              .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+            // Never delete these, whatever the patterns say.
+            const PROTECTED = new Set(['main', 'master', 'staging', 'production', 'develop'])
+
+            const lines = []
+
+            // ── branches ──────────────────────────────────────────────────────
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner, repo, per_page: 100
+            })
+            const toDelete = branches
+              .map(b => b.name)
+              .filter(name => !PROTECTED.has(name))
+              .filter(name => patterns.some(p => name.toLowerCase().includes(p)))
+
+            lines.push(`### Branches (${toDelete.length} matched ${patterns.map(p => '`' + p + '`').join(', ')})`)
+            for (const name of toDelete) {
+              if (dry) { lines.push(`- would delete \`${name}\``); continue }
+              try {
+                await github.rest.git.deleteRef({ owner, repo, ref: `heads/${name}` })
+                lines.push(`- ✓ deleted \`${name}\``)
+              } catch (e) {
+                lines.push(`- ✗ \`${name}\` — ${e.message}`)
+              }
+            }
+            if (!toDelete.length) lines.push('_none matched_')
+
+            // ── issues / PRs ──────────────────────────────────────────────────
+            const issueNums = (process.env.ISSUES || '')
+              .split(',').map(s => s.trim().replace(/^#/, '')).filter(Boolean)
+            lines.push('', `### Issues / PRs (${issueNums.length})`)
+            const note = `> 🤖 **Claude Code** · teardown-app (CI), posted from the Harness App · _#618 /remove-app_\n\n`
+              + `🧹 **\`${app}\` torn down.** This issue/PR was closed as part of removing the app `
+              + `(code + Cloudflare resources + branches). See the teardown-app workflow run for details.`
+            for (const n of issueNums) {
+              if (dry) { lines.push(`- would close #${n} (with note)`); continue }
+              try {
+                await github.rest.issues.createComment({ owner, repo, issue_number: Number(n), body: note })
+                await github.rest.issues.update({ owner, repo, issue_number: Number(n), state: 'closed', state_reason: 'not_planned' })
+                lines.push(`- ✓ closed #${n}`)
+              } catch (e) {
+                lines.push(`- ✗ #${n} — ${e.message}`)
+              }
+            }
+            if (!issueNums.length) lines.push('_none specified_')
+
+            const header = `## teardown-app — \`${app}\`${dry ? ' (DRY RUN — nothing changed)' : ''}\n\n`
+            core.summary.addRaw(header + lines.join('\n'))
+            await core.summary.write()
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### teardown-app — \`$APP\`"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| scope | \`$SCOPE\` |"
+            echo "| dry run | \`$DRY\` |"
+            echo "| cloudflare | ${{ inputs.delete_cloudflare }} |"
+            echo "| result | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
