@@ -1,0 +1,140 @@
+name: Fix CI on failure
+
+# Fix-bot (#338, epic #336): when a pipeline PR's CI fails, an agent wakes up, reads the
+# failure, and tries a minimal fix — for a few attempts. If it still can't, it tags the
+# owner and stands down (status:blocked on the issue) rather than guessing or looping
+# forever; the existing resume-on-comment.yml restarts it on a human reply.
+#
+# Guard rails (the whole point — provably no runaway):
+#   - Scope: only head branches `claude/issue-*` (pipeline PRs). Human PRs are never touched.
+#   - Attempt cap: a `ci-fix-attempts:N` label on the PR, capped at MAX (3). On exhaustion →
+#     stop, @mention the owner, block the linked issue.
+#   - Shared-code stop: the agent must NOT touch packages/ (the HARD GATE) — if a fix needs
+#     it, the agent stops and blocks instead (same as the auto-merge guard, #339).
+#   - The label also feeds the #337 sticky status note ("🔧 Auto-fix attempts: N").
+#
+# Trigger is `workflow_run` (completed) of the CI / E2E workflows — it carries the head
+# branch + conclusion, and a workflow_run job runs with write perms from the default branch.
+
+on:
+  workflow_run:
+    workflows: ["CI", "E2E"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  fixbot:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      startsWith(github.event.workflow_run.head_branch, 'claude/issue-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # NOTE: permissions MUST live at the job level — GitHub job-level `permissions` fully
+    # OVERRIDES a workflow-level block, so id-token: write has to be here or
+    # claude-code-action's OIDC token request fails.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      # ── Gate: resolve the PR, enforce the attempt cap, bump the counter ──────────
+      - id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const MAX = 3
+            const { owner, repo } = context.repo
+            const run = context.payload.workflow_run
+            const HEADER = '> 🤖 **Claude Code** · agent pipeline (CI) · _fix-bot (#338)_\n\n'
+
+            // Resolve the open PR for this head branch.
+            let pr = (run.pull_requests || [])[0]
+            if (!pr) {
+              const list = await github.rest.pulls.list({ owner, repo, head: `${owner}:${run.head_branch}`, state: 'open' })
+              pr = list.data[0]
+            }
+            if (!pr) { core.info('No open PR for branch — nothing to fix.'); core.setOutput('proceed', 'false'); return }
+
+            const full = (await github.rest.pulls.get({ owner, repo, pull_number: pr.number })).data
+            if (full.state !== 'open' || !full.head.ref.startsWith('claude/issue-')) {
+              core.info('Not an open pipeline PR — skipping.'); core.setOutput('proceed', 'false'); return
+            }
+            const labels = (full.labels || []).map(l => l.name)
+            // Already escalated — don't pile on while a human is in the loop.
+            if (labels.includes('status:blocked')) {
+              core.info('PR already blocked — standing down.'); core.setOutput('proceed', 'false'); return
+            }
+
+            // Attempt count lives in a `ci-fix-attempts:N` label on the PR (also read by #337).
+            const attemptLabel = labels.find(n => /^ci-fix-attempts:\d+$/.test(n))
+            const attempts = attemptLabel ? Number(attemptLabel.split(':')[1]) : 0
+
+            // The linked issue (from the branch name) is the resume surface for resume-on-comment.
+            const m = /^claude\/issue-(\d+)-/.exec(full.head.ref)
+            const issueNumber = m ? Number(m[1]) : null
+
+            if (attempts >= MAX) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body: HEADER +
+                `🛑 **Auto-fix gave up after ${attempts} attempts.** \`${run.name}\` is still failing on ` +
+                `\`${full.head.sha.slice(0, 7)}\`. @pmcp — this needs a human. [Failing run](${run.html_url}).` })
+              if (issueNumber) {
+                try { await github.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: ['status:blocked'] }) } catch (e) { core.warning(`block #${issueNumber}: ${e.message}`) }
+                await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body: HEADER +
+                  `🛑 The fix-bot tried ${attempts} times to get CI green on PR #${pr.number} and couldn't. ` +
+                  `@pmcp — reply here when you've had a look and the pipeline will resume. [Failing run](${run.html_url}).` })
+              }
+              core.setOutput('proceed', 'false'); return
+            }
+
+            // Bump the counter (addLabels auto-creates if absent; labels.yml predefines 1–3).
+            if (attemptLabel) { try { await github.rest.issues.removeLabel({ owner, repo, issue_number: pr.number, name: attemptLabel }) } catch (e) {} }
+            const next = attempts + 1
+            await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: [`ci-fix-attempts:${next}`] })
+
+            core.setOutput('proceed', 'true')
+            core.setOutput('pr_number', String(pr.number))
+            core.setOutput('issue_number', issueNumber ? String(issueNumber) : '')
+            core.setOutput('head_branch', full.head.ref)
+            core.setOutput('attempt', String(next))
+            core.info(`Fix attempt ${next}/${MAX} for PR #${pr.number} (issue #${issueNumber}).`)
+
+      - if: steps.gate.outputs.proceed == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.gate.outputs.head_branch }}
+          fetch-depth: 0
+
+      # ── The fix attempt ─────────────────────────────────────────────────────────
+      # AUTH: headless/unattended → MUST use an API key (never a subscription OAuth token;
+      # Anthropic terms). Pinned to the same SHA as claude.yml — keep in sync when bumping.
+      - if: steps.gate.outputs.proceed == 'true'
+        uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--max-turns 30"
+          show_full_output: true
+          prompt: |
+            CI failed on this pipeline PR — you are the fix-bot. This is auto-fix attempt
+            ${{ steps.gate.outputs.attempt }} of 3 for PR #${{ steps.gate.outputs.pr_number }}
+            (branch `${{ steps.gate.outputs.head_branch }}`, linked issue #${{ steps.gate.outputs.issue_number }}).
+
+            The failing workflow was "${{ github.event.workflow_run.name }}":
+            ${{ github.event.workflow_run.html_url }}
+
+            Do this, and ONLY this:
+            1. Reproduce the failure locally — run the relevant command (e.g. `pnpm -r --filter './apps/*' typecheck`,
+               `pnpm lint`, or the failing test/e2e) to see the actual error. Read the failing job's logs if you need to.
+            2. Diagnose the root cause and make the MINIMAL fix on this branch. Keep it tightly
+               scoped to the failure — do not refactor, do not touch unrelated files.
+            3. HARD GATE — shared code: do NOT modify anything under `packages/`. If the only correct
+               fix would require a `packages/` change, STOP: do not commit. Instead comment on issue
+               #${{ steps.gate.outputs.issue_number }} explaining why, @mention @pmcp, apply the
+               `status:blocked` label to that issue, and end your run.
+            4. Verify green: re-run the command from step 1 and confirm it passes.
+            5. Commit with the /commit skill (reference the issue) and push to this branch. CI re-runs
+               automatically; if it still fails, the fix-bot will get another attempt (up to the cap).
+
+            If you cannot find a confident fix, do NOT guess or push a speculative change — comment on
+            issue #${{ steps.gate.outputs.issue_number }}, @mention @pmcp, apply `status:blocked`, and stop.
