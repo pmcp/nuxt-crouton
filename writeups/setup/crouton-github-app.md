@@ -49,6 +49,7 @@ Fill the form (verbatim field labels; required marked):
 | **Repository permissions** | **Contents → Read & write**, **Pull requests → Read & write**. *(Metadata auto-forces to Read-only — expected.)* |
 | *(WS5)* | **Issues → Read & write** — needed so the App can apply the `delegate` label. |
 | *(futureproof, optional)* | **Checks → Read & write** — WS4 needs it; setting now saves a re-approval later. |
+| **Organization permissions → Projects** *(#646)* | **Read & write** — required for the org **Projects v2** board automation (`backfill-project.yml` / `project-status.yml`). This is an **organization** permission, *not* a repository one — it's a separate section in the form, and `GITHUB_TOKEN` can never grant it. See [§F](#f-projects-v2-board-org-level). |
 | **Subscribe to events** | none (Active is off) |
 | **Where can this GitHub App be installed?** | **Any account** (public) — required so the org-owned App can install on the personal `FriendlyInternet/nuxt-crouton` repo. |
 
@@ -90,6 +91,59 @@ npx wrangler deploy
 
 **Verify (the epic's "we'll know by"):** open the editor → edit a diagram → **Save** → the commit on
 the branch is authored by **`nuxt-harness[bot]`**, no PAT anywhere.
+
+## F. Projects v2 board (org-level) — the gotcha that cost us a day (#646)
+
+The org **"Crouton"** Projects v2 board is driven by two workflows, both authenticating as
+the App (`HARNESS_APP_ID` / `HARNESS_APP_PRIVATE_KEY` → `actions/create-github-app-token`):
+
+- **`project-status.yml`** — event-driven: adds a card + sets Status when an issue/PR changes.
+- **`backfill-project.yml`** — on-demand (`workflow_dispatch`): bulk-adds every open issue/PR.
+  Re-run it any time the board drifts.
+
+### Two things must both be true
+
+1. **The App needs `Organization → Projects: Read & write`** on the **org installation**
+   (not the repo). `GITHUB_TOKEN` *cannot* write a Projects v2 board — only the App can, and
+   only with this org-level grant. Adding it means **re-approving the installation**: look for
+   the pending "review request" banner on the org's installed-Apps page, *or* add the App to the
+   board's **Manage access** with Write.
+   - **Mint the token with `owner:` and no `repositories:`** so it carries the org-level grant:
+     ```yaml
+     - uses: actions/create-github-app-token@v1
+       id: app-token
+       with:
+         app-id: ${{ secrets.HARNESS_APP_ID }}
+         private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+         owner: FriendlyInternet      # org-scoped token; carries Projects: R/W
+     ```
+
+2. **Resolve the board at the ORG level, never via the repo link.** A **private** org board is
+   **not reliably returned by `repository.projectsV2`** to an App token *even when the repo IS
+   linked to the board in the UI*. This is the trap: the link looks correct, the workflow finds
+   `null`, and the board silently stays empty. Query `organization(login).projectsV2` and match by
+   title instead — then the repo↔project link is irrelevant:
+   ```graphql
+   query($org:String!,$cursor:String){
+     organization(login:$org){ projectsV2(first:100, after:$cursor){
+       pageInfo{ hasNextPage endCursor } nodes { id title } } }
+   }
+   ```
+
+### How we diagnosed it
+
+A temporary `core.warning` listing every project the token could see printed **0 org projects** —
+proving the token, not the code, was the problem. Once `Organization → Projects: R/W` was granted,
+the same backfill added 77 items on the first green run. The diagnostic has since been removed; the
+not-found failure message keeps a one-line hint pointing back at this permission.
+
+### Operate it
+
+- **Populate / repair the board:** Actions → **Backfill project board** → *Run workflow*. Output:
+  `Backfill "Crouton": added N item(s); M already present; K open issues/PRs scanned.`
+- **If it fails with `Project "Crouton" not found`:** the App lost (or never had) the org Projects
+  grant, *or* the board title changed. Re-check the installation permission first; set the
+  `PROJECT_NAME` repo variable if the board was renamed.
 
 ## Forward-compat (so this setup carries to the product)
 
