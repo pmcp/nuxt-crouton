@@ -100,19 +100,36 @@ jobs:
             core.setOutput('attempt', String(next))
             core.info(`Fix attempt ${next}/${MAX} for PR #${pr.number} (issue #${issueNumber}).`)
 
+      # Mint a Harness App token so the fix PUSH is App-authored. CRUCIAL: a push made with
+      # the default GITHUB_TOKEN does NOT re-trigger workflows (GitHub's loop guard), so a
+      # GITHUB_TOKEN-authored fix would never re-run CI — the retry loop would stall after
+      # one attempt and never verify its own fix. An App-token push fires `pull_request:
+      # synchronize` → CI re-runs → workflow_run gives the fix-bot its next attempt (bounded
+      # by the ci-fix-attempts cap). Same reason automerge/resume/schedule-waves use it (#626).
+      - if: steps.gate.outputs.proceed == 'true'
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: FriendlyInternet
+
       - if: steps.gate.outputs.proceed == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.gate.outputs.head_branch }}
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
       # ── The fix attempt ─────────────────────────────────────────────────────────
       # AUTH: headless/unattended → MUST use an API key (never a subscription OAuth token;
       # Anthropic terms). Pinned to the same SHA as claude.yml — keep in sync when bumping.
+      # github_token is the App token so the agent's git push re-triggers CI (above).
       - if: steps.gate.outputs.proceed == 'true'
         uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ steps.app-token.outputs.token }}
           claude_args: "--max-turns 30"
           show_full_output: true
           prompt: |
