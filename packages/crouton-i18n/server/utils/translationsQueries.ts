@@ -45,73 +45,87 @@ export async function getTeamBySlugForTranslations(slugOrId: string) {
 export async function getSystemTranslationsWithTeamOverrides(teamId: string, locale?: string) {
   const db = useDB()
 
-  // First, get all overrideable system translations
-  const systemTranslations = await db
-    .select({
-      keyPath: translationsUi.keyPath,
-      category: translationsUi.category,
-      namespace: translationsUi.namespace,
-      systemValues: translationsUi.values,
-      systemId: translationsUi.id,
-      isOverrideable: translationsUi.isOverrideable
-    })
-    .from(translationsUi)
-    .where(
-      and(
-        isNull(translationsUi.teamId), // Only system translations
-        eq(translationsUi.isOverrideable, true) // Only overrideable ones
+  // Graceful degradation (#680): `translations_ui` is owned by crouton-i18n and only
+  // holds team OVERRIDES — the UI defaults come from the bundled locale JSON via useT().
+  // A fresh app that never created the table (e.g. one that gets i18n transitively via
+  // crouton-core but has no override storage yet) must NOT hard-500 here; return empty
+  // so the caller falls back to the file-based defaults. The whole body is wrapped so
+  // the queries stay `const` (preserving their drizzle-inferred row types for callers).
+  try {
+    // First, get all overrideable system translations
+    const systemTranslations = await db
+      .select({
+        keyPath: translationsUi.keyPath,
+        category: translationsUi.category,
+        namespace: translationsUi.namespace,
+        systemValues: translationsUi.values,
+        systemId: translationsUi.id,
+        isOverrideable: translationsUi.isOverrideable
+      })
+      .from(translationsUi)
+      .where(
+        and(
+          isNull(translationsUi.teamId), // Only system translations
+          eq(translationsUi.isOverrideable, true) // Only overrideable ones
+        )
       )
-    )
-    .orderBy(translationsUi.keyPath)
+      .orderBy(translationsUi.keyPath)
 
-  // Then, get all team overrides for this team
-  const teamOverrides = await db
-    .select({
-      keyPath: translationsUi.keyPath,
-      namespace: translationsUi.namespace,
-      teamValues: translationsUi.values,
-      overrideId: translationsUi.id,
-      overrideDescription: translationsUi.description,
-      overrideUpdatedAt: translationsUi.updatedAt
-    })
-    .from(translationsUi)
-    .where(eq(translationsUi.teamId, teamId))
+    // Then, get all team overrides for this team
+    const teamOverrides = await db
+      .select({
+        keyPath: translationsUi.keyPath,
+        namespace: translationsUi.namespace,
+        teamValues: translationsUi.values,
+        overrideId: translationsUi.id,
+        overrideDescription: translationsUi.description,
+        overrideUpdatedAt: translationsUi.updatedAt
+      })
+      .from(translationsUi)
+      .where(eq(translationsUi.teamId, teamId))
 
-  // Create a lookup map for team overrides
-  const overrideMap = new Map()
-  for (const override of teamOverrides) {
-    const key = `${override.keyPath}:${override.namespace}`
-    overrideMap.set(key, override)
-  }
-
-  // Combine system translations with team overrides
-  const enhancedTranslations = systemTranslations.map((systemTranslation: any) => {
-    const key = `${systemTranslation.keyPath}:${systemTranslation.namespace}`
-    const override = overrideMap.get(key)
-
-    return {
-      keyPath: systemTranslation.keyPath,
-      category: systemTranslation.category,
-      namespace: systemTranslation.namespace,
-      systemValues: systemTranslation.systemValues,
-      systemId: systemTranslation.systemId,
-      isOverrideable: systemTranslation.isOverrideable,
-      teamValues: override?.teamValues || null,
-      hasOverride: override !== undefined,
-      overrideId: override?.overrideId || null,
-      overrideDescription: override?.overrideDescription || null,
-      overrideUpdatedAt: override?.overrideUpdatedAt || null
+    // Create a lookup map for team overrides
+    const overrideMap = new Map()
+    for (const override of teamOverrides) {
+      const key = `${override.keyPath}:${override.namespace}`
+      overrideMap.set(key, override)
     }
-  })
 
-  // Filter by locale if provided
-  if (locale) {
-    return enhancedTranslations.filter((t: any) =>
-      t.systemValues && typeof t.systemValues === 'object' && t.systemValues !== null && locale in t.systemValues
-    )
+    // Combine system translations with team overrides
+    const enhancedTranslations = systemTranslations.map((systemTranslation: any) => {
+      const key = `${systemTranslation.keyPath}:${systemTranslation.namespace}`
+      const override = overrideMap.get(key)
+
+      return {
+        keyPath: systemTranslation.keyPath,
+        category: systemTranslation.category,
+        namespace: systemTranslation.namespace,
+        systemValues: systemTranslation.systemValues,
+        systemId: systemTranslation.systemId,
+        isOverrideable: systemTranslation.isOverrideable,
+        teamValues: override?.teamValues || null,
+        hasOverride: override !== undefined,
+        overrideId: override?.overrideId || null,
+        overrideDescription: override?.overrideDescription || null,
+        overrideUpdatedAt: override?.overrideUpdatedAt || null
+      }
+    })
+
+    // Filter by locale if provided
+    if (locale) {
+      return enhancedTranslations.filter((t: any) =>
+        t.systemValues && typeof t.systemValues === 'object' && t.systemValues !== null && locale in t.systemValues
+      )
+    }
+
+    return enhancedTranslations
+  } catch (error: any) {
+    // Missing table → no overrides; defaults resolve from the bundled locale files.
+    if (/no such table|translations_ui/i.test(String(error?.message ?? error))) {
+      return []
+    }
+    throw error
   }
-
-  return enhancedTranslations
 }
 
 /**
