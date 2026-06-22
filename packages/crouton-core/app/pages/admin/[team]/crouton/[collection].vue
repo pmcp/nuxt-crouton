@@ -13,30 +13,24 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { t } = useT()
 const { getConfig } = useCollections()
 const { collectionWithCapital } = useFormatCollections()
 
 const collectionName = computed(() => route.params.collection as string)
 
-const loading = ref(true)
-const error = ref<string | null>(null)
-
 // Get collection config for display
 const collectionConfig = computed(() => getConfig(collectionName.value))
+
+// Verify collection exists in registry (reactive — no loading flash; the
+// viewer's own Suspense skeleton covers the data-loading phase)
+const error = computed(() =>
+  collectionConfig.value ? null : `Collection not found: ${collectionName.value}`
+)
 
 // Format collection name for display
 const collectionTitle = computed(() => {
   const config = collectionConfig.value
   return config?.adminNav?.label || config?.displayName || collectionWithCapital(collectionName.value)
-})
-
-// Verify collection exists in registry
-onMounted(() => {
-  if (!collectionConfig.value) {
-    error.value = `Collection not found: ${collectionName.value}`
-  }
-  loading.value = false
 })
 </script>
 
@@ -55,18 +49,7 @@ onMounted(() => {
 
     <!-- Use default slot instead of body for full-height content without auto-scroll -->
     <div
-      v-if="loading"
-      class="italic opacity-50 flex items-center gap-2 p-4"
-    >
-      <UIcon
-        name="i-lucide-loader-circle"
-        class="animate-spin"
-      />
-      {{ t('common.loading') }}
-    </div>
-
-    <div
-      v-else-if="error"
+      v-if="error"
       class="text-red-600 p-4"
     >
       {{ error }}
