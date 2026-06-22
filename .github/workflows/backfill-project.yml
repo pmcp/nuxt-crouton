@@ -59,7 +59,6 @@ jobs:
             //    in the UI — the root cause of the empty board. (#646)
             let project = null
             let pcursor = null
-            const seen = []
             do {
               const projQ = await github.graphql(`
                 query($org:String!,$cursor:String){
@@ -71,13 +70,11 @@ jobs:
                   }
                 }`, { org: owner, cursor: pcursor })
               const conn = projQ.organization.projectsV2
-              for (const p of conn.nodes) seen.push(p.title)
               project = conn.nodes.find(p => p.title === projectName)
               pcursor = (!project && conn.pageInfo.hasNextPage) ? conn.pageInfo.endCursor : null
             } while (pcursor)
             if (!project) {
-              core.warning(`${owner} org projects visible to the token (${seen.length}): ${seen.map(t => JSON.stringify(t)).join(', ') || '(none)'}`)
-              core.setFailed(`Project "${projectName}" not found among ${owner} org projects — check the board title or set the PROJECT_NAME variable.`)
+              core.setFailed(`Project "${projectName}" not found among ${owner} org projects — check the board title or set the PROJECT_NAME variable. (If this regresses, confirm the Nuxt Harness App still has Organization → Projects: Read & write.)`)
               return
             }
 
