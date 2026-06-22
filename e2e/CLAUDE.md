@@ -122,22 +122,47 @@ cd apps/with-i18n && node ../../packages/crouton-cli/bin/crouton-generate.js con
 mv apps/with-i18n fixtures/with-i18n
 #    set package.json "name": "e2e-fixture-with-i18n"
 
-# 3. Declare what to smoke
+# 3. Declare what to smoke (incl. `packages` so smart CI selection runs it on the right changes)
 cat > fixtures/with-i18n/e2e.manifest.json <<'JSON'
-{ "collections": [ { "key": "mainItems", "heading": "Main Items", "create": { "name": "e2e item" } } ] }
+{ "packages": ["crouton-i18n"], "collections": [ { "key": "mainItems", "heading": "Main Items", "create": { "name": "e2e item" } } ] }
 JSON
 
 # 4. Register + run
 pnpm install
 E2E_FIXTURE=with-i18n pnpm test:e2e
+
+# 5. Add it to the CI matrix: append the fixture name to ALL="…" in .github/workflows/e2e.yml
+#    (the detect job's candidate list). Without this it runs locally but never in CI.
 ```
 
 `fixtures/*` is already a workspace glob, so step 4's install picks it up.
 **No new test code** — the generic spec covers any fixture via its manifest.
 
+### Smart CI selection (#622)
+
+`e2e.yml` doesn't run every fixture on every change. A `detect` job (mirroring
+`deploy-pocs.yml`) computes the matrix from the changed paths + each manifest's `packages`:
+
+- `packages/<pkg>/**` → every fixture whose `packages` lists `<pkg>`; a package no fixture
+  covers → `minimal` (baseline boot).
+- `fixtures/<name>/**` → that fixture.
+- **Universal** (`crouton`, `crouton-core`, `crouton-i18n`, `crouton-cli`, `crouton-auth`,
+  `e2e/**`, `pnpm-lock.yaml`, the workflow) → **all** fixtures.
+- **Backstops:** push to `main` and the **nightly schedule** always run the full matrix, so
+  selection can never silently hide a regression.
+
+When you add a fixture, set its `packages` (step 3) **and** add it to `ALL` in the workflow
+(step 5) — otherwise the detect job never selects it.
+
 ### Manifest format
 ```jsonc
 {
+  // Feature packages this fixture exercises ON TOP OF the shared base (core/i18n/auth).
+  // Drives smart CI selection (#622): a PR touching packages/<pkg> runs only the fixtures
+  // whose `packages` list includes <pkg>. Include meaningful transitive deps the fixture
+  // actually renders (e.g. with-pages lists crouton-editor, which crouton-pages pulls in).
+  // Leave `[]` for a baseline fixture (minimal) — it always runs for uncovered/core changes.
+  "packages": ["crouton-pages", "crouton-editor"],
   "collections": [
     {
       "key": "mainItems",          // route segment + registered config key
