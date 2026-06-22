@@ -117,6 +117,34 @@ All components auto-import with `CroutonI18n` prefix:
 }
 ```
 
+### This package OWNS the `translations_ui` table (shipped migration) — #680
+
+`crouton-core` extends `@fyit/crouton-i18n` **transitively**, so every crouton app
+(even one that never opted into a language) serves the translations UI and queries
+`translations_ui` on each admin load. To guarantee the table always exists, the
+**package ships its own migration** rather than relying on each app's generated
+schema barrel:
+
+- **`server/db/migrations/0000_i18n_translations_ui.sql`** — an idempotent
+  `CREATE TABLE IF NOT EXISTS translations_ui` (+ the unique index). NuxtHub
+  auto-applies it because `@nuxthub/core` scans **every layer's**
+  `server/db/migrations` dir (`@nuxthub/core/dist/module.mjs:177`) — zero
+  registration needed.
+- **Idempotent + filename-tracked** (`_hub_migrations`): no-ops in the apps that
+  already created the table via their own per-app migration, and creates it on
+  fresh / no-i18n apps.
+- The SQL column/index shape matches the drizzle schema in
+  `server/database/schema.ts` exactly (it's copied verbatim from an app's already
+  generated `translations_ui` migration). Keep them in sync if the schema changes.
+- Consequence for the CLI: the scaffolder **no longer emits a per-app
+  `translations-ui.ts`** copy or schema export — the package owns the table. It
+  still registers the `translationsUi` runtime collection in `app.config.ts`.
+
+> Phase 2 (deferred follow-up): the ~19 existing per-app `translations-ui.ts`
+> copies + their barrel exports can be removed and fixtures regenerated so this
+> package is the single source. Harmless to defer — those apps' migrations already
+> ran and this package migration no-ops over them.
+
 ## CLI Commands
 
 ```bash
