@@ -18,20 +18,45 @@
         />
       </div>
 
-      <!-- Layout Switcher: single menu button on mobile -->
-      <UDropdownMenu
-        :items="switcherMenuItems"
-        :content="{ align: 'end' }"
-        class="sm:hidden shrink-0"
-      >
-        <UButton
-          :icon="currentLayoutIcon"
+      <!--
+        Mobile: single consolidated header. The layout switcher collapses to a
+        menu button, and the import/create actions (shown in the table navbar on
+        desktop) appear here as compact icon buttons so there's one header row,
+        not two. Export stays desktop-only (needs the row data). (#691, #692)
+      -->
+      <div class="flex sm:hidden items-center gap-1 shrink-0">
+        <UDropdownMenu
+          :items="switcherMenuItems"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            :icon="currentLayoutIcon"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            trailing-icon="i-lucide-chevron-down"
+          />
+        </UDropdownMenu>
+
+        <CroutonImportButton
+          :collection="collectionName"
           color="neutral"
-          variant="outline"
+          variant="ghost"
           size="sm"
-          trailing-icon="i-lucide-chevron-down"
+        >
+          <template #default>
+            <span class="sr-only">{{ t('common.import') }}</span>
+          </template>
+        </CroutonImportButton>
+
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          size="sm"
+          :aria-label="t('common.create')"
+          @click="handleItemAction('create')"
         />
-      </UDropdownMenu>
+      </div>
     </div>
 
     <!-- Content area - fills remaining space -->
