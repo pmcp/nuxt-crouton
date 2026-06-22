@@ -1,4 +1,5 @@
 {
+  "packages": ["crouton-pages", "crouton-editor"],
   "collections": [
     {
       "key": "mainItems",

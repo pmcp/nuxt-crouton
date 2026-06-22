@@ -1,8 +1,13 @@
 name: E2E
 
-# Boots each crouton fixture app and runs the Playwright smoke (login + CRUD).
-# Catches regressions — e.g. a dependency bump that breaks a generated app —
-# before merge. Matrix = one job per fixture (see fixtures/* + e2e/CLAUDE.md).
+# Boots crouton fixture apps and runs the Playwright smoke (login + CRUD + package
+# surfaces). Catches regressions — e.g. a dependency bump or packages/ change that
+# breaks a generated app — before merge. See fixtures/* + e2e/CLAUDE.md.
+#
+# Smart selection (#622): on a PR we run ONLY the fixtures a change can affect, computed
+# by the `detect` job from the changed paths + each fixture's e2e.manifest.json `packages`
+# list (mirrors deploy-pocs.yml's detect→matrix pattern). Backstops keep coverage honest:
+# push to `main` and the nightly schedule always run the FULL matrix.
 on:
   push:
     branches: [main]
@@ -20,9 +25,89 @@ on:
       - 'e2e/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/e2e.yml'
+  schedule:
+    - cron: '0 4 * * *'   # nightly full-matrix backstop (selection can't silently hide a regression)
+  workflow_dispatch:        # manual full-matrix run
 
 jobs:
+  # Decide which fixtures to run. PR → only what's affected; everything else → all.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      any: ${{ steps.set.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need history for the PR base...head diff
+      - id: set
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # CI fixtures (with-collab is intentionally excluded — its crouton-collab package
+          # has pre-existing type errors that fail the #197 typecheck gate; #210 keeps it a
+          # local-only spike until type-clean).
+          ALL="minimal with-pages with-bookings with-assets with-maps"
+          # Packages whose change can affect EVERY fixture (shared base + generator + harness inputs).
+          UNIVERSAL="crouton crouton-core crouton-i18n crouton-cli crouton-auth"
+
+          pick=""
+          add() { case " $pick " in *" $1 "*) ;; *) pick="$pick $1";; esac; }
+
+          if [ "$EVENT" != "pull_request" ]; then
+            # push to main / schedule / manual → full matrix backstop.
+            pick="$ALL"
+            echo "Non-PR event ($EVENT) → full matrix."
+          else
+            changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)
+            echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+            # Universal surfaces: the harness itself, the lockfile, or this workflow → run all.
+            if printf '%s\n' "$changed" | grep -qE '^(e2e/|pnpm-lock\.yaml$|\.github/workflows/e2e\.yml$)'; then
+              pick="$ALL"
+              echo "Harness / lockfile / workflow changed → full matrix."
+            else
+              force_all=false
+              while IFS= read -r f; do
+                [ -z "$f" ] && continue
+                case "$f" in
+                  fixtures/*/*)
+                    fx=$(printf '%s' "$f" | cut -d/ -f2)
+                    case " $ALL " in *" $fx "*) add "$fx";; esac   # ignore non-CI fixtures (with-collab)
+                    ;;
+                  packages/*/*)
+                    pkg=$(printf '%s' "$f" | cut -d/ -f2)
+                    case " $UNIVERSAL " in *" $pkg "*) force_all=true; continue;; esac
+                    matched=false
+                    for fx in $ALL; do
+                      if jq -e --arg p "$pkg" '(.packages // []) | index($p)' "fixtures/$fx/e2e.manifest.json" >/dev/null 2>&1; then
+                        add "$fx"; matched=true
+                      fi
+                    done
+                    # A changed package no fixture covers → run minimal as a baseline boot check.
+                    [ "$matched" = false ] && add minimal
+                    ;;
+                esac
+              done <<< "$changed"
+              [ "$force_all" = true ] && pick="$ALL"
+            fi
+          fi
+
+          # Rebuild in canonical order (dedupes; stable matrix naming).
+          ordered=""
+          for fx in $ALL; do case " $pick " in *" $fx "*) ordered="$ordered $fx";; esac; done
+          arr=$(printf '%s\n' $ordered | sed '/^$/d' | jq -R . | jq -cs .)
+          matrix=$(jq -cn --argjson f "$arr" '{fixture:$f}')
+          if [ "$(printf '%s' "$arr" | jq 'length')" -gt 0 ]; then any=true; else any=false; fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "any=$any" >> "$GITHUB_OUTPUT"
+          echo "Selected fixtures: ${ordered:-<none>}"
+
   e2e:
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
     name: E2E (${{ matrix.fixture }})
     runs-on: ubuntu-latest
     # Every fixture runs inside the official, version-matched Playwright image
@@ -33,13 +118,7 @@ jobs:
     container: mcr.microsoft.com/playwright:v1.57.0-jammy
     strategy:
       fail-fast: false
-      matrix:
-        # with-collab is intentionally NOT here yet: the #197 gate type-checks each
-        # fixture, and the crouton-collab package it extends has pre-existing type
-        # errors (CollabCursors/useCollabPresence/avatar/ws.ts). Per #210 ("add to
-        # CI once stable"), with-collab stays a local-only spike until the package
-        # is type-clean. Its runtime smoke passes; only the typecheck gate blocks it.
-        fixture: [minimal, with-pages, with-bookings, with-assets, with-maps]
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
     env:
       # Better-auth needs a secret present; the value is irrelevant in CI.
       BETTER_AUTH_SECRET: ci-placeholder-secret

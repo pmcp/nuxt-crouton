@@ -22,6 +22,10 @@ authenticates, and does CRUD** after a `packages/` change or dependency bump.
 - **To change what gets smoked, edit the fixture's `e2e.manifest.json`** — it
   declares the collections to CRUD and any package `surfaces` to assert. The
   shared specs in `e2e/` read it; you almost never write test code per fixture.
+- **The manifest's `packages` list drives smart CI selection (#622).** It names the
+  feature packages the fixture exercises, so a PR touching `packages/<pkg>` runs only
+  the fixtures that list `<pkg>` (push to `main` + nightly still run all). Keep it
+  current when a fixture starts/stops exercising a package. See `e2e/CLAUDE.md`.
 - **They live in `fixtures/`, not `tests/`**, on purpose: pnpm ignores `test*/`
   during workspace discovery, so a fixture there would be invisible to
   `pnpm --filter`.
