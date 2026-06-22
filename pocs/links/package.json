@@ -1,0 +1,31 @@
+{
+  "name": "pocs-links",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare 2>/dev/null || true",
+    "typecheck": "nuxt typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "npx wrangler d1 migrations apply links-db --local"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@libsql/client": "catalog:",
+    "drizzle-orm": "catalog:",
+    "nuxt": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@fyit/crouton-cli": "workspace:*",
+    "drizzle-kit": "catalog:",
+    "wrangler": "catalog:"
+  }
+}
