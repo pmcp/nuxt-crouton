@@ -54,6 +54,15 @@ on:
         required: false
         default: '@fyit/crouton-auth @fyit/crouton-core @fyit/crouton'
         type: string
+      review-pr:
+        description: >-
+          PR number to wire the preview-review bridge to (staging only, #607).
+          When set, the staging Worker is given the `croutonReview` runtime config
+          (repo + this PR + the Nuxt Harness App creds) so in-page overlay comments
+          POST to this PR as nuxt-harness[bot]. Empty = bridge left unconfigured.
+        required: false
+        default: ''
+        type: string
     secrets:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
@@ -204,6 +213,52 @@ jobs:
             npx wrangler secret bulk "$RUNNER_TEMP/worker-secrets.json" --env staging
           fi
           rm -f "$RUNNER_TEMP/worker-secrets.json"
+
+      # ── Preview-review bridge wiring (#607, part of #488) ───────────────────────
+      # The live-preview comment loop turns the overlay ON at build (NUXT_PUBLIC_CROUTON_REVIEW)
+      # but the bridge (`/api/_review`, @fyit/crouton-devtools) also needs RUNTIME config to
+      # know which PR to post to and how to auth — which no deploy ever set, so every overlay
+      # comment 4xx'd "Review bridge not configured". These two steps inject it on staging,
+      # PR-tied deploys: routing (repo + PR) + the Nuxt Harness App creds (so the bridge mints
+      # an installation token at request time and posts as nuxt-harness[bot]). Pushed as Worker
+      # secrets (persist on the live Worker; no redeploy needed). Skipped when not staging,
+      # not PR-tied, or the App creds are absent — so the bridge simply stays off.
+      - name: Mint Harness App installation id (for review bridge)
+        id: review-app-token
+        if: ${{ inputs.environment == 'staging' && inputs.review-pr != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.HARNESS_APP_ID }}
+          private-key: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Wire preview-review bridge config (staging, PR-tied)
+        if: ${{ inputs.environment == 'staging' && inputs.review-pr != '' && steps.review-app-token.outputs.installation-id != '' }}
+        working-directory: ${{ inputs.workspace }}/${{ inputs.app }}
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PR: ${{ inputs.review-pr }}
+          APP_ID: ${{ secrets.HARNESS_APP_ID }}
+          INSTALLATION_ID: ${{ steps.review-app-token.outputs.installation-id }}
+          PRIVATE_KEY: ${{ secrets.HARNESS_APP_PRIVATE_KEY }}
+        run: |
+          jq -n \
+            --arg repo "$REPOSITORY" \
+            --arg pr "$PR" \
+            --arg appId "$APP_ID" \
+            --arg inst "$INSTALLATION_ID" \
+            --arg key "$PRIVATE_KEY" \
+            '{
+              NUXT_CROUTON_REVIEW_REPOSITORY: $repo,
+              NUXT_CROUTON_REVIEW_PR: $pr,
+              NUXT_CROUTON_REVIEW_GITHUB_APP_ID: $appId,
+              NUXT_CROUTON_REVIEW_GITHUB_APP_INSTALLATION_ID: $inst,
+              NUXT_CROUTON_REVIEW_GITHUB_APP_PRIVATE_KEY: $key
+            }' > "$RUNNER_TEMP/review-secrets.json"
+          npx wrangler secret bulk "$RUNNER_TEMP/review-secrets.json" --env staging
+          rm -f "$RUNNER_TEMP/review-secrets.json"
+          echo "✓ Wired preview-review bridge → PR #$PR on $REPOSITORY (posts as nuxt-harness[bot])"
 
       # Guarantee a new app can AUTHENTICATE on first deploy with ZERO per-app setup.
       # A freshly provisioned Worker has no secrets, so member login 500s with

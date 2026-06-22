@@ -25,6 +25,13 @@ on:
         description: POC directory name under pocs/ (e.g. library-catalog)
         required: true
         type: string
+      review_pr:
+        description: >-
+          Optional PR number to wire the preview-review bridge to (#607). Set it
+          to make a manually-dispatched preview's in-page overlay comments post to
+          that PR. Leave empty to deploy without the bridge.
+        required: false
+        type: string
 
 jobs:
   # Figure out which opted-in POCs to deploy → a matrix the deploy job fans out over.
@@ -97,4 +104,7 @@ jobs:
       environment: staging
       staging-url: ${{ matrix.stagingUrl }}
       layer-packages: ${{ matrix.layerPackages }}
+      # PR-tied deploys wire the preview-review bridge to this PR (#607); on a manual
+      # dispatch use the optional review_pr input; empty → the bridge stays off.
+      review-pr: ${{ github.event.pull_request.number || github.event.inputs.review_pr }}
     secrets: inherit
