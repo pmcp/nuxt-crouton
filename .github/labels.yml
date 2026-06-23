@@ -204,6 +204,11 @@
   color: "fef2c0"
   description: "Red-team severity: low — hardening / informational"
 
+# ── Accessibility (a11y agent/skill findings — epic #726) ──
+- name: "a11y"
+  color: "0e8a16"
+  description: "Accessibility finding/work from the a11y agent + /a11y skill (.claude/agents/a11y)"
+
 # ── Status ──
 - name: "status:in-progress"
   color: "fbca04"

@@ -41,6 +41,7 @@ const META = {
   postmortem: { group: 'review', triggers: ['flow', 'ask'] },
   'bug-archaeology': { group: 'review', triggers: ['flow', 'ask'] },
   'red-team': { group: 'review', triggers: ['ask', 'auto'] },
+  a11y: { group: 'review', triggers: ['ask'] },
   deploy: { group: 'deploy', triggers: ['ask'] },
   'deploy-production': { group: 'deploy', triggers: ['ask'] },
   'poc-deploy': { group: 'deploy', triggers: ['ask'] },
