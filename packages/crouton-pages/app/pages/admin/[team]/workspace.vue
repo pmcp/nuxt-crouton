@@ -59,7 +59,6 @@ function handleCancel(onCancel: () => void) {
     query-param="page"
     :title="t('pages.workspace.title') || 'Pages'"
     sidebar-id="pages-sidebar"
-    content-mode="overlay"
   >
     <template #sidebar-actions>
       <UButton
@@ -84,11 +83,9 @@ function handleCancel(onCancel: () => void) {
         :key="sessionKey"
         :page-id="selectedId"
         :default-parent-id="mode === 'create' ? createParentId : null"
-        show-close
         @save="(item: any) => handleSave(item, onSave)"
         @delete="onDelete"
         @cancel="() => handleCancel(onCancel)"
-        @close="() => handleCancel(onCancel)"
       />
     </template>
 
