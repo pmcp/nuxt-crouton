@@ -1,38 +1,37 @@
 <script setup lang="ts">
 /**
  * CroutonLayoutRenderer — renders a layout *data tree* into resizable, nestable
- * panes using reka-ui's Splitter primitives (Sprint 0 spike, #713).
+ * panes using reka-ui's Splitter primitives (Sprint 0 #713 → Sprint 1 #704).
  *
- * - `split` node  → a SplitterGroup with one SplitterPanel per child (recursing
- *   into CroutonLayoutRenderer), interleaved with resize handles. Nesting = a
- *   SplitterGroup inside a SplitterPanel.
- * - `leaf` node   → one block, resolved id → component through the allowlisted
- *   `blocks` map. An unknown id renders a safe fallback — NEVER an arbitrary
- *   component (the "layout tree is untrusted input" guard).
+ * - `split` node → a SplitterGroup with one SplitterPanel per child (recursing),
+ *   interleaved with resize handles. Nesting = a group inside a panel.
+ * - `leaf` node  → one block, resolved id → component NAME through the
+ *   ALLOWLISTED `croutonLayoutBlocks` registry (#704). An unknown id renders a
+ *   safe fallback — NEVER an arbitrary component. Per-block config is sanitized
+ *   against the block's declared schema before it reaches props.
  *
- * Splitter primitives are SSR-safe (no <ClientOnly> needed). Throwaway spike;
- * the production renderer lands in Sprint 3 (#706).
+ * Splitter primitives are SSR-safe (no <ClientOnly> needed).
  */
-import type { Component } from 'vue'
 import { computed } from 'vue'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '../types/layout'
 
-const props = defineProps<{
-  node: LayoutNode
-  blocks: Record<string, Component>
-}>()
+const props = defineProps<{ node: LayoutNode }>()
 
 const emit = defineEmits<{
   /** Bubbled up on resize so the owner can persist sizes into its tree. */
   layoutChange: [node: LayoutSplit, sizes: number[]]
 }>()
 
-// Allowlisted resolution: only ids present in the registry map resolve.
-const resolved = computed<Component | null>(() => {
-  if (props.node.type !== 'leaf') return null
-  return props.blocks[props.node.blockId] ?? null
-})
+const { resolveComponentName, sanitizeConfig } = useCroutonLayoutBlocks()
+
+// Allowlisted: only ids registered in croutonLayoutBlocks resolve to a component.
+const componentName = computed<string | null>(() =>
+  props.node.type === 'leaf' ? resolveComponentName(props.node.blockId) : null,
+)
+const safeConfig = computed<Record<string, unknown>>(() =>
+  props.node.type === 'leaf' ? sanitizeConfig(props.node.blockId, props.node.config) : {},
+)
 
 function onLayout(sizes: number[]) {
   if (props.node.type === 'split') emit('layoutChange', props.node, sizes)
@@ -43,9 +42,9 @@ function onLayout(sizes: number[]) {
   <!-- Leaf -->
   <template v-if="node.type === 'leaf'">
     <component
-      :is="resolved"
-      v-if="resolved"
-      v-bind="node.config"
+      :is="componentName"
+      v-if="componentName"
+      v-bind="safeConfig"
       class="h-full w-full overflow-auto"
     />
     <div
@@ -78,7 +77,6 @@ function onLayout(sizes: number[]) {
       >
         <CroutonLayoutRenderer
           :node="child"
-          :blocks="blocks"
           @layout-change="(n: LayoutSplit, s: number[]) => emit('layoutChange', n, s)"
         />
       </SplitterPanel>

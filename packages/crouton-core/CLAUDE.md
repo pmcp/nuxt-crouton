@@ -80,6 +80,11 @@ export default defineNuxtConfig({
 | `server/routes/images/[pathname].get.ts` | Image serving with cache headers |
 | `app/components/stubs/` | No-op stubs (`priority: -1`) for optional package components |
 | `app/composables/useCroutonApps.ts` | App registry — `hasApp('assets')` for optional package detection |
+| `app/composables/useCroutonLayoutBlocks.ts` | **Layout block registry** reader (#704) — reads `app.config.croutonLayoutBlocks`; `getBlock`/`hasBlock`/`resolveComponentName` (allowlisted id → component **NAME**) + `sanitizeConfig` (validate per-block config vs the block's `configSchema`). Pure `resolveLayoutBlockComponentName` / `sanitizeLayoutBlockConfig` exported for tests. **Distinct** from the TipTap `croutonBlocks` content-block registry — layout blocks are pane-placeable surfaces. |
+| `app/types/layout-block.ts` | `CroutonLayoutBlockDefinition` (id/name/description/icon + component **string** + `kind`/`configSchema`) — the placeable-block contract (mirrors `CroutonPageType`). |
+| `app/types/layout.ts` | `LayoutTree` / `LayoutNode` (`split` \| `leaf`) — the persisted "layout is data" tree. |
+| `app/components/LayoutRenderer.vue` | `CroutonLayoutRenderer` — recursive renderer of a layout tree into **reka-ui Splitter** panes; resolves each leaf `blockId` via the registry (unknown id → safe fallback, never an arbitrary component). SSR-safe (no `<ClientOnly>`). |
+| _Throwaway spike (#713 → remove/replace at #706):_ `app/components/LayoutSpike{List,Form,Stats}.vue`, `app/pages/admin/[team]/layout-spike.vue`, `app/composables/useLayoutSpikeStore.ts`, `server/database/schema/layoutConfigs.ts` (`layout_configs` table), `server/api/teams/[id]/crouton-layouts/[layoutId].{get,put}.ts` | Spike harness proving the data-tree → panes mechanism + team-scoped persistence. |
 | `app/composables/useCroutonRedirects.ts` | Built-in redirects collection config, Zod schema, columns |
 | `app/components/RedirectsList.vue` | `CroutonRedirectsList` — Admin list with path display and status badge |
 | `app/components/RedirectsForm.vue` | `CroutonRedirectsForm` — Create/edit form for redirects |
