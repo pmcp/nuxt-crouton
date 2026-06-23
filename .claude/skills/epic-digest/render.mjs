@@ -49,11 +49,13 @@ const prettyDate = generated.toLocaleDateString('en-US', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
 })
 
+// Status is the ONE place colour is allowed to carry meaning. `cls` lets the
+// dark-mode <style> block brighten each hue for a dark background.
 const STATUS = {
-  blocked: { label: 'Blocked', bg: '#fef2f2', fg: '#b91c1c', bar: '#ef4444' },
-  'in-progress': { label: 'In progress', bg: '#fffbeb', fg: '#b45309', bar: '#f59e0b' },
-  done: { label: 'Done', bg: '#ecfdf5', fg: '#047857', bar: '#10b981' },
-  open: { label: 'Open', bg: '#f1f5f9', fg: '#475569', bar: '#10b981' }
+  blocked: { label: 'Blocked', fg: '#dc2626', cls: 's-blocked' },
+  'in-progress': { label: 'In progress', fg: '#b45309', cls: 's-prog' },
+  done: { label: 'Done', fg: '#15803d', cls: 's-done' },
+  open: { label: 'Open', fg: '#6b7280', cls: 's-open' }
 }
 const statusOf = (epic) => {
   if (epic.blocked || epic.status === 'blocked') return STATUS.blocked
@@ -106,41 +108,57 @@ const actionables = (data.actionables || []).slice().sort((a, b) => {
 })
 
 // ── HTML ─────────────────────────────────────────────────────────────────────
-const card = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;'
-const muted = 'color:#64748b;'
+// Clean, neutral, typographic. Colour is reserved for MEANING (status only) —
+// everything else is ink-on-paper with hairline rules. Semantic classes
+// (.ink/.sub/.mut/.card/.lnk/.track/.bar/.s-*) let the <style> block flip the
+// whole thing to a real dark theme via prefers-color-scheme, while the inline
+// values are the light fallback for clients that strip <style>.
+const C = {
+  ink: '#1f2937', sub: '#374151', mut: '#6b7280', faint: '#9ca3af',
+  surface: '#ffffff', border: '#e8e8ea', track: '#ededf0'
+}
+const card = `background:${C.surface};border:1px solid ${C.border};border-radius:12px`
+const muted = `color:${C.mut};`
+const linkS = `class="lnk" style="color:${C.ink};text-decoration:underline;text-underline-offset:2px"`
+const badge = (s) =>
+  `<span class="${s.cls}" style="font-size:11px;font-weight:600;letter-spacing:.05em;` +
+  `text-transform:uppercase;color:${s.fg};white-space:nowrap">${s.label}</span>`
 
 function actionableCard(a) {
   const isEpic = a.kind === 'epic'
-  const badge = a.label || (isEpic ? '✓ Epic complete · do one QA pass' : 'merged')
-  const badgeStyle = isEpic ? 'background:#ecfdf5;color:#047857' : 'background:#f1f5f9;color:#475569'
-  const accent = isEpic ? 'border-left:4px solid #10b981;' : ''
+  const tag = isEpic
+    ? `<span class="s-done" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#15803d;white-space:nowrap">Complete</span>`
+    : `<span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:${C.mut};white-space:nowrap">Merged</span>`
   const visual = a.hasVisual
-    ? `<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#4338ca">👁 visual change</span> `
+    ? `<span class="mut" style="font-size:12px;color:${C.mut}">👁 visual</span>`
+    : ''
+  const note = isEpic ? 'Reached 100% — give it one QA pass.' : ''
+  const subLine = (note || visual)
+    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin-top:5px">${note}${note && visual ? ' · ' : ''}${visual}</div>`
     : ''
   const stepCount = (a.testSteps && a.testSteps.length) || 0
   const stepsBlock = stepCount
     ? `<details style="margin-top:12px">
-         <summary style="cursor:pointer;color:#b45309;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;outline:none">🧪 How to test (${stepCount})</summary>
-         <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;padding:12px 14px;margin-top:8px">
-           <ol style="margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.7">${a.testSteps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-         </div>
+         <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">How to test (${stepCount})</summary>
+         <ol class="sub rule" style="margin:10px 0 0;padding:0 0 0 18px;border-left:2px solid ${C.border};color:${C.sub};font-size:13px;line-height:1.75">${a.testSteps.map((s) => `<li style="padding-left:4px">${esc(s)}</li>`).join('')}</ol>
        </details>`
-    : `<div style="${muted}font-size:12px;font-style:italic;margin-top:10px">No test steps — author should add a “🧪 How to test” section.</div>`
+    : `<div class="mut" style="color:${C.mut};font-size:12px;font-style:italic;margin-top:10px">No test steps — author should add a “How to test” section.</div>`
   const links = [
-    `<a href="${esc(a.url)}" style="color:#0f766e;text-decoration:none">→ ${isEpic ? `Verify rollup (#${esc(a.number)})` : `PR #${esc(a.number)}`}</a>`
+    `<a href="${esc(a.url)}" ${linkS}>${isEpic ? `Verify rollup #${esc(a.number)}` : `PR #${esc(a.number)}`}</a>`
   ]
-  if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" style="color:#0f766e;text-decoration:none">staging preview</a>`)
+  if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" ${linkS}>staging preview</a>`)
   return `
-  <tr><td style="padding:0 0 12px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}${accent}"><tr><td style="padding:16px 18px">
+  <tr><td style="padding:0 0 10px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="font-size:15px;font-weight:600">
-          <a href="${esc(a.url)}" style="color:#0f172a;text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
+        <td style="font-size:15px;font-weight:500;line-height:1.45">
+          <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
         </td>
-        <td align="right" style="white-space:nowrap">${visual}<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;${badgeStyle}">${esc(badge)}</span></td>
+        <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${tag}</td>
       </tr></table>
+      ${subLine}
       ${stepsBlock}
-      <div style="margin-top:10px;font-size:12px">${links.join(' · ')}</div>
+      <div style="margin-top:12px;font-size:12px">${links.join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</div>
     </td></tr></table>
   </td></tr>`
 }
@@ -149,93 +167,99 @@ function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
     <tr><td style="padding:0 0 10px">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#b45309">🧪 Needs your eyes — test what landed</div>
-      <div style="${muted}font-size:13px;margin-top:4px">${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h, ready for you to click through and sign off on.</div>
+      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Needs your eyes</div>
+      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:4px">${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h — worth a click-through and sign-off.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
 }
 
 const ACTIVITY_CAP = 8
 function activityList(items, emptyText, cap = ACTIVITY_CAP) {
-  if (!items || !items.length) return `<div style="${muted}font-size:13px;margin:2px 0 0">${emptyText}</div>`
+  if (!items || !items.length) return `<div class="mut" style="color:${C.mut};font-size:13px;margin:2px 0 0">${emptyText}</div>`
   const shown = items.slice(0, cap)
   const rest = items.length - shown.length
   const rows = shown
     .map(
       (it) =>
-        `<div style="font-size:13px;line-height:1.6;margin:1px 0">` +
-        `<a href="${esc(it.url)}" style="color:#0f766e;text-decoration:none">#${esc(it.number)}</a> ` +
-        `<span style="color:#334155">${esc(it.title)}</span></div>`
+        `<div style="font-size:13px;line-height:1.7;margin:1px 0">` +
+        `<a href="${esc(it.url)}" ${linkS}>#${esc(it.number)}</a> ` +
+        `<span class="sub" style="color:${C.sub}">${esc(it.title)}</span></div>`
     )
     .join('')
   const more = rest > 0
-    ? `<div style="${muted}font-size:12px;margin:3px 0 0;font-style:italic">+ ${rest} more</div>`
+    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin:3px 0 0;font-style:italic">+ ${rest} more</div>`
     : ''
   return rows + more
 }
 
-function statBox(n, label, color) {
+function statBox(n, label) {
   return (
-    `<td align="center" style="padding:10px 4px;${card}">` +
-    `<div style="font-size:26px;font-weight:700;color:${color};line-height:1">${n}</div>` +
-    `<div style="${muted}font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-top:4px">${label}</div>` +
+    `<td align="center" class="card" style="padding:14px 4px;${card}">` +
+    `<div class="ink" style="font-size:24px;font-weight:500;color:${C.ink};line-height:1">${n}</div>` +
+    `<div class="mut" style="color:${C.mut};font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:5px">${label}</div>` +
     `</td>`
   )
 }
 
 function labeledLine(label, text) {
   if (!text) return ''
+  // Stacked, not side-by-side: a small caption above full-width text. The old
+  // fixed 104px label column crushed the value into a narrow strip on phones —
+  // stacking lets the text breathe across the whole card.
   return (
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>` +
-    `<td valign="top" style="width:104px;padding-right:10px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.55;white-space:nowrap">${label}</td>` +
-    `<td valign="top" style="color:#334155;font-size:13px;line-height:1.55">${esc(text)}</td>` +
-    `</tr></table>`
+    `<div style="margin-top:14px">` +
+    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin:0 0 4px">${label}</div>` +
+    `<div class="sub" style="color:${C.sub};font-size:13px;line-height:1.65">${esc(text)}</div>` +
+    `</div>`
   )
 }
 
 function epicCard(e) {
   const s = statusOf(e)
   const p = pct(e)
+  const isBlocked = e.blocked || e.status === 'blocked'
+  // Progress is conveyed by length; colour the fill only when it carries a
+  // warning (blocked). Otherwise it's neutral ink.
+  const barColor = isBlocked ? '#dc2626' : C.ink
+  const barCls = isBlocked ? 'bar-blocked' : 'bar'
   const children = e.children || []
   const childRows = children
     .map((c) => {
       const closed = c.state === 'closed'
       const mark = closed ? '✓' : '○'
-      const markColor = closed ? '#10b981' : '#94a3b8'
-      const titleStyle = closed ? 'color:#94a3b8;text-decoration:line-through' : 'color:#334155'
+      const titleStyle = closed ? `color:${C.faint};text-decoration:line-through` : `color:${C.sub}`
+      const titleCls = closed ? 'mut' : 'sub'
       const cs = c.status && STATUS[c.status]
       const tag = cs && !closed
-        ? ` <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:${cs.bg};color:${cs.fg}">${cs.label}</span>`
+        ? ` <span class="${cs.cls}" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:${cs.fg}">${cs.label}</span>`
         : ''
       return (
-        `<div style="font-size:13px;line-height:1.7;padding:2px 0">` +
-        `<span style="color:${markColor};font-weight:700">${mark}</span> ` +
-        `<a href="${esc(c.url)}" style="color:#0f766e;text-decoration:none">#${esc(c.number)}</a> ` +
-        `<span style="${titleStyle}">${esc(c.title)}</span>${tag}</div>`
+        `<div style="font-size:13px;line-height:1.8;padding:1px 0">` +
+        `<span class="mut" style="color:${C.faint}">${mark}</span> ` +
+        `<a href="${esc(c.url)}" ${linkS}>#${esc(c.number)}</a> ` +
+        `<span class="${titleCls}" style="${titleStyle}">${esc(c.title)}</span>${tag}</div>`
       )
     })
     .join('')
 
   return `
-  <tr><td style="padding:0 0 14px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}">
+  <tr><td style="padding:0 0 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}">
       <tr><td style="padding:16px 18px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:15px;font-weight:600">
-            <a href="${esc(e.url)}" style="color:#0f172a;text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
+          <td style="font-size:15px;font-weight:500;line-height:1.45">
+            <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
           </td>
-          <td align="right" style="white-space:nowrap">
-            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:${s.bg};color:${s.fg}">${s.label}</span>
-          </td>
+          <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${badge(s)}</td>
         </tr></table>
 
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px"><tr>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px"><tr>
           <td style="width:100%;padding-right:12px">
-            <div style="background:#e2e8f0;border-radius:6px;height:8px;width:100%">
-              <div style="background:${s.bar};border-radius:6px;height:8px;width:${p}%"></div>
+            <div class="track" style="background:${C.track};border-radius:4px;height:6px;width:100%">
+              <div class="${barCls}" style="background:${barColor};border-radius:4px;height:6px;width:${p}%"></div>
             </div>
           </td>
-          <td style="white-space:nowrap;${muted}font-size:12px;font-weight:600">${e.done}/${e.total} · ${p}%</td>
+          <td class="mut" style="white-space:nowrap;color:${C.mut};font-size:12px;font-weight:500">${e.done}/${e.total} · ${p}%</td>
         </tr></table>
 
         ${labeledLine('Hypothesis', e.theHypothesis || e.theBet || e.whatItIs)}
@@ -244,9 +268,9 @@ function epicCard(e) {
 
         ${
           children.length
-            ? `<details style="margin-top:10px">
-                 <summary style="cursor:pointer;color:#0f766e;font-size:12px;font-weight:600;outline:none">Sub-issues (${children.length})</summary>
-                 <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9">${childRows}</div>
+            ? `<details style="margin-top:14px">
+                 <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">Sub-issues (${children.length})</summary>
+                 <div class="rule" style="margin-top:10px;padding-top:10px;border-top:1px solid ${C.border}">${childRows}</div>
                </details>`
             : ''
         }
@@ -262,72 +286,104 @@ function looseSection(items) {
       const lines = rows
         .map(
           (it) =>
-            `<div style="font-size:13px;line-height:1.6;margin:1px 0">` +
-            `<a href="${esc(it.url)}" style="color:#0f766e;text-decoration:none">#${esc(it.number)}</a> ` +
-            `<span style="color:#334155">${esc(it.title)}</span></div>`
+            `<div style="font-size:13px;line-height:1.7;margin:1px 0">` +
+            `<a href="${esc(it.url)}" ${linkS}>#${esc(it.number)}</a> ` +
+            `<span class="sub" style="color:${C.sub}">${esc(it.title)}</span></div>`
         )
         .join('')
-      return `<div style="font-size:12px;font-weight:600;color:#0f172a;margin:10px 0 2px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
+      return `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:12px 0 3px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
     })
     .join('')
   return `
-    <tr><td style="padding:6px 0 10px">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}">Loose tickets · no epic</div>
+    <tr><td style="padding:8px 0 10px">
+      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Loose tickets · no epic</div>
     </td></tr>
-    <tr><td style="padding:0 0 14px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}"><tr><td style="padding:14px 18px">
-        <div style="${muted}font-size:12px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} not tracked under any epic</div>
+    <tr><td style="padding:0 0 12px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
+        <div class="mut" style="color:${C.mut};font-size:12px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} not tracked under any epic</div>
         ${blocks}
       </td></tr></table>
     </td></tr>`
 }
 
+const sectionLabel = (t) =>
+  `<div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">${t}</div>`
+const detailHead = (t, m = '14px 0 3px') =>
+  `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:${m}">${t}</div>`
+
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Epic digest · ${esc(prettyDate)}</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc"><tr><td align="center" style="padding:28px 16px">
-  <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%">
+<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">
+<title>Epic digest · ${esc(prettyDate)}</title>
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  body { -webkit-text-size-adjust:100%; }
+  @media only screen and (max-width:600px) {
+    .outer-pad { padding:18px 12px !important; }
+    .digest-title { font-size:19px !important; }
+  }
+  /* A real dark theme — not a muddy auto-invert. Neutral surfaces, ink flipped
+     to off-white, status hues brightened so they stay legible on dark. */
+  @media (prefers-color-scheme: dark) {
+    .page        { background:#0c0d10 !important; }
+    .card        { background:#15171c !important; border-color:#262a31 !important; }
+    .ink         { color:#e7e8ea !important; }
+    .ink.lnk     { color:#e7e8ea !important; }
+    .sub         { color:#c3c7ce !important; }
+    .mut         { color:#8b9098 !important; }
+    .lnk         { color:#e7e8ea !important; }
+    .rule        { border-color:#262a31 !important; }
+    .track       { background:#262a31 !important; }
+    .bar         { background:#e7e8ea !important; }
+    .bar-blocked { background:#f87171 !important; }
+    .s-blocked   { color:#f87171 !important; }
+    .s-prog      { color:#e3b341 !important; }
+    .s-done      { color:#4ade80 !important; }
+    .s-open      { color:#9aa0a6 !important; }
+  }
+</style>
+</head>
+<body class="page" style="margin:0;padding:0;background:#f5f5f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:#f5f5f6"><tr><td align="center" class="outer-pad" style="padding:28px 16px">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
-    <tr><td style="padding:0 0 20px">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0f766e">Daily Epic Digest</div>
-      <div style="font-size:22px;font-weight:700;margin-top:4px">${esc(prettyDate)}</div>
-      <div style="${muted}font-size:13px;margin-top:2px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
+    <tr><td style="padding:0 0 18px">
+      <div class="mut" style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:${C.mut}">Daily Epic Digest</div>
+      <div class="digest-title ink" style="font-size:22px;font-weight:600;color:${C.ink};margin-top:4px">${esc(prettyDate)}</div>
+      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:3px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
     ${actionablesSection(actionables)}
 
-    <tr><td style="padding:0 0 22px">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}margin:0 0 10px">Since yesterday</div>
+    <tr><td style="padding:14px 0 20px">
+      <div style="margin:0 0 10px">${sectionLabel('Since yesterday')}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="8" style="margin:-8px"><tr>
-        ${statBox((activity.opened || []).length, 'Opened', '#0f172a')}
-        ${statBox((activity.closed || []).length, 'Closed', '#047857')}
-        ${statBox((activity.mergedPRs || []).length, 'PRs merged', '#7c3aed')}
+        ${statBox((activity.opened || []).length, 'Opened')}
+        ${statBox((activity.closed || []).length, 'Closed')}
+        ${statBox((activity.mergedPRs || []).length, 'PRs merged')}
       </tr></table>
 
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;${card}"><tr><td style="padding:14px 18px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="margin-top:12px;${card}"><tr><td style="padding:14px 18px">
         <details>
-          <summary style="cursor:pointer;color:#0f766e;font-size:12px;font-weight:600;outline:none;list-style:none">Show detail — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
-          <div style="margin-top:10px">
-            <div style="font-size:12px;font-weight:600;color:#047857;margin-bottom:2px">Closed</div>
+          <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:12px;font-weight:600;outline:none;list-style:none">Show detail — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
+          <div style="margin-top:12px">
+            ${detailHead('Closed', '0 0 3px')}
             ${activityList(activity.closed, 'Nothing closed.')}
-            <div style="font-size:12px;font-weight:600;color:#7c3aed;margin:12px 0 2px">PRs merged</div>
+            ${detailHead('PRs merged')}
             ${activityList(activity.mergedPRs, 'No PRs merged.')}
-            <div style="font-size:12px;font-weight:600;color:#0f172a;margin:12px 0 2px">Opened</div>
+            ${detailHead('Opened')}
             ${activityList(activity.opened, 'Nothing new opened.')}
           </div>
         </details>
       </td></tr></table>
     </td></tr>
 
-    <tr><td style="padding:0 0 10px">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;${muted}">Open epics</div>
-    </td></tr>
-    ${epics.length ? epics.map(epicCard).join('') : `<tr><td style="${muted}font-size:14px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
+    <tr><td style="padding:0 0 10px">${sectionLabel('Open epics')}</td></tr>
+    ${epics.length ? epics.map(epicCard).join('') : `<tr><td class="mut" style="color:${C.mut};font-size:14px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
 
     ${looseSection(loose)}
 
-    <tr><td style="padding:10px 0 0;border-top:1px solid #e2e8f0;${muted}font-size:12px">
+    <tr><td class="rule mut" style="padding:14px 0 0;border-top:1px solid ${C.border};color:${C.faint};font-size:12px">
       Generated ${esc(generated.toISOString())} by the <code>/epic-digest</code> skill.
     </td></tr>
 
