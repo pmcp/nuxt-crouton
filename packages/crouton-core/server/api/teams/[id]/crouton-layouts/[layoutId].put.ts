@@ -1,14 +1,17 @@
 import { eq, and } from 'drizzle-orm'
 import { resolveTeamAndCheckMembership } from '@fyit/crouton-auth/server/utils/team'
 import { layoutConfigs } from '../../../../database/schema/layoutConfigs'
+import { sanitizeLayoutTree } from '../../../../../app/utils/layout-tree'
 
 /**
- * Upsert a saved layout tree by id, scoped to the caller's team (Sprint 0 spike, #713).
+ * Upsert a saved layout tree by id, scoped to the caller's team (#706).
  *
- * The tree is untrusted input — it's stored verbatim here, and the renderer
- * resolves block ids through an allowlisted map (so a hostile/unknown id can
- * never instantiate an arbitrary component). Per-block config validation against
- * the registry's config schema lands in Sprint 1 (#704).
+ * The tree is UNTRUSTED input. We run it through the pure `sanitizeLayoutTree`
+ * shape gate on the way in — dropping stray keys / prototype pollution and
+ * rejecting structurally invalid trees — and store the CLEANED tree, so a
+ * malformed/hostile payload never reaches the renderer (which additionally
+ * allowlists each leaf's `blockId` against the registry and sanitizes per-block
+ * config at render). Defence in depth: validate on write, allowlist on render.
  */
 export default defineEventHandler(async (event) => {
   const { team } = await resolveTeamAndCheckMembership(event)
@@ -16,8 +19,9 @@ export default defineEventHandler(async (event) => {
   const layoutId = getRouterParam(event, 'layoutId')!
 
   const body = await readBody<{ tree?: unknown }>(event)
-  if (!body?.tree || typeof body.tree !== 'object') {
-    throw createError({ status: 400, statusText: 'tree object required' })
+  const tree = sanitizeLayoutTree(body?.tree)
+  if (!tree) {
+    throw createError({ status: 400, statusText: 'valid layout tree required' })
   }
 
   const [existing] = await db
@@ -29,16 +33,16 @@ export default defineEventHandler(async (event) => {
   if (existing) {
     await db
       .update(layoutConfigs)
-      .set({ tree: body.tree as Record<string, unknown> })
+      .set({ tree: tree as unknown as Record<string, unknown> })
       .where(and(eq(layoutConfigs.id, layoutId), eq(layoutConfigs.teamId, team.id)))
   }
   else {
     await db.insert(layoutConfigs).values({
       id: layoutId,
       teamId: team.id,
-      name: 'spike',
+      name: 'layout',
       renderer: 'panes',
-      tree: body.tree as Record<string, unknown>,
+      tree: tree as unknown as Record<string, unknown>,
     })
   }
 

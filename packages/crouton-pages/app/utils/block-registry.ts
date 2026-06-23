@@ -28,6 +28,7 @@ import type {
   ContactBlockAttrs,
   MailingBlockAttrs,
   QrCodeBlockAttrs,
+  PaneBlockAttrs,
   BlockMenuItem
 } from '../types/blocks'
 
@@ -1083,6 +1084,21 @@ export const qrCodeBlockDefinition: BlockDefinition<QrCodeBlockAttrs> = {
   ]
 }
 
+export const paneBlockDefinition: BlockDefinition<PaneBlockAttrs> = {
+  type: 'paneBlock',
+  name: 'Pane Layout',
+  description: 'A resizable, nestable pane layout composed from registered blocks',
+  icon: 'i-lucide-layout-template',
+  category: 'layout',
+  defaultAttrs: {
+    layout: null,
+    height: 480
+  },
+  // No property-panel fields: the pane layout is composed INLINE in the editor
+  // (CroutonLayout in PaneBlockView), not via the side property panel.
+  schema: []
+}
+
 export const blockRegistry: Record<BlockType, BlockDefinition> = {
   heroBlock: heroBlockDefinition,
   sectionBlock: sectionBlockDefinition,
@@ -1103,7 +1119,8 @@ export const blockRegistry: Record<BlockType, BlockDefinition> = {
   galleryBlock: galleryBlockDefinition,
   contactBlock: contactBlockDefinition,
   mailingBlock: mailingBlockDefinition,
-  qrCodeBlock: qrCodeBlockDefinition
+  qrCodeBlock: qrCodeBlockDefinition,
+  paneBlock: paneBlockDefinition
 }
 
 // ============================================================================

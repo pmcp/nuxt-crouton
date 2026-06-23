@@ -5,6 +5,7 @@
  * Blocks are stored as JSON in the content field and rendered
  * using Nuxt UI page components.
  */
+import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 // ============================================================================
 // Base Types
@@ -32,6 +33,7 @@ export type BlockType =
   | 'contactBlock'
   | 'mailingBlock'
   | 'qrCodeBlock'
+  | 'paneBlock'
 
 export type Orientation = 'vertical' | 'horizontal'
 
@@ -217,6 +219,21 @@ export type BlockAttrs =
   | ContactBlockAttrs
   | MailingBlockAttrs
   | QrCodeBlockAttrs
+  | PaneBlockAttrs
+
+/**
+ * paneBlock — hosts a pane *layout* inside the document flow (#706/#716). The
+ * `layout` is the same "layout is data" `LayoutTree` the standalone layout
+ * engine persists; it serializes into the page's `content` JSON like any other
+ * block. Untrusted on render → run through `sanitizeLayoutTree` (the public
+ * Render component does this; the renderer additionally allowlists block ids).
+ */
+export interface PaneBlockAttrs {
+  /** The pane layout tree, or null until the author composes one. */
+  layout?: LayoutTree | null
+  /** Pane height in document flow (px) — Splitter panes are height-driven. */
+  height?: number
+}
 
 // ============================================================================
 // Block Node Types (TipTap format)

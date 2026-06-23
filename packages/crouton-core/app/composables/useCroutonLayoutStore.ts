@@ -1,13 +1,20 @@
 import { ref, readonly } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { LayoutTree } from '../types/layout'
+import { sanitizeLayoutTree } from '../utils/layout-tree'
 
 /**
- * Persistence for the layout spike (#713) — load/save a layout tree to the
- * team-scoped `layout_configs` table via REST. Throwaway; the production store
- * lands in Sprint 3 (#706).
+ * Persistence for editable layouts (Sprint 3, #706) — load/save a `LayoutTree`
+ * to the team-scoped `layout_configs` table via REST. The production successor
+ * to the spike store (#713).
+ *
+ * The tree is untrusted on the way back out of storage too, so `load` runs it
+ * through `sanitizeLayoutTree` (the same shape gate the server applies on write)
+ * before handing it to the editor — a row tampered with directly in the DB still
+ * can't feed the renderer a malformed tree. `save` is debounced so a flurry of
+ * resize/drag edits collapses into one write.
  */
-export function useLayoutSpikeStore() {
+export function useCroutonLayoutStore() {
   const { getTeamId } = useTeamContext()
   const saving = ref(false)
   const error = ref<Error | null>(null)
@@ -16,11 +23,11 @@ export function useLayoutSpikeStore() {
     const teamId = getTeamId()
     if (!teamId) return null
     try {
-      const row = await $fetch<{ tree?: LayoutTree } | null>(
+      const row = await $fetch<{ tree?: unknown } | null>(
         `/api/teams/${teamId}/crouton-layouts/${layoutId}`,
         { credentials: 'include' },
       )
-      return row?.tree ?? null
+      return sanitizeLayoutTree(row?.tree)
     }
     catch (e) {
       error.value = e instanceof Error ? e : new Error('Failed to load layout')

@@ -103,3 +103,43 @@ export function checkTreeViability(
 ): ViabilityResult {
   return checkLayoutViability(tree.root, minWidthFor, targetWidths)
 }
+
+/**
+ * The minimum width (px) a whole subtree needs to stay viable — the renderer's
+ * runtime floor (#706, the enforcement side of #710). A HORIZONTAL split places
+ * its children side by side, so its requirement is the SUM of theirs; a VERTICAL
+ * split stacks them (each gets the full width), so its requirement is the MAX.
+ * A leaf needs its block's declared `minWidth`. Pure; mirrors the width model in
+ * `leafWidths` above so the floor the renderer enforces matches the metric.
+ */
+export function subtreeMinWidth(node: LayoutNode, minWidthFor: MinWidthResolver): number {
+  if (node.type === 'leaf') return minWidthFor(node.blockId)
+  const kids = node.children.map(c => subtreeMinWidth(c, minWidthFor))
+  if (node.direction === 'vertical') return kids.reduce((a, b) => Math.max(a, b), 0)
+  return kids.reduce((a, b) => a + b, 0)
+}
+
+/**
+ * The `min-size` (percent) a reka-ui `SplitterPanel` should get so the block(s)
+ * inside it can't be dragged below their `minWidth` contract (#706 / #710).
+ *
+ * Only a HORIZONTAL parent constrains width, so we convert the child subtree's
+ * px floor against the live `containerWidthPx`; for a VERTICAL parent (width
+ * isn't divided) we keep the child's authored `minSize` (a height %). Falls back
+ * to the authored `minSize` when the container hasn't measured yet (px ≤ 0) so
+ * SSR / first paint stays stable. Capped at 90% so a single panel can't claim
+ * the whole group (reka-ui also clamps, but we keep the sum sane).
+ */
+export function panelMinSizePct(
+  parentDirection: 'horizontal' | 'vertical',
+  child: LayoutNode,
+  containerWidthPx: number,
+  minWidthFor: MinWidthResolver,
+): number {
+  const authored = child.minSize ?? 0
+  if (parentDirection !== 'horizontal' || containerWidthPx <= 0) return authored
+  const px = subtreeMinWidth(child, minWidthFor)
+  if (px <= 0) return authored
+  const pct = (px / containerWidthPx) * 100
+  return Math.min(Math.max(pct, authored), 90)
+}

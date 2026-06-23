@@ -3,6 +3,8 @@ import {
   checkLayoutViability,
   checkTreeViability,
   minWidthResolver,
+  subtreeMinWidth,
+  panelMinSizePct,
 } from '../layout-viability'
 import type { LayoutNode, LayoutTree } from '../../types/layout'
 import type { CroutonLayoutBlockRegistry } from '../../types/layout-block'
@@ -127,5 +129,78 @@ describe('minWidthResolver + checkTreeViability', () => {
     const res = checkTreeViability(tree, minWidthResolver(registry), [1000])
     expect(res.viable).toBe(false)
     expect(res.violations[0]!.blockId).toBe('sidebar')
+  })
+})
+
+describe('subtreeMinWidth — the renderer’s runtime floor', () => {
+  // sidebar 320, main 480, stats fluid (0).
+  it('a leaf needs its block minWidth', () => {
+    expect(subtreeMinWidth({ type: 'leaf', blockId: 'sidebar' }, minWidthFor)).toBe(320)
+    expect(subtreeMinWidth({ type: 'leaf', blockId: 'stats' }, minWidthFor)).toBe(0)
+  })
+
+  it('a horizontal split SUMS its children (side by side)', () => {
+    // masterDetail = [sidebar(320), main(480)] horizontal → 800.
+    expect(subtreeMinWidth(masterDetail, minWidthFor)).toBe(800)
+  })
+
+  it('a vertical split takes the MAX of its children (stacked, share width)', () => {
+    const stacked: LayoutNode = {
+      type: 'split', direction: 'vertical',
+      children: [
+        { type: 'leaf', blockId: 'sidebar' }, // 320
+        { type: 'leaf', blockId: 'main' }, // 480
+      ],
+    }
+    expect(subtreeMinWidth(stacked, minWidthFor)).toBe(480)
+  })
+
+  it('composes through nesting (sidebar + [stats over main])', () => {
+    const nested: LayoutNode = {
+      type: 'split', direction: 'horizontal',
+      children: [
+        { type: 'leaf', blockId: 'sidebar' }, // 320
+        { type: 'split', direction: 'vertical', children: [
+          { type: 'leaf', blockId: 'stats' }, // 0
+          { type: 'leaf', blockId: 'main' }, // 480
+        ] }, // vertical → max(0,480) = 480
+      ],
+    }
+    expect(subtreeMinWidth(nested, minWidthFor)).toBe(800) // 320 + 480
+  })
+})
+
+describe('panelMinSizePct — px floor → SplitterPanel min-size %', () => {
+  const r = minWidthFor
+  const sidebar: LayoutNode = { type: 'leaf', blockId: 'sidebar' } // 320px
+
+  it('converts the px floor to a percent of the live container width', () => {
+    // 320 / 1000 = 32%.
+    expect(panelMinSizePct('horizontal', sidebar, 1000, r)).toBe(32)
+  })
+
+  it('keeps the authored minSize for a vertical parent (width not divided)', () => {
+    const withMin: LayoutNode = { type: 'leaf', blockId: 'sidebar', minSize: 15 }
+    expect(panelMinSizePct('vertical', withMin, 1000, r)).toBe(15)
+  })
+
+  it('falls back to the authored minSize before the container has measured', () => {
+    const withMin: LayoutNode = { type: 'leaf', blockId: 'sidebar', minSize: 10 }
+    expect(panelMinSizePct('horizontal', withMin, 0, r)).toBe(10)
+  })
+
+  it('takes the larger of the px-derived floor and the authored minSize', () => {
+    const withMin: LayoutNode = { type: 'leaf', blockId: 'sidebar', minSize: 50 }
+    // px floor 32% vs authored 50% → 50.
+    expect(panelMinSizePct('horizontal', withMin, 1000, r)).toBe(50)
+  })
+
+  it('caps at 90% so one panel can’t claim the whole group', () => {
+    // 320 / 300 = 106% → capped to 90.
+    expect(panelMinSizePct('horizontal', sidebar, 300, r)).toBe(90)
+  })
+
+  it('is 0 for a fluid block with no authored minSize', () => {
+    expect(panelMinSizePct('horizontal', { type: 'leaf', blockId: 'stats' }, 1000, r)).toBe(0)
   })
 })
