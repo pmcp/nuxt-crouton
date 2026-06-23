@@ -274,7 +274,7 @@ The package includes a block-based page editor using TipTap and Nuxt UI page com
 | `separatorBlock` | USeparator | Visual divider |
 | `richTextBlock` | prose div | Standard text content |
 | `qrCodeBlock` | CroutonQrCode | Scannable QR code linking to a CMS page (via the `page` field picker) or a custom URL. Resolves `pageId` → absolute public URL with `usePageLink().resolve()` + `useRequestURL().origin`. |
-| `paneBlock` | CroutonLayoutRenderer | **Bridge block (#716)** — hosts a *pane layout* inside the document flow. `attrs.layout` is a `LayoutTree` (the "layout is data" shape); rendering delegates to crouton-core's `CroutonLayoutRenderer`, composing `croutonLayoutBlocks` surfaces. The pane tree serializes into the page's existing `content` JSON — no new page type or table. `attrs.layout` is untrusted → run through `sanitizeLayoutTree` before render; the renderer allowlists each leaf `blockId`. **Public render only so far** — the in-editor pane composer (and the TipTap node that preserves a `paneBlock` through an editor save) ride Sprint 3 (#706); author/seed via content JSON until then. |
+| `paneBlock` | CroutonLayoutRenderer (render) / CroutonLayout (editor) | **Bridge block (#716, completed #706)** — hosts a *pane layout* inside the document flow. `attrs.layout` is a `LayoutTree` (the "layout is data" shape) + `attrs.height`. Public render delegates to crouton-core's `CroutonLayoutRenderer`; the **in-editor composer** (`Blocks/Views/PaneBlockView.vue`) hosts the editable `CroutonLayout` so authors arrange panes inline. The TipTap node (`editor/extensions/pane-block.ts`) round-trips `attrs.layout` through an editor save (serializes to `data-layout` JSON; JSON content storage preserves the object). The pane tree serializes into the page's existing `content` JSON — no new page type or table. `attrs.layout` is untrusted → `sanitizeLayoutTree` on render; the renderer allowlists each leaf `blockId`. |
 
 ### Content Format
 
@@ -385,6 +385,7 @@ Components auto-import with `CroutonPages` prefix:
 - `Editor/PageTypePicker.vue` → `<CroutonPagesEditorPageTypePicker />`
 - `Blocks/Render/HeroBlock.vue` → `<CroutonPagesBlocksRenderHeroBlock />`
 - `Blocks/Render/PaneBlock.vue` → `<CroutonPagesBlocksRenderPaneBlock />` (the #716 bridge block — delegates to `CroutonLayoutRenderer`)
+- `Blocks/Views/PaneBlockView.vue` → `<CroutonPagesBlocksViewsPaneBlockView />` (the #706 in-editor pane composer — hosts the editable `CroutonLayout`; paired with `editor/extensions/pane-block.ts`)
 
 ## URL Structure
 
