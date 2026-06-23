@@ -123,6 +123,10 @@ const C = {
 const serif = `'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif`
 const linkS = `class="lnk" style="color:${C.ink};text-decoration:underline;text-decoration-color:${C.faint};text-underline-offset:3px"`
 const num = (n) => `<span class="mut" style="color:${C.faint}">#${esc(n)}</span>`
+// Slick inline icon for a visual/UI change (a minimal line-art image glyph).
+// Apple Mail renders inline SVG; clients that strip it still show the word.
+// currentColor → inherits the surrounding text colour in both themes.
+const visualIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L4 21"/></svg>`
 // Fluorescent highlighter — a marker swipe over the lower part of the text. The
 // text stays dark (a real marker leaves ink legible over a bright stripe), so it
 // reads identically in light and night mode. Used SPARINGLY, by design.
@@ -135,11 +139,13 @@ const mark = (t, c = HL.attn) => {
   return `<span class="${cls}" style="background-image:linear-gradient(transparent 26%, ${c} 26%, ${c} 92%, transparent 92%);` +
     `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#1a1a1a;padding:0 .12em">${t}</span>`
 }
-// Status as a quiet lowercase word; only "blocked" earns a highlighter mark.
-const badge = (s) =>
-  s.cls === 's-blocked'
-    ? mark(s.label.toLowerCase(), HL.warn)
-    : `<span class="mut" style="font-style:italic;font-size:14px;color:${C.mut};white-space:nowrap">${s.label.toLowerCase()}</span>`
+// A small-caps status label (sits above the title). Only "blocked" earns the
+// highlighter mark; the rest stay quiet ink.
+const statusWord = (label, blocked) =>
+  blocked
+    ? mark(label.toLowerCase(), HL.warn)
+    : `<span class="mut" style="font-variant:small-caps;letter-spacing:.06em;font-size:13px;color:${C.mut}">${label.toLowerCase()}</span>`
+const badge = (s) => statusWord(s.label, s.cls === 's-blocked')
 // Small-caps serif heading — a chapter marker, optionally highlighted.
 const sectionLabel = (t, hl) =>
   `<div class="ink" style="font-variant:small-caps;letter-spacing:.06em;font-size:20px;color:${C.ink}">${hl ? mark(t, hl) : t}</div>`
@@ -148,9 +154,8 @@ const detailHead = (t, m = '16px 0 5px') =>
 
 function actionableCard(a) {
   const isEpic = a.kind === 'epic'
-  const tag = `<span class="mut" style="font-style:italic;font-size:14px;color:${C.mut};white-space:nowrap">${isEpic ? 'complete' : 'merged'}</span>`
   const note = isEpic ? 'At 100% — one last look.' : ''
-  const visual = a.hasVisual ? '👁 visual' : ''
+  const visual = a.hasVisual ? `${visualIcon}visual` : ''
   const sub = [note, visual].filter(Boolean).join('  ·  ')
   const subLine = sub
     ? `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">${sub}</div>`
@@ -168,12 +173,10 @@ function actionableCard(a) {
   if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" ${linkS}>staging preview</a>`)
   return `
   <tr><td class="rule" style="padding:22px 0;border-top:1px solid ${C.border}">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
-        <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(a.number)} · ${esc(a.title)}</a>
-      </td>
-      <td align="right" valign="top" style="white-space:nowrap;padding-left:12px">${tag}</td>
-    </tr></table>
+    <div style="margin:0 0 7px">${statusWord(isEpic ? 'complete' : 'merged', false)}</div>
+    <div style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
+      <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(a.number)} · ${esc(a.title)}</a>
+    </div>
     ${subLine}
     ${stepsBlock}
     <div style="margin-top:18px;font-size:13px">${links.join(' &nbsp;·&nbsp; ')}</div>
@@ -183,7 +186,7 @@ function actionableCard(a) {
 function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
-    <tr><td style="padding:32px 0 6px">
+    <tr><td style="padding:0 0 6px">
       ${sectionLabel('Needs your eyes', HL.attn)}
       <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin-top:8px">${items.length} shipped in the last ${windowHours}h.</div>
     </td></tr>
@@ -262,12 +265,10 @@ function epicCard(e) {
 
   return `
   <tr><td class="rule" style="padding:24px 0;border-top:1px solid ${C.border}">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
-        <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(e.number)} · ${esc(e.title)}</a>
-      </td>
-      <td align="right" valign="top" style="white-space:nowrap;padding-left:12px">${badge(s)}</td>
-    </tr></table>
+    <div style="margin:0 0 7px">${badge(s)}</div>
+    <div style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
+      <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(e.number)} · ${esc(e.title)}</a>
+    </div>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr>
       <td style="width:100%;padding-right:14px">
@@ -352,12 +353,6 @@ const html = `<!doctype html>
 <body class="page" style="margin:0;padding:0;background:${C.page};font-family:${serif};color:${C.ink}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:${C.page}"><tr><td align="center" class="outer-pad" style="padding:44px 22px">
   <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%">
-
-    <tr><td class="rule-strong" style="padding:0 0 22px;border-bottom:2px solid ${C.ink}">
-      <div class="mut" style="font-variant:small-caps;letter-spacing:.14em;color:${C.mut};font-size:13px">The daily digest</div>
-      <div class="digest-title ink" style="font-size:34px;font-weight:400;color:${C.ink};line-height:1.15;margin-top:8px">${esc(prettyDate)}</div>
-      <div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
-    </td></tr>
 
     ${actionablesSection(actionables)}
 
@@ -547,6 +542,16 @@ const md =
     : '') +
   `\n<sub>Generated ${generated.toISOString()} by the <code>/epic-digest</code> skill.</sub>\n`
 
+// ── email subject ─────────────────────────────────────────────────────────────
+// Actual values, no decoration — the scheduled job reads this verbatim so the
+// subject line itself is useful at a glance (no "📊 Daily epic digest" filler).
+const blockedCount = epics.filter((e) => e.blocked || e.status === 'blocked').length
+const subjectBits = []
+if (actionables.length) subjectBits.push(`${actionables.length} to review`)
+subjectBits.push(`${epics.length} open epic${epics.length === 1 ? '' : 's'}`)
+if (blockedCount) subjectBits.push(`${blockedCount} blocked`)
+const subject = subjectBits.join(' · ')
+
 // ── write ────────────────────────────────────────────────────────────────────
 mkdirSync(resolve(outDir), { recursive: true })
 const format = flag('format', 'all')
@@ -558,9 +563,12 @@ if (format === 'md') {
 } else {
   const htmlPath = join(outDir, `epic-digest-${stamp}.html`)
   const txtPath = join(outDir, `epic-digest-${stamp}.txt`)
+  const subjectPath = join(outDir, `epic-digest-${stamp}.subject.txt`)
   writeFileSync(resolve(htmlPath), html)
   writeFileSync(resolve(txtPath), txt)
-  console.log(`✓ HTML  → ${htmlPath}`)
-  console.log(`✓ Text  → ${txtPath}`)
+  writeFileSync(resolve(subjectPath), subject + '\n')
+  console.log(`✓ HTML    → ${htmlPath}`)
+  console.log(`✓ Text    → ${txtPath}`)
+  console.log(`✓ Subject → ${subject}`)
   console.log(`  ${epics.length} epic(s), ${actionables.length} actionable(s), ${loose.length} loose ticket(s), ${(activity.closed || []).length} closed / ${(activity.mergedPRs || []).length} PRs merged in last ${windowHours}h`)
 }

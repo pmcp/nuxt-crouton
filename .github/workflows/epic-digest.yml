@@ -58,8 +58,9 @@ jobs:
             echo "::warning::RESEND_API_KEY / RESEND_FROM / DIGEST_REPORT_EMAIL not set — skipping email (nothing delivered)."
             exit 0
           fi
-          SUBJECT="📊 Daily epic digest — $(date -u +%F)"
-          echo "Emailing $HTML → $EMAIL_TO"
+          SUBJECT="$(head -1 epic-digest-*.subject.txt 2>/dev/null)"
+          [ -z "$SUBJECT" ] && SUBJECT="Daily epic digest — $(date -u +%F)"
+          echo "Emailing $HTML → $EMAIL_TO  (subject: $SUBJECT)"
           # Build the JSON payload with jq so the HTML/text bodies are safely escaped.
           jq -n \
             --arg from "$EMAIL_FROM" \
@@ -82,4 +83,5 @@ jobs:
             digest.data.json
             epic-digest-*.html
             epic-digest-*.txt
+            epic-digest-*.subject.txt
           if-no-files-found: ignore
