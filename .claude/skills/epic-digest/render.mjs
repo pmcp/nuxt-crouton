@@ -127,35 +127,42 @@ const num = (n) => `<span class="mut" style="color:${C.faint}">#${esc(n)}</span>
 // Apple Mail renders inline SVG; clients that strip it still show the word.
 // currentColor → inherits the surrounding text colour in both themes.
 const visualIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L4 21"/></svg>`
-// Fluorescent highlighter — a marker swipe over the lower part of the text. The
-// text stays dark (a real marker leaves ink legible over a bright stripe), so it
-// reads identically in light and night mode. Used SPARINGLY, by design.
-const HL = { attn: '#fdf06a', warn: '#ff9d6b' }
-const mark = (t, c = HL.attn) => {
-  // Light: a real highlighter swipe (dark text on a bright stripe). Dark: a
-  // filled neon block looks cheap, so the .hl-* class flips it to bright fluo
-  // *text* with no background — same scarce colour, but elegant on black.
-  const cls = c === HL.warn ? 'hl-warn' : 'hl-attn'
-  return `<span class="${cls}" style="background-image:linear-gradient(transparent 26%, ${c} 26%, ${c} 92%, transparent 92%);` +
-    `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#1a1a1a;padding:0 .12em">${t}</span>`
+// Fluorescent palette — [light highlighter bg (dark text rides on it), dark-mode
+// text colour]. Colour is rationed to MEANING (status), but when we use it we
+// make it POP — neon on both paper and night.
+const FLUO = {
+  yellow:  ['#fdf436', '#ffe83d'],
+  green:   ['#4cf083', '#5bff99'],
+  orange:  ['#ff7a3d', '#ff9156'],
+  cyan:    ['#3ee6ff', '#62efff'],
+  magenta: ['#ff52cf', '#ff74dd']
 }
-// A small-caps status label (sits above the title). Only "blocked" earns the
-// highlighter mark; the rest stay quiet ink.
-const statusWord = (label, blocked) =>
-  blocked
-    ? mark(label.toLowerCase(), HL.warn)
+// Light: a real highlighter swipe (dark text on a bright stripe). Dark: a filled
+// block looks cheap, so the .hl-* class flips it to bright fluo *text* — same
+// colour, two elegant renderings.
+const mark = (t, key = 'yellow') => {
+  const bg = FLUO[key][0]
+  return `<span class="hl-${key}" style="background-image:linear-gradient(transparent 24%, ${bg} 24%, ${bg} 92%, transparent 92%);` +
+    `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#161616;padding:0 .12em">${t}</span>`
+}
+// Status as a small-caps fluo chip above the title. `key` null ⇒ quiet ink (open).
+const STATUS_FLUO = { 's-blocked': 'orange', 's-prog': 'yellow', 's-done': 'green', 's-open': null }
+const statusChip = (label, key) =>
+  key
+    ? `<span class="hl-${key}" style="background-image:linear-gradient(transparent 16%, ${FLUO[key][0]} 16%, ${FLUO[key][0]} 94%, transparent 94%);` +
+      `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#161616;padding:1px .34em;font-variant:small-caps;letter-spacing:.07em;font-size:13px;font-weight:600">${label.toLowerCase()}</span>`
     : `<span class="mut" style="font-variant:small-caps;letter-spacing:.06em;font-size:13px;color:${C.mut}">${label.toLowerCase()}</span>`
-const badge = (s) => statusWord(s.label, s.cls === 's-blocked')
+const badge = (s) => statusChip(s.label, STATUS_FLUO[s.cls])
 // Small-caps serif heading — a chapter marker, optionally highlighted.
-const sectionLabel = (t, hl) =>
-  `<div class="ink" style="font-variant:small-caps;letter-spacing:.06em;font-size:20px;color:${C.ink}">${hl ? mark(t, hl) : t}</div>`
+const sectionLabel = (t, key) =>
+  `<div class="ink" style="font-variant:small-caps;letter-spacing:.06em;font-size:20px;color:${C.ink}">${key ? mark(t, key) : t}</div>`
 const detailHead = (t, m = '16px 0 5px') =>
   `<div class="mut" style="font-variant:small-caps;letter-spacing:.05em;font-size:14px;color:${C.mut};margin:${m}">${t}</div>`
 
 function actionableCard(a) {
   const isEpic = a.kind === 'epic'
   const note = isEpic ? 'At 100% — one last look.' : ''
-  const visual = a.hasVisual ? `${visualIcon}visual` : ''
+  const visual = a.hasVisual ? mark(`${visualIcon}visual`, 'magenta') : ''
   const sub = [note, visual].filter(Boolean).join('  ·  ')
   const subLine = sub
     ? `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">${sub}</div>`
@@ -173,7 +180,7 @@ function actionableCard(a) {
   if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" ${linkS}>staging preview</a>`)
   return `
   <tr><td class="rule" style="padding:22px 0;border-top:1px solid ${C.border}">
-    <div style="margin:0 0 7px">${statusWord(isEpic ? 'complete' : 'merged', false)}</div>
+    <div style="margin:0 0 7px">${statusChip(isEpic ? 'complete' : 'merged', isEpic ? 'green' : 'cyan')}</div>
     <div style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
       <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(a.number)} · ${esc(a.title)}</a>
     </div>
@@ -187,7 +194,7 @@ function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
     <tr><td style="padding:0 0 6px">
-      ${sectionLabel('Needs your eyes', HL.attn)}
+      ${sectionLabel('Needs your eyes', 'yellow')}
       <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin-top:8px">${items.length} shipped in the last ${windowHours}h.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
@@ -239,7 +246,7 @@ function epicCard(e) {
   const isBlocked = e.blocked || e.status === 'blocked'
   // The bar's length is the meaning, so its fill is plain ink — it only takes a
   // highlighter colour (and so does the status word) when something is blocked.
-  const barColor = isBlocked ? HL.warn : C.ink
+  const barColor = isBlocked ? FLUO.orange[0] : C.ink
   const barCls = isBlocked ? 'bar-blocked' : 'bar'
   const children = e.children || []
   const childRows = children
@@ -249,11 +256,7 @@ function epicCard(e) {
       const titleStyle = closed ? `color:${C.faint};text-decoration:line-through` : `color:${C.sub}`
       const titleCls = closed ? 'mut' : 'sub'
       const cs = c.status && STATUS[c.status]
-      const tag = cs && !closed
-        ? (cs.cls === 's-blocked'
-            ? ` ${mark(cs.label.toLowerCase(), HL.warn)}`
-            : ` <span class="mut" style="font-style:italic;font-size:13px;color:${C.mut}">${cs.label.toLowerCase()}</span>`)
-        : ''
+      const tag = cs && !closed ? ` ${statusChip(cs.label, STATUS_FLUO[cs.cls])}` : ''
       return (
         `<div style="font-size:15px;line-height:1.95;padding:2px 0">` +
         `<span class="mut" style="color:${C.faint}">${glyph}</span> ` +
@@ -344,9 +347,13 @@ const html = `<!doctype html>
     .rule-strong { border-color:#f0efe9 !important; }
     .track       { background:#2a2a27 !important; }
     .bar         { background:#f0efe9 !important; }
-    .bar-blocked { background:#ff9d6b !important; }
-    .hl-attn     { background-image:none !important; color:#f3e85c !important; padding:0 !important; }
-    .hl-warn     { background-image:none !important; color:#ff9d6b !important; padding:0 !important; }
+    .bar-blocked { background:#ff9156 !important; }
+    /* Highlighter → bright fluo text on night paper (the marker block is light-only). */
+    .hl-yellow   { background-image:none !important; color:#ffe83d !important; padding:0 !important; }
+    .hl-green    { background-image:none !important; color:#5bff99 !important; padding:0 !important; }
+    .hl-orange   { background-image:none !important; color:#ff9156 !important; padding:0 !important; }
+    .hl-cyan     { background-image:none !important; color:#62efff !important; padding:0 !important; }
+    .hl-magenta  { background-image:none !important; color:#ff74dd !important; padding:0 !important; }
   }
 </style>
 </head>
