@@ -50,6 +50,14 @@ interface Props {
   createShortcut?: boolean
   /** Enable / keyboard shortcut for search */
   searchShortcut?: boolean
+  /**
+   * How the content (editor) surface is presented:
+   * - `'split'` (default): resizable content pane beside the sidebar on desktop,
+   *   a right `USlideover` on mobile (the original behaviour).
+   * - `'overlay'`: the sidebar/list is the full view at all widths, and the
+   *   content opens as a **fullscreen modal takeover** (like the sales kassa).
+   */
+  contentMode?: 'split' | 'overlay'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -62,6 +70,7 @@ const props = withDefaults(defineProps<Props>(), {
   sidebarMaxSize: 40,
   createShortcut: true,
   searchShortcut: true,
+  contentMode: 'split',
 })
 
 const emit = defineEmits<{
@@ -234,8 +243,8 @@ defineExpose({
     <slot name="sidebar" v-bind="sidebarSlotProps" />
   </UDashboardPanel>
 
-  <!-- Panel 2: Content (desktop) -->
-  <UDashboardPanel :id="`${sidebarId}-content`" class="hidden lg:flex">
+  <!-- Panel 2: Content (desktop) — split mode only -->
+  <UDashboardPanel v-if="contentMode === 'split'" :id="`${sidebarId}-content`" class="hidden lg:flex">
     <template v-if="showContent">
       <slot name="content" v-bind="contentSlotProps" />
     </template>
@@ -251,9 +260,9 @@ defineExpose({
     </slot>
   </UDashboardPanel>
 
-  <!-- Mobile: Slideover for content -->
+  <!-- Mobile: Slideover for content — split mode only -->
   <ClientOnly>
-    <USlideover v-if="isMobile" v-model:open="isContentPanelOpen" side="right">
+    <USlideover v-if="contentMode === 'split' && isMobile" v-model:open="isContentPanelOpen" side="right">
       <template #content>
         <slot
           v-if="showContent"
@@ -262,5 +271,25 @@ defineExpose({
         />
       </template>
     </USlideover>
+  </ClientOnly>
+
+  <!-- Overlay mode: fullscreen takeover at all widths (like the sales kassa) -->
+  <ClientOnly>
+    <UModal
+      v-if="contentMode === 'overlay'"
+      v-model:open="isContentPanelOpen"
+      fullscreen
+      :ui="{ content: 'bg-default' }"
+    >
+      <template #content>
+        <div class="flex flex-col h-full pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+          <slot
+            v-if="showContent"
+            name="content"
+            v-bind="contentSlotProps"
+          />
+        </div>
+      </template>
+    </UModal>
   </ClientOnly>
 </template>
