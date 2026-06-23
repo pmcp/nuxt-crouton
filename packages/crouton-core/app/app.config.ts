@@ -13,6 +13,9 @@ const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
     component: 'CroutonLayoutSpikeList',
     kind: 'atomic',
     category: 'data',
+    // Sizing contract (#710): a list collapses to cards but needs ~260px to stay legible.
+    minWidth: 260,
+    defaultSize: 34,
     configSchema: [
       { name: 'heading', type: 'text', label: 'Heading', default: 'Items' },
     ],
@@ -25,6 +28,9 @@ const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
     component: 'CroutonLayoutSpikeForm',
     kind: 'atomic',
     category: 'data',
+    // A form drops to a single column under ~480px; below ~320px fields crush.
+    minWidth: 320,
+    defaultSize: 50,
   },
   'stats': {
     id: 'stats',
@@ -34,6 +40,9 @@ const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
     component: 'CroutonLayoutSpikeStats',
     kind: 'atomic',
     category: 'data',
+    // KPI cards reflow to one column gracefully — fluid, modest floor.
+    minWidth: 200,
+    defaultSize: 40,
   },
 }
 

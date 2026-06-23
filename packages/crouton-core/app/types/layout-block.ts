@@ -42,6 +42,27 @@ export interface CroutonLayoutBlockDefinition {
   defaultConfig?: Record<string, unknown>
   /** User-editable props; the renderer passes ONLY these (validated) through. */
   configSchema?: CroutonLayoutBlockConfigField[]
+  /**
+   * Sizing contract (#710) — how the block behaves in a pane. All optional; a
+   * block that declares nothing is treated as fully fluid (minWidth 0). The
+   * panes renderer (#706) enforces the minimums at runtime; the viability
+   * metric (`checkLayoutViability`) and the deterministic layout pass (#709)
+   * read them to reason about whether an arrangement is good.
+   */
+  /** Minimum width in px below which the block breaks — the viability floor. */
+  minWidth?: number
+  /** Minimum height in px. */
+  minHeight?: number
+  /** Maximum width in px (the block shouldn't stretch past this). */
+  maxWidth?: number
+  /** Preferred size (percentage of its pane group) when first placed. */
+  defaultSize?: number
+  /** Width/height ratio, used when `resize: 'aspect'`. */
+  aspect?: number
+  /** How the pane may resize the block. Default `'free'`. */
+  resize?: 'free' | 'fixed' | 'aspect'
+  /** Information density hint for the block's own layout. */
+  density?: 'compact' | 'comfortable' | 'spacious'
 }
 
 export type CroutonLayoutBlockRegistry = Record<string, CroutonLayoutBlockDefinition>

@@ -3,6 +3,12 @@ import type {
   CroutonLayoutBlockDefinition,
   CroutonLayoutBlockRegistry,
 } from '../types/layout-block'
+import type { LayoutTree } from '../types/layout'
+import {
+  checkTreeViability,
+  minWidthResolver,
+  type ViabilityResult,
+} from '../utils/layout-viability'
 
 /**
  * Layout block registry reader (Sprint 1, #704).
@@ -73,6 +79,14 @@ export function useCroutonLayoutBlocks() {
   function sanitizeConfig(id: string, config?: Record<string, unknown>): Record<string, unknown> {
     return sanitizeLayoutBlockConfig(blocks.value[id], config)
   }
+  /**
+   * Viability check (#710) bound to the live registry — a layout is viable iff
+   * every placed block meets its declared `minWidth` at the given container
+   * width(s). Used by the renderer (#706) and the deterministic layout (#709).
+   */
+  function checkViability(tree: LayoutTree, targetWidths: number[]): ViabilityResult {
+    return checkTreeViability(tree, minWidthResolver(blocks.value), targetWidths)
+  }
 
-  return { blocks, blocksList, getBlock, hasBlock, resolveComponentName, sanitizeConfig }
+  return { blocks, blocksList, getBlock, hasBlock, resolveComponentName, sanitizeConfig, checkViability }
 }
