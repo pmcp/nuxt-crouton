@@ -63,6 +63,11 @@ const props = defineProps<{
    * plain-input branch (block/editor/textarea fields are unaffected). (#722)
    */
   fieldUi?: Record<string, { variant?: string, size?: string, class?: string }>
+  /**
+   * Per-field placeholder text (e.g. a borderless title's "Untitled page").
+   * Takes priority over the derived fallback-locale placeholder. Opt-in. (#722)
+   */
+  fieldPlaceholders?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
@@ -420,7 +425,7 @@ function previewText(field: string, locale: string): string {
             <UInput
               v-else
               :model-value="getFieldValue(field, narrowLocaleTab)"
-              :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
+              :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (fieldPlaceholders?.[field] || defaultValues?.[field] || '')"
               :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
               :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
               :variant="(fieldUi?.[field]?.variant as any)"

@@ -852,6 +852,10 @@ const docFieldUi = {
   title: { variant: 'none', size: 'xl', class: '!text-2xl font-bold leading-tight px-0' },
   slug: { variant: 'none', size: 'md', class: 'text-muted px-0' },
 }
+const docFieldPlaceholders = computed(() => ({
+  title: t('pages.editor.titlePlaceholder', 'Untitled page'),
+  slug: t('pages.editor.slugPlaceholder', 'page-url-slug'),
+}))
 
 // SEO & social disclosure (root og/robots + per-locale seo text, bound to the
 // active app locale — refine to follow the locale tab in a later pass).
@@ -1162,6 +1166,7 @@ defineExpose({ state })
             :field-options="fieldOptions"
             :bare-fields="['title', 'slug']"
             :field-ui="docFieldUi"
+            :field-placeholders="docFieldPlaceholders"
             :collab="collabForI18n"
             :class="isCollectionPage ? 'min-h-64' : 'flex-1 min-h-0'"
           >
@@ -1194,7 +1199,7 @@ defineExpose({ state })
               @click="showSeoMeta = !showSeoMeta"
             >
               <UIcon :name="showSeoMeta ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="size-3.5" />
-              {{ t('pages.fieldGroups.extra', 'SEO & social') }}
+              {{ t('pages.editor.seoSocial', 'SEO & social') }}
             </button>
             <div v-if="showSeoMeta" class="mt-2 flex flex-col gap-2">
               <UFormField :label="t('pages.fields.seoTitle', 'SEO title')" name="seoTitle">
