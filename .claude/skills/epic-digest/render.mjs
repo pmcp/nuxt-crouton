@@ -132,24 +132,24 @@ function actionableCard(a) {
   const visual = a.hasVisual
     ? `<span class="mut" style="font-size:12px;color:${C.mut}">👁 visual</span>`
     : ''
-  const note = isEpic ? 'Reached 100% — give it one QA pass.' : ''
+  const note = isEpic ? 'Hit 100% — one QA pass.' : ''
   const subLine = (note || visual)
-    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin-top:5px">${note}${note && visual ? ' · ' : ''}${visual}</div>`
+    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin-top:8px">${note}${note && visual ? ' · ' : ''}${visual}</div>`
     : ''
   const stepCount = (a.testSteps && a.testSteps.length) || 0
   const stepsBlock = stepCount
-    ? `<details style="margin-top:12px">
+    ? `<details style="margin-top:16px">
          <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">How to test (${stepCount})</summary>
-         <ol class="sub rule" style="margin:10px 0 0;padding:0 0 0 18px;border-left:2px solid ${C.border};color:${C.sub};font-size:13px;line-height:1.75">${a.testSteps.map((s) => `<li style="padding-left:4px">${esc(s)}</li>`).join('')}</ol>
+         <ol class="sub rule" style="margin:12px 0 0;padding:0 0 0 18px;border-left:2px solid ${C.border};color:${C.sub};font-size:13px;line-height:1.8">${a.testSteps.map((s) => `<li style="padding-left:4px;margin:2px 0">${esc(s)}</li>`).join('')}</ol>
        </details>`
-    : `<div class="mut" style="color:${C.mut};font-size:12px;font-style:italic;margin-top:10px">No test steps — author should add a “How to test” section.</div>`
+    : `<div class="mut" style="color:${C.mut};font-size:12px;font-style:italic;margin-top:12px">No test steps yet.</div>`
   const links = [
     `<a href="${esc(a.url)}" ${linkS}>${isEpic ? `Verify rollup #${esc(a.number)}` : `PR #${esc(a.number)}`}</a>`
   ]
   if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" ${linkS}>staging preview</a>`)
   return `
-  <tr><td style="padding:0 0 10px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
+  <tr><td style="padding:0 0 16px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:22px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="font-size:15px;font-weight:500;line-height:1.45">
           <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
@@ -158,7 +158,7 @@ function actionableCard(a) {
       </tr></table>
       ${subLine}
       ${stepsBlock}
-      <div style="margin-top:12px;font-size:12px">${links.join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</div>
+      <div style="margin-top:16px;font-size:12px">${links.join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</div>
     </td></tr></table>
   </td></tr>`
 }
@@ -166,9 +166,9 @@ function actionableCard(a) {
 function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
-    <tr><td style="padding:0 0 10px">
+    <tr><td style="padding:0 0 14px">
       <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Needs your eyes</div>
-      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:4px">${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h — worth a click-through and sign-off.</div>
+      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:6px">${items.length} shipped in the last ${windowHours}h.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
 }
@@ -194,7 +194,7 @@ function activityList(items, emptyText, cap = ACTIVITY_CAP) {
 
 function statBox(n, label) {
   return (
-    `<td align="center" class="card" style="padding:14px 4px;${card}">` +
+    `<td align="center" class="card" style="padding:18px 4px;${card}">` +
     `<div class="ink" style="font-size:24px;font-weight:500;color:${C.ink};line-height:1">${n}</div>` +
     `<div class="mut" style="color:${C.mut};font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:5px">${label}</div>` +
     `</td>`
@@ -207,9 +207,9 @@ function labeledLine(label, text) {
   // fixed 104px label column crushed the value into a narrow strip on phones —
   // stacking lets the text breathe across the whole card.
   return (
-    `<div style="margin-top:14px">` +
-    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin:0 0 4px">${label}</div>` +
-    `<div class="sub" style="color:${C.sub};font-size:13px;line-height:1.65">${esc(text)}</div>` +
+    `<div style="margin-top:20px">` +
+    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px">${label}</div>` +
+    `<div class="sub" style="color:${C.sub};font-size:13px;line-height:1.72">${esc(text)}</div>` +
     `</div>`
   )
 }
@@ -234,7 +234,7 @@ function epicCard(e) {
         ? ` <span class="${cs.cls}" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:${cs.fg}">${cs.label}</span>`
         : ''
       return (
-        `<div style="font-size:13px;line-height:1.8;padding:1px 0">` +
+        `<div style="font-size:13px;line-height:1.9;padding:2px 0">` +
         `<span class="mut" style="color:${C.faint}">${mark}</span> ` +
         `<a href="${esc(c.url)}" ${linkS}>#${esc(c.number)}</a> ` +
         `<span class="${titleCls}" style="${titleStyle}">${esc(c.title)}</span>${tag}</div>`
@@ -243,9 +243,9 @@ function epicCard(e) {
     .join('')
 
   return `
-  <tr><td style="padding:0 0 12px">
+  <tr><td style="padding:0 0 16px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}">
-      <tr><td style="padding:16px 18px">
+      <tr><td style="padding:22px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
           <td style="font-size:15px;font-weight:500;line-height:1.45">
             <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
@@ -253,7 +253,7 @@ function epicCard(e) {
           <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${badge(s)}</td>
         </tr></table>
 
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px"><tr>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr>
           <td style="width:100%;padding-right:12px">
             <div class="track" style="background:${C.track};border-radius:4px;height:6px;width:100%">
               <div class="${barCls}" style="background:${barColor};border-radius:4px;height:6px;width:${p}%"></div>
@@ -268,9 +268,9 @@ function epicCard(e) {
 
         ${
           children.length
-            ? `<details style="margin-top:14px">
+            ? `<details style="margin-top:20px">
                  <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">Sub-issues (${children.length})</summary>
-                 <div class="rule" style="margin-top:10px;padding-top:10px;border-top:1px solid ${C.border}">${childRows}</div>
+                 <div class="rule" style="margin-top:12px;padding-top:12px;border-top:1px solid ${C.border}">${childRows}</div>
                </details>`
             : ''
         }
@@ -299,7 +299,7 @@ function looseSection(items) {
       <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Loose tickets · no epic</div>
     </td></tr>
     <tr><td style="padding:0 0 12px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:22px">
         <div class="mut" style="color:${C.mut};font-size:12px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} not tracked under any epic</div>
         ${blocks}
       </td></tr></table>
@@ -319,7 +319,7 @@ const html = `<!doctype html>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
   body { -webkit-text-size-adjust:100%; }
   @media only screen and (max-width:600px) {
-    .outer-pad { padding:18px 12px !important; }
+    .outer-pad { padding:20px 14px !important; }
     .digest-title { font-size:19px !important; }
   }
   /* A real dark theme — not a muddy auto-invert. Neutral surfaces, ink flipped
@@ -347,23 +347,23 @@ const html = `<!doctype html>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:#f5f5f6"><tr><td align="center" class="outer-pad" style="padding:28px 16px">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
-    <tr><td style="padding:0 0 18px">
+    <tr><td style="padding:0 0 26px">
       <div class="mut" style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:${C.mut}">Daily Epic Digest</div>
-      <div class="digest-title ink" style="font-size:22px;font-weight:600;color:${C.ink};margin-top:4px">${esc(prettyDate)}</div>
-      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:3px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
+      <div class="digest-title ink" style="font-size:22px;font-weight:600;color:${C.ink};margin-top:6px">${esc(prettyDate)}</div>
+      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:5px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
     ${actionablesSection(actionables)}
 
-    <tr><td style="padding:14px 0 20px">
-      <div style="margin:0 0 10px">${sectionLabel('Since yesterday')}</div>
+    <tr><td style="padding:18px 0 28px">
+      <div style="margin:0 0 14px">${sectionLabel('Since yesterday')}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="8" style="margin:-8px"><tr>
         ${statBox((activity.opened || []).length, 'Opened')}
         ${statBox((activity.closed || []).length, 'Closed')}
         ${statBox((activity.mergedPRs || []).length, 'PRs merged')}
       </tr></table>
 
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="margin-top:12px;${card}"><tr><td style="padding:14px 18px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="margin-top:14px;${card}"><tr><td style="padding:18px 20px">
         <details>
           <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:12px;font-weight:600;outline:none;list-style:none">Show detail — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
           <div style="margin-top:12px">
@@ -378,12 +378,12 @@ const html = `<!doctype html>
       </td></tr></table>
     </td></tr>
 
-    <tr><td style="padding:0 0 10px">${sectionLabel('Open epics')}</td></tr>
+    <tr><td style="padding:0 0 14px">${sectionLabel('Open epics')}</td></tr>
     ${epics.length ? epics.map(epicCard).join('') : `<tr><td class="mut" style="color:${C.mut};font-size:14px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
 
     ${looseSection(loose)}
 
-    <tr><td class="rule mut" style="padding:14px 0 0;border-top:1px solid ${C.border};color:${C.faint};font-size:12px">
+    <tr><td class="rule mut" style="padding:20px 0 0;border-top:1px solid ${C.border};color:${C.faint};font-size:12px">
       Generated ${esc(generated.toISOString())} by the <code>/epic-digest</code> skill.
     </td></tr>
 
