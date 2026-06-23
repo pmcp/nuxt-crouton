@@ -1,36 +1,56 @@
 import { croutonRedirectsConfig } from './composables/useCroutonRedirects'
 import type { CroutonLayoutBlockRegistry } from './types/layout-block'
 
-// Initial layout blocks (Sprint 1, #704). Throwaway spike blocks for now; real
-// package blocks (calendar, generated list/form) register the same way. Each
-// layer can contribute its own `croutonLayoutBlocks` entries (defu-merged).
+// Core layout blocks (Sprint 1 #704 → real data-bound blocks Sprint 4 #709).
+// `collection-list` / `entity-form` are now REAL data-bound surfaces (they render
+// an actual generated collection by name via the `collection` config), placed by
+// the deterministic layout pass (`composeDefaultLayout`). Package blocks (e.g. the
+// bookings calendar) register the same way; each layer can contribute its own
+// `croutonLayoutBlocks` entries (defu-merged).
 const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
   'collection-list': {
     id: 'collection-list',
     name: 'List',
-    description: 'A simple list surface',
+    description: 'Live rows of a collection',
     icon: 'i-lucide-list',
-    component: 'CroutonLayoutSpikeList',
+    component: 'CroutonLayoutCollection',
     kind: 'atomic',
     category: 'data',
     // Sizing contract (#710): a list collapses to cards but needs ~260px to stay legible.
     minWidth: 260,
     defaultSize: 34,
     configSchema: [
-      { name: 'heading', type: 'text', label: 'Heading', default: 'Items' },
+      // The collection (registry key, e.g. `mainItems`) this block binds to.
+      { name: 'collection', type: 'text', label: 'Collection', default: '' },
+      { name: 'heading', type: 'text', label: 'Heading', default: '' },
+      {
+        name: 'layout',
+        type: 'select',
+        label: 'Layout',
+        default: 'list',
+        options: [
+          { label: 'List', value: 'list' },
+          { label: 'Grid', value: 'grid' },
+          { label: 'Table', value: 'table' },
+        ],
+      },
     ],
   },
   'entity-form': {
     id: 'entity-form',
     name: 'Form',
-    description: 'A form surface',
+    description: 'Create form for a collection',
     icon: 'i-lucide-square-pen',
-    component: 'CroutonLayoutSpikeForm',
+    component: 'CroutonLayoutForm',
     kind: 'atomic',
     category: 'data',
     // A form drops to a single column under ~480px; below ~320px fields crush.
     minWidth: 320,
     defaultSize: 50,
+    configSchema: [
+      { name: 'collection', type: 'text', label: 'Collection', default: '' },
+      { name: 'heading', type: 'text', label: 'Heading', default: '' },
+    ],
   },
   'stats': {
     id: 'stats',
