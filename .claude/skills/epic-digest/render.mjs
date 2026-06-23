@@ -52,10 +52,10 @@ const prettyDate = generated.toLocaleDateString('en-US', {
 // Status is the ONE place colour is allowed to carry meaning. `cls` lets the
 // dark-mode <style> block brighten each hue for a dark background.
 const STATUS = {
-  blocked: { label: 'Blocked', fg: '#dc2626', cls: 's-blocked' },
-  'in-progress': { label: 'In progress', fg: '#b45309', cls: 's-prog' },
-  done: { label: 'Done', fg: '#15803d', cls: 's-done' },
-  open: { label: 'Open', fg: '#6b7280', cls: 's-open' }
+  blocked: { label: 'Blocked', fg: '#a8503f', cls: 's-blocked' },
+  'in-progress': { label: 'In progress', fg: '#9a7b3f', cls: 's-prog' },
+  done: { label: 'Done', fg: '#5f7350', cls: 's-done' },
+  open: { label: 'Open', fg: '#8a8276', cls: 's-open' }
 }
 const statusOf = (epic) => {
   if (epic.blocked || epic.status === 'blocked') return STATUS.blocked
@@ -108,57 +108,64 @@ const actionables = (data.actionables || []).slice().sort((a, b) => {
 })
 
 // ── HTML ─────────────────────────────────────────────────────────────────────
-// Clean, neutral, typographic. Colour is reserved for MEANING (status only) —
-// everything else is ink-on-paper with hairline rules. Semantic classes
-// (.ink/.sub/.mut/.card/.lnk/.track/.bar/.s-*) let the <style> block flip the
-// whole thing to a real dark theme via prefers-color-scheme, while the inline
-// values are the light fallback for clients that strip <style>.
+// A calm, literary "letter" rather than a dashboard. Warm paper, serif type, a
+// muted natural palette (clay / ochre / sage), generous leading — meant to feel
+// like a small reward in the inbox, something to read rather than scan. Colour is
+// still reserved for MEANING (status only). Semantic classes
+// (.ink/.sub/.mut/.card/.lnk/.track/.bar/.s-*) let the <style> block flip to a
+// warm dark theme via prefers-color-scheme; inline values are the light fallback
+// for clients that strip <style>.
 const C = {
-  ink: '#1f2937', sub: '#374151', mut: '#6b7280', faint: '#9ca3af',
-  surface: '#ffffff', border: '#e8e8ea', track: '#ededf0'
+  ink: '#33302a', sub: '#5f594f', mut: '#928b7d', faint: '#b4ab9b',
+  surface: '#fbfaf6', page: '#f1ede4', border: '#e6e0d3', track: '#e7e1d4'
 }
-const card = `background:${C.surface};border:1px solid ${C.border};border-radius:12px`
-const muted = `color:${C.mut};`
-const linkS = `class="lnk" style="color:${C.ink};text-decoration:underline;text-underline-offset:2px"`
+const serif = `'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif`
+const card = `background:${C.surface};border-radius:16px`
+const linkS = `class="lnk" style="color:${C.ink};text-decoration:underline;text-decoration-color:${C.faint};text-underline-offset:3px"`
+const num = (n) => `<span class="mut" style="color:${C.faint}">#${esc(n)}</span>`
+// Status as a quiet italic word, never a loud chip.
 const badge = (s) =>
-  `<span class="${s.cls}" style="font-size:11px;font-weight:600;letter-spacing:.05em;` +
-  `text-transform:uppercase;color:${s.fg};white-space:nowrap">${s.label}</span>`
+  `<span class="${s.cls}" style="font-style:italic;font-size:14px;color:${s.fg};white-space:nowrap">${s.label.toLowerCase()}</span>`
+// Italic serif heading — a small chapter marker, not an uppercase UI label.
+const sectionLabel = (t) =>
+  `<div class="ink" style="font-style:italic;font-size:18px;color:${C.ink}">${t}</div>`
+const detailHead = (t, m = '16px 0 4px') =>
+  `<div class="mut" style="font-style:italic;font-size:14px;color:${C.mut};margin:${m}">${t}</div>`
 
 function actionableCard(a) {
   const isEpic = a.kind === 'epic'
   const tag = isEpic
-    ? `<span class="s-done" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#15803d;white-space:nowrap">Complete</span>`
-    : `<span class="mut" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:${C.mut};white-space:nowrap">Merged</span>`
-  const visual = a.hasVisual
-    ? `<span class="mut" style="font-size:12px;color:${C.mut}">👁 visual</span>`
-    : ''
-  const note = isEpic ? 'Hit 100% — one QA pass.' : ''
-  const subLine = (note || visual)
-    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin-top:8px">${note}${note && visual ? ' · ' : ''}${visual}</div>`
+    ? `<span class="s-done" style="font-style:italic;font-size:14px;color:#5f7350;white-space:nowrap">complete</span>`
+    : `<span class="mut" style="font-style:italic;font-size:14px;color:${C.mut};white-space:nowrap">merged</span>`
+  const note = isEpic ? 'At 100% — one last look.' : ''
+  const visual = a.hasVisual ? '👁 visual' : ''
+  const sub = [note, visual].filter(Boolean).join('  ·  ')
+  const subLine = sub
+    ? `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">${sub}</div>`
     : ''
   const stepCount = (a.testSteps && a.testSteps.length) || 0
   const stepsBlock = stepCount
     ? `<details style="margin-top:16px">
-         <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">How to test (${stepCount})</summary>
-         <ol class="sub rule" style="margin:12px 0 0;padding:0 0 0 18px;border-left:2px solid ${C.border};color:${C.sub};font-size:13px;line-height:1.8">${a.testSteps.map((s) => `<li style="padding-left:4px;margin:2px 0">${esc(s)}</li>`).join('')}</ol>
+         <summary class="mut" style="cursor:pointer;font-style:italic;color:${C.mut};font-size:13px;outline:none">how to test (${stepCount})</summary>
+         <ol class="sub rule" style="margin:12px 0 0;padding:0 0 0 20px;border-left:1px solid ${C.border};color:${C.sub};font-size:14px;line-height:1.85">${a.testSteps.map((s) => `<li style="padding-left:6px;margin:3px 0">${esc(s)}</li>`).join('')}</ol>
        </details>`
-    : `<div class="mut" style="color:${C.mut};font-size:12px;font-style:italic;margin-top:12px">No test steps yet.</div>`
+    : `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:12px">No test steps yet.</div>`
   const links = [
     `<a href="${esc(a.url)}" ${linkS}>${isEpic ? `Verify rollup #${esc(a.number)}` : `PR #${esc(a.number)}`}</a>`
   ]
   if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" ${linkS}>staging preview</a>`)
   return `
   <tr><td style="padding:0 0 16px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:22px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:24px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="font-size:15px;font-weight:500;line-height:1.45">
-          <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
+        <td style="font-size:17px;font-weight:400;line-height:1.5;color:${C.ink}">
+          <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(a.number)} · ${esc(a.title)}</a>
         </td>
-        <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${tag}</td>
+        <td align="right" valign="top" style="white-space:nowrap;padding-left:12px">${tag}</td>
       </tr></table>
       ${subLine}
       ${stepsBlock}
-      <div style="margin-top:16px;font-size:12px">${links.join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</div>
+      <div style="margin-top:18px;font-size:13px">${links.join(' &nbsp;·&nbsp; ')}</div>
     </td></tr></table>
   </td></tr>`
 }
@@ -166,50 +173,49 @@ function actionableCard(a) {
 function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
-    <tr><td style="padding:0 0 14px">
-      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Needs your eyes</div>
-      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:6px">${items.length} shipped in the last ${windowHours}h.</div>
+    <tr><td style="padding:0 0 16px">
+      ${sectionLabel('Needs your eyes')}
+      <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin-top:6px">${items.length} shipped in the last ${windowHours}h.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
 }
 
 const ACTIVITY_CAP = 8
 function activityList(items, emptyText, cap = ACTIVITY_CAP) {
-  if (!items || !items.length) return `<div class="mut" style="color:${C.mut};font-size:13px;margin:2px 0 0">${emptyText}</div>`
+  if (!items || !items.length) return `<div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin:2px 0 0">${emptyText}</div>`
   const shown = items.slice(0, cap)
   const rest = items.length - shown.length
   const rows = shown
     .map(
       (it) =>
-        `<div style="font-size:13px;line-height:1.7;margin:1px 0">` +
+        `<div style="font-size:14px;line-height:1.8;margin:1px 0">` +
         `<a href="${esc(it.url)}" ${linkS}>#${esc(it.number)}</a> ` +
         `<span class="sub" style="color:${C.sub}">${esc(it.title)}</span></div>`
     )
     .join('')
   const more = rest > 0
-    ? `<div class="mut" style="color:${C.mut};font-size:12px;margin:3px 0 0;font-style:italic">+ ${rest} more</div>`
+    ? `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin:4px 0 0">+ ${rest} more</div>`
     : ''
   return rows + more
 }
 
 function statBox(n, label) {
   return (
-    `<td align="center" class="card" style="padding:18px 4px;${card}">` +
-    `<div class="ink" style="font-size:24px;font-weight:500;color:${C.ink};line-height:1">${n}</div>` +
-    `<div class="mut" style="color:${C.mut};font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:5px">${label}</div>` +
+    `<td align="center" class="card" style="padding:22px 6px;${card}">` +
+    `<div class="ink" style="font-size:30px;font-weight:400;color:${C.ink};line-height:1">${n}</div>` +
+    `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:7px">${label}</div>` +
     `</td>`
   )
 }
 
 function labeledLine(label, text) {
   if (!text) return ''
-  // Stacked, not side-by-side: a small caption above full-width text. The old
-  // fixed 104px label column crushed the value into a narrow strip on phones —
-  // stacking lets the text breathe across the whole card.
+  // Stacked, not side-by-side: a small italic caption above full-width prose —
+  // reads like a margin note rather than a form field.
   return (
-    `<div style="margin-top:20px">` +
-    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px">${label}</div>` +
-    `<div class="sub" style="color:${C.sub};font-size:13px;line-height:1.72">${esc(text)}</div>` +
+    `<div style="margin-top:22px">` +
+    `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin:0 0 5px">${label}</div>` +
+    `<div class="sub" style="color:${C.sub};font-size:14px;line-height:1.8">${esc(text)}</div>` +
     `</div>`
   )
 }
@@ -218,9 +224,9 @@ function epicCard(e) {
   const s = statusOf(e)
   const p = pct(e)
   const isBlocked = e.blocked || e.status === 'blocked'
-  // Progress is conveyed by length; colour the fill only when it carries a
-  // warning (blocked). Otherwise it's neutral ink.
-  const barColor = isBlocked ? '#dc2626' : C.ink
+  // The bar's length is the meaning; its colour stays a calm warm taupe, turning
+  // to clay only when something is blocked.
+  const barColor = isBlocked ? '#a8503f' : '#a59b89'
   const barCls = isBlocked ? 'bar-blocked' : 'bar'
   const children = e.children || []
   const childRows = children
@@ -231,10 +237,10 @@ function epicCard(e) {
       const titleCls = closed ? 'mut' : 'sub'
       const cs = c.status && STATUS[c.status]
       const tag = cs && !closed
-        ? ` <span class="${cs.cls}" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:${cs.fg}">${cs.label}</span>`
+        ? ` <span class="${cs.cls}" style="font-style:italic;font-size:13px;color:${cs.fg}">${cs.label.toLowerCase()}</span>`
         : ''
       return (
-        `<div style="font-size:13px;line-height:1.9;padding:2px 0">` +
+        `<div style="font-size:14px;line-height:1.95;padding:2px 0">` +
         `<span class="mut" style="color:${C.faint}">${mark}</span> ` +
         `<a href="${esc(c.url)}" ${linkS}>#${esc(c.number)}</a> ` +
         `<span class="${titleCls}" style="${titleStyle}">${esc(c.title)}</span>${tag}</div>`
@@ -245,21 +251,21 @@ function epicCard(e) {
   return `
   <tr><td style="padding:0 0 16px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}">
-      <tr><td style="padding:22px">
+      <tr><td style="padding:24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:15px;font-weight:500;line-height:1.45">
-            <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
+          <td style="font-size:17px;font-weight:400;line-height:1.5;color:${C.ink}">
+            <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(e.number)} · ${esc(e.title)}</a>
           </td>
-          <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${badge(s)}</td>
+          <td align="right" valign="top" style="white-space:nowrap;padding-left:12px">${badge(s)}</td>
         </tr></table>
 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr>
-          <td style="width:100%;padding-right:12px">
-            <div class="track" style="background:${C.track};border-radius:4px;height:6px;width:100%">
-              <div class="${barCls}" style="background:${barColor};border-radius:4px;height:6px;width:${p}%"></div>
+          <td style="width:100%;padding-right:14px">
+            <div class="track" style="background:${C.track};border-radius:3px;height:5px;width:100%">
+              <div class="${barCls}" style="background:${barColor};border-radius:3px;height:5px;width:${p}%"></div>
             </div>
           </td>
-          <td class="mut" style="white-space:nowrap;color:${C.mut};font-size:12px;font-weight:500">${e.done}/${e.total} · ${p}%</td>
+          <td class="mut" style="white-space:nowrap;font-style:italic;color:${C.mut};font-size:13px">${e.done} of ${e.total}</td>
         </tr></table>
 
         ${labeledLine('Hypothesis', e.theHypothesis || e.theBet || e.whatItIs)}
@@ -268,9 +274,9 @@ function epicCard(e) {
 
         ${
           children.length
-            ? `<details style="margin-top:20px">
-                 <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;outline:none">Sub-issues (${children.length})</summary>
-                 <div class="rule" style="margin-top:12px;padding-top:12px;border-top:1px solid ${C.border}">${childRows}</div>
+            ? `<details style="margin-top:22px">
+                 <summary class="mut" style="cursor:pointer;font-style:italic;color:${C.mut};font-size:13px;outline:none">sub-issues (${children.length})</summary>
+                 <div class="rule" style="margin-top:14px;padding-top:14px;border-top:1px solid ${C.border}">${childRows}</div>
                </details>`
             : ''
         }
@@ -286,30 +292,25 @@ function looseSection(items) {
       const lines = rows
         .map(
           (it) =>
-            `<div style="font-size:13px;line-height:1.7;margin:1px 0">` +
+            `<div style="font-size:14px;line-height:1.8;margin:1px 0">` +
             `<a href="${esc(it.url)}" ${linkS}>#${esc(it.number)}</a> ` +
             `<span class="sub" style="color:${C.sub}">${esc(it.title)}</span></div>`
         )
         .join('')
-      return `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:12px 0 3px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
+      return `<div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin:14px 0 4px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
     })
     .join('')
   return `
-    <tr><td style="padding:8px 0 10px">
-      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Loose tickets · no epic</div>
+    <tr><td style="padding:8px 0 14px">
+      ${sectionLabel('Loose threads')}
     </td></tr>
-    <tr><td style="padding:0 0 12px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:22px">
-        <div class="mut" style="color:${C.mut};font-size:12px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} not tracked under any epic</div>
+    <tr><td style="padding:0 0 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:24px">
+        <div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin:0 0 2px">${items.length} open issue${items.length === 1 ? '' : 's'} under no epic</div>
         ${blocks}
       </td></tr></table>
     </td></tr>`
 }
-
-const sectionLabel = (t) =>
-  `<div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">${t}</div>`
-const detailHead = (t, m = '14px 0 3px') =>
-  `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:${m}">${t}</div>`
 
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -319,55 +320,55 @@ const html = `<!doctype html>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
   body { -webkit-text-size-adjust:100%; }
   @media only screen and (max-width:600px) {
-    .outer-pad { padding:20px 14px !important; }
-    .digest-title { font-size:19px !important; }
+    .outer-pad { padding:24px 16px !important; }
+    .digest-title { font-size:26px !important; }
   }
-  /* A real dark theme — not a muddy auto-invert. Neutral surfaces, ink flipped
-     to off-white, status hues brightened so they stay legible on dark. */
+  /* A warm dark theme — dim paper, not a cold invert. Surfaces lift gently off
+     the page; the natural status pigments are brightened to stay legible. */
   @media (prefers-color-scheme: dark) {
-    .page        { background:#0c0d10 !important; }
-    .card        { background:#15171c !important; border-color:#262a31 !important; }
-    .ink         { color:#e7e8ea !important; }
-    .ink.lnk     { color:#e7e8ea !important; }
-    .sub         { color:#c3c7ce !important; }
-    .mut         { color:#8b9098 !important; }
-    .lnk         { color:#e7e8ea !important; }
-    .rule        { border-color:#262a31 !important; }
-    .track       { background:#262a31 !important; }
-    .bar         { background:#e7e8ea !important; }
-    .bar-blocked { background:#f87171 !important; }
-    .s-blocked   { color:#f87171 !important; }
-    .s-prog      { color:#e3b341 !important; }
-    .s-done      { color:#4ade80 !important; }
-    .s-open      { color:#9aa0a6 !important; }
+    .page        { background:#191613 !important; }
+    .card        { background:#221e18 !important; }
+    .ink         { color:#ece5d6 !important; }
+    .ink.lnk     { color:#ece5d6 !important; }
+    .sub         { color:#c6bdaa !important; }
+    .mut         { color:#9b9282 !important; }
+    .lnk         { color:#ece5d6 !important; text-decoration-color:#6f6757 !important; }
+    .rule        { border-color:#34302a !important; }
+    .track       { background:#34302a !important; }
+    .bar         { background:#b7ad97 !important; }
+    .bar-blocked { background:#d98a72 !important; }
+    .s-blocked   { color:#d98a72 !important; }
+    .s-prog      { color:#cda86a !important; }
+    .s-done      { color:#a0b889 !important; }
+    .s-open      { color:#a89f8e !important; }
   }
 </style>
 </head>
-<body class="page" style="margin:0;padding:0;background:#f5f5f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:#f5f5f6"><tr><td align="center" class="outer-pad" style="padding:28px 16px">
-  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+<body class="page" style="margin:0;padding:0;background:${C.page};font-family:${serif};color:${C.ink}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:${C.page}"><tr><td align="center" class="outer-pad" style="padding:40px 20px">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
 
-    <tr><td style="padding:0 0 26px">
-      <div class="mut" style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:${C.mut}">Daily Epic Digest</div>
-      <div class="digest-title ink" style="font-size:22px;font-weight:600;color:${C.ink};margin-top:6px">${esc(prettyDate)}</div>
-      <div class="mut" style="color:${C.mut};font-size:13px;margin-top:5px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
+    <tr><td style="padding:0 0 30px">
+      <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px">The daily digest</div>
+      <div class="digest-title ink" style="font-size:30px;font-weight:400;color:${C.ink};line-height:1.2;margin-top:6px">${esc(prettyDate)}</div>
+      <div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
     ${actionablesSection(actionables)}
 
-    <tr><td style="padding:18px 0 28px">
-      <div style="margin:0 0 14px">${sectionLabel('Since yesterday')}</div>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="8" style="margin:-8px"><tr>
-        ${statBox((activity.opened || []).length, 'Opened')}
-        ${statBox((activity.closed || []).length, 'Closed')}
+    <tr><td style="padding:20px 0 30px">
+      <div style="margin:0 0 16px">${sectionLabel('Since yesterday')}</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="10" style="margin:-10px"><tr>
+        ${statBox((activity.opened || []).length, 'opened')}
+        ${statBox((activity.closed || []).length, 'closed')}
         ${statBox((activity.mergedPRs || []).length, 'PRs merged')}
       </tr></table>
 
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="margin-top:14px;${card}"><tr><td style="padding:18px 20px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="margin-top:16px;${card}"><tr><td style="padding:20px 24px">
         <details>
-          <summary class="mut" style="cursor:pointer;color:${C.mut};font-size:12px;font-weight:600;outline:none;list-style:none">Show detail — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
-          <div style="margin-top:12px">
-            ${detailHead('Closed', '0 0 3px')}
+          <summary class="mut" style="cursor:pointer;font-style:italic;color:${C.mut};font-size:14px;outline:none;list-style:none">a closer look — ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} merged · ${(activity.opened || []).length} opened</summary>
+          <div style="margin-top:14px">
+            ${detailHead('Closed', '0 0 4px')}
             ${activityList(activity.closed, 'Nothing closed.')}
             ${detailHead('PRs merged')}
             ${activityList(activity.mergedPRs, 'No PRs merged.')}
@@ -378,13 +379,13 @@ const html = `<!doctype html>
       </td></tr></table>
     </td></tr>
 
-    <tr><td style="padding:0 0 14px">${sectionLabel('Open epics')}</td></tr>
-    ${epics.length ? epics.map(epicCard).join('') : `<tr><td class="mut" style="color:${C.mut};font-size:14px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
+    <tr><td style="padding:0 0 16px">${sectionLabel('Open epics')}</td></tr>
+    ${epics.length ? epics.map(epicCard).join('') : `<tr><td class="mut" style="font-style:italic;color:${C.mut};font-size:15px;padding:0 0 14px">No open epics. 🎉</td></tr>`}
 
     ${looseSection(loose)}
 
-    <tr><td class="rule mut" style="padding:20px 0 0;border-top:1px solid ${C.border};color:${C.faint};font-size:12px">
-      Generated ${esc(generated.toISOString())} by the <code>/epic-digest</code> skill.
+    <tr><td class="rule mut" style="padding:24px 0 0;border-top:1px solid ${C.border};font-style:italic;color:${C.faint};font-size:12px">
+      Gathered ${esc(generated.toISOString())} by the epic-digest skill.
     </td></tr>
 
   </table>
