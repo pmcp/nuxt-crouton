@@ -51,6 +51,18 @@ const props = defineProps<{
    * Only relevant when fieldGroups is set.
    */
   defaultOpenGroups?: string[]
+  /**
+   * Fields rendered WITHOUT their auto label/translate row — for a document-style
+   * presentation where the field carries its own affordance (e.g. a big
+   * borderless title). Opt-in; default keeps the labelled rows. (#722)
+   */
+  bareFields?: string[]
+  /**
+   * Per-field overrides for the default `UInput` (variant / size / extra class),
+   * e.g. a borderless large title or a faint slug. Opt-in; only affects the
+   * plain-input branch (block/editor/textarea fields are unaffected). (#722)
+   */
+  fieldUi?: Record<string, { variant?: string, size?: string, class?: string }>
 }>()
 
 const emit = defineEmits<{
@@ -317,7 +329,7 @@ function previewText(field: string, locale: string): string {
               field === 'content' ? 'flex-1 min-h-[300px]' : ''
             ]"
           >
-            <div class="flex items-center justify-between h-5">
+            <div v-if="!bareFields?.includes(field)" class="flex items-center justify-between h-5">
               <label class="text-xs font-medium text-muted uppercase tracking-wide">
                 {{ field }}
               </label>
@@ -411,8 +423,9 @@ function previewText(field: string, locale: string): string {
               :placeholder="narrowLocaleTab !== primaryEditingLocale && getFieldValue(field, primaryEditingLocale) ? `${primaryEditingLocale.toUpperCase()}: ${getFieldValue(field, primaryEditingLocale)}` : (defaultValues?.[field] || '')"
               :color="error && !getFieldValue(field, narrowLocaleTab) ? 'error' : 'primary'"
               :highlight="!!(error && !getFieldValue(field, narrowLocaleTab))"
-              class="w-full"
-              size="sm"
+              :variant="(fieldUi?.[field]?.variant as any)"
+              :size="((fieldUi?.[field]?.size as any) || 'sm')"
+              :class="['w-full', fieldUi?.[field]?.class]"
               @update:model-value="updateFieldWithTransform(field, $event, narrowLocaleTab)"
               @blur="handleFieldBlur(field, narrowLocaleTab)"
             />
