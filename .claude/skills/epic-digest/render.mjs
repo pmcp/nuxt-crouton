@@ -127,9 +127,14 @@ const num = (n) => `<span class="mut" style="color:${C.faint}">#${esc(n)}</span>
 // text stays dark (a real marker leaves ink legible over a bright stripe), so it
 // reads identically in light and night mode. Used SPARINGLY, by design.
 const HL = { attn: '#fdf06a', warn: '#ff9d6b' }
-const mark = (t, c = HL.attn) =>
-  `<span style="background-image:linear-gradient(transparent 28%, ${c} 28%, ${c} 90%, transparent 90%);` +
-  `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#1a1a1a;padding:0 .1em">${t}</span>`
+const mark = (t, c = HL.attn) => {
+  // Light: a real highlighter swipe (dark text on a bright stripe). Dark: a
+  // filled neon block looks cheap, so the .hl-* class flips it to bright fluo
+  // *text* with no background — same scarce colour, but elegant on black.
+  const cls = c === HL.warn ? 'hl-warn' : 'hl-attn'
+  return `<span class="${cls}" style="background-image:linear-gradient(transparent 26%, ${c} 26%, ${c} 92%, transparent 92%);` +
+    `-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#1a1a1a;padding:0 .12em">${t}</span>`
+}
 // Status as a quiet lowercase word; only "blocked" earns a highlighter mark.
 const badge = (s) =>
   s.cls === 's-blocked'
@@ -329,16 +334,18 @@ const html = `<!doctype html>
      and meaningful here too. */
   @media (prefers-color-scheme: dark) {
     .page        { background:#0e0e0d !important; }
-    .ink         { color:#ededea !important; }
-    .ink.lnk     { color:#ededea !important; }
-    .sub         { color:#bdbdb6 !important; }
-    .mut         { color:#8f8f88 !important; }
-    .lnk         { color:#ededea !important; text-decoration-color:#5a5a55 !important; }
+    .ink         { color:#f0efe9 !important; }
+    .ink.lnk     { color:#f0efe9 !important; }
+    .sub         { color:#c4c4bd !important; }
+    .mut         { color:#9a958a !important; }
+    .lnk         { color:#f0efe9 !important; text-decoration-color:#5a5a55 !important; }
     .rule        { border-color:#2a2a27 !important; }
-    .rule-strong { border-color:#ededea !important; }
+    .rule-strong { border-color:#f0efe9 !important; }
     .track       { background:#2a2a27 !important; }
-    .bar         { background:#ededea !important; }
+    .bar         { background:#f0efe9 !important; }
     .bar-blocked { background:#ff9d6b !important; }
+    .hl-attn     { background-image:none !important; color:#f3e85c !important; padding:0 !important; }
+    .hl-warn     { background-image:none !important; color:#ff9d6b !important; padding:0 !important; }
   }
 </style>
 </head>
