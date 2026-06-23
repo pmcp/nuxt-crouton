@@ -506,7 +506,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 
 | Type | File | Purpose |
 |------|------|---------|
-| Skill | `.claude/skills/crouton.md` | Collection generation workflow |
+| Skill | `.claude/skills/crouton.md` | Collection generation workflow — incl. the generate → POC **default-layout** step (#709): after collections generate, a deterministic rule set (`crouton-core/app/utils/layout-compose.ts`) arranges them into a viability-gated `layout_configs` tree (`crouton.layout.json` → seeded), so a fresh POC boots laid-out (calendar-primary / master-detail), not a blank canvas |
 | Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
 | Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |

@@ -307,6 +307,24 @@ crouton {layer} {collection} --fields-file=./schemas/{collection}.json --dialect
    npx nuxt typecheck
    ```
 
+### Step 6: Default Layout (generate → POC, #709)
+
+The generator's final step runs the **deterministic layout pass** and writes
+**`crouton.layout.json`** at the app root — a `layout_configs`-format tree that
+arranges the just-generated collections into a good default (no LLM):
+
+- a compound **calendar** present (bookings) → **calendar-primary**;
+- otherwise list + form → **master-detail**; extra collections stacked;
+- each block is data-bound (`config.collection`), and the arrangement is
+  **viability-gated** (every block ≥ its `minWidth`, vertical fallback when a
+  side-by-side split is too narrow).
+
+`crouton-seed` upserts this tree into `layout_configs` (row `default`), so the
+POC boots laid-out — editable in `CroutonLayout`, the layout is **data** not
+`.vue`. Reviewed via the usual UI sign-off loop (#307: staging preview → `approve`).
+The rule set lives in `crouton-core/app/utils/layout-compose.ts`
+(`composeDefaultLayout`); the LLM `/layout` pass (#711) is gated and out of scope.
+
 ## Generated Files
 
 ```
