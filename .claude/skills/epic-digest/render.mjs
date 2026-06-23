@@ -347,13 +347,14 @@ const html = `<!doctype html>
     .rule-strong { border-color:#f0efe9 !important; }
     .track       { background:#2a2a27 !important; }
     .bar         { background:#f0efe9 !important; }
-    .bar-blocked { background:#ff9156 !important; }
-    /* Highlighter → bright fluo text on night paper (the marker block is light-only). */
-    .hl-yellow   { background-image:none !important; color:#ffe83d !important; padding:0 !important; }
-    .hl-green    { background-image:none !important; color:#5bff99 !important; padding:0 !important; }
-    .hl-orange   { background-image:none !important; color:#ff9156 !important; padding:0 !important; }
-    .hl-cyan     { background-image:none !important; color:#62efff !important; padding:0 !important; }
-    .hl-magenta  { background-image:none !important; color:#ff74dd !important; padding:0 !important; }
+    .bar-blocked { background:#ff7a2a !important; }
+    /* Highlighter → max-brightness neon text on night paper (the marker block is
+       light-only). A faint same-hue glow makes it read as genuinely luminous. */
+    .hl-yellow   { background-image:none !important; color:#fff21a !important; padding:0 !important; text-shadow:0 0 9px rgba(255,242,26,.5) !important; }
+    .hl-green    { background-image:none !important; color:#2dff7a !important; padding:0 !important; text-shadow:0 0 9px rgba(45,255,122,.5) !important; }
+    .hl-orange   { background-image:none !important; color:#ff8c1f !important; padding:0 !important; text-shadow:0 0 9px rgba(255,140,31,.5) !important; }
+    .hl-cyan     { background-image:none !important; color:#16f6ff !important; padding:0 !important; text-shadow:0 0 9px rgba(22,246,255,.5) !important; }
+    .hl-magenta  { background-image:none !important; color:#ff2ff0 !important; padding:0 !important; text-shadow:0 0 9px rgba(255,47,240,.5) !important; }
   }
 </style>
 </head>
