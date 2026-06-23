@@ -187,6 +187,10 @@ called out as "needs a human decision" with the reason.
   **`/simplify`** (the code-cleaning family), and **`/red-team`** (security) — same
   spawn-and-collate shape, different lens. Reach for `/a11y` when you specifically want
   accessibility, with the option to comment or fix.
-- A future CI gate could run the subagent at `depth=quick` on a PR diff (like
-  `red-team.yml`); for now `pnpm lint`'s warn-first rules are the CI signal and `/a11y`
-  is the human/agent entry point.
+- **CI runs the same engines automatically** (#730, mirroring the red-team workflows):
+  `.github/workflows/a11y.yml` runs the subagent at `depth=quick` on a PR diff — posts a
+  sticky `<!-- a11y -->` comment and **fails the check on a 🔴 critical/serious finding**
+  (diff-scoped, so never on the pre-existing backlog). `.github/workflows/a11y-daily.yml`
+  runs `/a11y` at `depth=deep` daily — writes a report (`writeups/reports/a11y-repo-*.md`),
+  updates a public standing issue, and files `a11y` issues for new confirmed criticals.
+  `/a11y` is the **on-demand** brain and human entry point for the same machinery.
