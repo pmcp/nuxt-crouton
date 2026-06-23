@@ -11,7 +11,8 @@ name: Red-Team (daily deep sweep)
 # Required repo config:
 #   secrets.RESEND_API_KEY        — Resend API key (https://resend.com)
 #   secrets.ANTHROPIC_API_KEY     — already present (shared with the other claude workflows)
-#   vars.RED_TEAM_EMAIL_FROM      — verified Resend sender, e.g. "red-team@your-domain"
+#   vars.RESEND_FROM              — verified Resend sender, e.g. "reports@friendlyinter.net"
+#                                   (shared with the epic-digest email; see #551)
 #   vars.RED_TEAM_REPORT_EMAIL    — recipient (your inbox)
 # If RESEND_API_KEY / the vars are unset the email step warns and skips (the job stays green).
 
@@ -75,7 +76,7 @@ jobs:
         if: always()
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_FROM: ${{ vars.RED_TEAM_EMAIL_FROM }}
+          EMAIL_FROM: ${{ vars.RESEND_FROM }}
           EMAIL_TO: ${{ vars.RED_TEAM_REPORT_EMAIL }}
         run: |
           REPORT=$(ls -t writeups/reports/red-team-repo-*.md 2>/dev/null | head -1 || true)
@@ -84,7 +85,7 @@ jobs:
             exit 0
           fi
           if [ -z "$RESEND_API_KEY" ] || [ -z "$EMAIL_FROM" ] || [ -z "$EMAIL_TO" ]; then
-            echo "::warning::RESEND_API_KEY / RED_TEAM_EMAIL_FROM / RED_TEAM_REPORT_EMAIL not set — skipping email. Report at $REPORT (in this run's workspace only)."
+            echo "::warning::RESEND_API_KEY / RESEND_FROM / RED_TEAM_REPORT_EMAIL not set — skipping email. Report at $REPORT (in this run's workspace only)."
             exit 0
           fi
           SUBJECT="🔴 Red-team daily report — $(date -u +%F)"
