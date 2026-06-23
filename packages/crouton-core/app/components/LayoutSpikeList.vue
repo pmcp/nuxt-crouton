@@ -20,11 +20,13 @@ const rows = [
     <div class="px-4 py-2 border-b border-default text-sm font-semibold">
       {{ heading }}
     </div>
-    <ul class="divide-y divide-default">
+    <!-- Reflows against THIS pane's width (@container), not the viewport:
+         narrow → single stacked column; wider → two columns (#710). -->
+    <ul class="grid grid-cols-1 @md:grid-cols-2 gap-px bg-default">
       <li
         v-for="(r, i) in rows"
         :key="i"
-        class="px-4 py-3 hover:bg-muted/50 transition-colors"
+        class="bg-default px-4 py-3 hover:bg-muted/50 transition-colors"
       >
         <p class="text-sm font-medium">{{ r.title }}</p>
         <p class="text-xs text-muted">{{ r.subtitle }}</p>
