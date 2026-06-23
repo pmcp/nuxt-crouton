@@ -280,7 +280,8 @@ crouton db-pull --config ./custom-wrangler.jsonc
 |------|---------|
 | `bin/crouton-generate.js` | CLI entry point (citty with 12 subcommands) |
 | `bin/crouton-seed.mjs` | `crouton-seed` entry — app DB seeding (citty) |
-| `lib/seed-app.ts` | Seed runner: discover providers, order, collect SQL, run wrangler |
+| `lib/seed-app.ts` | Seed runner: discover providers, order, collect SQL, run wrangler. Also seeds the **default layout** (`crouton.layout.json` → `layout_configs[default]`, #709) |
+| `lib/compose-layout.ts` | **Deterministic default-layout step** (#709) — after generation, runs crouton-core's `composeDefaultLayout` over the generated collections and writes `crouton.layout.json` (a `layout_configs` tree the POC boots with). `registryKeyFor(layer, collection)` mirrors the generated registry key; mirrors the core + bookings block sizing contracts (no live `app.config` at generate time) |
 | `lib/generate-collection.ts` | Main orchestrator (~74KB) |
 | `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.ts` | Template generators (14 files) |
@@ -512,7 +513,24 @@ layers/[layer]/collections/[collection]/
 
 # Also generated at app root (aggregated across all collections):
 server/utils/crouton-query-registry.ts   # Lazy-loaded query function registry
+crouton.layout.json                       # Deterministic default layout tree (#709) — seeded into layout_configs
 ```
+
+## Default Layout (generate → POC, #709)
+
+After collections are generated, `runPostGeneration` runs the **deterministic
+layout pass** (`lib/compose-layout.ts` → crouton-core's `composeDefaultLayout`)
+and writes **`crouton.layout.json`** at the app root: a `layout_configs`-format
+tree that arranges the generated collections into a good default — **calendar-primary**
+when the bookings package is in play, otherwise **master-detail** (list + form),
+with extra collections stacked. Each placed block is data-bound (`config.collection`).
+The arrangement is **viability-gated** (every block ≥ its `minWidth`); a too-narrow
+side-by-side split falls back to a vertical stack.
+
+`crouton-seed` then upserts that tree into the team-scoped `layout_configs` table
+(row id `default`), so a freshly seeded POC boots with a real, data-bound layout
+instead of a blank canvas — editable in `CroutonLayout` (the layout is **data**,
+not generated `.vue`). The LLM `/layout` pass (#711) is gated and out of scope.
 
 ## Output Location
 
