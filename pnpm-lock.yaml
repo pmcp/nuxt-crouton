@@ -46,6 +46,9 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
         version: 0.18.2
+      '@axe-core/playwright':
+        specifier: ^4.10.2
+        version: 4.12.1(playwright-core@1.57.0)
       '@changesets/cli':
         specifier: ^2.30.0
         version: 2.30.0(@types/node@22.19.7)
@@ -1977,6 +1980,11 @@ packages:
   '@aws/lambda-invoke-store@0.2.4':
     resolution: {integrity: sha512-iY8yvjE0y651BixKNPgmv1WrQc+GZ142sb0z4gYnChDDY2YqI4P/jsSopBWrKfAt7LOJAkOXt7rC/hms+WclQQ==}
     engines: {node: '>=18.0.0'}
+
+  '@axe-core/playwright@4.12.1':
+    resolution: {integrity: sha512-rMd7xriptqKpP+w5265i4Hdkv2X5kbu6uiBi/B2I7uf3hieRBM3qDCfaKPtxfiYb2mKXfF+yLODJwIx+Jv1GDw==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.28.6':
     resolution: {integrity: sha512-JYgintcMjRiCvS8mMECzaEn+m3PfoQiyqukOMCCVQtoJGYJw8j/8LBJEiqkHLkfwCcs74E3pbAUFNg7d9VNJ+Q==}
@@ -8358,6 +8366,10 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  axe-core@4.12.1:
+    resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
+    engines: {node: '>=4'}
 
   b4a@1.7.3:
     resolution: {integrity: sha512-5Q2mfq2WfGuFp3uS//0s6baOJLMoVduPYVeNmDYxu5OUA1/cBfvr2RIS7vi62LdNj/urk1hfmj867I3qt6uZ7Q==}
@@ -16037,6 +16049,11 @@ snapshots:
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.4': {}
+
+  '@axe-core/playwright@4.12.1(playwright-core@1.57.0)':
+    dependencies:
+      axe-core: 4.12.1
+      playwright-core: 1.57.0
 
   '@babel/code-frame@7.28.6':
     dependencies:
@@ -24699,6 +24716,8 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+
+  axe-core@4.12.1: {}
 
   b4a@1.7.3: {}
 
