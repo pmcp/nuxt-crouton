@@ -21,14 +21,26 @@ Whenever you need to perform multiple independent operations, invoke all relevan
 When improving code, use multiple focused passes:
 1. Functionality → Performance → Quality → Testing → Documentation
 
-### 4. Task Management with TodoWrite (MANDATORY)
+### 4. Task Management with TodoWrite (when available)
 
-**CRITICAL**: Use the TodoWrite tool proactively for ALL complex tasks.
+**Use the TodoWrite tool proactively for complex tasks — *when the harness exposes it*.**
+
+> ⚠️ **TodoWrite is not available on every harness** (notably Claude Code on the
+> web, where the tool errors with *"not enabled in this context"*). It's a
+> **capability, not a guarantee** — don't assume it, and don't waste turns
+> retrying it after it errors. When it's absent, **fall back** to:
+> 1. a short inline checklist in your reply (the breakdown lives in chat), and
+> 2. the **GitHub issue's own acceptance-criteria checkboxes** as the durable,
+>    coarse tracker — tick them as you satisfy each criterion.
+>
+> Do **not** push ephemeral per-step micro-todos onto the GitHub issue (comment
+> spam / body churn) — the issue tracks the *unit of work* (epic + sub-issues +
+> acceptance criteria), the inline checklist tracks *this session's steps*.
 
 **When to use:** Any task with 3+ steps, multi-file changes, debugging, feature implementations.
 **When NOT to use:** Single straightforward tasks, trivial changes, purely conversational queries.
 
-**Critical Rules:**
+**Critical Rules (when using TodoWrite):**
 - Exactly ONE task must be `in_progress` at any time
 - Mark tasks `completed` IMMEDIATELY after finishing
 - ONLY mark complete when FULLY accomplished — never if tests fail or work is partial
@@ -373,6 +385,28 @@ import { useDrizzle } from '#server/utils/drizzle'
 
 When delegating: template scout first → parallel tasks → clear boundaries → smell check after.
 Agent definitions live in `.claude/agents/*.md` (the recursive `task-orchestrator` / `task-decomposer` / `task-worker` pipeline). When an agent defines a custom persona, include it in the Task prompt when invoking.
+
+## You HAVE a headless browser (verify capabilities, don't assume)
+
+**This environment has a working headless browser** — Playwright + a chromium
+pre-installed under `/opt/pw-browsers/`. You **can** render pages, screenshot UI,
+and drive a live preview locally. The recurring trap: the Playwright browser
+**download host is egress-blocked**, so `npx playwright install` fails — and a
+session wrongly concludes "no Chromium / no browser" and plans around a
+limitation that **doesn't exist**. Don't. Use the already-installed browser:
+
+```bash
+# Easiest — screenshot a running app (auto-resolves the chromium build):
+node scripts/app-shots.mjs <baseUrl> <path[:name]> [more...]   # → screenshots/<name>.png
+# In Playwright code, point launch() at the installed binary (build number varies):
+#   chromium.launch({ executablePath: <…/opt/pw-browsers/chromium-*/chrome-linux/chrome> })
+```
+
+The `SessionStart` hook announces the browser + its path every session. **General
+rule:** a prior session's (or a task brief's) claimed limitation is a
+*hypothesis* — verify it with a 5-second check before designing around it. The
+same applies to any "X isn't available here" (TodoWrite, a CLI, a binary): probe,
+don't trust a stale assertion.
 
 ## UI Sign-Off (deploy a live preview before you build) — epic #307
 
