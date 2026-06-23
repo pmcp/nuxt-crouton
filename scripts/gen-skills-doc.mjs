@@ -26,6 +26,7 @@ const META = {
   'schema-review': { group: 'build', triggers: ['flow', 'ask'] },
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
   'provider-swap': { group: 'build', triggers: ['ask'] },
+  'block-authoring': { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   housekeeping: { group: 'plan', triggers: ['ask'] },
