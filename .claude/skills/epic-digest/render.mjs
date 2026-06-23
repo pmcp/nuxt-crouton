@@ -114,7 +114,7 @@ const actionables = (data.actionables || []).slice().sort((a, b) => {
 // whole thing to a real dark theme via prefers-color-scheme, while the inline
 // values are the light fallback for clients that strip <style>.
 const C = {
-  ink: '#111827', sub: '#374151', mut: '#6b7280', faint: '#9ca3af',
+  ink: '#1f2937', sub: '#374151', mut: '#6b7280', faint: '#9ca3af',
   surface: '#ffffff', border: '#e8e8ea', track: '#ededf0'
 }
 const card = `background:${C.surface};border:1px solid ${C.border};border-radius:12px`
@@ -151,7 +151,7 @@ function actionableCard(a) {
   <tr><td style="padding:0 0 10px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="font-size:15px;font-weight:600;line-height:1.4">
+        <td style="font-size:15px;font-weight:500;line-height:1.45">
           <a href="${esc(a.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
         </td>
         <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${tag}</td>
@@ -167,7 +167,7 @@ function actionablesSection(items) {
   if (!items || !items.length) return ''
   return `
     <tr><td style="padding:0 0 10px">
-      <div class="ink" style="font-size:12px;font-weight:700;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Needs your eyes</div>
+      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Needs your eyes</div>
       <div class="mut" style="color:${C.mut};font-size:13px;margin-top:4px">${items.length} thing${items.length === 1 ? '' : 's'} shipped in the last ${windowHours}h — worth a click-through and sign-off.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
@@ -195,7 +195,7 @@ function activityList(items, emptyText, cap = ACTIVITY_CAP) {
 function statBox(n, label) {
   return (
     `<td align="center" class="card" style="padding:14px 4px;${card}">` +
-    `<div class="ink" style="font-size:24px;font-weight:700;color:${C.ink};line-height:1">${n}</div>` +
+    `<div class="ink" style="font-size:24px;font-weight:500;color:${C.ink};line-height:1">${n}</div>` +
     `<div class="mut" style="color:${C.mut};font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:5px">${label}</div>` +
     `</td>`
   )
@@ -208,7 +208,7 @@ function labeledLine(label, text) {
   // stacking lets the text breathe across the whole card.
   return (
     `<div style="margin-top:14px">` +
-    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin:0 0 4px">${label}</div>` +
+    `<div class="mut" style="color:${C.mut};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin:0 0 4px">${label}</div>` +
     `<div class="sub" style="color:${C.sub};font-size:13px;line-height:1.65">${esc(text)}</div>` +
     `</div>`
   )
@@ -247,7 +247,7 @@ function epicCard(e) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}">
       <tr><td style="padding:16px 18px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:15px;font-weight:600;line-height:1.4">
+          <td style="font-size:15px;font-weight:500;line-height:1.45">
             <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
           </td>
           <td align="right" valign="top" style="white-space:nowrap;padding-left:10px">${badge(s)}</td>
@@ -259,7 +259,7 @@ function epicCard(e) {
               <div class="${barCls}" style="background:${barColor};border-radius:4px;height:6px;width:${p}%"></div>
             </div>
           </td>
-          <td class="mut" style="white-space:nowrap;color:${C.mut};font-size:12px;font-weight:600">${e.done}/${e.total} · ${p}%</td>
+          <td class="mut" style="white-space:nowrap;color:${C.mut};font-size:12px;font-weight:500">${e.done}/${e.total} · ${p}%</td>
         </tr></table>
 
         ${labeledLine('Hypothesis', e.theHypothesis || e.theBet || e.whatItIs)}
@@ -291,12 +291,12 @@ function looseSection(items) {
             `<span class="sub" style="color:${C.sub}">${esc(it.title)}</span></div>`
         )
         .join('')
-      return `<div class="ink" style="font-size:11px;font-weight:700;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:12px 0 3px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
+      return `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:12px 0 3px">${esc(TYPE_LABEL[k] || k)}</div>${lines}`
     })
     .join('')
   return `
     <tr><td style="padding:8px 0 10px">
-      <div class="ink" style="font-size:12px;font-weight:700;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Loose tickets · no epic</div>
+      <div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">Loose tickets · no epic</div>
     </td></tr>
     <tr><td style="padding:0 0 12px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="${card}"><tr><td style="padding:16px 18px">
@@ -307,9 +307,9 @@ function looseSection(items) {
 }
 
 const sectionLabel = (t) =>
-  `<div class="ink" style="font-size:12px;font-weight:700;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">${t}</div>`
+  `<div class="ink" style="font-size:12px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.06em">${t}</div>`
 const detailHead = (t, m = '14px 0 3px') =>
-  `<div class="ink" style="font-size:11px;font-weight:700;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:${m}">${t}</div>`
+  `<div class="ink" style="font-size:11px;font-weight:600;color:${C.ink};text-transform:uppercase;letter-spacing:.05em;margin:${m}">${t}</div>`
 
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -348,8 +348,8 @@ const html = `<!doctype html>
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
     <tr><td style="padding:0 0 18px">
-      <div class="mut" style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${C.mut}">Daily Epic Digest</div>
-      <div class="digest-title ink" style="font-size:22px;font-weight:700;color:${C.ink};margin-top:4px">${esc(prettyDate)}</div>
+      <div class="mut" style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:${C.mut}">Daily Epic Digest</div>
+      <div class="digest-title ink" style="font-size:22px;font-weight:600;color:${C.ink};margin-top:4px">${esc(prettyDate)}</div>
       <div class="mut" style="color:${C.mut};font-size:13px;margin-top:3px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
