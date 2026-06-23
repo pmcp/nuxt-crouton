@@ -178,7 +178,7 @@ function previewText(field: string, locale: string): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full">
+  <div class="flex flex-col gap-2 h-full">
     <!-- ============================================= -->
     <!-- SIDE-BY-SIDE LAYOUT (with tabs on narrow)    -->
     <!-- ============================================= -->
@@ -193,7 +193,9 @@ function previewText(field: string, locale: string): string {
           :content="false"
           color="neutral"
           variant="link"
-          class="mb-3"
+          size="xs"
+          :ui="{ trigger: 'px-2 py-1 text-xs', list: 'gap-1' }"
+          class="mb-2"
         />
 
         <!-- Fields for active locale -->
