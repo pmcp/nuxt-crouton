@@ -106,7 +106,9 @@ const actionables = (data.actionables || []).slice().sort((a, b) => {
 })
 
 // ── HTML ─────────────────────────────────────────────────────────────────────
-const card = 'background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;'
+// Lighter, airier cards: softer hairline border, gentler radius, a whisper of
+// lift instead of a hard outline — reads calmer on mobile.
+const card = 'background:#ffffff;border:1px solid #eef2f7;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);'
 const muted = 'color:#64748b;'
 
 function actionableCard(a) {
@@ -132,7 +134,7 @@ function actionableCard(a) {
   if (a.previewUrl) links.push(`<a href="${esc(a.previewUrl)}" style="color:#0f766e;text-decoration:none">staging preview</a>`)
   return `
   <tr><td style="padding:0 0 12px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}${accent}"><tr><td style="padding:16px 18px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}${accent}"><tr><td style="padding:18px 20px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="font-size:15px;font-weight:600">
           <a href="${esc(a.url)}" style="color:#0f172a;text-decoration:none">#${esc(a.number)} · ${esc(a.title)}</a>
@@ -185,11 +187,14 @@ function statBox(n, label, color) {
 
 function labeledLine(label, text) {
   if (!text) return ''
+  // Stacked, not side-by-side: a small caption above full-width text. The old
+  // fixed 104px label column crushed the value into a narrow strip on phones —
+  // stacking lets the text breathe across the whole card.
   return (
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>` +
-    `<td valign="top" style="width:104px;padding-right:10px;${muted}font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.55;white-space:nowrap">${label}</td>` +
-    `<td valign="top" style="color:#334155;font-size:13px;line-height:1.55">${esc(text)}</td>` +
-    `</tr></table>`
+    `<div style="margin-top:12px">` +
+    `<div style="${muted}font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 3px">${label}</div>` +
+    `<div style="color:#334155;font-size:13px;line-height:1.65">${esc(text)}</div>` +
+    `</div>`
   )
 }
 
@@ -219,7 +224,7 @@ function epicCard(e) {
   return `
   <tr><td style="padding:0 0 14px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${card}">
-      <tr><td style="padding:16px 18px">
+      <tr><td style="padding:18px 20px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
           <td style="font-size:15px;font-weight:600">
             <a href="${esc(e.url)}" style="color:#0f172a;text-decoration:none">#${esc(e.number)} · ${esc(e.title)}</a>
@@ -284,14 +289,25 @@ function looseSection(items) {
 
 const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Epic digest · ${esc(prettyDate)}</title></head>
-<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc"><tr><td align="center" style="padding:28px 16px">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>Epic digest · ${esc(prettyDate)}</title>
+<style>
+  /* Keep the light theme on mobile mail clients that auto-invert — the design
+     IS the light look; muddy auto-dark is what made it feel heavy. */
+  :root { color-scheme: light; supported-color-schemes: light; }
+  @media only screen and (max-width:600px) {
+    .outer-pad { padding:16px 10px !important; }
+    .digest-title { font-size:20px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f6f8fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f8fb"><tr><td align="center" class="outer-pad" style="padding:28px 16px">
   <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%">
 
     <tr><td style="padding:0 0 20px">
       <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0f766e">Daily Epic Digest</div>
-      <div style="font-size:22px;font-weight:700;margin-top:4px">${esc(prettyDate)}</div>
+      <div class="digest-title" style="font-size:22px;font-weight:700;margin-top:4px">${esc(prettyDate)}</div>
       <div style="${muted}font-size:13px;margin-top:2px">${esc(repo)} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}</div>
     </td></tr>
 
