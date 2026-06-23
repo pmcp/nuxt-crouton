@@ -28,6 +28,7 @@ import { GalleryBlock } from './gallery-block'
 import { ContactBlock } from './contact-block'
 import { MailingBlock } from './mailing-block'
 import { QrCodeBlock } from './qr-code-block'
+import { PaneBlock } from './pane-block'
 import { BlockCommands } from './block-commands'
 import { createAddonBlockExtension } from './addon-block-factory'
 
@@ -55,6 +56,7 @@ export interface PageBlocksOptions {
     contact?: boolean
     mailing?: boolean
     qrCode?: boolean
+    pane?: boolean
   }
   /**
    * Addon block definitions from external packages (registered via croutonBlocks in app.config.ts)
@@ -94,7 +96,8 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
         gallery: true,
         contact: true,
         mailing: true,
-        qrCode: true
+        qrCode: true,
+        pane: true
       },
       addonBlocks: [],
       enableSlashCommands: true,
@@ -110,7 +113,7 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
       'embedBlock', 'imageBlock', 'logoBlock', 'videoBlock',
       'fileBlock', 'buttonRowBlock', 'richTextBlock',
       'statsBlock', 'galleryBlock', 'contactBlock', 'mailingBlock',
-      'qrCodeBlock'
+      'qrCodeBlock', 'paneBlock'
     ]
 
     // Addon block types from config
@@ -189,6 +192,9 @@ export const PageBlocks = Extension.create<PageBlocksOptions>({
     if (blocks?.qrCode !== false) {
       extensions.push(QrCodeBlock)
     }
+    if (blocks?.pane !== false) {
+      extensions.push(PaneBlock)
+    }
 
     // Add addon block extensions (from croutonBlocks in app.config.ts)
     if (addonBlocks?.length) {
@@ -228,6 +234,7 @@ export { GalleryBlock } from './gallery-block'
 export { ContactBlock } from './contact-block'
 export { MailingBlock } from './mailing-block'
 export { QrCodeBlock } from './qr-code-block'
+export { PaneBlock } from './pane-block'
 export { BlockCommands, getBlockCommandItems, getBlockCommandsByCategory } from './block-commands'
 export { createAddonBlockExtension } from './addon-block-factory'
 
@@ -251,6 +258,7 @@ export type { GalleryBlockOptions } from './gallery-block'
 export type { ContactBlockOptions } from './contact-block'
 export type { MailingBlockOptions } from './mailing-block'
 export type { QrCodeBlockOptions } from './qr-code-block'
+export type { PaneBlockOptions } from './pane-block'
 export type { BlockCommandsOptions, BlockCommandItem } from './block-commands'
 
 export default PageBlocks
