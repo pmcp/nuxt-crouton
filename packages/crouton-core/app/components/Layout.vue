@@ -155,9 +155,9 @@ function clearLayout() {
   </div>
 
   <!-- Editable mode -->
-  <div v-else class="crouton-layout flex h-full w-full flex-col">
+  <div v-else class="crouton-layout @container flex h-full w-full flex-col">
     <!-- Toolbar -->
-    <div class="flex items-center gap-2 border-b border-default px-3 py-2">
+    <div class="flex flex-wrap items-center gap-2 border-b border-default px-3 py-2">
       <UBadge
         :color="viability.viable ? 'success' : 'warning'"
         variant="subtle"
@@ -186,23 +186,25 @@ function clearLayout() {
       </UButton>
     </div>
 
-    <div class="flex min-h-0 flex-1">
+    <!-- Narrow (its container, not the viewport): palette = top scroll strip,
+         canvas full width, config = bottom sheet. Side-by-side from @2xl. -->
+    <div class="relative flex min-h-0 flex-1 flex-col @2xl:flex-row">
       <!-- Palette -->
       <aside
         v-if="!previewing"
-        class="w-52 shrink-0 overflow-auto border-r border-default p-2"
+        class="shrink-0 border-b border-default p-2 @2xl:w-52 @2xl:overflow-auto @2xl:border-b-0 @2xl:border-r"
       >
         <p class="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-muted">
           Blocks
         </p>
-        <ul class="flex flex-col gap-1">
+        <ul class="flex flex-row gap-1 overflow-x-auto @2xl:flex-col @2xl:overflow-x-visible">
           <li
             v-for="block in blocksList"
             :key="block.id"
             draggable="true"
             data-testid="palette-item"
             :data-block-id="block.id"
-            class="flex cursor-grab items-center gap-2 rounded-md border border-default bg-elevated/40 px-2 py-1.5 text-sm hover:border-primary hover:bg-primary/5 active:cursor-grabbing transition-colors"
+            class="flex shrink-0 cursor-grab items-center gap-2 rounded-md border border-default bg-elevated/40 px-2 py-1.5 text-sm hover:border-primary hover:bg-primary/5 active:cursor-grabbing transition-colors @2xl:shrink"
             @dragstart="onPaletteDragStart($event, block.id)"
             @dragend="onPaletteDragEnd"
           >
@@ -241,11 +243,11 @@ function clearLayout() {
         <CroutonLayoutEditorPane v-else :node="root" :path="[]" />
       </div>
 
-      <!-- Config panel -->
+      <!-- Config panel: bottom sheet on a narrow container, side column from @2xl -->
       <aside
         v-if="!previewing && selectedLeaf"
         data-testid="config-panel"
-        class="w-64 shrink-0 overflow-auto border-l border-default p-3"
+        class="absolute inset-x-0 bottom-0 z-30 max-h-[70%] overflow-auto border-t border-default bg-default p-3 shadow-lg @2xl:static @2xl:bottom-auto @2xl:z-auto @2xl:max-h-none @2xl:w-64 @2xl:shrink-0 @2xl:border-l @2xl:border-t-0 @2xl:shadow-none"
       >
         <div class="flex items-center justify-between pb-2">
           <p class="text-xs font-semibold uppercase tracking-wide text-muted">
