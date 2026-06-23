@@ -1,6 +1,7 @@
-# Crouton OS — Vision Brief
+# Crouton — Vision Brief
 
-> Internal positioning notes. Captured from a thinking-out-loud session (2026-06-23).
+> Internal positioning notes. Originally captured from a thinking-out-loud session (2026-06-23),
+> revised after a skeptical design review of the layout engine.
 > This is early-idea / strategy framing, **not** agent instructions — nothing here is a
 > directive. The concrete, trackable work lives in epic
 > [#703](https://github.com/FriendlyInternet/nuxt-crouton/issues/703) and its sub-issues.
@@ -33,53 +34,77 @@ Crouton's bet is different:
 > Their base degrades as the app grows. Ours *appreciates* — because every generated collection
 > follows the same patterns, the 30th feature is as clean as the 1st.
 
-### The two-audience tension (positioning)
+### The central claim is measurable — and not yet proven
 
-The pitch has two readers who want opposite things:
+"Ours appreciates, theirs degrades" is the whole bet, and right now it's **faith, not data**. It is
+measurable, and we should treat proving it as a first-class goal, not a tagline:
 
-- **The vibe-coder** wants "type a sentence, get an app." They care about the magic moment.
-- **The serious builder** wants "I own this, it's secure, it scales, no lock-in." They care about the
-  floor and the exit.
+- **time-to-POC** (idea → deployed staging preview),
+- **time-to-promote** (POC → launched `apps/` product),
+- **regressions over a lifetime** (security/defect/i18n drift as an app grows from feature 1 to 30).
 
-Crouton is genuinely *both*. Working instinct: **lead with the floor, demo with the magic.** "The most
-opinionated, secure Nuxt starter — that you build by asking." Ownership/security is the *reason to
-trust it*; AI speed is the *reason it's fun*.
+The scariest *untested* assumption sits one level up: **does any of this work for a builder who isn't
+us?** The whole thing is dogfooded by one person. One external builder taking an idea through to a
+promoted production app — via the harness — would validate more of the company-level bet than another
+package would.
 
-## The three pillars (the machinery)
+## Who it's for (the ICP)
 
-Crouton decomposes into three distinct, separately-meaningful things. The moat is that **all three
-layers are open and yours** — the generic builders own all three layers *for* you.
+The customer is the **solo dev or small studio that ships *many* small multi-tenant apps** and is
+tired of re-doing auth, teams, i18n, and deploy from scratch every time. (That's us — Crouton is
+dogfooded.) Naming the ICP decides everything downstream:
+
+- The **harness is perfect** for this person and **irrelevant to a true non-coder.** We serve the
+  *builder*. The "magic moment" is the hook that gets them in the door, not the whole product.
+- "Two audiences" (the vibe-coder who wants magic, the serious builder who wants ownership + an exit)
+  are not two products — they're two **ends of one funnel** (below).
+
+## The two pillars (the machinery)
+
+The machinery is **two** things, not three. The moat is that **both layers are open and yours** — the
+generic builders own them *for* you.
 
 | Layer | Crouton gives you | Pillar |
 |---|---|---|
-| Foundation | the OS / building blocks (yours) | **1. Crouton OS** |
-| Process | the harness — issue-driven, skill-driven, headless-capable | **2. Nuxt Harness** |
-| Intelligence | bring your own AI | **3. Bring Your Own AI** |
+| Foundation | the building blocks (yours) | **1. The Floor — Crouton OS** |
+| Process | the harness — issue-driven, skill-driven, headless-capable | **2. The Harness** |
 
-### 1. Crouton OS — the building blocks
+### 1. The Floor — Crouton OS (what you build with)
 The ecosystem itself: the packages, the generator, the components, the layers, auth, storage, i18n,
-themes. The opinionated foundation that makes generated code load-bearing instead of generic. This is
-**what you build with**.
+themes, deploy. The opinionated foundation that makes generated code load-bearing instead of generic.
 
-### 2. Nuxt Harness — the way of working
-The genuinely novel pillar. The **GitHub-issues-as-interface** model: work lives as issues
-(epics → sub-issues), and the whole thing is drivable two ways —
+### 2. The Harness — the way you drive it (how you build)
+The genuinely novel pillar — **and the one that already exists and runs in this repo today** (the
+`.claude/` arsenal, `/task-decompose`, the digests, issues-as-interface). Work lives as GitHub issues
+(epics → sub-issues), and the whole thing is drivable two ways:
 - **interactively** (Claude Code, a conversation), or
 - **headless, straight off a GitHub issue** — no chat required. An issue *is* the prompt. The agent
   picks it up, picks up all the skills (`/commit`, `crouton`, `task-decompose`, deploy, the whole
   `.claude/` arsenal), does the work, opens a PR, closes the issue.
 
-The skills + agents + issue conventions in this repo aren't dev-process hygiene — they're **the
-product**. This is **how you build**.
+This is the moat. Anyone can bolt an LLM onto a code generator; almost nobody has a *way of working*
+where an issue is the prompt and an agent carries the whole skill set to a PR.
 
-### 3. Bring Your Own AI — the model layer
-Model-agnostic; plug in your own AI. This *completes the ownership thesis*: no lock-in at the code
-layer (Crouton OS) *and* no lock-in at the intelligence layer (BYO-AI). The two together are what make
-"it's yours, completely" true rather than a marketing line.
+### Bring Your Own AI — the trust bullet, not a third pillar
+Model-agnostic; plug in your own AI. This **completes the ownership story** (no lock-in at the code
+layer *and* none at the model layer) — but it's a checkbox under "it's yours," not a reason anyone
+chooses Crouton. It earns a bullet, not a pillar.
+
+## The funnel: magic in, harness deep
+
+The two audiences are one funnel with two ends:
+
+- **Acquisition = the magic moment.** Ask → a generated, laid-out, *deployed* POC. It has to be strong
+  enough to pay the on-ramp tax (a repo, GitHub, the conventions). This is what pulls the ICP in.
+- **Retention = the harness + the owned floor.** Issues-as-interface is invisible and a little
+  intimidating to a newcomer, so it is **not** the hook — it's what makes you *stay* once a generic
+  builder's output has betrayed you. It's a depth/retention play, not an acquisition play.
+
+**Working instinct: lead with the floor, demo with the magic, keep them with the harness.**
 
 ## The lifecycle: POC → refine → promote
 
-The three pillars are the machinery; this is the lifecycle that runs on top — and it's what makes the
+The two pillars are the machinery; this is the lifecycle that runs on top — and it's what makes the
 whole thing **safe to be fast**.
 
 1. **Spawn a POC** in `pocs/` (the incubator). Ask for an app → it scaffolds into `pocs/<name>`, *not*
@@ -98,38 +123,56 @@ whole thing **safe to be fast**.
 
 ## The full narrative, end to end
 
-> **Crouton OS** gives you the building blocks. **The Nuxt Harness** is how you drive the work
-> (issues + skills, chat or headless). **Bring Your Own AI** keeps the intelligence yours. And the
-> **POC → app flow** is the lifecycle that lets you go from "I want this" to a launched, production
-> product — fast where it's safe, rigorous where it counts.
+> **Crouton OS** (the Floor) gives you the building blocks. **The Harness** is how you drive the work
+> (issues + skills, chat or headless) — and it keeps you. **Bring Your Own AI** keeps the intelligence
+> yours. The **POC → app flow** is the lifecycle that lets you go from "I want this" to a launched,
+> production product — fast where it's safe, rigorous where it counts.
 
-## Where the layout engine fits (epic #703)
+## Where the layout engine fits (epic #703) — the visible proof of the Floor
 
-The next big build makes the OS metaphor literal. A **recursive layout engine**: a canvas you fill in
-with blocks. Packages declare *placeable blocks* (the bookings calendar, reservations, the assets
-picker) in a single registry; two interchangeable renderers sit over it — **Splitpanes** (structured,
-nestable panes — the "chrome") and **Vue Flow** (freeform canvas — already built as `crouton-flow`).
-**Panes all the way down**: a component isn't a black box — a compound component like reservations is
-deconstructed into sub-blocks (calendar/list/detail) in a default arrangement, so page, component, and
-sub-component are the same primitive at different zoom.
+The layout engine is **not** a separate "OS" initiative — it's the **demoable embodiment of pillar 1**:
+the base is so good that the AI just *places* great blocks into a form that already exists. It is the
+magic moment made concrete, and therefore the top of the funnel for the harness.
 
-The AI drives it and it clicks into the existing flow:
+After a design review we deliberately scoped it **lean** — prove the core bet cheaply before paying for
+the hard parts:
+
+- Packages declare **placeable blocks** (a registry) — Nuxt UI–based components that are responsive to
+  **their pane** (CSS container queries + a declared min-width), so any block looks good at any size
+  with no per-app tuning.
+- **One renderer to start: structured, nestable panes on Nuxt UI's own splitter** (reka-ui). No Vue
+  Flow, no real-time collab, no fractal component deconstruction in v1 — all parked until earned.
+- **Layout is data** (a saved tree), so the AI can write it and a user can edit it — it round-trips.
+- The first "AI that lays things out" is a **deterministic rule set**, not a model call. An LLM only if
+  the rules visibly fall short, proven by a blind test.
 
 ```
 "I want a booking app"
   → crouton generates the collections (list + form)
-  → /layout skill arranges the blocks → 2–3 proposals
-  → UI sign-off: pick one on a staging preview
+  → a deterministic /layout arranges registered blocks into a good default
+  → UI sign-off: review it on a staging preview
   → deployed POC → refine → promote to app
 ```
 
-Two skills guarantee the quality: **`/layout`** (the AI that places blocks well) and a **block
-authoring contract** (every block is responsive to *its pane* via container queries + a declared
-min-width, so every proposal is viable — not just the happy path). This is pillar 2 (Harness) meeting
-pillar 3 (BYO-AI) on top of pillar 1 (Crouton OS), inside the pillar-4 POC flow.
+### The lean sprint ladder
 
-Full breakdown: epic [#703](https://github.com/FriendlyInternet/nuxt-crouton/issues/703) (8 sub-issues,
-#704–#711).
+Each sprint ends in a **staging URL + a written learning**, and tests **one** assumption (cheapest to
+kill goes first):
+
+0. **Spike / kill-test** — a layout *data tree* renders real blocks in Nuxt UI panes, round-trips
+   (save/reload), and SSRs cleanly. Go/no-go on the whole mechanism.
+1. **Block registry** — packages declare placeable blocks (extends `croutonApps` / `CroutonPageType`).
+2. **Block contract + container responsiveness** — sizing contract + container-query blocks; the
+   objective quality metric is *viability* (every placed block meets its min-width in its pane).
+3. **Editable panes surface** — drag a block in, resize, nest, save, reload (its own persistence; new
+   `layout_configs`, no `flow_configs` migration).
+4. **Deterministic default layout** — a rule set arranges generated collections, wired into the
+   generate → POC flow. The North-Star demo, with zero model calls.
+5. **(gated) optional LLM `/layout`** — only if the deterministic default underperforms in a blind test.
+
+**Deferred backlog (revisit only when the above has users):** Vue Flow as a second renderer, collab /
+CRDT on the layout tree, fractal component deconstruction, and re-basing `CroutonWorkspaceLayout` onto
+the new renderer.
 
 ## Open idea — unified domain (not yet tracked)
 
@@ -151,8 +194,8 @@ by the system. Not yet an epic; capture here until it's worth tracking.
 
 | | Generic AI builders | Crouton |
 |---|---|---|
-| Foundation | generic, ungoverned codebase | opinionated, secured OS (yours) |
-| Process | a chat box + "regenerate" | issue-driven harness, chat *or* headless |
-| Intelligence | their model, their runtime, their bill | bring your own AI |
+| Foundation (the Floor) | generic, ungoverned codebase | opinionated, secured OS (yours) |
+| Process (the Harness) | a chat box + "regenerate" | issue-driven harness, chat *or* headless |
+| Intelligence | their model, their runtime, their bill | bring your own AI (the trust bullet) |
 | Output | their code, behind a runtime | **your code, completely** |
 | Speed vs safety | production from keystroke one | free-to-fail POC tier + a deliberate promote gate |

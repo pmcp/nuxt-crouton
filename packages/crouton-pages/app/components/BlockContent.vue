@@ -69,7 +69,10 @@ const blockComponents: Record<string, string> = {
   galleryBlock: 'CroutonPagesBlocksRenderGalleryBlock',
   contactBlock: 'CroutonPagesBlocksRenderContactBlock',
   mailingBlock: 'CroutonPagesBlocksRenderMailingBlock',
-  qrCodeBlock: 'CroutonPagesBlocksRenderQrCodeBlock'
+  qrCodeBlock: 'CroutonPagesBlocksRenderQrCodeBlock',
+  // Bridge block (#716): hosts a pane LayoutTree inside the document flow,
+  // delegating to crouton-core's CroutonLayoutRenderer.
+  paneBlock: 'CroutonPagesBlocksRenderPaneBlock'
 }
 
 // Get component name for a block type — checks core blocks then addon blocks
