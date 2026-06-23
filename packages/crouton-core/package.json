@@ -14,6 +14,7 @@
     "./shared/utils/scaffold": "./shared/utils/scaffold.ts",
     "./app/types/app": "./app/types/app.ts",
     "./app/types/block-definition": "./app/types/block-definition.ts",
+    "./app/types/layout": "./app/types/layout.ts",
     "./app/composables/*": {
       "types": "./dist/app/composables/*.d.ts",
       "import": "./dist/app/composables/*.mjs"
