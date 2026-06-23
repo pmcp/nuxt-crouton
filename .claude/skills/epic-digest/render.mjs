@@ -16,6 +16,9 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, join, dirname } from 'node:path'
+// Brand identity SSOT — shared with crouton-email's transactional templates.
+// Plain ESM relative import: resolves under the full actions/checkout, no install.
+import { BRAND_NAME, BRAND_URL, PRIMARY_COLOR, PRIMARY_COLOR_DARK } from '../../../packages/crouton-email/brand/email-brand.mjs'
 
 // ── args ──────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2)
@@ -348,6 +351,8 @@ const html = `<!doctype html>
     .track       { background:#2a2a27 !important; }
     .bar         { background:#f0efe9 !important; }
     .bar-blocked { background:#ff7a2a !important; }
+    /* Brand masthead accent → brightened teal so it reads on near-black paper. */
+    .brand-accent { background:${PRIMARY_COLOR_DARK} !important; }
     /* Highlighter → max-brightness neon text on night paper (the marker block is
        light-only). A faint same-hue glow makes it read as genuinely luminous. */
     .hl-yellow   { background-image:none !important; color:#fff21a !important; padding:0 !important; text-shadow:0 0 9px rgba(255,242,26,.5) !important; }
@@ -361,6 +366,10 @@ const html = `<!doctype html>
 <body class="page" style="margin:0;padding:0;background:${C.page};font-family:${serif};color:${C.ink}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:${C.page}"><tr><td align="center" class="outer-pad" style="padding:44px 22px">
   <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%">
+
+    <tr><td style="padding:0 0 30px">
+      <div class="brand-accent" style="width:44px;height:3px;background:${PRIMARY_COLOR};border-radius:2px"></div>
+    </td></tr>
 
     ${actionablesSection(actionables)}
 
@@ -392,7 +401,7 @@ const html = `<!doctype html>
     ${looseSection(loose)}
 
     <tr><td class="rule mut" style="padding:24px 0 0;margin-top:34px;border-top:1px solid ${C.border};font-style:italic;color:${C.faint};font-size:12px">
-      Gathered ${esc(generated.toISOString())} by the epic-digest skill.
+      <a href="${esc(BRAND_URL)}" class="lnk" style="color:${C.faint};text-decoration:underline;text-decoration-color:${C.faint};text-underline-offset:3px">${esc(BRAND_NAME)}</a> · Gathered ${esc(generated.toISOString())} by the epic-digest skill.
     </td></tr>
 
   </table>
@@ -475,7 +484,7 @@ const txt =
         .join('\n\n') +
       '\n'
     : '') +
-  `\n${'='.repeat(64)}\nGenerated ${generated.toISOString()} by /epic-digest\n`
+  `\n${'='.repeat(64)}\n${BRAND_NAME} · Generated ${generated.toISOString()} by /epic-digest\n`
 
 // ── markdown (for posting as a GitHub issue comment — renders natively) ───────
 const mdList = (items, empty, cap = 8) => {
@@ -548,7 +557,7 @@ const md =
         .join('\n\n') +
       '\n'
     : '') +
-  `\n<sub>Generated ${generated.toISOString()} by the <code>/epic-digest</code> skill.</sub>\n`
+  `\n<sub>[${BRAND_NAME}](${BRAND_URL}) · Generated ${generated.toISOString()} by the <code>/epic-digest</code> skill.</sub>\n`
 
 // ── email subject ─────────────────────────────────────────────────────────────
 // Actual values, no decoration — the scheduled job reads this verbatim so the
