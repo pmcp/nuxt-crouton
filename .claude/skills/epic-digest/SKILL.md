@@ -165,6 +165,10 @@ GH_TOKEN=… DIGEST_BODY_FILE=epic-digest-<date>.md bash .claude/skills/epic-dig
 - **`post-comment.sh`** posts the Markdown as a comment on the single standing
   **"📊 Daily epic digest"** issue (creating it if missing) via `gh` + the built-in
   `GITHUB_TOKEN`. No email provider, no secret to provision (#408).
+- **Optional email rail (#551):** the scheduled workflow also emails the rendered
+  HTML (+ text mirror) via Resend when `secrets.RESEND_API_KEY`, `vars.RESEND_FROM`
+  (shared with the red-team daily) and `vars.DIGEST_REPORT_EMAIL` are set. Unset ⇒ the
+  step warns and skips, so the standing-issue comment stays the baseline delivery.
 - The render is the same `render.mjs`, so the hand-run and the cron stay in lockstep.
 
 ## Step 5 — Hand off

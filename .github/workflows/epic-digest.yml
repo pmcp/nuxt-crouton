@@ -48,6 +48,45 @@ jobs:
           DIGEST_BODY_FILE: digest.md
         run: bash .claude/skills/epic-digest/post-comment.sh
 
+      # Optional second rail (#551): also DM the digest by email via Resend. Render-only
+      # (no LLM); reuses the same render.mjs output as email-safe HTML + a plain-text mirror.
+      # Shares the sender var (RESEND_FROM) with red-team-daily.yml; recipient is its own
+      # (DIGEST_REPORT_EMAIL). When the secret/vars are unset the step warns and skips —
+      # the job stays green so the standing-issue comment remains the baseline delivery.
+      - name: Render HTML for email
+        run: node .claude/skills/epic-digest/render.mjs digest.data.json --out-dir .
+
+      - name: Email the digest (Resend)
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ vars.RESEND_FROM }}
+          EMAIL_TO: ${{ vars.DIGEST_REPORT_EMAIL }}
+        run: |
+          HTML=$(ls -t epic-digest-*.html 2>/dev/null | head -1 || true)
+          TXT=$(ls -t epic-digest-*.txt 2>/dev/null | head -1 || true)
+          if [ -z "$HTML" ] || [ -z "$TXT" ]; then
+            echo "::warning::No rendered digest HTML/text found — nothing to email."
+            exit 0
+          fi
+          if [ -z "$RESEND_API_KEY" ] || [ -z "$EMAIL_FROM" ] || [ -z "$EMAIL_TO" ]; then
+            echo "::warning::RESEND_API_KEY / RESEND_FROM / DIGEST_REPORT_EMAIL not set — skipping email. The digest was still posted to the standing issue."
+            exit 0
+          fi
+          SUBJECT="📊 Daily epic digest — $(date -u +%F)"
+          echo "Emailing $HTML → $EMAIL_TO"
+          # Build the JSON payload with jq so the HTML/text bodies are safely escaped.
+          jq -n \
+            --arg from "$EMAIL_FROM" \
+            --arg to "$EMAIL_TO" \
+            --arg subject "$SUBJECT" \
+            --rawfile html "$HTML" \
+            --rawfile text "$TXT" \
+            '{from:$from, to:[$to], subject:$subject, html:$html, text:$text}' \
+          | curl -sS -X POST https://api.resend.com/emails \
+              -H "Authorization: Bearer $RESEND_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d @- -w '\nHTTP %{http_code}\n'
+
       - name: Upload digest artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,4 +95,6 @@ jobs:
           path: |
             digest.data.json
             epic-digest-*.md
+            epic-digest-*.html
+            epic-digest-*.txt
           if-no-files-found: ignore
