@@ -1229,6 +1229,29 @@ async function runPostGeneration(opts: PostGenerationOptions): Promise<void> {
     } catch (error: any) {
       console.log(`⚠ Could not generate query registry: ${error.message}`)
     }
+
+    // Deterministic default layout (#709): arrange the generated collections into
+    // a viable `layout_configs` tree the POC boots with (seeded by crouton-seed).
+    console.log(`\n${'═'.repeat(60)}`)
+    console.log(`  DEFAULT LAYOUT`)
+    console.log(`${'═'.repeat(60)}\n`)
+
+    try {
+      const { writeDefaultLayout } = await import('./compose-layout.ts')
+      const layoutResult = await writeDefaultLayout({
+        allCollections,
+        features: config.features,
+        cwd: process.cwd(),
+      })
+      if (layoutResult.written) {
+        console.log(`✓ Composed default layout (${layoutResult.pattern}${layoutResult.viable ? ', viable' : ', NOT viable — review minWidths'})`)
+        console.log(`  → ${layoutResult.path}`)
+      } else {
+        console.log(`⚠ Skipped default layout (${layoutResult.reason})`)
+      }
+    } catch (error: any) {
+      console.log(`⚠ Could not compose default layout: ${error.message}`)
+    }
   }
 
   console.log(`\n${'═'.repeat(60)}`)

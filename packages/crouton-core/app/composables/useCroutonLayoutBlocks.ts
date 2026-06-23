@@ -9,6 +9,12 @@ import {
   minWidthResolver,
   type ViabilityResult,
 } from '../utils/layout-viability'
+import {
+  composeDefaultLayout,
+  type ComposeCollectionInput,
+  type ComposeDefaultLayoutOptions,
+  type ComposeResult,
+} from '../utils/layout-compose'
 
 /**
  * Layout block registry reader (Sprint 1, #704).
@@ -87,6 +93,17 @@ export function useCroutonLayoutBlocks() {
   function checkViability(tree: LayoutTree, targetWidths: number[]): ViabilityResult {
     return checkTreeViability(tree, minWidthResolver(blocks.value), targetWidths)
   }
+  /**
+   * Deterministic default layout (#709) bound to the live registry — arrange the
+   * given collections into a viable default tree. Same pure rule set the CLI runs
+   * at generate time; here it reads the live `croutonLayoutBlocks`.
+   */
+  function composeDefault(
+    collections: ComposeCollectionInput[],
+    opts?: Omit<ComposeDefaultLayoutOptions, 'collections' | 'registry'>,
+  ): ComposeResult {
+    return composeDefaultLayout({ collections, registry: blocks.value, ...opts })
+  }
 
-  return { blocks, blocksList, getBlock, hasBlock, resolveComponentName, sanitizeConfig, checkViability }
+  return { blocks, blocksList, getBlock, hasBlock, resolveComponentName, sanitizeConfig, checkViability, composeDefault }
 }
