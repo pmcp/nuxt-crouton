@@ -57,15 +57,29 @@ const prettyDate = generated.toLocaleDateString('en-US', {
 const STATUS = {
   blocked: { label: 'Blocked', fg: '#a8503f', cls: 's-blocked' },
   'in-progress': { label: 'In progress', fg: '#9a7b3f', cls: 's-prog' },
-  done: { label: 'Done', fg: '#5f7350', cls: 's-done' },
+  // "Finished but still open" (#763) — replaces the old "Done" badge on an OPEN epic, which
+  // read as a contradiction (open epic showing "Done"). "Done" is gone; these two are the
+  // honest states: every child closed, just waiting on the close flow.
+  'ready-to-close': { label: 'Ready to close', fg: '#5f7350', cls: 's-done' },
+  'needs-postmortem': { label: 'Needs postmortem', fg: '#9a7b3f', cls: 's-prog' },
   open: { label: 'Open', fg: '#8a8276', cls: 's-open' }
 }
+// Order matters: prefer the stamped label, then the all-children-closed fallback, then the
+// epic's open/in-progress state (left deliberately untouched — in-progress = actively worked,
+// open = ready to pick up).
 const statusOf = (epic) => {
   if (epic.blocked || epic.status === 'blocked') return STATUS.blocked
-  if (epic.total > 0 && epic.done >= epic.total) return STATUS.done
+  if (epic.readyToClose || epic.status === 'ready-to-close') return STATUS['ready-to-close']
+  if (epic.needsPostmortem || epic.status === 'needs-postmortem') return STATUS['needs-postmortem']
+  if (epic.total > 0 && epic.done >= epic.total) return STATUS['needs-postmortem']
   if (epic.status === 'in-progress') return STATUS['in-progress']
   return STATUS[epic.status] || STATUS.open
 }
+// True when an epic is finished but still open — drives the "Ready to close" action band.
+const isCloseable = (e) =>
+  e.readyToClose || e.needsPostmortem ||
+  e.status === 'ready-to-close' || e.status === 'needs-postmortem' ||
+  (e.total > 0 && e.done >= e.total)
 const pct = (e) => (e.total > 0 ? Math.round((e.done / e.total) * 100) : 0)
 
 const activity = data.activity || {}
@@ -201,6 +215,36 @@ function actionablesSection(items) {
       <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin-top:8px">${items.length} shipped in the last ${windowHours}h.</div>
     </td></tr>
     ${items.map(actionableCard).join('')}`
+}
+
+// "Ready to close" band (#763): epics finished (all children closed) but still open. Each
+// names its one action — run the postmortem then close, or just close. This is what turns the
+// old confusing green "DONE"-on-an-open-epic badge into something the owner can act on.
+function readyToCloseSection(allEpics) {
+  const items = (allEpics || []).filter(isCloseable)
+  if (!items.length) return ''
+  const cards = items
+    .map((e) => {
+      const s = statusOf(e)
+      const action = (e.needsPostmortem || s.cls === 's-prog')
+        ? 'Run the postmortem, then close.'
+        : 'Ready — close it.'
+      return `
+      <tr><td class="rule" style="padding:20px 0;border-top:1px solid ${C.border}">
+        <div style="margin:0 0 7px">${badge(s)}</div>
+        <div style="font-size:18px;font-weight:400;line-height:1.5;color:${C.ink}">
+          <a href="${esc(e.url)}" class="ink lnk" style="color:${C.ink};text-decoration:none">${num(e.number)} · ${esc(e.title)}</a>
+        </div>
+        <div class="mut" style="font-style:italic;color:${C.mut};font-size:13px;margin-top:8px">All ${e.total} sub-issues closed · ${action}</div>
+      </td></tr>`
+    })
+    .join('')
+  return `
+    <tr><td style="padding:34px 0 6px">
+      ${sectionLabel('Ready to close', 'green')}
+      <div class="mut" style="font-style:italic;color:${C.mut};font-size:14px;margin-top:8px">${items.length} epic${items.length === 1 ? '' : 's'} finished but still open.</div>
+    </td></tr>
+    ${cards}`
 }
 
 const ACTIVITY_CAP = 8
@@ -395,6 +439,8 @@ const html = `<!doctype html>
       </details>
     </td></tr>
 
+    ${readyToCloseSection(epics)}
+
     <tr><td style="padding:34px 0 0">${sectionLabel('Open epics')}</td></tr>
     ${epics.length ? epics.map(epicCard).join('') : `<tr><td class="mut" style="font-style:italic;color:${C.mut};font-size:15px;padding:18px 0 0">No open epics. 🎉</td></tr>`}
 
@@ -443,11 +489,28 @@ const txtActionables = (items) => {
   )
 }
 
+const txtReadyToClose = (allEpics) => {
+  const items = (allEpics || []).filter(isCloseable)
+  if (!items.length) return ''
+  return (
+    `READY TO CLOSE — FINISHED BUT STILL OPEN (${items.length})\n\n` +
+    items
+      .map((e) => {
+        const s = statusOf(e)
+        const action = (e.needsPostmortem || s.cls === 's-prog') ? 'run postmortem, then close' : 'ready — close it'
+        return `  #${e.number}  ${e.title}  [${s.label}]\n      all ${e.total} sub-issues closed · ${action}\n      ${e.url}`
+      })
+      .join('\n') +
+    `\n\n${'='.repeat(64)}\n\n`
+  )
+}
+
 const txt =
   `DAILY EPIC DIGEST — ${prettyDate}\n` +
   `${repo} · last ${windowHours}h · ${epics.length} open epic(s)\n` +
   `${'='.repeat(64)}\n\n` +
   txtActionables(actionables) +
+  txtReadyToClose(epics) +
   `SINCE YESTERDAY\n` +
   `  ${(activity.opened || []).length} opened · ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} PRs merged\n\n` +
   `Closed:\n${txtList(activity.closed, 'nothing closed')}\n\n` +
@@ -539,10 +602,29 @@ const mdActionables = (items) => {
   )
 }
 
+const mdReadyToClose = (allEpics) => {
+  const items = (allEpics || []).filter(isCloseable)
+  if (!items.length) return ''
+  const block = items
+    .map((e) => {
+      const s = statusOf(e)
+      const action = (e.needsPostmortem || s.cls === 's-prog') ? 'run postmortem, then close' : 'ready — close it'
+      return `- **[#${e.number}](${e.url}) · ${e.title}** — _${s.label}_ · all ${e.total} sub-issues closed · ${action}`
+    })
+    .join('\n')
+  return (
+    `### ✅ Ready to close — finished but still open\n` +
+    `_${items.length} epic${items.length === 1 ? '' : 's'} with every sub-issue closed, still waiting on the close flow._\n\n` +
+    block +
+    `\n\n`
+  )
+}
+
 const md =
   `## 📊 Daily epic digest — ${prettyDate}\n` +
   `_${repo} · last ${windowHours}h · ${epics.length} open epic${epics.length === 1 ? '' : 's'}_\n\n` +
   mdActionables(actionables) +
+  mdReadyToClose(epics) +
   `**Since yesterday:** ${(activity.opened || []).length} opened · ${(activity.closed || []).length} closed · ${(activity.mergedPRs || []).length} PRs merged\n\n` +
   `<details><summary>Activity detail</summary>\n\n` +
   `**Closed**\n${mdList(activity.closed, 'nothing closed')}\n\n` +
