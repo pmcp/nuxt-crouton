@@ -13,6 +13,9 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { BRAND_NAME, BRAND_URL, PRIMARY_COLOR } from '../../../packages/crouton-email/brand/email-brand.mjs'
+// The trigger→skill flow lanes — same declarative source as skills-and-triggers.html (#843),
+// so the email's "the flow" section and the doc page can never disagree.
+import { FLOWS, flowSkillName } from '../../../scripts/gen-skills-doc.mjs'
 
 // ── args ──────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2)
@@ -51,7 +54,8 @@ const prettySince = data.since
 const TRIG = {
   auto: { label: 'auto', fg: '#0f766e', bg: '#d3eeea', bd: '#9fd6cf' },
   ask: { label: 'on ask', fg: '#1d4ed8', bg: '#dde6fb', bd: '#b6c8f4' },
-  flow: { label: 'in flow', fg: '#6d28d9', bg: '#e8e0fb', bd: '#cbb8f2' }
+  flow: { label: 'in flow', fg: '#6d28d9', bg: '#e8e0fb', bd: '#cbb8f2' },
+  cron: { label: 'on a schedule', fg: '#b45309', bg: '#fdecd2', bd: '#f4d29b' }
 }
 const badge = (t) => {
   const c = TRIG[t] || TRIG.ask
@@ -92,6 +96,32 @@ const changedBand = () => {
   </table>`
 }
 
+// ── the flow ("when each skill fires") — email-safe lane table ──────────────
+const flowChip = (s) => {
+  const name = flowSkillName(s)
+  const cad =
+    typeof s === 'object' && s.at
+      ? `<span style="font:700 9px/1 -apple-system,Segoe UI,Roboto,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:#b45309;background:#fdecd2;border:1px solid #f4d29b;border-radius:999px;padding:1px 5px;margin-left:5px;">${esc(s.at)}</span>`
+      : ''
+  return `<span style="display:inline-block;font:700 12px ui-monospace,Menlo,Consolas,monospace;color:#0f172a;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 7px;margin:2px 0;">/${esc(name)}${cad}</span>`
+}
+const flowLane = (lane) => {
+  const t = TRIG[lane.kind] || TRIG.ask
+  const chips = lane.skills.map(flowChip).join('<span style="color:#94a3b8;font-weight:700;">&nbsp;→&nbsp;</span>')
+  return `<tr>
+    <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;vertical-align:top;width:38%;">
+      <div style="font:700 13px -apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;">${lane.icon} ${esc(lane.trigger)}</div>
+      <div style="margin-top:3px;"><span style="display:inline-block;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;color:${t.fg};background:${t.bg};border:1px solid ${t.bd};border-radius:999px;padding:1px 7px;">${t.label}</span></div>
+      <div style="color:#94a3b8;font-size:11.5px;margin-top:4px;line-height:1.4;">${esc(lane.when)}</div>
+    </td>
+    <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;vertical-align:top;line-height:1.9;">${chips}</td>
+  </tr>`
+}
+const flowSection = () =>
+  `<h2 style="font:700 17px -apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;margin:4px 0 4px;">🔀 When each skill fires — the flow</h2>
+  <p style="color:#64748b;font-size:13px;margin:0 0 12px;">Which event sets off which skills, in order. The grouped list below is the same skills by job.</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;border-collapse:separate;overflow:hidden;margin:0 0 30px;">${FLOWS.map(flowLane).join('')}</table>`
+
 const skillCard = (s) =>
   `<tr><td style="padding:11px 0;border-bottom:1px solid #eef2f7;">
     <div style="margin-bottom:3px;"><code style="font:700 14px ui-monospace,Menlo,Consolas,monospace;color:#0f172a;">/${esc(s.name)}</code>${(s.triggers || ['ask']).map(badge).join('')}</div>
@@ -115,6 +145,7 @@ const html = `<!DOCTYPE html>
   </td></tr>
   <tr><td style="padding:24px 26px;">
     ${changedBand()}
+    ${flowSection()}
     ${(data.groups || []).map(groupSection).join('')}
     <p style="margin:34px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">
       <a href="${BRAND_URL}" style="color:${PRIMARY_COLOR};text-decoration:none;">${BRAND_NAME}</a> · generated ${generated.toISOString().slice(0, 10)} by the <code>/skills-digest</code> skill ·
@@ -138,9 +169,20 @@ const txtChanged = () => {
     block('  Removed', removed)
   )
 }
+const txtFlow =
+  `🔀 WHEN EACH SKILL FIRES — THE FLOW\n` +
+  FLOWS.map(
+    (lane) =>
+      `  ${lane.icon} ${lane.trigger} [${(TRIG[lane.kind] || TRIG.ask).label}]\n` +
+      `     ${lane.skills.map((s) => `/${flowSkillName(s)}${typeof s === 'object' && s.at ? ` (${s.at})` : ''}`).join(' → ')}`
+  ).join('\n') +
+  '\n'
+
 const txt =
   `🧩 SKILLS DIGEST — ${monthYear}\n${repo} · ${total} skills\n\n` +
   txtChanged() +
+  '\n' +
+  txtFlow +
   '\n' +
   (data.groups || [])
     .map(

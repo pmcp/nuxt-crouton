@@ -67,6 +67,25 @@ The delta is computed by comparing the skill set at the `since`-date commit agai
 > check out with `fetch-depth: 0` — a shallow clone (the default) can't reach a month-ago commit,
 > and `gather.mjs` will fall back to `firstRun: true` (no delta) rather than guess.
 
+## 🔀 The flow view (#843)
+
+The digest also carries a **trigger→skill flow** — the skill cards answer "*how* does each skill
+fire" (auto / on ask / in flow); the flow answers "***when*** — which event sets off which skills,
+in order" (on commit · on a PR / CI · on a schedule · when a bug is reported · at epic close · …).
+
+It's driven by the exported **`FLOWS`** map in `scripts/gen-skills-doc.mjs` — the **same source**
+the `skills-and-triggers.html` doc page renders, so the email and the page can never disagree.
+`gather.mjs` doesn't touch it; `render.mjs` imports `FLOWS` and draws an email-safe lane table.
+Adding a lane or moving a skill between lanes is a one-edit change in that map, and
+`gen-skills-doc.mjs` **hard-fails** (CI `--check`) if a lane references a skill that no longer
+exists — the diagram can't silently drift from the real skill set.
+
+> Chose inline HTML/SVG over a committed PNG/Excalidraw on purpose: our surfaces are the email
+> and the doc page, where inline markup renders more reliably (incl. mobile), stays crisp and
+> selectable, and regenerates from `FLOWS` every time. A committed binary would drift with no CI
+> to catch it. (Excalidraw-PNG — the `ticket-diagram` skill — remains the right tool for *per-epic
+> GitHub-mobile* status diagrams, a different surface.)
+
 ## Cadence + delivery (config-as-data)
 
 Declared in `.github/digests.yml`, exactly like the other digests:

@@ -71,8 +71,78 @@ export const GROUPS = [
 export const TRIG = {
   auto: { cls: 'auto', label: 'auto' },
   ask: { cls: 'ask', label: 'on ask' },
-  flow: { cls: 'flow', label: 'in flow' }
+  flow: { cls: 'flow', label: 'in flow' },
+  cron: { cls: 'cron', label: 'on a schedule' }
 }
+
+// Trigger → skill flow (#843). The skill cards above answer "HOW does each skill fire"
+// (auto/ask/flow); this answers "WHEN — what event triggers which skills, in what order."
+// Declarative + exported so both the doc page (renderFlowLanes below) and the monthly
+// skills-digest email (render.mjs) draw the SAME lanes from one source — and main() asserts
+// every referenced skill still exists, so a lane can never point at a deleted skill.
+// A skill in a lane may be a bare name or { name, at } (at = a cadence/condition annotation).
+export const FLOWS = [
+  {
+    id: 'plan', icon: '📋', kind: 'ask',
+    trigger: 'You start an initiative',
+    when: 'Issue-first — open the epic + sub-issues before any code.',
+    skills: ['github-tasks', 'task-decompose', 'ecosystem-check']
+  },
+  {
+    id: 'build', icon: '🔨', kind: 'flow',
+    trigger: 'You build a feature',
+    when: 'The sign-off gates fire first (agree the model / look / test), then you generate.',
+    skills: ['schema-review', 'ui-proposal', 'test-review', 'crouton', 'block-authoring']
+  },
+  {
+    id: 'commit', icon: '💾', kind: 'auto',
+    trigger: 'You commit',
+    when: 'Pre-commit gates run automatically, then the conventional commit lands.',
+    skills: ['sync-docs', 'i18n-check', 'commit']
+  },
+  {
+    id: 'ci', icon: '🤖', kind: 'flow',
+    trigger: 'A robot opens a PR → CI runs',
+    when: 'Quality gates run on the change before it can merge.',
+    skills: ['review', 'a11y', 'e2e-smoke', 'red-team']
+  },
+  {
+    id: 'deploy', icon: '🚀', kind: 'ask',
+    trigger: 'You ship it',
+    when: 'Staging by default; production is a separate, deliberate skill.',
+    skills: ['deploy', 'poc-deploy', 'deploy-production']
+  },
+  {
+    id: 'bug', icon: '🐛', kind: 'flow',
+    trigger: 'A bug is reported',
+    when: 'Archaeology first — find when it broke before fixing.',
+    skills: ['bug-archaeology']
+  },
+  {
+    id: 'close', icon: '🏁', kind: 'flow',
+    trigger: 'An epic closes',
+    when: 'A retro mines improvements into new workflow issues.',
+    skills: ['postmortem']
+  },
+  {
+    id: 'scheduled', icon: '⏰', kind: 'cron',
+    trigger: 'On a schedule — no human',
+    when: 'Deterministic digests + the daily security sweep run themselves.',
+    skills: [
+      { name: 'epic-digest', at: 'daily' },
+      { name: 'housekeeping', at: 'weekly' },
+      { name: 'skills-digest', at: 'monthly' },
+      { name: 'red-team', at: 'daily deep' }
+    ]
+  },
+  {
+    id: 'maintain', icon: '🧰', kind: 'ask',
+    trigger: 'On demand, as needed',
+    when: 'Keep the repo current and healthy.',
+    skills: ['dependency-sweep', 'db-migrations', 'db-clone', 'provider-swap', 'remove-app', 'audit', 'i18n-audit']
+  }
+]
+export const flowSkillName = (s) => (typeof s === 'string' ? s : s.name)
 
 // Static appendix: plain-language "what happens to a robot's PR" flow. Lives here (not a
 // hand-edited html) so the combined page stays in sync with CI's --check. Edit the copy
@@ -193,6 +263,36 @@ function card(s) {
       </div>`
 }
 
+function renderFlowLanes() {
+  const lanes = FLOWS.map((lane) => {
+    const chips = lane.skills
+      .map((s) => {
+        const name = flowSkillName(s)
+        const cad = typeof s === 'object' && s.at ? `<span class="fl-cad">${esc(s.at)}</span>` : ''
+        return `<span class="fl-chip">/${esc(name)}${cad}</span>`
+      })
+      .join('<span class="fl-arrow">→</span>')
+    const t = TRIG[lane.kind] || TRIG.ask
+    return `      <div class="fl-lane">
+        <div class="fl-head">
+          <span class="fl-ico">${lane.icon}</span>
+          <div>
+            <div class="fl-trig">${esc(lane.trigger)} <span class="b ${t.cls}">${t.label}</span></div>
+            <div class="fl-when">${esc(lane.when)}</div>
+          </div>
+        </div>
+        <div class="fl-skills">${chips}</div>
+      </div>`
+  }).join('\n')
+  return `  <section class="flow-wrap">
+    <h2><span class="num">★</span> When each skill fires — the flow</h2>
+    <p class="grp-sub">The cards above say <em>how</em> a skill triggers; this says <em>when</em> — which event sets off which skills, in order. Read each lane left-to-right.</p>
+    <div class="flow-lanes">
+${lanes}
+    </div>
+  </section>`
+}
+
 function render(skills) {
   const byGroup = id => skills.filter(s => (META[s.name]?.group || 'uncategorised') === id)
   const sections = GROUPS.map((g, i) => {
@@ -244,7 +344,19 @@ ${items.map(card).join('\n')}
   .b.auto{background:rgba(52,211,153,.14); color:var(--auto); border:1px solid #1f5e47;}
   .b.ask{background:rgba(96,165,250,.14); color:var(--ask); border:1px solid #29456f;}
   .b.flow{background:rgba(167,139,250,.14); color:var(--flow); border:1px solid #443a6b;}
+  .b.cron{background:rgba(244,162,59,.14); color:#f0a23b; border:1px solid #6b4f23;}
   .what{font-size:12.5px; color:var(--muted); margin:0;}
+  .flow-wrap{margin-top:26px;}
+  .flow-lanes{display:flex; flex-direction:column; gap:10px;}
+  .fl-lane{background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--line); border-radius:var(--radius); padding:13px 15px;}
+  .fl-head{display:flex; gap:11px; align-items:flex-start; margin-bottom:9px;}
+  .fl-ico{font-size:19px; line-height:1.2;}
+  .fl-trig{font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .fl-when{font-size:12px; color:var(--muted); margin-top:2px;}
+  .fl-skills{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-left:30px;}
+  .fl-chip{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; font-weight:700; color:#cfe3ff; background:#0e1626; border:1px solid var(--line); border-radius:7px; padding:3px 9px; display:inline-flex; align-items:center; gap:6px;}
+  .fl-cad{font-family:-apple-system,Segoe UI,Roboto,sans-serif; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#f0a23b; background:rgba(244,162,59,.13); border:1px solid #6b4f23; border-radius:999px; padding:1px 6px;}
+  .fl-arrow{color:#52628a; font-size:13px; font-weight:700;}
   .cif-wrap{margin-top:42px;}
   .cif-promises{display:flex; flex-wrap:wrap; gap:10px; margin:2px 0 18px;}
   .cif-promise{display:inline-flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); padding:8px 14px; border-radius:999px; font-size:13px; color:var(--ink);}
@@ -292,6 +404,8 @@ ${items.map(card).join('\n')}
     </svg>
   </div>
 
+${renderFlowLanes()}
+
 ${sections}
 
 ${CI_FLOW}
@@ -313,6 +427,14 @@ if (runDirectly) {
   const uncategorised = skills.filter(s => !META[s.name])
   if (uncategorised.length) {
     console.warn(`⚠️  ${uncategorised.length} skill(s) not in META (shown under "Uncategorised"): ${uncategorised.map(s => s.name).join(', ')}`)
+  }
+  // The flow lanes (#843) must only reference skills that still exist — fail loudly otherwise,
+  // so the diagram can't silently point at a deleted skill (CI runs this via --check).
+  const known = new Set(skills.map(s => s.name))
+  const danglingFlow = FLOWS.flatMap(l => l.skills.map(flowSkillName)).filter(n => !known.has(n))
+  if (danglingFlow.length) {
+    console.error(`✗ FLOWS references unknown skill(s): ${[...new Set(danglingFlow)].join(', ')}. Fix the FLOWS map in scripts/gen-skills-doc.mjs.`)
+    process.exit(1)
   }
   const html = render(skills)
 
