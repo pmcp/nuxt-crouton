@@ -365,7 +365,11 @@ jobs:
           SALT="${REVIEW_SEED_SECRET:-crouton-review-seed}"
           PW="$(printf '%s' "${SALT}:${APP}:${KEY}" | sha256sum | cut -c1-24)"
           echo "::add-mask::$PW"
-          node scripts/seed-review-login.mjs --url "$DEPLOY_URL" --email "$EMAIL" --password "$PW" --team "Review Team" || true
+          # Attach the review login to the SEEDED demo team (#832) so the advertised
+          # login lands in the team the content seed populated (test1 → seed:org:test1),
+          # not an empty fresh org. Staging-only step → production is untouched.
+          node scripts/seed-review-login.mjs --url "$DEPLOY_URL" --email "$EMAIL" --password "$PW" \
+            --seed-team test1 --db "${APP}-staging-db" || true
           # Surface for the PR comment + the run summary (the password is masked in logs).
           echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
           echo "password=$PW" >> "$GITHUB_OUTPUT"
