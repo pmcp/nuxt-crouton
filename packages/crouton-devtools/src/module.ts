@@ -1,4 +1,4 @@
-import { defineNuxtModule, createResolver, addServerHandler, addPlugin } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addServerHandler, addPlugin, addImports } from '@nuxt/kit'
 import { addCustomTab } from '@nuxt/devtools-kit'
 import { createCroutonSrcTransform } from './runtime/transform/croutonSrc'
 
@@ -66,6 +66,31 @@ export default defineNuxtModule<ModuleOptions>({
         route: '/api/_review',
         handler: reviewResolver.resolve('./runtime/server/api/review.post'),
         method: 'post'
+      })
+    }
+
+    // --- Unified dev-tools launcher + tool registry (#809) ------------------
+    // One neutral glasses launcher → a Nuxt UI dropdown of pluggable tools.
+    // Tools register themselves via useCroutonDevTools().registerTool(); the
+    // launcher only renders the registry, so adding the next tool is one call,
+    // not another floating button. Console + Annotate fold in as the first two
+    // tools (#810).
+    //
+    // Enabled in local dev, or when a build opts in via
+    // NUXT_PUBLIC_CROUTON_DEVTOOLS=true (folder-based auto-on for pocs/fixtures
+    // is #811). Registered BEFORE the dev-only early return so a flagged staging
+    // build gets it too; runtime-gated as well, so production ships nothing.
+    if (nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true') {
+      const devtoolsResolver = createResolver(import.meta.url)
+      nuxt.options.runtimeConfig.public ||= {}
+      ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonDevtools = true
+      addImports({
+        name: 'useCroutonDevTools',
+        from: devtoolsResolver.resolve('./runtime/composables/useCroutonDevTools')
+      })
+      addPlugin({
+        src: devtoolsResolver.resolve('./runtime/plugins/crouton-devtools.client'),
+        mode: 'client'
       })
     }
 

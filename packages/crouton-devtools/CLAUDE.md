@@ -9,6 +9,9 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | File | Purpose |
 |------|---------|
 | `src/module.ts` | Nuxt module entry point |
+| `src/runtime/composables/useCroutonDevTools.ts` | Dev-tools **tool registry** — `registerTool()` + reactive `tools`/`toggle` the launcher reads (#809) |
+| `src/runtime/components/CroutonDevTools.vue` | Unified **glasses launcher** → Nuxt UI dropdown of toggleable tools (#809) |
+| `src/runtime/plugins/crouton-devtools.client.ts` | Mounts the launcher into the host app's context (appContext) so global Nuxt UI components resolve (#809) |
 | `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
 | `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
 | `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
@@ -111,6 +114,45 @@ When `nuxt-crouton-events` is installed, the Activity tab appears automatically:
 - **Event ↔ Operation Correlation** - Link HTTP operations to events via itemId
 
 The module auto-detects the events package via layer inspection.
+
+## Unified dev-tools launcher + tool registry (epic #808, #809)
+
+One neutral **glasses** button (bottom-right) → a Nuxt UI 4 dropdown of toggleable
+tools. The launcher only renders the registry; it owns no tool logic, so adding
+the next tool is one `registerTool()` call, not another floating button. Console
+(eruda) + Annotate fold in as the first two tools in #810.
+
+```ts
+// A tool registers itself from its own client plugin:
+const { registerTool } = useCroutonDevTools()
+registerTool({
+  id: 'console',
+  label: 'Console',
+  icon: 'i-lucide-terminal',
+  order: 1,
+  isAvailable: () => true,        // hide/disable in the current context
+  activate: async () => { /* lazy-import + show */ },
+  deactivate: () => { /* hide */ },
+  badge: () => unread || null     // optional row badge
+})
+```
+
+- **Registry** (`useCroutonDevTools`) — a module-singleton reactive store
+  (`registerTool` / `unregisterTool` / reactive `tools` filtered by `isAvailable`
+  + sorted by `order` / `isActive` / `toggle`). Pure Vue reactivity, unit-tested
+  in `test/useCroutonDevTools.test.ts` (no Nuxt needed). `resetCroutonDevTools()`
+  for HMR/tests.
+- **Launcher** (`CroutonDevTools.vue`) — `UPopover` + `UButton` (glasses) +
+  `USwitch` rows + `UIcon`. Built on Nuxt UI 4 (every crouton app ships it);
+  hidden when no tool is available.
+- **Mount** (`crouton-devtools.client.ts`) — appends the launcher to `<body>` on
+  `app:mounted` and renders it with `nuxtApp.vueApp._context` as `appContext`, so
+  global U* components resolve without the host app placing anything in its layout.
+- **Gating** — the module adds the plugin + auto-imports `useCroutonDevTools`
+  only in local dev, or when a build sets `NUXT_PUBLIC_CROUTON_DEVTOOLS=true`
+  (→ `runtimeConfig.public.croutonDevtools`); the plugin double-checks at runtime,
+  so production ships nothing. Registered **before** the dev-only early return so a
+  flagged staging build gets it. Folder-based auto-on for pocs/fixtures is #811.
 
 ## Preview-review source stamping — `data-crouton-src` (epic #488, #490)
 
