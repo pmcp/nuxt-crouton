@@ -215,6 +215,11 @@
   color: "0e8a16"
   description: "Accessibility finding/work from the a11y agent + /a11y skill (.claude/agents/a11y)"
 
+# ── Front-end conventions (frontend-review agent/skill findings — epic #834) ──
+- name: "frontend"
+  color: "1d76db"
+  description: "Front-end conventions finding/work from the frontend-review agent + /frontend-review skill (Nuxt UI 4 / crouton component usage)"
+
 # ── Status ──
 - name: "status:in-progress"
   color: "fbca04"
