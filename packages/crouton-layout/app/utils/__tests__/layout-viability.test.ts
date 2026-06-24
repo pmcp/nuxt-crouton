@@ -6,8 +6,8 @@ import {
   subtreeMinWidth,
   panelMinSizePct,
 } from '../layout-viability'
-import type { LayoutNode, LayoutTree } from '../../types/layout'
-import type { CroutonLayoutBlockRegistry } from '../../types/layout-block'
+import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
 
 // sidebar needs 320px; main needs 480px; stats fluid (no min).
 const minWidthFor = (id: string) =>

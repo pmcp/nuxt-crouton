@@ -2,8 +2,8 @@ import { computed } from 'vue'
 import type {
   CroutonLayoutBlockDefinition,
   CroutonLayoutBlockRegistry,
-} from '../types/layout-block'
-import type { LayoutTree } from '../types/layout'
+} from '@fyit/crouton-core/app/types/layout-block'
+import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import {
   checkTreeViability,
   minWidthResolver,

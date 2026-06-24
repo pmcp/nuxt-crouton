@@ -7,8 +7,8 @@ import {
   applySizes,
   setConfig,
 } from '../layout-edit'
-import type { LayoutNode, LayoutSplit } from '../../types/layout'
-import type { CroutonLayoutBlockDefinition } from '../../types/layout-block'
+import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
+import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
 
 const listDef: CroutonLayoutBlockDefinition = {
   id: 'list',
