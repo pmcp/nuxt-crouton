@@ -135,15 +135,30 @@ jobs:
         with:
           path: |
             packages/*/dist
-          key: layer-builds-${{ hashFiles('packages/**/*.ts') }}
+          # v2: crouton-devtools is now ALWAYS built (below), so every entry carries
+          # its dist. The bump abandons stale v1 caches that were populated by apps
+          # which didn't build devtools and would otherwise satisfy a hit without it
+          # → `nuxt prepare` failing to load the module on a scaffolded app (#745).
+          key: layer-builds-v2-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Build layer packages
         if: steps.layer-cache.outputs.cache-hit != 'true'
         env:
           LAYER_PACKAGES: ${{ inputs['layer-packages'] }}
         run: |
-          for pkg in $LAYER_PACKAGES; do
+          # crouton-devtools is appended unconditionally: scaffolded apps declare it
+          # in their nuxt.config `modules` (scaffold-app.ts), so `nuxt prepare` needs
+          # its dist on every deploy — not just review ones (there is no review flag
+          # to gate on). Building it for apps that don't list it is cheap and inert.
+          # Keeping the set constant across all callers also keeps the shared cache
+          # above valid (no per-caller divergence to hide a missing dist). (#745)
+          for pkg in $LAYER_PACKAGES @fyit/crouton-devtools; do
             dir="packages/${pkg#@fyit/}"
+            # de-dupe: skip if this dist was already built earlier in the loop
+            if [ -d "$dir/dist" ] && [ -n "$(ls -A "$dir/dist" 2>/dev/null)" ]; then
+              echo "Skipping $pkg (already built this run)"
+              continue
+            fi
             if node -e "process.exit(require('./$dir/package.json').scripts?.build ? 0 : 1)" 2>/dev/null; then
               echo "Building $pkg"
               pnpm --filter "$pkg" build
