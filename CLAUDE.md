@@ -51,16 +51,19 @@ Each todo requires:
 
 ## Task Execution Workflow (MANDATORY)
 
-Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and follows this 5-step flow:
+Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and follows this flow:
 
 ```
 1. Claim the issue   → set it in-progress, use TodoWrite for the local breakdown
-2. Test Sign-Off     → for packages/* LOGIC: write the test FIRST, agree on it, before any code (see "Test Sign-Off" below). Apps opt-in; pocs exempt. Skip for non-logic / schema / UI changes.
-3. Do The Work       → Follow CLAUDE.md patterns, KISS principle — make the agreed test green
-4. Run Type Checking → pnpm typecheck (runs per-app), fix errors immediately
-5. Update the issue  → comment progress / tick acceptance criteria
-6. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
+2. Sanity-Check      → run the `issue-sanity-check` skill: a pessimistic gate — does this issue still make sense & should it be done? Verdict proceed/reshape/drop. Reshape/drop → bring to the human before building.
+3. Test Sign-Off     → for packages/* LOGIC: write the test FIRST, agree on it, before any code (see "Test Sign-Off" below). Apps opt-in; pocs exempt. Skip for non-logic / schema / UI changes.
+4. Do The Work       → Follow CLAUDE.md patterns, KISS principle — make the agreed test green
+5. Run Type Checking → pnpm typecheck (runs per-app), fix errors immediately
+6. Update the issue  → comment progress / tick acceptance criteria
+7. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
 ```
+
+**SANITY-CHECK-FIRST when you pick up an issue: try to *kill* it before you build it.** The reflex on claiming an issue is to start work; the counter-reflex is to spend two minutes as a skeptic — is it already done, obsolete, a duplicate, built on a false premise, against our patterns, or net-negative? Run the **`issue-sanity-check`** skill; it carries the checklist + the proceed/reshape/drop verdict. A skeptical pause is cheaper than a wasted build. (Skip only for a trivial just-written chore with no premise to be wrong.)
 
 **ARCHAEOLOGY-FIRST for bugs (HARD GATE): research how & when a bug was introduced BEFORE fixing it.** The moment a bug, crash, failed build, broken test, or "this used to work" is reported, step 0 is to find the first-bad commit (`git log -S`/`-G`, `git blame`, `git bisect`) — or determine it's *not* a code regression (stale install, env, data) — and **record that finding on the tracking issue/PR** (open one if none exists). A symptom-first fix can "repair" code that was never broken. Run the **`bug-archaeology`** skill; it carries the protocol + the finding template. (#424)
 
@@ -542,6 +545,7 @@ This applies to every agent and sub-agent, and every capture method: Playwright 
 | Skill | `.claude/skills/sync-docs/SKILL.md` | Doc sync before commits |
 | Skill | `.claude/skills/i18n-audit.md` | Translation audit + fix |
 | Skill | `.claude/skills/github-tasks/SKILL.md` | GitHub issue tracking (epics, labels, workflow) |
+| Skill | `.claude/skills/issue-sanity-check/SKILL.md` | Pessimistic gate when you pick up an issue — try to *kill* it before building: already done / obsolete / duplicate / false premise / against our patterns / net-negative? Returns a **proceed / reshape / drop** verdict with evidence; reshape/drop go to the human. Step 1 of the Task Execution Workflow, before the Test/Schema/UI sign-off gates (#800) |
 | Skill | `.claude/skills/epic-digest/SKILL.md` | Daily "where are we?" digest — a "🧪 Needs your eyes" band (what landed + the author's How-to-test steps + a 👁 badge for visual changes, so the owner has a ready QA checklist), a "✅ Ready to close" band for finished-but-open epics (driven by the `status:ready-to-close`/`status:needs-postmortem` labels, #763 — replaces the old contradictory "Done"-on-an-open-epic badge), last-24h activity, and a progress snapshot of every open epic, rendered dependency-free (HTML/text, or Markdown). Interactive run gathers via GitHub MCP; a scheduled GitHub Action (`gather.mjs` → `render.mjs` → email via Resend) sends it every morning with no LLM (#357, #408, #495, #551). For a status rapport / "what moved this week" |
 | Skill | `.claude/skills/housekeeping/SKILL.md` | Daily "🧹 Housekeeping" digest — a **report-only** sweep that catches the drift the event-driven jobs miss (stale unmerged branches, issues missing `type:`/component labels, `packages/apps/pocs/workers` dirs with no matching `.github/labels.yml` label, stuck `status:in-progress` tickets, epics with all children closed — split by `status:ready-to-close`/`status:needs-postmortem` (#763), idle PRs). Mirrors `epic-digest`'s deterministic `gather.mjs → render.mjs → post-comment.sh` (no LLM/secrets) → one rolling standing issue; **never mutates** a branch/label/issue. Cadence + delivery are config-as-data in `.github/digests.yml` (`schedule.mjs` gates a daily cron → only sends on the configured day; `issue`/`email` rails). Scheduled by `.github/workflows/housekeeping.yml` (epic #633) |
 | Skill | `.claude/skills/ticket-diagram/SKILL.md` | Attach a self-contained **Excalidraw** status diagram to a GitHub epic — read the epic + sub-issue tree → boxes-coloured-by-status with bound dependency arrows → a committed **PNG that renders on the GitHub mobile app AND has the editable scene embedded inside it** (open the PNG in Excalidraw to edit), plus a diffable `<slug>.graph.json` → sticky comment → iterate to approval (reuses the #310 sign-off loop). Round-trip human edits back via `scripts/ticket-excalidraw-import.mjs` (decode embedded scene from an attached PNG → re-render → re-embed). Generator: `scripts/ticket-excalidraw.mjs` (+ `scripts/lib/excalidraw.mjs`, `scripts/lib/excalidraw-png.mjs` codec). NOT live Mermaid (stalls on mobile). Workstream #2 of #479, epic #483 |

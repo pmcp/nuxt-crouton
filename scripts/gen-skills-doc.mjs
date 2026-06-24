@@ -29,6 +29,7 @@ const META = {
   'provider-swap': { group: 'build', triggers: ['ask'] },
   'block-authoring': { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
+  'issue-sanity-check': { group: 'plan', triggers: ['flow', 'ask'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   housekeeping: { group: 'plan', triggers: ['ask'] },
   'ticket-diagram': { group: 'plan', triggers: ['flow', 'ask'] },
