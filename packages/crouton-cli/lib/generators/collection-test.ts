@@ -16,7 +16,7 @@
 
 // Auto-generated / system columns and hierarchy columns are injected by the
 // runtime, not part of the create/validate schema — never sampled here.
-const AUTO_FIELDS = new Set([
+export const AUTO_FIELDS = new Set([
   'id', 'teamId', 'owner',
   'createdAt', 'updatedAt', 'createdBy', 'updatedBy',
   'parentId', 'path', 'depth', 'order',
@@ -53,22 +53,33 @@ function sampleLiteral(field: Record<string, any>): string {
   return "'sample'"
 }
 
-function objectLiteral(entries: string[], indent = '      '): string {
+export function objectLiteral(entries: string[], indent = '      '): string {
   if (entries.length === 0) return '{}'
   return `{\n${entries.map(e => `${indent}${e}`).join(',\n')},\n${indent.slice(2)}}`
 }
 
-/**
- * Generate the source of a `<Collection>.test.ts` schema-smoke test.
- * Returns the file content as a string (the orchestrator decides whether to
- * write it, honouring `--no-tests`).
- */
-export function generateCollectionTest(data: Record<string, any>, config: Record<string, any> | null = null): string {
-  const { layer, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase, fields } = data
+export { sampleLiteral }
 
-  const schemaName = `${layerCamelCase}${pascalCase}Schema`
-  const composableName = `use${layerPascalCase}${pascalCasePlural}`
-  const importPath = `./app/composables/${composableName}`
+export interface CollectionSample {
+  /** Source-string entries (`name: 'sample'`) for the valid create body. */
+  validEntries: string[]
+  /** Required, non-translatable fields — the ones safe to omit for an invalid body. */
+  requiredPlain: Record<string, any>[]
+  /** Required translatable fields (validated under `translations.<locale>`). */
+  requiredTranslatable: Record<string, any>[]
+  /** Whether the collection declares any translatable fields. */
+  hasTranslations: boolean
+}
+
+/**
+ * Derive a schema-valid create sample from a collection's field metadata.
+ * Single-sourced here so both the schema-smoke test (#788) and the API handler
+ * test (#791) build the same `valid` body — it mirrors the required-field rules
+ * of `fieldsSchema`/the composable schema (same `data.fieldsSchema` source), so
+ * the sample parses whether or not the type manifest resolved.
+ */
+export function buildCollectionSample(data: Record<string, any>, config: Record<string, any> | null = null): CollectionSample {
+  const { plural, fields } = data
 
   // Translatable fields are validated under `translations` (config-driven, mirrors fieldsSchema).
   const translatableFieldNames: string[] = config?.translations?.collections?.[plural] || []
@@ -94,6 +105,23 @@ export function generateCollectionTest(data: Record<string, any>, config: Record
       validEntries.push('translations: {}')
     }
   }
+
+  return { validEntries, requiredPlain, requiredTranslatable, hasTranslations: translatableFieldNames.length > 0 }
+}
+
+/**
+ * Generate the source of a `<Collection>.test.ts` schema-smoke test.
+ * Returns the file content as a string (the orchestrator decides whether to
+ * write it, honouring `--no-tests`).
+ */
+export function generateCollectionTest(data: Record<string, any>, config: Record<string, any> | null = null): string {
+  const { layer, plural, pascalCase, pascalCasePlural, layerPascalCase, layerCamelCase } = data
+
+  const schemaName = `${layerCamelCase}${pascalCase}Schema`
+  const composableName = `use${layerPascalCase}${pascalCasePlural}`
+  const importPath = `./app/composables/${composableName}`
+
+  const { validEntries, requiredPlain, requiredTranslatable } = buildCollectionSample(data, config)
 
   const validLiteral = objectLiteral(validEntries)
 

@@ -92,7 +92,7 @@ Use this skill when the user mentions:
 | `--hierarchy` | Enable tree structure |
 | `--seed` | Generate seed data file |
 | `--count <n>` | Seed record count (default: 25) |
-| `--no-tests` | Skip the per-collection schema-smoke test (emitted by default, #785) |
+| `--no-tests` | Skip the per-collection tests — schema-smoke (#785) + API route handler test (#791); both emitted by default |
 | `--dry-run` | Preview without writing |
 
 ### Field Types
@@ -347,16 +347,25 @@ layers/{layer}/collections/{collection}/
 │       ├── schema.ts         # Drizzle ORM schema
 │       ├── queries.ts        # Database operations
 │       └── seed.ts           # Seed data (with --seed flag)
-├── {Layer}{Collection}s.test.ts  # Zod schema-smoke test (#785) — skip with --no-tests
+├── {Layer}{Collection}s.test.ts      # Zod schema-smoke test (#785) — skip with --no-tests
+├── {Layer}{Collection}s.api.test.ts  # API route handler test (#791) — skip with --no-tests
 ├── types.ts                  # TypeScript interfaces
 ├── nuxt.config.ts           # Layer configuration
 └── README.md                # Collection documentation
 ```
 
-A **schema-smoke test** is emitted per collection by default (#785): runtime-free
-(zod only), it asserts the generated Zod schema accepts a valid record and rejects
-an invalid one. `crouton init`/`scaffold-app` wire a `vitest.config.ts` + `test`
-script so `pnpm test` runs them. The e2e fixture smoke still owns boot + CRUD.
+Two tests are emitted per collection by default (skip both with `--no-tests`):
+
+- A **schema-smoke test** (#785): runtime-free (zod only), it asserts the generated
+  Zod schema accepts a valid record and rejects an invalid one.
+- An **API route handler test** (#791): drives the generated endpoint handlers
+  (`get`/`post`/`[id].patch`/`[id].delete`, plus `move`/`reorder` for hierarchy) with
+  a mocked team-auth util + queries module and a fake H3 event — covering team-scoping
+  (unauthenticated → rejected; queries called with the resolved team id) and error
+  paths (invalid body → rejected, missing id → 400, not-found → 404).
+
+`crouton init`/`scaffold-app` wire a `vitest.config.ts` + `test` script so `pnpm test`
+runs them. The e2e fixture smoke still owns real boot + CRUD.
 
 ### Running Seed Files
 

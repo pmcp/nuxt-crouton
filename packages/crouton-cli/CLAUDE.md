@@ -272,7 +272,7 @@ crouton db-pull --config ./custom-wrangler.jsonc
 | `--count <number>` | Number of seed records (default: 25) |
 | `--force` | Overwrite existing files |
 | `--no-translations` | Skip i18n fields |
-| `--no-tests` | Skip the per-collection schema-smoke test (emitted by default, #785) |
+| `--no-tests` | Skip the per-collection tests — schema-smoke (#785) + API route handler test (#791); both emitted by default |
 | `--dry-run` | Preview without writing |
 
 ## Key Files
@@ -285,8 +285,9 @@ crouton db-pull --config ./custom-wrangler.jsonc
 | `lib/compose-layout.ts` | **Deterministic default-layout step** (#709) — after generation, runs `@fyit/crouton-layout`'s `composeDefaultLayout` (moved out of crouton-core, #751) over the generated collections and writes `crouton.layout.json` (a `layout_configs` tree the POC boots with). `registryKeyFor(layer, collection)` mirrors the generated registry key; mirrors the core + bookings block sizing contracts (no live `app.config` at generate time) |
 | `lib/generate-collection.ts` | Main orchestrator (~74KB) |
 | `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
-| `lib/generators/*.ts` | Template generators (15 files) |
-| `lib/generators/collection-test.ts` | Emits `<Layer><Collections>.test.ts` — a runtime-free Zod schema smoke (valid parses / invalid rejected). Sample derived from each field's `zod`. On by default; `--no-tests` skips (#785) |
+| `lib/generators/*.ts` | Template generators (16 files) |
+| `lib/generators/collection-test.ts` | Emits `<Layer><Collections>.test.ts` — a runtime-free Zod schema smoke (valid parses / invalid rejected). Sample derived from each field's `zod`. On by default; `--no-tests` skips (#785). Also exports the shared sample derivation (`buildCollectionSample`) reused by the API test |
+| `lib/generators/api-test.ts` | Emits `<Layer><Collections>.api.test.ts` — drives the generated route handlers (get/post/[id].patch/[id].delete + move/reorder) with a mocked team-auth util + queries module and a fake H3 event; covers team-scoping + 400/403/404 error paths. Same `--no-tests` gate (#791) |
 | `lib/db-pull.ts` | Remote D1 → local dev pull |
 | `lib/module-registry.ts` | Module definitions for `crouton add` |
 | `lib/add-module.ts` | Module installation implementation |
@@ -313,7 +314,8 @@ lib/generators/
 ├── nuxt-config.ts         → Layer config
 ├── field-components.ts    → Dependent field components
 ├── query-registry.ts      → Server-side query registry (lazy imports)
-└── collection-test.ts     → <Layer><Collections>.test.ts (Zod schema smoke, #785)
+├── collection-test.ts     → <Layer><Collections>.test.ts (Zod schema smoke, #785)
+└── api-test.ts            → <Layer><Collections>.api.test.ts (route handler tests, #791)
 ```
 
 ## Schema Format
@@ -511,7 +513,8 @@ layers/[layer]/collections/[collection]/
 │       ├── queries.ts
 │       └── seed.ts          # Only with --seed flag
 ├── seed.json                # Editable auto-derived sample rows (#298)
-├── [Layer][Collections].test.ts  # Zod schema-smoke test (#785) — skip with --no-tests
+├── [Layer][Collections].test.ts      # Zod schema-smoke test (#785) — skip with --no-tests
+├── [Layer][Collections].api.test.ts  # API route handler test (#791) — skip with --no-tests
 ├── types.ts
 └── nuxt.config.ts
 
@@ -538,7 +541,36 @@ no mocks), so it stays green for any schema — the unit-level complement to the
   fields are excluded; output is deterministic (no `Date.now()`/`Math.random()`).
 - `scaffold-app`/`crouton init` emit a `vitest.config.ts` + `test` script + the
   `vitest` devDep, so `pnpm test` runs these out of the box (#789).
-- API route auth/error-path tests are a tracked follow-up (#791), not emitted yet.
+
+### API route handler test (#791)
+
+Each collection also ships `<Layer><Collections>.api.test.ts` next to the
+schema-smoke — the depth deferred from #788. It drives the **generated endpoint
+handlers** (`index.get`/`index.post`/`[id].patch`/`[id].delete`, plus
+`move.patch`/`reorder.patch` for hierarchy/sortable collections) to cover the
+runtime logic the schema-smoke can't: **team-scoping** (an unauthenticated
+request is rejected and never writes; the happy path calls the query with the
+*resolved team's* id — flip `teamId: team.id` in a handler and the test goes red)
+and **error paths** (invalid body → rejected before any write, missing id param →
+400, a not-found surfaced by the query → 404).
+
+- **Runtime-free-ish:** the team-auth util (`@fyit/crouton-auth/server/utils/team`)
+  and the generated `./server/database/queries` module are `vi.mock`ed; the H3/Nitro
+  auto-imports the handlers call (`defineEventHandler`, `getQuery`,
+  `getRouterParams`, `readBody`, `readValidatedBody`, `createError`,
+  `useServerTiming`) are provided as globals via `vi.hoisted` (so the route's
+  `export default defineEventHandler(...)` evaluates at import); each handler runs
+  against a plain fake H3 event. No Nuxt server, no DB, no network.
+- **Same `--no-tests` gate** as the schema-smoke — it rides the one `tests` flag
+  (on by default). The assertions are engineered to be schema-shape-independent
+  (mock/control-flow driven); the one body-shape-dependent case (invalid-body →
+  rejected) is emitted only when an invalid sample is derivable, degrading
+  gracefully. The happy-path body reuses the schema-smoke's single-sourced sample
+  derivation (`buildCollectionSample` in `collection-test.ts`).
+- The emitted file carries `// @ts-nocheck` — it relies on untyped Nitro globals
+  and runs under vitest, not the app's `nuxt typecheck`.
+- The **e2e fixture smoke** still owns real boot + CRUD; this is the unit-level
+  complement (no duplication).
 
 ## Default Layout (generate → POC, #709)
 
@@ -676,7 +708,7 @@ features: {
 | `formComponent` | string | Use a custom form component instead of generating Form.vue |
 | `kind` | string | Collection kind: `'data'` (default), `'content'`, or `'media'`. Affects admin sidebar grouping |
 | `publishable` | boolean | Auto-register as page type in crouton-pages (requires crouton-pages) |
-| `tests` | boolean | Emit the schema-smoke test for this collection (default `true`; set `false` to skip, like `--no-tests`) (#785) |
+| `tests` | boolean | Emit the per-collection tests — schema-smoke (#785) + API route handler test (#791) — for this collection (default `true`; set `false` to skip, like `--no-tests`) |
 
 ### formComponent Option
 
@@ -879,6 +911,7 @@ npx nuxt typecheck
 | `lib/generators/types.ts` | TypeScript type generation (snapshot) |
 | `lib/generators/composable.ts` | Composable generation (snapshot) |
 | `lib/generators/collection-test.ts` | Schema-smoke test emission — import path, per-type sample derivation, valid/invalid cases (#785) |
+| `lib/generators/api-test.ts` | API route handler test emission — handler import paths, query-mock factory, auth/team-scope + 400/403/404 cases, hierarchy move/reorder (#791) |
 
 ## Seed Data Generation
 
