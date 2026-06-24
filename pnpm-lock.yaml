@@ -161,6 +161,9 @@ importers:
       '@fyit/crouton-layout':
         specifier: workspace:*
         version: link:../../packages/crouton-layout
+      '@fyit/crouton-triage':
+        specifier: workspace:*
+        version: link:../../packages/crouton-triage
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.4

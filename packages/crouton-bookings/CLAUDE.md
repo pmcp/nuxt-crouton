@@ -19,6 +19,7 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 | `server/api/crouton-bookings/` | API endpoints |
 | `server/utils/booking-emails.ts` | Email utilities |
 | `schemas/` | JSON schema definitions |
+| `seed/index.ts` | Seed provider (`@fyit/crouton-bookings/seed`, #696) — one settings row (statuses + groups) + demo locations (two slot-mode courts, one inventory-mode rental) + a few bookings, so previews open populated |
 
 ## Architecture
 
@@ -205,6 +206,29 @@ bookings.
 ├── meta.*           - Metadata labels
 └── common.*         - Common terms
 ```
+
+## Demo Seeding (`@fyit/crouton-bookings/seed`)
+
+Part of the composable seeding system (epic #82, contract in
+`@fyit/crouton-core/shared/seed`). Provider id `bookings`, `dependsOn: ['auth']`:
+
+- **Settings:** one `bookings_settings` row with three statuses
+  (confirmed/pending/cancelled) and two age groups (adults/youth), each an
+  option item (`{ id, value, label, translations }`) so booking `status`/`group`
+  values resolve to readable, translated labels in the admin list.
+- **Locations:** three `bookings_locations` covering both modes — two slot-mode
+  courts (named time slots with capacity) and one inventory-mode rental (a
+  quantity pool). Titles carry `nl`/`en` translations.
+- **Bookings:** four `bookings_bookings` referencing those locations/slots,
+  dated `unixepoch() + N*86400` so they always sit in the near future. Slot-mode
+  rows store a JSON array of slot ids (`["slot-0900"]`); the inventory row stores
+  the JSON literal `null` — the exact shape the live batch-checkout endpoint
+  writes (the `slot` column is NOT-NULL JSON).
+
+Pure module (references `bookings_*` table/columns by name, loads under jiti).
+Idempotent — stable `seedId(...)` ids upsert in place. Every NOT-NULL column is
+set explicitly because Drizzle `$default(...)` is ORM-time, not a SQL DEFAULT.
+Run via an app's `crouton-seed` / `db:seed:*` scripts.
 
 ## Testing
 

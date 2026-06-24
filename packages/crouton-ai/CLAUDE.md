@@ -27,6 +27,16 @@ AI integration layer for Nuxt applications using Vercel AI SDK. Provides composa
 | `schemas/chat-conversations.json` | JSON schema for crouton generator |
 | `schemas/chat-conversations.ts` | TypeScript schema with Zod validation |
 
+## Demo Seeding — intentionally none (#697)
+
+crouton-ai ships a single collection, `chat_conversations` — **runtime AI chat
+history**, written per-user as conversations happen. It carries no curated,
+user-facing demo content a reviewer needs to see pre-populated (a seeded fake
+conversation owned by `seed` wouldn't surface in the chat UI, which is keyed to
+the logged-in user). Per epic #695/#697, this package is **deliberately exempt**
+from the composable seeding system — it ships **no `./seed` provider**. If a
+future collection here warrants demo data, add a provider then.
+
 ## Architecture
 
 ```

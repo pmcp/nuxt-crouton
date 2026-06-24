@@ -34,6 +34,7 @@ Discussion-to-task triage system for Nuxt applications. Receives discussions fro
 | `server/utils/domain-routing.ts` | AI-powered domain routing for multi-output flows |
 | `server/api/crouton-triage/` | API endpoints |
 | `schemas/` | 8 JSON schema definitions |
+| `seed/index.ts` | Seed provider (`@fyit/crouton-triage/seed`, #697) — seeds the user-facing content chain (flow → input → discussions → tasks + inbox messages) so the Triage admin surfaces open populated. Integration-plumbing collections (accounts/outputs/jobs/users) are intentionally NOT seeded |
 
 ## Architecture
 
@@ -247,6 +248,36 @@ export default defineAppConfig({
 ```
 
 See `packages/crouton-core/CLAUDE.md` for the full `parentApp` pattern documentation.
+
+## Demo Seeding (`@fyit/crouton-triage/seed`)
+
+Part of the composable seeding system (epic #82, contract in
+`@fyit/crouton-core/shared/seed`). Provider id `triage`, `dependsOn: ['auth']`.
+
+Triage is integration-driven (Slack/Figma/email → AI → Notion), so most of its
+collections are **plumbing tied to live credentials** — `accounts` (OAuth),
+`outputs` (Notion targets), `jobs` (sync runs), `users` (platform identities).
+Seeding those with fake rows would misrepresent a working integration, so the
+provider seeds only the **user-facing content chain** a reviewer opens:
+
+```
+flow → input → discussions → tasks   (+ a couple of inbox messages)
+```
+
+- 1 flow ("Support Triage") + 1 Slack input (demo display config, no live token)
+- 3 discussions (varied status: completed/pending) with AI summaries + key points
+- 2 tasks (one per resolved discussion; `notionPageId`/`notionPageUrl` are demo
+  placeholders — `notionPageId` is unique per team, so stable demo ids stay idempotent)
+- 2 inbox messages
+
+Pure module (references `triage_*` table/columns by name, loads under jiti).
+Idempotent — stable `seedId(...)` ids upsert in place; every NOT-NULL column is
+set explicitly. Run via an app's `crouton-seed` / `db:seed:*` scripts.
+
+> **Discovery note:** `crouton-seed` finds providers by walking the app's
+> `package.json` dependency graph (not its `nuxt.config` extends). `apps/triage`
+> now declares `@fyit/crouton-triage` as a dependency (#698) so this provider is
+> discovered and seeded there.
 
 ## Naming Conventions
 

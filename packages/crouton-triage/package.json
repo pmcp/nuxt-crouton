@@ -8,6 +8,7 @@
     "app",
     "server",
     "schemas",
+    "seed",
     "i18n",
     "dist",
     "nuxt.config.ts",
@@ -17,6 +18,10 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./crouton.manifest": "./crouton.manifest.ts",
+    "./seed": {
+      "import": "./seed/index.ts",
+      "types": "./seed/index.ts"
+    },
     "./server/utils/domain-routing": {
       "types": "./dist/server/utils/domain-routing.d.ts",
       "import": "./dist/server/utils/domain-routing.mjs"
