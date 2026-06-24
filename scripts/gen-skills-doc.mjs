@@ -13,14 +13,16 @@
  */
 import { readdirSync, readFileSync, writeFileSync, statSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SKILLS_DIR = join(ROOT, '.claude/skills')
 const OUT = join(ROOT, 'writeups/architecture/skills-and-triggers.html')
 
 // group + trigger-type per skill (name → meta). Triggers: auto | ask | flow.
-const META = {
+// Exported as the single source of truth — the skills-digest (.claude/skills/skills-digest)
+// imports META/GROUPS/TRIG/discover() from here so the two can never drift (#841).
+export const META = {
   crouton: { group: 'build', triggers: ['ask'] },
   'ui-proposal': { group: 'build', triggers: ['flow', 'ask'] },
   'schema-review': { group: 'build', triggers: ['flow', 'ask'] },
@@ -31,6 +33,7 @@ const META = {
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   housekeeping: { group: 'plan', triggers: ['ask'] },
+  'skills-digest': { group: 'plan', triggers: ['ask'] },
   'ticket-diagram': { group: 'plan', triggers: ['flow', 'ask'] },
   'ecosystem-check': { group: 'plan', triggers: ['ask'] },
   'sync-docs': { group: 'commit', triggers: ['auto'] },
@@ -54,7 +57,7 @@ const META = {
   'think-aloud': { group: 'meta', triggers: ['ask'] }
 }
 
-const GROUPS = [
+export const GROUPS = [
   { id: 'build', title: 'Build & generate', sub: 'Turn intent into code (or into issues that become code).' },
   { id: 'plan', title: 'Plan & track', sub: 'Before code exists — issue tracking and prior-art checks.' },
   { id: 'commit', title: 'Commit gates', sub: 'Run automatically as part of landing a change — you rarely call them by hand.' },
@@ -65,7 +68,7 @@ const GROUPS = [
   { id: 'uncategorised', title: '⚠️ Uncategorised', sub: 'New skills not yet placed in the generator META map — add them.' }
 ]
 
-const TRIG = {
+export const TRIG = {
   auto: { cls: 'auto', label: 'auto' },
   ask: { cls: 'ask', label: 'on ask' },
   flow: { cls: 'flow', label: 'in flow' }
@@ -162,7 +165,7 @@ function firstParagraph(text) {
   return ''
 }
 
-function discover() {
+export function discover() {
   const out = []
   for (const entry of readdirSync(SKILLS_DIR)) {
     const p = join(SKILLS_DIR, entry)
@@ -303,22 +306,25 @@ ${CI_FLOW}
 `
 }
 
-// --- main ---
-const skills = discover()
-const uncategorised = skills.filter(s => !META[s.name])
-if (uncategorised.length) {
-  console.warn(`⚠️  ${uncategorised.length} skill(s) not in META (shown under "Uncategorised"): ${uncategorised.map(s => s.name).join(', ')}`)
-}
-const html = render(skills)
-
-if (process.argv.includes('--check')) {
-  const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : ''
-  if (current !== html) {
-    console.error('✗ skills-and-triggers.html is stale. Run: node scripts/gen-skills-doc.mjs')
-    process.exit(1)
+// --- main --- (only when run directly, not when imported for META/discover reuse)
+const runDirectly = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
+if (runDirectly) {
+  const skills = discover()
+  const uncategorised = skills.filter(s => !META[s.name])
+  if (uncategorised.length) {
+    console.warn(`⚠️  ${uncategorised.length} skill(s) not in META (shown under "Uncategorised"): ${uncategorised.map(s => s.name).join(', ')}`)
   }
-  console.log('✓ skills-and-triggers.html is up to date')
-} else {
-  writeFileSync(OUT, html)
-  console.log(`✓ Wrote ${OUT} (${skills.length} skills)`)
+  const html = render(skills)
+
+  if (process.argv.includes('--check')) {
+    const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : ''
+    if (current !== html) {
+      console.error('✗ skills-and-triggers.html is stale. Run: node scripts/gen-skills-doc.mjs')
+      process.exit(1)
+    }
+    console.log('✓ skills-and-triggers.html is up to date')
+  } else {
+    writeFileSync(OUT, html)
+    console.log(`✓ Wrote ${OUT} (${skills.length} skills)`)
+  }
 }
