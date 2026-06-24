@@ -9,7 +9,7 @@
  * demonstrable from scratch. Replaces the throwaway spike harness.
  */
 import { ref, watch, onMounted } from 'vue'
-import type { LayoutTree } from '../../../types/layout'
+import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 definePageMeta({ layout: 'admin', middleware: ['auth'] })
 
