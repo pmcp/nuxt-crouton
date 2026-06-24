@@ -1,11 +1,12 @@
 /**
- * Auto-seed the bookings demo when a *demo* book is created (#849).
+ * Auto-seed the demo content when a *demo* book is created (#849).
  *
  * Creating a book through the Velo UI emits the auth `crouton:operation` event
  * `auth:team:created` (fire-and-forget, from `afterCreateOrganization`). This
  * plugin listens for it and — ONLY for demo books — runs the shared
- * `@fyit/crouton-bookings` seed provider against the live D1, hung off the
- * real newly-created team, so the calendar/list open populated instead of empty.
+ * `@fyit/crouton-bookings` + `@fyit/crouton-pages` seed providers against the
+ * live D1, hung off the real newly-created team, so the calendar/list AND the
+ * public pages open populated instead of empty.
  *
  * Gating: the team slug must end with `-demo`. This is environment-independent
  * and explicit — a real customer book (e.g. `school-velotek`) is never touched,
@@ -27,6 +28,7 @@ import { defineNitroPlugin } from 'nitropack/runtime'
 import { sql, eq } from 'drizzle-orm'
 import { collectSeedSql } from '@fyit/crouton-core/shared/seed'
 import { provider as bookingsProvider } from '@fyit/crouton-bookings/seed'
+import { provider as pagesProvider, createPageWithBlocks } from '@fyit/crouton-pages/seed'
 import { organization } from '~~/server/db/schema'
 
 /** Demo books are explicitly named with a `-demo` slug suffix. */
@@ -51,13 +53,16 @@ export default defineNitroPlugin((nitroApp) => {
       const slug = org?.slug
       if (!slug || !isDemoSlug(slug)) return
 
-      // Build the bookings demo SQL bound to the REAL team (not a synthetic
-      // seed org) and execute it statement-by-statement against the live D1.
+      // Build the demo SQL bound to the REAL team (not a synthetic seed org)
+      // and execute it statement-by-statement against the live D1. Pages'
+      // `createPageWithBlocks` is injected so block-contributing providers can
+      // also seed a demo page (and the pages provider seeds its own demo page).
       const seedSql = await collectSeedSql({
-        providers: [bookingsProvider],
+        providers: [bookingsProvider, pagesProvider],
         teamId: payload.teamId,
         teamSlug: slug,
-        locale: 'nl'
+        locale: 'nl',
+        createPageWithBlocks
       })
 
       const statements = seedSql
@@ -69,11 +74,11 @@ export default defineNitroPlugin((nitroApp) => {
         await db.run(sql.raw(statement))
       }
 
-      console.log(`[velo/auto-seed] Seeded bookings demo for "${slug}" (${statements.length} statements)`)
+      console.log(`[velo/auto-seed] Seeded demo content for "${slug}" (${statements.length} statements)`)
     }
     catch (err) {
       // Non-blocking: a seed failure must never break team creation.
-      console.error('[velo/auto-seed] Failed to auto-seed bookings demo:', err)
+      console.error('[velo/auto-seed] Failed to auto-seed demo content:', err)
     }
   })
 })
