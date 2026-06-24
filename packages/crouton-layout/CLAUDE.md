@@ -33,12 +33,14 @@ empty layer; subsequent PRs move the code in:
 
 | Workstream | Moves in |
 |------------|----------|
-| #753 scaffold | package.json · nuxt.config.ts · this CLAUDE.md · `pkg:crouton-layout` label · package-catalog entry |
+| #753 scaffold ✅ | package.json · nuxt.config.ts · this CLAUDE.md · `pkg:crouton-layout` label · package-catalog entry |
+| #757 default-on ✅ (pulled early) | `crouton.manifest.ts` (`bundled: true`) · `layout` feature flag in `CroutonOptions` · `@fyit/crouton-layout` added to every app/fixture/poc `extends` + deps. **Empty layer wired into the graph first** so the code-moves below stay clean one-way + green. The functional proof lands in #758. |
 | #754 pure utils + types | `app/utils/layout-{compose,viability,tree,edit}.ts` + `app/types/layout{,-block}.ts` (+ tests); repoint the CLI import |
 | #755 components + composables | `Layout` / `LayoutRenderer` / `LayoutEditorPane` / `LayoutCollection(+Data)` / `LayoutForm` / `LayoutSpikeStats`; `useCroutonLayout{Blocks,Edit,Store}`; the `croutonLayoutBlocks` defaults |
 | #756 server side | `layout_configs` schema + `crouton-layouts/[layoutId].{get,put}` API + `/admin/[team]/layout` page (migration continuity) |
-| #757 default-on | `@fyit/crouton` extends this layer |
 | #758 prove it | typecheck + e2e + docs; port the mobile slideover (#749) + loading-state UX fixes into the core page |
+
+**Why #757 is first:** apps `extends: ['@fyit/crouton-core', …]` directly and core can't extend this layer (circular). So this layer only becomes active once it's in each app's `extends`. Wiring it (empty) up front means #754–#756 move code into an already-active layer — clean cross-layer auto-imports, no backward `core → layout` shims, one-way deps preserved at every PR.
 
 ## Key Files
 

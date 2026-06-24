@@ -109,6 +109,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
@@ -155,6 +158,9 @@ importers:
       '@fyit/crouton-charts':
         specifier: workspace:*
         version: link:../../packages/crouton-charts
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.4
@@ -207,6 +213,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
@@ -293,6 +302,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0
@@ -330,6 +342,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0
@@ -367,6 +382,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0
@@ -404,6 +422,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.0
@@ -438,6 +459,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-maps':
         specifier: workspace:*
         version: link:../../packages/crouton-maps
@@ -475,6 +499,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
@@ -542,6 +569,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../crouton-layout
       '@fyit/crouton-maps':
         specifier: workspace:*
         version: link:../crouton-maps
@@ -1399,6 +1429,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
@@ -1445,6 +1478,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.4
@@ -1491,6 +1527,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: ^0.17.0
         version: 0.17.4
@@ -1537,6 +1576,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-maps':
         specifier: workspace:*
         version: link:../../packages/crouton-maps
@@ -1592,6 +1634,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-maps':
         specifier: workspace:*
         version: link:../../packages/crouton-maps
@@ -1635,6 +1680,9 @@ importers:
       '@fyit/crouton-email':
         specifier: workspace:*
         version: link:../../packages/crouton-email
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.4
@@ -1731,6 +1779,9 @@ importers:
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
+      '@fyit/crouton-layout':
+        specifier: workspace:*
+        version: link:../../packages/crouton-layout
       '@fyit/crouton-pages':
         specifier: workspace:*
         version: link:../../packages/crouton-pages
