@@ -55,10 +55,11 @@ Every task is a **GitHub issue** (see `### GitHub Issue Tracking` below) and fol
 
 ```
 1. Claim the issue   → set it in-progress, use TodoWrite for the local breakdown
-2. Do The Work       → Follow CLAUDE.md patterns, KISS principle
-3. Run Type Checking → pnpm typecheck (runs per-app), fix errors immediately
-4. Update the issue  → comment progress / tick acceptance criteria
-5. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
+2. Test Sign-Off     → for packages/* LOGIC: write the test FIRST, agree on it, before any code (see "Test Sign-Off" below). Apps opt-in; pocs exempt. Skip for non-logic / schema / UI changes.
+3. Do The Work       → Follow CLAUDE.md patterns, KISS principle — make the agreed test green
+4. Run Type Checking → pnpm typecheck (runs per-app), fix errors immediately
+5. Update the issue  → comment progress / tick acceptance criteria
+6. Git Commit        → ALWAYS use /commit skill, reference (#NN) — NEVER git commit directly
 ```
 
 **ARCHAEOLOGY-FIRST for bugs (HARD GATE): research how & when a bug was introduced BEFORE fixing it.** The moment a bug, crash, failed build, broken test, or "this used to work" is reported, step 0 is to find the first-bad commit (`git log -S`/`-G`, `git blame`, `git bisect`) — or determine it's *not* a code regression (stale install, env, data) — and **record that finding on the tracking issue/PR** (open one if none exists). A symptom-first fix can "repair" code that was never broken. Run the **`bug-archaeology`** skill; it carries the protocol + the finding template. (#424)
@@ -227,6 +228,8 @@ Addon packages must register in `croutonApps` (in `app/app.config.ts`) to be det
 - **`fixtures/`** — throwaway e2e harness apps (not real apps).
 
 So: scaffold a new app at **`pocs/<name>`** (label `poc:<name>`); **promote `pocs/<name>` → `apps/<name>` only at production launch** (then it takes on the `apps/` rules, the `app:<name>` label, and prod deploy). Mirror `apps/velo` / `apps/fanfare` for structure either way. The endpoint of building a POC is a **deployed staging preview URL** (see the `/deploy` skill), not just merged code.
+
+When a POC instead **graduates into `packages/*`** (it was incubating a future package), that promotion is the checkpoint to **backfill test-first coverage** for its genuine logic — the Test Sign-Off gate (#774) is *off* for `pocs/*` but *on* for `packages/*`, so graduation is where the tests get written.
 
 ### New App `postinstall` Must Be Guarded
 
@@ -451,6 +454,35 @@ it). In the agent pipeline it's a gate in `.claude/agents/task-worker.md`; inter
 same by hand. It **reuses the same revision/approval loop and signal as the UI gate** (#310) —
 feedback goes inline on the committed `<collection>.md` in the diff; approval (a **comment**
 containing `lgtm`/`approve` — not a reaction or label, #572) unblocks generation.
+
+## Test Sign-Off (agree on the test before you write the code) — epic #774
+
+**When a task adds or changes hand-written LOGIC in `packages/*`, write the test first and agree on
+it before writing the code.** Run the **`test-review`** skill to render the proposed *failing*
+test(s) — the cases being asserted, in plain language plus the test code — get a human to sign off
+on the **behaviour**, and only then write the code that makes it green. The agreed test is the
+contract: "done" = that test passes. This is the third sign-off gate alongside Schema (#314, the
+data model) and UI (#307, the look) — pick the gate by *what the change is*.
+
+**Scope is by where the code currently lives (#779), not its origin or destiny:**
+
+| Current home | Test-first |
+|---|---|
+| `packages/*` | **On** (default) — what we maintain; every consuming app inherits its correctness |
+| `apps/*` | **Opt-in** — may be another user's app; their call, not ours to impose |
+| `pocs/*` | **Off** — the incubator must stay fast and safe-to-fail |
+
+The gate moves *with the code*: a POC has no fixed identity, so it's exempt while it's a POC, and
+**graduating to `packages/*` is the checkpoint to backfill its tests** (see the `pocs/` note above).
+Within `packages/*` the gate fires only on hand-written **logic** — a data model routes to the
+Schema gate, how something looks routes to the UI gate, and deterministic generated CRUD is covered
+by the e2e fixture smoke, not here.
+
+In the agent pipeline it's a gate in `.claude/agents/task-worker.md`; interactively, do the same by
+hand. It **reuses the same revision/approval loop and signal as the UI/Schema gates** (#310) — hold
+on `status:blocked`; approval is a **comment** containing `lgtm`/`approve` (not a reaction or label,
+#572) and unblocks the code. (The CI `test` job already hard-gates `pnpm test` — this gate is about
+*order*, writing the test first, not enforcement.)
 
 ## Documentation Organization
 
