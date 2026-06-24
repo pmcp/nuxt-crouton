@@ -19,15 +19,20 @@ definePageMeta({ layout: 'admin', middleware: ['auth'] })
 
 const LAYOUT_ID = 'default'
 const tree = ref<LayoutTree | null>(null)
+const loading = ref(true)
 const { load, save, saving } = useCroutonLayoutStore()
 
 // Persist every edit (debounced in the store).
 watch(tree, (v) => { if (v) save(LAYOUT_ID, v) })
 
 onMounted(async () => {
-  const persisted = await load(LAYOUT_ID)
-  // Fall back to the generated default so the preview is never a blank canvas.
-  tree.value = persisted ?? (generatedDefault.tree as LayoutTree)
+  try {
+    const persisted = await load(LAYOUT_ID)
+    // Fall back to the generated default so the preview is never a blank canvas.
+    tree.value = persisted ?? (generatedDefault.tree as LayoutTree)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -45,7 +50,14 @@ onMounted(async () => {
     </template>
 
     <template #body>
-      <div class="h-full w-full">
+      <div class="relative h-full w-full">
+        <div
+          v-if="loading"
+          class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-default/70 backdrop-blur-sm"
+        >
+          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-primary" />
+          <span class="text-sm text-muted">Loading layout…</span>
+        </div>
         <CroutonLayout v-model="tree" />
       </div>
     </template>
