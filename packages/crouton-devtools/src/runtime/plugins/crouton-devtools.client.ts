@@ -1,6 +1,6 @@
-import { createVNode, render } from 'vue'
 import { defineNuxtPlugin, useRuntimeConfig } from 'nuxt/app'
 import CroutonDevTools from '../components/CroutonDevTools.vue'
+import { mountOverlayInBody } from '../overlay/mount'
 
 /**
  * Mounts the unified dev-tools launcher (#809).
@@ -11,11 +11,9 @@ import CroutonDevTools from '../components/CroutonDevTools.vue'
  * #811.
  *
  * The launcher is appended to `<body>` after mount and rendered with the host
- * app's context (`appContext`), so the global Nuxt UI components inside the SFC
- * resolve — without the host app having to place anything in its layout.
+ * app's context, so the global Nuxt UI components inside the SFC resolve —
+ * without the host app having to place anything in its layout.
  */
-const ROOT_ID = '__crouton_devtools_root'
-
 export default defineNuxtPlugin((nuxtApp) => {
   if (!import.meta.client) return
 
@@ -23,14 +21,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (!enabled) return
 
   nuxtApp.hook('app:mounted', () => {
-    if (document.getElementById(ROOT_ID)) return
-
-    const container = document.createElement('div')
-    container.id = ROOT_ID
-    document.body.appendChild(container)
-
-    const vnode = createVNode(CroutonDevTools)
-    vnode.appContext = nuxtApp.vueApp._context
-    render(vnode, container)
+    mountOverlayInBody(CroutonDevTools, nuxtApp.vueApp._context, '__crouton_devtools_root')
   })
 })
+

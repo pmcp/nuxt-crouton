@@ -12,8 +12,13 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 | `src/runtime/composables/useCroutonDevTools.ts` | Dev-tools **tool registry** — `registerTool()` + reactive `tools`/`toggle` the launcher reads (#809) |
 | `src/runtime/components/CroutonDevTools.vue` | Unified **glasses launcher** → Nuxt UI dropdown of toggleable tools (#809) |
 | `src/runtime/plugins/crouton-devtools.client.ts` | Mounts the launcher into the host app's context (appContext) so global Nuxt UI components resolve (#809) |
+| `src/runtime/overlay/mount.ts` | `mountOverlayInBody()` — shared appContext-mount helper for launcher + Annotate overlay (#809/#810) |
+| `src/runtime/tools/console.ts` | **Console** tool factory — eruda, lazy-loaded on toggle; injectable loader (unit-tested) (#810) |
+| `src/runtime/tools/annotate.ts` | **Annotate** tool factory — maps activate/deactivate → select-mode start/stop (#810) |
+| `src/runtime/composables/useCroutonAnnotate.ts` | Annotate state + DOM select/highlight + POST to `/api/_review` (#810) |
+| `src/runtime/components/CroutonAnnotate.vue` | Annotate overlay — highlight + Nuxt UI comment panel (#810) |
+| `src/runtime/plugins/tools/console.client.ts` · `annotate.client.ts` | Register the two tools (Annotate also mounts its overlay) (#810) |
 | `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
-| `src/runtime/plugins/review-overlay.client.ts` | In-page preview-review overlay: click element → comment → payload (#489) |
 | `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
 | `src/runtime/server/api/review.post.ts` | `POST /api/_review` → GitHub PR comment bridge (#491) |
 | `src/runtime/server/utils/githubApp.ts` | Crouton App auth: WebCrypto, dependency-free installation-token mint for the bridge (#519) |
@@ -119,8 +124,8 @@ The module auto-detects the events package via layer inspection.
 
 One neutral **glasses** button (bottom-right) → a Nuxt UI 4 dropdown of toggleable
 tools. The launcher only renders the registry; it owns no tool logic, so adding
-the next tool is one `registerTool()` call, not another floating button. Console
-(eruda) + Annotate fold in as the first two tools in #810.
+the next tool is one `registerTool()` call, not another floating button. **Console
+(eruda) + Annotate** are the first two registered tools (#810).
 
 ```ts
 // A tool registers itself from its own client plugin:
@@ -148,11 +153,23 @@ registerTool({
 - **Mount** (`crouton-devtools.client.ts`) — appends the launcher to `<body>` on
   `app:mounted` and renders it with `nuxtApp.vueApp._context` as `appContext`, so
   global U* components resolve without the host app placing anything in its layout.
-- **Gating** — the module adds the plugin + auto-imports `useCroutonDevTools`
-  only in local dev, or when a build sets `NUXT_PUBLIC_CROUTON_DEVTOOLS=true`
-  (→ `runtimeConfig.public.croutonDevtools`); the plugin double-checks at runtime,
-  so production ships nothing. Registered **before** the dev-only early return so a
-  flagged staging build gets it. Folder-based auto-on for pocs/fixtures is #811.
+- **Tools (#810):**
+  - **Console** (`tools/console.ts`) — eruda, **lazy-imported on first toggle**
+    (own chunk, nothing fetched until opened). Supersedes the separate
+    `@fyit/crouton-devtools/eruda` `extends` layer (kept but deprecated). The
+    `loadEruda` arg is injectable so the tool is unit-tested without the lib.
+  - **Annotate** (`tools/annotate.ts` + `useCroutonAnnotate` + `CroutonAnnotate.vue`)
+    — pin a comment on a page element → builds the `ReviewAnnotation` (reusing the
+    pure `overlay/capture.ts`) → POSTs to `/api/_review`. The launcher toggle drives
+    select-mode; the **old standalone `review-overlay.client.ts` FAB is retired**
+    (deleted). Comment panel rebuilt on Nuxt UI 4; the highlight is a styled div.
+- **Gating** — the module adds the plugins + auto-imports `useCroutonDevTools`
+  in local dev, when a build sets `NUXT_PUBLIC_CROUTON_DEVTOOLS=true`, or on a
+  staging review build (`NUXT_PUBLIC_CROUTON_REVIEW=true`, so Annotate replaces the
+  old overlay there) (→ `runtimeConfig.public.croutonDevtools`); the plugins
+  double-check at runtime, so production ships nothing. Registered **before** the
+  dev-only early return so a flagged staging build gets it. Folder-based auto-on for
+  pocs/fixtures + flag unification is #811.
 
 ## Preview-review source stamping — `data-crouton-src` (epic #488, #490)
 
@@ -182,23 +199,24 @@ app's `cf:staging` script, never `cf:deploy`). Flag absent → transform not reg
 Registered in `module.ts` *before* the dev-only early return (staging is a non-dev
 build). Verified by `test/croutonSrc.test.ts`.
 
-### The in-page overlay (#489)
+### The in-page overlay — now the Annotate tool (#489 → #810)
 
-Under the same `NUXT_PUBLIC_CROUTON_REVIEW` gate, the module registers a client
-plugin (`runtime/plugins/review-overlay.client.ts`) that renders a self-contained
-feedback toolbar on the preview: toggle select-mode → hover highlights elements →
-click freezes one and opens a comment box. On send it builds a `ReviewAnnotation`
-(`route`, `cssSelector`, `componentFile` from the nearest `data-crouton-src`,
-`boundingBox`, `commentText`) and POSTs it to `/api/_review`.
+The feedback overlay is the **Annotate tool** in the unified menu (#810): toggle
+it from the glasses launcher → hover highlights elements → click freezes one and
+opens a comment box. On send it builds a `ReviewAnnotation` (`route`,
+`cssSelector`, `componentFile` from the nearest `data-crouton-src`, `boundingBox`,
+`commentText`) and POSTs it to `/api/_review`.
 
-- **Vanilla DOM on purpose** — no dependency on the host app's UI library, so it
-  renders identically on any crouton app/sandbox preview.
-- **The `/api/_review` endpoint → GitHub PR comment bridge lands in #491.** Until
-  then the overlay logs + toasts the payload so capture is verifiable standalone.
-- Pure capture logic lives in `runtime/overlay/capture.ts` (DOM-pure, happy-dom
-  unit tests in `test/capture.test.ts`); the plugin is the DOM/UX glue around it.
-- Runtime Nuxt composables are imported from `nuxt/app` (not `#imports`) so the
-  file typechecks even when pulled into a consuming app's program.
+- **History:** originally a self-contained vanilla-DOM FAB
+  (`review-overlay.client.ts`, #489) so it didn't depend on the host UI library.
+  Rebuilt on **Nuxt UI 4** for #810 (the launcher already mounts in the host
+  app's context) — comment panel = `CroutonAnnotate.vue` (UTextarea/UButton),
+  highlight = a styled fixed div; the old FAB plugin is **deleted**.
+- Pure capture logic still lives in `runtime/overlay/capture.ts` (DOM-pure,
+  happy-dom unit tests in `test/capture.test.ts`), reused unchanged.
+- The select/POST glue lives in `runtime/composables/useCroutonAnnotate.ts`; it
+  uses bare `$fetch` (Nuxt global) like the old overlay did.
+- **No PR? → opens a new issue instead** is #812 (target-resolution ladder).
 
 ### The GitHub bridge — `POST /api/_review` (#491)
 
