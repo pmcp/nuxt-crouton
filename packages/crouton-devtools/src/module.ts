@@ -148,16 +148,25 @@ export default defineNuxtModule<ModuleOptions>({
       method: 'post'
     })
 
-    // Add events-specific RPC handlers (when events package detected)
-    addServerHandler({
-      route: '/__nuxt_crouton_devtools/api/events',
-      handler: resolver.resolve('./runtime/server-rpc/events')
-    })
+    // Add events-specific RPC handlers — ONLY when the events package is present.
+    // These handlers statically `import('~~/.../schema')` event-table paths that
+    // don't exist in a standard generated app (its schema lives at
+    // `server/db/schema`). nitro dev eagerly resolves those literal specifiers at
+    // build time, so registering them unconditionally hard-fails `pnpm dev` with
+    // ENOENT for any devtools-enabled, events-free app (#799). The runtime handler
+    // already no-ops when `!hasEventsPackage`, so gating registration here loses
+    // nothing and keeps the broken import out of the bundle entirely.
+    if (hasEventsPackage) {
+      addServerHandler({
+        route: '/__nuxt_crouton_devtools/api/events',
+        handler: resolver.resolve('./runtime/server-rpc/events')
+      })
 
-    addServerHandler({
-      route: '/__nuxt_crouton_devtools/api/events/health',
-      handler: resolver.resolve('./runtime/server-rpc/eventsHealth')
-    })
+      addServerHandler({
+        route: '/__nuxt_crouton_devtools/api/events/health',
+        handler: resolver.resolve('./runtime/server-rpc/eventsHealth')
+      })
+    }
 
     // Add system operations RPC handlers (D1: System Ops tab)
     addServerHandler({
