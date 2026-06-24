@@ -14,6 +14,13 @@ interface AuthModalState {
   previousPath: string
   prefillEmail?: string
   /**
+   * Pre-fills the login/register password field (e.g. from a `?password=`
+   * link shared for a demo/preview). The form is filled but NOT submitted —
+   * the user still clicks Sign in. Convenience only; see the security note on
+   * `open()` before sharing such links.
+   */
+  prefillPassword?: string
+  /**
    * When true, the modal can be dismissed (X / Esc / outside-click) and
    * restores `previousPath`. Used by the "staff door" on pages that have their
    * own gate behind them (e.g. a scoped kassa page falls back to the PIN gate),
@@ -32,8 +39,17 @@ export function useAuthModal() {
     previousPath: '/'
   }))
 
-  function open(mode: AuthModalMode, redirectTo: string, previousPath: string, prefillEmail?: string, dismissible = false) {
-    state.value = { open: true, mode, redirectTo, previousPath, prefillEmail, dismissible }
+  /**
+   * Open the auth modal.
+   *
+   * `prefillEmail` / `prefillPassword` pre-fill the credential fields without
+   * submitting — handy for handing someone a ready-to-go demo/preview link
+   * (`/auth/login?email=…&password=…`). SECURITY: a password in a URL lands in
+   * browser history, server/proxy access logs and any `Referer` header, so only
+   * use this for throwaway demo credentials — never a real account's password.
+   */
+  function open(mode: AuthModalMode, redirectTo: string, previousPath: string, prefillEmail?: string, dismissible = false, prefillPassword?: string) {
+    state.value = { open: true, mode, redirectTo, previousPath, prefillEmail, prefillPassword, dismissible }
   }
 
   /**

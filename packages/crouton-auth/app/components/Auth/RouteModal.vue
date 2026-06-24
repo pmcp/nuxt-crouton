@@ -172,6 +172,17 @@ const loginSubmitButton = computed(() => ({
   block: true
 }))
 
+// Prefill credentials from a shared link (e.g. /auth/login?email=…&password=…)
+// when the login form mounts. Fills the fields only — the user still clicks
+// Sign in (we never auto-submit). Re-applies if the form remounts (e.g. magic-
+// link toggle) while still in login mode.
+const loginFormRef = useTemplateRef('loginForm')
+watch(loginFormRef, (form) => {
+  if (!form?.state) return
+  if (state.value.prefillEmail) form.state.email = state.value.prefillEmail
+  if (state.value.prefillPassword) form.state.password = state.value.prefillPassword
+})
+
 async function onLoginSubmit(event: FormSubmitEvent<{ email: string, password?: string, rememberMe?: boolean }>) {
   formError.value = null
   submitting.value = true
@@ -359,6 +370,7 @@ async function onForgotPasswordSubmit(event: FormSubmitEvent<{ email: string }>)
           <!-- Login form -->
           <template v-else>
             <UAuthForm
+              ref="loginForm"
               :fields="loginFields"
               :providers="hasPassword ? oauthButtons : []"
               :submit="loginSubmitButton"

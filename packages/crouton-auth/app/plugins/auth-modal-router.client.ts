@@ -29,6 +29,10 @@ export default defineNuxtPlugin(() => {
 
     const redirectTo = (to.query.redirect as string) || '/'
     const prefillEmail = (to.query.email as string) || undefined
+    // Convenience prefill for shared demo/preview links — fills the field but
+    // never auto-submits. Only for throwaway demo credentials (a password in a
+    // URL is logged in history / proxies / Referer).
+    const prefillPassword = (to.query.password as string) || undefined
     // A "staff door" link (e.g. on a scoped kassa page) passes ?dismissible=1
     // so the modal can be closed back to the page behind it (which re-asserts
     // its own gate). Hard auth redirects omit it and stay non-dismissable.
@@ -38,7 +42,7 @@ export default defineNuxtPlugin(() => {
     window.history.pushState(null, '', to.fullPath)
 
     // Open the auth modal
-    useAuthModal().open(mode, redirectTo, from.fullPath, prefillEmail, dismissible)
+    useAuthModal().open(mode, redirectTo, from.fullPath, prefillEmail, dismissible, prefillPassword)
 
     // Cancel the router navigation
     return false
