@@ -373,10 +373,19 @@ export const A11Y_EXCLUDED_RULES: readonly string[] = ['color-contrast']
  * rule (e.g. `image-alt`, `label`, `link-name`, `select-name`) on a scanned page
  * still fails the gate — so a template that ships an inaccessible element is caught.
  *
- *   button-name      — icon-only shell buttons (pagination, menu toggles) with no name
- *   aria-allowed-attr — `aria-controls` on reka-ui collapsible nav trailing icons
+ *   aria-allowed-attr — `aria-controls` on reka-ui collapsible nav trailing-icon
+ *     elements (`data-slot="linkTrailing"`), emitted by Nuxt UI 4 `UNavigationMenu`
+ *     internals. Our code never adds `aria-controls` (verified #735) — it's an
+ *     upstream reka-ui/Nuxt UI bug, so it stays baselined pending an upstream fix.
+ *
+ * REMOVED (now enforced — the gate FAILS on any regression):
+ *   button-name — driven to zero across every fixture in #735 by naming the
+ *     icon-only buttons in crouton-core (layout switcher, rows-per-page select,
+ *     tree node menus, workspace create), crouton-pages (workspace reorder +
+ *     create), crouton-bookings (WeekStrip), and crouton-assets (Picker clear).
+ *     Verified green on all six fixtures via @axe-core/playwright.
  */
-export const A11Y_KNOWN_SHELL_RULES: readonly string[] = ['aria-allowed-attr', 'button-name']
+export const A11Y_KNOWN_SHELL_RULES: readonly string[] = ['aria-allowed-attr']
 
 /** A flattened axe violation — enough to fail a test with an actionable message. */
 export interface A11yViolation {
