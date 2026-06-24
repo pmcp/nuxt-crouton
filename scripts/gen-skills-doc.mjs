@@ -24,6 +24,7 @@ const META = {
   crouton: { group: 'build', triggers: ['ask'] },
   'ui-proposal': { group: 'build', triggers: ['flow', 'ask'] },
   'schema-review': { group: 'build', triggers: ['flow', 'ask'] },
+  'test-review': { group: 'build', triggers: ['flow', 'ask'] },
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
   'provider-swap': { group: 'build', triggers: ['ask'] },
   'block-authoring': { group: 'build', triggers: ['ask', 'flow'] },
