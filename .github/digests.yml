@@ -16,7 +16,7 @@
 #   to:       [addr, ...]               recipients — required only when deliver includes email
 
 housekeeping:
-  schedule: weekly:wed
+  schedule: daily   # run more regularly (#763) — low-noise: upserts ONE standing issue, empty sections drop
   deliver: [issue]
   # to: [you@example.com]   # only used when deliver includes email
 

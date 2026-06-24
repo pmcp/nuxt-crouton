@@ -79,13 +79,19 @@ if (data.stuck?.length) {
 }
 
 if (data.staleEpics?.length) {
-  sections.push([
-    '✅ Epics ready to close',
-    [
-      'All sub-issues are closed but the epic is still open — verify the rollup, then close:',
-      ...data.staleEpics.map((e) => `- ${link(e.number, e.title, e.url)} — ${e.children}/${e.children} children closed`)
-    ]
-  ])
+  // Split by the action each epic needs (#763): postmortem-first vs just-close.
+  const needsPm = data.staleEpics.filter((e) => e.state !== 'ready-to-close')
+  const ready = data.staleEpics.filter((e) => e.state === 'ready-to-close')
+  const lines = ['All sub-issues are closed but the epic is still open:']
+  if (needsPm.length) {
+    lines.push('', '**Run the postmortem, then close:**',
+      ...needsPm.map((e) => `- ${link(e.number, e.title, e.url)} — ${e.children}/${e.children} children closed`))
+  }
+  if (ready.length) {
+    lines.push('', '**Postmortem done — ready to close:**',
+      ...ready.map((e) => `- ${link(e.number, e.title, e.url)} — ${e.children}/${e.children} children closed`))
+  }
+  sections.push(['✅ Epics ready to close', lines])
 }
 
 if (data.idlePRs?.length) {
