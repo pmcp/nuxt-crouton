@@ -1,0 +1,42 @@
+{
+  "name": "@fyit/crouton-layout",
+  "version": "0.1.0",
+  "description": "Deterministic layout engine for Nuxt Crouton — the layout editor, renderer, default-layout compose pass, placeable blocks, and layout_configs storage. Default-on via @fyit/crouton.",
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "exports": {
+    ".": "./nuxt.config.ts"
+  },
+  "files": [
+    "app",
+    "server",
+    "nuxt.config.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "nuxt",
+    "nuxt-layer",
+    "layout",
+    "crouton"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git",
+    "directory": "packages/crouton-layout"
+  },
+  "bugs": {
+    "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/FriendlyInternet/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@fyit/crouton-auth": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@nuxt/ui": "^4.3.0",
+    "nuxt": "^4.0.0"
+  }
+}
