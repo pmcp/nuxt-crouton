@@ -11,14 +11,15 @@ This replaces the ephemeral bench rig (a manual `tmux` dev server + a hand-typed
 | Piece | What it gives you |
 |-------|-------------------|
 | `NITRO_PRESET=node-server` build | a real production server (`.output/server/index.mjs`), not `nuxt dev` |
-| `fanfare.service` (systemd) | auto-start on boot, `Restart=always`, binds `HOST=0.0.0.0 PORT=3007`, `CROUTON_PRINTING_DRAINER=1` |
+| `fanfare.service` (systemd) | auto-start on boot, `Restart=always`, binds `HOST=0.0.0.0 PORT=80`, `CROUTON_PRINTING_DRAINER=1` |
+| `avahi-alias@kassa.local` (mDNS) | the till answers to **`http://kassa.local`** (per-interface CNAME), not `IP:3007` |
 | `configure-network.sh` (NetworkManager) | a **persistent** `192.168.1.51/24` route to the printer subnet (no more `ip addr add`) |
 | `fanfare-healthcheck.{service,timer}` | boot + 5-min reachability check of the RUT + both printers, logged to the journal |
 
 ## Topology (why the network bits matter)
 
 ```
- phone (home/venue wifi) ──▶ Pi wlan0  192.168.0.180:3007   ← the POS URL
+ phone (venue/home wifi) ──▶ http://kassa.local  (mDNS → Pi :80)  ← the POS URL
                                   │
                                   ▼  fanfare (node-server) + ESC/POS drainer
  Pi eth0  192.168.1.51/24 ──▶ RUT956 LAN ──▶ kitchen 192.168.1.70:9100
@@ -47,8 +48,8 @@ rebuilds (with `--build`), re-renders the unit, and restarts the service.
 Then, **once**, create the venue data (persists across reboots in
 `.data/db/sqlite.db`):
 
-1. On a phone on the **same wifi as the Pi**, open `http://192.168.0.180:3007`,
-   register an account + team.
+1. On a phone on the **same wifi as the Pi**, open **`http://kassa.local`**
+   (iOS/macOS resolve it via mDNS, no setup), register an account + team.
 2. Build the event in the **admin UI**: create an event (set its helper PIN),
    add locations (e.g. *Keuken*, *Bar*), products, and one `network-escpos`
    printer per location pointed at its IP (kitchen `192.168.1.70`, bar
@@ -73,8 +74,23 @@ sudo systemctl restart fanfare           # restart after a manual rebuild
 ```
 
 **Verify reboot-survival:** `sudo reboot`, wait ~1 min, then from a phone load
-`http://192.168.0.180:3007` and ring up an order — kitchen + bar tickets print,
+`http://kassa.local` and ring up an order — kitchen + bar tickets print,
 nothing touched by hand.
+
+## The friendly URL
+
+Staff reach the till at **`http://kassa.local`** — no IP, no `:3007`:
+- The app binds **port 80** (`fanfare.service` grants the non-root process
+  `CAP_NET_BIND_SERVICE`), so the URL drops the port.
+- `avahi-alias@kassa.local` publishes an **mDNS CNAME** to this host, resolved
+  **per-interface** — a phone on the RUT wifi gets the wired `.51`, a bench phone
+  on home wifi gets `.180`, with no per-network config. `BETTER_AUTH_URL` is set
+  to match so session cookies line up.
+- **iOS/macOS** resolve `.local` natively. **Android/Windows don't** — for an
+  all-device venue, add one line to the venue router / RUT DNS (dnsmasq):
+  `address=/kassa/<the till's IP on that network>` → staff use `http://kassa`.
+  (`setup.sh` prints this line for you.)
+- Change the name by passing `ALIAS=till.local ./setup.sh`.
 
 ## Gotchas (learned the hard way)
 
@@ -101,3 +117,5 @@ nothing touched by hand.
 | `fanfare.env.example` | secrets template → copy to `/etc/fanfare/fanfare.env` |
 | `configure-network.sh` | persistent NetworkManager printer-subnet route |
 | `healthcheck.sh` | RUT + printer reachability check (exit ≠ 0 when degraded) |
+| `avahi-alias` | mDNS CNAME publisher — `<name>.local` → this host (per-interface) |
+| `avahi-alias@.service` | systemd template running the publisher (`avahi-alias@kassa.local`) |

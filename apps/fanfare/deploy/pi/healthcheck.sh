@@ -17,7 +17,7 @@ KITCHEN="${KITCHEN_IP:-192.168.1.70}"
 BAR="${BAR_IP:-192.168.1.72}"
 PORT="${PRINTER_PORT:-9100}"
 ETH_ADDR="${ETH_ADDR:-192.168.1.51/24}"
-APP_URL="${APP_HEALTH_URL:-http://127.0.0.1:3007/}"
+APP_URL="${APP_HEALTH_URL:-http://127.0.0.1/}"   # the till serves on port 80
 
 fail=0
 log() { echo "[fanfare-health] $*"; }

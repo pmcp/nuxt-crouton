@@ -18,10 +18,13 @@ WorkingDirectory=__APP_DIR__
 # Nitro server plugin gated on this flag, so it runs in the production build too.
 Environment=NODE_ENV=production
 Environment=HOST=0.0.0.0
-Environment=PORT=3007
+Environment=PORT=80
 Environment=CROUTON_PRINTING_DRAINER=1
 # Secrets (BETTER_AUTH_SECRET, BETTER_AUTH_URL) live outside the repo.
 EnvironmentFile=/etc/fanfare/fanfare.env
+# Bind port 80 (the friendly URL drops the :3007) as the non-root User above —
+# the only privileged capability the app needs.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 ExecStart=__NODE_BIN__ __APP_DIR__/.output/server/index.mjs
 Restart=always
 RestartSec=3

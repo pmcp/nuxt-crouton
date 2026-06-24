@@ -20,6 +20,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "$HERE/../.." && pwd)"          # apps/fanfare
 RUN_USER="${SUDO_USER:-$(id -un)}"
 ENV_FILE="/etc/fanfare/fanfare.env"
+ALIAS="${ALIAS:-kassa.local}"   # friendly mDNS name — the till is reached by name, not IP:port
 
 log() { echo "[setup] $*"; }
 
@@ -61,6 +62,15 @@ else
   log "$ENV_FILE already exists — leaving it"
 fi
 
+# Point auth at the friendly URL (the till is reached by name, not IP:port), so
+# session cookies match what staff type. Idempotent.
+log "pointing BETTER_AUTH_URL at http://$ALIAS"
+if sudo grep -q '^BETTER_AUTH_URL=' "$ENV_FILE" 2>/dev/null; then
+  sudo sed -i "s#^BETTER_AUTH_URL=.*#BETTER_AUTH_URL=http://$ALIAS#" "$ENV_FILE"
+else
+  echo "BETTER_AUTH_URL=http://$ALIAS" | sudo tee -a "$ENV_FILE" >/dev/null
+fi
+
 # --- 3. render + install the systemd unit -------------------------------------
 log "installing /etc/systemd/system/fanfare.service"
 sed -e "s|__USER__|$RUN_USER|g" \
@@ -98,15 +108,30 @@ Unit=fanfare-healthcheck.service
 WantedBy=timers.target
 UNIT
 
+# --- 5b. friendly mDNS URL ($ALIAS) -------------------------------------------
+# Publish a per-interface CNAME alias so the till answers to a name, not IP:port.
+log "installing the mDNS alias $ALIAS"
+if ! python3 -c 'import dbus' 2>/dev/null; then
+  log "  installing python3-dbus"
+  sudo apt-get update -qq && sudo apt-get install -y -qq python3-dbus
+fi
+sudo install -m 755 "$HERE/avahi-alias" /usr/local/bin/avahi-alias
+sed "s|__ALIAS_BIN__|/usr/local/bin/avahi-alias|g" "$HERE/avahi-alias@.service" \
+  | sudo tee /etc/systemd/system/avahi-alias@.service >/dev/null
+
 # --- 6. enable + (re)start ----------------------------------------------------
 log "enabling + starting units"
 sudo systemctl daemon-reload
 sudo systemctl enable --now fanfare.service
 sudo systemctl enable --now fanfare-healthcheck.timer
+sudo systemctl enable --now "avahi-alias@${ALIAS}.service"
 sudo systemctl restart fanfare.service   # pick up a fresh build if re-run
 
 log "done. status:"
 sudo systemctl --no-pager --lines=0 status fanfare.service || true
 echo
-log "next: register an account + team at the venue URL, then seed the event (see README)."
+log "the till is reachable at  http://$ALIAS  (iOS/macOS resolve it with zero config)."
+log "for Android/Windows, add a name on the venue router/RUT DNS (dnsmasq), e.g.:"
+log "    address=/kassa/<the till's IP on that network>   -> staff then use http://kassa"
+log "next: register an account + team at http://$ALIAS, then set up the event (see README)."
 log "verify the rig with: $HERE/healthcheck.sh"
