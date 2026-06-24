@@ -26,13 +26,29 @@ export default defineBuildConfig({
       pattern: ['**/*.ts'],
       loaders: ['js']
     },
-    // Client review-overlay plugin (#489)
+    // Client plugins: review-overlay (#489) + dev-tools launcher mount (#809)
     {
       input: 'src/runtime/plugins',
       outDir: 'dist/runtime/plugins',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
       loaders: ['js']
+    },
+    // Dev-tools registry composable (#809)
+    {
+      input: 'src/runtime/composables',
+      outDir: 'dist/runtime/composables',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Dev-tools launcher SFC (#809) — mkdist compiles the .vue to .mjs (+ .css)
+    {
+      input: 'src/runtime/components',
+      outDir: 'dist/runtime/components',
+      builder: 'mkdist',
+      pattern: ['**/*.vue'],
+      loaders: ['vue', 'js']
     },
     // Pure capture helpers shared by the overlay (#489)
     {
