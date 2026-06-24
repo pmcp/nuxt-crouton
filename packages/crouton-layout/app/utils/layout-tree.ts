@@ -14,7 +14,7 @@
  * the renderer + `useCroutonLayoutBlocks().sanitizeConfig` so there's one
  * allowlist. Pure (no Nuxt runtime) so it's unit-testable.
  */
-import type { LayoutNode, LayoutTree } from '../types/layout'
+import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 /** Hard recursion cap — a hostile/looping tree can't blow the stack. */
 const MAX_DEPTH = 12
