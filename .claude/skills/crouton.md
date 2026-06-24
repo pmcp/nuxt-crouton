@@ -322,8 +322,9 @@ arranges the just-generated collections into a good default (no LLM):
 `crouton-seed` upserts this tree into `layout_configs` (row `default`), so the
 POC boots laid-out — editable in `CroutonLayout`, the layout is **data** not
 `.vue`. Reviewed via the usual UI sign-off loop (#307: staging preview → `approve`).
-The rule set lives in `crouton-core/app/utils/layout-compose.ts`
-(`composeDefaultLayout`); the LLM `/layout` pass (#711) is gated and out of scope.
+The rule set lives in `crouton-layout/app/utils/layout-compose.ts`
+(`composeDefaultLayout`, in the `@fyit/crouton-layout` package — #751);
+the LLM `/layout` pass (#711) is gated and out of scope.
 
 ## Generated Files
 

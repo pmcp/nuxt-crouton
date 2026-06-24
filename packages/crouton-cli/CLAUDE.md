@@ -281,7 +281,7 @@ crouton db-pull --config ./custom-wrangler.jsonc
 | `bin/crouton-generate.js` | CLI entry point (citty with 12 subcommands) |
 | `bin/crouton-seed.mjs` | `crouton-seed` entry — app DB seeding (citty) |
 | `lib/seed-app.ts` | Seed runner: discover providers, order, collect SQL, run wrangler. Also seeds the **default layout** (`crouton.layout.json` → `layout_configs[default]`, #709) |
-| `lib/compose-layout.ts` | **Deterministic default-layout step** (#709) — after generation, runs crouton-core's `composeDefaultLayout` over the generated collections and writes `crouton.layout.json` (a `layout_configs` tree the POC boots with). `registryKeyFor(layer, collection)` mirrors the generated registry key; mirrors the core + bookings block sizing contracts (no live `app.config` at generate time) |
+| `lib/compose-layout.ts` | **Deterministic default-layout step** (#709) — after generation, runs `@fyit/crouton-layout`'s `composeDefaultLayout` (moved out of crouton-core, #751) over the generated collections and writes `crouton.layout.json` (a `layout_configs` tree the POC boots with). `registryKeyFor(layer, collection)` mirrors the generated registry key; mirrors the core + bookings block sizing contracts (no live `app.config` at generate time) |
 | `lib/generate-collection.ts` | Main orchestrator (~74KB) |
 | `lib/init-app.ts` | Init pipeline (scaffold → generate → doctor) |
 | `lib/generators/*.ts` | Template generators (14 files) |
@@ -519,7 +519,7 @@ crouton.layout.json                       # Deterministic default layout tree (#
 ## Default Layout (generate → POC, #709)
 
 After collections are generated, `runPostGeneration` runs the **deterministic
-layout pass** (`lib/compose-layout.ts` → crouton-core's `composeDefaultLayout`)
+layout pass** (`lib/compose-layout.ts` → `@fyit/crouton-layout`'s `composeDefaultLayout`)
 and writes **`crouton.layout.json`** at the app root: a `layout_configs`-format
 tree that arranges the generated collections into a good default — **calendar-primary**
 when the bookings package is in play, otherwise **master-detail** (list + form),
