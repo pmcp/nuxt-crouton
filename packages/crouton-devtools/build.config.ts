@@ -26,7 +26,7 @@ export default defineBuildConfig({
       pattern: ['**/*.ts'],
       loaders: ['js']
     },
-    // Client plugins: review-overlay (#489) + dev-tools launcher mount (#809)
+    // Client plugins: launcher mount (#809) + tool registrations console/annotate (#810)
     {
       input: 'src/runtime/plugins',
       outDir: 'dist/runtime/plugins',
@@ -34,10 +34,18 @@ export default defineBuildConfig({
       pattern: ['**/*.ts'],
       loaders: ['js']
     },
-    // Dev-tools registry composable (#809)
+    // Dev-tools registry + annotate composables (#809, #810)
     {
       input: 'src/runtime/composables',
       outDir: 'dist/runtime/composables',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Dev-tool definitions: Console (eruda) + Annotate factories (#810)
+    {
+      input: 'src/runtime/tools',
+      outDir: 'dist/runtime/tools',
       builder: 'mkdist',
       pattern: ['**/*.ts'],
       loaders: ['js']

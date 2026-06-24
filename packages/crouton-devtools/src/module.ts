@@ -14,6 +14,8 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {},
   async setup(_options, nuxt) {
+    const reviewOn = process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true'
+
     // --- Preview-review source stamping (epic #488, #490) -------------------
     // Inject `data-crouton-src="<relative .vue path>"` on each component's root
     // element at COMPILE time, so a click on a deployed staging preview resolves
@@ -23,7 +25,7 @@ export default defineNuxtModule<ModuleOptions>({
     // `cf:staging` build), NEVER production. Flag absent → transform not installed
     // → zero attributes in the build. Runs BEFORE the dev-only early return below
     // because staging is a non-dev build.
-    if (process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true') {
+    if (reviewOn) {
       const reviewResolver = createResolver(import.meta.url)
 
       // 1. Stamp components with their source path (#490).
@@ -38,13 +40,12 @@ export default defineNuxtModule<ModuleOptions>({
         createCroutonSrcTransform(nuxt.options.rootDir)
       ]
 
-      // 2. Expose the flag to the client + mount the in-page review overlay (#489).
+      // 2. Expose the flag to the client. The in-page feedback UI is now the
+      // Annotate tool in the unified menu (#810) — the standalone overlay FAB
+      // (review-overlay.client) is retired; the launcher block below turns on
+      // under this flag too, so a staging review build gets the menu.
       nuxt.options.runtimeConfig.public ||= {}
       ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonReview = true
-      addPlugin({
-        src: reviewResolver.resolve('./runtime/plugins/review-overlay.client'),
-        mode: 'client'
-      })
 
       // 3. Server bridge: POST /api/_review → GitHub PR comment (#491).
       // Credentials stay server-side; populated at runtime from Worker env so
@@ -76,11 +77,14 @@ export default defineNuxtModule<ModuleOptions>({
     // not another floating button. Console + Annotate fold in as the first two
     // tools (#810).
     //
-    // Enabled in local dev, or when a build opts in via
-    // NUXT_PUBLIC_CROUTON_DEVTOOLS=true (folder-based auto-on for pocs/fixtures
-    // is #811). Registered BEFORE the dev-only early return so a flagged staging
-    // build gets it too; runtime-gated as well, so production ships nothing.
-    if (nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true') {
+    // Enabled in local dev, when a build opts in via
+    // NUXT_PUBLIC_CROUTON_DEVTOOLS=true, or on a staging review build
+    // (NUXT_PUBLIC_CROUTON_REVIEW=true) so the Annotate tool replaces the old
+    // standalone overlay there. Folder-based auto-on for pocs/fixtures + flag
+    // unification is #811. Registered BEFORE the dev-only early return so a
+    // flagged staging build gets it too; runtime-gated as well, so production
+    // ships nothing.
+    if (nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true' || reviewOn) {
       const devtoolsResolver = createResolver(import.meta.url)
       nuxt.options.runtimeConfig.public ||= {}
       ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonDevtools = true
@@ -90,6 +94,15 @@ export default defineNuxtModule<ModuleOptions>({
       })
       addPlugin({
         src: devtoolsResolver.resolve('./runtime/plugins/crouton-devtools.client'),
+        mode: 'client'
+      })
+      // The first two tools (#810): Console (eruda) + Annotate (pin → /api/_review).
+      addPlugin({
+        src: devtoolsResolver.resolve('./runtime/plugins/tools/console.client'),
+        mode: 'client'
+      })
+      addPlugin({
+        src: devtoolsResolver.resolve('./runtime/plugins/tools/annotate.client'),
         mode: 'client'
       })
     }
