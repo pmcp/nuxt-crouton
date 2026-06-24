@@ -10,6 +10,7 @@
   "files": [
     "app",
     "server",
+    "crouton.manifest.ts",
     "nuxt.config.ts",
     "README.md"
   ],
