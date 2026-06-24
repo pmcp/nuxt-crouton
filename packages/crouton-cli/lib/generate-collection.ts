@@ -40,6 +40,7 @@ import { generateSchema } from './generators/database-schema.ts'
 import { generateTypes } from './generators/types.ts'
 import { generateNuxtConfig } from './generators/nuxt-config.ts'
 import { generateCollectionTest } from './generators/collection-test.ts'
+import { generateApiTest } from './generators/api-test.ts'
 import { generateRepeaterItemComponent } from './generators/repeater-item-component.ts'
 import { generateFieldComponents } from './generators/field-components.ts'
 import { generateSeedFile } from './generators/seed-data.ts'
@@ -855,6 +856,7 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
     console.log(`• ${base}/types.ts`)
     if (!noTests) {
       console.log(`• ${base}/${layerPascalCase}${cases.pascalCasePlural}.test.ts (schema smoke)`)
+      console.log(`• ${base}/${layerPascalCase}${cases.pascalCasePlural}.api.test.ts (route handlers)`)
     }
     console.log(`• ${base}/nuxt.config.ts`)
     console.log(`• layers/${layer}/nuxt.config.ts (layer root config)`)
@@ -1056,6 +1058,17 @@ async function writeScaffold({ layer, collection, fields, dialect, autoRelations
       content: generateCollectionTest(data, config),
     })
     console.log(`  Generating ${layerPascalCase}${cases.pascalCasePlural}.test.ts (schema smoke)`)
+
+    // Emit the API route handler test (#791) — the depth deferred from #788.
+    // Drives the generated handlers with mocked team-auth + queries and a fake
+    // H3 event to cover team-scoping (unauth → rejected; queries called with the
+    // resolved team id) and error paths (invalid body → rejected, missing id →
+    // 400, not-found → 404). Same --no-tests gate.
+    files.push({
+      path: path.join(base, `${layerPascalCase}${cases.pascalCasePlural}.api.test.ts`),
+      content: generateApiTest(data, config),
+    })
+    console.log(`  Generating ${layerPascalCase}${cases.pascalCasePlural}.api.test.ts (route handlers)`)
   }
 
   // Write all files
