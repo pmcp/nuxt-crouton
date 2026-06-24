@@ -243,12 +243,18 @@ function clearLayout() {
         <CroutonLayoutEditorPane v-else :node="root" :path="[]" />
       </div>
 
-      <!-- Config panel: bottom sheet on a narrow container, side column from @2xl -->
-      <aside
-        v-if="!previewing && selectedLeaf"
-        data-testid="config-panel"
-        class="absolute inset-x-0 bottom-0 z-30 max-h-[70%] overflow-auto border-t border-default bg-default p-3 shadow-lg @2xl:static @2xl:bottom-auto @2xl:z-auto @2xl:max-h-none @2xl:w-64 @2xl:shrink-0 @2xl:border-l @2xl:border-t-0 @2xl:shadow-none"
+      <!-- Config panel: slide-out drawer from the right on a narrow container, static side column from @2xl -->
+      <Transition
+        enter-active-class="transition-transform duration-200 ease-out"
+        enter-from-class="translate-x-full @2xl:translate-x-0"
+        leave-active-class="transition-transform duration-150 ease-in"
+        leave-to-class="translate-x-full @2xl:translate-x-0"
       >
+        <aside
+          v-if="!previewing && selectedLeaf"
+          data-testid="config-panel"
+          class="absolute inset-y-0 right-0 z-30 w-[85%] max-w-sm overflow-auto border-l border-default bg-default p-3 shadow-xl @2xl:static @2xl:inset-auto @2xl:z-auto @2xl:w-64 @2xl:max-w-none @2xl:shrink-0 @2xl:shadow-none"
+        >
         <div class="flex items-center justify-between pb-2">
           <p class="text-xs font-semibold uppercase tracking-wide text-muted">
             {{ selectedDef?.name || selectedLeaf.blockId }}
@@ -299,7 +305,8 @@ function clearLayout() {
         <p v-else class="text-xs text-muted">
           This block has no configurable options.
         </p>
-      </aside>
+        </aside>
+      </Transition>
     </div>
   </div>
 </template>
