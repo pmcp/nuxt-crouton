@@ -43,6 +43,7 @@ const META = {
   'bug-archaeology': { group: 'review', triggers: ['flow', 'ask'] },
   'red-team': { group: 'review', triggers: ['ask', 'auto'] },
   a11y: { group: 'review', triggers: ['ask'] },
+  'frontend-review': { group: 'review', triggers: ['ask', 'auto'] },
   deploy: { group: 'deploy', triggers: ['ask'] },
   'deploy-production': { group: 'deploy', triggers: ['ask'] },
   'poc-deploy': { group: 'deploy', triggers: ['ask'] },

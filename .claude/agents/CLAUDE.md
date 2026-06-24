@@ -66,6 +66,29 @@ It's steered by the **`/a11y` skill** (on demand) and run by
 `a11y-daily.yml` (daily `deep`, posts a public standing issue + files `a11y` issues for new
 criticals). Severity maps axe critical/serious → 🔴, moderate → 🟡, minor → 🔵.
 
+## The frontend-review agent (standalone — the Nuxt UI 4 conventions analog of a11y)
+
+`frontend-review.md` is a **front-end conventions prober** (epic #834), the
+component-usage sibling of `a11y`. Given `{ scope, depth, fix }` it reads `.vue`
+templates the way a Nuxt UI 4 reviewer would — v3 component names (`UDropdown`→
+`UDropdownMenu` etc.), the v4 overlay pattern (`#content="{ close }"`, no `UCard`
+inside a `UModal`), Options API in a `.vue`, raw-HTML re-implementations where a Nuxt
+UI / crouton component applies, hardcoded colors over theme tokens — and **returns
+structured severity-rated findings**. Static-first (deterministic greps for the v3
+names / `UCard`-in-overlay / Options-API spine); `deep` cross-checks ambiguous calls
+against the real `@nuxt/ui` component set. It reports; it patches only the safe
+deterministic set (v3→v4 renames, redundant-overlay-`UCard` unwraps) under `fix:true`.
+
+| Agent | File | Recurses? | Writes code? | Model |
+|-------|------|-----------|--------------|-------|
+| `frontend-review` | `frontend-review.md` | no | only under `fix:true` (safe set) | `sonnet` |
+
+It's steered by the **`/frontend-review` skill** (on demand) and run by
+`.github/workflows/frontend-review.yml` (per-PR `quick`, fails the check on a 🔴
+critical convention break, diff-scoped so never the backlog). Its lens is conventions
+only — not visual taste (`/ui-proposal`), accessibility (`/a11y`), or security
+(`/red-team`).
+
 ### The agent contract
 
 - **Input is passed in the prompt** as a small JSON-ish object — e.g.

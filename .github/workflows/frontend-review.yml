@@ -1,0 +1,106 @@
+name: Frontend Review (PR)
+
+# Per-PR front-end conventions scan (epic #834). Runs the frontend-review subagent at
+# depth=quick over the PR diff (Nuxt UI 4 / crouton component usage on changed .vue),
+# posts an advisory sticky comment, and FAILS the check on any 🔴 critical finding
+# (a hard, documented convention break — v3 component name, UCard-in-overlay, Options
+# API, overlay missing the #content pattern), blocking merge. Diff-scoped, so it never
+# fails on the pre-existing repo backlog — only on what THIS PR introduces. Mirrors
+# a11y.yml / red-team.yml.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      # Conventions live in templates — only scan PRs that touch .vue files.
+      - '**/*.vue'
+
+concurrency:
+  group: frontend-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-review:
+    # Skip drafts and bot-authored PRs (no point scanning Dependabot/agent noise here).
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.type != 'Bot'
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    # NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
+    # OVERRIDES (does not merge with) any workflow-level block, so `id-token: write` has to
+    # be here or the claude-code-action OIDC token request fails ("Could not fetch an OIDC
+    # token"). A workflow-level block would be silently shadowed.
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the agent can diff the PR against its base branch.
+          fetch-depth: 0
+
+      # Pinned to the same SHA as the repo's other claude-code-action workflows — bump together.
+      - uses: anthropics/claude-code-action@c26cb6427d54362f5fd9834ac6818cbaaf82490a
+        # The VERDICT FILE is the gate — NOT this step's exit code. The agent can exit non-zero
+        # on `max_turns` (it flails writing the verdict / the SDK errors) even when it found
+        # nothing critical, which would turn every PR red on a flake (mirrors the red-team
+        # #499/#602/#603 and a11y fixes). `continue-on-error` makes the gate step below the sole
+        # decider: no verdict ⇒ inconclusive pass; a 🔴 finding in the verdict ⇒ fail.
+        continue-on-error: true
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
+          claude_args: "--max-turns 30"
+          prompt: |
+            Act as the **frontend-review subagent** defined in `.claude/agents/frontend-review.md`.
+            Input: { scope: "diff", depth: "quick", fix: false }.
+
+            The PR diff is this branch vs its base. The base branch is
+            `origin/${{ github.event.pull_request.base.ref }}` — diff against it
+            (`git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD`),
+            keep only the changed `.vue` files, and scan ONLY those through the convention
+            checklist in the agent definition (grep the deterministic spine — v3 component
+            names, UCard-in-overlay, Options API — then read the templates for the raw-HTML /
+            overlay-pattern / hardcoded-color smells). Be precise and avoid false positives — a
+            red CI check on a wrong call is worse than a comment. Do NOT go deep (no real Nuxt
+            UI component-set cross-check); quick is static only.
+
+            Then do exactly two outputs:
+
+            1. **Post a single PR comment** summarising the findings using the review skill's
+               3-level format (🔴 Critical / 🟡 Warning / 🔵 Note) — a severity table + each
+               finding's `file:line`, rule id, and one-line fix. Make it a sticky comment
+               containing the literal marker `<!-- frontend-review -->` on its own line, and
+               EDIT that comment in place if it already exists rather than posting a new one. If
+               there are no findings, post/update the comment saying the quick scan found nothing.
+
+            2. **Write `frontend-review-verdict.json`** at the repo root, exactly:
+               `{"highest":"<none|note|warning|critical>","critical":N,"warning":N,"note":N}`
+               where `highest` is the most severe finding's level (🔴→critical, 🟡→warning,
+               🔵→note, or `none`) per the agent's severity map. This file is the machine signal
+               the gate step reads — always write it, even for a clean scan.
+
+            Do NOT edit any `apps/`/`packages/` code (quick scan is report-only; `--fix` is a
+            separate, human-invoked path). Do NOT file GitHub issues. Reporting + the verdict
+            file is all.
+
+      - name: Gate on critical
+        if: always()
+        run: |
+          if [ ! -f frontend-review-verdict.json ]; then
+            echo "::warning::frontend-review produced no verdict file — treating as inconclusive (not blocking)."
+            exit 0
+          fi
+          echo "Verdict: $(cat frontend-review-verdict.json)"
+          HIGHEST=$(node -e "process.stdout.write((require('./frontend-review-verdict.json').highest||'none').toLowerCase())")
+          case "$HIGHEST" in
+            critical)
+              echo "::error::frontend-review found a critical Nuxt UI 4 convention break in this PR's diff — see the frontend-review PR comment. Blocking merge."
+              exit 1
+              ;;
+            *)
+              echo "frontend-review highest severity: ${HIGHEST}. No critical — check passes."
+              ;;
+          esac
