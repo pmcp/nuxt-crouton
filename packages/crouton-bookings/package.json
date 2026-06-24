@@ -8,6 +8,7 @@
     "app",
     "server",
     "schemas",
+    "seed",
     "i18n",
     "dist",
     "nuxt.config.ts",
@@ -18,6 +19,10 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./crouton.manifest": "./crouton.manifest.ts",
+    "./seed": {
+      "import": "./seed/index.ts",
+      "types": "./seed/index.ts"
+    },
     "./server/utils/email-service": {
       "types": "./dist/server/utils/email-service.d.ts",
       "import": "./dist/server/utils/email-service.mjs"

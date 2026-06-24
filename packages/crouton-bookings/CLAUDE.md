@@ -19,6 +19,7 @@ Booking system layer for Nuxt applications that provides both slot-based booking
 | `server/api/crouton-bookings/` | API endpoints |
 | `server/utils/booking-emails.ts` | Email utilities |
 | `schemas/` | JSON schema definitions |
+| `seed/index.ts` | Seed provider (`@fyit/crouton-bookings/seed`) — generic demo data: statuses/groups, two slot-based courts + an inventory pool, a few upcoming bookings (see Demo Seeding) |
 
 ## Architecture
 
@@ -171,6 +172,31 @@ const { variables, getPreviewValues, demoData } = useBookingEmailVariables()
 // Demo location: Court A, Sportlaan 42, Amsterdam
 // Demo team: Amsterdam Tennis Club
 ```
+
+## Demo Seeding (`@fyit/crouton-bookings/seed`)
+
+Part of the composable seeding system (epic #82, contract in
+`@fyit/crouton-core/shared/seed`; #830). Provider id `bookings`,
+`dependsOn: ['auth']` — so any app that extends `@fyit/crouton-bookings` boots
+with a populated booking platform instead of a blank calendar (auto-discovered
+by `crouton-seed` via the package's `./seed` export, no registration needed).
+
+**Generic** demo data (deliberately NOT Velo's school/bike-library flavour —
+that stays hand-rolled in `apps/velo/server/api/seed`):
+
+- **`bookings_settings`** — statuses (Confirmed/Pending/Cancelled) and age
+  groups (Adults/Juniors/Seniors); the option lists the booking form's
+  `status`/`group` selects read.
+- **`bookings_locations`** — two slot-based courts (Morning/Afternoon/Evening
+  slots, open every day) + one inventory-mode Equipment Pool (`quantity: 10`),
+  exercising both booking modes.
+- **`bookings_bookings`** — five sample bookings on **upcoming** days (`date` set
+  via `unixepoch() + 86400 * N`, so they stay future on a fresh boot).
+
+References the generated table/column names as **strings** (matching what
+`crouton config` emits from this package's `schemas/*.json`) so it stays a pure
+module under jiti. Idempotent — stable `seedId`s mean a re-run upserts in place.
+Run via an app's `crouton-seed` / `db:seed:*` scripts.
 
 ## Dependencies
 
