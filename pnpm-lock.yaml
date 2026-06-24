@@ -1198,6 +1198,16 @@ importers:
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(acbda501943d3a88c40c15b150712194)
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^2.1.9
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.32.0)(terser@5.46.0))
+      happy-dom:
+        specifier: ^16.6.0
+        version: 16.8.1
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.7)(@vitest/ui@4.0.17)(happy-dom@16.8.1)(jsdom@27.4.0)(lightningcss@1.32.0)(terser@5.46.0)
 
   packages/crouton-maps:
     dependencies:

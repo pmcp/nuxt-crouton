@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { composeDefaultLayout } from '../layout-compose'
-import type { CroutonLayoutBlockRegistry } from '../../types/layout-block'
-import type { LayoutSplit, LayoutLeaf } from '../../types/layout'
+import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
+import type { LayoutSplit, LayoutLeaf } from '@fyit/crouton-core/app/types/layout'
 
 /** A registry mirroring the real core + bookings sizing contracts. */
 const registry: CroutonLayoutBlockRegistry = {

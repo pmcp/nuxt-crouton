@@ -6,7 +6,7 @@ import {
 import type {
   CroutonLayoutBlockDefinition,
   CroutonLayoutBlockRegistry,
-} from '../../types/layout-block'
+} from '@fyit/crouton-core/app/types/layout-block'
 
 const registry: CroutonLayoutBlockRegistry = {
   'entity-form': {

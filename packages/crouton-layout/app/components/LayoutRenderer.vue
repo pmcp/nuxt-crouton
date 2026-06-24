@@ -20,7 +20,7 @@
 import { computed, ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
-import type { LayoutNode, LayoutSplit } from '../types/layout'
+import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
 
 const props = defineProps<{ node: LayoutNode }>()

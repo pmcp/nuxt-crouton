@@ -13,7 +13,7 @@
 import { computed, inject, ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
-import type { LayoutNode } from '../types/layout'
+import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
 import type { DropEdge } from '../utils/layout-edit'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
 import { LAYOUT_EDIT_KEY, pathKey, type LayoutEditApi } from '../composables/useCroutonLayoutEdit'

@@ -18,8 +18,8 @@
  * Pure (no Nuxt runtime), so it's unit-testable and runs identically in the CLI
  * generate → POC pipeline and in the Nuxt app (via `useCroutonLayoutBlocks`).
  */
-import type { LayoutLeaf, LayoutNode, LayoutSplit, LayoutTree } from '../types/layout'
-import type { CroutonLayoutBlockRegistry } from '../types/layout-block'
+import type { LayoutLeaf, LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
 import { checkLayoutViability, minWidthResolver, type ViabilityViolation } from './layout-viability'
 
 /** One generated collection the placer can lay out. */

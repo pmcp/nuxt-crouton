@@ -15,8 +15,8 @@
  * are ignored — a few px don't change viability and keeping it size-only makes
  * the metric stable and unit-testable.
  */
-import type { LayoutNode, LayoutTree } from '../types/layout'
-import type { CroutonLayoutBlockRegistry } from '../types/layout-block'
+import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
 
 export interface ViabilityViolation {
   /** The block that can't meet its minimum at this container width. */

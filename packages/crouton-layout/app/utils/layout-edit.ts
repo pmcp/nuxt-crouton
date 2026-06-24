@@ -11,8 +11,8 @@
  * (root itself is `[]`). All functions return a NEW root (structural copies on
  * the touched spine) and never mutate their input.
  */
-import type { LayoutNode, LayoutLeaf, LayoutSplit } from '../types/layout'
-import type { CroutonLayoutBlockDefinition } from '../types/layout-block'
+import type { LayoutNode, LayoutLeaf, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
+import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
 
 export type NodePath = number[]
 /** Which edge of a target pane a block was dropped on → split direction + order. */

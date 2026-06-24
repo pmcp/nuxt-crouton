@@ -18,7 +18,7 @@
  * config is sanitized at render.
  */
 import { computed, provide, ref, watch } from 'vue'
-import type { LayoutTree, LayoutNode } from '../types/layout'
+import type { LayoutTree, LayoutNode } from '@fyit/crouton-core/app/types/layout'
 import {
   dropBlock,
   removeNode,

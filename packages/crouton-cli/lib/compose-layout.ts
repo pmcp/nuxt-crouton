@@ -13,7 +13,9 @@
 import path from 'node:path'
 import { writeFile } from 'node:fs/promises'
 import { toCase } from './utils/helpers.ts'
-import { composeDefaultLayout, type ComposeCollectionInput } from '@fyit/crouton-core/app/utils/layout-compose'
+import { composeDefaultLayout, type ComposeCollectionInput } from '@fyit/crouton-layout/app/utils/layout-compose'
+// Layout TYPES intentionally stay in crouton-core (shared contract); only the
+// implementation moved to @fyit/crouton-layout (#751).
 import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
 
 /**
