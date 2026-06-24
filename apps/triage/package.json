@@ -15,6 +15,10 @@
     "db:migrate": "npx wrangler d1 migrations apply triage-db --local",
     "db:migrate:prod": "npx wrangler d1 migrations apply triage-db --remote",
     "db:migrate:staging": "npx wrangler d1 migrations apply triage-staging-db --env staging --remote",
+    "db:seed": "pnpm db:seed:local",
+    "db:seed:local": "crouton-seed --db triage-db --with-staff",
+    "db:seed:remote": "crouton-seed --db triage-db --remote",
+    "db:seed:staging": "crouton-seed --db triage-staging-db --remote --with-staff",
     "tunnel": "cloudflared tunnel --config ~/.cloudflared/triage-dev.yml run triage-dev",
     "logs": "npx wrangler tail triage"
   },
@@ -22,6 +26,7 @@
     "@fyit/crouton": "workspace:*",
     "@fyit/crouton-charts": "workspace:*",
     "@fyit/crouton-layout": "workspace:*",
+    "@fyit/crouton-triage": "workspace:*",
     "@libsql/client": "catalog:",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/controls": "^1.1.2",
