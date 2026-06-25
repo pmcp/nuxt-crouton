@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — tactile breakpoint control (concepts)</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a24; --elevated:#1b2330; --border:#2a3445; --border2:#3a4860;
+    --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0; --grip:#2b3a55;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:24px;overflow-x:hidden}
+  h1{font-size:18px;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 18px;max-width:78ch}
+  .concepts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;font-size:12px;color:var(--muted)}
+  .concepts b{color:var(--text)}
+  .stagewrap{position:relative;margin-top:40px;height:520px;user-select:none;touch-action:none}
+
+  /* top ruler with breakpoint studs, spanning the resize range */
+  .ruler{position:absolute;top:-26px;left:50%;transform:translateX(-50%);height:20px;display:flex;align-items:center}
+  .ruler .track{position:relative;height:2px;background:var(--border2);border-radius:2px}
+  .stud{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:default}
+  .stud .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);border:2px solid var(--bg);transition:.15s}
+  .stud.active .dot{background:var(--accent);box-shadow:0 0 10px var(--accent);transform:scale(1.25)}
+  .stud .lbl{position:absolute;top:14px;font:10px/1 ui-monospace,monospace;color:var(--muted);white-space:nowrap}
+  .stud.active .lbl{color:var(--accent)}
+
+  /* the resizable frame (centered); drag either edge grip to widen */
+  .frame{position:absolute;top:0;left:50%;transform:translateX(-50%);height:480px;
+    border:1px solid var(--border);border-radius:14px;background:var(--panel);
+    box-shadow:0 24px 60px #0008; transition:box-shadow .2s}
+  .frame.dragging{box-shadow:0 30px 80px #000b,0 0 0 1px var(--primary)}
+  .edge{position:absolute;top:0;bottom:0;width:22px;display:flex;align-items:center;justify-content:center;cursor:ew-resize}
+  .edge.l{left:-11px}.edge.r{right:-11px}
+  .grip{width:8px;height:56px;border-radius:6px;background:linear-gradient(180deg,var(--border2),var(--grip));
+    border:1px solid #44557a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    box-shadow:0 2px 8px #0007; transition:.15s}
+  .edge:hover .grip,.frame.dragging .grip{background:linear-gradient(180deg,var(--primary),#3b6fcc);border-color:var(--primary)}
+  .grip i{width:3px;height:3px;border-radius:50%;background:#0b0e14aa}
+  .wpill{position:absolute;top:-2px;left:50%;transform:translate(-50%,-130%);font:11px/1 ui-monospace,monospace;
+    background:#0d1320;border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:999px;white-space:nowrap}
+
+  /* inner sample layout — reflows via @container, no JS */
+  .root{position:absolute;inset:14px;container-type:inline-size;container-name:mq}
+  .app{display:grid;gap:8px;height:100%;grid-template-columns:1fr;grid-template-areas:"list" "main" "stats"}
+  @container mq (min-width:480px){.app{grid-template-columns:160px 1fr;grid-template-areas:"list main" "stats main"}}
+  @container mq (min-width:760px){.app{grid-template-columns:180px 1fr 200px;grid-template-areas:"list main stats"}}
+  .pane{border:1px solid #243348;border-radius:9px;background:linear-gradient(180deg,var(--elevated),var(--panel));padding:10px;overflow:hidden;min-width:0}
+  .pane h4{margin:0 0 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .list{grid-area:list}.main{grid-area:main}.stats{grid-area:stats}
+  .row{height:8px;border-radius:4px;background:#26334a;margin-bottom:6px}.row.s{width:55%}.row.m{width:82%}
+  .kpi{font-size:20px;font-weight:800}.kpi small{color:var(--accent);font-size:11px;margin-left:5px}
+
+  .hint{margin-top:28px;color:var(--muted);font-size:12px;text-align:center}
+  .legend{margin-top:14px;color:var(--muted);font-size:12.5px;max-width:84ch}
+  .legend b{color:var(--text)}
+</style>
+</head>
+<body>
+  <h1>Maquette — tactile breakpoint control</h1>
+  <p class="sub">Instead of an abstract slider: <b>grab the layout's edge and stretch it</b>. The breakpoints live on the frame as studs that light up as you cross them — direct manipulation, the arranging <em>is</em> the gesture. Drag either grip.</p>
+
+  <div class="concepts">
+    <span><b>This demo →</b> edge-drag frame + ruler studs.</span>
+    <span>· Alt 1: a corner “screw” knob you twist/drag.</span>
+    <span>· Alt 2: studs themselves draggable (set a breakpoint by dragging a stud onto the edge).</span>
+  </div>
+
+  <div class="stagewrap" id="stage">
+    <div class="ruler" id="ruler" style="width:900px"><div class="track" id="track" style="width:100%"></div></div>
+
+    <div class="frame" id="frame" style="width:900px">
+      <div class="wpill" id="wpill">900px</div>
+      <div class="edge l" data-side="l"><div class="grip"><i></i><i></i><i></i></div></div>
+      <div class="edge r" data-side="r"><div class="grip"><i></i><i></i><i></i></div></div>
+      <div class="root">
+        <div class="app">
+          <div class="pane list"><h4>Bookings</h4><div class="row m"></div><div class="row s"></div><div class="row m"></div><div class="row s"></div></div>
+          <div class="pane main"><h4>Detail</h4><div class="row m"></div><div class="row m"></div><div class="row s"></div><div class="row m"></div></div>
+          <div class="pane stats"><h4>Stats</h4><div class="kpi">128<small>+12%</small></div><div class="row m" style="margin-top:8px"></div><div class="row s"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">↤ drag a grip to resize ↦ &nbsp;·&nbsp; studs light up as the width crosses each breakpoint &nbsp;·&nbsp; the layout reflows in pure CSS</p>
+  <p class="legend"><b>Why this is better than a slider:</b> the control <em>is</em> the layout — you size the real thing, breakpoints are physical marks on its frame, and it reads as "make it this wide" rather than "set an abstract number." Maps 1:1 to the authored min-width breakpoints. (The grips could be the breakpoint studs themselves — drag a stud to plant a new breakpoint exactly where you let go.)</p>
+
+<script>
+  const MIN=300,MAX=1100;
+  const BPS=[480,760]; // authored breakpoints
+  const stage=document.getElementById('stage'), frame=document.getElementById('frame'),
+        ruler=document.getElementById('ruler'), track=document.getElementById('track'),
+        wpill=document.getElementById('wpill');
+  let width=900;
+
+  // render studs on the ruler (mapped across MIN..MAX), + the MIN as a base mark
+  function buildStuds(){
+    [...track.querySelectorAll('.stud')].forEach(s=>s.remove());
+    BPS.forEach(bp=>{
+      const s=document.createElement('div'); s.className='stud'; s.dataset.bp=bp;
+      s.style.left=((bp-MIN)/(MAX-MIN)*100)+'%';
+      s.innerHTML='<div class="dot"></div><div class="lbl">'+bp+'</div>';
+      track.appendChild(s);
+    });
+  }
+  function render(){
+    width=Math.max(MIN,Math.min(MAX,width));
+    frame.style.width=width+'px';
+    ruler.style.width=width+'px';            // ruler spans the frame
+    // map studs: position each bp relative to the CURRENT frame width so a stud sits
+    // exactly at the frame width where it activates
+    track.querySelectorAll('.stud').forEach(s=>{
+      const bp=+s.dataset.bp;
+      s.style.left=Math.min(100,(bp/width*100))+'%';
+      s.classList.toggle('active', width>=bp);
+    });
+    wpill.textContent=width+'px';
+  }
+  buildStuds(); render();
+
+  let drag=null;
+  stage.querySelectorAll('.edge').forEach(e=>{
+    e.addEventListener('pointerdown',ev=>{
+      drag={side:e.dataset.side,startX:ev.clientX,startW:width};
+      frame.classList.add('dragging'); e.setPointerCapture?.(ev.pointerId); ev.preventDefault();
+    });
+  });
+  window.addEventListener('pointermove',ev=>{
+    if(!drag) return;
+    const dx=ev.clientX-drag.startX;
+    // symmetric about centre: each side contributes 2× so the frame grows from the middle
+    width=drag.startW + (drag.side==='r'? dx : -dx)*2;
+    render();
+  });
+  window.addEventListener('pointerup',()=>{ if(drag){drag=null; frame.classList.remove('dragging');}});
+  window.__setW=(w)=>{ width=w; render() }; // test/screenshot hook
+</script>
+</body>
+</html>
