@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Layout-Collapse Concept Gallery · crouton-layout</title>
+<style>
+  :root{
+    --bg:#070a10; --bg2:#0a0e14; --panel:#0d1320; --edge:#1f2a3d; --edge2:#2b3a55;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73;
+    --gold:#ffd34d; --violet:#9d7bff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 800px at 80% -10%, #15314a44, transparent),
+      radial-gradient(1000px 700px at -10% 110%, #2a123a44, transparent),
+      var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:80; opacity:.04;
+    background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  header{max-width:1280px; margin:0 auto; padding:64px 28px 24px}
+  .kicker{display:inline-flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); border:1px solid var(--edge);
+    background:#0d132088; border-radius:999px; padding:7px 14px}
+  .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:var(--glow) var(--accent)}
+  h1{font-size:clamp(30px,5vw,52px); line-height:1.02; margin:20px 0 14px; letter-spacing:-.02em;
+    background:linear-gradient(120deg,#fff, #b9c6da 60%, var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .lede{color:var(--dim); font-size:16px; max-width:760px; line-height:1.6}
+  .lede code{background:#162033; border:1px solid var(--edge); border-radius:6px; padding:1px 6px; font-size:13px; color:#c9d6ea}
+  .legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:22px}
+  .tag{font-size:11px; letter-spacing:.04em; padding:5px 10px; border-radius:999px; border:1px solid var(--edge); color:var(--dim); background:#0d132066}
+  .tag b{color:var(--ink); font-weight:600}
+  .tag.tree{color:var(--accent); border-color:#1f5247}
+  .tag.star{color:var(--gold); border-color:#5c4a17}
+
+  main{max-width:1280px; margin:0 auto; padding:18px 28px 90px}
+  .sec{display:flex; align-items:baseline; gap:12px; margin:38px 4px 18px}
+  .sec h2{font-size:14px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); margin:0; font-weight:600}
+  .sec .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--edge),transparent)}
+
+  .grid{display:grid; gap:20px; grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+  .grid.top{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+
+  .card{position:relative; border:1px solid var(--edge); border-radius:16px; overflow:hidden;
+    background:linear-gradient(180deg,#0e1421,#0a0e16); text-decoration:none; color:inherit;
+    transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, box-shadow .25s; display:block}
+  .card:hover{transform:translateY(-4px); border-color:var(--edge2); box-shadow:0 20px 50px #000a, 0 0 0 1px #ffffff08}
+  .card.pick{border-color:#5c4a1755}
+  .card.pick:hover{border-color:var(--gold); box-shadow:0 20px 50px #000a, var(--glow) #ffd34d33}
+
+  .preview{position:relative; height:230px; overflow:hidden; background:var(--bg2); border-bottom:1px solid var(--edge)}
+  .preview iframe{position:absolute; top:0; left:0; width:1280px; height:780px;
+    transform:scale(.297); transform-origin:top left; border:0; pointer-events:none}
+  .preview::after{content:""; position:absolute; inset:0;
+    box-shadow:inset 0 -40px 60px -20px #0a0e16; pointer-events:none}
+  .top .preview{height:300px}
+  .top .preview iframe{transform:scale(.387)}
+  .num{position:absolute; top:12px; left:12px; z-index:3; font-size:12px; font-weight:700;
+    width:26px;height:26px; display:grid; place-items:center; border-radius:8px;
+    background:#0a0e16cc; border:1px solid var(--edge); color:var(--dim)}
+  .openbtn{position:absolute; top:12px; right:12px; z-index:3; font-size:11px; letter-spacing:.04em;
+    padding:6px 11px; border-radius:999px; background:#0a0e16cc; border:1px solid var(--edge);
+    color:var(--ink); opacity:0; transform:translateY(-4px); transition:.25s}
+  .card:hover .openbtn{opacity:1; transform:translateY(0)}
+
+  .body{padding:15px 16px 17px}
+  .titleRow{display:flex; align-items:center; gap:9px; margin-bottom:6px}
+  .titleRow h3{margin:0; font-size:17px; letter-spacing:-.01em}
+  .titleRow .s{color:var(--gold); font-size:14px}
+  .meta{color:var(--dim); font-size:13.5px; line-height:1.5; margin:0 0 11px}
+  .fit{display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.03em;
+    padding:4px 9px; border-radius:999px; border:1px solid var(--edge); color:var(--dim); background:#0d132055}
+  .fit::before{content:""; width:6px;height:6px;border-radius:50%;background:currentColor}
+  .fit.tree{color:var(--accent)} .fit.switch{color:var(--violet)} .fit.screen{color:#7fb4ff}
+  .fit.transition{color:var(--accent2)} .fit.niche{color:var(--gold)}
+
+  footer{max-width:1280px; margin:0 auto; padding:10px 32px 80px; color:var(--dim); font-size:13px; line-height:1.7}
+  footer a{color:var(--accent)}
+  .hintbar{position:fixed; bottom:0; left:0; right:0; z-index:70; text-align:center; pointer-events:none;
+    padding:10px; font-size:12px; color:var(--dim); background:linear-gradient(0deg,#070a10ee,transparent)}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<header>
+  <span class="kicker"><span class="dot"></span>crouton-layout · collapse styles</span>
+  <h1>Layout-Collapse Concept Gallery</h1>
+  <p class="lede">
+    12 wild, game-UX takes on how a pane <b style="color:#e6edf6">disappears and comes back</b> in the
+    layout engine — beyond today's <code>gutter-tabs</code>. Every tile below is <b style="color:#e6edf6">live</b>
+    and looping. Click any one to open the full mock — then <b style="color:#e6edf6">click inside it</b> to drive the
+    collapse yourself. Each is one <code>render(t)</code> timeline, so you can freeze any frame with <code>?t=0..1</code>.
+  </p>
+  <div class="legend">
+    <span class="tag star">⭐ <b>top pick</b> to promote into LayoutCollapseStyle</span>
+    <span class="tag tree"><b>tree-native</b> — works on any leaf at any size</span>
+    <span class="tag">screen-level · switcher · transition · niche — fun, but not a per-node collapse</span>
+  </div>
+</header>
+
+<main>
+  <div class="sec"><h2>⭐ Top 3 picks</h2><div class="rule"></div></div>
+  <div class="grid top" id="top"></div>
+
+  <div class="sec"><h2>All 12 concepts</h2><div class="rule"></div></div>
+  <div class="grid" id="all"></div>
+</main>
+
+<footer>
+  Throwaway prototypes for design exploration — fake content, motion &amp; metaphor only. Full analysis &amp; top-3 rationale in
+  <a href="../layout-collapse-concepts.md">layout-collapse-concepts.md</a>.
+  Enum lives in <code style="color:#c9d6ea">crouton-core/app/types/layout.ts</code>; renderer in <code style="color:#c9d6ea">crouton-layout/…/LayoutRenderer.vue</code>.
+</footer>
+
+<div class="hintbar">live thumbnails loop on their own · click a tile to open it · click inside a mock to play the collapse</div>
+
+<script>
+  const C = [
+    {n:'01', file:'01-hud-dock',       name:'HUD Dock',       meta:'Collapsed panes fly to the screen edges as a health / ammo / radar HUD.', fit:'screen', fitlabel:'screen-level'},
+    {n:'02', file:'02-weapon-wheel',   name:'Weapon Wheel',   meta:'Panes shrink into wedges orbiting a hub; flick one out to deploy it.', fit:'switch', fitlabel:'switcher'},
+    {n:'03', file:'03-crt-power-down', name:'CRT Power-Down', meta:'A pane shuts off like an old TV — crush to a white-hot line, pinch to a standby dot.', fit:'tree', fitlabel:'tree-native', pick:true},
+    {n:'04', file:'04-card-deck',      name:'Card Deck',      meta:'Panes deal out as a hand; collapse shuffles them into a fanned stack.', fit:'screen', fitlabel:'screen-level'},
+    {n:'05', file:'05-inventory-grid', name:'Inventory Grid', meta:'Panes snap into footprint slots on a Diablo backpack, with rarity borders.', fit:'screen', fitlabel:'minimized tray'},
+    {n:'06', file:'06-iris-portal',    name:'Iris Portal',    meta:'A camera-shutter iris of blades closes the pane to a glowing seed.', fit:'tree', fitlabel:'tree-native', pick:true},
+    {n:'07', file:'07-spring-drawer',  name:'Spring Drawer',  meta:'A side pane slams shut to an edge spine, overshoots and springs back.', fit:'tree', fitlabel:'tree-native', pick:true},
+    {n:'08', file:'08-fog-of-war',     name:'Fog of War',     meta:'Roiling fog re-shrouds the pane to a ghost silhouette and a “?”.', fit:'transition', fitlabel:'reveal transition'},
+    {n:'09', file:'09-cartridge-deck', name:'Cartridge Deck', meta:'The pane ejects as a chunky game cartridge and drops into a side rack.', fit:'screen', fitlabel:'juicy gutter'},
+    {n:'10', file:'10-magnetic-snap',  name:'Magnetic Snap',  meta:'The pane is yanked to a magnetic dock rail, squashes, and snaps flush.', fit:'tree', fitlabel:'tree-native · runner-up'},
+    {n:'11', file:'11-rolodex-spin',   name:'Rolodex Spin',   meta:'A 3D drum rolls the front pane back and brings the next one to face you.', fit:'switch', fitlabel:'tab switcher'},
+    {n:'12', file:'12-minimap-zoom',   name:'Minimap Zoom',   meta:'The map pane shrinks to a LIVE corner minimap; neighbours reflow to fill in.', fit:'niche', fitlabel:'niche · stays live'},
+  ];
+  const card = (c, delay) => `
+    <a class="card ${c.pick?'pick':''}" href="${c.file}.html" target="_blank" rel="noopener">
+      <div class="preview">
+        <span class="num">${c.n}</span>
+        <span class="openbtn">Open ▸</span>
+        <iframe loading="lazy" src="${c.file}.html?auto=${delay}" title="${c.name}"></iframe>
+      </div>
+      <div class="body">
+        <div class="titleRow"><h3>${c.name}</h3>${c.pick?'<span class="s">⭐</span>':''}</div>
+        <p class="meta">${c.meta}</p>
+        <span class="fit ${c.fit}">${c.fitlabel}</span>
+      </div>
+    </a>`;
+  // stagger autoplay delays so the wall feels alive, not synchronized
+  const delays = [2400,3000,2600,3200,2800,2500,2300,3400,2900,2700,3100,2600];
+  document.getElementById('top').innerHTML  = C.filter(c=>c.pick).map((c,i)=>card(c, 2300+i*350)).join('');
+  document.getElementById('all').innerHTML  = C.map((c,i)=>card(c, delays[i])).join('');
+</script>
+</body>
+</html>

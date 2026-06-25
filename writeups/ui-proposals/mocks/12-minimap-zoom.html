@@ -177,6 +177,12 @@
   function animate(){ t+=(target-t)*0.15; if(Math.abs(target-t)<0.001){t=target;_r(t);raf=null;return;} _r(t); raf=requestAnimationFrame(animate);}
   if(tParam!==null){ _r(clamp(parseFloat(tParam))); }
   else { _r(0); addEventListener('click', ()=>{ target=target>0.5?0:1; if(!raf)raf=requestAnimationFrame(animate); }); }
+
+  // autoplay loop for gallery thumbnails (?auto): ping-pong the collapse
+  if(new URLSearchParams(location.search).has("auto")){
+    const _delay = parseInt(new URLSearchParams(location.search).get("auto"))||2600;
+    setInterval(()=>{ target = target>0.5?0:1; if(!raf) raf=requestAnimationFrame(animate); }, _delay);
+  }
 </script>
 </body>
 </html>

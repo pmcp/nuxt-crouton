@@ -170,6 +170,12 @@
     standby.addEventListener('click',e=>{ e.stopPropagation(); if(target>0.5) toggle(); }); // power back on
     addEventListener('click', toggle);                                                      // power down (or on)
   }
+
+  // autoplay loop for gallery thumbnails (?auto): ping-pong the collapse
+  if(new URLSearchParams(location.search).has("auto")){
+    const _delay = parseInt(new URLSearchParams(location.search).get("auto"))||2600;
+    setInterval(()=>{ target = target>0.5?0:1; if(!raf) raf=requestAnimationFrame(animate); }, _delay);
+  }
 </script>
 </body>
 </html>
