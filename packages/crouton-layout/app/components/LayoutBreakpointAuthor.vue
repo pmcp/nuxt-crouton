@@ -24,6 +24,7 @@ import {
   patchBreakpoint,
   removeBreakpoint,
 } from '../utils/layout-responsive'
+import { applySizes, type NodePath } from '../utils/layout-edit'
 
 const props = defineProps<{ modelValue: LayoutTree }>()
 const emit = defineEmits<{ 'update:modelValue': [tree: LayoutTree] }>()
@@ -100,6 +101,20 @@ function isCollapsed(blockId: string) {
 function onExpand(blockId: string) {
   // Tapping a gutter tab / handle un-collapses it (authoring a checkpoint here).
   onToggleCollapse(blockId)
+}
+
+// Author BY DEMONSTRATION, continued: dragging a splitter at the current width is *also*
+// a change — it authors a breakpoint here whose `root` override locks the new pane sizes
+// in from this width up (#874 follow-up). The renderer hands us the resized split's path
+// within the resolved root; we apply the sizes onto our own (structurally identical)
+// resolve and snapshot the whole resolved state, exactly like authorHere().
+function onResize(path: NodePath, sizes: number[]) {
+  update(patchBreakpoint(tree.value, simWidth.value, {
+    root: applySizes(resolved.value.root, path, sizes),
+    collapsed: [...resolved.value.collapsed],
+    variants: { ...resolved.value.variants },
+    ...(resolved.value.collapseStyle !== undefined ? { collapseStyle: resolved.value.collapseStyle } : {}),
+  }))
 }
 
 // --- click-to-delete a checkpoint marker (arm → red ✕ → confirm) ------------
@@ -200,6 +215,7 @@ const frameScale = computed(() => {
           :tree="tree"
           :width="simWidth"
           @expand="onExpand"
+          @layout-change="onResize"
         />
       </div>
     </div>

@@ -17,9 +17,10 @@
  */
 import { computed, provide, ref, toRef, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { normalizeCollapseStyle } from '../utils/layout-responsive'
+import { findNodePath, type NodePath } from '../utils/layout-edit'
 import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{
@@ -31,7 +32,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** A collapsed pane (gutter tab or in-place handle) was clicked — host may expand it. */
   expand: [blockId: string]
+  /**
+   * A splitter was dragged (WS5 #874 follow-up — "resize → breakpoint"). We translate
+   * the resized split *node* to its `NodePath` within the resolved root and bubble that
+   * up, so the author (which resolves the same tree at the same width) can apply the new
+   * sizes onto a structurally-identical root and snapshot them onto a breakpoint here.
+   */
+  layoutChange: [path: NodePath, sizes: number[]]
 }>()
+
+function onInnerLayout(node: LayoutSplit, sizes: number[]) {
+  const path = findNodePath(resolved.value.root, node)
+  if (path) emit('layoutChange', path, sizes)
+}
 
 const hostRef = ref<HTMLElement | null>(null)
 const { width: measured } = useElementSize(hostRef)
@@ -81,6 +94,7 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
       <CroutonLayoutRenderer
         :node="resolved.root"
         class="min-w-0 flex-1"
+        @layout-change="onInnerLayout"
       />
     </template>
 
@@ -90,6 +104,7 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
         <CroutonLayoutRenderer
           v-if="visibleRoot"
           :node="visibleRoot"
+          @layout-change="onInnerLayout"
         />
         <div
           v-else
