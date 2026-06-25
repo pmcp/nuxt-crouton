@@ -20,15 +20,14 @@
   .chip b{font-weight:700}
   .scanlines{position:fixed; inset:0; pointer-events:none; z-index:90; opacity:.04; background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
 
-  /* device toggle bar */
-  .devbar{position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:60; display:flex; gap:6px;
-    background:#0d1320cc; border:1px solid var(--edge); border-radius:14px; padding:6px; backdrop-filter:blur(8px)}
-  .dev{display:flex; gap:8px; align-items:center; border:1px solid transparent; background:transparent; color:var(--dim);
-    border-radius:10px; padding:8px 14px; font-size:13px; cursor:pointer; transition:.18s}
+  /* size switcher — docked to the layout, travels with the device */
+  .deck{display:flex; flex-direction:column; align-items:center; gap:16px}
+  .sizebar{display:flex; gap:6px; background:#0d1320cc; border:1px solid var(--edge); border-radius:15px; padding:6px; backdrop-filter:blur(8px); box-shadow:0 14px 34px -14px #000c}
+  .dev{width:44px; height:38px; display:grid; place-items:center; border:1px solid transparent; background:transparent; color:var(--dim); border-radius:11px; cursor:pointer; transition:.18s}
+  .dev svg{width:23px; height:23px; display:block; transition:transform .18s}
   .dev:hover{color:var(--ink); background:#16203a}
-  .dev.on{color:var(--ink); background:#16203a; border-color:var(--accent); box-shadow:0 0 16px -4px var(--accent)}
-  .dev .gl{font-size:15px}
-  .dev small{color:var(--dim); font-size:11px}
+  .dev:hover svg{transform:translateY(-1px)}
+  .dev.on{color:var(--accent); background:#101e2b; border-color:var(--accent); box-shadow:0 0 18px -4px var(--accent), inset 0 0 14px -9px var(--accent)}
   .saved{position:fixed; top:74px; left:50%; transform:translateX(-50%) translateY(-6px); z-index:60; opacity:0;
     background:#0b1a16; border:1px solid #1f5247; color:var(--accent); font-size:12px; padding:6px 12px; border-radius:999px; transition:.25s}
   .saved.show{opacity:1; transform:translateX(-50%) translateY(0)}
@@ -99,19 +98,21 @@
 </head>
 <body>
   <div class="chip"><span class="dot"></span><b>Responsive Layouts</b> · arrange per device — each is saved &amp; jumps back when you toggle</div>
-  <div class="devbar">
-    <button class="dev" data-d="desktop"><span class="gl">🖥</span> Desktop <small>1180</small></button>
-    <button class="dev" data-d="tablet"><span class="gl">▭</span> Tablet <small>800</small></button>
-    <button class="dev" data-d="phone"><span class="gl">📱</span> Phone <small>372</small></button>
-    <button class="dev" data-d="square"><span class="gl">⬛</span> Square <small>600</small></button>
-  </div>
   <div class="saved" id="saved">✓ saved</div>
 
   <div class="stage">
-    <div class="bezel desktop" id="bezel">
-      <div class="chrome"><i></i><i></i><i></i><div class="url"></div></div>
-      <div class="notch"></div><div class="cam"></div><div class="home"></div><div class="devtag" id="devtag"></div>
-      <div id="frame"></div>
+    <div class="deck">
+      <div class="bezel desktop" id="bezel">
+        <div class="chrome"><i></i><i></i><i></i><div class="url"></div></div>
+        <div class="notch"></div><div class="cam"></div><div class="home"></div><div class="devtag" id="devtag"></div>
+        <div id="frame"></div>
+      </div>
+      <div class="sizebar">
+        <button class="dev" data-d="desktop" aria-label="Desktop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M9.5 20h5M12 16.5V20"/></svg></button>
+        <button class="dev" data-d="tablet" aria-label="Tablet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.4"/><path d="M11 17.6h2"/></svg></button>
+        <button class="dev" data-d="phone" aria-label="Phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.6 5h2.8"/><path d="M11.4 18.7h1.2"/></svg></button>
+        <button class="dev" data-d="square" aria-label="Square"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="15" height="15" rx="2.6"/></svg></button>
+      </div>
     </div>
   </div>
   <div id="ghost"></div><div id="zone"><div class="arr"></div></div>
@@ -181,7 +182,7 @@ function insertLeaf(n,tid,side,lf){ if(n.kind==='leaf'){ if(n.id!==tid) return n
   return {...n,a:insertLeaf(n.a,tid,side,lf),b:insertLeaf(n.b,tid,side,lf)}; }
 
 let curScale=1;
-function fit(d){ const maxW=Math.min(innerWidth*0.78, 1240), maxH=innerHeight*0.66; return Math.min(maxW/d.w, maxH/d.h, 1); }
+function fit(d){ const maxW=Math.min(innerWidth*0.78, 1240), maxH=innerHeight*0.58; return Math.min(maxW/d.w, maxH/d.h, 1); }
 function paneRects(){ const m={}; frameEl.querySelectorAll('.pane[data-id]').forEach(p=>m[p.dataset.id]=p.getBoundingClientRect()); return m; }
 function render(flip){
   const before = flip? paneRects():null;
