@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Snap-Compose · click mini-apps into a layout</title>
+<style>
+  :root{
+    --bg:#070a10; --bg2:#0a0e14; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d; --edge2:#2b3a55;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73;
+    --gold:#ffd34d; --violet:#9d7bff; --blue:#7fb4ff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; height:100%; -webkit-font-smoothing:antialiased}
+  .chip{position:fixed; top:18px; left:18px; z-index:60; display:flex; gap:10px; align-items:center;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; font-size:13px; backdrop-filter:blur(8px)}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:var(--glow) var(--accent)}
+  .chip b{font-weight:700}
+  .toolbar{position:fixed; top:18px; right:18px; z-index:60; display:flex; gap:8px}
+  .btn{background:#0d1320cc; border:1px solid var(--edge); color:var(--ink); border-radius:10px; padding:8px 13px;
+    font-size:12.5px; cursor:pointer; backdrop-filter:blur(8px); transition:.2s}
+  .btn:hover{border-color:var(--edge2); background:#16203a}
+  .hint{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:60; pointer-events:none; text-align:center}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:80; opacity:.04; background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  /* infinite canvas */
+  #canvas{position:absolute; inset:0; cursor:grab; overflow:hidden;
+    background:
+      radial-gradient(1200px 800px at 75% -10%, #15314a33, transparent),
+      radial-gradient(1000px 700px at -10% 110%, #2a123a33, transparent),
+      var(--bg)}
+  #canvas.panning{cursor:grabbing}
+  #grid{position:absolute; inset:-2000px; pointer-events:none;
+    background-image:
+      linear-gradient(#13203355 1px,transparent 1px),
+      linear-gradient(90deg,#13203355 1px,transparent 1px),
+      linear-gradient(#0f1a2e 1px,transparent 1px),
+      linear-gradient(90deg,#0f1a2e 1px,transparent 1px);
+    background-size:160px 160px,160px 160px,32px 32px,32px 32px}
+  #world{position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform}
+
+  /* a piece = a loose block OR a bound layout group */
+  .piece{position:absolute; will-change:left,top; touch-action:none}
+  .piece .frame{position:absolute; inset:0; border-radius:16px; overflow:hidden; cursor:grab;
+    box-shadow:0 18px 40px #0009, inset 0 1px 0 #ffffff0a; transition:box-shadow .25s, border-color .25s}
+  .piece.dragging{z-index:50}
+  .piece.dragging .frame{cursor:grabbing; box-shadow:0 30px 70px #000b, 0 0 0 1px #ffffff12}
+  .piece.snapclick{animation:snapclick .42s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes snapclick{0%{transform:scale(1.05)}55%{transform:scale(.985)}100%{transform:scale(1)}}
+
+  /* loose vs bound look */
+  .loose > .frame{border:1.5px dashed #33425e; background:linear-gradient(180deg,#141c2c,#0e1420)}
+  .group > .frame{border:1.5px solid var(--edge2); background:#0b1018;
+    box-shadow:0 18px 44px #000a, inset 0 0 0 1px #ffffff08, 0 0 40px -8px #36e0c033}
+  .badge{position:absolute; top:-11px; left:14px; z-index:6; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    background:#0b1018; border:1px solid var(--edge2); color:var(--accent); border-radius:999px; padding:3px 9px;
+    display:flex; gap:5px; align-items:center}
+
+  /* layout tree render */
+  .split{position:absolute; inset:6px; display:flex; gap:8px}
+  .split.col{flex-direction:column}
+  .split > .cell{flex:1 1 0; min-width:0; min-height:0; position:relative}
+  .gutter{flex:0 0 4px; align-self:stretch; border-radius:3px; background:#1c2740}
+  .split.col > .gutter{flex:0 0 4px}
+
+  /* a mini-app pane */
+  .pane{position:absolute; inset:0; border-radius:11px; padding:11px; overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid #243348}
+  .loose .pane{inset:8px}
+  .pane h4{margin:0 0 9px; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); display:flex; gap:7px; align-items:center}
+  .pane .ic{width:18px;height:18px;border-radius:6px; display:grid; place-items:center; font-size:11px; flex:0 0 auto}
+  .row{height:9px;border-radius:5px;background:#26334a;opacity:.85;margin-bottom:7px}
+  .row.s{width:55%}.row.m{width:78%}.row.l{width:95%}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:2px}
+  .cal i{aspect-ratio:1;border-radius:3px;background:#22304a}
+  .cal i.on{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:54px;margin-top:6px}
+  .bars i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--accent),#1c8f7e)}
+  .kpi{font-size:26px;font-weight:800;letter-spacing:-.02em}.kpi small{font-size:12px;color:var(--accent);font-weight:600;margin-left:6px}
+  .field{height:24px;border-radius:7px;background:#1a2336;border:1px solid #283651;margin-bottom:7px}
+  .mapb{position:absolute;inset:34px 11px 11px;border-radius:8px;background:
+      radial-gradient(60px 40px at 40% 50%,#16324a,#0e1c2e);overflow:hidden}
+  .mapb i{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+
+  /* snap guide + magnet glow (drawn in world space) */
+  #guide{position:absolute; border-radius:6px; pointer-events:none; z-index:40; opacity:0;
+    background:linear-gradient(var(--accent),var(--accent)); box-shadow:0 0 22px 4px var(--accent);
+    transition:opacity .12s}
+  #magnet{position:absolute; pointer-events:none; z-index:39; opacity:0; border-radius:50%;
+    background:radial-gradient(circle, #36e0c055, transparent 70%); transition:opacity .15s}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>Snap-Compose</b> · drag mini-apps together — they magnetically click into a layout</div>
+  <div class="toolbar">
+    <button class="btn" id="reset">↺ Reset</button>
+    <button class="btn" id="scatter">+ Add app</button>
+  </div>
+
+  <div id="canvas">
+    <div id="grid"></div>
+    <div id="world">
+      <div id="magnet"></div>
+      <div id="guide"></div>
+    </div>
+  </div>
+
+  <div class="hint">drag a card toward another — it gets pulled in &amp; clicks flush · drag empty space to pan · scroll to zoom</div>
+  <div class="scanlines"></div>
+
+<script>
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const GUT=12, BASE_W=232, BASE_H=168, SNAP_GAP=72, SNAP_ALIGN=96, PULL=0.34;
+
+// ---- mini-app catalog (fake content, distinct visuals) ----
+const APPS=[
+  {name:'Calendar',  icon:'◧', col:'var(--accent2)', kind:'cal'},
+  {name:'Bookings',  icon:'≣', col:'var(--accent)',  kind:'list'},
+  {name:'New Booking',icon:'✎',col:'var(--violet)',  kind:'form'},
+  {name:'Revenue',   icon:'★', col:'var(--gold)',    kind:'kpi'},
+  {name:'Activity',  icon:'▦', col:'var(--blue)',    kind:'bars'},
+  {name:'Venue Map', icon:'◈', col:'var(--gold)',    kind:'map'},
+];
+function paneHTML(app){
+  const head=`<h4><span class="ic" style="background:${app.col}22;color:${app.col}">${app.icon}</span>${app.name}</h4>`;
+  let body='';
+  switch(app.kind){
+    case 'cal':  body=`<div class="cal">${Array.from({length:21},(_,i)=>`<i class="${[3,9,10,16].includes(i)?'on':''}"></i>`).join('')}</div>`; break;
+    case 'list': body=`<div class="row l"></div><div class="row m"></div><div class="row l"></div><div class="row s"></div><div class="row m"></div>`; break;
+    case 'form': body=`<div class="field"></div><div class="field"></div><div class="field" style="width:60%"></div>`; break;
+    case 'kpi':  body=`<div class="kpi">€48.2k<small>▲ 12%</small></div><div class="bars">${Array.from({length:7},(_,i)=>`<i style="height:${30+((i*37)%60)}%"></i>`).join('')}</div>`; break;
+    case 'bars': body=`<div class="bars">${Array.from({length:9},(_,i)=>`<i style="height:${25+((i*53)%70)}%"></i>`).join('')}</div>`; break;
+    case 'map':  body=`<div class="mapb"><i style="left:30%;top:40%"></i><i style="left:60%;top:55%;background:var(--accent2);box-shadow:0 0 8px var(--accent2)"></i><i style="left:48%;top:25%;background:var(--accent);box-shadow:0 0 8px var(--accent)"></i></div>`; break;
+  }
+  return head+body;
+}
+
+// ---- layout tree ----
+let UID=1; const uid=()=>UID++;
+const leaf = app => ({kind:'leaf', app});
+function treeSize(n){
+  if(n.kind==='leaf') return {w:BASE_W, h:BASE_H};
+  const A=treeSize(n.a), B=treeSize(n.b);
+  return n.dir==='row' ? {w:A.w+GUT+B.w, h:Math.max(A.h,B.h)}
+                       : {w:Math.max(A.w,B.w), h:A.h+GUT+B.h};
+}
+function treeHTML(n){
+  if(n.kind==='leaf') return `<div class="pane">${paneHTML(n.app)}</div>`;
+  const cls = n.dir==='col' ? 'split col' : 'split';
+  return `<div class="${cls}"><div class="cell">${treeHTML(n.a)}</div><div class="gutter"></div><div class="cell">${treeHTML(n.b)}</div></div>`;
+}
+const isGroup = n => n.kind==='split';
+
+// ---- state ----
+let pieces=[];   // {id, tree, x, y}
+let panX=120, panY=90, zoom=1;
+const world=document.getElementById('world');
+const canvas=document.getElementById('canvas');
+const guide=document.getElementById('guide');
+const magnet=document.getElementById('magnet');
+
+function applyView(){ world.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`; }
+function rectOf(p){ const s=treeSize(p.tree); return {x:p.x,y:p.y,w:s.w,h:s.h}; }
+
+function renderAll(){
+  // wipe pieces (keep guide+magnet)
+  [...world.querySelectorAll('.piece')].forEach(e=>e.remove());
+  for(const p of pieces){
+    const r=rectOf(p);
+    const el=document.createElement('div');
+    el.className='piece '+(isGroup(p.tree)?'group':'loose');
+    el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.style.width=r.w+'px'; el.style.height=r.h+'px';
+    el.dataset.id=p.id;
+    el.innerHTML = (isGroup(p.tree)?`<span class="badge">⛓ layout</span>`:``)+`<div class="frame">${treeHTML(p.tree)}</div>`;
+    world.appendChild(el);
+  }
+}
+const elOf = id => world.querySelector(`.piece[data-id="${id}"]`);
+
+// ---- snap detection ----
+function overlap(a1,a2,b1,b2){ return Math.min(a2,b2)-Math.max(a1,b1); }
+function findSnap(drag){
+  const D=rectOf(drag); let best=null;
+  for(const T of pieces){
+    if(T===drag) continue;
+    const R=rectOf(T);
+    // EAST of T:  D.left ≈ R.right+GUT, vertically aligned
+    const cands=[
+      {side:'E', gap:Math.abs(D.x-(R.x+R.w+GUT)),    align:Math.abs(D.y-R.y),      ov:overlap(D.y,D.y+D.h,R.y,R.y+R.h), tx:R.x+R.w+GUT, ty:R.y},
+      {side:'W', gap:Math.abs((D.x+D.w+GUT)-R.x),    align:Math.abs(D.y-R.y),      ov:overlap(D.y,D.y+D.h,R.y,R.y+R.h), tx:R.x-D.w-GUT, ty:R.y},
+      {side:'S', gap:Math.abs(D.y-(R.y+R.h+GUT)),    align:Math.abs(D.x-R.x),      ov:overlap(D.x,D.x+D.w,R.x,R.x+R.w), tx:R.x,         ty:R.y+R.h+GUT},
+      {side:'N', gap:Math.abs((D.y+D.h+GUT)-R.y),    align:Math.abs(D.x-R.x),      ov:overlap(D.x,D.x+D.w,R.x,R.x+R.w), tx:R.x,         ty:R.y-D.h-GUT},
+    ];
+    for(const c of cands){
+      if(c.gap<SNAP_GAP && c.align<SNAP_ALIGN && c.ov>30){
+        c.score=c.gap+c.align; c.T=T;
+        if(!best||c.score<best.score) best=c;
+      }
+    }
+  }
+  return best;
+}
+function showGuide(drag,s){
+  const R=rectOf(s.T), D=rectOf(drag);
+  let x,y,w,h;
+  if(s.side==='E'||s.side==='W'){
+    const seam = s.side==='E' ? R.x+R.w+GUT/2 : R.x-GUT/2;
+    x=seam-2.5; w=5; y=Math.min(R.y,s.ty); h=Math.max(R.h,D.h);
+  }else{
+    const seam = s.side==='S' ? R.y+R.h+GUT/2 : R.y-GUT/2;
+    y=seam-2.5; h=5; x=Math.min(R.x,s.tx); w=Math.max(R.w,D.w);
+  }
+  Object.assign(guide.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px',opacity:1});
+  Object.assign(magnet.style,{left:(s.tx+D.w/2-90)+'px',top:(s.ty+D.h/2-90)+'px',width:'180px',height:'180px',opacity:1});
+}
+function hideGuide(){ guide.style.opacity=0; magnet.style.opacity=0; }
+
+// ---- merge: the "click into a layout" ----
+function merge(s, drag){
+  const T=s.T;
+  let dir, a, b, ox, oy;
+  if(s.side==='E'){ dir='row'; a=T.tree; b=drag.tree; ox=T.x; oy=T.y; }
+  if(s.side==='W'){ dir='row'; a=drag.tree; b=T.tree; ox=s.tx; oy=T.y; }
+  if(s.side==='S'){ dir='col'; a=T.tree; b=drag.tree; ox=T.x; oy=T.y; }
+  if(s.side==='N'){ dir='col'; a=drag.tree; b=T.tree; ox=T.x; oy=s.ty; }
+  const merged={id:uid(), tree:{kind:'split',dir,a,b}, x:ox, y:oy};
+  pieces=pieces.filter(p=>p!==T && p!==drag);
+  pieces.push(merged);
+  renderAll();
+  const el=elOf(merged.id);
+  if(el){ el.classList.add('snapclick'); el.addEventListener('animationend',()=>el.classList.remove('snapclick'),{once:true}); }
+}
+
+// ---- pointer: drag pieces, pan canvas ----
+let drag=null, grabX=0, grabY=0, curSnap=null;
+let panning=false, panSX=0, panSY=0, panOX=0, panOY=0;
+const toWorld = e => { const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left-panX)/zoom, y:(e.clientY-r.top-panY)/zoom}; };
+
+canvas.addEventListener('pointerdown', e=>{
+  const pieceEl=e.target.closest('.piece');
+  if(pieceEl){
+    const id=+pieceEl.dataset.id; drag=pieces.find(p=>p.id===id);
+    const w=toWorld(e); grabX=w.x-drag.x; grabY=w.y-drag.y;
+    pieceEl.classList.add('dragging');
+    // bring to front in array (render order) without full rerender
+    world.appendChild(pieceEl);
+    canvas.setPointerCapture(e.pointerId);
+  } else {
+    panning=true; panSX=e.clientX; panSY=e.clientY; panOX=panX; panOY=panY;
+    canvas.classList.add('panning'); canvas.setPointerCapture(e.pointerId);
+  }
+});
+canvas.addEventListener('pointermove', e=>{
+  if(drag){
+    const w=toWorld(e);
+    drag.x = w.x-grabX; drag.y = w.y-grabY;
+    curSnap=findSnap(drag);
+    if(curSnap){ // magnetic pull toward the snap position
+      drag.x = lerp(drag.x, curSnap.tx, PULL);
+      drag.y = lerp(drag.y, curSnap.ty, PULL);
+      showGuide(drag,curSnap);
+    } else hideGuide();
+    const el=elOf(drag.id); el.style.left=drag.x+'px'; el.style.top=drag.y+'px';
+  } else if(panning){
+    panX=panOX+(e.clientX-panSX); panY=panOY+(e.clientY-panSY); applyView();
+  }
+});
+function endDrag(e){
+  if(drag){
+    const el=elOf(drag.id); if(el) el.classList.remove('dragging');
+    if(curSnap){ const s=curSnap, d=drag; curSnap=null; drag=null; hideGuide(); merge(s,d); return; }
+    drag=null; curSnap=null; hideGuide();
+  }
+  panning=false; canvas.classList.remove('panning');
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+// zoom toward cursor
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect(), sx=e.clientX-r.left, sy=e.clientY-r.top;
+  const wx=(sx-panX)/zoom, wy=(sy-panY)/zoom;
+  zoom=clamp(zoom*(e.deltaY<0?1.1:0.9), 0.45, 1.7);
+  panX=sx-wx*zoom; panY=sy-wy*zoom; applyView();
+},{passive:false});
+
+// ---- seed / controls ----
+function seed(){
+  pieces=[];
+  const spots=[[40,40],[330,70],[150,300],[470,330],[640,90],[700,360]];
+  APPS.forEach((a,i)=>{ const [x,y]=spots[i]; pieces.push({id:uid(), tree:leaf(a), x, y}); });
+  panX=120; panY=70; zoom=1; applyView(); renderAll();
+}
+let addN=0;
+document.getElementById('reset').onclick=seed;
+document.getElementById('scatter').onclick=()=>{
+  const a=APPS[addN++%APPS.length];
+  const w=toWorld({clientX:innerWidth/2, clientY:innerHeight/2});
+  pieces.push({id:uid(), tree:leaf(a), x:w.x-BASE_W/2+(addN*18), y:w.y-BASE_H/2+(addN*12)});
+  renderAll();
+};
+
+// screenshot mode: ?state=composed pre-snaps a layout
+const q=new URLSearchParams(location.search);
+seed();
+if(q.get('state')==='composed'){
+  // Calendar | (Bookings / New Booking)  beside  Revenue, with Activity below — a real composed tree
+  const t={kind:'split',dir:'row',
+    a:{kind:'split',dir:'row', a:leaf(APPS[0]), b:{kind:'split',dir:'col',a:leaf(APPS[1]),b:leaf(APPS[2])}},
+    b:{kind:'split',dir:'col', a:leaf(APPS[3]), b:leaf(APPS[4])}};
+  pieces=[{id:uid(),tree:t,x:60,y:80},{id:uid(),tree:leaf(APPS[5]),x:760,y:120}];
+  panX=80; panY=60; zoom=.92; applyView(); renderAll();
+}
+</script>
+</body>
+</html>
