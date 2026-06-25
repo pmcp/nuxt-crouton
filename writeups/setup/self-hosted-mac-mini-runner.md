@@ -52,16 +52,46 @@ GitHub-hosted minutes, full control) and survive reboots, sleep, and network bli
 
 ---
 
-## 0. Prerequisites (on the Mac mini)
+## Conventions — WHERE each step runs (read this first)
 
-You're driving this from your own Mac over SSH into the mini — every step below is
-copy-pasteable into that SSH session (or run directly if you're sitting at the mini).
+This is where mistakes happen. Every step below is tagged with **where** it runs, and
+every terminal block starts by telling you the **folder** to be in. The tags:
+
+| Tag | Means | How you do it |
+|---|---|---|
+| 🖥️ **MINI (terminal)** | A shell **on the Mac mini** | You're SSH'd into the mini from your own Mac (`ssh you@mac-mini.local`). Run it there. |
+| 🌐 **GITHUB (browser)** | The **GitHub web UI** | In a browser on whatever machine — it's a website, not a terminal. |
+| ⚙️ **GITHUB (repo settings)** | **Repo** settings page, not org/account | `github.com/FriendlyInternet/nuxt-crouton/settings/...` — needs admin on the repo. |
+
+**Two separate folders on the mini — do not confuse them:**
+
+- **`~/actions-runner`** — the GitHub runner install (the tarball you unpack in §1). This
+  is NOT the repo. It has no app code; it's just the runner agent.
+- **`~/nuxt-crouton`** — a clone of this repo (only needed in §4 for the watchdog scripts).
+
+Each terminal block opens with a `cd` so you're never guessing the working directory. If a
+block has no `cd`, the folder doesn't matter for that command (e.g. `brew install`).
+
+---
+
+## 0. Prerequisites
+
+🖥️ **MINI (terminal)** — SSH in from your own Mac first, then run everything in this section
+there:
 
 ```bash
-# A working dir for the runner (NOT inside the repo — keep them separate).
+# From YOUR Mac, open a shell on the mini (adjust host/user to your box):
+ssh you@mac-mini.local
+```
+
+Then, on the mini:
+
+```bash
+# folder: anywhere (this just creates + enters the runner dir)
+# A working dir for the runner — NOT inside the repo, keep them separate:
 mkdir -p ~/actions-runner && cd ~/actions-runner
 
-# Confirm macOS arch (Apple Silicon = arm64; you'll pick the matching runner tarball).
+# Confirm macOS arch (Apple Silicon = arm64; you'll pick the matching runner tarball):
 uname -m            # arm64 (M-series) or x86_64 (Intel)
 ```
 
@@ -71,9 +101,15 @@ uname -m            # arm64 (M-series) or x86_64 (Intel)
 
 ### 1a. Get the registration token + download
 
-In the GitHub UI: **Settings → Actions → Runners → New self-hosted runner → macOS**.
-GitHub shows you the exact download URL + a **short-lived registration token**. Copy them
+⚙️ **GITHUB (repo settings)** — in a browser, go to the **repo** (not your account, not the
+org): `github.com/FriendlyInternet/nuxt-crouton` → **Settings** tab → left sidebar
+**Actions → Runners** → **New self-hosted runner** → **macOS**. Direct link:
+`https://github.com/FriendlyInternet/nuxt-crouton/settings/actions/runners`.
+
+That page shows the exact download URL + a **short-lived registration token** — copy both
 (the token expires in ~1h). The commands below mirror what that page generates.
+
+🖥️ **MINI (terminal):**
 
 ```bash
 cd ~/actions-runner
@@ -89,7 +125,10 @@ This is the load-bearing step: the routing toggle (#610 WS3, var `AGENT_RUNNER`)
 reports-only pi.dev workflow (`a11y-daily-pidev.yml`) both target the **single custom
 label `mac-mini`**. Label it exactly that.
 
+🖥️ **MINI (terminal)** — folder: `~/actions-runner` (where you just unpacked the tarball):
+
 ```bash
+cd ~/actions-runner
 ./config.sh \
   --url https://github.com/FriendlyInternet/nuxt-crouton \
   --token <REGISTRATION_TOKEN_FROM_THE_UI> \
@@ -117,7 +156,10 @@ Don't run `./run.sh` in a terminal — that dies on logout/reboot (explicitly th
 **considered-and-rejected** `tmux`/login-shell path in #653). Use the runner's own launchd
 installer:
 
+🖥️ **MINI (terminal)** — folder: `~/actions-runner`:
+
 ```bash
+cd ~/actions-runner
 ./svc.sh install      # registers a GUI-domain launchd agent: actions.runner.<owner>-<repo>.mac-mini
 ./svc.sh start
 ./svc.sh status       # → "started" with a live PID
@@ -136,7 +178,9 @@ installer:
 ### 2a. Toolchain on the box
 
 GitHub-hosted runners ship a toolchain; a self-hosted one starts bare. The Mac mini needs
-the full build toolchain (it *is* the build box now). Install once:
+the full build toolchain (it *is* the build box now). Install once.
+
+🖥️ **MINI (terminal)** — folder: anywhere (these are global installs; cwd doesn't matter):
 
 ```bash
 # Node 22 via nvm (matches the workflows' setup-node node-version: 22)
@@ -169,10 +213,11 @@ wrangler --version
 
 ### 2b. Secrets
 
-**GitHub repo secrets are delivered to self-hosted runners exactly like hosted ones** —
-they're injected into the job env at runtime; nothing is stored on the box. So the
-secrets the agent/deploy jobs need require **no on-box action** beyond confirming they
-resolve. The list (from #654):
+⚙️ **GITHUB (repo settings)** — nothing to run on the mini here. **GitHub repo secrets are
+delivered to self-hosted runners exactly like hosted ones** — injected into the job env at
+runtime; nothing is stored on the box. So the secrets the agent/deploy jobs need require
+**no on-box action** beyond confirming they exist at
+`github.com/FriendlyInternet/nuxt-crouton/settings/secrets/actions`. The list (from #654):
 
 | Secret | Used by |
 |---|---|
@@ -203,10 +248,12 @@ committed file.
 
 ## 3. Route jobs to the runner (#610 WS3 — context)
 
-The workflows that opt in already read a toggle: `runs-on: ${{ vars.AGENT_RUNNER ||
-'ubuntu-latest' }}`. Setting the **repo variable** `AGENT_RUNNER=mac-mini` (Settings →
-Secrets and variables → Actions → Variables) sends those jobs to the mini; unsetting it
-falls back to GitHub-hosted. One variable, reversible — no workflow edits needed.
+⚙️ **GITHUB (repo settings)** — nothing to run on the mini. The workflows that opt in
+already read a toggle: `runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}`. Add the
+**repo variable** `AGENT_RUNNER` = `mac-mini` at
+`github.com/FriendlyInternet/nuxt-crouton/settings/variables/actions` (**Variables** tab,
+*not* Secrets) to send those jobs to the mini; delete the variable to fall back to
+GitHub-hosted. One variable, reversible — no workflow edits needed.
 
 > This runbook covers WS1/WS2/WS5 (register + provision + keep-alive). Wiring *more*
 > workflows to the toggle, and the fork-PR security policy (WS4), are tracked separately
@@ -222,7 +269,9 @@ Three layers, set all three.
 
 Full detail + the optional `caffeinate` launchd agent are in
 [`scripts/mac-mini-runner/no-sleep.md`](../../scripts/mac-mini-runner/no-sleep.md). The
-essentials, run on the mini:
+essentials:
+
+🖥️ **MINI (terminal)** — folder: anywhere (needs `sudo`):
 
 ```bash
 sudo pmset -c sleep 0 disksleep 0 powernap 0 autorestart 1
@@ -232,7 +281,9 @@ pmset -g custom        # confirm: sleep 0 / disksleep 0 / autorestart 1 on AC
 ### 4b. launchd KeepAlive (process-level restart)
 
 `./svc.sh install` already installs a launchd agent that restarts the runner if its
-**process** dies. Confirm it's `KeepAlive`-d:
+**process** dies. Confirm it's `KeepAlive`-d.
+
+🖥️ **MINI (terminal)** — folder: anywhere:
 
 ```bash
 launchctl list | grep actions.runner          # shows the runner agent + its PID
@@ -259,19 +310,43 @@ Two committed files do this:
 - [`scripts/mac-mini-runner/com.nuxtcrouton.runner-watchdog.plist`](../../scripts/mac-mini-runner/com.nuxtcrouton.runner-watchdog.plist)
   — a launchd agent that runs the health-check every **5 minutes**.
 
-Install (edit the `<<EDIT>>` paths in the plist to your absolute home dir first):
+The watchdog files live in **this repo**, so the mini needs a clone of it (separate from
+`~/actions-runner`). 🖥️ **MINI (terminal)** — clone once, then `cd` into it:
 
 ```bash
+# folder: anywhere — clones the repo to ~/nuxt-crouton (skip if already cloned)
+git clone https://github.com/FriendlyInternet/nuxt-crouton.git ~/nuxt-crouton
+cd ~/nuxt-crouton
+git checkout chore/653-mac-mini-runner-runbook    # or `main` once PR #882 is merged
+```
+
+🖥️ **MINI (terminal)** — folder: `~/nuxt-crouton` (the repo clone — the `scripts/...` paths
+below are relative to it):
+
+```bash
+cd ~/nuxt-crouton
+
 # Optional: secrets for the API probe + alerts, in a gitignored env file the script sources.
+# (Lives in your HOME, ~/.runner-watchdog.env — NOT in the repo.)
 cat > ~/.runner-watchdog.env <<'EOF'
 GH_TOKEN=ghp_xxx          # a PAT with repo scope (only for the API liveness probe)
 ALERT_WEBHOOK=https://hooks.slack.com/services/...   # optional Slack/Discord webhook
 EOF
 chmod 600 ~/.runner-watchdog.env
 
+# Copy the launchd plist into your LaunchAgents folder:
 cp scripts/mac-mini-runner/com.nuxtcrouton.runner-watchdog.plist \
    ~/Library/LaunchAgents/com.nuxtcrouton.runner-watchdog.plist
-# >>> edit the 4 YOURNAME paths in that copied plist <<<
+```
+
+🖥️ **MINI (editor)** — open `~/Library/LaunchAgents/com.nuxtcrouton.runner-watchdog.plist`
+and replace every `YOURNAME` with your macOS short username (run `whoami` to get it) so the
+paths are absolute and real. There are paths in `ProgramArguments`, `EnvironmentVariables`,
+`WorkingDirectory`, and the two `Standard*Path` entries.
+
+🖥️ **MINI (terminal)** — folder: anywhere — load + run it:
+
+```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.nuxtcrouton.runner-watchdog.plist
 launchctl kickstart  gui/$(id -u)/com.nuxtcrouton.runner-watchdog     # run it once now
 tail -f ~/Library/Logs/runner-watchdog.log                            # watch it work
@@ -289,7 +364,9 @@ tail -f ~/Library/Logs/runner-watchdog.log                            # watch it
 
 ## Three acceptance tests, in one place
 
-Pulled from #653 / #654 / #657 so you can run them top-to-bottom once the box is set up:
+Pulled from #653 / #654 / #657 so you can run them top-to-bottom once the box is set up.
+The reboot/kill steps are 🖥️ **MINI (terminal)**; "a job lands on it" / "routed workflow"
+are observed in 🌐 **GITHUB (browser)** on the Actions tab.
 
 1. **#653 — registered + always-on:** Runner shows **Idle** with label `mac-mini`; a
    trivial test job lands on it; after a **reboot** it returns to Idle automatically.
