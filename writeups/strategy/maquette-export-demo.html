@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — what the build exports</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a24; --elevated:#1b2330; --border:#2a3445; --border2:#3a4860;
+    --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0; --code:#0d1320;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 ui-sans-serif,system-ui,sans-serif;padding:26px}
+  h1{font-size:19px;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 20px;max-width:80ch}
+  .badge{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:600;letter-spacing:.04em}
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 22px}
+  .mode{border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:14px}
+  .mode h3{margin:0 0 6px;font-size:13px}
+  .mode h3 code{color:var(--primary)}
+  .mode p{margin:0;color:var(--muted);font-size:12.5px}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media (max-width:900px){.split,.modes{grid-template-columns:1fr}}
+  .col h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 10px;display:flex;gap:10px;align-items:center}
+  .controls{display:flex;gap:8px;margin-bottom:12px}
+  .controls button{background:var(--elevated);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer}
+  .controls button.on{border-color:var(--primary);color:var(--primary)}
+
+  /* ===== THE EXPORTED ARTIFACT — this whole block is what a build emits ===== */
+  /* A wrapper that IS a container; the layout reflows to ITS width, no JS. */
+  .mq-stage{border:1px dashed var(--border2);border-radius:12px;padding:10px;background:#070a10;overflow:hidden;transition:max-width .25s}
+  .mq-root{container-type:inline-size;container-name:mq;}
+  .mq-app{
+    display:grid;gap:8px;height:360px;
+    grid-template-columns:1fr;          /* phone-first: one column, stacked */
+    grid-template-areas:"list" "main" "stats";
+  }
+  @container mq (min-width:640px){      /* authored breakpoint @ 640 → master-detail */
+    .mq-app{grid-template-columns:200px 1fr;grid-template-areas:"list main" "stats main";}
+  }
+  @container mq (min-width:960px){      /* authored breakpoint @ 960 → + stats column */
+    .mq-app{grid-template-columns:200px 1fr 220px;grid-template-areas:"list main stats";}
+  }
+  .mq-pane{border:1px solid #243348;border-radius:9px;background:linear-gradient(180deg,var(--elevated),var(--panel));padding:10px;overflow:auto;min-width:0}
+  .mq-pane h4{margin:0 0 8px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .mq-list{grid-area:list} .mq-main{grid-area:main} .mq-stats{grid-area:stats}
+  .row{height:8px;border-radius:4px;background:#26334a;margin-bottom:6px}.row.s{width:55%}.row.m{width:82%}
+  .kpi{font-size:22px;font-weight:800}.kpi small{color:var(--accent);font-size:11px;margin-left:5px}
+  /* ===== end exported artifact ===== */
+
+  pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,monospace;color:#c9d6ec;margin:0}
+  pre .c{color:#5f7088}.pre .k{color:var(--primary)}
+  .note{margin-top:10px;color:var(--muted);font-size:12px}
+  .legend{margin-top:24px;color:var(--muted);font-size:12.5px;max-width:84ch}
+  .legend b{color:var(--text)}
+</style>
+</head>
+<body>
+  <h1>Maquette — what the <em>build</em> exports <span class="badge">0 JS · static</span></h1>
+  <p class="sub">The reactive builder (Vue + reka-ui) is the <b>design-time</b> tool. What ships is this:
+  a layout that reflows entirely in <b>CSS container queries</b> — the authored breakpoints become
+  <code>@container</code> rules. No framework, no reactivity, no runtime. The preview below is driven
+  only by the stylesheet shown next to it.</p>
+
+  <div class="modes">
+    <div class="mode">
+      <h3>Mode A — <code>nuxt-maquette</code> (Nuxt module)</h3>
+      <p>Dev loads the full reactive builder. <b>Build clashes it down</b> to the layout you decided on → static CSS + markup injected into the page. Production ships no layout JS.</p>
+    </div>
+    <div class="mode">
+      <h3>Mode B — <code>@fyit/maquette</code> / <code>vue-maquette</code> (compiler)</h3>
+      <p>The same <code>compileLayoutToCss(tree)</code> exposed standalone: a saved layout → a <code>.css</code> file (+ optional HTML skeleton). Any stack. This is the library face.</p>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="col">
+      <h2>The exported layout (pure CSS)</h2>
+      <div class="controls">
+        <span style="color:var(--muted);font-size:12px;align-self:center">Preview width:</span>
+        <button data-w="380">Phone 380</button>
+        <button data-w="760">Tablet 760</button>
+        <button data-w="1100" class="on">Desktop 1100</button>
+      </div>
+      <div class="mq-stage" id="stage" style="max-width:1100px">
+        <div class="mq-root">
+          <div class="mq-app">
+            <div class="mq-pane mq-list"><h4>Bookings</h4><div class="row m"></div><div class="row s"></div><div class="row m"></div><div class="row s"></div></div>
+            <div class="mq-pane mq-main"><h4>Detail</h4><div class="row m"></div><div class="row m"></div><div class="row s"></div><div class="row m"></div></div>
+            <div class="mq-pane mq-stats"><h4>Stats</h4><div class="kpi">128<small>+12%</small></div><div class="row m" style="margin-top:8px"></div><div class="row s"></div></div>
+          </div>
+        </div>
+      </div>
+      <p class="note">The buttons only change the <em>preview frame's</em> width to prove the reflow — the layout itself has no script. At a real deploy the pane just <em>is</em> its width and the <code>@container</code> rules do the rest.</p>
+    </div>
+
+    <div class="col">
+      <h2>…emitted as this</h2>
+      <pre><span class="c">/* maquette.css — generated from the saved LayoutTree. No JS. */</span>
+.mq-app {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;            <span class="c">/* phone-first */</span>
+  grid-template-areas: "list" "main" "stats";
+}
+<span class="c">/* authored breakpoint @ 640px → master-detail */</span>
+@container mq (min-width: 640px) {
+  .mq-app {
+    grid-template-columns: 200px 1fr;
+    grid-template-areas: "list main" "stats main";
+  }
+}
+<span class="c">/* authored breakpoint @ 960px → + stats column */</span>
+@container mq (min-width: 960px) {
+  .mq-app {
+    grid-template-columns: 200px 1fr 220px;
+    grid-template-areas: "list main stats";
+  }
+}</pre>
+      <pre style="margin-top:12px"><span class="c">&lt;!-- maquette.html — minimal skeleton, your blocks slot in --&gt;</span>
+&lt;div class="mq-root"&gt;
+  &lt;div class="mq-app"&gt;
+    &lt;section class="mq-list"&gt;…&lt;/section&gt;
+    &lt;section class="mq-main"&gt;…&lt;/section&gt;
+    &lt;section class="mq-stats"&gt;…&lt;/section&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+
+  <p class="legend">
+    <b>Why two modes is the win:</b> Mode A is just Mode B + a thin Nuxt wrapper — so building the
+    compiler once gives you both a great Nuxt DX <i>and</i> a framework-agnostic OSS library. The
+    authored breakpoints (min-width, lock-upward) map 1:1 onto <code>@container</code> rules; a snap-composed
+    split tree maps onto <code>grid-template-areas</code>; the viability metric becomes a build-time check.
+    Collapse/overlay behaviours that genuinely need interaction can emit a tiny optional JS shim, but the
+    <em>layout</em> itself is pure CSS.
+  </p>
+
+<script>
+  // The ONLY script here is the preview-width toggle (a demo aid). It is NOT part of the export.
+  const stage = document.getElementById('stage');
+  document.querySelectorAll('.controls button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.controls button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    stage.style.maxWidth = b.dataset.w + 'px';
+  }));
+</script>
+</body>
+</html>
