@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HUD Dock</title>
+<style>
+  /* ---- shared game-UI scaffold (see writeup) ---- */
+  :root{
+    --t:0;                 /* 0 = expanded, 1 = collapsed. render(t) drives everything */
+    --bg:#0a0e14; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73; --gold:#ffd34d;
+    --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 70% -10%, #15314a55, transparent),
+      radial-gradient(900px 600px at -10% 110%, #2a123a55, transparent),
+      var(--bg);
+    color:var(--ink); font-family:"Inter",system-ui,sans-serif; overflow:hidden;
+    height:100%;
+  }
+  .stage{position:absolute; inset:0; padding:26px; display:flex; flex-direction:column}
+  .chip{
+    position:fixed; top:18px; left:18px; z-index:50;
+    display:flex; align-items:center; gap:10px;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px;
+    padding:8px 16px; font-size:13px; letter-spacing:.04em; backdrop-filter:blur(8px);
+  }
+  .chip b{font-weight:700} .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:var(--glow) var(--accent)}
+  .hint{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:50}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.06;
+    background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  /* generic pane look */
+  .pane{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--edge);
+    border-radius:14px; padding:14px; position:relative; overflow:hidden; box-shadow:inset 0 1px 0 #ffffff0a, 0 10px 30px #0008}
+  .pane h4{margin:0 0 10px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); display:flex; gap:8px; align-items:center}
+  .pane .ic{width:9px;height:9px;border-radius:3px}
+  .rows{display:flex; flex-direction:column; gap:8px}
+  .row{height:12px; border-radius:6px; background:#26334a; opacity:.8}
+  .row.s{width:60%} .row.m{width:85%} .row.l{width:100%}
+  .grid{display:grid; gap:8px; grid-template-columns:repeat(3,1fr)}
+  .tile{aspect-ratio:1; border-radius:10px; background:linear-gradient(135deg,#22304a,#1a2236); border:1px solid #2b3a55}
+
+  /* ===== HUD DOCK specifics ===== */
+  /* Layout: a main canvas + three satellite panes that, on collapse, fly to the
+     screen edges and condense into glowing HUD bars (health / ammo / radar). */
+  .canvas{position:absolute; inset:26px; border-radius:18px;
+    background:radial-gradient(900px 500px at 50% 40%, #14304688, #0c1119);
+    border:1px solid var(--edge); overflow:hidden}
+  .canvas .map{position:absolute; inset:0; opacity:.5;
+    background-image:linear-gradient(#1c3450 1px,transparent 1px),linear-gradient(90deg,#1c3450 1px,transparent 1px);
+    background-size:48px 48px; mask-image:radial-gradient(700px 400px at 50% 45%,#000,transparent)}
+  .blip{position:absolute; width:10px;height:10px;border-radius:50%; background:var(--accent2); box-shadow:var(--glow) var(--accent2)}
+  .player{position:absolute; left:50%; top:46%; width:26px;height:26px; transform:translate(-50%,-50%) rotate(35deg);
+    background:conic-gradient(from 200deg, var(--accent), #1ec); clip-path:polygon(50% 0,100% 100%,50% 78%,0 100%); filter:drop-shadow(0 0 10px var(--accent))}
+
+  .hud{position:absolute; z-index:20; will-change:transform,opacity}
+  /* each satellite pane is absolutely placed; render(t) lerps it from a docked
+     in-canvas card (t=0) toward a flush screen-edge HUD bar (t=1). */
+  #left{left:26px; top:90px; width:230px}
+  #right{right:26px; top:90px; width:230px}
+  #bottom{left:50%; bottom:26px; width:380px; transform-origin:bottom center}
+
+  .bar{height:14px;border-radius:8px;overflow:hidden;background:#0008;border:1px solid #ffffff14}
+  .bar > i{display:block;height:100%;}
+  .hp > i{width:72%; background:linear-gradient(90deg,var(--accent2),#ff9b6b); box-shadow:var(--glow) var(--accent2)}
+  .ammo > i{width:48%; background:linear-gradient(90deg,var(--gold),#fff2));}
+  .edge-glow{position:absolute; inset:0; border-radius:14px; box-shadow:0 0 0 1px #ffffff10; pointer-events:none}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>HUD Dock</b> · panes fly to the screen edges as a health / ammo / radar HUD</div>
+
+  <div class="canvas">
+    <div class="map"></div>
+    <div class="player"></div>
+    <div class="blip" style="left:38%;top:30%"></div>
+    <div class="blip" style="left:64%;top:58%; background:var(--gold); box-shadow:var(--glow) var(--gold)"></div>
+    <div class="blip" style="left:55%;top:22%"></div>
+  </div>
+
+  <!-- LEFT satellite → docks to left edge as a vertical health stack -->
+  <div class="hud pane" id="left">
+    <h4><span class="ic" style="background:var(--accent2)"></span>Squad Vitals</h4>
+    <div class="rows">
+      <div class="bar hp"><i></i></div>
+      <div class="bar hp" style="--w:50%"><i style="width:54%"></i></div>
+      <div class="bar hp"><i style="width:88%"></i></div>
+    </div>
+    <div class="edge-glow"></div>
+  </div>
+
+  <!-- RIGHT satellite → docks to right edge as an ammo/loadout rail -->
+  <div class="hud pane" id="right">
+    <h4><span class="ic" style="background:var(--gold)"></span>Loadout</h4>
+    <div class="rows">
+      <div class="bar ammo"><i></i></div>
+      <div class="bar ammo"><i style="width:30%"></i></div>
+      <div class="bar ammo"><i style="width:66%"></i></div>
+    </div>
+    <div class="edge-glow"></div>
+  </div>
+
+  <!-- BOTTOM satellite → shrinks into a centered minimap thumbnail strip -->
+  <div class="hud pane" id="bottom">
+    <h4><span class="ic" style="background:var(--accent)"></span>Tactical Feed</h4>
+    <div class="grid"><div class="tile"></div><div class="tile"></div><div class="tile"></div></div>
+    <div class="edge-glow"></div>
+  </div>
+
+  <div class="hint">click anywhere — panes dock to the edges · add <code>?t=0..1</code> to freeze a frame</div>
+  <div class="scanlines"></div>
+
+<script>
+  // ===== shared render contract =====
+  // render(t): t in [0,1]. 0 = fully expanded panes; 1 = fully collapsed to HUD.
+  const $ = s => document.querySelector(s);
+  const lerp = (a,b,t)=>a+(b-a)*t;
+  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+
+  function render(t){
+    document.documentElement.style.setProperty('--t', t);
+    // LEFT: slide flush to the left wall, narrow to a vertical bar, brighten.
+    const L=$('#left');
+    L.style.transform = `translate(${lerp(0,-12,t)}px, ${lerp(0,-58,t)}px)`;
+    L.style.width = lerp(230,150,t)+'px';
+    L.style.height = lerp(120, 78, t)+'px';
+    L.style.borderRadius = lerp(14, 0, t)+'px 14px 14px '+lerp(14,0,t)+'px';
+    L.style.filter = `saturate(${lerp(1,1.4,t)}) brightness(${lerp(1,1.15,t)})`;
+    L.style.boxShadow = `inset 0 1px 0 #ffffff0a, ${lerp(0,30,t)}px 0 ${lerp(0,60,t)}px ${'var(--accent2)'.replace(')','')}`;
+    // RIGHT: mirror to the right wall.
+    const R=$('#right');
+    R.style.transform = `translate(${lerp(0,12,t)}px, ${lerp(0,-58,t)}px)`;
+    R.style.width = lerp(230,150,t)+'px';
+    R.style.height = lerp(120, 78, t)+'px';
+    R.style.borderRadius = `14px ${lerp(14,0,t)}px ${lerp(14,0,t)}px 14px`;
+    R.style.filter = `saturate(${lerp(1,1.4,t)}) brightness(${lerp(1,1.15,t)})`;
+    // BOTTOM: shrink + drop flush to the floor as a compact strip.
+    const B=$('#bottom');
+    B.style.transform = `translate(-50%, ${lerp(0,18,t)}px) scale(${lerp(1,.62,t)})`;
+    B.style.opacity = lerp(1,.96,t);
+    B.style.borderRadius = `14px 14px 0 0`;
+    // dim the canvas grid slightly so the HUD pops when docked
+    document.querySelector('.canvas').style.filter = `brightness(${lerp(1,1.08,t)})`;
+  }
+
+  // ===== screenshot mode vs interactive mode =====
+  const q = new URLSearchParams(location.search);
+  const tParam = q.get('t');
+  let t = 0, target = 0, raf=null;
+  function animate(){
+    t += (target - t) * 0.16;
+    if(Math.abs(target-t) < 0.001){ t = target; render(t); raf=null; return; }
+    render(t); raf = requestAnimationFrame(animate);
+  }
+  if(tParam !== null){
+    render(clamp(parseFloat(tParam)));   // frozen frame for capture
+  } else {
+    render(0);
+    addEventListener('click', ()=>{ target = target>0.5?0:1; if(!raf) raf=requestAnimationFrame(animate); });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spring Drawer</title>
+<style>
+  :root{
+    --t:0; --bg:#0a0e14; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73;
+    --gold:#ffd34d; --violet:#9d7bff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1100px 700px at 78% -8%, #15314a55, transparent),
+      radial-gradient(900px 600px at -8% 112%, #2a123a55, transparent),
+      var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,sans-serif; overflow:hidden; height:100%;
+  }
+  .stage{position:absolute; inset:24px; display:flex; gap:18px}
+  .chip{position:fixed; top:18px; left:18px; z-index:50; display:flex; gap:10px; align-items:center;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; font-size:13px; letter-spacing:.04em; backdrop-filter:blur(8px)}
+  .chip b{font-weight:700} .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:var(--glow) var(--gold)}
+  .hint{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:50}
+  .hint code{color:var(--accent)}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.06;
+    background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  .pane{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--edge);
+    border-radius:14px; padding:16px; position:relative; overflow:hidden; box-shadow:inset 0 1px 0 #ffffff0a, 0 12px 34px #0008}
+  .pane h4{margin:0 0 12px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); display:flex; gap:8px; align-items:center}
+  .ic{width:20px;height:20px;border-radius:6px; display:grid; place-items:center; font-size:12px}
+
+  /* main pane fills remaining space */
+  .main{flex:1; min-width:0}
+  .map{position:absolute; inset:46px 16px 16px; border-radius:10px; opacity:.55;
+    background-image:linear-gradient(#1c3450 1px,transparent 1px),linear-gradient(90deg,#1c3450 1px,transparent 1px);
+    background-size:42px 42px; mask-image:radial-gradient(640px 380px at 50% 45%,#000,transparent)}
+  .blip{position:absolute; width:9px;height:9px;border-radius:50%; background:var(--accent2); box-shadow:var(--glow) var(--accent2)}
+
+  /* ===== SPRING DRAWER ===== */
+  /* a physics-y loot drawer on the right. t=0 = sprung open (a full tree card);
+     t=1 = slammed shut into a thin labeled drawer-spine flush with the edge.
+     render(t) remaps t through an out-back spring so position OVERSHOOTS the
+     resting line near both ends, then settles. */
+  .drawer{position:relative; will-change:width,transform; flex:none; transform-origin:right center}
+  .front{position:absolute; inset:0; border-radius:14px; overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--edge);
+    box-shadow:inset 0 1px 0 #ffffff0a, 0 12px 34px #0008}
+  /* knob/handle on the drawer front */
+  .knob{position:absolute; left:8px; top:50%; transform:translateY(-50%); width:10px; height:64px;
+    border-radius:6px; background:linear-gradient(180deg,#46557a,#222d44); border:1px solid #55689a;
+    box-shadow:inset 0 1px 0 #ffffff22, var(--glow) #46557a55; z-index:6}
+  .knob::after{content:""; position:absolute; inset:14px 3px; border-radius:4px;
+    background:repeating-linear-gradient(180deg,#ffffff14 0 3px,transparent 3px 7px)}
+  /* spine label shown when shut */
+  .spine{position:absolute; right:0; top:0; bottom:0; width:46px; z-index:5;
+    display:flex; align-items:center; justify-content:center; pointer-events:none}
+  .spine span{writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
+    font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--dim); font-weight:700}
+  .content{position:absolute; inset:0; padding:16px 16px 16px 26px; overflow:hidden}
+
+  .tree{display:flex; flex-direction:column; gap:9px; margin-top:6px}
+  .node{display:flex; align-items:center; gap:9px; font-size:13px; color:var(--ink)}
+  .node .tw{color:var(--dim)}
+  .node .gl{width:20px;height:20px;border-radius:6px; display:grid;place-items:center; font-size:12px;
+    background:#1f2a40; border:1px solid #2b3a55}
+  .node.depth1{padding-left:18px} .node.depth2{padding-left:36px}
+  .bar{height:6px;border-radius:4px;background:#26334a;flex:1}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>Spring Drawer</b> · the side pane slams shut & springs open with an elastic overshoot</div>
+
+  <div class="stage">
+    <!-- MAIN canvas pane -->
+    <div class="pane main">
+      <h4><span class="ic" style="background:#1f3a44;color:var(--accent)">◈</span>Sector Map</h4>
+      <div class="map"></div>
+      <div class="blip" style="left:34%;top:42%"></div>
+      <div class="blip" style="left:58%;top:30%; background:var(--gold); box-shadow:var(--glow) var(--gold)"></div>
+      <div class="blip" style="left:48%;top:64%"></div>
+    </div>
+
+    <!-- SPRING DRAWER (right) -->
+    <div class="drawer" id="drawer">
+      <div class="front" id="front">
+        <div class="knob"></div>
+        <div class="spine" id="spine"><span>Loot · Inventory</span></div>
+        <div class="content" id="content">
+          <h4 style="margin:0 0 12px"><span class="ic" style="background:#4a3c1c;color:var(--gold)">❖</span>Loot Drawer</h4>
+          <div class="tree">
+            <div class="node"><span class="gl" style="color:var(--gold)">★</span><span class="tw">▾</span> Rare Cache <span class="bar"></span></div>
+            <div class="node depth1"><span class="gl" style="color:var(--violet)">◆</span> Ion Blade <span class="bar" style="flex:.7"></span></div>
+            <div class="node depth1"><span class="gl" style="color:var(--accent)">◈</span> Cloak Field <span class="bar" style="flex:.5"></span></div>
+            <div class="node depth2"><span class="gl" style="color:var(--accent2)">✶</span> Charge x3 <span class="bar" style="flex:.4"></span></div>
+            <div class="node"><span class="gl" style="color:var(--accent2)">▣</span><span class="tw">▾</span> Consumables <span class="bar"></span></div>
+            <div class="node depth1"><span class="gl" style="color:var(--gold)">◢</span> Med Kit <span class="bar" style="flex:.6"></span></div>
+            <div class="node depth1"><span class="gl" style="color:var(--violet)">❖</span> Nano Salve <span class="bar" style="flex:.45"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">click anywhere — the drawer slams shut & springs open · add <code>?t=0..1</code> to freeze a frame</div>
+  <div class="scanlines"></div>
+
+<script>
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const drawer=document.getElementById('drawer');
+  const front=document.getElementById('front');
+  const content=document.getElementById('content');
+  const spine=document.getElementById('spine');
+
+  const OPEN_W=300, SHUT_W=46;
+
+  // damped-sine spring easing — position OVERSHOOTS past the target near the
+  // settling end and rings back. We apply it in BOTH directions so RESTORE
+  // springs past open (t→0) and SLAM overshoots past shut (t→1).
+  // spring(x): x in [0,1], eases 0→1 overshooting past 1 before settling.
+  function spring(x){
+    if(x<=0) return 0; if(x>=1) return 1;
+    return 1 - Math.exp(-6*x)*Math.cos(x*6.0);   // rings past 1 around x~.4 then settles
+  }
+  // remap raw t so width overshoots at WHICHEVER end we're settling toward.
+  function springMap(t){
+    // closing half (t>.5 → settling toward shut): overshoot past 1
+    if(t>=0.5) return 0.5 + 0.5*spring((t-0.5)/0.5);
+    // opening half (t<.5 → settling toward open): overshoot below 0
+    return 0.5 - 0.5*spring((0.5-t)/0.5);
+  }
+
+  // t=0 = fully OPEN (sprung), t=1 = fully SHUT (slammed). Everything derived from t.
+  function render(t){
+    document.documentElement.style.setProperty('--t',t);
+
+    // remap raw t through the spring so width overshoots at both extremes:
+    // near t=1 it goes >1 (slam past closed), near t=0 it dips <0 (spring past open).
+    const s = springMap(t);
+
+    // width can overshoot below SHUT_W (slam past closed) / above OPEN_W (spring past open)
+    const w = lerp(OPEN_W, SHUT_W, s);
+    drawer.style.width = Math.max(8, w)+'px';
+
+    // motion intensity: how fast we're moving relative to rest (peaks mid-travel,
+    // and the overshoot near the ends keeps it nonzero) → drives blur/stretch.
+    const speed = Math.abs(s - t);                 // overshoot magnitude
+    const mid = 1 - Math.abs(2*t - 1);             // bell, peaks at t=.5
+    const motion = clamp(mid*0.8 + speed*2.2, 0, 1);
+
+    // motion-blur / squash-stretch: squeeze horizontally while flying.
+    const stretch = 1 - motion*0.10;               // scaleX dips during fast motion
+    const squash  = 1 + motion*0.05;               // slight vertical bulge
+    front.style.transform = `scaleX(${stretch}) scaleY(${squash})`;
+    front.style.filter = `blur(${motion*1.4}px) brightness(${lerp(1,1.06,t)})`;
+
+    // a hot edge-glow on the drawer front as it slams home
+    const slam = clamp((t-0.65)/0.35,0,1);
+    front.style.boxShadow =
+      `inset 0 1px 0 #ffffff0a, 0 12px 34px #0008, -${lerp(0,26,t)}px 0 ${lerp(0,46,t)}px #ffd34d${slam>0?'33':'00'}`;
+    front.style.borderColor = t>0.7 ? '#46557a' : 'var(--edge)';
+
+    // crossfade tree content out / spine label in as it shuts
+    content.style.opacity = clamp(1 - t*1.8, 0, 1);
+    content.style.transform = `translateX(${lerp(0,14,t)}px)`;
+    spine.style.opacity = clamp((t-0.55)/0.4, 0, 1);
+  }
+
+  const q=new URLSearchParams(location.search), tParam=q.get('t');
+  let t=0,target=0,raf=null;
+  function animate(){ t+=(target-t)*0.13; if(Math.abs(target-t)<0.001){t=target;render(t);raf=null;return;} render(t); raf=requestAnimationFrame(animate);}
+  if(tParam!==null){ render(clamp(parseFloat(tParam))); }
+  else { render(0); addEventListener('click', ()=>{ target=target>0.5?0:1; if(!raf)raf=requestAnimationFrame(animate); }); }
+</script>
+</body>
+</html>

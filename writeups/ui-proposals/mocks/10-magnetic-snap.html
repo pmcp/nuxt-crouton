@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Magnetic Snap</title>
+<style>
+  :root{
+    --t:0; --bg:#0a0e14; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73; --gold:#ffd34d; --violet:#9d7bff;
+    --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1100px 700px at 80% -10%, #11314a55, transparent),
+      radial-gradient(900px 600px at -10% 110%, #2a123a55, transparent),
+      var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,sans-serif; overflow:hidden; height:100%;
+  }
+  .chip{position:fixed; top:18px; left:18px; z-index:50; display:flex; gap:10px; align-items:center;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; font-size:13px; letter-spacing:.04em; backdrop-filter:blur(8px)}
+  .chip b{font-weight:700}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:var(--glow) var(--accent)}
+  .hint{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:50}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.06; background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  .stage{position:absolute; inset:0; padding:60px 90px}
+
+  /* ===== docking rail on the right edge — holds dock chips ===== */
+  .rail{position:absolute; right:34px; top:80px; bottom:80px; width:108px;
+    border-radius:16px; background:linear-gradient(180deg,#141b2b,#0c1119);
+    border:1px solid #213049; box-shadow:inset 0 2px 0 #ffffff08, inset 0 -10px 26px #0008, 0 18px 40px #0009;
+    display:flex; flex-direction:column; align-items:center; gap:12px; padding:18px 0}
+  .rail-label{position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:9px; letter-spacing:.22em;
+    color:var(--dim); background:#0d1320; padding:2px 10px; border:1px solid #213049; border-radius:999px}
+  /* a magnetized dock chip already parked on the rail (a satellite pane) */
+  .chip-dock{width:74px; height:74px; border-radius:12px; flex:0 0 auto; position:relative;
+    background:linear-gradient(160deg,#23304c,#161e30); border:1px solid #38486a;
+    box-shadow:inset 0 1px 0 #ffffff10, 0 4px 12px #0007; display:grid; place-items:center; font-size:22px; color:#7fb4ff}
+  .chip-dock::after{content:""; position:absolute; left:-7px; top:50%; transform:translateY(-50%);
+    width:6px; height:34px; border-radius:3px; background:linear-gradient(180deg,var(--accent),#1c9); box-shadow:var(--glow) var(--accent)}
+  .chip-dock.v{color:var(--violet)} .chip-dock.r{color:var(--accent2)}
+
+  /* the socket the main pane snaps into — glowing, with +/- poles */
+  .socket{position:absolute; right:14px; top:50%; transform:translateY(-50%);
+    width:80px; height:128px; border-radius:14px; z-index:2;
+    background:radial-gradient(circle at 50% 50%, #1c2c46, #0d1422);
+    border:1px dashed #2f466a; box-shadow:inset 0 0 18px #0008}
+  .pole{position:absolute; left:50%; transform:translateX(-50%); width:22px; height:22px; border-radius:50%;
+    display:grid; place-items:center; font-size:15px; font-weight:800; border:1px solid; }
+  .pole.plus{top:8px; color:var(--accent2); border-color:#5a2333; background:#3a1a26}
+  .pole.minus{bottom:8px; color:#7fb4ff; border-color:#234a5a; background:#162e3a}
+
+  /* curved magnetic field lines drawn near the dock */
+  .field{position:absolute; right:0; top:50%; transform:translateY(-50%); width:420px; height:360px;
+    pointer-events:none; z-index:1; overflow:visible}
+  .field path{fill:none; stroke:var(--accent); stroke-width:1.4; opacity:0; filter:drop-shadow(0 0 4px var(--accent))}
+
+  /* ===== the main pane that snaps to the dock ===== */
+  .pane{position:absolute; left:120px; top:50%; transform:translateY(-50%); width:420px; height:300px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--edge);
+    border-radius:16px; padding:18px; overflow:hidden; z-index:20; will-change:transform; transform-origin:right center;
+    box-shadow:inset 0 1px 0 #ffffff0a, 0 18px 44px #000a}
+  .pane h4{margin:0 0 14px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); display:flex; gap:8px; align-items:center}
+  .pane .ic{width:22px;height:22px;border-radius:7px; display:grid; place-items:center; font-size:13px; background:#1f3a44;color:var(--accent)}
+  .rows{display:flex; flex-direction:column; gap:10px}
+  .row{height:13px;border-radius:6px;background:#26334a;opacity:.85}
+  .row.s{width:52%} .row.m{width:80%}
+  .grid{display:grid; gap:9px; grid-template-columns:repeat(3,1fr); margin-top:14px}
+  .tile{aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#22304a,#1a2236);border:1px solid #2b3a55; display:grid; place-items:center; color:#4f6488; font-size:20px}
+  /* the magnetized-chip skin that fades in when the pane condenses into the dock */
+  .mag-skin{position:absolute; inset:0; border-radius:16px; opacity:0; pointer-events:none; z-index:25;
+    background:linear-gradient(160deg,#243b5a,#15203a);
+    border:1px solid #4a6da0; box-shadow:inset 0 1px 0 #ffffff14, 0 0 26px var(--accent);
+    display:grid; place-items:center; font-size:26px; color:var(--accent)}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>Magnetic Snap</b> · collapse yanks the pane to a magnetic dock with an elastic recoil</div>
+
+  <div class="stage">
+    <!-- field lines + socket near the dock -->
+    <svg class="field" id="field" viewBox="0 0 420 360" preserveAspectRatio="none">
+      <path d="M40 60 C 240 60, 360 130, 400 180" />
+      <path d="M30 130 C 230 130, 350 165, 400 180" />
+      <path d="M30 230 C 230 230, 350 195, 400 180" />
+      <path d="M40 300 C 240 300, 360 230, 400 180" />
+    </svg>
+
+    <div class="socket">
+      <div class="pole plus">+</div>
+      <div class="pole minus">−</div>
+    </div>
+
+    <!-- docking rail with already-parked satellite chips -->
+    <div class="rail">
+      <span class="rail-label">DOCK · M</span>
+      <div class="chip-dock">◈</div>
+      <div class="chip-dock v">◆</div>
+      <div class="chip-dock r">✶</div>
+    </div>
+
+    <!-- the main pane that snaps -->
+    <div class="pane" id="pane">
+      <h4><span class="ic">❖</span>Map · live</h4>
+      <div class="rows"><div class="row m"></div><div class="row"></div><div class="row s"></div></div>
+      <div class="grid">
+        <div class="tile">◢</div><div class="tile">▣</div><div class="tile">★</div>
+        <div class="tile">◆</div><div class="tile">◈</div><div class="tile">✶</div>
+      </div>
+      <div class="mag-skin" id="skin">❖</div>
+    </div>
+  </div>
+
+  <div class="hint">click anywhere — the pane snaps to the dock · add <code>?t=0..1</code> to freeze a frame</div>
+  <div class="scanlines"></div>
+
+<script>
+  // render(t): t in [0,1]. 0 = pane full at rest. 1 = pane snapped flush into the magnetic dock chip.
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+  const pane=document.getElementById('pane');
+  const skin=document.getElementById('skin');
+  const field=[...document.querySelectorAll('.field path')];
+
+  function dockTarget(){
+    const sock=document.querySelector('.socket').getBoundingClientRect();
+    const p=pane.getBoundingClientRect();
+    return { dx:(sock.left+sock.width/2)-(p.left+p.width/2),
+             dy:(sock.top+sock.height/2)-(p.top+p.height/2),
+             dw:sock.width, dh:sock.height, pw:p.width, ph:p.height };
+  }
+
+  function render(t){
+    document.documentElement.style.setProperty('--t',t);
+    const T=dockTarget();
+    // FAST-IN easing toward the dock: accelerate hard, then a small recoil near the end.
+    const ease = 1-Math.pow(1-t,3);                 // cubic-out: yanked fast, settles
+    const recoil = t>0.78 ? Math.sin((t-0.78)/0.22*Math.PI)*0.06 : 0; // tiny bounce back as it snaps flush
+    const prog = clamp(ease - recoil);
+    // squash/stretch proportional to instantaneous SPEED (derivative of cubic-out peaks early)
+    const speed = 3*Math.pow(1-t,2);                // d/dt of cubic-out, 0..3
+    const sv = clamp(speed,0,1);
+    const travelStretch = lerp(1, 1.18, sv);        // stretch along X (travel axis) while flying
+    const squashY = lerp(1, 0.90, sv);
+    // overall shrink into the dock chip footprint
+    const shrink = lerp(1, T.dw/T.pw, prog);
+    const shrinkY= lerp(1, T.dh/T.ph, prog);
+    const sx = shrink * (t<0.78 ? travelStretch : 1);
+    const sy = shrinkY * (t<0.78 ? squashY : 1);
+    const x = lerp(0, T.dx, prog);
+    const y = lerp(0, T.dy, prog);
+    pane.style.transform = `translate(${x}px,${y}px) scale(${sx},${sy})`;
+    pane.style.zIndex = t>0.05 ? 30 : 20;
+    pane.style.boxShadow = `inset 0 1px 0 #ffffff0a, 0 ${lerp(18,4,t)}px ${lerp(44,16,t)}px #000a, 0 0 ${lerp(0,30,t)}px var(--accent)`;
+    pane.style.borderColor = t>0.6 ? '#4a6da0' : 'var(--edge)';
+    // condense into the magnetized chip: skin fades in, content fades out
+    skin.style.opacity = clamp((t-0.55)/0.35);
+    pane.querySelectorAll('h4,.rows,.grid').forEach(el=>{ el.style.opacity = lerp(1,0,clamp((t-0.4)/0.4)); });
+    // pull field lines intensify as t -> 1
+    field.forEach((p,i)=>{ p.style.opacity = lerp(0,.85,t)*(0.7+0.3*Math.sin(i)); p.style.strokeWidth = lerp(1,1.8,t); });
+    // socket glows hotter as the pane locks in
+    document.querySelector('.socket').style.boxShadow = `inset 0 0 ${lerp(8,28,t)}px var(--accent), 0 0 ${lerp(0,22,t)}px ${t>0.6?'var(--accent)':'transparent'}`;
+  }
+
+  const q=new URLSearchParams(location.search), tParam=q.get('t');
+  let t=0,target=0,raf=null;
+  function animate(){ t+=(target-t)*0.15; if(Math.abs(target-t)<0.001){t=target;render(t);raf=null;return;} render(t); raf=requestAnimationFrame(animate);}
+  addEventListener('resize', ()=>render(tParam!==null?clamp(parseFloat(tParam)):t));
+  if(tParam!==null){ render(clamp(parseFloat(tParam))); }
+  else { render(0); addEventListener('click', ()=>{ target=target>0.5?0:1; if(!raf)raf=requestAnimationFrame(animate); }); }
+</script>
+</body>
+</html>
