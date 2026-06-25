@@ -13,7 +13,7 @@
 import { computed, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { useCroutonComposeGestures, type ComposePiece } from '../composables/useCroutonComposeGestures'
-import { detachNode, removeNode, type NodePath } from '../utils/layout-edit'
+import { detachNode, removeNode, getNestedLayout, replaceNestedLayout, type NodePath } from '../utils/layout-edit'
 
 const props = defineProps<{ modelValue: ComposePiece[] }>()
 const emit = defineEmits<{ 'update:modelValue': [ComposePiece[]] }>()
@@ -132,21 +132,51 @@ function commit(next: ComposePiece[]) {
   emit('update:modelValue', next)
 }
 
-/** Pull a leaf back out of a group into its own free piece next to the group. */
-function onDetach(piece: ComposePiece, path: NodePath) {
-  const { root, detached } = detachNode(piece.node, path)
-  if (!detached || !root) return
+interface Addr { inner: NodePath, nestedAt: NodePath | null }
+function freedPiece(piece: ComposePiece, node: import('@fyit/crouton-core/app/types/layout').LayoutNode): ComposePiece {
   const f = fit(Math.min(piece.width, 260), Math.min(piece.height, 180), piece.x + 28, piece.y + 28)
-  const freed: ComposePiece = { id: `detached-${++detachSeq}-${piece.id}`, node: detached, ...f }
-  commit([...pieces.value.map(p => (p.id === piece.id ? { ...p, node: root } : p)), freed])
+  return { id: `detached-${++detachSeq}-${piece.id}`, node, ...f }
 }
 
-/** Remove a leaf (or the whole piece when path is empty). */
-function onRemove(piece: ComposePiece, path: NodePath) {
-  if (path.length === 0) return commit(pieces.value.filter(p => p.id !== piece.id))
-  const root = removeNode(piece.node, path)
-  commit(root
-    ? pieces.value.map(p => (p.id === piece.id ? { ...p, node: root } : p))
+/** Pull a leaf back out — of a split group OR a nested app — into its own free piece. */
+function onDetach(piece: ComposePiece, { inner, nestedAt }: Addr) {
+  let nextNode: import('@fyit/crouton-core/app/types/layout').LayoutNode | null
+  let detached: import('@fyit/crouton-core/app/types/layout').LayoutNode | null
+  if (!nestedAt) {
+    const r = detachNode(piece.node, inner)
+    detached = r.detached
+    if (!detached || !r.root) return
+    nextNode = r.root
+  }
+  else {
+    const sub = getNestedLayout(piece.node, nestedAt)
+    if (!sub) return
+    const r = detachNode(sub.root, inner)
+    detached = r.detached
+    if (!detached) return
+    nextNode = r.root ? replaceNestedLayout(piece.node, nestedAt, { ...sub, root: r.root }) : removeNode(piece.node, nestedAt)
+  }
+  const freed = freedPiece(piece, detached)
+  commit(nextNode
+    ? [...pieces.value.map(p => (p.id === piece.id ? { ...p, node: nextNode! } : p)), freed]
+    : [...pieces.value.filter(p => p.id !== piece.id), freed])
+}
+
+/** Remove a leaf — from a split group OR a nested app — or the whole piece. */
+function onRemove(piece: ComposePiece, { inner, nestedAt }: Addr) {
+  if (!nestedAt && inner.length === 0) return commit(pieces.value.filter(p => p.id !== piece.id))
+  let nextNode: import('@fyit/crouton-core/app/types/layout').LayoutNode | null
+  if (!nestedAt) {
+    nextNode = removeNode(piece.node, inner)
+  }
+  else {
+    const sub = getNestedLayout(piece.node, nestedAt)
+    if (!sub) return
+    const newInner = removeNode(sub.root, inner)
+    nextNode = newInner ? replaceNestedLayout(piece.node, nestedAt, { ...sub, root: newInner }) : removeNode(piece.node, nestedAt)
+  }
+  commit(nextNode
+    ? pieces.value.map(p => (p.id === piece.id ? { ...p, node: nextNode! } : p))
     : pieces.value.filter(p => p.id !== piece.id))
 }
 
@@ -217,8 +247,8 @@ const nestRing = computed(() => {
       <div class="h-full w-full overflow-hidden rounded-xl">
         <CroutonLayoutComposePane
           :node="piece.node"
-          @detach="(p: NodePath) => onDetach(piece, p)"
-          @remove="(p: NodePath) => onRemove(piece, p)"
+          @detach="(a: Addr) => onDetach(piece, a)"
+          @remove="(a: Addr) => onRemove(piece, a)"
         />
       </div>
 
