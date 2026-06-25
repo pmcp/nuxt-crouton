@@ -17,7 +17,7 @@
  * `panelMinSizePct`. Splitter primitives are SSR-safe (no <ClientOnly> needed);
  * the floor falls back to the authored `minSize` until the group has measured.
  */
-import { computed, inject, nextTick, ref, watch } from 'vue'
+import { computed, inject, nextTick, onScopeDispose, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
@@ -101,18 +101,44 @@ const collapsedPct = computed(() => {
   return Math.min(40, Math.max(2, (46 / basis) * 100))
 })
 
+// WS6 #875 follow-up: animate the PANE's own collapse/expand, not just the handle.
+// reka-ui sizes a panel via inline `flex-grow`; a CSS transition on flex-grow tweens
+// the shrink (siblings reflow in as their grow rebalances). We arm that transition
+// (`animating`) ONLY around a collapse/expand toggle — never during an interactive
+// divider drag (which never changes childCollapsed), so resizing stays snappy.
+const animating = ref(false)
+let animTimer: ReturnType<typeof setTimeout> | undefined
+onScopeDispose(() => { if (animTimer) clearTimeout(animTimer) })
+
+// Run after the next paint, so a freshly-applied transition class is in the element's
+// computed style BEFORE we change flex-grow (else the first toggle jumps, untweened).
+// Double rAF is the reliable "after style commit" signal; falls back to a timer in SSR.
+function afterPaint(fn: () => void) {
+  if (typeof requestAnimationFrame === 'undefined') { fn(); return }
+  requestAnimationFrame(() => requestAnimationFrame(fn))
+}
+
+let collapseRanOnce = false
 watch(
   () => childCollapsed.value.join(','),
   () => {
     if (props.node.type !== 'split' || !inPlace.value) return
     nextTick(() => {
+      const ops: Array<() => void> = []
       childCollapsed.value.forEach((want, i) => {
         const p = panelEls.value[i]
         if (!p) return
         const is = Boolean(p.isCollapsed)
-        if (want && !is) p.collapse?.()
-        else if (!want && is) p.expand?.()
+        if (want && !is) ops.push(() => p.collapse?.())
+        else if (!want && is) ops.push(() => p.expand?.())
       })
+      if (!ops.length) return
+      // First sync (panes that *start* collapsed) snaps without animating.
+      if (!collapseRanOnce) { collapseRanOnce = true; ops.forEach(op => op()); return }
+      animating.value = true // arm the per-style transition…
+      afterPaint(() => ops.forEach(op => op())) // …then change flex-grow so it tweens
+      if (animTimer) clearTimeout(animTimer)
+      animTimer = setTimeout(() => { animating.value = false }, 720)
     })
   },
   { flush: 'post', immediate: true },
@@ -183,6 +209,7 @@ watch(
         :collapsible="inPlace || undefined"
         :collapsed-size="inPlace ? collapsedPct : undefined"
         class="overflow-hidden"
+        :class="inPlace && animating && collapseCtx ? `mq-co-${collapseCtx.style}` : ''"
       >
         <CroutonLayoutRenderer
           :node="child"
@@ -202,5 +229,17 @@ watch(
 .croutonpane {
   container-type: inline-size;
   container-name: pane;
+}
+
+/* WS6 #875 follow-up — the pane's own collapse/expand motion, one curve per style
+   (armed only while `animating`, so interactive divider drags stay snappy). reka-ui
+   drives the panel via inline `flex-grow`; transitioning it tweens the shrink and the
+   siblings reflowing into the freed space. The collapse *handle* adds its signature
+   in-pane motion on top — together the four styles read distinctly. */
+.mq-co-spring-drawer  { transition: flex-grow .52s cubic-bezier(.34, 1.56, .64, 1); }   /* overshoot — springs shut */
+.mq-co-crt-power-down { transition: flex-grow .30s cubic-bezier(.85, 0, .97, .27); }     /* snappy — powers off */
+.mq-co-iris-portal    { transition: flex-grow .46s cubic-bezier(.65, 0, .35, 1); }       /* smooth iris */
+@media (prefers-reduced-motion: reduce) {
+  .mq-co-spring-drawer, .mq-co-crt-power-down, .mq-co-iris-portal { transition: none; }
 }
 </style>
