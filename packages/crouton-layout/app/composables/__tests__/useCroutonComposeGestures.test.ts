@@ -30,6 +30,9 @@ describe('useCroutonComposeGestures', () => {
     const combined = pieces.value[0]!.node as LayoutSplit
     expect(combined.type).toBe('split')
     expect(combined.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['a', 'b'])
+    // the group grows along the snap axis so the joined pane isn't squished to a sliver
+    expect(pieces.value[0]!.width).toBe(400) // 200 (a) + 200 (b)
+    expect(pieces.value[0]!.height).toBe(140)
   })
 
   it('arms a nest after dwelling OVER a piece, then commits a nested app', () => {

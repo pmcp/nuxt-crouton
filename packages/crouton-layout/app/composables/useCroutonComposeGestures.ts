@@ -135,7 +135,19 @@ export function useCroutonComposeGestures(pieces: Ref<ComposePiece[]>, opts: Com
     const combined = p.intent === 'nest'
       ? nestInside(target.node, [], d.node, d.label)
       : dropNode(target.node, [], d.node, p.edge!)
-    next[ti] = { ...target, node: combined, label: undefined }
+
+    // Grow the combined group along the snap axis so the newly-joined pane keeps its
+    // size instead of being squished into a sliver (and looking like it "vanished"). A
+    // left/top snap also shifts the origin so the group grows in that direction. Nesting
+    // keeps the target's footprint (the guest tucks inside).
+    let { x, y, width, height } = target
+    if (p.intent === 'snap') {
+      if (p.edge === 'left' || p.edge === 'right') width = target.width + d.width
+      if (p.edge === 'top' || p.edge === 'bottom') height = target.height + d.height
+      if (p.edge === 'left') x = target.x - d.width
+      if (p.edge === 'top') y = target.y - d.height
+    }
+    next[ti] = { ...target, node: combined, label: undefined, x, y, width, height }
     next.splice(di, 1) // the dragged piece is now folded into the target group
     pieces.value = next
     opts.onChange?.(next)

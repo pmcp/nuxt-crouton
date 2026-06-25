@@ -11,6 +11,7 @@
  * piece's content renders through the normal read-only `CroutonLayoutRenderer`.
  */
 import { computed, ref, watch } from 'vue'
+import { useElementSize } from '@vueuse/core'
 import { useCroutonComposeGestures, type ComposePiece } from '../composables/useCroutonComposeGestures'
 
 const props = defineProps<{ modelValue: ComposePiece[] }>()
@@ -19,13 +20,40 @@ const emit = defineEmits<{ 'update:modelValue': [ComposePiece[]] }>()
 // Own a deeply-reactive copy so in-place drag mutation (piece.x/y) re-renders; the model
 // is the source of truth on the way IN and the commit target on the way OUT.
 const pieces = ref<ComposePiece[]>(props.modelValue.map(p => ({ ...p })))
-watch(() => props.modelValue, v => { pieces.value = v.map(p => ({ ...p })) })
+// On every model change (incl. a snap that grew a group), keep each piece inside the
+// canvas so a freshly-combined group can't spill off the clipped edge.
+watch(() => props.modelValue, v => { pieces.value = v.map(p => ({ ...p, ...fit(p.width, p.height, p.x, p.y) })) })
 
 const canvasRef = ref<HTMLElement | null>(null)
-const { draggingId, preview, dwellReady, start, move, end, cancel } = useCroutonComposeGestures(
+const { width: canvasW, height: canvasH } = useElementSize(canvasRef)
+const { draggingId, dragging, preview, dwellReady, start, move, end, cancel } = useCroutonComposeGestures(
   pieces,
   { onChange: v => emit('update:modelValue', v) },
 )
+
+// Keep every piece inside the (clipped) canvas so a drag can never strand one off-edge
+// where it can't be grabbed back. On a narrow/mobile canvas a piece is also capped to the
+// available width — otherwise the seed layout (wide cards at fixed x) starts off-screen.
+const EDGE = 8
+function fit(width: number, height: number, x: number, y: number) {
+  const cw = canvasW.value
+  const ch = canvasH.value
+  const w = cw ? Math.min(width, cw - EDGE * 2) : width
+  const h = ch ? Math.min(height, ch - EDGE * 2) : height
+  const maxX = cw ? Math.max(EDGE, cw - w - EDGE) : x
+  const maxY = ch ? Math.max(EDGE, ch - h - EDGE) : y
+  return { width: w, height: h, x: Math.min(Math.max(EDGE, x), maxX), y: Math.min(Math.max(EDGE, y), maxY) }
+}
+
+// When the canvas first measures or resizes (e.g. rotate / mobile), pull any out-of-bounds
+// piece back into view — fixes the "block stuck as a sliver off the right edge" report.
+watch([canvasW, canvasH], ([w, h]) => {
+  if (!w || !h || draggingId.value) return
+  for (const p of pieces.value) {
+    const f = fit(p.width, p.height, p.x, p.y)
+    if (f.x !== p.x || f.y !== p.y || f.width !== p.width || f.height !== p.height) Object.assign(p, f)
+  }
+})
 
 // Drag bookkeeping in client space → translated to the piece's world position.
 let grabDX = 0
@@ -48,7 +76,11 @@ function onPointerDown(e: PointerEvent, piece: ComposePiece) {
 function onPointerMove(e: PointerEvent) {
   if (!draggingId.value || !canvasRef.value) return
   const r = canvasRef.value.getBoundingClientRect()
-  move(e.clientX - r.left - grabDX, e.clientY - r.top - grabDY)
+  const d = dragging.value
+  const raw = { x: e.clientX - r.left - grabDX, y: e.clientY - r.top - grabDY }
+  // Clamp to the canvas so a piece can never be dragged off the clipped edge and lost.
+  const c = d ? fit(d.width, d.height, raw.x, raw.y) : raw
+  move(c.x, c.y)
 }
 
 function onPointerUp() {
