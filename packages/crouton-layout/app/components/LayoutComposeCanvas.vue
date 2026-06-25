@@ -38,7 +38,10 @@ function onPointerDown(e: PointerEvent, piece: ComposePiece) {
   grabDX = e.clientX - r.left - piece.x
   grabDY = e.clientY - r.top - piece.y
   start(piece.id)
-  ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+  // Pointer capture keeps the drag alive if the cursor outruns the piece; best-effort
+  // (some environments don't implement it — never let that break the gesture).
+  try { (e.target as HTMLElement).setPointerCapture?.(e.pointerId) }
+  catch { /* ignore */ }
   e.preventDefault()
 }
 
@@ -107,6 +110,7 @@ const nestRing = computed(() => {
         isLoose(piece) ? 'rounded-xl border border-dashed border-muted' : 'rounded-xl border border-default',
       ]"
       :style="{ left: `${piece.x}px`, top: `${piece.y}px`, width: `${piece.width}px`, height: `${piece.height}px` }"
+      :data-piece-id="piece.id"
       @pointerdown="onPointerDown($event, piece)"
     >
       <div
