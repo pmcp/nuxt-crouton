@@ -53,6 +53,16 @@ const levelDot: Record<string, string> = {
   breakpoints: 'bg-blue-400',
 }
 
+/**
+ * Descend from the Site level into a page's layout. Exposed to the `#site` slot
+ * so a host (e.g. `CroutonFlowSiteFlow`, WS3 #872) can render the live Vue Flow
+ * canvas there and zoom in by page — the shell stays free of any crouton-flow
+ * coupling (one-way dep: crouton-layout → crouton-core only).
+ */
+function zoomIntoPageFromSlot(page: ZoomPage): void {
+  zoom.zoomIntoPage(page.label, page.tree)
+}
+
 // Scroll-up zooms out, throttled so one flick = one level (matches the mock).
 const lastWheel = ref(0)
 useEventListener('wheel', (e: WheelEvent) => {
@@ -101,46 +111,57 @@ onKeyStroke('Escape', () => zoom.zoomOut())
     </div>
 
     <Transition name="zoom" mode="out-in">
-      <!-- L0 · Site (a flow of pages — static list until WS3) -->
+      <!-- L0 · Site — the only floating level (a flow of pages). The host fills
+           the #site slot with the live Vue Flow canvas (CroutonFlowSiteFlow,
+           WS3 #872); the default is a static page grid so the shell still works
+           standalone (e.g. without crouton-flow). -->
       <div
         v-if="current.level === 'site'"
         :key="'site'"
-        class="grid h-full w-full place-items-center p-10"
+        class="h-full w-full"
       >
-        <div class="w-full max-w-4xl">
-          <p class="mb-4 text-xs uppercase tracking-widest text-muted">{{ current.label }} · wire your pages</p>
-          <div
-            v-if="props.pages.length"
-            class="grid grid-cols-2 gap-3 sm:grid-cols-3"
-          >
-            <button
-              v-for="page in props.pages"
-              :key="page.id"
-              type="button"
-              class="group flex flex-col gap-2 rounded-xl border border-default bg-elevated p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
-              @click="zoom.zoomIntoPage(page.label, page.tree)"
-            >
-              <div class="flex items-center gap-2">
-                <UIcon
-                  :name="page.icon || 'i-lucide-layout-dashboard'"
-                  class="size-4 text-primary"
-                />
-                <span class="font-medium">{{ page.label }}</span>
-                <UIcon
-                  name="i-lucide-maximize-2"
-                  class="ml-auto size-3.5 text-muted opacity-0 transition-opacity group-hover:opacity-100"
-                />
+        <slot
+          name="site"
+          :pages="props.pages"
+          :zoom-into-page="zoomIntoPageFromSlot"
+        >
+          <div class="grid h-full w-full place-items-center p-10">
+            <div class="w-full max-w-4xl">
+              <p class="mb-4 text-xs uppercase tracking-widest text-muted">{{ current.label }} · wire your pages</p>
+              <div
+                v-if="props.pages.length"
+                class="grid grid-cols-2 gap-3 sm:grid-cols-3"
+              >
+                <button
+                  v-for="page in props.pages"
+                  :key="page.id"
+                  type="button"
+                  class="group flex flex-col gap-2 rounded-xl border border-default bg-elevated p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-lg"
+                  @click="zoom.zoomIntoPage(page.label, page.tree)"
+                >
+                  <div class="flex items-center gap-2">
+                    <UIcon
+                      :name="page.icon || 'i-lucide-layout-dashboard'"
+                      class="size-4 text-primary"
+                    />
+                    <span class="font-medium">{{ page.label }}</span>
+                    <UIcon
+                      name="i-lucide-maximize-2"
+                      class="ml-auto size-3.5 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+                    />
+                  </div>
+                  <span class="text-xs text-muted">zoom in to arrange its apps</span>
+                </button>
               </div>
-              <span class="text-xs text-muted">zoom in to arrange its apps</span>
-            </button>
+              <p
+                v-else
+                class="rounded-xl border border-dashed border-default p-8 text-center text-sm text-muted"
+              >
+                No pages yet — provide the #site slot (CroutonFlowSiteFlow) to wire pages.
+              </p>
+            </div>
           </div>
-          <p
-            v-else
-            class="rounded-xl border border-dashed border-default p-8 text-center text-sm text-muted"
-          >
-            No pages yet — the Site flow (Vue Flow) lands in WS3.
-          </p>
-        </div>
+        </slot>
       </div>
 
       <!-- L3 · Breakpoints (focused layout at a narrow width; authoring is WS5) -->

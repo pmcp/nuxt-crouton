@@ -51,6 +51,9 @@
       "edit": "Edit",
       "delete": "Delete"
     },
+    "page": {
+      "zoom": "Zoom into page"
+    },
     "common": {
       "cancel": "Cancel",
       "edit": "Edit",
