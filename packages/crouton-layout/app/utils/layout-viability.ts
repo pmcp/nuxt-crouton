@@ -55,6 +55,12 @@ function leafWidths(node: LayoutNode, width: number): LeafWidth[] {
     return [{ blockId: node.blockId, width }]
   }
 
+  // Nested: the pane this node occupies IS the container for its sub-layout, so
+  // recurse from the sub-layout's root with the same width (WS2 #871).
+  if (node.type === 'nested') {
+    return leafWidths(node.layout.root, width)
+  }
+
   // Split: horizontal divides width by size share; vertical keeps full width.
   if (node.direction === 'vertical') {
     return node.children.flatMap(child => leafWidths(child, width))
@@ -114,6 +120,8 @@ export function checkTreeViability(
  */
 export function subtreeMinWidth(node: LayoutNode, minWidthFor: MinWidthResolver): number {
   if (node.type === 'leaf') return minWidthFor(node.blockId)
+  // Nested: a sub-layout's floor is its own root's floor at this pane (WS2 #871).
+  if (node.type === 'nested') return subtreeMinWidth(node.layout.root, minWidthFor)
   const kids = node.children.map(c => subtreeMinWidth(c, minWidthFor))
   if (node.direction === 'vertical') return kids.reduce((a, b) => Math.max(a, b), 0)
   return kids.reduce((a, b) => a + b, 0)

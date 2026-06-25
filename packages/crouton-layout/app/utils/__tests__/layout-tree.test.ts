@@ -85,3 +85,73 @@ describe('sanitizeLayoutTree — rejects / strips malformed input', () => {
     expect(sanitizeLayoutTree(node)).toBeNull()
   })
 })
+
+describe('sanitizeLayoutTree — recursive nested layouts (WS2 #871)', () => {
+  const appLayout: LayoutTree = {
+    renderer: 'panes',
+    root: {
+      type: 'split',
+      direction: 'vertical',
+      children: [
+        { type: 'leaf', blockId: 'bookings-calendar' },
+        { type: 'leaf', blockId: 'entity-form' },
+      ],
+    },
+  }
+
+  it('accepts a nested node hosting a sub-layout', () => {
+    expect(sanitizeLayoutTree({ type: 'nested', layout: appLayout, label: 'Bookings' })).toEqual({
+      renderer: 'panes',
+      root: { type: 'nested', layout: appLayout, label: 'Bookings' },
+    })
+  })
+
+  it('accepts a page-layout whose panes are app-layouts (layouts in layouts)', () => {
+    const out = sanitizeLayoutTree({
+      type: 'split',
+      direction: 'horizontal',
+      children: [
+        { type: 'nested', layout: appLayout },
+        { type: 'leaf', blockId: 'stats' },
+      ],
+    })
+    expect(out?.root).toMatchObject({ type: 'split' })
+    expect((out!.root as { children: unknown[] }).children[0]).toMatchObject({
+      type: 'nested',
+      layout: { renderer: 'panes' },
+    })
+  })
+
+  it('normalizes a bare-root sub-layout into a full tree', () => {
+    expect(sanitizeLayoutTree({ type: 'nested', layout: { type: 'leaf', blockId: 'stats' } })).toEqual({
+      renderer: 'panes',
+      root: { type: 'nested', layout: { renderer: 'panes', root: { type: 'leaf', blockId: 'stats' } } },
+    })
+  })
+
+  it('rejects a nested node whose sub-layout is missing or malformed (no silent hole)', () => {
+    expect(sanitizeLayoutTree({ type: 'nested' })).toBeNull()
+    expect(sanitizeLayoutTree({ type: 'nested', layout: { type: 'leaf' } })).toBeNull()
+    expect(sanitizeLayoutTree({ type: 'nested', layout: { renderer: 'vue-flow', root: { type: 'leaf', blockId: 'x' } } })).toBeNull()
+  })
+
+  it('drops an empty label and out-of-range sizes on a nested node', () => {
+    expect(sanitizeLayoutTree({
+      type: 'nested',
+      layout: { type: 'leaf', blockId: 'stats' },
+      label: '',
+      defaultSize: 999,
+    })).toEqual({
+      renderer: 'panes',
+      root: { type: 'nested', layout: { renderer: 'panes', root: { type: 'leaf', blockId: 'stats' } } },
+    })
+  })
+
+  it('counts nesting toward the depth cap (layouts-in-layouts can’t blow the stack)', () => {
+    let layout: Record<string, unknown> = { renderer: 'panes', root: { type: 'leaf', blockId: 'deep' } }
+    for (let i = 0; i < 20; i++) {
+      layout = { renderer: 'panes', root: { type: 'nested', layout } }
+    }
+    expect(sanitizeLayoutTree(layout)).toBeNull()
+  })
+})

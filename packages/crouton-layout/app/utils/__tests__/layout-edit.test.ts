@@ -6,8 +6,11 @@ import {
   removeNode,
   applySizes,
   setConfig,
+  makeNested,
+  getNestedLayout,
+  replaceNestedLayout,
 } from '../layout-edit'
-import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
 
 const listDef: CroutonLayoutBlockDefinition = {
@@ -170,5 +173,70 @@ describe('setConfig — writes per-block config on a leaf', () => {
   it('is a no-op on a split node', () => {
     const root = masterDetail()
     expect(setConfig(root, [], { x: 1 })).toBe(root)
+  })
+})
+
+describe('nested layouts — a pane can be a whole sub-layout (WS2 #871)', () => {
+  const appLayout: LayoutTree = {
+    renderer: 'panes',
+    root: { type: 'split', direction: 'vertical', children: [
+      { type: 'leaf', blockId: 'list' },
+      { type: 'leaf', blockId: 'form' },
+    ] },
+  }
+  const page = (): LayoutNode => ({
+    type: 'split', direction: 'horizontal',
+    children: [makeNested(appLayout, 'Bookings'), { type: 'leaf', blockId: 'stats' }],
+  })
+
+  it('makeNested wraps a sub-layout as an app boundary', () => {
+    expect(makeNested(appLayout, 'Bookings')).toEqual({ type: 'nested', layout: appLayout, label: 'Bookings' })
+    expect(makeNested(appLayout)).toEqual({ type: 'nested', layout: appLayout })
+  })
+
+  it('a nested node is opaque to the parent path space (each layout edits in its own)', () => {
+    const root = page()
+    expect(getNode(root, [0])).toMatchObject({ type: 'nested' })
+    // can't address INTO the sub-layout via the parent's path
+    expect(getNode(root, [0, 0])).toBeNull()
+  })
+
+  it('getNestedLayout resolves the sub-layout at a path (null off a non-nested node)', () => {
+    const root = page()
+    expect(getNestedLayout(root, [0])).toEqual(appLayout)
+    expect(getNestedLayout(root, [1])).toBeNull()
+  })
+
+  it('replaceNestedLayout swaps a sub-layout, leaving siblings intact', () => {
+    const root = page()
+    // edit the sub-layout in its OWN path space, then write it back
+    const editedRoot = dropBlock(appLayout.root, [0], 'kpi', 'bottom')
+    const editedTree: LayoutTree = { renderer: 'panes', root: editedRoot }
+    const next = replaceNestedLayout(root, [0], editedTree) as LayoutSplit
+    expect(next.children[0]).toMatchObject({ type: 'nested', layout: editedTree })
+    expect(next.children[1]).toMatchObject({ type: 'leaf', blockId: 'stats' })
+  })
+
+  it('replaceNestedLayout is a no-op off a non-nested node', () => {
+    const root = page()
+    expect(replaceNestedLayout(root, [1], appLayout)).toBe(root)
+  })
+
+  it('dropBlock on an edge gives a nested app a sibling (wraps it in a split)', () => {
+    const next = dropBlock(makeNested(appLayout), [], 'stats', 'right') as LayoutSplit
+    expect(next.type).toBe('split')
+    expect(next.children[0]).toMatchObject({ type: 'nested' })
+    expect(next.children[1]).toMatchObject({ type: 'leaf', blockId: 'stats' })
+  })
+
+  it('removeNode removes a nested app from a page', () => {
+    expect(removeNode(page(), [0])).toMatchObject({ type: 'leaf', blockId: 'stats' })
+  })
+
+  it('does not mutate inputs when editing a nested sub-layout', () => {
+    const root = page()
+    const snapshot = JSON.stringify(root)
+    replaceNestedLayout(root, [0], { renderer: 'panes', root: { type: 'leaf', blockId: 'x' } })
+    expect(JSON.stringify(root)).toBe(snapshot)
   })
 })

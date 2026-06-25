@@ -11,7 +11,7 @@
  * (root itself is `[]`). All functions return a NEW root (structural copies on
  * the touched spine) and never mutate their input.
  */
-import type { LayoutNode, LayoutLeaf, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutLeaf, LayoutSplit, LayoutNested, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
 
 export type NodePath = number[]
@@ -150,4 +150,34 @@ export function setConfig(
   const target = getNode(root, path)
   if (!target || target.type !== 'leaf') return root
   return replaceAt(root, path, { ...target, config }) ?? root
+}
+
+// --- Recursive nested layouts (WS2 #871) -----------------------------------
+// A `nested` node embeds a whole sub-layout ("an app that is itself a layout").
+// It is opaque to its parent's `NodePath` space — `getNode`/`replaceAt` stop at
+// it because it isn't a `split` — so each layout is edited in its OWN path space,
+// scoped to the level the zoom shell (WS1) has focused. To edit a sub-layout you
+// pull it out with `getNestedLayout`, transform its root with the same functions,
+// and write it back with `replaceNestedLayout`.
+
+/** Build a `nested` node wrapping a sub-layout as an app boundary. */
+export function makeNested(layout: LayoutTree, label?: string): LayoutNested {
+  return { type: 'nested', layout, ...(label ? { label } : {}) }
+}
+
+/** Resolve the sub-layout hosted by the `nested` node at `path`, or null. */
+export function getNestedLayout(root: LayoutNode | null, path: NodePath): LayoutTree | null {
+  const target = getNode(root, path)
+  return target && target.type === 'nested' ? target.layout : null
+}
+
+/** Replace the sub-layout on the `nested` node at `path` (no-op off a nested node). */
+export function replaceNestedLayout(
+  root: LayoutNode,
+  path: NodePath,
+  layout: LayoutTree,
+): LayoutNode {
+  const target = getNode(root, path)
+  if (!target || target.type !== 'nested') return root
+  return replaceAt(root, path, { ...target, layout }) ?? root
 }
