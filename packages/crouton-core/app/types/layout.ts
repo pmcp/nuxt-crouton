@@ -48,6 +48,46 @@ export interface LayoutNested extends LayoutNodeBase {
 export type LayoutNode = LayoutLeaf | LayoutSplit | LayoutNested
 
 /**
+ * The closed set of pane-collapse motions (WS6, #875). Promoted from the 12-concept
+ * gallery (`writeups/ui-proposals/layout-collapse-concepts.md`) by two questions:
+ * does it survive in a *narrow pane*, and does it map to a *node in a tree* (not the
+ * whole viewport). The four that pass:
+ *
+ *  - `gutter-tabs` — shipped (#852, WS5). The collapsed pane *leaves the splitter* and
+ *    hangs as a vertical tab in a right-edge gutter rail. The one "out-of-flow" style.
+ *  - `spring-drawer` — in-place. The pane slams shut into a thin edge spine with a
+ *    damped-spring overshoot; restore springs past its width and settles.
+ *  - `crt-power-down` — in-place. An old-CRT switch-off: the pane crushes to a phosphor
+ *    line, pinches to a standby dot (the restore handle), then boots back open.
+ *  - `iris-portal` — in-place. A camera-shutter iris closes the pane to a glowing seed
+ *    at its own center; restore irises back open.
+ *
+ * `gutter-tabs` reclaims space by leaving the splitter; the three in-place styles keep
+ * the pane's tree slot and collapse its splitter panel to a thin handle so siblings
+ * reflow into the freed space. All four are size-proof (the resting handle is tiny) and
+ * tree-native (work on any leaf at any nesting depth).
+ */
+export const LAYOUT_COLLAPSE_STYLES = ['gutter-tabs', 'spring-drawer', 'crt-power-down', 'iris-portal'] as const
+export type LayoutCollapseStyle = (typeof LAYOUT_COLLAPSE_STYLES)[number]
+
+/** The default collapse motion when a breakpoint sets none (the shipped behaviour). */
+export const DEFAULT_COLLAPSE_STYLE: LayoutCollapseStyle = 'gutter-tabs'
+
+/** Narrow a persisted/untrusted value to a known `LayoutCollapseStyle`. */
+export function isLayoutCollapseStyle(value: unknown): value is LayoutCollapseStyle {
+  return typeof value === 'string' && (LAYOUT_COLLAPSE_STYLES as readonly string[]).includes(value)
+}
+
+/**
+ * `gutter-tabs` pulls a collapsed pane out of the splitter into a gutter rail; every
+ * other style collapses the pane *in place* (its panel shrinks to a handle, siblings
+ * reflow). The renderer branches on this.
+ */
+export function isInPlaceCollapse(style: LayoutCollapseStyle): boolean {
+  return style !== 'gutter-tabs'
+}
+
+/**
  * An authored responsive breakpoint (WS5, #874) — a layout adapts in two
  * complementary layers: *intrinsic* (every region reflows to its own width via
  * container queries, recursively) and *explicit* (these breakpoints, authored
@@ -78,8 +118,11 @@ export interface LayoutBreakpoint {
   collapsed?: string[]
   /** Per-block widget variant override (`blockId` → variant, e.g. list↔cards↔table). */
   variants?: Record<string, string>
-  /** Collapse-style for collapsed panes at this breakpoint (WS6, #875). Reserved. */
-  collapseStyle?: string
+  /**
+   * Collapse motion for panes collapsed at this breakpoint (WS6, #875). One of the
+   * closed `LayoutCollapseStyle` set; absent ⇒ `DEFAULT_COLLAPSE_STYLE` (`gutter-tabs`).
+   */
+  collapseStyle?: LayoutCollapseStyle
 }
 
 export interface LayoutTree {
