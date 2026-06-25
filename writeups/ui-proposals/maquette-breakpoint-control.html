@@ -3,62 +3,41 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Maquette — scrolling-ruler breakpoint control</title>
+<title>Maquette — tactile breakpoint control</title>
 <style>
   :root{
     --bg:#0b0e14; --panel:#141a24; --elevated:#1b2330; --border:#2a3445; --border2:#3a4860;
-    --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0;
+    --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0; --grip:#2b3a55;
   }
   *{box-sizing:border-box}
-  html,body{overflow-x:hidden}
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:22px 16px}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:22px;overflow-x:hidden}
   h1{font-size:18px;margin:0 0 4px}
-  p.sub{color:var(--muted);margin:0 0 18px;max-width:78ch}
+  p.sub{color:var(--muted);margin:0 0 16px;max-width:78ch}
   .wrap{max-width:760px;margin:0 auto}
 
-  /* ── The ruler: a fixed-scale strip that SCROLLS under a fixed center needle.
-        The needle is the width; breakpoint dots are marks at a fixed spacing that
-        scroll past. Drag the ruler (left = smaller). A dot passing under the needle
-        snaps. The strip can be wider than the screen — that's the point: it scrolls. ── */
-  .ruler{position:relative;height:64px;margin:0 auto 4px;overflow:hidden;
-    border-radius:12px;background:linear-gradient(180deg,#0e131c,#0b0e14);
-    border:1px solid var(--border);touch-action:none;cursor:ew-resize;
-    -webkit-user-select:none;user-select:none;
-    -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
-            mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
-  .strip{position:absolute;top:0;left:0;height:100%;will-change:transform}
-  .tick{position:absolute;bottom:14px;width:1px;background:var(--border2)}
-  .tick.minor{height:8px;opacity:.55}
-  .tick.major{height:15px;opacity:.9}
-  .tlabel{position:absolute;bottom:0;transform:translateX(-50%);font:10px/1 ui-monospace,monospace;color:var(--muted)}
-  .dot{position:absolute;top:15px;width:14px;height:14px;border-radius:50%;
-    transform:translateX(-50%);background:var(--border2);border:2px solid #0b0e14;
-    box-shadow:0 0 0 1px var(--border2);transition:background .12s,box-shadow .12s,transform .12s}
-  .dot.passed{background:var(--primary)}
-  .dot.active{background:var(--accent);box-shadow:0 0 14px var(--accent);transform:translateX(-50%) scale(1.25)}
-  .dlabel{position:absolute;top:32px;transform:translateX(-50%);white-space:nowrap;
-    font:9px/1 ui-monospace,monospace;color:var(--muted)}
-  .dot.active + .dlabel{color:var(--accent)}
-
-  /* the fixed needle — the current width, dead center, never moves */
-  .needle{position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
-    background:linear-gradient(180deg,var(--primary),transparent);z-index:4;pointer-events:none}
-  .needle::after{content:"";position:absolute;left:50%;top:11px;width:9px;height:9px;
-    transform:translate(-50%,-50%) rotate(45deg);background:var(--primary);border-radius:2px}
-  .readout{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:5;pointer-events:none;
+  /* ── one connected axis: a slider whose handle position IS the width, with the
+        breakpoint dots as marks on the SAME axis. Align handle with a dot → that bp. ── */
+  .slider{position:relative;height:30px;margin:0 auto 6px}
+  .track{position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);
+    background:transparent}                       /* no line, per request — just dots + handle */
+  .dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;
+    transform:translate(-50%,-50%);background:var(--border2);transition:.15s}
+  .dot.active{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .dot.near{transform:translate(-50%,-50%) scale(1.25)}
+  .handle{position:absolute;top:50%;transform:translate(-50%,-50%);z-index:3;
+    display:flex;align-items:center;gap:6px;cursor:ew-resize;touch-action:none;
     background:#0d1320;border:1px solid var(--primary);color:var(--primary);
-    font:11px/1 ui-monospace,monospace;padding:4px 9px;border-radius:999px;white-space:nowrap;
+    font:11px/1 ui-monospace,monospace;padding:5px 10px;border-radius:999px;white-space:nowrap;
     box-shadow:0 2px 10px #0008}
-  .readout small{color:var(--muted);margin-left:3px}
+  .handle .ico{opacity:.7}
 
-  .stage{position:relative;height:430px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;margin-top:8px}
+  .stage{position:relative;height:430px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
   .frame{height:420px;border:1px solid var(--border);border-radius:14px;background:var(--panel);
     box-shadow:0 24px 60px #0008;transform-origin:top center;flex:0 0 auto;overflow:hidden}
   .root{position:absolute;inset:12px;container-type:inline-size;container-name:mq}
   .app{display:grid;gap:8px;height:100%;grid-template-columns:1fr;grid-template-areas:"list" "main" "stats"}
   @container mq (min-width:480px){.app{grid-template-columns:160px 1fr;grid-template-areas:"list main" "stats main"}}
-  @container mq (min-width:768px){.app{grid-template-columns:170px 1fr;grid-template-areas:"list main" "stats main"}}
-  @container mq (min-width:1024px){.app{grid-template-columns:180px 1fr 200px;grid-template-areas:"list main stats"}}
+  @container mq (min-width:760px){.app{grid-template-columns:180px 1fr 200px;grid-template-areas:"list main stats"}}
   .pane{border:1px solid #243348;border-radius:9px;background:linear-gradient(180deg,var(--elevated),var(--panel));padding:10px;overflow:hidden;min-width:0}
   .pane h4{margin:0 0 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .list{grid-area:list}.main{grid-area:main}.stats{grid-area:stats}
@@ -69,22 +48,19 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Maquette — scrolling-ruler breakpoint control</h1>
-  <p class="sub">The <b>needle is fixed at center</b> — it's the current width. <b>Drag the ruler</b> (left = narrower, right = wider) and the breakpoint <b>dots scroll past</b> at a fixed spacing. When a dot rolls <b>under the needle</b> it snaps and lights up — that's the breakpoint you're editing. The layout below stays centered and scales to fit.</p>
+  <h1>Maquette — tactile breakpoint control</h1>
+  <p class="sub">One axis: the <b>handle's position is the width</b>, and the breakpoint <b>dots are marks on the same line</b>. Slide the handle onto a dot → you're at that breakpoint (it snaps + lights up). The frame scales to fit, so widths bigger than the screen still work.</p>
 
   <div
-    class="ruler"
-    id="ruler"
+    class="slider"
+    id="slider"
   >
+    <div class="track"></div>
+    <!-- dots + handle injected -->
     <div
-      class="strip"
-      id="strip"
-    ><!-- ticks + dots injected --></div>
-    <div class="needle"></div>
-    <div
-      class="readout"
-      id="readout"
-    >880<small>px</small></div>
+      class="handle"
+      id="handle"
+    ><span class="ico">⟷</span><span id="readout">880</span>px</div>
   </div>
 
   <div
@@ -105,65 +81,49 @@
     </div>
   </div>
 
-  <p class="hint">drag the ruler ⟷ · dots scroll past · one under the needle snaps + lights up</p>
+  <p class="hint">slide the handle → the dots light up as you pass each breakpoint · drop near a dot and it snaps</p>
 </div>
 
 <script>
-  const MIN=320, MAX=1600, BPS=[480,768,1024], SNAP_W=14, PXPERW=0.62;
+  const MIN=320, MAX=1100, BPS=[480,760], SNAP=14;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const ruler=document.getElementById('ruler'), strip=document.getElementById('strip'),
+  const slider=document.getElementById('slider'), handle=document.getElementById('handle'),
         readout=document.getElementById('readout'), stage=document.getElementById('stage'),
         frame=document.getElementById('frame');
   let width=880;
 
-  const xOf=w=>(w-MIN)*PXPERW;                 // width → x on the (fixed-scale) strip
-  const STRIPW=xOf(MAX);
-  strip.style.width=STRIPW+'px';
-
-  // ticks: minor every 40px-of-width, major + label every 200px
-  for(let w=Math.ceil(MIN/40)*40; w<=MAX; w+=40){
-    const t=document.createElement('div'); const major=(w%200===0);
-    t.className='tick '+(major?'major':'minor'); t.style.left=xOf(w)+'px'; strip.appendChild(t);
-    if(major){ const l=document.createElement('div'); l.className='tlabel'; l.style.left=xOf(w)+'px'; l.textContent=w; strip.appendChild(l); }
-  }
-  // breakpoint dots + labels
-  const dots=BPS.map(bp=>{
-    const d=document.createElement('div'); d.className='dot'; d.dataset.bp=bp; d.style.left=xOf(bp)+'px'; strip.appendChild(d);
-    const l=document.createElement('div'); l.className='dlabel'; l.style.left=xOf(bp)+'px'; l.textContent=bp+'px'; strip.appendChild(l);
-    return d;
-  });
+  // build the breakpoint dots on the slider
+  const dots=BPS.map(bp=>{ const d=document.createElement('div'); d.className='dot'; d.dataset.bp=bp; slider.appendChild(d); return d; });
+  const xOf=bp=>((bp-MIN)/(MAX-MIN))*slider.clientWidth;     // width → x on the axis
+  const wOf=x=>MIN+(x/slider.clientWidth)*(MAX-MIN);          // x → width
 
   function render(){
     width=Math.round(clamp(width,MIN,MAX));
-    // keep the width under the fixed center needle → scroll the strip
-    const center=ruler.clientWidth/2;
-    strip.style.transform='translateX('+(center-xOf(width))+'px)';
-    readout.firstChild.textContent=width;
-    dots.forEach(d=>{ const bp=+d.dataset.bp;
-      const onIt=Math.abs(width-bp)<=SNAP_W;
-      d.classList.toggle('active', onIt);
-      d.classList.toggle('passed', !onIt && width>bp); });
-    // the frame is drawn AT `width` then scaled down to fit the stage (so widths
-    // bigger than the screen still render — and it stays centered)
+    // handle rides the axis at the width's position
+    handle.style.left=xOf(width)+'px';
+    readout.textContent=width;
+    dots.forEach(d=>{ const bp=+d.dataset.bp; d.style.left=xOf(bp)+'px';
+      d.classList.toggle('active', width>=bp);
+      d.classList.toggle('near', Math.abs(xOf(width)-xOf(bp))<SNAP); });
+    // frame is drawn AT `width` then scaled to fit the stage (so >screen widths still work)
     const avail=stage.clientWidth-4;
     frame.style.width=width+'px';
     frame.style.transform='scale('+Math.min(1, avail/width)+')';
   }
 
-  // scrub: dragging the ruler left lowers the width (right raises it). Snap when a
-  // breakpoint dot lands under the needle.
-  let drag=null, lastX=0;
-  ruler.addEventListener('pointerdown',ev=>{ drag=true; lastX=ev.clientX; ruler.setPointerCapture?.(ev.pointerId); ev.preventDefault(); });
+  let drag=null;
+  handle.addEventListener('pointerdown',ev=>{ drag=true; handle.setPointerCapture?.(ev.pointerId); ev.preventDefault(); });
   window.addEventListener('pointermove',ev=>{
     if(!drag) return;
-    const dx=ev.clientX-lastX; lastX=ev.clientX;
-    width=clamp(width+dx/PXPERW, MIN, MAX);          // drag right → wider, left → narrower
-    for(const bp of BPS){ if(Math.abs(width-bp)<SNAP_W) width=bp; }  // magnet
-    render();
+    const r=slider.getBoundingClientRect();
+    let w=wOf(clamp(ev.clientX-r.left,0,slider.clientWidth));
+    // snap to a nearby breakpoint
+    for(const bp of BPS){ if(Math.abs(w-bp) < (MAX-MIN)*SNAP/slider.clientWidth) w=bp; }
+    width=w; render();
   });
   window.addEventListener('pointerup',()=>{ drag=null; });
   window.addEventListener('resize',render);
-  window.__setW=w=>{ width=w; render() };
+  window.__setW=(w)=>{ width=w; render() };
   render();
 </script>
 </body>
