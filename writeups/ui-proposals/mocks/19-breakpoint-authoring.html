@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Breakpoint Authoring · lock arrangements by size</title>
+<style>
+  :root{
+    --bg:#070a10; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d; --edge2:#2b3a55;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73; --gold:#ffd34d; --violet:#9d7bff; --blue:#7fb4ff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:radial-gradient(1200px 800px at 75% -10%, #15314a33, transparent),radial-gradient(1000px 700px at -10% 110%, #2a123a33, transparent),var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,sans-serif; height:100%; -webkit-font-smoothing:antialiased}
+  .chip{position:fixed; top:18px; left:18px; z-index:60; display:flex; gap:10px; align-items:center;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; font-size:13px; backdrop-filter:blur(8px)}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:var(--glow) var(--gold)}
+  .chip b{font-weight:700}
+  .hint{position:fixed; bottom:14px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:60; pointer-events:none; text-align:center; max-width:92vw}
+  .hint b{color:var(--ink)}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:90; opacity:.04; background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+  .saved{position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-6px); z-index:60; opacity:0;
+    background:#1c1606; border:1px solid #5c4a17; color:var(--gold); font-size:12px; padding:6px 12px; border-radius:999px; transition:.25s}
+  .saved.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  .stage{position:absolute; inset:0; display:grid; place-items:center}
+  .deck{display:flex; flex-direction:column; align-items:center; gap:16px}
+
+  /* breakpoint ruler */
+  .ruler{position:relative; width:760px; max-width:92vw; height:54px}
+  .track{position:absolute; left:0; right:0; top:34px; height:4px; border-radius:2px; background:#16203a; overflow:hidden}
+  .track .fill{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#1c8f7e,var(--accent)); opacity:.5}
+  .flag{position:absolute; top:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; cursor:pointer; z-index:3}
+  .flag .pin{width:2px; height:30px; background:#33445f}
+  .flag .lab{font-size:10px; color:var(--dim); background:#0d1320; border:1px solid var(--edge); border-radius:6px; padding:2px 6px; white-space:nowrap; font-variant-numeric:tabular-nums; margin-bottom:2px}
+  .flag.base .lab{color:var(--dim)}
+  .flag.on .lab{color:var(--gold); border-color:var(--gold); box-shadow:0 0 12px -3px var(--gold)}
+  .flag.on .pin{background:var(--gold)}
+  .cursor{position:absolute; top:30px; transform:translateX(-50%); z-index:4; display:flex; flex-direction:column; align-items:center; cursor:ew-resize}
+  .cursor .knob{width:16px;height:16px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent); border:2px solid #0b1018}
+  .cursor .w{position:absolute; top:18px; font-size:11px; font-weight:700; color:var(--accent); background:#0b1a16; border:1px solid #1f5247; border-radius:6px; padding:2px 7px; font-variant-numeric:tabular-nums; white-space:nowrap}
+
+  .frameWrap{position:relative}
+  #frame{position:relative; height:440px; border:1.5px solid var(--edge2); border-radius:16px; background:#0b1018; padding:8px;
+    box-shadow:0 26px 64px #000b, inset 0 0 0 1px #ffffff08, 0 0 50px -10px #ffd34d22; transition:width .12s ease-out}
+  .whandle-wrap{position:absolute; right:-9px; top:50%; transform:translateY(-50%); z-index:6; display:flex; align-items:center; gap:8px}
+  .whandle{position:relative; width:14px; height:60px; border-radius:7px; cursor:ew-resize; background:#0d1320; border:1px solid var(--edge2); box-shadow:0 0 14px -4px var(--gold)}
+  .whandle::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:2px;height:22px;background:#4a5a78;border-radius:2px;box-shadow:3px 0 #4a5a78,-3px 0 #4a5a78}
+  /* hover the handle → device-size shortcuts pop out to quick-jump the width */
+  .shortcuts{display:flex; gap:6px; opacity:0; pointer-events:none; transform:translateX(12px) scale(.92); transition:.2s cubic-bezier(.2,.85,.3,1)}
+  .whandle-wrap:hover .shortcuts, .whandle-wrap.show .shortcuts{opacity:1; pointer-events:auto; transform:none}
+  .sc{width:38px;height:33px;display:grid;place-items:center;border-radius:10px;background:#0d1320ee;border:1px solid var(--edge2);color:var(--dim);cursor:pointer;transition:.15s;box-shadow:0 10px 24px -8px #000b;backdrop-filter:blur(6px)}
+  .sc:hover{color:var(--gold);border-color:var(--gold);box-shadow:0 0 16px -3px var(--gold);transform:translateY(-1px)}
+  .sc svg{width:20px;height:20px;display:block}
+  .lockline{position:absolute; left:0; right:0; top:-26px; text-align:center; font-size:11px; color:var(--gold); opacity:.9; letter-spacing:.02em}
+
+  /* layout tree */
+  .split{position:absolute; inset:0; display:flex} .split.col{flex-direction:column}
+  .split>.cell{position:relative; min-width:0; min-height:0; display:flex}
+  .gutter{flex:0 0 7px; align-self:stretch; border-radius:4px; background:#141d2e; position:relative; transition:background .15s}
+  .split:not(.col)>.gutter{cursor:col-resize} .split.col>.gutter{cursor:row-resize}
+  .gutter::after{content:"";position:absolute;left:50%;top:50%;background:#33415e;border-radius:3px}
+  .split:not(.col)>.gutter::after{width:2px;height:15px;transform:translate(-50%,-50%)} .split.col>.gutter::after{height:2px;width:15px;transform:translate(-50%,-50%)}
+  .gutter:hover,.gutter.active{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .pane{position:relative; flex:1 1 0; min-width:0; min-height:0; border-radius:10px; padding:10px; overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid #243348; box-shadow:inset 0 1px 0 #ffffff08; will-change:transform}
+  .pane h4{margin:0 0 8px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); display:flex; gap:6px; align-items:center; pointer-events:none}
+  .pane .ic{width:17px;height:17px;border-radius:6px;display:grid;place-items:center;font-size:10px;flex:0 0 auto}
+  .gr{pointer-events:none}
+  .grip{position:absolute; top:6px; right:6px; z-index:7; width:22px; height:18px; border-radius:6px; cursor:grab; display:grid; place-items:center; color:#5d6f8c; font-size:12px; background:#0e1626cc; border:1px solid #283a55; opacity:.6; transition:.18s}
+  .grip:hover{opacity:1; color:var(--accent); border-color:var(--accent)}
+  .row-{height:8px;border-radius:5px;background:#26334a;opacity:.85;margin-bottom:6px}.row-.s{width:55%}.row-.m{width:78%}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.cal i{aspect-ratio:1;border-radius:3px;background:#22304a}.cal i.on{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:42px;margin-top:3px}.bars i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--accent),#1c8f7e)}
+  .kpi{font-size:21px;font-weight:800;letter-spacing:-.02em}.kpi small{font-size:11px;color:var(--accent);font-weight:600;margin-left:5px}
+
+  /* per-breakpoint widget VARIANT switcher (list / cards / table) */
+  .vswitch{position:absolute; top:6px; right:34px; z-index:7; display:flex; gap:2px; background:#0e1626cc; border:1px solid #283a55; border-radius:7px; padding:2px}
+  .vswitch button{width:18px;height:16px;border:0;background:transparent;color:#5d6f8c;font-size:11px;line-height:1;cursor:pointer;border-radius:4px;display:grid;place-items:center;padding:0}
+  .vswitch button:hover{color:var(--ink)}
+  .vswitch button.on{color:var(--gold);background:#1c1606}
+  .bk-cards{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .bk-card{background:#141d2e;border:1px solid #223150;border-radius:9px;padding:7px}
+  .bk-card .th{height:28px;border-radius:6px;background:#22304a;margin-bottom:6px}
+  .bk-card i{display:block;height:7px;border-radius:4px;background:#26334a;margin-bottom:5px}.bk-card i.s{width:55%}
+  .bk-table{display:flex;flex-direction:column;gap:6px}
+  .bk-table .tr{display:grid;grid-template-columns:1fr 1fr .5fr;gap:8px;align-items:center}
+  .bk-table .tr.h span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+  .bk-table .tr .c{height:7px;border-radius:4px;background:#26334a}.bk-table .tr .c.s{width:60%}
+  #ghost{position:fixed; z-index:75; border-radius:11px; pointer-events:none; opacity:0; box-shadow:0 30px 70px #000c,0 0 0 1px #ffffff14,0 0 40px -6px #36e0c055; transform:rotate(-1.5deg) scale(1.03)}
+  #zone{position:fixed; z-index:70; pointer-events:none; opacity:0; border-radius:9px; border:2px solid var(--accent); background:#36e0c022; box-shadow:0 0 26px 2px #36e0c055,inset 0 0 20px #36e0c033; transition:opacity .1s,left .1s,top .1s,width .1s,height .1s}
+  #zone .arr{position:absolute;inset:0;display:grid;place-items:center;color:var(--accent);font-size:20px;text-shadow:0 0 10px var(--accent)}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>Breakpoint Authoring</b> · arrange at a width → it locks from that width up</div>
+  <div class="saved" id="saved">✓ checkpoint saved</div>
+  <div class="stage">
+    <div class="deck">
+      <div class="ruler" id="ruler">
+        <div class="track"><div class="fill" id="fill"></div></div>
+        <div class="cursor" id="cursor"><div class="knob"></div><div class="w" id="wlbl">920px</div></div>
+      </div>
+      <div class="frameWrap">
+        <div class="lockline" id="lockline"></div>
+        <div id="frame"></div>
+        <div class="whandle-wrap" id="whwrap">
+          <div class="shortcuts">
+            <button class="sc" data-w="390" title="iPhone · 390px" aria-label="Phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="M10.6 5h2.8"/><path d="M11.4 18.7h1.2"/></svg></button>
+            <button class="sc" data-w="768" title="iPad · 768px" aria-label="Tablet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.4"/><path d="M11 17.6h2"/></svg></button>
+            <button class="sc" data-w="1080" title="Desktop · 1080px" aria-label="Desktop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M9.5 20h5M12 16.5V20"/></svg></button>
+          </div>
+          <div class="whandle" id="whandle"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hint">drag the <b>handle ⟷</b> (or scrub the ruler) to change width · drag a <b>seam</b> or a pane's <b>⠿</b> to rearrange — it saves a <b>checkpoint at this width</b> &amp; locks the layout from there up. Set a few, then sweep the width.</div>
+  <div class="scanlines"></div>
+
+<script>
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), clone=o=>JSON.parse(JSON.stringify(o));
+const MINW=360, MAXW=1080, RULER=760;
+const APPS={cal:{name:'Calendar',icon:'◧',col:'var(--accent2)',k:'cal'},list:{name:'Bookings',icon:'≣',col:'var(--accent)',k:'list'},kpi:{name:'Revenue',icon:'★',col:'var(--gold)',k:'kpi'},bars:{name:'Activity',icon:'▦',col:'var(--blue)',k:'bars'}};
+const VARIANTS={list:['list','cards','table']}, VICON={list:'≣',cards:'▦',table:'▤'};
+function bookings(v){
+  if(v==='cards') return `<div class="bk-cards">${Array.from({length:4},()=>`<div class="bk-card"><div class="th"></div><i></i><i class="s"></i></div>`).join('')}</div>`;
+  if(v==='table') return `<div class="bk-table"><div class="tr h"><span>Guest</span><span>Date</span><span>€</span></div>${Array.from({length:4},()=>`<div class="tr"><span class="c"></span><span class="c"></span><span class="c s"></span></div>`).join('')}</div>`;
+  return `<div class="row- m"></div><div class="row-"></div><div class="row- s"></div><div class="row- m"></div>`;
+}
+function paneInner(a,variant){ const h=`<h4><span class="ic" style="background:${a.col}22;color:${a.col}">${a.icon}</span>${a.name}</h4>`; let b='';
+  if(a.k==='cal')b=`<div class="cal">${Array.from({length:21},(_,i)=>`<i class="${[3,9,10,16].includes(i)?'on':''}"></i>`).join('')}</div>`;
+  if(a.k==='list')b=bookings(variant||'list');
+  if(a.k==='kpi')b=`<div class="kpi">€48.2k<small>▲12%</small></div><div class="bars">${Array.from({length:7},(_,i)=>`<i style="height:${30+((i*37)%60)}%"></i>`).join('')}</div>`;
+  if(a.k==='bars')b=`<div class="bars">${Array.from({length:9},(_,i)=>`<i style="height:${25+((i*53)%70)}%"></i>`).join('')}</div>`;
+  return `<div class="gr">${h}${b}</div>`; }
+
+let SID=1;
+const leaf=k=>({kind:'leaf',app:APPS[k],id:k});
+const R=(a,b,f)=>({kind:'split',dir:'row',a,b,frac:f??.5,sid:SID++});
+const C=(a,b,f)=>({kind:'split',dir:'col',a,b,frac:f??.5,sid:SID++});
+function treeHTML(n, vars){ vars=vars||{};
+  if(n.kind==='leaf'){ const cur=vars[n.id]||(VARIANTS[n.id]?VARIANTS[n.id][0]:null);
+    const vsw=VARIANTS[n.id]?`<div class="vswitch" data-vid="${n.id}">${VARIANTS[n.id].map(v=>`<button data-var="${v}" class="${v===cur?'on':''}" title="${v}">${VICON[v]}</button>`).join('')}</div>`:'';
+    return `<div class="pane" data-id="${n.id}"><div class="grip" data-grip="${n.id}">⠿</div>${vsw}${paneInner(n.app,cur)}</div>`; }
+  const f=n.frac??.5; return `<div class="split ${n.dir==='col'?'col':''}" data-sid="${n.sid}"><div class="cell" style="flex:${f} 1 0">${treeHTML(n.a,vars)}</div><div class="gutter" data-sid="${n.sid}"></div><div class="cell" style="flex:${1-f} 1 0">${treeHTML(n.b,vars)}</div></div>`; }
+const findLeaf=(n,id)=>n.kind==='leaf'?(n.id===id?n:null):(findLeaf(n.a,id)||findLeaf(n.b,id));
+const findSplit=(n,sid)=>n.kind==='leaf'?null:(n.sid===sid?n:(findSplit(n.a,sid)||findSplit(n.b,sid)));
+function removeLeaf(n,id){ if(n.kind==='leaf')return n.id===id?null:n; const a=removeLeaf(n.a,id),b=removeLeaf(n.b,id); if(a===null)return b; if(b===null)return a; return {...n,a,b}; }
+function insertLeaf(n,tid,side,lf){ if(n.kind==='leaf'){ if(n.id!==tid)return n; const dir=(side==='E'||side==='W')?'row':'col'; const a=(side==='E'||side==='S')?n:lf,b=(side==='E'||side==='S')?lf:n; return {kind:'split',dir,a,b,frac:.5,sid:SID++}; } return {...n,a:insertLeaf(n.a,tid,side,lf),b:insertLeaf(n.b,tid,side,lf)}; }
+
+// ---- checkpoints: sorted [{min, tree}] ; base at 0 ----
+let checkpoints=[
+  {min:0,   vars:{list:'list'},  tree:C(leaf('cal'), C(leaf('list'), C(leaf('kpi'), leaf('bars'))), .28)},   // narrow → vertical stack · Bookings as list
+  {min:560, vars:{list:'cards'}, tree:R(C(leaf('cal'),leaf('list')), C(leaf('kpi'),leaf('bars')), .5)},      // medium → 2×2 · Bookings as cards
+  {min:880, vars:{list:'table'}, tree:R(leaf('cal'), R(leaf('list'), R(leaf('kpi'),leaf('bars'))), .34)},    // wide → 4 across · Bookings as table
+];
+let W=920;
+const active=()=>{ let a=checkpoints[0]; for(const c of checkpoints) if(c.min<=W && c.min>=a.min) a=c; return a; };
+
+const frame=document.getElementById('frame'), ruler=document.getElementById('ruler');
+const cursor=document.getElementById('cursor'), wlbl=document.getElementById('wlbl'), fill=document.getElementById('fill');
+const ghost=document.getElementById('ghost'), zone=document.getElementById('zone'), savedEl=document.getElementById('saved'), lockline=document.getElementById('lockline');
+const xOf=w=>clamp((w-MINW)/(MAXW-MINW),0,1)*RULER;
+
+let lastActiveMin=null;
+function paneRects(){ const m={}; frame.querySelectorAll('.pane[data-id]').forEach(p=>m[p.dataset.id]=p.getBoundingClientRect()); return m; }
+function render(flip){
+  const before=flip?paneRects():null;
+  frame.innerHTML=treeHTML(active().tree, active().vars); bind();
+  if(before){ frame.querySelectorAll('.pane[data-id]').forEach(p=>{ const b=before[p.dataset.id]; if(!b)return; const a=p.getBoundingClientRect();
+    const dx=b.left-a.left,dy=b.top-a.top,sx=b.width/a.width||1,sy=b.height/a.height||1;
+    p.style.transformOrigin='top left'; p.style.transition='none'; p.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    requestAnimationFrame(()=>{ p.style.transition='transform .42s cubic-bezier(.3,.9,.3,1)'; p.style.transform='none'; }); }); }
+}
+function renderRuler(){
+  [...ruler.querySelectorAll('.flag')].forEach(f=>f.remove());
+  const act=active();
+  checkpoints.forEach(c=>{ const f=document.createElement('div'); f.className='flag'+(c.min===0?' base':'')+(c===act?' on':'');
+    f.style.left=xOf(c.min)+'px'; f.innerHTML=`<div class="lab">${c.min===0?'base':c.min+'px'}</div><div class="pin"></div>`;
+    f.addEventListener('pointerdown',e=>{e.stopPropagation(); setW(Math.max(c.min,MINW));}); ruler.appendChild(f); });
+  cursor.style.left=xOf(W)+'px'; wlbl.textContent=Math.round(W)+'px'; fill.style.width=xOf(W)+'px';
+  lockline.textContent = act.min===0 ? 'base layout (below first checkpoint)' : `▲ locked from ${act.min}px and up`;
+}
+function setW(w){ W=clamp(w,MINW,MAXW); frame.style.width=W+'px';
+  const am=active().min; if(am!==lastActiveMin){ lastActiveMin=am; render(true); } renderRuler(); }
+function flashSaved(min){ savedEl.textContent=`✓ checkpoint saved at ${min}px`; savedEl.classList.add('show'); clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>savedEl.classList.remove('show'),1400); }
+
+// editing writes to a checkpoint AT the current width (create if none within tol)
+function cpForEdit(){ let cp=checkpoints.find(c=>Math.abs(c.min-W)<=14); let created=false;
+  if(!cp){ const a=active(); cp={min:Math.round(W), tree:clone(a.tree), vars:clone(a.vars||{})}; checkpoints.push(cp); checkpoints.sort((a,b)=>a.min-b.min); created=true; }
+  lastActiveMin=cp.min; return {cp,created}; }
+
+// ---- edit: seam resize + grip rearrange ----
+let mode=null, gut=null, pane=null, hover=null;
+function bind(){
+  frame.querySelectorAll('.grip').forEach(g=>g.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=treeHTML(cp.tree, cp.vars); bind(); renderRuler(); }
+    const lf=findLeaf(cp.tree,g.dataset.grip); pane={cp, leaf:lf, backup:clone(cp.tree)};
+    cp.tree=removeLeaf(cp.tree,g.dataset.grip); frameRenderFrom(cp,true);
+    ghost.style.width='150px'; ghost.style.height='108px'; ghost.innerHTML=`<div class="pane" style="cursor:grabbing">${paneInner(lf.app)}</div>`; ghost.dataset.gx=75; ghost.dataset.gy=22; moveGhost(e); ghost.style.opacity=1; mode='pane'; }));
+  frame.querySelectorAll('.gutter').forEach(gt=>gt.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=treeHTML(cp.tree, cp.vars); bind(); renderRuler(); }
+    const sid=+gt.dataset.sid, node=findSplit(cp.tree,sid); const splitEl=frame.querySelector(`.split[data-sid="${sid}"]`), r=splitEl.getBoundingClientRect();
+    gut={cp,node,dir:node.dir,len:node.dir==='row'?r.width:r.height,startFrac:node.frac??.5,startC:node.dir==='row'?e.clientX:e.clientY,el:splitEl};
+    splitEl.querySelector('.gutter').classList.add('active'); mode='gut'; }));
+  // per-breakpoint widget variant (list / cards / table) — writes to the current checkpoint
+  frame.querySelectorAll('.vswitch button').forEach(btn=>{
+    btn.addEventListener('pointerdown',e=>e.stopPropagation());
+    btn.addEventListener('click',e=>{ e.stopPropagation();
+      const {cp}=cpForEdit(); const vid=btn.closest('.vswitch').dataset.vid;
+      cp.vars=cp.vars||{}; cp.vars[vid]=btn.dataset.var;
+      frameRenderFrom(cp,false); flashSaved(cp.min); renderRuler(); });
+  });
+}
+function frameRenderFrom(cp,flip){ const before=flip?paneRects():null; frame.innerHTML=treeHTML(cp.tree, cp.vars); bind();
+  if(before){ frame.querySelectorAll('.pane[data-id]').forEach(p=>{ const b=before[p.dataset.id]; if(!b)return; const a=p.getBoundingClientRect();
+    const dx=b.left-a.left,dy=b.top-a.top,sx=b.width/a.width||1,sy=b.height/a.height||1; p.style.transformOrigin='top left'; p.style.transition='none'; p.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    requestAnimationFrame(()=>{ p.style.transition='transform .4s cubic-bezier(.3,.9,.3,1)'; p.style.transform='none'; }); }); } }
+function moveGhost(e){ ghost.style.left=(e.clientX-(+ghost.dataset.gx))+'px'; ghost.style.top=(e.clientY-(+ghost.dataset.gy))+'px'; }
+function sideFor(r,x,y){ const d={W:(x-r.left)/r.width,E:1-(x-r.left)/r.width,N:(y-r.top)/r.height,S:1-(y-r.top)/r.height}; return Object.keys(d).reduce((m,k)=>d[k]<d[m]?k:m,'W'); }
+
+addEventListener('pointermove',e=>{
+  if(mode==='pane'){ moveGhost(e); zone.style.opacity=0; hover=null;
+    const u=document.elementFromPoint(e.clientX,e.clientY), pEl=u&&u.closest('.pane[data-id]');
+    if(pEl&&frame.contains(pEl)){ const r=pEl.getBoundingClientRect(), side=sideFor(r,e.clientX,e.clientY); hover={targetId:pEl.dataset.id,side};
+      let zx=r.left,zy=r.top,zw=r.width,zh=r.height; if(side==='E'){zx=r.left+r.width*.5;zw=r.width*.5;} if(side==='W'){zw=r.width*.5;} if(side==='S'){zy=r.top+r.height*.5;zh=r.height*.5;} if(side==='N'){zh=r.height*.5;}
+      Object.assign(zone.style,{left:zx+3+'px',top:zy+3+'px',width:zw-6+'px',height:zh-6+'px',opacity:1}); zone.querySelector('.arr').textContent={E:'→',W:'←',N:'↑',S:'↓'}[side]; }
+  } else if(mode==='gut'&&gut){ const cur=gut.dir==='row'?e.clientX:e.clientY, f=clamp(gut.startFrac+(cur-gut.startC)/gut.len,.14,.86);
+    gut.node.frac=f; gut.el.children[0].style.flex=`${f} 1 0`; gut.el.children[2].style.flex=`${1-f} 1 0`;
+  } else if(scrub){ const x=clamp(e.clientX-ruler.getBoundingClientRect().left,0,RULER); setW(MINW+(x/RULER)*(MAXW-MINW));
+  } else if(wdrag){ setW(wdrag.w+(e.clientX-wdrag.sx)); }
+});
+addEventListener('pointerup',()=>{
+  if(mode==='pane'&&pane){ ghost.style.opacity=0; zone.style.opacity=0;
+    if(hover){ pane.cp.tree=insertLeaf(pane.cp.tree,hover.targetId,hover.side,pane.leaf); frameRenderFrom(pane.cp,true); flashSaved(pane.cp.min); }
+    else { pane.cp.tree=pane.backup; frameRenderFrom(pane.cp,true); } pane=null;hover=null;mode=null; renderRuler(); return; }
+  if(mode==='gut'&&gut){ gut.el.querySelector('.gutter')?.classList.remove('active'); flashSaved(gut.cp.min); gut=null; mode=null; renderRuler(); return; }
+  scrub=false; wdrag=null;
+});
+
+// width controls: scrub the ruler, drag the handle
+let scrub=false, wdrag=null;
+ruler.addEventListener('pointerdown',e=>{ if(e.target.closest('.flag'))return; scrub=true; const x=clamp(e.clientX-ruler.getBoundingClientRect().left,0,RULER); setW(MINW+(x/RULER)*(MAXW-MINW)); });
+document.getElementById('whandle').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); wdrag={sx:e.clientX,w:W}; });
+// device-size shortcuts (quick-jump width)
+document.querySelectorAll('.sc').forEach(b=>{ b.addEventListener('pointerdown',e=>e.stopPropagation());
+  b.addEventListener('click',e=>{ e.stopPropagation(); setW(+b.dataset.w); }); });
+
+const q=new URLSearchParams(location.search);
+if(q.get('sc')) document.getElementById('whwrap').classList.add('show');   // force-show popout for screenshots
+if(q.get('w')) W=clamp(+q.get('w'),MINW,MAXW);
+frame.style.width=W+'px'; lastActiveMin=active().min; render(false); renderRuler();
+</script>
+</body>
+</html>
