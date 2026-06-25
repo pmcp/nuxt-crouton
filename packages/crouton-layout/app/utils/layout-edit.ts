@@ -78,6 +78,14 @@ function sizeOf(node: LayoutNode): { defaultSize?: number, minSize?: number } {
   }
 }
 
+/** A shallow copy of `node` with its outer size shed (so a wrapping split owns it). */
+function stripSize(node: LayoutNode): LayoutNode {
+  const copy = { ...node }
+  delete (copy as LayoutNode).defaultSize
+  delete (copy as LayoutNode).minSize
+  return copy
+}
+
 /**
  * Drop a block onto the pane at `path`.
  * - `center` replaces the leaf's block in place (a swap).
@@ -196,4 +204,161 @@ export function findNestedNodes(
   if (root.type === 'nested') return [{ path: base, ...(root.label ? { label: root.label } : {}) }]
   if (root.type === 'split') return root.children.flatMap((c, i) => findNestedNodes(c, [...base, i]))
   return []
+}
+
+// --- Compose gestures (WS4 #873) -------------------------------------------
+// Direct-manipulation gestures (magnetic snap / rearrange / detach / dwell-to-drop)
+// expressed as pure transforms on the same immutable tree. The *where* (which pane
+// edge) comes from `layout-snap`'s geometry; these apply the *what*. The composable
+// wires pointer drags to them; they stay pure so the compose loop is unit-testable.
+
+/**
+ * Drop an existing NODE onto the pane at `path` along `edge` — the snap/rearrange
+ * primitive (`dropBlock` makes a fresh leaf; this inserts a whole node, so it can move
+ * a subtree or snap a free app in). `center` swaps the target node wholesale. The
+ * dropped node sheds its outer size so the new pair shares the pane.
+ */
+export function dropNode(
+  root: LayoutNode | null,
+  path: NodePath,
+  node: LayoutNode,
+  edge: DropEdge,
+): LayoutNode {
+  if (!root) return node
+  const target = getNode(root, path)
+  if (!target) return root
+
+  if (edge === 'center') return replaceAt(root, path, node) ?? root
+
+  const direction = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical'
+  const first = edge === 'left' || edge === 'top'
+  const wrapped = stripSize(target)
+  const dropped = stripSize(node)
+  const split: LayoutSplit = {
+    type: 'split',
+    direction,
+    children: first ? [dropped, wrapped] : [wrapped, dropped],
+    ...sizeOf(target),
+  }
+  return replaceAt(root, path, split) ?? root
+}
+
+/**
+ * Detach the node at `path` — pop it out to a free card. Returns the removed node and
+ * the remaining tree (the parent split collapses to its survivor, as with `removeNode`).
+ * Detaching the root empties the tree. A bad path detaches nothing.
+ */
+export function detachNode(
+  root: LayoutNode | null,
+  path: NodePath,
+): { root: LayoutNode | null, detached: LayoutNode | null } {
+  const detached = getNode(root, path)
+  if (!root || !detached) return { root, detached: null }
+  return { root: removeNode(root, path), detached }
+}
+
+/** The path to `node` (by reference) within `root`, or null if it isn't present. */
+export function findNodePath(root: LayoutNode | null, node: LayoutNode): NodePath | null {
+  if (!root) return null
+  if (root === node) return []
+  if (root.type === 'split') {
+    for (let i = 0; i < root.children.length; i++) {
+      const sub = findNodePath(root.children[i]!, node)
+      if (sub) return [i, ...sub]
+    }
+  }
+  return null
+}
+
+const isPrefix = (a: NodePath, b: NodePath): boolean => a.length <= b.length && a.every((v, i) => v === b[i])
+
+const MOVE_MARK = '__croutonMoveTarget'
+type Marked = LayoutNode & { [MOVE_MARK]?: true }
+
+/** Copy the spine to `path`, tagging the node there with a transient marker. */
+function cloneMarking(node: LayoutNode, path: NodePath): LayoutNode {
+  if (path.length === 0) return { ...node, [MOVE_MARK]: true } as Marked
+  if (node.type !== 'split') return node
+  const [head, ...rest] = path
+  const children = node.children.slice()
+  if (children[head!]) children[head!] = cloneMarking(children[head!]!, rest)
+  return { ...node, children }
+}
+
+/** Path to the marked node after the detach reshaped the tree, or null. */
+function findMark(node: LayoutNode | null, base: NodePath = []): NodePath | null {
+  if (!node) return null
+  if ((node as Marked)[MOVE_MARK]) return base
+  if (node.type === 'split') {
+    for (let i = 0; i < node.children.length; i++) {
+      const r = findMark(node.children[i]!, [...base, i])
+      if (r) return r
+    }
+  }
+  if (node.type === 'nested') return findMark(node.layout.root, base) ? base : null
+  return null
+}
+
+/** Strip the transient marker everywhere (the result is a clean tree). */
+function unmark(node: LayoutNode): LayoutNode {
+  const copy = { ...node } as Marked
+  delete copy[MOVE_MARK]
+  if (copy.type === 'split') copy.children = copy.children.map(unmark)
+  if (copy.type === 'nested') copy.layout = { ...copy.layout, root: unmark(copy.layout.root) }
+  return copy
+}
+
+/**
+ * Rearrange: move the node at `fromPath` to `toPath`'s `edge`. We mark the target,
+ * detach the source (which may collapse a 2-child parent and rewrite paths), re-find
+ * the target by its marker — robust to that collapse — then drop the moving node there.
+ * No-op when moving a node onto itself or into its own subtree.
+ */
+export function moveNode(
+  root: LayoutNode | null,
+  fromPath: NodePath,
+  toPath: NodePath,
+  edge: DropEdge,
+): LayoutNode | null {
+  if (!root || fromPath.length === 0) return root
+  if (isPrefix(fromPath, toPath)) return root // onto itself or a descendant
+  const moving = getNode(root, fromPath)
+  if (!moving || !getNode(root, toPath)) return root
+
+  const marked = cloneMarking(root, toPath)
+  const { root: detachedRoot } = detachNode(marked, fromPath)
+  if (!detachedRoot) return root
+  const targetPath = findMark(detachedRoot)
+  if (!targetPath) return root
+  return unmark(dropNode(detachedRoot, targetPath, moving, edge))
+}
+
+/**
+ * Dwell-to-drop-inside: drop `node` *inside* the pane at `path`, creating a nested app
+ * (WS2 nesting). On a leaf/split target it wraps the target + node into a new `nested`
+ * sub-layout (split). On an existing `nested` target it appends into that sub-layout.
+ * The new node inherits the target's slot size so the outer layout doesn't jump.
+ */
+export function nestInside(
+  root: LayoutNode | null,
+  path: NodePath,
+  node: LayoutNode,
+  label?: string,
+): LayoutNode {
+  if (!root) return root ?? node
+  const target = getNode(root, path)
+  if (!target) return root
+
+  if (target.type === 'nested') {
+    const inner = dropNode(target.layout.root, [], node, 'right')
+    return replaceAt(root, path, { ...target, layout: { ...target.layout, root: inner } }) ?? root
+  }
+
+  const innerRoot: LayoutSplit = {
+    type: 'split',
+    direction: 'horizontal',
+    children: [stripSize(target), stripSize(node)],
+  }
+  const nested: LayoutNested = { type: 'nested', layout: { renderer: 'panes', root: innerRoot }, ...(label ? { label } : {}), ...sizeOf(target) }
+  return replaceAt(root, path, nested) ?? root
 }

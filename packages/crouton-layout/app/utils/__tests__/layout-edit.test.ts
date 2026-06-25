@@ -3,6 +3,11 @@ import {
   getNode,
   makeLeaf,
   dropBlock,
+  dropNode,
+  moveNode,
+  detachNode,
+  nestInside,
+  findNodePath,
   removeNode,
   applySizes,
   setConfig,
@@ -11,7 +16,7 @@ import {
   replaceNestedLayout,
   findNestedNodes,
 } from '../layout-edit'
-import type { LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutLeaf, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
 
 const listDef: CroutonLayoutBlockDefinition = {
@@ -273,5 +278,111 @@ describe('nested layouts — a pane can be a whole sub-layout (WS2 #871)', () =>
     expect(findNestedNodes(null)).toEqual([])
     expect(findNestedNodes({ type: 'leaf', blockId: 'x' })).toEqual([])
     expect(findNestedNodes(masterDetail())).toEqual([])
+  })
+})
+
+// --- Compose gestures (WS4 #873) -------------------------------------------
+const leaf = (blockId: string, extra: Partial<LayoutLeaf> = {}): LayoutLeaf => ({ type: 'leaf', blockId, ...extra })
+
+describe('dropNode — insert an existing node (snap / rearrange primitive)', () => {
+  it('drops a whole node onto an edge, wrapping the target in a split', () => {
+    const next = dropNode(leaf('a'), [], leaf('b'), 'right') as LayoutSplit
+    expect(next.type).toBe('split')
+    expect(next.direction).toBe('horizontal')
+    expect(next.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['a', 'b'])
+  })
+  it('can drop a SUBTREE (not just a leaf), unlike dropBlock', () => {
+    const sub: LayoutSplit = { type: 'split', direction: 'vertical', children: [leaf('x'), leaf('y')] }
+    const next = dropNode(leaf('a'), [], sub, 'left') as LayoutSplit
+    expect(next.children[0]).toMatchObject({ type: 'split', direction: 'vertical' })
+    expect(next.children[1]).toMatchObject({ type: 'leaf', blockId: 'a' })
+  })
+  it('center drop swaps the whole target node', () => {
+    expect(dropNode(leaf('a'), [], leaf('b'), 'center')).toMatchObject({ type: 'leaf', blockId: 'b' })
+  })
+  it('seeds an empty tree with the dropped node', () => {
+    expect(dropNode(null, [], leaf('a'), 'right')).toMatchObject({ type: 'leaf', blockId: 'a' })
+  })
+  it('the dropped node sheds its outer size so the pair shares the pane', () => {
+    const next = dropNode(leaf('a'), [], leaf('b', { defaultSize: 80 }), 'right') as LayoutSplit
+    expect((next.children[1] as LayoutLeaf).defaultSize).toBeUndefined()
+  })
+})
+
+describe('detachNode — pop a node out to a free card', () => {
+  it('returns the removed node and the remaining tree', () => {
+    const { root, detached } = detachNode(masterDetail(), [0])
+    expect(detached).toMatchObject({ type: 'leaf', blockId: 'list' })
+    // the surviving sibling collapses up into the root
+    expect(root).toMatchObject({ type: 'leaf', blockId: 'form' })
+  })
+  it('detaching the whole root empties the tree', () => {
+    const { root, detached } = detachNode(leaf('only'), [])
+    expect(detached).toMatchObject({ type: 'leaf', blockId: 'only' })
+    expect(root).toBeNull()
+  })
+  it('a non-existent path detaches nothing', () => {
+    const { root, detached } = detachNode(masterDetail(), [9])
+    expect(detached).toBeNull()
+    expect(root).toMatchObject({ type: 'split' })
+  })
+})
+
+describe('findNodePath — locate a node by reference', () => {
+  it('finds a child by identity', () => {
+    const root = masterDetail()
+    const form = root.children[1]!
+    expect(findNodePath(root, form)).toEqual([1])
+  })
+  it('returns null when the node is not in the tree', () => {
+    expect(findNodePath(masterDetail(), leaf('ghost'))).toBeNull()
+  })
+})
+
+describe('moveNode — rearrange a pane within the tree', () => {
+  it('reorders two panes (move list to the right of form)', () => {
+    // [list, form] → move list (path [0]) to form's right edge
+    const root = masterDetail()
+    const next = moveNode(root, [0], [1], 'right') as LayoutSplit
+    expect(next.type).toBe('split')
+    expect(next.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['form', 'list'])
+  })
+  it('is a no-op when moving a node into its own subtree', () => {
+    const root: LayoutSplit = {
+      type: 'split', direction: 'horizontal',
+      children: [{ type: 'split', direction: 'vertical', children: [leaf('a'), leaf('b')] }, leaf('c')],
+    }
+    // moving [0] (the inner split) into [0,1] (its own descendant) → refused
+    expect(moveNode(root, [0], [0, 1], 'right')).toBe(root)
+  })
+  it('is a no-op when source and target are the same path', () => {
+    const root = masterDetail()
+    expect(moveNode(root, [0], [0], 'right')).toBe(root)
+  })
+})
+
+describe('nestInside — dwell-to-drop creates a nested app (WS2 nesting)', () => {
+  it('wraps a target leaf + dropped node into a nested sub-layout', () => {
+    const root = leaf('host')
+    const next = nestInside(root, [], leaf('guest'), 'App') as LayoutNode
+    expect(next.type).toBe('nested')
+    const inner = getNestedLayout(next, [])!
+    expect(inner.root).toMatchObject({ type: 'split', direction: 'horizontal' })
+    expect((inner.root as LayoutSplit).children.map(c => (c as LayoutLeaf).blockId)).toEqual(['host', 'guest'])
+  })
+  it('drops INTO an existing nested app (appends to its sub-layout)', () => {
+    const nested = makeNested({ renderer: 'panes', root: leaf('inner') }, 'App')
+    const root: LayoutSplit = { type: 'split', direction: 'horizontal', children: [nested, leaf('side')] }
+    const next = nestInside(root, [0], leaf('added')) as LayoutSplit
+    const innerLayout = getNestedLayout(next.children[0]!, [])!
+    expect((innerLayout.root as LayoutSplit).children.map(c => (c as LayoutLeaf).blockId)).toEqual(['inner', 'added'])
+  })
+  it('preserves the target slot size so the layout does not jump', () => {
+    const root: LayoutSplit = {
+      type: 'split', direction: 'horizontal',
+      children: [leaf('host', { defaultSize: 70 }), leaf('side', { defaultSize: 30 })],
+    }
+    const next = nestInside(root, [0], leaf('guest')) as LayoutSplit
+    expect((next.children[0] as LayoutNode).defaultSize).toBe(70)
   })
 })
