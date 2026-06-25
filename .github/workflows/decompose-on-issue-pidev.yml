@@ -1,0 +1,151 @@
+name: Decompose on issue (pi.dev spike)
+
+# WS1 of epic #669 / spike #670 — pi.dev as the in-job agent, GitHub stays the
+# orchestrator. This is a THROWAWAY variant of decompose-on-issue.yml: it swaps
+# ONLY the agent step (claude-code-action → a `pi` step) and keeps everything
+# else identical (checkout, the t0 stamp, the #461 artifact-gate).
+#
+# DELIBERATELY workflow_dispatch-ONLY — it never auto-fires on issue events, so
+# it cannot interfere with the live pipeline. Rollout behind the AGENT_HARNESS
+# toggle is WS7, NOT this file.
+#
+# Requires the Mac-mini runner to be up (#653/#654/#657) and these to exist:
+#   • secret  PI_PROVIDER_KEY   — pi's model-provider key (Anthropic key for a
+#                                 cheap Claude model, or a local-model endpoint)
+#   • secret  HARNESS_PUSH_TOKEN — a PAT/App token so pushes re-trigger CI
+#                                  (GITHUB_TOKEN pushes do NOT — the #572/#626 reason); WS4
+# Run it: Actions → this workflow → Run, with the throwaway issue number.
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Throwaway test issue number to decompose"
+        required: true
+        type: string
+      model:
+        description: "Model for pi (cheap by default — early quality read)"
+        required: false
+        default: "claude-haiku-4-5-20251001"
+        type: string
+
+jobs:
+  decompose-pidev:
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    # NOTE: no `id-token: write` here — pi auths via a provider key, not OIDC
+    # (that was a claude-code-action requirement). GITHUB_TOKEN still drives the
+    # artifact-gate's reads/comment. The bot-actor guard that claude-code-action
+    # gave us (`allowed_bots`) has no pi equivalent — it's WS4; safe to omit on a
+    # dispatch-only spike that only a human can trigger.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - id: t0
+        run: echo "ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      # ── The swap: claude-code-action → pi ──────────────────────────────────
+      # «VERIFY» the exact pi CLI on the runner (print flag, model flag, turn cap)
+      # via `pi --help`; the spike script (scripts/spike-pidev.sh) centralises the
+      # same invocation. Skills: .claude/skills is bridged to .pi/skills so pi can
+      # load them (Agent Skills standard) — confirm consumption in the log (crit 1).
+      - id: pi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.PI_PROVIDER_KEY }}
+          GH_TOKEN: ${{ secrets.HARNESS_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+          PI_MODEL: ${{ inputs.model }}
+          ISSUE: ${{ inputs.issue }}
+        run: |
+          set -o pipefail
+          command -v pi >/dev/null 2>&1 || npm i -g @earendil-works/pi-coding-agent
+          mkdir -p .pi && [ -e .pi/skills ] || ln -s ../.claude/skills .pi/skills
+          LOG="pidev-exec-${{ github.run_id }}.log"
+          echo "exec=$LOG" >> "$GITHUB_OUTPUT"
+          # «VERIFY» flags — single source of truth for the invocation:
+          pi --print --model "$PI_MODEL" "/task-decompose #${ISSUE}" 2>&1 | tee "$LOG"
+          echo "conclusion=$([ ${PIPESTATUS[0]} -eq 0 ] && echo success || echo failure)" >> "$GITHUB_OUTPUT"
+
+      # ── Artifact-gate (#461), verbatim from decompose-on-issue.yml ─────────
+      # The PASS/FAIL logic uses GITHUB_TOKEN (comments / linked PR / sub-issues /
+      # status:blocked) and is HARNESS-AGNOSTIC — it already works for pi unchanged.
+      # Only the #661 "why did it produce nothing" classifier reads the agent's
+      # execution_file/conclusion. pi doesn't emit claude-code-action's JSON shape,
+      # so CLAUDE_EXEC_FILE points at pi's raw log (best-effort) and the parser
+      # degrades GRACEFULLY to the generic message. Making pi emit the structured
+      # execution_file is WS3 (the execution-log adapter).
+      - name: Artifact-gate — fail if the agent produced nothing
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          CLAUDE_EXEC_FILE: ${{ steps.pi.outputs.exec }}
+          CLAUDE_CONCLUSION: ${{ steps.pi.outputs.conclusion }}
+          ISSUE: ${{ inputs.issue }}
+        with:
+          script: |
+            const issue_number = Number(process.env.ISSUE)
+            const since = '${{ steps.t0.outputs.ts }}'
+            const sinceMs = new Date(since).getTime()
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo, issue_number, since,
+            })
+            const newComment = comments.length > 0
+
+            const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
+              ...context.repo, issue_number,
+            })
+            const prRefs = timeline.filter(e =>
+              e.event === 'cross-referenced' &&
+              e.source && e.source.issue && e.source.issue.pull_request
+            )
+            const linkedPR = prRefs.some(e => new Date(e.created_at).getTime() >= sinceMs)
+            const alreadyLinkedPR = prRefs.length > 0
+
+            const issue = await github.rest.issues.get({ ...context.repo, issue_number })
+            const blocked = issue.data.labels.some(l => (typeof l === 'string' ? l : l.name) === 'status:blocked')
+            const alreadyClosed = issue.data.state === 'closed'
+
+            let createdSubIssues = false
+            try {
+              const subs = await github.paginate('GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues', {
+                ...context.repo, issue_number, per_page: 100,
+              })
+              createdSubIssues = subs.some(s => new Date(s.created_at).getTime() >= sinceMs)
+            } catch (e) { core.warning(`sub-issue check skipped: ${e.message}`) }
+
+            const signoffHeld = blocked && newComment
+            if (linkedPR || signoffHeld || alreadyLinkedPR || alreadyClosed || createdSubIssues) {
+              core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld} alreadyLinkedPR=${alreadyLinkedPR} alreadyClosed=${alreadyClosed} createdSubIssues=${createdSubIssues}`)
+              return
+            }
+
+            // #661 classifier — best-effort against pi's raw log (WS3 makes it structured).
+            const fs = require('fs')
+            let why = '', action = ''
+            try {
+              const execFile = process.env.CLAUDE_EXEC_FILE
+              if (execFile && fs.existsSync(execFile)) {
+                const text = fs.readFileSync(execFile, 'utf8')
+                if (/credit balance|billing/i.test(text)) {
+                  why = 'the model call failed — **billing/credit**'
+                  action = 'Top up the provider account behind `PI_PROVIDER_KEY`, then re-run.'
+                }
+              }
+            } catch (e) { core.warning(`artifact-gate: could not parse pi log: ${e.message}`) }
+            if (!why && process.env.CLAUDE_CONCLUSION === 'failure') {
+              why = 'the pi step **failed before producing anything** (billing/API/tooling — see log)'
+              action = 'Open the run log; fix the logged error, then re-run.'
+            }
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            const body = why
+              ? `⚠️ **Artifact-gate failed (#461) — pi.dev spike.** This run produced no deliverable: ${why}\n\n**What to do:** ${action}\n\n🔗 ${runUrl}`
+              : `⚠️ **Artifact-gate failed (#461) — pi.dev spike.** No PR, no sub-issues, not held for sign-off. The "narrate-then-stop" no-op, OR pi never produced an issue deliverable — note which for the WS2 parity matrix.\n\n🔗 ${runUrl}`
+            await github.rest.issues.createComment({ ...context.repo, issue_number, body })
+            core.setFailed(`Artifact-gate: pi spike on #${issue_number} produced no deliverable.`)
