@@ -9,6 +9,7 @@ import {
   makeNested,
   getNestedLayout,
   replaceNestedLayout,
+  findNestedNodes,
 } from '../layout-edit'
 import type { LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import type { CroutonLayoutBlockDefinition } from '@fyit/crouton-core/app/types/layout-block'
@@ -238,5 +239,39 @@ describe('nested layouts — a pane can be a whole sub-layout (WS2 #871)', () =>
     const snapshot = JSON.stringify(root)
     replaceNestedLayout(root, [0], { renderer: 'panes', root: { type: 'leaf', blockId: 'x' } })
     expect(JSON.stringify(root)).toBe(snapshot)
+  })
+
+  it('findNestedNodes lists the nested apps in this layout, with paths + labels', () => {
+    const root: LayoutNode = {
+      type: 'split', direction: 'horizontal',
+      children: [
+        makeNested(appLayout, 'Bookings'),
+        { type: 'leaf', blockId: 'stats' },
+        { type: 'split', direction: 'vertical', children: [
+          { type: 'leaf', blockId: 'list' },
+          makeNested(appLayout), // unlabelled, deeper
+        ] },
+      ],
+    }
+    expect(findNestedNodes(root)).toEqual([
+      { path: [0], label: 'Bookings' },
+      { path: [2, 1] },
+    ])
+  })
+
+  it('findNestedNodes stops at a nested boundary (does not cross into its sub-layout)', () => {
+    // appLayout itself contains no nested nodes, but even if it did, a parent
+    // nested node must be reported as ONE target, not recursed into.
+    const nestedWithNestedInside: LayoutTree = {
+      renderer: 'panes',
+      root: makeNested({ renderer: 'panes', root: makeNested(appLayout, 'inner') }, 'outer'),
+    }
+    expect(findNestedNodes(nestedWithNestedInside.root)).toEqual([{ path: [], label: 'outer' }])
+  })
+
+  it('findNestedNodes returns nothing for a plain leaf/split and handles null', () => {
+    expect(findNestedNodes(null)).toEqual([])
+    expect(findNestedNodes({ type: 'leaf', blockId: 'x' })).toEqual([])
+    expect(findNestedNodes(masterDetail())).toEqual([])
   })
 })
