@@ -105,7 +105,18 @@
 </header>
 
 <main>
-  <div class="sec"><h2>🧲 The keystone — compose &amp; rearrange</h2><div class="rule"></div></div>
+  <div class="sec"><h2>🧲 Compose the canvas — authoring gestures</h2><div class="rule"></div></div>
+  <a class="card pick" href="15-canvas-playground.html" target="_blank" rel="noopener" style="display:block; margin-bottom:20px">
+    <div class="preview" style="height:320px">
+      <span class="num">15</span><span class="openbtn">Open ▸</span>
+      <iframe loading="lazy" src="15-canvas-playground.html?state=composed" title="Canvas Playground" style="transform:scale(.52)"></iframe>
+    </div>
+    <div class="body">
+      <div class="titleRow"><h3>Canvas Playground</h3><span class="s">⭐ the full surface</span></div>
+      <p class="meta">All the gestures on one canvas: <b style="color:#e6edf6">snap</b> loose apps together into a layout, <b style="color:#e6edf6">drag the seams</b> to resize panes, and <b style="color:#e6edf6">pull a pane out</b> of a layout to pop it back onto the canvas (then re-snap it anywhere = rearrange). The free canvas and the bound pane tree, in one place. <b style="color:#e6edf6">Open it and play.</b></p>
+      <span class="fit tree">compose · resize · detach · epic #855</span>
+    </div>
+  </a>
   <div class="grid top">
   <a class="card pick" href="13-snap-compose.html" target="_blank" rel="noopener">
     <div class="preview" style="height:300px">
@@ -127,6 +138,28 @@
       <div class="titleRow"><h3>Rearrange</h3><span class="s">⭐</span></div>
       <p class="meta">Once composed, <b style="color:#e6edf6">grab any pane and drop it on another's edge</b> — left/right/top/bottom. A glowing zone shows where it'll land and the whole layout <b style="color:#e6edf6">glides into its new slots</b> (FLIP reflow). The same tree edit crouton-layout's <code style="color:#c9d6ea">layout-edit.ts</code> already does. <b style="color:#e6edf6">Open it and drag a pane.</b></p>
       <span class="fit tree">in-layout editing · epic #855</span>
+    </div>
+  </a>
+  </div>
+
+  <div class="sec"><h2>🥽 Spatial — the same mini-apps in 3D / VR</h2><div class="rule"></div></div>
+  <div class="grid top">
+  <a class="card pick" href="16-spatial.html" target="_blank" rel="noopener">
+    <div class="preview" style="height:300px"><span class="num">16</span><span class="openbtn">Open ▸</span>
+      <iframe loading="lazy" src="16-spatial.html" title="Spatial immersive"></iframe></div>
+    <div class="body">
+      <div class="titleRow"><h3>Spatial · immersive</h3><span class="s">⭐</span></div>
+      <p class="meta">The mini-apps as glassy panels floating on a curved arc in 3D space — a holographic workspace. <b style="color:#e6edf6">Drag to orbit, scroll to dolly, hover a panel to focus it.</b> The <code>renderer:'spatial'</code> idea (TresJS in real life; CSS-3D here).</p>
+      <span class="fit niche">3D · crouton-three · epic #855</span>
+    </div>
+  </a>
+  <a class="card pick" href="16-spatial.html?view=stereo" target="_blank" rel="noopener">
+    <div class="preview" style="height:300px"><span class="num">16</span><span class="openbtn">Open ▸</span>
+      <iframe loading="lazy" src="16-spatial.html?view=stereo" title="Spatial stereo"></iframe></div>
+    <div class="body">
+      <div class="titleRow"><h3>Spatial · VR headset</h3><span class="s">🥽</span></div>
+      <p class="meta">The same scene as a <b style="color:#e6edf6">stereoscopic left/right eye split</b> — what you'd actually see through VR glasses. The endpoint of the vision: walk around your mini-apps in a headset.</p>
+      <span class="fit niche">WebXR target · epic #855</span>
     </div>
   </a>
   </div>
