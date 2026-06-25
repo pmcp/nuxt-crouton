@@ -23,7 +23,7 @@ const OUT = join(ROOT, 'writeups/architecture/skills-and-triggers.html')
 const META = {
   crouton: { group: 'build', triggers: ['ask'] },
   'ui-proposal': { group: 'build', triggers: ['flow', 'ask'] },
-  prototype: { group: 'build', triggers: ['ask'] },
+  mockup: { group: 'build', triggers: ['ask'] },
   'schema-review': { group: 'build', triggers: ['flow', 'ask'] },
   'test-review': { group: 'build', triggers: ['flow', 'ask'] },
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },

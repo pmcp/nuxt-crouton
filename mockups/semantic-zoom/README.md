@@ -1,6 +1,6 @@
 # semantic-zoom — one zoomable surface, four semantic levels
 
-The first prototype built with the `/prototype` skill (hand-rolled tier, motion-first).
+The first mockup built with the `/mockup` skill (hand-rolled tier, motion-first).
 A **Zoomable UI (ZUI)** where zoom navigates the *abstraction ladder* — content changes
 *meaning* at each depth (Figma/Miro-style semantic zoom), applied to the whole crouton builder.
 
