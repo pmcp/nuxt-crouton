@@ -13,11 +13,29 @@
  *    renderer free of breakpoint knowledge.
  */
 import { computed, type ComputedRef, type InjectionKey, type MaybeRefOrGetter, type Ref, toValue } from 'vue'
-import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutCollapseStyle, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { partitionCollapsed, resolveLayoutAtWidth, type CollapsedPane, type ResolvedLayout } from '../utils/layout-responsive'
 
 /** Injected variant map (`blockId` → variant) for the breakpoint in view. */
 export const LAYOUT_VARIANTS_KEY: InjectionKey<Ref<Record<string, string>> | ComputedRef<Record<string, string>>> = Symbol('crouton-layout-variants')
+
+/**
+ * In-place collapse context (WS6, #875) — provided by `CroutonLayoutResponsiveRenderer`
+ * when the active breakpoint's collapse style is an *in-place* one (not `gutter-tabs`).
+ * It tells the recursive `CroutonLayoutRenderer` which leaves to render as a collapsed
+ * handle (and with which motion), and how to ask the host to expand one. Absent (the
+ * default) ⇒ the renderer behaves exactly as before — so the plain renderer, the editor,
+ * and the gutter-tabs path are untouched.
+ */
+export interface LayoutCollapseContext {
+  /** `blockId`s collapsed in place at this width. */
+  collapsedSet: Set<string>
+  /** The motion for those collapsed panes. */
+  style: LayoutCollapseStyle
+  /** Ask the host to expand a collapsed pane (it owns the collapsed set). */
+  expand: (blockId: string) => void
+}
+export const LAYOUT_COLLAPSE_KEY: InjectionKey<ComputedRef<LayoutCollapseContext | null>> = Symbol('crouton-layout-collapse')
 
 export interface UseLayoutResponsive {
   /** The full resolution at the current width (root + dials + active checkpoint). */

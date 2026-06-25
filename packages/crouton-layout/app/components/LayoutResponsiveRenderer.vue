@@ -18,7 +18,9 @@
 import { computed, provide, ref, toRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
-import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY } from '../composables/useCroutonLayoutResponsive'
+import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
+import { normalizeCollapseStyle } from '../utils/layout-responsive'
+import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{
   tree: LayoutTree
@@ -27,7 +29,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  /** A collapsed gutter tab was clicked (the host may expand it). */
+  /** A collapsed pane (gutter tab or in-place handle) was clicked — host may expand it. */
   expand: [blockId: string]
 }>()
 
@@ -35,14 +37,28 @@ const hostRef = ref<HTMLElement | null>(null)
 const { width: measured } = useElementSize(hostRef)
 const effectiveWidth = computed(() => (props.width !== undefined ? props.width : measured.value))
 
-const { visibleRoot, collapsedPanes, variants, activeBreakpoint } = useCroutonLayoutResponsive(
+const { resolved, visibleRoot, collapsedPanes, variants, activeBreakpoint } = useCroutonLayoutResponsive(
   toRef(props, 'tree'),
   effectiveWidth,
 )
 
 provide(LAYOUT_VARIANTS_KEY, variants)
 
-defineExpose({ activeBreakpoint })
+// WS6 #875: the active breakpoint's collapse motion (normalized — absent ⇒ gutter-tabs).
+// `gutter-tabs` keeps the right-edge rail; the in-place styles keep collapsed panes in the
+// tree (rendered as handles) and reclaim their space via the splitter.
+const collapseStyle = computed(() => normalizeCollapseStyle(resolved.value.collapseStyle))
+const inPlace = computed(() => isInPlaceCollapse(collapseStyle.value))
+
+// Provide the in-place collapse context to the recursive renderer — only when an
+// in-place style is active, so the gutter-tabs path is untouched.
+provide(LAYOUT_COLLAPSE_KEY, computed(() =>
+  inPlace.value
+    ? { collapsedSet: new Set(resolved.value.collapsed), style: collapseStyle.value, expand: (id: string) => emit('expand', id) }
+    : null,
+))
+
+defineExpose({ activeBreakpoint, collapseStyle })
 </script>
 
 <template>
@@ -50,24 +66,36 @@ defineExpose({ activeBreakpoint })
     ref="hostRef"
     class="relative flex h-full w-full"
   >
-    <div class="min-w-0 flex-1">
+    <!-- In-place collapse (WS6 #875): render the FULL resolved tree — collapsed panes
+         stay in their slots as motion handles (provided via LAYOUT_COLLAPSE_KEY) and the
+         splitter hands their space back to siblings. No gutter rail. -->
+    <template v-if="inPlace">
       <CroutonLayoutRenderer
-        v-if="visibleRoot"
-        :node="visibleRoot"
+        :node="resolved.root"
+        class="min-w-0 flex-1"
       />
-      <div
-        v-else
-        class="grid h-full w-full place-items-center p-6 text-center text-sm text-muted"
-      >
-        Every pane is collapsed at this width — expand one from the gutter.
-      </div>
-    </div>
+    </template>
 
-    <!-- Gutter rail: each collapsed pane as a tab (WS5 #874; collapse-style is WS6). -->
-    <div
-      v-if="collapsedPanes.length"
-      class="flex w-9 shrink-0 flex-col items-stretch gap-1 border-l border-default bg-elevated/60 p-1"
-    >
+    <!-- gutter-tabs (default): collapsed panes leave the splitter into a right-edge rail. -->
+    <template v-else>
+      <div class="min-w-0 flex-1">
+        <CroutonLayoutRenderer
+          v-if="visibleRoot"
+          :node="visibleRoot"
+        />
+        <div
+          v-else
+          class="grid h-full w-full place-items-center p-6 text-center text-sm text-muted"
+        >
+          Every pane is collapsed at this width — expand one from the gutter.
+        </div>
+      </div>
+
+      <!-- Gutter rail: each collapsed pane as a tab. -->
+      <div
+        v-if="collapsedPanes.length"
+        class="flex w-9 shrink-0 flex-col items-stretch gap-1 border-l border-default bg-elevated/60 p-1"
+      >
       <button
         v-for="pane in collapsedPanes"
         :key="pane.blockId"
@@ -82,6 +110,7 @@ defineExpose({ activeBreakpoint })
         />
         <span class="[writing-mode:vertical-rl] rotate-180 text-[10px] uppercase tracking-wide">{{ pane.label || pane.blockId }}</span>
       </button>
-    </div>
+      </div>
+    </template>
   </div>
 </template>
