@@ -6,8 +6,11 @@
 <title>Crouton Builder — Site flow (WS3 #872)</title>
 <style>
   :root {
-    --primary: #6366f1;          /* indigo-500 (stand-in for theme primary) */
-    --primary-soft: rgba(99,102,241,.25);
+    /* The component uses `ring-primary` / `text-primary` (theme tokens) — NOT a
+       hardcoded color. triage sets no override, so this is Nuxt UI's default
+       primary (green). Change the theme → this follows it. */
+    --primary: #00c16a;          /* Nuxt UI default primary (green-500) */
+    --primary-soft: rgba(0,193,106,.25);
     --bg: #fafafa;
     --card: #ffffff;
     --border: #e5e5e5;
