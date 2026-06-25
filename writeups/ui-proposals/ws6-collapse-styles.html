@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WS6 · Collapse styles — in-place motions (#875)</title>
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #141a24; --elevated: #1b2330; --border: #2a3445;
+    --muted: #8a97ab; --text: #e6ecf5; --primary: #5b9dff; --error: #ff6b6b;
+    --phosphor: #9dffce;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; padding: 28px;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 22px; max-width: 70ch; }
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .controls button, .controls a {
+    background: var(--elevated); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer; text-decoration: none; font-size: 13px;
+  }
+  .controls button:hover, .controls a:hover { border-color: var(--primary); color: var(--primary); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .demo { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  .demo h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .demo h2 code { color: var(--primary); }
+  .demo .note { color: var(--muted); font-size: 11px; padding: 8px 14px 0; min-height: 34px; }
+  .stage { height: 240px; padding: 14px; display: flex; }
+  /* a horizontal master-detail split: list (collapsing) + detail (reflows in) */
+  .split { display: flex; width: 100%; height: 100%; gap: 8px; }
+  .pane {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--elevated);
+    overflow: hidden; position: relative; display: flex; flex-direction: column;
+  }
+  .pane .ph { padding: 10px; }
+  .pane .ph .bar { height: 8px; border-radius: 4px; background: #2c3850; margin: 7px 0; }
+  .pane .ph .bar.s { width: 55%; } .pane .ph .bar.m { width: 80%; }
+  .pane-title { font-size: 11px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .detail { flex: 1 1 auto; }
+  .list { position: relative; }
+  /* the handle that the list collapses into */
+  .handle {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    background: rgba(20,26,36,.6); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--muted);
+  }
+  .spine { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .spine .cap { writing-mode: vertical-rl; transform: rotate(180deg); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px 2px var(--primary); }
+  .crtline { position: absolute; height: 2px; width: 66%; background: var(--phosphor); box-shadow: 0 0 8px var(--phosphor); }
+  .iris { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+  .iris .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--primary) 70%, transparent); }
+  .iris .seed { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px 3px var(--primary); }
+  .legend { margin-top: 26px; color: var(--muted); font-size: 12px; max-width: 80ch; }
+  .legend b { color: var(--text); }
+</style>
+</head>
+<body>
+  <h1>WS6 · Collapse styles — in-place motions <code style="color:var(--muted)">#875</code></h1>
+  <p class="sub">
+    The three promoted styles play <b>in place</b> on a master-detail split: the <i>list</i> pane collapses to its
+    resting handle and the <i>detail</i> pane reflows into the freed space (the splitter hands space back).
+    Drag the timeline (t=0 expanded → t=1 collapsed) or freeze a frame with <code>?t=0.5</code>.
+  </p>
+
+  <div class="controls">
+    <button id="play">▶ Play</button>
+    <input id="t" type="range" min="0" max="1" step="0.01" value="0" style="width:280px" />
+    <span id="tval" style="color:var(--muted)">t = 0.00</span>
+    <a href="?t=0">expanded</a><a href="?t=0.5">mid</a><a href="?t=1">collapsed</a>
+  </div>
+
+  <div class="grid">
+    <div class="demo" data-style="spring-drawer">
+      <h2><code>spring-drawer</code> — edge spine, damped overshoot</h2>
+      <div class="note">Slams shut into a thin labeled spine, overshooting past closed then ringing back.</div>
+      <div class="stage"><div class="split">
+        <div class="pane list" style="flex-basis:40%">
+          <div class="pane-title">list</div>
+          <div class="ph"><div class="bar m"></div><div class="bar s"></div><div class="bar m"></div><div class="bar s"></div></div>
+          <div class="handle" style="opacity:0">
+            <div class="spine"><span>‹‹</span><span class="cap">list</span></div>
+          </div>
+        </div>
+        <div class="pane detail">
+          <div class="pane-title">detail</div>
+          <div class="ph"><div class="bar m"></div><div class="bar m"></div><div class="bar s"></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="demo" data-style="crt-power-down">
+      <h2><code>crt-power-down</code> — phosphor line → standby dot</h2>
+      <div class="note">Crushes to a blazing line, pinches to a clickable standby dot. Size-proof in any pane.</div>
+      <div class="stage"><div class="split">
+        <div class="pane list" style="flex-basis:40%">
+          <div class="pane-title">list</div>
+          <div class="ph"><div class="bar m"></div><div class="bar s"></div><div class="bar m"></div><div class="bar s"></div></div>
+          <div class="handle" style="opacity:0">
+            <div class="dot" style="opacity:0"></div><div class="crtline" style="opacity:0"></div>
+          </div>
+        </div>
+        <div class="pane detail">
+          <div class="pane-title">detail</div>
+          <div class="ph"><div class="bar m"></div><div class="bar m"></div><div class="bar s"></div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="demo" data-style="iris-portal">
+      <h2><code>iris-portal</code> — shutter closes to a seed</h2>
+      <div class="note">A camera-shutter iris closes the pane to a glowing seed at its own center; restore irises open.</div>
+      <div class="stage"><div class="split">
+        <div class="pane list" style="flex-basis:40%">
+          <div class="pane-title">list</div>
+          <div class="ph"><div class="bar m"></div><div class="bar s"></div><div class="bar m"></div><div class="bar s"></div></div>
+          <div class="handle" style="opacity:0">
+            <div class="iris"><div class="ring"></div><div class="seed"></div></div>
+          </div>
+        </div>
+        <div class="pane detail">
+          <div class="pane-title">detail</div>
+          <div class="ph"><div class="bar m"></div><div class="bar m"></div><div class="bar s"></div></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <p class="legend">
+    <b>The model:</b> <code>gutter-tabs</code> (shipped) pulls a collapsed pane out of the splitter into a right-edge
+    rail. The three above collapse <b>in place</b> — the pane keeps its tree slot, shrinks to a tiny handle, and the
+    splitter reclaims the space for siblings. All four are a closed <code>LayoutCollapseStyle</code> enum, authored
+    per breakpoint (so a pane can collapse at phone width and re-open at desktop). Handles are tiny ⇒ they survive in
+    the narrowest pane at any nesting depth.
+  </p>
+
+<script>
+  // Single render(t) timeline (t=0 expanded → t=1 collapsed). Each style maps t to its
+  // own motion; freezable via ?t= for screenshots — mirrors the gallery-mock convention.
+  const clamp01 = x => Math.max(0, Math.min(1, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  // damped spring overshoot used by spring-drawer
+  const spring = t => 1 - Math.pow(2.718, -6 * t) * Math.cos(9 * t);
+
+  function render(t) {
+    t = clamp01(t);
+    document.querySelectorAll('.demo').forEach(demo => {
+      const style = demo.dataset.style;
+      const list = demo.querySelector('.list');
+      const handle = demo.querySelector('.handle');
+      const ph = demo.querySelector('.list .ph');
+      // shared: list pane shrinks 40% -> ~14% basis; detail reflows to fill.
+      const basis = lerp(40, 14, t);
+      list.style.flexBasis = basis + '%';
+      // content fades out as it collapses
+      ph.style.opacity = String(clamp01(1 - t * 1.6));
+      handle.style.opacity = String(clamp01((t - 0.35) / 0.4));
+
+      if (style === 'spring-drawer') {
+        const s = spring(t);
+        list.style.transform = `scaleX(${lerp(1, 0.98, s)})`;
+        handle.querySelector('.spine').style.transform = `translateY(${lerp(8, 0, clamp01((t-0.4)/0.5))}px)`;
+      } else if (style === 'crt-power-down') {
+        // crush vertically to a line (t~.5), then dot blooms
+        const crush = t < 0.5 ? lerp(1, 0.05, t / 0.5) : lerp(0.05, 1, (t - 0.5) / 0.5);
+        ph.style.transform = `scaleY(${t < 0.5 ? crush : 0})`;
+        const line = handle.querySelector('.crtline');
+        const dot = handle.querySelector('.dot');
+        line.style.opacity = String(t > 0.35 && t < 0.62 ? 1 : 0);
+        line.style.transform = `scaleX(${t < 0.62 ? lerp(1, 0.04, clamp01((t-0.35)/0.27)) : 0})`;
+        dot.style.opacity = String(clamp01((t - 0.6) / 0.25));
+        dot.style.transform = `scale(${lerp(0, 1, clamp01((t - 0.6) / 0.3))})`;
+      } else if (style === 'iris-portal') {
+        const c = clamp01((t - 0.2) / 0.8);
+        ph.style.clipPath = `circle(${lerp(140, 8, c)}% at 50% 45%)`;
+        const ring = handle.querySelector('.ring');
+        const seed = handle.querySelector('.seed');
+        ring.style.transform = `scale(${lerp(3.2, 1, c)}) rotate(${lerp(-60, 0, c)}deg)`;
+        ring.style.opacity = String(clamp01((t - 0.3) / 0.3));
+        seed.style.transform = `scale(${lerp(0, 1, clamp01((t - 0.5) / 0.4))})`;
+        seed.style.opacity = String(clamp01((t - 0.5) / 0.3));
+      }
+    });
+  }
+
+  const slider = document.getElementById('t');
+  const tval = document.getElementById('tval');
+  function set(t) { slider.value = t; tval.textContent = 't = ' + Number(t).toFixed(2); render(t); }
+  slider.addEventListener('input', () => set(slider.value));
+
+  let raf = null;
+  document.getElementById('play').addEventListener('click', () => {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    let start = null;
+    const step = ts => {
+      if (!start) start = ts;
+      const t = clamp01((ts - start) / 1400);
+      set(t);
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    set(0); raf = requestAnimationFrame(step);
+  });
+
+  // initial frame from ?t=
+  const q = new URLSearchParams(location.search);
+  set(q.has('t') ? Number(q.get('t')) : 0);
+</script>
+</body>
+</html>
