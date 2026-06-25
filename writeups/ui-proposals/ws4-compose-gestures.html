@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WS4 · Compose gestures — snap · nest · detach (#873)</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a24; --elevated:#1b2330; --border:#2a3445; --border2:#3a4860;
+    --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:28px}
+  h1{font-size:18px;margin:0 0 4px}
+  p.sub{color:var(--muted);margin:0 0 22px;max-width:74ch}
+  .controls{display:flex;gap:10px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
+  .controls button,.controls a{background:var(--elevated);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;text-decoration:none;font-size:13px}
+  .controls button:hover,.controls a:hover{border-color:var(--primary);color:var(--primary)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .demo{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .demo h2{font-size:13px;margin:0;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .demo h2 code{color:var(--primary)}
+  .demo .note{color:var(--muted);font-size:11px;padding:8px 14px 0;min-height:44px}
+  .stage{position:relative;height:240px;margin:14px;border-radius:10px;background:
+    radial-gradient(600px 400px at 70% -20%,#15314a22,transparent),var(--elevated);
+    overflow:hidden;background-image:linear-gradient(#1f2a3d33 1px,transparent 1px),linear-gradient(90deg,#1f2a3d33 1px,transparent 1px);background-size:28px 28px}
+  .piece{position:absolute;border-radius:10px;overflow:hidden;transition:none}
+  .loose{border:1.5px dashed var(--border2);background:linear-gradient(180deg,#141c2c,#0e1420)}
+  .group{border:1.5px solid var(--border2);background:#0b1018;box-shadow:0 0 30px -8px #36e0c033}
+  .pane{position:absolute;inset:6px;border-radius:8px;padding:9px;background:linear-gradient(180deg,var(--elevated),var(--panel));border:1px solid #243348;overflow:hidden}
+  .pane h4{margin:0 0 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .row{height:8px;border-radius:4px;background:#26334a;margin-bottom:6px}
+  .row.s{width:55%}.row.m{width:80%}
+  .badge{position:absolute;top:-9px;left:12px;z-index:6;font-size:9px;letter-spacing:.12em;text-transform:uppercase;background:#0b1018;border:1px solid var(--border2);color:var(--accent);border-radius:999px;padding:2px 8px}
+  .guide{position:absolute;border-radius:4px;background:var(--primary);box-shadow:0 0 16px 2px var(--primary);opacity:0;z-index:20}
+  .ring{position:absolute;border:2px solid var(--primary);border-radius:12px;opacity:0;z-index:20}
+  .legend{margin-top:26px;color:var(--muted);font-size:12px;max-width:82ch}
+  .legend b{color:var(--text)}
+  .legend code{color:var(--primary)}
+</style>
+</head>
+<body>
+  <h1>WS4 · Compose gestures <code style="color:var(--muted)">#873</code></h1>
+  <p class="sub">Direct manipulation on the real layout tree. <b>Snap</b>: drag a loose app to another → they click into a bound split. <b>Nest</b>: hold one OVER another → it drops inside (a nested app). <b>Detach</b>: pull a pane out → it pops back to a free card. Drag the timeline (t=0 → t=1) or freeze with <code>?t=0.6</code>.</p>
+
+  <div class="controls">
+    <button id="play">▶ Play</button>
+    <input id="t" type="range" min="0" max="1" step="0.01" value="0" style="width:280px" />
+    <span id="tval" style="color:var(--muted)">t = 0.00</span>
+    <a href="?t=0">start</a><a href="?t=0.6">mid</a><a href="?t=1">done</a>
+  </div>
+
+  <div class="grid">
+    <div class="demo" data-kind="snap">
+      <h2><code>snap</code> — magnetic edge-snap → bound split</h2>
+      <div class="note">Two loose apps; drag the second toward the first's right edge — a guide lights, then they click flush into one bound group.</div>
+      <div class="stage">
+        <div class="guide" id="snap-guide"></div>
+        <div class="piece loose" id="snap-a" style="left:14px;top:60px;width:120px;height:120px"><div class="pane"><h4>Calendar</h4><div class="row m"></div><div class="row s"></div><div class="row m"></div></div></div>
+        <div class="piece loose" id="snap-b" style="left:280px;top:60px;width:120px;height:120px"><div class="pane"><h4>Bookings</h4><div class="row m"></div><div class="row m"></div><div class="row s"></div></div></div>
+      </div>
+    </div>
+
+    <div class="demo" data-kind="nest">
+      <h2><code>nest</code> — dwell-over → nested app</h2>
+      <div class="note">Hold an app OVER another; a ring fills as the dwell arms, then it drops INSIDE — the target becomes a nested app (layouts in layouts).</div>
+      <div class="stage">
+        <div class="ring" id="nest-ring"></div>
+        <div class="piece group" id="nest-host" style="left:40px;top:55px;width:200px;height:130px"><span class="badge">app</span><div class="pane"><h4>Dashboard</h4><div class="row m"></div><div class="row s"></div></div></div>
+        <div class="piece loose" id="nest-guest" style="left:250px;top:30px;width:110px;height:96px"><div class="pane"><h4>Map</h4><div class="row m"></div><div class="row m"></div></div></div>
+      </div>
+    </div>
+
+    <div class="demo" data-kind="detach">
+      <h2><code>detach</code> — pull a pane out → free card</h2>
+      <div class="note">Grab a pane inside a bound group and drag it away — the group hands its space back to the survivor and the pane pops out as a loose card.</div>
+      <div class="stage">
+        <div class="piece group" id="det-group" style="left:24px;top:55px;width:210px;height:130px"><span class="badge">app</span>
+          <div class="pane" id="det-keep" style="right:50%"><h4>List</h4><div class="row m"></div><div class="row s"></div></div>
+          <div class="pane" id="det-keep2" style="left:50%;display:none"><h4>List</h4><div class="row m"></div><div class="row s"></div></div>
+        </div>
+        <div class="piece loose" id="det-out" style="left:130px;top:60px;width:104px;height:104px"><div class="pane"><h4>Form</h4><div class="row m"></div><div class="row m"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="legend">
+    <b>The model:</b> the geometry (<code>snapEdge</code>/<code>closestSnap</code>) decides which edge a dragged piece snaps to; the pure tree transforms apply it — <code>dropNode</code> (snap), <code>nestInside</code> (dwell), <code>detachNode</code> (pull-out) — all immutable edits on the same <code>LayoutTree</code> the renderer already draws. The arranging IS the gesture; there's no dialog.
+  </p>
+
+<script>
+  const clamp=(x)=>Math.max(0,Math.min(1,x)), lerp=(a,b,t)=>a+(b-a)*t;
+  const $=(id)=>document.getElementById(id);
+
+  function render(t){
+    t=clamp(t);
+    // --- snap: b slides left toward a, guide lights near the lock, then flush ---
+    const a=$('snap-a'), b=$('snap-b'), g=$('snap-guide');
+    const bx=lerp(280,138,t); b.style.left=bx+'px';
+    const gap=bx-(14+120);
+    g.style.opacity = (gap<70 && t<0.96)?1:0;
+    g.style.left=(14+120-2)+'px'; g.style.top='60px'; g.style.width='4px'; g.style.height='120px';
+    if(t>0.96){ a.classList.remove('loose'); a.classList.add('group'); a.style.width='246px';
+      b.style.left='138px'; }
+    else { a.classList.add('loose'); a.classList.remove('group'); a.style.width='120px'; }
+
+    // --- nest: guest moves over host, ring fills, then folds inside ---
+    const host=$('nest-host'), guest=$('nest-guest'), ring=$('nest-ring');
+    const gx=lerp(250,95,clamp(t/0.7)), gy=lerp(30,80,clamp(t/0.7));
+    guest.style.left=gx+'px'; guest.style.top=gy+'px';
+    const over = t>0.45 && t<0.96;
+    ring.style.opacity = over? lerp(0.3,1,clamp((t-0.45)/0.4)) : 0;
+    ring.style.left=(40-4)+'px'; ring.style.top=(55-4)+'px'; ring.style.width=(200+8)+'px'; ring.style.height=(130+8)+'px';
+    if(t>0.96){ guest.style.opacity=0;
+      host.innerHTML='<span class="badge">app · nested</span><div class="pane" style="right:52%"><h4>Dashboard</h4><div class="row m"></div></div><div class="pane" style="left:52%"><h4>Map</h4><div class="row m"></div></div>'; }
+    else { guest.style.opacity=1; }
+
+    // --- detach: form pane drags out of the group; group collapses to survivor ---
+    const grp=$('det-group'), out=$('det-out'), keep=$('det-keep'), keep2=$('det-keep2');
+    const ox=lerp(130,300,t), oy=lerp(60,40,t);
+    out.style.left=ox+'px'; out.style.top=oy+'px'; out.style.opacity = t>0.06?1:0;
+    if(t>0.5){ keep.style.right='6px'; keep2.style.display='none'; } // survivor reclaims space
+    else { keep.style.right='50%'; }
+  }
+
+  const slider=$('t'), tval=$('tval');
+  function set(t){ slider.value=t; tval.textContent='t = '+Number(t).toFixed(2); render(t); }
+  slider.addEventListener('input',()=>set(slider.value));
+  let raf=null;
+  $('play').addEventListener('click',()=>{ if(raf)cancelAnimationFrame(raf); let s=null;
+    const step=ts=>{ if(!s)s=ts; const t=clamp((ts-s)/1800); set(t); if(t<1)raf=requestAnimationFrame(step); };
+    set(0); raf=requestAnimationFrame(step); });
+  const q=new URLSearchParams(location.search);
+  set(q.has('t')?Number(q.get('t')):0);
+</script>
+</body>
+</html>
