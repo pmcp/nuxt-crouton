@@ -18,19 +18,20 @@
   .stagewrap{position:relative;margin-top:40px;height:520px;user-select:none;touch-action:none}
 
   /* width indicator (always visible) → hover it to slide the breakpoint ruler out */
-  .bpctl{position:absolute;top:-44px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:6;max-width:100%}
+  .bpctl{position:absolute;top:-66px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:6;max-width:100%}
   .chip{font:11px/1 ui-monospace,monospace;background:#0d1320;border:1px solid var(--border2);color:var(--text);
     padding:5px 11px;border-radius:999px;cursor:ew-resize;touch-action:none;display:flex;gap:7px;align-items:center;transition:.15s}
   .bpctl.pinned .chip{border-color:var(--primary);color:var(--primary)}
   .bpctl:hover .chip{border-color:var(--primary);color:var(--primary)}
   .chip .ico{color:var(--muted)}.bpctl:hover .chip .ico{color:var(--primary)}
   /* the ruler is tucked until you hover the indicator */
-  .ruler{height:20px;display:flex;align-items:center;margin-top:9px;max-width:100%;opacity:0;transform:translateY(-8px);
+  .ruler{height:22px;display:flex;align-items:center;margin-top:14px;max-width:100%;opacity:0;transform:translateY(-8px);
     pointer-events:none;transition:opacity .18s, transform .18s}
   .bpctl:hover .ruler, .bpctl.pinned .ruler{opacity:1;transform:none;pointer-events:auto}
-  .ruler .track{position:relative;height:2px;background:var(--border2);border-radius:2px}
+  /* not a solid bar — a faint DOTTED line carrying the breakpoint dots, with room */
+  .ruler .track{position:relative;height:0;border-top:2px dotted var(--border2);background:transparent}
   .stud{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:default}
-  .stud .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);border:2px solid var(--bg);transition:.15s}
+  .stud .dot{width:11px;height:11px;border-radius:50%;background:var(--muted);border:2px solid var(--bg);transition:.15s}
   .stud.active .dot{background:var(--accent);box-shadow:0 0 10px var(--accent);transform:scale(1.25)}
   .stud .lbl{position:absolute;top:14px;font:10px/1 ui-monospace,monospace;color:var(--muted);white-space:nowrap}
   .stud.active .lbl{color:var(--accent)}
@@ -117,19 +118,15 @@
     });
   }
   function render(){
-    // Clamp to what's actually on screen so the readout, studs, and reflow agree on
-    // mobile (you can't show 980px on a 390px phone — be honest about the real width).
+    // Clamp to what's actually on screen, and round to whole px (no float spam in the
+    // readout, esp. from sub-pixel touch deltas).
     const avail=stage.clientWidth||MAX;
-    width=Math.max(MIN,Math.min(Math.min(MAX,avail),width));
+    width=Math.round(Math.max(MIN,Math.min(Math.min(MAX,avail),width)));
     frame.style.width=width+'px';
-    ruler.style.width=width+'px';            // ruler spans the frame
-    // map studs: position each bp relative to the CURRENT frame width so a stud sits
-    // exactly at the frame width where it activates
-    track.querySelectorAll('.stud').forEach(s=>{
-      const bp=+s.dataset.bp;
-      s.style.left=Math.min(100,(bp/width*100))+'%';
-      s.classList.toggle('active', width>=bp);
-    });
+    ruler.style.width=width+'px';
+    // studs keep FIXED positions on the MIN..MAX scale (set in buildStuds) so they have
+    // room and never pile at the edge — we only toggle their active state.
+    track.querySelectorAll('.stud').forEach(s=>{ s.classList.toggle('active', width>=+s.dataset.bp); });
     wpill.textContent=width+'px';
   }
   buildStuds(); render();

@@ -10,7 +10,7 @@ useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b9 · 25 Jun · detach handle always-visible (touch) · collapse motion replays on style switch'
+const BUILD = 'b10 · 25 Jun · overlay-drawer expand · nested unpack · breakpoint dots + rounded width'
 
 // Structural match for crouton-layout's ComposePiece (its composables subpath isn't
 // exposed for type imports; the canvas accepts any structurally-compatible piece).
@@ -37,14 +37,8 @@ const pieces = ref<ComposePiece[]>(seed())
 
 const collapseStyle = ref<LayoutCollapseStyle>('iris-portal')
 const simWidth = ref(880)
-// Panes the user has clicked to re-open (overrides the breakpoint's collapsed set until
-// the width changes). Without this, clicking a collapsed handle did nothing.
-const expandedOverride = ref<Set<string>>(new Set())
-watch(simWidth, () => { expandedOverride.value = new Set() })
-function onExpand(blockId: string) {
-  expandedOverride.value = new Set([...expandedOverride.value, blockId])
-}
-const phoneCollapsed = computed(() => ['demo-a'].filter(id => !expandedOverride.value.has(id)))
+// Clicking a collapsed pane is now handled inside the renderer (it slides out as an
+// overlay drawer), so the page just declares the breakpoints.
 const respTree = computed<LayoutTree>(() => ({
   renderer: 'panes',
   root: {
@@ -55,7 +49,7 @@ const respTree = computed<LayoutTree>(() => ({
     ],
   },
   breakpoints: [
-    { minWidth: 0, label: 'Phone', collapsed: phoneCollapsed.value, collapseStyle: collapseStyle.value },
+    { minWidth: 0, label: 'Phone', collapsed: ['demo-a'], collapseStyle: collapseStyle.value },
     { minWidth: 640, label: 'Wide', collapsed: [] },
   ],
 }))
@@ -137,7 +131,7 @@ const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-powe
           >{{ s }}</UButton>
         </div>
       </div>
-      <p class="mb-3 text-sm text-muted">Drag the width below 640px → the left pane collapses with the chosen motion and the other reflows in. <strong>Click the collapsed handle to re-open it</strong> (moving the width slider resets).</p>
+      <p class="mb-3 text-sm text-muted">Drag the width below 640px → the left pane collapses with the chosen motion. <strong>Click the collapsed handle</strong> → it slides out as an overlay; ✕ or tap outside to close.</p>
       <ClientOnly>
         <div
           class="mx-auto h-[460px] overflow-hidden rounded-lg border border-default transition-all"
@@ -146,7 +140,6 @@ const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-powe
           <CroutonLayoutResponsiveRenderer
             :tree="respTree"
             :width="simWidth"
-            @expand="onExpand"
           />
         </div>
       </ClientOnly>
