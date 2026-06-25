@@ -109,14 +109,18 @@ org): `github.com/FriendlyInternet/nuxt-crouton` → **Settings** tab → left s
 That page shows the exact download URL + a **short-lived registration token** — copy both
 (the token expires in ~1h). The commands below mirror what that page generates.
 
-🖥️ **MINI (terminal):**
+🖥️ **MINI (terminal).** Paste these **without** the `# …` notes if your zsh has interactive
+comments off (you'll see `command not found: #` otherwise — or run `setopt
+interactive_comments` once). Note the `-o actions-runner.tar.gz` downloads to a **fixed
+local name** regardless of which version URL you paste, so the `tar` line always matches:
 
 ```bash
 cd ~/actions-runner
-# Download the macOS arm64 runner (use the version/URL GitHub's page shows you):
-curl -o actions-runner-osx-arm64.tar.gz -L \
+# Use the download URL GitHub's runners page shows you; the -o name stays fixed:
+curl -L -o actions-runner.tar.gz \
   https://github.com/actions/runner/releases/download/v2.XXX.X/actions-runner-osx-arm64-2.XXX.X.tar.gz
-tar xzf actions-runner-osx-arm64.tar.gz
+tar xzf actions-runner.tar.gz
+ls   # you should now see config.sh, svc.sh, run.sh
 ```
 
 ### 1b. Configure with the `mac-mini` label
@@ -225,8 +229,12 @@ runtime; nothing is stored on the box. So the secrets the agent/deploy jobs need
 | `PI_PROVIDER_KEY` | the pi.dev variant (`a11y-daily-pidev.yml`) — model-provider key |
 | `CLOUDFLARE_ACCOUNT_ID` | `wrangler deploy` (Workers/D1/KV provisioning) |
 | `CLOUDFLARE_API_TOKEN` | `wrangler deploy` (account Workers/D1/KV/R2 + zone routes/DNS) |
-| `HARNESS_APP_ID` / `HARNESS_APP_PRIVATE_KEY` | `actions/create-github-app-token` — the App-token push path so pushes re-trigger CI |
-| `PROJECTS_TOKEN` | cross-repo / project-board automation in the agent flows |
+| `HARNESS_APP_ID` / `HARNESS_APP_PRIVATE_KEY` | `actions/create-github-app-token` — the App-token push path so pushes re-trigger CI, **and** project-board / cross-repo automation (mints a short-lived installation token at runtime) |
+
+> **Not `PROJECTS_TOKEN`.** #654's body listed it, but it's **retired** — the HARNESS App
+> above replaced that human PAT (see the comments in `project-status.yml` /
+> `comment-dispatch.yml`). No workflow reads `secrets.PROJECTS_TOKEN` anymore; don't
+> re-add it.
 
 The **only** on-box secret in this whole runbook is the watchdog's optional `GH_TOKEN` /
 `ALERT_WEBHOOK` (§4) — and those live in a gitignored `~/.runner-watchdog.env`, never in a
