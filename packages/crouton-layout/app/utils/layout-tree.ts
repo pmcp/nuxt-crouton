@@ -15,6 +15,7 @@
  * allowlist. Pure (no Nuxt runtime) so it's unit-testable.
  */
 import type { LayoutBreakpoint, LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import { isLayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
 
 /** Hard recursion cap — a hostile/looping tree can't blow the stack. */
 const MAX_DEPTH = 12
@@ -109,7 +110,9 @@ function sanitizeBreakpoints(input: unknown, depth: number): LayoutBreakpoint[] 
     if (collapsed) bp.collapsed = collapsed
     const variants = stringRecord(raw.variants)
     if (variants) bp.variants = variants
-    if (typeof raw.collapseStyle === 'string' && raw.collapseStyle) bp.collapseStyle = raw.collapseStyle
+    // WS6 #875: only a known LayoutCollapseStyle survives; an unknown value is
+    // dropped so the breakpoint falls back to DEFAULT_COLLAPSE_STYLE.
+    if (isLayoutCollapseStyle(raw.collapseStyle)) bp.collapseStyle = raw.collapseStyle
     out.push(bp)
   }
   return out.length ? out : undefined

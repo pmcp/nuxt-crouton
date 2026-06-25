@@ -25,7 +25,8 @@
  *
  * Pure (no Vue, no DOM) so the precedence is unit-testable without a browser.
  */
-import type { LayoutBreakpoint, LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutBreakpoint, LayoutCollapseStyle, LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import { DEFAULT_COLLAPSE_STYLE, isLayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
 
 /** The effective layout view at one container width — what the renderer draws. */
 export interface ResolvedLayout {
@@ -35,8 +36,12 @@ export interface ResolvedLayout {
   collapsed: string[]
   /** Per-block widget variant overrides (`blockId` → variant) at this width. */
   variants: Record<string, string>
-  /** Resolved collapse-style (WS6, #875) for collapsed panes, if any breakpoint set one. */
-  collapseStyle?: string
+  /**
+   * Resolved collapse motion (WS6, #875) for collapsed panes, if any active breakpoint
+   * authored one. Stays faithful to what was authored (undefined when none) — consumers
+   * call `normalizeCollapseStyle` to fold absent → `DEFAULT_COLLAPSE_STYLE`.
+   */
+  collapseStyle?: LayoutCollapseStyle
   /** The winning (largest active) checkpoint's `minWidth`, or null when on the base. */
   activeBreakpoint: number | null
 }
@@ -44,6 +49,28 @@ export interface ResolvedLayout {
 /** Container width is the only axis; clamp junk (negative / NaN) to 0 → base. */
 function clampWidth(width: number): number {
   return Number.isFinite(width) && width > 0 ? width : 0
+}
+
+/**
+ * Fold a resolved/authored collapse-style value into a known `LayoutCollapseStyle`
+ * (WS6, #875): a recognised style passes through; absent or unknown ⇒
+ * `DEFAULT_COLLAPSE_STYLE` (`gutter-tabs`). The renderer always has a concrete motion.
+ */
+export function normalizeCollapseStyle(value: string | undefined): LayoutCollapseStyle {
+  return isLayoutCollapseStyle(value) ? value : DEFAULT_COLLAPSE_STYLE
+}
+
+/**
+ * Is every leaf under `node` in the collapsed set? Used by the in-place renderer to
+ * decide whether a splitter panel should collapse and hand its space back to siblings:
+ * a `split` only collapses when *all* its children are collapsed, so a half-collapsed
+ * split keeps its slot. Recurses through nested sub-layouts. Empty set ⇒ false.
+ */
+export function isSubtreeCollapsed(node: LayoutNode, collapsedIds: Set<string>): boolean {
+  if (collapsedIds.size === 0) return false
+  if (node.type === 'leaf') return collapsedIds.has(node.blockId)
+  if (node.type === 'nested') return isSubtreeCollapsed(node.layout.root, collapsedIds)
+  return node.children.every(c => isSubtreeCollapsed(c, collapsedIds))
 }
 
 /**
@@ -188,6 +215,16 @@ export function setVariant(tree: LayoutTree, minWidth: number, blockId: string, 
   if (variant) current[blockId] = variant
   else delete current[blockId]
   return patchBreakpoint(tree, minWidth, { variants: current })
+}
+
+/**
+ * Set the collapse motion at a breakpoint (WS6, #875), or clear it (empty / unknown
+ * value) so the breakpoint falls back to `DEFAULT_COLLAPSE_STYLE`. Upserts the
+ * checkpoint. The chosen style applies to every pane collapsed at that breakpoint.
+ */
+export function setCollapseStyle(tree: LayoutTree, minWidth: number, style: string): LayoutTree {
+  const collapseStyle = isLayoutCollapseStyle(style) ? style : undefined
+  return patchBreakpoint(tree, minWidth, { collapseStyle })
 }
 
 /** List the blocks placed in a layout root (for the authoring controls). */

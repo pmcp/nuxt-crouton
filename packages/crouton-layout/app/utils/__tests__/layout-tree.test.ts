@@ -194,6 +194,23 @@ describe('sanitizeLayoutTree — authored breakpoints (WS5 #874)', () => {
     expect(clean && 'breakpoints' in clean).toBe(false)
   })
 
+  it('keeps a known collapseStyle and drops an unknown one (WS6 #875)', () => {
+    const clean = sanitizeLayoutTree({
+      renderer: 'panes',
+      root: { type: 'leaf', blockId: 'list' },
+      breakpoints: [
+        { minWidth: 600, collapsed: ['list'], collapseStyle: 'iris-portal' }, // valid → kept
+        { minWidth: 900, collapsed: ['list'], collapseStyle: 'header-toggle' }, // never promoted → dropped
+        { minWidth: 1200, collapsed: ['list'], collapseStyle: 42 }, // non-string → dropped
+      ],
+    })
+    expect(clean?.breakpoints).toEqual([
+      { minWidth: 600, collapsed: ['list'], collapseStyle: 'iris-portal' },
+      { minWidth: 900, collapsed: ['list'] },
+      { minWidth: 1200, collapsed: ['list'] },
+    ])
+  })
+
   it('validates a breakpoint root override through the node sanitizer', () => {
     const clean = sanitizeLayoutTree({
       renderer: 'panes',

@@ -17,12 +17,14 @@
  * `panelMinSizePct`. Splitter primitives are SSR-safe (no <ClientOnly> needed);
  * the floor falls back to the authored `minSize` until the group has measured.
  */
-import { computed, inject, ref } from 'vue'
+import { computed, inject, nextTick, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
+import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
-import { LAYOUT_VARIANTS_KEY } from '../composables/useCroutonLayoutResponsive'
+import { isSubtreeCollapsed } from '../utils/layout-responsive'
+import { LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{ node: LayoutNode }>()
 
@@ -31,6 +33,20 @@ const props = defineProps<{ node: LayoutNode }>()
 // no overrides. A leaf's variant is merged into its config so the block can read
 // `variant` like any other prop.
 const variants = inject(LAYOUT_VARIANTS_KEY, ref({} as Record<string, string>))
+
+// In-place collapse context (WS6 #875), provided only when an in-place collapse
+// style is active. Absent (the default — plain renderer, editor, gutter-tabs path)
+// → every branch below behaves exactly as before.
+const collapseCtx = inject(LAYOUT_COLLAPSE_KEY, computed(() => null))
+const inPlace = computed(() => {
+  const c = collapseCtx.value
+  return !!c && isInPlaceCollapse(c.style)
+})
+// A leaf renders as a collapse handle (instead of its block) when it's collapsed
+// in place at the current breakpoint.
+const leafCollapsed = computed(() =>
+  props.node.type === 'leaf' && inPlace.value && !!collapseCtx.value?.collapsedSet.has(props.node.blockId),
+)
 
 const emit = defineEmits<{
   /** Bubbled up on resize so the owner can persist sizes into its tree. */
@@ -54,7 +70,7 @@ const safeConfig = computed<Record<string, unknown>>(() => {
 // Live width of THIS split's group → converts each child's px min-width floor
 // to a percentage min-size for its panel (horizontal splits only).
 const groupRef = ref<HTMLElement | null>(null)
-const { width: groupWidth } = useElementSize(groupRef)
+const { width: groupWidth, height: groupHeight } = useElementSize(groupRef)
 const minWidthFor = computed(() => minWidthResolver(blocks.value))
 
 function panelMin(child: LayoutNode): number {
@@ -65,6 +81,42 @@ function panelMin(child: LayoutNode): number {
 function onLayout(sizes: number[]) {
   if (props.node.type === 'split') emit('layoutChange', props.node, sizes)
 }
+
+// --- In-place collapse: hand a collapsed child's space back to its siblings ---
+// A child panel collapses when ITS WHOLE SUBTREE is collapsed (a half-collapsed
+// split keeps its slot). We drive reka-ui's collapsible panels imperatively so the
+// non-collapsed siblings reflow into the freed space without remounting the tree.
+const panelEls = ref<Array<{ collapse?: () => void, expand?: () => void, isCollapsed?: boolean } | null>>([])
+const childCollapsed = computed<boolean[]>(() => {
+  const c = collapseCtx.value
+  if (props.node.type !== 'split' || !inPlace.value || !c) return []
+  return props.node.children.map(child => isSubtreeCollapsed(child, c.collapsedSet))
+})
+// The thin resting size a collapsed panel shrinks to (handle ≈ 46px → % of the
+// group along its split axis), clamped so it never eats the whole group.
+const collapsedPct = computed(() => {
+  if (props.node.type !== 'split') return 0
+  const basis = props.node.direction === 'horizontal' ? groupWidth.value : groupHeight.value
+  if (!basis) return 6
+  return Math.min(40, Math.max(2, (46 / basis) * 100))
+})
+
+watch(
+  () => childCollapsed.value.join(','),
+  () => {
+    if (props.node.type !== 'split' || !inPlace.value) return
+    nextTick(() => {
+      childCollapsed.value.forEach((want, i) => {
+        const p = panelEls.value[i]
+        if (!p) return
+        const is = Boolean(p.isCollapsed)
+        if (want && !is) p.collapse?.()
+        else if (!want && is) p.expand?.()
+      })
+    })
+  },
+  { flush: 'post', immediate: true },
+)
 </script>
 
 <template>
@@ -75,9 +127,17 @@ function onLayout(sizes: number[]) {
     v-if="node.type === 'leaf'"
     class="croutonpane h-full w-full"
   >
+    <!-- Collapsed in place (WS6 #875): the block becomes its style's resting handle,
+         in its own pane slot, click-to-expand. -->
+    <CroutonLayoutCollapseHandle
+      v-if="leafCollapsed && collapseCtx"
+      :collapse-style="collapseCtx.style"
+      :block-id="node.blockId"
+      @expand="collapseCtx.expand(node.blockId)"
+    />
     <component
       :is="componentName"
-      v-if="componentName"
+      v-else-if="componentName"
       v-bind="safeConfig"
       class="h-full w-full overflow-auto"
     />
@@ -116,8 +176,11 @@ function onLayout(sizes: number[]) {
         class="bg-border hover:bg-primary transition-colors data-[orientation=horizontal]:w-px data-[orientation=vertical]:h-px"
       />
       <SplitterPanel
-        :default-size="child.defaultSize ?? (100 / node.children.length)"
-        :min-size="panelMin(child)"
+        :ref="(el: any) => { panelEls[i] = el }"
+        :default-size="inPlace && childCollapsed[i] ? collapsedPct : (child.defaultSize ?? (100 / node.children.length))"
+        :min-size="inPlace && childCollapsed[i] ? collapsedPct : panelMin(child)"
+        :collapsible="inPlace || undefined"
+        :collapsed-size="inPlace ? collapsedPct : undefined"
         class="overflow-hidden"
       >
         <CroutonLayoutRenderer
