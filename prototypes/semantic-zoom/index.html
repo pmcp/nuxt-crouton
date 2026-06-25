@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Semantic Zoom · one surface, four levels</title>
+<style>
+  :root{
+    --bg:#070a10; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d; --edge2:#2b3a55;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73; --gold:#ffd34d; --violet:#9d7bff; --blue:#7fb4ff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg)}
+  body{color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .scanlines{position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.04;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  /* breadcrumb + zoom-out */
+  .bar{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:80;display:flex;gap:8px;align-items:center;
+    background:#0d1320cc;border:1px solid var(--edge);border-radius:999px;padding:7px 10px 7px 14px;backdrop-filter:blur(8px);font-size:13px}
+  .crumb{cursor:pointer;color:var(--dim);transition:.15s;white-space:nowrap}
+  .crumb:hover{color:var(--ink)} .crumb.on{color:var(--ink);font-weight:600}
+  .sep{color:#3a4a66}
+  .zout{margin-left:6px;border:1px solid var(--edge2);background:#16203a;color:var(--ink);border-radius:999px;width:26px;height:26px;display:grid;place-items:center;cursor:pointer;font-size:13px}
+  .zout:hover{border-color:var(--gold);color:var(--gold)}
+  .hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:var(--dim);font-size:12px;z-index:80;pointer-events:none}
+  .hint b{color:var(--ink)}
+
+  .layer{position:fixed;inset:0;will-change:transform,opacity;overflow:hidden;display:grid;place-items:center}
+  .badge{position:absolute;top:18px;left:18px;z-index:5;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+    background:#0d1320cc;border:1px solid var(--edge);border-radius:999px;padding:7px 14px;display:flex;gap:9px;align-items:center}
+  .badge b{color:var(--ink);letter-spacing:.04em}
+  .badge .d{width:7px;height:7px;border-radius:50%}
+
+  .stage{position:relative;width:min(92vw,1080px);height:min(78vh,640px)}
+  .edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .edges line{stroke:#2c3e5e;stroke-width:.4;stroke-dasharray:1.4 1.4}
+  .edges line.hot{stroke:var(--accent);opacity:.5}
+
+  /* a generic node (page or app) */
+  .node{position:absolute;transform:translate(-50%,-50%);width:170px;border:1.5px solid var(--edge2);border-radius:14px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:0 16px 36px #0009;cursor:zoom-in;transition:transform .18s,border-color .18s,box-shadow .18s}
+  .node:hover{transform:translate(-50%,-50%) translateY(-3px);border-color:var(--accent);box-shadow:0 20px 44px #000b,0 0 26px -6px var(--accent)}
+  .node h4{margin:0;padding:9px 11px;font-size:12px;letter-spacing:.04em;display:flex;gap:8px;align-items:center;border-bottom:1px solid #1c2740}
+  .node .ic{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+  .node .zi{margin-left:auto;color:#46577a;font-size:12px}
+  .node .thumb{height:78px;padding:9px;display:grid;gap:5px}
+  .mini{display:flex;gap:5px;height:100%}.mini .col{flex:1;display:flex;flex-direction:column;gap:5px}
+  .mini b{display:block;border-radius:4px;background:#22304a;flex:1}
+  .rows{display:flex;flex-direction:column;gap:5px}.rows i{height:7px;border-radius:4px;background:#26334a}.rows i.s{width:55%}
+  .calm{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.calm i{aspect-ratio:1;border-radius:2px;background:#22304a}.calm i.on{background:var(--accent2)}
+  .barsm{display:flex;align-items:flex-end;gap:3px;height:100%}.barsm i{flex:1;border-radius:2px 2px 0 0;background:var(--accent)}
+
+  /* L2 — app layout (panes) */
+  .frame{width:min(80vw,720px);height:min(64vh,440px);border:1.5px solid var(--edge2);border-radius:16px;background:#0b1018;padding:8px;display:flex;gap:8px;
+    box-shadow:0 26px 64px #000b,0 0 50px -10px #36e0c022}
+  .pane{flex:1;border-radius:11px;padding:11px;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid #243348;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .pane h5{margin:0;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:flex;gap:6px;align-items:center}
+  .pane .ic{width:16px;height:16px;border-radius:5px;display:grid;place-items:center;font-size:10px}
+  .col{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+  .editchip{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:5;cursor:zoom-in;
+    background:#101e2b;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:8px 16px;font-size:12.5px;box-shadow:0 0 22px -6px var(--accent)}
+  .editchip:hover{background:#13283a}
+
+  /* L3 — breakpoints */
+  .ruler{position:absolute;top:84px;left:50%;transform:translateX(-50%);width:min(70vw,560px);height:36px}
+  .ruler .track{position:absolute;left:0;right:0;top:24px;height:4px;border-radius:2px;background:#16203a}
+  .ruler .fill{position:absolute;left:0;top:24px;height:4px;border-radius:2px;background:linear-gradient(90deg,#1c8f7e,var(--accent));width:46%}
+  .ruler .flag{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .ruler .flag.on{color:var(--gold)} .ruler .flag .pin{width:2px;height:18px;background:#33445f;margin:3px auto 0}.ruler .flag.on .pin{background:var(--gold)}
+  .ruler .knob{position:absolute;top:18px;left:46%;transform:translateX(-50%);width:15px;height:15px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);border:2px solid #0b1018}
+  .phone{width:300px;height:min(58vh,420px);border:1.5px solid var(--edge2);border-radius:34px;background:#0b1018;padding:30px 10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 26px 64px #000b}
+  .phone .pane{flex:0 0 auto;height:64px}
+  .phone .grail{position:absolute;right:14px;top:120px;display:flex;flex-direction:column;gap:6px}
+  .phone .tab{width:30px;writing-mode:vertical-rl;text-orientation:mixed;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border:1px solid #283a55;border-left:3px solid var(--blue);border-radius:8px;padding:9px 0;text-align:center}
+</style>
+</head>
+<body>
+  <div class="bar" id="bar"></div>
+  <div class="scanlines"></div>
+
+  <!-- L0 · SITE -->
+  <div class="layer" id="l0">
+    <div class="badge"><span class="d" style="background:var(--violet)"></span><b id="l0t">friendlyinter.net</b> · site</div>
+    <div class="stage">
+      <svg class="edges" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line class="hot" x1="26" y1="50" x2="58" y2="24"/><line class="hot" x1="26" y1="50" x2="62" y2="52"/>
+        <line class="hot" x1="26" y1="50" x2="56" y2="80"/><line x1="62" y1="52" x2="86" y2="30"/><line x1="62" y1="52" x2="86" y2="74"/>
+      </svg>
+      <div class="node" style="left:26%;top:50%" data-next="1" data-label="Home"><h4><span class="ic" style="background:#3a2b4f;color:var(--violet)">⌂</span>Home<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i></div><div class="mini"><div class="col"><b></b></div><div class="col"><b></b><b></b></div></div></div></div>
+      <div class="node" style="left:58%;top:24%" data-next="1" data-label="Bookings"><h4><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings<span class="zi">⤢</span></h4><div class="thumb"><div class="mini"><div class="col"><b></b><b></b></div><div class="col"><b></b></div></div></div></div>
+      <div class="node" style="left:62%;top:52%" data-next="1" data-label="Menu"><h4><span class="ic" style="background:#4a3c1c;color:var(--gold)">▤</span>Menu<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i><i></i></div></div></div>
+      <div class="node" style="left:56%;top:80%" data-next="1" data-label="Events"><h4><span class="ic" style="background:#4a2230;color:var(--accent2)">✶</span>Events<span class="zi">⤢</span></h4><div class="thumb"><div class="calm">${''}</div></div></div>
+      <div class="node" style="left:86%;top:30%" data-next="1" data-label="About"><h4><span class="ic" style="background:#24344f;color:var(--blue)">❖</span>About<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i></div></div></div>
+      <div class="node" style="left:86%;top:74%" data-next="1" data-label="Contact"><h4><span class="ic" style="background:#24344f;color:var(--blue)">✎</span>Contact<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i></div></div></div>
+    </div>
+  </div>
+
+  <!-- L1 · PAGE CANVAS (apps wired) -->
+  <div class="layer" id="l1" style="display:none">
+    <div class="badge"><span class="d" style="background:var(--accent)"></span>page · <b id="l1t">Bookings</b></div>
+    <div class="stage">
+      <svg class="edges" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line class="hot" x1="24" y1="34" x2="54" y2="30"/><line class="hot" x1="54" y1="30" x2="52" y2="68"/>
+        <line x1="24" y1="34" x2="22" y2="72"/><line x1="54" y1="30" x2="82" y2="40"/>
+      </svg>
+      <div class="node" style="left:24%;top:34%" data-next="2" data-label="Calendar"><h4><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar<span class="zi">⤢</span></h4><div class="thumb"><div class="calm" id="cm"></div></div></div>
+      <div class="node" style="left:54%;top:30%" data-next="2" data-label="Bookings"><h4><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i><i></i><i class="s"></i></div></div></div>
+      <div class="node" style="left:22%;top:72%" data-next="2" data-label="New Booking"><h4><span class="ic" style="background:#3a2b4f;color:var(--violet)">✎</span>New Booking<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i></i><i class="s"></i></div></div></div>
+      <div class="node" style="left:52%;top:68%" data-next="2" data-label="Revenue"><h4><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue<span class="zi">⤢</span></h4><div class="thumb"><div class="barsm"><i style="height:50%"></i><i style="height:80%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i></div></div></div>
+      <div class="node" style="left:82%;top:40%" data-next="2" data-label="Activity"><h4><span class="ic" style="background:#24344f;color:var(--blue)">▦</span>Activity<span class="zi">⤢</span></h4><div class="thumb"><div class="barsm"><i style="height:40%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:85%"></i></div></div></div>
+    </div>
+  </div>
+
+  <!-- L2 · APP LAYOUT (panes) -->
+  <div class="layer" id="l2" style="display:none">
+    <div class="badge"><span class="d" style="background:var(--gold)"></span>app · <b id="l2t">Calendar</b> · layout</div>
+    <div class="frame">
+      <div class="pane" style="flex:1.3"><h5><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar</h5><div class="calm" id="cm2" style="flex:1"></div></div>
+      <div class="col">
+        <div class="pane"><h5><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings</h5><div class="rows"><i></i><i class="s"></i><i></i></div></div>
+        <div class="pane"><h5><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue</h5><div class="barsm" style="height:42px"><i style="height:50%"></i><i style="height:80%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i></div></div>
+      </div>
+    </div>
+    <div class="editchip" data-next="3" data-label="Responsive">⤢ edit responsiveness</div>
+  </div>
+
+  <!-- L3 · BREAKPOINTS -->
+  <div class="layer" id="l3" style="display:none">
+    <div class="badge"><span class="d" style="background:var(--blue)"></span>layout · <b>responsiveness</b></div>
+    <div class="ruler"><div class="track"></div><div class="fill"></div>
+      <div class="flag" style="left:8%">base<div class="pin"></div></div>
+      <div class="flag on" style="left:46%">560px<div class="pin"></div></div>
+      <div class="flag" style="left:84%">880px<div class="pin"></div></div>
+      <div class="knob"></div>
+    </div>
+    <div class="phone">
+      <div class="pane"><h5><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar</h5><div class="calm" id="cm3"></div></div>
+      <div class="pane"><h5><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings</h5><div class="rows"><i></i><i class="s"></i></div></div>
+      <div class="pane"><h5><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue</h5><div class="barsm" style="height:30px"><i style="height:60%"></i><i style="height:90%"></i><i style="height:45%"></i></div></div>
+      <div class="grail"><div class="tab">Activity</div></div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">click a <b>node</b> to zoom in · <b>Esc</b> / scroll up / a breadcrumb to zoom out</div>
+
+<script>
+  const LV=['l0','l1','l2','l3'].map(id=>document.getElementById(id));
+  const TITLE={1:'l1t',2:'l2t'}; // levels whose header shows the dived label
+  const ROOT=['friendlyinter.net','','','']; // crumb 0 fixed label
+  const calmFill=el=>{ if(el) el.innerHTML=Array.from({length:21},(_,i)=>`<i class="${[3,9,10,16].includes(i)?'on':''}"></i>`).join(''); };
+  ['cm','cm2','cm3'].forEach(id=>calmFill(document.getElementById(id)));
+  document.querySelectorAll('#l0 .calm').forEach(calmFill);
+
+  let cur=0; const rectStack=[]; const labels=['Site'];
+  const vw=()=>innerWidth, vh=()=>innerHeight;
+  const DUR=560;
+
+  function crumbs(){
+    const names=['Site',...labels.slice(1)];
+    const bar=document.getElementById('bar');
+    bar.innerHTML = names.map((n,i)=>`<span class="crumb ${i===cur?'on':''}" data-lvl="${i}">${i===0?'◰ '+ROOT[0]:n}</span>`).join('<span class="sep">›</span>')
+      + (cur>0?'<span class="zout" id="zo" title="zoom out">⤡</span>':'');
+    bar.querySelectorAll('.crumb').forEach(c=>c.onclick=()=>{ const t=+c.dataset.lvl; while(cur>t) zoomOut(); });
+    const zo=document.getElementById('zo'); if(zo) zo.onclick=()=>zoomOut();
+  }
+
+  function dive(node){
+    const next=+node.dataset.next, label=node.dataset.label;
+    const r=node.getBoundingClientRect();
+    const N=LV[cur], M=LV[next];
+    const s=Math.max(vw()/r.width, vh()/r.height)*1.12;
+    N.style.transition=`transform ${DUR}ms cubic-bezier(.5,0,.3,1), opacity ${DUR}ms ease`;
+    N.style.transformOrigin='0 0';
+    N.style.transform=`translate(${vw()/2-(r.left+r.width/2)*s}px,${vh()/2-(r.top+r.height/2)*s}px) scale(${s})`;
+    N.style.opacity='0';
+    if(TITLE[next]) document.getElementById(TITLE[next]).textContent=label;
+    M.style.display='grid'; M.style.transition='none'; M.style.transformOrigin='0 0';
+    M.style.transform=`translate(${r.left}px,${r.top}px) scale(${r.width/vw()},${r.height/vh()})`;
+    M.style.opacity='0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      M.style.transition=`transform ${DUR}ms cubic-bezier(.5,0,.3,1), opacity ${DUR}ms ease`;
+      M.style.transform='none'; M.style.opacity='1';
+    }));
+    setTimeout(()=>{ N.style.display='none'; }, DUR);
+    rectStack.push(r); labels.push(label); cur=next; crumbs();
+  }
+
+  function zoomOut(){
+    if(cur===0) return;
+    const r=rectStack.pop(); const N=LV[cur], P=LV[cur-1];
+    const s=Math.max(vw()/r.width, vh()/r.height)*1.12;
+    N.style.transition=`transform ${DUR}ms cubic-bezier(.5,0,.3,1), opacity ${DUR}ms ease`;
+    N.style.transformOrigin='0 0';
+    N.style.transform=`translate(${r.left}px,${r.top}px) scale(${r.width/vw()},${r.height/vh()})`;
+    N.style.opacity='0';
+    P.style.display='grid'; P.style.transition='none'; P.style.transformOrigin='0 0';
+    P.style.transform=`translate(${vw()/2-(r.left+r.width/2)*s}px,${vh()/2-(r.top+r.height/2)*s}px) scale(${s})`;
+    P.style.opacity='0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      P.style.transition=`transform ${DUR}ms cubic-bezier(.5,0,.3,1), opacity ${DUR}ms ease`;
+      P.style.transform='none'; P.style.opacity='1';
+    }));
+    setTimeout(()=>{ N.style.display='none'; N.style.transform='none'; N.style.opacity='1'; }, DUR);
+    labels.pop(); cur--; crumbs();
+  }
+
+  addEventListener('click', e=>{ const n=e.target.closest('[data-next]'); if(n && !inFlight()) dive(n); });
+  addEventListener('keydown', e=>{ if(e.key==='Escape') zoomOut(); });
+  let lastWheel=0;
+  addEventListener('wheel', e=>{ if(e.deltaY<-30 && Date.now()-lastWheel>700){ lastWheel=Date.now(); zoomOut(); } }, {passive:true});
+  let _flight=0; function inFlight(){ if(Date.now()<_flight) return true; _flight=Date.now()+DUR+40; return false; }
+
+  // screenshot mode: ?level=0..3 shows a level statically with a representative breadcrumb
+  const q=new URLSearchParams(location.search), lp=q.get('level');
+  if(lp!==null){ const L=Math.max(0,Math.min(3,+lp));
+    const path=['Site','Bookings','Calendar','Responsive'];
+    for(let i=0;i<=L;i++){ if(i>0) labels.push(path[i]); }
+    if(L>=1) document.getElementById('l1t').textContent='Bookings';
+    if(L>=2) document.getElementById('l2t').textContent='Calendar';
+    LV.forEach((l,i)=>{ l.style.display=i===L?'grid':'none'; l.style.transform='none'; l.style.opacity='1'; });
+    cur=L;
+  }
+  crumbs();
+</script>
+</body>
+</html>
