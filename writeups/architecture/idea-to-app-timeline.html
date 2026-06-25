@@ -1,0 +1,303 @@
+<!doctype html>
+<!-- Idea → App timeline. Styled to match the epic-digest email (serif, light paper,
+     teal accent, small-caps labels, thin rules, dark-mode aware). Hand-authored. -->
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">
+<title>Idea → App · the timeline</title>
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  body { -webkit-text-size-adjust:100%; }
+  @media only screen and (max-width:600px) {
+    .outer-pad { padding:28px 18px !important; }
+    .doc-title { font-size:28px !important; }
+  }
+  @media (prefers-color-scheme: dark) {
+    .page         { background:#0e0e0d !important; }
+    .ink          { color:#f0efe9 !important; }
+    .sub          { color:#c4c4bd !important; }
+    .mut          { color:#9a958a !important; }
+    .faint        { color:#5a5a55 !important; }
+    .rule         { border-color:#2a2a27 !important; }
+    .rail         { background:#2a2a27 !important; }
+    .node         { background:#0e0e0d !important; border-color:#5a5a55 !important; color:#9a958a !important; }
+    .brand-accent { background:#2dd4bf !important; }
+    .chip-user    { color:#2dd4bf !important; }
+    .chip-skill   { color:#ff8c1f !important; }
+    .chip-ci      { color:#16f6ff !important; }
+    .mono         { color:#c4c4bd !important; }
+    .gate         { color:#ff8c1f !important; }
+  }
+</style>
+</head>
+<body class="page" style="margin:0;padding:0;background:#ffffff;font-family:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif;color:#1a1a1a">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="page" style="background:#ffffff"><tr><td align="center" class="outer-pad" style="padding:44px 22px">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+
+    <!-- masthead -->
+    <tr><td style="padding:0 0 26px">
+      <div class="brand-accent" style="width:44px;height:3px;background:#0F766E;border-radius:2px"></div>
+    </td></tr>
+    <tr><td style="padding:0 0 8px">
+      <div class="ink doc-title" style="font-size:34px;line-height:1.1;color:#1a1a1a">Idea&nbsp;→&nbsp;App</div>
+      <div class="mut" style="font-style:italic;color:#8a8a84;font-size:15px;margin-top:8px">
+        How a feature travels from a sentence to a live URL — and exactly where a
+        <b>command</b>, a <b>skill</b>, or <b>CI</b> steps in along the way.
+      </div>
+    </td></tr>
+
+    <!-- legend -->
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:33.33%;padding-right:8px">
+          <span class="chip-user" style="font-variant:small-caps;letter-spacing:.06em;font-size:13px;font-weight:600;color:#0F766E">👤 you type</span>
+          <div class="faint" style="color:#bdbdb6;font-size:12px;margin-top:2px;font-style:italic">a command</div>
+        </td>
+        <td valign="top" style="width:33.33%;padding:0 8px">
+          <span class="chip-skill" style="font-variant:small-caps;letter-spacing:.06em;font-size:13px;font-weight:600;color:#b45309">🛠 a skill</span>
+          <div class="faint" style="color:#bdbdb6;font-size:12px;margin-top:2px;font-style:italic">fires for you</div>
+        </td>
+        <td valign="top" style="width:33.33%;padding-left:8px">
+          <span class="chip-ci" style="font-variant:small-caps;letter-spacing:.06em;font-size:13px;font-weight:600;color:#0e7490">⚙️ CI runs</span>
+          <div class="faint" style="color:#bdbdb6;font-size:12px;margin-top:2px;font-style:italic">on its own</div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- ════════════ PHASE ROWS ════════════ -->
+    <!-- Each phase is a table row: a left rail with a numbered node, then the body. -->
+
+    <!-- 0 -->
+    <tr><td style="padding:30px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">0</div>
+        </td>
+        <td valign="top" class="rule" style="border-top:0;padding:2px 0 0">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Idea lands</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">No code yet. The issue exists before the code does.</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 github-tasks</span> — opens the <b>epic + sub-issues</b>, labelled by package/app, written as a <i>hypothesis</i>.</div>
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 ecosystem-check</span> <span class="mut" style="color:#8a8a84">(optional)</span> — does Nuxt/UnJS already solve it?</div>
+            <div style="margin:4px 0"><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ decompose-on-issue.yml</span> — fires on <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">issues: opened/labeled</span>.</div>
+          </div>
+          <div class="gate" style="margin-top:12px;font-size:13px;color:#b45309;font-style:italic">⚑ Hard gate — editing files with no issue? Stop and open it first.</div>
+          <div class="mut" style="margin-top:8px;font-size:13.5px;color:#8a8a84">Hand it to agents instead: <span class="chip-user" style="color:#0F766E;font-weight:600">👤 /task-decompose "build X"</span> → orchestrator → decomposer → worker.</div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 1 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:100%;margin:0 auto;min-height:24px"></div></td>
+        <td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">1</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Sign-off gates</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">Agree on the <i>shape</i> before writing code. Each holds on <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#6b6b66">status:blocked</span>.</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 schema-review</span> — data model → field table <span class="mut" style="color:#8a8a84">(#314)</span></div>
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 ui-proposal</span> — a <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">.vue</span>/layout/theme → live preview <span class="mut" style="color:#8a8a84">(#307)</span></div>
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 test-review</span> — logic in <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">packages/*</span> → failing test first <span class="mut" style="color:#8a8a84">(#774)</span></div>
+            <div style="margin:4px 0"><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ resume-on-comment.yml</span> — your reply unblocks the pipeline.</div>
+          </div>
+          <div class="gate" style="margin-top:12px;font-size:13px;color:#b45309;font-style:italic">⚑ Only a comment <b>lgtm</b>/<b>approve</b> resumes it — a 👍 reaction or a label does nothing (#572).</div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 2 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">2</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Build it</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">All local — no CI yet.</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 crouton</span> — schema → Form/List/API/migration, arranged into a default layout.</div>
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 db-migrations</span> — only at the migration step.</div>
+            <div style="margin:4px 0"><span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">pnpm typecheck</span> after <b>every</b> change. Not optional.</div>
+          </div>
+          <div class="gate" style="margin-top:12px;font-size:13px;color:#b45309;font-style:italic">⚑ A hook blocks edits to <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">packages/*</span> without approval. New apps scaffold into <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">pocs/</span>, not <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">apps/</span>.</div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 3 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">3</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Commit</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">The first automated quality pass.</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-user" style="color:#0F766E;font-weight:600">👤 /commit</span> — never raw <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">git commit</span>.</div>
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 sync-docs</span> + <span class="chip-skill" style="color:#b45309;font-weight:600">🛠 i18n-check</span> run first, then granular conventional commits referencing <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">(#NN)</span>.</div>
+          </div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 4 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">4</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">PR opens · CI fans out</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">Most CI lives here. PR body carries <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">Closes #NN</span>.</div>
+          <div style="font-size:14.5px;line-height:1.8;color:#474744">
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ ci.yml</span> — typecheck + lint + test</div>
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ e2e.yml</span> — boot → auth → CRUD on a real app</div>
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ frontend-review.yml</span> — Nuxt UI 4 conventions <span class="mut" style="color:#8a8a84">(on .vue)</span></div>
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ a11y.yml · red-team.yml</span> — accessibility + security probes</div>
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ deploy-pocs.yml</span> — a clickable preview URL <span class="mut" style="color:#8a8a84">(pocs/)</span></div>
+            <div><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ pipeline-pr-status.yml</span> — posts the status note</div>
+          </div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 5 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">5</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">The robot-PR safety net</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">When an agent finishes a task — a change never ships unseen.</div>
+          <div style="font-size:15px;line-height:1.75;color:#474744">
+            <div style="margin:3px 0"><b>1.</b> Robot finishes → opens PR</div>
+            <div style="margin:3px 0"><b>2.</b> Tests run → you always get a status note</div>
+            <div style="margin:3px 0"><b>3a.</b> All green → <span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ automerge-epic-subpr.yml</span> merges it</div>
+            <div style="margin:3px 0"><b>3b.</b> Fails → <span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ fix-ci-on-failure.yml</span> tries a fix … still stuck → tags you</div>
+            <div style="margin:3px 0"><b>4.</b> Breaks after merge → opens a new ticket</div>
+          </div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 6 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">6</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Merge to main = staging</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">Trunk = staging (#347). Landing code previews itself.</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ deploy-app/-apps/-pocs.yml</span> → <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">&lt;app&gt;.pmcp.dev</span></div>
+            <div style="margin:4px 0"><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ cleanup-merged-branches.yml</span> — tidies branches.</div>
+          </div>
+          <div class="gate" style="margin-top:12px;font-size:13px;color:#b45309;font-style:italic">⚑ Structurally can't reach production — a push never sets <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:12px">environment=production</span>.</div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 7 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">7</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Production</div>
+          <div class="mut" style="font-style:italic;color:#8a8a84;font-size:13px;margin:2px 0 12px">Deliberate, human-only. Never a side effect of an agent flow (#318).</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744">
+            <div style="margin:4px 0"><span class="chip-user" style="color:#0F766E;font-weight:600">👤 /deploy-production</span> → <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">&lt;app&gt;.friendlyinter.net</span> via manual dispatch.</div>
+            <div style="margin:4px 0"><span class="mut" style="color:#8a8a84">A POC must be promoted</span> <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">pocs/ → apps/</span> <span class="mut" style="color:#8a8a84">first.</span></div>
+          </div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- 8 -->
+    <tr><td style="padding:0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px;padding-top:10px"><div class="rail" style="width:1px;background:#e7e6e1;height:24px;margin:0 auto"></div></td><td></td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td valign="top" style="width:46px">
+          <div class="node" style="width:30px;height:30px;border-radius:50%;border:1px solid #d8d7d1;background:#fff;color:#8a8a84;text-align:center;line-height:30px;font-size:14px">8</div>
+        </td>
+        <td valign="top">
+          <div class="ink" style="font-variant:small-caps;letter-spacing:.05em;font-size:21px;color:#1a1a1a">Close &amp; learn</div>
+          <div style="font-size:15px;line-height:1.7;color:#474744;margin-top:8px">
+            <div style="margin:4px 0"><span class="chip-skill" style="color:#b45309;font-weight:600">🛠 postmortem</span> — at epic close, mints <span class="mono" style="font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#6b6b66">workflow</span> issues so the loop tightens.</div>
+            <div style="margin:4px 0"><span class="chip-ci" style="color:#0e7490;font-weight:600">⚙️ epic-digest · housekeeping</span> — scheduled digests, no LLM.</div>
+            <div style="margin:4px 0"><span class="mut" style="color:#8a8a84">Ongoing:</span> <span class="chip-skill" style="color:#b45309;font-weight:600">🛠 dependency-sweep · e2e-smoke · db-clone</span></div>
+          </div>
+        </td>
+      </tr></table>
+    </td></tr>
+
+    <!-- one-line model -->
+    <tr><td class="rule" style="padding:30px 0 0;margin-top:10px;border-top:1px solid #e7e6e1"></td></tr>
+    <tr><td style="padding:22px 0 0">
+      <div class="mut" style="font-variant:small-caps;letter-spacing:.05em;color:#8a8a84;font-size:13px;margin:0 0 8px">The whole thing in one breath</div>
+      <div class="sub" style="font-size:15px;line-height:1.85;color:#474744">
+        idea → <b>github-tasks</b> (issue first) → sign-off gates (hold on <i>lgtm</i>) →
+        <b>crouton</b> build + typecheck → <b>/commit</b> → PR → CI fans out → status note →
+        green&nbsp;merges&nbsp;/&nbsp;fail&nbsp;fixes → merge = staging deploy →
+        <b>/deploy-production</b> (humans only) → <b>postmortem</b>.
+      </div>
+      <div class="gate" style="margin-top:16px;font-size:14px;color:#b45309;font-style:italic">
+        Burn in two things: the issue exists <b>before</b> code, and an <b>lgtm/approve comment</b>
+        — not a reaction, not a label — is the only thing that unblocks a held pipeline.
+      </div>
+    </td></tr>
+
+    <!-- footer -->
+    <tr><td class="rule mut" style="padding:24px 0 0;margin-top:30px;border-top:1px solid #e7e6e1;font-style:italic;color:#bdbdb6;font-size:12px">
+      <a href="https://github.com/FriendlyInternet/nuxt-crouton" class="lnk" style="color:#bdbdb6;text-decoration:underline;text-decoration-color:#bdbdb6;text-underline-offset:3px">Crouton</a> ·
+      Companion to <span class="mono" style="font-family:ui-monospace,Menlo,monospace">skills-and-triggers.html</span> &amp; <span class="mono" style="font-family:ui-monospace,Menlo,monospace">agent-flow.html</span>.
+    </td></tr>
+
+  </table>
+</td></tr></table>
+</body></html>
