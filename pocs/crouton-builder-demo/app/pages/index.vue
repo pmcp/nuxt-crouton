@@ -22,15 +22,25 @@ interface ComposePiece {
 
 const tab = ref<'compose' | 'responsive' | 'author'>('compose')
 
+// Seeded in a vertical stack at a small fixed x so they fit even a narrow mobile
+// canvas without overlapping; the canvas clamps anything that would fall off-edge.
 const seed = (): ComposePiece[] => [
-  { id: 'sales', node: { type: 'leaf', blockId: 'demo-a' }, x: 40, y: 40, width: 240, height: 150, label: 'Sales' },
-  { id: 'traffic', node: { type: 'leaf', blockId: 'demo-b' }, x: 360, y: 90, width: 240, height: 150, label: 'Traffic' },
-  { id: 'revenue', node: { type: 'leaf', blockId: 'demo-a' }, x: 200, y: 270, width: 240, height: 150, label: 'Revenue' },
+  { id: 'sales', node: { type: 'leaf', blockId: 'demo-a' }, x: 16, y: 16, width: 240, height: 140, label: 'Sales' },
+  { id: 'traffic', node: { type: 'leaf', blockId: 'demo-b' }, x: 16, y: 168, width: 240, height: 140, label: 'Traffic' },
+  { id: 'revenue', node: { type: 'leaf', blockId: 'demo-a' }, x: 16, y: 320, width: 240, height: 140, label: 'Revenue' },
 ]
 const pieces = ref<ComposePiece[]>(seed())
 
 const collapseStyle = ref<LayoutCollapseStyle>('iris-portal')
 const simWidth = ref(880)
+// Panes the user has clicked to re-open (overrides the breakpoint's collapsed set until
+// the width changes). Without this, clicking a collapsed handle did nothing.
+const expandedOverride = ref<Set<string>>(new Set())
+watch(simWidth, () => { expandedOverride.value = new Set() })
+function onExpand(blockId: string) {
+  expandedOverride.value = new Set([...expandedOverride.value, blockId])
+}
+const phoneCollapsed = computed(() => ['demo-a'].filter(id => !expandedOverride.value.has(id)))
 const respTree = computed<LayoutTree>(() => ({
   renderer: 'panes',
   root: {
@@ -41,7 +51,7 @@ const respTree = computed<LayoutTree>(() => ({
     ],
   },
   breakpoints: [
-    { minWidth: 0, label: 'Phone', collapsed: ['demo-a'], collapseStyle: collapseStyle.value },
+    { minWidth: 0, label: 'Phone', collapsed: phoneCollapsed.value, collapseStyle: collapseStyle.value },
     { minWidth: 640, label: 'Wide', collapsed: [] },
   ],
 }))
@@ -122,7 +132,7 @@ const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-powe
           >{{ s }}</UButton>
         </div>
       </div>
-      <p class="mb-3 text-sm text-muted">Drag the width below 640px → the left pane collapses with the chosen motion and the other reflows in.</p>
+      <p class="mb-3 text-sm text-muted">Drag the width below 640px → the left pane collapses with the chosen motion and the other reflows in. <strong>Click the collapsed handle to re-open it</strong> (moving the width slider resets).</p>
       <ClientOnly>
         <div
           class="mx-auto h-[460px] overflow-hidden rounded-lg border border-default transition-all"
@@ -131,6 +141,7 @@ const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-powe
           <CroutonLayoutResponsiveRenderer
             :tree="respTree"
             :width="simWidth"
+            @expand="onExpand"
           />
         </div>
       </ClientOnly>
