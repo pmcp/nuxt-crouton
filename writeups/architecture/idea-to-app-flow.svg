@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 780" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif">
+  <defs>
+    <marker id="a-8a8a84" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8a8a84"/>
+    </marker>
+    <marker id="a-16a34a" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="a-0891b2" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#0891b2"/>
+    </marker>
+    <marker id="a-ca8a04" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#ca8a04"/>
+    </marker>
+    <marker id="a-c026d3" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#c026d3"/>
+    </marker>
+    <marker id="a-0f766e" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#0f766e"/>
+    </marker></defs>
+  <rect x="0" y="0" width="1280" height="780" fill="#ffffff"/>
+  <text x="40" y="40" font-size="26" font-weight="800" fill="#1a1a1a" font-family="Georgia,serif">Idea → App</text>
+  <text x="40" y="60" font-size="13.5" fill="#8a8a84" font-style="italic">A straight timeline that branches into a loop at every sign-off gate — and only your “lgtm” lets it continue.</text>
+  <path d="M 190 92 L 215 92" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/><path d="M 365 92 L 390 92" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/><path d="M 540 92 L 565 92" fill="none" stroke="#8a8a84" stroke-width="2.5" stroke-dasharray="6 6" marker-end="url(#a-8a8a84)"/><path d="M 715 92 L 740 92" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/><path d="M 890 92 L 915 92" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/><path d="M 1065 92 L 1090 92" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/>
+  <g>
+    <rect x="40" y="61" width="150" height="62" rx="12" fill="#f4f4f1" stroke="#cfcec8" stroke-width="2"/>
+    <text x="115" y="85" text-anchor="middle" font-size="20">💡</text>
+    <text x="115" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#33332e">Idea</text>
+    <text x="115" y="122" text-anchor="middle" font-size="11.5" fill="#33332e" opacity=".85">a sentence</text>
+  </g>
+  <g>
+    <rect x="215" y="61" width="150" height="62" rx="12" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
+    <text x="290" y="85" text-anchor="middle" font-size="20">📋</text>
+    <text x="290" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#9a3412">Issue first</text>
+    <text x="290" y="122" text-anchor="middle" font-size="11.5" fill="#9a3412" opacity=".85">github-tasks</text>
+  </g>
+  <g>
+    <rect x="390" y="61" width="150" height="62" rx="12" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+    <text x="465" y="85" text-anchor="middle" font-size="20">🤝</text>
+    <text x="465" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0b5d56">Sign-off gate</text>
+    <text x="465" y="122" text-anchor="middle" font-size="11.5" fill="#0b5d56" opacity=".85">schema · ui · test</text>
+  </g>
+  <g>
+    <rect x="565" y="61" width="150" height="62" rx="12" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
+    <text x="640" y="85" text-anchor="middle" font-size="20">🔨</text>
+    <text x="640" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#9a3412">Build</text>
+    <text x="640" y="122" text-anchor="middle" font-size="11.5" fill="#9a3412" opacity=".85">crouton + typecheck</text>
+  </g>
+  <g>
+    <rect x="740" y="61" width="150" height="62" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="815" y="85" text-anchor="middle" font-size="20">📝</text>
+    <text x="815" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#15803d">Commit</text>
+    <text x="815" y="122" text-anchor="middle" font-size="11.5" fill="#15803d" opacity=".85">/commit</text>
+  </g>
+  <g>
+    <rect x="915" y="61" width="150" height="62" rx="12" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+    <text x="990" y="85" text-anchor="middle" font-size="20">🔀</text>
+    <text x="990" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0e7490">PR · CI</text>
+    <text x="990" y="122" text-anchor="middle" font-size="11.5" fill="#0e7490" opacity=".85">6 checks fan out</text>
+  </g>
+  <g>
+    <rect x="1090" y="61" width="150" height="62" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="1165" y="85" text-anchor="middle" font-size="20">🚀</text>
+    <text x="1165" y="105" text-anchor="middle" font-size="14.5" font-weight="700" fill="#15803d">Ship</text>
+    <text x="1165" y="122" text-anchor="middle" font-size="11.5" fill="#15803d" opacity=".85">staging → prod</text>
+  </g><text x="552.5" y="78" text-anchor="middle" font-size="11" fill="#8a8a84" font-style="italic">🔒 can't skip</text><path d="M 465 123 L 465 290" fill="none" stroke="#0f766e" stroke-width="2.5"  marker-end="url(#a-0f766e)"/><text x="473" y="206.5" font-size="11.5" fill="#0b5d56" font-style="italic">opens · holds on status:blocked</text><ellipse cx="465" cy="470" rx="132" ry="150" fill="none" stroke="#d9d8d2" stroke-width="2.5" stroke-dasharray="2 9" stroke-linecap="round"/><g transform="translate(558.3,576.1) rotate(311.3)"><path d="M -7,-6 L 7,0 L -7,6 Z" fill="#bdbcb5"/></g><g transform="translate(371.7,576.1) rotate(48.7)"><path d="M -7,-6 L 7,0 L -7,6 Z" fill="#bdbcb5"/></g><g transform="translate(371.7,363.9) rotate(131.3)"><path d="M -7,-6 L 7,0 L -7,6 Z" fill="#bdbcb5"/></g><g transform="translate(558.3,363.9) rotate(228.7)"><path d="M -7,-6 L 7,0 L -7,6 Z" fill="#bdbcb5"/></g>
+  <g>
+    <rect x="381" y="292" width="168" height="56" rx="12" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
+    <text x="465" y="313" text-anchor="middle" font-size="20">🟡</text>
+    <text x="465" y="333" text-anchor="middle" font-size="14.5" font-weight="700" fill="#854d0e">Agent posts</text>
+    <text x="465" y="350" text-anchor="middle" font-size="11.5" fill="#854d0e" opacity=".85">preview · diagram · schema · test</text>
+  </g>
+  <g>
+    <rect x="519" y="442" width="168" height="56" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="603" y="463" text-anchor="middle" font-size="20">🟢</text>
+    <text x="603" y="483" text-anchor="middle" font-size="14.5" font-weight="700" fill="#15803d">You command</text>
+    <text x="603" y="500" text-anchor="middle" font-size="11.5" fill="#15803d" opacity=".85">pin · comment · edit</text>
+  </g>
+  <g>
+    <rect x="381" y="592" width="168" height="56" rx="12" fill="#fae8ff" stroke="#c026d3" stroke-width="2"/>
+    <text x="465" y="613" text-anchor="middle" font-size="20">🟣</text>
+    <text x="465" y="633" text-anchor="middle" font-size="14.5" font-weight="700" fill="#86198f">Auto-comment</text>
+    <text x="465" y="650" text-anchor="middle" font-size="11.5" fill="#86198f" opacity=".85">🎯 crouton[bot] → PR</text>
+  </g>
+  <g>
+    <rect x="243" y="442" width="168" height="56" rx="12" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+    <text x="327" y="463" text-anchor="middle" font-size="20">🔵</text>
+    <text x="327" y="483" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0e7490">Agent acts</text>
+    <text x="327" y="500" text-anchor="middle" font-size="11.5" fill="#0e7490" opacity=".85">edits the file · re-posts</text>
+  </g><text x="465" y="466" text-anchor="middle" font-size="14" font-weight="700" fill="#33332e">↻ repeats</text><text x="465" y="485" text-anchor="middle" font-size="12.5" fill="#8a8a84" font-style="italic">until you reply lgtm</text><path d="M 603 442 Q 643 212 562.5 129" fill="none" stroke="#16a34a" stroke-width="3.5"  marker-end="url(#a-16a34a)"/><text x="621" y="242" font-size="12.5" font-weight="700" fill="#15803d">✅ lgtm → continue</text><path d="M 990 123 L 990 275" fill="none" stroke="#8a8a84" stroke-width="2.5"  marker-end="url(#a-8a8a84)"/>
+  <g>
+    <rect x="874" y="275" width="232" height="50" rx="12" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+    <text x="990" y="293" text-anchor="middle" font-size="20">⚙️</text>
+    <text x="990" y="313" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0e7490">ci · e2e · a11y · red-team</text>
+    
+  </g><path d="M 1106 290 C 1176 260, 1176 340, 1106 310" fill="none" stroke="#0891b2" stroke-width="2.5" marker-end="url(#a-0891b2)"/><text x="1130" y="274" font-size="11.5" fill="#0e7490" font-style="italic">⟲ autofix</text><text x="1136" y="288" font-size="11.5" fill="#0e7490" font-style="italic">≤ 3</text><text x="990" y="345" text-anchor="middle" font-size="11.5" fill="#8a8a84" font-style="italic">all green → automerge</text>
+  <g><circle cx="46" cy="750" r="6" fill="#ca8a04"/><text x="58" y="754" font-size="12.5" fill="#474744">agent posts</text></g><g><circle cx="169.2" cy="750" r="6" fill="#16a34a"/><text x="181.2" y="754" font-size="12.5" fill="#474744">you command</text></g><g><circle cx="292.4" cy="750" r="6" fill="#ea580c"/><text x="304.4" y="754" font-size="12.5" fill="#474744">a skill</text></g><g><circle cx="386.79999999999995" cy="750" r="6" fill="#0891b2"/><text x="398.79999999999995" y="754" font-size="12.5" fill="#474744">ci runs</text></g><g><circle cx="481.19999999999993" cy="750" r="6" fill="#c026d3"/><text x="493.19999999999993" y="754" font-size="12.5" fill="#474744">auto-comment</text></g><g><circle cx="611.5999999999999" cy="750" r="6" fill="#0f766e"/><text x="623.5999999999999" y="754" font-size="12.5" fill="#474744">human gate</text></g>
+</svg>
