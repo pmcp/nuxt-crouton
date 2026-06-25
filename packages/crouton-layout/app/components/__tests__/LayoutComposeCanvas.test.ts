@@ -20,7 +20,7 @@ const piece = (id: string, x: number, y: number): ComposePiece => ({
 function mountCanvas(pieces: ComposePiece[]) {
   return mount(LayoutComposeCanvas, {
     props: { modelValue: pieces, 'onUpdate:modelValue': () => {} },
-    global: { stubs: { CroutonLayoutRenderer: true, UIcon: true } },
+    global: { stubs: { CroutonLayoutRenderer: true, CroutonLayoutComposePane: true, UIcon: true } },
   })
 }
 

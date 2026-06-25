@@ -13,6 +13,7 @@
 import { computed, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { useCroutonComposeGestures, type ComposePiece } from '../composables/useCroutonComposeGestures'
+import { detachNode, removeNode, type NodePath } from '../utils/layout-edit'
 
 const props = defineProps<{ modelValue: ComposePiece[] }>()
 const emit = defineEmits<{ 'update:modelValue': [ComposePiece[]] }>()
@@ -124,6 +125,31 @@ function onPointerLeave() {
   cancel()
 }
 
+// --- per-leaf actions from CroutonLayoutComposePane (detach / remove) -------
+let detachSeq = 0
+function commit(next: ComposePiece[]) {
+  pieces.value = next
+  emit('update:modelValue', next)
+}
+
+/** Pull a leaf back out of a group into its own free piece next to the group. */
+function onDetach(piece: ComposePiece, path: NodePath) {
+  const { root, detached } = detachNode(piece.node, path)
+  if (!detached || !root) return
+  const f = fit(Math.min(piece.width, 260), Math.min(piece.height, 180), piece.x + 28, piece.y + 28)
+  const freed: ComposePiece = { id: `detached-${++detachSeq}-${piece.id}`, node: detached, ...f }
+  commit([...pieces.value.map(p => (p.id === piece.id ? { ...p, node: root } : p)), freed])
+}
+
+/** Remove a leaf (or the whole piece when path is empty). */
+function onRemove(piece: ComposePiece, path: NodePath) {
+  if (path.length === 0) return commit(pieces.value.filter(p => p.id !== piece.id))
+  const root = removeNode(piece.node, path)
+  commit(root
+    ? pieces.value.map(p => (p.id === piece.id ? { ...p, node: root } : p))
+    : pieces.value.filter(p => p.id !== piece.id))
+}
+
 const isLoose = (piece: ComposePiece) => piece.node.type === 'leaf'
 
 // The guide line drawn on the target piece's edge while snapping.
@@ -189,7 +215,11 @@ const nestRing = computed(() => {
         {{ piece.label }}
       </div>
       <div class="h-full w-full overflow-hidden rounded-xl">
-        <CroutonLayoutRenderer :node="piece.node" />
+        <CroutonLayoutComposePane
+          :node="piece.node"
+          @detach="(p: NodePath) => onDetach(piece, p)"
+          @remove="(p: NodePath) => onRemove(piece, p)"
+        />
       </div>
 
       <!-- Resize handle (bottom-right corner). Big touch target; its own gesture. -->
