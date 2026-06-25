@@ -155,3 +155,59 @@ describe('sanitizeLayoutTree — recursive nested layouts (WS2 #871)', () => {
     expect(sanitizeLayoutTree(layout)).toBeNull()
   })
 })
+
+describe('sanitizeLayoutTree — authored breakpoints (WS5 #874)', () => {
+  it('keeps well-formed breakpoints with only known fields', () => {
+    const clean = sanitizeLayoutTree({
+      renderer: 'panes',
+      root: { type: 'leaf', blockId: 'list' },
+      breakpoints: [
+        { minWidth: 768, label: 'Tablet', collapsed: ['list'], variants: { list: 'cards' }, collapseStyle: 'gutter-tabs' },
+      ],
+    })
+    expect(clean?.breakpoints).toEqual([
+      { minWidth: 768, label: 'Tablet', collapsed: ['list'], variants: { list: 'cards' }, collapseStyle: 'gutter-tabs' },
+    ])
+  })
+
+  it('drops a breakpoint without a finite non-negative minWidth, and strips stray keys', () => {
+    const clean = sanitizeLayoutTree({
+      renderer: 'panes',
+      root: { type: 'leaf', blockId: 'list' },
+      breakpoints: [
+        { minWidth: -5, collapsed: ['list'] },
+        { minWidth: 'wide' },
+        { minWidth: 600, evil: 'x', variants: { a: 'cards', b: 2 } },
+      ],
+    })
+    // Only the 600 survives; its non-string variant value and stray key are dropped.
+    expect(clean?.breakpoints).toEqual([{ minWidth: 600, variants: { a: 'cards' } }])
+  })
+
+  it('omits the field entirely when no breakpoint is usable', () => {
+    const clean = sanitizeLayoutTree({
+      renderer: 'panes',
+      root: { type: 'leaf', blockId: 'list' },
+      breakpoints: [{ minWidth: -1 }, 'nope'],
+    })
+    expect(clean).toEqual({ renderer: 'panes', root: { type: 'leaf', blockId: 'list' } })
+    expect(clean && 'breakpoints' in clean).toBe(false)
+  })
+
+  it('validates a breakpoint root override through the node sanitizer', () => {
+    const clean = sanitizeLayoutTree({
+      renderer: 'panes',
+      root: { type: 'leaf', blockId: 'list' },
+      breakpoints: [
+        { minWidth: 1024, root: { type: 'split', direction: 'vertical', children: [{ type: 'leaf', blockId: 'list' }, { type: 'leaf', blockId: 'form' }] } },
+        { minWidth: 1280, root: { type: 'leaf', blockId: 123 } }, // invalid → root dropped, bp kept
+      ],
+    })
+    expect(clean?.breakpoints?.[0]?.root).toEqual({
+      type: 'split',
+      direction: 'vertical',
+      children: [{ type: 'leaf', blockId: 'list' }, { type: 'leaf', blockId: 'form' }],
+    })
+    expect(clean?.breakpoints?.[1]).toEqual({ minWidth: 1280 })
+  })
+})

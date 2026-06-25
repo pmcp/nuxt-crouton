@@ -14,7 +14,7 @@
  * the renderer + `useCroutonLayoutBlocks().sanitizeConfig` so there's one
  * allowlist. Pure (no Nuxt runtime) so it's unit-testable.
  */
-import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutBreakpoint, LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 /** Hard recursion cap — a hostile/looping tree can't blow the stack. */
 const MAX_DEPTH = 12
@@ -68,6 +68,53 @@ function sanitizeNode(input: unknown, depth: number): LayoutNode | null {
   return null
 }
 
+/** Keep only non-empty string entries from an untrusted array (drops the rest). */
+function stringArray(input: unknown): string[] | undefined {
+  if (!Array.isArray(input)) return undefined
+  return input.filter((v): v is string => typeof v === 'string' && v.length > 0)
+}
+
+/** Keep only `string → string` entries from an untrusted record. */
+function stringRecord(input: unknown): Record<string, string> | undefined {
+  if (!isRecord(input)) return undefined
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(input)) {
+    if (typeof v === 'string') out[k] = v
+  }
+  return out
+}
+
+/**
+ * Sanitize the authored responsive breakpoints (WS5, #874) — drops any
+ * breakpoint without a finite non-negative `minWidth`, copies only known fields
+ * (so stray keys / prototype pollution are dropped), and validates an override
+ * `root` through the same node sanitizer. Returns undefined when there are no
+ * usable breakpoints, so the clean tree simply omits the field.
+ */
+function sanitizeBreakpoints(input: unknown, depth: number): LayoutBreakpoint[] | undefined {
+  if (!Array.isArray(input)) return undefined
+  const out: LayoutBreakpoint[] = []
+  for (const raw of input) {
+    if (!isRecord(raw)) continue
+    const minWidth = raw.minWidth
+    if (typeof minWidth !== 'number' || !Number.isFinite(minWidth) || minWidth < 0) continue
+
+    const bp: LayoutBreakpoint = { minWidth }
+    if (typeof raw.label === 'string' && raw.label) bp.label = raw.label
+    if (raw.root !== undefined) {
+      const root = sanitizeNode(raw.root, depth)
+      if (root) bp.root = root // an unusable override root is dropped, not fatal
+    }
+    const collapsed = stringArray(raw.collapsed)
+    if (collapsed) bp.collapsed = collapsed
+    const variants = stringRecord(raw.variants)
+    if (variants) bp.variants = variants
+    if (typeof raw.collapseStyle === 'string' && raw.collapseStyle) bp.collapseStyle = raw.collapseStyle
+    out.push(bp)
+  }
+  return out.length ? out : undefined
+}
+
 /**
  * Validate + normalize an untrusted value into a `LayoutTree` at a given depth,
  * threading depth through nesting so the recursion cap holds across sub-layouts.
@@ -80,7 +127,9 @@ function sanitizeTreeAtDepth(input: unknown, depth: number): LayoutTree | null {
   if ('root' in input) {
     if (input.renderer !== undefined && input.renderer !== 'panes') return null
     const root = sanitizeNode(input.root, depth)
-    return root ? { renderer: 'panes', root } : null
+    if (!root) return null
+    const breakpoints = sanitizeBreakpoints(input.breakpoints, depth + 1)
+    return { renderer: 'panes', root, ...(breakpoints ? { breakpoints } : {}) }
   }
 
   // Bare root-node form.
