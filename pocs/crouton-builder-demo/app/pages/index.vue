@@ -10,7 +10,7 @@ useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b8 · 25 Jun · resize + auto-breakpoint + detach + click-to-reopen'
+const BUILD = 'b9 · 25 Jun · detach handle always-visible (touch) · collapse motion replays on style switch'
 
 // Structural match for crouton-layout's ComposePiece (its composables subpath isn't
 // exposed for type imports; the canvas accepts any structurally-compatible piece).
