@@ -11,11 +11,13 @@
  *             Vue Flow canvas is WS3 #872 — the only floating level).
  *  - layout → the page/app layout via `CroutonLayoutRenderer`, with a toolbar to
  *             zoom into each `nested` app (WS2 recursion) or into breakpoints.
- *  - breakpoints → the focused layout at a narrow width (authoring is WS5 #874).
+ *  - breakpoints → author responsiveness by demonstration via
+ *             `CroutonLayoutBreakpointAuthor` (ruler · device frame · per-checkpoint
+ *             collapse & widget variant; WS5 #874). Edits emit up as `layoutChange`.
  *
  * Zoom out: the breadcrumb, the ⤡ button, Esc, or scroll-up.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onKeyStroke, useEventListener } from '@vueuse/core'
 import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { findNestedNodes } from '../utils/layout-edit'
@@ -37,8 +39,33 @@ const props = withDefaults(defineProps<{
   siteLabel: 'Site',
 })
 
+const emit = defineEmits<{
+  /**
+   * The focused layout's authored breakpoints changed at the Breakpoints level
+   * (WS5 #874). The host owns persistence (e.g. saving the page's `layout_configs`
+   * tree); the shell stays storage-agnostic.
+   */
+  layoutChange: [tree: LayoutTree]
+}>()
+
 const zoom = useCroutonSemanticZoom({ siteLabel: props.siteLabel })
 const { current, depth, canZoomOut, breadcrumb } = zoom
+
+/**
+ * A live, editable copy of the focused layout while authoring breakpoints (L3).
+ * Seeded from the frame's tree on entry; edits emit up via `layoutChange`. Deep
+ * round-tripping back into the page's own content is a documented follow-up.
+ */
+const bpTree = ref<LayoutTree | null>(null)
+watch(current, (frame) => {
+  if (frame.level === 'breakpoints' && frame.tree) bpTree.value = frame.tree
+  else bpTree.value = null
+}, { immediate: true })
+
+function onBreakpointsChange(tree: LayoutTree): void {
+  bpTree.value = tree
+  emit('layoutChange', tree)
+}
 
 /** The `nested` apps in the current layout = the zoom-in targets. */
 const apps = computed(() =>
@@ -164,19 +191,19 @@ onKeyStroke('Escape', () => zoom.zoomOut())
         </slot>
       </div>
 
-      <!-- L3 · Breakpoints (focused layout at a narrow width; authoring is WS5) -->
+      <!-- L3 · Breakpoints — author responsiveness by demonstration (WS5 #874):
+           ruler of min-width checkpoints · scaled device frame · per-checkpoint
+           collapse + widget variant. -->
       <div
         v-else-if="current.level === 'breakpoints'"
         :key="'bp-' + depth"
-        class="grid h-full w-full place-items-center gap-4 p-10"
+        class="h-full w-full"
       >
-        <div class="flex h-full max-h-[560px] w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-default bg-elevated p-2 shadow-xl">
-          <CroutonLayoutRenderer
-            v-if="current.tree"
-            :node="current.tree.root"
-          />
-        </div>
-        <p class="text-xs text-muted">Breakpoint authoring (ruler · collapse · variants) arrives in WS5 (#874).</p>
+        <CroutonLayoutBreakpointAuthor
+          v-if="bpTree"
+          :model-value="bpTree"
+          @update:model-value="onBreakpointsChange"
+        />
       </div>
 
       <!-- L1/L2 · a Layout of apps (a page, or a nested app — itself a layout) -->
