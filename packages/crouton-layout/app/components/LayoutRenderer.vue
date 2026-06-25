@@ -17,13 +17,20 @@
  * `panelMinSizePct`. Splitter primitives are SSR-safe (no <ClientOnly> needed);
  * the floor falls back to the authored `minSize` until the group has measured.
  */
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
+import { LAYOUT_VARIANTS_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{ node: LayoutNode }>()
+
+// Per-block widget variant overrides for the authored breakpoint in view (WS5
+// #874), provided by CroutonLayoutResponsiveRenderer. Absent (plain renderer) →
+// no overrides. A leaf's variant is merged into its config so the block can read
+// `variant` like any other prop.
+const variants = inject(LAYOUT_VARIANTS_KEY, ref({} as Record<string, string>))
 
 const emit = defineEmits<{
   /** Bubbled up on resize so the owner can persist sizes into its tree. */
@@ -36,9 +43,13 @@ const { blocks, resolveComponentName, sanitizeConfig } = useCroutonLayoutBlocks(
 const componentName = computed<string | null>(() =>
   props.node.type === 'leaf' ? resolveComponentName(props.node.blockId) : null,
 )
-const safeConfig = computed<Record<string, unknown>>(() =>
-  props.node.type === 'leaf' ? sanitizeConfig(props.node.blockId, props.node.config) : {},
-)
+const safeConfig = computed<Record<string, unknown>>(() => {
+  if (props.node.type !== 'leaf') return {}
+  const config = sanitizeConfig(props.node.blockId, props.node.config)
+  const variant = variants.value[props.node.blockId]
+  // The authored breakpoint's widget variant wins over the stored config.
+  return variant ? { ...config, variant } : config
+})
 
 // Live width of THIS split's group → converts each child's px min-width floor
 // to a percentage min-size for its panel (horizontal splits only).
@@ -57,8 +68,13 @@ function onLayout(sizes: number[]) {
 </script>
 
 <template>
-  <!-- Leaf -->
-  <template v-if="node.type === 'leaf'">
+  <!-- Leaf — its wrapper is a CSS container (intrinsic responsiveness, WS5 #874):
+       the block reflows to ITS OWN pane width via `@container`, independent of the
+       viewport. Every pane is its own container, so this composes recursively. -->
+  <div
+    v-if="node.type === 'leaf'"
+    class="croutonpane h-full w-full"
+  >
     <component
       :is="componentName"
       v-if="componentName"
@@ -71,13 +87,14 @@ function onLayout(sizes: number[]) {
     >
       Unknown block:&nbsp;<code>{{ node.blockId }}</code>
     </div>
-  </template>
+  </div>
 
   <!-- Nested sub-layout (an app that is itself a layout, WS2 #871) → recurse.
+       Also a container so the sub-layout reflows to its own pane (intrinsic, WS5).
        Read-only here; persisting a nested resize is part of nested authoring (WS4). -->
   <div
     v-else-if="node.type === 'nested'"
-    class="h-full w-full"
+    class="croutonpane h-full w-full"
   >
     <CroutonLayoutRenderer :node="node.layout.root" />
   </div>
@@ -111,3 +128,15 @@ function onLayout(sizes: number[]) {
     </template>
   </SplitterGroup>
 </template>
+
+<style scoped>
+/* Intrinsic responsiveness (WS5 #874): each pane is a query container, so a
+   block sizes to its own pane width (`@container (min-width: …)`) rather than the
+   viewport. `inline-size` constrains only the inline axis — height still flows,
+   so `h-full` panes are unaffected. Recursive: every nested pane re-establishes
+   its own container, so reflow holds at any depth. */
+.croutonpane {
+  container-type: inline-size;
+  container-name: pane;
+}
+</style>
