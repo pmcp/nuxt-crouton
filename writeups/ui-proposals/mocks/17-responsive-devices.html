@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Responsive Layouts · per-device arrangements</title>
+<style>
+  :root{
+    --bg:#070a10; --bg2:#0a0e14; --panel:#121826; --panel2:#161d2e; --edge:#1f2a3d; --edge2:#2b3a55;
+    --ink:#e6edf6; --dim:#7c8aa3; --accent:#36e0c0; --accent2:#ff5d73;
+    --gold:#ffd34d; --violet:#9d7bff; --blue:#7fb4ff; --glow:0 0 24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:radial-gradient(1200px 800px at 75% -10%, #15314a33, transparent),radial-gradient(1000px 700px at -10% 110%, #2a123a33, transparent),var(--bg);
+    color:var(--ink); font-family:Inter,system-ui,sans-serif; height:100%; -webkit-font-smoothing:antialiased}
+  .chip{position:fixed; top:18px; left:18px; z-index:60; display:flex; gap:10px; align-items:center;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; font-size:13px; backdrop-filter:blur(8px)}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:var(--glow) var(--blue)}
+  .chip b{font-weight:700}
+  .scanlines{position:fixed; inset:0; pointer-events:none; z-index:90; opacity:.04; background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+
+  /* device toggle bar */
+  .devbar{position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:60; display:flex; gap:6px;
+    background:#0d1320cc; border:1px solid var(--edge); border-radius:14px; padding:6px; backdrop-filter:blur(8px)}
+  .dev{display:flex; gap:8px; align-items:center; border:1px solid transparent; background:transparent; color:var(--dim);
+    border-radius:10px; padding:8px 14px; font-size:13px; cursor:pointer; transition:.18s}
+  .dev:hover{color:var(--ink); background:#16203a}
+  .dev.on{color:var(--ink); background:#16203a; border-color:var(--accent); box-shadow:0 0 16px -4px var(--accent)}
+  .dev .gl{font-size:15px}
+  .dev small{color:var(--dim); font-size:11px}
+  .saved{position:fixed; top:74px; left:50%; transform:translateX(-50%) translateY(-6px); z-index:60; opacity:0;
+    background:#0b1a16; border:1px solid #1f5247; color:var(--accent); font-size:12px; padding:6px 12px; border-radius:999px; transition:.25s}
+  .saved.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .hint{position:fixed; bottom:16px; left:50%; transform:translateX(-50%); color:var(--dim); font-size:12px; z-index:60; pointer-events:none; text-align:center; max-width:92vw}
+  .hint b{color:var(--ink)}
+
+  .stage{position:absolute; inset:0; display:grid; place-items:center}
+  /* device bezel */
+  .bezel{position:relative; transition:width .42s cubic-bezier(.3,.9,.3,1), height .42s cubic-bezier(.3,.9,.3,1), border-radius .42s, padding .42s;
+    background:linear-gradient(180deg,#0e1626,#0a1019); border:1px solid #223150; box-shadow:0 40px 90px #000b, inset 0 1px 0 #ffffff0a}
+  .bezel.desktop{border-radius:14px; padding:34px 12px 12px}
+  .bezel.tablet{border-radius:30px; padding:40px 18px}
+  .bezel.phone{border-radius:42px; padding:46px 12px 40px}
+  .bezel.square{border-radius:18px; padding:30px 14px 14px}
+  /* chrome bits */
+  .chrome{position:absolute; left:0; right:0; top:0; height:34px; display:flex; align-items:center; gap:7px; padding:0 14px; opacity:0; transition:opacity .3s}
+  .desktop .chrome{opacity:1}
+  .chrome i{width:11px;height:11px;border-radius:50%;background:#2b3a55}
+  .chrome i:nth-child(1){background:#ff5f57}.chrome i:nth-child(2){background:#febc2e}.chrome i:nth-child(3){background:#28c840}
+  .chrome .url{margin-left:10px;height:16px;flex:1;max-width:280px;border-radius:6px;background:#16203a;border:1px solid #243348}
+  .notch{position:absolute; top:16px; left:50%; transform:translateX(-50%); width:120px; height:18px; border-radius:12px; background:#05080e; opacity:0; transition:.3s}
+  .phone .notch{opacity:1}
+  .home{position:absolute; bottom:16px; left:50%; transform:translateX(-50%); width:120px; height:5px; border-radius:3px; background:#2b3a55; opacity:0; transition:.3s}
+  .phone .home{opacity:1}
+  .cam{position:absolute; top:16px; left:50%; transform:translateX(-50%); width:9px;height:9px;border-radius:50%;background:#05080e; opacity:0; transition:.3s}
+  .tablet .cam{opacity:1}
+  .devtag{position:absolute; top:8px; left:14px; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); opacity:0; transition:.3s}
+  .square .devtag,.tablet .devtag{opacity:.7}
+
+  #frame{position:relative; width:100%; height:100%; border-radius:10px; overflow:hidden; background:#0b1018;
+    transition:width .42s cubic-bezier(.3,.9,.3,1), height .42s cubic-bezier(.3,.9,.3,1)}
+
+  .split{position:absolute; inset:0; display:flex}
+  .split.col{flex-direction:column}
+  .split>.cell{position:relative; min-width:0; min-height:0; display:flex; padding:4px}
+  .gutter{flex:0 0 8px; align-self:stretch; border-radius:4px; background:#141d2e; position:relative; transition:background .15s}
+  .split:not(.col)>.gutter{cursor:col-resize} .split.col>.gutter{cursor:row-resize}
+  .gutter::after{content:""; position:absolute; left:50%;top:50%; background:#33415e; border-radius:3px}
+  .split:not(.col)>.gutter::after{width:2px;height:16px;transform:translate(-50%,-50%)}
+  .split.col>.gutter::after{height:2px;width:16px;transform:translate(-50%,-50%)}
+  .gutter:hover,.gutter.active{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+
+  .pane{position:relative; flex:1 1 0; min-width:0; min-height:0; border-radius:10px; padding:10px; overflow:hidden;
+    background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid #243348; box-shadow:inset 0 1px 0 #ffffff08; will-change:transform}
+  .pane.lifted{opacity:.2}
+  .pane h4{margin:0 0 8px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); display:flex; gap:6px; align-items:center; pointer-events:none}
+  .pane .ic{width:17px;height:17px;border-radius:6px; display:grid; place-items:center; font-size:10px; flex:0 0 auto}
+  .gr{pointer-events:none}
+  .grip{position:absolute; top:6px; right:6px; z-index:7; width:22px; height:18px; border-radius:6px; cursor:grab;
+    display:grid; place-items:center; color:#5d6f8c; font-size:12px; background:#0e1626cc; border:1px solid #283a55; opacity:.6; transition:.18s}
+  .grip:hover{opacity:1; color:var(--accent); border-color:var(--accent)}
+  .row-{height:8px;border-radius:5px;background:#26334a;opacity:.85;margin-bottom:6px}
+  .row-.s{width:55%}.row-.m{width:78%}.row-.l{width:95%}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal i{aspect-ratio:1;border-radius:3px;background:#22304a}.cal i.on{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:42px;margin-top:3px}
+  .bars i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--accent),#1c8f7e)}
+  .kpi{font-size:21px;font-weight:800;letter-spacing:-.02em}.kpi small{font-size:11px;color:var(--accent);font-weight:600;margin-left:5px}
+  .field{height:20px;border-radius:6px;background:#1a2336;border:1px solid #283651;margin-bottom:6px}
+  .mapb{position:relative;height:46px;margin-top:3px;border-radius:7px;background:radial-gradient(60px 40px at 40% 50%,#16324a,#0e1c2e);overflow:hidden}
+  .mapb i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 7px var(--gold)}
+
+  #ghost{position:fixed; z-index:75; border-radius:11px; pointer-events:none; opacity:0; box-shadow:0 30px 70px #000c, 0 0 0 1px #ffffff14, 0 0 40px -6px #36e0c055; transform:rotate(-1.5deg) scale(1.03)}
+  #zone{position:fixed; z-index:70; pointer-events:none; opacity:0; border-radius:9px; border:2px solid var(--accent);
+    background:#36e0c022; box-shadow:0 0 26px 2px #36e0c055, inset 0 0 20px #36e0c033; transition:opacity .1s, left .1s, top .1s, width .1s, height .1s}
+  #zone .arr{position:absolute; inset:0; display:grid; place-items:center; color:var(--accent); font-size:20px; text-shadow:0 0 10px var(--accent)}
+</style>
+</head>
+<body>
+  <div class="chip"><span class="dot"></span><b>Responsive Layouts</b> · arrange per device — each is saved &amp; jumps back when you toggle</div>
+  <div class="devbar">
+    <button class="dev" data-d="desktop"><span class="gl">🖥</span> Desktop <small>1180</small></button>
+    <button class="dev" data-d="tablet"><span class="gl">▭</span> Tablet <small>800</small></button>
+    <button class="dev" data-d="phone"><span class="gl">📱</span> Phone <small>372</small></button>
+    <button class="dev" data-d="square"><span class="gl">⬛</span> Square <small>600</small></button>
+  </div>
+  <div class="saved" id="saved">✓ saved</div>
+
+  <div class="stage">
+    <div class="bezel desktop" id="bezel">
+      <div class="chrome"><i></i><i></i><i></i><div class="url"></div></div>
+      <div class="notch"></div><div class="cam"></div><div class="home"></div><div class="devtag" id="devtag"></div>
+      <div id="frame"></div>
+    </div>
+  </div>
+  <div id="ghost"></div><div id="zone"><div class="arr"></div></div>
+  <div class="hint">toggle a <b>device</b> — the layout reroutes to that screen's saved arrangement · grab a pane's <b>⠿</b> to rearrange it for this device · drag a <b>seam</b> to resize · every edit is saved per device</div>
+  <div class="scanlines"></div>
+
+<script>
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const APPS={
+  cal:{name:'Calendar',icon:'◧',col:'var(--accent2)',kind:'cal'},
+  list:{name:'Bookings',icon:'≣',col:'var(--accent)',kind:'list'},
+  form:{name:'New Booking',icon:'✎',col:'var(--violet)',kind:'form'},
+  kpi:{name:'Revenue',icon:'★',col:'var(--gold)',kind:'kpi'},
+  bars:{name:'Activity',icon:'▦',col:'var(--blue)',kind:'bars'},
+  map:{name:'Venue Map',icon:'◈',col:'var(--gold)',kind:'map'},
+};
+function paneInner(app){
+  const head=`<h4><span class="ic" style="background:${app.col}22;color:${app.col}">${app.icon}</span>${app.name}</h4>`;
+  let b='';switch(app.kind){
+    case 'cal':b=`<div class="cal">${Array.from({length:21},(_,i)=>`<i class="${[3,9,10,16].includes(i)?'on':''}"></i>`).join('')}</div>`;break;
+    case 'list':b=`<div class="row- l"></div><div class="row- m"></div><div class="row- l"></div><div class="row- s"></div>`;break;
+    case 'form':b=`<div class="field"></div><div class="field"></div><div class="field" style="width:60%"></div>`;break;
+    case 'kpi':b=`<div class="kpi">€48.2k<small>▲12%</small></div><div class="bars">${Array.from({length:7},(_,i)=>`<i style="height:${30+((i*37)%60)}%"></i>`).join('')}</div>`;break;
+    case 'bars':b=`<div class="bars">${Array.from({length:9},(_,i)=>`<i style="height:${25+((i*53)%70)}%"></i>`).join('')}</div>`;break;
+    case 'map':b=`<div class="mapb"><i style="left:30%;top:50%"></i><i style="left:62%;top:40%;background:var(--accent2);box-shadow:0 0 7px var(--accent2)"></i><i style="left:45%;top:20%;background:var(--accent);box-shadow:0 0 7px var(--accent)"></i></div>`;break;
+  }
+  return `<div class="gr">${head}${b}</div>`;
+}
+
+let SID=1;
+const leaf=k=>({kind:'leaf',app:APPS[k],id:k});            // id = app key → stable across devices (FLIP continuity)
+const R=(a,b,frac)=>({kind:'split',dir:'row',a,b,frac:frac??.5,sid:SID++});
+const C=(a,b,frac)=>({kind:'split',dir:'col',a,b,frac:frac??.5,sid:SID++});
+
+// default arrangement per device — same 6 apps, different routing
+const DEFAULTS={
+  desktop:()=>R(leaf('cal'), R(C(R(leaf('list'),leaf('form')), R(leaf('kpi'),leaf('bars'))), leaf('map'), .8), .32),
+  tablet :()=>C(R(leaf('cal'),leaf('list')), C(R(leaf('form'),leaf('kpi')), R(leaf('bars'),leaf('map'))), .34),
+  phone  :()=>C(leaf('cal'), C(leaf('list'), C(leaf('form'), C(leaf('kpi'), C(leaf('bars'),leaf('map'))))), .2),
+  square :()=>C(R(leaf('cal'),leaf('kpi')), R(C(leaf('list'),leaf('form')), C(leaf('bars'),leaf('map'))), .42),
+};
+const DEV={ desktop:{w:1180,h:680}, tablet:{w:800,h:600}, phone:{w:372,h:760}, square:{w:600,h:600} };
+const LABEL={ desktop:'Desktop', tablet:'iPad', phone:'iPhone', square:'Square' };
+
+const trees={};
+function loadTrees(){ for(const d in DEV){ try{ const s=localStorage.getItem('crouton-resp-'+d); trees[d]= s?JSON.parse(s):DEFAULTS[d](); }catch(e){ trees[d]=DEFAULTS[d](); } } }
+function save(){ try{ localStorage.setItem('crouton-resp-'+current, JSON.stringify(trees[current])); }catch(e){} flashSaved(); }
+
+let current='desktop';
+const bezel=document.getElementById('bezel'), frameEl=document.getElementById('frame');
+const ghost=document.getElementById('ghost'), zone=document.getElementById('zone'), savedEl=document.getElementById('saved');
+
+function treeHTML(n){
+  if(n.kind==='leaf') return `<div class="pane" data-id="${n.id}"><div class="grip" data-grip="${n.id}">⠿</div>${paneInner(n.app)}</div>`;
+  const f=n.frac??.5;
+  return `<div class="split ${n.dir==='col'?'col':''}" data-sid="${n.sid}">`+
+    `<div class="cell" style="flex:${f} 1 0">${treeHTML(n.a)}</div>`+
+    `<div class="gutter" data-sid="${n.sid}"></div>`+
+    `<div class="cell" style="flex:${1-f} 1 0">${treeHTML(n.b)}</div></div>`;
+}
+function findLeaf(n,id){ if(n.kind==='leaf') return n.id===id?n:null; return findLeaf(n.a,id)||findLeaf(n.b,id); }
+function findSplit(n,sid){ if(n.kind==='leaf') return null; if(n.sid===sid) return n; return findSplit(n.a,sid)||findSplit(n.b,sid); }
+function removeLeaf(n,id){ if(n.kind==='leaf') return n.id===id?null:n; const a=removeLeaf(n.a,id),b=removeLeaf(n.b,id); if(a===null)return b; if(b===null)return a; return {...n,a,b}; }
+function insertLeaf(n,tid,side,lf){ if(n.kind==='leaf'){ if(n.id!==tid) return n;
+    const dir=(side==='E'||side==='W')?'row':'col'; const a=(side==='E'||side==='S')?n:lf, b=(side==='E'||side==='S')?lf:n;
+    return {kind:'split',dir,a,b,frac:.5,sid:SID++}; }
+  return {...n,a:insertLeaf(n.a,tid,side,lf),b:insertLeaf(n.b,tid,side,lf)}; }
+
+let curScale=1;
+function fit(d){ const maxW=Math.min(innerWidth*0.78, 1240), maxH=innerHeight*0.66; return Math.min(maxW/d.w, maxH/d.h, 1); }
+function paneRects(){ const m={}; frameEl.querySelectorAll('.pane[data-id]').forEach(p=>m[p.dataset.id]=p.getBoundingClientRect()); return m; }
+function render(flip){
+  const before = flip? paneRects():null;
+  const d=DEV[current]; curScale=fit(d);
+  bezel.className='bezel '+current;
+  document.getElementById('devtag').textContent=LABEL[current];
+  frameEl.style.width=(d.w*curScale)+'px'; frameEl.style.height=(d.h*curScale)+'px';
+  frameEl.innerHTML=treeHTML(trees[current]); bind();
+  if(before){ frameEl.querySelectorAll('.pane[data-id]').forEach(pane=>{
+    const b=before[pane.dataset.id]; if(!b) return; const a=pane.getBoundingClientRect();
+    const dx=b.left-a.left, dy=b.top-a.top, sx=b.width/a.width||1, sy=b.height/a.height||1;
+    pane.style.transformOrigin='top left'; pane.style.transition='none';
+    pane.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+    requestAnimationFrame(()=>{ pane.style.transition='transform .44s cubic-bezier(.3,.9,.3,1)'; pane.style.transform='none'; });
+  }); }
+}
+function flashSaved(){ savedEl.textContent='✓ saved to '+LABEL[current]; savedEl.classList.add('show'); clearTimeout(flashSaved._t); flashSaved._t=setTimeout(()=>savedEl.classList.remove('show'),1300); }
+
+// device toggle
+document.querySelectorAll('.dev').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.dev').forEach(b=>b.classList.toggle('on', b===btn));
+  current=btn.dataset.d; render(true);
+}));
+
+// ---- editing: grip rearrange + seam resize ----
+let mode=null, gut=null, pane=null, hover=null;
+function bind(){
+  frameEl.querySelectorAll('.grip').forEach(g=>g.addEventListener('pointerdown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    frameEl.setPointerCapture?.(e.pointerId);
+    const id=g.dataset.grip; const lf=findLeaf(trees[current],id);
+    pane={leaf:lf, backup:JSON.parse(JSON.stringify(trees[current]))};
+    trees[current]=removeLeaf(trees[current],id); render(true);
+    const w=DEV[current].w*0; // placeholder
+    ghost.style.width='150px'; ghost.style.height='112px';
+    ghost.innerHTML=`<div class="pane" style="cursor:grabbing">${paneInner(lf.app)}</div>`;
+    ghost.dataset.gx=75; ghost.dataset.gy=22; moveGhost(e); ghost.style.opacity=1; mode='pane';
+  }));
+  frameEl.querySelectorAll('.gutter').forEach(gt=>gt.addEventListener('pointerdown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    const sid=+gt.dataset.sid, node=findSplit(trees[current],sid), splitEl=gt.parentElement, r=splitEl.getBoundingClientRect();
+    gut={node,dir:node.dir,len:node.dir==='row'?r.width:r.height,startFrac:node.frac??.5,startC:node.dir==='row'?e.clientX:e.clientY,el:splitEl};
+    gt.classList.add('active'); mode='gut';
+  }));
+}
+function moveGhost(e){ ghost.style.left=(e.clientX-(+ghost.dataset.gx))+'px'; ghost.style.top=(e.clientY-(+ghost.dataset.gy))+'px'; }
+function sideFor(r,x,y){ const d={W:(x-r.left)/r.width,E:1-(x-r.left)/r.width,N:(y-r.top)/r.height,S:1-(y-r.top)/r.height}; return Object.keys(d).reduce((m,k)=>d[k]<d[m]?k:m,'W'); }
+addEventListener('pointermove',e=>{
+  if(mode==='pane'){
+    moveGhost(e); zone.style.opacity=0; hover=null;
+    const under=document.elementFromPoint(e.clientX,e.clientY), pEl=under&&under.closest('.pane[data-id]');
+    if(pEl && frameEl.contains(pEl)){
+      const r=pEl.getBoundingClientRect(), side=sideFor(r,e.clientX,e.clientY);
+      hover={targetId:pEl.dataset.id, side};
+      let zx=r.left,zy=r.top,zw=r.width,zh=r.height;
+      if(side==='E'){zx=r.left+r.width*.5;zw=r.width*.5;} if(side==='W'){zw=r.width*.5;}
+      if(side==='S'){zy=r.top+r.height*.5;zh=r.height*.5;} if(side==='N'){zh=r.height*.5;}
+      Object.assign(zone.style,{left:zx+3+'px',top:zy+3+'px',width:zw-6+'px',height:zh-6+'px',opacity:1});
+      zone.querySelector('.arr').textContent={E:'→',W:'←',N:'↑',S:'↓'}[side];
+    }
+  } else if(mode==='gut'&&gut){
+    const cur=gut.dir==='row'?e.clientX:e.clientY, f=clamp(gut.startFrac+(cur-gut.startC)/gut.len,.14,.86);
+    gut.node.frac=f; gut.el.children[0].style.flex=`${f} 1 0`; gut.el.children[2].style.flex=`${1-f} 1 0`;
+  }
+});
+addEventListener('pointerup',()=>{
+  if(mode==='pane'&&pane){
+    ghost.style.opacity=0; zone.style.opacity=0;
+    if(hover){ trees[current]=insertLeaf(trees[current],hover.targetId,hover.side,pane.leaf); render(true); save(); }
+    else { trees[current]=pane.backup; render(true); }   // dropped outside → snap back
+    pane=null; hover=null; mode=null; return;
+  }
+  if(mode==='gut'&&gut){ gut.el.querySelector('.gutter')?.classList.remove('active'); gut=null; mode=null; save(); }
+});
+document.addEventListener('dblclick',()=>{ // dbl-click a device's empty bezel to reset it
+});
+
+addEventListener('resize',()=>render(false));
+loadTrees();
+const q=new URLSearchParams(location.search);
+const initD=q.get('device'); if(initD&&DEV[initD]) current=initD;
+document.querySelectorAll('.dev').forEach(b=>b.classList.toggle('on',b.dataset.d===current));
+render(false);
+</script>
+</body>
+</html>
