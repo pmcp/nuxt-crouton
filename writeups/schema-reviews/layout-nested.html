@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Schema review — Recursive nested layouts (WS2)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #18181b; background: #fafafa; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 36px 40px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { color: #71717a; margin: 0 0 24px; font-size: 13.5px; }
+  h2 { font-size: 17px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e4e4e7; }
+  .ok { color: #15803d; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  code { background: #f4f4f5; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  pre { background: #18181b; color: #e4e4e7; padding: 14px 16px; border-radius: 8px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+  pre .c { color: #a1a1aa; } pre .k { color: #93c5fd; } pre .s { color: #86efac; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e4e4e7; vertical-align: top; }
+  th { background: #f4f4f5; font-weight: 600; }
+  td code { white-space: nowrap; }
+  .req { color: #15803d; font-weight: 700; }
+  .opt { color: #a1a1aa; }
+  .badge { display: inline-block; background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; vertical-align: middle; margin-left: 8px; }
+  .note { background: #fff; border: 1px solid #e4e4e7; border-left: 3px solid #6366f1; border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 13.5px; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Schema review — Recursive nested layouts <span class="badge">WS2 · keystone</span></h1>
+  <p class="sub">Data-model sign-off for #871 (epic #868). Schema sign-off gate (#314) — agree the persisted shape before any code lands.</p>
+
+  <h2>What changes</h2>
+  <p>Today a layout leaf hosts exactly <strong>one block</strong>. WS2 lets a pane be a <strong>whole sub-layout</strong> — so a <em>page</em> is a layout whose panes are <em>app-layouts</em>, recursively ("layouts in layouts").</p>
+
+  <h2 class="ok">✅ Recommended — a dedicated <code>nested</code> node</h2>
+  <p><code>leaf</code> stays "one block"; <code>split</code> stays "arrange siblings in <em>this</em> layout"; the new <code>nested</code> means "an <strong>app</strong> boundary that is itself a layout."</p>
+<pre><span class="k">interface</span> LayoutNested <span class="k">extends</span> LayoutNodeBase {
+  type: <span class="s">'nested'</span>
+  layout: LayoutTree   <span class="c">// a full sub-layout (own renderer +, later, own breakpoints)</span>
+  label?: string       <span class="c">// app name shown at the App zoom level (WS1)</span>
+}
+<span class="k">type</span> LayoutNode = LayoutLeaf | LayoutSplit | LayoutNested</pre>
+
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Req</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>type</code></td><td><code>'nested'</code></td><td class="req">✓</td><td>discriminator (joins <code>'leaf'</code>/<code>'split'</code>)</td></tr>
+      <tr><td><code>layout</code></td><td><code>LayoutTree</code></td><td class="req">✓</td><td>the embedded sub-layout — an "app" that is itself a layout. Full tree so it can carry its own <code>renderer</code> (#855) + breakpoints (WS5)</td></tr>
+      <tr><td><code>label</code></td><td><code>string</code></td><td class="opt">—</td><td>app name at the App zoom level (WS1); falls back to the primary block name</td></tr>
+      <tr><td><code>defaultSize</code></td><td><code>number</code> 0–100</td><td class="opt">—</td><td>size within the parent split (from <code>LayoutNodeBase</code>)</td></tr>
+      <tr><td><code>minSize</code></td><td><code>number</code> 0–100</td><td class="opt">—</td><td>min size within the parent split (from <code>LayoutNodeBase</code>)</td></tr>
+    </tbody>
+  </table>
+  <p><code>LayoutLeaf</code> and <code>LayoutSplit</code> are <strong>unchanged</strong>. Only the union widens; one node type is added. <strong>No DB migration</strong> — <code>layout_configs.tree</code> is already a JSON column.</p>
+
+  <h2>Decisions needing sign-off</h2>
+  <ul>
+    <li><strong>Full <code>LayoutTree</code> vs bare <code>root</code></strong> in <code>layout</code> — recommend full (forward-compat with #855 + WS5).</li>
+    <li><strong>Depth cap</strong> — nesting must add to the existing <code>MAX_DEPTH=12</code> guard; or give nesting its own cap (~3, matching Site→Page→App)?</li>
+    <li><strong>Edit path space</strong> — recommend each sub-layout edits in its own <code>NodePath</code> space, scoped to the focused zoom level.</li>
+  </ul>
+
+  <h2>Considered &amp; rejected</h2>
+  <ul>
+    <li><strong>A · overload the leaf</strong> (<code>blockId?</code> + <code>layout?</code>) — the brief's literal wording. ❌ as the mechanism: makes <code>blockId</code> optional → every consumer branches "block or layout?"; a dedicated node keeps <code>leaf</code> honest.</li>
+    <li><strong>C · reference by id</strong> (<code>layoutRef</code> → another row) — ❌ deferred: enables reuse + composes with the site flow, but adds resolution/fetch/cycle-detection. Inline embedding can gain refs later.</li>
+    <li><strong>re-use <code>split</code> as the boundary</strong> — ❌ no way to say "these panes are one app" → kills the App zoom level + per-app breakpoints.</li>
+  </ul>
+</div>
+</body>
+</html>
