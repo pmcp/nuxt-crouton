@@ -15,9 +15,9 @@
  * lives in `CroutonLayoutRenderer`'s CSS and needs nothing here — the two
  * compose: this picks the arrangement; the renderer reflows within each pane.
  */
-import { computed, provide, ref, toRef } from 'vue'
+import { computed, provide, ref, toRef, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { normalizeCollapseStyle } from '../utils/layout-responsive'
 import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
@@ -44,21 +44,29 @@ const { resolved, visibleRoot, collapsedPanes, variants, activeBreakpoint } = us
 
 provide(LAYOUT_VARIANTS_KEY, variants)
 
-// WS6 #875: the active breakpoint's collapse motion (normalized — absent ⇒ gutter-tabs).
-// `gutter-tabs` keeps the right-edge rail; the in-place styles keep collapsed panes in the
-// tree (rendered as handles) and reclaim their space via the splitter.
 const collapseStyle = computed(() => normalizeCollapseStyle(resolved.value.collapseStyle))
 const inPlace = computed(() => isInPlaceCollapse(collapseStyle.value))
 
+// Expand = OVERLAY DRAWER (#873/#875 follow-up). Clicking a collapsed pane (gutter tab or
+// in-place handle) peeks it as an overlay sliding over the content — the collapsed zone
+// stays put, and a clear close affordance slides it back. Makes "what happened on click"
+// obvious, instead of the old silent reflow.
+const openOverlay = ref<string | null>(null)
+function peek(blockId: string) { openOverlay.value = blockId; emit('expand', blockId) }
+const overlayPane = computed(() => collapsedPanes.value.find(p => p.blockId === openOverlay.value) ?? null)
+const overlayNode = computed<LayoutNode | null>(() => (openOverlay.value ? { type: 'leaf', blockId: openOverlay.value } : null))
+// If the width changes so the pane is no longer collapsed, close the overlay.
+watch(collapsedPanes, panes => { if (openOverlay.value && !panes.some(p => p.blockId === openOverlay.value)) openOverlay.value = null })
+
 // Provide the in-place collapse context to the recursive renderer — only when an
-// in-place style is active, so the gutter-tabs path is untouched.
+// in-place style is active, so the gutter-tabs path is untouched. `expand` opens the drawer.
 provide(LAYOUT_COLLAPSE_KEY, computed(() =>
   inPlace.value
-    ? { collapsedSet: new Set(resolved.value.collapsed), style: collapseStyle.value, expand: (id: string) => emit('expand', id) }
+    ? { collapsedSet: new Set(resolved.value.collapsed), style: collapseStyle.value, expand: peek }
     : null,
 ))
 
-defineExpose({ activeBreakpoint, collapseStyle })
+defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
 </script>
 
 <template>
@@ -102,7 +110,7 @@ defineExpose({ activeBreakpoint, collapseStyle })
         type="button"
         :title="`Expand ${pane.label ? pane.label + ' · ' : ''}${pane.blockId}`"
         class="group flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-default bg-default py-2 text-muted transition-colors hover:border-primary hover:text-primary"
-        @click="emit('expand', pane.blockId)"
+        @click="peek(pane.blockId)"
       >
         <UIcon
           name="i-lucide-chevron-left"
@@ -112,5 +120,51 @@ defineExpose({ activeBreakpoint, collapseStyle })
       </button>
       </div>
     </template>
+
+    <!-- Expand drawer: the peeked pane slides over the content; scrim/✕ slides it back. -->
+    <Transition name="mq-scrim">
+      <div
+        v-if="openOverlay"
+        class="absolute inset-0 z-40 bg-black/40"
+        @click="openOverlay = null"
+      />
+    </Transition>
+    <Transition name="mq-drawer">
+      <div
+        v-if="openOverlay && overlayNode"
+        class="absolute inset-y-0 right-0 z-50 flex w-[min(440px,88%)] flex-col border-l border-default bg-default shadow-2xl"
+      >
+        <div class="flex items-center gap-2 border-b border-default px-3 py-2">
+          <UIcon
+            name="i-lucide-panel-right-open"
+            class="size-4 text-muted"
+          />
+          <span class="text-sm font-medium">{{ overlayPane?.label || openOverlay }}</span>
+          <span class="rounded-full border border-default px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted">overlay</span>
+          <UButton
+            icon="i-lucide-x"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            class="ml-auto"
+            aria-label="Close"
+            @click="openOverlay = null"
+          />
+        </div>
+        <div class="min-h-0 flex-1 overflow-auto">
+          <CroutonLayoutRenderer :node="overlayNode" />
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.mq-scrim-enter-active, .mq-scrim-leave-active { transition: opacity .2s ease }
+.mq-scrim-enter-from, .mq-scrim-leave-to { opacity: 0 }
+.mq-drawer-enter-active, .mq-drawer-leave-active { transition: transform .24s cubic-bezier(.4,0,.2,1) }
+.mq-drawer-enter-from, .mq-drawer-leave-to { transform: translateX(100%) }
+@media (prefers-reduced-motion: reduce) {
+  .mq-scrim-enter-active, .mq-scrim-leave-active, .mq-drawer-enter-active, .mq-drawer-leave-active { transition: none }
+}
+</style>
