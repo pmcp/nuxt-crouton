@@ -59,6 +59,12 @@ watch([canvasW, canvasH], ([w, h]) => {
 let grabDX = 0
 let grabDY = 0
 
+// Resize bookkeeping (a separate gesture from move, off the corner handle).
+const MIN_W = 140
+const MIN_H = 96
+const resizingId = ref<string | null>(null)
+let rStart = { w: 0, h: 0, px: 0, py: 0 }
+
 function onPointerDown(e: PointerEvent, piece: ComposePiece) {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -73,7 +79,28 @@ function onPointerDown(e: PointerEvent, piece: ComposePiece) {
   e.preventDefault()
 }
 
+function onResizeDown(e: PointerEvent, piece: ComposePiece) {
+  resizingId.value = piece.id
+  rStart = { w: piece.width, h: piece.height, px: e.clientX, py: e.clientY }
+  try { (e.target as HTMLElement).setPointerCapture?.(e.pointerId) }
+  catch { /* ignore */ }
+  e.preventDefault()
+  e.stopPropagation() // don't also start a move-drag
+}
+
 function onPointerMove(e: PointerEvent) {
+  // Resize takes precedence — grow/shrink the piece from its top-left, clamped to canvas.
+  if (resizingId.value) {
+    const p = pieces.value.find(x => x.id === resizingId.value)
+    if (!p) return
+    let w = Math.max(MIN_W, rStart.w + (e.clientX - rStart.px))
+    let h = Math.max(MIN_H, rStart.h + (e.clientY - rStart.py))
+    if (canvasW.value) w = Math.min(w, canvasW.value - EDGE - p.x)
+    if (canvasH.value) h = Math.min(h, canvasH.value - EDGE - p.y)
+    p.width = w
+    p.height = h
+    return
+  }
   if (!draggingId.value || !canvasRef.value) return
   const r = canvasRef.value.getBoundingClientRect()
   const d = dragging.value
@@ -84,7 +111,17 @@ function onPointerMove(e: PointerEvent) {
 }
 
 function onPointerUp() {
+  if (resizingId.value) {
+    resizingId.value = null
+    emit('update:modelValue', pieces.value)
+    return
+  }
   if (draggingId.value) end()
+}
+
+function onPointerLeave() {
+  if (resizingId.value) { resizingId.value = null; emit('update:modelValue', pieces.value) }
+  cancel()
 }
 
 const isLoose = (piece: ComposePiece) => piece.node.type === 'leaf'
@@ -116,7 +153,7 @@ const nestRing = computed(() => {
     class="croutoncompose relative h-full w-full overflow-hidden rounded-lg border border-default bg-elevated/30"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
-    @pointerleave="cancel"
+    @pointerleave="onPointerLeave"
   >
     <!-- snap guide -->
     <div
@@ -153,6 +190,18 @@ const nestRing = computed(() => {
       </div>
       <div class="h-full w-full overflow-hidden rounded-xl">
         <CroutonLayoutRenderer :node="piece.node" />
+      </div>
+
+      <!-- Resize handle (bottom-right corner). Big touch target; its own gesture. -->
+      <div
+        class="absolute -bottom-1 -right-1 z-20 flex size-6 cursor-se-resize touch-none items-end justify-end rounded-br-xl p-1 text-muted hover:text-primary"
+        title="Drag to resize"
+        @pointerdown="onResizeDown($event, piece)"
+      >
+        <UIcon
+          name="i-lucide-move-diagonal-2"
+          class="size-3.5"
+        />
       </div>
     </div>
 
