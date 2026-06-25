@@ -215,6 +215,22 @@ wrangler --version
 > `setup-node` is what the jobs actually rely on. (#654 asks to confirm the macOS cache
 > path works — it caches under the runner's `_work/_tool`, no extra config.)
 
+> ⚠️ **GOTCHA — the runner's PATH is NOT your shell's PATH.** The runner runs under
+> **launchd**, which does **not** source `~/.zshrc` and starts with a minimal PATH
+> (`/usr/bin:/bin:/usr/sbin:/sbin`). So Homebrew (`/opt/homebrew/bin` → `gh`, `wrangler`)
+> and the nvm node dir are **invisible to jobs**, even though your interactive shell finds
+> them — any step that calls `gh`/`wrangler` directly fails with "command not found". Fix:
+> the runner reads a **`.path`** file in its own dir and uses it as the job PATH. Capture
+> your interactive PATH into it and restart the service:
+> ```bash
+> cd ~/actions-runner
+> echo "$PATH" > .path          # bakes /opt/homebrew/bin + nvm node into the runner PATH
+> ./svc.sh stop && ./svc.sh start && ./svc.sh status
+> ```
+> Node/pnpm are *also* covered per-job by `setup-node`/`pnpm/action-setup`; `.path` is what
+> rescues the direct `gh`/`wrangler` calls. (Re-run the `echo "$PATH" > .path` if you later
+> change the nvm default node version, since that dir is version-stamped.)
+
 ### 2b. Secrets
 
 ⚙️ **GITHUB (repo settings)** — nothing to run on the mini here. **GitHub repo secrets are
