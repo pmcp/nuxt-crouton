@@ -137,9 +137,29 @@ const zones: { edge: DropEdge, area: string, label: string }[] = [
     </div>
   </div>
 
+  <!-- Nested sub-layout (an app that is itself a layout, WS2 #871). Shown as a
+       read-only preview for now; editing INTO a nested app (drop-in, zoom) is the
+       authoring UX in WS1/WS4 (UI sign-off, #307). -->
+  <div
+    v-else-if="node.type === 'nested'"
+    data-testid="editor-pane-nested"
+    :data-path="path.join('.')"
+    class="relative h-full w-full ring-1 ring-default/60 ring-inset"
+  >
+    <div
+      v-if="node.label"
+      class="absolute top-1 left-1 z-20 px-1.5 py-0.5 rounded bg-elevated/90 text-[10px] font-medium text-muted pointer-events-none"
+    >
+      {{ node.label }}
+    </div>
+    <div class="h-full w-full overflow-auto pointer-events-none select-none">
+      <CroutonLayoutRenderer :node="node.layout.root" />
+    </div>
+  </div>
+
   <!-- Split: Splitter group, recursing -->
   <SplitterGroup
-    v-else
+    v-else-if="node.type === 'split'"
     ref="groupRef"
     :direction="node.direction"
     class="h-full w-full"

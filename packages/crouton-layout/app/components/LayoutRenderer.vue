@@ -73,9 +73,18 @@ function onLayout(sizes: number[]) {
     </div>
   </template>
 
+  <!-- Nested sub-layout (an app that is itself a layout, WS2 #871) → recurse.
+       Read-only here; persisting a nested resize is part of nested authoring (WS4). -->
+  <div
+    v-else-if="node.type === 'nested'"
+    class="h-full w-full"
+  >
+    <CroutonLayoutRenderer :node="node.layout.root" />
+  </div>
+
   <!-- Split -->
   <SplitterGroup
-    v-else
+    v-else-if="node.type === 'split'"
     ref="groupRef"
     :direction="node.direction"
     class="h-full w-full"

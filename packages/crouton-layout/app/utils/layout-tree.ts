@@ -55,7 +55,37 @@ function sanitizeNode(input: unknown, depth: number): LayoutNode | null {
     return { type: 'split', direction: input.direction, children, ...base }
   }
 
+  if (input.type === 'nested') {
+    // A nested node embeds a whole sub-layout (WS2 #871). Its depth ADDS to the
+    // parent's so MAX_DEPTH bounds total nesting (split depth + nested depth) —
+    // a malformed/looping sub-layout invalidates the node (no silent hole).
+    const layout = sanitizeTreeAtDepth(input.layout, depth + 1)
+    if (!layout) return null
+    const label = typeof input.label === 'string' && input.label ? input.label : undefined
+    return { type: 'nested', layout, ...(label ? { label } : {}), ...base }
+  }
+
   return null
+}
+
+/**
+ * Validate + normalize an untrusted value into a `LayoutTree` at a given depth,
+ * threading depth through nesting so the recursion cap holds across sub-layouts.
+ * Accepts either a full `{ renderer: 'panes', root }` tree or a bare root node.
+ */
+function sanitizeTreeAtDepth(input: unknown, depth: number): LayoutTree | null {
+  if (!isRecord(input)) return null
+
+  // Full tree form.
+  if ('root' in input) {
+    if (input.renderer !== undefined && input.renderer !== 'panes') return null
+    const root = sanitizeNode(input.root, depth)
+    return root ? { renderer: 'panes', root } : null
+  }
+
+  // Bare root-node form.
+  const root = sanitizeNode(input, depth)
+  return root ? { renderer: 'panes', root } : null
 }
 
 /**
@@ -64,16 +94,5 @@ function sanitizeNode(input: unknown, depth: number): LayoutNode | null {
  * (defaulting `renderer` to `'panes'`), so callers can persist either form.
  */
 export function sanitizeLayoutTree(input: unknown): LayoutTree | null {
-  if (!isRecord(input)) return null
-
-  // Full tree form.
-  if ('root' in input) {
-    if (input.renderer !== undefined && input.renderer !== 'panes') return null
-    const root = sanitizeNode(input.root, 0)
-    return root ? { renderer: 'panes', root } : null
-  }
-
-  // Bare root-node form.
-  const root = sanitizeNode(input, 0)
-  return root ? { renderer: 'panes', root } : null
+  return sanitizeTreeAtDepth(input, 0)
 }
