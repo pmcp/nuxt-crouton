@@ -15,7 +15,7 @@
  * `LayoutTree`; this component is just the surface. Mocks: 17 (devices), 18
  * (container context), 19 (breakpoint authoring).
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import {
@@ -23,8 +23,6 @@ import {
   listBlocks,
   patchBreakpoint,
   removeBreakpoint,
-  toggleCollapsed,
-  setVariant,
 } from '../utils/layout-responsive'
 
 const props = defineProps<{ modelValue: LayoutTree }>()
@@ -65,19 +63,33 @@ const hasCheckpointHere = computed(() => breakpoints.value.some(b => b.minWidth 
 
 const blocks = computed(() => listBlocks(resolved.value.root))
 
-function addCheckpoint() {
-  update(patchBreakpoint(tree.value, simWidth.value, {}))
-}
 function dropCheckpoint(minWidth: number) {
+  armedDelete.value = null
   update(removeBreakpoint(tree.value, minWidth))
 }
+
+// Author BY DEMONSTRATION: changing anything at the current width auto-creates (or
+// updates) a breakpoint *there*, snapshotting the resolved state with the change applied
+// — no separate "Add breakpoint" step. The snapshot preserves whatever is already
+// resolved at this width (inherited collapses / variants) so a single toggle doesn't
+// silently drop the others.
+function authorHere(patch: { collapsed?: string[], variants?: Record<string, string> }) {
+  update(patchBreakpoint(tree.value, simWidth.value, {
+    collapsed: patch.collapsed ?? [...resolved.value.collapsed],
+    variants: patch.variants ?? { ...resolved.value.variants },
+    ...(resolved.value.collapseStyle !== undefined ? { collapseStyle: resolved.value.collapseStyle } : {}),
+  }))
+}
 function onToggleCollapse(blockId: string) {
-  if (activeMin.value === null) return
-  update(toggleCollapsed(tree.value, activeMin.value, blockId))
+  const current = resolved.value.collapsed
+  const collapsed = current.includes(blockId) ? current.filter(id => id !== blockId) : [...current, blockId]
+  authorHere({ collapsed })
 }
 function onSetVariant(blockId: string, variant: string) {
-  if (activeMin.value === null) return
-  update(setVariant(tree.value, activeMin.value, blockId, variant))
+  const variants = { ...resolved.value.variants }
+  if (variant) variants[blockId] = variant
+  else delete variants[blockId]
+  authorHere({ variants })
 }
 function variantOf(blockId: string) {
   return resolved.value.variants[blockId] ?? ''
@@ -86,9 +98,24 @@ function isCollapsed(blockId: string) {
   return resolved.value.collapsed.includes(blockId)
 }
 function onExpand(blockId: string) {
-  // Tapping a gutter tab un-collapses it on the active checkpoint.
+  // Tapping a gutter tab / handle un-collapses it (authoring a checkpoint here).
   onToggleCollapse(blockId)
 }
+
+// --- click-to-delete a checkpoint marker (arm → red ✕ → confirm) ------------
+const armedDelete = ref<number | null>(null)
+function onMarkerClick(minWidth: number) {
+  if (armedDelete.value === minWidth) {
+    dropCheckpoint(minWidth) // second click on the armed ✕ removes it
+    return
+  }
+  simWidth.value = minWidth // jump to it…
+  armedDelete.value = minWidth // …and arm it (shows a red ✕)
+}
+// Dragging the ruler away from an armed marker disarms it.
+watch(simWidth, () => {
+  if (armedDelete.value !== null && armedDelete.value !== simWidth.value) armedDelete.value = null
+})
 
 // --- the scaled device frame ----------------------------------------------
 const stageRef = ref<HTMLElement | null>(null)
@@ -115,15 +142,6 @@ const frameScale = computed(() => {
         @click="simWidth = d.width"
       />
       <span class="ml-auto font-mono text-xs text-muted">{{ simWidth }}px</span>
-      <UButton
-        :icon="hasCheckpointHere ? 'i-lucide-check' : 'i-lucide-plus'"
-        :label="hasCheckpointHere ? 'Checkpoint here' : 'Add breakpoint here'"
-        size="xs"
-        color="primary"
-        :variant="hasCheckpointHere ? 'subtle' : 'solid'"
-        :disabled="hasCheckpointHere"
-        @click="addCheckpoint"
-      />
     </div>
 
     <!-- The ruler: a min-width track with authored checkpoints (each locks upward) -->
@@ -149,14 +167,23 @@ const frameScale = computed(() => {
         type="button"
         class="absolute top-0 z-20 flex -translate-x-1/2 flex-col items-center"
         :style="{ left: pct(bp.minWidth) + '%' }"
-        :title="`Jump to ${bp.minWidth}px`"
-        @click="simWidth = bp.minWidth"
+        :title="armedDelete === bp.minWidth ? `Click again to delete ${bp.minWidth}px` : `Jump to ${bp.minWidth}px (click again to delete)`"
+        @click="onMarkerClick(bp.minWidth)"
       >
+        <UIcon
+          v-if="armedDelete === bp.minWidth"
+          name="i-lucide-circle-x"
+          class="size-3.5 text-error"
+        />
         <span
+          v-else
           class="size-2.5 rounded-full border-2 border-elevated transition-transform hover:scale-125"
           :class="bp.minWidth === activeMin ? 'bg-primary' : 'bg-muted'"
         />
-        <span class="mt-0.5 font-mono text-[9px] text-muted">{{ bp.minWidth }}</span>
+        <span
+          class="mt-0.5 font-mono text-[9px]"
+          :class="armedDelete === bp.minWidth ? 'text-error' : 'text-muted'"
+        >{{ bp.minWidth }}</span>
       </button>
     </div>
 
@@ -177,29 +204,23 @@ const frameScale = computed(() => {
       </div>
     </div>
 
-    <!-- Per-block overrides for the active checkpoint -->
+    <!-- Per-block overrides — changing anything authors a breakpoint at the current width -->
     <div class="rounded-xl border border-default bg-elevated/50 p-3">
-      <div
-        v-if="activeMin === null"
-        class="text-center text-xs text-muted"
-      >
-        No checkpoint active at {{ simWidth }}px — drag to a width and
-        <span class="font-medium text-default">add a breakpoint</span> to author overrides (the base layout holds here).
-      </div>
-      <div
-        v-else
-        class="flex flex-col gap-2"
-      >
+      <div class="flex flex-col gap-2">
         <div class="flex items-center gap-2">
-          <span class="text-xs uppercase tracking-widest text-muted">overrides @ ≥{{ activeMin }}px</span>
+          <span class="text-xs uppercase tracking-widest text-muted">
+            <template v-if="hasCheckpointHere">overrides @ ≥{{ simWidth }}px</template>
+            <template v-else>author @ {{ simWidth }}px <span class="normal-case text-muted/70">— a change adds a breakpoint here</span></template>
+          </span>
           <UButton
+            v-if="hasCheckpointHere"
             icon="i-lucide-trash-2"
             label="Remove checkpoint"
             size="xs"
             color="error"
             variant="ghost"
             class="ml-auto"
-            @click="dropCheckpoint(activeMin)"
+            @click="dropCheckpoint(simWidth)"
           />
         </div>
         <div
