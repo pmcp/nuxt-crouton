@@ -1,0 +1,360 @@
+<!doctype html>
+<!-- Idea → App, INTERACTIVE edition. Same epic-digest aesthetic (serif, paper, teal
+     accent, fluo highlighter markers) but a real interactive page (not email-safe):
+       · the 5 legend chips are FILTERS — click to spotlight one actor's tokens
+       · loop cards collapse/expand
+       · light / dark toggle (defaults to system)
+     Self-contained, vanilla JS, no build. Companion to the email-safe
+     idea-to-app-timeline.html. Hand-authored. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Idea → App · interactive</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#1a1a1a; --sub:#474744; --mut:#8a8a84; --faint:#bdbdb6;
+    --line:#e7e6e1; --card:#fcfcfa; --code-bg:#f5f5f1; --code-ink:#33332e;
+    --teal:#0F766E; --gate:#b45309;
+    --art:#fdf436; --cmd:#4cf083; --skill:#ff7a3d; --ci:#3ee6ff; --auto:#ff52cf;
+  }
+  body.dark{
+    --paper:#0e0e0d; --ink:#f0efe9; --sub:#c4c4bd; --mut:#9a958a; --faint:#5a5a55;
+    --line:#2a2a27; --card:#141413; --code-bg:#161613; --code-ink:#c4c4bd;
+    --teal:#2dd4bf; --gate:#ff8c1f;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); transition:background .25s,color .25s;
+    font-family:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif;
+    -webkit-text-size-adjust:100%;}
+  .wrap{max-width:640px; margin:0 auto; padding:40px 22px 90px;}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.86em; color:var(--mut);}
+  .mut{color:var(--mut);} .sub{color:var(--sub);} .faint{color:var(--faint);}
+  a{color:inherit;}
+
+  /* ── FLUO markers ── light = highlighter swipe; dark = neon glow text ── */
+  .m{ -webkit-box-decoration-break:clone; box-decoration-break:clone; color:#161616; padding:0 .14em;
+      border-radius:1px; transition:opacity .18s, filter .18s; }
+  .m-art{ background-image:linear-gradient(transparent 24%,var(--art) 24%,var(--art) 92%,transparent 92%); }
+  .m-cmd{ background-image:linear-gradient(transparent 24%,var(--cmd) 24%,var(--cmd) 92%,transparent 92%); }
+  .m-skill{ background-image:linear-gradient(transparent 24%,var(--skill) 24%,var(--skill) 92%,transparent 92%); }
+  .m-ci{ background-image:linear-gradient(transparent 24%,var(--ci) 24%,var(--ci) 92%,transparent 92%); }
+  .m-auto{ background-image:linear-gradient(transparent 24%,var(--auto) 24%,var(--auto) 92%,transparent 92%); }
+  body.dark .m{ background-image:none !important; padding:0 !important; }
+  body.dark .m-art{ color:#fff21a; text-shadow:0 0 9px rgba(255,242,26,.5); }
+  body.dark .m-cmd{ color:#2dff7a; text-shadow:0 0 9px rgba(45,255,122,.5); }
+  body.dark .m-skill{ color:#ff8c1f; text-shadow:0 0 9px rgba(255,140,31,.5); }
+  body.dark .m-ci{ color:#16f6ff; text-shadow:0 0 9px rgba(22,246,255,.5); }
+  body.dark .m-auto{ color:#ff2ff0; text-shadow:0 0 9px rgba(255,47,240,.5); }
+
+  /* ── filtering: when active, dim every marker, un-dim the chosen actors ── */
+  body.filtering .m{ opacity:.16; filter:grayscale(.6); }
+  body.filtering.show-art .m-art,
+  body.filtering.show-cmd .m-cmd,
+  body.filtering.show-skill .m-skill,
+  body.filtering.show-ci .m-ci,
+  body.filtering.show-auto .m-auto{ opacity:1; filter:none; }
+
+  /* masthead */
+  .accent{ width:44px; height:3px; background:var(--teal); border-radius:2px; margin-bottom:24px; }
+  h1{ font-size:34px; line-height:1.1; margin:0 0 8px; }
+  .lede{ color:var(--mut); font-style:italic; font-size:15px; max-width:60ch; margin:0 0 18px; }
+
+  /* controls bar */
+  .controls{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:14px 0 6px; }
+  .legend{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{ cursor:pointer; user-select:none; border:1px solid var(--line); border-radius:999px;
+    padding:3px .7em; font-variant:small-caps; letter-spacing:.05em; font-size:12.5px; font-weight:600;
+    background:transparent; color:var(--sub); transition:all .15s; display:inline-flex; align-items:center; gap:5px; }
+  .chip .dot{ width:9px; height:9px; border-radius:50%; }
+  .chip.active{ color:#161616; border-color:transparent; }
+  body.dark .chip.active{ color:#0e0e0d; }
+  .chip[data-actor=art].active{ background:var(--art); }
+  .chip[data-actor=cmd].active{ background:var(--cmd); }
+  .chip[data-actor=skill].active{ background:var(--skill); }
+  .chip[data-actor=ci].active{ background:var(--ci); }
+  .chip[data-actor=auto].active{ background:var(--auto); }
+  .chip[data-actor=art] .dot{ background:var(--art); }
+  .chip[data-actor=cmd] .dot{ background:var(--cmd); }
+  .chip[data-actor=skill] .dot{ background:var(--skill); }
+  .chip[data-actor=ci] .dot{ background:var(--ci); }
+  .chip[data-actor=auto] .dot{ background:var(--auto); }
+  .btn{ cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--mut);
+    border-radius:8px; padding:4px 10px; font-family:inherit; font-size:12.5px; transition:all .15s; }
+  .btn:hover{ color:var(--ink); border-color:var(--mut); }
+  .hint{ color:var(--faint); font-size:12px; font-style:italic; margin-top:4px; }
+
+  /* section labels */
+  .seclabel{ font-variant:small-caps; letter-spacing:.05em; color:var(--mut); font-size:13px; margin:38px 0 4px; }
+  .secbig{ font-variant:small-caps; letter-spacing:.04em; font-size:24px; margin:2px 0 6px; }
+
+  /* phase rows */
+  .phase{ display:flex; gap:16px; }
+  .rail{ flex:0 0 30px; display:flex; flex-direction:column; align-items:center; }
+  .node{ width:30px; height:30px; border-radius:50%; border:1px solid var(--line);
+    display:grid; place-items:center; font-size:14px; color:var(--mut); flex:0 0 auto; }
+  .railline{ width:1px; flex:1; background:var(--line); margin:4px 0; min-height:14px; }
+  .pbody{ flex:1; min-width:0; padding-bottom:6px; }
+  .ptitle{ font-variant:small-caps; letter-spacing:.05em; font-size:21px; }
+  .psub{ color:var(--mut); font-style:italic; font-size:13px; margin:2px 0 8px; }
+  .pbody .row{ font-size:15px; line-height:1.85; color:var(--sub); margin:4px 0; }
+  .gatev{ color:var(--gate); font-style:italic; font-size:13px; margin-top:8px; }
+
+  /* loop cards */
+  .loop{ border:1px solid var(--line); border-left:4px solid var(--teal); border-radius:12px;
+    background:var(--card); margin:16px 0; overflow:hidden; }
+  .loop-head{ cursor:pointer; user-select:none; display:flex; align-items:center; gap:10px;
+    padding:14px 16px; }
+  .loop-head .chev{ transition:transform .2s; color:var(--mut); flex:0 0 auto; font-size:13px; }
+  .loop.collapsed .chev{ transform:rotate(-90deg); }
+  .loop-title{ font-variant:small-caps; letter-spacing:.04em; font-size:18px; flex:1; }
+  .loop-title .tag{ font-size:12px; color:var(--mut); font-variant:normal; letter-spacing:0; }
+  .loop-body{ padding:0 16px 14px; font-size:14.5px; line-height:1.7; color:var(--sub); }
+  .loop.collapsed .loop-body{ display:none; }
+  .loop-body .step{ margin:8px 0; }
+  .code{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.65;
+    background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:11px 13px;
+    color:var(--code-ink); white-space:pre-wrap; margin:8px 0 2px; overflow-x:auto; }
+
+  .railbox{ border:1px dashed var(--line); border-radius:12px; padding:14px 16px; margin:18px 0; }
+  .auto-list .row{ font-size:14.5px; line-height:1.7; color:var(--sub); margin:7px 0; }
+
+  hr.rule{ border:0; border-top:1px solid var(--line); margin:32px 0 0; }
+  .breath{ font-size:15px; line-height:2; color:var(--sub); }
+  footer{ color:var(--faint); font-size:12px; font-style:italic; margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="accent"></div>
+  <h1>Idea&nbsp;→&nbsp;App</h1>
+  <p class="lede">The straight line from a sentence to a live URL — then the feedback loops that bend it.
+    Colour tells you who's acting. <b>Tap a chip below to spotlight one actor.</b></p>
+
+  <div class="controls">
+    <div class="legend" id="legend">
+      <span class="chip" data-actor="art"><span class="dot"></span>agent posts</span>
+      <span class="chip" data-actor="cmd"><span class="dot"></span>you command</span>
+      <span class="chip" data-actor="skill"><span class="dot"></span>a skill</span>
+      <span class="chip" data-actor="ci"><span class="dot"></span>ci runs</span>
+      <span class="chip" data-actor="auto"><span class="dot"></span>auto-comment</span>
+    </div>
+    <button class="btn" id="clearFilter" hidden>clear</button>
+    <span style="flex:1"></span>
+    <button class="btn" id="toggleLoops">collapse loops</button>
+    <button class="btn" id="toggleTheme">◐ theme</button>
+  </div>
+  <div class="hint" id="filterHint">Filtering off — all actors shown.</div>
+
+  <!-- ══ PART I ══ -->
+  <div class="seclabel">Part I · the straight line</div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">0</div><div class="railline"></div></div>
+    <div class="pbody">
+      <div class="ptitle">Idea lands</div>
+      <div class="psub">No code yet. The issue exists before the code does.</div>
+      <div class="row">🛠 <span class="m m-skill">github-tasks</span> opens the <b>epic + sub-issues</b>, labelled by package/app, written as a <i>hypothesis</i>.</div>
+      <div class="row">🛠 <span class="m m-skill">ecosystem-check</span> <span class="mut">(optional)</span> — does Nuxt/UnJS already solve it?</div>
+      <div class="row">⚙️ <span class="m m-ci">decompose-on-issue.yml</span> fires on <span class="mono">issues: opened/labeled</span>.</div>
+      <div class="row">👤 <span class="m m-cmd">/task-decompose "build X"</span> → orchestrator → decomposer → worker.</div>
+      <div class="gatev">⚑ Hard gate — editing files with no issue? Stop and open it first.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">1</div><div class="railline"></div></div>
+    <div class="pbody">
+      <div class="ptitle">Sign-off gates</div>
+      <div class="psub">Agree on the <i>shape</i> before code — each opens a loop (Part II) and holds on <span class="mono">status:blocked</span>.</div>
+      <div class="row">🛠 <span class="m m-skill">schema-review</span> — the data model <span class="mut">(#314 → loop B/C)</span></div>
+      <div class="row">🛠 <span class="m m-skill">ui-proposal</span> — the look <span class="mut">(#307 → loop A)</span></div>
+      <div class="row">🛠 <span class="m m-skill">test-review</span> — logic in <span class="mono">packages/*</span> <span class="mut">(#774 → loop D)</span></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">2</div><div class="railline"></div></div>
+    <div class="pbody">
+      <div class="ptitle">Build it</div>
+      <div class="row">🛠 <span class="m m-skill">crouton</span> — schema → Form/List/API/migration + a default layout.</div>
+      <div class="row">🛠 <span class="m m-skill">db-migrations</span> at the migration step · <span class="mono">pnpm typecheck</span> after <b>every</b> change.</div>
+      <div class="gatev">⚑ A hook blocks <span class="mono">packages/*</span> edits without approval. New apps → <span class="mono">pocs/</span>, not <span class="mono">apps/</span>.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">3</div><div class="railline"></div></div>
+    <div class="pbody">
+      <div class="ptitle">Commit</div>
+      <div class="row">👤 <span class="m m-cmd">/commit</span> — never raw <span class="mono">git commit</span>. Runs 🛠 <span class="m m-skill">sync-docs</span> + 🛠 <span class="m m-skill">i18n-check</span> first.</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">4</div><div class="railline"></div></div>
+    <div class="pbody">
+      <div class="ptitle">PR opens · CI fans out</div>
+      <div class="row">⚙️ <span class="m m-ci">ci.yml</span> typecheck+lint+test · ⚙️ <span class="m m-ci">e2e.yml</span> boot→auth→CRUD</div>
+      <div class="row">⚙️ <span class="m m-ci">frontend-review.yml</span> · ⚙️ <span class="m m-ci">a11y.yml</span> · ⚙️ <span class="m m-ci">red-team.yml</span></div>
+      <div class="row">⚙️ <span class="m m-ci">deploy-pocs.yml</span> preview URL · ⚙️ <span class="m m-ci">pipeline-pr-status.yml</span> status note</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="rail"><div class="node">5</div></div>
+    <div class="pbody">
+      <div class="ptitle">Merge → staging → prod</div>
+      <div class="row">⚙️ Merge to <span class="mono">main</span> auto-deploys <span class="m m-ci">deploy-app/-pocs.yml</span> → <span class="mono">&lt;app&gt;.pmcp.dev</span> (staging).</div>
+      <div class="row">👤 <span class="m m-cmd">/deploy-production</span> → <span class="mono">friendlyinter.net</span> — human-only, never an agent side effect (#318).</div>
+      <div class="row">🛠 <span class="m m-skill">postmortem</span> at epic close mints <span class="mono">workflow</span> issues.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART II ══ -->
+  <div class="seclabel">Part II · the feedback loops</div>
+  <div class="secbig">Post → command → auto → act → re-post</div>
+  <p class="lede" style="margin-top:0">Each loop: 🟡 the agent posts an artifact · 🟢 you command on it · 🟣 an automatic comment fires · 🟠/🔵 a skill or workflow acts · ✅ it ends on your <b>lgtm</b>.</p>
+
+  <!-- LOOP A -->
+  <div class="loop">
+    <div class="loop-head"><span class="chev">▾</span><span class="loop-title">A · Annotate a live preview <span class="tag">— the UI gate (#307/#488/#590/#607)</span></span></div>
+    <div class="loop-body">
+      <div class="step">🟡 <b>Agent posts</b> a <span class="m m-art">live staging preview</span>. The <span class="mono">cf:staging</span> build with <span class="mono">NUXT_PUBLIC_CROUTON_REVIEW=true</span> stamps every component root with <span class="mono">data-crouton-src</span>, ships the <b>Annotate</b> tool + the <span class="mono">/api/_review</span> bridge, and drops a sticky PR comment with the URL.</div>
+      <div class="step">🟢 <b>You command on the page</b> — open the <span class="m m-cmd">🥽 glasses launcher</span> (bottom-right) → toggle <span class="m m-cmd">Annotate</span> → hover highlights elements → click one → type → <b>Send</b>. <span class="mut">(Static-mockup fallback: inline-comment the committed <span class="mono">.md</span>.)</span></div>
+      <div class="step">🟣 <b>Auto-comment fires.</b> <span class="mono">useCroutonAnnotate</span> builds a <span class="mono">ReviewAnnotation</span> → <span class="m m-auto">POST /api/_review</span> posts as <span class="m m-auto">crouton[bot]</span> (GitHub-App token, no PAT) the exact comment the agent keys off:</div>
+      <div class="code">🎯 <b>Preview feedback</b>
+
+- <b>Component:</b> `app/components/ProductCard.vue`
+- <b>Element:</b> `div &gt; button:nth-of-type(2)` <i>(bbox 100,200 150×40)</i>
+- <b>Page:</b> `/products/view`
+
+&gt; make this smaller and add an icon</div>
+      <div class="step">🔵 <b>Agent acts.</b> The subscribed agent (<span class="mono">subscribe_pr_activity</span>) wakes on <span class="m m-auto">🎯 Preview feedback</span>, reads the <b>Component</b> line, edits <i>that</i> file, redeploys to the same URL, appends <span class="mono">- rN: …</span> to the sticky.</div>
+      <div class="step">✅ <b>Ends</b> when you reply <span class="m m-cmd">lgtm</span> / <span class="m m-cmd">approve</span>. <span class="mut">No PR open? → the bridge opens an issue instead (#812).</span></div>
+    </div>
+  </div>
+
+  <!-- LOOP B -->
+  <div class="loop">
+    <div class="loop-head"><span class="chev">▾</span><span class="loop-title">B · Edit a ticket diagram <span class="tag">— round-trip (#479/#483)</span></span></div>
+    <div class="loop-body">
+      <div class="step">🟡 <b>Agent posts</b> 👤 <span class="m m-cmd">/ticket-diagram</span> → an <span class="m m-art">Excalidraw status PNG</span> — boxes coloured by status, dependency arrows, with the <b>editable scene embedded inside the PNG</b> (a <span class="mono">tEXt</span> chunk). Committed <span class="mono">&lt;slug&gt;.png</span> + diffable <span class="mono">&lt;slug&gt;.graph.json</span>, sticky comment. Renders on the GitHub mobile app.</div>
+      <div class="step">🟢 <b>You command on the diagram</b> — open the PNG in <span class="m m-cmd">Excalidraw</span> (the scene loads live) → drag boxes / edit labels → export with <b>“Embed scene” ON</b> → attach the edited PNG back to a comment. <span class="mut">(Mobile: one-tap <span class="m m-cmd">ticket-editor</span> Worker — each Save posts a frozen comment.)</span></div>
+      <div class="step">🟣 <b>Round-trip back in.</b> 🛠 <span class="m m-skill">ticket-excalidraw-import.mjs</span> runs <span class="m m-auto">extractScene()</span> to decode the scene from <i>your</i> PNG → re-renders from your layout → <span class="m m-auto">embedScene()</span> re-embeds it → commits the refreshed PNG, appends the revision log.</div>
+      <div class="step">✅ <b>Ends</b> on <span class="m m-cmd">lgtm</span> / <span class="m m-cmd">approve</span> → the gate merges.</div>
+    </div>
+  </div>
+
+  <!-- LOOP C -->
+  <div class="loop">
+    <div class="loop-head"><span class="chev">▾</span><span class="loop-title">C · Sign off the data model <span class="tag">— schema gate (#314)</span></span></div>
+    <div class="loop-body">
+      <div class="step">🟡 <b>Agent posts</b> 🛠 <span class="m m-skill">schema-review</span> → a <span class="m m-art">field-table PNG</span> + commits <span class="mono">&lt;collection&gt;.md</span> (the inline-commentable surface) and <span class="mono">.html</span>.</div>
+      <div class="step">🟢 <b>You command on the table</b> — <span class="m m-cmd">inline-comment the <span class="mono">.md</span></span> in the PR diff, pinned to a field: “make this <span class="mono">decimal</span>”, “add a <span class="mono">slug</span> field”.</div>
+      <div class="step">🔵 <b>Agent acts.</b> Reads the review threads (<span class="mono">pull_request_read</span>), edits <span class="mono">schemas/&lt;collection&gt;.json</span>, re-renders, replies/resolves each thread, pushes — the diff updates in place.</div>
+      <div class="step">✅ <b>Ends</b> on <span class="m m-cmd">lgtm</span> / <span class="m m-cmd">approve</span> → <i>only then</i> does <span class="mono">crouton config</span> generate code.</div>
+    </div>
+  </div>
+
+  <!-- LOOP D -->
+  <div class="loop">
+    <div class="loop-head"><span class="chev">▾</span><span class="loop-title">D · Agree on the test <span class="tag">— test gate (#774)</span></span></div>
+    <div class="loop-body">
+      <div class="step">🟡 <b>Agent posts</b> 🛠 <span class="m m-skill">test-review</span> → the <span class="m m-art">proposed failing test</span> — a plain-language case list + the test code, committed red. <span class="mut">(Logic in <span class="mono">packages/*</span> only.)</span></div>
+      <div class="step">🟢 <b>You command on the cases</b> — <span class="m m-cmd">inline-comment the test</span> (“add a case for …”, “fix this expectation”) or just say so in chat.</div>
+      <div class="step">🔵 <b>Agent acts.</b> Revises cases/expectations, replies to threads — the test stays in the diff as the contract.</div>
+      <div class="step">✅ <b>Ends</b> on <span class="m m-cmd">lgtm</span> / <span class="m m-cmd">approve</span> → <i>only then</i> writes the code to make it green.</div>
+    </div>
+  </div>
+
+  <!-- resume rail -->
+  <div class="railbox">
+    <div style="font-variant:small-caps;letter-spacing:.04em;font-size:16px">⚑ The one signal that resumes any held gate <span class="mut" style="font-size:12px">(#572/#310)</span></div>
+    <div class="auto-list">
+      <div class="row" style="margin-top:6px">✅ <b>Only</b> an <span class="m m-cmd">issue comment</span> matching <span class="mono">/\b(approve|lgtm)\b/i</span> on a <span class="mono">status:blocked</span> issue. ⚙️ <span class="m m-ci">resume-on-comment.yml</span> then merges the gate PR with an <b>App token</b> (so <span class="mono">pull_request: closed</span> cascades to wave advancement) — merge, not squash.</div>
+      <div class="gatev">🚫 A 👍 reaction, the <span class="mono">ui-approved</span> label, or marking the draft ready do <b>nothing</b> — no workflow listens for them.</div>
+    </div>
+  </div>
+
+  <!-- autonomous -->
+  <div class="seclabel">…and the loops with no human in them (machine ↔ machine)</div>
+  <div class="auto-list">
+    <div class="row">🔧 <b>Autofix</b> — ⚙️ <span class="m m-ci">fix-ci-on-failure.yml</span> on CI/E2E red → a bot reproduces &amp; fixes, pushes via App token (re-triggers CI). Capped at <b>3</b> (<span class="mono">ci-fix-attempts:N</span>); never touches <span class="mono">packages/</span>; at the cap it 🛑 blocks the issue + tags you.</div>
+    <div class="row">🔀 <b>Auto-merge</b> — ⚙️ <span class="m m-ci">automerge-epic-subpr.yml</span>: a non-draft, pipeline-authored sub-PR onto an <span class="mono">epic/</span> branch with <b>no red checks</b> and no <span class="mono">packages/</span> changes merges itself.</div>
+    <div class="row">🌊 <b>Waves</b> — ⚙️ <span class="m m-ci">schedule-waves.yml</span>: each issue's <span class="mono">Blocked-by: #NN</span> edges; when all blockers close it applies <span class="m m-auto">delegate</span> (App token) → the next worker dispatches.</div>
+    <div class="row">💬 <b>Comment dispatch</b> — you comment 👤 <span class="m m-cmd">/delegate</span> or <span class="m m-cmd">/deploy</span> on an issue → ⚙️ <span class="m m-ci">comment-dispatch.yml</span> applies the <span class="m m-auto">delegate</span> label, reacts 🚀, the pipeline picks it up.</div>
+    <div class="row">📊 <b>Status note</b> — ⚙️ <span class="m m-ci">pipeline-pr-status.yml</span>: a sticky <span class="mono">&lt;!-- crouton-pipeline-status --&gt;</span> per PR + epic roll-up, refreshed on every check-suite.</div>
+    <div class="row">🧪 <b>Needs your eyes</b> — 🛠 <span class="m m-skill">epic-digest</span>'s top band surfaces each merged PR's authored <i>how-to-test</i> steps + a 👁 badge for visual changes.</div>
+  </div>
+
+  <hr class="rule">
+  <div class="seclabel" style="margin-top:22px">The whole thing in one breath</div>
+  <div class="breath">
+    idea → 🛠 <span class="m m-skill">github-tasks</span> (issue first) → gates that each <b>post an artifact</b> 🟡, take your <b>command</b> 🟢, fire an <b>auto-comment</b> 🟣, and <b>re-post</b> until you reply <span class="m m-cmd">lgtm</span> → 🛠 <span class="m m-skill">crouton</span> build + typecheck → 👤 <span class="m m-cmd">/commit</span> → PR → ⚙️ <span class="m m-ci">CI</span> fans out (autofix / automerge run themselves) → merge = staging → 👤 <span class="m m-cmd">/deploy-production</span> → 🛠 <span class="m m-skill">postmortem</span>.
+  </div>
+  <div class="gatev" style="margin-top:14px;font-size:14px">Burn in: the issue exists <b>before</b> code, and an <b>lgtm/approve comment</b> — not a reaction, not a label — is the only thing that unblocks a held gate.</div>
+
+  <footer>
+    <a href="https://github.com/FriendlyInternet/nuxt-crouton">Crouton</a> ·
+    Interactive companion to <span class="mono">idea-to-app-timeline.html</span>, <span class="mono">skills-and-triggers.html</span> &amp; <span class="mono">agent-flow.html</span>.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var body = document.body;
+
+  // ── theme: default to system, then cycle via button ──
+  var mql = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mql.matches) body.classList.add('dark');
+  document.getElementById('toggleTheme').addEventListener('click', function(){
+    body.classList.toggle('dark');
+  });
+
+  // ── actor filters ──
+  var active = {};
+  var hint = document.getElementById('filterHint');
+  var clearBtn = document.getElementById('clearFilter');
+  var names = { art:'agent posts', cmd:'you command', skill:'skills', ci:'CI', auto:'auto-comments' };
+  function sync(){
+    var on = Object.keys(active).filter(function(k){return active[k];});
+    ['art','cmd','skill','ci','auto'].forEach(function(k){
+      body.classList.toggle('show-'+k, !!active[k]);
+    });
+    body.classList.toggle('filtering', on.length > 0);
+    clearBtn.hidden = on.length === 0;
+    hint.textContent = on.length === 0
+      ? 'Filtering off — all actors shown.'
+      : 'Spotlighting: ' + on.map(function(k){return names[k];}).join(' + ') + '.';
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#legend .chip'), function(chip){
+    chip.addEventListener('click', function(){
+      var a = chip.dataset.actor;
+      active[a] = !active[a];
+      chip.classList.toggle('active', active[a]);
+      sync();
+    });
+  });
+  clearBtn.addEventListener('click', function(){
+    active = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#legend .chip'), function(c){c.classList.remove('active');});
+    sync();
+  });
+
+  // ── collapsible loop cards ──
+  Array.prototype.forEach.call(document.querySelectorAll('.loop-head'), function(h){
+    h.addEventListener('click', function(){ h.parentElement.classList.toggle('collapsed'); });
+  });
+  var allCollapsed = false;
+  var loopBtn = document.getElementById('toggleLoops');
+  loopBtn.addEventListener('click', function(){
+    allCollapsed = !allCollapsed;
+    Array.prototype.forEach.call(document.querySelectorAll('.loop'), function(l){
+      l.classList.toggle('collapsed', allCollapsed);
+    });
+    loopBtn.textContent = allCollapsed ? 'expand loops' : 'collapse loops';
+  });
+})();
+</script>
+</body></html>
