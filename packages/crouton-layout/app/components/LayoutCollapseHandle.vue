@@ -6,11 +6,12 @@
  * (so the collapse reads as "in place"), and is the restore affordance — click it to ask
  * the host to expand the pane back.
  *
- * Three motion families, each a distinct, size-proof resting form (from the gallery,
- * `layout-collapse-concepts.md`):
- *  - `spring-drawer` — a thin labeled spine; springs in with a damped overshoot.
- *  - `crt-power-down` — a phosphor line crushes to a standby dot; boots back on restore.
- *  - `iris-portal` — a camera-shutter iris closes to a glowing seed at the pane's center.
+ * Three distinct, size-proof resting forms (from the gallery, `layout-collapse-concepts.md`).
+ * Each settles in with a SUBTLE fade + small scale nudge — the loud motion is the pane's
+ * own shrink (LayoutRenderer flex-grow); this handle is the quiet endpoint, not the show:
+ *  - `spring-drawer` — a thin labeled spine; faint settle along its axis.
+ *  - `crt-power-down` — a phosphor line softly fades into a standby dot.
+ *  - `iris-portal` — a ring + glowing seed at the pane's center; eases in, no zoom/spin.
  *
  * Purely presentational: the host owns the collapsed set, so this only renders + emits.
  * The motion is CSS (`prefers-reduced-motion`-aware) so it needs no JS animation loop.
@@ -55,7 +56,7 @@ const caption = computed(() => props.label || props.blockId)
     <!-- crt-power-down: a standby dot; the phosphor line crushes into it on collapse. -->
     <template v-else-if="collapseStyle === 'crt-power-down'">
       <span class="crouton-crt grid place-items-center">
-        <span class="crouton-crt-dot size-2.5 rounded-full bg-primary shadow-[0_0_10px_2px_var(--ui-primary)]" />
+        <span class="crouton-crt-dot size-2.5 rounded-full bg-primary shadow-[0_0_5px_0_var(--ui-primary)]" />
         <span class="crouton-crt-line absolute h-px w-2/3 bg-primary" />
       </span>
       <span class="absolute bottom-1.5 max-w-full truncate px-1 text-[10px] uppercase tracking-wide opacity-0 transition-opacity group-hover:opacity-100">{{ caption }}</span>
@@ -65,7 +66,7 @@ const caption = computed(() => props.label || props.blockId)
     <template v-else>
       <span class="crouton-iris relative grid size-10 place-items-center">
         <span class="crouton-iris-ring absolute inset-0 rounded-full border-2 border-primary/70" />
-        <span class="crouton-iris-seed size-2 rounded-full bg-primary shadow-[0_0_12px_3px_var(--ui-primary)]" />
+        <span class="crouton-iris-seed size-2 rounded-full bg-primary shadow-[0_0_6px_0_var(--ui-primary)]" />
       </span>
       <span class="absolute bottom-1.5 max-w-full truncate px-1 text-[10px] uppercase tracking-wide opacity-0 transition-opacity group-hover:opacity-100">{{ caption }}</span>
     </template>
@@ -73,67 +74,57 @@ const caption = computed(() => props.label || props.blockId)
 </template>
 
 <style scoped>
-/* Each style plays its collapse-in motion on mount (the pane crushing into the handle).
-   Kept short + GPU-friendly (transform/opacity/clip-path). */
+/* Each style plays a SUBTLE settle-in on mount — a gentle fade with a small scale
+   nudge, just enough to read as "this style's resting form arrived" without a loud
+   flourish. The big motion is the pane's own shrink (LayoutRenderer flex-grow); this
+   handle is the quiet endpoint, not the show. GPU-friendly (transform/opacity only). */
 
-/* spring-drawer — overshoot then settle (damped). */
+@keyframes crouton-handle-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* spring-drawer — a faint settle along the spine axis. */
 .crouton-collapse-handle[data-collapse-style='spring-drawer'] {
-  animation: crouton-spring-in 480ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+  animation: crouton-spring-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes crouton-spring-in {
-  0% { transform: scaleX(2.2); opacity: 0.2; filter: blur(2px); }
-  55% { transform: scaleX(0.86); opacity: 1; filter: blur(0); }
-  78% { transform: scaleX(1.08); }
-  100% { transform: scaleX(1); }
+  0% { transform: scaleX(1.05); opacity: 0; }
+  100% { transform: scaleX(1); opacity: 1; }
 }
 
-/* crt-power-down — a white-hot line snaps in, pinches to a dot. */
+/* crt-power-down — the line just fades softly into the standby dot. */
 .crouton-collapse-handle[data-collapse-style='crt-power-down'] {
-  animation: crouton-crt-frame 520ms ease-out both;
+  animation: crouton-handle-fade 220ms ease-out both;
 }
 .crouton-crt-line {
-  animation: crouton-crt-line 520ms ease-out both;
+  animation: crouton-crt-line 300ms ease-out both;
 }
 .crouton-crt-dot {
-  animation: crouton-crt-dot 520ms ease-out both;
-}
-@keyframes crouton-crt-frame {
-  0% { transform: scaleY(1.6); }
-  40% { transform: scaleY(0.04); } /* crushed to the phosphor line */
-  100% { transform: scaleY(1); }
+  animation: crouton-crt-dot 300ms ease-out both;
 }
 @keyframes crouton-crt-line {
-  0%, 30% { opacity: 1; transform: scaleX(1); }
-  55% { opacity: 1; transform: scaleX(0.04); } /* line pinches to a point */
-  70%, 100% { opacity: 0; transform: scaleX(0); }
+  0% { opacity: 0.6; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.2); }
 }
 @keyframes crouton-crt-dot {
-  0%, 60% { opacity: 0; transform: scale(0); }
-  72% { opacity: 1; transform: scale(1.6); } /* standby dot blooms */
+  0% { opacity: 0; transform: scale(0.6); }
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* iris-portal — content clips from full to a seed; the ring converges. */
+/* iris-portal — the ring eases in from a hair larger; no zoom/spin. */
 .crouton-collapse-handle[data-collapse-style='iris-portal'] {
-  animation: crouton-iris-clip 540ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: crouton-handle-fade 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 .crouton-iris-ring {
-  animation: crouton-iris-ring 540ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: crouton-iris-ring 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 .crouton-iris-seed {
-  animation: crouton-iris-seed 540ms ease-out both;
-}
-@keyframes crouton-iris-clip {
-  0% { clip-path: circle(140%); }
-  100% { clip-path: circle(60%); }
+  animation: crouton-iris-seed 300ms ease-out both;
 }
 @keyframes crouton-iris-ring {
-  0% { transform: scale(3.4) rotate(-60deg); opacity: 0; }
-  60% { opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% { transform: scale(1.12); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 @keyframes crouton-iris-seed {
-  0%, 45% { opacity: 0; transform: scale(0); }
+  0% { opacity: 0; transform: scale(0.6); }
   100% { opacity: 1; transform: scale(1); }
 }
 
