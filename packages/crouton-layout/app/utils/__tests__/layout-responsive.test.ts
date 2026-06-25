@@ -6,8 +6,12 @@ import {
   removeBreakpoint,
   toggleCollapsed,
   setVariant,
+  setCollapseStyle,
   listBlocks,
+  normalizeCollapseStyle,
+  isSubtreeCollapsed,
 } from '../layout-responsive'
+import { isLayoutCollapseStyle, isInPlaceCollapse, DEFAULT_COLLAPSE_STYLE } from '@fyit/crouton-core/app/types/layout'
 import type { LayoutLeaf, LayoutNode, LayoutSplit, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 const leaf = (blockId: string, extra: Partial<LayoutLeaf> = {}): LayoutLeaf => ({ type: 'leaf', blockId, ...extra })
@@ -144,6 +148,83 @@ describe('resolveLayoutAtWidth — robustness', () => {
     })
     expect(resolveLayoutAtWidth(t, 800).collapseStyle).toBe('spring-drawer')
     expect(resolveLayoutAtWidth(t, 1280).collapseStyle).toBe('gutter-tabs')
+  })
+})
+
+describe('collapse styles (WS6 #875)', () => {
+  describe('isLayoutCollapseStyle — closed-set guard', () => {
+    it('accepts the four promoted styles', () => {
+      for (const s of ['gutter-tabs', 'spring-drawer', 'crt-power-down', 'iris-portal']) {
+        expect(isLayoutCollapseStyle(s)).toBe(true)
+      }
+    })
+    it('rejects unknown / non-string values', () => {
+      expect(isLayoutCollapseStyle('header-toggle')).toBe(false) // never promoted
+      expect(isLayoutCollapseStyle('bogus')).toBe(false)
+      expect(isLayoutCollapseStyle(undefined)).toBe(false)
+      expect(isLayoutCollapseStyle(3)).toBe(false)
+    })
+  })
+
+  describe('normalizeCollapseStyle — value → known style, default fallback', () => {
+    it('passes a known style through', () => {
+      expect(normalizeCollapseStyle('iris-portal')).toBe('iris-portal')
+      expect(normalizeCollapseStyle('spring-drawer')).toBe('spring-drawer')
+    })
+    it('falls back to the default for absent / unknown values', () => {
+      expect(normalizeCollapseStyle(undefined)).toBe(DEFAULT_COLLAPSE_STYLE)
+      expect(normalizeCollapseStyle('nope')).toBe(DEFAULT_COLLAPSE_STYLE)
+      expect(DEFAULT_COLLAPSE_STYLE).toBe('gutter-tabs')
+    })
+  })
+
+  describe('isInPlaceCollapse — gutter-tabs is out-of-flow, the rest are in place', () => {
+    it('gutter-tabs is NOT in-place (it leaves the splitter)', () => {
+      expect(isInPlaceCollapse('gutter-tabs')).toBe(false)
+    })
+    it('the three promoted motions are in-place', () => {
+      expect(isInPlaceCollapse('spring-drawer')).toBe(true)
+      expect(isInPlaceCollapse('crt-power-down')).toBe(true)
+      expect(isInPlaceCollapse('iris-portal')).toBe(true)
+    })
+  })
+
+  describe('resolved style normalizes', () => {
+    it('an absent collapseStyle resolves (via normalize) to the default', () => {
+      const r = resolveLayoutAtWidth(tree({ breakpoints: [{ minWidth: 600, collapsed: ['list'] }] }), 800)
+      expect(r.collapseStyle).toBeUndefined() // resolve stays faithful to what was authored…
+      expect(normalizeCollapseStyle(r.collapseStyle)).toBe('gutter-tabs') // …consumers normalize
+    })
+  })
+
+  describe('isSubtreeCollapsed — a panel hands space back only when ALL its leaves are collapsed', () => {
+    it('a leaf is collapsed iff its blockId is in the set', () => {
+      expect(isSubtreeCollapsed(leaf('list'), new Set(['list']))).toBe(true)
+      expect(isSubtreeCollapsed(leaf('list'), new Set(['form']))).toBe(false)
+      expect(isSubtreeCollapsed(leaf('list'), new Set())).toBe(false)
+    })
+    it('a split is collapsed only when every child is collapsed', () => {
+      const split = masterDetail() // list + form
+      expect(isSubtreeCollapsed(split, new Set(['list']))).toBe(false)
+      expect(isSubtreeCollapsed(split, new Set(['list', 'form']))).toBe(true)
+    })
+    it('a nested node is collapsed iff its inner root is collapsed', () => {
+      const nested: LayoutNode = { type: 'nested', label: 'App', layout: { renderer: 'panes', root: leaf('inner') } }
+      expect(isSubtreeCollapsed(nested, new Set(['inner']))).toBe(true)
+      expect(isSubtreeCollapsed(nested, new Set(['other']))).toBe(false)
+    })
+  })
+
+  describe('setCollapseStyle — author the motion at a checkpoint', () => {
+    it('upserts the breakpoint with a valid style', () => {
+      const t = setCollapseStyle(tree(), 768, 'iris-portal')
+      expect(t.breakpoints?.[0]).toEqual({ minWidth: 768, collapseStyle: 'iris-portal' })
+    })
+    it('clears the style when passed an empty / unknown value', () => {
+      const set = setCollapseStyle(tree(), 768, 'spring-drawer')
+      const cleared = setCollapseStyle(set, 768, '')
+      expect(cleared.breakpoints?.[0]?.collapseStyle).toBeUndefined()
+    })
   })
 })
 
