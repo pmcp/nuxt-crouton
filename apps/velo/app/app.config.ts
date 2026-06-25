@@ -25,5 +25,13 @@ export default defineAppConfig({
     croutonAssets: croutonAssetsConfig,
     bookingsEmailtemplates: bookingsEmailtemplatesConfig,
     bookingsEmaillogs: bookingsEmaillogsConfig
+  },
+  // Backend-free demo blocks for the /builder preview (epic #868) — both reuse the
+  // generic KPI block under DISTINCT ids so the collapse demo can collapse one pane
+  // and reflow the other (collapse is keyed by blockId). defu-merged with the
+  // crouton-layout defaults; not used by velo's product.
+  croutonLayoutBlocks: {
+    'demo-a': { id: 'demo-a', name: 'Overview', description: 'Demo KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 40 },
+    'demo-b': { id: 'demo-b', name: 'Detail', description: 'Demo KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 60 },
   }
 })
