@@ -60,6 +60,9 @@
   .editchip{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:5;cursor:zoom-in;
     background:#101e2b;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:8px 16px;font-size:12.5px;box-shadow:0 0 22px -6px var(--accent)}
   .editchip:hover{background:#13283a}
+  .frame .pane.zoom{cursor:zoom-in}
+  .frame .pane.zoom:hover{border-color:var(--accent);box-shadow:inset 0 1px 0 #ffffff08,0 0 22px -6px var(--accent);transform:translateY(-2px);transition:.18s}
+  .pane .zi{margin-left:auto;color:#46577a;font-size:11px}
 
   /* L3 — breakpoints */
   .ruler{position:absolute;top:84px;left:50%;transform:translateX(-50%);width:min(70vw,560px);height:36px}
@@ -95,30 +98,30 @@
     </div>
   </div>
 
-  <!-- L1 · PAGE CANVAS (apps wired) -->
+  <!-- L1 · PAGE = a LAYOUT of the page's apps (panes, not floating). Layouts in layouts. -->
   <div class="layer" id="l1" style="display:none">
-    <div class="badge"><span class="d" style="background:var(--accent)"></span>page · <b id="l1t">Bookings</b></div>
-    <div class="stage">
-      <svg class="edges" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line class="hot" x1="24" y1="34" x2="54" y2="30"/><line class="hot" x1="54" y1="30" x2="52" y2="68"/>
-        <line x1="24" y1="34" x2="22" y2="72"/><line x1="54" y1="30" x2="82" y2="40"/>
-      </svg>
-      <div class="node" style="left:24%;top:34%" data-next="2" data-label="Calendar"><h4><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar<span class="zi">⤢</span></h4><div class="thumb"><div class="calm" id="cm"></div></div></div>
-      <div class="node" style="left:54%;top:30%" data-next="2" data-label="Bookings"><h4><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i class="s"></i><i></i><i class="s"></i></div></div></div>
-      <div class="node" style="left:22%;top:72%" data-next="2" data-label="New Booking"><h4><span class="ic" style="background:#3a2b4f;color:var(--violet)">✎</span>New Booking<span class="zi">⤢</span></h4><div class="thumb"><div class="rows"><i></i><i></i><i class="s"></i></div></div></div>
-      <div class="node" style="left:52%;top:68%" data-next="2" data-label="Revenue"><h4><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue<span class="zi">⤢</span></h4><div class="thumb"><div class="barsm"><i style="height:50%"></i><i style="height:80%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i></div></div></div>
-      <div class="node" style="left:82%;top:40%" data-next="2" data-label="Activity"><h4><span class="ic" style="background:#24344f;color:var(--blue)">▦</span>Activity<span class="zi">⤢</span></h4><div class="thumb"><div class="barsm"><i style="height:40%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:85%"></i></div></div></div>
+    <div class="badge"><span class="d" style="background:var(--accent)"></span>page · <b id="l1t">Bookings</b> · layout</div>
+    <div class="frame">
+      <div class="pane zoom" data-next="2" data-label="Calendar" style="flex:1.5"><h5><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar<span class="zi">⤢</span></h5><div class="calm" id="cm" style="flex:1"></div></div>
+      <div class="col">
+        <div class="pane zoom" data-next="2" data-label="Bookings"><h5><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings<span class="zi">⤢</span></h5><div class="rows"><i></i><i class="s"></i><i></i></div></div>
+        <div style="display:flex;gap:8px;flex:1;min-height:0">
+          <div class="pane zoom" data-next="2" data-label="New Booking"><h5><span class="ic" style="background:#3a2b4f;color:var(--violet)">✎</span>New<span class="zi">⤢</span></h5><div class="rows"><i></i><i></i></div></div>
+          <div class="pane zoom" data-next="2" data-label="Revenue"><h5><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue<span class="zi">⤢</span></h5><div class="barsm" style="height:32px"><i style="height:50%"></i><i style="height:80%"></i><i style="height:40%"></i><i style="height:95%"></i></div></div>
+        </div>
+      </div>
+      <div class="pane zoom" data-next="2" data-label="Activity" style="flex:.85"><h5><span class="ic" style="background:#24344f;color:var(--blue)">▦</span>Activity<span class="zi">⤢</span></h5><div class="barsm" style="flex:1"><i style="height:40%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:85%"></i><i style="height:60%"></i></div></div>
     </div>
   </div>
 
-  <!-- L2 · APP LAYOUT (panes) -->
+  <!-- L2 · APP = its OWN layout (sub-panes). The app you zoomed into is itself a layout. -->
   <div class="layer" id="l2" style="display:none">
     <div class="badge"><span class="d" style="background:var(--gold)"></span>app · <b id="l2t">Calendar</b> · layout</div>
     <div class="frame">
-      <div class="pane" style="flex:1.3"><h5><span class="ic" style="background:#4a2230;color:var(--accent2)">◧</span>Calendar</h5><div class="calm" id="cm2" style="flex:1"></div></div>
+      <div class="pane" style="flex:1.6"><h5><span class="ic" style="background:#1f3a44;color:var(--accent)">◰</span>Main view</h5><div class="calm" id="cm2" style="flex:1"></div></div>
       <div class="col">
-        <div class="pane"><h5><span class="ic" style="background:#1f3a44;color:var(--accent)">≣</span>Bookings</h5><div class="rows"><i></i><i class="s"></i><i></i></div></div>
-        <div class="pane"><h5><span class="ic" style="background:#4a3c1c;color:var(--gold)">★</span>Revenue</h5><div class="barsm" style="height:42px"><i style="height:50%"></i><i style="height:80%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i></div></div>
+        <div class="pane"><h5><span class="ic" style="background:#24344f;color:var(--blue)">▤</span>Filters</h5><div class="rows"><i class="s"></i><i></i><i class="s"></i></div></div>
+        <div class="pane"><h5><span class="ic" style="background:#3a2b4f;color:var(--violet)">≣</span>Detail</h5><div class="rows"><i></i><i class="s"></i><i></i><i></i></div></div>
       </div>
     </div>
     <div class="editchip" data-next="3" data-label="Responsive">⤢ edit responsiveness</div>
@@ -141,7 +144,7 @@
     </div>
   </div>
 
-  <div class="hint" id="hint">click a <b>node</b> to zoom in · <b>Esc</b> / scroll up / a breadcrumb to zoom out</div>
+  <div class="hint" id="hint"><b>Site</b> is a flow (wire pages) · zoom into a page and it's <b>layouts in layouts</b> — a page is a layout of apps, each app a layout too · click a pane to dive · <b>Esc</b>/scroll-up/breadcrumb to zoom out</div>
 
 <script>
   const LV=['l0','l1','l2','l3'].map(id=>document.getElementById(id));
