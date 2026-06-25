@@ -131,6 +131,7 @@ watch(
          in its own pane slot, click-to-expand. -->
     <CroutonLayoutCollapseHandle
       v-if="leafCollapsed && collapseCtx"
+      :key="collapseCtx.style"
       :collapse-style="collapseCtx.style"
       :block-id="node.blockId"
       @expand="collapseCtx.expand(node.blockId)"

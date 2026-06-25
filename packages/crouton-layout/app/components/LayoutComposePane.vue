@@ -53,37 +53,40 @@ const canDetach = computed(() => props.path.length > 0)
       Unknown block:&nbsp;<code>{{ node.blockId }}</code>
     </div>
 
-    <!-- Per-leaf handle — appears on hover; click an action. -->
+    <!-- Per-leaf handle — always visible (touch has no hover); brightens on hover.
+         Detach pops the pane out of its group; trash removes it. -->
     <div
-      class="absolute left-1 top-1 z-20 flex items-center gap-0.5 rounded-md border border-default bg-default/90 px-1 py-0.5 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover/pane:opacity-100"
+      class="absolute left-1 top-1 z-20 flex items-center gap-0.5 rounded-md border border-default bg-default/90 px-1 py-0.5 opacity-80 shadow-sm backdrop-blur transition-opacity group-hover/pane:opacity-100"
     >
       <UIcon
         name="i-lucide-grip-vertical"
-        class="size-3.5 text-muted"
+        class="size-4 text-muted"
       />
       <button
         v-if="canDetach"
         type="button"
         title="Detach this pane"
-        class="grid size-5 place-items-center rounded text-muted hover:text-primary"
+        aria-label="Detach this pane"
+        class="grid size-7 place-items-center rounded text-muted hover:text-primary"
         @pointerdown.stop
         @click.stop="emit('detach', path)"
       >
         <UIcon
           name="i-lucide-package-open"
-          class="size-3.5"
+          class="size-4"
         />
       </button>
       <button
         type="button"
         title="Remove this pane"
-        class="grid size-5 place-items-center rounded text-muted hover:text-error"
+        aria-label="Remove this pane"
+        class="grid size-7 place-items-center rounded text-muted hover:text-error"
         @pointerdown.stop
         @click.stop="emit('remove', path)"
       >
         <UIcon
           name="i-lucide-trash-2"
-          class="size-3.5"
+          class="size-4"
         />
       </button>
     </div>
