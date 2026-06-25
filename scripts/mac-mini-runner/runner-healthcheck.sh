@@ -90,15 +90,21 @@ if [ -z "$svc_label" ]; then
   fail=1
 else
   # `launchctl list <label>` prints a plist; the PID line is `"PID" = N;` when running.
+  # NB: launchd tracks the PID of the runner's WRAPPER (`runsvc.sh`), NOT the listener —
+  # the real `Runner.Listener` runs as a child of that wrapper. So "healthy" = the service
+  # has a live wrapper PID AND a Runner.Listener process exists somewhere. (Checking that
+  # the wrapper PID itself is a Runner.Listener is wrong — it's bash — and would restart a
+  # perfectly healthy runner every cycle.)
   pid="$(launchctl list "$svc_label" 2>/dev/null | awk -F'= ' '/"PID"/ {gsub(/[ ;]/,"",$2); print $2}')"
   if [ -z "$pid" ] || [ "$pid" = "-" ]; then
     alert "runner service '$svc_label' is loaded but has no running PID"
     fail=1
-  elif ! ps -p "$pid" -o command= 2>/dev/null | grep -q 'Runner.Listener'; then
-    alert "runner PID $pid is not a Runner.Listener (wedged/zombie)"
+  elif ! pgrep -f 'Runner.Listener' >/dev/null 2>&1; then
+    alert "runner service '$svc_label' is up (wrapper pid=$pid) but no Runner.Listener process exists (wedged wrapper / dead listener)"
     fail=1
   else
-    log "OK: runner '$svc_label' alive (pid=$pid, label=$RUNNER_LABEL)"
+    listener_pid="$(pgrep -f 'Runner.Listener' | head -1)"
+    log "OK: runner '$svc_label' alive (wrapper pid=$pid, listener pid=$listener_pid, label=$RUNNER_LABEL)"
   fi
 fi
 
@@ -132,12 +138,12 @@ if [ "$fail" -ne 0 ]; then
   if restart_runner; then
     log "Recovery: restart issued. Re-verifying in 15s…"
     sleep 15
-    new_pid="$(launchctl list "$(runner_launchd_label)" 2>/dev/null | awk -F'= ' '/"PID"/ {gsub(/[ ;]/,"",$2); print $2}')"
-    if [ -n "$new_pid" ] && [ "$new_pid" != "-" ]; then
-      log "Recovery: runner back up (pid=$new_pid)"
-      alert "runner was down and has been auto-restarted (pid=$new_pid)"
+    if pgrep -f 'Runner.Listener' >/dev/null 2>&1; then
+      new_pid="$(pgrep -f 'Runner.Listener' | head -1)"
+      log "Recovery: runner back up (Runner.Listener pid=$new_pid)"
+      alert "runner was down and has been auto-restarted (listener pid=$new_pid)"
     else
-      alert "runner restart attempted but it is STILL down — needs a human"
+      alert "runner restart attempted but no Runner.Listener is up — needs a human"
     fi
   else
     alert "could not restart the runner (no launchd label and no svc.sh) — needs a human"
