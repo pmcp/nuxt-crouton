@@ -3,55 +3,38 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Maquette — tactile breakpoint control (concepts)</title>
+<title>Maquette — tactile breakpoint control</title>
 <style>
   :root{
     --bg:#0b0e14; --panel:#141a24; --elevated:#1b2330; --border:#2a3445; --border2:#3a4860;
     --muted:#8a97ab; --text:#e6ecf5; --primary:#5b9dff; --accent:#36e0c0; --grip:#2b3a55;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:24px;overflow-x:hidden}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;padding:22px;overflow-x:hidden}
   h1{font-size:18px;margin:0 0 4px}
-  p.sub{color:var(--muted);margin:0 0 18px;max-width:78ch}
-  .concepts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;font-size:12px;color:var(--muted)}
-  .concepts b{color:var(--text)}
-  .stagewrap{position:relative;margin-top:40px;height:520px;user-select:none;touch-action:none}
+  p.sub{color:var(--muted);margin:0 0 16px;max-width:78ch}
+  .wrap{max-width:760px;margin:0 auto}
 
-  /* width indicator (always visible) → hover it to slide the breakpoint ruler out */
-  .bpctl{position:absolute;top:-66px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:6;max-width:100%}
-  .chip{font:11px/1 ui-monospace,monospace;background:#0d1320;border:1px solid var(--border2);color:var(--text);
-    padding:5px 11px;border-radius:999px;cursor:ew-resize;touch-action:none;display:flex;gap:7px;align-items:center;transition:.15s}
-  .bpctl.pinned .chip{border-color:var(--primary);color:var(--primary)}
-  .bpctl:hover .chip{border-color:var(--primary);color:var(--primary)}
-  .chip .ico{color:var(--muted)}.bpctl:hover .chip .ico{color:var(--primary)}
-  /* the ruler is tucked until you hover the indicator */
-  .ruler{height:22px;display:flex;align-items:center;margin-top:14px;max-width:100%;opacity:0;transform:translateY(-8px);
-    pointer-events:none;transition:opacity .18s, transform .18s}
-  .bpctl:hover .ruler, .bpctl.pinned .ruler{opacity:1;transform:none;pointer-events:auto}
-  /* not a solid bar — a faint DOTTED line carrying the breakpoint dots, with room */
-  .ruler .track{position:relative;height:0;border-top:2px dotted var(--border2);background:transparent}
-  .stud{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:default}
-  .stud .dot{width:11px;height:11px;border-radius:50%;background:var(--muted);border:2px solid var(--bg);transition:.15s}
-  .stud.active .dot{background:var(--accent);box-shadow:0 0 10px var(--accent);transform:scale(1.25)}
-  .stud .lbl{position:absolute;top:14px;font:10px/1 ui-monospace,monospace;color:var(--muted);white-space:nowrap}
-  .stud.active .lbl{color:var(--accent)}
+  /* ── one connected axis: a slider whose handle position IS the width, with the
+        breakpoint dots as marks on the SAME axis. Align handle with a dot → that bp. ── */
+  .slider{position:relative;height:30px;margin:0 auto 6px}
+  .track{position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);
+    background:transparent}                       /* no line, per request — just dots + handle */
+  .dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;
+    transform:translate(-50%,-50%);background:var(--border2);transition:.15s}
+  .dot.active{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  .dot.near{transform:translate(-50%,-50%) scale(1.25)}
+  .handle{position:absolute;top:50%;transform:translate(-50%,-50%);z-index:3;
+    display:flex;align-items:center;gap:6px;cursor:ew-resize;touch-action:none;
+    background:#0d1320;border:1px solid var(--primary);color:var(--primary);
+    font:11px/1 ui-monospace,monospace;padding:5px 10px;border-radius:999px;white-space:nowrap;
+    box-shadow:0 2px 10px #0008}
+  .handle .ico{opacity:.7}
 
-  /* the resizable frame (centered); drag either edge grip to widen */
-  .frame{position:absolute;top:0;left:50%;transform:translateX(-50%);height:480px;max-width:100%;
-    border:1px solid var(--border);border-radius:14px;background:var(--panel);
-    box-shadow:0 24px 60px #0008; transition:box-shadow .2s}
-  .frame.dragging{box-shadow:0 30px 80px #000b,0 0 0 1px var(--primary)}
-  .edge{position:absolute;top:0;bottom:0;width:22px;display:flex;align-items:center;justify-content:center;cursor:ew-resize}
-  .edge.l{left:-11px}.edge.r{right:-11px}
-  .grip{width:8px;height:56px;border-radius:6px;background:linear-gradient(180deg,var(--border2),var(--grip));
-    border:1px solid #44557a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-    box-shadow:0 2px 8px #0007; transition:.15s}
-  .edge:hover .grip,.frame.dragging .grip{background:linear-gradient(180deg,var(--primary),#3b6fcc);border-color:var(--primary)}
-  .grip i{width:3px;height:3px;border-radius:50%;background:#0b0e14aa}
-  /* (width readout now lives in the .chip above the frame) */
-
-  /* inner sample layout — reflows via @container, no JS */
-  .root{position:absolute;inset:14px;container-type:inline-size;container-name:mq}
+  .stage{position:relative;height:430px;display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+  .frame{height:420px;border:1px solid var(--border);border-radius:14px;background:var(--panel);
+    box-shadow:0 24px 60px #0008;transform-origin:top center;flex:0 0 auto;overflow:hidden}
+  .root{position:absolute;inset:12px;container-type:inline-size;container-name:mq}
   .app{display:grid;gap:8px;height:100%;grid-template-columns:1fr;grid-template-areas:"list" "main" "stats"}
   @container mq (min-width:480px){.app{grid-template-columns:160px 1fr;grid-template-areas:"list main" "stats main"}}
   @container mq (min-width:760px){.app{grid-template-columns:180px 1fr 200px;grid-template-areas:"list main stats"}}
@@ -60,32 +43,34 @@
   .list{grid-area:list}.main{grid-area:main}.stats{grid-area:stats}
   .row{height:8px;border-radius:4px;background:#26334a;margin-bottom:6px}.row.s{width:55%}.row.m{width:82%}
   .kpi{font-size:20px;font-weight:800}.kpi small{color:var(--accent);font-size:11px;margin-left:5px}
-
-  .hint{margin-top:28px;color:var(--muted);font-size:12px;text-align:center}
-  .legend{margin-top:14px;color:var(--muted);font-size:12.5px;max-width:84ch}
-  .legend b{color:var(--text)}
+  .hint{margin-top:14px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
 <body>
+<div class="wrap">
   <h1>Maquette — tactile breakpoint control</h1>
-  <p class="sub">Instead of an abstract slider: <b>grab the layout's edge and stretch it</b>. The breakpoints live on the frame as studs that light up as you cross them — direct manipulation, the arranging <em>is</em> the gesture. Drag either grip.</p>
+  <p class="sub">One axis: the <b>handle's position is the width</b>, and the breakpoint <b>dots are marks on the same line</b>. Slide the handle onto a dot → you're at that breakpoint (it snaps + lights up). The frame scales to fit, so widths bigger than the screen still work.</p>
 
-  <div class="concepts">
-    <span><b>This demo →</b> edge-drag frame + ruler studs.</span>
-    <span>· Alt 1: a corner “screw” knob you twist/drag.</span>
-    <span>· Alt 2: studs themselves draggable (set a breakpoint by dragging a stud onto the edge).</span>
+  <div
+    class="slider"
+    id="slider"
+  >
+    <div class="track"></div>
+    <!-- dots + handle injected -->
+    <div
+      class="handle"
+      id="handle"
+    ><span class="ico">⟷</span><span id="readout">880</span>px</div>
   </div>
 
-  <div class="stagewrap" id="stage">
-    <!-- compact width indicator; hover it to slide the breakpoint ruler out -->
-    <div class="bpctl" id="bpctl">
-      <div class="chip"><span class="ico">⟷</span><span id="wpill">900px</span></div>
-      <div class="ruler" id="ruler" style="width:900px"><div class="track" id="track" style="width:100%"></div></div>
-    </div>
-
-    <div class="frame" id="frame" style="width:900px">
-      <div class="edge l" data-side="l"><div class="grip"><i></i><i></i><i></i></div></div>
-      <div class="edge r" data-side="r"><div class="grip"><i></i><i></i><i></i></div></div>
+  <div
+    class="stage"
+    id="stage"
+  >
+    <div
+      class="frame"
+      id="frame"
+    >
       <div class="root">
         <div class="app">
           <div class="pane list"><h4>Bookings</h4><div class="row m"></div><div class="row s"></div><div class="row m"></div><div class="row s"></div></div>
@@ -96,70 +81,50 @@
     </div>
   </div>
 
-  <p class="hint">↤ drag a grip to resize ↦ &nbsp;·&nbsp; studs light up as the width crosses each breakpoint &nbsp;·&nbsp; the layout reflows in pure CSS</p>
-  <p class="legend"><b>Why this is better than a slider:</b> the control <em>is</em> the layout — you size the real thing, breakpoints are physical marks on its frame, and it reads as "make it this wide" rather than "set an abstract number." Maps 1:1 to the authored min-width breakpoints. (The grips could be the breakpoint studs themselves — drag a stud to plant a new breakpoint exactly where you let go.)</p>
+  <p class="hint">slide the handle → the dots light up as you pass each breakpoint · drop near a dot and it snaps</p>
+</div>
 
 <script>
-  const MIN=300,MAX=1100;
-  const BPS=[480,760]; // authored breakpoints
-  const stage=document.getElementById('stage'), frame=document.getElementById('frame'),
-        ruler=document.getElementById('ruler'), track=document.getElementById('track'),
-        wpill=document.getElementById('wpill');
-  let width=900;
+  const MIN=320, MAX=1100, BPS=[480,760], SNAP=14;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const slider=document.getElementById('slider'), handle=document.getElementById('handle'),
+        readout=document.getElementById('readout'), stage=document.getElementById('stage'),
+        frame=document.getElementById('frame');
+  let width=880;
 
-  // render studs on the ruler (mapped across MIN..MAX), + the MIN as a base mark
-  function buildStuds(){
-    [...track.querySelectorAll('.stud')].forEach(s=>s.remove());
-    BPS.forEach(bp=>{
-      const s=document.createElement('div'); s.className='stud'; s.dataset.bp=bp;
-      s.style.left=((bp-MIN)/(MAX-MIN)*100)+'%';
-      s.innerHTML='<div class="dot"></div><div class="lbl">'+bp+'</div>';
-      track.appendChild(s);
-    });
-  }
+  // build the breakpoint dots on the slider
+  const dots=BPS.map(bp=>{ const d=document.createElement('div'); d.className='dot'; d.dataset.bp=bp; slider.appendChild(d); return d; });
+  const xOf=bp=>((bp-MIN)/(MAX-MIN))*slider.clientWidth;     // width → x on the axis
+  const wOf=x=>MIN+(x/slider.clientWidth)*(MAX-MIN);          // x → width
+
   function render(){
-    // Clamp to what's actually on screen, and round to whole px (no float spam in the
-    // readout, esp. from sub-pixel touch deltas).
-    const avail=stage.clientWidth||MAX;
-    width=Math.round(Math.max(MIN,Math.min(Math.min(MAX,avail),width)));
+    width=Math.round(clamp(width,MIN,MAX));
+    // handle rides the axis at the width's position
+    handle.style.left=xOf(width)+'px';
+    readout.textContent=width;
+    dots.forEach(d=>{ const bp=+d.dataset.bp; d.style.left=xOf(bp)+'px';
+      d.classList.toggle('active', width>=bp);
+      d.classList.toggle('near', Math.abs(xOf(width)-xOf(bp))<SNAP); });
+    // frame is drawn AT `width` then scaled to fit the stage (so >screen widths still work)
+    const avail=stage.clientWidth-4;
     frame.style.width=width+'px';
-    ruler.style.width=width+'px';
-    // studs keep FIXED positions on the MIN..MAX scale (set in buildStuds) so they have
-    // room and never pile at the edge — we only toggle their active state.
-    track.querySelectorAll('.stud').forEach(s=>{ s.classList.toggle('active', width>=+s.dataset.bp); });
-    wpill.textContent=width+'px';
+    frame.style.transform='scale('+Math.min(1, avail/width)+')';
   }
-  buildStuds(); render();
 
   let drag=null;
-  stage.querySelectorAll('.edge').forEach(e=>{
-    e.addEventListener('pointerdown',ev=>{
-      drag={side:e.dataset.side,startX:ev.clientX,startW:width};
-      frame.classList.add('dragging'); e.setPointerCapture?.(ev.pointerId); ev.preventDefault();
-    });
-  });
+  handle.addEventListener('pointerdown',ev=>{ drag=true; handle.setPointerCapture?.(ev.pointerId); ev.preventDefault(); });
   window.addEventListener('pointermove',ev=>{
     if(!drag) return;
-    const dx=ev.clientX-drag.startX;
-    // symmetric about centre: each side contributes 2× so the frame grows from the middle
-    width=drag.startW + (drag.side==='r'? dx : -dx)*2;
-    render();
+    const r=slider.getBoundingClientRect();
+    let w=wOf(clamp(ev.clientX-r.left,0,slider.clientWidth));
+    // snap to a nearby breakpoint
+    for(const bp of BPS){ if(Math.abs(w-bp) < (MAX-MIN)*SNAP/slider.clientWidth) w=bp; }
+    width=w; render();
   });
-  window.addEventListener('pointerup',()=>{ if(drag){drag=null; frame.classList.remove('dragging');}});
-  // The width chip IS the resize control: drag it to shrink/grow the CENTRED layout
-  // (drag right → wider, left → narrower; everything stays centred). A tap with no
-  // drag pins the ruler open — needed on touch, where there's no hover.
-  const chip=document.querySelector('.chip'), bpctl=document.getElementById('bpctl');
-  let cdrag=null;
-  chip.addEventListener('pointerdown',ev=>{ cdrag={x:ev.clientX,w:width,moved:false}; chip.setPointerCapture?.(ev.pointerId); ev.preventDefault(); });
-  window.addEventListener('pointermove',ev=>{
-    if(!cdrag) return;
-    const dx=ev.clientX-cdrag.x; if(Math.abs(dx)>3) cdrag.moved=true;
-    width=cdrag.w+dx*2;            // ×2 so the centred frame grows symmetrically with the drag
-    frame.classList.add('dragging'); render();
-  });
-  window.addEventListener('pointerup',()=>{ if(!cdrag) return; if(!cdrag.moved) bpctl.classList.toggle('pinned'); cdrag=null; frame.classList.remove('dragging'); });
-  window.__setW=(w)=>{ width=w; render() }; // test/screenshot hook
+  window.addEventListener('pointerup',()=>{ drag=null; });
+  window.addEventListener('resize',render);
+  window.__setW=(w)=>{ width=w; render() };
+  render();
 </script>
 </body>
 </html>
