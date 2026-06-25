@@ -218,13 +218,16 @@ function cpForEdit(){ let cp=checkpoints.find(c=>Math.abs(c.min-W)<=14); let cre
   lastActiveMin=cp.min; return {cp,created}; }
 
 // ---- edit: seam resize + grip rearrange ----
-let mode=null, gut=null, pane=null, hover=null;
+let mode=null, gut=null, pane=null, hover=null, gripArm=null;
+// lift only AFTER a real drag (threshold) — a plain click must NOT remove the pane
+function startLift(e){ const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=frameMarkup(cp); bind(); renderRuler(); }
+  const lf=findLeaf(cp.tree,gripArm.id); pane={cp, leaf:lf, backup:clone(cp.tree)};
+  cp.tree=removeLeaf(cp.tree,gripArm.id); frameRenderFrom(cp,true);
+  ghost.style.width='150px'; ghost.style.height='108px'; ghost.innerHTML=`<div class="pane" style="cursor:grabbing">${paneInner(lf.app)}</div>`;
+  ghost.dataset.gx=75; ghost.dataset.gy=22; moveGhost(e); ghost.style.opacity=1; mode='pane'; gripArm=null; }
 function bind(){
   frame.querySelectorAll('.grip').forEach(g=>g.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
-    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=frameMarkup(cp); bind(); renderRuler(); }
-    const lf=findLeaf(cp.tree,g.dataset.grip); pane={cp, leaf:lf, backup:clone(cp.tree)};
-    cp.tree=removeLeaf(cp.tree,g.dataset.grip); frameRenderFrom(cp,true);
-    ghost.style.width='150px'; ghost.style.height='108px'; ghost.innerHTML=`<div class="pane" style="cursor:grabbing">${paneInner(lf.app)}</div>`; ghost.dataset.gx=75; ghost.dataset.gy=22; moveGhost(e); ghost.style.opacity=1; mode='pane'; }));
+    gripArm={id:g.dataset.grip, sx:e.clientX, sy:e.clientY}; mode='griparm'; }));
   frame.querySelectorAll('.gutter').forEach(gt=>gt.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
     const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=frameMarkup(cp); bind(); renderRuler(); }
     const sid=+gt.dataset.sid, node=findSplit(cp.tree,sid); const splitEl=frame.querySelector(`.split[data-sid="${sid}"]`), r=splitEl.getBoundingClientRect();
@@ -256,6 +259,7 @@ function moveGhost(e){ ghost.style.left=(e.clientX-(+ghost.dataset.gx))+'px'; gh
 function sideFor(r,x,y){ const d={W:(x-r.left)/r.width,E:1-(x-r.left)/r.width,N:(y-r.top)/r.height,S:1-(y-r.top)/r.height}; return Object.keys(d).reduce((m,k)=>d[k]<d[m]?k:m,'W'); }
 
 addEventListener('pointermove',e=>{
+  if(mode==='griparm'){ if(Math.hypot(e.clientX-gripArm.sx,e.clientY-gripArm.sy)>6) startLift(e); return; }
   if(mode==='pane'){ moveGhost(e); zone.style.opacity=0; hover=null;
     const u=document.elementFromPoint(e.clientX,e.clientY), pEl=u&&u.closest('.pane[data-id]');
     if(pEl&&frame.contains(pEl)){ const r=pEl.getBoundingClientRect(), side=sideFor(r,e.clientX,e.clientY); hover={targetId:pEl.dataset.id,side};
@@ -267,6 +271,7 @@ addEventListener('pointermove',e=>{
   } else if(wdrag){ setW(wdrag.w+(e.clientX-wdrag.sx)); }
 });
 addEventListener('pointerup',()=>{
+  if(mode==='griparm'){ gripArm=null; mode=null; return; }   // clean click — no lift, no checkpoint
   if(mode==='pane'&&pane){ ghost.style.opacity=0; zone.style.opacity=0;
     if(hover){ pane.cp.tree=insertLeaf(pane.cp.tree,hover.targetId,hover.side,pane.leaf); frameRenderFrom(pane.cp,true); flashSaved(pane.cp.min); }
     else { pane.cp.tree=pane.backup; frameRenderFrom(pane.cp,true); } pane=null;hover=null;mode=null; renderRuler(); return; }

@@ -247,7 +247,7 @@ canvas.addEventListener('pointerdown',e=>{
   const gripEl=e.target.closest('.grip');
   const gutEl=e.target.closest('.gutter');
   const pieceEl=e.target.closest('.piece');
-  if(gripEl){ liftPane(pieces.find(p=>findLeaf(p.tree,+gripEl.dataset.grip)), +gripEl.dataset.grip, e); return; }
+  if(gripEl){ gripArm={piece:pieces.find(p=>findLeaf(p.tree,+gripEl.dataset.grip)), leafId:+gripEl.dataset.grip, sx:e.clientX, sy:e.clientY}; mode='griparm'; return; }
   if(gutEl){
     const sid=+gutEl.dataset.sid, piece=pieces.find(p=>findSplit(p.tree,sid)), node=findSplit(piece.tree,sid);
     const splitEl=gutEl.parentElement, r=splitEl.getBoundingClientRect();
@@ -262,6 +262,7 @@ canvas.addEventListener('pointerdown',e=>{
   mode='pan'; panSX=e.clientX;panSY=e.clientY;panOX=panX;panOY=panY; canvas.classList.add('panning');
 });
 
+let gripArm=null;   // armed on grip pointerdown; lift only after a real drag (a click must not remove the pane)
 function liftPane(piece, leafId, e){
   const lf=findLeaf(piece.tree, leafId);
   pane={srcPiece:piece, leaf:lf};
@@ -280,6 +281,7 @@ function moveGhost(e){ ghost.style.left=(e.clientX-(+ghost.dataset.gx))+'px'; gh
 function sideFor(r,x,y){ const d={W:(x-r.left)/r.width,E:1-(x-r.left)/r.width,N:(y-r.top)/r.height,S:1-(y-r.top)/r.height}; return Object.keys(d).reduce((m,k)=>d[k]<d[m]?k:m,'W'); }
 
 canvas.addEventListener('pointermove',e=>{
+  if(mode==='griparm'){ if(Math.hypot(e.clientX-gripArm.sx,e.clientY-gripArm.sy)>6){ liftPane(gripArm.piece, gripArm.leafId, e); gripArm=null; } return; }
   if(mode==='pane'){
     moveGhost(e); zone.style.opacity=0; hover=null;
     const under=document.elementFromPoint(e.clientX,e.clientY);
@@ -332,6 +334,7 @@ function cleanupEmpty(){ // drop pieces whose tree became null (shouldn't happen
   pieces=pieces.filter(p=>p.tree);
 }
 function end(e){
+  if(mode==='griparm'){ gripArm=null; mode=null; return; }   // clean click on a grip — no lift
   if(mode==='gut'&&gut){ gut.el.querySelector('.gutter')?.classList.remove('active'); gut=null; mode=null; return; }
   if(mode==='pane'&&pane){
     ghost.style.opacity=0; zone.style.opacity=0;
