@@ -8,6 +8,10 @@ import type { LayoutNode, LayoutTree, LayoutCollapseStyle } from '@fyit/crouton-
 
 useHead({ title: 'Crouton Builder — live POC' })
 
+// Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
+// hard) that you're looking at the latest build, not a stale one.
+const BUILD = 'b8 · 25 Jun · resize + auto-breakpoint + detach + click-to-reopen'
+
 // Structural match for crouton-layout's ComposePiece (its composables subpath isn't
 // exposed for type imports; the canvas accepts any structurally-compatible piece).
 interface ComposePiece {
@@ -73,8 +77,9 @@ const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-powe
 <template>
   <div class="min-h-screen bg-default p-6 text-default">
     <header class="mb-5">
-      <h1 class="text-xl font-semibold">Crouton Builder — live POC</h1>
+      <h1 class="text-xl font-semibold">Maquette — live POC</h1>
       <p class="mt-1 text-sm text-muted">Drag the real components. Epic #868 — WS4 compose · WS5 responsiveness · WS6 collapse.</p>
+      <span class="mt-2 inline-block rounded-full border border-default bg-elevated px-2 py-0.5 font-mono text-[10px] text-muted">{{ BUILD }}</span>
     </header>
 
     <div class="mb-5 flex flex-wrap gap-2">
