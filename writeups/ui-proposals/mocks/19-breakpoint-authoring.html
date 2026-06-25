@@ -43,7 +43,23 @@
 
   .frameWrap{position:relative}
   #frame{position:relative; height:440px; border:1.5px solid var(--edge2); border-radius:16px; background:#0b1018; padding:8px;
-    box-shadow:0 26px 64px #000b, inset 0 0 0 1px #ffffff08, 0 0 50px -10px #ffd34d22; transition:width .12s ease-out}
+    box-shadow:0 26px 64px #000b, inset 0 0 0 1px #ffffff08, 0 0 50px -10px #ffd34d22; transition:width .12s ease-out; display:flex; gap:8px}
+  .main{position:relative; flex:1 1 0; min-width:0}
+  .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-size:12px}
+  /* collapsed panes → gutter rail (the shipped gutter-tabs style, + a thinner icon 'rail') */
+  .grail{flex:0 0 auto; display:flex; flex-direction:column; gap:6px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;border:1px solid #283a55;border-left:3px solid var(--c);border-radius:9px;background:#0e1626;color:var(--ink);padding:10px 0;width:34px;transition:.15s}
+  .tab:hover{background:#16213a;box-shadow:0 0 14px -4px var(--c)}
+  .tab .ti{font-size:13px;color:var(--c)}
+  .tab .tn{writing-mode:vertical-rl;text-orientation:mixed;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .grail.rail .tab{width:30px;padding:8px 0}
+  .grail.rail .tab .tn{display:none}
+  .styletog{position:absolute; right:0; top:-26px; display:flex; gap:3px; z-index:7}
+  .styletog button{font-size:10px;letter-spacing:.04em;color:var(--dim);background:#0d1320;border:1px solid var(--edge);border-radius:6px;padding:3px 7px;cursor:pointer}
+  .styletog button.on{color:var(--gold);border-color:var(--gold)}
+  .pctl{position:absolute; top:6px; right:6px; z-index:7; display:flex; gap:4px; align-items:center}
+  .cbtn{width:22px;height:18px;border-radius:6px;cursor:pointer;display:grid;place-items:center;color:#5d6f8c;font-size:13px;line-height:1;background:#0e1626cc;border:1px solid #283a55;opacity:.6;transition:.18s;padding:0}
+  .cbtn:hover{opacity:1;color:var(--gold);border-color:var(--gold)}
   .whandle-wrap{position:absolute; right:-9px; top:50%; transform:translateY(-50%); z-index:6; display:flex; align-items:center; gap:8px}
   .whandle{position:relative; width:14px; height:60px; border-radius:7px; cursor:ew-resize; background:#0d1320; border:1px solid var(--edge2); box-shadow:0 0 14px -4px var(--gold)}
   .whandle::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:2px;height:22px;background:#4a5a78;border-radius:2px;box-shadow:3px 0 #4a5a78,-3px 0 #4a5a78}
@@ -68,7 +84,7 @@
   .pane h4{margin:0 0 8px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); display:flex; gap:6px; align-items:center; pointer-events:none}
   .pane .ic{width:17px;height:17px;border-radius:6px;display:grid;place-items:center;font-size:10px;flex:0 0 auto}
   .gr{pointer-events:none}
-  .grip{position:absolute; top:6px; right:6px; z-index:7; width:22px; height:18px; border-radius:6px; cursor:grab; display:grid; place-items:center; color:#5d6f8c; font-size:12px; background:#0e1626cc; border:1px solid #283a55; opacity:.6; transition:.18s}
+  .grip{width:22px; height:18px; border-radius:6px; cursor:grab; display:grid; place-items:center; color:#5d6f8c; font-size:12px; background:#0e1626cc; border:1px solid #283a55; opacity:.6; transition:.18s}
   .grip:hover{opacity:1; color:var(--accent); border-color:var(--accent)}
   .row-{height:8px;border-radius:5px;background:#26334a;opacity:.85;margin-bottom:6px}.row-.s{width:55%}.row-.m{width:78%}
   .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.cal i{aspect-ratio:1;border-radius:3px;background:#22304a}.cal i.on{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
@@ -76,7 +92,7 @@
   .kpi{font-size:21px;font-weight:800;letter-spacing:-.02em}.kpi small{font-size:11px;color:var(--accent);font-weight:600;margin-left:5px}
 
   /* per-breakpoint widget VARIANT switcher (list / cards / table) */
-  .vswitch{position:absolute; top:6px; right:34px; z-index:7; display:flex; gap:2px; background:#0e1626cc; border:1px solid #283a55; border-radius:7px; padding:2px}
+  .vswitch{display:flex; gap:2px; background:#0e1626cc; border:1px solid #283a55; border-radius:7px; padding:2px}
   .vswitch button{width:18px;height:16px;border:0;background:transparent;color:#5d6f8c;font-size:11px;line-height:1;cursor:pointer;border-radius:4px;display:grid;place-items:center;padding:0}
   .vswitch button:hover{color:var(--ink)}
   .vswitch button.on{color:var(--gold);background:#1c1606}
@@ -104,6 +120,7 @@
       </div>
       <div class="frameWrap">
         <div class="lockline" id="lockline"></div>
+        <div class="styletog" id="styletog"><button data-style="tabs">tabs</button><button data-style="rail">rail</button></div>
         <div id="frame"></div>
         <div class="whandle-wrap" id="whwrap">
           <div class="shortcuts">
@@ -143,18 +160,25 @@ const C=(a,b,f)=>({kind:'split',dir:'col',a,b,frac:f??.5,sid:SID++});
 function treeHTML(n, vars){ vars=vars||{};
   if(n.kind==='leaf'){ const cur=vars[n.id]||(VARIANTS[n.id]?VARIANTS[n.id][0]:null);
     const vsw=VARIANTS[n.id]?`<div class="vswitch" data-vid="${n.id}">${VARIANTS[n.id].map(v=>`<button data-var="${v}" class="${v===cur?'on':''}" title="${v}">${VICON[v]}</button>`).join('')}</div>`:'';
-    return `<div class="pane" data-id="${n.id}"><div class="grip" data-grip="${n.id}">⠿</div>${vsw}${paneInner(n.app,cur)}</div>`; }
+    return `<div class="pane" data-id="${n.id}"><div class="pctl">${vsw}<button class="cbtn" data-collapse="${n.id}" title="collapse on this breakpoint">»</button><div class="grip" data-grip="${n.id}">⠿</div></div>${paneInner(n.app,cur)}</div>`; }
   const f=n.frac??.5; return `<div class="split ${n.dir==='col'?'col':''}" data-sid="${n.sid}"><div class="cell" style="flex:${f} 1 0">${treeHTML(n.a,vars)}</div><div class="gutter" data-sid="${n.sid}"></div><div class="cell" style="flex:${1-f} 1 0">${treeHTML(n.b,vars)}</div></div>`; }
 const findLeaf=(n,id)=>n.kind==='leaf'?(n.id===id?n:null):(findLeaf(n.a,id)||findLeaf(n.b,id));
 const findSplit=(n,sid)=>n.kind==='leaf'?null:(n.sid===sid?n:(findSplit(n.a,sid)||findSplit(n.b,sid)));
 function removeLeaf(n,id){ if(n.kind==='leaf')return n.id===id?null:n; const a=removeLeaf(n.a,id),b=removeLeaf(n.b,id); if(a===null)return b; if(b===null)return a; return {...n,a,b}; }
 function insertLeaf(n,tid,side,lf){ if(n.kind==='leaf'){ if(n.id!==tid)return n; const dir=(side==='E'||side==='W')?'row':'col'; const a=(side==='E'||side==='S')?n:lf,b=(side==='E'||side==='S')?lf:n; return {kind:'split',dir,a,b,frac:.5,sid:SID++}; } return {...n,a:insertLeaf(n.a,tid,side,lf),b:insertLeaf(n.b,tid,side,lf)}; }
 
-// ---- checkpoints: sorted [{min, tree}] ; base at 0 ----
+// collapse: a checkpoint can mark leaves collapsed → they leave the tree and dock as gutter tabs
+function reduceTree(tree, collapsed){ let t=tree; for(const id of (collapsed||[])){ t=t?removeLeaf(t,id):t; } return t; }
+function tabsMarkup(collapsed, style){ if(!collapsed||!collapsed.length) return '';
+  return `<div class="grail ${style||'tabs'}">${collapsed.map(id=>{const a=APPS[id]; return `<button class="tab" data-expand="${id}" style="--c:${a.col}" title="${a.name}"><span class="ti">${a.icon}</span><span class="tn">${a.name}</span></button>`;}).join('')}</div>`; }
+function frameMarkup(s){ const t=reduceTree(s.tree,s.collapsed); const main=t?treeHTML(t,s.vars):`<div class="empty">all panes collapsed</div>`; return `<div class="main">${main}</div>${tabsMarkup(s.collapsed,s.style)}`; }
+function updateStyleTog(){ const st=active().style||'tabs'; document.querySelectorAll('#styletog button').forEach(b=>b.classList.toggle('on',b.dataset.style===st)); }
+
+// ---- checkpoints: sorted [{min, tree, vars, collapsed, style}] ; base at 0 ----
 let checkpoints=[
-  {min:0,   vars:{list:'list'},  tree:C(leaf('cal'), C(leaf('list'), C(leaf('kpi'), leaf('bars'))), .28)},   // narrow → vertical stack · Bookings as list
-  {min:560, vars:{list:'cards'}, tree:R(C(leaf('cal'),leaf('list')), C(leaf('kpi'),leaf('bars')), .5)},      // medium → 2×2 · Bookings as cards
-  {min:880, vars:{list:'table'}, tree:R(leaf('cal'), R(leaf('list'), R(leaf('kpi'),leaf('bars'))), .34)},    // wide → 4 across · Bookings as table
+  {min:0,   vars:{list:'list'},  collapsed:['bars'], style:'tabs', tree:C(leaf('cal'), C(leaf('list'), C(leaf('kpi'), leaf('bars'))), .28)},  // narrow → stack · Bookings list · Activity collapsed to a tab
+  {min:560, vars:{list:'cards'}, collapsed:[],       style:'tabs', tree:R(C(leaf('cal'),leaf('list')), C(leaf('kpi'),leaf('bars')), .5)},     // medium → 2×2 · Bookings cards
+  {min:880, vars:{list:'table'}, collapsed:[],       style:'tabs', tree:R(leaf('cal'), R(leaf('list'), R(leaf('kpi'),leaf('bars'))), .34)},   // wide → 4 across · Bookings table
 ];
 let W=920;
 const active=()=>{ let a=checkpoints[0]; for(const c of checkpoints) if(c.min<=W && c.min>=a.min) a=c; return a; };
@@ -168,7 +192,7 @@ let lastActiveMin=null;
 function paneRects(){ const m={}; frame.querySelectorAll('.pane[data-id]').forEach(p=>m[p.dataset.id]=p.getBoundingClientRect()); return m; }
 function render(flip){
   const before=flip?paneRects():null;
-  frame.innerHTML=treeHTML(active().tree, active().vars); bind();
+  frame.innerHTML=frameMarkup(active()); bind();
   if(before){ frame.querySelectorAll('.pane[data-id]').forEach(p=>{ const b=before[p.dataset.id]; if(!b)return; const a=p.getBoundingClientRect();
     const dx=b.left-a.left,dy=b.top-a.top,sx=b.width/a.width||1,sy=b.height/a.height||1;
     p.style.transformOrigin='top left'; p.style.transition='none'; p.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
@@ -182,6 +206,7 @@ function renderRuler(){
     f.addEventListener('pointerdown',e=>{e.stopPropagation(); setW(Math.max(c.min,MINW));}); ruler.appendChild(f); });
   cursor.style.left=xOf(W)+'px'; wlbl.textContent=Math.round(W)+'px'; fill.style.width=xOf(W)+'px';
   lockline.textContent = act.min===0 ? 'base layout (below first checkpoint)' : `▲ locked from ${act.min}px and up`;
+  updateStyleTog();
 }
 function setW(w){ W=clamp(w,MINW,MAXW); frame.style.width=W+'px';
   const am=active().min; if(am!==lastActiveMin){ lastActiveMin=am; render(true); } renderRuler(); }
@@ -189,19 +214,19 @@ function flashSaved(min){ savedEl.textContent=`✓ checkpoint saved at ${min}px`
 
 // editing writes to a checkpoint AT the current width (create if none within tol)
 function cpForEdit(){ let cp=checkpoints.find(c=>Math.abs(c.min-W)<=14); let created=false;
-  if(!cp){ const a=active(); cp={min:Math.round(W), tree:clone(a.tree), vars:clone(a.vars||{})}; checkpoints.push(cp); checkpoints.sort((a,b)=>a.min-b.min); created=true; }
+  if(!cp){ const a=active(); cp={min:Math.round(W), tree:clone(a.tree), vars:clone(a.vars||{}), collapsed:clone(a.collapsed||[]), style:a.style||'tabs'}; checkpoints.push(cp); checkpoints.sort((a,b)=>a.min-b.min); created=true; }
   lastActiveMin=cp.min; return {cp,created}; }
 
 // ---- edit: seam resize + grip rearrange ----
 let mode=null, gut=null, pane=null, hover=null;
 function bind(){
   frame.querySelectorAll('.grip').forEach(g=>g.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
-    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=treeHTML(cp.tree, cp.vars); bind(); renderRuler(); }
+    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=frameMarkup(cp); bind(); renderRuler(); }
     const lf=findLeaf(cp.tree,g.dataset.grip); pane={cp, leaf:lf, backup:clone(cp.tree)};
     cp.tree=removeLeaf(cp.tree,g.dataset.grip); frameRenderFrom(cp,true);
     ghost.style.width='150px'; ghost.style.height='108px'; ghost.innerHTML=`<div class="pane" style="cursor:grabbing">${paneInner(lf.app)}</div>`; ghost.dataset.gx=75; ghost.dataset.gy=22; moveGhost(e); ghost.style.opacity=1; mode='pane'; }));
   frame.querySelectorAll('.gutter').forEach(gt=>gt.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
-    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=treeHTML(cp.tree, cp.vars); bind(); renderRuler(); }
+    const {cp,created}=cpForEdit(); if(created){ frame.innerHTML=frameMarkup(cp); bind(); renderRuler(); }
     const sid=+gt.dataset.sid, node=findSplit(cp.tree,sid); const splitEl=frame.querySelector(`.split[data-sid="${sid}"]`), r=splitEl.getBoundingClientRect();
     gut={cp,node,dir:node.dir,len:node.dir==='row'?r.width:r.height,startFrac:node.frac??.5,startC:node.dir==='row'?e.clientX:e.clientY,el:splitEl};
     splitEl.querySelector('.gutter').classList.add('active'); mode='gut'; }));
@@ -213,8 +238,17 @@ function bind(){
       cp.vars=cp.vars||{}; cp.vars[vid]=btn.dataset.var;
       frameRenderFrom(cp,false); flashSaved(cp.min); renderRuler(); });
   });
+  // collapse a pane on this breakpoint (→ gutter tab)
+  frame.querySelectorAll('.cbtn').forEach(b=>{ b.addEventListener('pointerdown',e=>e.stopPropagation());
+    b.addEventListener('click',e=>{ e.stopPropagation(); const {cp}=cpForEdit(); cp.collapsed=cp.collapsed||[];
+      if(!cp.collapsed.includes(b.dataset.collapse)) cp.collapsed.push(b.dataset.collapse);
+      frameRenderFrom(cp,true); flashSaved(cp.min); renderRuler(); }); });
+  // expand a gutter tab back into the layout (for this breakpoint)
+  frame.querySelectorAll('.tab').forEach(t=>{ t.addEventListener('pointerdown',e=>e.stopPropagation());
+    t.addEventListener('click',e=>{ e.stopPropagation(); const {cp}=cpForEdit(); cp.collapsed=(cp.collapsed||[]).filter(x=>x!==t.dataset.expand);
+      frameRenderFrom(cp,true); flashSaved(cp.min); renderRuler(); }); });
 }
-function frameRenderFrom(cp,flip){ const before=flip?paneRects():null; frame.innerHTML=treeHTML(cp.tree, cp.vars); bind();
+function frameRenderFrom(cp,flip){ const before=flip?paneRects():null; frame.innerHTML=frameMarkup(cp); bind();
   if(before){ frame.querySelectorAll('.pane[data-id]').forEach(p=>{ const b=before[p.dataset.id]; if(!b)return; const a=p.getBoundingClientRect();
     const dx=b.left-a.left,dy=b.top-a.top,sx=b.width/a.width||1,sy=b.height/a.height||1; p.style.transformOrigin='top left'; p.style.transition='none'; p.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
     requestAnimationFrame(()=>{ p.style.transition='transform .4s cubic-bezier(.3,.9,.3,1)'; p.style.transform='none'; }); }); } }
@@ -247,6 +281,9 @@ document.getElementById('whandle').addEventListener('pointerdown',e=>{ e.prevent
 // device-size shortcuts (quick-jump width)
 document.querySelectorAll('.sc').forEach(b=>{ b.addEventListener('pointerdown',e=>e.stopPropagation());
   b.addEventListener('click',e=>{ e.stopPropagation(); setW(+b.dataset.w); }); });
+// collapse-style toggle (gutter tabs / icon rail) — per checkpoint
+document.querySelectorAll('#styletog button').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation();
+  const {cp}=cpForEdit(); cp.style=b.dataset.style; frameRenderFrom(cp,false); flashSaved(cp.min); renderRuler(); }));
 
 const q=new URLSearchParams(location.search);
 if(q.get('sc')) document.getElementById('whwrap').classList.add('show');   // force-show popout for screenshots
