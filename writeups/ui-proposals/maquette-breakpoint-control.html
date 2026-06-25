@@ -18,14 +18,14 @@
   .stagewrap{position:relative;margin-top:40px;height:520px;user-select:none;touch-action:none}
 
   /* width indicator (always visible) → hover it to slide the breakpoint ruler out */
-  .bpctl{position:absolute;top:-44px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:6}
+  .bpctl{position:absolute;top:-44px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:6;max-width:100%}
   .chip{font:11px/1 ui-monospace,monospace;background:#0d1320;border:1px solid var(--border2);color:var(--text);
     padding:5px 11px;border-radius:999px;cursor:pointer;display:flex;gap:7px;align-items:center;transition:.15s}
   .bpctl.pinned .chip{border-color:var(--primary);color:var(--primary)}
   .bpctl:hover .chip{border-color:var(--primary);color:var(--primary)}
   .chip .ico{color:var(--muted)}.bpctl:hover .chip .ico{color:var(--primary)}
   /* the ruler is tucked until you hover the indicator */
-  .ruler{height:20px;display:flex;align-items:center;margin-top:9px;opacity:0;transform:translateY(-8px);
+  .ruler{height:20px;display:flex;align-items:center;margin-top:9px;max-width:100%;opacity:0;transform:translateY(-8px);
     pointer-events:none;transition:opacity .18s, transform .18s}
   .bpctl:hover .ruler, .bpctl.pinned .ruler{opacity:1;transform:none;pointer-events:auto}
   .ruler .track{position:relative;height:2px;background:var(--border2);border-radius:2px}
@@ -36,7 +36,7 @@
   .stud.active .lbl{color:var(--accent)}
 
   /* the resizable frame (centered); drag either edge grip to widen */
-  .frame{position:absolute;top:0;left:50%;transform:translateX(-50%);height:480px;
+  .frame{position:absolute;top:0;left:50%;transform:translateX(-50%);height:480px;max-width:100%;
     border:1px solid var(--border);border-radius:14px;background:var(--panel);
     box-shadow:0 24px 60px #0008; transition:box-shadow .2s}
   .frame.dragging{box-shadow:0 30px 80px #000b,0 0 0 1px var(--primary)}
@@ -117,7 +117,10 @@
     });
   }
   function render(){
-    width=Math.max(MIN,Math.min(MAX,width));
+    // Clamp to what's actually on screen so the readout, studs, and reflow agree on
+    // mobile (you can't show 980px on a 390px phone — be honest about the real width).
+    const avail=stage.clientWidth||MAX;
+    width=Math.max(MIN,Math.min(Math.min(MAX,avail),width));
     frame.style.width=width+'px';
     ruler.style.width=width+'px';            // ruler spans the frame
     // map studs: position each bp relative to the CURRENT frame width so a stud sits
