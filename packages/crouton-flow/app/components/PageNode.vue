@@ -10,10 +10,12 @@ import { Handle, Position } from '@vue-flow/core'
  * is a draggable card here instead of a row in the pages tree, and the lines
  * between cards are the same `parentId` hierarchy. This component is the card.
  *
- * It is injected into `CroutonFlow` via the `defaultNodeComponent` prop by
- * `CroutonFlowSiteFlow`. The "zoom in" affordance calls the `croutonSiteFlowZoom`
- * function the wrapper provides — descending the semantic-zoom shell from Site
- * into this page's own layout (WS1 #870).
+ * Built from standard Nuxt UI 4 primitives (`UCard` / `UButton` / `UIcon`) and
+ * semantic design tokens — no bespoke colors — so it themes with the rest of the
+ * app. It is injected into `CroutonFlow` via the `defaultNodeComponent` prop by
+ * `CroutonFlowSiteFlow`; the zoom affordance calls the `croutonSiteFlowZoom`
+ * function the wrapper provides, descending the semantic-zoom shell (WS1 #870)
+ * into this page's own layout.
  */
 
 interface Props {
@@ -67,11 +69,8 @@ function handleZoom(event: Event) {
 
 <template>
   <div
-    class="crouton-page-node"
-    :class="{
-      'crouton-page-node--selected': selected,
-      'crouton-page-node--dragging': dragging,
-    }"
+    class="crouton-page-node w-44 cursor-grab"
+    :class="{ 'cursor-grabbing': dragging }"
     @dblclick="handleZoom"
   >
     <!-- Incoming wire (a parent links to this page) -->
@@ -81,33 +80,38 @@ function handleZoom(event: Event) {
       class="crouton-page-handle"
     />
 
-    <div class="crouton-page-node__body">
-      <UIcon
-        :name="icon"
-        class="crouton-page-node__icon"
-      />
-      <div class="crouton-page-node__text">
-        <span class="crouton-page-node__label">{{ displayLabel }}</span>
-        <span
-          v-if="subtitle"
-          class="crouton-page-node__subtitle"
-        >{{ subtitle }}</span>
-      </div>
-
-      <!-- Zoom-in affordance: drop from Site into this page's layout -->
-      <button
-        type="button"
-        class="crouton-page-node__zoom"
-        :title="$t('flow.page.zoom', 'Zoom into page')"
-        :aria-label="$t('flow.page.zoom', 'Zoom into page')"
-        @click="handleZoom"
-      >
+    <UCard
+      variant="outline"
+      :ui="{ root: 'rounded-lg transition-all duration-150', body: 'p-2.5 sm:p-2.5' }"
+      :class="[
+        selected ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-primary/50',
+        dragging ? 'shadow-lg' : '',
+      ]"
+    >
+      <div class="flex items-center gap-2.5">
         <UIcon
-          name="i-lucide-maximize-2"
-          class="size-3.5"
+          :name="icon"
+          class="size-4 shrink-0 text-primary"
         />
-      </button>
-    </div>
+        <div class="flex min-w-0 flex-col">
+          <span class="truncate text-sm font-medium text-highlighted">{{ displayLabel }}</span>
+          <span
+            v-if="subtitle"
+            class="truncate text-xs text-muted"
+          >{{ subtitle }}</span>
+        </div>
+        <UButton
+          icon="i-lucide-maximize-2"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="ml-auto"
+          :aria-label="$t('flow.page.zoom', 'Zoom into page')"
+          :title="$t('flow.page.zoom', 'Zoom into page')"
+          @click="handleZoom"
+        />
+      </div>
+    </UCard>
 
     <!-- Outgoing wire (this page links to a child) -->
     <Handle
@@ -119,70 +123,17 @@ function handleZoom(event: Event) {
 </template>
 
 <style scoped>
-@reference "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
-
-.crouton-page-node {
-  @apply relative rounded-xl border bg-white dark:bg-neutral-900;
-  @apply border-neutral-200 dark:border-neutral-700;
-  @apply shadow-sm transition-all duration-150;
-  @apply min-w-[176px] max-w-[240px] cursor-grab;
-}
-
-.crouton-page-node:hover {
-  @apply -translate-y-0.5 shadow-md;
-  border-color: var(--color-primary-500);
-}
-
-.crouton-page-node--selected {
-  @apply ring-2;
-  border-color: var(--color-primary-500);
-  --tw-ring-color: color-mix(in srgb, var(--color-primary-500) 25%, transparent);
-}
-
-.crouton-page-node--dragging {
-  @apply scale-105 cursor-grabbing shadow-lg;
-}
-
-.crouton-page-node__body {
-  @apply flex items-center gap-2.5 px-3.5 py-2.5;
-}
-
-.crouton-page-node__icon {
-  @apply size-4 shrink-0;
-  color: var(--color-primary-500);
-}
-
-.crouton-page-node__text {
-  @apply flex min-w-0 flex-col;
-}
-
-.crouton-page-node__label {
-  @apply truncate text-sm font-medium text-neutral-900 dark:text-neutral-100;
-}
-
-.crouton-page-node__subtitle {
-  @apply truncate text-xs text-neutral-500 dark:text-neutral-400;
-}
-
-.crouton-page-node__zoom {
-  @apply ml-auto flex size-6 shrink-0 items-center justify-center rounded-md;
-  @apply text-neutral-400 transition-all duration-150;
-  @apply hover:bg-neutral-100 dark:hover:bg-neutral-800;
-}
-
-.crouton-page-node__zoom:hover {
-  color: var(--color-primary-500);
-}
-
+/* Vue Flow handles only — themed off Nuxt UI design tokens (no hardcoded colors). */
 .crouton-page-handle {
-  @apply size-2 rounded-full;
-  @apply bg-neutral-400 dark:bg-neutral-500;
-  @apply border border-white dark:border-neutral-800;
-  @apply transition-colors;
+  height: 0.5rem;
+  width: 0.5rem;
+  min-width: 0;
+  border-radius: 9999px;
+  background: var(--ui-border-accented);
+  border: 1px solid var(--ui-bg);
+  transition: background-color 0.15s ease;
 }
-
 .crouton-page-handle:hover {
-  background-color: var(--color-primary-500);
+  background: var(--ui-primary);
 }
 </style>
