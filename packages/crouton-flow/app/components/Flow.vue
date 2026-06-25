@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, provide, reactive, ref, resolveComponent, watch, markRaw } from 'vue'
+import type { Component } from 'vue'
 import { useThrottleFn } from '@vueuse/core'
 import { VueFlow, useVueFlow, ConnectionMode } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -111,6 +112,14 @@ interface Props {
   additionalEdges?: Array<{ id: string; source: string; target: string }>
   /** Color for background dot/line pattern (default: '#aaa') */
   backgroundPatternColor?: string
+  /**
+   * Explicit component for the default node render path. When set it overrides
+   * the by-collection-name resolution (`{Collection}Node`) — the only way a
+   * wrapper in this prefixed package (e.g. CroutonFlowSiteFlow's page card) can
+   * inject its own node card, since the `CroutonFlow` component prefix makes the
+   * by-name lookup unreachable. Ghost nodes still render as ghosts.
+   */
+  defaultNodeComponent?: Component
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -1060,6 +1069,16 @@ defineExpose({
         <CroutonFlowGhostNode
           v-if="nodeProps.data?.isGhost"
           :data="nodeProps.data"
+        />
+        <!-- Injected node component (e.g. CroutonFlowSiteFlow's page card) -->
+        <component
+          :is="defaultNodeComponent"
+          v-else-if="defaultNodeComponent"
+          :data="nodeProps.data"
+          :selected="nodeProps.selected"
+          :dragging="nodeProps.dragging"
+          :label="typeof nodeProps.label === 'string' ? nodeProps.label : undefined"
+          :collection="collection"
         />
         <!-- Custom node component -->
         <component

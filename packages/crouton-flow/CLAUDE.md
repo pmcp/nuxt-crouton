@@ -10,7 +10,9 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 
 | File | Purpose |
 |------|---------|
-| `app/components/Flow.vue` | Main graph component (orchestrates composables) |
+| `app/components/Flow.vue` | Main graph component (orchestrates composables). `defaultNodeComponent` prop injects a node card on the default render path (wrappers in this prefixed package can't use the by-collection-name `{Collection}Node` lookup — the `CroutonFlow` prefix makes it unreachable). |
+| `app/components/SiteFlow.vue` | `CroutonFlowSiteFlow` — the **Site level** of the Crouton Builder (WS3 #872, epic #868). A thin preset over `CroutonFlow` that renders the existing `pages` collection as a wireable sitemap (cards = pages, lines = `parentId`, positions → `flow_configs`, `sync` → Yjs multiplayer — all reused, not new). Injects `PageNode` via `defaultNodeComponent`, `provide`s `croutonSiteFlowZoom`, and emits `zoomIntoPage` (the original page row) so the zoom shell's `#site` slot descends into that page's layout. NOT a new data model — just another *view* of the pages you already have. |
+| `app/components/PageNode.vue` | `CroutonFlowPageNode` — the page-card node type (icon + label + slug + ⤡ zoom affordance, source/target handles). Injects `croutonSiteFlowZoom`; ⤡ or double-click descends the zoom shell into the page. |
 | `app/composables/useFlowDragDrop.ts` | External drag-and-drop onto canvas |
 | `app/composables/useFlowSyncBridge.ts` | Yjs ↔ Vue Flow data bridge |
 | `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
@@ -166,6 +168,7 @@ When `sync` is enabled:
 | `dataMode` | `'collection' \| 'ephemeral'` | `'collection'` | Data mode — 'ephemeral' skips collection mutations |
 | `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
 | `additionalEdges` | `Array<{ id, source, target }>` | `[]` | Extra edges rendered alongside parent-derived edges (e.g. multi-parent synthesis connections) |
+| `defaultNodeComponent` | `Component` | - | Explicit node component for the default render path (overrides `{Collection}Node` name resolution). Used by `CroutonFlowSiteFlow` to inject its page card. Ghost nodes still render as ghosts. |
 
 ## Events
 
