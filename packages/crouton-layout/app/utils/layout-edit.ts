@@ -181,3 +181,19 @@ export function replaceNestedLayout(
   if (!target || target.type !== 'nested') return root
   return replaceAt(root, path, { ...target, layout }) ?? root
 }
+
+/**
+ * List the `nested` apps reachable in THIS layout's path space (the zoom targets
+ * for the semantic-zoom shell, WS1 #870). Recurses through `split` children but
+ * STOPS at a `nested` node — its sub-layout is a separate path space you reach by
+ * zooming in, not by addressing across the boundary.
+ */
+export function findNestedNodes(
+  root: LayoutNode | null,
+  base: NodePath = [],
+): { path: NodePath, label?: string }[] {
+  if (!root) return []
+  if (root.type === 'nested') return [{ path: base, ...(root.label ? { label: root.label } : {}) }]
+  if (root.type === 'split') return root.children.flatMap((c, i) => findNestedNodes(c, [...base, i]))
+  return []
+}
