@@ -19,9 +19,12 @@
  */
 import { computed, ref, watch } from 'vue'
 import { onKeyStroke, useEventListener } from '@vueuse/core'
-import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { findNestedNodes } from '../utils/layout-edit'
+import { treeToPieces, piecesToTree, piecePath } from '../utils/layout-compose-bridge'
+import type { ComposePiece } from '../composables/useCroutonComposeGestures'
 import { useCroutonSemanticZoom } from '../composables/useCroutonSemanticZoom'
+import { useCroutonLayoutBlocks } from '../composables/useCroutonLayoutBlocks'
 
 interface ZoomPage {
   id: string
@@ -64,7 +67,9 @@ watch(current, (frame) => {
 
 function onBreakpointsChange(tree: LayoutTree): void {
   bpTree.value = tree
-  emit('layoutChange', tree)
+  // Share the edit down to the layout it authors, then bubble the page for the host.
+  zoom.setCurrentTree(tree)
+  persistFocusedPage()
 }
 
 /** The `nested` apps in the current layout = the zoom-in targets. */
@@ -74,11 +79,63 @@ const apps = computed(() =>
     : [],
 )
 
+// --- L2 App level — the editable compose canvas, bridged to the shared tree ----
+// At a layout frame we render the WS4 compose canvas (free cards you snap together)
+// instead of the read-only renderer. The bridge keeps the focused frame's `tree` in
+// lock-step with the canvas pieces, so a snap here is the SAME edit the breakpoint
+// author sees when you zoom in — one shared tree, no per-surface copy (#899).
+const { getBlock } = useCroutonLayoutBlocks()
+const labelOf = (node: LayoutNode): string | undefined =>
+  node.type === 'leaf' ? getBlock(node.blockId)?.name ?? node.blockId
+    : node.type === 'nested' ? node.label || 'App'
+      : undefined
+
+const pieces = ref<ComposePiece[]>([])
+
+// Re-seed the cards from the focused tree only on NAVIGATION — keyed on a STABLE
+// primitive (`depth:level:label`), NOT a fresh array, so an in-place edit (which calls
+// setCurrentTree → same depth/level) does NOT refire and re-explode the cards the user
+// just snapped. Zooming in/out (depth changes) re-seeds from the now-focused tree.
+watch(
+  () => `${depth.value}:${current.value.level}:${current.value.label}`,
+  () => {
+    pieces.value = current.value.level === 'layout' && current.value.tree
+      ? treeToPieces(current.value.tree, { labelOf })
+      : []
+  },
+  { immediate: true },
+)
+
+/** A compose edit (snap / detach / move) → recompose the authoritative tree. */
+function onComposeChange(next: ComposePiece[]): void {
+  pieces.value = next
+  const tree = piecesToTree(next, current.value.tree)
+  zoom.setCurrentTree(tree)
+  persistFocusedPage()
+}
+
+/** Pane-click-to-zoom: a nested-app card was opened → descend into its sub-layout. */
+function onComposeZoom(piece: ComposePiece): void {
+  // Make sure the frame tree matches the current cards, then address the clicked one.
+  zoom.setCurrentTree(piecesToTree(pieces.value, current.value.tree))
+  const path = piecePath(pieces.value, piece.id)
+  if (path) zoom.zoomIntoNested(path)
+}
+
 const levelDot: Record<string, string> = {
   site: 'bg-violet-400',
   layout: 'bg-primary',
   breakpoints: 'bg-blue-400',
 }
+
+/**
+ * Per-page edited trees, keyed by page id. So zooming out to Site and back into the
+ * same page returns to your edits instead of the pristine seed — "return without
+ * losing edits" across the whole stack, not just within one descent (#899). The host
+ * still owns durable persistence (it gets every edit via `layoutChange`).
+ */
+const editedPages = new Map<string, LayoutTree>()
+const currentPageId = ref<string | null>(null)
 
 /**
  * Descend from the Site level into a page's layout. Exposed to the `#site` slot
@@ -87,7 +144,17 @@ const levelDot: Record<string, string> = {
  * coupling (one-way dep: crouton-layout → crouton-core only).
  */
 function zoomIntoPageFromSlot(page: ZoomPage): void {
-  zoom.zoomIntoPage(page.label, page.tree)
+  currentPageId.value = page.id
+  zoom.zoomIntoPage(page.label, editedPages.get(page.id) ?? page.tree)
+}
+
+/** Cache + bubble the focused page's tree after an edit at any level below it. */
+function persistFocusedPage(): void {
+  // After downward propagation, the page-level frame (depth 1) holds the whole tree.
+  const pageTree = zoom.stack.value[1]?.tree
+  if (!pageTree) return
+  if (currentPageId.value) editedPages.set(currentPageId.value, pageTree)
+  emit('layoutChange', pageTree)
 }
 
 // Scroll-up zooms out, throttled so one flick = one level (matches the mock).
@@ -206,7 +273,10 @@ onKeyStroke('Escape', () => zoom.zoomOut())
         />
       </div>
 
-      <!-- L1/L2 · a Layout of apps (a page, or a nested app — itself a layout) -->
+      <!-- L1/L2 · a Layout of apps (a page, or a nested app — itself a layout).
+           The editable surface IS the WS4 compose canvas: drag a card next to
+           another → they snap into a bound split; hold one over another → it nests.
+           Every edit recomposes the focused frame's tree (shared with breakpoints). -->
       <div
         v-else
         :key="'layout-' + depth"
@@ -214,7 +284,7 @@ onKeyStroke('Escape', () => zoom.zoomOut())
       >
         <!-- Zoom toolbar: into each nested app, or into breakpoints -->
         <div class="flex flex-wrap items-center gap-2 px-4 pb-2 pt-16">
-          <span class="text-xs uppercase tracking-widest text-muted">apps</span>
+          <span class="hidden text-xs text-muted sm:inline">Drag a card beside another → snap · hold over → nest · open an app to zoom in</span>
           <UButton
             v-for="app in apps"
             :key="app.path.join('.')"
@@ -225,12 +295,8 @@ onKeyStroke('Escape', () => zoom.zoomOut())
             variant="soft"
             @click="zoom.zoomIntoNested(app.path)"
           />
-          <span
-            v-if="!apps.length"
-            class="text-xs text-muted"
-          >no nested apps in this layout</span>
           <UButton
-            label="Responsive"
+            label="Breakpoints"
             icon="i-lucide-smartphone"
             size="xs"
             color="neutral"
@@ -240,12 +306,11 @@ onKeyStroke('Escape', () => zoom.zoomOut())
           />
         </div>
         <div class="min-h-0 flex-1 p-4 pt-0">
-          <div class="h-full w-full overflow-hidden rounded-xl border border-default">
-            <CroutonLayoutRenderer
-              v-if="current.tree"
-              :node="current.tree.root"
-            />
-          </div>
+          <CroutonLayoutComposeCanvas
+            :model-value="pieces"
+            @update:model-value="onComposeChange"
+            @zoom="onComposeZoom"
+          />
         </div>
       </div>
     </Transition>
