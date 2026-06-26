@@ -30,6 +30,13 @@ export interface TreeToPiecesOptions {
   gap?: number
   originX?: number
   originY?: number
+  /**
+   * Force a single vertical column regardless of the split direction — the mobile
+   * layout, where horizontal tiling would overflow a narrow canvas and the cards
+   * pile up on top of each other once the canvas clamps them. Default: tile along
+   * the split axis.
+   */
+  column?: boolean
   /** Resolve a human label for a node (e.g. a block's registry `name`). */
   labelOf?: (node: LayoutNode) => string | undefined
 }
@@ -53,10 +60,11 @@ function defaultLabel(node: LayoutNode): string | undefined {
  * measured size, so they only need to be non-overlapping and on-canvas-ish.
  */
 export function treeToPieces(tree: LayoutTree, opts: TreeToPiecesOptions = {}): ComposePiece[] {
-  const { width = 240, height = 160, gap = 16, originX = 16, originY = 16 } = opts
+  const { width = 240, height = 160, gap = 16, originX = 16, originY = 16, column = false } = opts
   const labelOf = opts.labelOf ?? defaultLabel
   const root = tree.root
-  const horizontal = root.type === 'split' ? root.direction === 'horizontal' : true
+  // `column` forces vertical stacking (mobile); otherwise tile along the split axis.
+  const horizontal = column ? false : root.type === 'split' ? root.direction === 'horizontal' : true
   const nodes: LayoutNode[] = root.type === 'split' ? root.children : [root]
   return nodes.map((node, i) => ({
     id: `piece-${i}-${nodeKey(node)}`,

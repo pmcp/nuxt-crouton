@@ -41,6 +41,13 @@ describe('treeToPieces — explode a layout into draggable cards', () => {
     const pieces = treeToPieces(hsplit, { labelOf: n => (n.type === 'leaf' ? n.blockId.toUpperCase() : undefined) })
     expect(pieces[0]!.label).toBe('DEMO-A')
   })
+
+  it('column:true forces a vertical stack even for a horizontal split (mobile)', () => {
+    const pieces = treeToPieces(hsplit, { column: true, width: 320 })
+    expect(pieces[0]!.x).toBe(pieces[1]!.x) // same column
+    expect(pieces[0]!.y).toBeLessThan(pieces[1]!.y) // stacked down
+    expect(pieces[0]!.width).toBe(320)
+  })
 })
 
 describe('piecesToTree — recompose the authoritative tree', () => {

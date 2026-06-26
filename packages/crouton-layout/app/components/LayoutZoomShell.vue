@@ -18,7 +18,7 @@
  * Zoom out: the breadcrumb, the ⤡ button, Esc, or scroll-up.
  */
 import { computed, ref, watch } from 'vue'
-import { onKeyStroke, useEventListener } from '@vueuse/core'
+import { onKeyStroke, useEventListener, useWindowSize } from '@vueuse/core'
 import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { findNestedNodes } from '../utils/layout-edit'
 import { treeToPieces, piecesToTree, piecePath } from '../utils/layout-compose-bridge'
@@ -92,6 +92,18 @@ const labelOf = (node: LayoutNode): string | undefined =>
 
 const pieces = ref<ComposePiece[]>([])
 
+// Responsive seeding: on a narrow (phone) viewport, lay the cards out as a single
+// full-width vertical column instead of a horizontal tile that overflows the canvas
+// and piles up once clamped. Sized to the viewport so each card is readable + grabbable.
+const { width: winW } = useWindowSize()
+function seedOptions() {
+  if (winW.value && winW.value < 560) {
+    const w = Math.max(180, winW.value - 48)
+    return { column: true, width: w, height: 168, gap: 14, originX: 16, originY: 16, labelOf }
+  }
+  return { labelOf }
+}
+
 // Re-seed the cards from the focused tree only on NAVIGATION — keyed on a STABLE
 // primitive (`depth:level:label`), NOT a fresh array, so an in-place edit (which calls
 // setCurrentTree → same depth/level) does NOT refire and re-explode the cards the user
@@ -100,7 +112,7 @@ watch(
   () => `${depth.value}:${current.value.level}:${current.value.label}`,
   () => {
     pieces.value = current.value.level === 'layout' && current.value.tree
-      ? treeToPieces(current.value.tree, { labelOf })
+      ? treeToPieces(current.value.tree, seedOptions())
       : []
   },
   { immediate: true },
@@ -171,7 +183,7 @@ onKeyStroke('Escape', () => zoom.zoomOut())
 <template>
   <div class="croutonzoom relative h-full w-full overflow-hidden bg-default">
     <!-- Breadcrumb + zoom-out -->
-    <div class="absolute top-3 left-1/2 z-20 -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-default bg-elevated/90 px-3 py-1.5 text-sm backdrop-blur">
+    <div class="absolute top-3 left-1/2 z-20 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1.5 overflow-x-auto rounded-full border border-default bg-elevated/90 px-3 py-1.5 text-sm backdrop-blur [scrollbar-width:none]">
       <span
         class="inline-block size-1.5 rounded-full"
         :class="levelDot[current.level]"
