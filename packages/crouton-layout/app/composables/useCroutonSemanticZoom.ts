@@ -20,7 +20,7 @@
  */
 import { ref, computed } from 'vue'
 import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
-import { getNode, getNestedLayout, type NodePath } from '../utils/layout-edit'
+import { getNode, getNestedLayout, replaceNestedLayout, type NodePath } from '../utils/layout-edit'
 
 export type ZoomLevel = 'site' | 'layout' | 'breakpoints'
 
@@ -30,6 +30,13 @@ export interface ZoomFrame {
   label: string
   /** The focused layout at this frame (absent on the Site frame). */
   tree?: LayoutTree
+  /**
+   * For a frame reached by zooming into a `nested` node (`zoomIntoNested`): the
+   * path of that node WITHIN the parent frame's layout. `setCurrentTree` uses it to
+   * write an edit made down here back up into the parent's tree, so the parent
+   * stays in sync (one shared tree across the whole zoom stack, #899).
+   */
+  sourcePath?: NodePath
 }
 
 export interface ZoomCrumb {
@@ -75,7 +82,7 @@ export function useCroutonSemanticZoom(opts: UseSemanticZoomOptions = {}) {
     if (!sub) return false
     const node = getNode(frame.tree.root, path)
     const label = node?.type === 'nested' && node.label ? node.label : 'App'
-    stack.value = [...stack.value, { level: 'layout', label, tree: sub }]
+    stack.value = [...stack.value, { level: 'layout', label, tree: sub, sourcePath: path }]
     return true
   }
 
@@ -84,6 +91,45 @@ export function useCroutonSemanticZoom(opts: UseSemanticZoomOptions = {}) {
     const frame = current.value
     if (frame.level !== 'layout' || !frame.tree) return false
     stack.value = [...stack.value, { level: 'breakpoints', label, tree: frame.tree }]
+    return true
+  }
+
+  /**
+   * Replace the focused frame's tree with an edit made at this level, then
+   * propagate that edit DOWN the stack so every frame addressing the same layout
+   * stays in sync — the "one shared tree" guarantee (#899):
+   *
+   *  - a `breakpoints` frame sits directly on top of the `layout` it authors, so
+   *    its edit also replaces that layout frame's tree;
+   *  - a `nested`-zoomed frame (carrying `sourcePath`) writes its sub-tree back into
+   *    the parent frame at that path via `replaceNestedLayout`;
+   *  - propagation stops at an independent boundary (a page zoomed from Site, whose
+   *    parent is the treeless Site frame) — the host owns persistence past that.
+   *
+   * Because it only rewrites `tree` (never pushes/pops), the focused level/label and
+   * the breadcrumb are untouched — so a re-seed keyed on navigation won't refire.
+   */
+  function setCurrentTree(tree: LayoutTree): boolean {
+    if (current.value.level === 'site') return false
+    const next = stack.value.slice()
+    next[next.length - 1] = { ...next[next.length - 1]!, tree }
+    for (let i = next.length - 1; i > 0; i--) {
+      const frame = next[i]!
+      const below = next[i - 1]!
+      if (frame.level === 'breakpoints') {
+        // Same layout, viewed as breakpoints — share the edited tree downward.
+        next[i - 1] = { ...below, tree: frame.tree }
+      }
+      else if (frame.sourcePath && below.tree && frame.tree) {
+        // A nested app — fold its sub-layout back into the parent at its path.
+        const root = replaceNestedLayout(below.tree.root, frame.sourcePath, frame.tree)
+        next[i - 1] = { ...below, tree: { ...below.tree, root } }
+      }
+      else {
+        break // independent boundary (page ← Site): host owns it from here.
+      }
+    }
+    stack.value = next
     return true
   }
 
@@ -115,6 +161,7 @@ export function useCroutonSemanticZoom(opts: UseSemanticZoomOptions = {}) {
     zoomIntoPage,
     zoomIntoNested,
     zoomIntoBreakpoints,
+    setCurrentTree,
     zoomOut,
     jumpTo,
     reset,
