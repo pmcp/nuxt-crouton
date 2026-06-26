@@ -1014,6 +1014,13 @@ function selectSubtree(rootId: string): string[] {
 }
 
 // Expose sync state and container detection for external access
+// Re-fit the camera onto the currently-focused node. The `focusNodeId` watcher only fires on
+// id CHANGE; call this when the focused node's size changes (e.g. host switches device width
+// while zoomed) so the camera re-frames it without toggling focus off/on.
+function refitFocus() {
+  if (props.focusNodeId) fitView({ nodes: [props.focusNodeId], duration: 300, padding: 0.16, maxZoom: 1.75 })
+}
+
 defineExpose({
   syncState,
   containerDetection,
@@ -1022,6 +1029,8 @@ defineExpose({
   relayoutAll,
   layoutSubtree,
   selectSubtree,
+  fitView,
+  refitFocus,
 })
 </script>
 
