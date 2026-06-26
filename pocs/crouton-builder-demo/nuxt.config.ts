@@ -15,6 +15,7 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-layout',
+    '@fyit/crouton-flow', // L0 Site = the crouton-flow page flow (#site slot)
     '@fyit/crouton-i18n',
     '@fyit/crouton-pages',
     '@fyit/crouton-devtools/eruda',
