@@ -246,19 +246,30 @@ const {
   addSelectedNodes,
   removeSelectedNodes,
   findNode,
-  fitView
+  fitView,
+  updateNodeInternals
 } = useVueFlow()
 
-// Camera focus (zoom into a single node, or back to the whole board). Driven by `focusNodeId`:
-// set it → the canvas animates to fill that node (the "zoom into the layout" gesture); clear it
-// → fit the whole board. nextTick so a freshly-resized node is measured at its new size.
+// Camera focus (zoom into a single node, or back to the whole board). Driven by `focusNodeId`.
+// A focused node has usually JUST changed size (the host renders it at a device width), and Vue
+// Flow measures node dimensions async — so fitting immediately frames the STALE size and the node
+// lands off-centre / oversized. Force a re-measure, then fit on the next frame(s) at the NEW size.
+function frameFocus(id: string) {
+  updateNodeInternals([id])
+  const run = () => fitView({ nodes: [id], duration: 400, padding: 0.2, maxZoom: 1.6 })
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(() => requestAnimationFrame(run))
+    // Correction pass: if the first fit still raced the re-measure of a big size jump
+    // (footprint → device width), re-fit once the new dimensions have definitely settled.
+    setTimeout(run, 200)
+  }
+  else nextTick(run)
+}
 watch(() => props.focusNodeId, (id) => {
-  nextTick(() => {
-    if (id) fitView({ nodes: [id], duration: 450, padding: 0.16, maxZoom: 1.75 })
-    // maxZoom:1 so clearing focus with only a node or two doesn't "fit" them to fill the
-    // screen (fit-all of a single node = zoom right in) — settle at natural size instead.
-    else fitView({ duration: 450, padding: 0.3, maxZoom: 1 })
-  })
+  if (id) frameFocus(id)
+  // maxZoom:1 so clearing focus with only a node or two doesn't "fit" them to fill the
+  // screen (fit-all of a single node = zoom right in) — settle at natural size instead.
+  else nextTick(() => fitView({ duration: 450, padding: 0.3, maxZoom: 1 }))
 })
 
 // Flag to prevent emit loops when syncing selected prop to Vue Flow
@@ -1018,7 +1029,7 @@ function selectSubtree(rootId: string): string[] {
 // id CHANGE; call this when the focused node's size changes (e.g. host switches device width
 // while zoomed) so the camera re-frames it without toggling focus off/on.
 function refitFocus() {
-  if (props.focusNodeId) fitView({ nodes: [props.focusNodeId], duration: 300, padding: 0.16, maxZoom: 1.75 })
+  if (props.focusNodeId) frameFocus(props.focusNodeId)
 }
 
 defineExpose({
