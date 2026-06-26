@@ -22,7 +22,7 @@
  * phone (out of the way — #906). The result rides in a `USlideover`. The palette markup
  * is defined once with VueUse's `createReusableTemplate` and reused in both places.
  */
-import { markRaw, computed, shallowRef, provide, nextTick } from 'vue'
+import { markRaw, computed, shallowRef, provide } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-m · #907 · fix zoom framing (re-measure before fit) + mobile-aware default device'
+const BUILD = 'spike-n · #907 · deterministic zoom framing (fitBounds) — no re-measure hack'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -126,7 +126,6 @@ const flowRows = computed<FlowNode[]>(() => {
 // responsiveness (collapse/variants/sizes per width). Edits persist back onto that node (root +
 // breakpoints), so the survey (layer 3) then reflects them. Size on the flow is unchanged — the
 // slider is a simulation, exactly the "drag bigger/smaller while staying the same size" model.
-const flowRef = ref<{ refitFocus: () => void } | null>(null)
 const PHONE_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Phone')!
 const DESKTOP_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Desktop')!
 // Default the focus device to the screen we're on: Phone width on a narrow screen (so the zoomed
@@ -142,6 +141,15 @@ const zoomNodeId = ref<string | null>(null)
 const focus = shallowRef<SpikeFocus | null>(null)
 provide(SPIKE_FOCUS_KEY, focus)
 
+// The exact rect (flow coords) the focused node occupies — its board position + the device size we
+// render it at. CroutonFlow frames this deterministically (fitBounds), so switching device just
+// recomputes the rect and the camera re-frames; no re-measure/timing hack needed.
+const focusBounds = computed(() => {
+  if (!focus.value || !zoomNodeId.value) return null
+  const n = nodes.value.find(nd => nd.id === zoomNodeId.value)
+  return n ? { x: n.position.x, y: n.position.y, width: focus.value.vp.width, height: focus.value.vp.height } : null
+})
+
 function onNodeDblClick(id: string) {
   if (mode.value !== 'free') return
   const n = nodes.value.find(nd => nd.id === id)
@@ -152,8 +160,7 @@ function onNodeDblClick(id: string) {
 }
 function setFocusVp(vp: SpikeViewport) {
   if (!focus.value) return
-  focus.value = { ...focus.value, vp } // resize the focused node → re-frame the camera
-  nextTick(() => flowRef.value?.refitFocus())
+  focus.value = { ...focus.value, vp } // resize the focused node → focusBounds recomputes → camera re-frames
 }
 function closeFocus() {
   focus.value = null
@@ -557,13 +564,12 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
-            ref="flowRef"
             :rows="flowRows"
             collection="artists"
             data-mode="ephemeral"
             :default-node-component="blockNode"
-            :draggable="viewport === null"
-            :focus-node-id="zoomNodeId"
+            :draggable="viewport === null && !focus"
+            :focus-bounds="focusBounds"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
