@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-i · #907 · viewport chips visible on mobile + dbl-click breakpoint slider'
+const BUILD = 'spike-j · #907 · fix version stamp wrapping vertically on mobile'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -486,9 +486,10 @@ function reset() {
           variant="soft"
           @click="resultOpen = true"
         />
-        <!-- Version stamp — always visible (incl. mobile) so we agree on the same build -->
-        <span class="basis-full break-all rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:basis-auto sm:break-normal">{{ BUILD }}</span>
       </div>
+      <!-- Version stamp — a DIRECT child of the wrapping header so on mobile it drops to its own
+           full-width line (inside the non-wrapping cluster above it collapsed to a vertical sliver). -->
+      <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
     </header>
 
     <div class="flex min-h-0 flex-1">
