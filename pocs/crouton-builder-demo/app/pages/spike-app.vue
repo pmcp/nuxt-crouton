@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-h · #907 · double-click a node → breakpoint slider (authored responsiveness)'
+const BUILD = 'spike-i · #907 · viewport chips visible on mobile + dbl-click breakpoint slider'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -425,8 +425,9 @@ function reset() {
       <h1 class="text-base font-semibold">Spike · build an app on Vue Flow</h1>
       <p class="hidden text-xs text-muted lg:block">Drop blocks → arrange (Free / Snap) → ✨ Magic or compile. #905</p>
       <div class="ml-auto flex items-center gap-2">
-        <!-- Viewport survey (#907 layer 3) — flip the whole board to a device width (Free mode only) -->
-        <div v-if="mode === 'free'" class="hidden items-center gap-0.5 rounded-lg border border-default p-0.5 sm:flex">
+        <!-- Viewport survey (#907 layer 3) — flip the whole board to a device width (Free mode only).
+             Visible on mobile too (survey is especially handy on a phone); the header wraps if tight. -->
+        <div v-if="mode === 'free'" class="flex items-center gap-0.5 rounded-lg border border-default p-0.5">
           <UButton
             size="xs"
             icon="i-lucide-frame"
