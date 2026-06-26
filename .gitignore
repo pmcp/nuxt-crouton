@@ -134,3 +134,5 @@ writeups/diagrams/*.excalidraw
 # committed files. See epic #540 / the public-repo disclosure note on PR #548.
 writeups/reports/red-team-*.md
 !writeups/reports/red-team-TEMPLATE.md
+
+pocs/crouton-builder-demo/.data

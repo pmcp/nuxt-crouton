@@ -1,0 +1,22 @@
+import { translationsUiConfig } from '@fyit/crouton-i18n/app/composables/useTranslationsUi'
+import { pagesPagesConfig } from '../layers/pages/collections/pages/app/composables/usePagesPages'
+
+export default defineAppConfig({
+  croutonCollections: {
+    translationsUi: translationsUiConfig,
+    pagesPages: pagesPagesConfig
+  },
+  // Backend-free demo blocks for the builder preview — both reuse the generic KPI
+  // block under DISTINCT ids so the collapse demo collapses one pane and reflows the
+  // other (collapse is keyed by blockId). defu-merged with the crouton-layout defaults.
+  croutonLayoutBlocks: {
+    'demo-a': { id: 'demo-a', name: 'Overview', description: 'Demo KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 40 },
+    'demo-b': { id: 'demo-b', name: 'Detail', description: 'Demo KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 60 },
+    // Spike (#903): the blocks a collection ("Artists") would offer — list / form / stats.
+    // All render the backend-free KPI block; the spike is about the drawer→drag→compile
+    // loop, not the block fidelity. Distinct names/icons so the drawer reads right.
+    'artists-list': { id: 'artists-list', name: 'Artists · List', description: 'All artists', icon: 'i-lucide-list', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 220, defaultSize: 50 },
+    'artists-form': { id: 'artists-form', name: 'Artists · New', description: 'Create an artist', icon: 'i-lucide-square-pen', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'form', minWidth: 220, defaultSize: 50 },
+    'artists-stats': { id: 'artists-stats', name: 'Artists · Stats', description: 'Artist KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 50 }
+  }
+})

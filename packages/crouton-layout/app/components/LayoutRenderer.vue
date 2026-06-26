@@ -101,6 +101,12 @@ const collapsedPct = computed(() => {
   return Math.min(40, Math.max(2, (46 / basis) * 100))
 })
 
+// WS6 #875 follow-up: the PANE's own collapse/expand animates, not just the handle.
+// reka-ui sizes a panel via inline `flex-grow`; the per-style transition class on the
+// panel (present whenever an in-place style is active — see the template) tweens the
+// shrink in BOTH directions, and siblings reflow into the freed space as their grow
+// rebalances. We still drive reka-ui's collapsible panels imperatively so a fully
+// -collapsed subtree hands its slot back to its siblings.
 watch(
   () => childCollapsed.value.join(','),
   () => {
@@ -131,6 +137,7 @@ watch(
          in its own pane slot, click-to-expand. -->
     <CroutonLayoutCollapseHandle
       v-if="leafCollapsed && collapseCtx"
+      :key="collapseCtx.style"
       :collapse-style="collapseCtx.style"
       :block-id="node.blockId"
       @expand="collapseCtx.expand(node.blockId)"
@@ -182,6 +189,7 @@ watch(
         :collapsible="inPlace || undefined"
         :collapsed-size="inPlace ? collapsedPct : undefined"
         class="overflow-hidden"
+        :class="inPlace && collapseCtx ? `mq-co-${collapseCtx.style}` : ''"
       >
         <CroutonLayoutRenderer
           :node="child"
@@ -201,5 +209,17 @@ watch(
 .croutonpane {
   container-type: inline-size;
   container-name: pane;
+}
+
+/* WS6 #875 follow-up — the pane's own collapse/expand motion, one curve per style
+   (armed only while `animating`, so interactive divider drags stay snappy). reka-ui
+   drives the panel via inline `flex-grow`; transitioning it tweens the shrink and the
+   siblings reflowing into the freed space. The collapse *handle* adds its signature
+   in-pane motion on top — together the four styles read distinctly. */
+.mq-co-spring-drawer  { transition: flex-grow .52s cubic-bezier(.34, 1.56, .64, 1); }   /* overshoot — springs shut */
+.mq-co-crt-power-down { transition: flex-grow .30s cubic-bezier(.85, 0, .97, .27); }     /* snappy — powers off */
+.mq-co-iris-portal    { transition: flex-grow .46s cubic-bezier(.65, 0, .35, 1); }       /* smooth iris */
+@media (prefers-reduced-motion: reduce) {
+  .mq-co-spring-drawer, .mq-co-crt-power-down, .mq-co-iris-portal { transition: none; }
 }
 </style>
