@@ -17,7 +17,8 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutTree, LayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
+import { LAYOUT_COLLAPSE_STYLES, DEFAULT_COLLAPSE_STYLE } from '@fyit/crouton-core/app/types/layout'
 import {
   resolveLayoutAtWidth,
   listBlocks,
@@ -25,6 +26,14 @@ import {
   removeBreakpoint,
 } from '../utils/layout-responsive'
 import { applySizes, type NodePath } from '../utils/layout-edit'
+
+// The collapse-motion picker (WS6 #875): label each style for the segmented control.
+const COLLAPSE_STYLE_LABELS: Record<LayoutCollapseStyle, string> = {
+  'gutter-tabs': 'Gutter tabs',
+  'spring-drawer': 'Spring drawer',
+  'crt-power-down': 'CRT power-down',
+  'iris-portal': 'Iris portal',
+}
 
 const props = defineProps<{ modelValue: LayoutTree }>()
 const emit = defineEmits<{ 'update:modelValue': [tree: LayoutTree] }>()
@@ -81,12 +90,20 @@ function dropCheckpoint(minWidth: number) {
 // — no separate "Add breakpoint" step. The snapshot preserves whatever is already
 // resolved at this width (inherited collapses / variants) so a single toggle doesn't
 // silently drop the others.
-function authorHere(patch: { collapsed?: string[], variants?: Record<string, string> }) {
+function authorHere(patch: { collapsed?: string[], variants?: Record<string, string>, collapseStyle?: LayoutCollapseStyle }) {
+  const collapseStyle = patch.collapseStyle ?? resolved.value.collapseStyle
   update(patchBreakpoint(tree.value, simWidth.value, {
     collapsed: patch.collapsed ?? [...resolved.value.collapsed],
     variants: patch.variants ?? { ...resolved.value.variants },
-    ...(resolved.value.collapseStyle !== undefined ? { collapseStyle: resolved.value.collapseStyle } : {}),
+    ...(collapseStyle !== undefined ? { collapseStyle } : {}),
   }))
+}
+
+/** The collapse motion resolved at the current width (defaults to the engine default). */
+const collapseStyleHere = computed<LayoutCollapseStyle>(() => resolved.value.collapseStyle ?? DEFAULT_COLLAPSE_STYLE)
+/** Author the collapse motion at the current checkpoint (the WS6 picker). */
+function onSetCollapseStyle(style: LayoutCollapseStyle) {
+  authorHere({ collapseStyle: style })
 }
 function onToggleCollapse(blockId: string) {
   const current = resolved.value.collapsed
@@ -246,6 +263,28 @@ const frameScale = computed(() => {
             @click="dropCheckpoint(simWidth)"
           />
         </div>
+
+        <!-- Collapse motion (WS6 #875) — the style a pane uses when it collapses at this
+             checkpoint. Authored per checkpoint, previewed live in the device frame. -->
+        <div class="flex flex-wrap items-center gap-2 rounded-lg border border-default bg-default px-3 py-2">
+          <UIcon
+            name="i-lucide-sparkles"
+            class="size-3.5 text-muted"
+          />
+          <span class="text-sm font-medium">Collapse motion</span>
+          <div class="ml-auto flex flex-wrap items-center gap-1">
+            <UButton
+              v-for="s in LAYOUT_COLLAPSE_STYLES"
+              :key="s"
+              :label="COLLAPSE_STYLE_LABELS[s]"
+              size="xs"
+              :color="collapseStyleHere === s ? 'primary' : 'neutral'"
+              :variant="collapseStyleHere === s ? 'solid' : 'soft'"
+              @click="onSetCollapseStyle(s)"
+            />
+          </div>
+        </div>
+
         <div
           v-for="b in blocks"
           :key="b.blockId"

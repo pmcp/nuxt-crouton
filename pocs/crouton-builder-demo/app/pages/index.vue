@@ -15,7 +15,7 @@ useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b18 · 26 Jun · WS8 zoom shell + mobile pass (vertical compose stack · phone-first breakpoints)'
+const BUILD = 'b19 · 26 Jun · collapse-motion picker in Breakpoints + spring-drawer demo (drag the ruler past 640)'
 
 // Backend-free demo blocks (registered in app.config) so the canvas/author can be
 // driven without auth. A `nested` app on the Reports page demonstrates
@@ -35,6 +35,9 @@ const pages: ZoomPage[] = [
     id: 'dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard',
     // Three free cards on entry — snap two together and the tree gains a nested split,
     // which the breakpoint author then shows: a compose edit, reflected one level in.
+    // Ships with an authored breakpoint so the WS6 collapse MOTION is visible by zoom
+    // alone: below 640px the middle pane collapses with `spring-drawer` (drag the ruler
+    // in the Breakpoints level across 640 to see it; switch the motion with the picker).
     tree: {
       renderer: 'panes',
       root: {
@@ -45,6 +48,10 @@ const pages: ZoomPage[] = [
           { type: 'leaf', blockId: 'demo-a', defaultSize: 33 },
         ],
       },
+      breakpoints: [
+        { minWidth: 0, label: 'Phone', collapsed: ['demo-b'], collapseStyle: 'spring-drawer' },
+        { minWidth: 640, label: 'Wide', collapsed: [] },
+      ],
     },
   },
   {
