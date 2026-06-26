@@ -37,7 +37,9 @@ function update(next: LayoutTree) {
 // --- the ruler -------------------------------------------------------------
 const MIN = 320
 const MAX = 1600
-const simWidth = ref(1280)
+// Start at the viewport's own size so authoring is mobile-first on a phone (you land on
+// the phone checkpoint) and desktop-first on a wide screen. Clamped to the ruler range.
+const simWidth = ref(import.meta.client ? Math.min(MAX, Math.max(MIN, window.innerWidth < 560 ? 390 : 1280)) : 1280)
 
 const DEVICES = [
   { label: 'Phone', width: 390, icon: 'i-lucide-smartphone' },
