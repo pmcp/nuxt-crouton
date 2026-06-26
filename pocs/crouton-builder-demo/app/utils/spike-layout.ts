@@ -4,10 +4,24 @@
  * footprint is how many block-cells it spans on each axis, so a 2-high stack is twice
  * as tall and a snapped neighbour can match it. Auto-imported (app/utils).
  */
+import type { InjectionKey, ShallowRef } from 'vue'
 import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
 
 export const SPIKE_BASE_W = 256
 export const SPIKE_BASE_H = 184
+
+/** Which edge of a target a dragged block will snap to (mirrors layout-snap's edge). */
+export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
+
+/**
+ * Live snap preview (#907) — set continuously WHILE a block is dragged (via CroutonFlow's
+ * new `@node-drag`). It names the TARGET node (by object identity of its `data.node`) and
+ * the edge the dragged block will click onto, so that target's card can light up that edge
+ * — "the side that's gonna snap lines up" before you let go. Provided by the page, injected
+ * by SpikeBlockNode. `shallowRef` because the value is a small immutable record swapped each frame.
+ */
+export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge }
+export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /** How many block-cells wide × tall this node spans (1×1 for a leaf). */
 export function footprint(node: LayoutNode): { cols: number, rows: number } {

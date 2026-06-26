@@ -22,7 +22,7 @@
  * phone (out of the way — #906). The result rides in a `USlideover`. The palette markup
  * is defined once with VueUse's `createReusableTemplate` and reused in both places.
  */
-import { markRaw, computed } from 'vue'
+import { markRaw, computed, shallowRef, provide } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
@@ -31,7 +31,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-d · #907/#808 · devtools glasses menu (console + annotate) + version stamp on mobile'
+const BUILD = 'spike-e · #907 · live snap guide — target edge lights up while you drag'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -73,6 +73,11 @@ interface FlowNode { id: string, type: string, position: { x: number, y: number 
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
+// Live snap preview (#907): while a block is dragged, the target node it will snap to lights
+// up the joining edge. Provided here; SpikeBlockNode injects it and matches by object identity.
+const snapPreview = shallowRef<SpikeSnapPreview | null>(null)
+provide(SPIKE_SNAP_KEY, snapPreview)
+
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
 const resultOpen = ref(false)
@@ -102,6 +107,35 @@ function combineNodes(a: LayoutNode, b: LayoutNode, direction: 'horizontal' | 'v
   return { type: 'split', direction, children }
 }
 
+// Snap tuning — shared by the live preview and the on-release merge so the glowing edge
+// you saw is exactly the edge it clicks onto.
+const SNAP_OPTS = { gap: 160, align: 0.2 } as const
+
+/** Geometry-only: which other node (and its edge) a block dragged to `pos` snaps to, or null.
+ *  `others` are the candidate nodes; the dragged block's footprint comes from `movedNode`. */
+function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: FlowNode[]) {
+  const md = sizeOf(movedNode)
+  const drag: Rect = { x: pos.x, y: pos.y, width: md.width, height: md.height }
+  const targets: SnapTarget[] = others.map((o, idx) => {
+    const s = sizeOf(o.data.node)
+    return { path: [idx], rect: { x: o.position.x, y: o.position.y, width: s.width, height: s.height } }
+  })
+  const snap = closestSnap(drag, targets, SNAP_OPTS)
+  if (!snap) return null
+  return { target: others[snap.path[0]!]!, edge: snap.edge, tRect: targets[snap.path[0]!]!.rect, md }
+}
+
+// Live snap guide (#907): CroutonFlow streams the dragged node's position via `@node-drag`
+// (its collab sync already broadcasts it continuously). On each frame we recompute the snap
+// candidate and light up the target's joining edge — so "the side that's gonna snap lines up"
+// is visible BEFORE you let go, not just after the merge.
+function onNodeDragLive(id: string, pos: { x: number, y: number }) {
+  const moved = nodes.value.find(n => n.id === id)
+  if (!moved) { snapPreview.value = null; return }
+  const s = snapAt(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
+  snapPreview.value = s ? { node: s.target.data.node, edge: s.edge } : null
+}
+
 // In-flow snap + MERGE (#907) — snapping happens ON the Vue Flow canvas, no separate mode.
 // CroutonFlow re-emits the moved rows on drag stop; we OWN that update (not v-model) so our
 // write is the last one (a plain v-model would clobber it with the drop point). If the dropped
@@ -109,6 +143,7 @@ function combineNodes(a: LayoutNode, b: LayoutNode, direction: 'horizontal' | 'v
 // split — so the unit drags as one piece and the renderer stretches each pane to the group's
 // full size (a block snapped to a 2-high stack spans its full height).
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
+  snapPreview.value = null // drag has ended — clear the live guide
   const rows = rowsRaw as unknown as FlowNode[]
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
   const moved = rows.find((r) => {
@@ -117,26 +152,17 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   })
   if (!moved) { nodes.value = rows; return }
 
-  const md = sizeOf(moved.data.node)
-  const drag: Rect = { x: moved.position.x, y: moved.position.y, width: md.width, height: md.height }
-  const targets: SnapTarget[] = rows
-    .map((r, idx) => ({ r, idx }))
-    .filter(o => o.r.id !== moved.id)
-    .map((o) => {
-      const s = sizeOf(o.r.data.node)
-      return { path: [o.idx], rect: { x: o.r.position.x, y: o.r.position.y, width: s.width, height: s.height } }
-    })
-  const snap = closestSnap(drag, targets, { gap: 160, align: 0.2 })
-  if (!snap) { nodes.value = rows; return }
+  const others = rows.filter(r => r.id !== moved.id)
+  const s = snapAt(moved.data.node, moved.position, others)
+  if (!s) { nodes.value = rows; return }
 
-  const target = rows[snap.path[0]!]!
-  const tRect = targets.find(tg => tg.path[0] === snap.path[0])!.rect
-  const horizontal = snap.edge === 'left' || snap.edge === 'right'
-  const targetFirst = snap.edge === 'right' || snap.edge === 'bottom'
+  const { target, edge, tRect, md } = s
+  const horizontal = edge === 'left' || edge === 'right'
+  const targetFirst = edge === 'right' || edge === 'bottom'
   const combined = combineNodes(target.data.node, moved.data.node, horizontal ? 'horizontal' : 'vertical', targetFirst)
   // Group origin: a left/top snap places the group to the left/above the target's old spot.
-  const gx = snap.edge === 'left' ? tRect.x - md.width : tRect.x
-  const gy = snap.edge === 'top' ? tRect.y - md.height : tRect.y
+  const gx = edge === 'left' ? tRect.x - md.width : tRect.x
+  const gy = edge === 'top' ? tRect.y - md.height : tRect.y
   const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined } }
   // Replace the target with the merged group; drop the moved node — they're now one unit.
   nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
@@ -390,6 +416,7 @@ function reset() {
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
+            @node-drag="onNodeDragLive"
             @update:rows="onRowsUpdate"
           />
           <!-- Snap: the WS4 magnetic compose canvas — drag cards together → bound split (#907) -->
