@@ -15,7 +15,7 @@ useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b17 · 26 Jun · WS8 — three tabs folded into the zoom shell (Site → Page → App → Breakpoints)'
+const BUILD = 'b18 · 26 Jun · WS8 zoom shell + mobile pass (vertical compose stack · phone-first breakpoints)'
 
 // Backend-free demo blocks (registered in app.config) so the canvas/author can be
 // driven without auth. A `nested` app on the Reports page demonstrates
