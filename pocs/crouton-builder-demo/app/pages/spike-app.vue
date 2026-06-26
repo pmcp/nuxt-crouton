@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-f · #907 · pull-apart-to-detach — drag a pane out of a merged group'
+const BUILD = 'spike-g · #907 · viewport survey — flip the whole board to phone/tablet/desktop'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -105,6 +105,20 @@ function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
 }
 provide(SPIKE_DETACH_KEY, onDetach)
 
+// Global viewport survey (#907 layer 3) — flip the whole board to a device width to see what every
+// page looks like at that viewport. Read-only: snapping/detach off, nodes tiled & non-draggable.
+const viewport = ref<SpikeViewport | null>(null)
+provide(SPIKE_VIEWPORT_KEY, viewport)
+
+// While surveying, tile the nodes in a row at device size — non-destructive (the real topology
+// positions in `nodes` are untouched, so flipping back to Fit restores your arrangement).
+const flowRows = computed<FlowNode[]>(() => {
+  if (!viewport.value) return nodes.value
+  const vw = viewport.value
+  const GAP = 80
+  return nodes.value.map((n, i) => ({ ...n, position: { x: i * (vw.width + GAP), y: 0 } }))
+})
+
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
 const resultOpen = ref(false)
@@ -157,6 +171,7 @@ function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: Fl
 // candidate and light up the target's joining edge — so "the side that's gonna snap lines up"
 // is visible BEFORE you let go, not just after the merge.
 function onNodeDragLive(id: string, pos: { x: number, y: number }) {
+  if (viewport.value) { snapPreview.value = null; return } // survey mode is read-only
   const moved = nodes.value.find(n => n.id === id)
   if (!moved) { snapPreview.value = null; return }
   const s = snapAt(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
@@ -171,6 +186,7 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
 // full size (a block snapped to a 2-high stack spans its full height).
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   snapPreview.value = null // drag has ended — clear the live guide
+  if (viewport.value) return // survey mode is read-only — don't merge or persist tiled positions
   const rows = rowsRaw as unknown as FlowNode[]
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
   const moved = rows.find((r) => {
@@ -231,6 +247,7 @@ const blockCount = computed(() => currentBlocks().length)
 /** Enter Snap mode — seed the compose canvas from the free nodes (each node's layout + size). */
 function enterSnap() {
   if (mode.value === 'snap') return
+  viewport.value = null // survey is a Free-mode overlay; leave it when switching to Snap
   const ns = nodes.value
   if (ns.length) {
     const minX = Math.min(...ns.map(n => n.position.x))
@@ -380,6 +397,28 @@ function reset() {
       <h1 class="text-base font-semibold">Spike · build an app on Vue Flow</h1>
       <p class="hidden text-xs text-muted lg:block">Drop blocks → arrange (Free / Snap) → ✨ Magic or compile. #905</p>
       <div class="ml-auto flex items-center gap-2">
+        <!-- Viewport survey (#907 layer 3) — flip the whole board to a device width (Free mode only) -->
+        <div v-if="mode === 'free'" class="hidden items-center gap-0.5 rounded-lg border border-default p-0.5 sm:flex">
+          <UButton
+            size="xs"
+            icon="i-lucide-frame"
+            label="Fit"
+            :color="viewport === null ? 'primary' : 'neutral'"
+            :variant="viewport === null ? 'soft' : 'ghost'"
+            @click="viewport = null"
+          />
+          <UButton
+            v-for="v in SPIKE_VIEWPORTS"
+            :key="v.label"
+            size="xs"
+            :icon="v.icon"
+            :title="`${v.label} · ${v.width}px`"
+            :aria-label="v.label"
+            :color="viewport?.label === v.label ? 'primary' : 'neutral'"
+            :variant="viewport?.label === v.label ? 'soft' : 'ghost'"
+            @click="viewport = v"
+          />
+        </div>
         <!-- Free placement ⇄ magnetic Snap — non-exclusive surfaces over the same blocks (#907) -->
         <div class="flex items-center gap-0.5 rounded-lg border border-default p-0.5">
           <UButton
@@ -436,10 +475,11 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
-            :rows="nodes"
+            :rows="flowRows"
             collection="artists"
             data-mode="ephemeral"
             :default-node-component="blockNode"
+            :draggable="viewport === null"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
@@ -454,7 +494,13 @@ function reset() {
 
         <!-- Snap hints (when there's something to arrange) -->
         <p
-          v-if="mode === 'free' && nodes.length >= 2"
+          v-if="mode === 'free' && viewport && nodes.length"
+          class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
+        >
+          Surveying at {{ viewport.label }} · {{ viewport.width }}px — read-only · hit ⛶ to fit · pick <strong>Fit</strong> to edit
+        </p>
+        <p
+          v-else-if="mode === 'free' && nodes.length >= 2"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
           Drag a block next to another → they snap together · then ✨ Magic or compile

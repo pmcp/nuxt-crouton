@@ -4,7 +4,7 @@
  * footprint is how many block-cells it spans on each axis, so a 2-high stack is twice
  * as tall and a snapped neighbour can match it. Auto-imported (app/utils).
  */
-import type { InjectionKey, ShallowRef } from 'vue'
+import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
 
 export const SPIKE_BASE_W = 256
@@ -34,6 +34,24 @@ export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<Sp
  */
 export interface SpikeDetachPayload { index: number, dir: { x: number, y: number } }
 export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
+
+/**
+ * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
+ * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
+ * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a
+ * read-only survey: while a viewport is active, snapping/detach are off and nodes tile rather
+ * than drag. `null` = back to the topology (footprint) view. Provided by the page; SpikeBlockNode
+ * injects it to size its card to the device + render via CroutonLayoutResponsiveRenderer at `width`.
+ */
+export interface SpikeViewport { label: string, icon: string, width: number, height: number }
+export const SPIKE_VIEWPORT_KEY = Symbol('spike-viewport') as InjectionKey<Ref<SpikeViewport | null>>
+
+/** The device presets the viewport chips offer (width/height in px). */
+export const SPIKE_VIEWPORTS: SpikeViewport[] = [
+  { label: 'Phone', icon: 'i-lucide-smartphone', width: 375, height: 720 },
+  { label: 'Tablet', icon: 'i-lucide-tablet', width: 768, height: 1024 },
+  { label: 'Desktop', icon: 'i-lucide-monitor', width: 1280, height: 800 },
+]
 
 /** How many block-cells wide × tall this node spans (1×1 for a leaf). */
 export function footprint(node: LayoutNode): { cols: number, rows: number } {

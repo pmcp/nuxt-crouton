@@ -27,15 +27,24 @@ const props = defineProps<{
   selected?: boolean
 }>()
 
+// Global viewport survey (#907 layer 3): when a device is active, size the card to that device
+// and render the layout AT that width (so the board becomes a wall of phones/tablets/desktops).
+const viewport = inject(SPIKE_VIEWPORT_KEY, null)
+const surveying = computed(() => !!viewport?.value)
+
 const size = computed(() => {
+  if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
   const f = footprint(props.data.node)
   return { width: `${f.cols * SPIKE_BASE_W}px`, height: `${f.rows * SPIKE_BASE_H}px` }
 })
 
+// A LayoutTree wrapper for the responsive renderer (data.node is a bare node).
+const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node }))
+
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
 const guideEdge = computed<SnapEdge | null>(() =>
-  snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
+  !surveying.value && snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
 )
 const guideStyle = computed(() => {
   switch (guideEdge.value) {
@@ -52,7 +61,7 @@ const DETACH_THRESHOLD = 56 // px the grip must travel before a pane pops out
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
-const armed = computed(() => isGroup.value && (hovered.value || !!props.selected))
+const armed = computed(() => !surveying.value && isGroup.value && (hovered.value || !!props.selected))
 
 // Top-level pane regions (as % of the card), laid out along the split's axis by footprint.
 const regions = computed(() => {
@@ -130,7 +139,10 @@ function cleanup() {
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
-    <CroutonLayoutRenderer :node="data.node" />
+    <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
+    <!-- topology mode renders it plain at its footprint size. -->
+    <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
+    <CroutonLayoutRenderer v-else :node="data.node" />
 
     <!-- Live snap guide: the edge this block will be joined on lights up while a peer is dragged -->
     <div
