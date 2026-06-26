@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-l · #907 · in-flow zoom EDIT — resize panes on the zoomed node → keypoint'
+const BUILD = 'spike-m · #907 · fix zoom framing (re-measure before fit) + mobile-aware default device'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -127,7 +127,13 @@ const flowRows = computed<FlowNode[]>(() => {
 // breakpoints), so the survey (layer 3) then reflects them. Size on the flow is unchanged — the
 // slider is a simulation, exactly the "drag bigger/smaller while staying the same size" model.
 const flowRef = ref<{ refitFocus: () => void } | null>(null)
+const PHONE_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Phone')!
 const DESKTOP_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Desktop')!
+// Default the focus device to the screen we're on: Phone width on a narrow screen (so the zoomed
+// layout renders ~1:1 and stays editable), Desktop on a wide one. You can still flip in the bar.
+function defaultFocusVp(): SpikeViewport {
+  return (import.meta.client && window.innerWidth < 700) ? PHONE_VP : DESKTOP_VP
+}
 
 // In-flow zoom edit: double-click a node → camera zooms in (zoomNodeId drives CroutonFlow's
 // focus-node-id) AND that node becomes the live edit surface (focus). A slim bar picks the device
@@ -142,7 +148,7 @@ function onNodeDblClick(id: string) {
   if (!n) return
   viewport.value = null // focus is a single-node view; leave the board-wide survey
   zoomNodeId.value = id
-  focus.value = { node: n.data.node, vp: DESKTOP_VP }
+  focus.value = { node: n.data.node, vp: defaultFocusVp() }
 }
 function setFocusVp(vp: SpikeViewport) {
   if (!focus.value) return
