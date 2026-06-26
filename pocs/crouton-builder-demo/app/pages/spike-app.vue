@@ -31,7 +31,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-d · #907 · snap = merge into one layout (drags as a unit, spans full height)'
+const BUILD = 'spike-d · #907/#808 · devtools glasses menu (console + annotate) + version stamp on mobile'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -365,7 +365,8 @@ function reset() {
           variant="soft"
           @click="resultOpen = true"
         />
-        <span class="hidden rounded-full border border-default bg-elevated px-2 py-0.5 font-mono text-[10px] text-muted sm:inline">{{ BUILD }}</span>
+        <!-- Version stamp — always visible (incl. mobile) so we agree on the same build -->
+        <span class="basis-full break-all rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:basis-auto sm:break-normal">{{ BUILD }}</span>
       </div>
     </header>
 
