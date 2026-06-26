@@ -169,6 +169,7 @@ When `sync` is enabled:
 | `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
 | `additionalEdges` | `Array<{ id, source, target }>` | `[]` | Extra edges rendered alongside parent-derived edges (e.g. multi-parent synthesis connections) |
 | `defaultNodeComponent` | `Component` | - | Explicit node component for the default render path (overrides `{Collection}Node` name resolution). Used by `CroutonFlowSiteFlow` to inject its page card. Ghost nodes still render as ghosts. |
+| `focusNodeId` | `string \| null` | - | Camera focus — set it to animate the canvas to fill that node (zoom-into-the-layout); clear it to fit the whole board. View transform only; doesn't touch node data/positions. |
 
 ## Events
 

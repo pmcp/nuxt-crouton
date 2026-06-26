@@ -120,6 +120,12 @@ interface Props {
    * by-name lookup unreachable. Ghost nodes still render as ghosts.
    */
   defaultNodeComponent?: Component
+  /**
+   * Camera focus: when set, the canvas animates to fill this node (zoom-into-the-layout);
+   * when cleared (null/undefined), it fits the whole board. Purely a view transform — it
+   * doesn't change node data or positions.
+   */
+  focusNodeId?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -239,8 +245,19 @@ const {
   getSelectedNodes,
   addSelectedNodes,
   removeSelectedNodes,
-  findNode
+  findNode,
+  fitView
 } = useVueFlow()
+
+// Camera focus (zoom into a single node, or back to the whole board). Driven by `focusNodeId`:
+// set it → the canvas animates to fill that node (the "zoom into the layout" gesture); clear it
+// → fit the whole board. nextTick so a freshly-resized node is measured at its new size.
+watch(() => props.focusNodeId, (id) => {
+  nextTick(() => {
+    if (id) fitView({ nodes: [id], duration: 450, padding: 0.16, maxZoom: 1.75 })
+    else fitView({ duration: 450, padding: 0.2 })
+  })
+})
 
 // Flag to prevent emit loops when syncing selected prop to Vue Flow
 const isSyncingFromProp = ref(false)
