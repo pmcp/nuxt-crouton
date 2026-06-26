@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-ai": "workspace:*",
     "@fyit/crouton-core": "workspace:*",
     "@fyit/crouton-devtools": "workspace:*",
     "@fyit/crouton-flow": "workspace:*",
@@ -27,10 +28,12 @@
     "@fyit/crouton-layout": "workspace:*",
     "@fyit/crouton-pages": "workspace:*",
     "@libsql/client": "catalog:",
+    "ai": "^4.3.19",
     "drizzle-orm": "catalog:",
     "nuxt": "catalog:",
     "vue": "catalog:",
-    "vue-router": "catalog:"
+    "vue-router": "catalog:",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@fyit/crouton-cli": "workspace:*",

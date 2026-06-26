@@ -30,12 +30,20 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-b · #907 · Snap mode — magnetic compose canvas (WS4 reuse)'
+const BUILD = 'spike-d · #909 · ✨ Magic v2 — AI proposes + ranks (crouton-ai add-on, viability guardrail)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
-const { magicArrange } = useSpikeMagic()
+const { magicArrange, magicArrangeAI } = useSpikeMagic()
 const { checkViability } = useCroutonLayoutBlocks()
+
+// ✨ Magic v2 is an optional add-on: the AI button only shows when the crouton-ai package
+// is installed (same hasApp() stub pattern crouton-pages uses). No AI package → no button.
+const { hasApp } = useCroutonApps()
+const hasAI = hasApp('ai')
+const aiIntent = ref('')
+const aiLoading = ref(false)
+const resultSource = ref<'deterministic' | 'ai' | 'fallback'>('deterministic')
 
 // Free (Vue Flow free placement) ⇄ Snap (magnetic compose canvas). Non-exclusive: you can
 // drop in Free, switch to Snap to bind by hand, and either feeds the same compile/magic.
@@ -141,9 +149,28 @@ function magic() {
   const { proposals: ps, defaultId } = magicArrange(currentBlocks())
   proposals.value = ps
   selectedId.value = defaultId ?? ps[0]?.id ?? ''
+  resultSource.value = 'deterministic'
   resultTitle.value = '✨ Magic layout'
   paletteOpen.value = false
   resultOpen.value = ps.length > 0
+}
+
+/** ✨ Magic v2 (#909) — AI proposes + ranks; deterministic composer is the viability guardrail. */
+async function magicAI() {
+  if (aiLoading.value) return
+  aiLoading.value = true
+  try {
+    const { proposals: ps, defaultId, source } = await magicArrangeAI(currentBlocks(), aiIntent.value)
+    proposals.value = ps
+    selectedId.value = defaultId ?? ps[0]?.id ?? ''
+    resultSource.value = source === 'ai' ? 'ai' : 'fallback'
+    resultTitle.value = source === 'ai' ? '✨ Magic layout · AI' : '✨ Magic layout'
+    paletteOpen.value = false
+    resultOpen.value = ps.length > 0
+  }
+  finally {
+    aiLoading.value = false
+  }
 }
 
 // "As placed" — the original spike's dumb positional infer: 1 node → its leaf is the
@@ -215,6 +242,17 @@ function reset() {
       </div>
       <div class="mt-4 flex flex-col gap-2">
         <UButton size="sm" color="primary" icon="i-lucide-wand-2" :disabled="!blockCount" block @click="magic">✨ Magic arrange</UButton>
+        <!-- AI tier — only shown when the crouton-ai add-on is installed (hasApp('ai'), #909) -->
+        <template v-if="hasAI">
+          <UInput
+            v-model="aiIntent"
+            size="sm"
+            icon="i-lucide-message-square-text"
+            placeholder="Describe the app (optional)"
+            :disabled="!blockCount"
+          />
+          <UButton size="sm" color="primary" variant="soft" icon="i-lucide-sparkles" :loading="aiLoading" :disabled="!blockCount" block @click="magicAI">✨ Magic (AI)</UButton>
+        </template>
         <UButton size="sm" color="neutral" variant="soft" :icon="mode === 'snap' ? 'i-lucide-magnet' : 'i-lucide-move'" :disabled="!blockCount" block @click="compile">{{ compileLabel }}</UButton>
         <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-rotate-ccw" block @click="reset">Reset</UButton>
       </div>
@@ -331,6 +369,24 @@ function reset() {
     <USlideover v-model:open="resultOpen" :title="resultTitle" :ui="{ content: 'sm:max-w-lg' }">
       <template #body>
         <div class="flex h-full flex-col gap-3">
+          <!-- Source badge — AI-ranked (#909) or the deterministic fallback when AI is off/unavailable -->
+          <div v-if="resultSource !== 'deterministic'" class="flex items-center gap-2">
+            <UBadge
+              v-if="resultSource === 'ai'"
+              color="primary"
+              variant="subtle"
+              size="sm"
+              icon="i-lucide-sparkles"
+            >AI ranked</UBadge>
+            <UBadge
+              v-else
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              icon="i-lucide-cpu"
+            >deterministic fallback</UBadge>
+            <span v-if="resultSource === 'fallback'" class="text-xs text-muted">AI unavailable — used the viability composer</span>
+          </div>
           <!-- Flip between archetype proposals (#908) -->
           <div v-if="proposals.length > 1" class="flex flex-wrap gap-1.5">
             <UButton

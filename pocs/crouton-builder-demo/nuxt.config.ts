@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-flow', // L0 Site = the crouton-flow page flow (#site slot)
     '@fyit/crouton-i18n',
     '@fyit/crouton-pages',
+    '@fyit/crouton-ai', // optional AI add-on — enables ✨ Magic v2 (gated via hasApp('ai'), #909)
     '@fyit/crouton-devtools/eruda',
     // Generated collection layers must come last
     './layers/pages'
@@ -32,6 +33,9 @@ export default defineNuxtConfig({
   // disable crouton-pages' public page catch-alls to avoid /three being parsed
   // as a team slug. See crouton-pages nuxt.config "routingMode" handling.
   runtimeConfig: {
+    // ✨ Magic v2 (#909) — set NUXT_ANTHROPIC_API_KEY to enable the AI tier; absent →
+    // the /api/spike-magic-ai route returns `unavailable` and the client degrades to v1.
+    anthropicApiKey: '',
     public: {
       croutonPages: {
         routingMode: 'custom'
