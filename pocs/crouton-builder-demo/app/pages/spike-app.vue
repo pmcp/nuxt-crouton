@@ -26,11 +26,12 @@ import { markRaw, computed } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
+import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
 import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCroutonComposeGestures'
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-d · #909 · ✨ Magic v2 + tap-to-add blocks (mobile: no drag needed)'
+const BUILD = 'spike-d · #907/#909 · in-flow snap (drag blocks together on the canvas) + tap-to-add'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -92,6 +93,41 @@ function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: num
     position,
     data: { blockId: String(item.blockId), label: String(item.label ?? item.blockId) },
   }]
+}
+
+// In-flow snap (#907) — snapping happens ON the Vue Flow canvas, no separate mode.
+// CroutonFlow re-emits the moved rows on drag stop; we OWN that update (not v-model) so the
+// snapped position is the last write (a plain v-model would clobber it with the drop point).
+// If the dropped node lands near another node's edge, snap it FLUSH + edge-aligned. All
+// block-nodes are the same size, so flush + align reads as a clean row/column.
+const NODE_W = 256
+const NODE_H = 184
+function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
+  const rows = rowsRaw as unknown as FlowNode[]
+  // Which node moved? (compare the incoming rows against the current positions)
+  const prev = new Map(nodes.value.map(n => [n.id, n.position]))
+  const moved = rows.find((r) => {
+    const p = prev.get(r.id)
+    return p && (p.x !== r.position.x || p.y !== r.position.y)
+  })
+  if (!moved) { nodes.value = rows; return }
+
+  const drag: Rect = { x: moved.position.x, y: moved.position.y, width: NODE_W, height: NODE_H }
+  const targets: SnapTarget[] = rows
+    .map((r, idx) => ({ r, idx }))
+    .filter(o => o.r.id !== moved.id)
+    .map(o => ({ path: [o.idx], rect: { x: o.r.position.x, y: o.r.position.y, width: NODE_W, height: NODE_H } }))
+  const snap = closestSnap(drag, targets, { gap: 160, align: 0.2 })
+
+  let pos = moved.position
+  if (snap) {
+    const t = targets.find(tg => tg.path[0] === snap.path[0])!.rect
+    if (snap.edge === 'right') pos = { x: t.x + t.width, y: t.y }
+    else if (snap.edge === 'left') pos = { x: t.x - NODE_W, y: t.y }
+    else if (snap.edge === 'bottom') pos = { x: t.x, y: t.y + t.height }
+    else pos = { x: t.x, y: t.y - NODE_H } // top
+  }
+  nodes.value = rows.map(r => r.id === moved.id ? { ...r, position: { x: Math.round(pos.x), y: Math.round(pos.y) } } : r)
 }
 
 // Tap-to-add (#906 mobile fix): HTML5 drag doesn't fire on touch, and the bottom-sheet
@@ -331,13 +367,14 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
-            v-model:rows="nodes"
+            :rows="nodes"
             collection="artists"
             data-mode="ephemeral"
             :default-node-component="blockNode"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
+            @update:rows="onRowsUpdate"
           />
           <!-- Snap: the WS4 magnetic compose canvas — drag cards together → bound split (#907) -->
           <div v-else class="absolute inset-0 p-3">
@@ -345,9 +382,15 @@ function reset() {
           </div>
         </ClientOnly>
 
-        <!-- Snap hint (when there's something to arrange) -->
+        <!-- Snap hints (when there's something to arrange) -->
         <p
-          v-if="mode === 'snap' && pieces.length"
+          v-if="mode === 'free' && nodes.length >= 2"
+          class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
+        >
+          Drag a block next to another → they snap together · then ✨ Magic or compile
+        </p>
+        <p
+          v-else-if="mode === 'snap' && pieces.length"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
           Drag a card beside another → they snap into a split · resize from the corner
