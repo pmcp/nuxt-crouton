@@ -1,157 +1,117 @@
 <script setup lang="ts">
 /**
- * Crouton Builder — live POC (epic #868). Mounts the REAL builder surfaces with
- * backend-free `stats` blocks so the WS4 compose gestures, WS5 responsiveness, and
- * WS6 collapse motions can be driven by hand on a deployed URL.
+ * Crouton Builder — live POC (epic #868). WS8 (#899): the three tabs (Compose /
+ * Responsive+Collapse / Breakpoint author) are folded into the ONE
+ * `CroutonLayoutZoomShell`, so you navigate by ZOOM rather than tab buttons:
+ *
+ *   Site (crouton-flow page flow)  →  Page  →  App (compose canvas)  →  Breakpoints
+ *
+ * One shared layout tree threads every level: a snap you make on the compose canvas
+ * is the same edit the breakpoint author shows when you zoom further in.
  */
-import type { LayoutNode, LayoutTree, LayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutTree } from '@fyit/crouton-core/app/types/layout'
 
 useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b16 · 26 Jun · overlay drawer now closes back to the same side it opened from'
+const BUILD = 'b18 · 26 Jun · WS8 zoom shell + mobile pass (vertical compose stack · phone-first breakpoints)'
 
-// Structural match for crouton-layout's ComposePiece (its composables subpath isn't
-// exposed for type imports; the canvas accepts any structurally-compatible piece).
-interface ComposePiece {
-  id: string
-  node: LayoutNode
-  x: number
-  y: number
-  width: number
-  height: number
-  label?: string
-}
-
-const tab = ref<'compose' | 'responsive' | 'author'>('compose')
-
-// Seeded in a vertical stack at a small fixed x so they fit even a narrow mobile
-// canvas without overlapping; the canvas clamps anything that would fall off-edge.
-const seed = (): ComposePiece[] => [
-  { id: 'sales', node: { type: 'leaf', blockId: 'demo-a' }, x: 16, y: 16, width: 240, height: 140, label: 'Sales' },
-  { id: 'traffic', node: { type: 'leaf', blockId: 'demo-b' }, x: 16, y: 168, width: 240, height: 140, label: 'Traffic' },
-  { id: 'revenue', node: { type: 'leaf', blockId: 'demo-a' }, x: 16, y: 320, width: 240, height: 140, label: 'Revenue' },
-]
-const pieces = ref<ComposePiece[]>(seed())
-
-const collapseStyle = ref<LayoutCollapseStyle>('iris-portal')
-const simWidth = ref(880)
-// Clicking a collapsed pane is now handled inside the renderer (it slides out as an
-// overlay drawer), so the page just declares the breakpoints.
-const respTree = computed<LayoutTree>(() => ({
-  renderer: 'panes',
-  root: {
-    type: 'split', direction: 'horizontal',
-    children: [
-      { type: 'leaf', blockId: 'demo-a', defaultSize: 38 },
-      { type: 'leaf', blockId: 'demo-b', defaultSize: 62 },
-    ],
-  },
-  breakpoints: [
-    { minWidth: 0, label: 'Phone', collapsed: ['demo-a'], collapseStyle: collapseStyle.value },
-    { minWidth: 640, label: 'Wide', collapsed: [] },
+// Backend-free demo blocks (registered in app.config) so the canvas/author can be
+// driven without auth. A `nested` app on the Reports page demonstrates
+// pane-click-to-zoom: open it and you descend into its own sub-layout.
+const split = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horizontal'): LayoutTree['root'] => ({
+  type: 'split', direction: dir,
+  children: [
+    { type: 'leaf', blockId: a, defaultSize: 50 },
+    { type: 'leaf', blockId: b, defaultSize: 50 },
   ],
-}))
-
-const authorTree = ref<LayoutTree>({
-  renderer: 'panes',
-  root: {
-    type: 'split', direction: 'horizontal',
-    children: [
-      { type: 'leaf', blockId: 'demo-a', defaultSize: 40 },
-      { type: 'leaf', blockId: 'demo-b', defaultSize: 60 },
-    ],
-  },
 })
 
-const styles: LayoutCollapseStyle[] = ['gutter-tabs', 'spring-drawer', 'crt-power-down', 'iris-portal']
+interface ZoomPage { id: string, label: string, icon?: string, tree: LayoutTree }
+
+const pages: ZoomPage[] = [
+  {
+    id: 'dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard',
+    // Three free cards on entry — snap two together and the tree gains a nested split,
+    // which the breakpoint author then shows: a compose edit, reflected one level in.
+    tree: {
+      renderer: 'panes',
+      root: {
+        type: 'split', direction: 'horizontal',
+        children: [
+          { type: 'leaf', blockId: 'demo-a', defaultSize: 34 },
+          { type: 'leaf', blockId: 'demo-b', defaultSize: 33 },
+          { type: 'leaf', blockId: 'demo-a', defaultSize: 33 },
+        ],
+      },
+    },
+  },
+  {
+    id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3',
+    tree: {
+      renderer: 'panes',
+      root: {
+        type: 'split', direction: 'horizontal',
+        children: [
+          // A nested "app" — open it to zoom into its own sub-layout (pane-click-to-zoom).
+          { type: 'nested', label: 'Analytics', defaultSize: 60, layout: { renderer: 'panes', root: split('demo-a', 'demo-b', 'vertical') } },
+          { type: 'leaf', blockId: 'demo-b', defaultSize: 40 },
+        ],
+      },
+    },
+  },
+  {
+    id: 'settings', label: 'Settings', icon: 'i-lucide-settings',
+    tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'demo-a' } },
+  },
+]
+
+// The same pages as crouton-flow rows (a sitemap): Dashboard is the root, the others
+// hang off it via `parentId` — exactly the data CroutonFlowSiteFlow wires into cards.
+const pageRows = [
+  { id: 'dashboard', label: 'Dashboard', parentId: null },
+  { id: 'reports', label: 'Reports', parentId: 'dashboard' },
+  { id: 'settings', label: 'Settings', parentId: 'dashboard' },
+]
+const pageById = (id: unknown): ZoomPage | undefined => pages.find(p => p.id === String(id))
+
+// The host owns persistence; here we just keep the latest emitted page tree so a
+// reader can confirm edits round-trip (the shell already caches per-page in-session).
+const lastEdited = ref<LayoutTree | null>(null)
+function onLayoutChange(tree: LayoutTree) {
+  lastEdited.value = tree
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-default p-6 text-default">
-    <header class="mb-5">
-      <h1 class="text-xl font-semibold">Maquette — live POC</h1>
-      <p class="mt-1 text-sm text-muted">Drag the real components. Epic #868 — WS4 compose · WS5 responsiveness · WS6 collapse.</p>
-      <span class="mt-2 inline-block rounded-full border border-default bg-elevated px-2 py-0.5 font-mono text-[10px] text-muted">{{ BUILD }}</span>
+  <div class="flex h-screen flex-col bg-default text-default">
+    <header class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-5 py-3">
+      <h1 class="text-base font-semibold">Maquette — live POC</h1>
+      <p class="text-xs text-muted">Zoom in/out — no tabs. Epic #868 · WS8 #899</p>
+      <span class="ml-auto rounded-full border border-default bg-elevated px-2 py-0.5 font-mono text-[10px] text-muted">{{ BUILD }}</span>
     </header>
 
-    <div class="mb-5 flex flex-wrap gap-2">
-      <UButton
-        v-for="t in (['compose', 'responsive', 'author'] as const)"
-        :key="t"
-        :color="tab === t ? 'primary' : 'neutral'"
-        :variant="tab === t ? 'solid' : 'soft'"
-        size="sm"
-        @click="tab = t"
-      >
-        {{ t === 'compose' ? 'WS4 · Compose' : t === 'responsive' ? 'WS5/6 · Responsive + Collapse' : 'WS5 · Breakpoint author' }}
-      </UButton>
-    </div>
-
-    <section v-if="tab === 'compose'">
-      <div class="mb-3 flex items-center gap-3 text-sm text-muted">
-        <span>Drag a card next to another → they snap into a bound layout. Hold one over another → it drops inside (nested).</span>
-        <UButton
-          size="xs"
-          variant="soft"
-          icon="i-lucide-rotate-ccw"
-          @click="pieces = seed()"
-        >Reset</UButton>
-      </div>
+    <div class="min-h-0 flex-1">
       <ClientOnly>
-        <div class="h-[520px] w-full">
-          <CroutonLayoutComposeCanvas v-model="pieces" />
-        </div>
-      </ClientOnly>
-    </section>
-
-    <section v-else-if="tab === 'responsive'">
-      <div class="mb-3 flex flex-wrap items-center gap-4 text-sm">
-        <label class="flex items-center gap-2">
-          <span class="text-muted">Container width</span>
-          <input
-            v-model.number="simWidth"
-            type="range"
-            min="320"
-            max="1100"
-            class="w-56"
-          >
-          <span class="tabular-nums">{{ simWidth }}px</span>
-        </label>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-muted">Collapse style</span>
-          <UButton
-            v-for="s in styles"
-            :key="s"
-            size="xs"
-            :color="collapseStyle === s ? 'primary' : 'neutral'"
-            :variant="collapseStyle === s ? 'solid' : 'soft'"
-            @click="collapseStyle = s"
-          >{{ s }}</UButton>
-        </div>
-      </div>
-      <p class="mb-3 text-sm text-muted">Drag the width below 640px → the left pane collapses with the chosen motion. <strong>Click the collapsed handle</strong> → it slides out as an overlay; ✕ or tap outside to close.</p>
-      <ClientOnly>
-        <div
-          class="mx-auto h-[460px] overflow-hidden rounded-lg border border-default transition-all"
-          :style="{ width: `${simWidth}px`, maxWidth: '100%' }"
+        <CroutonLayoutZoomShell
+          site-label="builder.demo"
+          :pages="pages"
+          @layout-change="onLayoutChange"
         >
-          <CroutonLayoutResponsiveRenderer
-            :tree="respTree"
-            :width="simWidth"
-          />
-        </div>
+          <!-- L0 Site — the real crouton-flow page flow (cards = pages, lines =
+               parentId). Double-click / ⤡ a card → the shell zooms into that page. -->
+          <template #site="{ zoomIntoPage }">
+            <CroutonFlowSiteFlow
+              :pages="pageRows"
+              collection="pagesPages"
+              label-field="label"
+              parent-field="parentId"
+              @zoom-into-page="(row: Record<string, unknown>) => { const p = pageById(row.id); if (p) zoomIntoPage(p) }"
+            />
+          </template>
+        </CroutonLayoutZoomShell>
       </ClientOnly>
-    </section>
-
-    <section v-else>
-      <p class="mb-3 text-sm text-muted">The Breakpoints zoom level (L3): author responsiveness by demonstration — pick a device / drag the ruler, then collapse panes or switch widget variants at that width.</p>
-      <ClientOnly>
-        <div class="h-[560px] w-full overflow-hidden rounded-lg border border-default">
-          <CroutonLayoutBreakpointAuthor v-model="authorTree" />
-        </div>
-      </ClientOnly>
-    </section>
+    </div>
   </div>
 </template>

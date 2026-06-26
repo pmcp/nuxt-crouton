@@ -16,7 +16,20 @@ import { useCroutonComposeGestures, type ComposePiece } from '../composables/use
 import { detachNode, removeNode, getNestedLayout, replaceNestedLayout, type NodePath } from '../utils/layout-edit'
 
 const props = defineProps<{ modelValue: ComposePiece[] }>()
-const emit = defineEmits<{ 'update:modelValue': [ComposePiece[]] }>()
+const emit = defineEmits<{
+  'update:modelValue': [ComposePiece[]]
+  /**
+   * A piece that is itself an app (a `nested` node) was activated to zoom into
+   * (double-click or the ⤢ affordance) — the host descends a level (#899). Only
+   * emitted for nested pieces; plain panes/groups stay composable in place.
+   */
+  zoom: [ComposePiece]
+}>()
+
+/** Zoom into a piece that is an app boundary (a nested sub-layout). */
+function zoomInto(piece: ComposePiece) {
+  if (piece.node.type === 'nested') emit('zoom', piece)
+}
 
 // Own a deeply-reactive copy so in-place drag mutation (piece.x/y) re-renders; the model
 // is the source of truth on the way IN and the commit target on the way OUT.
@@ -237,6 +250,7 @@ const nestRing = computed(() => {
       :style="{ left: `${piece.x}px`, top: `${piece.y}px`, width: `${piece.width}px`, height: `${piece.height}px` }"
       :data-piece-id="piece.id"
       @pointerdown="onPointerDown($event, piece)"
+      @dblclick="zoomInto(piece)"
     >
       <div
         v-if="piece.label"
@@ -244,6 +258,19 @@ const nestRing = computed(() => {
       >
         {{ piece.label }}
       </div>
+
+      <!-- An app (nested sub-layout) can be zoomed into — the ⤢ affordance. -->
+      <button
+        v-if="piece.node.type === 'nested'"
+        type="button"
+        class="absolute -top-2.5 right-3 z-20 flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary transition-colors hover:bg-primary/20"
+        title="Zoom into this app"
+        @pointerdown.stop
+        @click.stop="zoomInto(piece)"
+      >
+        <UIcon name="i-lucide-maximize-2" class="size-3" />
+        Open
+      </button>
       <div class="h-full w-full overflow-hidden rounded-xl">
         <CroutonLayoutComposePane
           :node="piece.node"

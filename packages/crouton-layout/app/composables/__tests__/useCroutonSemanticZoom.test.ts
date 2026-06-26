@@ -92,6 +92,54 @@ describe('useCroutonSemanticZoom — invalid zooms are no-ops', () => {
   })
 })
 
+describe('useCroutonSemanticZoom — setCurrentTree shares one tree across levels (#899)', () => {
+  const edited: LayoutTree = {
+    renderer: 'panes',
+    root: { type: 'split', direction: 'horizontal', children: [{ type: 'leaf', blockId: 'merged' }] },
+  }
+
+  it('no-ops on the Site frame (nothing to edit)', () => {
+    const z = useCroutonSemanticZoom()
+    expect(z.setCurrentTree(edited)).toBe(false)
+  })
+
+  it('replaces the focused layout tree without moving the breadcrumb', () => {
+    const z = useCroutonSemanticZoom()
+    z.zoomIntoPage('Bookings', bookingsPage)
+    expect(z.setCurrentTree(edited)).toBe(true)
+    expect(z.current.value.tree).toEqual(edited)
+    expect(z.current.value.level).toBe('layout')
+    expect(z.depth.value).toBe(1) // no push/pop — a re-seed keyed on depth won't refire
+  })
+
+  it('a breakpoints edit propagates DOWN to the layout it authors', () => {
+    const z = useCroutonSemanticZoom()
+    z.zoomIntoPage('Bookings', bookingsPage)
+    z.zoomIntoBreakpoints()
+    z.setCurrentTree(edited)
+    // both the breakpoints frame and the layout frame below now hold the edit
+    expect(z.current.value.tree).toEqual(edited)
+    z.zoomOut()
+    expect(z.current.value).toMatchObject({ level: 'layout', tree: edited })
+  })
+
+  it('a nested-app edit folds back into the parent page (zoom out shows it)', () => {
+    const z = useCroutonSemanticZoom()
+    z.zoomIntoPage('Bookings', bookingsPage) // child 0 = nested Calendar app
+    z.zoomIntoNested([0])
+    const newApp: LayoutTree = { renderer: 'panes', root: { type: 'leaf', blockId: 'calendar-only' } }
+    z.setCurrentTree(newApp)
+    z.zoomOut() // back to the page
+    const root = z.current.value.tree!.root
+    expect(root.type).toBe('split')
+    if (root.type === 'split') {
+      const nested = root.children[0]
+      expect(nested?.type).toBe('nested')
+      if (nested?.type === 'nested') expect(nested.layout).toEqual(newApp)
+    }
+  })
+})
+
 describe('useCroutonSemanticZoom — zoom out / jump / reset', () => {
   it('zooms out one level and reports when it cannot', () => {
     const z = useCroutonSemanticZoom()
