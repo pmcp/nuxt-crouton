@@ -248,16 +248,26 @@ const {
   removeSelectedNodes,
   findNode,
   fitView,
-  fitBounds
+  fitBounds,
+  setCenter
 } = useVueFlow()
 
 // Camera focus driven by `focusBounds`: the host hands us the EXACT rectangle (flow coords) the
-// focused node will occupy — its position + the size it's being rendered at — so we frame it
-// DETERMINISTICALLY via fitBounds. No dependence on Vue Flow's async node measurement (which lags
-// a node that's resizing as we zoom, the cause of the old off-centre/oversized framing). Clear it
-// → fit the whole board, capped so a lone node doesn't zoom in to fill the screen.
+// focused node occupies — its position + the size it's rendered at. Rather than auto-fit (which
+// would shrink a wider device to tiny), we set an explicit zoom that maps the device WIDTH to a
+// CONSTANT fraction of the canvas width — so scrubbing to a bigger screen zooms OUT and the layout
+// stays ~the same on-screen size, only reflowing for the new width (the responsive-preview feel).
+// Deterministic (no Vue Flow re-measure). Clear → fit the whole board, capped.
+const FOCUS_DISPLAY_FRAC = 0.86
 watch(() => props.focusBounds, (bounds) => {
-  if (bounds) fitBounds({ ...bounds }, { duration: 420, padding: 0.18 })
+  if (bounds) {
+    const cw = containerRef.value?.clientWidth ?? 0
+    if (cw > 0) {
+      const zoom = (cw * FOCUS_DISPLAY_FRAC) / bounds.width
+      setCenter(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, { zoom, duration: 200 })
+    }
+    else fitBounds({ ...bounds }, { duration: 200, padding: 0.16 })
+  }
   else nextTick(() => fitView({ duration: 450, padding: 0.3, maxZoom: 1 }))
 }, { deep: true })
 
@@ -1024,6 +1034,7 @@ defineExpose({
   selectSubtree,
   fitView,
   fitBounds,
+  setCenter,
 })
 </script>
 

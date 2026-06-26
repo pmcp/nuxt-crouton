@@ -169,7 +169,7 @@ When `sync` is enabled:
 | `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
 | `additionalEdges` | `Array<{ id, source, target }>` | `[]` | Extra edges rendered alongside parent-derived edges (e.g. multi-parent synthesis connections) |
 | `defaultNodeComponent` | `Component` | - | Explicit node component for the default render path (overrides `{Collection}Node` name resolution). Used by `CroutonFlowSiteFlow` to inject its page card. Ghost nodes still render as ghosts. |
-| `focusBounds` | `{ x, y, width, height } \| null` | - | Camera focus — set a rect (flow coords) to zoom the canvas onto that area (deterministic `fitBounds`; pass the rect the focused node will occupy and it frames without waiting for a re-measure); clear it to fit the whole board. View transform only; doesn't touch node data/positions. Also exposes `fitView` / `fitBounds` via template ref. |
+| `focusBounds` | `{ x, y, width, height } \| null` | - | Camera focus — set a rect (flow coords) to zoom onto that area, clear it to fit the whole board. Deterministic (no re-measure): maps the rect's WIDTH to a constant fraction (~0.86) of the canvas width via `setCenter`, so scrubbing the rect to a wider device zooms OUT and the content stays ~the same on-screen size (responsive-preview feel). View transform only. Exposes `fitView` / `fitBounds` / `setCenter` via template ref. |
 
 ## Events
 
