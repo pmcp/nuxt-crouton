@@ -31,7 +31,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-d · #907/#909 · in-flow snap (drag blocks together on the canvas) + tap-to-add'
+const BUILD = 'spike-d · #907 · snap = merge into one layout (drags as a unit, spans full height)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -66,8 +66,10 @@ const drawer = [
   { blockId: 'artists-stats', label: 'Artists · Stats', icon: 'i-lucide-bar-chart-3' },
 ]
 
-// Pre-built Vue Flow nodes (CroutonFlow ephemeral mode renders these directly).
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { blockId: string, label?: string } }
+// Pre-built Vue Flow nodes (CroutonFlow ephemeral mode renders these directly). A node's
+// `data.node` is a single leaf when freshly dropped, or a bound SPLIT once blocks snap
+// together (#907) — the merged unit then drags as one node.
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -85,26 +87,29 @@ function onDragStart(e: DragEvent, item: { blockId: string, label: string }) {
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
 }
 
-/** CroutonFlow emits this on drop with the flow-space position — add the node. */
+/** CroutonFlow emits this on drop with the flow-space position — add a fresh leaf node. */
 function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: number }) {
-  nodes.value = [...nodes.value, {
-    id: String(item.id),
-    type: 'default',
-    position,
-    data: { blockId: String(item.blockId), label: String(item.label ?? item.blockId) },
-  }]
+  const label = String(item.label ?? item.blockId)
+  const leaf: LayoutNode = { type: 'leaf', blockId: String(item.blockId), config: { collection: 'artists', heading: label } }
+  nodes.value = [...nodes.value, { id: String(item.id), type: 'default', position, data: { node: leaf, label } }]
 }
 
-// In-flow snap (#907) — snapping happens ON the Vue Flow canvas, no separate mode.
-// CroutonFlow re-emits the moved rows on drag stop; we OWN that update (not v-model) so the
-// snapped position is the last write (a plain v-model would clobber it with the drop point).
-// If the dropped node lands near another node's edge, snap it FLUSH + edge-aligned. All
-// block-nodes are the same size, so flush + align reads as a clean row/column.
-const NODE_W = 256
-const NODE_H = 184
+/** Combine two nodes into a split, flattening same-direction nesting so a third block joins
+ *  the existing group as a sibling (and so spans the group's full cross-size, not just one). */
+function combineNodes(a: LayoutNode, b: LayoutNode, direction: 'horizontal' | 'vertical', aFirst: boolean): LayoutNode {
+  const ordered = aFirst ? [a, b] : [b, a]
+  const children = ordered.flatMap(n => (n.type === 'split' && n.direction === direction) ? n.children : [n])
+  return { type: 'split', direction, children }
+}
+
+// In-flow snap + MERGE (#907) — snapping happens ON the Vue Flow canvas, no separate mode.
+// CroutonFlow re-emits the moved rows on drag stop; we OWN that update (not v-model) so our
+// write is the last one (a plain v-model would clobber it with the drop point). If the dropped
+// node lands near another's edge, the two MERGE into one node whose `data.node` is a bound
+// split — so the unit drags as one piece and the renderer stretches each pane to the group's
+// full size (a block snapped to a 2-high stack spans its full height).
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   const rows = rowsRaw as unknown as FlowNode[]
-  // Which node moved? (compare the incoming rows against the current positions)
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
   const moved = rows.find((r) => {
     const p = prev.get(r.id)
@@ -112,22 +117,29 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   })
   if (!moved) { nodes.value = rows; return }
 
-  const drag: Rect = { x: moved.position.x, y: moved.position.y, width: NODE_W, height: NODE_H }
+  const md = sizeOf(moved.data.node)
+  const drag: Rect = { x: moved.position.x, y: moved.position.y, width: md.width, height: md.height }
   const targets: SnapTarget[] = rows
     .map((r, idx) => ({ r, idx }))
     .filter(o => o.r.id !== moved.id)
-    .map(o => ({ path: [o.idx], rect: { x: o.r.position.x, y: o.r.position.y, width: NODE_W, height: NODE_H } }))
+    .map((o) => {
+      const s = sizeOf(o.r.data.node)
+      return { path: [o.idx], rect: { x: o.r.position.x, y: o.r.position.y, width: s.width, height: s.height } }
+    })
   const snap = closestSnap(drag, targets, { gap: 160, align: 0.2 })
+  if (!snap) { nodes.value = rows; return }
 
-  let pos = moved.position
-  if (snap) {
-    const t = targets.find(tg => tg.path[0] === snap.path[0])!.rect
-    if (snap.edge === 'right') pos = { x: t.x + t.width, y: t.y }
-    else if (snap.edge === 'left') pos = { x: t.x - NODE_W, y: t.y }
-    else if (snap.edge === 'bottom') pos = { x: t.x, y: t.y + t.height }
-    else pos = { x: t.x, y: t.y - NODE_H } // top
-  }
-  nodes.value = rows.map(r => r.id === moved.id ? { ...r, position: { x: Math.round(pos.x), y: Math.round(pos.y) } } : r)
+  const target = rows[snap.path[0]!]!
+  const tRect = targets.find(tg => tg.path[0] === snap.path[0])!.rect
+  const horizontal = snap.edge === 'left' || snap.edge === 'right'
+  const targetFirst = snap.edge === 'right' || snap.edge === 'bottom'
+  const combined = combineNodes(target.data.node, moved.data.node, horizontal ? 'horizontal' : 'vertical', targetFirst)
+  // Group origin: a left/top snap places the group to the left/above the target's old spot.
+  const gx = snap.edge === 'left' ? tRect.x - md.width : tRect.x
+  const gy = snap.edge === 'top' ? tRect.y - md.height : tRect.y
+  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined } }
+  // Replace the target with the merged group; drop the moved node — they're now one unit.
+  nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
 }
 
 // Tap-to-add (#906 mobile fix): HTML5 drag doesn't fire on touch, and the bottom-sheet
@@ -154,30 +166,34 @@ function flattenLeaves(node: LayoutNode): { blockId: string, label?: string }[] 
   return []
 }
 
-/** The dropped blocks, from whichever surface is active (Snap may have grouped them). */
+/** The dropped blocks, from whichever surface is active (Free nodes / Snap pieces may
+ *  each already be a merged group, so flatten their leaves). */
 function currentBlocks(): { blockId: string, label?: string }[] {
   return mode.value === 'snap'
     ? pieces.value.flatMap(p => flattenLeaves(p.node))
-    : nodes.value.map(n => ({ blockId: n.data.blockId, label: n.data.label }))
+    : nodes.value.flatMap(n => flattenLeaves(n.data.node))
 }
 const blockCount = computed(() => currentBlocks().length)
 
-/** Enter Snap mode — seed the compose canvas from the free nodes (relative layout kept). */
+/** Enter Snap mode — seed the compose canvas from the free nodes (each node's layout + size). */
 function enterSnap() {
   if (mode.value === 'snap') return
   const ns = nodes.value
   if (ns.length) {
     const minX = Math.min(...ns.map(n => n.position.x))
     const minY = Math.min(...ns.map(n => n.position.y))
-    pieces.value = ns.map(n => ({
-      id: n.id,
-      node: { type: 'leaf', blockId: n.data.blockId, config: { collection: 'artists', ...(n.data.label ? { heading: n.data.label } : {}) } },
-      x: Math.round(n.position.x - minX) + 24,
-      y: Math.round(n.position.y - minY) + 24,
-      width: 260,
-      height: 184,
-      label: n.data.label,
-    }))
+    pieces.value = ns.map((n) => {
+      const s = sizeOf(n.data.node)
+      return {
+        id: n.id,
+        node: n.data.node,
+        x: Math.round(n.position.x - minX) + 24,
+        y: Math.round(n.position.y - minY) + 24,
+        width: s.width,
+        height: s.height,
+        label: n.data.label,
+      }
+    })
   }
   mode.value = 'snap'
 }
@@ -222,13 +238,12 @@ async function magicAI() {
   }
 }
 
-// "As placed" — the original spike's dumb positional infer: 1 node → its leaf is the
-// root; many → a split whose axis is inferred from how they're laid out (wider spread in
-// x ⇒ horizontal), ordered along that axis. Kept beside ✨ Magic as the literal placement.
+// "As placed" — positional infer over the canvas nodes. Each node carries its own
+// `data.node` (a leaf, or a snapped split): 1 node → its node IS the root; many → a split
+// whose axis is inferred from the spread, ordered along it, each node's layout preserved.
 function inferPositional(ns: FlowNode[]): LayoutTree | null {
   if (!ns.length) return null
-  const leaf = (n: FlowNode): LayoutNode => ({ type: 'leaf', blockId: n.data.blockId })
-  if (ns.length === 1) return { renderer: 'panes', root: leaf(ns[0]!) }
+  if (ns.length === 1) return { renderer: 'panes', root: ns[0]!.data.node }
   const spread = (a: number[]) => Math.max(...a) - Math.min(...a)
   const horizontal = spread(ns.map(n => n.position.x)) >= spread(ns.map(n => n.position.y))
   const ordered = [...ns].sort((a, b) => (horizontal ? a.position.x - b.position.x : a.position.y - b.position.y))
@@ -237,7 +252,7 @@ function inferPositional(ns: FlowNode[]): LayoutTree | null {
     root: {
       type: 'split',
       direction: horizontal ? 'horizontal' : 'vertical',
-      children: ordered.map(n => ({ ...leaf(n), defaultSize: Math.round((100 / ordered.length) * 10) / 10 })),
+      children: ordered.map(n => ({ ...n.data.node, defaultSize: Math.round((100 / ordered.length) * 10) / 10 })),
     },
   }
 }
