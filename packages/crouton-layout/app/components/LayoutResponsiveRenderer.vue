@@ -65,28 +65,30 @@ const inPlace = computed(() => isInPlaceCollapse(collapseStyle.value))
 // stays put, and a clear close affordance slides it back. Makes "what happened on click"
 // obvious, instead of the old silent reflow.
 const openOverlay = ref<string | null>(null)
-function peek(blockId: string) { openOverlay.value = blockId; emit('expand', blockId) }
-const overlayPane = computed(() => collapsedPanes.value.find(p => p.blockId === openOverlay.value) ?? null)
-const overlayNode = computed<LayoutNode | null>(() => (openOverlay.value ? { type: 'leaf', blockId: openOverlay.value } : null))
 
-// The drawer slides out from the SIDE the collapsed pane lives on (a left pane → from
-// the left), so the motion reads as "this pane opened up" rather than arriving from
-// nowhere. Determined by the block's position in the top horizontal split; vertical
-// splits (or not found) fall back to the right.
+// The drawer slides out from — and back to — the SIDE the collapsed pane lives on (a
+// left pane → from the left), so the motion reads as "this pane opened up". We LATCH the
+// side when the drawer opens (`overlaySide`) and keep it through the close: deriving it
+// from `openOverlay` would flip to the default the moment it's nulled, so a left drawer
+// would exit right. Determined by the block's position in the top horizontal split;
+// vertical splits (or not found) fall back to the right.
 function subtreeHasBlock(node: LayoutNode, blockId: string): boolean {
   if (node.type === 'leaf') return node.blockId === blockId
   if (node.type === 'nested') return subtreeHasBlock(node.layout.root, blockId)
   if (node.type === 'split') return node.children.some(c => subtreeHasBlock(c, blockId))
   return false
 }
-const overlaySide = computed<'left' | 'right'>(() => {
+function sideOfBlock(blockId: string): 'left' | 'right' {
   const root = resolved.value.root
-  const id = openOverlay.value
-  if (!id || !root || root.type !== 'split' || root.direction !== 'horizontal') return 'right'
-  const idx = root.children.findIndex(c => subtreeHasBlock(c, id))
+  if (!root || root.type !== 'split' || root.direction !== 'horizontal') return 'right'
+  const idx = root.children.findIndex(c => subtreeHasBlock(c, blockId))
   if (idx < 0) return 'right'
   return idx < root.children.length / 2 ? 'left' : 'right'
-})
+}
+const overlaySide = ref<'left' | 'right'>('right')
+function peek(blockId: string) { overlaySide.value = sideOfBlock(blockId); openOverlay.value = blockId; emit('expand', blockId) }
+const overlayPane = computed(() => collapsedPanes.value.find(p => p.blockId === openOverlay.value) ?? null)
+const overlayNode = computed<LayoutNode | null>(() => (openOverlay.value ? { type: 'leaf', blockId: openOverlay.value } : null))
 
 // Render the peeked block DIRECTLY (not via CroutonLayoutRenderer) so it shows its real
 // content: the in-place collapse context provided above would otherwise leak in and draw
