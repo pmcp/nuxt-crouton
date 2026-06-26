@@ -255,7 +255,9 @@ const {
 watch(() => props.focusNodeId, (id) => {
   nextTick(() => {
     if (id) fitView({ nodes: [id], duration: 450, padding: 0.16, maxZoom: 1.75 })
-    else fitView({ duration: 450, padding: 0.2 })
+    // maxZoom:1 so clearing focus with only a node or two doesn't "fit" them to fill the
+    // screen (fit-all of a single node = zoom right in) — settle at natural size instead.
+    else fitView({ duration: 450, padding: 0.3, maxZoom: 1 })
   })
 })
 
