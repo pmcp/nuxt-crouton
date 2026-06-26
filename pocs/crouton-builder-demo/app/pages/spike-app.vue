@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-j · #907 · fix version stamp wrapping vertically on mobile'
+const BUILD = 'spike-k · #907 · zoom into a node on the flow → author responsiveness beside it'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -510,6 +510,7 @@ function reset() {
             data-mode="ephemeral"
             :default-node-component="blockNode"
             :draggable="viewport === null"
+            :focus-node-id="zoomNodeId"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
@@ -633,22 +634,24 @@ function reset() {
       </template>
     </USlideover>
 
-    <!-- Layer 2 (#907): zoom into a node's layout → author its responsiveness in the breakpoint slider.
-         Fullscreen — the author carries a ruler + scaled device frame. Edits persist via zoomTree. -->
-    <UModal v-model:open="zoomOpen" fullscreen>
-      <template #content>
-        <div class="flex h-full flex-col bg-default">
-          <div class="flex items-center gap-2 border-b border-default px-4 py-2.5">
-            <UIcon name="i-lucide-ruler" class="size-4 text-primary" />
-            <span class="text-sm font-semibold">Responsiveness · {{ zoomLabel }}</span>
-            <span class="hidden text-xs text-muted sm:inline">— scrub the width to author how this layout reflows; the node on the canvas stays its size</span>
-            <UButton class="ml-auto" size="xs" icon="i-lucide-x" color="neutral" variant="ghost" label="Done" @click="zoomOpen = false" />
-          </div>
-          <div class="min-h-0 flex-1 overflow-auto p-4">
+    <!-- Layer 2 + in-flow zoom (#907): double-click zooms the CANVAS into the node (focus-node-id),
+         and the responsiveness author docks on the right WITHOUT a backdrop — so the zoomed layout
+         stays visible on the flow beside it (not a fullscreen takeover). Edits persist via zoomTree. -->
+    <USlideover
+      v-model:open="zoomOpen"
+      :title="`Responsiveness · ${zoomLabel}`"
+      :overlay="false"
+      :dismissible="false"
+      :ui="{ content: 'sm:max-w-xl' }"
+    >
+      <template #body>
+        <div class="flex h-full flex-col">
+          <p class="mb-3 text-xs text-muted">Zoomed into this layout — scrub the width to author how it reflows; drag a pane to lock its size at that breakpoint.</p>
+          <div class="min-h-0 flex-1 overflow-auto">
             <CroutonLayoutBreakpointAuthor v-model="zoomTree" />
           </div>
         </div>
       </template>
-    </UModal>
+    </USlideover>
   </div>
 </template>
