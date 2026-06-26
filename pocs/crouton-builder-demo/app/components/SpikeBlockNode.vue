@@ -20,10 +20,10 @@
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
 import { ref, inject, computed, watch } from 'vue'
-import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
-  data: { node: LayoutNode, label?: string }
+  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[] }
   selected?: boolean
 }>()
 
@@ -38,8 +38,9 @@ const size = computed(() => {
   return { width: `${f.cols * SPIKE_BASE_W}px`, height: `${f.rows * SPIKE_BASE_H}px` }
 })
 
-// A LayoutTree wrapper for the responsive renderer (data.node is a bare node).
-const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node }))
+// A LayoutTree wrapper for the responsive renderer — carries any breakpoints authored in the
+// layer-2 slider, so the survey resolves the SAME authored responsiveness at the device width.
+const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node, breakpoints: props.data.bp }))
 
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)

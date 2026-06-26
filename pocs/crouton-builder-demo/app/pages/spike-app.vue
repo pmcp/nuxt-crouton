@@ -24,7 +24,7 @@
  */
 import { markRaw, computed, shallowRef, provide } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
-import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
 import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-g · #907 · viewport survey — flip the whole board to phone/tablet/desktop'
+const BUILD = 'spike-h · #907 · double-click a node → breakpoint slider (authored responsiveness)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -70,7 +70,10 @@ const drawer = [
 // Pre-built Vue Flow nodes (CroutonFlow ephemeral mode renders these directly). A node's
 // `data.node` is a single leaf when freshly dropped, or a bound SPLIT once blocks snap
 // together (#907) — the merged unit then drags as one node.
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string } }
+// `bp` = authored responsive breakpoints for this node's layout (#907 layer 2), set in the
+// breakpoint slider you zoom into. Structural edits (snap/detach) create nodes WITHOUT bp, so
+// authored breakpoints reset when the structure they targeted changes — which is the right thing.
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[] } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -118,6 +121,31 @@ const flowRows = computed<FlowNode[]>(() => {
   const GAP = 80
   return nodes.value.map((n, i) => ({ ...n, position: { x: i * (vw.width + GAP), y: 0 } }))
 })
+
+// Layer 2 (#907) — double-click a node to ZOOM into its layout's breakpoint slider and author
+// responsiveness (collapse/variants/sizes per width). Edits persist back onto that node (root +
+// breakpoints), so the survey (layer 3) then reflects them. Size on the flow is unchanged — the
+// slider is a simulation, exactly the "drag bigger/smaller while staying the same size" model.
+const zoomNodeId = ref<string | null>(null)
+const zoomOpen = computed({ get: () => !!zoomNodeId.value, set: (v: boolean) => { if (!v) zoomNodeId.value = null } })
+const zoomNode = computed(() => zoomNodeId.value ? nodes.value.find(n => n.id === zoomNodeId.value) ?? null : null)
+const zoomLabel = computed(() => zoomNode.value?.data.label ?? 'Layout')
+const EMPTY_TREE: LayoutTree = { renderer: 'panes', root: { type: 'leaf', blockId: '', config: {} } }
+const zoomTree = computed<LayoutTree>({
+  get: () => {
+    const n = zoomNode.value
+    return n ? { renderer: 'panes' as const, root: n.data.node, breakpoints: n.data.bp } : EMPTY_TREE
+  },
+  set: (t: LayoutTree) => {
+    const id = zoomNodeId.value
+    if (!id) return
+    nodes.value = nodes.value.map(n => n.id === id ? { ...n, data: { ...n.data, node: t.root, bp: t.breakpoints } } : n)
+  },
+})
+function onNodeDblClick(id: string) {
+  if (mode.value !== 'free') return
+  zoomNodeId.value = id
+}
 
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
@@ -484,6 +512,7 @@ function reset() {
             :minimap="false"
             @node-drop="onNodeDrop"
             @node-drag="onNodeDragLive"
+            @node-dbl-click="onNodeDblClick"
             @update:rows="onRowsUpdate"
           />
           <!-- Snap: the WS4 magnetic compose canvas — drag cards together → bound split (#907) -->
@@ -601,5 +630,23 @@ function reset() {
         </div>
       </template>
     </USlideover>
+
+    <!-- Layer 2 (#907): zoom into a node's layout → author its responsiveness in the breakpoint slider.
+         Fullscreen — the author carries a ruler + scaled device frame. Edits persist via zoomTree. -->
+    <UModal v-model:open="zoomOpen" fullscreen>
+      <template #content>
+        <div class="flex h-full flex-col bg-default">
+          <div class="flex items-center gap-2 border-b border-default px-4 py-2.5">
+            <UIcon name="i-lucide-ruler" class="size-4 text-primary" />
+            <span class="text-sm font-semibold">Responsiveness · {{ zoomLabel }}</span>
+            <span class="hidden text-xs text-muted sm:inline">— scrub the width to author how this layout reflows; the node on the canvas stays its size</span>
+            <UButton class="ml-auto" size="xs" icon="i-lucide-x" color="neutral" variant="ghost" label="Done" @click="zoomOpen = false" />
+          </div>
+          <div class="min-h-0 flex-1 overflow-auto p-4">
+            <CroutonLayoutBreakpointAuthor v-model="zoomTree" />
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
