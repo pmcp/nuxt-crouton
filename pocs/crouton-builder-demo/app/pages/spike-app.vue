@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-n · #907 · deterministic zoom framing (fitBounds) — no re-measure hack'
+const BUILD = 'spike-o · #907 · width slider — scrub size, layout stays same on-screen, others step aside'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -116,6 +116,12 @@ provide(SPIKE_VIEWPORT_KEY, viewport)
 // While surveying, tile the nodes in a row at device size — non-destructive (the real topology
 // positions in `nodes` are untouched, so flipping back to Fit restores your arrangement).
 const flowRows = computed<FlowNode[]>(() => {
+  // Focus edit: SOLO the focused node — the others step aside so growing it to a wide device
+  // doesn't collide with its neighbours on the board. They reappear on Done (#907).
+  if (focus.value && zoomNodeId.value) {
+    const n = nodes.value.find(nd => nd.id === zoomNodeId.value)
+    if (n) return [n]
+  }
   if (!viewport.value) return nodes.value
   const vw = viewport.value
   const GAP = 80
@@ -162,6 +168,14 @@ function setFocusVp(vp: SpikeViewport) {
   if (!focus.value) return
   focus.value = { ...focus.value, vp } // resize the focused node → focusBounds recomputes → camera re-frames
 }
+// The width slider: scrub the previewed width freely (keeps the last preset's height). The camera
+// keeps it ~the same on-screen size (CroutonFlow), so the layout reflows in place as you drag.
+const focusWidth = computed({
+  get: () => focus.value?.vp.width ?? 0,
+  set: (w: number) => {
+    if (focus.value) focus.value = { ...focus.value, vp: { ...focus.value.vp, width: w, label: `${w}px`, icon: 'i-lucide-ruler' } }
+  },
+})
 function closeFocus() {
   focus.value = null
   zoomNodeId.value = null // CroutonFlow fits back out (capped, won't over-zoom)
@@ -590,7 +604,10 @@ function reset() {
           class="pointer-events-auto absolute inset-x-0 top-2 z-20 mx-auto flex w-fit items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 px-2 py-1 shadow-lg backdrop-blur"
         >
           <UIcon name="i-lucide-ruler" class="ml-1 size-3.5 text-primary" />
-          <span class="text-[11px] font-medium text-primary">{{ focus.vp.width }}px</span>
+          <span class="w-12 text-[11px] font-medium tabular-nums text-primary">{{ focus.vp.width }}px</span>
+          <!-- Continuous width slider — scrub the previewed screen width; the camera zooms to keep
+               the layout ~the same on-screen size, so you watch it reflow (#907). -->
+          <USlider v-model="focusWidth" :min="320" :max="1600" :step="10" size="xs" class="w-28" />
           <div class="mx-1 flex items-center gap-0.5">
             <UButton
               v-for="v in SPIKE_VIEWPORTS"
