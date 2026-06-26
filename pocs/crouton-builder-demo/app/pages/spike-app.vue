@@ -30,7 +30,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-d · #909 · ✨ Magic v2 — AI proposes + ranks (crouton-ai add-on, viability guardrail)'
+const BUILD = 'spike-d · #909 · ✨ Magic v2 + tap-to-add blocks (mobile: no drag needed)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -92,6 +92,19 @@ function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: num
     position,
     data: { blockId: String(item.blockId), label: String(item.label ?? item.blockId) },
   }]
+}
+
+// Tap-to-add (#906 mobile fix): HTML5 drag doesn't fire on touch, and the bottom-sheet
+// covers the canvas — so on a phone you can't drag a block onto the flow. Tapping a block
+// adds it directly (drag still works on desktop). New nodes stagger left-to-right so the
+// positional "As placed" reads in add order; the drawer stays open so you can add several.
+const toast = useToast()
+function addBlock(item: { blockId: string, label: string }) {
+  onNodeDrop(
+    { id: `${item.blockId}-${++seq}`, blockId: item.blockId, label: item.label },
+    { x: nodes.value.length * 300 + 60, y: 140 },
+  )
+  toast.add({ title: `Added ${item.label}`, icon: 'i-lucide-plus', duration: 1200 })
 }
 
 /** Collect every placed block (blockId + heading) under a layout node. */
@@ -232,12 +245,13 @@ function reset() {
           v-for="b in drawer"
           :key="b.blockId"
           draggable="true"
-          :ui="{ root: 'cursor-grab transition-colors hover:ring-primary active:cursor-grabbing', body: 'flex items-center gap-2 p-3 sm:p-3' }"
+          :ui="{ root: 'cursor-pointer transition-colors hover:ring-primary active:scale-[0.99]', body: 'flex items-center gap-2 p-3 sm:p-3' }"
           @dragstart="onDragStart($event, b)"
+          @click="addBlock(b)"
         >
           <UIcon :name="b.icon" class="size-4 text-primary" />
           <span class="text-sm">{{ b.label }}</span>
-          <UIcon name="i-lucide-grip-vertical" class="ml-auto size-3.5 text-muted" />
+          <UIcon name="i-lucide-plus" class="ml-auto size-4 text-muted" />
         </UCard>
       </div>
       <div class="mt-4 flex flex-col gap-2">
@@ -344,8 +358,8 @@ function reset() {
           v-if="mode === 'free' && !nodes.length"
           class="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted"
         >
-          <span class="hidden md:inline">Drag a block from the drawer onto the canvas →</span>
-          <span class="md:hidden">Tap <strong>Blocks</strong> to open the palette.</span>
+          <span class="hidden md:inline">Tap (or drag) a block from the drawer onto the canvas →</span>
+          <span class="md:hidden">Tap <strong>Blocks</strong>, then tap a block to add it.</span>
         </p>
         <p
           v-else-if="mode === 'snap' && !pieces.length"
@@ -360,6 +374,7 @@ function reset() {
     <UDrawer v-model:open="paletteOpen" :handle="true" title="Artists · blocks">
       <template #body>
         <div class="p-1 pb-4">
+          <p class="px-1 pb-2 text-xs text-muted">Tap a block to add it to the canvas — then ✨ Magic or compile.</p>
           <ReusePalette />
         </div>
       </template>
