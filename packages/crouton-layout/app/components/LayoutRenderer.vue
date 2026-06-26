@@ -17,7 +17,7 @@
  * `panelMinSizePct`. Splitter primitives are SSR-safe (no <ClientOnly> needed);
  * the floor falls back to the authored `minSize` until the group has measured.
  */
-import { computed, inject, nextTick, onScopeDispose, ref, watch } from 'vue'
+import { computed, inject, nextTick, ref, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
@@ -101,44 +101,24 @@ const collapsedPct = computed(() => {
   return Math.min(40, Math.max(2, (46 / basis) * 100))
 })
 
-// WS6 #875 follow-up: animate the PANE's own collapse/expand, not just the handle.
-// reka-ui sizes a panel via inline `flex-grow`; a CSS transition on flex-grow tweens
-// the shrink (siblings reflow in as their grow rebalances). We arm that transition
-// (`animating`) ONLY around a collapse/expand toggle — never during an interactive
-// divider drag (which never changes childCollapsed), so resizing stays snappy.
-const animating = ref(false)
-let animTimer: ReturnType<typeof setTimeout> | undefined
-onScopeDispose(() => { if (animTimer) clearTimeout(animTimer) })
-
-// Run after the next paint, so a freshly-applied transition class is in the element's
-// computed style BEFORE we change flex-grow (else the first toggle jumps, untweened).
-// Double rAF is the reliable "after style commit" signal; falls back to a timer in SSR.
-function afterPaint(fn: () => void) {
-  if (typeof requestAnimationFrame === 'undefined') { fn(); return }
-  requestAnimationFrame(() => requestAnimationFrame(fn))
-}
-
-let collapseRanOnce = false
+// WS6 #875 follow-up: the PANE's own collapse/expand animates, not just the handle.
+// reka-ui sizes a panel via inline `flex-grow`; the per-style transition class on the
+// panel (present whenever an in-place style is active — see the template) tweens the
+// shrink in BOTH directions, and siblings reflow into the freed space as their grow
+// rebalances. We still drive reka-ui's collapsible panels imperatively so a fully
+// -collapsed subtree hands its slot back to its siblings.
 watch(
   () => childCollapsed.value.join(','),
   () => {
     if (props.node.type !== 'split' || !inPlace.value) return
     nextTick(() => {
-      const ops: Array<() => void> = []
       childCollapsed.value.forEach((want, i) => {
         const p = panelEls.value[i]
         if (!p) return
         const is = Boolean(p.isCollapsed)
-        if (want && !is) ops.push(() => p.collapse?.())
-        else if (!want && is) ops.push(() => p.expand?.())
+        if (want && !is) p.collapse?.()
+        else if (!want && is) p.expand?.()
       })
-      if (!ops.length) return
-      // First sync (panes that *start* collapsed) snaps without animating.
-      if (!collapseRanOnce) { collapseRanOnce = true; ops.forEach(op => op()); return }
-      animating.value = true // arm the per-style transition…
-      afterPaint(() => ops.forEach(op => op())) // …then change flex-grow so it tweens
-      if (animTimer) clearTimeout(animTimer)
-      animTimer = setTimeout(() => { animating.value = false }, 720)
     })
   },
   { flush: 'post', immediate: true },
@@ -209,7 +189,7 @@ watch(
         :collapsible="inPlace || undefined"
         :collapsed-size="inPlace ? collapsedPct : undefined"
         class="overflow-hidden"
-        :class="inPlace && animating && collapseCtx ? `mq-co-${collapseCtx.style}` : ''"
+        :class="inPlace && collapseCtx ? `mq-co-${collapseCtx.style}` : ''"
       >
         <CroutonLayoutRenderer
           :node="child"
