@@ -121,11 +121,12 @@ interface Props {
    */
   defaultNodeComponent?: Component
   /**
-   * Camera focus: when set, the canvas animates to fill this node (zoom-into-the-layout);
-   * when cleared (null/undefined), it fits the whole board. Purely a view transform — it
-   * doesn't change node data or positions.
+   * Camera focus: a rectangle (flow coords) to frame — set it to zoom the canvas onto that area
+   * (e.g. a node the host is rendering at a specific size), clear it (null/undefined) to fit the
+   * whole board. Deterministic (fitBounds) — pass the rect the focused node WILL occupy and the
+   * camera frames it without waiting for Vue Flow to re-measure. View transform only.
    */
-  focusNodeId?: string | null
+  focusBounds?: { x: number, y: number, width: number, height: number } | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -247,30 +248,18 @@ const {
   removeSelectedNodes,
   findNode,
   fitView,
-  updateNodeInternals
+  fitBounds
 } = useVueFlow()
 
-// Camera focus (zoom into a single node, or back to the whole board). Driven by `focusNodeId`.
-// A focused node has usually JUST changed size (the host renders it at a device width), and Vue
-// Flow measures node dimensions async — so fitting immediately frames the STALE size and the node
-// lands off-centre / oversized. Force a re-measure, then fit on the next frame(s) at the NEW size.
-function frameFocus(id: string) {
-  updateNodeInternals([id])
-  const run = () => fitView({ nodes: [id], duration: 400, padding: 0.2, maxZoom: 1.6 })
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(() => requestAnimationFrame(run))
-    // Correction pass: if the first fit still raced the re-measure of a big size jump
-    // (footprint → device width), re-fit once the new dimensions have definitely settled.
-    setTimeout(run, 200)
-  }
-  else nextTick(run)
-}
-watch(() => props.focusNodeId, (id) => {
-  if (id) frameFocus(id)
-  // maxZoom:1 so clearing focus with only a node or two doesn't "fit" them to fill the
-  // screen (fit-all of a single node = zoom right in) — settle at natural size instead.
+// Camera focus driven by `focusBounds`: the host hands us the EXACT rectangle (flow coords) the
+// focused node will occupy — its position + the size it's being rendered at — so we frame it
+// DETERMINISTICALLY via fitBounds. No dependence on Vue Flow's async node measurement (which lags
+// a node that's resizing as we zoom, the cause of the old off-centre/oversized framing). Clear it
+// → fit the whole board, capped so a lone node doesn't zoom in to fill the screen.
+watch(() => props.focusBounds, (bounds) => {
+  if (bounds) fitBounds({ ...bounds }, { duration: 420, padding: 0.18 })
   else nextTick(() => fitView({ duration: 450, padding: 0.3, maxZoom: 1 }))
-})
+}, { deep: true })
 
 // Flag to prevent emit loops when syncing selected prop to Vue Flow
 const isSyncingFromProp = ref(false)
@@ -1025,13 +1014,6 @@ function selectSubtree(rootId: string): string[] {
 }
 
 // Expose sync state and container detection for external access
-// Re-fit the camera onto the currently-focused node. The `focusNodeId` watcher only fires on
-// id CHANGE; call this when the focused node's size changes (e.g. host switches device width
-// while zoomed) so the camera re-frames it without toggling focus off/on.
-function refitFocus() {
-  if (props.focusNodeId) frameFocus(props.focusNodeId)
-}
-
 defineExpose({
   syncState,
   containerDetection,
@@ -1041,7 +1023,7 @@ defineExpose({
   layoutSubtree,
   selectSubtree,
   fitView,
-  refitFocus,
+  fitBounds,
 })
 </script>
 
