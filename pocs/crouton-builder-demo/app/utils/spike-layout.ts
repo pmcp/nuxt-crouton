@@ -53,6 +53,17 @@ export const SPIKE_VIEWPORTS: SpikeViewport[] = [
   { label: 'Desktop', icon: 'i-lucide-monitor', width: 1280, height: 800 },
 ]
 
+/**
+ * In-flow zoom edit (#907) — when you zoom into ONE node, you edit it IN PLACE on the canvas:
+ * the focused node renders at the chosen device width with live splitter handles, and dragging a
+ * pane saves its sizes to THAT width's keypoint. `focus` names the node (object identity) + the
+ * device it's being authored at; `SPIKE_RESIZE_KEY` is the page callback the node calls on a
+ * splitter drag (it can't emit up through CroutonFlow). null focus = not zoom-editing.
+ */
+export interface SpikeFocus { node: LayoutNode, vp: SpikeViewport }
+export const SPIKE_FOCUS_KEY = Symbol('spike-focus') as InjectionKey<Ref<SpikeFocus | null>>
+export const SPIKE_RESIZE_KEY = Symbol('spike-resize') as InjectionKey<(group: LayoutNode, path: number[], sizes: number[], width: number) => void>
+
 /** How many block-cells wide × tall this node spans (1×1 for a leaf). */
 export function footprint(node: LayoutNode): { cols: number, rows: number } {
   if (node.type === 'leaf') return { cols: 1, rows: 1 }

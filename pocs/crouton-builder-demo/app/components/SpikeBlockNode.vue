@@ -32,11 +32,23 @@ const props = defineProps<{
 const viewport = inject(SPIKE_VIEWPORT_KEY, null)
 const surveying = computed(() => !!viewport?.value)
 
+// In-flow zoom edit (#907): when THIS node is the focused one, it's the live edit surface —
+// sized to the chosen device, rendered editable at that width, splitter drags → keypoints.
+const focus = inject(SPIKE_FOCUS_KEY, null)
+const resize = inject(SPIKE_RESIZE_KEY, null)
+const focused = computed(() => !!focus?.value && focus.value.node === props.data.node)
+const editVp = computed(() => focus?.value?.vp ?? null)
+
 const size = computed(() => {
+  if (focused.value && editVp.value) return { width: `${editVp.value.width}px`, height: `${editVp.value.height}px` }
   if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
   const f = footprint(props.data.node)
   return { width: `${f.cols * SPIKE_BASE_W}px`, height: `${f.rows * SPIKE_BASE_H}px` }
 })
+
+function onPaneResize(path: number[], sizes: number[]) {
+  if (focused.value && editVp.value) resize?.(props.data.node, path, sizes, editVp.value.width)
+}
 
 // A LayoutTree wrapper for the responsive renderer — carries any breakpoints authored in the
 // layer-2 slider, so the survey resolves the SAME authored responsiveness at the device width.
@@ -45,7 +57,7 @@ const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
 const guideEdge = computed<SnapEdge | null>(() =>
-  !surveying.value && snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
+  !surveying.value && !focused.value && snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
 )
 const guideStyle = computed(() => {
   switch (guideEdge.value) {
@@ -62,7 +74,7 @@ const DETACH_THRESHOLD = 56 // px the grip must travel before a pane pops out
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
-const armed = computed(() => !surveying.value && isGroup.value && (hovered.value || !!props.selected))
+const armed = computed(() => !surveying.value && !focused.value && isGroup.value && (hovered.value || !!props.selected))
 
 // Top-level pane regions (as % of the card), laid out along the split's axis by footprint.
 const regions = computed(() => {
@@ -154,9 +166,14 @@ watch(() => props.data.node, () => resetDrag())
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
+    <!-- Focused (in-flow edit): editable at the device width — splitter drags save to that
+         keypoint. `.nodrag` so dragging a splitter resizes the pane instead of moving the node. -->
+    <div v-if="focused && editVp" class="nodrag h-full w-full">
+      <CroutonLayoutResponsiveRenderer :tree="tree" :width="editVp.width" @layout-change="onPaneResize" />
+    </div>
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
     <!-- topology mode renders it plain at its footprint size. -->
-    <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
+    <CroutonLayoutResponsiveRenderer v-else-if="surveying" :tree="tree" :width="viewport!.width" />
     <CroutonLayoutRenderer v-else :node="data.node" />
 
     <!-- Live snap guide: the edge this block will be joined on lights up while a peer is dragged -->

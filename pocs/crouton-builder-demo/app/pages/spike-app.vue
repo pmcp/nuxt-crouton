@@ -22,17 +22,17 @@
  * phone (out of the way — #906). The result rides in a `USlideover`. The palette markup
  * is defined once with VueUse's `createReusableTemplate` and reused in both places.
  */
-import { markRaw, computed, shallowRef, provide } from 'vue'
+import { markRaw, computed, shallowRef, provide, nextTick } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
-import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
+import { detachNode, applySizes } from '@fyit/crouton-layout/app/utils/layout-edit'
 import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCroutonComposeGestures'
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-k · #907 · zoom into a node on the flow → author responsiveness beside it'
+const BUILD = 'spike-l · #907 · in-flow zoom EDIT — resize panes on the zoomed node → keypoint'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -126,8 +126,57 @@ const flowRows = computed<FlowNode[]>(() => {
 // responsiveness (collapse/variants/sizes per width). Edits persist back onto that node (root +
 // breakpoints), so the survey (layer 3) then reflects them. Size on the flow is unchanged — the
 // slider is a simulation, exactly the "drag bigger/smaller while staying the same size" model.
+const flowRef = ref<{ refitFocus: () => void } | null>(null)
+const DESKTOP_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Desktop')!
+
+// In-flow zoom edit: double-click a node → camera zooms in (zoomNodeId drives CroutonFlow's
+// focus-node-id) AND that node becomes the live edit surface (focus). A slim bar picks the device
+// (= which keypoint you author); dragging a pane on the node saves sizes to that keypoint.
 const zoomNodeId = ref<string | null>(null)
-const zoomOpen = computed({ get: () => !!zoomNodeId.value, set: (v: boolean) => { if (!v) zoomNodeId.value = null } })
+const focus = shallowRef<SpikeFocus | null>(null)
+provide(SPIKE_FOCUS_KEY, focus)
+
+function onNodeDblClick(id: string) {
+  if (mode.value !== 'free') return
+  const n = nodes.value.find(nd => nd.id === id)
+  if (!n) return
+  viewport.value = null // focus is a single-node view; leave the board-wide survey
+  zoomNodeId.value = id
+  focus.value = { node: n.data.node, vp: DESKTOP_VP }
+}
+function setFocusVp(vp: SpikeViewport) {
+  if (!focus.value) return
+  focus.value = { ...focus.value, vp } // resize the focused node → re-frame the camera
+  nextTick(() => flowRef.value?.refitFocus())
+}
+function closeFocus() {
+  focus.value = null
+  zoomNodeId.value = null // CroutonFlow fits back out (capped, won't over-zoom)
+  authorOpen.value = false
+}
+
+// A splitter drag on the focused node → save the new sizes to that device's keypoint. Applies onto
+// the base root and stores it as a per-width breakpoint override (data.node itself is untouched, so
+// the node keeps its identity and stays focused).
+function upsertBp(bp: LayoutBreakpoint[] | undefined, width: number, root: LayoutNode): LayoutBreakpoint[] {
+  const arr = [...(bp ?? [])]
+  const i = arr.findIndex(b => b.minWidth === width)
+  if (i >= 0) arr[i] = { ...arr[i]!, root }
+  else arr.push({ minWidth: width, root })
+  return arr.sort((a, b) => a.minWidth - b.minWidth)
+}
+function onFocusResize(group: LayoutNode, path: number[], sizes: number[], width: number) {
+  const idx = nodes.value.findIndex(n => n.data.node === group)
+  if (idx === -1) return
+  const newRoot = applySizes(group, path, sizes)
+  const bp = upsertBp(nodes.value[idx]!.data.bp, width, newRoot)
+  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, bp } } : n)
+}
+provide(SPIKE_RESIZE_KEY, onFocusResize)
+
+// Advanced author (collapse motion / widget variants / per-breakpoint structure) — opt-in via the
+// focus bar's "More", not auto-opened. Edits the focused node's full tree (root + breakpoints).
+const authorOpen = ref(false)
 const zoomNode = computed(() => zoomNodeId.value ? nodes.value.find(n => n.id === zoomNodeId.value) ?? null : null)
 const zoomLabel = computed(() => zoomNode.value?.data.label ?? 'Layout')
 const EMPTY_TREE: LayoutTree = { renderer: 'panes', root: { type: 'leaf', blockId: '', config: {} } }
@@ -140,12 +189,9 @@ const zoomTree = computed<LayoutTree>({
     const id = zoomNodeId.value
     if (!id) return
     nodes.value = nodes.value.map(n => n.id === id ? { ...n, data: { ...n.data, node: t.root, bp: t.breakpoints } } : n)
+    if (focus.value) focus.value = { ...focus.value, node: t.root } // keep focus identity after a base edit
   },
 })
-function onNodeDblClick(id: string) {
-  if (mode.value !== 'free') return
-  zoomNodeId.value = id
-}
 
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
@@ -505,6 +551,7 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
+            ref="flowRef"
             :rows="flowRows"
             collection="artists"
             data-mode="ephemeral"
@@ -524,18 +571,43 @@ function reset() {
           </div>
         </ClientOnly>
 
+        <!-- In-flow zoom edit bar (#907): pick the device (= which keypoint you're authoring); drag a
+             pane on the zoomed node to lock its size at that keypoint. "More" opens the full author. -->
+        <div
+          v-if="focus"
+          class="pointer-events-auto absolute inset-x-0 top-2 z-20 mx-auto flex w-fit items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 px-2 py-1 shadow-lg backdrop-blur"
+        >
+          <UIcon name="i-lucide-ruler" class="ml-1 size-3.5 text-primary" />
+          <span class="text-[11px] font-medium text-primary">{{ focus.vp.width }}px</span>
+          <div class="mx-1 flex items-center gap-0.5">
+            <UButton
+              v-for="v in SPIKE_VIEWPORTS"
+              :key="v.label"
+              size="xs"
+              :icon="v.icon"
+              :aria-label="v.label"
+              :title="`${v.label} · ${v.width}px`"
+              :color="focus.vp.label === v.label ? 'primary' : 'neutral'"
+              :variant="focus.vp.label === v.label ? 'soft' : 'ghost'"
+              @click="setFocusVp(v)"
+            />
+          </div>
+          <UButton size="xs" icon="i-lucide-sliders-horizontal" color="neutral" variant="ghost" label="More" @click="authorOpen = true" />
+          <UButton size="xs" icon="i-lucide-check" color="primary" variant="soft" label="Done" @click="closeFocus" />
+        </div>
+
         <!-- Snap hints (when there's something to arrange) -->
         <p
-          v-if="mode === 'free' && viewport && nodes.length"
+          v-if="mode === 'free' && !focus && viewport && nodes.length"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
         >
           Surveying at {{ viewport.label }} · {{ viewport.width }}px — read-only · hit ⛶ to fit · pick <strong>Fit</strong> to edit
         </p>
         <p
-          v-else-if="mode === 'free' && nodes.length >= 2"
+          v-else-if="mode === 'free' && !focus && nodes.length >= 2"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
-          Drag a block next to another → they snap together · then ✨ Magic or compile
+          Drag a block next to another → they snap together · then ✨ Magic or compile · double-click to zoom in
         </p>
         <p
           v-else-if="mode === 'snap' && pieces.length"
@@ -638,7 +710,7 @@ function reset() {
          and the responsiveness author docks on the right WITHOUT a backdrop — so the zoomed layout
          stays visible on the flow beside it (not a fullscreen takeover). Edits persist via zoomTree. -->
     <USlideover
-      v-model:open="zoomOpen"
+      v-model:open="authorOpen"
       :title="`Responsiveness · ${zoomLabel}`"
       :overlay="false"
       :dismissible="false"
@@ -646,7 +718,7 @@ function reset() {
     >
       <template #body>
         <div class="flex h-full flex-col">
-          <p class="mb-3 text-xs text-muted">Zoomed into this layout — scrub the width to author how it reflows; drag a pane to lock its size at that breakpoint.</p>
+          <p class="mb-3 text-xs text-muted">Advanced: collapse motion, per-block widget variants and per-breakpoint structure. (Sizes are quicker to set by dragging panes right on the zoomed node.)</p>
           <div class="min-h-0 flex-1 overflow-auto">
             <CroutonLayoutBreakpointAuthor v-model="zoomTree" />
           </div>
