@@ -176,7 +176,8 @@ When `sync` is enabled:
 |-------|---------|-------------|
 | `nodeClick` | `(nodeId, data)` | Node clicked |
 | `nodeDblClick` | `(nodeId, data)` | Node double-clicked |
-| `nodeMove` | `(nodeId, position)` | Node moved |
+| `nodeMove` | `(nodeId, position)` | Node moved (after drag) |
+| `nodeDrag` | `(nodeId, position)` | Emitted continuously *while* dragging (live position, throttled ~50ms). Not gated on `sync` — use for live snap guides / alignment previews. |
 | `edgeClick` | `(edgeId)` | Edge clicked |
 | `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
 | `connectEnd` | `({ sourceNodeId, sourceHandleType, position, mouseEvent })` | Connection drag ended in empty space (no target handle). Use to show a "create node" menu. |
