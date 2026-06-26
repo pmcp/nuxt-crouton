@@ -68,6 +68,32 @@ const openOverlay = ref<string | null>(null)
 function peek(blockId: string) { openOverlay.value = blockId; emit('expand', blockId) }
 const overlayPane = computed(() => collapsedPanes.value.find(p => p.blockId === openOverlay.value) ?? null)
 const overlayNode = computed<LayoutNode | null>(() => (openOverlay.value ? { type: 'leaf', blockId: openOverlay.value } : null))
+
+// The drawer slides out from the SIDE the collapsed pane lives on (a left pane → from
+// the left), so the motion reads as "this pane opened up" rather than arriving from
+// nowhere. Determined by the block's position in the top horizontal split; vertical
+// splits (or not found) fall back to the right.
+function subtreeHasBlock(node: LayoutNode, blockId: string): boolean {
+  if (node.type === 'leaf') return node.blockId === blockId
+  if (node.type === 'nested') return subtreeHasBlock(node.layout.root, blockId)
+  if (node.type === 'split') return node.children.some(c => subtreeHasBlock(c, blockId))
+  return false
+}
+const overlaySide = computed<'left' | 'right'>(() => {
+  const root = resolved.value.root
+  const id = openOverlay.value
+  if (!id || !root || root.type !== 'split' || root.direction !== 'horizontal') return 'right'
+  const idx = root.children.findIndex(c => subtreeHasBlock(c, id))
+  if (idx < 0) return 'right'
+  return idx < root.children.length / 2 ? 'left' : 'right'
+})
+
+// Render the peeked block DIRECTLY (not via CroutonLayoutRenderer) so it shows its real
+// content: the in-place collapse context provided above would otherwise leak in and draw
+// the collapsed *handle* again inside the drawer.
+const { resolveComponentName: resolveOverlayComponent, sanitizeConfig: sanitizeOverlayConfig } = useCroutonLayoutBlocks()
+const overlayComponent = computed(() => (openOverlay.value ? resolveOverlayComponent(openOverlay.value) : null))
+const overlayConfig = computed<Record<string, unknown>>(() => (openOverlay.value ? sanitizeOverlayConfig(openOverlay.value, undefined) : {}))
 // If the width changes so the pane is no longer collapsed, close the overlay.
 watch(collapsedPanes, panes => { if (openOverlay.value && !panes.some(p => p.blockId === openOverlay.value)) openOverlay.value = null })
 
@@ -144,10 +170,11 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
         @click="openOverlay = null"
       />
     </Transition>
-    <Transition name="mq-drawer">
+    <Transition :name="overlaySide === 'left' ? 'mq-drawer-l' : 'mq-drawer-r'">
       <div
         v-if="openOverlay && overlayNode"
-        class="absolute inset-y-0 right-0 z-50 flex w-[min(440px,88%)] flex-col border-l border-default bg-default shadow-2xl"
+        class="absolute inset-y-0 z-50 flex w-[min(440px,88%)] flex-col bg-default shadow-2xl"
+        :class="overlaySide === 'left' ? 'left-0 border-r border-default' : 'right-0 border-l border-default'"
       >
         <div class="flex items-center gap-2 border-b border-default px-3 py-2">
           <UIcon
@@ -167,7 +194,18 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
           />
         </div>
         <div class="min-h-0 flex-1 overflow-auto">
-          <CroutonLayoutRenderer :node="overlayNode" />
+          <component
+            :is="overlayComponent"
+            v-if="overlayComponent"
+            v-bind="overlayConfig"
+            class="h-full w-full overflow-auto"
+          />
+          <div
+            v-else
+            class="grid h-full w-full place-items-center p-6 text-center text-sm text-error"
+          >
+            Unknown block:&nbsp;<code>{{ openOverlay }}</code>
+          </div>
         </div>
       </div>
     </Transition>
@@ -177,9 +215,13 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
 <style scoped>
 .mq-scrim-enter-active, .mq-scrim-leave-active { transition: opacity .2s ease }
 .mq-scrim-enter-from, .mq-scrim-leave-to { opacity: 0 }
-.mq-drawer-enter-active, .mq-drawer-leave-active { transition: transform .24s cubic-bezier(.4,0,.2,1) }
-.mq-drawer-enter-from, .mq-drawer-leave-to { transform: translateX(100%) }
+.mq-drawer-r-enter-active, .mq-drawer-r-leave-active,
+.mq-drawer-l-enter-active, .mq-drawer-l-leave-active { transition: transform .28s cubic-bezier(.32,.72,0,1) }
+.mq-drawer-r-enter-from, .mq-drawer-r-leave-to { transform: translateX(100%) }
+.mq-drawer-l-enter-from, .mq-drawer-l-leave-to { transform: translateX(-100%) }
 @media (prefers-reduced-motion: reduce) {
-  .mq-scrim-enter-active, .mq-scrim-leave-active, .mq-drawer-enter-active, .mq-drawer-leave-active { transition: none }
+  .mq-scrim-enter-active, .mq-scrim-leave-active,
+  .mq-drawer-r-enter-active, .mq-drawer-r-leave-active,
+  .mq-drawer-l-enter-active, .mq-drawer-l-leave-active { transition: none }
 }
 </style>
