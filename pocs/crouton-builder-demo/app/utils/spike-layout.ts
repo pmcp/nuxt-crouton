@@ -23,6 +23,18 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
+/**
+ * Pull-apart-to-detach (#907) — the inverse of snap-merge, ON the flow canvas. A merged
+ * node renders its panes; arming it (hover/select) shows a grip per top-level pane, and
+ * dragging a grip OUT past a threshold pops that pane back into its own flow node. The
+ * page owns `nodes`, but a default node component can't emit up through CroutonFlow, so the
+ * page PROVIDES this callback and SpikeBlockNode calls it — identifying its group by object
+ * identity of `data.node` (Vue Flow doesn't forward the node id). `dir` is the release
+ * direction (screen px) so the page places the freed node on that side of the group.
+ */
+export interface SpikeDetachPayload { index: number, dir: { x: number, y: number } }
+export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
+
 /** How many block-cells wide × tall this node spans (1×1 for a leaf). */
 export function footprint(node: LayoutNode): { cols: number, rows: number } {
   if (node.type === 'leaf') return { cols: 1, rows: 1 }

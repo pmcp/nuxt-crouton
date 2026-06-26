@@ -27,11 +27,12 @@ import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
+import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
 import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCroutonComposeGestures'
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-e · #907 · live snap guide — target edge lights up while you drag'
+const BUILD = 'spike-f · #907 · pull-apart-to-detach — drag a pane out of a merged group'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -77,6 +78,32 @@ let seq = 0
 // up the joining edge. Provided here; SpikeBlockNode injects it and matches by object identity.
 const snapPreview = shallowRef<SpikeSnapPreview | null>(null)
 provide(SPIKE_SNAP_KEY, snapPreview)
+
+// Pull-apart-to-detach (#907) — the inverse of snap-merge. A SpikeBlockNode pops a pane out of
+// a merged group and reports it here (via SPIKE_DETACH_KEY — it can't emit up through CroutonFlow).
+// We split the group's `data.node`, shrink it to the remainder, and place the freed pane as its
+// own flow node on the side the user dragged toward.
+const DETACH_GAP = 40
+function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
+  const idx = nodes.value.findIndex(n => n.data.node === group)
+  if (idx === -1) return
+  const host = nodes.value[idx]!
+  const { root, detached } = detachNode(group, [payload.index])
+  if (!detached || !root) return
+
+  const gSize = sizeOf(group) // group's extent BEFORE it shrinks
+  const dSize = sizeOf(detached)
+  const horizontal = Math.abs(payload.dir.x) >= Math.abs(payload.dir.y)
+  const pos = horizontal
+    ? { x: payload.dir.x >= 0 ? host.position.x + gSize.width + DETACH_GAP : host.position.x - dSize.width - DETACH_GAP, y: host.position.y }
+    : { x: host.position.x, y: payload.dir.y >= 0 ? host.position.y + gSize.height + DETACH_GAP : host.position.y - dSize.height - DETACH_GAP }
+
+  const label = flattenLeaves(detached)[0]?.label
+  const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }
+  // Shrink the host to the remainder (keeps its position) and add the freed pane beside it.
+  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: root } } : n).concat(freed)
+}
+provide(SPIKE_DETACH_KEY, onDetach)
 
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
