@@ -19,7 +19,7 @@
  * No `@vue-flow/core` import (connection handles aren't needed here). `footprint` / `SPIKE_*`
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
-import { ref, inject, computed } from 'vue'
+import { ref, inject, computed, watch } from 'vue'
 import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
@@ -109,18 +109,28 @@ function onGripDown(i: number, e: PointerEvent) {
   upHandler = () => {
     const dir = { ...delta.value }
     const i2 = activeIndex.value
+    const didDetach = past.value && i2 != null
     cleanup()
-    if (past.value && i2 != null) {
-      detach?.(props.data.node, { index: i2, dir }) // page removes this pane → card re-renders
+    past.value = false
+    if (didDetach) {
+      // Reset drag state FIRST: Vue Flow reuses this node's component instance (same id), so a
+      // leftover activeIndex/delta would strand the next grip's state. Then ask the page to detach.
+      resetDrag()
+      detach?.(props.data.node, { index: i2!, dir }) // page removes this pane → card re-renders
     }
     else {
       delta.value = { x: 0, y: 0 } // spring back (CSS transition)
       window.setTimeout(() => { activeIndex.value = null }, 180)
     }
-    past.value = false
   }
   window.addEventListener('pointermove', moveHandler)
   window.addEventListener('pointerup', upHandler, { once: true })
+}
+
+function resetDrag() {
+  activeIndex.value = null
+  delta.value = { x: 0, y: 0 }
+  past.value = false
 }
 
 function cleanup() {
@@ -128,6 +138,10 @@ function cleanup() {
   moveHandler = null
   upHandler = null
 }
+
+// Whenever the rendered layout changes under us (a detach shrank the group, a merge grew it, etc.),
+// clear any stale grip-drag state — the instance is reused across these changes, so don't carry it over.
+watch(() => props.data.node, () => resetDrag())
 </script>
 
 <template>
