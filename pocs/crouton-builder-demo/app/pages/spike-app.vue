@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'consolidated-1 · #907 · full-screen edit view (no camera) + pull-pane detach + overview-on-add'
+const BUILD = 'focus-shell-1 · #907 · zoom-up edit shell (key-points pop + floating controls) — first cut'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -143,15 +143,14 @@ const flowRows = computed<FlowNode[]>(() => {
   return nodes.value.map((n, i) => ({ ...n, position: { x: i * (vw.width + GAP), y: 0 } }))
 })
 
-// Focus EDIT VIEW (#907 redesign) — double-click a node to open a DEDICATED full-screen edit view
-// (not a Vue Flow camera zoom). Because it's a plain overlay, the layout renders at a constant,
-// cleanly-framed on-screen size for EVERY node — no fight with Vue Flow's own viewport fit (the old
-// camera approach raced its re-measure and cut off some nodes, esp. the 2nd at mobile width). The
-// view hosts CroutonLayoutBreakpointAuthor, which already unifies everything in one screen: the
-// breakpoint ruler/key-points, the device buttons, the width slider, the per-checkpoint collapse
-// motion, and per-block widget variants — with splitter drags → keypoint sizes. `zoomNodeId` ≠ null
-// means the view is open.
+// Focus EDIT (#907 v2) — double-click a node and its layout ZOOMS UP in place: SpikeFocusShell
+// animates the card from the node's real on-screen rect to centre (a shared-element transition, NOT
+// the Vue Flow camera — so no re-measure/framing fight), the board falls away behind a blurred scrim,
+// and a minimal control shell hugs the layout (key-points pop, device + width on a floating pill;
+// collapse motion / variants behind a "⋯"). `zoomNodeId` ≠ null means the shell is open; `originRect`
+// is the node's rect captured at click so the zoom flies from exactly there.
 const zoomNodeId = ref<string | null>(null)
+const originRect = ref<{ x: number, y: number, width: number, height: number } | null>(null)
 const zoomNode = computed(() => zoomNodeId.value ? nodes.value.find(n => n.id === zoomNodeId.value) ?? null : null)
 const zoomLabel = computed(() => zoomNode.value?.data.label ?? 'Layout')
 const editing = computed(() => zoomNode.value !== null)
@@ -159,11 +158,16 @@ const editing = computed(() => zoomNode.value !== null)
 function onNodeDblClick(id: string) {
   if (mode.value !== 'free') return
   if (!nodes.value.some(nd => nd.id === id)) return
+  // Capture the node's current on-screen rect so the shell can fly the zoom from exactly there.
+  const el = import.meta.client ? document.querySelector(`.vue-flow__node[data-id="${id}"]`) : null
+  const r = el?.getBoundingClientRect()
+  originRect.value = r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null
   viewport.value = null // editing one node; leave the board-wide survey
   zoomNodeId.value = id
 }
 function closeEdit() {
   zoomNodeId.value = null
+  originRect.value = null
 }
 
 // The focused node's layout as a v-model'd LayoutTree (root + authored breakpoints). The author
@@ -675,49 +679,16 @@ function reset() {
       </template>
     </USlideover>
 
-    <!-- Focus EDIT VIEW (#907 redesign) — a dedicated full-screen overlay, NOT a Vue Flow camera
-         zoom. The layout renders at a constant, cleanly-framed on-screen size for every node (no
-         viewport-fit race → the old off-screen/cut-off framing is gone). CroutonLayoutBreakpointAuthor
-         IS the unified surface: breakpoint key-points + device buttons + width slider + collapse
-         motion + per-block variants, with splitter drags → keypoint sizes. A subtle CSS zoom-in
-         eases it in. The app-style header floats over the author's reserved top band. -->
-    <Teleport to="body">
-      <Transition name="focus-zoom">
-        <section
-          v-if="editing"
-          class="fixed inset-0 z-50 flex flex-col bg-default text-default"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="`Edit ${zoomLabel}`"
-        >
-          <header class="flex shrink-0 items-center gap-2 border-b border-default bg-elevated/60 px-4 py-2.5 backdrop-blur">
-            <UIcon name="i-lucide-layout-template" class="size-4 text-primary" />
-            <span class="text-sm font-semibold">{{ zoomLabel }}</span>
-            <UBadge color="neutral" variant="subtle" size="sm" class="hidden sm:inline-flex">Edit responsiveness</UBadge>
-            <div class="ml-auto flex items-center gap-2">
-              <UButton size="xs" icon="i-lucide-check" color="primary" label="Done" @click="closeEdit" />
-            </div>
-          </header>
-          <div class="min-h-0 flex-1 overflow-auto">
-            <!-- The author renders its own ruler/devices/slider/motion/variants; -mt-12 reclaims its
-                 built-in pt-16 top band since this view supplies the header. -->
-            <CroutonLayoutBreakpointAuthor v-model="zoomTree" class="-mt-12" />
-          </div>
-        </section>
-      </Transition>
-    </Teleport>
+    <!-- Focus EDIT (#907 v2) — the layout ZOOMS UP in place via SpikeFocusShell: a shared-element
+         transition from the node's rect to centre (no Vue Flow camera), the board falls away behind a
+         blurred scrim, and a minimal control shell hugs the layout (key-points pop · device + width
+         pill · collapse motion / variants behind "⋯"). Persists via the same `zoomTree` v-model. -->
+    <SpikeFocusShell
+      v-if="editing"
+      v-model="zoomTree"
+      :label="zoomLabel"
+      :origin-rect="originRect"
+      @close="closeEdit"
+    />
   </div>
 </template>
-
-<style scoped>
-/* Subtle "zoom into the view" — a CSS scale+fade, NOT a Vue Flow camera fit (#907). */
-.focus-zoom-enter-active,
-.focus-zoom-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
-.focus-zoom-enter-from,
-.focus-zoom-leave-to {
-  opacity: 0;
-  transform: scale(0.97);
-}
-</style>
