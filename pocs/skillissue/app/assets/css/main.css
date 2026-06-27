@@ -1,0 +1,231 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@source "./../../**/*.{vue,ts}";
+
+/* ===========================================================================
+   skill/issue — bespoke design system (#920)
+   Developer-native: near-black canvas, blueprint grid, neon violet→cyan→lime
+   gradient, kinetic mono display type. No Nuxt UI theme — fully custom.
+   =========================================================================== */
+
+:root {
+  --si-bg: #07070b;
+  --si-bg-2: #0c0c14;
+  --si-ink: #e7e7f2;
+  --si-ink-dim: #9a9ab0;
+  --si-ink-faint: #5a5a72;
+  --si-line: #1c1c2a;
+  --si-line-2: #26263a;
+
+  --si-violet: #8b5cf6;
+  --si-cyan: #22d3ee;
+  --si-lime: #a3e635;
+  --si-pink: #f472b6;
+
+  --si-grad: linear-gradient(100deg, var(--si-violet), var(--si-cyan) 55%, var(--si-lime));
+  --si-grad-soft: linear-gradient(100deg, #8b5cf640, #22d3ee30 55%, #a3e63530);
+
+  --si-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  --si-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --si-maxw: 1180px;
+}
+
+html.si {
+  background: var(--si-bg);
+  color: var(--si-ink);
+  font-family: var(--si-sans);
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+  font-feature-settings: "ss01", "cv01";
+}
+
+html.si body { background: var(--si-bg); margin: 0; }
+
+::selection { background: var(--si-violet); color: #fff; }
+
+/* Blueprint grid + ambient glow backdrop -------------------------------------- */
+.si-canvas {
+  position: relative;
+  overflow: clip;
+  min-height: 100vh;
+}
+.si-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--si-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--si-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+.si-canvas::after {
+  content: "";
+  position: fixed;
+  top: -20%; left: 50%;
+  width: 70vw; height: 70vw;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, #8b5cf625, transparent 60%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+.si-shell { position: relative; z-index: 1; }
+
+.si-wrap { max-width: var(--si-maxw); margin: 0 auto; padding: 0 24px; }
+
+/* Type ------------------------------------------------------------------------ */
+.si-display {
+  font-family: var(--si-sans);
+  font-weight: 880;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  font-size: clamp(2.7rem, 8vw, 6rem);
+}
+.si-eyebrow {
+  font-family: var(--si-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--si-ink-dim);
+}
+.si-grad-text {
+  background: var(--si-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.si-kicker {
+  font-family: var(--si-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--si-cyan);
+}
+.si-lead { color: var(--si-ink-dim); font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 1.55; }
+
+/* Buttons --------------------------------------------------------------------- */
+.si-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--si-mono); font-size: 0.92rem; font-weight: 600;
+  padding: 0.85rem 1.4rem; border-radius: 0;
+  cursor: pointer; text-decoration: none; transition: all 0.18s ease;
+  border: 1px solid transparent;
+}
+.si-btn-primary {
+  background: var(--si-grad); color: #07070b;
+  box-shadow: 0 0 0 1px #ffffff10, 0 8px 30px -8px #8b5cf688;
+}
+.si-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px #ffffff20, 0 14px 44px -8px #22d3eeaa; }
+.si-btn-ghost {
+  background: transparent; color: var(--si-ink); border-color: var(--si-line-2);
+}
+.si-btn-ghost:hover { border-color: var(--si-cyan); color: var(--si-cyan); }
+
+/* Cards ----------------------------------------------------------------------- */
+.si-card {
+  background: linear-gradient(180deg, #ffffff06, #ffffff02);
+  border: 1px solid var(--si-line);
+  border-radius: 14px;
+  padding: 1.6rem;
+  position: relative;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.si-card:hover { border-color: var(--si-line-2); transform: translateY(-3px); }
+.si-card-glow::before {
+  content: ""; position: absolute; inset: -1px; border-radius: 14px; padding: 1px;
+  background: var(--si-grad); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity 0.25s ease;
+}
+.si-card-glow:hover::before { opacity: 0.6; }
+
+/* Terminal / code window ------------------------------------------------------ */
+.si-term {
+  background: #0a0a12; border: 1px solid var(--si-line-2); border-radius: 12px;
+  font-family: var(--si-mono); font-size: 0.86rem; overflow: hidden;
+  box-shadow: 0 30px 80px -30px #000, 0 0 0 1px #ffffff08;
+}
+.si-term-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--si-line);
+  background: #0d0d18;
+}
+.si-dot { width: 11px; height: 11px; border-radius: 50%; }
+.si-term-body { padding: 1.1rem 1.2rem; line-height: 1.7; }
+.si-add { color: var(--si-lime); }
+.si-del { color: #fb7185; }
+.si-dim { color: var(--si-ink-faint); }
+.si-tok { color: var(--si-cyan); }
+.si-tok-2 { color: var(--si-violet); }
+
+/* Flow pipeline --------------------------------------------------------------- */
+.si-pipe { display: grid; gap: 0.75rem; }
+@media (min-width: 860px) { .si-pipe { grid-template-columns: repeat(4, 1fr); align-items: stretch; } }
+.si-step {
+  position: relative; padding: 1.3rem; border-radius: 12px;
+  border: 1px solid var(--si-line); background: #ffffff04; overflow: hidden;
+}
+.si-step-n { font-family: var(--si-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--si-ink-faint); }
+.si-step-ico { font-size: 1.6rem; line-height: 1; margin: 0.6rem 0; }
+.si-step h4 { font-weight: 700; font-size: 1.05rem; margin: 0 0 0.25rem; }
+.si-step p { color: var(--si-ink-dim); font-size: 0.86rem; margin: 0; line-height: 1.45; }
+.si-step::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+  background: var(--si-grad); transform: scaleX(0); transform-origin: left;
+  animation: si-sweep 0.8s ease forwards;
+}
+.si-step:nth-child(1)::after { animation-delay: 0.0s; }
+.si-step:nth-child(2)::after { animation-delay: 0.25s; }
+.si-step:nth-child(3)::after { animation-delay: 0.5s; }
+.si-step:nth-child(4)::after { animation-delay: 0.75s; }
+@keyframes si-sweep { to { transform: scaleX(1); } }
+
+/* Section scaffolding --------------------------------------------------------- */
+.si-section { padding: clamp(4rem, 11vh, 8rem) 0; position: relative; }
+.si-section-head { max-width: 720px; margin-bottom: 3rem; }
+.si-h2 { font-weight: 820; letter-spacing: -0.03em; font-size: clamp(1.9rem, 4.5vw, 3.1rem); line-height: 1.02; }
+.si-rule { height: 1px; background: var(--si-line); border: 0; margin: 0; }
+
+/* Comparison table ------------------------------------------------------------ */
+.si-vs { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.si-vs th, .si-vs td { text-align: left; padding: 1rem 1.1rem; border-bottom: 1px solid var(--si-line); }
+.si-vs thead th { font-family: var(--si-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--si-ink-faint); }
+.si-vs .si-col-old { color: var(--si-ink-dim); }
+.si-vs .si-col-new { color: var(--si-ink); font-weight: 600; }
+.si-vs tbody tr:hover td { background: #ffffff04; }
+.si-vs .si-col-new-h { color: var(--si-cyan); }
+
+/* Marquee badge --------------------------------------------------------------- */
+.si-pill {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--si-mono); font-size: 0.74rem; letter-spacing: 0.04em;
+  padding: 0.4rem 0.8rem; border-radius: 999px;
+  border: 1px solid var(--si-line-2); color: var(--si-ink-dim); background: #ffffff05;
+}
+.si-blink { width: 7px; height: 7px; border-radius: 50%; background: var(--si-lime); box-shadow: 0 0 10px var(--si-lime); animation: si-blink 1.6s ease-in-out infinite; }
+@keyframes si-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* Nav ------------------------------------------------------------------------- */
+.si-nav {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(12px);
+  background: #07070bcc; border-bottom: 1px solid var(--si-line);
+}
+.si-nav-inner { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.si-logo { font-family: var(--si-mono); font-weight: 700; letter-spacing: -0.02em; font-size: 1rem; color: var(--si-ink); text-decoration: none; }
+.si-logo b { color: var(--si-cyan); }
+.si-navlinks { display: none; gap: 1.6rem; }
+@media (min-width: 800px) { .si-navlinks { display: flex; } }
+.si-navlinks a { font-size: 0.86rem; color: var(--si-ink-dim); text-decoration: none; transition: color 0.15s; }
+.si-navlinks a:hover { color: var(--si-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .si-step::after, .si-blink { animation: none; transform: scaleX(1); }
+  html.si { scroll-behavior: auto; }
+}

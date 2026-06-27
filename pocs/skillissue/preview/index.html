@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en" class="si">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>skill/issue — turn AI coding into a repeatable system</title>
+<meta name="description" content="skill/issue turns AI coding into a repeatable system: a ticket says what to build, a reusable skill knows how, and out comes a reviewed PR — every time, traceably." />
+<!--
+  STANDALONE PREVIEW of the skill/issue landing (epic #917, design #920).
+  Zero dependencies, system fonts only → renders anywhere, incl. htmlpreview.github.io.
+  This is the FAST-ITERATION surface; app/pages/index.vue mirrors it for the real Nuxt build.
+  Copy source of truth: writeups/briefings/skillissue-site-brief.md (#918).
+-->
+<style>
+:root{
+  --si-bg:#07070b; --si-bg-2:#0c0c14; --si-ink:#e7e7f2; --si-ink-dim:#9a9ab0; --si-ink-faint:#5a5a72;
+  --si-line:#1c1c2a; --si-line-2:#26263a;
+  --si-violet:#8b5cf6; --si-cyan:#22d3ee; --si-lime:#a3e635; --si-pink:#f472b6;
+  --si-grad:linear-gradient(100deg,var(--si-violet),var(--si-cyan) 55%,var(--si-lime));
+  --si-mono:ui-monospace,"SF Mono","JetBrains Mono","Fira Code",Menlo,Consolas,monospace;
+  --si-sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --si-maxw:1180px;
+}
+*{box-sizing:border-box;}
+html.si{background:var(--si-bg);color:var(--si-ink);font-family:var(--si-sans);-webkit-font-smoothing:antialiased;scroll-behavior:smooth;font-feature-settings:"ss01","cv01";}
+body{margin:0;background:var(--si-bg);}
+::selection{background:var(--si-violet);color:#fff;}
+a{color:inherit;}
+i{font-style:italic;} b{font-weight:700;}
+
+.si-canvas{position:relative;overflow:clip;min-height:100vh;}
+.si-canvas::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--si-line) 1px,transparent 1px),linear-gradient(90deg,var(--si-line) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);opacity:.5;pointer-events:none;z-index:0;}
+.si-canvas::after{content:"";position:fixed;top:-20%;left:50%;width:70vw;height:70vw;transform:translateX(-50%);background:radial-gradient(circle,#8b5cf625,transparent 60%);filter:blur(40px);pointer-events:none;z-index:0;}
+.si-shell{position:relative;z-index:1;}
+.si-wrap{max-width:var(--si-maxw);margin:0 auto;padding:0 24px;}
+
+.si-display{font-weight:880;letter-spacing:-.04em;line-height:.95;font-size:clamp(2.7rem,8vw,6rem);margin:0;}
+.si-eyebrow{font-family:var(--si-mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--si-ink-dim);margin:0;}
+.si-grad-text{background:var(--si-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.si-kicker{font-family:var(--si-mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--si-cyan);margin:0;}
+.si-lead{color:var(--si-ink-dim);font-size:clamp(1.05rem,2.2vw,1.3rem);line-height:1.55;}
+
+.si-btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--si-mono);font-size:.92rem;font-weight:600;padding:.85rem 1.4rem;border-radius:0;cursor:pointer;text-decoration:none;transition:all .18s ease;border:1px solid transparent;}
+.si-btn-primary{background:var(--si-grad);color:#07070b;box-shadow:0 0 0 1px #ffffff10,0 8px 30px -8px #8b5cf688;}
+.si-btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 0 1px #ffffff20,0 14px 44px -8px #22d3eeaa;}
+.si-btn-ghost{background:transparent;color:var(--si-ink);border-color:var(--si-line-2);}
+.si-btn-ghost:hover{border-color:var(--si-cyan);color:var(--si-cyan);}
+
+.si-card{background:linear-gradient(180deg,#ffffff06,#ffffff02);border:1px solid var(--si-line);border-radius:14px;padding:1.6rem;position:relative;transition:border-color .2s ease,transform .2s ease;}
+.si-card:hover{border-color:var(--si-line-2);transform:translateY(-3px);}
+.si-card-glow::before{content:"";position:absolute;inset:-1px;border-radius:14px;padding:1px;background:var(--si-grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .25s ease;}
+.si-card-glow:hover::before{opacity:.6;}
+
+.si-term{background:#0a0a12;border:1px solid var(--si-line-2);border-radius:12px;font-family:var(--si-mono);font-size:.86rem;overflow:hidden;box-shadow:0 30px 80px -30px #000,0 0 0 1px #ffffff08;}
+.si-term-bar{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid var(--si-line);background:#0d0d18;}
+.si-dot{width:11px;height:11px;border-radius:50%;}
+.si-term-body{padding:1.1rem 1.2rem;line-height:1.7;white-space:pre-wrap;}
+.si-add{color:var(--si-lime);} .si-del{color:#fb7185;} .si-dim{color:var(--si-ink-faint);} .si-tok{color:var(--si-cyan);} .si-tok2{color:var(--si-violet);}
+
+.si-pipe{display:grid;gap:.75rem;}
+@media(min-width:860px){.si-pipe{grid-template-columns:repeat(4,1fr);align-items:stretch;}}
+.si-step{position:relative;padding:1.3rem;border-radius:12px;border:1px solid var(--si-line);background:#ffffff04;overflow:hidden;cursor:pointer;text-align:left;color:inherit;font-family:inherit;transition:border-color .2s,background .2s;}
+.si-step[aria-selected=true]{border-color:var(--si-cyan);background:#22d3ee0d;}
+.si-step-n{font-family:var(--si-mono);font-size:.7rem;letter-spacing:.2em;color:var(--si-ink-faint);}
+.si-step-ico{font-size:1.6rem;line-height:1;margin:.6rem 0;}
+.si-step h4{font-weight:700;font-size:1.05rem;margin:0 0 .25rem;}
+.si-step p{color:var(--si-ink-dim);font-size:.86rem;margin:0;line-height:1.45;}
+.si-step::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--si-grad);transform:scaleX(0);transform-origin:left;animation:si-sweep .8s ease forwards;}
+.si-step:nth-child(1)::after{animation-delay:0s;} .si-step:nth-child(2)::after{animation-delay:.25s;} .si-step:nth-child(3)::after{animation-delay:.5s;} .si-step:nth-child(4)::after{animation-delay:.75s;}
+@keyframes si-sweep{to{transform:scaleX(1);}}
+
+.si-section{padding:clamp(4rem,11vh,8rem) 0;position:relative;}
+.si-section-head{max-width:720px;margin-bottom:3rem;}
+.si-h2{font-weight:820;letter-spacing:-.03em;font-size:clamp(1.9rem,4.5vw,3.1rem);line-height:1.02;margin:0;}
+.si-rule{height:1px;background:var(--si-line);border:0;margin:0;}
+
+.si-vs{width:100%;border-collapse:collapse;font-size:.95rem;}
+.si-vs th,.si-vs td{text-align:left;padding:1rem 1.1rem;border-bottom:1px solid var(--si-line);}
+.si-vs thead th{font-family:var(--si-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--si-ink-faint);}
+.si-col-old{color:var(--si-ink-dim);} .si-col-new{color:var(--si-ink);font-weight:600;} .si-col-new-h{color:var(--si-cyan);}
+.si-vs tbody tr:hover td{background:#ffffff04;}
+
+.si-pill{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--si-mono);font-size:.74rem;letter-spacing:.04em;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--si-line-2);color:var(--si-ink-dim);background:#ffffff05;}
+.si-blink{width:7px;height:7px;border-radius:50%;background:var(--si-lime);box-shadow:0 0 10px var(--si-lime);animation:si-blink 1.6s ease-in-out infinite;}
+@keyframes si-blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+.si-nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:#07070bcc;border-bottom:1px solid var(--si-line);}
+.si-nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px;}
+.si-logo{font-family:var(--si-mono);font-weight:700;letter-spacing:-.02em;font-size:1rem;color:var(--si-ink);text-decoration:none;}
+.si-logo b{color:var(--si-cyan);}
+.si-navlinks{display:none;gap:1.6rem;}
+@media(min-width:800px){.si-navlinks{display:flex;}}
+.si-navlinks a{font-size:.86rem;color:var(--si-ink-dim);text-decoration:none;transition:color .15s;}
+.si-navlinks a:hover{color:var(--si-ink);}
+
+/* layout helpers (standalone — no Tailwind) */
+.grid{display:grid;} .gap-5{gap:1.25rem;} .gap-12{gap:3rem;} .gap-3{gap:.75rem;}
+.flex{display:flex;} .wrap{flex-wrap:wrap;} .center{justify-content:center;align-items:center;}
+.mt-3{margin-top:.75rem;} .mt-4{margin-top:1rem;} .mt-5{margin-top:1.25rem;} .mt-7{margin-top:1.75rem;} .mt-8{margin-top:2rem;} .mt-9{margin-top:2.25rem;}
+.mb-2{margin-bottom:.5rem;} .mb-3{margin-bottom:.75rem;} .mb-4{margin-bottom:1rem;} .mb-5{margin-bottom:1.25rem;} .mb-6{margin-bottom:1.5rem;}
+.maxw-xl{max-width:36rem;} .tcenter{text-align:center;}
+.hero-grid{display:grid;gap:3rem;}
+@media(min-width:1000px){.hero-grid{grid-template-columns:1.1fr .9fr;align-items:center;}}
+.cols-2{display:grid;gap:1.25rem;} @media(min-width:760px){.cols-2{grid-template-columns:1fr 1fr;}}
+.cols-3{display:grid;gap:1.25rem;} @media(min-width:760px){.cols-3{grid-template-columns:repeat(3,1fr);}}
+@media(prefers-reduced-motion:reduce){.si-step::after,.si-blink{animation:none;transform:scaleX(1);}html.si{scroll-behavior:auto;}}
+</style>
+</head>
+<body>
+<div class="si-canvas"><div class="si-shell">
+
+  <nav class="si-nav"><div class="si-wrap si-nav-inner">
+    <a href="#top" class="si-logo">skill<b>/</b>issue</a>
+    <div class="si-navlinks">
+      <a href="#flow">The flow</a><a href="#how">How it works</a><a href="#why">Why different</a><a href="#use-cases">Use cases</a>
+    </div>
+    <a href="#cta" class="si-btn si-btn-primary" style="padding:.55rem 1rem">Get early access</a>
+  </div></nav>
+
+  <header id="top" class="si-section si-wrap" style="padding-top:5rem">
+    <div class="hero-grid">
+      <div>
+        <p class="si-eyebrow mb-5">Skills + tickets = software that ships itself</p>
+        <h1 class="si-display">Stop prompting.<br>Start shipping —<br><span class="si-grad-text">repeatably.</span></h1>
+        <p class="si-lead mt-7 maxw-xl">skill/issue turns AI coding into a system you can trust. A <b style="color:var(--si-ink)">ticket</b> captures <i>what</i> to build and <i>why</i>. A reusable <b style="color:var(--si-ink)">skill</b> knows <i>how</i>. Out comes a <b style="color:var(--si-ink)">reviewed PR</b> — every time, traceable, auditable.</p>
+        <div class="flex wrap gap-3 mt-9">
+          <a href="#flow" class="si-btn si-btn-primary">Watch the flow ↓</a>
+          <a href="#cta" class="si-btn si-btn-ghost">Get early access</a>
+        </div>
+        <p class="si-kicker mt-7">// this page was built this way — receipts in the demo</p>
+      </div>
+      <div class="si-term">
+        <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" style="margin-left:.5rem">issue → skill → PR → deploy</span></div>
+        <div class="si-term-body"><span class="si-tok2">$</span> skill run build-feature <span class="si-tok">--issue</span> 918
+<span class="si-dim">→ reading ticket …</span>
+<span class="si-add">✓ code written</span>
+<span class="si-add">✓ PR #924 opened · 6/6 checks green</span>
+<span class="si-add">✓ deployed · learnings saved</span>
+<span class="si-tok2">done — and the skill got smarter.</span></div>
+      </div>
+    </div>
+  </header>
+
+  <hr class="si-rule si-wrap">
+
+  <section id="flow" class="si-section si-wrap">
+    <div class="si-section-head">
+      <p class="si-kicker mb-3">// the centerpiece</p>
+      <h2 class="si-h2">Watch one change go from idea to deployed</h2>
+      <p class="si-lead mt-4">No slides. This is the actual loop — file an issue, a skill executes it, a reviewed PR appears, it deploys. Click a step.</p>
+    </div>
+    <div class="si-pipe mb-6" id="pipe"></div>
+    <div class="si-term">
+      <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" id="term-tag" style="margin-left:.5rem"></span></div>
+      <div class="si-term-body" id="term-body"></div>
+    </div>
+    <p class="si-kicker mt-5">// the whole product — not a faster autocomplete, a delivery system</p>
+  </section>
+
+  <hr class="si-rule si-wrap">
+
+  <section id="how" class="si-section si-wrap">
+    <div class="si-section-head">
+      <p class="si-kicker mb-3">// how it works</p>
+      <h2 class="si-h2">Two durable artifacts.<br>One compounding loop.</h2>
+      <p class="si-lead mt-4">Most AI coding throws away the most valuable part — <i>how</i> you did it. skill/issue keeps it.</p>
+    </div>
+    <div class="cols-2">
+      <div class="si-card si-card-glow">
+        <div class="si-step-ico">🛠️</div>
+        <h3 style="font-size:1.25rem;font-weight:700;margin:0 0 .5rem">Skills — the reusable how-to</h3>
+        <p class="si-lead" style="font-size:1rem">The repeatable procedure, written once and improved over time. Versioned, reviewable, shareable. The skill that built today's feature builds tomorrow's the same way — and gets better each run.</p>
+      </div>
+      <div class="si-card si-card-glow">
+        <div class="si-step-ico">📋</div>
+        <h3 style="font-size:1.25rem;font-weight:700;margin:0 0 .5rem">Issues — the tracked what &amp; why</h3>
+        <p class="si-lead" style="font-size:1rem">Every change starts as a ticket: scope, reasoning, acceptance check, audit trail. Six months later you can answer “why did this change?” — because the answer is written down, not lost in a chat log.</p>
+      </div>
+    </div>
+    <div class="si-card mt-5" style="border-style:dashed">
+      <p class="si-kicker mb-3">// the loop</p>
+      <p style="font-family:var(--si-mono);font-size:1rem;color:var(--si-ink)"><span class="si-tok">Issue</span> → <span class="si-tok2">Skill</span> → Code → <span class="si-add">Reviewed&nbsp;PR</span> → Deploy → <span class="si-dim">(learnings sharpen the skill)</span> → ↻</p>
+      <p class="si-lead mt-3" style="font-size:1rem">Knowledge <b style="color:var(--si-ink)">compounds</b> instead of evaporating. Every loop leaves the system smarter than it found it.</p>
+    </div>
+  </section>
+
+  <hr class="si-rule si-wrap">
+
+  <section id="why" class="si-section si-wrap">
+    <div class="si-section-head">
+      <p class="si-kicker mb-3">// positioning</p>
+      <h2 class="si-h2">Not another autocomplete</h2>
+      <p class="si-lead mt-4">Copilot and Cursor make <i>typing</i> faster. skill/issue makes <i>delivery</i> a system — governed, reviewable, repeatable. It's the layer <b style="color:var(--si-ink)">above</b> the assistant, not a replacement for it.</p>
+    </div>
+    <div class="si-card" style="padding:0;overflow:hidden">
+      <table class="si-vs">
+        <thead><tr><th>Ad-hoc AI coding</th><th class="si-col-new-h">skill/issue</th></tr></thead>
+        <tbody>
+          <tr><td class="si-col-old">Re-explain the context every session</td><td class="si-col-new">Durable how-to — the skill remembers</td></tr>
+          <tr><td class="si-col-old">“Why did this change?” → shrug</td><td class="si-col-new">Traceable what/why — the ticket is the record</td></tr>
+          <tr><td class="si-col-old">Works once, differently next time</td><td class="si-col-new">Repeatable — same skill, same result</td></tr>
+          <tr><td class="si-col-old">No paper trail</td><td class="si-col-new">Auditable — one reviewed PR per issue</td></tr>
+          <tr><td class="si-col-old">Knowledge lives in one person's head</td><td class="si-col-new">Knowledge compounds in skills + issues</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="si-kicker mt-5">// bring your favourite assistant — skill/issue is the system it plugs into</p>
+  </section>
+
+  <hr class="si-rule si-wrap">
+
+  <section id="use-cases" class="si-section si-wrap">
+    <div class="si-section-head"><p class="si-kicker mb-3">// who it's for</p><h2 class="si-h2">Built for people who ship</h2></div>
+    <div class="cols-3">
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> solo builders</span><p class="si-lead" style="font-size:1rem">You move fast but lose the thread — last month's clever prompt is gone. Here your <i>how-to</i> becomes an asset you keep, not a one-off you retype. Leverage without the amnesia.</p></div>
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> small dev teams</span><p class="si-lead" style="font-size:1rem">Onboarding, traceability, and “who changed this and why” — solved by construction. The ticket is the audit trail; the skill is the shared playbook. New teammates inherit how you build.</p></div>
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink" style="background:var(--si-violet);box-shadow:0 0 10px var(--si-violet)"></span> agencies</span><p class="si-lead" style="font-size:1rem">Repeatable, auditable delivery across clients. Productize your process: the same skills run every engagement, and every change is traceable for the client.</p></div>
+    </div>
+  </section>
+
+  <hr class="si-rule si-wrap">
+
+  <section id="cta" class="si-section si-wrap">
+    <div class="si-card si-card-glow" style="padding:clamp(2rem,6vw,4rem);text-align:center">
+      <p class="si-kicker mb-4">// make your AI coding repeatable</p>
+      <h2 class="si-h2" style="max-width:16ch;margin:0 auto">Skills + tickets + a reviewed flow.</h2>
+      <p class="si-lead mt-4" style="max-width:46ch;margin:1rem auto 0">The way we build — packaged for the way you build.</p>
+      <form class="flex wrap center gap-3 mt-8" onsubmit="return false">
+        <input type="email" placeholder="you@studio.dev" class="si-btn si-btn-ghost" style="min-width:260px;font-family:var(--si-mono);color:var(--si-ink)">
+        <button type="submit" class="si-btn si-btn-primary">Get early access →</button>
+      </form>
+      <p class="si-dim mt-3" style="font-family:var(--si-mono);font-size:.85rem">No spam. Just a note when it's ready.</p>
+    </div>
+    <p class="si-kicker mt-8 tcenter">// this page was built with skill/issue · so was the demo · so is everything next</p>
+  </section>
+
+  <footer class="si-wrap" style="padding:3rem 24px;border-top:1px solid var(--si-line)">
+    <div class="flex wrap" style="align-items:center;justify-content:space-between;gap:1rem">
+      <a href="#top" class="si-logo">skill<b>/</b>issue</a>
+      <p class="si-dim" style="font-family:var(--si-mono);font-size:.85rem">A ticket says what. A skill knows how. Out comes a reviewed PR.</p>
+    </div>
+  </footer>
+
+</div></div>
+
+<script>
+const STEPS=[
+  {key:'issue',n:'01',ico:'📋',title:'Issue',tag:'the what & why',blurb:'A ticket: scope, the reason, and what “done” looks like.'},
+  {key:'skill',n:'02',ico:'🛠️',title:'Skill',tag:'the repeatable how-to',blurb:'A reusable procedure picks up the ticket and runs it.'},
+  {key:'pr',n:'03',ico:'✅',title:'Reviewed PR',tag:'the proof',blurb:'A real diff, reviewed against the ticket’s acceptance criteria.'},
+  {key:'deploy',n:'04',ico:'🚀',title:'Deploy',tag:'it ships',blurb:'And the learnings feed back into the skill — next time is sharper.'}
+];
+const TERM={
+  issue:{cmd:'gh issue view 918',lines:[['#918  Add dark-mode toggle to the settings page','tok'],['labels: type:feat · app:web    status: open','dim'],['',''],['## Why','tok2'],['Users on the night shift asked for it twice this week.',''],['## Done when','tok2'],['- toggle persists across reloads',''],['- respects prefers-color-scheme on first visit','']]},
+  skill:{cmd:'skill run build-feature --issue 918',lines:[['→ reading ticket #918 …','dim'],['→ applying skill: build-feature@2.3','tok'],['✓ added useColorMode() composable','add'],['✓ wired toggle in SettingsPanel.vue','add'],['✓ persisted choice to localStorage','add'],['→ running typecheck … pass','dim'],['→ opening pull request …','dim']]},
+  pr:{cmd:'gh pr view 924 --diff',lines:[['PR #924  feat: dark-mode toggle (Closes #918)','tok'],['reviewers: 1 approved · checks: 6/6 green','add'],['',''],['+ const mode = useColorMode()','add'],['+ <USwitch v-model="isDark" />','add'],['- // TODO: dark mode someday','del']]},
+  deploy:{cmd:'skill run deploy --env staging',lines:[['→ building … done in 7.4s','dim'],['✓ deployed to https://web.pmcp.dev','add'],['✓ learnings appended to build-feature skill','tok'],['',''],['one change · idea → live · fully traceable','tok2']]}
+};
+let active='issue';
+const pipe=document.getElementById('pipe');
+STEPS.forEach(s=>{
+  const b=document.createElement('button');
+  b.className='si-step';b.setAttribute('aria-selected',s.key===active);b.dataset.key=s.key;
+  b.innerHTML=`<div class="si-step-n">STEP ${s.n}</div><div class="si-step-ico">${s.ico}</div><h4>${s.title}</h4><p>${s.blurb}</p>`;
+  b.onclick=()=>{active=s.key;render();};
+  pipe.appendChild(b);
+});
+function render(){
+  document.querySelectorAll('.si-step').forEach(el=>el.setAttribute('aria-selected',el.dataset.key===active));
+  const t=TERM[active];const s=STEPS.find(x=>x.key===active);
+  document.getElementById('term-tag').textContent=s.tag;
+  const body=document.getElementById('term-body');
+  body.innerHTML=`<div style="margin-bottom:.5rem"><span class="si-tok2">$</span> ${t.cmd}</div>`+
+    t.lines.map(([txt,c])=>`<div class="${c?'si-'+c:''}">${(txt||' ').replace(/</g,'&lt;')}</div>`).join('');
+}
+render();
+</script>
+</body>
+</html>
