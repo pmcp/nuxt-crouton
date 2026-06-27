@@ -27,12 +27,12 @@ import { createReusableTemplate } from '@vueuse/core'
 import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
-import { detachNode, applySizes } from '@fyit/crouton-layout/app/utils/layout-edit'
+import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
 import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCroutonComposeGestures'
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-p · #907 · back out solo (regressed framing); focus-view redesign pending'
+const BUILD = 'focus-view-1 · #907 · unified edit view (no camera) — framing fixed'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -82,31 +82,12 @@ let seq = 0
 const snapPreview = shallowRef<SpikeSnapPreview | null>(null)
 provide(SPIKE_SNAP_KEY, snapPreview)
 
-// Pull-apart-to-detach (#907) — the inverse of snap-merge. A SpikeBlockNode pops a pane out of
-// a merged group and reports it here (via SPIKE_DETACH_KEY — it can't emit up through CroutonFlow).
-// We split the group's `data.node`, shrink it to the remainder, and place the freed pane as its
-// own flow node on the side the user dragged toward.
+// Detach (#907 focus-view redesign) — folded INTO the edit view as a clean affordance (a pane
+// menu), no longer pull-apart grips on the canvas. From inside the view you pop a top-level pane
+// of the focused group back onto the board: split the group's `data.node`, shrink the host to the
+// remainder (authored breakpoints reset — the structure they targeted changed), place the freed
+// pane beside it, and return to the board so you can see it. See `detachPaneInView` below.
 const DETACH_GAP = 40
-function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
-  const idx = nodes.value.findIndex(n => n.data.node === group)
-  if (idx === -1) return
-  const host = nodes.value[idx]!
-  const { root, detached } = detachNode(group, [payload.index])
-  if (!detached || !root) return
-
-  const gSize = sizeOf(group) // group's extent BEFORE it shrinks
-  const dSize = sizeOf(detached)
-  const horizontal = Math.abs(payload.dir.x) >= Math.abs(payload.dir.y)
-  const pos = horizontal
-    ? { x: payload.dir.x >= 0 ? host.position.x + gSize.width + DETACH_GAP : host.position.x - dSize.width - DETACH_GAP, y: host.position.y }
-    : { x: host.position.x, y: payload.dir.y >= 0 ? host.position.y + gSize.height + DETACH_GAP : host.position.y - dSize.height - DETACH_GAP }
-
-  const label = flattenLeaves(detached)[0]?.label
-  const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }
-  // Shrink the host to the remainder (keeps its position) and add the freed pane beside it.
-  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: root } } : n).concat(freed)
-}
-provide(SPIKE_DETACH_KEY, onDetach)
 
 // Global viewport survey (#907 layer 3) — flip the whole board to a device width to see what every
 // page looks like at that viewport. Read-only: snapping/detach off, nodes tiled & non-draggable.
@@ -116,94 +97,39 @@ provide(SPIKE_VIEWPORT_KEY, viewport)
 // While surveying, tile the nodes in a row at device size — non-destructive (the real topology
 // positions in `nodes` are untouched, so flipping back to Fit restores your arrangement).
 const flowRows = computed<FlowNode[]>(() => {
-  // NOTE: soloing the focused node (returning [n] here) makes Vue Flow re-process the node set and
-  // fire its OWN viewport fit, which races/overrides our focusBounds camera op (off-screen framing).
-  // Left out pending the focus-view redesign (#907) — which moves editing into a dedicated view
-  // rather than a Vue Flow camera zoom, sidestepping this fight entirely.
   if (!viewport.value) return nodes.value
   const vw = viewport.value
   const GAP = 80
   return nodes.value.map((n, i) => ({ ...n, position: { x: i * (vw.width + GAP), y: 0 } }))
 })
 
-// Layer 2 (#907) — double-click a node to ZOOM into its layout's breakpoint slider and author
-// responsiveness (collapse/variants/sizes per width). Edits persist back onto that node (root +
-// breakpoints), so the survey (layer 3) then reflects them. Size on the flow is unchanged — the
-// slider is a simulation, exactly the "drag bigger/smaller while staying the same size" model.
-const PHONE_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Phone')!
-const DESKTOP_VP = SPIKE_VIEWPORTS.find(v => v.label === 'Desktop')!
-// Default the focus device to the screen we're on: Phone width on a narrow screen (so the zoomed
-// layout renders ~1:1 and stays editable), Desktop on a wide one. You can still flip in the bar.
-function defaultFocusVp(): SpikeViewport {
-  return (import.meta.client && window.innerWidth < 700) ? PHONE_VP : DESKTOP_VP
-}
-
-// In-flow zoom edit: double-click a node → camera zooms in (zoomNodeId drives CroutonFlow's
-// focus-node-id) AND that node becomes the live edit surface (focus). A slim bar picks the device
-// (= which keypoint you author); dragging a pane on the node saves sizes to that keypoint.
+// Focus EDIT VIEW (#907 redesign) — double-click a node to open a DEDICATED full-screen edit view
+// (not a Vue Flow camera zoom). Because it's a plain overlay, the layout renders at a constant,
+// cleanly-framed on-screen size for EVERY node — no fight with Vue Flow's own viewport fit (the old
+// camera approach raced its re-measure and cut off some nodes, esp. the 2nd at mobile width). The
+// view hosts CroutonLayoutBreakpointAuthor, which already unifies everything in one screen: the
+// breakpoint ruler/key-points, the device buttons, the width slider, the per-checkpoint collapse
+// motion, and per-block widget variants — with splitter drags → keypoint sizes. `zoomNodeId` ≠ null
+// means the view is open.
 const zoomNodeId = ref<string | null>(null)
-const focus = shallowRef<SpikeFocus | null>(null)
-provide(SPIKE_FOCUS_KEY, focus)
-
-// The exact rect (flow coords) the focused node occupies — its board position + the device size we
-// render it at. CroutonFlow frames this deterministically (fitBounds), so switching device just
-// recomputes the rect and the camera re-frames; no re-measure/timing hack needed.
-const focusBounds = computed(() => {
-  if (!focus.value || !zoomNodeId.value) return null
-  const n = nodes.value.find(nd => nd.id === zoomNodeId.value)
-  return n ? { x: n.position.x, y: n.position.y, width: focus.value.vp.width, height: focus.value.vp.height } : null
-})
+const zoomNode = computed(() => zoomNodeId.value ? nodes.value.find(n => n.id === zoomNodeId.value) ?? null : null)
+const zoomLabel = computed(() => zoomNode.value?.data.label ?? 'Layout')
+const editing = computed(() => zoomNode.value !== null)
 
 function onNodeDblClick(id: string) {
   if (mode.value !== 'free') return
-  const n = nodes.value.find(nd => nd.id === id)
-  if (!n) return
-  viewport.value = null // focus is a single-node view; leave the board-wide survey
+  if (!nodes.value.some(nd => nd.id === id)) return
+  viewport.value = null // editing one node; leave the board-wide survey
   zoomNodeId.value = id
-  focus.value = { node: n.data.node, vp: defaultFocusVp() }
 }
-function setFocusVp(vp: SpikeViewport) {
-  if (!focus.value) return
-  focus.value = { ...focus.value, vp } // resize the focused node → focusBounds recomputes → camera re-frames
-}
-// The width slider: scrub the previewed width freely (keeps the last preset's height). The camera
-// keeps it ~the same on-screen size (CroutonFlow), so the layout reflows in place as you drag.
-const focusWidth = computed({
-  get: () => focus.value?.vp.width ?? 0,
-  set: (w: number) => {
-    if (focus.value) focus.value = { ...focus.value, vp: { ...focus.value.vp, width: w, label: `${w}px`, icon: 'i-lucide-ruler' } }
-  },
-})
-function closeFocus() {
-  focus.value = null
-  zoomNodeId.value = null // CroutonFlow fits back out (capped, won't over-zoom)
-  authorOpen.value = false
+function closeEdit() {
+  zoomNodeId.value = null
 }
 
-// A splitter drag on the focused node → save the new sizes to that device's keypoint. Applies onto
-// the base root and stores it as a per-width breakpoint override (data.node itself is untouched, so
-// the node keeps its identity and stays focused).
-function upsertBp(bp: LayoutBreakpoint[] | undefined, width: number, root: LayoutNode): LayoutBreakpoint[] {
-  const arr = [...(bp ?? [])]
-  const i = arr.findIndex(b => b.minWidth === width)
-  if (i >= 0) arr[i] = { ...arr[i]!, root }
-  else arr.push({ minWidth: width, root })
-  return arr.sort((a, b) => a.minWidth - b.minWidth)
-}
-function onFocusResize(group: LayoutNode, path: number[], sizes: number[], width: number) {
-  const idx = nodes.value.findIndex(n => n.data.node === group)
-  if (idx === -1) return
-  const newRoot = applySizes(group, path, sizes)
-  const bp = upsertBp(nodes.value[idx]!.data.bp, width, newRoot)
-  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, bp } } : n)
-}
-provide(SPIKE_RESIZE_KEY, onFocusResize)
-
-// Advanced author (collapse motion / widget variants / per-breakpoint structure) — opt-in via the
-// focus bar's "More", not auto-opened. Edits the focused node's full tree (root + breakpoints).
-const authorOpen = ref(false)
-const zoomNode = computed(() => zoomNodeId.value ? nodes.value.find(n => n.id === zoomNodeId.value) ?? null : null)
-const zoomLabel = computed(() => zoomNode.value?.data.label ?? 'Layout')
+// The focused node's layout as a v-model'd LayoutTree (root + authored breakpoints). The author
+// edits this directly — collapse/variant/sizes-per-keypoint all flow through `update:modelValue`,
+// so resize→keypoint is the author's own job (no separate SPIKE_RESIZE wiring). Persists back onto
+// the node by id, so the survey then reflects the authored responsiveness.
 const EMPTY_TREE: LayoutTree = { renderer: 'panes', root: { type: 'leaf', blockId: '', config: {} } }
 const zoomTree = computed<LayoutTree>({
   get: () => {
@@ -214,9 +140,37 @@ const zoomTree = computed<LayoutTree>({
     const id = zoomNodeId.value
     if (!id) return
     nodes.value = nodes.value.map(n => n.id === id ? { ...n, data: { ...n.data, node: t.root, bp: t.breakpoints } } : n)
-    if (focus.value) focus.value = { ...focus.value, node: t.root } // keep focus identity after a base edit
   },
 })
+
+// Detach FROM the edit view — the top-level panes of the focused group, each detachable to its own
+// board node. `detachItems` feeds the view's "Detach" menu (only shown for a split/group node).
+const editPanes = computed(() => {
+  const n = zoomNode.value?.data.node
+  if (!n || n.type !== 'split') return []
+  return n.children.map((c, i) => ({ index: i, label: flattenLeaves(c)[0]?.label ?? `Pane ${i + 1}` }))
+})
+const detachItems = computed(() => [
+  editPanes.value.map(p => ({ label: `Detach ${p.label}`, icon: 'i-lucide-grip', onSelect: () => detachPaneInView(p.index) })),
+])
+function detachPaneInView(paneIndex: number) {
+  const id = zoomNodeId.value
+  if (!id) return
+  const idx = nodes.value.findIndex(n => n.id === id)
+  if (idx === -1) return
+  const host = nodes.value[idx]!
+  const group = host.data.node
+  const { root, detached } = detachNode(group, [paneIndex])
+  if (!detached || !root) return
+  const gSize = sizeOf(group) // group's extent BEFORE it shrinks
+  const pos = { x: host.position.x + gSize.width + DETACH_GAP, y: host.position.y }
+  const label = flattenLeaves(detached)[0]?.label
+  const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }
+  // Shrink the host to the remainder (authored bp reset — its structure changed) + add the freed pane beside it.
+  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: root, bp: undefined } } : n).concat(freed)
+  toast.add({ title: `Detached ${label ?? 'pane'}`, icon: 'i-lucide-grip', duration: 1400 })
+  closeEdit() // back to the board so the freed pane is visible
+}
 
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
@@ -580,8 +534,7 @@ function reset() {
             collection="artists"
             data-mode="ephemeral"
             :default-node-component="blockNode"
-            :draggable="viewport === null && !focus"
-            :focus-bounds="focusBounds"
+            :draggable="viewport === null && !editing"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
@@ -595,46 +548,18 @@ function reset() {
           </div>
         </ClientOnly>
 
-        <!-- In-flow zoom edit bar (#907): pick the device (= which keypoint you're authoring); drag a
-             pane on the zoomed node to lock its size at that keypoint. "More" opens the full author. -->
-        <div
-          v-if="focus"
-          class="pointer-events-auto absolute inset-x-0 top-2 z-20 mx-auto flex w-fit items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 px-2 py-1 shadow-lg backdrop-blur"
-        >
-          <UIcon name="i-lucide-ruler" class="ml-1 size-3.5 text-primary" />
-          <span class="w-12 text-[11px] font-medium tabular-nums text-primary">{{ focus.vp.width }}px</span>
-          <!-- Continuous width slider — scrub the previewed screen width; the camera zooms to keep
-               the layout ~the same on-screen size, so you watch it reflow (#907). -->
-          <USlider v-model="focusWidth" :min="320" :max="1600" :step="10" size="xs" class="w-28" />
-          <div class="mx-1 flex items-center gap-0.5">
-            <UButton
-              v-for="v in SPIKE_VIEWPORTS"
-              :key="v.label"
-              size="xs"
-              :icon="v.icon"
-              :aria-label="v.label"
-              :title="`${v.label} · ${v.width}px`"
-              :color="focus.vp.label === v.label ? 'primary' : 'neutral'"
-              :variant="focus.vp.label === v.label ? 'soft' : 'ghost'"
-              @click="setFocusVp(v)"
-            />
-          </div>
-          <UButton size="xs" icon="i-lucide-sliders-horizontal" color="neutral" variant="ghost" label="More" @click="authorOpen = true" />
-          <UButton size="xs" icon="i-lucide-check" color="primary" variant="soft" label="Done" @click="closeFocus" />
-        </div>
-
         <!-- Snap hints (when there's something to arrange) -->
         <p
-          v-if="mode === 'free' && !focus && viewport && nodes.length"
+          v-if="mode === 'free' && viewport && nodes.length"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
         >
           Surveying at {{ viewport.label }} · {{ viewport.width }}px — read-only · hit ⛶ to fit · pick <strong>Fit</strong> to edit
         </p>
         <p
-          v-else-if="mode === 'free' && !focus && nodes.length >= 2"
+          v-else-if="mode === 'free' && nodes.length >= 2"
           class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
-          Drag a block next to another → they snap together · then ✨ Magic or compile · double-click to zoom in
+          Drag a block next to another → they snap together · then ✨ Magic or compile · double-click to edit
         </p>
         <p
           v-else-if="mode === 'snap' && pieces.length"
@@ -733,24 +658,52 @@ function reset() {
       </template>
     </USlideover>
 
-    <!-- Layer 2 + in-flow zoom (#907): double-click zooms the CANVAS into the node (focus-node-id),
-         and the responsiveness author docks on the right WITHOUT a backdrop — so the zoomed layout
-         stays visible on the flow beside it (not a fullscreen takeover). Edits persist via zoomTree. -->
-    <USlideover
-      v-model:open="authorOpen"
-      :title="`Responsiveness · ${zoomLabel}`"
-      :overlay="false"
-      :dismissible="false"
-      :ui="{ content: 'sm:max-w-xl' }"
-    >
-      <template #body>
-        <div class="flex h-full flex-col">
-          <p class="mb-3 text-xs text-muted">Advanced: collapse motion, per-block widget variants and per-breakpoint structure. (Sizes are quicker to set by dragging panes right on the zoomed node.)</p>
+    <!-- Focus EDIT VIEW (#907 redesign) — a dedicated full-screen overlay, NOT a Vue Flow camera
+         zoom. The layout renders at a constant, cleanly-framed on-screen size for every node (no
+         viewport-fit race → the old off-screen/cut-off framing is gone). CroutonLayoutBreakpointAuthor
+         IS the unified surface: breakpoint key-points + device buttons + width slider + collapse
+         motion + per-block variants, with splitter drags → keypoint sizes. A subtle CSS zoom-in
+         eases it in. The app-style header floats over the author's reserved top band. -->
+    <Teleport to="body">
+      <Transition name="focus-zoom">
+        <section
+          v-if="editing"
+          class="fixed inset-0 z-50 flex flex-col bg-default text-default"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="`Edit ${zoomLabel}`"
+        >
+          <header class="flex shrink-0 items-center gap-2 border-b border-default bg-elevated/60 px-4 py-2.5 backdrop-blur">
+            <UIcon name="i-lucide-layout-template" class="size-4 text-primary" />
+            <span class="text-sm font-semibold">{{ zoomLabel }}</span>
+            <UBadge color="neutral" variant="subtle" size="sm" class="hidden sm:inline-flex">Edit responsiveness</UBadge>
+            <div class="ml-auto flex items-center gap-2">
+              <UDropdownMenu v-if="editPanes.length" :items="detachItems">
+                <UButton size="xs" icon="i-lucide-grip" color="neutral" variant="ghost" label="Detach pane" trailing-icon="i-lucide-chevron-down" />
+              </UDropdownMenu>
+              <UButton size="xs" icon="i-lucide-check" color="primary" label="Done" @click="closeEdit" />
+            </div>
+          </header>
           <div class="min-h-0 flex-1 overflow-auto">
-            <CroutonLayoutBreakpointAuthor v-model="zoomTree" />
+            <!-- The author renders its own ruler/devices/slider/motion/variants; -mt-12 reclaims its
+                 built-in pt-16 top band since this view supplies the header. -->
+            <CroutonLayoutBreakpointAuthor v-model="zoomTree" class="-mt-12" />
           </div>
-        </div>
-      </template>
-    </USlideover>
+        </section>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* Subtle "zoom into the view" — a CSS scale+fade, NOT a Vue Flow camera fit (#907). */
+.focus-zoom-enter-active,
+.focus-zoom-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.focus-zoom-enter-from,
+.focus-zoom-leave-to {
+  opacity: 0;
+  transform: scale(0.97);
+}
+</style>

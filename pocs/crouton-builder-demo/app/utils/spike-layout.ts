@@ -24,18 +24,6 @@ export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**
- * Pull-apart-to-detach (#907) — the inverse of snap-merge, ON the flow canvas. A merged
- * node renders its panes; arming it (hover/select) shows a grip per top-level pane, and
- * dragging a grip OUT past a threshold pops that pane back into its own flow node. The
- * page owns `nodes`, but a default node component can't emit up through CroutonFlow, so the
- * page PROVIDES this callback and SpikeBlockNode calls it — identifying its group by object
- * identity of `data.node` (Vue Flow doesn't forward the node id). `dir` is the release
- * direction (screen px) so the page places the freed node on that side of the group.
- */
-export interface SpikeDetachPayload { index: number, dir: { x: number, y: number } }
-export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
-
-/**
  * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
  * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
  * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a
@@ -53,16 +41,11 @@ export const SPIKE_VIEWPORTS: SpikeViewport[] = [
   { label: 'Desktop', icon: 'i-lucide-monitor', width: 1280, height: 800 },
 ]
 
-/**
- * In-flow zoom edit (#907) — when you zoom into ONE node, you edit it IN PLACE on the canvas:
- * the focused node renders at the chosen device width with live splitter handles, and dragging a
- * pane saves its sizes to THAT width's keypoint. `focus` names the node (object identity) + the
- * device it's being authored at; `SPIKE_RESIZE_KEY` is the page callback the node calls on a
- * splitter drag (it can't emit up through CroutonFlow). null focus = not zoom-editing.
- */
-export interface SpikeFocus { node: LayoutNode, vp: SpikeViewport }
-export const SPIKE_FOCUS_KEY = Symbol('spike-focus') as InjectionKey<Ref<SpikeFocus | null>>
-export const SPIKE_RESIZE_KEY = Symbol('spike-resize') as InjectionKey<(group: LayoutNode, path: number[], sizes: number[], width: number) => void>
+// Focus editing (#907 redesign) lives in a DEDICATED full-screen edit VIEW, not an in-flow
+// camera zoom — so there's no SPIKE_FOCUS/RESIZE injection here anymore. The overlay renders the
+// node's layout through CroutonLayoutBreakpointAuthor (ruler + devices + width slider + collapse
+// motion + variants, all in one) and persists via the page's `zoomTree` v-model; resize→keypoint
+// is the author's own job. Keeping the camera out of editing is what fixes the framing bug.
 
 /** How many block-cells wide × tall this node spans (1×1 for a leaf). */
 export function footprint(node: LayoutNode): { cols: number, rows: number } {
