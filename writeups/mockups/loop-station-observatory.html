@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loop Station — Harness Observatory</title>
+<style>
+  :root{
+    --bg:#0a0e13; --panel:#10151d; --panel2:#0c1118; --bd:#1c2530; --hair:#161d27;
+    --tx:#ccd6e0; --mut:#6a798b; --faint:#44515f;
+    --teal:#2dd4bf; --cyan:#38bdf8; --grn:#34d399; --amb:#f5a623; --rose:#f4566e; --violet:#a78bfa;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"DejaVu Sans Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(45,212,191,.06), transparent 60%),
+      var(--bg);
+    color:var(--tx);font-family:var(--sans);font-size:13px;line-height:1.4;padding:22px 26px 30px}
+  .wrap{max-width:1320px;margin:0 auto}
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:30px;height:30px;border-radius:8px;background:
+      conic-gradient(from 210deg,var(--teal),var(--cyan),var(--violet),var(--teal));
+    box-shadow:0 0 18px rgba(45,212,191,.4);position:relative}
+  .logo::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--bg);
+    border:2px solid rgba(255,255,255,.15)}
+  .brand h1{font-size:16px;letter-spacing:.14em;margin:0;font-weight:600}
+  .brand .sub{color:var(--mut);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .meta{display:flex;align-items:center;gap:16px;color:var(--mut);font-family:var(--mono);font-size:11px}
+  .live{display:flex;align-items:center;gap:6px;color:var(--grn)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn)}
+  /* grid */
+  .grid{display:grid;gap:14px}
+  .row{display:grid;gap:14px}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--bd);
+    border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+  .panel h2{margin:0 0 12px;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:600}
+  .panel h2 .tag{float:right;color:var(--faint);letter-spacing:.05em;text-transform:none;font-family:var(--mono)}
+  /* kpi */
+  .kpis{grid-template-columns:repeat(4,1fr)}
+  .kpi .lbl{color:var(--mut);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+  .kpi .val{font-family:var(--mono);font-size:30px;font-weight:600;margin-top:8px;letter-spacing:-.01em}
+  .kpi .delta{font-family:var(--mono);font-size:11px;margin-top:6px}
+  .up{color:var(--amb)} .flat{color:var(--mut)} .bad{color:var(--rose)} .good{color:var(--grn)}
+  .accent{color:var(--teal)}
+  /* sparkline */
+  .spark-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+  .big{font-family:var(--mono);font-size:34px;font-weight:600}
+  .legend{color:var(--mut);font-size:11px;margin-top:4px}
+  /* gauges */
+  .gauge{display:grid;grid-template-columns:92px 1fr 34px;align-items:center;gap:10px;margin:9px 0;font-size:12px}
+  .gauge .gl{color:var(--mut)}
+  .track{height:7px;border-radius:5px;background:#0c1219;border:1px solid var(--hair);overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .gv{font-family:var(--mono);text-align:right;color:var(--tx)}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:var(--faint);font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    padding:0 8px 9px;border-bottom:1px solid var(--hair)}
+  td{padding:9px 8px;border-bottom:1px solid var(--hair);font-family:var(--mono)}
+  td.name{font-family:var(--sans)} tr:last-child td{border-bottom:none}
+  .num{text-align:right}
+  .pill{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10px;font-family:var(--mono)}
+  .pill.dead{background:rgba(244,86,110,.13);color:var(--rose);border:1px solid rgba(244,86,110,.3)}
+  .pill.esc{background:rgba(245,166,35,.13);color:var(--amb);border:1px solid rgba(245,166,35,.3)}
+  .pill.on{background:rgba(56,189,248,.12);color:var(--cyan);border:1px solid rgba(56,189,248,.28)}
+  /* bars */
+  .bar{display:grid;grid-template-columns:150px 1fr 56px;align-items:center;gap:10px;margin:8px 0;font-size:12px}
+  .bar .bl{color:var(--mut);font-family:var(--mono);font-size:11px}
+  .bar .bt{height:14px;border-radius:4px;background:linear-gradient(90deg,rgba(56,189,248,.5),rgba(45,212,191,.65));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+  .bar .bv{font-family:var(--mono);text-align:right;color:var(--mut)}
+  /* gantt */
+  .gantt{position:relative}
+  .lane{display:grid;grid-template-columns:118px 1fr;align-items:center;gap:10px;height:24px;margin:3px 0}
+  .lane .ll{color:var(--mut);font-family:var(--mono);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lanebg{position:relative;height:15px;background:repeating-linear-gradient(90deg,transparent,transparent 79px,var(--hair) 79px,var(--hair) 80px);border-radius:3px}
+  .seg{position:absolute;height:15px;border-radius:3px;top:0;font-size:9px;font-family:var(--mono);color:#04121a;
+    display:flex;align-items:center;padding:0 6px;white-space:nowrap;overflow:hidden}
+  .s-orch{background:var(--cyan)} .s-dec{background:var(--teal)} .s-rec{background:var(--amb)} .s-wrk{background:var(--grn)} .s-cmt{background:var(--violet)}
+  .axis{display:grid;grid-template-columns:118px 1fr;gap:10px;color:var(--faint);font-family:var(--mono);font-size:10px;margin-top:4px}
+  .axis .ticks{display:flex;justify-content:space-between}
+  .foot{color:var(--faint);font-size:10.5px;font-family:var(--mono);margin-top:16px;letter-spacing:.04em;display:flex;justify-content:space-between}
+  svg text{font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>LOOP&nbsp;STATION</h1>
+        <div class="sub">Harness Observatory</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span>FriendlyInternet/nuxt-crouton</span>
+      <span>updated 2m ago · merge&nbsp;#892</span>
+      <span class="live"><span class="dot"></span>LIVE</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- KPI ROW -->
+    <div class="row kpis">
+      <div class="panel kpi">
+        <div class="lbl">Always-on budget</div>
+        <div class="val accent">15.3k</div>
+        <div class="delta up">▲ +920 tok · 7d</div>
+      </div>
+      <div class="panel kpi">
+        <div class="lbl">Artifacts tracked</div>
+        <div class="val">39</div>
+        <div class="delta flat">33 skills · 6 agents</div>
+      </div>
+      <div class="panel kpi">
+        <div class="lbl">Invocations · 7d</div>
+        <div class="val">1,284</div>
+        <div class="delta good">▲ 11% vs prior week</div>
+      </div>
+      <div class="panel kpi">
+        <div class="lbl">Dead weight</div>
+        <div class="val bad">4</div>
+        <div class="delta bad">skills · 0 calls / 90d</div>
+      </div>
+    </div>
+
+    <!-- ROW: budget trend + scorecard -->
+    <div class="row" style="grid-template-columns:1.5fr 1fr">
+      <div class="panel">
+        <h2>Context budget · CLAUDE.md <span class="tag">tokens / merge</span></h2>
+        <div class="spark-wrap">
+          <div>
+            <div class="big accent">13,500</div>
+            <div class="legend">11.6k → 13.5k over 9 weeks · <span class="up">escalate tripped</span> (+8% vs 4-wk median)</div>
+          </div>
+          <svg width="640" height="120" viewBox="0 0 640 120">
+            <defs>
+              <linearGradient id="sg" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="rgba(45,212,191,.35)"/>
+                <stop offset="1" stop-color="rgba(45,212,191,0)"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="100" x2="640" y2="100" stroke="#1c2530"/>
+            <line x1="0" y1="60" x2="640" y2="60" stroke="#141b24" stroke-dasharray="3 5"/>
+            <line x1="0" y1="20" x2="640" y2="20" stroke="#141b24" stroke-dasharray="3 5"/>
+            <path d="M0,86 L80,82 L160,74 L240,76 L320,62 L400,58 L480,46 L560,40 L630,24 L630,100 L0,100 Z" fill="url(#sg)"/>
+            <path d="M0,86 L80,82 L160,74 L240,76 L320,62 L400,58 L480,46 L560,40 L630,24" fill="none" stroke="#2dd4bf" stroke-width="2"/>
+            <circle cx="320" cy="62" r="3" fill="#10151d" stroke="#2dd4bf" stroke-width="2"/>
+            <circle cx="480" cy="46" r="3" fill="#10151d" stroke="#2dd4bf" stroke-width="2"/>
+            <circle cx="630" cy="24" r="4.5" fill="#f5a623" stroke="#0a0e13" stroke-width="2"/>
+            <text x="612" y="16" fill="#f5a623" font-size="10" text-anchor="end">#892 +920</text>
+            <text x="6" y="16" fill="#44515f" font-size="9">15k</text>
+            <text x="6" y="56" fill="#44515f" font-size="9">13k</text>
+            <text x="6" y="112" fill="#44515f" font-size="9">11k</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>CLAUDE.md scorecard <span class="tag">deterministic · /10</span></h2>
+        <div class="gauge"><span class="gl">correctness</span><div class="track"><div class="fill" style="width:90%;background:var(--grn)"></div></div><span class="gv">9.0</span></div>
+        <div class="gauge"><span class="gl">structure</span><div class="track"><div class="fill" style="width:90%;background:var(--grn)"></div></div><span class="gv">9.0</span></div>
+        <div class="gauge"><span class="gl">actionability</span><div class="track"><div class="fill" style="width:85%;background:var(--teal)"></div></div><span class="gv">8.5</span></div>
+        <div class="gauge"><span class="gl">redundancy</span><div class="track"><div class="fill" style="width:60%;background:var(--amb)"></div></div><span class="gv">6.0</span></div>
+        <div class="gauge"><span class="gl">drift-risk</span><div class="track"><div class="fill" style="width:50%;background:var(--amb)"></div></div><span class="gv">5.0</span></div>
+        <div class="gauge"><span class="gl">length</span><div class="track"><div class="fill" style="width:40%;background:var(--rose)"></div></div><span class="gv">4.0</span></div>
+        <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--hair);display:flex;justify-content:space-between;align-items:baseline">
+          <span style="color:var(--mut);font-size:11px;letter-spacing:.1em;text-transform:uppercase">overall</span>
+          <span style="font-family:var(--mono);font-size:22px;color:var(--amb)">7.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: the loop graph (hero) -->
+    <div class="panel">
+      <h2>Loop graph · observed call topology <span class="tag">nodes ∝ invocations · edges = parent→child · ⟲ = loop</span></h2>
+      <svg width="100%" viewBox="0 0 1000 420" style="display:block">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#3a4654"/>
+          </marker>
+          <marker id="ahA" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#f5a623"/>
+          </marker>
+        </defs>
+
+        <!-- edges -->
+        <g stroke="#3a4654" stroke-width="1.6" fill="none" marker-end="url(#ah)">
+          <path d="M188,96 L262,96"/>            <!-- decompose -> orchestrator -->
+          <path d="M398,96 L470,96"/>            <!-- orchestrator -> decomposer -->
+          <path d="M520,128 L520,196"/>          <!-- decomposer -> worker -->
+          <path d="M470,228 L360,300"/>          <!-- worker -> commit -->
+          <path d="M250,316 L196,316"/>          <!-- commit -> sync-docs -->
+          <path d="M572,214 L662,168"/>          <!-- worker -> frontend-review -->
+          <path d="M576,228 L740,262"/>          <!-- worker -> a11y -->
+        </g>
+        <!-- LOOP edges (amber) -->
+        <g stroke="#f5a623" stroke-width="1.8" fill="none" marker-end="url(#ahA)" stroke-dasharray="5 4">
+          <path d="M700,182 L686,300"/>          <!-- frontend-review -> fix-ci -->
+          <path d="M636,322 Q545,300 560,236"/>  <!-- fix-ci -> worker (CI fix loop back-edge) -->
+        </g>
+        <!-- self-loop recursion on decomposer -->
+        <path d="M548,72 C600,30 470,22 500,66" stroke="#f5a623" stroke-width="1.8" fill="none" marker-end="url(#ahA)"/>
+        <text x="560" y="30" fill="#f5a623" font-size="10">⟲ recurse ×6</text>
+        <text x="612" y="262" fill="#f5a623" font-size="10">⟲ CI-fix loop</text>
+
+        <!-- edge counts -->
+        <g fill="#5a6a7a" font-size="9">
+          <text x="215" y="90">38</text>
+          <text x="425" y="90">38</text>
+          <text x="528" y="170">112</text>
+          <text x="402" y="262">96</text>
+          <text x="215" y="308">88</text>
+          <text x="612" y="186">41</text>
+        </g>
+
+        <!-- nodes -->
+        <!-- task-decompose -->
+        <g transform="translate(130,78)">
+          <circle r="22" fill="#0e1620" stroke="#2c3a48" stroke-width="1.5"/>
+          <text y="40" text-anchor="middle" fill="#9fb0c0" font-size="10">task-decompose</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">24</text>
+        </g>
+        <!-- orchestrator -->
+        <g transform="translate(330,78)">
+          <circle r="22" fill="#0e1620" stroke="#2c3a48" stroke-width="1.5"/>
+          <text y="40" text-anchor="middle" fill="#9fb0c0" font-size="10">orchestrator</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">24</text>
+        </g>
+        <!-- decomposer (hot) -->
+        <g transform="translate(520,96)">
+          <circle r="30" fill="#0f1d22" stroke="#2dd4bf" stroke-width="2"/>
+          <text y="48" text-anchor="middle" fill="#cdeae6" font-size="10">decomposer</text>
+          <text y="4" text-anchor="middle" fill="#2dd4bf" font-size="12">142</text>
+        </g>
+        <!-- worker (hottest) -->
+        <g transform="translate(520,224)">
+          <circle r="33" fill="#0f1d22" stroke="#34d399" stroke-width="2"/>
+          <text y="51" text-anchor="middle" fill="#cdeae6" font-size="10">task-worker</text>
+          <text y="4" text-anchor="middle" fill="#34d399" font-size="13">196</text>
+        </g>
+        <!-- commit (hub) -->
+        <g transform="translate(320,316)">
+          <circle r="28" fill="#1a1530" stroke="#a78bfa" stroke-width="2"/>
+          <text y="46" text-anchor="middle" fill="#d8cffb" font-size="10">commit</text>
+          <text y="4" text-anchor="middle" fill="#a78bfa" font-size="12">231</text>
+        </g>
+        <!-- sync-docs -->
+        <g transform="translate(150,316)">
+          <circle r="20" fill="#0e1620" stroke="#2c3a48" stroke-width="1.5"/>
+          <text y="38" text-anchor="middle" fill="#9fb0c0" font-size="10">sync-docs</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">88</text>
+        </g>
+        <!-- frontend-review -->
+        <g transform="translate(690,150)">
+          <circle r="22" fill="#0e1620" stroke="#3a4a5a" stroke-width="1.5"/>
+          <text y="40" text-anchor="middle" fill="#9fb0c0" font-size="10">frontend-review</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">41</text>
+        </g>
+        <!-- a11y -->
+        <g transform="translate(790,272)">
+          <circle r="20" fill="#0e1620" stroke="#3a4a5a" stroke-width="1.5"/>
+          <text y="38" text-anchor="middle" fill="#9fb0c0" font-size="10">a11y</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">33</text>
+        </g>
+        <!-- fix-ci -->
+        <g transform="translate(686,322)">
+          <circle r="21" fill="#1f1810" stroke="#f5a623" stroke-width="1.6"/>
+          <text y="39" text-anchor="middle" fill="#f3c98a" font-size="10">fix-ci</text>
+          <text y="4" text-anchor="middle" fill="#f5a623" font-size="9">17</text>
+        </g>
+        <!-- red-team (nightly, detached) -->
+        <g transform="translate(900,96)">
+          <circle r="19" fill="#0e1620" stroke="#3a4a5a" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text y="36" text-anchor="middle" fill="#9fb0c0" font-size="10">red-team</text>
+          <text y="4" text-anchor="middle" fill="#6a798b" font-size="9">7</text>
+        </g>
+        <text x="900" y="148" text-anchor="middle" fill="#44515f" font-size="9">nightly cron</text>
+      </svg>
+    </div>
+
+    <!-- ROW: inventory + cold-write -->
+    <div class="row" style="grid-template-columns:1.45fr 1fr">
+      <div class="panel">
+        <h2>Inventory · size × usage <span class="tag">dead-weight detector</span></h2>
+        <table>
+          <thead><tr><th>Artifact</th><th class="num">Tokens</th><th class="num">Δ 7d</th><th class="num">Calls 90d</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="name">CLAUDE.md</td><td class="num">13,500</td><td class="num up">+920</td><td class="num">—</td><td><span class="pill on">always-on</span></td></tr>
+            <tr><td class="name">agents/task-worker</td><td class="num">6,415</td><td class="num flat">0</td><td class="num">196</td><td></td></tr>
+            <tr><td class="name">skills/github-tasks</td><td class="num">5,030</td><td class="num flat">0</td><td class="num">142</td><td></td></tr>
+            <tr><td class="name">skills/task-decompose</td><td class="num">4,390</td><td class="num up">+180</td><td class="num">24</td><td></td></tr>
+            <tr><td class="name">skills/commit</td><td class="num">2,220</td><td class="num flat">0</td><td class="num">231</td><td></td></tr>
+            <tr><td class="name">skills/provider-swap</td><td class="num">2,090</td><td class="num flat">0</td><td class="num bad">0</td><td><span class="pill dead">dead weight</span></td></tr>
+            <tr><td class="name">skills/db-clone</td><td class="num">1,640</td><td class="num flat">0</td><td class="num bad">0</td><td><span class="pill dead">dead weight</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>CI cold-write · per run <span class="tag">no cross-run cache</span></h2>
+        <div class="bar"><span class="bl">decompose-on-issue</span><div class="bt" style="width:100%"></div><span class="bv">18.0k</span></div>
+        <div class="bar"><span class="bl">fix-ci-on-failure</span><div class="bt" style="width:95%"></div><span class="bv">17.2k</span></div>
+        <div class="bar"><span class="bl">frontend-review</span><div class="bt" style="width:94%"></div><span class="bv">16.9k</span></div>
+        <div class="bar"><span class="bl">a11y</span><div class="bt" style="width:93%"></div><span class="bv">16.7k</span></div>
+        <div class="bar"><span class="bl">red-team</span><div class="bt" style="width:87%"></div><span class="bv">15.7k</span></div>
+        <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--hair);color:var(--mut);font-size:11px">
+          CLAUDE.md is <span class="accent">~80%</span> of every cold write · trimming it is the lever
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: trace timeline -->
+    <div class="panel">
+      <h2>Trace · decompose run #892 <span class="tag">one execution · parallel + recursion</span></h2>
+      <div class="gantt">
+        <div class="lane"><span class="ll s-orch" style="color:var(--cyan)">orchestrator</span><div class="lanebg"><div class="seg s-orch" style="left:0;width:11%">8s</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--teal)">decomposer.1</span><div class="lanebg"><div class="seg s-dec" style="left:11%;width:17%">decompose</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--teal)">decomposer.2</span><div class="lanebg"><div class="seg s-dec" style="left:11%;width:14%">decompose</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--amb)">↳ decomposer.2.1</span><div class="lanebg"><div class="seg s-rec" style="left:25%;width:13%">recurse</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--grn)">worker.A</span><div class="lanebg"><div class="seg s-wrk" style="left:28%;width:46%">implement → typecheck → /commit</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--grn)">worker.B</span><div class="lanebg"><div class="seg s-wrk" style="left:38%;width:34%">implement → /commit</div></div></div>
+        <div class="lane"><span class="ll" style="color:var(--violet)">commit / PR</span><div class="lanebg"><div class="seg s-cmt" style="left:74%;width:8%">PR</div></div></div>
+        <div class="axis"><span></span><div class="ticks"><span>0s</span><span>20s</span><span>40s</span><span>60s</span><span>80s</span></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <span>sample data · deterministic gather.mjs + PostToolUse invocation hook</span>
+    <span>history.jsonl · trace.jsonl · render.mjs → static page</span>
+  </div>
+</div>
+</body>
+</html>
