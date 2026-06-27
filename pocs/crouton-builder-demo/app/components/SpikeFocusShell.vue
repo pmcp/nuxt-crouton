@@ -54,11 +54,12 @@ const blocks = computed(() => listBlocks(resolved.value.root))
 // --- hide-recipes: per-pane collapse recipe (edge + affordance) — a PERSISTED leaf field -------
 interface RecipePreset { id: string, label: string, icon: string, edge: LayoutCollapseEdge, affordance: LayoutCollapseAffordance }
 const RECIPES: RecipePreset[] = [
+  { id: 'tab-right', label: 'Tab · right', icon: 'i-lucide-panel-right', edge: 'right', affordance: 'tab' },
   { id: 'tab-left', label: 'Tab · left', icon: 'i-lucide-panel-left', edge: 'left', affordance: 'tab' },
   { id: 'tab-top', label: 'Tab · top', icon: 'i-lucide-panel-top', edge: 'top', affordance: 'tab' },
+  { id: 'tab-bottom', label: 'Tab · bottom', icon: 'i-lucide-panel-bottom', edge: 'bottom', affordance: 'tab' },
   { id: 'button-top', label: 'Button · top', icon: 'i-lucide-rectangle-horizontal', edge: 'top', affordance: 'button' },
   { id: 'dot-right', label: 'Dot · right', icon: 'i-lucide-circle-dot', edge: 'right', affordance: 'dot' },
-  { id: 'tab-bottom', label: 'Tab · bottom', icon: 'i-lucide-panel-bottom', edge: 'bottom', affordance: 'tab' },
 ]
 // The current recipe of a block (read from listBlocks, which normalizes the leaf's `collapse`).
 function recipeOf(blockId: string) { return blocks.value.find(b => b.blockId === blockId)?.recipe ?? { edge: 'right', affordance: 'tab' } }
@@ -68,7 +69,18 @@ function presetOf(blockId: string): RecipePreset {
     ?? { id: 'custom', label: `${r.affordance} · ${r.edge}`, icon: 'i-lucide-layout-panel-left', edge: r.edge, affordance: r.affordance }
 }
 function setRecipe(blockId: string, p: RecipePreset) {
-  update({ ...tree.value, root: setCollapseRecipe(tree.value.root, blockId, { edge: p.edge, affordance: p.affordance }) })
+  // The recipe is a stable per-pane property, but a breakpoint can carry a full `root` override
+  // (authored by dragging a splitter), so the leaf you SEE at the current width may live in a
+  // breakpoint root, not the base. Write the recipe to the base root AND every breakpoint root
+  // override, so whichever one resolves at the current width carries it. (Without this, picking a
+  // recipe "does nothing" the moment any breakpoint has authored an arrangement.)
+  const recipe = { edge: p.edge, affordance: p.affordance }
+  const bps = tree.value.breakpoints
+  update({
+    ...tree.value,
+    root: setCollapseRecipe(tree.value.root, blockId, recipe),
+    ...(bps ? { breakpoints: bps.map(bp => (bp.root ? { ...bp, root: setCollapseRecipe(bp.root, blockId, recipe) } : bp)) } : {}),
+  })
 }
 
 function isCollapsed(blockId: string) { return resolved.value.collapsed.includes(blockId) }
