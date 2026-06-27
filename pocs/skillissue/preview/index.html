@@ -105,6 +105,22 @@ i{font-style:italic;} b{font-weight:700;}
 .cols-3{display:grid;gap:1.25rem;} @media(min-width:760px){.cols-3{grid-template-columns:repeat(3,1fr);}}
 @media(prefers-reduced-motion:reduce){.si-step::after,.si-blink{animation:none;transform:scaleX(1);}html.si{scroll-behavior:auto;}}
 
+/* depth: stats + skills-by-phase */
+.si-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--si-line);border:1px solid var(--si-line);border-radius:14px;overflow:hidden;}
+@media(min-width:760px){.si-stats{grid-template-columns:repeat(4,1fr);}}
+.si-stat{background:#0a0a12;padding:1.6rem 1.4rem;display:flex;flex-direction:column;gap:.4rem;}
+.si-stat-n{font-family:var(--si-mono);font-weight:800;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;background:var(--si-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.si-stat-l{font-size:.84rem;color:var(--si-ink-dim);line-height:1.35;}
+.si-phases{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+@media(min-width:680px){.si-phases{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:1040px){.si-phases{grid-template-columns:repeat(6,1fr);}}
+.si-phase{border:1px solid var(--si-line);border-radius:12px;padding:1.1rem;background:#ffffff03;transition:border-color .2s,transform .2s;}
+.si-phase:hover{border-color:var(--si-line-2);transform:translateY(-3px);}
+.si-phase h5{font-family:var(--si-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--si-cyan);margin:0 0 .7rem;}
+.si-chip{display:block;font-family:var(--si-mono);font-size:.78rem;color:var(--si-ink-dim);padding:.32rem 0;border-top:1px solid var(--si-line);}
+.si-phase .si-chip:first-of-type{border-top:0;}
+.si-phase:hover .si-chip{color:var(--si-ink);}
+
 /* logo / brand mark */
 .si-mark{display:block;}
 .si-logo{display:inline-flex;align-items:center;gap:.55rem;}
@@ -134,27 +150,27 @@ i{font-style:italic;} b{font-weight:700;}
       <span>skill<b>/</b>issue</span>
     </a>
     <div class="si-navlinks">
-      <a href="#flow">The flow</a><a href="#how">How it works</a><a href="#why">Why different</a><a href="#use-cases">Use cases</a>
+      <a href="#flow">The flow</a><a href="#depth">The depth</a><a href="#how">How it works</a><a href="#why">Why</a><a href="#use-cases">For you</a>
     </div>
-    <a href="#cta" class="si-btn si-btn-primary" style="padding:.55rem 1rem">Get early access</a>
+    <a href="#cta" class="si-btn si-btn-primary" style="padding:.55rem 1rem">Read the playbook</a>
   </div></nav>
 
   <header id="top" class="si-section si-wrap" style="padding-top:4rem">
     <div class="si-brand">
       <svg class="si-mark" viewBox="0 0 64 64" fill="none" aria-label="skill/issue logo"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#siGrad)" stroke-width="2.5"/><path d="M41 17 L23 47" stroke="url(#siGrad)" stroke-width="7" stroke-linecap="round"/><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee"/><circle cx="43.5" cy="43" r="3.6" fill="#a3e635"/></svg>
       <div class="si-brand-word">skill<span class="slash">/</span>issue</div>
-      <div class="si-brand-sub">the way we build software — packaged</div>
+      <div class="si-brand-sub">how we build at Friendly Internet</div>
     </div>
     <div class="hero-grid">
       <div>
-        <p class="si-eyebrow mb-5">Skills + tickets = software that ships itself</p>
+        <p class="si-eyebrow mb-5">The way we ship at Friendly Internet</p>
         <h1 class="si-display">Stop prompting.<br>Start shipping —<br><span class="si-grad-text">repeatably.</span></h1>
-        <p class="si-lead mt-7 maxw-xl">skill/issue turns AI coding into a system you can trust. A <b style="color:var(--si-ink)">ticket</b> captures <i>what</i> to build and <i>why</i>. A reusable <b style="color:var(--si-ink)">skill</b> knows <i>how</i>. Out comes a <b style="color:var(--si-ink)">reviewed PR</b> — every time, traceable, auditable.</p>
+        <p class="si-lead mt-7 maxw-xl">skill/issue is how we build here. Every change starts as a <b style="color:var(--si-ink)">ticket</b> — the <i>what</i> &amp; <i>why</i>. A reusable <b style="color:var(--si-ink)">skill</b> knows the <i>how</i>. Out comes a <b style="color:var(--si-ink)">reviewed PR</b> — same playbook, every repo, every time.</p>
         <div class="flex wrap gap-3 mt-9">
           <a href="#flow" class="si-btn si-btn-primary">Watch the flow ↓</a>
-          <a href="#cta" class="si-btn si-btn-ghost">Get early access</a>
+          <a href="#how" class="si-btn si-btn-ghost">Read the playbook</a>
         </div>
-        <p class="si-kicker mt-7">// this page was built this way — receipts in the demo</p>
+        <p class="si-kicker mt-7">// this page runs the playbook too — receipts in the demo</p>
       </div>
       <div class="si-term">
         <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" style="margin-left:.5rem">issue → skill → PR → deploy</span></div>
@@ -174,14 +190,43 @@ i{font-style:italic;} b{font-weight:700;}
     <div class="si-section-head">
       <p class="si-kicker mb-3">// the centerpiece</p>
       <h2 class="si-h2">Watch one change go from idea to deployed</h2>
-      <p class="si-lead mt-4">No slides. This is the actual loop — file an issue, a skill executes it, a reviewed PR appears, it deploys. Click a step.</p>
+      <p class="si-lead mt-4">This is the loop every change goes through here — file an issue, a skill executes it, a reviewed PR appears, it deploys. Click a step.</p>
     </div>
     <div class="si-pipe mb-6" id="pipe"></div>
     <div class="si-term">
       <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" id="term-tag" style="margin-left:.5rem"></span></div>
       <div class="si-term-body" id="term-body"></div>
     </div>
-    <p class="si-kicker mt-5">// the whole product — not a faster autocomplete, a delivery system</p>
+    <p class="si-kicker mt-5">// four steps to watch — but “a skill runs it” hides a whole system ↓</p>
+  </section>
+
+  <hr class="si-rule si-wrap">
+
+  <!-- DEPTH / BREADTH -->
+  <section id="depth" class="si-section si-wrap">
+    <div class="si-section-head">
+      <p class="si-kicker mb-3">// don't let the four steps fool you</p>
+      <h2 class="si-h2">The loop is simple.<br>The system isn't.</h2>
+      <p class="si-lead mt-4">“A skill runs it” really means: <b style="color:var(--si-ink)">the right one of dozens</b> — each a versioned playbook for a different part of how we build. One ticket can fan into an epic and a <b style="color:var(--si-ink)">tree of sub-issues</b>, worked in parallel, each gated by a human sign-off. And the system improves itself — every retro can mint a new skill.</p>
+    </div>
+
+    <div class="si-stats">
+      <div class="si-stat"><span class="si-stat-n">25+</span><span class="si-stat-l">skills, and counting</span></div>
+      <div class="si-stat"><span class="si-stat-n">6</span><span class="si-stat-l">phases of the lifecycle</span></div>
+      <div class="si-stat"><span class="si-stat-n">∞</span><span class="si-stat-l">depth — issues decompose into trees</span></div>
+      <div class="si-stat"><span class="si-stat-n">1</span><span class="si-stat-l">playbook the whole team shares</span></div>
+    </div>
+
+    <p class="si-kicker mt-8 mb-4">// one box on the diagram = this much underneath</p>
+    <div class="si-phases">
+      <div class="si-phase"><h5>Plan</h5><span class="si-chip">/task-decompose</span><span class="si-chip">github-tasks</span><span class="si-chip">ticket-diagram</span><span class="si-chip">epic-digest</span></div>
+      <div class="si-phase"><h5>Design</h5><span class="si-chip">/ui-proposal</span><span class="si-chip">/schema-review</span><span class="si-chip">block-authoring</span></div>
+      <div class="si-phase"><h5>Build</h5><span class="si-chip">/commit</span><span class="si-chip">crouton generate</span><span class="si-chip">db-migrations</span><span class="si-chip">i18n-check</span></div>
+      <div class="si-phase"><h5>Review</h5><span class="si-chip">/code-review</span><span class="si-chip">/test-review</span><span class="si-chip">/a11y</span><span class="si-chip">/frontend-review</span><span class="si-chip">/red-team</span></div>
+      <div class="si-phase"><h5>Ship</h5><span class="si-chip">/deploy</span><span class="si-chip">/poc-deploy</span><span class="si-chip">db-clone</span><span class="si-chip">remove-app</span></div>
+      <div class="si-phase"><h5>Learn</h5><span class="si-chip">/postmortem</span><span class="si-chip">bug-archaeology</span><span class="si-chip">dependency-sweep</span><span class="si-chip">ecosystem-check</span></div>
+    </div>
+    <p class="si-kicker mt-6">// the four steps are the spine — these are the muscles</p>
   </section>
 
   <hr class="si-rule si-wrap">
@@ -215,13 +260,13 @@ i{font-style:italic;} b{font-weight:700;}
 
   <section id="why" class="si-section si-wrap">
     <div class="si-section-head">
-      <p class="si-kicker mb-3">// positioning</p>
-      <h2 class="si-h2">Not another autocomplete</h2>
-      <p class="si-lead mt-4">Copilot and Cursor make <i>typing</i> faster. skill/issue makes <i>delivery</i> a system — governed, reviewable, repeatable. It's the layer <b style="color:var(--si-ink)">above</b> the assistant, not a replacement for it.</p>
+      <p class="si-kicker mb-3">// why we work this way</p>
+      <h2 class="si-h2">We don't prompt and pray</h2>
+      <p class="si-lead mt-4">Every change runs the same governed loop, so we move fast without losing the thread. The how-to is written down, the <i>what</i> &amp; <i>why</i> live on the ticket, and the result is a reviewed PR. New people inherit it — nobody re-explains it.</p>
     </div>
     <div class="si-card" style="padding:0;overflow:hidden">
       <table class="si-vs">
-        <thead><tr><th>Ad-hoc AI coding</th><th class="si-col-new-h">skill/issue</th></tr></thead>
+        <thead><tr><th>Winging it</th><th class="si-col-new-h">the skill/issue way</th></tr></thead>
         <tbody>
           <tr><td class="si-col-old">Re-explain the context every session</td><td class="si-col-new">Durable how-to — the skill remembers</td></tr>
           <tr><td class="si-col-old">“Why did this change?” → shrug</td><td class="si-col-new">Traceable what/why — the ticket is the record</td></tr>
@@ -231,17 +276,17 @@ i{font-style:italic;} b{font-weight:700;}
         </tbody>
       </table>
     </div>
-    <p class="si-kicker mt-5">// bring your favourite assistant — skill/issue is the system it plugs into</p>
+    <p class="si-kicker mt-5">// one playbook — so the whole team ships the same way</p>
   </section>
 
   <hr class="si-rule si-wrap">
 
   <section id="use-cases" class="si-section si-wrap">
-    <div class="si-section-head"><p class="si-kicker mb-3">// who it's for</p><h2 class="si-h2">Built for people who ship</h2></div>
+    <div class="si-section-head"><p class="si-kicker mb-3">// what it means for you</p><h2 class="si-h2">For everyone who ships here</h2></div>
     <div class="cols-3">
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> solo builders</span><p class="si-lead" style="font-size:1rem">You move fast but lose the thread — last month's clever prompt is gone. Here your <i>how-to</i> becomes an asset you keep, not a one-off you retype. Leverage without the amnesia.</p></div>
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> small dev teams</span><p class="si-lead" style="font-size:1rem">Onboarding, traceability, and “who changed this and why” — solved by construction. The ticket is the audit trail; the skill is the shared playbook. New teammates inherit how you build.</p></div>
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink" style="background:var(--si-violet);box-shadow:0 0 10px var(--si-violet)"></span> agencies</span><p class="si-lead" style="font-size:1rem">Repeatable, auditable delivery across clients. Productize your process: the same skills run every engagement, and every change is traceable for the client.</p></div>
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> new here</span><p class="si-lead" style="font-size:1rem">Onboarding is reading the playbook, not shadowing for a month. The skills are <i>how</i> we build; the issues are <i>why</i>. You inherit both on day one and ship something real in week one.</p></div>
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> engineers</span><p class="si-lead" style="font-size:1rem">Your daily loop. The skill remembers the <i>how</i>, the ticket holds the <i>why</i> — so you stop re-explaining context and start shipping. Leverage without the amnesia.</p></div>
+      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink" style="background:var(--si-violet);box-shadow:0 0 10px var(--si-violet)"></span> leads &amp; reviewers</span><p class="si-lead" style="font-size:1rem">Traceability and audit by construction. One reviewed PR per issue, every change tied to a reason. “Who changed this and why” answers itself.</p></div>
     </div>
   </section>
 
@@ -249,14 +294,13 @@ i{font-style:italic;} b{font-weight:700;}
 
   <section id="cta" class="si-section si-wrap">
     <div class="si-card si-card-glow" style="padding:clamp(2rem,6vw,4rem);text-align:center">
-      <p class="si-kicker mb-4">// make your AI coding repeatable</p>
+      <p class="si-kicker mb-4">// your turn</p>
       <h2 class="si-h2" style="max-width:16ch;margin:0 auto">Skills + tickets + a reviewed flow.</h2>
-      <p class="si-lead mt-4" style="max-width:46ch;margin:1rem auto 0">The way we build — packaged for the way you build.</p>
-      <form class="flex wrap center gap-3 mt-8" onsubmit="return false">
-        <input type="email" placeholder="you@studio.dev" class="si-btn si-btn-ghost" style="min-width:260px;font-family:var(--si-mono);color:var(--si-ink)">
-        <button type="submit" class="si-btn si-btn-primary">Get early access →</button>
-      </form>
-      <p class="si-dim mt-3" style="font-family:var(--si-mono);font-size:.85rem">No spam. Just a note when it's ready.</p>
+      <p class="si-lead mt-4" style="max-width:48ch;margin:1rem auto 0">How we build at Friendly Internet. Open the playbook, file your first issue, and let a skill take it from there.</p>
+      <div class="flex wrap center gap-3 mt-8">
+        <a href="#how" class="si-btn si-btn-primary">Open the playbook →</a>
+        <a href="#flow" class="si-btn si-btn-ghost">File your first issue</a>
+      </div>
     </div>
     <p class="si-kicker mt-8 tcenter">// this page was built with skill/issue · so was the demo · so is everything next</p>
   </section>
@@ -267,7 +311,7 @@ i{font-style:italic;} b{font-weight:700;}
         <svg class="si-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true" style="width:24px;height:24px"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#siGrad)" stroke-width="2.5"/><path d="M41 17 L23 47" stroke="url(#siGrad)" stroke-width="7" stroke-linecap="round"/><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee"/><circle cx="43.5" cy="43" r="3.6" fill="#a3e635"/></svg>
         <span>skill<b>/</b>issue</span>
       </a>
-      <p class="si-dim" style="font-family:var(--si-mono);font-size:.85rem">A ticket says what. A skill knows how. Out comes a reviewed PR.</p>
+      <p class="si-dim" style="font-family:var(--si-mono);font-size:.85rem">Friendly Internet · a ticket says what, a skill knows how, out comes a reviewed PR.</p>
     </div>
   </footer>
 
