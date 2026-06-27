@@ -62,6 +62,7 @@ const COLLAPSE_LABELS: Record<LayoutCollapseStyle, string> = {
   'crt-power-down': 'CRT power-down',
   'iris-portal': 'Iris portal',
 }
+const MOTION_ITEMS = LAYOUT_COLLAPSE_STYLES.map(s => ({ label: COLLAPSE_LABELS[s], value: s }))
 
 // Author BY DEMONSTRATION — a change at the current width snapshots a checkpoint there.
 function authorHere(patch: { collapsed?: string[], variants?: Record<string, string>, collapseStyle?: LayoutCollapseStyle }) {
@@ -86,7 +87,21 @@ function onSetVariant(blockId: string, variant: string) {
 function variantOf(blockId: string) { return resolved.value.variants[blockId] ?? NO_VARIANT }
 function isCollapsed(blockId: string) { return resolved.value.collapsed.includes(blockId) }
 function onExpand(blockId: string) { onToggleCollapse(blockId) }
+// Scrubbing the width makes the layout reflow (panes hit their min-width as it narrows), and the
+// renderer fires `layoutChange` for that reflow too — which would author a key-point at EVERY width
+// you slide through (the spam bug). So suppress onResize for a beat after any width change: a real
+// splitter DRAG happens with no recent width change, a reflow happens right after one.
+// Start suppressed so the layout's INITIAL settling reflow doesn't author a stray key-point at the
+// opening width; cleared shortly after mount (below). Then re-suppressed on every width change.
+const suppressResize = ref(true)
+let suppressTimer: ReturnType<typeof setTimeout> | null = null
+watch(simWidth, () => {
+  suppressResize.value = true
+  if (suppressTimer) clearTimeout(suppressTimer)
+  suppressTimer = setTimeout(() => { suppressResize.value = false }, 350)
+})
 function onResize(path: NodePath, sizes: number[]) {
+  if (suppressResize.value) return // reflow from a width change, not a user splitter drag
   update(patchBreakpoint(tree.value, simWidth.value, {
     root: applySizes(resolved.value.root, path, sizes),
     collapsed: [...resolved.value.collapsed],
@@ -143,6 +158,8 @@ onMounted(async () => {
   if (props.originRect) flipFrom(props.originRect)
   // let the zoom lead, then pop the shell + key-points in
   window.setTimeout(() => { ready.value = true }, props.originRect ? 240 : 0)
+  // release the resize guard once the initial layout has settled (so future user drags author again)
+  window.setTimeout(() => { suppressResize.value = false }, 600)
 })
 
 const closing = ref(false)
@@ -225,16 +242,12 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
         @click="requestClose"
       />
 
-      <!-- Top hairline: a tiny grabber + Done, kept minimal (Apple-ish) -->
+      <!-- Top hairline: the layout TITLE (label only — not a button) + the single exit, Done. -->
       <div class="relative z-10 flex items-center justify-between px-4 pt-4">
-        <button
-          type="button"
-          class="flex items-center gap-1.5 rounded-full bg-elevated/70 px-3 py-1.5 text-xs font-medium text-muted shadow-sm backdrop-blur transition-colors hover:text-default"
-          @click="requestClose"
-        >
-          <UIcon name="i-lucide-chevron-down" class="size-3.5" />
+        <span class="flex items-center gap-1.5 rounded-full bg-elevated/70 px-3 py-1.5 text-xs font-medium text-muted shadow-sm backdrop-blur">
+          <UIcon name="i-lucide-layout-template" class="size-3.5 text-primary" />
           {{ label || 'Layout' }}
-        </button>
+        </span>
         <button
           type="button"
           class="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-inverted shadow-sm transition-transform active:scale-95"
@@ -319,11 +332,19 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
               <USlider v-model="simWidth" :min="MIN" :max="MAX" :step="1" size="xs" aria-label="Width" />
             </div>
 
-            <!-- "⋯" reveal — collapse motion + per-block variant, tucked away by default -->
+            <!-- "⋯" reveal — compact: collapse motion (a select) + the selected panel, two slim rows -->
             <Transition name="opts">
-              <div v-if="optionsOpen" class="flex flex-col gap-2 border-t border-default/50 pt-2">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-[10px] uppercase tracking-widest text-muted">Collapse motion</span>
+              <div v-if="optionsOpen" class="flex flex-col gap-1.5 border-t border-default/50 pt-1.5">
+                <!-- collapse motion (layout-wide) -->
+                <div class="flex items-center gap-2">
+                  <span class="w-12 shrink-0 text-[10px] uppercase tracking-widest text-muted">Motion</span>
+                  <USelect
+                    :model-value="collapseStyleHere"
+                    :items="MOTION_ITEMS"
+                    size="xs"
+                    class="flex-1"
+                    @update:model-value="(v: string) => onSetCollapseStyle(v as LayoutCollapseStyle)"
+                  />
                   <UButton
                     v-if="hasCheckpointHere"
                     icon="i-lucide-trash-2"
@@ -334,56 +355,37 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
                     @click="dropCheckpoint(simWidth)"
                   />
                 </div>
-                <div class="flex flex-wrap gap-1">
-                  <UButton
-                    v-for="s in LAYOUT_COLLAPSE_STYLES"
-                    :key="s"
-                    :label="COLLAPSE_LABELS[s]"
-                    size="xs"
-                    :color="collapseStyleHere === s ? 'primary' : 'neutral'"
-                    :variant="collapseStyleHere === s ? 'solid' : 'soft'"
-                    @click="onSetCollapseStyle(s)"
-                  />
-                </div>
-                <!-- per-panel settings — scoped to the panel you tapped in the layout (#907) -->
-                <div class="flex flex-col gap-1.5 border-t border-default/50 pt-2">
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 text-muted" />
-                    <span class="text-[10px] uppercase tracking-widest text-muted">Panel</span>
-                    <span v-if="selectedBlock" class="truncate text-xs font-medium text-default">{{ selectedBlock.label || selectedBlock.blockId }}</span>
+                <!-- the panel you tapped — its variant + collapse, one row -->
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-muted" />
+                  <span v-if="selectedBlock" class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
+                  <span v-else class="flex-1 text-[11px] text-muted">Tap a panel to edit it</span>
+                  <template v-if="selectedBlock">
+                    <USelect
+                      :model-value="variantOf(selectedBlock.blockId)"
+                      :items="VARIANTS"
+                      size="xs"
+                      class="w-24"
+                      @update:model-value="(v: string) => onSetVariant(selectedBlock!.blockId, v)"
+                    />
                     <UButton
-                      v-if="selectedBlock && multiBlock"
+                      :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
+                      size="xs"
+                      :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
+                      :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
+                      :aria-label="isCollapsed(selectedBlock.blockId) ? 'Expand' : 'Collapse'"
+                      @click="onToggleCollapse(selectedBlock!.blockId)"
+                    />
+                    <UButton
+                      v-if="multiBlock"
                       icon="i-lucide-x"
                       size="xs"
                       color="neutral"
                       variant="ghost"
                       aria-label="Clear selection"
-                      class="ml-auto -my-1"
                       @click="selectedBlockId = null"
                     />
-                  </div>
-                  <p
-                    v-if="!selectedBlock"
-                    class="rounded-lg bg-default/50 px-2.5 py-2 text-center text-[11px] text-muted"
-                  >Tap a panel in the layout to edit its variant &amp; collapse.</p>
-                  <div v-else class="flex items-center gap-2 rounded-xl bg-default/60 px-2 py-1.5">
-                    <USelect
-                      :model-value="variantOf(selectedBlock.blockId)"
-                      :items="VARIANTS"
-                      size="xs"
-                      class="w-28"
-                      @update:model-value="(v: string) => onSetVariant(selectedBlock!.blockId, v)"
-                    />
-                    <UButton
-                      :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
-                      :label="isCollapsed(selectedBlock.blockId) ? 'Collapsed' : 'Collapse'"
-                      size="xs"
-                      :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
-                      :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
-                      class="ml-auto"
-                      @click="onToggleCollapse(selectedBlock!.blockId)"
-                    />
-                  </div>
+                  </template>
                 </div>
               </div>
             </Transition>
