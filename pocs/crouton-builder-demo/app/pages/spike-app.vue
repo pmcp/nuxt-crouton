@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-o · #907 · width slider — scrub size, layout stays same on-screen, others step aside'
+const BUILD = 'spike-p · #907 · back out solo (regressed framing); focus-view redesign pending'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -116,12 +116,10 @@ provide(SPIKE_VIEWPORT_KEY, viewport)
 // While surveying, tile the nodes in a row at device size — non-destructive (the real topology
 // positions in `nodes` are untouched, so flipping back to Fit restores your arrangement).
 const flowRows = computed<FlowNode[]>(() => {
-  // Focus edit: SOLO the focused node — the others step aside so growing it to a wide device
-  // doesn't collide with its neighbours on the board. They reappear on Done (#907).
-  if (focus.value && zoomNodeId.value) {
-    const n = nodes.value.find(nd => nd.id === zoomNodeId.value)
-    if (n) return [n]
-  }
+  // NOTE: soloing the focused node (returning [n] here) makes Vue Flow re-process the node set and
+  // fire its OWN viewport fit, which races/overrides our focusBounds camera op (off-screen framing).
+  // Left out pending the focus-view redesign (#907) — which moves editing into a dedicated view
+  // rather than a Vue Flow camera zoom, sidestepping this fight entirely.
   if (!viewport.value) return nodes.value
   const vw = viewport.value
   const GAP = 80
