@@ -12,9 +12,9 @@
  * Composed in the POC from the layout engine's pure utils (same logic the package's BreakpointAuthor
  * uses) so the v-model + resize→keypoint contract is identical — only the presentation is bespoke.
  */
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import type { LayoutTree, LayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutTree, LayoutNode, LayoutCollapseStyle } from '@fyit/crouton-core/app/types/layout'
 import { LAYOUT_COLLAPSE_STYLES, DEFAULT_COLLAPSE_STYLE } from '@fyit/crouton-core/app/types/layout'
 import { applySizes, type NodePath } from '@fyit/crouton-layout/app/utils/layout-edit'
 // resolveLayoutAtWidth / listBlocks / patchBreakpoint / removeBreakpoint are auto-imported from the
@@ -168,6 +168,52 @@ function requestClose() {
 
 // Advanced controls (collapse motion + per-block variant) hide behind a "⋯" reveal.
 const optionsOpen = ref(false)
+
+// --- per-panel selection (#907) — tap a panel IN the layout → its settings appear -----
+// Direct manipulation: instead of a flat list of every block, you tap the actual panel and the
+// options scope to it. We hit-test the tap against the layout geometry (computed from the resolved
+// tree — no dependency on renderer internals), so a tap maps to the leaf block under your finger.
+const selectedBlockId = ref<string | null>(null)
+interface Region { blockId: string, label?: string, left: number, top: number, width: number, height: number }
+function leafRegions(node: LayoutNode, left: number, top: number, width: number, height: number): Region[] {
+  if (node.type === 'leaf') {
+    const b = blocks.value.find(x => x.blockId === node.blockId)
+    return [{ blockId: node.blockId, label: b?.label, left, top, width, height }]
+  }
+  if (node.type === 'nested') return leafRegions(node.layout.root, left, top, width, height)
+  const horizontal = node.direction === 'horizontal'
+  const sizes = node.children.map(c => (typeof (c as { defaultSize?: number }).defaultSize === 'number' ? (c as { defaultSize?: number }).defaultSize! : 100 / node.children.length))
+  const total = sizes.reduce((a, b) => a + b, 0) || 1
+  let off = 0
+  const out: Region[] = []
+  node.children.forEach((c, i) => {
+    const frac = sizes[i]! / total
+    if (horizontal) out.push(...leafRegions(c, left + off * width, top, frac * width, height))
+    else out.push(...leafRegions(c, left, top + off * height, width, frac * height))
+    off += frac
+  })
+  return out
+}
+const regions = computed(() => leafRegions(resolved.value.root, 0, 0, 100, 100))
+const selectedRegion = computed(() => regions.value.find(r => r.blockId === selectedBlockId.value) ?? null)
+const selectedBlock = computed(() => blocks.value.find(b => b.blockId === selectedBlockId.value) ?? null)
+const multiBlock = computed(() => regions.value.length > 1)
+
+const innerRef = ref<HTMLElement | null>(null)
+function onLayoutClick(e: MouseEvent) {
+  const el = innerRef.value
+  if (!el || !multiBlock.value) return // single-block layout → nothing to pick
+  const r = el.getBoundingClientRect()
+  const px = ((e.clientX - r.left) / r.width) * 100
+  const py = ((e.clientY - r.top) / r.height) * 100
+  const hit = regions.value.find(rg => px >= rg.left && px <= rg.left + rg.width && py >= rg.top && py <= rg.top + rg.height)
+  if (hit) { selectedBlockId.value = hit.blockId; optionsOpen.value = true }
+}
+// A single-block layout has nothing to pick → auto-select it so its options are right there.
+watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join('|')], () => {
+  if (regions.value.length === 1) selectedBlockId.value = regions.value[0]!.blockId
+  else if (selectedBlockId.value && !regions.value.some(r => r.blockId === selectedBlockId.value)) selectedBlockId.value = null
+}, { immediate: true })
 </script>
 
 <template>
@@ -204,13 +250,19 @@ const optionsOpen = ref(false)
           class="spike-focus__card overflow-hidden rounded-[2rem] border border-default/60 bg-default shadow-2xl ring-1 ring-black/5"
           :style="wrapperStyle"
         >
-          <div :style="innerStyle">
+          <div ref="innerRef" class="relative" :style="innerStyle" @click="onLayoutClick">
             <CroutonLayoutResponsiveRenderer
               :tree="tree"
               :width="simWidth"
               class="h-full w-full"
               @expand="onExpand"
               @layout-change="onResize"
+            />
+            <!-- selection highlight: a ring over the tapped panel (geometry, %-rect) -->
+            <div
+              v-if="multiBlock && selectedRegion"
+              class="pointer-events-none absolute rounded-xl ring-2 ring-primary ring-offset-2 ring-offset-default transition-all duration-200"
+              :style="{ left: `${selectedRegion.left}%`, top: `${selectedRegion.top}%`, width: `${selectedRegion.width}%`, height: `${selectedRegion.height}%` }"
             />
           </div>
         </div>
@@ -293,27 +345,43 @@ const optionsOpen = ref(false)
                     @click="onSetCollapseStyle(s)"
                   />
                 </div>
-                <div
-                  v-for="b in blocks"
-                  :key="b.blockId"
-                  class="flex items-center gap-2 rounded-xl bg-default/60 px-2 py-1.5"
-                >
-                  <span class="truncate text-xs font-medium">{{ b.label || b.blockId }}</span>
-                  <div class="ml-auto flex items-center gap-1.5">
+                <!-- per-panel settings — scoped to the panel you tapped in the layout (#907) -->
+                <div class="flex flex-col gap-1.5 border-t border-default/50 pt-2">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 text-muted" />
+                    <span class="text-[10px] uppercase tracking-widest text-muted">Panel</span>
+                    <span v-if="selectedBlock" class="truncate text-xs font-medium text-default">{{ selectedBlock.label || selectedBlock.blockId }}</span>
+                    <UButton
+                      v-if="selectedBlock && multiBlock"
+                      icon="i-lucide-x"
+                      size="xs"
+                      color="neutral"
+                      variant="ghost"
+                      aria-label="Clear selection"
+                      class="ml-auto -my-1"
+                      @click="selectedBlockId = null"
+                    />
+                  </div>
+                  <p
+                    v-if="!selectedBlock"
+                    class="rounded-lg bg-default/50 px-2.5 py-2 text-center text-[11px] text-muted"
+                  >Tap a panel in the layout to edit its variant &amp; collapse.</p>
+                  <div v-else class="flex items-center gap-2 rounded-xl bg-default/60 px-2 py-1.5">
                     <USelect
-                      :model-value="variantOf(b.blockId)"
+                      :model-value="variantOf(selectedBlock.blockId)"
                       :items="VARIANTS"
                       size="xs"
-                      class="w-24"
-                      @update:model-value="(v: string) => onSetVariant(b.blockId, v)"
+                      class="w-28"
+                      @update:model-value="(v: string) => onSetVariant(selectedBlock!.blockId, v)"
                     />
                     <UButton
-                      :icon="isCollapsed(b.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
+                      :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
+                      :label="isCollapsed(selectedBlock.blockId) ? 'Collapsed' : 'Collapse'"
                       size="xs"
-                      :color="isCollapsed(b.blockId) ? 'primary' : 'neutral'"
-                      :variant="isCollapsed(b.blockId) ? 'soft' : 'ghost'"
-                      :aria-label="isCollapsed(b.blockId) ? 'Expand' : 'Collapse'"
-                      @click="onToggleCollapse(b.blockId)"
+                      :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
+                      :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
+                      class="ml-auto"
+                      @click="onToggleCollapse(selectedBlock!.blockId)"
                     />
                   </div>
                 </div>
