@@ -160,13 +160,13 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
       <div class="flex h-full w-full flex-col">
         <!-- top rail -->
         <div v-if="edgeHasPanes('top')" class="flex shrink-0 flex-wrap items-center justify-center gap-1.5 border-b border-default bg-elevated/50 p-1.5">
-          <ReuseTuck v-for="pane in panesOnEdge('top')" :key="pane.blockId" :pane="pane" />
+          <ReuseTuck v-for="(pane, i) in panesOnEdge('top')" :key="`${pane.blockId}-${i}`" :pane="pane" />
         </div>
 
         <div class="flex min-h-0 flex-1">
           <!-- left rail -->
           <div v-if="edgeHasPanes('left')" class="flex shrink-0 flex-col items-center justify-center gap-1.5 border-r border-default bg-elevated/50 p-1.5">
-            <ReuseTuck v-for="pane in panesOnEdge('left')" :key="pane.blockId" :pane="pane" />
+            <ReuseTuck v-for="(pane, i) in panesOnEdge('left')" :key="`${pane.blockId}-${i}`" :pane="pane" />
           </div>
 
           <!-- content: the survivors, reflowed -->
@@ -186,13 +186,13 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
 
           <!-- right rail -->
           <div v-if="edgeHasPanes('right')" class="flex shrink-0 flex-col items-center justify-center gap-1.5 border-l border-default bg-elevated/50 p-1.5">
-            <ReuseTuck v-for="pane in panesOnEdge('right')" :key="pane.blockId" :pane="pane" />
+            <ReuseTuck v-for="(pane, i) in panesOnEdge('right')" :key="`${pane.blockId}-${i}`" :pane="pane" />
           </div>
         </div>
 
         <!-- bottom rail -->
         <div v-if="edgeHasPanes('bottom')" class="flex shrink-0 flex-wrap items-center justify-center gap-1.5 border-t border-default bg-elevated/50 p-1.5">
-          <ReuseTuck v-for="pane in panesOnEdge('bottom')" :key="pane.blockId" :pane="pane" />
+          <ReuseTuck v-for="(pane, i) in panesOnEdge('bottom')" :key="`${pane.blockId}-${i}`" :pane="pane" />
         </div>
       </div>
     </template>
