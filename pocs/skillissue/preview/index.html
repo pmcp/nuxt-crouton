@@ -126,6 +126,9 @@ i{font-style:italic;} b{font-weight:700;}
 /* hero lead (replaces the old oversized display headline) */
 .si-hero-lead{font-size:clamp(1.3rem,2.8vw,1.9rem);line-height:1.42;color:var(--si-ink-dim);max-width:30ch;font-weight:500;letter-spacing:-.01em;margin:0;}
 .si-hero-lead b{color:var(--si-ink);font-weight:700;}
+.si-hero-center{margin-left:auto;margin-right:auto;text-align:center;max-width:30ch;font-size:clamp(1.25rem,2.6vw,1.7rem);}
+@media(min-width:680px){.si-hero-center{max-width:46ch;}}
+.si-hero-term{max-width:720px;margin:3.2rem auto 0;box-shadow:0 30px 90px -30px #000,0 0 70px -24px #8b5cf63a,0 0 0 1px #ffffff0a;}
 
 /* logo / brand mark */
 .si-mark{display:block;}
@@ -156,9 +159,9 @@ i{font-style:italic;} b{font-weight:700;}
       <span>skill<b>/</b>issue</span>
     </a>
     <div class="si-navlinks">
-      <a href="#flow">The flow</a><a href="#depth">The depth</a><a href="#how">How it works</a><a href="#why">Why</a><a href="#use-cases">For you</a>
+      <a href="#flow">The flow</a><a href="#depth">The depth</a><a href="#how">How it works</a><a href="#why">Why</a>
     </div>
-    <a href="#cta" class="si-btn si-btn-primary" style="padding:.55rem 1rem">Read the playbook</a>
+    <a href="#how" class="si-btn si-btn-primary" style="padding:.55rem 1rem">Read the playbook</a>
   </div></nav>
 
   <header id="top" class="si-section si-wrap" style="padding-top:4rem">
@@ -167,24 +170,20 @@ i{font-style:italic;} b{font-weight:700;}
       <div class="si-brand-word">skill<span class="slash">/</span>issue</div>
       <div class="si-brand-sub">how we build at Friendly Internet</div>
     </div>
-    <div class="hero-grid">
-      <div>
-        <p class="si-hero-lead">skill/issue is how we build here. Every change starts as a <b>ticket</b> — the <i>what</i> &amp; <i>why</i>. A reusable <b>skill</b> knows the <i>how</i>. Out comes a <b>reviewed PR</b> — <span class="si-grad-text">same playbook, every repo, every time.</span></p>
-        <div class="flex wrap gap-3 mt-8">
-          <a href="#flow" class="si-btn si-btn-primary">Watch the flow ↓</a>
-          <a href="#how" class="si-btn si-btn-ghost">Read the playbook</a>
-        </div>
-        <p class="si-kicker mt-7">// this page runs the playbook too — receipts in the demo</p>
-      </div>
-      <div class="si-term">
-        <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" style="margin-left:.5rem">issue → skill → PR → deploy</span></div>
-        <div class="si-term-body"><span class="si-tok2">$</span> skill run build-feature <span class="si-tok">--issue</span> 918
+    <p class="si-hero-lead si-hero-center">skill/issue is how we build here. Every change starts as a <b>ticket</b> — the <i>what</i> &amp; <i>why</i>. A reusable <b>skill</b> knows the <i>how</i>. Out comes a <b>reviewed PR</b> — <span class="si-grad-text">same playbook, every repo, every time.</span></p>
+    <div class="flex wrap gap-3 mt-8" style="justify-content:center">
+      <a href="#flow" class="si-btn si-btn-primary">Watch the flow ↓</a>
+      <a href="#how" class="si-btn si-btn-ghost">Read the playbook</a>
+    </div>
+    <p class="si-kicker mt-7 tcenter">// this page runs the playbook too — receipts in the demo</p>
+    <div class="si-term si-hero-term">
+      <div class="si-term-bar"><span class="si-dot" style="background:#fb7185"></span><span class="si-dot" style="background:#fbbf24"></span><span class="si-dot" style="background:#a3e635"></span><span class="si-dim" style="margin-left:.5rem">issue → skill → PR → deploy</span></div>
+      <div class="si-term-body"><span class="si-tok2">$</span> skill run build-feature <span class="si-tok">--issue</span> 918
 <span class="si-dim">→ reading ticket …</span>
 <span class="si-add">✓ code written</span>
 <span class="si-add">✓ PR #924 opened · 6/6 checks green</span>
 <span class="si-add">✓ deployed · learnings saved</span>
 <span class="si-tok2">done — and the skill got smarter.</span></div>
-      </div>
     </div>
   </header>
 
@@ -320,28 +319,13 @@ i{font-style:italic;} b{font-weight:700;}
 
   <hr class="si-rule si-wrap">
 
-  <section id="use-cases" class="si-section si-wrap">
-    <div class="si-section-head"><p class="si-kicker mb-3">// what it means for you</p><h2 class="si-h2">For everyone who ships here</h2></div>
-    <div class="cols-3">
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> new here</span><p class="si-lead" style="font-size:1rem">Onboarding is reading the playbook, not shadowing for a month. The skills are <i>how</i> we build; the issues are <i>why</i>. You inherit both on day one and ship something real in week one.</p></div>
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink"></span> engineers</span><p class="si-lead" style="font-size:1rem">Your daily loop. The skill remembers the <i>how</i>, the ticket holds the <i>why</i> — so you stop re-explaining context and start shipping. Leverage without the amnesia.</p></div>
-      <div class="si-card"><span class="si-pill mb-4"><span class="si-blink" style="background:var(--si-violet);box-shadow:0 0 10px var(--si-violet)"></span> leads &amp; reviewers</span><p class="si-lead" style="font-size:1rem">Traceability and audit by construction. One reviewed PR per issue, every change tied to a reason. “Who changed this and why” answers itself.</p></div>
-    </div>
-  </section>
-
-  <hr class="si-rule si-wrap">
-
   <section id="cta" class="si-section si-wrap">
     <div class="si-card si-card-glow" style="padding:clamp(2rem,6vw,4rem);text-align:center">
-      <p class="si-kicker mb-4">// your turn</p>
-      <h2 class="si-h2" style="max-width:16ch;margin:0 auto">Skills + tickets + a reviewed flow.</h2>
-      <p class="si-lead mt-4" style="max-width:48ch;margin:1rem auto 0">How we build at Friendly Internet. Open the playbook, file your first issue, and let a skill take it from there.</p>
-      <div class="flex wrap center gap-3 mt-8">
-        <a href="#how" class="si-btn si-btn-primary">Open the playbook →</a>
-        <a href="#flow" class="si-btn si-btn-ghost">File your first issue</a>
-      </div>
+      <p class="si-kicker mb-4">// in one line</p>
+      <h2 class="si-h2" style="max-width:18ch;margin:0 auto">Skills + tickets + a reviewed flow.</h2>
+      <p class="si-lead mt-4" style="max-width:56ch;margin:1rem auto 0">A ticket holds the <i>what</i> &amp; <i>why</i>. A skill holds the <i>how</i>. The loop turns one into a reviewed PR — and the learnings sharpen the skill for next time. That's skill/issue.</p>
     </div>
-    <p class="si-kicker mt-8 tcenter">// this page was built with skill/issue · so was the demo · so is everything next</p>
+    <p class="si-kicker mt-8 tcenter">// this page was built with skill/issue · so was the demo · so is everything else</p>
   </section>
 
   <footer class="si-wrap" style="padding:3rem 24px;border-top:1px solid var(--si-line)">
