@@ -69,7 +69,7 @@ i{font-style:italic;} b{font-weight:700;}
 .si-step:nth-child(1)::after{animation-delay:0s;} .si-step:nth-child(2)::after{animation-delay:.25s;} .si-step:nth-child(3)::after{animation-delay:.5s;} .si-step:nth-child(4)::after{animation-delay:.75s;}
 @keyframes si-sweep{to{transform:scaleX(1);}}
 
-.si-section{padding:clamp(4rem,11vh,8rem) 0;position:relative;}
+.si-section{padding:clamp(4rem,11vh,8rem) 0;position:relative;scroll-margin-top:76px;}
 .si-section-head{max-width:720px;margin-bottom:3rem;}
 .si-h2{font-weight:820;letter-spacing:-.03em;font-size:clamp(1.9rem,4.5vw,3.1rem);line-height:1.02;margin:0;}
 .si-rule{height:1px;background:var(--si-line);border:0;margin:0;}
@@ -105,12 +105,13 @@ i{font-style:italic;} b{font-weight:700;}
 .cols-3{display:grid;gap:1.25rem;} @media(min-width:760px){.cols-3{grid-template-columns:repeat(3,1fr);}}
 @media(prefers-reduced-motion:reduce){.si-step::after,.si-blink{animation:none;transform:scaleX(1);}html.si{scroll-behavior:auto;}}
 
-/* depth: stats + skills-by-phase */
-.si-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--si-line);border:1px solid var(--si-line);border-radius:14px;overflow:hidden;}
-@media(min-width:760px){.si-stats{grid-template-columns:repeat(4,1fr);}}
-.si-stat{background:#0a0a12;padding:1.6rem 1.4rem;display:flex;flex-direction:column;gap:.4rem;}
-.si-stat-n{font-family:var(--si-mono);font-weight:800;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;background:var(--si-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.si-stat-l{font-size:.84rem;color:var(--si-ink-dim);line-height:1.35;}
+/* depth: decomposition tree + skills-by-phase */
+.si-tree{border:1px solid var(--si-line);border-radius:16px;background:radial-gradient(120% 100% at 50% 0,#8b5cf614,transparent 60%),#0a0a12;padding:1.7rem 1.4rem 1.4rem;}
+.si-tree-scroll{overflow-x:auto;}
+.si-tree-svg{width:100%;min-width:660px;height:auto;display:block;}
+.si-tree-svg text{font-family:var(--si-mono);}
+.si-tree-cap{margin:1.2rem auto 0;max-width:64ch;text-align:center;color:var(--si-ink-dim);font-size:.95rem;line-height:1.55;}
+.si-tree-cap b{color:var(--si-ink);}
 .si-phases{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
 @media(min-width:680px){.si-phases{grid-template-columns:repeat(3,1fr);}}
 @media(min-width:1040px){.si-phases{grid-template-columns:repeat(6,1fr);}}
@@ -213,11 +214,46 @@ i{font-style:italic;} b{font-weight:700;}
       <p class="si-lead mt-4">“A skill runs it” really means: <b style="color:var(--si-ink)">the right one of dozens</b> — each a versioned playbook for a different part of how we build. One ticket can fan into an epic and a <b style="color:var(--si-ink)">tree of sub-issues</b>, worked in parallel, each gated by a human sign-off. And the system improves itself — every retro can mint a new skill.</p>
     </div>
 
-    <div class="si-stats">
-      <div class="si-stat"><span class="si-stat-n">25+</span><span class="si-stat-l">skills, and counting</span></div>
-      <div class="si-stat"><span class="si-stat-n">6</span><span class="si-stat-l">phases of the lifecycle</span></div>
-      <div class="si-stat"><span class="si-stat-n">∞</span><span class="si-stat-l">depth — issues decompose into trees</span></div>
-      <div class="si-stat"><span class="si-stat-n">1</span><span class="si-stat-l">playbook the whole team shares</span></div>
+    <div class="si-tree">
+      <div class="si-tree-scroll">
+      <svg class="si-tree-svg" viewBox="0 0 960 360" fill="none" role="img" aria-label="One ticket fans into an epic and a tree of sub-issues, each worked by its own skill and merged through reviewed PRs">
+        <g stroke="url(#siGrad)" stroke-width="2" opacity="0.5" fill="none">
+          <path d="M480 70 L480 108" />
+          <path d="M480 156 C480 190 150 182 150 214" />
+          <path d="M480 156 C480 190 370 186 370 214" />
+          <path d="M480 156 C480 190 590 186 590 214" />
+          <path d="M480 156 C480 190 810 182 810 214" />
+          <path d="M150 272 C150 300 480 296 480 312" />
+          <path d="M370 272 C370 302 480 300 480 312" />
+          <path d="M590 272 C590 302 480 300 480 312" />
+          <path d="M810 272 C810 300 480 296 480 312" />
+        </g>
+        <!-- issue -->
+        <rect x="392" y="22" width="176" height="48" rx="12" fill="#0d0d18" stroke="url(#siGrad)" stroke-width="2" />
+        <text x="480" y="51" text-anchor="middle" fill="#e7e7f2" font-size="16" font-weight="600">issue #918</text>
+        <!-- epic -->
+        <rect x="392" y="108" width="176" height="48" rx="12" fill="#0d0d18" stroke="url(#siGrad)" stroke-width="2" />
+        <text x="480" y="129" text-anchor="middle" fill="#e7e7f2" font-size="14">epic · hypothesis</text>
+        <text x="480" y="146" text-anchor="middle" fill="#5a5a72" font-size="10.5">decomposes into ↓</text>
+        <!-- sub-issues (worked in parallel, each by its own skill) -->
+        <rect x="64" y="214" width="172" height="58" rx="12" fill="#0b0b14" stroke="#2a2a40" stroke-width="1.5" />
+        <text x="150" y="240" text-anchor="middle" fill="#9a9ab0" font-size="13">sub-issue</text>
+        <text x="150" y="261" text-anchor="middle" fill="#22d3ee" font-size="13">/schema-review</text>
+        <rect x="284" y="214" width="172" height="58" rx="12" fill="#0b0b14" stroke="#2a2a40" stroke-width="1.5" />
+        <text x="370" y="240" text-anchor="middle" fill="#9a9ab0" font-size="13">sub-issue</text>
+        <text x="370" y="261" text-anchor="middle" fill="#22d3ee" font-size="13">/commit</text>
+        <rect x="504" y="214" width="172" height="58" rx="12" fill="#0b0b14" stroke="#2a2a40" stroke-width="1.5" />
+        <text x="590" y="240" text-anchor="middle" fill="#9a9ab0" font-size="13">sub-issue</text>
+        <text x="590" y="261" text-anchor="middle" fill="#22d3ee" font-size="13">/frontend-review</text>
+        <rect x="724" y="214" width="172" height="58" rx="12" fill="#0b0b14" stroke="#2a2a40" stroke-width="1.5" />
+        <text x="810" y="240" text-anchor="middle" fill="#9a9ab0" font-size="13">sub-issue</text>
+        <text x="810" y="261" text-anchor="middle" fill="#22d3ee" font-size="13">/deploy</text>
+        <!-- merge -->
+        <rect x="356" y="312" width="248" height="46" rx="12" fill="#0d0d18" stroke="url(#siGrad)" stroke-width="2" />
+        <text x="480" y="340" text-anchor="middle" fill="#e7e7f2" font-size="14">reviewed PR → deploy</text>
+      </svg>
+      </div>
+      <p class="si-tree-cap">One ticket fans into an epic, then a <b>tree of sub-issues</b> worked in parallel — each leaf picked up by its own <span style="color:var(--si-cyan)">/skill</span> and merged back through a reviewed PR. <span class="si-dim">One library · 25+ skills · 6 phases.</span></p>
     </div>
 
     <p class="si-kicker mt-8 mb-4">// one box on the diagram = this much underneath</p>
