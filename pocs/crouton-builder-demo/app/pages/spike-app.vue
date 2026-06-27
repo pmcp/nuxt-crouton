@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-8 · #907 · slimmer options (panel + collapse only; motion/variant out)'
+const BUILD = 'focus-shell-9 · #907 · Fit = single clean fitView (no double-animation jank)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -202,8 +202,13 @@ function openResponsive() { pillMode.value = 'responsive' }
 // Leaving the Responsive picker drops the survey (it only exists while you're choosing a width).
 function closeResponsive() { pillMode.value = 'main'; viewport.value = null }
 // Top-level Fit = zoom the camera to show every node (and ensure we're not surveying). A real
-// "fit to view", so it always does something — unlike the old toggle that no-op'd in normal view.
-function fitBoard() { viewport.value = null; pillMode.value = 'main'; fitOverview() }
+// "fit to view". ONE fitView call (not fitOverview's double-call, which is for async-measured fresh
+// drops — on a settled board two competing zoom animations look janky/blurry). Single clean fit.
+function fitBoard() {
+  viewport.value = null
+  pillMode.value = 'main'
+  nextTick(() => flowRef.value?.fitView?.({ duration: 250, padding: 0.18, maxZoom: 1 }))
+}
 
 /** HTML5 drag source: stamp the crouton-item payload CroutonFlow's drop handler reads. */
 function onDragStart(e: DragEvent, item: { blockId: string, label: string }) {
