@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-6 · #907 · breakpoint dots on the slider + chip controls + dimmed-panel select'
+const BUILD = 'focus-shell-7 · #907 · Fit = native zoom-to-fit · devtools menu above the pill (z-fix)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -199,8 +199,11 @@ const resultOpen = ref(false)
 // "← " returns to the main set. (Survey is Free-mode only; leaving Responsive resets to Fit.)
 const pillMode = ref<'main' | 'responsive'>('main')
 function openResponsive() { pillMode.value = 'responsive' }
-function closeResponsive() { pillMode.value = 'main' }
-function fitBoard() { viewport.value = null; pillMode.value = 'main' }
+// Leaving the Responsive picker drops the survey (it only exists while you're choosing a width).
+function closeResponsive() { pillMode.value = 'main'; viewport.value = null }
+// Top-level Fit = zoom the camera to show every node (and ensure we're not surveying). A real
+// "fit to view", so it always does something — unlike the old toggle that no-op'd in normal view.
+function fitBoard() { viewport.value = null; pillMode.value = 'main'; fitOverview() }
 
 /** HTML5 drag source: stamp the crouton-item payload CroutonFlow's drop handler reads. */
 function onDragStart(e: DragEvent, item: { blockId: string, label: string }) {
@@ -531,11 +534,12 @@ function reset() {
               class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl"
             >
               <UButton
-                icon="i-lucide-frame"
+                icon="i-lucide-scan"
                 label="Fit"
                 size="sm"
-                :color="viewport === null ? 'primary' : 'neutral'"
-                :variant="viewport === null ? 'soft' : 'ghost'"
+                color="neutral"
+                variant="ghost"
+                title="Zoom to fit all blocks"
                 @click="fitBoard"
               />
               <UButton
@@ -580,15 +584,7 @@ function reset() {
               class="pointer-events-auto flex items-center gap-1 rounded-full border border-primary/40 bg-elevated/90 p-1.5 shadow-xl backdrop-blur-xl"
             >
               <UButton icon="i-lucide-chevron-left" size="sm" color="neutral" variant="ghost" aria-label="Back" @click="closeResponsive" />
-              <UButton
-                icon="i-lucide-frame"
-                label="Fit"
-                size="sm"
-                :color="viewport === null ? 'primary' : 'neutral'"
-                :variant="viewport === null ? 'soft' : 'ghost'"
-                @click="viewport = null"
-              />
-              <span class="mx-0.5 h-5 w-px bg-default/60" />
+              <span class="ml-1 mr-0.5 text-[11px] uppercase tracking-widest text-muted">Preview</span>
               <UButton
                 v-for="v in SPIKE_VIEWPORTS"
                 :key="v.label"
