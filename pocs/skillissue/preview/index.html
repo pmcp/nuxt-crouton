@@ -118,6 +118,7 @@ i{font-style:italic;} b{font-weight:700;}
 .si-phase:hover{border-color:var(--si-line-2);transform:translateY(-3px);}
 .si-phase h5{font-family:var(--si-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--si-cyan);margin:0 0 .7rem;}
 .si-chip{display:block;font-family:var(--si-mono);font-size:.78rem;color:var(--si-ink-dim);padding:.32rem 0;border-top:1px solid var(--si-line);}
+.si-chip::before{content:"/";color:var(--si-cyan);opacity:.85;}
 .si-phase .si-chip:first-of-type{border-top:0;}
 .si-phase:hover .si-chip{color:var(--si-ink);}
 
@@ -221,12 +222,12 @@ i{font-style:italic;} b{font-weight:700;}
 
     <p class="si-kicker mt-8 mb-4">// one box on the diagram = this much underneath</p>
     <div class="si-phases">
-      <div class="si-phase"><h5>Plan</h5><span class="si-chip">/task-decompose</span><span class="si-chip">github-tasks</span><span class="si-chip">ticket-diagram</span><span class="si-chip">epic-digest</span></div>
-      <div class="si-phase"><h5>Design</h5><span class="si-chip">/ui-proposal</span><span class="si-chip">/schema-review</span><span class="si-chip">block-authoring</span></div>
-      <div class="si-phase"><h5>Build</h5><span class="si-chip">/commit</span><span class="si-chip">crouton generate</span><span class="si-chip">db-migrations</span><span class="si-chip">i18n-check</span></div>
-      <div class="si-phase"><h5>Review</h5><span class="si-chip">/code-review</span><span class="si-chip">/test-review</span><span class="si-chip">/a11y</span><span class="si-chip">/frontend-review</span><span class="si-chip">/red-team</span></div>
-      <div class="si-phase"><h5>Ship</h5><span class="si-chip">/deploy</span><span class="si-chip">/poc-deploy</span><span class="si-chip">db-clone</span><span class="si-chip">remove-app</span></div>
-      <div class="si-phase"><h5>Learn</h5><span class="si-chip">/postmortem</span><span class="si-chip">bug-archaeology</span><span class="si-chip">dependency-sweep</span><span class="si-chip">ecosystem-check</span></div>
+      <div class="si-phase"><h5>Plan</h5><span class="si-chip">task-decompose</span><span class="si-chip">github-tasks</span><span class="si-chip">ticket-diagram</span><span class="si-chip">epic-digest</span></div>
+      <div class="si-phase"><h5>Design</h5><span class="si-chip">ui-proposal</span><span class="si-chip">schema-review</span><span class="si-chip">block-authoring</span></div>
+      <div class="si-phase"><h5>Build</h5><span class="si-chip">commit</span><span class="si-chip">crouton</span><span class="si-chip">db-migrations</span><span class="si-chip">i18n-check</span></div>
+      <div class="si-phase"><h5>Review</h5><span class="si-chip">code-review</span><span class="si-chip">test-review</span><span class="si-chip">a11y</span><span class="si-chip">frontend-review</span><span class="si-chip">red-team</span></div>
+      <div class="si-phase"><h5>Ship</h5><span class="si-chip">deploy</span><span class="si-chip">poc-deploy</span><span class="si-chip">db-clone</span><span class="si-chip">remove-app</span></div>
+      <div class="si-phase"><h5>Learn</h5><span class="si-chip">postmortem</span><span class="si-chip">bug-archaeology</span><span class="si-chip">dependency-sweep</span><span class="si-chip">ecosystem-check</span></div>
     </div>
     <p class="si-kicker mt-6">// the four steps are the spine — these are the muscles</p>
   </section>
