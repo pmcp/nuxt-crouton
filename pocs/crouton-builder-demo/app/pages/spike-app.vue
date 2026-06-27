@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-detach-5 · #907 · pull a pane out — it lands exactly where you drop it (stays grabbed even when the cursor leaves the card)'
+const BUILD = 'spike-detach-6 · #907 · add a block → camera re-frames to an overview (no more hard zoom on the first block, esp. mobile)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -76,6 +76,21 @@ const drawer = [
 interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[] } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
+
+// Camera: re-frame the whole board to an overview after adding a block. CroutonFlow only
+// fits-to-view on mount (when the board is empty), so without this a freshly-added block sits at
+// the default zoom — which on a narrow phone fills the screen. fitView with maxZoom:1 keeps a
+// single block at a comfortable size and shows everything you've added. Survey/focus own the
+// camera, so skip then.
+const flowRef = ref<{ fitView?: (o?: Record<string, unknown>) => void } | null>(null)
+function fitOverview() {
+  if (viewport.value || focus.value) return
+  const fit = () => flowRef.value?.fitView?.({ duration: 350, padding: 0.3, maxZoom: 1 })
+  // Fit on nextTick, then once more after the new node's dimensions settle (Vue Flow measures
+  // node size async, so a single immediate fit can frame a stale/zero-width box and miscenter).
+  nextTick(fit)
+  window.setTimeout(fit, 180)
+}
 
 // Live snap preview (#907): while a block is dragged, the target node it will snap to lights
 // up the joining edge. Provided here; SpikeBlockNode injects it and matches by object identity.
@@ -244,6 +259,7 @@ function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: num
   const label = String(item.label ?? item.blockId)
   const leaf: LayoutNode = { type: 'leaf', blockId: String(item.blockId), config: { collection: 'artists', heading: label } }
   nodes.value = [...nodes.value, { id: String(item.id), type: 'default', position, data: { node: leaf, label } }]
+  fitOverview() // re-frame so you see everything that's been added (esp. the first block on mobile)
 }
 
 /** Combine two nodes into a split, flattening same-direction nesting so a third block joins
@@ -583,8 +599,10 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
+            ref="flowRef"
             :rows="flowRows"
             collection="artists"
+            :fit-view-on-mount="false"
             data-mode="ephemeral"
             :default-node-component="blockNode"
             :draggable="viewport === null && !focus"
