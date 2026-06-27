@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-detach-2 · #907 · pull a pane out — pane no longer clips at the card edge; tracks the cursor the whole way'
+const BUILD = 'spike-detach-5 · #907 · pull a pane out — it lands exactly where you drop it (stays grabbed even when the cursor leaves the card)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -84,8 +84,8 @@ provide(SPIKE_SNAP_KEY, snapPreview)
 
 // Pull-apart-to-detach (#907) — the inverse of snap-merge. A SpikeBlockNode pops a pane out of
 // a merged group and reports it here (via SPIKE_DETACH_KEY — it can't emit up through CroutonFlow).
-// We split the group's `data.node`, shrink it to the remainder, and place the freed pane as its
-// own flow node on the side the user dragged toward.
+// We split the group's `data.node`, shrink it to the remainder, and place the freed pane WHERE you
+// dropped it (payload.dropPos, flow coords) — falling back to the pulled side if it's unavailable.
 const DETACH_GAP = 40
 function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
   const idx = nodes.value.findIndex(n => n.data.node === group)
@@ -94,12 +94,17 @@ function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
   const { root, detached } = detachNode(group, [payload.index])
   if (!detached || !root) return
 
+  // Primary: land it where the pulled pane was released (WYSIWYG) — the node reports the pane's
+  // flow-space offset from the group's top-left, we add it to the group's known position. Fallback
+  // (no offset): place it on the side the drag pointed, just past the group's old extent.
   const gSize = sizeOf(group) // group's extent BEFORE it shrinks
   const dSize = sizeOf(detached)
   const horizontal = Math.abs(payload.dir.x) >= Math.abs(payload.dir.y)
-  const pos = horizontal
-    ? { x: payload.dir.x >= 0 ? host.position.x + gSize.width + DETACH_GAP : host.position.x - dSize.width - DETACH_GAP, y: host.position.y }
-    : { x: host.position.x, y: payload.dir.y >= 0 ? host.position.y + gSize.height + DETACH_GAP : host.position.y - dSize.height - DETACH_GAP }
+  const pos = payload.dropOffset
+    ? { x: host.position.x + payload.dropOffset.x, y: host.position.y + payload.dropOffset.y }
+    : (horizontal
+        ? { x: payload.dir.x >= 0 ? host.position.x + gSize.width + DETACH_GAP : host.position.x - dSize.width - DETACH_GAP, y: host.position.y }
+        : { x: host.position.x, y: payload.dir.y >= 0 ? host.position.y + gSize.height + DETACH_GAP : host.position.y - dSize.height - DETACH_GAP })
 
   const label = flattenLeaves(detached)[0]?.label
   const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }

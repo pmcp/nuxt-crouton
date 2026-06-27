@@ -77,7 +77,9 @@ const RESISTANCE = 0.65 // pane follows the cursor at <1 → it lags behind (a p
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
-const armed = computed(() => !surveying.value && !focused.value && isGroup.value && (hovered.value || !!props.selected))
+// Stay armed while a pull is in flight (activeIndex set) even if the cursor leaves the card —
+// otherwise mouseleave drops `hovered`, the overlay unmounts, and the grabbed pane is orphaned.
+const armed = computed(() => !surveying.value && !focused.value && isGroup.value && (hovered.value || !!props.selected || activeIndex.value !== null))
 
 // Top-level pane faces (as % of the card), laid out along the split's axis by footprint — the
 // regions you grab to pull a pane out, and the seams revealed between them on ease-apart.
@@ -106,6 +108,7 @@ const springing = ref(false) // released under the threshold → animate the pan
 const pull = ref({ x: 0, y: 0 }) // resisted (lagging) translate on the grabbed pane
 const past = ref(false) // cursor past the threshold → releasing now will detach
 let origin = { x: 0, y: 0 }
+let faceEl: HTMLElement | null = null // the grabbed pane face — its rect at release = the drop spot
 let moveHandler: ((e: PointerEvent) => void) | null = null
 let upHandler: ((e: PointerEvent) => void) | null = null
 
@@ -123,6 +126,25 @@ function faceStyle(i: number) {
   }
 }
 
+// The grabbed pane's top-left at release, as a FLOW-space offset from the group's top-left. The
+// card renders at `sizeOf(node)` flow px scaled by the canvas zoom, so zoom = cardScreenWidth /
+// flowWidth; the pane's screen offset from the card top-left ÷ zoom is its flow offset. The page
+// adds this to the group's known flow position (CroutonFlow doesn't forward the node's position
+// to a default node component, so we report an offset, not an absolute, and let the page resolve it).
+function computeDropOffset(): { x: number, y: number } | undefined {
+  if (!faceEl) return undefined
+  // Vue Flow's node wrapper is the reliable ancestor — its box is the node's rendered (zoom-scaled)
+  // footprint, so its top-left is the group's screen origin and its width gives the live zoom.
+  const card = faceEl.closest('.vue-flow__node') as HTMLElement | null
+  if (!card) return undefined
+  const faceR = faceEl.getBoundingClientRect()
+  const cardR = card.getBoundingClientRect()
+  const flow = sizeOf(props.data.node) // group's flow footprint (before it shrinks)
+  const zoom = cardR.width / flow.width
+  if (!zoom || !isFinite(zoom)) return undefined
+  return { x: (faceR.left - cardR.left) / zoom, y: (faceR.top - cardR.top) / zoom }
+}
+
 function onPaneDown(i: number, e: PointerEvent) {
   if (e.button !== 0) return // left-button only; `.nodrag` already keeps Vue Flow from moving the node
   activeIndex.value = i
@@ -131,6 +153,7 @@ function onPaneDown(i: number, e: PointerEvent) {
   past.value = false
   pull.value = { x: 0, y: 0 }
   origin = { x: e.clientX, y: e.clientY }
+  faceEl = e.currentTarget as HTMLElement
   moveHandler = (ev: PointerEvent) => {
     const rawX = ev.clientX - origin.x
     const rawY = ev.clientY - origin.y
@@ -139,6 +162,9 @@ function onPaneDown(i: number, e: PointerEvent) {
   }
   upHandler = (ev: PointerEvent) => {
     const dir = { x: ev.clientX - origin.x, y: ev.clientY - origin.y } // raw release direction
+    // The pulled pane's flow-space offset at release, so the freed node lands where you dropped it
+    // (WYSIWYG) instead of adjacent to the group. Read the DOM BEFORE cleanup nulls faceEl.
+    const dropOffset = computeDropOffset()
     const i2 = activeIndex.value
     const didDetach = past.value && i2 != null
     cleanup()
@@ -146,7 +172,7 @@ function onPaneDown(i: number, e: PointerEvent) {
       // Reset pull state FIRST: Vue Flow reuses this node's component instance (same id), so a
       // leftover activeIndex/pull would strand the next pull's state. Then ask the page to detach.
       resetPull()
-      detach?.(props.data.node, { index: i2!, dir }) // page removes this pane → card re-renders
+      detach?.(props.data.node, { index: i2!, dir, dropOffset }) // page removes this pane → card re-renders
     }
     else {
       // Spring the pane back to its socket (CSS transition), then clear once it's home.
@@ -173,6 +199,7 @@ function cleanup() {
   if (moveHandler) window.removeEventListener('pointermove', moveHandler)
   moveHandler = null
   upHandler = null
+  faceEl = null
 }
 
 // Whenever the rendered layout changes under us (a detach shrank the group, a merge grew it, etc.),

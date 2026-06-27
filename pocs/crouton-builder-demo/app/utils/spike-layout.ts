@@ -29,10 +29,14 @@ export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<Sp
  * dragging a grip OUT past a threshold pops that pane back into its own flow node. The
  * page owns `nodes`, but a default node component can't emit up through CroutonFlow, so the
  * page PROVIDES this callback and SpikeBlockNode calls it — identifying its group by object
- * identity of `data.node` (Vue Flow doesn't forward the node id). `dir` is the release
- * direction (screen px) so the page places the freed node on that side of the group.
+ * identity of `data.node` (Vue Flow doesn't forward the node id). `dropOffset` is the pulled
+ * pane's top-left at release expressed as a FLOW-space offset from the group's top-left (the node
+ * computes it from its own on-screen size vs its flow footprint, no Vue Flow store needed); the
+ * page adds it to the group's known flow position so the freed node lands exactly where you
+ * dropped it. `dir` (screen-px release delta) is kept as a fallback for placing it on the pulled
+ * side when no `dropOffset` is available.
  */
-export interface SpikeDetachPayload { index: number, dir: { x: number, y: number } }
+export interface SpikeDetachPayload { index: number, dir: { x: number, y: number }, dropOffset?: { x: number, y: number } }
 export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
 
 /**
