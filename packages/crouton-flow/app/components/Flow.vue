@@ -258,15 +258,13 @@ const {
 // CONSTANT fraction of the canvas width — so scrubbing to a bigger screen zooms OUT and the layout
 // stays ~the same on-screen size, only reflowing for the new width (the responsive-preview feel).
 // Deterministic (no Vue Flow re-measure). Clear → fit the whole board, capped.
-const FOCUS_DISPLAY_FRAC = 0.86
 watch(() => props.focusBounds, (bounds) => {
   if (bounds) {
-    const cw = containerRef.value?.clientWidth ?? 0
-    if (cw > 0) {
-      const zoom = (cw * FOCUS_DISPLAY_FRAC) / bounds.width
-      setCenter(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, { zoom, duration: 200 })
-    }
-    else fitBounds({ ...bounds }, { duration: 200, padding: 0.16 })
+    // Defer past the same-tick node-set/resize churn (soloing a node makes Vue Flow re-process
+    // nodes and can fire its own viewport fit that races ours) so our fit is the last camera op.
+    const apply = () => fitBounds({ ...bounds }, { duration: 250, padding: 0.18 })
+    if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(() => requestAnimationFrame(apply))
+    else apply()
   }
   else nextTick(() => fitView({ duration: 450, padding: 0.3, maxZoom: 1 }))
 }, { deep: true })
