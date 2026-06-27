@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-7 · #907 · Fit = native zoom-to-fit · devtools menu above the pill (z-fix)'
+const BUILD = 'focus-shell-8 · #907 · slimmer options (panel + collapse only; motion/variant out)'
 
 const blockNode = markRaw(SpikeBlockNode)
 

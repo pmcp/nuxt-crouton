@@ -357,74 +357,32 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
               </div>
             </div>
 
-            <!-- "⋯" reveal — compact: collapse motion (a select) + the selected panel, two slim rows -->
+            <!-- "⋯" reveal — just the selected panel + its Collapse. (Collapse MOTION is layout-wide,
+                 not per-breakpoint, so it moved out of here; Widget variants need variant-aware blocks
+                 — both deferred to keep this clean.) -->
             <Transition name="opts">
-              <div v-if="optionsOpen" class="flex flex-col gap-2 border-t border-default/50 pt-2">
-                <!-- collapse motion (layout-wide) — tappable chips, no dropdown -->
-                <div class="flex items-center gap-2">
-                  <span class="w-12 shrink-0 text-[10px] uppercase tracking-widest text-muted">Motion</span>
-                  <div class="flex flex-1 gap-1 overflow-x-auto">
-                    <UButton
-                      v-for="s in LAYOUT_COLLAPSE_STYLES"
-                      :key="s"
-                      :label="MOTION_SHORT[s]"
-                      :title="COLLAPSE_LABELS[s]"
-                      size="xs"
-                      class="shrink-0"
-                      :color="collapseStyleHere === s ? 'primary' : 'neutral'"
-                      :variant="collapseStyleHere === s ? 'solid' : 'soft'"
-                      @click="onSetCollapseStyle(s)"
-                    />
-                  </div>
+              <div v-if="optionsOpen" class="border-t border-default/50 pt-2">
+                <div v-if="selectedBlock" class="flex items-center gap-2">
+                  <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-primary" />
+                  <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
                   <UButton
-                    v-if="hasCheckpointHere"
-                    icon="i-lucide-trash-2"
+                    :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
+                    :label="isCollapsed(selectedBlock.blockId) ? 'Collapsed' : 'Collapse'"
                     size="xs"
-                    color="error"
+                    :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
+                    :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
+                    @click="onToggleCollapse(selectedBlock!.blockId)"
+                  />
+                  <UButton
+                    v-if="multiBlock"
+                    icon="i-lucide-x"
+                    size="xs"
+                    color="neutral"
                     variant="ghost"
-                    :title="`Remove key-point @ ${simWidth}px`"
-                    @click="dropCheckpoint(simWidth)"
+                    aria-label="Clear selection"
+                    @click="selectedBlockId = null"
                   />
                 </div>
-                <!-- the panel you tapped — name + collapse, then its variant chips -->
-                <template v-if="selectedBlock">
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-primary" />
-                    <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
-                    <UButton
-                      :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
-                      :label="isCollapsed(selectedBlock.blockId) ? 'Collapsed' : 'Collapse'"
-                      size="xs"
-                      :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
-                      :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
-                      @click="onToggleCollapse(selectedBlock!.blockId)"
-                    />
-                    <UButton
-                      v-if="multiBlock"
-                      icon="i-lucide-x"
-                      size="xs"
-                      color="neutral"
-                      variant="ghost"
-                      aria-label="Clear selection"
-                      @click="selectedBlockId = null"
-                    />
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="w-12 shrink-0 text-[10px] uppercase tracking-widest text-muted">Widget</span>
-                    <div class="flex flex-1 gap-1 overflow-x-auto">
-                      <UButton
-                        v-for="vr in VARIANTS"
-                        :key="vr.value"
-                        :label="vr.label"
-                        size="xs"
-                        class="shrink-0"
-                        :color="variantOf(selectedBlock.blockId) === vr.value ? 'primary' : 'neutral'"
-                        :variant="variantOf(selectedBlock.blockId) === vr.value ? 'solid' : 'soft'"
-                        @click="onSetVariant(selectedBlock!.blockId, vr.value)"
-                      />
-                    </div>
-                  </div>
-                </template>
                 <p v-else class="py-0.5 text-center text-[11px] text-muted">Tap a panel in the layout to edit it</p>
               </div>
             </Transition>
