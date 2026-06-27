@@ -247,7 +247,7 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
       <div ref="stageRef" class="relative z-10 grid min-h-0 flex-1 place-items-center overflow-hidden px-3 pt-3">
         <div
           ref="flipRef"
-          class="spike-focus__card overflow-hidden rounded-[2rem] border border-default/60 bg-default shadow-2xl ring-1 ring-black/5"
+          class="spike-focus__card overflow-hidden rounded-[1.75rem] bg-default shadow-lg ring-1 ring-default/15"
           :style="wrapperStyle"
         >
           <div ref="innerRef" class="relative" :style="innerStyle" @click="onLayoutClick">
