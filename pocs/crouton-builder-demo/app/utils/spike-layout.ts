@@ -24,6 +24,22 @@ export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**
+ * Pull-the-pane-to-detach (#907) — the inverse of snap-merge, ON the flow canvas. A merged node
+ * renders its panes; arming it (hover/select) makes each top-level pane a grabbable face — grab one
+ * and pull it past a threshold to pop it back into its own flow node. The page owns `nodes`, but a
+ * default node component can't emit up through CroutonFlow, so the page PROVIDES this callback and
+ * SpikeBlockNode calls it — identifying its group by object identity of `data.node` (Vue Flow
+ * doesn't forward the node id). `dropOffset` is the pulled pane's top-left at release as a FLOW-space
+ * offset from the group's top-left (the node computes it from its on-screen size vs its flow
+ * footprint, no Vue Flow store needed); the page adds it to the group's known flow position so the
+ * freed node lands exactly where you dropped it. `dir` (screen-px release delta) is a fallback for
+ * placing it on the pulled side when no `dropOffset` is available. (Detach is a BOARD gesture;
+ * double-click a node to open the separate full-screen edit view.)
+ */
+export interface SpikeDetachPayload { index: number, dir: { x: number, y: number }, dropOffset?: { x: number, y: number } }
+export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
+
+/**
  * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
  * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
  * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a

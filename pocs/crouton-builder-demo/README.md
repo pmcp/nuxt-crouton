@@ -41,12 +41,19 @@ Vue Flow camera zoom. This is the key design choice:
 - **Persistence contract is unchanged.** The node's layout rides in the page's
   `zoomTree` `v-model` (root + authored breakpoints); resize→keypoint is the
   author's own job. `Done` returns to the board.
-- **Detach** is folded into this view as a clean "Detach pane" menu (for a snapped
-  group), replacing the old canvas pull-apart grips — it pops a top-level pane back
-  onto the board (reusing `detachNode`) and returns you to the board to see it.
+- **Detach** is a **board gesture** (consolidated from the detach-redesign branch):
+  grab a pane of a merged node and pull it — the group eases apart, the pane tracks
+  your finger 1:1 (zoom-corrected) and past a threshold detaches into its own flow
+  node exactly where you release; under the threshold it springs back. The edit view
+  stays focused purely on responsiveness.
+- **Overview-on-add** (also consolidated): adding a block re-frames the board to an
+  overview (`fitView` with `maxZoom:1`) instead of hard-zooming the first block on a
+  phone.
 
 Verify the framing fix at a **mobile viewport (390×844)**: drop 2 blocks →
-double-click each → both open framed identically and fully on-screen.
+double-click each → both open framed identically and fully on-screen. Drag one block
+onto another to merge → pull a pane out (it follows your finger and detaches where you
+release) → add a block (the camera frames an overview, not a hard zoom).
 
 ## Local dev
 

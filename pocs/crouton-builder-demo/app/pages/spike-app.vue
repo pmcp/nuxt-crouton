@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-view-1 · #907 · unified edit view (no camera) — framing fixed'
+const BUILD = 'consolidated-1 · #907 · full-screen edit view (no camera) + pull-pane detach + overview-on-add'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -77,17 +77,57 @@ interface FlowNode { id: string, type: string, position: { x: number, y: number 
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
+// Camera: re-frame the whole board to an overview after adding a block. CroutonFlow only
+// fits-to-view on mount (when the board is empty), so without this a freshly-added block sits at
+// the default zoom — which on a narrow phone fills the screen. fitView with maxZoom:1 keeps a
+// single block at a comfortable size and shows everything you've added. Survey/focus own the
+// camera, so skip then.
+const flowRef = ref<{ fitView?: (o?: Record<string, unknown>) => void } | null>(null)
+function fitOverview() {
+  if (viewport.value || zoomNodeId.value) return // survey / edit-view own the screen
+  const fit = () => flowRef.value?.fitView?.({ duration: 350, padding: 0.3, maxZoom: 1 })
+  // Fit on nextTick, then once more after the new node's dimensions settle (Vue Flow measures
+  // node size async, so a single immediate fit can frame a stale/zero-width box and miscenter).
+  nextTick(fit)
+  window.setTimeout(fit, 180)
+}
+
 // Live snap preview (#907): while a block is dragged, the target node it will snap to lights
 // up the joining edge. Provided here; SpikeBlockNode injects it and matches by object identity.
 const snapPreview = shallowRef<SpikeSnapPreview | null>(null)
 provide(SPIKE_SNAP_KEY, snapPreview)
 
-// Detach (#907 focus-view redesign) — folded INTO the edit view as a clean affordance (a pane
-// menu), no longer pull-apart grips on the canvas. From inside the view you pop a top-level pane
-// of the focused group back onto the board: split the group's `data.node`, shrink the host to the
-// remainder (authored breakpoints reset — the structure they targeted changed), place the freed
-// pane beside it, and return to the board so you can see it. See `detachPaneInView` below.
+// Pull-the-pane-to-detach (#907) — the inverse of snap-merge, a BOARD gesture. A SpikeBlockNode pops
+// a pane out of a merged group and reports it here (via SPIKE_DETACH_KEY — it can't emit up through
+// CroutonFlow). We split the group's `data.node`, shrink it to the remainder, and place the freed pane
+// WHERE you dropped it (payload.dropOffset, flow coords) — falling back to the pulled side if it's
+// unavailable. (Editing a node is the separate full-screen edit view — double-click; this is detach.)
 const DETACH_GAP = 40
+function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
+  const idx = nodes.value.findIndex(n => n.data.node === group)
+  if (idx === -1) return
+  const host = nodes.value[idx]!
+  const { root, detached } = detachNode(group, [payload.index])
+  if (!detached || !root) return
+
+  // Primary: land it where the pulled pane was released (WYSIWYG) — the node reports the pane's
+  // flow-space offset from the group's top-left, we add it to the group's known position. Fallback
+  // (no offset): place it on the side the drag pointed, just past the group's old extent.
+  const gSize = sizeOf(group) // group's extent BEFORE it shrinks
+  const dSize = sizeOf(detached)
+  const horizontal = Math.abs(payload.dir.x) >= Math.abs(payload.dir.y)
+  const pos = payload.dropOffset
+    ? { x: host.position.x + payload.dropOffset.x, y: host.position.y + payload.dropOffset.y }
+    : (horizontal
+        ? { x: payload.dir.x >= 0 ? host.position.x + gSize.width + DETACH_GAP : host.position.x - dSize.width - DETACH_GAP, y: host.position.y }
+        : { x: host.position.x, y: payload.dir.y >= 0 ? host.position.y + gSize.height + DETACH_GAP : host.position.y - dSize.height - DETACH_GAP })
+
+  const label = flattenLeaves(detached)[0]?.label
+  const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }
+  // Shrink the host to the remainder (keeps its position) and add the freed pane beside it.
+  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: root } } : n).concat(freed)
+}
+provide(SPIKE_DETACH_KEY, onDetach)
 
 // Global viewport survey (#907 layer 3) — flip the whole board to a device width to see what every
 // page looks like at that viewport. Read-only: snapping/detach off, nodes tiled & non-draggable.
@@ -143,34 +183,8 @@ const zoomTree = computed<LayoutTree>({
   },
 })
 
-// Detach FROM the edit view — the top-level panes of the focused group, each detachable to its own
-// board node. `detachItems` feeds the view's "Detach" menu (only shown for a split/group node).
-const editPanes = computed(() => {
-  const n = zoomNode.value?.data.node
-  if (!n || n.type !== 'split') return []
-  return n.children.map((c, i) => ({ index: i, label: flattenLeaves(c)[0]?.label ?? `Pane ${i + 1}` }))
-})
-const detachItems = computed(() => [
-  editPanes.value.map(p => ({ label: `Detach ${p.label}`, icon: 'i-lucide-grip', onSelect: () => detachPaneInView(p.index) })),
-])
-function detachPaneInView(paneIndex: number) {
-  const id = zoomNodeId.value
-  if (!id) return
-  const idx = nodes.value.findIndex(n => n.id === id)
-  if (idx === -1) return
-  const host = nodes.value[idx]!
-  const group = host.data.node
-  const { root, detached } = detachNode(group, [paneIndex])
-  if (!detached || !root) return
-  const gSize = sizeOf(group) // group's extent BEFORE it shrinks
-  const pos = { x: host.position.x + gSize.width + DETACH_GAP, y: host.position.y }
-  const label = flattenLeaves(detached)[0]?.label
-  const freed: FlowNode = { id: `detached-${++seq}`, type: 'default', position: { x: Math.round(pos.x), y: Math.round(pos.y) }, data: { node: detached, label } }
-  // Shrink the host to the remainder (authored bp reset — its structure changed) + add the freed pane beside it.
-  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: root, bp: undefined } } : n).concat(freed)
-  toast.add({ title: `Detached ${label ?? 'pane'}`, icon: 'i-lucide-grip', duration: 1400 })
-  closeEdit() // back to the board so the freed pane is visible
-}
+// Detach is the BOARD pull-pane gesture (onDetach above), not an in-view affordance — so the edit
+// view stays focused purely on responsiveness. To split a merged node, pull a pane out on the board.
 
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
@@ -191,6 +205,7 @@ function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: num
   const label = String(item.label ?? item.blockId)
   const leaf: LayoutNode = { type: 'leaf', blockId: String(item.blockId), config: { collection: 'artists', heading: label } }
   nodes.value = [...nodes.value, { id: String(item.id), type: 'default', position, data: { node: leaf, label } }]
+  fitOverview() // re-frame so you see everything that's been added (esp. the first block on mobile)
 }
 
 /** Combine two nodes into a split, flattening same-direction nesting so a third block joins
@@ -530,8 +545,10 @@ function reset() {
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
+            ref="flowRef"
             :rows="flowRows"
             collection="artists"
+            :fit-view-on-mount="false"
             data-mode="ephemeral"
             :default-node-component="blockNode"
             :draggable="viewport === null && !editing"
@@ -678,9 +695,6 @@ function reset() {
             <span class="text-sm font-semibold">{{ zoomLabel }}</span>
             <UBadge color="neutral" variant="subtle" size="sm" class="hidden sm:inline-flex">Edit responsiveness</UBadge>
             <div class="ml-auto flex items-center gap-2">
-              <UDropdownMenu v-if="editPanes.length" :items="detachItems">
-                <UButton size="xs" icon="i-lucide-grip" color="neutral" variant="ghost" label="Detach pane" trailing-icon="i-lucide-chevron-down" />
-              </UDropdownMenu>
               <UButton size="xs" icon="i-lucide-check" color="primary" label="Done" @click="closeEdit" />
             </div>
           </header>
