@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-2 · #907 · scales to fit at any width + tap-a-panel for its settings'
+const BUILD = 'focus-shell-3 · #907 · bottom command pill (Fit · Responsive · Blocks · Magic)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -193,6 +193,14 @@ const zoomTree = computed<LayoutTree>({
 // Mobile palette (bottom sheet) + the compiled-layout slideover open state.
 const paletteOpen = ref(false)
 const resultOpen = ref(false)
+
+// Bottom command pill (#907) — the board chrome lives in a floating bottom pill (Fit · Responsive ·
+// Blocks · Magic), iOS-toolbar style. Tapping "Responsive" lets the pill TAKE OVER → device chips;
+// "← " returns to the main set. (Survey is Free-mode only; leaving Responsive resets to Fit.)
+const pillMode = ref<'main' | 'responsive'>('main')
+function openResponsive() { pillMode.value = 'responsive' }
+function closeResponsive() { pillMode.value = 'main' }
+function fitBoard() { viewport.value = null; pillMode.value = 'main' }
 
 /** HTML5 drag source: stamp the crouton-item payload CroutonFlow's drop handler reads. */
 function onDragStart(e: DragEvent, item: { blockId: string, label: string }) {
@@ -468,67 +476,24 @@ function reset() {
     <header class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-5 py-3">
       <h1 class="text-base font-semibold">Spike · build an app on Vue Flow</h1>
       <p class="hidden text-xs text-muted lg:block">Drop blocks → arrange (Free / Snap) → ✨ Magic or compile. #905</p>
-      <div class="ml-auto flex items-center gap-2">
-        <!-- Viewport survey (#907 layer 3) — flip the whole board to a device width (Free mode only).
-             Visible on mobile too (survey is especially handy on a phone); the header wraps if tight. -->
-        <div v-if="mode === 'free'" class="flex items-center gap-0.5 rounded-lg border border-default p-0.5">
-          <UButton
-            size="xs"
-            icon="i-lucide-frame"
-            label="Fit"
-            :color="viewport === null ? 'primary' : 'neutral'"
-            :variant="viewport === null ? 'soft' : 'ghost'"
-            @click="viewport = null"
-          />
-          <UButton
-            v-for="v in SPIKE_VIEWPORTS"
-            :key="v.label"
-            size="xs"
-            :icon="v.icon"
-            :title="`${v.label} · ${v.width}px`"
-            :aria-label="v.label"
-            :color="viewport?.label === v.label ? 'primary' : 'neutral'"
-            :variant="viewport?.label === v.label ? 'soft' : 'ghost'"
-            @click="viewport = v"
-          />
-        </div>
-        <!-- Free placement ⇄ magnetic Snap — non-exclusive surfaces over the same blocks (#907) -->
-        <div class="flex items-center gap-0.5 rounded-lg border border-default p-0.5">
-          <UButton
-            size="xs"
-            icon="i-lucide-move"
-            label="Free"
-            :color="mode === 'free' ? 'primary' : 'neutral'"
-            :variant="mode === 'free' ? 'soft' : 'ghost'"
-            @click="enterFree"
-          />
-          <UButton
-            size="xs"
-            icon="i-lucide-magnet"
-            label="Snap"
-            :color="mode === 'snap' ? 'primary' : 'neutral'"
-            :variant="mode === 'snap' ? 'soft' : 'ghost'"
-            @click="enterSnap"
-          />
-        </div>
-        <!-- Mobile: open the palette as a bottom sheet (desktop has the persistent sidebar) -->
+      <!-- Board controls now live in the bottom command pill (Fit · Responsive · Blocks · Magic).
+           The header keeps only the secondary Free ⇄ Snap surface toggle. -->
+      <div class="ml-auto flex items-center gap-0.5 rounded-full border border-default p-0.5">
         <UButton
-          class="md:hidden"
           size="xs"
-          icon="i-lucide-layout-grid"
-          label="Blocks"
-          color="neutral"
-          variant="soft"
-          @click="paletteOpen = true"
+          icon="i-lucide-move"
+          label="Free"
+          :color="mode === 'free' ? 'primary' : 'neutral'"
+          :variant="mode === 'free' ? 'soft' : 'ghost'"
+          @click="enterFree"
         />
         <UButton
-          v-if="proposals.length"
           size="xs"
-          icon="i-lucide-panel-right-open"
-          label="Layout"
-          color="neutral"
-          variant="soft"
-          @click="resultOpen = true"
+          icon="i-lucide-magnet"
+          label="Snap"
+          :color="mode === 'snap' ? 'primary' : 'neutral'"
+          :variant="mode === 'snap' ? 'soft' : 'ghost'"
+          @click="enterSnap"
         />
       </div>
       <!-- Version stamp — a DIRECT child of the wrapping header so on mobile it drops to its own
@@ -568,6 +533,93 @@ function reset() {
             <CroutonLayoutComposeCanvas v-model="pieces" class="h-full w-full" />
           </div>
         </ClientOnly>
+
+        <!-- Bottom command pill (#907) — the board's primary controls, iOS-toolbar style. Free mode
+             only; hidden while the edit shell is up. "Responsive" takes the pill over with device chips. -->
+        <div
+          v-if="mode === 'free' && !editing"
+          class="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
+          <Transition name="pill-swap" mode="out-in">
+            <!-- main set -->
+            <div
+              v-if="pillMode === 'main'"
+              key="main"
+              class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl"
+            >
+              <UButton
+                icon="i-lucide-frame"
+                label="Fit"
+                size="sm"
+                :color="viewport === null ? 'primary' : 'neutral'"
+                :variant="viewport === null ? 'soft' : 'ghost'"
+                @click="fitBoard"
+              />
+              <UButton
+                icon="i-lucide-ruler"
+                label="Responsive"
+                size="sm"
+                :color="viewport !== null ? 'primary' : 'neutral'"
+                :variant="viewport !== null ? 'soft' : 'ghost'"
+                @click="openResponsive"
+              />
+              <UButton
+                icon="i-lucide-layout-grid"
+                label="Blocks"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                @click="paletteOpen = true"
+              />
+              <UButton
+                :icon="hasAI ? 'i-lucide-sparkles' : 'i-lucide-wand-2'"
+                label="Magic"
+                size="sm"
+                color="primary"
+                variant="solid"
+                :disabled="!blockCount"
+                @click="magic"
+              />
+              <UButton
+                v-if="proposals.length"
+                icon="i-lucide-panel-top-open"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                aria-label="Show layout result"
+                @click="resultOpen = true"
+              />
+            </div>
+            <!-- "Responsive" took over → device chips -->
+            <div
+              v-else
+              key="responsive"
+              class="pointer-events-auto flex items-center gap-1 rounded-full border border-primary/40 bg-elevated/90 p-1.5 shadow-xl backdrop-blur-xl"
+            >
+              <UButton icon="i-lucide-chevron-left" size="sm" color="neutral" variant="ghost" aria-label="Back" @click="closeResponsive" />
+              <UButton
+                icon="i-lucide-frame"
+                label="Fit"
+                size="sm"
+                :color="viewport === null ? 'primary' : 'neutral'"
+                :variant="viewport === null ? 'soft' : 'ghost'"
+                @click="viewport = null"
+              />
+              <span class="mx-0.5 h-5 w-px bg-default/60" />
+              <UButton
+                v-for="v in SPIKE_VIEWPORTS"
+                :key="v.label"
+                :icon="v.icon"
+                :label="v.label"
+                size="sm"
+                :title="`${v.label} · ${v.width}px`"
+                :color="viewport?.label === v.label ? 'primary' : 'neutral'"
+                :variant="viewport?.label === v.label ? 'soft' : 'ghost'"
+                @click="viewport = v"
+              />
+            </div>
+          </Transition>
+        </div>
 
         <!-- Snap hints (when there's something to arrange) -->
         <p
@@ -692,3 +744,11 @@ function reset() {
     />
   </div>
 </template>
+
+<style scoped>
+/* the command pill swaps between its main set and the "Responsive" device set */
+.pill-swap-enter-active,
+.pill-swap-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.pill-swap-enter-from { opacity: 0; transform: translateY(6px) scale(0.97); }
+.pill-swap-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
+</style>
