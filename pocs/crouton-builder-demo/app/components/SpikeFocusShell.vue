@@ -99,42 +99,43 @@ function dropCheckpoint(minWidth: number) { update(removeBreakpoint(tree.value, 
 const pct = (w: number) => ((w - MIN) / (MAX - MIN)) * 100
 
 // --- the scaled layout frame (fit to the available stage, never clipped) --------------
+// TWO elements on purpose: the WRAPPER (flipRef) is sized to the real on-screen box and is the only
+// thing the zoom animation touches (its transform); the INNER frame is `simWidth` px wide and Vue
+// scales it down to fit (transform: scale). They never share a transform, so scrubbing the width
+// always re-fits — the FLIP can't strand a stale transform on the scaled frame. And because the
+// wrapper carries the true on-screen size, a (visually) scaled-down inner can't overflow the screen.
 const stageRef = ref<HTMLElement | null>(null)
 const { width: stageW, height: stageH } = useElementSize(stageRef)
-const displayW = computed(() => Math.min(simWidth.value, Math.max(240, stageW.value - 24)))
-const frameScale = computed(() => displayW.value / simWidth.value)
-// Frame height fills the stage (÷scale so the on-screen height ≈ the stage), so the layout uses the
-// whole space and nothing is cut off — the old fixed-height clipping is gone.
-const frameH = computed(() => Math.max(360, (stageH.value - 16) / frameScale.value))
-const frameStyle = computed(() => ({
+const availW = computed(() => Math.max(240, stageW.value - 24))
+const availH = computed(() => Math.max(320, stageH.value - 16))
+const displayW = computed(() => Math.min(simWidth.value, availW.value))
+const scale = computed(() => displayW.value / simWidth.value)
+const wrapperStyle = computed(() => ({ width: `${Math.round(displayW.value)}px`, height: `${Math.round(availH.value)}px` }))
+const innerStyle = computed(() => ({
   width: `${simWidth.value}px`,
-  height: `${frameH.value}px`,
-  transform: `scale(${frameScale.value})`,
-  transformOrigin: 'top center',
+  height: `${Math.round(availH.value / scale.value)}px`,
+  transform: `scale(${scale.value})`,
+  transformOrigin: 'top left',
 }))
 
-// --- shared-element zoom (card morphs from the node's rect → centre) -------------------
-const cardRef = ref<HTMLElement | null>(null)
+// --- shared-element zoom (wrapper morphs from the node's rect → centre) ----------------
+const flipRef = ref<HTMLElement | null>(null)
 const ready = ref(false) // gates the control-shell reveal until the zoom settles
 function flipFrom(rect: { x: number, y: number, width: number, height: number }) {
-  const el = cardRef.value
+  const el = flipRef.value
   if (!el) return
   const f = el.getBoundingClientRect()
   if (!f.width || !f.height) return
-  const sx = rect.width / f.width
-  const sy = rect.height / f.height
-  const tx = rect.x - f.x
-  const ty = rect.y - f.y
   el.style.transformOrigin = 'top left'
   el.style.transition = 'none'
-  el.style.transform = `translate(${tx}px, ${ty}px) scale(${sx}, ${sy})`
+  el.style.transform = `translate(${rect.x - f.x}px, ${rect.y - f.y}px) scale(${rect.width / f.width}, ${rect.height / f.height})`
   el.style.opacity = '0.85'
   void el.offsetWidth // force reflow so the start frame sticks
   requestAnimationFrame(() => {
-    if (!cardRef.value) return
-    cardRef.value.style.transition = 'transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease'
-    cardRef.value.style.transform = 'none'
-    cardRef.value.style.opacity = '1'
+    if (!flipRef.value) return
+    flipRef.value.style.transition = 'transform 0.46s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease'
+    flipRef.value.style.transform = 'none'
+    flipRef.value.style.opacity = '1'
   })
 }
 onMounted(async () => {
@@ -147,16 +148,14 @@ onMounted(async () => {
 const closing = ref(false)
 function requestClose() {
   if (closing.value) return
-  const el = cardRef.value
+  const el = flipRef.value
   const o = props.originRect
   ready.value = false
   if (el && o) {
     const f = el.getBoundingClientRect()
-    const sx = o.width / f.width
-    const sy = o.height / f.height
     el.style.transformOrigin = 'top left'
     el.style.transition = 'transform 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
-    el.style.transform = `translate(${o.x - f.x}px, ${o.y - f.y}px) scale(${sx}, ${sy})`
+    el.style.transform = `translate(${o.x - f.x}px, ${o.y - f.y}px) scale(${o.width / f.width}, ${o.height / f.height})`
     el.style.opacity = '0.6'
     closing.value = true
     let done = false
@@ -197,19 +196,23 @@ const optionsOpen = ref(false)
         >Done</button>
       </div>
 
-      <!-- The layout — the hero. Zooms up from the node's rect, fits the stage (never clipped). -->
+      <!-- The layout — the hero. Zooms up from the node's rect, fits the stage (never clipped).
+           Wrapper = on-screen box + the zoom transform; inner = simWidth px scaled to fit (Vue-owned). -->
       <div ref="stageRef" class="relative z-10 grid min-h-0 flex-1 place-items-center overflow-hidden px-3 pt-3">
         <div
-          ref="cardRef"
+          ref="flipRef"
           class="spike-focus__card overflow-hidden rounded-[2rem] border border-default/60 bg-default shadow-2xl ring-1 ring-black/5"
-          :style="frameStyle"
+          :style="wrapperStyle"
         >
-          <CroutonLayoutResponsiveRenderer
-            :tree="tree"
-            :width="simWidth"
-            @expand="onExpand"
-            @layout-change="onResize"
-          />
+          <div :style="innerStyle">
+            <CroutonLayoutResponsiveRenderer
+              :tree="tree"
+              :width="simWidth"
+              class="h-full w-full"
+              @expand="onExpand"
+              @layout-change="onResize"
+            />
+          </div>
         </div>
       </div>
 
