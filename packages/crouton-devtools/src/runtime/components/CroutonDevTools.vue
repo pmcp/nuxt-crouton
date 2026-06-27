@@ -23,6 +23,7 @@ const hasTools = computed(() => tools.value.length > 0)
   <UPopover
     v-if="hasTools"
     :content="{ side: 'top', align: 'end', sideOffset: 8 }"
+    :ui="{ content: 'z-[100000]' }"
   >
     <UButton
       icon="i-lucide-glasses"
