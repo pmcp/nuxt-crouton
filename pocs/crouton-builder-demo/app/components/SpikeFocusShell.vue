@@ -62,7 +62,13 @@ const COLLAPSE_LABELS: Record<LayoutCollapseStyle, string> = {
   'crt-power-down': 'CRT power-down',
   'iris-portal': 'Iris portal',
 }
-const MOTION_ITEMS = LAYOUT_COLLAPSE_STYLES.map(s => ({ label: COLLAPSE_LABELS[s], value: s }))
+// Short labels so the 4 motion options fit one chip row (full name in the title/tooltip).
+const MOTION_SHORT: Record<LayoutCollapseStyle, string> = {
+  'gutter-tabs': 'Gutter',
+  'spring-drawer': 'Spring',
+  'crt-power-down': 'CRT',
+  'iris-portal': 'Iris',
+}
 
 // Author BY DEMONSTRATION — a change at the current width snapshots a checkpoint there.
 function authorHere(patch: { collapsed?: string[], variants?: Record<string, string>, collapseStyle?: LayoutCollapseStyle }) {
@@ -271,12 +277,16 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
               @expand="onExpand"
               @layout-change="onResize"
             />
-            <!-- selection highlight: a ring over the tapped panel (geometry, %-rect) -->
-            <div
-              v-if="multiBlock && selectedRegion"
-              class="pointer-events-none absolute rounded-xl ring-2 ring-primary ring-offset-2 ring-offset-default transition-all duration-200"
-              :style="{ left: `${selectedRegion.left}%`, top: `${selectedRegion.top}%`, width: `${selectedRegion.width}%`, height: `${selectedRegion.height}%` }"
-            />
+            <!-- selection focus: dim the OTHER panels so the tapped one stands out — no hard ring -->
+            <template v-if="multiBlock && selectedBlockId">
+              <div
+                v-for="(rg, i) in regions"
+                v-show="rg.blockId !== selectedBlockId"
+                :key="i"
+                class="pointer-events-none absolute bg-default/55 transition-opacity duration-200"
+                :style="{ left: `${rg.left}%`, top: `${rg.top}%`, width: `${rg.width}%`, height: `${rg.height}%` }"
+              />
+            </template>
           </div>
         </div>
       </div>
@@ -284,26 +294,6 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
       <!-- The control SHELL — slides up and hugs the layout once the zoom settles. -->
       <Transition name="shell-rise">
         <div v-if="ready" class="relative z-10 mx-auto mb-[max(1rem,env(safe-area-inset-bottom))] w-full max-w-md px-3">
-          <!-- key-points: poppable checkpoint chips above the pill -->
-          <div class="mb-2 flex flex-wrap items-center justify-center gap-1.5">
-            <button
-              v-for="(bp, i) in breakpoints"
-              :key="bp.minWidth"
-              type="button"
-              class="spike-pop flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium tabular-nums shadow-sm backdrop-blur transition-all"
-              :class="bp.minWidth === activeMin ? 'bg-primary text-inverted' : 'bg-elevated/80 text-muted hover:text-default'"
-              :style="{ animationDelay: `${i * 45}ms` }"
-              @click="jumpTo(bp.minWidth)"
-            >
-              <UIcon name="i-lucide-git-commit-horizontal" class="size-3" />
-              {{ bp.minWidth }}
-            </button>
-            <span
-              v-if="!breakpoints.length"
-              class="spike-pop rounded-full bg-elevated/70 px-2.5 py-1 text-[11px] text-muted/80 backdrop-blur"
-            >change anything → a key-point lands here</span>
-          </div>
-
           <!-- the pill: device presets · width scrubber · px · options -->
           <div class="flex flex-col gap-2 rounded-[1.75rem] border border-default/60 bg-elevated/85 p-2.5 shadow-xl backdrop-blur-xl">
             <div class="flex items-center gap-1">
@@ -330,21 +320,62 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
             </div>
             <div class="px-1 pb-0.5">
               <USlider v-model="simWidth" :min="MIN" :max="MAX" :step="1" size="xs" aria-label="Width" />
+              <!-- breakpoints as dots ON the track at their px position; tap → popover with the px,
+                   green dot when it's the active breakpoint (the one applied at the current width). -->
+              <div v-if="breakpoints.length" class="relative mt-1.5 h-3">
+                <UPopover v-for="bp in breakpoints" :key="bp.minWidth">
+                  <button
+                    type="button"
+                    class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 p-1.5"
+                    :style="{ left: `${pct(bp.minWidth)}%` }"
+                    :aria-label="`Breakpoint ${bp.minWidth}px`"
+                    @click="jumpTo(bp.minWidth)"
+                  >
+                    <span
+                      class="block size-2.5 rounded-full ring-2 ring-elevated transition-colors"
+                      :class="bp.minWidth === activeMin ? 'bg-primary' : 'bg-muted'"
+                    />
+                  </button>
+                  <template #content>
+                    <div class="flex items-center gap-1.5 px-2 py-1.5">
+                      <span
+                        class="size-1.5 rounded-full"
+                        :class="bp.minWidth === activeMin ? 'bg-primary' : 'bg-muted'"
+                      />
+                      <span class="font-mono text-xs tabular-nums">{{ bp.minWidth }}px</span>
+                      <UButton
+                        icon="i-lucide-trash-2"
+                        size="xs"
+                        color="error"
+                        variant="ghost"
+                        aria-label="Remove breakpoint"
+                        @click="dropCheckpoint(bp.minWidth)"
+                      />
+                    </div>
+                  </template>
+                </UPopover>
+              </div>
             </div>
 
             <!-- "⋯" reveal — compact: collapse motion (a select) + the selected panel, two slim rows -->
             <Transition name="opts">
-              <div v-if="optionsOpen" class="flex flex-col gap-1.5 border-t border-default/50 pt-1.5">
-                <!-- collapse motion (layout-wide) -->
+              <div v-if="optionsOpen" class="flex flex-col gap-2 border-t border-default/50 pt-2">
+                <!-- collapse motion (layout-wide) — tappable chips, no dropdown -->
                 <div class="flex items-center gap-2">
                   <span class="w-12 shrink-0 text-[10px] uppercase tracking-widest text-muted">Motion</span>
-                  <USelect
-                    :model-value="collapseStyleHere"
-                    :items="MOTION_ITEMS"
-                    size="xs"
-                    class="flex-1"
-                    @update:model-value="(v: string) => onSetCollapseStyle(v as LayoutCollapseStyle)"
-                  />
+                  <div class="flex flex-1 gap-1 overflow-x-auto">
+                    <UButton
+                      v-for="s in LAYOUT_COLLAPSE_STYLES"
+                      :key="s"
+                      :label="MOTION_SHORT[s]"
+                      :title="COLLAPSE_LABELS[s]"
+                      size="xs"
+                      class="shrink-0"
+                      :color="collapseStyleHere === s ? 'primary' : 'neutral'"
+                      :variant="collapseStyleHere === s ? 'solid' : 'soft'"
+                      @click="onSetCollapseStyle(s)"
+                    />
+                  </div>
                   <UButton
                     v-if="hasCheckpointHere"
                     icon="i-lucide-trash-2"
@@ -355,25 +386,17 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
                     @click="dropCheckpoint(simWidth)"
                   />
                 </div>
-                <!-- the panel you tapped — its variant + collapse, one row -->
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-muted" />
-                  <span v-if="selectedBlock" class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
-                  <span v-else class="flex-1 text-[11px] text-muted">Tap a panel to edit it</span>
-                  <template v-if="selectedBlock">
-                    <USelect
-                      :model-value="variantOf(selectedBlock.blockId)"
-                      :items="VARIANTS"
-                      size="xs"
-                      class="w-24"
-                      @update:model-value="(v: string) => onSetVariant(selectedBlock!.blockId, v)"
-                    />
+                <!-- the panel you tapped — name + collapse, then its variant chips -->
+                <template v-if="selectedBlock">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-primary" />
+                    <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
                     <UButton
                       :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-panel-left-close' : 'i-lucide-panel-left'"
+                      :label="isCollapsed(selectedBlock.blockId) ? 'Collapsed' : 'Collapse'"
                       size="xs"
                       :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
                       :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
-                      :aria-label="isCollapsed(selectedBlock.blockId) ? 'Expand' : 'Collapse'"
                       @click="onToggleCollapse(selectedBlock!.blockId)"
                     />
                     <UButton
@@ -385,8 +408,24 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
                       aria-label="Clear selection"
                       @click="selectedBlockId = null"
                     />
-                  </template>
-                </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-12 shrink-0 text-[10px] uppercase tracking-widest text-muted">Widget</span>
+                    <div class="flex flex-1 gap-1 overflow-x-auto">
+                      <UButton
+                        v-for="vr in VARIANTS"
+                        :key="vr.value"
+                        :label="vr.label"
+                        size="xs"
+                        class="shrink-0"
+                        :color="variantOf(selectedBlock.blockId) === vr.value ? 'primary' : 'neutral'"
+                        :variant="variantOf(selectedBlock.blockId) === vr.value ? 'solid' : 'soft'"
+                        @click="onSetVariant(selectedBlock!.blockId, vr.value)"
+                      />
+                    </div>
+                  </div>
+                </template>
+                <p v-else class="py-0.5 text-center text-[11px] text-muted">Tap a panel in the layout to edit it</p>
               </div>
             </Transition>
           </div>
