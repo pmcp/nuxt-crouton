@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>skill/issue & the Nuxt-crouton family — strategic overview</title>
+<!--
+  Strategic overview of how the brands connect, as resolved this session
+  (epic #917 consolidation). On-brand with the skill/issue site. Self-contained;
+  render with the pre-installed chromium → screenshots/.
+-->
+<style>
+:root{
+  --bg:#07070b;--bg2:#0c0c14;--ink:#e7e7f2;--dim:#9a9ab0;--faint:#5a5a72;
+  --line:#1c1c2a;--line2:#26263a;--violet:#8b5cf6;--cyan:#22d3ee;--lime:#a3e635;
+  --grad:linear-gradient(100deg,#8b5cf6,#22d3ee 55%,#a3e635);
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1320px;margin:0 auto;padding:48px 40px 56px;position:relative;}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0,#000 30%,transparent 75%);opacity:.45;z-index:0;}
+.shell{position:relative;z-index:1;}
+
+h1{font-size:2.1rem;font-weight:820;letter-spacing:-.03em;margin:0 0 .3rem;}
+.sub{color:var(--dim);font-size:1rem;margin:0 0 8px;max-width:70ch;line-height:1.5;}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin:0 0 14px;}
+.zone{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#ffffff05,#ffffff01);padding:24px 24px 26px;margin-top:22px;position:relative;}
+.zone-tag{position:absolute;top:-10px;right:18px;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);background:var(--bg);padding:1px 10px;border:1px solid var(--line);border-radius:999px;}
+
+.card{border:1px solid var(--line2);border-radius:14px;background:#0d0d18;padding:16px 18px;position:relative;}
+.card h3{margin:0 0 4px;font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.card p{margin:0;color:var(--dim);font-size:.86rem;line-height:1.45;}
+.id{font-family:var(--mono);font-size:.7rem;color:var(--faint);border:1px solid var(--line2);border-radius:6px;padding:1px 6px;}
+.badge{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;}
+.b-live{color:#07070b;background:var(--lime);font-weight:700;}
+.b-plan{color:var(--faint);border:1px dashed var(--line2);}
+.method{border-color:transparent;background:linear-gradient(#0d0d18,#0d0d18) padding-box,var(--grad) border-box;border:1.5px solid transparent;}
+.dashed{border-style:dashed;opacity:.7;}
+
+.row{display:grid;gap:14px;}
+.r3{grid-template-columns:repeat(3,1fr);}
+.center{text-align:center;}
+.connect{text-align:center;color:var(--faint);font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;margin:14px 0;}
+.connect b{color:var(--cyan);}
+
+.method-head{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+.mark{width:54px;height:54px;flex:0 0 auto;}
+.method-head .big{font-family:var(--mono);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;}
+.method-head .slash{color:var(--cyan);}
+
+/* zone 2 stack */
+.stack{display:flex;flex-direction:column;gap:0;}
+.layer{border:1px solid var(--line2);background:#0d0d18;padding:14px 18px;position:relative;}
+.layer:first-child{border-radius:14px 14px 0 0;}
+.layer:last-child{border-radius:0 0 14px 14px;}
+.layer+.layer{border-top:0;}
+.layer h3{margin:0 0 2px;font-size:1rem;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.layer p{margin:0;color:var(--dim);font-size:.82rem;}
+.layer .role{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+.l-product{background:linear-gradient(90deg,#8b5cf614,transparent);}
+.l-bridge{background:linear-gradient(90deg,#22d3ee14,transparent);border-color:#22d3ee44;}
+.l-engine{background:#0a0a12;}
+
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;font-family:var(--mono);font-size:.72rem;color:var(--dim);}
+.legend span{display:inline-flex;align-items:center;gap:7px;}
+.dot{width:10px;height:10px;border-radius:3px;}
+.foot{margin-top:18px;color:var(--faint);font-family:var(--mono);font-size:.7rem;}
+.site{font-family:var(--mono);font-size:.72rem;color:var(--cyan);margin-top:8px;display:block;}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset=".55" stop-color="#22d3ee"/><stop offset="1" stop-color="#a3e635"/></linearGradient>
+</defs></svg>
+
+<div class="wrap"><div class="shell">
+
+  <p class="kicker">// strategic overview · how it connects</p>
+  <h1>One <span class="grad">method</span>. One engine. Three front doors.</h1>
+  <p class="sub">How the pieces fit after this session's consolidation (#917): <b style="color:var(--ink)">skill/issue</b> is the portable <i>method</i>; <b style="color:var(--ink)">crouton</b> is the <i>engine</i>; <b style="color:var(--ink)">Nuxt&nbsp;Harness</b> is where they meet; <b style="color:var(--ink)">Atelier</b> &amp; <b style="color:var(--ink)">Maquette</b> are what we sell on top.</p>
+
+  <!-- ZONE 1: THE METHOD -->
+  <div class="zone">
+    <span class="zone-tag">the method · portable</span>
+    <div class="card method" style="margin-bottom:18px">
+      <div class="method-head">
+        <svg class="mark" viewBox="0 0 64 64" fill="none"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#g)" stroke-width="2.5"/><path d="M41 17 L23 47" stroke="url(#g)" stroke-width="7" stroke-linecap="round"/><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee"/><circle cx="43.5" cy="43" r="3.6" fill="#a3e635"/></svg>
+        <div>
+          <div class="big">skill<span class="slash">/</span>issue <span class="id">#917</span></div>
+          <p style="color:var(--dim);margin-top:2px">The stack-agnostic way to build with AI — <b style="color:var(--ink)">a ticket holds the what &amp; why · a reusable skill holds the how · out comes a reviewed PR</b>. Not tied to any framework.</p>
+        </div>
+      </div>
+    </div>
+    <p class="connect">one method · <b>implemented per stack</b> ↓</p>
+    <div class="row r3">
+      <div class="card"><h3>Nuxt Harness <span class="id">#458</span> <span class="badge b-live">live</span></h3><p>The <b style="color:var(--ink)">Nuxt</b> implementation of skill/issue — the framework that ships the method as code.</p></div>
+      <div class="card dashed"><h3>React <span class="badge b-plan">next</span></h3><p>A future implementation — same method, React/JS skills. (The agnostic claim, proven.)</p></div>
+      <div class="card dashed"><h3>Swift <span class="badge b-plan">next</span></h3><p>A future implementation — same method, Swift/Xcode skills.</p></div>
+    </div>
+  </div>
+
+  <p class="connect">Nuxt Harness is <b>where the method meets our stack</b> ↓</p>
+
+  <!-- ZONE 2: THE NUXT-CROUTON STACK -->
+  <div class="zone">
+    <span class="zone-tag">the nuxt-crouton stack · #897 family</span>
+    <div class="stack">
+      <div class="layer l-product"><span class="role">product</span><h3>Atelier</h3><p>The product for <b style="color:var(--ink)">small organisations</b> — “describe your org, get a working app.”</p></div>
+      <div class="layer"><span class="role">layout engine</span><h3>Maquette <span class="id">#868 · #895</span></h3><p>Semantic-zoom layout builder + OSS engine (<code>@fyit/maquette</code>). A feature in Atelier and a standalone package.</p></div>
+      <div class="layer l-bridge"><span class="role">↑ the bridge</span><h3>Nuxt Harness <span class="id">#458</span></h3><p>The dev-facing framework — <b style="color:var(--cyan)">skill/issue, implemented for Nuxt</b>, on top of crouton.</p></div>
+      <div class="layer l-engine"><span class="role">engine</span><h3>crouton <span class="id">nuxt-crouton</span></h3><p>The monorepo engine — ~25 packages that generate full-stack Nuxt apps from JSON schemas. Everything above sits on it.</p></div>
+    </div>
+  </div>
+
+  <!-- ZONE 3: GO TO MARKET -->
+  <div class="zone">
+    <span class="zone-tag">go to market · 3 doors</span>
+    <p class="kicker" style="margin-bottom:16px">// who it's for → which site sells it</p>
+    <div class="row r3">
+      <div class="card method"><h3>Developers <span style="color:var(--faint);font-weight:500">· any stack</span></h3><p>Buy the <b style="color:var(--ink)">method</b>. “Make your AI coding repeatable.”</p><span class="site">→ skill/issue site · pocs/skillissue</span></div>
+      <div class="card"><h3>Developers <span style="color:var(--faint);font-weight:500">· Nuxt</span></h3><p>Buy the <b style="color:var(--ink)">framework</b>. “The best of the ecosystem, made legible to your LLM.”</p><span class="site">→ Nuxt Harness site · marketing/nuxt-harness.html</span></div>
+      <div class="card"><h3>Small organisations</h3><p>Buy the <b style="color:var(--ink)">product</b>. “Apps for small organisations, built fast.”</p><span class="site">→ Atelier site · strategy/atelier-marketing-site.html</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--lime)"></span> live</span>
+    <span><span class="dot" style="border:1px dashed var(--line2)"></span> planned</span>
+    <span><span class="dot" style="background:var(--grad)"></span> carries the skill/issue method</span>
+    <span><span class="dot" style="background:#22d3ee44"></span> the bridge (method × stack)</span>
+  </div>
+  <p class="foot">crouton = the engine · Nuxt Harness (#458) = skill/issue on Nuxt · skill/issue (#917) = the portable method · Atelier + Maquette = the product family (#897). Sibling brands, one engine.</p>
+
+</div></div>
+</body>
+</html>
