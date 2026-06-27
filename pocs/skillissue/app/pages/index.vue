@@ -94,11 +94,25 @@ const dotColors = ['#fb7185', '#fbbf24', '#a3e635']
 
 <template>
   <div class="si-canvas">
+    <!-- shared brand gradient (referenced by every logo mark) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="siGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8b5cf6" />
+          <stop offset=".55" stop-color="#22d3ee" />
+          <stop offset="1" stop-color="#a3e635" />
+        </linearGradient>
+      </defs>
+    </svg>
+
     <div class="si-shell">
       <!-- NAV -->
       <nav class="si-nav">
         <div class="si-wrap si-nav-inner">
-          <a href="#top" class="si-logo">skill<b>/</b>issue</a>
+          <a href="#top" class="si-logo">
+            <svg class="si-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#siGrad)" stroke-width="2.5" /><path d="M41 17 L23 47" stroke="url(#siGrad)" stroke-width="7" stroke-linecap="round" /><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee" /><circle cx="43.5" cy="43" r="3.6" fill="#a3e635" /></svg>
+            <span>skill<b>/</b>issue</span>
+          </a>
           <div class="si-navlinks">
             <a href="#flow">The flow</a>
             <a href="#how">How it works</a>
@@ -110,7 +124,12 @@ const dotColors = ['#fb7185', '#fbbf24', '#a3e635']
       </nav>
 
       <!-- HERO -->
-      <header id="top" class="si-section si-wrap" style="padding-top: 5rem">
+      <header id="top" class="si-section si-wrap" style="padding-top: 4rem">
+        <div class="si-brand">
+          <svg class="si-mark" viewBox="0 0 64 64" fill="none" aria-label="skill/issue logo"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#siGrad)" stroke-width="2.5" /><path d="M41 17 L23 47" stroke="url(#siGrad)" stroke-width="7" stroke-linecap="round" /><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee" /><circle cx="43.5" cy="43" r="3.6" fill="#a3e635" /></svg>
+          <div class="si-brand-word">skill<span class="slash">/</span>issue</div>
+          <div class="si-brand-sub">the way we build software — packaged</div>
+        </div>
         <div class="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <p class="si-eyebrow mb-5">Skills + tickets = software that ships itself</p>
@@ -335,7 +354,10 @@ const dotColors = ['#fb7185', '#fbbf24', '#a3e635']
       <!-- FOOTER -->
       <footer class="si-wrap" style="padding: 3rem 24px; border-top: 1px solid var(--si-line)">
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <a href="#top" class="si-logo">skill<b>/</b>issue</a>
+          <a href="#top" class="si-logo">
+            <svg class="si-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true" style="width:24px;height:24px"><rect x="5" y="5" width="54" height="54" rx="15" fill="#0a0a12" stroke="url(#siGrad)" stroke-width="2.5" /><path d="M41 17 L23 47" stroke="url(#siGrad)" stroke-width="7" stroke-linecap="round" /><circle cx="20.5" cy="21" r="3.6" fill="#22d3ee" /><circle cx="43.5" cy="43" r="3.6" fill="#a3e635" /></svg>
+            <span>skill<b>/</b>issue</span>
+          </a>
           <p class="si-dim text-sm" style="font-family: var(--si-mono)">A ticket says what. A skill knows how. Out comes a reviewed PR.</p>
         </div>
       </footer>

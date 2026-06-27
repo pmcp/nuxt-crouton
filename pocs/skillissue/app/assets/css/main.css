@@ -229,3 +229,15 @@ html.si body { background: var(--si-bg); margin: 0; }
   .si-step::after, .si-blink { animation: none; transform: scaleX(1); }
   html.si { scroll-behavior: auto; }
 }
+
+/* Logo / brand mark ----------------------------------------------------------- */
+.si-mark { display: block; }
+.si-logo { display: inline-flex; align-items: center; gap: 0.55rem; }
+.si-nav .si-mark { width: 28px; height: 28px; }
+.si-brand { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.1rem; margin: 0 auto 3.5rem; }
+.si-brand .si-mark { width: 104px; height: 104px; filter: drop-shadow(0 10px 34px #8b5cf655); animation: si-float 6s ease-in-out infinite; }
+.si-brand-word { font-family: var(--si-mono); font-weight: 800; font-size: clamp(1.7rem, 4.4vw, 2.7rem); letter-spacing: -0.03em; color: var(--si-ink); }
+.si-brand-word .slash { color: var(--si-cyan); }
+.si-brand-sub { font-family: var(--si-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--si-ink-faint); }
+@keyframes si-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@media (prefers-reduced-motion: reduce) { .si-brand .si-mark { animation: none; } }
