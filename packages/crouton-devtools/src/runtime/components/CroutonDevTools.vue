@@ -23,9 +23,11 @@ const activeTools = computed(() => tools.value.filter(t => isActive(t.id)))
 </script>
 
 <template>
+  <!-- z above eruda's panel (~1e7): eruda is full-screen, so the active-Console chip must
+       float OVER it to stay tappable — otherwise opening the console traps you with no close. -->
   <div
     v-if="hasTools"
-    class="fixed bottom-4 right-4 z-[99999] flex flex-col items-end gap-2"
+    class="fixed bottom-4 right-4 z-[2147483646] flex flex-col items-end gap-2"
     data-crouton-ui
   >
     <!-- active-tool quick toggles: one filled chip per active tool, tap to turn off -->
@@ -47,7 +49,7 @@ const activeTools = computed(() => tools.value.filter(t => isActive(t.id)))
       </button>
     </TransitionGroup>
 
-    <UPopover :content="{ side: 'top', align: 'end', sideOffset: 8 }" :ui="{ content: 'z-[100000]' }">
+    <UPopover :content="{ side: 'top', align: 'end', sideOffset: 8 }" :ui="{ content: 'z-[2147483647]' }">
       <UButton
         icon="i-lucide-glasses"
         color="neutral"
