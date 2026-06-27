@@ -121,6 +121,10 @@ i{font-style:italic;} b{font-weight:700;}
 .si-phase .si-chip:first-of-type{border-top:0;}
 .si-phase:hover .si-chip{color:var(--si-ink);}
 
+/* hero lead (replaces the old oversized display headline) */
+.si-hero-lead{font-size:clamp(1.3rem,2.8vw,1.9rem);line-height:1.42;color:var(--si-ink-dim);max-width:30ch;font-weight:500;letter-spacing:-.01em;margin:0;}
+.si-hero-lead b{color:var(--si-ink);font-weight:700;}
+
 /* logo / brand mark */
 .si-mark{display:block;}
 .si-logo{display:inline-flex;align-items:center;gap:.55rem;}
@@ -163,10 +167,8 @@ i{font-style:italic;} b{font-weight:700;}
     </div>
     <div class="hero-grid">
       <div>
-        <p class="si-eyebrow mb-5">The way we ship at Friendly Internet</p>
-        <h1 class="si-display">Stop prompting.<br>Start shipping —<br><span class="si-grad-text">repeatably.</span></h1>
-        <p class="si-lead mt-7 maxw-xl">skill/issue is how we build here. Every change starts as a <b style="color:var(--si-ink)">ticket</b> — the <i>what</i> &amp; <i>why</i>. A reusable <b style="color:var(--si-ink)">skill</b> knows the <i>how</i>. Out comes a <b style="color:var(--si-ink)">reviewed PR</b> — same playbook, every repo, every time.</p>
-        <div class="flex wrap gap-3 mt-9">
+        <p class="si-hero-lead">skill/issue is how we build here. Every change starts as a <b>ticket</b> — the <i>what</i> &amp; <i>why</i>. A reusable <b>skill</b> knows the <i>how</i>. Out comes a <b>reviewed PR</b> — <span class="si-grad-text">same playbook, every repo, every time.</span></p>
+        <div class="flex wrap gap-3 mt-8">
           <a href="#flow" class="si-btn si-btn-primary">Watch the flow ↓</a>
           <a href="#how" class="si-btn si-btn-ghost">Read the playbook</a>
         </div>
