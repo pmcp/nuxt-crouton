@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-4 · #907 · no key-point spam on scrub + compact options + title/Done dedupe'
+const BUILD = 'focus-shell-5 · #907 · pill above the mobile toolbar (h-dvh) + drop Free/Snap'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -438,7 +438,9 @@ function reset() {
 </script>
 
 <template>
-  <div class="flex h-screen flex-col bg-default text-default">
+  <!-- h-dvh (dynamic viewport height), NOT h-screen/100vh — so the bottom command pill sits above the
+       mobile browser toolbar instead of behind it (iOS Safari occludes 100vh's bottom). -->
+  <div class="flex h-dvh flex-col bg-default text-default">
     <!-- Palette markup, defined once and reused in the desktop sidebar + mobile drawer -->
     <DefinePalette>
       <div class="flex flex-col gap-2">
@@ -475,27 +477,8 @@ function reset() {
 
     <header class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-5 py-3">
       <h1 class="text-base font-semibold">Spike · build an app on Vue Flow</h1>
-      <p class="hidden text-xs text-muted lg:block">Drop blocks → arrange (Free / Snap) → ✨ Magic or compile. #905</p>
-      <!-- Board controls now live in the bottom command pill (Fit · Responsive · Blocks · Magic).
-           The header keeps only the secondary Free ⇄ Snap surface toggle. -->
-      <div class="ml-auto flex items-center gap-0.5 rounded-full border border-default p-0.5">
-        <UButton
-          size="xs"
-          icon="i-lucide-move"
-          label="Free"
-          :color="mode === 'free' ? 'primary' : 'neutral'"
-          :variant="mode === 'free' ? 'soft' : 'ghost'"
-          @click="enterFree"
-        />
-        <UButton
-          size="xs"
-          icon="i-lucide-magnet"
-          label="Snap"
-          :color="mode === 'snap' ? 'primary' : 'neutral'"
-          :variant="mode === 'snap' ? 'soft' : 'ghost'"
-          @click="enterSnap"
-        />
-      </div>
+      <p class="ml-auto hidden text-xs text-muted lg:block">Tap Blocks → arrange → ✨ Magic. #907</p>
+      <!-- All board controls live in the bottom command pill (Fit · Responsive · Blocks · Magic). -->
       <!-- Version stamp — a DIRECT child of the wrapping header so on mobile it drops to its own
            full-width line (inside the non-wrapping cluster above it collapsed to a vertical sliver). -->
       <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
