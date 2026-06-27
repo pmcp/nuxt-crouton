@@ -9,12 +9,14 @@
  * Live snap guide (#907): while ANOTHER block is dragged toward this one, the page's
  * `snapPreview` (injected) names this node + the joining edge — we light that edge up.
  *
- * Pull-apart-to-detach (#907): hovering/selecting a MERGED node eases its panes apart (shows
- * the seams) and reveals a grip per top-level pane. Dragging a grip OUT (with a little
- * resistance — the grip lags behind the cursor) past a threshold pops that pane back into its
- * own flow node; under the threshold it springs back. The grips are `.nodrag` so Vue Flow
- * doesn't move the whole node while you pull a pane out. Detach is reported via the injected
- * SPIKE_DETACH_KEY callback (a default node component can't emit up through CroutonFlow).
+ * Pull-the-pane-to-detach (#907): hovering/selecting a MERGED node arms it — each top-level
+ * pane becomes a grabbable face. Grab the pane itself (no pill) and the group EASES APART to
+ * reveal its seams; the grabbed pane LAGS the cursor (resistance, so it feels physical) and,
+ * dragged past a threshold, pops back into its own flow node on the side you pulled. Under the
+ * threshold it SPRINGS back. The pane faces are `.nodrag` so Vue Flow pulls the pane instead of
+ * moving the whole node; the seams/frame between them stay node-draggable (so a merged group can
+ * still be repositioned). Detach is reported via the injected SPIKE_DETACH_KEY callback (a
+ * default node component can't emit up through CroutonFlow).
  *
  * No `@vue-flow/core` import (connection handles aren't needed here). `footprint` / `SPIKE_*`
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
@@ -69,15 +71,17 @@ const guideStyle = computed(() => {
   }
 })
 
-// --- pull-apart-to-detach -------------------------------------------------------------
-const DETACH_THRESHOLD = 56 // px the grip must travel before a pane pops out
+// --- pull-the-pane-to-detach ----------------------------------------------------------
+const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
+const RESISTANCE = 0.55 // pane follows the cursor at <1 → it lags behind (a physical pull)
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
 const armed = computed(() => !surveying.value && !focused.value && isGroup.value && (hovered.value || !!props.selected))
 
-// Top-level pane regions (as % of the card), laid out along the split's axis by footprint.
-const regions = computed(() => {
+// Top-level pane faces (as % of the card), laid out along the split's axis by footprint — the
+// regions you grab to pull a pane out, and the seams revealed between them on ease-apart.
+const panes = computed(() => {
   const n = props.data.node
   if (n.type !== 'split') return []
   const horizontal = n.direction === 'horizontal'
@@ -95,54 +99,73 @@ const regions = computed(() => {
   })
 })
 
-// Active grip drag state.
-const activeIndex = ref<number | null>(null)
-const delta = ref({ x: 0, y: 0 })
-const past = ref(false)
-let start = { x: 0, y: 0 }
+// Active pull state.
+const activeIndex = ref<number | null>(null) // the pane being pulled
+const pulling = ref(false) // a pull is in progress → the group eases apart
+const springing = ref(false) // released under the threshold → animate the pane back
+const pull = ref({ x: 0, y: 0 }) // resisted (lagging) translate on the grabbed pane
+const past = ref(false) // cursor past the threshold → releasing now will detach
+let origin = { x: 0, y: 0 }
 let moveHandler: ((e: PointerEvent) => void) | null = null
 let upHandler: ((e: PointerEvent) => void) | null = null
 
-function cellStyle(r: { left: number, top: number, width: number, height: number }, i: number) {
-  const t = activeIndex.value === i ? `translate(${delta.value.x}px, ${delta.value.y}px)` : undefined
-  return { left: `${r.left}%`, top: `${r.top}%`, width: `${r.width}%`, height: `${r.height}%`, transform: t }
+// Gap each pane insets by: a resting seam (so the seams/frame stay node-draggable) that widens
+// when a pull starts, so the group visibly eases apart the moment you grab a pane.
+const gap = computed(() => (pulling.value ? 12 : 6))
+
+function paneRect(p: { left: number, top: number, width: number, height: number }) {
+  return { left: `${p.left}%`, top: `${p.top}%`, width: `${p.width}%`, height: `${p.height}%` }
+}
+function faceStyle(i: number) {
+  return {
+    inset: `${gap.value}px`,
+    transform: activeIndex.value === i ? `translate(${pull.value.x}px, ${pull.value.y}px)` : undefined,
+  }
 }
 
-function onGripDown(i: number, e: PointerEvent) {
-  e.stopPropagation()
-  e.preventDefault()
+function onPaneDown(i: number, e: PointerEvent) {
+  if (e.button !== 0) return // left-button only; `.nodrag` already keeps Vue Flow from moving the node
   activeIndex.value = i
-  delta.value = { x: 0, y: 0 }
+  pulling.value = true // ease the group apart on grab
+  springing.value = false
   past.value = false
-  start = { x: e.clientX, y: e.clientY }
+  pull.value = { x: 0, y: 0 }
+  origin = { x: e.clientX, y: e.clientY }
   moveHandler = (ev: PointerEvent) => {
-    delta.value = { x: ev.clientX - start.x, y: ev.clientY - start.y }
-    past.value = Math.hypot(delta.value.x, delta.value.y) > DETACH_THRESHOLD
+    const rawX = ev.clientX - origin.x
+    const rawY = ev.clientY - origin.y
+    pull.value = { x: rawX * RESISTANCE, y: rawY * RESISTANCE } // lag the cursor (resistance)
+    past.value = Math.hypot(rawX, rawY) > PULL_THRESHOLD
   }
-  upHandler = () => {
-    const dir = { ...delta.value }
+  upHandler = (ev: PointerEvent) => {
+    const dir = { x: ev.clientX - origin.x, y: ev.clientY - origin.y } // raw release direction
     const i2 = activeIndex.value
     const didDetach = past.value && i2 != null
     cleanup()
-    past.value = false
     if (didDetach) {
-      // Reset drag state FIRST: Vue Flow reuses this node's component instance (same id), so a
-      // leftover activeIndex/delta would strand the next grip's state. Then ask the page to detach.
-      resetDrag()
+      // Reset pull state FIRST: Vue Flow reuses this node's component instance (same id), so a
+      // leftover activeIndex/pull would strand the next pull's state. Then ask the page to detach.
+      resetPull()
       detach?.(props.data.node, { index: i2!, dir }) // page removes this pane → card re-renders
     }
     else {
-      delta.value = { x: 0, y: 0 } // spring back (CSS transition)
-      window.setTimeout(() => { activeIndex.value = null }, 180)
+      // Spring the pane back to its socket (CSS transition), then clear once it's home.
+      springing.value = true
+      pulling.value = false
+      pull.value = { x: 0, y: 0 }
+      past.value = false
+      window.setTimeout(() => resetPull(), 220)
     }
   }
   window.addEventListener('pointermove', moveHandler)
   window.addEventListener('pointerup', upHandler, { once: true })
 }
 
-function resetDrag() {
+function resetPull() {
   activeIndex.value = null
-  delta.value = { x: 0, y: 0 }
+  pulling.value = false
+  springing.value = false
+  pull.value = { x: 0, y: 0 }
   past.value = false
 }
 
@@ -153,8 +176,8 @@ function cleanup() {
 }
 
 // Whenever the rendered layout changes under us (a detach shrank the group, a merge grew it, etc.),
-// clear any stale grip-drag state — the instance is reused across these changes, so don't carry it over.
-watch(() => props.data.node, () => resetDrag())
+// clear any stale pull state — the instance is reused across these changes, so don't carry it over.
+watch(() => props.data.node, () => { cleanup(); resetPull() })
 </script>
 
 <template>
@@ -183,28 +206,42 @@ watch(() => props.data.node, () => resetDrag())
       :style="guideStyle"
     />
 
-    <!-- Detach overlay: armed merged node → grip per pane; drag a grip out past the threshold to pop it free -->
+    <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
+         The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame
+         between faces stay uncovered (pointer-events-none) so the merged group is still draggable. -->
     <div v-if="armed" class="nodrag pointer-events-none absolute inset-0 z-20">
       <div
-        v-for="(r, i) in regions"
+        v-for="(p, i) in panes"
         :key="i"
-        class="absolute transition-transform duration-150 ease-out"
-        :style="cellStyle(r, i)"
+        class="absolute"
+        :style="paneRect(p)"
       >
+        <!-- the socket the pane leaves behind while it's pulled out -->
         <div
-          class="absolute inset-1 rounded-lg ring-1 transition-colors"
-          :class="activeIndex === i && past ? 'ring-2 ring-primary bg-primary/5 shadow-xl' : 'ring-default/60 bg-elevated/10'"
+          v-if="activeIndex === i"
+          class="absolute rounded-xl border border-dashed border-primary/50 bg-primary/5"
+          :style="{ inset: `${gap}px` }"
         />
-        <!-- the grip you pull -->
-        <button
-          type="button"
-          class="pointer-events-auto absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 cursor-grab items-center gap-1 rounded-full border border-default bg-default/90 px-2 py-1 text-[10px] font-medium text-muted shadow-sm backdrop-blur transition-colors hover:border-primary hover:text-primary active:cursor-grabbing"
-          :class="activeIndex === i ? 'border-primary text-primary' : ''"
-          @pointerdown="onGripDown(i, $event)"
+        <!-- the grabbable pane face — grab it and pull -->
+        <div
+          class="group pointer-events-auto absolute flex cursor-grab items-center justify-center rounded-xl ring-1 backdrop-blur-[1px] active:cursor-grabbing"
+          :class="[
+            activeIndex === i
+              ? (past ? 'ring-2 ring-primary bg-primary/15 shadow-2xl' : 'ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
+              : 'ring-default/40 bg-elevated/5 hover:bg-elevated/20 hover:ring-primary/40',
+            activeIndex === i && !springing ? '' : 'transition-all duration-200 ease-out',
+          ]"
+          :style="faceStyle(i)"
+          @pointerdown="onPaneDown(i, $event)"
         >
-          <UIcon name="i-lucide-grip-vertical" class="size-3" />
-          {{ activeIndex === i && past ? 'Release' : 'Detach' }}
-        </button>
+          <span
+            class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur transition-opacity"
+            :class="activeIndex === i ? 'text-primary opacity-100' : 'text-muted opacity-0 group-hover:opacity-100'"
+          >
+            <UIcon :name="activeIndex === i && past ? 'i-lucide-hand' : 'i-lucide-grip'" class="size-3" />
+            {{ activeIndex === i ? (past ? 'Release to detach' : 'Pull out…') : 'Pull to detach' }}
+          </span>
+        </div>
       </div>
     </div>
   </UCard>
