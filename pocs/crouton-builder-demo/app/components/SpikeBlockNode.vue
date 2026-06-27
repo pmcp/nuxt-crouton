@@ -11,10 +11,11 @@
  *
  * Pull-the-pane-to-detach (#907): hovering/selecting a MERGED node arms it — each top-level
  * pane becomes a grabbable face. Grab the pane itself (no pill) and the group EASES APART to
- * reveal its seams; the grabbed pane LAGS the cursor (resistance, so it feels physical) and,
- * dragged past a threshold, pops back into its own flow node on the side you pulled. Under the
- * threshold it SPRINGS back. The pane faces are `.nodrag` so Vue Flow pulls the pane instead of
- * moving the whole node; the seams/frame between them stay node-draggable (so a merged group can
+ * reveal its seams; the pane tracks your finger 1:1 and, dragged past a THRESHOLD, pops out into
+ * its own flow node exactly where you let go. Under the threshold it SPRINGS back. (The threshold
+ * + ease-apart + spring-back carry the physical feel; the pane no longer lags the cursor, which
+ * made it drop behind the finger.) The pane faces are `.nodrag` so Vue Flow pulls the pane instead
+ * of moving the whole node; the seams/frame between them stay node-draggable (so a merged group can
  * still be repositioned). Detach is reported via the injected SPIKE_DETACH_KEY callback (a
  * default node component can't emit up through CroutonFlow).
  *
@@ -73,7 +74,7 @@ const guideStyle = computed(() => {
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
-const RESISTANCE = 0.65 // pane follows the cursor at <1 → it lags behind (a physical pull, but tracks closely)
+const RESISTANCE = 1 // pane tracks the cursor/thumb 1:1 (direct manipulation) → it detaches exactly under your finger; the THRESHOLD + ease-apart + spring-back carry the physical feel, not positional lag
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
@@ -131,17 +132,24 @@ function faceStyle(i: number) {
 // flowWidth; the pane's screen offset from the card top-left ÷ zoom is its flow offset. The page
 // adds this to the group's known flow position (CroutonFlow doesn't forward the node's position
 // to a default node component, so we report an offset, not an absolute, and let the page resolve it).
+// The live canvas zoom, read straight off Vue Flow's transformationpane `scale(z)` — exact, and
+// independent of the node's content-driven render size (which is why a footprint-derived zoom was wrong).
+function currentZoom(): number {
+  const pane = (faceEl?.ownerDocument ?? document).querySelector('.vue-flow__transformationpane') as HTMLElement | null
+  const m = pane ? /scale\(([-\d.]+)\)/.exec(pane.style.transform || '') : null
+  const z = m ? Number.parseFloat(m[1]!) : 1
+  return z && isFinite(z) ? z : 1
+}
+
 function computeDropOffset(): { x: number, y: number } | undefined {
   if (!faceEl) return undefined
-  // Vue Flow's node wrapper is the reliable ancestor — its box is the node's rendered (zoom-scaled)
-  // footprint, so its top-left is the group's screen origin and its width gives the live zoom.
+  // The node wrapper's screen top-left is the group's origin; divide the pane's screen offset from it
+  // by the real zoom to get the flow-space offset the page adds to the group's known position.
   const card = faceEl.closest('.vue-flow__node') as HTMLElement | null
   if (!card) return undefined
   const faceR = faceEl.getBoundingClientRect()
   const cardR = card.getBoundingClientRect()
-  const flow = sizeOf(props.data.node) // group's flow footprint (before it shrinks)
-  const zoom = cardR.width / flow.width
-  if (!zoom || !isFinite(zoom)) return undefined
+  const zoom = currentZoom()
   return { x: (faceR.left - cardR.left) / zoom, y: (faceR.top - cardR.top) / zoom }
 }
 
@@ -154,11 +162,16 @@ function onPaneDown(i: number, e: PointerEvent) {
   pull.value = { x: 0, y: 0 }
   origin = { x: e.clientX, y: e.clientY }
   faceEl = e.currentTarget as HTMLElement
+  // The face lives inside Vue Flow's `transformationpane`, which is `scale(zoom)`. A CSS translate
+  // here is applied in that scaled space, so it moves `translate × zoom` on screen. To track the
+  // finger 1:1 on screen (so the pane is under your finger and detaches exactly there), pre-divide
+  // the finger delta by the live zoom (read straight off the transformationpane scale).
+  const zoom = currentZoom()
   moveHandler = (ev: PointerEvent) => {
     const rawX = ev.clientX - origin.x
     const rawY = ev.clientY - origin.y
-    pull.value = { x: rawX * RESISTANCE, y: rawY * RESISTANCE } // lag the cursor (resistance)
-    past.value = Math.hypot(rawX, rawY) > PULL_THRESHOLD
+    pull.value = { x: (rawX / zoom) * RESISTANCE, y: (rawY / zoom) * RESISTANCE } // → on-screen = rawΔ × RESISTANCE
+    past.value = Math.hypot(rawX, rawY) > PULL_THRESHOLD // threshold is in real screen px (finger travel)
   }
   upHandler = (ev: PointerEvent) => {
     const dir = { x: ev.clientX - origin.x, y: ev.clientY - origin.y } // raw release direction

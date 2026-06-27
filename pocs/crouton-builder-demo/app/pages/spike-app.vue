@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-detach-6 · #907 · add a block → camera re-frames to an overview (no more hard zoom on the first block, esp. mobile)'
+const BUILD = 'spike-detach-7 · #907 · pull-a-pane now tracks your finger 1:1 → detaches exactly where you let go (no lag drop-behind)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
