@@ -136,3 +136,10 @@ writeups/reports/red-team-*.md
 !writeups/reports/red-team-TEMPLATE.md
 
 pocs/crouton-builder-demo/.data
+# Loop Station invocation traces (WS2, #929) — runtime exhaust, NOT committed.
+# Reconstructed from session transcripts (names + ids + durations only, no tool
+# payloads); shipped from CI as artifacts and aggregated for the WS3 view. The
+# committed Loop Station dataset is only writeups/loop-station/history.jsonl (WS1).
+trace.jsonl
+loop-station-trace*.jsonl
+writeups/loop-station/traces/
