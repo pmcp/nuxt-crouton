@@ -1,9 +1,14 @@
 ---
 name: loop-station
-description: Measure the harness's own context budget — tokens per CLAUDE.md / skill / agent, lexical redundancy, per-CI cold-write totals — as a deterministic, trendable inventory (no LLM). Appends one point to a committed history.jsonl per relevant merge. Use when asked for "context budget", "how big is CLAUDE.md / our skills", "is the harness bloating", "loop station inventory", or to run the inventory by hand.
+description: Observe the harness itself — (WS1) measure context budget as a deterministic, trendable inventory (tokens per CLAUDE.md / skill / agent, lexical redundancy, per-CI cold-write totals; committed history.jsonl), and (WS2) reconstruct the real invocation trace (which skills/agents/tools fired and how they nested) from session transcripts. Use for "context budget", "how big is CLAUDE.md / our skills", "is the harness bloating", "how do our agent loops actually run", "trace this session", "loop station".
 ---
 
-# Loop Station — context-budget inventory (WS1)
+# Loop Station — harness observatory (WS1 inventory + WS2 trace)
+
+> WS1 (context-budget inventory) is below; the WS2 invocation trace is the second
+> section. Both are producers — WS3 (`pocs/loop-station`) renders them.
+
+# WS1 — context-budget inventory
 
 The first, cheapest layer of the **Loop Station observatory** (epic #926): a
 **deterministic** snapshot of how big our always-on harness context is and how
@@ -61,3 +66,54 @@ path-filtered to `CLAUDE.md` / `.claude/skills/**` / `.claude/agents/**`. It
 gathers (with `ANTHROPIC_API_KEY` → `count_tokens`), appends, and commits the new
 `history.jsonl` line back with `[skip ci]` and the causing PR recorded — one data
 point per relevant merge, with the cause attached, no filler.
+
+---
+
+# WS2 — invocation trace
+
+Reconstructs the **real call tree** of a session — which skills/agents/tools
+fired, how they nested, how long sub-agents ran — from Claude Code transcripts.
+
+> **Hard privacy rule:** the trace carries **names + correlation ids + durations
+> only**, never a tool's `input` or a `tool_result`'s content. It is runtime
+> exhaust → **gitignored**, shipped from CI as an artifact, never committed
+> (unlike WS1's `history.jsonl`).
+
+## What it reads
+
+`~/.claude/projects/<slug>/<session>.jsonl` (+ its `subagents/agent-*.jsonl`).
+Two transcript layouts are auto-detected — the parser handles both because
+Claude Code has shipped both:
+
+- **inline** (current local schema) — sub-agents are `isSidechain` records in the
+  main transcript; skills tag their calls with `attributionSkill`. Nesting comes
+  from the `parentUuid` tree + those markers.
+- **files** (the proven prototype layout) — each sub-agent is its own
+  `subagents/agent-*.jsonl`, linked to its spawning Agent call by global
+  start-time order (robust for sync *and* async agents), carrying durations.
+
+Both reconstruct **2+-level recursion** (agent→agent→…) to the correct depth.
+
+## Files
+
+| file | role |
+|------|------|
+| `parse-transcripts.mjs` | parse one session → `trace.jsonl` of `{ts,kind,name,parent,depth,agentId?,durMs?}` (also importable: `parseSession()`) |
+| `collect-traces.mjs` | CI collector — discover the run's session across all project dirs, tag events with the run id, write one NDJSON file (meta header + tagged events) for artifact upload |
+| `lib/parse-transcripts.test.mjs` | fixtures for both layouts, 2-level recursion, payload-freeness, defensiveness |
+
+## Run by hand
+
+```bash
+node .claude/skills/loop-station/parse-transcripts.mjs --out trace.jsonl   # latest session
+node .claude/skills/loop-station/parse-transcripts.mjs <session> --json     # inspect
+node .claude/skills/loop-station/collect-traces.mjs --out loop-station-trace.jsonl
+```
+
+## In CI
+
+`claude.yml` carries the reusable two-step snippet (collect → upload artifact),
+`if: always()` and tolerant so it never fails the agent job. Copy those two steps
+into any LLM workflow to capture its trace. Each ephemeral runner ships its
+trace tagged by `run_id`; aggregating the artifacts gives the all-runs topology
+WS3 renders.
