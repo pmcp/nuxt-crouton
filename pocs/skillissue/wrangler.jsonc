@@ -1,0 +1,26 @@
+{
+  // Cloudflare WORKERS (static assets) config for the `skillissue` marketing site.
+  //
+  // This is a STATIC site — no DB, no auth, no server routes (the page prerenders
+  // to HTML). So there are NO d1/kv bindings and nothing to auto-provision; the
+  // Worker just serves the prerendered assets. Domain convention (#133):
+  // production → skillissue.friendlyinter.net, staging → skillissue.pmcp.dev.
+  //
+  // Nitro's `cloudflare_module` preset (NITRO_PRESET in cf:deploy/cf:staging) reads
+  // this file at build time and writes the deployable config to
+  // .output/server/wrangler.json, injecting `name` + the `assets` binding.
+  "name": "skillissue",
+  "compatibility_date": "2025-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Production custom domain (bound at DNS cutover by the launch workstream #922).
+  "routes": [{ "pattern": "skillissue.friendlyinter.net", "custom_domain": true }],
+
+  // Staging environment — bindings/routes do NOT inherit across envs, so the
+  // staging custom domain is declared here too. cf:staging re-injects this block.
+  "env": {
+    "staging": {
+      "routes": [{ "pattern": "skillissue.pmcp.dev", "custom_domain": true }]
+    }
+  }
+}
