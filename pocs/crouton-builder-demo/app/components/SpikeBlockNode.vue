@@ -73,7 +73,7 @@ const guideStyle = computed(() => {
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
-const RESISTANCE = 0.55 // pane follows the cursor at <1 → it lags behind (a physical pull)
+const RESISTANCE = 0.65 // pane follows the cursor at <1 → it lags behind (a physical pull, but tracks closely)
 const detach = inject(SPIKE_DETACH_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
@@ -185,7 +185,7 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     class="spike-block-node transition-shadow"
     :class="guideEdge ? 'ring-2 ring-primary shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
     :style="size"
-    :ui="{ root: 'relative overflow-visible', body: 'h-full overflow-hidden rounded-[inherit] p-0 sm:p-0' }"
+    :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
@@ -227,7 +227,7 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
           class="group pointer-events-auto absolute flex cursor-grab items-center justify-center rounded-xl ring-1 backdrop-blur-[1px] active:cursor-grabbing"
           :class="[
             activeIndex === i
-              ? (past ? 'ring-2 ring-primary bg-primary/15 shadow-2xl' : 'ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
+              ? (past ? 'z-10 ring-2 ring-primary bg-primary/15 shadow-2xl' : 'z-10 ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
               : 'ring-default/40 bg-elevated/5 hover:bg-elevated/20 hover:ring-primary/40',
             activeIndex === i && !springing ? '' : 'transition-all duration-200 ease-out',
           ]"

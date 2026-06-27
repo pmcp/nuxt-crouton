@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'spike-detach-1 · #907 · pull a pane out — grab the pane, it eases apart & lags, past the threshold it detaches'
+const BUILD = 'spike-detach-2 · #907 · pull a pane out — pane no longer clips at the card edge; tracks the cursor the whole way'
 
 const blockNode = markRaw(SpikeBlockNode)
 
