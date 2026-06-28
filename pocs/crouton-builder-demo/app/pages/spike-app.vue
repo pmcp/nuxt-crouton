@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-7 · #942 · page is fitted instantly on open (no zoom-out)'
+const BUILD = 'page-compose-8 · #941 · exit wiggle: tap outside or Done button'
 
 const blockNode = markRaw(SpikeBlockNode)
 

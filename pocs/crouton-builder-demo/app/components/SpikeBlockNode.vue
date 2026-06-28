@@ -27,7 +27,7 @@
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
 import { ref, inject, computed, watch } from 'vue'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, onClickOutside } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
@@ -97,6 +97,10 @@ function onCardMove(e: PointerEvent) {
 }
 function onCardUp() { clearPress() }
 onKeyStroke('Escape', () => { if (jiggling.value) jiggling.value = false })
+// Exit wiggle by tapping anywhere OUTSIDE this layout (the natural "done" gesture on touch);
+// there's also a visible Done button. Tapping a face (inside) still starts a pull.
+const cardRef = ref()
+onClickOutside(cardRef, () => { if (jiggling.value) jiggling.value = false })
 
 // Show the detach faces only while WIGGLING (or while a pull is mid-flight, so the grabbed pane
 // isn't orphaned if the finger leaves the card). Tapping/selecting no longer auto-arms detach —
@@ -247,6 +251,7 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
 
 <template>
   <UCard
+    ref="cardRef"
     class="spike-block-node transition-shadow"
     :class="guideEdge ? 'ring-2 ring-primary shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
     :style="size"
@@ -269,8 +274,24 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     <!-- Node actions (#942) — promote this layout to BE the page, or duplicate it as a draft.
          Shown when selected; floated ABOVE the card so it clears the detach faces. `.nodrag` +
          `.stop` so tapping a button neither drags the node nor bubbles to the card. -->
+    <!-- Done — exit wiggle mode (#941). Shown while wiggling; tapping outside the layout also exits. -->
     <div
-      v-if="selected && !surveying"
+      v-if="jiggling && !surveying"
+      class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 p-1 shadow-xl backdrop-blur"
+    >
+      <UButton
+        icon="i-lucide-check"
+        label="Done"
+        size="xs"
+        color="primary"
+        variant="soft"
+        @pointerdown.stop
+        @click.stop="jiggling = false"
+      />
+    </div>
+
+    <div
+      v-if="selected && !jiggling && !surveying"
       class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-default bg-elevated/95 p-1 shadow-xl backdrop-blur"
     >
       <UButton
