@@ -176,6 +176,7 @@ function computeDropOffset(): { x: number, y: number } | undefined {
 
 function onPaneDown(i: number, e: PointerEvent) {
   if (e.button !== 0) return // left-button only; `.nodrag` already keeps Vue Flow from moving the node
+  if (!jiggling.value) return // HARD GATE (#941): a pane only pulls in wiggle mode — long-press first
   activeIndex.value = i
   pulling.value = true // ease the group apart on grab
   springing.value = false
