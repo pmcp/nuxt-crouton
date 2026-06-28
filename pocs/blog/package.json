@@ -29,6 +29,7 @@
     "@fyit/crouton-i18n": "workspace:*",
     "@fyit/crouton-layout": "workspace:*",
     "@libsql/client": "catalog:",
+    "@nuxt/scripts": "^1.2.1",
     "drizzle-orm": "catalog:",
     "nuxt": "catalog:",
     "vue": "catalog:",
