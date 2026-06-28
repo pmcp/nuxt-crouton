@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-22 · page opens into a framed container w/ identity header (icon·name·path·access·status)'
+const BUILD = 'page-compose-23 · page header mirrors the pages package (status·visibility·settings·preview)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -599,12 +599,19 @@ function reset() {
 // Pick a page on the flow → its layout seeds the board → arrange/edit (incl. the
 // focus editor) → "← Pages" stores it back. One board (= one layout) per page,
 // persisted in-session so zooming out to Site and back keeps your edits exactly.
-// Page metadata mirrors the crouton-pages concept (#940): a page has an icon + name, a route path,
-// a visibility (who can see it), and a publish state. Demo values here; the real builder reads these
-// off the pages collection. The page-shell header surfaces them (expandable).
-type PageAccess = 'public' | 'members' | 'admin'
-type PageStatus = 'live' | 'draft'
-interface BuilderPage { id: string, label: string, icon?: string, path?: string, access?: PageAccess, status?: PageStatus, tree: LayoutTree }
+// Mirror @fyit/crouton-pages' real page model (#940): the builder is just another VIEW of the pages
+// collection, so the header reflects the package's actual fields/enums/icons (see
+// packages/crouton-pages/schemas/pages.json + app/components/Editor/Toolbar.vue). Demo values here;
+// the real builder reads the page row — and at graduation should REUSE the package's toolbar/settings
+// rather than mirror them. Class strings are literal (not `bg-${x}`) so Tailwind's JIT keeps them.
+type PageStatus = 'draft' | 'published' | 'archived'
+type PageVisibility = 'public' | 'members' | 'admin' | 'scoped' | 'hidden'
+type PageLayout = 'default' | 'full-height' | 'full-screen'
+interface BuilderPage {
+  id: string, label: string, icon?: string, path?: string
+  status?: PageStatus, visibility?: PageVisibility, layout?: PageLayout, showInNavigation?: boolean
+  tree: LayoutTree
+}
 const pageSplit = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horizontal'): LayoutTree['root'] => ({
   type: 'split', direction: dir,
   children: [{ type: 'leaf', blockId: a, defaultSize: 50 }, { type: 'leaf', blockId: b, defaultSize: 50 }],
@@ -612,25 +619,33 @@ const pageSplit = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horiz
 const PAGES: BuilderPage[] = [
   {
     id: 'dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard',
-    path: '/dashboard', access: 'members', status: 'live',
+    path: '/dashboard', status: 'published', visibility: 'members', layout: 'default', showInNavigation: true,
     tree: { renderer: 'panes', root: { type: 'split', direction: 'horizontal', children: [
       { type: 'leaf', blockId: 'artists-list', defaultSize: 34 },
       { type: 'leaf', blockId: 'artists-stats', defaultSize: 33 },
       { type: 'leaf', blockId: 'artists-form', defaultSize: 33 },
     ] } },
   },
-  { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', path: '/reports', access: 'admin', status: 'draft', tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
-  { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', path: '/settings', access: 'public', status: 'live', tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
+  { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', path: '/reports', status: 'draft', visibility: 'admin', layout: 'full-height', showInNavigation: true, tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
+  { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', path: '/settings', status: 'published', visibility: 'public', layout: 'default', showInNavigation: false, tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
 ]
-// Visibility + status → icon/label/tone for the header chips (lucide + Nuxt UI colors).
-const ACCESS_META: Record<PageAccess, { icon: string, label: string }> = {
+// Config copied from crouton-pages' Editor (exact enum values, icons, colors, labels).
+const STATUS_META: Record<PageStatus, { icon: string, label: string, dot: string, text: string }> = {
+  draft: { icon: 'i-lucide-pencil', label: 'Draft', dot: 'bg-warning', text: 'text-warning' },
+  published: { icon: 'i-lucide-check', label: 'Published', dot: 'bg-success', text: 'text-success' },
+  archived: { icon: 'i-lucide-archive', label: 'Archived', dot: 'bg-error', text: 'text-error' },
+}
+const VISIBILITY_META: Record<PageVisibility, { icon: string, label: string }> = {
   public: { icon: 'i-lucide-globe', label: 'Public' },
   members: { icon: 'i-lucide-users', label: 'Members' },
   admin: { icon: 'i-lucide-shield', label: 'Admin only' },
+  scoped: { icon: 'i-lucide-key-round', label: 'Scoped' },
+  hidden: { icon: 'i-lucide-eye-off', label: 'Hidden' },
 }
-const STATUS_META: Record<PageStatus, { icon: string, label: string, color: 'success' | 'warning' }> = {
-  live: { icon: 'i-lucide-circle-check', label: 'Live', color: 'success' },
-  draft: { icon: 'i-lucide-circle-dashed', label: 'Draft', color: 'warning' },
+const LAYOUT_META: Record<PageLayout, { icon: string, label: string }> = {
+  default: { icon: 'i-lucide-panels-top-left', label: 'Default' },
+  'full-height': { icon: 'i-lucide-rectangle-vertical', label: 'Full height' },
+  'full-screen': { icon: 'i-lucide-maximize', label: 'Full screen' },
 }
 // The same pages as crouton-flow rows (Dashboard is root; others hang off it).
 const pageRows = [
@@ -652,6 +667,11 @@ const currentPageLabel = computed(() => (selectedPageId.value ? pageById(selecte
 // header collapses to just icon+name+chips; expanding reveals the path + full access/status labels.
 const currentPage = computed(() => (selectedPageId.value ? pageById(selectedPageId.value) ?? null : null))
 const pageHeaderExpanded = ref(false)
+// The header's pages-package controls (preview / open-public) are display-only in the POC — on
+// graduation they wire to the real crouton-pages actions (this view is just another view of pages).
+function mockPageAction(name: string) {
+  useToast().add({ title: name, description: 'Mock — wires to the pages package on graduation', icon: 'i-lucide-info', duration: 1500 })
+}
 
 function labelFor(node: LayoutNode): string {
   if (node.type === 'leaf') { const h = node.config?.heading; return typeof h === 'string' ? h : node.blockId }
@@ -820,49 +840,58 @@ function exitToPages() {
            (mirrors the pages package). The header slides in as the container forms (the transition). -->
       <div class="relative min-w-0 flex-1 p-2 sm:p-3">
        <div class="flex h-full flex-col overflow-hidden rounded-xl border border-default bg-elevated/40 shadow-sm">
+        <!-- Mirrors CroutonPagesEditorToolbar — status (dot+label) · visibility (icon+label) · preview
+             · open-public · settings gear. Display-only here; reuses the real toolbar on graduation. -->
         <header class="spike-page-header shrink-0 border-b border-default/70 bg-elevated/60 px-3 py-2 backdrop-blur">
           <div class="flex items-center gap-2.5">
             <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <UIcon :name="currentPage?.icon ?? 'i-lucide-file'" class="size-5" />
             </span>
-            <p class="truncate text-sm font-semibold leading-tight">{{ currentPage?.label ?? 'Page' }}</p>
-            <div class="ml-auto flex items-center gap-2">
-              <span
-                v-if="currentPage?.status"
-                class="size-2 rounded-full"
-                :class="currentPage.status === 'live' ? 'bg-success' : 'bg-warning'"
-                :title="STATUS_META[currentPage.status].label"
-              />
-              <UIcon
-                v-if="currentPage?.access"
-                :name="ACCESS_META[currentPage.access].icon"
-                class="size-4 text-muted"
-                :title="ACCESS_META[currentPage.access].label"
-              />
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold leading-tight">{{ currentPage?.label ?? 'Page' }}</p>
+              <p v-if="currentPage?.path" class="hidden truncate font-mono text-[10px] leading-tight text-muted sm:block">{{ currentPage.path }}</p>
+            </div>
+
+            <div class="ml-auto flex items-center gap-0.5">
+              <!-- status: colored dot + label -->
+              <span v-if="currentPage?.status" class="flex items-center gap-1.5 px-1.5 text-[11px] font-medium" :class="STATUS_META[currentPage.status].text">
+                <span class="size-2 rounded-full" :class="STATUS_META[currentPage.status].dot" />
+                <span class="hidden sm:inline">{{ STATUS_META[currentPage.status].label }}</span>
+              </span>
+              <!-- visibility: icon + label -->
+              <span v-if="currentPage?.visibility" class="flex items-center gap-1.5 px-1.5 text-[11px] text-muted">
+                <UIcon :name="VISIBILITY_META[currentPage.visibility].icon" class="size-4" />
+                <span class="hidden sm:inline">{{ VISIBILITY_META[currentPage.visibility].label }}</span>
+              </span>
+              <USeparator orientation="vertical" class="mx-1 hidden h-5 sm:block" />
+              <UButton icon="i-lucide-eye" size="xs" color="neutral" variant="ghost" class="hidden sm:inline-flex" aria-label="Preview" @click="mockPageAction('Preview')" />
+              <UButton icon="i-lucide-external-link" size="xs" color="neutral" variant="ghost" class="hidden sm:inline-flex" :disabled="currentPage?.status !== 'published'" aria-label="Open public page" @click="mockPageAction('Open public page')" />
               <UButton
-                :icon="pageHeaderExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                :icon="pageHeaderExpanded ? 'i-lucide-chevron-up' : 'i-lucide-settings'"
                 size="xs"
-                color="neutral"
-                variant="ghost"
-                :aria-label="pageHeaderExpanded ? 'Collapse page details' : 'Expand page details'"
+                :color="pageHeaderExpanded ? 'primary' : 'neutral'"
+                :variant="pageHeaderExpanded ? 'soft' : 'ghost'"
+                aria-label="Page settings"
                 @click="pageHeaderExpanded = !pageHeaderExpanded"
               />
             </div>
           </div>
-          <!-- Expanded detail: path · visibility · publish state -->
+          <!-- Settings detail (mirrors SettingsPanel fields, read-only mock): path · visibility · layout · nav -->
           <div
             v-if="pageHeaderExpanded"
-            class="mt-2 grid grid-cols-1 gap-1.5 border-t border-default/60 pt-2 text-[11px] text-muted sm:grid-cols-3"
+            class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-default/60 pt-2 text-[11px] text-muted sm:grid-cols-4"
           >
             <div class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-link" class="size-3.5 shrink-0" />
-              <span class="truncate font-mono">{{ currentPage?.path ?? '—' }}</span>
+              <UIcon name="i-lucide-link" class="size-3.5 shrink-0" /><span class="truncate font-mono">{{ currentPage?.path ?? '—' }}</span>
             </div>
-            <div v-if="currentPage?.access" class="flex items-center gap-1.5">
-              <UIcon :name="ACCESS_META[currentPage.access].icon" class="size-3.5 shrink-0" />{{ ACCESS_META[currentPage.access].label }}
+            <div v-if="currentPage?.visibility" class="flex items-center gap-1.5">
+              <UIcon :name="VISIBILITY_META[currentPage.visibility].icon" class="size-3.5 shrink-0" />{{ VISIBILITY_META[currentPage.visibility].label }}
             </div>
-            <div v-if="currentPage?.status" class="flex items-center gap-1.5">
-              <UIcon :name="STATUS_META[currentPage.status].icon" class="size-3.5 shrink-0" />{{ STATUS_META[currentPage.status].label }}
+            <div v-if="currentPage?.layout" class="flex items-center gap-1.5">
+              <UIcon :name="LAYOUT_META[currentPage.layout].icon" class="size-3.5 shrink-0" />{{ LAYOUT_META[currentPage.layout].label }}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <UIcon :name="currentPage?.showInNavigation ? 'i-lucide-eye' : 'i-lucide-eye-off'" class="size-3.5 shrink-0" />{{ currentPage?.showInNavigation ? 'In navigation' : 'Hidden from nav' }}
             </div>
           </div>
         </header>
