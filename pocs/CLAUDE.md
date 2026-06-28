@@ -62,6 +62,13 @@ The rule of thumb, every working session:
 `pocs/crouton-builder-demo/HANDOFF.md` is the worked example. (Apps that never graduate — pure
 consumer demos — don't need one; this is for POCs incubating a future package.)
 
+**At handoff, the doc is reconciled against the running POC — both directions.** The `graduate`
+skill's reconcile gate (step 1.5) drives the live app and sorts behaviour into *confirmed /
+contradicted / undocumented*, so the brief is proven complete — the **undocumented** bucket is what
+catches the unknown-unknowns a checklist can't. The running POC is the visual ground truth (no
+screenshot layer needed); stable `data-testid`/`data-handoff` hooks added during that pass are the
+shared vocabulary the doc, the agent, and the derived tests target, and they carry into the rebuild.
+
 ## What lives here right now
 
 A mix of two things:

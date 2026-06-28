@@ -57,6 +57,34 @@ Capture:
 Write it to `writeups/briefings/<name>-graduation-brief.md` and link it on the epic.
 **This brief is the single source of truth for steps 2–5** — don't re-read the spike.
 
+### 1.5 Reconcile the brief against the running POC (gate)
+
+**Before the brief is frozen, prove it against the live app — in BOTH directions.** A brief checked
+only as a *checklist* can confirm only what we remembered to write; it can't catch what we
+forgot. So an exploratory agent (powered by `/verify` + the `e2e-smoke` boot harness + the headless
+browser) drives the running POC and reports three buckets:
+
+- **Confirmed** — a documented behaviour that actually works in the app. ✅
+- **Contradicted** — the doc says X, the app does Y. → fix the doc (or the POC) until they agree.
+- **Undocumented** — behaviour the app has that the brief/`HANDOFF.md` *doesn't mention* (the
+  **unknown-unknowns**). → add it, or consciously drop it. This is the bucket a checklist misses and
+  the whole reason this step exists.
+
+Reconcile until all three are clean: the brief + `HANDOFF.md` must read as *current truth*, complete.
+Only then is the brief safe as the rebuild's single source of truth.
+
+**Stable element hooks (output of this pass, not upfront busywork).** Wherever the agent *struggles to
+locate* a state (the armed snap, a ghost slot, an active badge), add a stable `data-testid` /
+`data-handoff` on that element and name it in the brief. These become the **shared vocabulary** the
+brief, the reconcile/parity agent, and the derived e2e tests all target — and the rebuild (step 3)
+**reproduces the same hook names**, so the same agent runs identically against the POC *and* the
+graduated app. (Hooks are the right "references to elements" — NOT `file:line` code refs, which rot
+and pull the rebuild toward copying the spike.)
+
+> Needs an environment that can actually run the POC (a sandbox that kills long-running dev servers
+> can't host this — run it where `pnpm dev` / a staging preview stays up). The POC being runnable is
+> exactly why a screenshot layer is unnecessary: the live app is the visual ground truth.
+
 ### 2. Open the graduation epic
 
 Per `github-tasks`: an **epic** + a **sub-issue per extracted package and the app**
@@ -71,9 +99,18 @@ For each `packages/*` unit in the brief:
    (the #774 gate) to sign off on the behaviour. The agreed test is the contract.
 2. **Build to green** — a clean implementation, **re-derived** from the POC, not
    ported. Resist copy-pasting `spike-*` files; the brief + tests are the spec.
+   Reproduce the **stable element hooks** named in the brief (step 1.5) so the parity
+   pass and the e2e tests target the same vocabulary on the new app.
 3. Respect the package boundary (the `packages/` edit gate), `pnpm typecheck`, and
    the data-model / UI gates where they apply (`/schema-review` #314, `/ui-proposal`
    #307).
+
+### 4.5 Parity check on the rebuilt app (gate)
+
+Run the **same exploratory agent from step 1.5** against the *graduated* app and reconcile it to the
+brief — same three buckets (confirmed / contradicted / undocumented). This catches what the rebuild
+**dropped or drifted** (step 1.5 catches what the *handoff* forgot; this catches what the *rebuild*
+lost). Don't promote until parity is clean.
 
 ### 4. Document as you go
 
