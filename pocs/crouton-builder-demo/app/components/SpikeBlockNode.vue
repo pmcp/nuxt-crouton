@@ -136,7 +136,9 @@ let upHandler: ((e: PointerEvent) => void) | null = null
 
 // Gap each pane insets by: a resting seam (so the seams/frame stay node-draggable) that widens
 // when a pull starts, so the group visibly eases apart the moment you grab a pane.
-const gap = computed(() => (pulling.value ? 12 : 6))
+// On hold (wiggle), ease the panes APART so the separate layouts read clearly (no blur, just a
+// real gap); widen further during an active pull. Resting (not armed) stays a thin seam.
+const gap = computed(() => (pulling.value ? 18 : jiggling.value ? 16 : 6))
 
 function paneRect(p: { left: number, top: number, width: number, height: number }) {
   return { left: `${p.left}%`, top: `${p.top}%`, width: `${p.width}%`, height: `${p.height}%` }
@@ -331,11 +333,11 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
         />
         <!-- the grabbable pane face — grab it and pull -->
         <div
-          class="group pointer-events-auto absolute flex cursor-grab items-center justify-center rounded-xl ring-1 backdrop-blur-[1px] active:cursor-grabbing"
+          class="group pointer-events-auto absolute flex cursor-grab items-center justify-center rounded-xl ring-1 active:cursor-grabbing"
           :class="[
             activeIndex === i
               ? (past ? 'z-10 ring-2 ring-primary bg-primary/15 shadow-2xl' : 'z-10 ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
-              : 'ring-default/40 bg-elevated/5 hover:bg-elevated/20 hover:ring-primary/40',
+              : 'ring-2 ring-primary/50 bg-elevated/10 hover:bg-primary/10 hover:ring-primary',
             activeIndex === i && !springing ? '' : 'transition-all duration-200 ease-out',
             jiggling && activeIndex !== i ? 'spike-face-jiggle' : '',
           ]"

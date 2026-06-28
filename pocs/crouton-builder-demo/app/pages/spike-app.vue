@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-5 · #941/#942 · favorited consumes on merge · hard wiggle-gate on detach'
+const BUILD = 'page-compose-6 · #941/#942 · hold = panes ease apart (no blur) · favorited consumes'
 
 const blockNode = markRaw(SpikeBlockNode)
 
