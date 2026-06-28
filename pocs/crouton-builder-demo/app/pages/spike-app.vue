@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-20 · pinch-zoom over a layout · added block lands clear, centered, green'
+const BUILD = 'page-compose-21 · smooth page⇄flow cross-fade (no bg flash, fit preserved)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -628,6 +628,9 @@ const pageById = (id: unknown) => PAGES.find(p => p.id === String(id))
 // per-node breakpoints all survive a round-trip out to Site and back (no lossy recompile).
 const pageBoards = new Map<string, FlowNode[]>()
 const selectedPageId = ref<string | null>(null)
+// Direction of the page⇄site cross-fade: 'in' grows the page in (opening), 'out' settles back to the
+// flow (returning). Set before the swap so the right curve plays. (#940)
+const zoomDir = ref<'in' | 'out'>('in')
 const currentPageLabel = computed(() => (selectedPageId.value ? pageById(selectedPageId.value)?.label ?? 'Page' : ''))
 
 function labelFor(node: LayoutNode): string {
@@ -705,6 +708,7 @@ function enterPage(id: string) {
   // clean transient board state for a fresh entry
   mode.value = 'free'; viewport.value = null; zoomNodeId.value = null; originRect.value = null
   proposals.value = []; resultOpen.value = false; paletteOpen.value = false
+  zoomDir.value = 'in'
   selectedPageId.value = id
   nodes.value = pageBoards.get(id) ?? treeToBoardNodes(page.tree)
   fitPage()
@@ -713,6 +717,7 @@ function enterPage(id: string) {
 function exitToPages() {
   stashCurrentBoard()
   zoomNodeId.value = null; originRect.value = null; viewport.value = null
+  zoomDir.value = 'out'
   selectedPageId.value = null
 }
 </script>
@@ -776,7 +781,13 @@ function exitToPages() {
       <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
     </header>
 
-    <div v-if="selectedPageId" class="flex min-h-0 flex-1">
+    <!-- Page ⇄ Site cross-fade (#940 redux): both views stacked absolutely so one fades IN while the
+         other fades OUT (simultaneous — NOT mode=out-in, which flashed the dark bg between them and
+         delayed the board's mount so the fit missed). A subtle directional scale reads as a gentle
+         zoom in (open a page) / out (back to the flow). The board still mounts immediately, so fitPage works. -->
+    <div class="relative flex min-h-0 flex-1 overflow-hidden">
+    <Transition :name="zoomDir === 'in' ? 'viewzoom-in' : 'viewzoom-out'">
+    <div v-if="selectedPageId" key="board" class="absolute inset-0 flex">
       <!-- Desktop drawer — the collection's blocks, draggable onto the canvas -->
       <aside class="hidden w-56 shrink-0 overflow-y-auto border-r border-default bg-elevated/40 p-3 md:block">
         <p class="mb-2 text-xs uppercase tracking-widest text-muted">Artists · blocks</p>
@@ -928,7 +939,7 @@ function exitToPages() {
 
     <!-- Site level (#940) — the page flow. Cards = pages (lines = parentId); double-click /
          ⤡ a card → enterPage() loads that page's layout into the spike board above. -->
-    <div v-else class="min-h-0 flex-1">
+    <div v-else key="site" class="absolute inset-0">
       <ClientOnly>
         <CroutonFlowSiteFlow
           :pages="pageRows"
@@ -938,6 +949,8 @@ function exitToPages() {
           @zoom-into-page="(row: Record<string, unknown>) => enterPage(String(row.id))"
         />
       </ClientOnly>
+    </div>
+    </Transition>
     </div>
 
     <!-- Mobile palette — a bottom sheet, out of the way until summoned (#906) -->
@@ -1033,4 +1046,24 @@ function exitToPages() {
 .pill-swap-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .pill-swap-enter-from { opacity: 0; transform: translateY(6px) scale(0.97); }
 .pill-swap-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
+
+/* Page ⇄ Site cross-fade (#940): both views absolute + overlapping, so enter and leave run at the
+   SAME time (no bg flash). Subtle directional scale = a gentle zoom. Opacity is a touch faster than
+   the transform so the outgoing view is mostly gone before its scale finishes (clean hand-off). */
+.viewzoom-in-enter-active, .viewzoom-in-leave-active,
+.viewzoom-out-enter-active, .viewzoom-out-leave-active {
+  transition: opacity 0.26s ease, transform 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+.viewzoom-in-enter-from { opacity: 0; transform: scale(0.97); }   /* page grows in */
+.viewzoom-in-leave-to { opacity: 0; transform: scale(1.03); }     /* site recedes forward */
+.viewzoom-out-enter-from { opacity: 0; transform: scale(1.03); }  /* site settles back from larger */
+.viewzoom-out-leave-to { opacity: 0; transform: scale(0.97); }    /* page shrinks away */
+@media (prefers-reduced-motion: reduce) {
+  .viewzoom-in-enter-active, .viewzoom-in-leave-active,
+  .viewzoom-out-enter-active, .viewzoom-out-leave-active { transition: opacity 0.2s ease; transform: none; }
+  .viewzoom-in-enter-from, .viewzoom-in-leave-to,
+  .viewzoom-out-enter-from, .viewzoom-out-leave-to { transform: none; }
+}
 </style>
