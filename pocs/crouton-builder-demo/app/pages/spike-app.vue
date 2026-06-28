@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-6 · #941/#942 · hold = panes ease apart (no blur) · favorited consumes'
+const BUILD = 'page-compose-7 · #942 · page is fitted instantly on open (no zoom-out)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -539,17 +539,18 @@ function fitPage() {
     const page = nodes.value.find(n => n.data.isPage)
     if (page) {
       // Frame the page node by its KNOWN geometry (position + footprint size), NOT Vue Flow's
-      // measured dimensions — those are stale on a fresh mount (block content reflows after
-      // measurement), so a plain fitView zooms onto the first pane. fitBounds is deterministic.
+      // measured dimensions — those are stale on a fresh mount. duration:0 = snap to fitted on
+      // arrival (no visible zoom-out animation); the early retries just make sure the snap lands
+      // once flowRef is mounted.
       const s = sizeOf(page.data.node)
-      flowRef.value?.fitBounds?.({ x: page.position.x, y: page.position.y, width: s.width, height: s.height }, { duration: 300, padding: 0.18 })
+      flowRef.value?.fitBounds?.({ x: page.position.x, y: page.position.y, width: s.width, height: s.height }, { duration: 0, padding: 0.18 })
     }
     else {
-      flowRef.value?.fitView?.({ duration: 300, padding: 0.2, maxZoom: 1 })
+      flowRef.value?.fitView?.({ duration: 0, padding: 0.2, maxZoom: 1 })
     }
   }
   nextTick(fit)
-  for (const d of [120, 320, 600]) window.setTimeout(fit, d)
+  for (const d of [40, 120, 300]) window.setTimeout(fit, d)
 }
 /** Site → page: load (or first-seed) that page's board and show the editor. */
 function enterPage(id: string) {
