@@ -341,44 +341,36 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
             <!-- "⋯" reveal — the selected panel: collapse it + pick HOW it tucks (the hide-recipe). -->
             <Transition name="opts">
               <div v-if="optionsOpen" class="border-t border-default/50 pt-2">
-                <div v-if="selectedBlock" class="flex items-center gap-2">
-                  <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-primary" />
-                  <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
-                  <UPopover :content="{ side: 'top', align: 'end' }">
+                <div v-if="selectedBlock" class="flex flex-col gap-2">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-square-mouse-pointer" class="size-3.5 shrink-0 text-primary" />
+                    <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ selectedBlock.label || selectedBlock.blockId }}</span>
                     <UButton
-                      :icon="presetOf(selectedBlock.blockId).icon"
-                      :label="presetOf(selectedBlock.blockId).label"
+                      :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+                      :label="isCollapsed(selectedBlock.blockId) ? 'Show' : 'Tuck'"
                       size="xs"
-                      color="neutral"
-                      variant="soft"
-                      trailing-icon="i-lucide-chevron-down"
+                      :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
+                      :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
+                      @click="onToggleCollapse(selectedBlock!.blockId)"
                     />
-                    <template #content>
-                      <div class="flex w-48 flex-col p-1">
-                        <p class="px-2 py-1 text-[10px] uppercase tracking-widest text-muted">Tuck as…</p>
-                        <button
-                          v-for="r in RECIPES"
-                          :key="r.id"
-                          type="button"
-                          class="flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-elevated/60"
-                          :class="presetOf(selectedBlock.blockId).id === r.id ? 'text-primary' : ''"
-                          @click="setRecipe(selectedBlock!.blockId, r)"
-                        >
-                          <UIcon :name="r.icon" class="size-4 shrink-0" />
-                          {{ r.label }}
-                          <UIcon v-if="presetOf(selectedBlock.blockId).id === r.id" name="i-lucide-check" class="ml-auto size-3.5" />
-                        </button>
-                      </div>
-                    </template>
-                  </UPopover>
-                  <UButton
-                    :icon="isCollapsed(selectedBlock.blockId) ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-                    :label="isCollapsed(selectedBlock.blockId) ? 'Show' : 'Tuck'"
-                    size="xs"
-                    :color="isCollapsed(selectedBlock.blockId) ? 'primary' : 'neutral'"
-                    :variant="isCollapsed(selectedBlock.blockId) ? 'soft' : 'ghost'"
-                    @click="onToggleCollapse(selectedBlock!.blockId)"
-                  />
+                  </div>
+                  <!-- INLINE recipe chips — a direct tap sets the recipe (no popover/teleport to be
+                       intercepted by an overlay), and the active chip highlights for instant feedback. -->
+                  <div class="flex items-center gap-1 overflow-x-auto pb-0.5">
+                    <span class="shrink-0 pr-0.5 text-[10px] uppercase tracking-widest text-muted">Tuck&nbsp;as</span>
+                    <button
+                      v-for="r in RECIPES"
+                      :key="r.id"
+                      type="button"
+                      class="flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors active:scale-95"
+                      :class="presetOf(selectedBlock.blockId).id === r.id ? 'border-primary bg-primary/10 text-primary' : 'border-default text-muted hover:text-default'"
+                      :title="r.label"
+                      @click="setRecipe(selectedBlock!.blockId, r)"
+                    >
+                      <UIcon :name="r.icon" class="size-3.5 shrink-0" />
+                      {{ r.label }}
+                    </button>
+                  </div>
                 </div>
                 <p v-else class="py-0.5 text-center text-[11px] text-muted">Tap a panel in the layout to edit it</p>
               </div>
