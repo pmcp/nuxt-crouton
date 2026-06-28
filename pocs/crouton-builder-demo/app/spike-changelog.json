@@ -1,5 +1,6 @@
 [
-  { "v": 27, "note": "Drop INTO a nested layout — insert recurses to the deepest split under your finger (path-addressed), not just the top-level split", "commit": "" },
+  { "v": 28, "note": "Always-on responsive slider drives ALL layouts (no Responsive button; max = edit, scrub = preview); actions moved to a top icon pill; Fit sits left of the slider", "commit": "" },
+  { "v": 27, "note": "Drop INTO a nested layout — insert recurses to the deepest split under your finger (path-addressed), not just the top-level split", "commit": "9b283273" },
   { "v": 26, "note": "Responsive mode gets a continuous width slider (scrub device width live, like the breakpoint author); scroll an overflowing preview instead of panning the canvas; prettier changelog timeline", "commit": "e40732b8" },
   { "v": 25, "note": "Consolidated header (page identity + back button); version chip opens this changelog; zoom controls moved to top-right", "commit": "7ea54378" },
   { "v": 24, "note": "Undo button + ⌘Z (board history)", "commit": "f393b0a0" },

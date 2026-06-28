@@ -257,35 +257,26 @@ const zoomTree = computed<LayoutTree>({
 const paletteOpen = ref(false)
 const resultOpen = ref(false)
 
-// Bottom command pill (#907) — the board chrome lives in a floating bottom pill (Fit · Responsive ·
-// Blocks · Magic), iOS-toolbar style. Tapping "Responsive" lets the pill TAKE OVER → device chips;
-// "← " returns to the main set. (Survey is Free-mode only; leaving Responsive resets to Fit.)
-const pillMode = ref<'main' | 'responsive'>('main')
-// Responsive preview (#940): like the focus-edit breakpoint author, the board's Responsive mode has
-// a continuous WIDTH SLIDER (drag to scrub the device width and watch every layout respond live), not
-// just fixed device chips. Opening it defaults to the Phone preset so the slider is live immediately.
+// Always-on responsive slider (#951): the bottom slider is ALWAYS in view (no "Responsive" mode
+// button). It's a GLOBAL width scrubber — every layout responds to it at once (survey). At its MAX
+// the board is EDIT mode (`viewport = null`: topology, drag/snap/detach); scrub left and it previews
+// at that width (read-only). So "max = edit, scrub = preview" — one control, no mode toggle. The
+// per-layout breakpoint authoring (keypoints) lives in the focus edit view you open by tapping a layout.
 const SURVEY_MIN = 320
 const SURVEY_MAX = 1440
-function openResponsive() {
-  pillMode.value = 'responsive'
-  if (!viewport.value) viewport.value = { ...SPIKE_VIEWPORTS[0]! }
-}
-/** Scrub the survey width — snap the label to a preset when the width matches one, else 'Custom'. */
+/** Drive the global survey width. At/over MAX → edit (no survey). Else preview at that width,
+ *  snapping the label to a device preset when it matches one. */
 function setSurveyWidth(w: number | undefined) {
-  const width = Math.round(w ?? SURVEY_MIN)
+  const width = Math.round(w ?? SURVEY_MAX)
+  if (width >= SURVEY_MAX) { viewport.value = null; return } // max = back to edit (topology)
   const preset = SPIKE_VIEWPORTS.find(v => v.width === width)
   viewport.value = preset
     ? { ...preset }
     : { label: 'Custom', icon: 'i-lucide-ruler', width, height: viewport.value?.height ?? 800 }
 }
-// Leaving the Responsive picker drops the survey (it only exists while you're choosing a width).
-function closeResponsive() { pillMode.value = 'main'; viewport.value = null }
-// Top-level Fit = zoom the camera to show every node (and ensure we're not surveying). A real
-// "fit to view". ONE fitView call (not fitOverview's double-call, which is for async-measured fresh
-// drops — on a settled board two competing zoom animations look janky/blurry). Single clean fit.
+// Top-level Fit = zoom the camera to show every node. Doesn't touch the survey width (the slider owns
+// that now) — just frames the board.
 function fitBoard() {
-  viewport.value = null
-  pillMode.value = 'main'
   nextTick(() => flowRef.value?.fitView?.({ duration: 250, padding: 0.18, maxZoom: 1 }))
 }
 
@@ -992,121 +983,58 @@ function exitToPages() {
           </div>
         </ClientOnly>
 
-        <!-- Bottom command pill (#907) — the board's primary controls, iOS-toolbar style. Free mode
-             only; hidden while the edit shell is up. "Responsive" takes the pill over with device chips. -->
+        <!-- Top actions pill (#951) — icon-only quick actions, floating top-centre of the canvas. -->
         <div
           v-if="mode === 'free' && !editing"
-          class="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+          class="pointer-events-none absolute inset-x-0 top-2 z-30 flex justify-center px-4"
         >
-          <Transition name="pill-swap" mode="out-in">
-            <!-- main set -->
-            <div
-              v-if="pillMode === 'main'"
-              key="main"
-              class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl"
-            >
-              <UButton
-                icon="i-lucide-undo-2"
-                size="sm"
-                color="neutral"
-                variant="ghost"
-                :disabled="!canUndo"
-                title="Undo (⌘Z)"
-                aria-label="Undo"
-                @click="undo"
-              />
-              <UButton
-                icon="i-lucide-scan"
-                label="Fit"
-                size="sm"
-                color="neutral"
-                variant="ghost"
-                title="Zoom to fit all blocks"
-                @click="fitBoard"
-              />
-              <UButton
-                icon="i-lucide-ruler"
-                label="Responsive"
-                size="sm"
-                :color="viewport !== null ? 'primary' : 'neutral'"
-                :variant="viewport !== null ? 'soft' : 'ghost'"
-                @click="openResponsive"
-              />
-              <UButton
-                icon="i-lucide-layout-grid"
-                label="Blocks"
-                size="sm"
-                color="neutral"
-                variant="ghost"
-                @click="paletteOpen = true"
-              />
-              <UButton
-                :icon="hasAI ? 'i-lucide-sparkles' : 'i-lucide-wand-2'"
-                label="Magic"
-                size="sm"
-                color="primary"
-                variant="solid"
-                :disabled="!blockCount"
-                @click="magic"
-              />
-              <UButton
-                v-if="proposals.length"
-                icon="i-lucide-panel-top-open"
-                size="sm"
-                color="neutral"
-                variant="ghost"
-                aria-label="Show layout result"
-                @click="resultOpen = true"
-              />
-            </div>
-            <!-- "Responsive" took over → device chips -->
-            <div
-              v-else
-              key="responsive"
-              class="pointer-events-auto w-[min(94vw,520px)] rounded-2xl border border-primary/40 bg-elevated/90 p-2 shadow-xl backdrop-blur-xl"
-            >
-              <div class="flex items-center gap-1">
-                <UButton icon="i-lucide-chevron-left" size="sm" color="neutral" variant="ghost" aria-label="Back" @click="closeResponsive" />
-                <UButton
-                  v-for="v in SPIKE_VIEWPORTS"
-                  :key="v.label"
-                  :icon="v.icon"
-                  size="sm"
-                  :title="`${v.label} · ${v.width}px`"
-                  :color="viewport?.width === v.width ? 'primary' : 'neutral'"
-                  :variant="viewport?.width === v.width ? 'soft' : 'ghost'"
-                  @click="viewport = { ...v }"
-                />
-                <span class="ml-auto rounded-full bg-default/70 px-2 py-0.5 font-mono text-[11px] text-muted">{{ Math.round(viewport?.width ?? 0) }}px</span>
-              </div>
-              <USlider
-                class="mt-2.5 px-1"
-                :min="SURVEY_MIN"
-                :max="SURVEY_MAX"
-                :step="2"
-                :model-value="viewport?.width ?? SURVEY_MIN"
-                @update:model-value="setSurveyWidth"
-              />
-            </div>
-          </Transition>
+          <div class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl">
+            <UButton icon="i-lucide-undo-2" size="sm" color="neutral" variant="ghost" :disabled="!canUndo" title="Undo (⌘Z)" aria-label="Undo" @click="undo" />
+            <UButton icon="i-lucide-plus" size="sm" color="neutral" variant="ghost" title="Add blocks" aria-label="Add blocks" @click="paletteOpen = true" />
+            <UButton :icon="hasAI ? 'i-lucide-sparkles' : 'i-lucide-wand-2'" size="sm" color="primary" variant="solid" :disabled="!blockCount" title="Magic arrange" aria-label="Magic" @click="magic" />
+            <UButton v-if="proposals.length" icon="i-lucide-panel-top-open" size="sm" color="neutral" variant="ghost" aria-label="Show layout result" @click="resultOpen = true" />
+          </div>
+        </div>
+
+        <!-- Always-on responsive slider (#951) — Fit (left of the slider) + the GLOBAL width slider +
+             a width/Edit readout. Scrub to preview every layout at a width; at MAX it's edit mode. -->
+        <div
+          v-if="mode === 'free' && !editing"
+          class="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        >
+          <div class="pointer-events-auto flex w-[min(94vw,560px)] items-center gap-2 rounded-2xl border border-default/60 bg-elevated/85 py-2 pl-1.5 pr-3 shadow-xl backdrop-blur-xl">
+            <UButton icon="i-lucide-scan" size="sm" color="neutral" variant="ghost" title="Zoom to fit" aria-label="Fit" @click="fitBoard" />
+            <USlider
+              class="flex-1"
+              :min="SURVEY_MIN"
+              :max="SURVEY_MAX"
+              :step="2"
+              :model-value="viewport?.width ?? SURVEY_MAX"
+              @update:model-value="setSurveyWidth"
+            />
+            <span
+              class="w-12 shrink-0 text-right font-mono text-[11px]"
+              :class="viewport ? 'text-primary' : 'text-muted'"
+            >{{ viewport ? Math.round(viewport.width) + 'px' : 'Edit' }}</span>
+          </div>
         </div>
 
         <!-- Snap hints (when there's something to arrange) -->
         <p
           v-if="mode === 'free' && viewport && nodes.length"
-          class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
+          class="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
         >
           Surveying at {{ viewport.label }} · {{ viewport.width }}px — read-only · hit ⛶ to fit · pick <strong>Fit</strong> to edit
         </p>
         <p
           v-else-if="mode === 'free' && nodes.length >= 2"
-          class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
+          class="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
           Drag a block next to another → they snap together · then ✨ Magic or compile · double-click to edit
         </p>
         <p
           v-else-if="mode === 'snap' && pieces.length"
-          class="pointer-events-none absolute inset-x-0 top-2 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
+          class="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
           Drag a card beside another → they snap into a split · resize from the corner
         </p>
@@ -1295,12 +1223,6 @@ function exitToPages() {
   bottom: auto;
   left: auto;
 }
-
-/* the command pill swaps between its main set and the "Responsive" device set */
-.pill-swap-enter-active,
-.pill-swap-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-.pill-swap-enter-from { opacity: 0; transform: translateY(6px) scale(0.97); }
-.pill-swap-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
 
 /* Page ⇄ Site cross-fade (#940): both views absolute + overlapping, so enter and leave run at the
    SAME time (no bg flash). Subtle directional scale = a gentle zoom. Opacity is a touch faster than
