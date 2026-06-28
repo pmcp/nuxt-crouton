@@ -31,7 +31,7 @@ import { onKeyStroke, onClickOutside } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
-  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean }
+  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean }
   selected?: boolean
   // Vue Flow sets this true while the node is being dragged across the board, false on drop —
   // drives the light-green drag glow. It fades out via `transition-shadow` after release.
@@ -149,6 +149,36 @@ function onCardMove(e: PointerEvent) {
 }
 function onCardUp() { clearPress() }
 onKeyStroke('Escape', () => { if (jiggling.value) jiggling.value = false })
+
+// Pinch-to-zoom over a layout (#948): a 2-finger gesture on the card should zoom the CANVAS, not
+// drag/wiggle the node. We listen in the CAPTURE phase so we can stop the event before Vue Flow's
+// node-drag (bubble phase) ever sees it, then drive the page's zoom. One finger is untouched —
+// normal drag/long-press still work. Provided by the page; no-op if absent.
+const pinch = inject(SPIKE_PINCH_KEY, null)
+const pinching = ref(false)
+let pinchDist = 0
+function touchDist(t: TouchList) { return Math.hypot(t[0]!.clientX - t[1]!.clientX, t[0]!.clientY - t[1]!.clientY) }
+function touchMid(t: TouchList) { return { x: (t[0]!.clientX + t[1]!.clientX) / 2, y: (t[0]!.clientY + t[1]!.clientY) / 2 } }
+function onTouchStartCap(e: TouchEvent) {
+  if (e.touches.length < 2 || !pinch) return
+  pinching.value = true
+  jiggling.value = false; clearPress() // a pinch is never a wiggle
+  pinchDist = touchDist(e.touches)
+  e.stopPropagation(); e.preventDefault() // keep it off the node drag + browser page-zoom
+}
+function onTouchMoveCap(e: TouchEvent) {
+  if (!pinching.value || e.touches.length < 2) return
+  const d = touchDist(e.touches)
+  if (pinchDist > 0 && d > 0) {
+    const mid = touchMid(e.touches)
+    pinch?.(d / pinchDist, mid.x, mid.y)
+  }
+  pinchDist = d
+  e.stopPropagation(); e.preventDefault()
+}
+function onTouchEndCap(e: TouchEvent) {
+  if (e.touches.length < 2) { pinching.value = false; pinchDist = 0 }
+}
 // Exit wiggle by tapping anywhere OUTSIDE this layout (the natural "done" gesture on touch);
 // there's also a visible Done button. Tapping a face (inside) still starts a pull.
 const cardRef = ref()
@@ -314,13 +344,17 @@ watch(() => props.data.node, () => {
   <UCard
     ref="cardRef"
     class="spike-block-node transition-[width,height,box-shadow] duration-300 ease-out"
-    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : dragging ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
+    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : (dragging || data.justAdded) ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
     @pointermove="onCardMove"
     @pointerup="onCardUp"
     @pointercancel="onCardUp"
+    @touchstart.capture="onTouchStartCap"
+    @touchmove.capture="onTouchMoveCap"
+    @touchend.capture="onTouchEndCap"
+    @touchcancel.capture="onTouchEndCap"
   >
     <!-- "Page" badge — this node is the live layout a user sees (#942). -->
     <UBadge

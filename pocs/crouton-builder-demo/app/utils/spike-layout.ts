@@ -69,6 +69,15 @@ export const SPIKE_DUPLICATE_KEY = Symbol('spike-duplicate') as InjectionKey<(no
 export const SPIKE_GHOST_LABEL_KEY = Symbol('spike-ghost-label') as InjectionKey<Ref<string>>
 
 /**
+ * Pinch-to-zoom passthrough (#948) — Vue Flow zooms on a two-finger pinch over the empty canvas,
+ * but a pinch that STARTS on a node is swallowed by the node's drag, so you can't zoom while your
+ * fingers are over a layout. SpikeBlockNode catches a 2-finger gesture (capture phase, before the
+ * node drag) and calls this so the PAGE drives the canvas zoom instead — `ratio` is the incremental
+ * finger-distance change, `(midX, midY)` the pinch midpoint in client px (kept under the fingers).
+ */
+export const SPIKE_PINCH_KEY = Symbol('spike-pinch') as InjectionKey<(ratio: number, midX: number, midY: number) => void>
+
+/**
  * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
  * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
  * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a

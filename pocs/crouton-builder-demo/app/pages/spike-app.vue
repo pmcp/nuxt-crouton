@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-19 · ghost slot mirrors the dragged item\'s shape & size'
+const BUILD = 'page-compose-20 · pinch-zoom over a layout · added block lands clear, centered, green'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -73,7 +73,7 @@ const drawer = [
 // `bp` = authored responsive breakpoints for this node's layout (#907 layer 2), set in the
 // breakpoint slider you zoom into. Structural edits (snap/detach) create nodes WITHOUT bp, so
 // authored breakpoints reset when the structure they targeted changes — which is the right thing.
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean } }
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -85,7 +85,31 @@ let seq = 0
 const flowRef = ref<{
   fitView?: (o?: Record<string, unknown>) => void
   fitBounds?: (b: { x: number, y: number, width: number, height: number }, o?: Record<string, unknown>) => void
+  setCenter?: (x: number, y: number, o?: Record<string, unknown>) => void
 } | null>(null)
+
+// Pinch-to-zoom over a layout (#948): SpikeBlockNode catches a 2-finger gesture and calls this so the
+// canvas zooms even when the fingers start on a node (Vue Flow's own pinch never fires there — the
+// node's drag eats it). We read the live viewport transform and re-`setCenter` with the math that
+// keeps the pinched point fixed under the fingers (Vue Flow exposes setCenter but not setViewport).
+function pinchZoom(ratio: number, midX: number, midY: number) {
+  if (viewport.value || zoomNodeId.value) return
+  const container = document.querySelector('.crouton-vue-flow') as HTMLElement | null
+  const vp = container?.querySelector('.vue-flow__viewport') as HTMLElement | null
+  if (!container || !vp || !flowRef.value?.setCenter) return
+  const m = new DOMMatrix(getComputedStyle(vp).transform)
+  const z = m.a
+  if (!z || !isFinite(ratio) || ratio <= 0) return
+  const rect = container.getBoundingClientRect()
+  const px = midX - rect.left, py = midY - rect.top // pinch midpoint, container-relative
+  const pfx = (px - m.e) / z, pfy = (py - m.f) / z   // flow point currently under the fingers
+  const nz = Math.min(4, Math.max(0.1, z * ratio))
+  // Centre to pass so that flow point (pfx,pfy) lands back at the fingers (px,py) at the new zoom.
+  const cx = pfx + (rect.width / 2 - px) / nz
+  const cy = pfy + (rect.height / 2 - py) / nz
+  flowRef.value.setCenter(cx, cy, { zoom: nz, duration: 0 })
+}
+provide(SPIKE_PINCH_KEY, pinchZoom)
 function fitOverview() {
   if (viewport.value || zoomNodeId.value) return // survey / edit-view own the screen
   const fit = () => flowRef.value?.fitView?.({ duration: 350, padding: 0.3, maxZoom: 1 })
@@ -223,12 +247,39 @@ function onDragStart(e: DragEvent, item: { blockId: string, label: string }) {
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
 }
 
+/** A clear spot to the RIGHT of every existing node (never under one), so a freshly added block
+ *  lands in the open, not hidden behind a wide layout. Uses real footprints, not a fixed stride. */
+function clearSpot(): { x: number, y: number } {
+  if (!nodes.value.length) return { x: 60, y: 140 }
+  let maxRight = -Infinity, topY = Infinity
+  for (const n of nodes.value) {
+    const s = sizeOf(n.data.node)
+    maxRight = Math.max(maxRight, n.position.x + s.width)
+    topY = Math.min(topY, n.position.y)
+  }
+  return { x: Math.round(maxRight + 100), y: Math.round(topY) }
+}
+
+let justAddedTimer: number | null = null
 /** CroutonFlow emits this on drop with the flow-space position — add a fresh leaf node. */
 function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: number }) {
   const label = String(item.label ?? item.blockId)
   const leaf: LayoutNode = { type: 'leaf', blockId: String(item.blockId), config: { collection: 'artists', heading: label } }
-  nodes.value = [...nodes.value, { id: String(item.id), type: 'default', position, data: { node: leaf, label } }]
-  fitOverview() // re-frame so you see everything that's been added (esp. the first block on mobile)
+  const added: FlowNode = { id: String(item.id), type: 'default', position, data: { node: leaf, label, justAdded: true } }
+  // Clear any prior "just added" highlight so only the newest block glows; fade this one after a beat.
+  nodes.value = [...nodes.value.map(n => (n.data.justAdded ? { ...n, data: { ...n.data, justAdded: false } } : n)), added]
+  if (justAddedTimer != null) window.clearTimeout(justAddedTimer)
+  justAddedTimer = window.setTimeout(() => {
+    nodes.value = nodes.value.map(n => (n.id === added.id ? { ...n, data: { ...n.data, justAdded: false } } : n))
+  }, 2600)
+  // Center on the new block at a moderate zoom (frame it with breathing room — not too deep), so it's
+  // always visible after adding rather than hidden behind / off-screen of the existing layouts.
+  const s = sizeOf(leaf)
+  const margin = Math.max(s.width, s.height) * 0.9
+  nextTick(() => flowRef.value?.fitBounds?.(
+    { x: position.x - margin, y: position.y - margin, width: s.width + margin * 2, height: s.height + margin * 2 },
+    { duration: 350, padding: 0.1 },
+  ))
 }
 
 /** Combine two nodes into a split, flattening same-direction nesting so a third block joins
@@ -407,7 +458,7 @@ const toast = useToast()
 function addBlock(item: { blockId: string, label: string }) {
   onNodeDrop(
     { id: `${item.blockId}-${++seq}`, blockId: item.blockId, label: item.label },
-    { x: nodes.value.length * 300 + 60, y: 140 },
+    clearSpot(), // open spot to the right of everything — never hidden under an existing layout
   )
   toast.add({ title: `Added ${item.label}`, icon: 'i-lucide-plus', duration: 1200 })
 }
