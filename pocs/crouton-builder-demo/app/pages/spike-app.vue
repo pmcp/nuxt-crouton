@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-2 · #942 · page = a composed layout you promote · drafts coexist'
+const BUILD = 'page-compose-3 · #941/#942 · page opens centered · long-press to wiggle + pull apart'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -524,6 +524,15 @@ provide(SPIKE_DUPLICATE_KEY, duplicateNode)
 function stashCurrentBoard() {
   if (selectedPageId.value) pageBoards.set(selectedPageId.value, nodes.value)
 }
+/** Centre + fit the page's layout on entry. The flow is freshly mounted (v-if) and Vue Flow
+ *  measures node size async, so a single early fit frames a stale (zero/partial) box and the
+ *  layout falls off-screen — retry across a few frames until the node is measured. */
+function fitPage() {
+  if (viewport.value || zoomNodeId.value) return
+  const fit = () => flowRef.value?.fitView?.({ duration: 300, padding: 0.16, maxZoom: 1 })
+  nextTick(fit)
+  for (const d of [120, 320, 600]) window.setTimeout(fit, d)
+}
 /** Site → page: load (or first-seed) that page's board and show the editor. */
 function enterPage(id: string) {
   const page = pageById(id)
@@ -534,7 +543,7 @@ function enterPage(id: string) {
   proposals.value = []; resultOpen.value = false; paletteOpen.value = false
   selectedPageId.value = id
   nodes.value = pageBoards.get(id) ?? treeToBoardNodes(page.tree)
-  fitOverview()
+  fitPage()
 }
 /** Page → Site: persist the board and go back to the page flow. */
 function exitToPages() {
