@@ -27,6 +27,7 @@
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
 import { ref, inject, computed, watch } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
@@ -71,11 +72,36 @@ const detach = inject(SPIKE_DETACH_KEY, null)
 // Page promotion (#942): promote this node to BE the page, or duplicate it as a draft.
 const setPage = inject(SPIKE_SET_PAGE_KEY, null)
 const duplicate = inject(SPIKE_DUPLICATE_KEY, null)
-const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
-// Stay armed while a pull is in flight (activeIndex set) even if the cursor leaves the card —
-// otherwise mouseleave drops `hovered`, the overlay unmounts, and the grabbed pane is orphaned.
-const armed = computed(() => !surveying.value && isGroup.value && (hovered.value || !!props.selected || activeIndex.value !== null))
+
+// Long-press → jiggle (#941): detach is gated behind a deliberate HOLD, so a merged group's panes
+// only become pullable once they WIGGLE (clearly draggable). A quick drag still moves the whole
+// group. Per-node state, so holding another group wiggles it too. Exit on detach / Escape / a tap
+// or drag off a face.
+const LONG_PRESS_MS = 420
+const MOVE_CANCEL_PX = 8
+const jiggling = ref(false)
+let pressTimer: number | null = null
+let pressOrigin = { x: 0, y: 0 }
+function clearPress() { if (pressTimer != null) { window.clearTimeout(pressTimer); pressTimer = null } }
+function onCardDown(e: PointerEvent) {
+  if (surveying.value || !isGroup.value) return
+  if (jiggling.value) { jiggling.value = false; return } // already wiggling → a tap/drag off a face exits
+  pressOrigin = { x: e.clientX, y: e.clientY }
+  clearPress()
+  pressTimer = window.setTimeout(() => { jiggling.value = true; pressTimer = null }, LONG_PRESS_MS)
+}
+function onCardMove(e: PointerEvent) {
+  // Moved before the hold completed → it's a node drag, not a long-press. Cancel.
+  if (pressTimer != null && Math.hypot(e.clientX - pressOrigin.x, e.clientY - pressOrigin.y) > MOVE_CANCEL_PX) clearPress()
+}
+function onCardUp() { clearPress() }
+onKeyStroke('Escape', () => { if (jiggling.value) jiggling.value = false })
+
+// Show the detach faces only while WIGGLING (or while a pull is mid-flight, so the grabbed pane
+// isn't orphaned if the finger leaves the card). Tapping/selecting no longer auto-arms detach —
+// that surface is the #942 promote/duplicate toolbar now; pulling apart is the deliberate hold.
+const armed = computed(() => !surveying.value && isGroup.value && (jiggling.value || activeIndex.value !== null))
 
 // Top-level pane faces (as % of the card), laid out along the split's axis by footprint — the
 // regions you grab to pull a pane out, and the seams revealed between them on ease-apart.
@@ -180,6 +206,7 @@ function onPaneDown(i: number, e: PointerEvent) {
       // Reset pull state FIRST: Vue Flow reuses this node's component instance (same id), so a
       // leftover activeIndex/pull would strand the next pull's state. Then ask the page to detach.
       resetPull()
+      jiggling.value = false // pulled one out → leave wiggle mode
       detach?.(props.data.node, { index: i2!, dir, dropOffset }) // page removes this pane → card re-renders
     }
     else {
@@ -221,8 +248,10 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     :class="guideEdge ? 'ring-2 ring-primary shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
-    @mouseenter="hovered = true"
-    @mouseleave="hovered = false"
+    @pointerdown="onCardDown"
+    @pointermove="onCardMove"
+    @pointerup="onCardUp"
+    @pointercancel="onCardUp"
   >
     <!-- "Page" badge — this node is the live layout a user sees (#942). -->
     <UBadge
@@ -307,9 +336,10 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
               ? (past ? 'z-10 ring-2 ring-primary bg-primary/15 shadow-2xl' : 'z-10 ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
               : 'ring-default/40 bg-elevated/5 hover:bg-elevated/20 hover:ring-primary/40',
             activeIndex === i && !springing ? '' : 'transition-all duration-200 ease-out',
+            jiggling && activeIndex !== i ? 'spike-face-jiggle' : '',
           ]"
-          :style="faceStyle(i)"
-          @pointerdown="onPaneDown(i, $event)"
+          :style="{ ...faceStyle(i), animationDelay: i % 2 ? '0.08s' : '0s' }"
+          @pointerdown.stop="onPaneDown(i, $event)"
         >
           <span
             class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur transition-opacity"
@@ -323,3 +353,15 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     </div>
   </UCard>
 </template>
+
+<style scoped>
+/* Long-press → jiggle (#941): iOS edit-mode wiggle on the detachable pane faces, so it's
+   clearly draggable. Disabled under prefers-reduced-motion. The pulled face doesn't wiggle. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes spike-jiggle {
+    0%, 100% { transform: rotate(-1.1deg); }
+    50% { transform: rotate(1.1deg); }
+  }
+  .spike-face-jiggle { animation: spike-jiggle 0.25s ease-in-out infinite; }
+}
+</style>
