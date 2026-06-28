@@ -20,7 +20,9 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
  * — "the side that's gonna snap lines up" before you let go. Provided by the page, injected
  * by SpikeBlockNode. `shallowRef` because the value is a small immutable record swapped each frame.
  */
-export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge }
+// `armed` (#941 dwell): false = "snap point here" (soft/blue, just approached); true = held long
+// enough that releasing now WILL snap (green). Two-stage so a snap takes intent, not a brush-past.
+export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge, armed?: boolean }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**

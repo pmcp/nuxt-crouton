@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-8 · #941 · exit wiggle: tap outside or Done button'
+const BUILD = 'page-compose-9 · #941 · dwell-to-snap: blue snap point → hold → green → release'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -261,12 +261,35 @@ function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: Fl
 // (its collab sync already broadcasts it continuously). On each frame we recompute the snap
 // candidate and light up the target's joining edge — so "the side that's gonna snap lines up"
 // is visible BEFORE you let go, not just after the merge.
+// Dwell-to-snap (#941): a snap takes intent, not a brush-past. The moment you're near a snap
+// point it shows SOFT (blue, "snap point here"); hold there ~0.6s and it ARMS (green, "release to
+// snap"). A timer (not frame-based) so it still arms while the finger holds perfectly still (no
+// drag events fire then). Moving away / to a different edge resets it.
+const SNAP_DWELL_MS = 600
+let snapKey: string | null = null
+let snapTimer: number | null = null
+function clearSnapTimer() { if (snapTimer != null) { window.clearTimeout(snapTimer); snapTimer = null } }
+function resetSnap() { snapPreview.value = null; snapKey = null; clearSnapTimer() }
+
 function onNodeDragLive(id: string, pos: { x: number, y: number }) {
-  if (viewport.value) { snapPreview.value = null; return } // survey mode is read-only
+  if (viewport.value) { resetSnap(); return } // survey mode is read-only
   const moved = nodes.value.find(n => n.id === id)
-  if (!moved) { snapPreview.value = null; return }
+  if (!moved) { resetSnap(); return }
   const s = snapAt(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
-  snapPreview.value = s ? { node: s.target.data.node, edge: s.edge } : null
+  if (!s) { resetSnap(); return } // out of range → no candidate, dwell resets
+  const key = `${s.target.id}-${s.edge}`
+  if (key === snapKey) {
+    // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.
+    snapPreview.value = { node: s.target.data.node, edge: s.edge, armed: snapPreview.value?.armed === true }
+    return
+  }
+  // New candidate → soft state + (re)start the dwell-to-arm timer.
+  snapKey = key
+  clearSnapTimer()
+  snapPreview.value = { node: s.target.data.node, edge: s.edge, armed: false }
+  snapTimer = window.setTimeout(() => {
+    if (snapKey === key && snapPreview.value) snapPreview.value = { ...snapPreview.value, armed: true }
+  }, SNAP_DWELL_MS)
 }
 
 // In-flow snap + MERGE (#907) — snapping happens ON the Vue Flow canvas, no separate mode.
@@ -276,7 +299,8 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
 // split — so the unit drags as one piece and the renderer stretches each pane to the group's
 // full size (a block snapped to a 2-high stack spans its full height).
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
-  snapPreview.value = null // drag has ended — clear the live guide
+  const wasArmed = snapPreview.value?.armed === true // did the dwell complete (green) before release?
+  resetSnap() // drag has ended — clear the live guide + dwell timer
   if (viewport.value) return // survey mode is read-only — don't merge or persist tiled positions
   const rows = rowsRaw as unknown as FlowNode[]
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
@@ -285,6 +309,8 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
     return p && (p.x !== r.position.x || p.y !== r.position.y)
   })
   if (!moved) { nodes.value = rows; return }
+  // Released while only SOFT (not held long enough) → just place it; snapping requires the dwell.
+  if (!wasArmed) { nodes.value = rows; return }
 
   const others = rows.filter(r => r.id !== moved.id)
   const s = snapAt(moved.data.node, moved.position, others)

@@ -55,12 +55,16 @@ const snapPreview = inject(SPIKE_SNAP_KEY, null)
 const guideEdge = computed<SnapEdge | null>(() =>
   !surveying.value && snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
 )
+// Dwell stages (#941): SOFT = just approached (blue, wide band — "snap point here"); ARMED = held
+// long enough that releasing now snaps (green, tighter solid line).
+const guideArmed = computed(() => guideEdge.value !== null && snapPreview?.value?.armed === true)
 const guideStyle = computed(() => {
+  const t = guideArmed.value ? '5px' : '10px' // soft band is wide & obvious; armed is a crisp line
   switch (guideEdge.value) {
-    case 'left': return { left: '-3px', top: '0', bottom: '0', width: '4px' }
-    case 'right': return { right: '-3px', top: '0', bottom: '0', width: '4px' }
-    case 'top': return { top: '-3px', left: '0', right: '0', height: '4px' }
-    case 'bottom': return { bottom: '-3px', left: '0', right: '0', height: '4px' }
+    case 'left': return { left: '-4px', top: '0', bottom: '0', width: t }
+    case 'right': return { right: '-4px', top: '0', bottom: '0', width: t }
+    case 'top': return { top: '-4px', left: '0', right: '0', height: t }
+    case 'bottom': return { bottom: '-4px', left: '0', right: '0', height: t }
     default: return {}
   }
 })
@@ -253,7 +257,7 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
   <UCard
     ref="cardRef"
     class="spike-block-node transition-shadow"
-    :class="guideEdge ? 'ring-2 ring-primary shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
+    :class="guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : guideEdge ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -329,12 +333,23 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
     <CroutonLayoutRenderer v-else :node="data.node" />
 
-    <!-- Live snap guide: the edge this block will be joined on lights up while a peer is dragged -->
+    <!-- Live snap guide (#941 dwell): SOFT = blue, wide, pulsing ("snap point here"); ARMED = green,
+         crisp, steady ("release to snap"). -->
     <div
       v-if="guideEdge"
-      class="pointer-events-none absolute z-10 animate-pulse rounded-full bg-primary shadow-[0_0_10px_2px_var(--ui-primary)]"
+      class="pointer-events-none absolute z-10 rounded-full"
+      :class="guideArmed
+        ? 'bg-emerald-500 shadow-[0_0_14px_3px_rgba(16,185,129,0.85)]'
+        : 'animate-pulse bg-sky-400/80 shadow-[0_0_10px_2px_rgba(56,189,248,0.7)]'"
       :style="guideStyle"
     />
+    <!-- Armed cue: a small "release to snap" tag at the joining edge so the green state is unmistakable -->
+    <div
+      v-if="guideArmed"
+      class="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-lg"
+    >
+      release to snap
+    </div>
 
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame
