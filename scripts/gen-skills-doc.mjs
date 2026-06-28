@@ -52,7 +52,8 @@ const META = {
   'dependency-sweep': { group: 'verify', triggers: ['ask', 'auto'] },
   'db-migrations': { group: 'verify', triggers: ['ask'] },
   'db-clone': { group: 'verify', triggers: ['ask'] },
-  'think-aloud': { group: 'meta', triggers: ['ask'] }
+  'think-aloud': { group: 'meta', triggers: ['ask'] },
+  'loop-station': { group: 'meta', triggers: ['ask', 'auto'] }
 }
 
 const GROUPS = [

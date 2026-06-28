@@ -1,0 +1,82 @@
+name: loop-station-inventory
+
+# Context-budget inventory (Loop Station WS1, #927). Event-driven: every merge to
+# main that touches the always-on harness surface records ONE deterministic data
+# point — tokens per CLAUDE.md / skill / agent, lexical redundancy, scorecard,
+# per-CI cold-writes — appended to writeups/loop-station/history.jsonl with the
+# causing PR attached. The number only changes on these merges, so we measure on
+# the merge (cause attached), not on a filler cron. No LLM: count_tokens is free
+# tokenization. See .claude/skills/loop-station/.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'CLAUDE.md'
+      - '.claude/skills/**'
+      - '.claude/agents/**'
+  workflow_dispatch: # manual re-measure of the current HEAD
+
+permissions:
+  contents: write # commit the new history.jsonl line back to main
+
+concurrency:
+  group: loop-station-inventory
+  cancel-in-progress: false # never drop a data point mid-write
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so the commit-back rebases cleanly
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Best-effort: pull the causing PR number out of the merge commit subject
+      # ("Merge #NN — …" / "… (#NN)"). Recorded on the data point; empty is fine.
+      - name: Derive causing PR
+        id: pr
+        env:
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          NUM=$(printf '%s' "$MSG" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || true)
+          echo "number=${NUM}" >> "$GITHUB_OUTPUT"
+
+      - name: Gather inventory
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOOP_STATION_PR: ${{ steps.pr.outputs.number }}
+          LOOP_STATION_COMMIT: ${{ github.sha }}
+        run: node .claude/skills/loop-station/gather.mjs > loop-station.record.json
+
+      - name: Append to history (idempotent per commit)
+        id: append
+        run: |
+          APPENDED=$(node .claude/skills/loop-station/append-history.mjs < loop-station.record.json)
+          echo "appended=${APPENDED}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit the new data point
+        if: steps.append.outputs.appended == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add writeups/loop-station/history.jsonl
+          git commit -m "chore(loop-station): record context-budget inventory [skip ci]"
+          # Rebase onto any concurrent main movement, then push.
+          for i in 1 2 3 4; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "push attempt $i failed; retrying…"; sleep $((2 ** i))
+          done
+          exit 1
+
+      - name: Upload record artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: loop-station-record
+          path: loop-station.record.json
+          if-no-files-found: ignore
