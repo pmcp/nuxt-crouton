@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-18 · snap arms reliably over a layout (overlap + steady dwell)'
+const BUILD = 'page-compose-19 · ghost slot mirrors the dragged item\'s shape & size'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -331,7 +331,7 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
   const key = intent.kind === 'insert' ? `ins-${intent.target.id}` : `edge-${intent.target.id}-${intent.edge}`
   const dragLabel = moved.data.label ?? labelFor(moved.data.node)
   const base: SpikeSnapPreview = intent.kind === 'insert'
-    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index }, dragLabel }
+    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index }, dragLabel, dragNode: moved.data.node }
     : { node: intent.target.data.node, edge: intent.edge, dragLabel }
   if (key === snapKey) {
     // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.

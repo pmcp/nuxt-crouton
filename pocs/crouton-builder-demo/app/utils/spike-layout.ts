@@ -29,7 +29,9 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 export interface SpikeSnapInsert { axis: 'horizontal' | 'vertical', frac: number, index: number }
 // `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed insert target
 // can render a "this is where it lands" ghost slab at the seam carrying the incoming item's name.
-export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert, dragLabel?: string }
+// `dragNode` (#947) — the dragged node's actual subtree, so the target can build a ghost skeleton
+// with the SAME footprint (a 2-row stack → a 2-row ghost), making the opened slot match its size.
+export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert, dragLabel?: string, dragNode?: LayoutNode }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**

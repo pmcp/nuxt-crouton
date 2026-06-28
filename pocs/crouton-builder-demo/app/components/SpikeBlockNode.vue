@@ -45,7 +45,9 @@ const surveying = computed(() => !!viewport?.value)
 
 const size = computed(() => {
   if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
-  const f = footprint(props.data.node)
+  // `renderNode` (not data.node) so the card GROWS to fit a ghost skeleton spliced in on an armed
+  // insert — e.g. dropping a 2-row stack into a row makes the row 2-tall, opening a matching slot.
+  const f = footprint(renderNode.value)
   return { width: `${f.cols * SPIKE_BASE_W}px`, height: `${f.rows * SPIKE_BASE_H}px` }
 })
 
@@ -94,11 +96,22 @@ const guideInsertStyle = computed(() => {
 const guideArmedInsert = computed(() => guideArmed.value && !!guideInsert.value)
 const ghostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Drops here')
 provide(SPIKE_GHOST_LABEL_KEY, ghostLabel)
+// Build a ghost SKELETON with the same shape as the dragged node — every leaf becomes a
+// `__dropghost__` placeholder, splits/nested preserved — so its FOOTPRINT matches the dragged item.
+// Inserted into a horizontal split, a 2-row stack stays 2 rows, growing the row to fit (so the
+// opened slot matches the item's size, not a flat 1×1 sliver). Sizes preserved for inner proportions.
+function ghostify(node: LayoutNode): LayoutNode {
+  if (node.type === 'leaf') return { type: 'leaf', blockId: '__dropghost__', ...(node.defaultSize !== undefined ? { defaultSize: node.defaultSize } : {}) }
+  if (node.type === 'nested') return { type: 'nested', layout: { ...node.layout, root: ghostify(node.layout.root) } }
+  return { ...node, children: node.children.map(ghostify) }
+}
 const renderNode = computed<LayoutNode>(() => {
   const ins = guideInsert.value
   const n = props.data.node
   if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
-  const ghost: LayoutNode = { type: 'leaf', blockId: '__dropghost__', defaultSize: Math.round(100 / (n.children.length + 1)) }
+  const dn = snapPreview?.value?.dragNode
+  const skeleton = dn ? ghostify(dn) : { type: 'leaf' as const, blockId: '__dropghost__' }
+  const ghost: LayoutNode = { ...skeleton, defaultSize: Math.round(100 / (n.children.length + 1)) }
   const children = [...n.children]
   children.splice(Math.min(ins.index, children.length), 0, ghost)
   return { ...n, children }
@@ -300,7 +313,7 @@ watch(() => props.data.node, () => {
 <template>
   <UCard
     ref="cardRef"
-    class="spike-block-node transition-shadow"
+    class="spike-block-node transition-[width,height,box-shadow] duration-300 ease-out"
     :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : dragging ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
