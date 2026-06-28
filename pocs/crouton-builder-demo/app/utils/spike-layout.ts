@@ -26,7 +26,47 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 // A preview is EITHER an `edge` snap (merge the dragged node onto a side of the target) OR an
 // `insert` (drop the dragged node BETWEEN the panes of a combined target, Phase A). `insert.frac`
 // is the seam position as a 0..1 fraction along the split axis; the target draws a guide line there.
-export interface SpikeSnapInsert { axis: 'horizontal' | 'vertical', frac: number, index: number }
+// An insert targets a split addressed by `path` (the child-index route from the target node's root —
+// `[]` is the root split, `[1,0]` a split nested two levels deep), at seam `index` within it. The
+// `pos`/`cross0`/`cross1` are the seam's geometry as fractions of the WHOLE target card, so the soft
+// guide bar can draw at the right place AND only across the nested split's sub-region. (#950)
+export interface SpikeSnapInsert {
+  axis: 'horizontal' | 'vertical'
+  path: number[]
+  index: number
+  pos: number
+  cross0: number
+  cross1: number
+}
+
+/** Resolve the split at `path` within `root` (or null). Walks split children by index. */
+export function splitAtPath(root: LayoutNode, path: number[]): LayoutNode | null {
+  let node: LayoutNode | null = root
+  for (const i of path) {
+    if (!node || node.type !== 'split' || !node.children[i]) return null
+    node = node.children[i]!
+  }
+  return node
+}
+
+/** Immutably splice `child` into the split at `path`, index `index`, redistributing that split's
+ *  children to even sizes. Rebuilds only the touched spine. (Used for the ghost preview AND the
+ *  real drop, so nested inserts land exactly where the seam guide pointed.) */
+export function insertAtPath(root: LayoutNode, path: number[], index: number, child: LayoutNode): LayoutNode {
+  if (root.type !== 'split') return root
+  if (path.length === 0) {
+    const children = [...root.children]
+    children.splice(Math.min(index, children.length), 0, child)
+    const size = Math.round((100 / children.length) * 10) / 10
+    return { ...root, children: children.map(c => ({ ...c, defaultSize: size })) }
+  }
+  const [head, ...rest] = path
+  const target = root.children[head!]
+  if (!target) return root
+  const children = root.children.slice()
+  children[head!] = insertAtPath(target, rest, index, child)
+  return { ...root, children }
+}
 // `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed insert target
 // can render a "this is where it lands" ghost slab at the seam carrying the incoming item's name.
 // `dragNode` (#947) — the dragged node's actual subtree, so the target can build a ghost skeleton

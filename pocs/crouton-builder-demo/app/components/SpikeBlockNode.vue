@@ -78,15 +78,19 @@ const guideStyle = computed(() => {
     default: return {}
   }
 })
-// Internal insert seam: a line at `frac` along the split axis (Phase A — drop between panes).
+// Internal insert seam (#950): a line at the seam, positioned by card-fractions and spanning only
+// the TARGET split's sub-region — so a seam inside a NESTED split draws in the right place, not
+// across the whole card. `pos` is the main-axis position; `cross0..cross1` the cross-axis span.
 const guideInsertStyle = computed(() => {
   const ins = guideInsert.value
   if (!ins) return {}
-  const pct = `${Math.round(ins.frac * 100)}%`
   const t = guideArmed.value ? '5px' : '8px'
+  const pos = `${ins.pos * 100}%`
+  const c0 = `${ins.cross0 * 100}%`
+  const c1 = `${(1 - ins.cross1) * 100}%`
   return ins.axis === 'horizontal'
-    ? { left: pct, top: '6px', bottom: '6px', width: t, transform: 'translateX(-50%)' }
-    : { top: pct, left: '6px', right: '6px', height: t, transform: 'translateY(-50%)' }
+    ? { left: pos, top: c0, bottom: c1, width: t, transform: 'translateX(-50%)' }
+    : { top: pos, left: c0, right: c1, height: t, transform: 'translateY(-50%)' }
 })
 // Ease-apart preview (#946): once an internal insert ARMS (green), splice a ghost pane into the
 // layout at the target index and render THAT — the renderer lays out the extra pane and the #943
@@ -109,12 +113,14 @@ const renderNode = computed<LayoutNode>(() => {
   const ins = guideInsert.value
   const n = props.data.node
   if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
+  // The seam may be in a NESTED split — resolve it by path so the ghost opens the slot at the right
+  // depth (#950). Size the ghost to that split's child count, then splice it in via insertAtPath.
+  const targetSplit = splitAtPath(n, ins.path)
+  if (!targetSplit || targetSplit.type !== 'split') return n
   const dn = snapPreview?.value?.dragNode
   const skeleton = dn ? ghostify(dn) : { type: 'leaf' as const, blockId: '__dropghost__' }
-  const ghost: LayoutNode = { ...skeleton, defaultSize: Math.round(100 / (n.children.length + 1)) }
-  const children = [...n.children]
-  children.splice(Math.min(ins.index, children.length), 0, ghost)
-  return { ...n, children }
+  const ghost: LayoutNode = { ...skeleton, defaultSize: Math.round(100 / (targetSplit.children.length + 1)) }
+  return insertAtPath(n, ins.path, ins.index, ghost)
 })
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------

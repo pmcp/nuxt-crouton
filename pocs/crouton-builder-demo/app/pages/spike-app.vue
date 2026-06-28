@@ -364,16 +364,39 @@ function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: Fl
 // Where a dragged node wants to land (#941 Phase A): INSERT between the panes of a combined (split)
 // target it's dragged OVER, or EDGE-merge onto a side of a target it's near (the original snap).
 type SnapIntent =
-  | { kind: 'insert', target: FlowNode, index: number, frac: number, axis: 'horizontal' | 'vertical' }
+  | { kind: 'insert', target: FlowNode, insert: SpikeSnapInsert }
   | { kind: 'edge', target: FlowNode, edge: SnapEdge }
+type FlowRect = { x: number, y: number, w: number, h: number }
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
+// Recurse to the DEEPEST split under (cx,cy): walk each split's child sub-rects so a drop can land
+// inside a NESTED layout (a split within a pane), not just the top-level split. Returns that split,
+// its flow-space sub-rect, and the child-index path to it.
+function deepestSplitAt(node: LayoutNode, rect: FlowRect, cx: number, cy: number, path: number[] = []): { node: LayoutSplit, rect: FlowRect, path: number[] } | null {
+  if (node.type !== 'split') return null
+  const horizontal = node.direction === 'horizontal'
+  const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
+  const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
+  let acc = 0
+  for (let i = 0; i < node.children.length; i++) {
+    const frac0 = acc / total, len = sizes[i]! / total
+    acc += sizes[i]!
+    const cr: FlowRect = horizontal
+      ? { x: rect.x + frac0 * rect.w, y: rect.y, w: len * rect.w, h: rect.h }
+      : { x: rect.x, y: rect.y + frac0 * rect.h, w: rect.w, h: len * rect.h }
+    if (cx >= cr.x && cx <= cr.x + cr.w && cy >= cr.y && cy <= cr.y + cr.h) {
+      return deepestSplitAt(node.children[i]!, cr, cx, cy, [...path, i]) ?? { node, rect, path }
+    }
+  }
+  return { node, rect, path }
+}
 function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others: FlowNode[]): SnapIntent | null {
   const md = sizeOf(movedNode)
   const cx = pos.x + md.width / 2
   const cy = pos.y + md.height / 2
-  // 1) INSERT: the drag OVERLAPS a split target → drop between its panes. We don't require the
-  // centre be strictly inside (a big card overlapping heavily would otherwise miss); instead the
-  // dragged rect must cover ≥35% of its own area over the split. The seam is picked from the centre
-  // CLAMPED into the target, so a centre that drifts just past an edge still resolves to an end seam.
+  // 1) INSERT: the drag OVERLAPS a split target → drop between its panes. Overlap (≥35% of the dragged
+  // area), not strict centre-inside, so a big card overlapping heavily still matches. Then recurse to
+  // the DEEPEST split under the (clamped) centre, so you can drop into a nested layout, and pick the
+  // nearest seam within THAT split. The seam geometry is returned as card-fractions for the guide.
   const dl = pos.x, dr = pos.x + md.width, dt = pos.y, db = pos.y + md.height
   for (const o of others) {
     const node = o.data.node
@@ -383,30 +406,29 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
     const ox = Math.max(0, Math.min(dr, tx + ts.width) - Math.max(dl, tx))
     const oy = Math.max(0, Math.min(db, ty + ts.height) - Math.max(dt, ty))
     if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over the split → try edge-snap
-    const horizontal = node.direction === 'horizontal'
-    const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
-    const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
+    const ccx = clamp(cx, tx, tx + ts.width), ccy = clamp(cy, ty, ty + ts.height)
+    const hit = deepestSplitAt(node, { x: tx, y: ty, w: ts.width, h: ts.height }, ccx, ccy)
+    if (!hit) continue
+    const { node: split, rect: r, path } = hit
+    const horizontal = split.direction === 'horizontal'
+    const sizes = split.children.map(c => c.defaultSize ?? (100 / split.children.length))
+    const total = sizes.reduce((a, b) => a + b, 0) || split.children.length
     const bounds = [0]
     let acc = 0
     for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
-    const clampedX = Math.min(Math.max(cx, tx), tx + ts.width)
-    const clampedY = Math.min(Math.max(cy, ty), ty + ts.height)
-    const rel = horizontal ? (clampedX - tx) / ts.width : (clampedY - ty) / ts.height
+    const rel = horizontal ? (clamp(ccx, r.x, r.x + r.w) - r.x) / r.w : (clamp(ccy, r.y, r.y + r.h) - r.y) / r.h
     let index = 0, bestD = Infinity
     bounds.forEach((b, i) => { const d = Math.abs(b - rel); if (d < bestD) { bestD = d; index = i } })
-    return { kind: 'insert', target: o, index, frac: bounds[index]!, axis: horizontal ? 'horizontal' : 'vertical' }
+    const seamFrac = bounds[index]!
+    const rxf = (r.x - tx) / ts.width, ryf = (r.y - ty) / ts.height, rwf = r.w / ts.width, rhf = r.h / ts.height
+    const insert: SpikeSnapInsert = horizontal
+      ? { axis: 'horizontal', path, index, pos: rxf + seamFrac * rwf, cross0: ryf, cross1: ryf + rhf }
+      : { axis: 'vertical', path, index, pos: ryf + seamFrac * rhf, cross0: rxf, cross1: rxf + rwf }
+    return { kind: 'insert', target: o, insert }
   }
   // 2) EDGE: original side-snap (merge onto a target's outer edge).
   const s = snapAt(movedNode, pos, others)
   return s ? { kind: 'edge', target: s.target, edge: s.edge } : null
-}
-
-/** Insert a node into a split at `index`, redistributing sizes evenly (keeps it simple + legible). */
-function insertIntoSplit(split: LayoutSplit, index: number, node: LayoutNode): LayoutSplit {
-  const children = [...split.children]
-  children.splice(index, 0, node)
-  const size = Math.round((100 / children.length) * 10) / 10
-  return { ...split, children: children.map(c => ({ ...c, defaultSize: size })) }
 }
 
 // Live snap guide (#907): CroutonFlow streams the dragged node's position via `@node-drag`
@@ -435,7 +457,7 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
   const key = intent.kind === 'insert' ? `ins-${intent.target.id}` : `edge-${intent.target.id}-${intent.edge}`
   const dragLabel = moved.data.label ?? labelFor(moved.data.node)
   const base: SpikeSnapPreview = intent.kind === 'insert'
-    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index }, dragLabel, dragNode: moved.data.node }
+    ? { node: intent.target.data.node, insert: intent.insert, dragLabel, dragNode: moved.data.node }
     : { node: intent.target.data.node, edge: intent.edge, dragLabel }
   if (key === snapKey) {
     // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.
@@ -480,9 +502,9 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   // Page (favorited) ALWAYS consumes (#942): if either side is the page, the result stays the page.
   const keepPage = (target.data.isPage || moved.data.isPage) ? { isPage: true } : {}
 
-  // INSERT between the panes of the combined target (#941 Phase A).
+  // INSERT between the panes — at the targeted split, which may be NESTED (armed.insert.path). (#950)
   if (armed.insert && target.data.node.type === 'split') {
-    const newNode = insertIntoSplit(target.data.node, armed.insert.index, moved.data.node)
+    const newNode = insertAtPath(target.data.node, armed.insert.path, armed.insert.index, moved.data.node)
     const groupNode: FlowNode = { ...target, data: { node: newNode, ...keepPage } }
     nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
     return
