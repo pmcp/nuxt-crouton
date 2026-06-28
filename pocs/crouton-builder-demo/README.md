@@ -16,69 +16,18 @@ Extends `@fyit/crouton-core`, `@fyit/crouton-i18n`, `@fyit/crouton-three`, and
 
 ## Crouton Builder spike — `/spike-app` (epic #907)
 
-Build an app by dragging a collection's blocks onto a Vue Flow canvas, snap them
-into bound splits, then `✨ Magic`/compile into a `LayoutTree`.
+Build an app by composing a collection's blocks into a `LayoutTree` on a Vue Flow canvas.
+Two levels on one screen: **Site** (the page flow — `CroutonFlowSiteFlow`, cards = pages) and
+**Page** (the board — double-click a page card to compose its blocks; `Pages ←` returns).
 
-### Focus / layout-edit view (#907 — `focus-view-1`)
+> **Design decisions, gotchas & graduation requirements live in [`HANDOFF.md`](./HANDOFF.md)** — a
+> living, curated handoff doc (the brief the `graduate` skill consumes). Keep it current as you build:
+> capture each signed-off decision, prune what we iterate past.
 
-Double-clicking a layout node opens a **dedicated full-screen edit VIEW**, not a
-Vue Flow camera zoom. This is the key design choice:
-
-- **Why a view, not a camera.** The old approach zoomed the Vue Flow *camera*
-  onto the focused node (`focusBounds` → `fitBounds`/`setCenter`). Resizing the
-  focused node to a device width made Vue Flow re-measure and fire its own
-  viewport fit, which raced/overrode the camera op → non-deterministic, off-screen
-  framing on some nodes (reliably the **2nd** node at a mobile viewport). A plain
-  overlay has no camera and no re-measure race, so **every** node renders at a
-  constant, cleanly-framed on-screen size for free.
-- **One unified surface.** The view hosts `CroutonLayoutBreakpointAuthor`
-  (`@fyit/crouton-layout`) — which already unifies the breakpoint key-points
-  (min-width ruler), the device buttons, the width slider, the per-checkpoint
-  **collapse motion** (gutter-tabs / spring-drawer / crt-power-down / iris-portal),
-  and per-block widget variants, with splitter drags → keypoint sizes. We compose
-  it untouched in the POC (no package edit); the floating app-style header sits in
-  the author's reserved top band. A subtle CSS scale+fade eases the view in.
-- **Persistence contract is unchanged.** The node's layout rides in the page's
-  `zoomTree` `v-model` (root + authored breakpoints); resize→keypoint is the
-  author's own job. `Done` returns to the board.
-- **Detach** is a **board gesture** (consolidated from the detach-redesign branch):
-  grab a pane of a merged node and pull it — the group eases apart, the pane tracks
-  your finger 1:1 (zoom-corrected) and past a threshold detaches into its own flow
-  node exactly where you release; under the threshold it springs back. The edit view
-  stays focused purely on responsiveness.
-- **Overview-on-add** (also consolidated): adding a block re-frames the board to an
-  overview (`fitView` with `maxZoom:1`) instead of hard-zooming the first block on a
-  phone.
-
-Verify the framing fix at a **mobile viewport (390×844)**: drop 2 blocks →
-double-click each → both open framed identically and fully on-screen. Drag one block
-onto another to merge → pull a pane out (it follows your finger and detaches where you
-release) → add a block (the camera frames an overview, not a hard zoom).
-
-### 🎓 Graduation requirement — make page ⇄ flow REAL routing (not one view)
-
-**When this spike graduates into a real package + app, the Site⇄Page navigation MUST become
-route-based, not the current single-view toggle.** Today `/spike-app` is one route and
-`selectedPageId` just `v-if`/`v-else`-swaps the flow vs. the board with a CSS cross-fade — a
-*visual* transition pretending to be navigation. That's fine for proving the interactions, but the
-real builder is fundamentally **pages that link to each other**, which is what a router models.
-
-The graduated version should:
-
-- **Give each view a URL** — e.g. `/builder` = the Site flow, `/builder/[pageId]` = that page's
-  board. Deep-linkable + shareable (link straight to a page's board).
-- **Use real history** — browser back/forward (back from a page → the flow), so navigation is
-  native, not bespoke state.
-- **Support inter-page linking** — "this button goes to that page" becomes a plain route link, the
-  groundwork for wiring pages together in the builder.
-- **Transition via the View Transitions API (shared-element morph), not a cross-fade** — put a
-  matching `view-transition-name` on the flow's page card and on the page board so the card
-  **morphs/grows into the full board** on enter and shrinks back on exit. That's a far better "into
-  the detail" feel than the fade, and the fade we ship now is explicitly the stopgap.
-
-Cost when we do it: a moderate refactor — lift the shared board state and move the board into a
-`[pageId].vue` route — but nothing built in the spike is wasted (the board, snapping, ghost/ease-
-apart, pinch, add-block all carry over). Flagged here so the `graduate` handoff brief carries it.
+**Quick verify** at a mobile viewport (390×844): enter a page → arrives fitted (no zoom-out wobble);
+drop 2 blocks → double-click each → both framed fully on-screen; drag a card onto a layout + hold → it
+goes green and the panes ease apart into a card-shaped slot → release to insert; pull a pane out → it
+detaches where you release; add a block → lands right, centred, glowing green; pinch a layout → zooms.
 
 ## Local dev
 
