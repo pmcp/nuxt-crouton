@@ -405,6 +405,16 @@ node scripts/app-shots.mjs <baseUrl> <path[:name]> [more...]   # → screenshots
 #   chromium.launch({ executablePath: <…/opt/pw-browsers/chromium-*/chrome-linux/chrome> })
 ```
 
+**📱 Mobile-first — verify at phone width FIRST (HARD DEFAULT).** These surfaces are used
+on a phone before anything else, so a screenshot/preview at **390px is the source of truth**;
+desktop is a follow-up check, never the default. When you build or change UI, look at it on
+mobile *before* you call it done — a layout that only holds at 1440px is **not done** (a wide
+sidebar that eats a phone, a card wider than the viewport, off-canvas overflow are the usual
+tells). `scripts/app-shots.mjs` defaults to a **390×844** mobile viewport for exactly this
+reason; pass `--desktop` (or `--viewport <W>x<H>`) for the wider pass, and when driving
+Playwright by hand open a `390×844 / isMobile` page first. This applies to every agent and
+sub-agent.
+
 The `SessionStart` hook announces the browser + its path every session. **General
 rule:** a prior session's (or a task brief's) claimed limitation is a
 *hypothesis* — verify it with a 5-second check before designing around it. The

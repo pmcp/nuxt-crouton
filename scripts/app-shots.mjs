@@ -6,7 +6,8 @@
 // host is egress-blocked in CI/sandbox, so we never fetch a browser).
 //
 // Usage:
-//   node scripts/app-shots.mjs <baseUrl> <path[:name]> [more paths...] [--out <dir>]
+//   node scripts/app-shots.mjs <baseUrl> <path[:name]> [more paths...] [--out <dir>] [--desktop | --viewport <W>x<H>]
+//   (mobile-first: viewport defaults to 390×844 — pass --desktop for a wide pass)
 //
 // Examples:
 //   node scripts/app-shots.mjs http://localhost:3008 /blog:index /blog/hello:post /auth/login:login
@@ -50,10 +51,24 @@ if (outIdx !== -1) {
   outDir = argv[outIdx + 1]
   argv.splice(outIdx, 2)
 }
+// Mobile-first (root CLAUDE.md HARD DEFAULT): a phone viewport is the source of truth.
+// Default to 390×844; --desktop widens to 1280, --viewport <W>x<H> sets a custom size.
+let viewport = { width: 390, height: 844 }
+let isMobile = true
+const dIdx = argv.indexOf('--desktop')
+if (dIdx !== -1) { viewport = { width: 1280, height: 900 }; isMobile = false; argv.splice(dIdx, 1) }
+const vpIdx = argv.indexOf('--viewport')
+if (vpIdx !== -1) {
+  const m = /^(\d+)x(\d+)$/.exec(argv[vpIdx + 1] || '')
+  if (m) { viewport = { width: +m[1], height: +m[2] }; isMobile = viewport.width < 600 }
+  argv.splice(vpIdx, 2)
+}
+
 const [baseUrl, ...specs] = argv
 
 if (!baseUrl || specs.length === 0) {
-  console.error('Usage: node scripts/app-shots.mjs <baseUrl> <path[:name]> [more paths...] [--out <dir>]')
+  console.error('Usage: node scripts/app-shots.mjs <baseUrl> <path[:name]> [more paths...] [--out <dir>] [--desktop | --viewport <W>x<H>]')
+  console.error('  Default viewport is mobile (390×844). Pass --desktop for 1280, or --viewport 768x1024.')
   process.exit(1)
 }
 
@@ -82,7 +97,8 @@ const browser = await chromium.launch(
 )
 console.log(`browser: ${execPath || '(playwright-managed)'}  base: ${baseUrl}`)
 
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 })
+const page = await browser.newPage({ viewport, deviceScaleFactor: 2, isMobile, hasTouch: isMobile })
+console.log(`viewport: ${viewport.width}×${viewport.height}${isMobile ? ' (mobile)' : ' (desktop)'}`)
 let failures = 0
 
 for (const spec of specs) {

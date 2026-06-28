@@ -15,6 +15,12 @@ isn't practical.
 Either way the outcome is identical: a draft PR is posted, the reviewer gives feedback,
 you iterate, and an `approve`/`lgtm` comment unblocks the build.
 
+**📱 Mobile-first (root CLAUDE.md HARD DEFAULT):** frame the preview/mockup at **phone width
+first** — capture/screenshot at 390px before any wider pass, and design the surface to hold
+there (no viewport-wider cards, no sidebar that eats the screen). Desktop is the follow-up
+check, not the default. Static mockups should render mobile by default; live-preview
+screenshots use `app-shots.mjs`, which already defaults to a 390×844 viewport.
+
 ## When to use
 - A task's diff adds or changes a **visual surface**: a `.vue` component, a layout, a page,
   a theme (`crouton-themes`, a `ui:` block in `app.config.ts`), or app CSS/theme tokens.
