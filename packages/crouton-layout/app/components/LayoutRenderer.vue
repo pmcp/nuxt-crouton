@@ -18,11 +18,13 @@
  * the floor falls back to the authored `minSize` until the group has measured.
  */
 import { computed, inject, nextTick, ref, watch } from 'vue'
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, unrefElement } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
+import { siblingKeys } from '../utils/layout-flip'
+import { useLayoutFlip } from '../composables/useLayoutFlip'
 import { isSubtreeCollapsed } from '../utils/layout-responsive'
 import { LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY, LAYOUT_CONTAINER_WIDTH_KEY } from '../composables/useCroutonLayoutResponsive'
 
@@ -123,6 +125,23 @@ function onLayout(sizes: number[]) {
   if (props.node.type === 'split') emit('layoutChange', props.node, sizes)
 }
 
+// --- FLIP reflow on structural change (#943) ------------------------------------
+// When this split's children change (a pane detached, a block inserted), reka-ui rebuilds
+// the panes at their final sizes — so the survivors would JUMP into place. useLayoutFlip
+// measures each direct pane before the change and tweens it back from its old box, with
+// zero change to keys/sizing (purely a one-shot transform). Off for the collapse path,
+// which owns its own flex-grow motion. `childKeys` is structure-derived so a survivor is
+// matched to its old box across the rebuild.
+const childKeys = computed(() => (props.node.type === 'split' ? siblingKeys(props.node.children) : []))
+const flipEnabled = computed(() => props.node.type === 'split' && !inPlace.value)
+const flipPanels = (): HTMLElement[] => {
+  const g = unrefElement(groupRef) as HTMLElement | null
+  if (!g) return []
+  // reka-ui panes carry `data-panel`; stacked panes (own render path) carry `data-crouton-pane`.
+  return Array.from(g.querySelectorAll<HTMLElement>(':scope > [data-panel], :scope > [data-crouton-pane]'))
+}
+useLayoutFlip({ enabled: flipEnabled, keys: childKeys, panels: flipPanels })
+
 // --- In-place collapse: hand a collapsed child's space back to its siblings ---
 // A child panel collapses when ITS WHOLE SUBTREE is collapsed (a half-collapsed
 // split keeps its slot). We drive reka-ui's collapsible panels imperatively so the
@@ -222,6 +241,7 @@ watch(
     <div
       v-for="(child, i) in node.children"
       :key="i"
+      data-crouton-pane
       class="croutonpane min-h-72 w-full shrink-0"
     >
       <CroutonLayoutRenderer
