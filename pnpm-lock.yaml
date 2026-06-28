@@ -1679,6 +1679,43 @@ importers:
         specifier: 'catalog:'
         version: 4.101.0(@cloudflare/workers-types@4.20260118.0)
 
+  pocs/loop-station:
+    dependencies:
+      '@dagrejs/dagre':
+        specifier: ^1.1.4
+        version: 1.1.8
+      '@fyit/crouton-themes':
+        specifier: workspace:*
+        version: link:../../packages/crouton-themes
+      '@nuxt/ui':
+        specifier: ^4.9.0
+        version: 4.9.0(715162a68736c8fd1bfca4491ae2b8ac)
+      '@vue-flow/background':
+        specifier: ^1.3.0
+        version: 1.3.2(@vue-flow/core@1.48.1(vue@3.5.38(typescript@5.9.3)))(vue@3.5.38(typescript@5.9.3))
+      '@vue-flow/controls':
+        specifier: ^1.1.2
+        version: 1.1.3(@vue-flow/core@1.48.1(vue@3.5.38(typescript@5.9.3)))(vue@3.5.38(typescript@5.9.3))
+      '@vue-flow/core':
+        specifier: ^1.41.2
+        version: 1.48.1(vue@3.5.38(typescript@5.9.3))
+      nuxt:
+        specifier: ^4.4.8
+        version: 4.4.8(acbda501943d3a88c40c15b150712194)
+      nuxt-charts:
+        specifier: ^2.1.2
+        version: 2.1.2(vue@3.5.38(typescript@5.9.3))
+      vue:
+        specifier: ^3.5.38
+        version: 3.5.38(typescript@5.9.3)
+      vue-router:
+        specifier: 'catalog:'
+        version: 5.1.0(@vue/compiler-sfc@3.5.38)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
+    devDependencies:
+      wrangler:
+        specifier: 'catalog:'
+        version: 4.101.0(@cloudflare/workers-types@4.20260118.0)
+
   pocs/sintlukas:
     dependencies:
       '@fyit/crouton':
@@ -4676,9 +4713,6 @@ packages:
 
   '@mapbox/point-geometry@1.1.0':
     resolution: {integrity: sha512-YGcBz1cg4ATXDCM/71L9xveh4dynfGmcLDqufR+nQQy3fKwsAZsWd/x4621/6uJaeB9mwOHE6hPeDgXz9uViUQ==}
-
-  '@mapbox/tiny-sdf@2.0.7':
-    resolution: {integrity: sha512-25gQLQMcpivjOSA40g3gO6qgiFPDpWRoMfd+G/GoppPIeP6JDaMMkMrEJnMZhKyyS6iKwVt5YKu02vCUyJM3Ug==}
 
   '@mapbox/tiny-sdf@2.2.0':
     resolution: {integrity: sha512-LVL4wgI9YAum5V+LNVQO6QgFBPw7/MIIY4XJPNsPDMrjEwcE+JfKk1LuIl8GnF197ejVdC9QdPaxrx5gfgdGXg==}
@@ -18459,8 +18493,6 @@ snapshots:
 
   '@mapbox/point-geometry@1.1.0': {}
 
-  '@mapbox/tiny-sdf@2.0.7': {}
-
   '@mapbox/tiny-sdf@2.2.0': {}
 
   '@mapbox/unitbezier@0.0.1': {}
@@ -28958,7 +28990,7 @@ snapshots:
       '@mapbox/jsonlint-lines-primitives': 2.0.2
       '@mapbox/mapbox-gl-supported': 2.0.1
       '@mapbox/point-geometry': 0.1.0
-      '@mapbox/tiny-sdf': 2.0.7
+      '@mapbox/tiny-sdf': 2.2.0
       '@mapbox/unitbezier': 0.0.1
       '@mapbox/vector-tile': 1.3.1
       '@mapbox/whoots-js': 3.1.0
