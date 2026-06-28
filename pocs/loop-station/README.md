@@ -60,6 +60,20 @@ builder** compose the dashboard into a `layout_configs` tree, instead of a
 hardcoded page. Each panel already sizes to its container, so the main work is
 the block registration + sizing contract, not a rewrite.
 
+**Intended authoring flow (the nesting model).** The builder composes *bottom-up
+and recursively* — pair panels into a small layout, pair layouts into a bigger
+one, and so on:
+
+1. Click a **graph** + a **list** together → that pair becomes **layout A**.
+2. Click another **graph** + **list** together → **layout B**.
+3. Click **A + B** together → a larger composed layout.
+4. Under that, drop the **Vue Flow loop graph**, then the next block… and so on.
+
+So a "layout" is itself a placeable unit (a node in the `layout_configs` tree),
+and bigger layouts are layouts-of-layouts — exactly the recursive container tree
+the layout engine already models. The Loop Station's six panels are a clean first
+real test case for that compose-and-nest interaction.
+
 > Note the boundary: this is the **layout** builder arranging *view panels* — not
 > a loop builder. Epic #926's "observatory, not a loop builder" line still holds;
 > composing the observatory's own panels is a presentation concern.
