@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-3 · #941/#942 · page opens centered · long-press to wiggle + pull apart'
+const BUILD = 'page-compose-4 · #942 · page opens centered (fitBounds) · hold to wiggle + pull apart'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -82,7 +82,10 @@ let seq = 0
 // the default zoom — which on a narrow phone fills the screen. fitView with maxZoom:1 keeps a
 // single block at a comfortable size and shows everything you've added. Survey/focus own the
 // camera, so skip then.
-const flowRef = ref<{ fitView?: (o?: Record<string, unknown>) => void } | null>(null)
+const flowRef = ref<{
+  fitView?: (o?: Record<string, unknown>) => void
+  fitBounds?: (b: { x: number, y: number, width: number, height: number }, o?: Record<string, unknown>) => void
+} | null>(null)
 function fitOverview() {
   if (viewport.value || zoomNodeId.value) return // survey / edit-view own the screen
   const fit = () => flowRef.value?.fitView?.({ duration: 350, padding: 0.3, maxZoom: 1 })
@@ -529,7 +532,19 @@ function stashCurrentBoard() {
  *  layout falls off-screen — retry across a few frames until the node is measured. */
 function fitPage() {
   if (viewport.value || zoomNodeId.value) return
-  const fit = () => flowRef.value?.fitView?.({ duration: 300, padding: 0.16, maxZoom: 1 })
+  const fit = () => {
+    const page = nodes.value.find(n => n.data.isPage)
+    if (page) {
+      // Frame the page node by its KNOWN geometry (position + footprint size), NOT Vue Flow's
+      // measured dimensions — those are stale on a fresh mount (block content reflows after
+      // measurement), so a plain fitView zooms onto the first pane. fitBounds is deterministic.
+      const s = sizeOf(page.data.node)
+      flowRef.value?.fitBounds?.({ x: page.position.x, y: page.position.y, width: s.width, height: s.height }, { duration: 300, padding: 0.18 })
+    }
+    else {
+      flowRef.value?.fitView?.({ duration: 300, padding: 0.2, maxZoom: 1 })
+    }
+  }
   nextTick(fit)
   for (const d of [120, 320, 600]) window.setTimeout(fit, d)
 }
