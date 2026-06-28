@@ -137,6 +137,39 @@ function labelCoverage() {
   return missing.sort((a, b) => a.expected.localeCompare(b.expected))
 }
 
+// ── Loop Station budget readout (#934, WS4) ───────────────────────────────────
+// Read-only: the producer (WS1) writes writeups/loop-station/history.jsonl; this
+// reporter just surfaces the latest point + delta as one digest line. No LLM, no
+// recompute. Null (line omitted) when the inventory hasn't run yet.
+function loopStationBudget() {
+  const file = 'writeups/loop-station/history.jsonl'
+  if (!existsSync(file)) return null
+  const lines = readFileSync(file, 'utf8').trim().split('\n').filter(Boolean)
+  if (lines.length === 0) return null
+  const recs = lines
+    .slice(-2)
+    .map((l) => {
+      try {
+        return JSON.parse(l)
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean)
+  const latest = recs[recs.length - 1]
+  const prev = recs.length > 1 ? recs[recs.length - 2] : null
+  if (!latest) return null
+  const tok = (r) => r?.totals?.alwaysOnTokens ?? null
+  return {
+    alwaysOnTokens: tok(latest),
+    redundancyPct: latest.redundancy?.pct ?? null,
+    scorecard: latest.scorecard?.overall ?? null,
+    tokenizer: latest.tokenizer ?? null,
+    commit: latest.commit ?? null,
+    deltaTokens: prev && tok(latest) != null && tok(prev) != null ? tok(latest) - tok(prev) : null
+  }
+}
+
 // ── Issue / PR drift (API) ───────────────────────────────────────────────────
 const COMPONENT_RE = /^(pkg|app|worker|poc):/
 
@@ -203,6 +236,7 @@ const data = {
   staleDays,
   staleBranches: staleBranches(),
   labelCoverage: labelCoverage(),
+  loopStation: loopStationBudget(),
   ...drift
 }
 
