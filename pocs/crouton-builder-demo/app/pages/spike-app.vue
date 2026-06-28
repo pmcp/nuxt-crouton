@@ -24,7 +24,7 @@
  */
 import { markRaw, computed, shallowRef, provide } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
-import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutSplit, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
 import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-9 · #941 · dwell-to-snap: blue snap point → hold → green → release'
+const BUILD = 'page-compose-10 · #941 · drag a block between a combined layout’s panes (insert)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -257,6 +257,47 @@ function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: Fl
   return { target: others[snap.path[0]!]!, edge: snap.edge, tRect: targets[snap.path[0]!]!.rect, md }
 }
 
+// Where a dragged node wants to land (#941 Phase A): INSERT between the panes of a combined (split)
+// target it's dragged OVER, or EDGE-merge onto a side of a target it's near (the original snap).
+type SnapIntent =
+  | { kind: 'insert', target: FlowNode, index: number, frac: number, axis: 'horizontal' | 'vertical' }
+  | { kind: 'edge', target: FlowNode, edge: SnapEdge }
+function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others: FlowNode[]): SnapIntent | null {
+  const md = sizeOf(movedNode)
+  const cx = pos.x + md.width / 2
+  const cy = pos.y + md.height / 2
+  // 1) INSERT: the drag's centre is over a split target → drop between its panes. Pick the nearest
+  // seam (incl. the two ends) along the split axis from the children's size proportions.
+  for (const o of others) {
+    const node = o.data.node
+    if (node.type !== 'split') continue
+    const ts = sizeOf(node)
+    const tx = o.position.x, ty = o.position.y
+    if (cx < tx || cx > tx + ts.width || cy < ty || cy > ty + ts.height) continue
+    const horizontal = node.direction === 'horizontal'
+    const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
+    const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
+    const bounds = [0]
+    let acc = 0
+    for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
+    const rel = horizontal ? (cx - tx) / ts.width : (cy - ty) / ts.height
+    let index = 0, bestD = Infinity
+    bounds.forEach((b, i) => { const d = Math.abs(b - rel); if (d < bestD) { bestD = d; index = i } })
+    return { kind: 'insert', target: o, index, frac: bounds[index]!, axis: horizontal ? 'horizontal' : 'vertical' }
+  }
+  // 2) EDGE: original side-snap (merge onto a target's outer edge).
+  const s = snapAt(movedNode, pos, others)
+  return s ? { kind: 'edge', target: s.target, edge: s.edge } : null
+}
+
+/** Insert a node into a split at `index`, redistributing sizes evenly (keeps it simple + legible). */
+function insertIntoSplit(split: LayoutSplit, index: number, node: LayoutNode): LayoutSplit {
+  const children = [...split.children]
+  children.splice(index, 0, node)
+  const size = Math.round((100 / children.length) * 10) / 10
+  return { ...split, children: children.map(c => ({ ...c, defaultSize: size })) }
+}
+
 // Live snap guide (#907): CroutonFlow streams the dragged node's position via `@node-drag`
 // (its collab sync already broadcasts it continuously). On each frame we recompute the snap
 // candidate and light up the target's joining edge — so "the side that's gonna snap lines up"
@@ -275,18 +316,21 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
   if (viewport.value) { resetSnap(); return } // survey mode is read-only
   const moved = nodes.value.find(n => n.id === id)
   if (!moved) { resetSnap(); return }
-  const s = snapAt(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
-  if (!s) { resetSnap(); return } // out of range → no candidate, dwell resets
-  const key = `${s.target.id}-${s.edge}`
+  const intent = snapIntent(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
+  if (!intent) { resetSnap(); return } // out of range → no candidate, dwell resets
+  const key = intent.kind === 'insert' ? `ins-${intent.target.id}-${intent.index}` : `edge-${intent.target.id}-${intent.edge}`
+  const base: SpikeSnapPreview = intent.kind === 'insert'
+    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index } }
+    : { node: intent.target.data.node, edge: intent.edge }
   if (key === snapKey) {
     // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.
-    snapPreview.value = { node: s.target.data.node, edge: s.edge, armed: snapPreview.value?.armed === true }
+    snapPreview.value = { ...base, armed: snapPreview.value?.armed === true }
     return
   }
   // New candidate → soft state + (re)start the dwell-to-arm timer.
   snapKey = key
   clearSnapTimer()
-  snapPreview.value = { node: s.target.data.node, edge: s.edge, armed: false }
+  snapPreview.value = { ...base, armed: false }
   snapTimer = window.setTimeout(() => {
     if (snapKey === key && snapPreview.value) snapPreview.value = { ...snapPreview.value, armed: true }
   }, SNAP_DWELL_MS)
@@ -299,7 +343,7 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
 // split — so the unit drags as one piece and the renderer stretches each pane to the group's
 // full size (a block snapped to a 2-high stack spans its full height).
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
-  const wasArmed = snapPreview.value?.armed === true // did the dwell complete (green) before release?
+  const armed = snapPreview.value?.armed === true ? snapPreview.value : null // the green candidate at release
   resetSnap() // drag has ended — clear the live guide + dwell timer
   if (viewport.value) return // survey mode is read-only — don't merge or persist tiled positions
   const rows = rowsRaw as unknown as FlowNode[]
@@ -310,25 +354,38 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   })
   if (!moved) { nodes.value = rows; return }
   // Released while only SOFT (not held long enough) → just place it; snapping requires the dwell.
-  if (!wasArmed) { nodes.value = rows; return }
+  if (!armed) { nodes.value = rows; return }
 
-  const others = rows.filter(r => r.id !== moved.id)
-  const s = snapAt(moved.data.node, moved.position, others)
-  if (!s) { nodes.value = rows; return }
+  // The target FlowNode is the one whose layout node is the armed candidate (node identity is stable
+  // across a drag — only positions change — so this matches what the green guide pointed at).
+  const target = rows.find(r => r.id !== moved.id && r.data.node === armed.node)
+  if (!target) { nodes.value = rows; return }
+  const md = sizeOf(moved.data.node)
+  // Page (favorited) ALWAYS consumes (#942): if either side is the page, the result stays the page.
+  const keepPage = (target.data.isPage || moved.data.isPage) ? { isPage: true } : {}
 
-  const { target, edge, tRect, md } = s
-  const horizontal = edge === 'left' || edge === 'right'
-  const targetFirst = edge === 'right' || edge === 'bottom'
-  const combined = combineNodes(target.data.node, moved.data.node, horizontal ? 'horizontal' : 'vertical', targetFirst)
-  // Group origin: a left/top snap places the group to the left/above the target's old spot.
-  const gx = edge === 'left' ? tRect.x - md.width : tRect.x
-  const gy = edge === 'top' ? tRect.y - md.height : tRect.y
-  // The Page (favorited) layout ALWAYS consumes (#942): if EITHER the dragged node or the target
-  // is the page, the merged group stays the page — drag the page onto a draft, or a draft onto the
-  // page, and the badge sticks to the combined layout.
-  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined, ...((target.data.isPage || moved.data.isPage) ? { isPage: true } : {}) } }
-  // Replace the target with the merged group; drop the moved node — they're now one unit.
-  nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
+  // INSERT between the panes of the combined target (#941 Phase A).
+  if (armed.insert && target.data.node.type === 'split') {
+    const newNode = insertIntoSplit(target.data.node, armed.insert.index, moved.data.node)
+    const groupNode: FlowNode = { ...target, data: { node: newNode, ...keepPage } }
+    nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
+    return
+  }
+
+  // EDGE merge onto a side of the target (the original snap).
+  if (armed.edge) {
+    const edge = armed.edge
+    const horizontal = edge === 'left' || edge === 'right'
+    const targetFirst = edge === 'right' || edge === 'bottom'
+    const combined = combineNodes(target.data.node, moved.data.node, horizontal ? 'horizontal' : 'vertical', targetFirst)
+    const gx = edge === 'left' ? target.position.x - md.width : target.position.x
+    const gy = edge === 'top' ? target.position.y - md.height : target.position.y
+    const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined, ...keepPage } }
+    nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
+    return
+  }
+
+  nodes.value = rows
 }
 
 // Tap-to-add (#906 mobile fix): HTML5 drag doesn't fire on touch, and the bottom-sheet

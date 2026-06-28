@@ -22,7 +22,12 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
  */
 // `armed` (#941 dwell): false = "snap point here" (soft/blue, just approached); true = held long
 // enough that releasing now WILL snap (green). Two-stage so a snap takes intent, not a brush-past.
-export interface SpikeSnapPreview { node: LayoutNode, edge: SnapEdge, armed?: boolean }
+//
+// A preview is EITHER an `edge` snap (merge the dragged node onto a side of the target) OR an
+// `insert` (drop the dragged node BETWEEN the panes of a combined target, Phase A). `insert.frac`
+// is the seam position as a 0..1 fraction along the split axis; the target draws a guide line there.
+export interface SpikeSnapInsert { axis: 'horizontal' | 'vertical', frac: number, index: number }
+export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**

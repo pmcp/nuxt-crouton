@@ -52,12 +52,17 @@ const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node
 
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
-const guideEdge = computed<SnapEdge | null>(() =>
-  !surveying.value && snapPreview?.value && snapPreview.value.node === props.data.node ? snapPreview.value.edge : null,
-)
-// Dwell stages (#941): SOFT = just approached (blue, wide band — "snap point here"); ARMED = held
-// long enough that releasing now snaps (green, tighter solid line).
-const guideArmed = computed(() => guideEdge.value !== null && snapPreview?.value?.armed === true)
+// This node is the snap target when the injected preview names its layout node.
+const guideMatch = computed(() => !surveying.value && !!snapPreview?.value && snapPreview.value.node === props.data.node)
+// A preview is EITHER an internal insert seam (Phase A) OR an outer edge.
+const guideInsert = computed(() => (guideMatch.value ? snapPreview!.value!.insert ?? null : null))
+const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guideInsert.value ? snapPreview!.value!.edge ?? null : null))
+// Dwell stages (#941): SOFT = just approached (blue, wide — "snap point here"); ARMED = held long
+// enough that releasing now snaps (green, tighter solid line).
+const guideArmed = computed(() => guideMatch.value && snapPreview!.value!.armed === true)
+const guideBarClass = computed(() => (guideArmed.value
+  ? 'bg-emerald-500 shadow-[0_0_14px_3px_rgba(16,185,129,0.85)]'
+  : 'animate-pulse bg-sky-400/80 shadow-[0_0_10px_2px_rgba(56,189,248,0.7)]'))
 const guideStyle = computed(() => {
   const t = guideArmed.value ? '5px' : '10px' // soft band is wide & obvious; armed is a crisp line
   switch (guideEdge.value) {
@@ -67,6 +72,16 @@ const guideStyle = computed(() => {
     case 'bottom': return { bottom: '-4px', left: '0', right: '0', height: t }
     default: return {}
   }
+})
+// Internal insert seam: a line at `frac` along the split axis (Phase A — drop between panes).
+const guideInsertStyle = computed(() => {
+  const ins = guideInsert.value
+  if (!ins) return {}
+  const pct = `${Math.round(ins.frac * 100)}%`
+  const t = guideArmed.value ? '5px' : '8px'
+  return ins.axis === 'horizontal'
+    ? { left: pct, top: '6px', bottom: '6px', width: t, transform: 'translateX(-50%)' }
+    : { top: pct, left: '6px', right: '6px', height: t, transform: 'translateY(-50%)' }
 })
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
@@ -257,7 +272,7 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
   <UCard
     ref="cardRef"
     class="spike-block-node transition-shadow"
-    :class="guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : guideEdge ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
+    :class="guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -333,15 +348,19 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
     <CroutonLayoutRenderer v-else :node="data.node" />
 
-    <!-- Live snap guide (#941 dwell): SOFT = blue, wide, pulsing ("snap point here"); ARMED = green,
-         crisp, steady ("release to snap"). -->
+    <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop
+         between panes). SOFT = blue, wide, pulsing ("snap point here"); ARMED = green, crisp, steady. -->
     <div
       v-if="guideEdge"
       class="pointer-events-none absolute z-10 rounded-full"
-      :class="guideArmed
-        ? 'bg-emerald-500 shadow-[0_0_14px_3px_rgba(16,185,129,0.85)]'
-        : 'animate-pulse bg-sky-400/80 shadow-[0_0_10px_2px_rgba(56,189,248,0.7)]'"
+      :class="guideBarClass"
       :style="guideStyle"
+    />
+    <div
+      v-if="guideInsert"
+      class="pointer-events-none absolute z-10 rounded-full"
+      :class="guideBarClass"
+      :style="guideInsertStyle"
     />
     <!-- Armed cue: a small "release to snap" tag at the joining edge so the green state is unmistakable -->
     <div
