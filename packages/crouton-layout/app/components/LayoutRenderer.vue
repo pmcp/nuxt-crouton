@@ -24,7 +24,7 @@ import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layou
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
 import { isSubtreeCollapsed } from '../utils/layout-responsive'
-import { LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
+import { LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY, LAYOUT_CONTAINER_WIDTH_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{ node: LayoutNode }>()
 
@@ -73,9 +73,16 @@ const groupRef = ref<HTMLElement | null>(null)
 const { width: groupWidth, height: groupHeight } = useElementSize(groupRef)
 const minWidthFor = computed(() => minWidthResolver(blocks.value))
 
+// The width to reason about min-sizes / stacking with: our own measured group width, or — when
+// that reads 0 (a transform-scaled device frame breaks the ResizeObserver) — the known container
+// width the responsive renderer resolved at. Without this the px→% min-size math divides by 0 and
+// every floor collapses to 0, so panes squish into equal clipped columns instead of stacking.
+const injectedWidth = inject(LAYOUT_CONTAINER_WIDTH_KEY, ref(0))
+const basisWidth = computed(() => groupWidth.value || injectedWidth.value)
+
 function panelMin(child: LayoutNode): number {
   if (props.node.type !== 'split') return 0
-  return panelMinSizePct(props.node.direction, child, groupWidth.value, minWidthFor.value)
+  return panelMinSizePct(props.node.direction, child, basisWidth.value, minWidthFor.value)
 }
 
 // Auto-stack to a full-width column (#852 follow-up): a horizontal split whose children
@@ -94,7 +101,7 @@ const shouldStack = computed(() =>
   props.node.type === 'split'
   && props.node.direction === 'horizontal'
   && !inPlace.value
-  && groupWidth.value > 0
+  && basisWidth.value > 0
   && stackMinSum.value > 100,
 )
 

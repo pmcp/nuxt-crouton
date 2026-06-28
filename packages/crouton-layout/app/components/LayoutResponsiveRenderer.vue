@@ -22,7 +22,7 @@ import type { LayoutCollapseEdge, LayoutNode, LayoutSplit, LayoutTree } from '@f
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
 import { normalizeCollapseStyle } from '../utils/layout-responsive'
 import { findNodePath, type NodePath } from '../utils/layout-edit'
-import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY } from '../composables/useCroutonLayoutResponsive'
+import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY, LAYOUT_CONTAINER_WIDTH_KEY } from '../composables/useCroutonLayoutResponsive'
 
 const props = defineProps<{
   tree: LayoutTree
@@ -57,6 +57,9 @@ const { resolved, visibleRoot, collapsedPanes, variants, activeBreakpoint } = us
 )
 
 provide(LAYOUT_VARIANTS_KEY, variants)
+// The known container width → the recursive renderer falls back to it when its own
+// ResizeObserver reads 0 (transform-scaled device frame), so min-width + auto-stack hold.
+provide(LAYOUT_CONTAINER_WIDTH_KEY, effectiveWidth)
 
 const collapseStyle = computed(() => normalizeCollapseStyle(resolved.value.collapseStyle))
 const inPlace = computed(() => isInPlaceCollapse(collapseStyle.value))
