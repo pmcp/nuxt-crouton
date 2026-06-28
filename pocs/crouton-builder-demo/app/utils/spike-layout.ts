@@ -27,7 +27,9 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 // `insert` (drop the dragged node BETWEEN the panes of a combined target, Phase A). `insert.frac`
 // is the seam position as a 0..1 fraction along the split axis; the target draws a guide line there.
 export interface SpikeSnapInsert { axis: 'horizontal' | 'vertical', frac: number, index: number }
-export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert }
+// `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed insert target
+// can render a "this is where it lands" ghost slab at the seam carrying the incoming item's name.
+export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert, dragLabel?: string }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**

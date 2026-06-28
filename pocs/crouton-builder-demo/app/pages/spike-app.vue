@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-15 · drop the "release to snap" tag (green ring is enough)'
+const BUILD = 'page-compose-16 · ghost slab at the armed insert point (this is where it lands)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -319,9 +319,10 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
   const intent = snapIntent(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
   if (!intent) { resetSnap(); return } // out of range → no candidate, dwell resets
   const key = intent.kind === 'insert' ? `ins-${intent.target.id}-${intent.index}` : `edge-${intent.target.id}-${intent.edge}`
+  const dragLabel = moved.data.label ?? labelFor(moved.data.node)
   const base: SpikeSnapPreview = intent.kind === 'insert'
-    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index } }
-    : { node: intent.target.data.node, edge: intent.edge }
+    ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index }, dragLabel }
+    : { node: intent.target.data.node, edge: intent.edge, dragLabel }
   if (key === snapKey) {
     // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.
     snapPreview.value = { ...base, armed: snapPreview.value?.armed === true }

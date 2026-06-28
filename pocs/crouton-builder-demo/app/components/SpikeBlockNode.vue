@@ -86,6 +86,21 @@ const guideInsertStyle = computed(() => {
     ? { left: pct, top: '6px', bottom: '6px', width: t, transform: 'translateX(-50%)' }
     : { top: pct, left: '6px', right: '6px', height: t, transform: 'translateY(-50%)' }
 })
+// Drop-ghost (#946): once an internal insert ARMS (green), show a translucent slab where the
+// dragged item will wedge in — sized to the slot a new even pane would take (1/(n+1) of the axis),
+// straddling the seam, carrying the incoming item's label. So it reads "this is where it lands"
+// before you let go. Only at the armed stage (the soft stage keeps just the thin seam line).
+const guideArmedInsert = computed(() => guideArmed.value && !!guideInsert.value)
+const dragGhostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Block')
+const insertGhostStyle = computed(() => {
+  const ins = guideInsert.value
+  if (!ins || props.data.node.type !== 'split') return {}
+  const slot = `${100 / (props.data.node.children.length + 1)}%`
+  const pos = `${Math.round(ins.frac * 100)}%`
+  return ins.axis === 'horizontal'
+    ? { left: pos, top: '6px', bottom: '6px', width: slot, transform: 'translateX(-50%)' }
+    : { top: pos, left: '6px', right: '6px', height: slot, transform: 'translateY(-50%)' }
+})
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
@@ -369,11 +384,20 @@ watch(() => props.data.node, () => {
       :style="guideStyle"
     />
     <div
-      v-if="guideInsert"
+      v-if="guideInsert && !guideArmedInsert"
       class="pointer-events-none absolute z-10 rounded-full"
       :class="guideBarClass"
       :style="guideInsertStyle"
     />
+    <!-- Drop-ghost (#946): armed insert → a translucent slab in the slot the dragged item will take,
+         labelled with the incoming item, so you see where it lands before releasing. -->
+    <div
+      v-if="guideArmedInsert"
+      class="pointer-events-none absolute z-10 flex items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-emerald-400 bg-emerald-400/15 px-1 text-center text-[10px] font-semibold text-emerald-100 shadow-[0_0_16px_3px_rgba(16,185,129,0.45)]"
+      :style="insertGhostStyle"
+    >
+      <span class="truncate">{{ dragGhostLabel }}</span>
+    </div>
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame
          between faces stay uncovered (pointer-events-none) so the merged group is still draggable. -->
