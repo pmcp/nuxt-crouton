@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-11 · #941 · panes animate to their new sizes after a detach/insert'
+const BUILD = 'page-compose-12 · #940 · zoom transition opening/closing a page'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -566,6 +566,9 @@ const pageById = (id: unknown) => PAGES.find(p => p.id === String(id))
 // per-node breakpoints all survive a round-trip out to Site and back (no lossy recompile).
 const pageBoards = new Map<string, FlowNode[]>()
 const selectedPageId = ref<string | null>(null)
+// Direction of the page open/close zoom transition: 'in' when opening a page (it grows in), 'out'
+// when returning to the page flow (it shrinks away). Set before the swap so the right one plays.
+const zoomDir = ref<'in' | 'out'>('in')
 const currentPageLabel = computed(() => (selectedPageId.value ? pageById(selectedPageId.value)?.label ?? 'Page' : ''))
 
 function labelFor(node: LayoutNode): string {
@@ -643,6 +646,7 @@ function enterPage(id: string) {
   // clean transient board state for a fresh entry
   mode.value = 'free'; viewport.value = null; zoomNodeId.value = null; originRect.value = null
   proposals.value = []; resultOpen.value = false; paletteOpen.value = false
+  zoomDir.value = 'in'
   selectedPageId.value = id
   nodes.value = pageBoards.get(id) ?? treeToBoardNodes(page.tree)
   fitPage()
@@ -651,6 +655,7 @@ function enterPage(id: string) {
 function exitToPages() {
   stashCurrentBoard()
   zoomNodeId.value = null; originRect.value = null; viewport.value = null
+  zoomDir.value = 'out'
   selectedPageId.value = null
 }
 </script>
@@ -658,7 +663,7 @@ function exitToPages() {
 <template>
   <!-- h-dvh (dynamic viewport height), NOT h-screen/100vh — so the bottom command pill sits above the
        mobile browser toolbar instead of behind it (iOS Safari occludes 100vh's bottom). -->
-  <div class="flex h-dvh flex-col bg-default text-default">
+  <div class="flex h-dvh flex-col overflow-hidden bg-default text-default">
     <!-- Palette markup, defined once and reused in the desktop sidebar + mobile drawer -->
     <DefinePalette>
       <div class="flex flex-col gap-2">
@@ -714,7 +719,8 @@ function exitToPages() {
       <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
     </header>
 
-    <div v-if="selectedPageId" class="flex min-h-0 flex-1">
+    <Transition :name="zoomDir === 'in' ? 'pagezoom-in' : 'pagezoom-out'" mode="out-in">
+    <div v-if="selectedPageId" key="board" class="flex min-h-0 flex-1">
       <!-- Desktop drawer — the collection's blocks, draggable onto the canvas -->
       <aside class="hidden w-56 shrink-0 overflow-y-auto border-r border-default bg-elevated/40 p-3 md:block">
         <p class="mb-2 text-xs uppercase tracking-widest text-muted">Artists · blocks</p>
@@ -866,7 +872,7 @@ function exitToPages() {
 
     <!-- Site level (#940) — the page flow. Cards = pages (lines = parentId); double-click /
          ⤡ a card → enterPage() loads that page's layout into the spike board above. -->
-    <div v-else class="min-h-0 flex-1">
+    <div v-else key="site" class="min-h-0 flex-1">
       <ClientOnly>
         <CroutonFlowSiteFlow
           :pages="pageRows"
@@ -877,6 +883,7 @@ function exitToPages() {
         />
       </ClientOnly>
     </div>
+    </Transition>
 
     <!-- Mobile palette — a bottom sheet, out of the way until summoned (#906) -->
     <UDrawer v-model:open="paletteOpen" :handle="true" title="Artists · blocks">
@@ -971,4 +978,18 @@ function exitToPages() {
 .pill-swap-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .pill-swap-enter-from { opacity: 0; transform: translateY(6px) scale(0.97); }
 .pill-swap-leave-to { opacity: 0; transform: translateY(6px) scale(0.97); }
+
+/* Page open/close zoom (#940): opening a page grows it in; going back shrinks it away. Directional
+   so "in" and "out" feel different (mode=out-in: the old view leaves, then the new one enters). */
+.pagezoom-in-enter-active,
+.pagezoom-in-leave-active,
+.pagezoom-out-enter-active,
+.pagezoom-out-leave-active {
+  transition: opacity 0.24s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+.pagezoom-in-enter-from { opacity: 0; transform: scale(0.96); }   /* page grows in */
+.pagezoom-in-leave-to { opacity: 0; transform: scale(1.04); }     /* site recedes */
+.pagezoom-out-enter-from { opacity: 0; transform: scale(1.04); }  /* site settles back from larger */
+.pagezoom-out-leave-to { opacity: 0; transform: scale(0.96); }    /* page shrinks away */
 </style>
