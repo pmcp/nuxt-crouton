@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-14 · #852 · mobile stack reliable (feed renderer the known width)'
+const BUILD = 'page-flow-1 · #940 · pages → zoom a page → edit in the spike (full circle)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -443,6 +443,81 @@ function reset() {
   selectedId.value = ''
   resultOpen.value = false
 }
+
+// ── Site level (#940, approach B) — a page-flow ON TOP of the spike board ──────
+// Pick a page on the flow → its layout seeds the board → arrange/edit (incl. the
+// focus editor) → "← Pages" stores it back. One board (= one layout) per page,
+// persisted in-session so zooming out to Site and back keeps your edits exactly.
+interface BuilderPage { id: string, label: string, icon?: string, tree: LayoutTree }
+const pageSplit = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horizontal'): LayoutTree['root'] => ({
+  type: 'split', direction: dir,
+  children: [{ type: 'leaf', blockId: a, defaultSize: 50 }, { type: 'leaf', blockId: b, defaultSize: 50 }],
+})
+const PAGES: BuilderPage[] = [
+  {
+    id: 'dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard',
+    tree: { renderer: 'panes', root: { type: 'split', direction: 'horizontal', children: [
+      { type: 'leaf', blockId: 'artists-list', defaultSize: 34 },
+      { type: 'leaf', blockId: 'artists-stats', defaultSize: 33 },
+      { type: 'leaf', blockId: 'artists-form', defaultSize: 33 },
+    ] } },
+  },
+  { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
+  { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
+]
+// The same pages as crouton-flow rows (Dashboard is root; others hang off it).
+const pageRows = [
+  { id: 'dashboard', label: 'Dashboard', parentId: null },
+  { id: 'reports', label: 'Reports', parentId: 'dashboard' },
+  { id: 'settings', label: 'Settings', parentId: 'dashboard' },
+]
+const pageById = (id: unknown) => PAGES.find(p => p.id === String(id))
+
+// Per-page board state — persist the FlowNode[] verbatim so positions, merges, and
+// per-node breakpoints all survive a round-trip out to Site and back (no lossy recompile).
+const pageBoards = new Map<string, FlowNode[]>()
+const selectedPageId = ref<string | null>(null)
+const currentPageLabel = computed(() => (selectedPageId.value ? pageById(selectedPageId.value)?.label ?? 'Page' : ''))
+
+function labelFor(node: LayoutNode): string {
+  if (node.type === 'leaf') { const h = node.config?.heading; return typeof h === 'string' ? h : node.blockId }
+  if (node.type === 'nested') return node.label || 'App'
+  return 'Group'
+}
+/** Explode a page's tree into free board nodes (one per top-level child of a split root). */
+function treeToBoardNodes(tree: LayoutTree): FlowNode[] {
+  const root = tree.root
+  const horizontal = root.type === 'split' ? root.direction === 'horizontal' : true
+  const children: LayoutNode[] = root.type === 'split' ? root.children : [root]
+  return children.map((child, i) => ({
+    id: `seed-${selectedPageId.value}-${i}-${++seq}`,
+    type: 'default',
+    position: { x: horizontal ? i * (320 + 48) + 60 : 60, y: horizontal ? 140 : i * (260 + 48) + 80 },
+    data: { node: child, label: labelFor(child) },
+  }))
+}
+/** Stash the current board onto the open page so it can be restored on return. */
+function stashCurrentBoard() {
+  if (selectedPageId.value) pageBoards.set(selectedPageId.value, nodes.value)
+}
+/** Site → page: load (or first-seed) that page's board and show the editor. */
+function enterPage(id: string) {
+  const page = pageById(id)
+  if (!page) return
+  stashCurrentBoard()
+  // clean transient board state for a fresh entry
+  mode.value = 'free'; viewport.value = null; zoomNodeId.value = null; originRect.value = null
+  proposals.value = []; resultOpen.value = false; paletteOpen.value = false
+  selectedPageId.value = id
+  nodes.value = pageBoards.get(id) ?? treeToBoardNodes(page.tree)
+  fitOverview()
+}
+/** Page → Site: persist the board and go back to the page flow. */
+function exitToPages() {
+  stashCurrentBoard()
+  zoomNodeId.value = null; originRect.value = null; viewport.value = null
+  selectedPageId.value = null
+}
 </script>
 
 <template>
@@ -484,15 +559,27 @@ function reset() {
     </DefinePalette>
 
     <header class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-5 py-3">
-      <h1 class="text-base font-semibold">Spike · build an app on Vue Flow</h1>
-      <p class="ml-auto hidden text-xs text-muted lg:block">Tap Blocks → arrange → ✨ Magic. #907</p>
+      <UButton
+        v-if="selectedPageId"
+        icon="i-lucide-arrow-left"
+        label="Pages"
+        size="xs"
+        color="neutral"
+        variant="ghost"
+        @click="exitToPages"
+      />
+      <h1 class="text-base font-semibold">
+        <template v-if="selectedPageId"><span class="text-muted">builder.demo ›</span> {{ currentPageLabel }}</template>
+        <template v-else>Crouton Builder · pages</template>
+      </h1>
+      <p class="ml-auto hidden text-xs text-muted lg:block">Pages → zoom a page → arrange → ✨ Magic. #940</p>
       <!-- All board controls live in the bottom command pill (Fit · Responsive · Blocks · Magic). -->
       <!-- Version stamp — a DIRECT child of the wrapping header so on mobile it drops to its own
            full-width line (inside the non-wrapping cluster above it collapsed to a vertical sliver). -->
       <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
     </header>
 
-    <div class="flex min-h-0 flex-1">
+    <div v-if="selectedPageId" class="flex min-h-0 flex-1">
       <!-- Desktop drawer — the collection's blocks, draggable onto the canvas -->
       <aside class="hidden w-56 shrink-0 overflow-y-auto border-r border-default bg-elevated/40 p-3 md:block">
         <p class="mb-2 text-xs uppercase tracking-widest text-muted">Artists · blocks</p>
@@ -640,6 +727,20 @@ function reset() {
           Drop blocks in <strong>Free</strong> mode, then switch back here to snap them together.
         </p>
       </div>
+    </div>
+
+    <!-- Site level (#940) — the page flow. Cards = pages (lines = parentId); double-click /
+         ⤡ a card → enterPage() loads that page's layout into the spike board above. -->
+    <div v-else class="min-h-0 flex-1">
+      <ClientOnly>
+        <CroutonFlowSiteFlow
+          :pages="pageRows"
+          collection="pagesPages"
+          label-field="label"
+          parent-field="parentId"
+          @zoom-into-page="(row: Record<string, unknown>) => enterPage(String(row.id))"
+        />
+      </ClientOnly>
     </div>
 
     <!-- Mobile palette — a bottom sheet, out of the way until summoned (#906) -->
