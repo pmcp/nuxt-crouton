@@ -1,0 +1,27 @@
+{
+  // Cloudflare WORKERS (static assets) config for loop-station — a DB-LESS POC.
+  //
+  // Unlike most crouton POCs, the observatory has no database, KV, or auth: it's a
+  // read-only viewer over staged JSONL. So there are NO d1_databases / kv_namespaces
+  // bindings, and `cf:staging` has no migrate step — nothing to provision. It also
+  // doesn't use NuxtHub, so Nitro's cloudflare_module build emits a plain worker
+  // (.output/server/index.mjs) + assets (.output/public) and we point wrangler at
+  // them here directly — no generated wrangler.json / env-injection dance.
+  "name": "loop-station",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "main": "./.output/server/index.mjs",
+  "assets": { "directory": "./.output/public", "binding": "ASSETS" },
+
+  "routes": [{ "pattern": "loop-station.pmcp.dev", "custom_domain": true }],
+
+  // Staging is the only env a POC deploys (#318). main/assets/compatibility_* are
+  // inherited from the top level; we just override the route (here it's the same
+  // staging domain). `wrangler deploy --env staging` reads this file directly.
+  "env": {
+    "staging": {
+      "routes": [{ "pattern": "loop-station.pmcp.dev", "custom_domain": true }]
+    }
+  }
+}
