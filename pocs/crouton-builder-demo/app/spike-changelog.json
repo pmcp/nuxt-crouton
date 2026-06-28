@@ -1,5 +1,6 @@
 [
-  { "v": 25, "note": "Consolidated header (page identity + back button); version chip opens this changelog; zoom controls moved to top-right", "commit": "" },
+  { "v": 26, "note": "Responsive mode gets a continuous width slider (scrub device width live, like the breakpoint author); scroll an overflowing preview instead of panning the canvas; prettier changelog timeline", "commit": "" },
+  { "v": 25, "note": "Consolidated header (page identity + back button); version chip opens this changelog; zoom controls moved to top-right", "commit": "7ea54378" },
   { "v": 24, "note": "Undo button + ⌘Z (board history)", "commit": "f393b0a0" },
   { "v": 23, "note": "Page header mirrors the real crouton-pages model (status · visibility · settings · preview)", "commit": "ab059bc3" },
   { "v": 22, "note": "Page opens into a framed container with an identity header (icon · name · path · access · status)", "commit": "025c972d" },

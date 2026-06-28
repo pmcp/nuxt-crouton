@@ -421,7 +421,15 @@ watch(() => props.data.node, () => {
 
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
     <!-- topology mode renders it plain at its footprint size. -->
-    <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
+    <!-- Survey: scroll the PREVIEW, don't pan the canvas (#940). `nopan`/`nodrag` keep Vue Flow's
+         hands off the gesture, `overflow-auto` + `touch-action` let an overflowing layout scroll. -->
+    <div
+      v-if="surveying"
+      class="nopan nodrag h-full w-full overflow-auto"
+      style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
+    >
+      <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" />
+    </div>
     <CroutonLayoutRenderer v-else :node="renderNode" />
 
     <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop

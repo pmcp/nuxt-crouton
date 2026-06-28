@@ -261,7 +261,23 @@ const resultOpen = ref(false)
 // Blocks · Magic), iOS-toolbar style. Tapping "Responsive" lets the pill TAKE OVER → device chips;
 // "← " returns to the main set. (Survey is Free-mode only; leaving Responsive resets to Fit.)
 const pillMode = ref<'main' | 'responsive'>('main')
-function openResponsive() { pillMode.value = 'responsive' }
+// Responsive preview (#940): like the focus-edit breakpoint author, the board's Responsive mode has
+// a continuous WIDTH SLIDER (drag to scrub the device width and watch every layout respond live), not
+// just fixed device chips. Opening it defaults to the Phone preset so the slider is live immediately.
+const SURVEY_MIN = 320
+const SURVEY_MAX = 1440
+function openResponsive() {
+  pillMode.value = 'responsive'
+  if (!viewport.value) viewport.value = { ...SPIKE_VIEWPORTS[0]! }
+}
+/** Scrub the survey width — snap the label to a preset when the width matches one, else 'Custom'. */
+function setSurveyWidth(w: number | undefined) {
+  const width = Math.round(w ?? SURVEY_MIN)
+  const preset = SPIKE_VIEWPORTS.find(v => v.width === width)
+  viewport.value = preset
+    ? { ...preset }
+    : { label: 'Custom', icon: 'i-lucide-ruler', width, height: viewport.value?.height ?? 800 }
+}
 // Leaving the Responsive picker drops the survey (it only exists while you're choosing a width).
 function closeResponsive() { pillMode.value = 'main'; viewport.value = null }
 // Top-level Fit = zoom the camera to show every node (and ensure we're not surveying). A real
@@ -1025,20 +1041,29 @@ function exitToPages() {
             <div
               v-else
               key="responsive"
-              class="pointer-events-auto flex items-center gap-1 rounded-full border border-primary/40 bg-elevated/90 p-1.5 shadow-xl backdrop-blur-xl"
+              class="pointer-events-auto w-[min(94vw,520px)] rounded-2xl border border-primary/40 bg-elevated/90 p-2 shadow-xl backdrop-blur-xl"
             >
-              <UButton icon="i-lucide-chevron-left" size="sm" color="neutral" variant="ghost" aria-label="Back" @click="closeResponsive" />
-              <span class="ml-1 mr-0.5 text-[11px] uppercase tracking-widest text-muted">Preview</span>
-              <UButton
-                v-for="v in SPIKE_VIEWPORTS"
-                :key="v.label"
-                :icon="v.icon"
-                :label="v.label"
-                size="sm"
-                :title="`${v.label} · ${v.width}px`"
-                :color="viewport?.label === v.label ? 'primary' : 'neutral'"
-                :variant="viewport?.label === v.label ? 'soft' : 'ghost'"
-                @click="viewport = v"
+              <div class="flex items-center gap-1">
+                <UButton icon="i-lucide-chevron-left" size="sm" color="neutral" variant="ghost" aria-label="Back" @click="closeResponsive" />
+                <UButton
+                  v-for="v in SPIKE_VIEWPORTS"
+                  :key="v.label"
+                  :icon="v.icon"
+                  size="sm"
+                  :title="`${v.label} · ${v.width}px`"
+                  :color="viewport?.width === v.width ? 'primary' : 'neutral'"
+                  :variant="viewport?.width === v.width ? 'soft' : 'ghost'"
+                  @click="viewport = { ...v }"
+                />
+                <span class="ml-auto rounded-full bg-default/70 px-2 py-0.5 font-mono text-[11px] text-muted">{{ Math.round(viewport?.width ?? 0) }}px</span>
+              </div>
+              <USlider
+                class="mt-2.5 px-1"
+                :min="SURVEY_MIN"
+                :max="SURVEY_MAX"
+                :step="2"
+                :model-value="viewport?.width ?? SURVEY_MIN"
+                @update:model-value="setSurveyWidth"
               />
             </div>
           </Transition>
@@ -1197,22 +1222,38 @@ function exitToPages() {
       :title="BUILD"
       @click="versionOpen = true"
     />
-    <UModal v-model:open="versionOpen" title="Changelog">
+    <UModal v-model:open="versionOpen" :ui="{ content: 'sm:max-w-md' }">
       <template #content="{ close }">
-        <div class="flex max-h-[80dvh] flex-col">
+        <div class="flex max-h-[82dvh] flex-col">
           <div class="flex items-center justify-between border-b border-default px-4 py-3">
-            <h3 class="text-sm font-semibold">Changelog · v{{ BUILD_VERSION }}</h3>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-history" class="size-4 text-muted" />
+              <h3 class="text-sm font-semibold">Changelog</h3>
+              <span class="rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">v{{ BUILD_VERSION }}</span>
+            </div>
             <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Close" @click="close" />
           </div>
-          <ol class="min-h-0 flex-1 divide-y divide-default overflow-y-auto">
-            <li v-for="(entry, i) in BUILD_HISTORY" :key="entry.v" class="flex gap-3 px-4 py-2.5">
-              <span
-                class="mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[10px]"
-                :class="i === 0 ? 'bg-primary/15 text-primary' : 'bg-elevated text-muted'"
-              >v{{ entry.v }}</span>
-              <div class="min-w-0">
+          <!-- Timeline: a hairline rail down the left, a dot per entry; current entry accented. -->
+          <ol class="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            <li
+              v-for="(entry, i) in BUILD_HISTORY"
+              :key="entry.v"
+              class="relative flex gap-3 pb-4 last:pb-0"
+            >
+              <!-- rail + dot -->
+              <div class="relative flex w-10 shrink-0 justify-center">
+                <span v-if="i < BUILD_HISTORY.length - 1" class="absolute left-1/2 top-4 h-full w-px -translate-x-1/2 bg-default" />
+                <span
+                  class="relative z-10 inline-flex h-5 items-center rounded-full px-1.5 font-mono text-[10px] font-semibold tabular-nums ring-2 ring-default"
+                  :class="i === 0 ? 'bg-primary text-inverted ring-primary/30' : 'bg-elevated text-muted'"
+                >{{ entry.v }}</span>
+              </div>
+              <div class="min-w-0 flex-1 pt-0.5">
                 <p class="text-xs leading-snug text-default">{{ entry.note }}</p>
-                <p v-if="entry.commit" class="mt-0.5 font-mono text-[10px] text-muted">{{ entry.commit }}</p>
+                <p v-if="entry.commit" class="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-dimmed">
+                  <UIcon name="i-lucide-git-commit-horizontal" class="size-3" />{{ entry.commit }}
+                </p>
+                <span v-if="i === 0" class="ml-2 align-middle text-[10px] font-medium text-primary">· current</span>
               </div>
             </li>
           </ol>
