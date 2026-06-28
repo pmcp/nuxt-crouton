@@ -33,6 +33,9 @@ import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/
 const props = defineProps<{
   data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean }
   selected?: boolean
+  // Vue Flow sets this true while the node is being dragged across the board, false on drop —
+  // drives the light-green drag glow. It fades out via `transition-shadow` after release.
+  dragging?: boolean
 }>()
 
 // Global viewport survey (#907 layer 3): when a device is active, size the card to that device
@@ -281,7 +284,7 @@ watch(() => props.data.node, () => {
   <UCard
     ref="cardRef"
     class="spike-block-node transition-shadow"
-    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
+    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : dragging ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -440,5 +443,15 @@ watch(() => props.data.node, () => {
   .spike-reflowing :deep([data-panel]) {
     transition: flex-grow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+}
+
+/* Light-green glow while a card is dragged across the board — a soft emerald halo + a
+   thin ring + a lift, so the piece you're moving reads as "live". It's a box-shadow (like
+   Tailwind's ring), so the card's `transition-shadow` fades it out the moment you drop. */
+.spike-drag-glow {
+  box-shadow:
+    0 0 0 2px rgb(74 222 128 / 0.7),
+    0 0 18px 4px rgb(74 222 128 / 0.5),
+    0 10px 28px rgb(0 0 0 / 0.28);
 }
 </style>

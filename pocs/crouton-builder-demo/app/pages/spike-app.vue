@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-13 · #943 · panes FLIP into place after a detach/insert (renderer)'
+const BUILD = 'page-compose-14 · light-green glow on the card you are dragging'
 
 const blockNode = markRaw(SpikeBlockNode)
 
