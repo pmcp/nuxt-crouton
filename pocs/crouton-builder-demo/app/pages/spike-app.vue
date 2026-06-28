@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-flow-1 · #940 · pages → zoom a page → edit in the spike (full circle)'
+const BUILD = 'page-compose-2 · #942 · page = a composed layout you promote · drafts coexist'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -73,7 +73,7 @@ const drawer = [
 // `bp` = authored responsive breakpoints for this node's layout (#907 layer 2), set in the
 // breakpoint slider you zoom into. Structural edits (snap/detach) create nodes WITHOUT bp, so
 // authored breakpoints reset when the structure they targeted changes — which is the right thing.
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[] } }
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -294,7 +294,7 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   // Group origin: a left/top snap places the group to the left/above the target's old spot.
   const gx = edge === 'left' ? tRect.x - md.width : tRect.x
   const gy = edge === 'top' ? tRect.y - md.height : tRect.y
-  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined } }
+  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined, ...(target.data.isPage ? { isPage: true } : {}) } }
   // Replace the target with the merged group; drop the moved node — they're now one unit.
   nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
 }
@@ -484,18 +484,42 @@ function labelFor(node: LayoutNode): string {
   if (node.type === 'nested') return node.label || 'App'
   return 'Group'
 }
-/** Explode a page's tree into free board nodes (one per top-level child of a split root). */
+/** Seed an existing page as ONE composed node — the whole layout, badged as THE page (#942), so
+ *  zooming in shows what the page actually looks like (WYSIWYG), not loose exploded cards. Drafts
+ *  you add later coexist beside it. (An empty page just starts with a blank board.) */
 function treeToBoardNodes(tree: LayoutTree): FlowNode[] {
-  const root = tree.root
-  const horizontal = root.type === 'split' ? root.direction === 'horizontal' : true
-  const children: LayoutNode[] = root.type === 'split' ? root.children : [root]
-  return children.map((child, i) => ({
-    id: `seed-${selectedPageId.value}-${i}-${++seq}`,
+  return [{
+    id: `page-${selectedPageId.value}-${++seq}`,
     type: 'default',
-    position: { x: horizontal ? i * (320 + 48) + 60 : 60, y: horizontal ? 140 : i * (260 + 48) + 80 },
-    data: { node: child, label: labelFor(child) },
-  }))
+    position: { x: 80, y: 120 },
+    data: { node: tree.root, label: pageById(selectedPageId.value)?.label ?? 'Page', bp: tree.breakpoints, isPage: true },
+  }]
 }
+
+// ── Page promotion (#942) — the board is a sandbox; one node is "the page" (data.isPage). ──
+function JSONclone<T>(v: T): T { return JSON.parse(JSON.stringify(v)) as T }
+/** Promote a node to BE the page — the badge moves to it; all others become drafts. */
+function setAsPage(node: LayoutNode) {
+  nodes.value = nodes.value.map(n => ({ ...n, data: { ...n.data, isPage: n.data.node === node } }))
+}
+/** Duplicate a node as a free draft (deep-cloned) so you can rearrange the copy, then promote it. */
+function duplicateNode(node: LayoutNode) {
+  const src = nodes.value.find(n => n.data.node === node)
+  if (!src) return
+  nodes.value = [...nodes.value, {
+    id: `copy-${++seq}`,
+    type: 'default',
+    position: { x: src.position.x + 48, y: src.position.y + 48 },
+    data: {
+      node: JSONclone(src.data.node),
+      label: src.data.label ? `${src.data.label} copy` : undefined,
+      bp: src.data.bp ? JSONclone(src.data.bp) : undefined,
+      isPage: false,
+    },
+  }]
+}
+provide(SPIKE_SET_PAGE_KEY, setAsPage)
+provide(SPIKE_DUPLICATE_KEY, duplicateNode)
 /** Stash the current board onto the open page so it can be restored on return. */
 function stashCurrentBoard() {
   if (selectedPageId.value) pageBoards.set(selectedPageId.value, nodes.value)

@@ -30,7 +30,7 @@ import { ref, inject, computed, watch } from 'vue'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 
 const props = defineProps<{
-  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[] }
+  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean }
   selected?: boolean
 }>()
 
@@ -68,6 +68,9 @@ const guideStyle = computed(() => {
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
 const RESISTANCE = 1 // pane tracks the cursor/thumb 1:1 (direct manipulation) → it detaches exactly under your finger; the THRESHOLD + ease-apart + spring-back carry the physical feel, not positional lag
 const detach = inject(SPIKE_DETACH_KEY, null)
+// Page promotion (#942): promote this node to BE the page, or duplicate it as a draft.
+const setPage = inject(SPIKE_SET_PAGE_KEY, null)
+const duplicate = inject(SPIKE_DUPLICATE_KEY, null)
 const hovered = ref(false)
 const isGroup = computed(() => props.data.node.type === 'split')
 // Stay armed while a pull is in flight (activeIndex set) even if the cursor leaves the card —
@@ -221,6 +224,53 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
+    <!-- "Page" badge — this node is the live layout a user sees (#942). -->
+    <UBadge
+      v-if="data.isPage && !surveying"
+      color="primary"
+      variant="solid"
+      size="sm"
+      icon="i-lucide-star"
+      class="pointer-events-none absolute left-2 top-2 z-30 shadow"
+    >Page</UBadge>
+
+    <!-- Node actions (#942) — promote this layout to BE the page, or duplicate it as a draft.
+         Shown when selected; floated ABOVE the card so it clears the detach faces. `.nodrag` +
+         `.stop` so tapping a button neither drags the node nor bubbles to the card. -->
+    <div
+      v-if="selected && !surveying"
+      class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-default bg-elevated/95 p-1 shadow-xl backdrop-blur"
+    >
+      <UButton
+        v-if="!data.isPage"
+        icon="i-lucide-star"
+        label="Set as page"
+        size="xs"
+        color="primary"
+        variant="soft"
+        @pointerdown.stop
+        @click.stop="setPage?.(data.node)"
+      />
+      <UButton
+        v-else
+        icon="i-lucide-star"
+        label="Page"
+        size="xs"
+        color="primary"
+        variant="solid"
+        disabled
+      />
+      <UButton
+        icon="i-lucide-copy"
+        label="Duplicate"
+        size="xs"
+        color="neutral"
+        variant="ghost"
+        @pointerdown.stop
+        @click.stop="duplicate?.(data.node)"
+      />
+    </div>
+
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
     <!-- topology mode renders it plain at its footprint size. -->
     <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />

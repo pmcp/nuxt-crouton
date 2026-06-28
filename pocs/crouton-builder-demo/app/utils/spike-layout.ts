@@ -40,6 +40,16 @@ export interface SpikeDetachPayload { index: number, dir: { x: number, y: number
 export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
 
 /**
+ * Page promotion (#942) — the board is a sandbox of layout candidates + loose draft blocks;
+ * exactly ONE node is "the page" (the live layout a user sees, ★-badged). `SET_PAGE` promotes a
+ * node to be the page; `DUPLICATE` clones a node as a free draft so you can rearrange a copy and
+ * then promote it. Both identify the node by object identity of its `data.node` (Vue Flow doesn't
+ * forward the node id), exactly like the detach callback. Provided by the page, injected by SpikeBlockNode.
+ */
+export const SPIKE_SET_PAGE_KEY = Symbol('spike-set-page') as InjectionKey<(node: LayoutNode) => void>
+export const SPIKE_DUPLICATE_KEY = Symbol('spike-duplicate') as InjectionKey<(node: LayoutNode) => void>
+
+/**
  * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
  * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
  * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a
