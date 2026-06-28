@@ -109,3 +109,9 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
     wasted (board, snapping, ghost/ease-apart, FLIP, pinch, add-block all carry over).
 - **Backfill test-first coverage** for the genuine logic when it lands in `packages/*` (the #774 gate
   is off for `pocs/*`, on for `packages/*` — graduation is where the tests get written).
+- **Multiplayer + collaborative undo via `crouton-collab` (Yjs).** `crouton-flow` already extends
+  `crouton-collab`; the spike runs Vue Flow in *ephemeral, non-synced* mode. The graduated builder
+  should be able to **"build together"** — sync the board through a `CollabRoom` (a `flowId` + the
+  synced data mode + presence, all infra that already exists). When it does, **undo must switch to
+  `Y.UndoManager`** (per-user transaction undo) — the POC's whole-board snapshot stack is a
+  *single-user placeholder* that would clobber other people's edits in a shared session.

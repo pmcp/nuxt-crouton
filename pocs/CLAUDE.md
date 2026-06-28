@@ -62,6 +62,14 @@ The rule of thumb, every working session:
 `pocs/crouton-builder-demo/HANDOFF.md` is the worked example. (Apps that never graduate — pure
 consumer demos — don't need one; this is for POCs incubating a future package.)
 
+**Pair it with a chronological decision log (`changelog.json`).** Where `HANDOFF.md` is the *curated
+current truth* (pruned), a per-POC `changelog.json` is the *append-only history* — one entry per
+iteration `{ v, note, commit }`, newest first — recording **how** we got here (every signed-off
+change + its commit). The two complement each other: the changelog never prunes, the handoff always
+does. Surface it in-app where it's verifiable on the deployed preview (the builder POC shows a `vNN`
+chip that opens the changelog; an entry's `commit` is backfilled when the next entry is added, since
+the hash isn't known until push). `pocs/crouton-builder-demo/app/spike-changelog.json` is the example.
+
 **At handoff, the doc is reconciled against the running POC — both directions.** The `graduate`
 skill's reconcile gate (step 1.5) drives the live app and sorts behaviour into *confirmed /
 contradicted / undocumented*, so the brief is proven complete — the **undocumented** bucket is what
