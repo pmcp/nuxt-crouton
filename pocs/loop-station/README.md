@@ -46,3 +46,20 @@ pnpm --filter loop-station dev        # http://localhost:3021
 pnpm --filter loop-station build
 pnpm --filter loop-station cf:staging # via /poc-deploy for a staging URL
 ```
+
+## Handoff — compose this with the layout builder (future direction)
+
+This dashboard is a **prime candidate for the crouton layout builder.** The page
+is deliberately built from independent, self-contained panels — `BudgetTrend`,
+`Scorecard`, `LoopGraph`, `InventoryTable`, `TraceTimeline`, and the cold-write
+bars — currently arranged by hand in `app/pages/index.vue`.
+
+The next iteration should **register these panels as placeable layout blocks**
+(`croutonLayoutBlocks`, see the `block-authoring` skill) and let the **layout
+builder** compose the dashboard into a `layout_configs` tree, instead of a
+hardcoded page. Each panel already sizes to its container, so the main work is
+the block registration + sizing contract, not a rewrite.
+
+> Note the boundary: this is the **layout** builder arranging *view panels* — not
+> a loop builder. Epic #926's "observatory, not a loop builder" line still holds;
+> composing the observatory's own panels is a presentation concern.
