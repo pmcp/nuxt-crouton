@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-10 · #941 · drag a block between a combined layout’s panes (insert)'
+const BUILD = 'page-compose-11 · #941 · panes animate to their new sizes after a detach/insert'
 
 const blockNode = markRaw(SpikeBlockNode)
 

@@ -263,16 +263,25 @@ function cleanup() {
   faceEl = null
 }
 
-// Whenever the rendered layout changes under us (a detach shrank the group, a merge grew it, etc.),
-// clear any stale pull state — the instance is reused across these changes, so don't carry it over.
-watch(() => props.data.node, () => { cleanup(); resetPull() })
+// Whenever the rendered layout changes under us (detach/insert/merge), clear stale pull state AND
+// briefly enable a flex-grow transition so the remaining panes ANIMATE to their new sizes (#941 —
+// "see where the blocks go after pulling one out"). Read-only resize doesn't change data.node, so
+// the splitter handle stays snappy (not smoothed).
+const reflowing = ref(false)
+let reflowTimer: number | null = null
+watch(() => props.data.node, () => {
+  cleanup(); resetPull()
+  reflowing.value = true
+  if (reflowTimer != null) window.clearTimeout(reflowTimer)
+  reflowTimer = window.setTimeout(() => { reflowing.value = false }, 450)
+})
 </script>
 
 <template>
   <UCard
     ref="cardRef"
     class="spike-block-node transition-shadow"
-    :class="guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : ''"
+    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -421,5 +430,15 @@ watch(() => props.data.node, () => { cleanup(); resetPull() })
     50% { transform: rotate(1.1deg); }
   }
   .spike-face-jiggle { animation: spike-jiggle 0.25s ease-in-out infinite; }
+}
+
+/* Animate the remaining panes when the layout restructures (detach / insert / merge) so you can see
+   where the blocks land. Active only briefly (the `spike-reflowing` window) — a manual splitter
+   resize doesn't change data.node, so the handle stays snappy. reka-ui sizes panels via inline
+   `flex`; transitioning flex-grow tweens the reflow. (#941) */
+@media (prefers-reduced-motion: no-preference) {
+  .spike-reflowing :deep([data-panel]) {
+    transition: flex-grow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 </style>
