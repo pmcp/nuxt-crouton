@@ -32,7 +32,15 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-24 · undo button + ⌘Z (board history)'
+// Iteration changelog / decision log (#940) — newest first, externalized to `spike-changelog.json`
+// with a commit ref per entry (a chronological record of HOW we got here, complementing the curated
+// HANDOFF.md). The floating chip shows the current number; tapping it opens the former changelogs.
+// On every iteration: bump the stamp by prepending an entry to that JSON (commit filled on push).
+import spikeChangelog from '~/spike-changelog.json'
+const BUILD_HISTORY = spikeChangelog as { v: number, note: string, commit?: string }[]
+const BUILD_VERSION = BUILD_HISTORY[0]!.v
+const BUILD = `page-compose-${BUILD_VERSION} · ${BUILD_HISTORY[0]!.note}`
+const versionOpen = ref(false)
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -834,26 +842,8 @@ function exitToPages() {
       </div>
     </DefinePalette>
 
-    <header class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-5 py-3">
-      <UButton
-        v-if="selectedPageId"
-        icon="i-lucide-arrow-left"
-        label="Pages"
-        size="xs"
-        color="neutral"
-        variant="ghost"
-        @click="exitToPages"
-      />
-      <h1 class="text-base font-semibold">
-        <template v-if="selectedPageId"><span class="text-muted">builder.demo ›</span> {{ currentPageLabel }}</template>
-        <template v-else>Crouton Builder · pages</template>
-      </h1>
-      <p class="ml-auto hidden text-xs text-muted lg:block">Pages → zoom a page → arrange → ✨ Magic. #940</p>
-      <!-- All board controls live in the bottom command pill (Fit · Responsive · Blocks · Magic). -->
-      <!-- Version stamp — a DIRECT child of the wrapping header so on mobile it drops to its own
-           full-width line (inside the non-wrapping cluster above it collapsed to a vertical sliver). -->
-      <span class="order-last w-full break-words rounded-full border border-default bg-elevated px-2 py-0.5 text-center font-mono text-[10px] text-muted sm:order-none sm:w-auto sm:basis-auto">{{ BUILD }}</span>
-    </header>
+    <!-- Old app-chrome header removed (#940): the page-shell header below IS the header now (back
+         button folded in), and the Site view is full-bleed. The BUILD stamp floats as a tiny chip. -->
 
     <!-- Page ⇄ Site cross-fade (#940 redux): both views stacked absolutely so one fades IN while the
          other fades OUT (simultaneous — NOT mode=out-in, which flashed the dark bg between them and
@@ -878,6 +868,15 @@ function exitToPages() {
              · open-public · settings gear. Display-only here; reuses the real toolbar on graduation. -->
         <header class="spike-page-header shrink-0 border-b border-default/70 bg-elevated/60 px-3 py-2 backdrop-blur">
           <div class="flex items-center gap-2.5">
+            <UButton
+              icon="i-lucide-arrow-left"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              aria-label="Back to pages"
+              title="Back to pages"
+              @click="exitToPages"
+            />
             <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <UIcon :name="currentPage?.icon ?? 'i-lucide-file'" class="size-5" />
             </span>
@@ -1184,10 +1183,56 @@ function exitToPages() {
       :origin-rect="originRect"
       @close="closeEdit"
     />
+
+    <!-- Version chip (#940): the old header is gone, so this tiny floating chip shows the current
+         iteration NUMBER and — tapped — opens the full former-changelog history. On-page (not Nuxt
+         DevTools, which is dev-only and can't show on the mobile staging preview deploys verify on). -->
+    <UButton
+      class="fixed bottom-1 left-1 z-50 font-mono text-[10px]"
+      size="xs"
+      color="neutral"
+      variant="soft"
+      :label="`v${BUILD_VERSION}`"
+      icon="i-lucide-history"
+      :title="BUILD"
+      @click="versionOpen = true"
+    />
+    <UModal v-model:open="versionOpen" title="Changelog">
+      <template #content="{ close }">
+        <div class="flex max-h-[80dvh] flex-col">
+          <div class="flex items-center justify-between border-b border-default px-4 py-3">
+            <h3 class="text-sm font-semibold">Changelog · v{{ BUILD_VERSION }}</h3>
+            <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Close" @click="close" />
+          </div>
+          <ol class="min-h-0 flex-1 divide-y divide-default overflow-y-auto">
+            <li v-for="(entry, i) in BUILD_HISTORY" :key="entry.v" class="flex gap-3 px-4 py-2.5">
+              <span
+                class="mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[10px]"
+                :class="i === 0 ? 'bg-primary/15 text-primary' : 'bg-elevated text-muted'"
+              >v{{ entry.v }}</span>
+              <div class="min-w-0">
+                <p class="text-xs leading-snug text-default">{{ entry.note }}</p>
+                <p v-if="entry.commit" class="mt-0.5 font-mono text-[10px] text-muted">{{ entry.commit }}</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <style scoped>
+/* Move Vue Flow's zoom controls (+/−/fit) from the default bottom-left to the TOP-RIGHT corner of
+   the canvas (#940) — clear of the bottom command pill and the floating version chip. :deep reaches
+   into CroutonFlow. Applies to both the board and the Site flow. */
+:deep(.vue-flow__controls) {
+  top: 0.5rem;
+  right: 0.5rem;
+  bottom: auto;
+  left: auto;
+}
+
 /* the command pill swaps between its main set and the "Responsive" device set */
 .pill-swap-enter-active,
 .pill-swap-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }

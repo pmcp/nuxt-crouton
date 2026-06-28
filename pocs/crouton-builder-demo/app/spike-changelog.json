@@ -1,0 +1,17 @@
+[
+  { "v": 25, "note": "Consolidated header (page identity + back button); version chip opens this changelog; zoom controls moved to top-right", "commit": "" },
+  { "v": 24, "note": "Undo button + ⌘Z (board history)", "commit": "f393b0a0" },
+  { "v": 23, "note": "Page header mirrors the real crouton-pages model (status · visibility · settings · preview)", "commit": "ab059bc3" },
+  { "v": 22, "note": "Page opens into a framed container with an identity header (icon · name · path · access · status)", "commit": "025c972d" },
+  { "v": 21, "note": "Smooth page⇄flow cross-fade (simultaneous, no bg flash, fit preserved)", "commit": "da9d2374" },
+  { "v": 20, "note": "Pinch-zoom over a layout; added block lands clear, centered, with a green active glow", "commit": "7b0a606a" },
+  { "v": 19, "note": "Ghost slot mirrors the dragged item's shape & size", "commit": "4082a775" },
+  { "v": 18, "note": "Insert-snap arms reliably over a layout (overlap detection + steady dwell)", "commit": "3761bd9e" },
+  { "v": 17, "note": "Panes ease apart to open a real slot for the dragged item", "commit": "cf3610da" },
+  { "v": 16, "note": "Ghost slab at the armed insert point (this is where it lands)", "commit": "ed7ed324" },
+  { "v": 15, "note": "Dropped the \"release to snap\" tag (green ring is enough)", "commit": "c932072a" },
+  { "v": 14, "note": "Light-green glow on the card you are dragging", "commit": "8caec530" },
+  { "v": 13, "note": "Panes FLIP into place after a detach/insert (renderer, #943)", "commit": "a9fe945f" },
+  { "v": 12, "note": "Page-open zoom transition (later reverted — broke fit, flashed bg)", "commit": "3aa4c33b" },
+  { "v": 11, "note": "Earlier spikes (1–11): board · drag/snap/merge · pull-to-detach · ✨ Magic/compile · focus edit view · Site⇄Page flow · page promotion · instant centering", "commit": "" }
+]
