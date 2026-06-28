@@ -117,3 +117,36 @@ node .claude/skills/loop-station/collect-traces.mjs --out loop-station-trace.jso
 into any LLM workflow to capture its trace. Each ephemeral runner ships its
 trace tagged by `run_id`; aggregating the artifacts gives the all-runs topology
 WS3 renders.
+
+---
+
+# WS5 — advisor (state → actionable ticket)
+
+Turns the observatory from numbers-to-look-at into decisions. An agent reviews the
+inventory state and, **only when something's actionable**, files a single GitHub
+issue assigned to the maintainer with concrete recommendations.
+
+> Two layers, kept separate: deterministic **numbers → the WS4 digest** (no LLM);
+> qualitative **remarks → a ticket** (this). The LLM never touches the trend and
+> only *recommends* — epic #926's observatory-not-builder boundary holds.
+
+## Files
+
+| file | role |
+|------|------|
+| `advisor.mjs` | **deterministic gate** — reads `history.jsonl`, surfaces candidate findings (scorecard reds, sharp always-on growth, redundancy jumps), decides `actionable`. No LLM, no issue. Importable `analyze()`. |
+| `lib/advisor.test.mjs` | findings logic (reds flag, growth flags, cross-tokenizer deltas are NOT compared, deterministic) |
+| `.github/workflows/loop-station-advisor.yml` | weekly: run the gate → **only if actionable** invoke `claude-code-action` to open/update ONE `loop-station-advisor` issue assigned to `pmcp` |
+
+## Why the gate is deterministic
+
+The cheap deterministic pass decides *whether to bother the human* (and whether to
+spend an LLM call) — so the model runs only on a real signal, never on a quiet
+week, and the trend numbers stay LLM-free. Deltas are compared **only within the
+same tokenizer** (a heuristic→anthropic switch isn't real growth).
+
+## Run by hand
+
+```bash
+node .claude/skills/loop-station/advisor.mjs --pretty   # see findings + actionable verdict
+```
