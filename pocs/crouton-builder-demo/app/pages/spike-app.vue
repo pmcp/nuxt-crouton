@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-21 · smooth page⇄flow cross-fade (no bg flash, fit preserved)'
+const BUILD = 'page-compose-22 · page opens into a framed container w/ identity header (icon·name·path·access·status)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -599,7 +599,12 @@ function reset() {
 // Pick a page on the flow → its layout seeds the board → arrange/edit (incl. the
 // focus editor) → "← Pages" stores it back. One board (= one layout) per page,
 // persisted in-session so zooming out to Site and back keeps your edits exactly.
-interface BuilderPage { id: string, label: string, icon?: string, tree: LayoutTree }
+// Page metadata mirrors the crouton-pages concept (#940): a page has an icon + name, a route path,
+// a visibility (who can see it), and a publish state. Demo values here; the real builder reads these
+// off the pages collection. The page-shell header surfaces them (expandable).
+type PageAccess = 'public' | 'members' | 'admin'
+type PageStatus = 'live' | 'draft'
+interface BuilderPage { id: string, label: string, icon?: string, path?: string, access?: PageAccess, status?: PageStatus, tree: LayoutTree }
 const pageSplit = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horizontal'): LayoutTree['root'] => ({
   type: 'split', direction: dir,
   children: [{ type: 'leaf', blockId: a, defaultSize: 50 }, { type: 'leaf', blockId: b, defaultSize: 50 }],
@@ -607,15 +612,26 @@ const pageSplit = (a: string, b: string, dir: 'horizontal' | 'vertical' = 'horiz
 const PAGES: BuilderPage[] = [
   {
     id: 'dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard',
+    path: '/dashboard', access: 'members', status: 'live',
     tree: { renderer: 'panes', root: { type: 'split', direction: 'horizontal', children: [
       { type: 'leaf', blockId: 'artists-list', defaultSize: 34 },
       { type: 'leaf', blockId: 'artists-stats', defaultSize: 33 },
       { type: 'leaf', blockId: 'artists-form', defaultSize: 33 },
     ] } },
   },
-  { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
-  { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
+  { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', path: '/reports', access: 'admin', status: 'draft', tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
+  { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', path: '/settings', access: 'public', status: 'live', tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
 ]
+// Visibility + status → icon/label/tone for the header chips (lucide + Nuxt UI colors).
+const ACCESS_META: Record<PageAccess, { icon: string, label: string }> = {
+  public: { icon: 'i-lucide-globe', label: 'Public' },
+  members: { icon: 'i-lucide-users', label: 'Members' },
+  admin: { icon: 'i-lucide-shield', label: 'Admin only' },
+}
+const STATUS_META: Record<PageStatus, { icon: string, label: string, color: 'success' | 'warning' }> = {
+  live: { icon: 'i-lucide-circle-check', label: 'Live', color: 'success' },
+  draft: { icon: 'i-lucide-circle-dashed', label: 'Draft', color: 'warning' },
+}
 // The same pages as crouton-flow rows (Dashboard is root; others hang off it).
 const pageRows = [
   { id: 'dashboard', label: 'Dashboard', parentId: null },
@@ -632,6 +648,10 @@ const selectedPageId = ref<string | null>(null)
 // flow (returning). Set before the swap so the right curve plays. (#940)
 const zoomDir = ref<'in' | 'out'>('in')
 const currentPageLabel = computed(() => (selectedPageId.value ? pageById(selectedPageId.value)?.label ?? 'Page' : ''))
+// The page being edited → drives the page-shell header (icon · name · path · access · status). The
+// header collapses to just icon+name+chips; expanding reveals the path + full access/status labels.
+const currentPage = computed(() => (selectedPageId.value ? pageById(selectedPageId.value) ?? null : null))
+const pageHeaderExpanded = ref(false)
 
 function labelFor(node: LayoutNode): string {
   if (node.type === 'leaf') { const h = node.config?.heading; return typeof h === 'string' ? h : node.blockId }
@@ -795,7 +815,59 @@ function exitToPages() {
       </aside>
 
       <!-- The canvas — Free (Vue Flow) or Snap (magnetic compose canvas) -->
-      <div class="relative min-w-0 flex-1">
+      <!-- Page shell (#940): entering a page frames the flow INSIDE a padded container whose header
+           carries the page identity — icon + name, expandable to path / visibility / live-vs-draft
+           (mirrors the pages package). The header slides in as the container forms (the transition). -->
+      <div class="relative min-w-0 flex-1 p-2 sm:p-3">
+       <div class="flex h-full flex-col overflow-hidden rounded-xl border border-default bg-elevated/40 shadow-sm">
+        <header class="spike-page-header shrink-0 border-b border-default/70 bg-elevated/60 px-3 py-2 backdrop-blur">
+          <div class="flex items-center gap-2.5">
+            <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <UIcon :name="currentPage?.icon ?? 'i-lucide-file'" class="size-5" />
+            </span>
+            <p class="truncate text-sm font-semibold leading-tight">{{ currentPage?.label ?? 'Page' }}</p>
+            <div class="ml-auto flex items-center gap-2">
+              <span
+                v-if="currentPage?.status"
+                class="size-2 rounded-full"
+                :class="currentPage.status === 'live' ? 'bg-success' : 'bg-warning'"
+                :title="STATUS_META[currentPage.status].label"
+              />
+              <UIcon
+                v-if="currentPage?.access"
+                :name="ACCESS_META[currentPage.access].icon"
+                class="size-4 text-muted"
+                :title="ACCESS_META[currentPage.access].label"
+              />
+              <UButton
+                :icon="pageHeaderExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                :aria-label="pageHeaderExpanded ? 'Collapse page details' : 'Expand page details'"
+                @click="pageHeaderExpanded = !pageHeaderExpanded"
+              />
+            </div>
+          </div>
+          <!-- Expanded detail: path · visibility · publish state -->
+          <div
+            v-if="pageHeaderExpanded"
+            class="mt-2 grid grid-cols-1 gap-1.5 border-t border-default/60 pt-2 text-[11px] text-muted sm:grid-cols-3"
+          >
+            <div class="flex items-center gap-1.5">
+              <UIcon name="i-lucide-link" class="size-3.5 shrink-0" />
+              <span class="truncate font-mono">{{ currentPage?.path ?? '—' }}</span>
+            </div>
+            <div v-if="currentPage?.access" class="flex items-center gap-1.5">
+              <UIcon :name="ACCESS_META[currentPage.access].icon" class="size-3.5 shrink-0" />{{ ACCESS_META[currentPage.access].label }}
+            </div>
+            <div v-if="currentPage?.status" class="flex items-center gap-1.5">
+              <UIcon :name="STATUS_META[currentPage.status].icon" class="size-3.5 shrink-0" />{{ STATUS_META[currentPage.status].label }}
+            </div>
+          </div>
+        </header>
+        <!-- The flow itself lives inside the container -->
+        <div class="relative min-h-0 flex-1">
         <ClientOnly>
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
@@ -934,6 +1006,8 @@ function exitToPages() {
         >
           Drop blocks in <strong>Free</strong> mode, then switch back here to snap them together.
         </p>
+        </div>
+       </div>
       </div>
     </div>
 
@@ -1065,5 +1139,16 @@ function exitToPages() {
   .viewzoom-out-enter-active, .viewzoom-out-leave-active { transition: opacity 0.2s ease; transform: none; }
   .viewzoom-in-enter-from, .viewzoom-in-leave-to,
   .viewzoom-out-enter-from, .viewzoom-out-leave-to { transform: none; }
+}
+
+/* Page-shell header (#940): on entering a page the identity bar slides down into place as the
+   container forms — the "name slides to the top" feel. Runs on mount (the board is re-created each
+   entry), so it replays every time you open a page. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes spike-header-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .spike-page-header { animation: spike-header-in 0.34s cubic-bezier(0.4, 0, 0.2, 1) both; }
 }
 </style>
