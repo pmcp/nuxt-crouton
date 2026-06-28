@@ -23,7 +23,7 @@
  * is defined once with VueUse's `createReusableTemplate` and reused in both places.
  */
 import { markRaw, computed, shallowRef, provide } from 'vue'
-import { createReusableTemplate } from '@vueuse/core'
+import { createReusableTemplate, onKeyStroke } from '@vueuse/core'
 import type { LayoutNode, LayoutSplit, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-23 · page header mirrors the pages package (status·visibility·settings·preview)'
+const BUILD = 'page-compose-24 · undo button + ⌘Z (board history)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -76,6 +76,33 @@ const drawer = [
 interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
+
+// Undo (#940): snapshot the whole board before each mutation; Undo restores the last snapshot.
+// `nodes` is the complete board state, so a deep-cloned snapshot is a full, safe restore point.
+// (`JSONclone` is a hoisted function declaration, so it's callable here.) Cleared on entering a page.
+const UNDO_LIMIT = 50
+const undoStack = ref<FlowNode[][]>([])
+const canUndo = computed(() => undoStack.value.length > 0)
+function pushUndo() {
+  undoStack.value.push(JSONclone(nodes.value))
+  if (undoStack.value.length > UNDO_LIMIT) undoStack.value.shift()
+}
+function undo() {
+  const prev = undoStack.value.pop()
+  if (!prev) return
+  resetSnap()
+  closeEdit()
+  nodes.value = prev
+}
+// ⌘/Ctrl-Z undoes, on the board only (let inputs/textareas keep their native undo).
+onKeyStroke('z', (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.shiftKey) return
+  if (!selectedPageId.value || viewport.value) return
+  const t = e.target as HTMLElement | null
+  if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) return
+  e.preventDefault()
+  undo()
+})
 
 // Camera: re-frame the whole board to an overview after adding a block. CroutonFlow only
 // fits-to-view on mount (when the board is empty), so without this a freshly-added block sits at
@@ -136,6 +163,7 @@ function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
   const host = nodes.value[idx]!
   const { root, detached } = detachNode(group, [payload.index])
   if (!detached || !root) return
+  pushUndo()
 
   // Primary: land it where the pulled pane was released (WYSIWYG) — the node reports the pane's
   // flow-space offset from the group's top-left, we add it to the group's known position. Fallback
@@ -263,6 +291,7 @@ function clearSpot(): { x: number, y: number } {
 let justAddedTimer: number | null = null
 /** CroutonFlow emits this on drop with the flow-space position — add a fresh leaf node. */
 function onNodeDrop(item: Record<string, unknown>, position: { x: number, y: number }) {
+  pushUndo()
   const label = String(item.label ?? item.blockId)
   const leaf: LayoutNode = { type: 'leaf', blockId: String(item.blockId), config: { collection: 'artists', heading: label } }
   const added: FlowNode = { id: String(item.id), type: 'default', position, data: { node: leaf, label, justAdded: true } }
@@ -415,6 +444,7 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
     return p && (p.x !== r.position.x || p.y !== r.position.y)
   })
   if (!moved) { nodes.value = rows; return }
+  pushUndo() // a real move (reposition / merge / insert) is about to apply — snapshot first
   // Released while only SOFT (not held long enough) → just place it; snapping requires the dwell.
   if (!armed) { nodes.value = rows; return }
 
@@ -588,6 +618,7 @@ function compile() {
   resultOpen.value = true
 }
 function reset() {
+  if (nodes.value.length) pushUndo()
   nodes.value = []
   pieces.value = []
   proposals.value = []
@@ -694,12 +725,14 @@ function treeToBoardNodes(tree: LayoutTree): FlowNode[] {
 function JSONclone<T>(v: T): T { return JSON.parse(JSON.stringify(v)) as T }
 /** Promote a node to BE the page — the badge moves to it; all others become drafts. */
 function setAsPage(node: LayoutNode) {
+  pushUndo()
   nodes.value = nodes.value.map(n => ({ ...n, data: { ...n.data, isPage: n.data.node === node } }))
 }
 /** Duplicate a node as a free draft (deep-cloned) so you can rearrange the copy, then promote it. */
 function duplicateNode(node: LayoutNode) {
   const src = nodes.value.find(n => n.data.node === node)
   if (!src) return
+  pushUndo()
   nodes.value = [...nodes.value, {
     id: `copy-${++seq}`,
     type: 'default',
@@ -748,6 +781,7 @@ function enterPage(id: string) {
   // clean transient board state for a fresh entry
   mode.value = 'free'; viewport.value = null; zoomNodeId.value = null; originRect.value = null
   proposals.value = []; resultOpen.value = false; paletteOpen.value = false
+  undoStack.value = [] // fresh board context — don't undo across page boundaries
   zoomDir.value = 'in'
   selectedPageId.value = id
   nodes.value = pageBoards.get(id) ?? treeToBoardNodes(page.tree)
@@ -934,6 +968,16 @@ function exitToPages() {
               key="main"
               class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl"
             >
+              <UButton
+                icon="i-lucide-undo-2"
+                size="sm"
+                color="neutral"
+                variant="ghost"
+                :disabled="!canUndo"
+                title="Undo (⌘Z)"
+                aria-label="Undo"
+                @click="undo"
+              />
               <UButton
                 icon="i-lucide-scan"
                 label="Fit"
