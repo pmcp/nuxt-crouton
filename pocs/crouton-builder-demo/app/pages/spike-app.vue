@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-17 · panes ease apart to open a real slot for the dragged item'
+const BUILD = 'page-compose-18 · snap arms reliably over a layout (overlap + steady dwell)'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -266,21 +266,28 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
   const md = sizeOf(movedNode)
   const cx = pos.x + md.width / 2
   const cy = pos.y + md.height / 2
-  // 1) INSERT: the drag's centre is over a split target → drop between its panes. Pick the nearest
-  // seam (incl. the two ends) along the split axis from the children's size proportions.
+  // 1) INSERT: the drag OVERLAPS a split target → drop between its panes. We don't require the
+  // centre be strictly inside (a big card overlapping heavily would otherwise miss); instead the
+  // dragged rect must cover ≥35% of its own area over the split. The seam is picked from the centre
+  // CLAMPED into the target, so a centre that drifts just past an edge still resolves to an end seam.
+  const dl = pos.x, dr = pos.x + md.width, dt = pos.y, db = pos.y + md.height
   for (const o of others) {
     const node = o.data.node
     if (node.type !== 'split') continue
     const ts = sizeOf(node)
     const tx = o.position.x, ty = o.position.y
-    if (cx < tx || cx > tx + ts.width || cy < ty || cy > ty + ts.height) continue
+    const ox = Math.max(0, Math.min(dr, tx + ts.width) - Math.max(dl, tx))
+    const oy = Math.max(0, Math.min(db, ty + ts.height) - Math.max(dt, ty))
+    if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over the split → try edge-snap
     const horizontal = node.direction === 'horizontal'
     const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
     const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
     const bounds = [0]
     let acc = 0
     for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
-    const rel = horizontal ? (cx - tx) / ts.width : (cy - ty) / ts.height
+    const clampedX = Math.min(Math.max(cx, tx), tx + ts.width)
+    const clampedY = Math.min(Math.max(cy, ty), ty + ts.height)
+    const rel = horizontal ? (clampedX - tx) / ts.width : (clampedY - ty) / ts.height
     let index = 0, bestD = Infinity
     bounds.forEach((b, i) => { const d = Math.abs(b - rel); if (d < bestD) { bestD = d; index = i } })
     return { kind: 'insert', target: o, index, frac: bounds[index]!, axis: horizontal ? 'horizontal' : 'vertical' }
@@ -318,7 +325,10 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
   if (!moved) { resetSnap(); return }
   const intent = snapIntent(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
   if (!intent) { resetSnap(); return } // out of range → no candidate, dwell resets
-  const key = intent.kind === 'insert' ? `ins-${intent.target.id}-${intent.index}` : `edge-${intent.target.id}-${intent.edge}`
+  // Dwell key is COARSE for inserts — keyed on the target only, NOT the seam index — so small
+  // movements that flip the nearest seam don't reset the arm timer; the seam keeps following the
+  // finger live (base carries the current index/frac) and the green arms reliably after the hold.
+  const key = intent.kind === 'insert' ? `ins-${intent.target.id}` : `edge-${intent.target.id}-${intent.edge}`
   const dragLabel = moved.data.label ?? labelFor(moved.data.node)
   const base: SpikeSnapPreview = intent.kind === 'insert'
     ? { node: intent.target.data.node, insert: { axis: intent.axis, frac: intent.frac, index: intent.index }, dragLabel }
