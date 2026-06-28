@@ -37,7 +37,15 @@ If the POC is still being explored, it's **too early** — say so and stop.
 
 Before any rebuild, write the brief — the artifact a *fresh session/agent* needs to
 understand the POC without re-deriving it from `spike-a … spike-z`. This **extends
-`/postmortem`** (run that first if the epic is closing). Capture:
+`/postmortem`** (run that first if the epic is closing).
+
+**If the POC kept a living `<poc>/HANDOFF.md` (the `pocs/` convention), that IS the brief's
+backbone — start from it, don't re-derive cold.** It was curated to current truth as the POC was
+built (signed-off decisions in, superseded ones pruned) and already carries the design decisions,
+gotchas, and graduation requirements. Reconcile it against the code, then expand into the briefing
+below (add the per-unit shape call + test checklist). No `HANDOFF.md`? Reconstruct from the spike.
+
+Capture:
 
 - **What it does** — one paragraph, plain language.
 - **The features** — the proven behaviours, as a checklist (each becomes ≥1 test).

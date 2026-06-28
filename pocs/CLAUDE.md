@@ -39,6 +39,29 @@ right shape before committing to a shared API.
   work — follow the normal package rules (issue first, approval gate, `pnpm typecheck`
   across apps) at that point.
 
+## Keep a living `HANDOFF.md` — capture decisions as you go
+
+**A POC that's actively iterating toward graduation MUST keep a living `<poc>/HANDOFF.md`,
+curated to *current truth*.** Don't write the handoff from scratch at graduation — build it as
+you go, so it's already done when you call the **`graduate`** skill (which consumes it as its
+handoff brief).
+
+The rule of thumb, every working session:
+
+- **A design decision gets signed off ("ok, this works") → write it into `HANDOFF.md`.** That's
+  the trigger. Not "later", not "at the end" — at sign-off, while it's fresh.
+- **We iterate *past* a decision → edit/delete the superseded version.** `HANDOFF.md` is *not* a
+  changelog. It must always read as *"this is how it should be built,"* never *"here's everything
+  we tried." A stale learning left in is worse than no doc — it misleads the handoff.
+- **What belongs:** what it is, the architecture/data model, the signed-off design decisions
+  (current truth), gotchas/limitations, and the **graduation requirements** (what must hold in the
+  real package + app). Descriptive, not imperative — it's a brief, not agent instructions.
+- **Keep the `README.md` thin:** usage / dev / deploy + a pointer to `HANDOFF.md`. Design decisions
+  live in *one* place (`HANDOFF.md`) so they don't drift.
+
+`pocs/crouton-builder-demo/HANDOFF.md` is the worked example. (Apps that never graduate — pure
+consumer demos — don't need one; this is for POCs incubating a future package.)
+
 ## What lives here right now
 
 A mix of two things:
