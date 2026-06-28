@@ -24,11 +24,20 @@ import { normalizeCollapseStyle } from '../utils/layout-responsive'
 import { findNodePath, type NodePath } from '../utils/layout-edit'
 import { useCroutonLayoutResponsive, LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY, LAYOUT_CONTAINER_WIDTH_KEY } from '../composables/useCroutonLayoutResponsive'
 
-const props = defineProps<{
-  tree: LayoutTree
-  /** Simulate a container width (px) instead of measuring — for the device frame. */
-  width?: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    tree: LayoutTree
+    /** Simulate a container width (px) instead of measuring — for the device frame. */
+    width?: number
+    /**
+     * Forwarded to `CroutonLayoutRenderer`: `false` = VIEW mode (no draggable
+     * splitter — a served layout, not an authoring surface). Default `true`
+     * keeps the breakpoint-author / editor behaviour. (#937)
+     */
+    interactive?: boolean
+  }>(),
+  { interactive: true },
+)
 
 const emit = defineEmits<{
   /** A collapsed pane (gutter tab or in-place handle) was clicked — host may expand it. */
@@ -133,6 +142,7 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
     <template v-if="inPlace">
       <CroutonLayoutRenderer
         :node="resolved.root"
+        :interactive="interactive"
         class="min-w-0 flex-1"
         @layout-change="onInnerLayout"
       />
@@ -177,6 +187,7 @@ defineExpose({ activeBreakpoint, collapseStyle, openOverlay })
             <CroutonLayoutRenderer
               v-if="visibleRoot"
               :node="visibleRoot"
+              :interactive="interactive"
               @layout-change="onInnerLayout"
             />
             <div

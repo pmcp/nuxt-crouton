@@ -26,7 +26,21 @@ import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
 import { isSubtreeCollapsed } from '../utils/layout-responsive'
 import { LAYOUT_VARIANTS_KEY, LAYOUT_COLLAPSE_KEY, LAYOUT_CONTAINER_WIDTH_KEY } from '../composables/useCroutonLayoutResponsive'
 
-const props = defineProps<{ node: LayoutNode }>()
+const props = withDefaults(
+  defineProps<{
+    node: LayoutNode
+    /**
+     * Whether the splitter is draggable. `true` (default) is the authoring
+     * affordance — the editor / breakpoint-author / compose paths keep their
+     * resize handles. `false` is VIEW mode: a served layout renders at its
+     * breakpoint-resolved sizes with no draggable dividers (the end user doesn't
+     * redefine the layout). Stacking/min-width logic is unaffected either way —
+     * this gates only the handles. Threaded through the recursion. (#937)
+     */
+    interactive?: boolean
+  }>(),
+  { interactive: true },
+)
 
 // Per-block widget variant overrides for the authored breakpoint in view (WS5
 // #874), provided by CroutonLayoutResponsiveRenderer. Absent (plain renderer) →
@@ -190,7 +204,10 @@ watch(
     v-else-if="node.type === 'nested'"
     class="croutonpane h-full w-full"
   >
-    <CroutonLayoutRenderer :node="node.layout.root" />
+    <CroutonLayoutRenderer
+      :node="node.layout.root"
+      :interactive="interactive"
+    />
   </div>
 
   <!-- Split, STACKED — too narrow to fit side-by-side, so the columns reflow to a
@@ -209,6 +226,7 @@ watch(
     >
       <CroutonLayoutRenderer
         :node="child"
+        :interactive="interactive"
         @layout-change="(n: LayoutSplit, s: number[]) => emit('layoutChange', n, s)"
       />
     </div>
@@ -227,7 +245,7 @@ watch(
       :key="i"
     >
       <SplitterResizeHandle
-        v-if="i > 0"
+        v-if="i > 0 && interactive"
         class="bg-border hover:bg-primary transition-colors data-[orientation=horizontal]:w-px data-[orientation=vertical]:h-px"
       />
       <SplitterPanel
@@ -241,6 +259,7 @@ watch(
       >
         <CroutonLayoutRenderer
           :node="child"
+          :interactive="interactive"
           @layout-change="(n: LayoutSplit, s: number[]) => emit('layoutChange', n, s)"
         />
       </SplitterPanel>
