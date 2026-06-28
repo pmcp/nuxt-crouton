@@ -374,14 +374,6 @@ watch(() => props.data.node, () => {
       :class="guideBarClass"
       :style="guideInsertStyle"
     />
-    <!-- Armed cue: a small "release to snap" tag at the joining edge so the green state is unmistakable -->
-    <div
-      v-if="guideArmed"
-      class="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-lg"
-    >
-      release to snap
-    </div>
-
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame
          between faces stay uncovered (pointer-events-none) so the merged group is still draggable. -->
