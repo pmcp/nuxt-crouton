@@ -59,6 +59,14 @@ export const SPIKE_SET_PAGE_KEY = Symbol('spike-set-page') as InjectionKey<(node
 export const SPIKE_DUPLICATE_KEY = Symbol('spike-duplicate') as InjectionKey<(node: LayoutNode) => void>
 
 /**
+ * Drop-ghost label (#946 ease-apart) — when an internal insert ARMS, the target splices a ghost
+ * pane into its layout so the real panes ease apart to open the slot (the renderer's #943 FLIP
+ * animates them). The ghost pane block (`__dropghost__`) renders `SpikeGhostPane`, which injects
+ * this to show the incoming item's name. Provided by SpikeBlockNode (the armed target).
+ */
+export const SPIKE_GHOST_LABEL_KEY = Symbol('spike-ghost-label') as InjectionKey<Ref<string>>
+
+/**
  * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
  * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
  * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a

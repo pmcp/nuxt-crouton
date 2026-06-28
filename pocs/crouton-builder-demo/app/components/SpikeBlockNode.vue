@@ -86,20 +86,22 @@ const guideInsertStyle = computed(() => {
     ? { left: pct, top: '6px', bottom: '6px', width: t, transform: 'translateX(-50%)' }
     : { top: pct, left: '6px', right: '6px', height: t, transform: 'translateY(-50%)' }
 })
-// Drop-ghost (#946): once an internal insert ARMS (green), show a translucent slab where the
-// dragged item will wedge in — sized to the slot a new even pane would take (1/(n+1) of the axis),
-// straddling the seam, carrying the incoming item's label. So it reads "this is where it lands"
-// before you let go. Only at the armed stage (the soft stage keeps just the thin seam line).
+// Ease-apart preview (#946): once an internal insert ARMS (green), splice a ghost pane into the
+// layout at the target index and render THAT — the renderer lays out the extra pane and the #943
+// FLIP eases the real panes apart to physically open its slot, the ghost landing in the gap. The
+// ghost block (`__dropghost__` → SpikeGhostPane) shows the incoming item's label, which we provide
+// (the renderer doesn't thread arbitrary config to a block). Reverts on un-arm → panes close back.
 const guideArmedInsert = computed(() => guideArmed.value && !!guideInsert.value)
-const dragGhostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Block')
-const insertGhostStyle = computed(() => {
+const ghostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Drops here')
+provide(SPIKE_GHOST_LABEL_KEY, ghostLabel)
+const renderNode = computed<LayoutNode>(() => {
   const ins = guideInsert.value
-  if (!ins || props.data.node.type !== 'split') return {}
-  const slot = `${100 / (props.data.node.children.length + 1)}%`
-  const pos = `${Math.round(ins.frac * 100)}%`
-  return ins.axis === 'horizontal'
-    ? { left: pos, top: '6px', bottom: '6px', width: slot, transform: 'translateX(-50%)' }
-    : { top: pos, left: '6px', right: '6px', height: slot, transform: 'translateY(-50%)' }
+  const n = props.data.node
+  if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
+  const ghost: LayoutNode = { type: 'leaf', blockId: '__dropghost__', defaultSize: Math.round(100 / (n.children.length + 1)) }
+  const children = [...n.children]
+  children.splice(Math.min(ins.index, children.length), 0, ghost)
+  return { ...n, children }
 })
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
@@ -373,7 +375,7 @@ watch(() => props.data.node, () => {
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
     <!-- topology mode renders it plain at its footprint size. -->
     <CroutonLayoutResponsiveRenderer v-if="surveying" :tree="tree" :width="viewport!.width" />
-    <CroutonLayoutRenderer v-else :node="data.node" />
+    <CroutonLayoutRenderer v-else :node="renderNode" />
 
     <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop
          between panes). SOFT = blue, wide, pulsing ("snap point here"); ARMED = green, crisp, steady. -->
@@ -389,15 +391,6 @@ watch(() => props.data.node, () => {
       :class="guideBarClass"
       :style="guideInsertStyle"
     />
-    <!-- Drop-ghost (#946): armed insert → a translucent slab in the slot the dragged item will take,
-         labelled with the incoming item, so you see where it lands before releasing. -->
-    <div
-      v-if="guideArmedInsert"
-      class="pointer-events-none absolute z-10 flex items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-emerald-400 bg-emerald-400/15 px-1 text-center text-[10px] font-semibold text-emerald-100 shadow-[0_0_16px_3px_rgba(16,185,129,0.45)]"
-      :style="insertGhostStyle"
-    >
-      <span class="truncate">{{ dragGhostLabel }}</span>
-    </div>
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame
          between faces stay uncovered (pointer-events-none) so the merged group is still draggable. -->

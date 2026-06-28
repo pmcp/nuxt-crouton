@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-16 · ghost slab at the armed insert point (this is where it lands)'
+const BUILD = 'page-compose-17 · panes ease apart to open a real slot for the dragged item'
 
 const blockNode = markRaw(SpikeBlockNode)
 
