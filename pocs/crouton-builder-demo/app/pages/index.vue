@@ -15,7 +15,7 @@ useHead({ title: 'Crouton Builder — live POC' })
 
 // Bump on every deploy so you can confirm (esp. on mobile, where the browser caches
 // hard) that you're looking at the latest build, not a stale one.
-const BUILD = 'b19 · 26 Jun · collapse-motion picker in Breakpoints + spring-drawer demo (drag the ruler past 640)'
+const BUILD = 'b20 · App level is now the Vue Flow canvas (#939) — zoom into a page, arrange its components'
 
 // Backend-free demo blocks (registered in app.config) so the canvas/author can be
 // driven without auth. A `nested` app on the Reports page demonstrates
@@ -101,7 +101,7 @@ function onLayoutChange(tree: LayoutTree) {
 
     <div class="min-h-0 flex-1">
       <ClientOnly>
-        <CroutonLayoutZoomShell
+        <BuilderZoomShell
           site-label="builder.demo"
           :pages="pages"
           @layout-change="onLayoutChange"
@@ -117,7 +117,7 @@ function onLayoutChange(tree: LayoutTree) {
               @zoom-into-page="(row: Record<string, unknown>) => { const p = pageById(row.id); if (p) zoomIntoPage(p) }"
             />
           </template>
-        </CroutonLayoutZoomShell>
+        </BuilderZoomShell>
       </ClientOnly>
     </div>
   </div>
