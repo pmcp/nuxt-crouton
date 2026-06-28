@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'focus-shell-12 · #852 · recipe picker = inline chips (tap to set, no dropdown)'
+const BUILD = 'focus-shell-13 · #852 · tap a tucked chip → pane slides in (peek drawer)'
 
 const blockNode = markRaw(SpikeBlockNode)
 

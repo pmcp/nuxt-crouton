@@ -96,7 +96,6 @@ function onToggleCollapse(blockId: string) {
   const cur = resolved.value.collapsed
   authorHere({ collapsed: cur.includes(blockId) ? cur.filter(id => id !== blockId) : [...cur, blockId] })
 }
-function onExpand(blockId: string) { if (isCollapsed(blockId)) onToggleCollapse(blockId) }
 
 // Scrubbing the width makes the layout reflow (panes hit their min-width as it narrows), and the
 // renderer fires `layoutChange` for that reflow too — which would author a key-point at EVERY width
@@ -259,7 +258,6 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
               :tree="tree"
               :width="simWidth"
               class="h-full w-full"
-              @expand="onExpand"
               @layout-change="onResize"
             />
             <!-- selection focus: dim the OTHER panels so the tapped one stands out -->
