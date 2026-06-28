@@ -32,7 +32,7 @@ import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCrout
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-const BUILD = 'page-compose-4 · #942 · page opens centered (fitBounds) · hold to wiggle + pull apart'
+const BUILD = 'page-compose-5 · #941/#942 · favorited consumes on merge · hard wiggle-gate on detach'
 
 const blockNode = markRaw(SpikeBlockNode)
 
@@ -297,7 +297,10 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   // Group origin: a left/top snap places the group to the left/above the target's old spot.
   const gx = edge === 'left' ? tRect.x - md.width : tRect.x
   const gy = edge === 'top' ? tRect.y - md.height : tRect.y
-  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined, ...(target.data.isPage ? { isPage: true } : {}) } }
+  // The Page (favorited) layout ALWAYS consumes (#942): if EITHER the dragged node or the target
+  // is the page, the merged group stays the page — drag the page onto a draft, or a draft onto the
+  // page, and the badge sticks to the combined layout.
+  const groupNode: FlowNode = { ...target, position: { x: Math.round(gx), y: Math.round(gy) }, data: { node: combined, ...((target.data.isPage || moved.data.isPage) ? { isPage: true } : {}) } }
   // Replace the target with the merged group; drop the moved node — they're now one unit.
   nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
 }
