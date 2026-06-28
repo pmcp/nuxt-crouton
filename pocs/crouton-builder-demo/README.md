@@ -55,6 +55,31 @@ double-click each → both open framed identically and fully on-screen. Drag one
 onto another to merge → pull a pane out (it follows your finger and detaches where you
 release) → add a block (the camera frames an overview, not a hard zoom).
 
+### 🎓 Graduation requirement — make page ⇄ flow REAL routing (not one view)
+
+**When this spike graduates into a real package + app, the Site⇄Page navigation MUST become
+route-based, not the current single-view toggle.** Today `/spike-app` is one route and
+`selectedPageId` just `v-if`/`v-else`-swaps the flow vs. the board with a CSS cross-fade — a
+*visual* transition pretending to be navigation. That's fine for proving the interactions, but the
+real builder is fundamentally **pages that link to each other**, which is what a router models.
+
+The graduated version should:
+
+- **Give each view a URL** — e.g. `/builder` = the Site flow, `/builder/[pageId]` = that page's
+  board. Deep-linkable + shareable (link straight to a page's board).
+- **Use real history** — browser back/forward (back from a page → the flow), so navigation is
+  native, not bespoke state.
+- **Support inter-page linking** — "this button goes to that page" becomes a plain route link, the
+  groundwork for wiring pages together in the builder.
+- **Transition via the View Transitions API (shared-element morph), not a cross-fade** — put a
+  matching `view-transition-name` on the flow's page card and on the page board so the card
+  **morphs/grows into the full board** on enter and shrinks back on exit. That's a far better "into
+  the detail" feel than the fade, and the fade we ship now is explicitly the stopgap.
+
+Cost when we do it: a moderate refactor — lift the shared board state and move the board into a
+`[pageId].vue` route — but nothing built in the spike is wasted (the board, snapping, ghost/ease-
+apart, pinch, add-block all carry over). Flagged here so the `graduate` handoff brief carries it.
+
 ## Local dev
 
 ```bash
