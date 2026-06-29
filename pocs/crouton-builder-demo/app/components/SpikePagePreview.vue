@@ -37,9 +37,10 @@ const hasContent = computed(() => props.top.length || props.main.length || props
 
       <!-- Phone frame: pinned top region · scrolling main · pinned bottom region -->
       <div class="relative flex h-[78vh] w-full max-w-sm flex-col overflow-hidden rounded-[2rem] border-4 border-default bg-default shadow-2xl">
-        <!-- Pinned TOP region (sticky pill/bar) -->
+        <!-- Pinned TOP region (sticky pill/bar) — hugs the block's intrinsic height (#954): a Top bar
+             block is ~56px, so the bar is short, not a tall panel. -->
         <div v-if="top.length" class="z-10 shrink-0 border-b border-default bg-default/95 backdrop-blur">
-          <div v-for="n in top" :key="n.id" class="spike-preview-region">
+          <div v-for="n in top" :key="n.id" class="spike-preview-region spike-region-pinned">
             <CroutonLayoutRenderer :node="n.data.node" />
           </div>
         </div>
@@ -56,9 +57,9 @@ const hasContent = computed(() => props.top.length || props.main.length || props
           </div>
         </div>
 
-        <!-- Pinned BOTTOM region -->
+        <!-- Pinned BOTTOM region — hugs the block's intrinsic height (#954). -->
         <div v-if="bottom.length" class="z-10 shrink-0 border-t border-default bg-default/95 backdrop-blur">
-          <div v-for="n in bottom" :key="n.id" class="spike-preview-region">
+          <div v-for="n in bottom" :key="n.id" class="spike-preview-region spike-region-pinned">
             <CroutonLayoutRenderer :node="n.data.node" />
           </div>
         </div>
@@ -79,5 +80,10 @@ const hasContent = computed(() => props.top.length || props.main.length || props
 }
 .spike-preview-region :deep(.croutonpane) {
   min-height: 0;
+}
+/* Pinned bars HUG their block's intrinsic height (#954) — the renderer's panes are `h-full`, which
+   would otherwise stretch the bar to fill; auto lets a ~56px Top bar / 64px Nav stay short. */
+.spike-region-pinned :deep(.croutonpane) {
+  height: auto;
 }
 </style>

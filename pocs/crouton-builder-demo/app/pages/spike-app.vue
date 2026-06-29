@@ -261,11 +261,10 @@ function onNodeDblClick(id: string) {
   const el = nodeEl?.querySelector('.spike-block-node') ?? nodeEl
   const r = el?.getBoundingClientRect()
   originRect.value = r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null
-  // Open the edit view AT the width you're surveying at on the flow (#953) — if the slider is scrubbed
-  // to a device width, focusing a layout should land on that same size, not the editor default. Capture
-  // it BEFORE clearing the survey. null when at edit (max) → the edit view picks its own default.
-  editInitialWidth.value = viewport.value?.width ?? null
-  viewport.value = null // editing one node; leave the board-wide survey
+  // Open the edit view AT the node's RESIZED width (#954) — if you dragged the card's resize handle to
+  // a width, focusing it lands on that same width, not the editor default. (Replaces the old global
+  // survey-slider source.) null when the node hasn't been resized → the edit view picks its default.
+  editInitialWidth.value = nodes.value.find(n => n.id === id)?.data.width ?? null
   zoomNodeId.value = id
 }
 const editInitialWidth = ref<number | null>(null)
@@ -298,23 +297,9 @@ const zoomTree = computed<LayoutTree>({
 const paletteOpen = ref(false)
 const resultOpen = ref(false)
 
-// Always-on responsive slider (#951): the bottom slider is ALWAYS in view (no "Responsive" mode
-// button). It's a GLOBAL width scrubber — every layout responds to it at once (survey). At its MAX
-// the board is EDIT mode (`viewport = null`: topology, drag/snap/detach); scrub left and it previews
-// at that width (read-only). So "max = edit, scrub = preview" — one control, no mode toggle. The
-// per-layout breakpoint authoring (keypoints) lives in the focus edit view you open by tapping a layout.
-const SURVEY_MIN = 320
-const SURVEY_MAX = 1440
-/** Drive the global survey width. At/over MAX → edit (no survey). Else preview at that width,
- *  snapping the label to a device preset when it matches one. */
-function setSurveyWidth(w: number | undefined) {
-  const width = Math.round(w ?? SURVEY_MAX)
-  if (width >= SURVEY_MAX) { viewport.value = null; return } // max = back to edit (topology)
-  const preset = SPIKE_VIEWPORTS.find(v => v.width === width)
-  viewport.value = preset
-    ? { ...preset }
-    : { label: 'Custom', icon: 'i-lucide-ruler', width, height: viewport.value?.height ?? 800 }
-}
+// The global responsive slider was removed (#954): responsiveness is now PER-ELEMENT — drag a card's
+// resize handle to preview its layout at that width. `viewport` (the old board-wide survey state) is
+// kept only as a dormant null so the SpikeBlockNode survey branch still compiles; nothing sets it.
 // Top-level Fit = zoom the camera to show every node. Doesn't touch the survey width (the slider owns
 // that now) — just frames the board. We frame by the nodes' KNOWN geometry (position + sizeOf), NOT Vue
 // Flow's `fitView` — VF measures the `.vue-flow__node` wrapper, which is smaller than our overflowing
@@ -1083,6 +1068,7 @@ function exitToPages() {
         >
           <div class="pointer-events-auto flex items-center gap-1 rounded-full border border-default/60 bg-elevated/85 p-1.5 shadow-xl backdrop-blur-xl">
             <UButton icon="i-lucide-undo-2" size="sm" color="neutral" variant="ghost" :disabled="!canUndo" title="Undo (⌘Z)" aria-label="Undo" @click="undo" />
+            <UButton icon="i-lucide-scan" size="sm" color="neutral" variant="ghost" title="Zoom to fit" aria-label="Fit" @click="fitBoard" />
             <UButton icon="i-lucide-plus" size="sm" color="neutral" variant="ghost" title="Add blocks" aria-label="Add blocks" @click="paletteOpen = true" />
             <UButton :icon="hasAI ? 'i-lucide-sparkles' : 'i-lucide-wand-2'" size="sm" color="primary" variant="solid" :disabled="!blockCount" title="Magic arrange" aria-label="Magic" @click="magic" />
             <!-- Preview the assembled page (#953) — pinned regions as pills, the rest as scrolling main. -->
@@ -1091,38 +1077,12 @@ function exitToPages() {
           </div>
         </div>
 
-        <!-- Always-on responsive slider (#951) — Fit (left of the slider) + the GLOBAL width slider +
-             a width/Edit readout. Scrub to preview every layout at a width; at MAX it's edit mode. -->
-        <div
-          v-if="mode === 'free' && !editing"
-          class="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        >
-          <div class="pointer-events-auto flex w-[min(94vw,560px)] items-center gap-2 rounded-2xl border border-default/60 bg-elevated/85 py-2 pl-1.5 pr-3 shadow-xl backdrop-blur-xl">
-            <UButton icon="i-lucide-scan" size="sm" color="neutral" variant="ghost" title="Zoom to fit" aria-label="Fit" @click="fitBoard" />
-            <USlider
-              class="flex-1"
-              :min="SURVEY_MIN"
-              :max="SURVEY_MAX"
-              :step="2"
-              :model-value="viewport?.width ?? SURVEY_MAX"
-              @update:model-value="setSurveyWidth"
-            />
-            <span
-              class="w-12 shrink-0 text-right font-mono text-[11px]"
-              :class="viewport ? 'text-primary' : 'text-muted'"
-            >{{ viewport ? Math.round(viewport.width) + 'px' : 'Edit' }}</span>
-          </div>
-        </div>
+        <!-- (#954) The global responsive slider is gone — responsiveness is now per-element: drag a
+             card's resize handle to preview its layout at that width. Fit moved into the top pill. -->
 
         <!-- Snap hints (when there's something to arrange) -->
         <p
-          v-if="mode === 'free' && viewport && nodes.length"
-          class="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full border border-primary/40 bg-elevated/90 px-3 py-1 text-[11px] text-primary backdrop-blur"
-        >
-          Surveying at {{ viewport.label }} · {{ viewport.width }}px — read-only · hit ⛶ to fit · pick <strong>Fit</strong> to edit
-        </p>
-        <p
-          v-else-if="mode === 'free' && nodes.length >= 2"
+          v-if="mode === 'free' && nodes.length >= 2"
           class="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full border border-default bg-elevated/90 px-3 py-1 text-[11px] text-muted backdrop-blur"
         >
           Drag a block next to another → they snap together · then ✨ Magic or compile · double-click to edit

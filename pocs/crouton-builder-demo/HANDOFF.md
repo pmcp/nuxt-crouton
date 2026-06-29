@@ -141,8 +141,26 @@ badge shows "Pinned top/bottom". **▶ Preview** assembles the running page: pin
 top bar, pinned-bottom in a sticky bottom bar, everything else (or the ★ page node) in a scrolling main
 area between — the review-flow + pill-top + pill-bottom shape, with NO free-floating positioning. Region
 is a bounded enum (`top`|`bottom`|undefined=main) on the FlowNode data — agent-pickable, serialisable.
-Composed POC-side (`SpikePagePreview` over `CroutonLayoutRenderer`). Next in this family: per-block
-sizing enums (full-width/height, fit) so a pinned pill is short instead of as tall as its content.
+Composed POC-side (`SpikePagePreview` over `CroutonLayoutRenderer`).
+
+### Per-element resize + intrinsic block sizing (#954 — replaces the global slider)
+
+Two decisions that resolve "how do blocks size / how do I preview responsiveness", deliberately the
+*bounded* way (no per-instance flex panel — that would just be rebuilding CSS):
+
+- **Responsiveness is per-element, not global.** The old board-wide responsive slider is **gone**. Each
+  card has a **corner resize handle** (shown when selected) — drag it to set the node's width/height,
+  and the card renders **responsively at that width** (its own preview). Opening edit lands at the
+  node's resized width. (`data.width/height` on the FlowNode; `SPIKE_SET_SIZE_KEY`.)
+- **The component decides its own size ("intrinsic sizing").** A block declares how it lays out *once*,
+  in the component — so it behaves the same everywhere it's dropped, and there's **no per-instance
+  align/size UI to build**. A **Top bar / Bottom nav are fixed-height bars**; List/Form/Chart fill. So a
+  pinned Top bar comes out as a **short pill** automatically (the Preview's pinned regions hug the
+  block's intrinsic height via `height:auto` on the pane). The agent picks *blocks*, not flex values.
+- **Graduation note:** truly making a *pane hug its content inside a split* (vs in the Preview regions)
+  is layout-engine work in the `crouton-layout` package renderer; here it's prototyped POC-side. A
+  block-type **sizing descriptor** in the registry (`{ width:'fill'|'hug', height:… }`) is the clean
+  formalisation so the renderer (and an agent) read one declared source.
 
 ### Board gestures (direct manipulation)
 

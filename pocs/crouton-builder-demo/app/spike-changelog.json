@@ -1,8 +1,13 @@
 [
   {
+    "v": 43,
+    "note": "Removed the global responsive slider — responsiveness is now PER-ELEMENT (drag a card's resize handle to preview its layout at that width). Opening edit now lands at the node's RESIZED width. And blocks decide their own size intrinsically (the Top bar / Bottom nav are short bars), so a pinned Top bar comes out as a proper short pill with content scrolling under it — no per-instance flex controls.",
+    "commit": ""
+  },
+  {
     "v": 42,
     "note": "Bigger resize handle — the per-node corner resize grip is now a clearly grabbable button with a diagonal-resize icon (was a tiny corner mark, hard to hit on mobile).",
-    "commit": ""
+    "commit": "b8f583b6"
   },
   {
     "v": 41,
