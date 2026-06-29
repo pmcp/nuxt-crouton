@@ -63,6 +63,36 @@ So a "version" in the builder becomes a concrete instruction on the ticket: the 
 human edits it visually, the edit goes back to the ticket, the agent acts on it. The builder is the visual
 front-end to an issue-tracked, agent-executed layout spec. (See Graduation requirements.)
 
+## Expressiveness boundary — the "artboard" question (design guardrail)
+
+There's a real tension: the builder must produce **good-looking** layouts (you should be able to make
+the review-flow-with-a-pinned-pill-top-and-bottom kind of thing), but it must NOT drift into a freeform
+"make anything" design tool — because the **whole point is that an agent can also produce and re-read
+the layout**, in the opinionated house style. A free-floating canvas (arbitrary x/y, per-pixel sizing)
+breaks both: an agent can't reliably target it, and it breaks responsiveness.
+
+**The rule that resolves it: every expressive control must be a BOUNDED, ENUMERATED, RESPONSIVE choice
+that serialises into the `LayoutTree` — i.e. something an agent could equally have picked from a small
+set.** If a control can only be expressed as a free value (drag to x=347px, float anywhere), it's "too
+far". If it's an enum/role an agent could choose, it's in.
+
+Concretely — what's IN vs OUT:
+
+- ✅ **Regions/roles, not free floats.** The "artboard" instinct is right but should be a few *named
+  regions* (e.g. `header`/top-pill · `main` · `footer`/bottom-pill · `aside`), not absolute-positioned
+  elements. A pinned top/bottom pill is a **pinned region**, not a free-floating box. This gives the
+  review-flow + pills look while staying tree-structured and agent-targetable.
+- ✅ **Per-block sizing as ENUMS.** `full-width` / `full-height` / `fixed` / `auto`, `pin: top|bottom|
+  left|right`, grow/shrink — bounded settings that stay responsive (mirrors the page model's existing
+  `layout: default|full-height|full-screen` enum, pushed down to blocks).
+- ✅ **Layout primitives** like the **Spacer** (#952) — a real, snappable block that holds space.
+- ❌ **No free-floating absolute positioning** (arbitrary x/y), no per-pixel manual sizing outside the
+  splitter/enum model, no "anything anywhere".
+
+So the builder stays a *structured* editor (splits, regions, enum settings, primitives) that just
+happens to feel direct-manipulation — the LayoutTree is always the truth, and an agent is a first-class
+co-author of it. Add expressiveness by adding **bounded vocabulary**, never a blank canvas.
+
 ## What it is
 
 Build an app by composing a collection's blocks into a `LayoutTree`, visually, on a Vue Flow canvas.
