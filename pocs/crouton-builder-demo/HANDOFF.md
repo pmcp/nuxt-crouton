@@ -187,6 +187,12 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   `minWidth`/`fill`-`hug`; a composite *derives* them, recursively. Prototyped POC-side: the per-element
   **resize can't drag a card below its hard floor** (so a layout literally can't violate its
   components' rules), and a selected card shows a **floor readout** (`stacks <Npx · floor Mpx`).
+  - **Considered & deferred — a MANUAL min/max override on a composite.** Sometimes you may want to
+    pin a specific row/layout to its own min or max (not just the derived floor). Deliberately **not
+    built**: composite rules are *derived* for now, and a per-instance min/max settings panel risks
+    reintroducing the per-instance flex control we avoid. **Revisit after graduation** — build it test-
+    first in the real setting only if the derived floors prove insufficient there. (Leaf intrinsic
+    rules stay component-level/declared; per-breakpoint behaviour stays in the responsive editor.)
 - **Graduation note:** the descriptor currently rides the **inferred** app.config type (the POC adds
   `sizing` to entries without touching the package type). Two pieces remain package work in
   `crouton-layout`: (1) move `sizing` onto the typed `CroutonLayoutBlockDefinition` so it's a first-class
