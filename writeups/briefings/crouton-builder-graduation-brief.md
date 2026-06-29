@@ -88,6 +88,37 @@ Drive the running **v52** POC (`crouton-builder-demo.pmcp.dev` / `pnpm dev`) aga
 page badge, floor readout, region pills). Those hook names become the shared vocabulary the rebuild
 (WS) reproduces, so the same agent runs identically against the POC and the graduated app.
 
+### Reconcile result — v52, WS1 (#984) — done
+
+Drove the running v52 POC (`pnpm dev`, headless chromium) against this brief + `HANDOFF.md`:
+
+- **Confirmed** — the whole composition/board model is implemented and renders live: Site flow (page
+  cards with condensed status/visibility/layout/nav meta) → page board; the composed split layout
+  (Artists list *rows* variant · stacked Bookings/Revenue stats · New-artist form); block palette,
+  `✨ Magic arrange`, page promotion (★), regions toolbar, per-element resize + floor readout. The
+  contract logic (`deriveSizing`, `blockSizing`, `applyPaneDrop`/`insertAtPath`, leaf-config
+  read/write) is verified in `utils/spike-layout.ts`. Gesture *states* (armed snap, armed-drop ghost,
+  detach pull) are code-confirmed but not driven headlessly — that's the rebuild's e2e job, against
+  the hooks below.
+- **Contradicted** — none. Both docs read as current truth.
+- **Undocumented** (now folded into `HANDOFF.md`): (1) **per-node responsive preview** — a node with
+  `data.width` set renders read-only via `CroutonLayoutResponsiveRenderer(interactive:false)`, so the
+  card *is* its own width preview; (2) **ephemeral per-page board cache** (`pageBoards` Map) — board
+  state is in-memory, restored on re-enter, **nothing persists** (real persistence is the round-trip,
+  #974); (3) **`✨ Magic (AI)`** — a free-text *"Describe the app"* intent → LLM arranges the placed
+  blocks (`aiIntent` + `magicAI`, gated on `hasApp('ai')` #909); the in-app agent-first-cut surface,
+  distinct from the deterministic `✨ Magic arrange`.
+
+**Stable element hooks (the shared vocabulary — reproduce these names verbatim in the rebuilt app, #988):**
+
+| State | Selector | Where / when |
+|---|---|---|
+| armed snap | `[data-handoff="snap-guide"][data-armed="true"]` | `SpikeBlockNode` edge guide; green once the dwell-arm fires (soft blue = `data-armed="false"`) |
+| ghost slot | `[data-handoff="ghost-pane"]` | `SpikeGhostPane`; the `__dropghost__` ease-apart placeholder |
+| ★ page badge | `[data-handoff="page-badge"]` | `SpikeBlockNode`; the one node that is "the page" |
+| floor readout | `[data-handoff="floor-readout"]` (+ `data-hard-floor` / `data-soft-floor`) | `SpikeBlockNode`; selected card's derived floor |
+| region pills | `[data-handoff="region-pill"]` (+ `data-region`) | `SpikeBlockNode`; pinned top/bottom |
+
 ## Promotion path
 
 `pocs/crouton-builder-demo` → package contributions land in `@fyit/crouton-layout` (test-first, gated)
