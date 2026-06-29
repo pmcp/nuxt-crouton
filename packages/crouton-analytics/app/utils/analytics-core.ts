@@ -9,6 +9,8 @@
  * thesis).
  */
 
+import { createD1Provider } from './d1-sink'
+
 /** The default lean-loop event set every POC inherits — tiny + stable (#949). */
 export type CroutonAnalyticsEvent =
   | 'pageview'
@@ -26,7 +28,7 @@ export interface AnalyticsProvider {
 }
 
 export interface AnalyticsConfig {
-  provider?: 'noop' | 'console' | 'posthog'
+  provider?: 'noop' | 'console' | 'posthog' | 'd1'
   /** Version-lock / experiment id (#951) — when set, stamped on every event. */
   version?: string
   posthog?: { key?: string, host?: string }
@@ -43,6 +45,8 @@ export interface ResolveDeps {
   sink?: (rec: { event: string, props: AnalyticsProps }) => void
   /** Lazy PostHog client loader (e.g. @nuxt/scripts useScriptPostHog). Returns undefined if unavailable. */
   posthogLoader?: () => PostHogClient | undefined
+  /** Beacon sender for the D1 self-host sink (#968) — POSTs each event to the ingest endpoint. */
+  d1Sender?: (payload: { event: string, props: AnalyticsProps }) => void
 }
 
 export function createNoopProvider(): AnalyticsProvider {
@@ -80,6 +84,8 @@ export function resolveProvider(config: AnalyticsConfig | undefined, deps: Resol
       const client = deps.posthogLoader?.()
       return client ? createPostHogProvider(client) : createNoopProvider()
     }
+    case 'd1':
+      return deps.d1Sender ? createD1Provider(deps.d1Sender) : createNoopProvider()
     case 'noop':
     default:
       return createNoopProvider()

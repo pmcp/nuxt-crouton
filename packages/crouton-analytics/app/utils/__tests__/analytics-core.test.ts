@@ -42,6 +42,18 @@ describe('resolveProvider — pick the backend, degrade safely', () => {
     // @ts-expect-error — exercising the runtime safety net for a bad config value
     expect(resolveProvider({ provider: 'mixpanel' }).id).toBe('noop')
   })
+
+  it('returns the d1 provider when a sender is injected', () => {
+    const d1Sender = vi.fn()
+    const p = resolveProvider({ provider: 'd1' }, { d1Sender })
+    expect(p.id).toBe('d1')
+    p.track('pageview', { path: '/' })
+    expect(d1Sender).toHaveBeenCalledWith({ event: 'pageview', props: { path: '/' } })
+  })
+
+  it('falls back to no-op for d1 with no sender injected', () => {
+    expect(resolveProvider({ provider: 'd1' }).id).toBe('noop')
+  })
 })
 
 describe('withVersion — optional version/experiment enrichment (#951)', () => {
