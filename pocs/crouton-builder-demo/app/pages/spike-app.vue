@@ -86,7 +86,7 @@ const drawer = [
 // `bp` = authored responsive breakpoints for this node's layout (#907 layer 2), set in the
 // breakpoint slider you zoom into. Structural edits (snap/detach) create nodes WITHOUT bp, so
 // authored breakpoints reset when the structure they targeted changes — which is the right thing.
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion } }
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion, width?: number, height?: number } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -842,9 +842,24 @@ function setRegion(node: LayoutNode, region: SpikeRegion | null) {
   pushUndo()
   nodes.value = nodes.value.map(n => n.data.node === node ? { ...n, data: { ...n.data, region: region ?? undefined } } : n)
 }
+/** Per-node resize (#954): set this node's display width/height (null width clears to footprint). The
+ *  card then previews responsively at that width. No pushUndo per move (it fires continuously). */
+function setNodeSize(node: LayoutNode, sizeArg: SpikeNodeSize) {
+  nodes.value = nodes.value.map(n => n.data.node === node
+    ? { ...n, data: { ...n.data, width: sizeArg.width ?? undefined, height: (sizeArg.width === null ? undefined : (sizeArg.height ?? n.data.height)) } }
+    : n)
+}
 provide(SPIKE_SET_PAGE_KEY, setAsPage)
 provide(SPIKE_DUPLICATE_KEY, duplicateNode)
+/** Delete a node (block or whole layout) from the canvas (#955). Undoable. */
+function deleteNode(node: LayoutNode) {
+  if (!nodes.value.some(n => n.data.node === node)) return
+  pushUndo()
+  nodes.value = nodes.value.filter(n => n.data.node !== node)
+}
 provide(SPIKE_SET_REGION_KEY, setRegion)
+provide(SPIKE_SET_SIZE_KEY, setNodeSize)
+provide(SPIKE_DELETE_KEY, deleteNode)
 // Assemble the page for Preview (#953): pinned nodes become top/bottom bars, the rest is the main flow.
 const previewOpen = ref(false)
 const topRegionNodes = computed(() => nodes.value.filter(n => n.data.region === 'top'))

@@ -121,6 +121,21 @@ export type SpikeRegion = 'top' | 'bottom'
 export const SPIKE_SET_REGION_KEY = Symbol('spike-set-region') as InjectionKey<(node: LayoutNode, region: SpikeRegion | null) => void>
 
 /**
+ * Per-node resize (#954 — replacing the global survey slider). A node carries its own display
+ * `width`/`height`; dragging its corner handle sets them, and the node renders its layout RESPONSIVELY
+ * at that width (panes reflow / breakpoints resolve) — so each card is its OWN width preview. The handle
+ * IS the per-element slider. Width is the meaningful axis (drives responsiveness); height just frames.
+ * `null` width clears back to the intrinsic footprint size. Provided by the page, injected by
+ * SpikeBlockNode (node by object identity, like the other node callbacks).
+ */
+export interface SpikeNodeSize { width: number | null, height?: number | null }
+export const SPIKE_SET_SIZE_KEY = Symbol('spike-set-size') as InjectionKey<(node: LayoutNode, size: SpikeNodeSize) => void>
+
+/** Delete a node (a block or a whole composed layout) from the canvas (#955). Provided by the page,
+ *  injected by SpikeBlockNode (node by object identity). Undoable. */
+export const SPIKE_DELETE_KEY = Symbol('spike-delete') as InjectionKey<(node: LayoutNode) => void>
+
+/**
  * Drop-ghost label (#946 ease-apart) — when an internal insert ARMS, the target splices a ghost
  * pane into its layout so the real panes ease apart to open the slot (the renderer's #943 FLIP
  * animates them). The ghost pane block (`__dropghost__`) renders `SpikeGhostPane`, which injects

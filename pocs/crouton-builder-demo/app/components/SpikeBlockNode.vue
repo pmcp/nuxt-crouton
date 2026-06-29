@@ -32,7 +32,7 @@ import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/
 import type { SpikeRegion } from '~/utils/spike-layout'
 
 const props = defineProps<{
-  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion }
+  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion, width?: number, height?: number }
   selected?: boolean
   // Vue Flow sets this true while the node is being dragged across the board, false on drop —
   // drives the light-green drag glow. It fades out via `transition-shadow` after release.
@@ -46,6 +46,12 @@ const surveying = computed(() => !!viewport?.value)
 
 const size = computed(() => {
   if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
+  // Per-node resize (#954): once you've dragged the corner, the card is sized to its own width/height
+  // and previews responsively at that width. Height falls back to the footprint height.
+  if (typeof props.data.width === 'number') {
+    const f = footprint(renderNode.value)
+    return { width: `${props.data.width}px`, height: `${props.data.height ?? f.rows * SPIKE_BASE_H}px` }
+  }
   // `renderNode` (not data.node) so the card GROWS to fit a ghost skeleton spliced in on an armed
   // insert — e.g. dropping a 2-row stack into a row makes the row 2-tall, opening a matching slot.
   const f = footprint(renderNode.value)
@@ -148,6 +154,38 @@ const setRegion = inject(SPIKE_SET_REGION_KEY, null)
 function toggleRegion(region: SpikeRegion) {
   setRegion?.(props.data.node, props.data.region === region ? null : region)
 }
+// Per-node resize (#954): the corner handle sets this node's display width/height. When a width is set,
+// the card renders RESPONSIVELY at that width (its own width preview) — the per-element "slider".
+const setSize = inject(SPIKE_SET_SIZE_KEY, null)
+const RESIZE_MIN_W = 240
+const RESIZE_MIN_H = 140
+const resizing = ref(false)
+function onResizeDown(e: PointerEvent) {
+  if (e.button !== 0 || !setSize) return
+  resizing.value = true
+  const zoom = currentZoom()
+  const card = (e.currentTarget as HTMLElement).closest('.spike-block-node') as HTMLElement | null
+  const r = card?.getBoundingClientRect()
+  const startW = props.data.width ?? (r ? r.width / zoom : SPIKE_BASE_W)
+  const startH = props.data.height ?? (r ? r.height / zoom : SPIKE_BASE_H)
+  const ox = e.clientX, oy = e.clientY
+  const move = (ev: PointerEvent) => {
+    const w = Math.max(RESIZE_MIN_W, Math.round(startW + (ev.clientX - ox) / zoom))
+    const h = Math.max(RESIZE_MIN_H, Math.round(startH + (ev.clientY - oy) / zoom))
+    setSize!(props.data.node, { width: w, height: h })
+  }
+  const up = () => {
+    resizing.value = false
+    window.removeEventListener('pointermove', move)
+  }
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', up, { once: true })
+}
+function resetSize() { setSize?.(props.data.node, { width: null }) }
+// Delete this node (block or whole layout) from the canvas (#955).
+const deleteNode = inject(SPIKE_DELETE_KEY, null)
+// Render responsively at the node's own width when one is set (and not in the global survey).
+const previewing = computed(() => !surveying.value && typeof props.data.width === 'number')
 const isGroup = computed(() => props.data.node.type === 'split')
 
 // Long-press → jiggle (#941): detach is gated behind a deliberate HOLD, so a merged group's panes
@@ -520,6 +558,18 @@ watch(() => props.data.node, () => {
         @pointerdown.stop
         @click.stop="toggleRegion('bottom')"
       >Bottom</UButton>
+      <!-- Delete this node (block or whole layout) from the canvas (#955). -->
+      <USeparator orientation="vertical" class="h-5" />
+      <UButton
+        icon="i-lucide-trash-2"
+        size="xs"
+        color="error"
+        variant="ghost"
+        title="Delete"
+        aria-label="Delete"
+        @pointerdown.stop
+        @click.stop="deleteNode?.(data.node)"
+      />
     </div>
 
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
@@ -536,7 +586,29 @@ watch(() => props.data.node, () => {
            view's job (double-click), not the survey. -->
       <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" :interactive="false" />
     </div>
+    <!-- Per-node width preview (#954): render responsively at the node's own width so it reflows like
+         the survey did, but per-element. Read-only splitters (resize the CARD, not internal panes). -->
+    <div
+      v-else-if="previewing"
+      class="nopan nodrag h-full w-full overflow-auto"
+      style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
+    >
+      <CroutonLayoutResponsiveRenderer :tree="tree" :width="data.width!" :interactive="false" />
+    </div>
     <CroutonLayoutRenderer v-else :node="renderNode" />
+
+    <!-- Resize handle (#954) — drag the corner to set this node's width (drives responsive reflow) +
+         height. The per-element "slider". `.nodrag`/`.stop` keep it off Vue Flow's node drag. Shown when
+         selected (not wiggling/surveying). Double-click clears back to the intrinsic footprint size. -->
+    <div
+      v-if="selected && !jiggling && !surveying"
+      class="nodrag absolute -bottom-1 -right-1 z-40 size-5 cursor-nwse-resize touch-none"
+      title="Drag to resize · double-click to reset"
+      @pointerdown.stop="onResizeDown"
+      @dblclick.stop="resetSize"
+    >
+      <div class="absolute bottom-1 right-1 size-3 rounded-sm border-b-2 border-r-2 border-primary/70" :class="resizing ? 'border-primary' : ''" />
+    </div>
 
     <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop
          between panes). SOFT = blue, wide, pulsing ("snap point here"); ARMED = green, crisp, steady. -->
