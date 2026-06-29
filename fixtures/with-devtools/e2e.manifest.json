@@ -1,0 +1,24 @@
+{
+  "packages": ["crouton-devtools", "crouton-feedback"],
+  "collections": [
+    {
+      "key": "mainItems",
+      "heading": "Main Items",
+      "create": { "name": "e2e item" },
+      "requiredField": "name"
+    }
+  ],
+  "surfaces": [
+    {
+      "name": "crouton-feedback glasses launcher mounts (via devtools installModule)",
+      "path": "/admin/{team}/crouton/mainItems",
+      "expect": { "visible": "button[aria-label='Feedback tools']", "a11y": false }
+    }
+  ],
+  "i18n": {
+    "path": "/",
+    "switchTo": "NL",
+    "before": "Your teams",
+    "after": "Jouw teams"
+  }
+}
