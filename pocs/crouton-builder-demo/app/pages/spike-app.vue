@@ -131,7 +131,10 @@ const flowRef = ref<{
 // node's drag eats it). We read the live viewport transform and re-`setCenter` with the math that
 // keeps the pinched point fixed under the fingers (Vue Flow exposes setCenter but not setViewport).
 function pinchZoom(ratio: number, midX: number, midY: number) {
-  if (viewport.value || zoomNodeId.value) return
+  // Pinch zooms the CANVAS — fine during a survey (the slider previewing a device width); only the
+  // full-screen edit view (zoomNodeId) owns the screen and must not be pinched. (Was also bailing on
+  // `viewport`, which killed pinch whenever the slider wasn't at max → "pinch broken in other views".)
+  if (zoomNodeId.value) return
   const container = document.querySelector('.crouton-vue-flow') as HTMLElement | null
   // The zoom transform lives on `.vue-flow__transformationpane` — `.vue-flow__viewport` has NO
   // transform (it reads `none` → identity → z=1), which made the pinch math read the wrong zoom and
@@ -302,9 +305,29 @@ function setSurveyWidth(w: number | undefined) {
     : { label: 'Custom', icon: 'i-lucide-ruler', width, height: viewport.value?.height ?? 800 }
 }
 // Top-level Fit = zoom the camera to show every node. Doesn't touch the survey width (the slider owns
-// that now) — just frames the board.
+// that now) — just frames the board. We frame by the nodes' KNOWN geometry (position + sizeOf), NOT Vue
+// Flow's `fitView` — VF measures the `.vue-flow__node` wrapper, which is smaller than our overflowing
+// card, so its fit zooms into a corner of the oversized content. fitBounds on the real union box (like
+// fitPage does for one node) frames correctly. (#952 follow-up — same wrapper-vs-card mismatch.)
+function boardBounds(): { x: number, y: number, width: number, height: number } | null {
+  const ns = nodes.value
+  if (!ns.length) return null
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const n of ns) {
+    const s = viewport.value
+      ? { width: viewport.value.width, height: viewport.value.height }
+      : sizeOf(n.data.node)
+    minX = Math.min(minX, n.position.x); minY = Math.min(minY, n.position.y)
+    maxX = Math.max(maxX, n.position.x + s.width); maxY = Math.max(maxY, n.position.y + s.height)
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
 function fitBoard() {
-  nextTick(() => flowRef.value?.fitView?.({ duration: 250, padding: 0.18, maxZoom: 1 }))
+  nextTick(() => {
+    const b = boardBounds()
+    if (b && flowRef.value?.fitBounds) flowRef.value.fitBounds(b, { duration: 250, padding: 0.18 })
+    else flowRef.value?.fitView?.({ duration: 250, padding: 0.18, maxZoom: 1 })
+  })
 }
 
 /** HTML5 drag source: stamp the crouton-item payload CroutonFlow's drop handler reads. */
