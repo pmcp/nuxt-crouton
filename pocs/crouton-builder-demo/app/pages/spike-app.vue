@@ -73,9 +73,13 @@ const [DefinePalette, ReusePalette] = createReusableTemplate()
 // The drawer = the blocks a collection ("Artists") offers. In the real thing this list
 // is derived from the collection; here it's the registered demo blocks.
 const drawer = [
+  // Distinct demo blocks (#956) — each renders a different, recognizable UI.
   { blockId: 'artists-list', label: 'Artists · List', icon: 'i-lucide-list' },
   { blockId: 'artists-form', label: 'Artists · New', icon: 'i-lucide-square-pen' },
-  { blockId: 'artists-stats', label: 'Artists · Stats', icon: 'i-lucide-bar-chart-3' },
+  { blockId: 'artists-stats', label: 'Artists · Stats', icon: 'i-lucide-gauge' },
+  { blockId: 'artists-chart', label: 'Bookings · Chart', icon: 'i-lucide-bar-chart-3' },
+  { blockId: 'app-toolbar', label: 'Top bar', icon: 'i-lucide-panel-top' },
+  { blockId: 'app-nav', label: 'Bottom nav', icon: 'i-lucide-panel-bottom' },
   // Layout primitive (#952): empty space you can add + snap/resize like a block, to push others around.
   { blockId: 'spacer', label: 'Spacer', icon: 'i-lucide-square-dashed' },
 ]

@@ -1,6 +1,11 @@
 import { defineNuxtPlugin } from 'nuxt/app'
 import SpikeSpacer from '~/components/SpikeSpacer.vue'
 import SpikeGhostPane from '~/components/SpikeGhostPane.vue'
+import SpikeListBlock from '~/components/SpikeListBlock.vue'
+import SpikeFormBlock from '~/components/SpikeFormBlock.vue'
+import SpikeChartBlock from '~/components/SpikeChartBlock.vue'
+import SpikeToolbarBlock from '~/components/SpikeToolbarBlock.vue'
+import SpikeNavBlock from '~/components/SpikeNavBlock.vue'
 
 /**
  * Register the POC layout-block components GLOBALLY (#952).
@@ -16,4 +21,10 @@ import SpikeGhostPane from '~/components/SpikeGhostPane.vue'
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('SpikeSpacer', SpikeSpacer)
   nuxtApp.vueApp.component('SpikeGhostPane', SpikeGhostPane)
+  // Distinct demo blocks (#956) so you can SEE which block landed where.
+  nuxtApp.vueApp.component('SpikeListBlock', SpikeListBlock)
+  nuxtApp.vueApp.component('SpikeFormBlock', SpikeFormBlock)
+  nuxtApp.vueApp.component('SpikeChartBlock', SpikeChartBlock)
+  nuxtApp.vueApp.component('SpikeToolbarBlock', SpikeToolbarBlock)
+  nuxtApp.vueApp.component('SpikeNavBlock', SpikeNavBlock)
 })
