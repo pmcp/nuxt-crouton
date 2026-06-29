@@ -6,26 +6,22 @@ const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  // SPIKE (#945): @nuxt/scripts backs the (default PostHog) analytics provider —
-  // SSR-safe, consent-aware script loading. The composable stays provider-agnostic.
-  modules: ['@fyit/crouton', '@nuxt/scripts'],
+  modules: ['@fyit/crouton'],
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   devServer: { port: 3014 },
 
-  // SPIKE (#945) — crouton-analytics config. Default to the `console` provider so the
-  // spike is observable without a PostHog key; flip to `posthog` + fill the key to send
-  // real events. The shape here is what `@fyit/crouton-analytics` will read.
+  // crouton-analytics config (#945/#946) — consumes @fyit/crouton-analytics (in extends).
+  // `console` provider so events are observable without a PostHog key; flip to `posthog`
+  // + fill the key to send real events.
   runtimeConfig: {
     public: {
-      crouton: {
-        analytics: {
-          provider: 'console', // 'noop' | 'console' | 'posthog'
-          posthog: {
-            key: '', // NUXT_PUBLIC_CROUTON_ANALYTICS_POSTHOG_KEY
-            host: 'https://us.i.posthog.com'
-          }
+      croutonAnalytics: {
+        provider: 'console', // 'noop' | 'console' | 'posthog'
+        posthog: {
+          key: '', // NUXT_PUBLIC_CROUTON_ANALYTICS_POSTHOG_KEY
+          host: 'https://us.i.posthog.com'
         }
       }
     }
@@ -40,6 +36,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-layout',
     '@fyit/crouton-auth',
     '@fyit/crouton-i18n',
+    '@fyit/crouton-analytics',
     '@fyit/crouton-devtools/eruda',
     './layers/blog'
   ],
