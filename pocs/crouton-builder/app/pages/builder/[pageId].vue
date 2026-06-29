@@ -153,8 +153,18 @@ const ghostStyle = computed(() => {
   return { position: 'absolute' as const, left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px`, zIndex: 19 }
 })
 
-// --- preview + round-trip --------------------------------------------------------
+// --- preview at different sizes (the layout engine's whole point) ----------------
+// Preview renders through CroutonLayoutResponsiveRenderer at a SIMULATED width, so you
+// see the layout reflow: panes stack (@container), hug bars stay short, breakpoints
+// resolve. Device presets + a width slider drive it; `null` = full (measure the frame).
 const showPreview = ref(false)
+const DEVICES = [
+  { label: 'Phone', w: 390, icon: 'i-lucide-smartphone' },
+  { label: 'Tablet', w: 768, icon: 'i-lucide-tablet' },
+  { label: 'Laptop', w: 1024, icon: 'i-lucide-laptop' },
+  { label: 'Full', w: null, icon: 'i-lucide-maximize' },
+] as const
+const previewWidth = ref<number | null>(null)
 
 const issueNumber = ref<number | null>(null)
 const posting = ref(false)
@@ -260,27 +270,20 @@ async function postToTicket() {
 
       <!-- Board -->
       <main class="relative min-w-0 flex-1 overflow-auto p-4">
+        <!-- EDIT: the package's editable renderer OWNS its pane handles (#985) -->
         <div
-          v-if="root"
+          v-if="root && !showPreview"
           ref="boardRef"
           class="relative h-full min-h-[420px] w-full rounded-xl border border-default bg-default/20 p-2"
           :class="placing ? 'cursor-copy' : ''"
           @pointermove="onBoardMove"
           @click="placing && commitPlace()"
         >
-          <!-- Edit: the package's editable renderer OWNS its pane handles (#985) -->
           <CroutonLayoutEditableRenderer
-            v-if="!showPreview"
             :node="root"
             :editable="!placing"
             @update:node="onUpdateNode"
             @detach="onDetach"
-          />
-          <!-- Preview: read-only, hug-aware (#986) -->
-          <CroutonLayoutRenderer
-            v-else
-            :node="root"
-            :interactive="false"
           />
 
           <!-- place preview: snap-guide on the armed edge + ghost-pane slot -->
@@ -297,6 +300,50 @@ async function postToTicket() {
             :style="ghostStyle"
           >
             drops here
+          </div>
+        </div>
+
+        <!-- PREVIEW at a chosen size — read-only, hug-aware (#986), reflows via @container -->
+        <div
+          v-else-if="root && page"
+          class="flex h-full flex-col gap-3"
+        >
+          <div class="flex flex-wrap items-center gap-1.5">
+            <UButton
+              v-for="d in DEVICES"
+              :key="d.label"
+              :icon="d.icon"
+              size="xs"
+              :color="previewWidth === d.w ? 'primary' : 'neutral'"
+              :variant="previewWidth === d.w ? 'solid' : 'soft'"
+              @click="previewWidth = d.w"
+            >
+              {{ d.label }}
+            </UButton>
+            <input
+              type="range"
+              min="320"
+              max="1280"
+              step="10"
+              :value="previewWidth ?? 1280"
+              class="ml-2 w-40 accent-primary"
+              @input="previewWidth = Number(($event.target as HTMLInputElement).value)"
+            >
+            <span class="font-mono text-[11px] text-muted">{{ previewWidth ? `${previewWidth}px` : 'full' }}</span>
+          </div>
+
+          <div class="flex flex-1 justify-center overflow-auto rounded-xl border border-default bg-default/20 p-3">
+            <div
+              class="h-full min-h-[420px] shrink-0 overflow-hidden rounded-lg border border-default bg-elevated/30 shadow-lg transition-[width] duration-300"
+              :style="{ width: previewWidth ? `${previewWidth}px` : '100%', maxWidth: '100%' }"
+            >
+              <CroutonLayoutResponsiveRenderer
+                :tree="page.tree"
+                :width="previewWidth ?? undefined"
+                :interactive="false"
+                class="h-full w-full"
+              />
+            </div>
           </div>
         </div>
       </main>
