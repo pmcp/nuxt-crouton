@@ -217,7 +217,7 @@ export const SPIKE_DEFAULT_SIZING: SpikeBlockSizing = { width: 'fill', height: '
 
 /** A registry shape carrying the optional POC sizing descriptor (the app.config entries). The fields
  *  are read loosely (app.config literals widen to `string`) and validated to the enum here. */
-type SizedRegistry = Record<string, { sizing?: { width?: string, height?: string } } | undefined>
+type SizedRegistry = Record<string, { sizing?: { width?: string, height?: string }, minWidth?: number } | undefined>
 
 /** Narrow an arbitrary value to a `SpikeSizing` (default `fill`) — robust to widened/tampered data. */
 const asSizing = (v: unknown): SpikeSizing => (v === 'hug' ? 'hug' : 'fill')
@@ -235,6 +235,44 @@ export function blockSizing(blockId: string, registry: SizedRegistry): SpikeBloc
  */
 export function nodeHeightSizing(node: LayoutNode, registry: SizedRegistry): SpikeSizing {
   return node.type === 'leaf' ? blockSizing(node.blockId, registry).height : 'fill'
+}
+
+/**
+ * Composite sizing derivation (#972 follow-up) — "component-driven, all the way up". A LEAF declares
+ * its rules (minWidth + fill/hug on the registry); a COMPOSITE (split / nested layout) DERIVES its own,
+ * bottom-up, so a layout-of-layouts publishes the same contract its children do and a parent (or an
+ * agent) can reason about it as one unit. The fold is direction-aware, with TWO width floors:
+ *   • softMinWidth — the comfortable width that keeps a horizontal split a ROW: `sum` of children
+ *     along a horizontal axis, `max` across a vertical one. Below it, the renderer stacks the row.
+ *   • hardMinWidth — the absolute floor it can reflow DOWN to: a horizontal split can always stack to
+ *     a column whose width floor is the widest child, so hard = `max` of children's hard floors
+ *     (recursively, the widest single leaf in the subtree).
+ * Height mirrors width with the axes swapped (`sum` vertical, `max` horizontal). `width`/`height`
+ * fill/hug: a composite always `fill`s (a real layout claims its space); a leaf uses its descriptor.
+ *
+ * Prototyped POC-side; the clean home is the `crouton-layout` viability engine (it already folds leaf
+ * min-widths for stacking) + the `nested` node carrying this as its declared contract (graduation).
+ */
+export interface SpikeDerivedSizing { hardMinWidth: number, softMinWidth: number, minHeight: number, width: SpikeSizing, height: SpikeSizing }
+export function deriveSizing(node: LayoutNode, registry: SizedRegistry): SpikeDerivedSizing {
+  if (node.type === 'leaf') {
+    const mw = registry[node.blockId]?.minWidth ?? 0
+    const s = blockSizing(node.blockId, registry)
+    return { hardMinWidth: mw, softMinWidth: mw, minHeight: 0, width: s.width, height: s.height }
+  }
+  if (node.type === 'nested') return deriveSizing(node.layout.root, registry)
+  const kids = node.children.map(c => deriveSizing(c, registry))
+  const horizontal = node.direction === 'horizontal'
+  // Hard floor: the subtree can always reflow to a single column → the widest single leaf.
+  const hardMinWidth = Math.max(0, ...kids.map(k => k.hardMinWidth))
+  // Soft floor: keep the arrangement as-is — sum along the axis, max across it.
+  const softMinWidth = horizontal
+    ? kids.reduce((sum, k) => sum + k.softMinWidth, 0)
+    : Math.max(0, ...kids.map(k => k.softMinWidth))
+  const minHeight = horizontal
+    ? Math.max(0, ...kids.map(k => k.minHeight))
+    : kids.reduce((sum, k) => sum + k.minHeight, 0)
+  return { hardMinWidth, softMinWidth, minHeight, width: 'fill', height: 'fill' }
 }
 
 /**

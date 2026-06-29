@@ -1,8 +1,13 @@
 [
   {
+    "v": 52,
+    "note": "Composite layout sizing — a layout now DERIVES its own size rules from its components (folded bottom-up): a 'hard floor' = the widest single block (it can always reflow to a column), and a 'soft floor' = the sum across a row (where it starts to stack). The per-element resize can't shrink a card below its hard floor — so a layout literally can't break its components' rules — and a selected card shows the derived floor ('stacks <Npx · floor Mpx'). Component-driven, all the way up a layout-of-layouts.",
+    "commit": ""
+  },
+  {
     "v": 51,
     "note": "Fixed the wiggle drag-borders spilling OUTSIDE the card when the layout is taller than the card (scrolls/overflows) — the green faces are measured from the rendered panes, and a pane below the fold reported a rect extending past the card, so its border sprawled down the canvas. Faces are now clamped to the card box (a pane scrolled out of view just has no face). Caught from your IMG_1071.",
-    "commit": ""
+    "commit": "0613db0"
   },
   {
     "v": 50,

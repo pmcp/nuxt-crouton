@@ -146,8 +146,14 @@ function toggleRegion(region: SpikeRegion) {
 // Per-node resize (#954): the corner handle sets this node's display width/height. When a width is set,
 // the card renders RESPONSIVELY at that width (its own width preview) — the per-element "slider".
 const setSize = inject(SPIKE_SET_SIZE_KEY, null)
-const RESIZE_MIN_W = 240
 const RESIZE_MIN_H = 140
+// Composite sizing (#972 follow-up): the layout's DERIVED floor — folded from its components' declared
+// minWidths. The resize handle can't drag the card below its HARD floor (the widest single block; below
+// that a block would break even after stacking), so a layout literally "follows the rules of its
+// components". `softMinWidth` is where it stops being a row and stacks — shown in the readout.
+const blockRegistry = computed(() => (useAppConfig().croutonLayoutBlocks ?? {}) as Record<string, { sizing?: { width?: string, height?: string }, minWidth?: number }>)
+const derived = computed(() => deriveSizing(props.data.node, blockRegistry.value))
+const resizeFloorW = computed(() => Math.max(80, derived.value.hardMinWidth))
 const resizing = ref(false)
 function onResizeDown(e: PointerEvent) {
   if (e.button !== 0 || !setSize) return
@@ -159,7 +165,7 @@ function onResizeDown(e: PointerEvent) {
   const startH = props.data.height ?? (r ? r.height / zoom : SPIKE_BASE_H)
   const ox = e.clientX, oy = e.clientY
   const move = (ev: PointerEvent) => {
-    const w = Math.max(RESIZE_MIN_W, Math.round(startW + (ev.clientX - ox) / zoom))
+    const w = Math.max(resizeFloorW.value, Math.round(startW + (ev.clientX - ox) / zoom))
     const h = Math.max(RESIZE_MIN_H, Math.round(startH + (ev.clientY - oy) / zoom))
     setSize!(props.data.node, { width: w, height: h })
   }
@@ -632,6 +638,20 @@ watch(() => props.data.node, () => {
       <CroutonLayoutResponsiveRenderer :tree="tree" :width="data.width!" :interactive="false" />
     </div>
     <CroutonLayoutRenderer v-else :node="renderNode" />
+
+    <!-- Derived sizing readout (#972 follow-up) — the layout's floor, FOLDED from its components'
+         declared min-widths. `floor` = the hard min the resize can't go below; when the layout would
+         stack before then, we also show the soft "stacks <Npx" threshold. Shows it follows its
+         components' rules, all the way up a layout-of-layouts. -->
+    <div
+      v-if="selected && !jiggling"
+      class="nodrag pointer-events-none absolute -bottom-3 left-2 z-40 flex items-center gap-1 rounded-full border border-default bg-elevated/95 px-2 py-0.5 font-mono text-[10px] text-muted shadow-sm backdrop-blur"
+      title="Floor derived from the components' min-widths"
+    >
+      <UIcon name="i-lucide-ruler" class="size-3" />
+      <span v-if="derived.softMinWidth > derived.hardMinWidth">stacks &lt;{{ derived.softMinWidth }} · floor {{ derived.hardMinWidth }}px</span>
+      <span v-else>floor {{ derived.hardMinWidth }}px</span>
+    </div>
 
     <!-- Resize handle (#954) — drag the corner to set this node's width (drives responsive reflow) +
          height. The per-element "slider". `.nodrag`/`.stop` keep it off Vue Flow's node drag. Shown when

@@ -20,6 +20,14 @@ the house style — heavily **Nuxt UI 4 / crouton-opinionated**, not freeform ge
 a random UI, you get *your* system's UI, consistently. That consistency is exactly what makes the blocks
 composable and the round-trip (below) safe to automate.
 
+**It's COMPONENT-DRIVEN: the layout obeys what each component declares about itself** — not arbitrary
+styling imposed on top. A component publishes its rules as data (min-width, `fill`/`hug`, display
+variants), and the builder's job is *arranging components within the bounds each one publishes*. Those
+declared rules ARE the bounded vocabulary a human and an agent both edit against. And it's recursive —
+a composed layout is itself a component that **derives** its own rules from its children (see "Composites
+derive their rules" below), so the contract holds all the way up a layout-of-layouts. (Today only some
+rules are declared; completing the component contract + making it round-trippable is the durable work.)
+
 **The full lifecycle — close to end-to-end automation, with a human checkpoint:**
 
 ```
@@ -170,11 +178,23 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   the viability metric, and an agent all read; the agent picks *blocks*, not flex values. Read POC-side
   via `blockSizing()` / `nodeHeightSizing()` (`app/utils/spike-layout.ts`); honoured in the Preview
   (`SpikePagePreview` maps a `hug`-height node → an `height:auto` pane → short bar, per region).
+- **Composites DERIVE their rules — component-driven, all the way up (#972 follow-up).** A composed
+  layout (a split, or a `nested` layout-of-layouts) is itself a component and **publishes the same
+  contract its children do**, folded bottom-up by `deriveSizing()` (`app/utils/spike-layout.ts`):
+  a **hard floor** = the widest single leaf (a row can always reflow to a column, so this is the
+  absolute min it survives down to) and a **soft floor** = `sum` of children along a horizontal axis /
+  `max` across a vertical one (the comfortable width before it stacks). A leaf *declares* its
+  `minWidth`/`fill`-`hug`; a composite *derives* them, recursively. Prototyped POC-side: the per-element
+  **resize can't drag a card below its hard floor** (so a layout literally can't violate its
+  components' rules), and a selected card shows a **floor readout** (`stacks <Npx · floor Mpx`).
 - **Graduation note:** the descriptor currently rides the **inferred** app.config type (the POC adds
   `sizing` to entries without touching the package type). Two pieces remain package work in
   `crouton-layout`: (1) move `sizing` onto the typed `CroutonLayoutBlockDefinition` so it's a first-class
   field; (2) have the package **renderer honour it INSIDE a split** — make a *pane* hug its content
-  between siblings (the Preview only hugs at the region level today).
+  between siblings (the Preview only hugs at the region level today). (3) **Composite derivation**
+  (`deriveSizing`) belongs in the `crouton-layout` viability engine (it already folds leaf min-widths
+  for stacking) with the derived contract carried **on the `nested` node**, so a parent reads a
+  sub-layout's floor without re-deriving — the formalisation of "a leaf declares, a composite derives".
 
 ### Per-block display variants (#970 — bounded "collection viewer options")
 
