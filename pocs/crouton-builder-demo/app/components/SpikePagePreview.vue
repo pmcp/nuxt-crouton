@@ -23,6 +23,15 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const hasContent = computed(() => props.top.length || props.main.length || props.bottom.length)
+
+// Intrinsic block sizing as DECLARED DATA (#971): a node renders `hug` (height:auto → short bar) or
+// `fill` (stretch) per the BLOCK's `sizing.height` descriptor on the registry — so a pinned Top bar is
+// short because the component says `hug`, not because of where it's pinned, and with no per-instance
+// control. `nodeHeightSizing` reads the same one source an agent would.
+const registry = computed(() => (useAppConfig().croutonLayoutBlocks ?? {}) as Record<string, { sizing?: { width?: string, height?: string } }>)
+function hugs(node: LayoutNode): boolean {
+  return nodeHeightSizing(node, registry.value) === 'hug'
+}
 </script>
 
 <template>
@@ -37,18 +46,23 @@ const hasContent = computed(() => props.top.length || props.main.length || props
 
       <!-- Phone frame: pinned top region · scrolling main · pinned bottom region -->
       <div class="relative flex h-[78vh] w-full max-w-sm flex-col overflow-hidden rounded-[2rem] border-4 border-default bg-default shadow-2xl">
-        <!-- Pinned TOP region (sticky pill/bar) — hugs the block's intrinsic height (#954): a Top bar
-             block is ~56px, so the bar is short, not a tall panel. -->
+        <!-- Pinned TOP region (sticky pill/bar). Each node hugs/fills per its block's sizing descriptor
+             (#971): a Top bar declares `height:'hug'` → ~56px short pill (not because it's pinned). -->
         <div v-if="top.length" class="z-10 shrink-0 border-b border-default bg-default/95 backdrop-blur">
-          <div v-for="n in top" :key="n.id" class="spike-preview-region spike-region-pinned">
+          <div v-for="n in top" :key="n.id" class="spike-preview-region" :class="hugs(n.data.node) ? 'spike-hug' : 'spike-fill'">
             <CroutonLayoutRenderer :node="n.data.node" />
           </div>
         </div>
 
-        <!-- MAIN (scrolls) -->
+        <!-- MAIN (scrolls). A `hug` block stays content-height; a `fill` block grows (#971). -->
         <div class="min-h-0 flex-1 overflow-auto">
           <div v-if="main.length" class="flex min-h-full flex-col">
-            <div v-for="n in main" :key="n.id" class="spike-preview-region min-h-0 flex-1">
+            <div
+              v-for="n in main"
+              :key="n.id"
+              class="spike-preview-region"
+              :class="hugs(n.data.node) ? 'spike-hug shrink-0' : 'spike-fill min-h-0 flex-1'"
+            >
               <CroutonLayoutRenderer :node="n.data.node" />
             </div>
           </div>
@@ -57,9 +71,9 @@ const hasContent = computed(() => props.top.length || props.main.length || props
           </div>
         </div>
 
-        <!-- Pinned BOTTOM region — hugs the block's intrinsic height (#954). -->
+        <!-- Pinned BOTTOM region — hug/fill per the block's descriptor (#971). -->
         <div v-if="bottom.length" class="z-10 shrink-0 border-t border-default bg-default/95 backdrop-blur">
-          <div v-for="n in bottom" :key="n.id" class="spike-preview-region spike-region-pinned">
+          <div v-for="n in bottom" :key="n.id" class="spike-preview-region" :class="hugs(n.data.node) ? 'spike-hug' : 'spike-fill'">
             <CroutonLayoutRenderer :node="n.data.node" />
           </div>
         </div>
@@ -73,17 +87,18 @@ const hasContent = computed(() => props.top.length || props.main.length || props
 </template>
 
 <style scoped>
-/* Give each region's rendered layout a sensible intrinsic height so pinned bars hug their content
-   while the main area fills. The renderer's panes are h-full; the region wrapper bounds that. */
+/* Give each region's rendered layout a sensible intrinsic height. The renderer's panes are h-full;
+   the region wrapper bounds that. */
 .spike-preview-region {
   container-type: inline-size;
 }
 .spike-preview-region :deep(.croutonpane) {
   min-height: 0;
 }
-/* Pinned bars HUG their block's intrinsic height (#954) — the renderer's panes are `h-full`, which
-   would otherwise stretch the bar to fill; auto lets a ~56px Top bar / 64px Nav stay short. */
-.spike-region-pinned :deep(.croutonpane) {
+/* A `hug`-height block (#971): the renderer's panes are `h-full`, which would stretch it to fill;
+   `auto` lets the block's own content height stand — a ~56px Top bar / 64px Nav stays short, driven
+   by the block's declared `sizing.height: 'hug'`, not by which region it sits in. */
+.spike-hug :deep(.croutonpane) {
   height: auto;
 }
 </style>

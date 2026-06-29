@@ -174,3 +174,41 @@ export function sizeOf(node: LayoutNode): { width: number, height: number } {
   const f = footprint(node)
   return { width: f.cols * SPIKE_BASE_W, height: f.rows * SPIKE_BASE_H }
 }
+
+/**
+ * Block sizing descriptor (#971) — "the component decides its own size" as DECLARED DATA, not
+ * per-instance CSS. Each block declares how it fills a pane per axis: `fill` stretches to the pane,
+ * `hug` sizes to its own content. A Top bar / Bottom nav declare `height: 'hug'`, so they come out as
+ * SHORT bars wherever they land (incl. pinned regions) with NO per-instance size control — the agent
+ * picks the BLOCK, the block's descriptor does the rest. It lives on the `croutonLayoutBlocks` registry
+ * entries (app.config), so one source feeds the renderer, the viability metric, and an agent alike.
+ *
+ * Honoured POC-side in the Preview (a `hug`-height block → an `height:auto` pane → short bar). Making a
+ * pane hug its content INSIDE a split is the `crouton-layout` package renderer's job — graduation work;
+ * the clean formalisation is exactly this descriptor moving onto the typed `CroutonLayoutBlockDefinition`.
+ */
+export type SpikeSizing = 'fill' | 'hug'
+export interface SpikeBlockSizing { width: SpikeSizing, height: SpikeSizing }
+export const SPIKE_DEFAULT_SIZING: SpikeBlockSizing = { width: 'fill', height: 'fill' }
+
+/** A registry shape carrying the optional POC sizing descriptor (the app.config entries). The fields
+ *  are read loosely (app.config literals widen to `string`) and validated to the enum here. */
+type SizedRegistry = Record<string, { sizing?: { width?: string, height?: string } } | undefined>
+
+/** Narrow an arbitrary value to a `SpikeSizing` (default `fill`) — robust to widened/tampered data. */
+const asSizing = (v: unknown): SpikeSizing => (v === 'hug' ? 'hug' : 'fill')
+
+/** The sizing a block declares (defaults to fully `fill`). Reads the descriptor off the registry. */
+export function blockSizing(blockId: string, registry: SizedRegistry): SpikeBlockSizing {
+  const s = registry[blockId]?.sizing
+  return { width: asSizing(s?.width), height: asSizing(s?.height) }
+}
+
+/**
+ * How a NODE wants to size on the page's vertical axis. Only a single leaf hugs by its block's
+ * descriptor; a composed split/nested fills (a real layout claims its space). Drives the Preview's
+ * per-region hug/fill so a pinned Top bar is short because the BLOCK says `hug`, not because it's pinned.
+ */
+export function nodeHeightSizing(node: LayoutNode, registry: SizedRegistry): SpikeSizing {
+  return node.type === 'leaf' ? blockSizing(node.blockId, registry).height : 'fill'
+}

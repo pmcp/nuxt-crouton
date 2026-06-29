@@ -161,15 +161,20 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   card has a **corner resize handle** (shown when selected) — drag it to set the node's width/height,
   and the card renders **responsively at that width** (its own preview). Opening edit lands at the
   node's resized width. (`data.width/height` on the FlowNode; `SPIKE_SET_SIZE_KEY`.)
-- **The component decides its own size ("intrinsic sizing").** A block declares how it lays out *once*,
-  in the component — so it behaves the same everywhere it's dropped, and there's **no per-instance
-  align/size UI to build**. A **Top bar / Bottom nav are fixed-height bars**; List/Form/Chart fill. So a
-  pinned Top bar comes out as a **short pill** automatically (the Preview's pinned regions hug the
-  block's intrinsic height via `height:auto` on the pane). The agent picks *blocks*, not flex values.
-- **Graduation note:** truly making a *pane hug its content inside a split* (vs in the Preview regions)
-  is layout-engine work in the `crouton-layout` package renderer; here it's prototyped POC-side. A
-  block-type **sizing descriptor** in the registry (`{ width:'fill'|'hug', height:… }`) is the clean
-  formalisation so the renderer (and an agent) read one declared source.
+- **The component decides its own size ("intrinsic sizing"), as DECLARED DATA (#971).** Each block
+  carries a **sizing descriptor** on the `croutonLayoutBlocks` registry entry —
+  `sizing: { width: 'fill' | 'hug', height: 'fill' | 'hug' }` (defaults to fully `fill`). `hug` = size
+  to content, `fill` = stretch. A **Top bar / Bottom nav declare `height: 'hug'`**; List/Form/Chart/
+  Stats `fill`. So a pinned Top bar comes out as a **short pill** *because the block declares `hug`* —
+  not because of where it's pinned, and with **no per-instance align/size UI**. One source the renderer,
+  the viability metric, and an agent all read; the agent picks *blocks*, not flex values. Read POC-side
+  via `blockSizing()` / `nodeHeightSizing()` (`app/utils/spike-layout.ts`); honoured in the Preview
+  (`SpikePagePreview` maps a `hug`-height node → an `height:auto` pane → short bar, per region).
+- **Graduation note:** the descriptor currently rides the **inferred** app.config type (the POC adds
+  `sizing` to entries without touching the package type). Two pieces remain package work in
+  `crouton-layout`: (1) move `sizing` onto the typed `CroutonLayoutBlockDefinition` so it's a first-class
+  field; (2) have the package **renderer honour it INSIDE a split** — make a *pane* hug its content
+  between siblings (the Preview only hugs at the region level today).
 
 ### Board gestures (direct manipulation)
 

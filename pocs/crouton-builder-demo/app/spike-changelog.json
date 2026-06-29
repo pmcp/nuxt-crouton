@@ -1,8 +1,13 @@
 [
   {
+    "v": 46,
+    "note": "Block sizing as DECLARED DATA — each block in the registry now carries a sizing descriptor ({ width, height: 'fill' | 'hug' }), so 'the component decides its own size' is one source the renderer and an agent both read, not per-component CSS. A Top bar / Bottom nav declare height:'hug', so a pinned bar comes out SHORT because the BLOCK says so (not because of where it's pinned) — no per-instance size control. Honoured in the page Preview (a hug block → a short bar, a fill block grows).",
+    "commit": ""
+  },
+  {
     "v": 45,
     "note": "Cleanup pass — ripped out the dormant survey/viewport code left over after the slider→per-element-resize pivot (and the dead fitOverview), so the board path is one clear model. Chart block bars now render reliably (each bar sits in a definite-height track, so its % height resolves). And the board hides Vue Flow's own ⛶ fit button — it zooms into our oversized cards; the pill Fit is the right one (the Site flow keeps its ⛶).",
-    "commit": ""
+    "commit": "fd0c1d5"
   },
   {
     "v": 44,
