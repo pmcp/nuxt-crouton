@@ -303,6 +303,24 @@ export function insertAtPath(
 }
 
 /**
+ * Immutably move a child of the split at `path` from index `from` to index `to`,
+ * preserving the order of the other children. The flat sibling-reorder primitive the
+ * editable renderer applies when you drag a pane across to another slot (vs `moveNode`,
+ * which restructures across the tree). No-op on a non-split target, out-of-range indices,
+ * or `from === to`.
+ */
+export function moveChild(root: LayoutNode, path: NodePath, from: number, to: number): LayoutNode {
+  const target = getNode(root, path)
+  if (!target || target.type !== 'split') return root
+  const n = target.children.length
+  if (from < 0 || from >= n || to < 0 || to >= n || from === to) return root
+  const children = target.children.slice()
+  const [moved] = children.splice(from, 1)
+  children.splice(to, 0, moved!)
+  return replaceAt(root, path, { ...target, children }) ?? root
+}
+
+/**
  * Add `child` beside the pane at `paneDrop.path` on `paneDrop.edge`. FLATTENS into
  * the parent split when the edge runs ALONG its axis (drop right of a block in a row
  * → it joins the row), and WRAPS the pane in a new perpendicular split otherwise (or

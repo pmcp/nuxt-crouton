@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { insertAtPath, applyPaneDrop, makeLeaf } from '../layout-edit'
+import { insertAtPath, applyPaneDrop, moveChild, makeLeaf } from '../layout-edit'
 import type { LayoutSplit, LayoutLeaf } from '@fyit/crouton-core/app/types/layout'
 
 // --- #985 drop-beside-pane pure transforms ---------------------------------
@@ -121,6 +121,45 @@ describe('applyPaneDrop', () => {
     const root = column()
     const snapshot = JSON.stringify(root)
     applyPaneDrop(root, { path: [1], edge: 'right' }, leaf('extra'))
+    expect(JSON.stringify(root)).toBe(snapshot)
+  })
+})
+
+describe('moveChild', () => {
+  const triple = (): LayoutSplit => ({
+    type: 'split',
+    direction: 'horizontal',
+    children: [leaf('a'), leaf('b'), leaf('c')],
+  })
+
+  it('moves a child forward, preserving the order of the rest', () => {
+    const next = moveChild(triple(), [], 0, 2) as LayoutSplit
+    expect(next.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('moves a child backward', () => {
+    const next = moveChild(triple(), [], 2, 0) as LayoutSplit
+    expect(next.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['c', 'a', 'b'])
+  })
+
+  it('reorders the children of a nested split addressed by path', () => {
+    const root: LayoutSplit = { type: 'split', direction: 'vertical', children: [leaf('top'), triple()] }
+    const next = moveChild(root, [1], 1, 0) as LayoutSplit
+    const inner = next.children[1] as LayoutSplit
+    expect(inner.children.map(c => (c as LayoutLeaf).blockId)).toEqual(['b', 'a', 'c'])
+  })
+
+  it('is a no-op for from === to, out-of-range, or a non-split target', () => {
+    const root = triple()
+    expect(moveChild(root, [], 1, 1)).toBe(root)
+    expect(moveChild(root, [], 0, 9)).toBe(root)
+    expect(moveChild(root, [0], 0, 1)).toBe(root) // child 0 is a leaf
+  })
+
+  it('is immutable — the input root is not mutated', () => {
+    const root = triple()
+    const snapshot = JSON.stringify(root)
+    moveChild(root, [], 0, 2)
     expect(JSON.stringify(root)).toBe(snapshot)
   })
 })
