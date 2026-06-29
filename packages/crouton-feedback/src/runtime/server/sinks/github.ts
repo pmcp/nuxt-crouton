@@ -16,8 +16,8 @@ import { mintInstallationToken } from '../utils/githubApp'
  * message on failure — never echoes a token or the private key.
  */
 export const githubSink: FeedbackSink = async (_annotation, markdown, { config }) => {
-  const repository = typeof config.repository === 'string' ? config.repository.trim() : ''
-  const pr = String(config.pr ?? '').trim()
+  const repository = typeof config.githubRepository === 'string' ? config.githubRepository.trim() : ''
+  const pr = String(config.githubPr ?? '').trim()
   const appId = config.githubAppId as string | undefined
   const privateKey = config.githubAppPrivateKey as string | undefined
   const installationId = config.githubAppInstallationId as string | undefined

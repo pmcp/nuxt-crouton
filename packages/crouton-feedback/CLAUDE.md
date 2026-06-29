@@ -22,18 +22,20 @@ adds its crouton-specific tabs on top.
 
 ## Status
 
-🚧 **All four sinks built (WS4 / #964).** Both tools (Console + Annotate) work;
-a sent annotation is dispatched to one of four pluggable sinks. The webhook path
-is verified end-to-end against a real URL; slack/discord/github are unit-proven
-(payload shaping, auth, error paths). What remains is the **config surface** so
-the slack/discord/github destinations are reachable from options/env. Workstreams:
+🚧 **Module feature-complete (WS5 / #965).** Both tools work; a sent annotation
+is dispatched to the configured sink, selectable via module option or env. The
+webhook + slack paths are verified end-to-end against a real URL; discord/github
+are unit-proven (payload shaping, auth, error paths). What remains is integration:
+have `@fyit/crouton-devtools` consume this module (#966) + docs/e2e (#967).
 
 | Issue | Brings in | State |
 |-------|-----------|-------|
 | [#962](https://github.com/FriendlyInternet/nuxt-crouton/issues/962) | Launcher + tool registry + mount + Console (eruda) | ✅ |
 | [#963](https://github.com/FriendlyInternet/nuxt-crouton/issues/963) | `FeedbackSink` dispatcher + Annotate + source-stamp transform (webhook sink) | ✅ |
 | [#964](https://github.com/FriendlyInternet/nuxt-crouton/issues/964) | The slack / discord / github sinks — test-first (#774) | ✅ |
-| [#965](https://github.com/FriendlyInternet/nuxt-crouton/issues/965) | Module-option + env config surface (lights up slack/discord/github via env) | ⏳ |
+| [#965](https://github.com/FriendlyInternet/nuxt-crouton/issues/965) | Module-option + env config surface for sink selection | ✅ |
+| [#966](https://github.com/FriendlyInternet/nuxt-crouton/issues/966) | Refactor `@fyit/crouton-devtools` to consume this module | ⏳ |
+| [#967](https://github.com/FriendlyInternet/nuxt-crouton/issues/967) | Docs site + e2e fixture smoke + cross-app typecheck | ⏳ |
 
 **Gating:** the launcher + tools register only in local dev or when a build sets
 `NUXT_PUBLIC_CROUTON_FEEDBACK=true` (→ `runtimeConfig.public.croutonFeedback`);
@@ -61,8 +63,22 @@ sink is chosen by `croutonFeedback.sink` (env `NUXT_CROUTON_FEEDBACK_SINK`):
 | `github` | issue/PR comment (App token, PAT fallback) | `NUXT_CROUTON_FEEDBACK_GITHUB_*` |
 
 Credentials/URLs stay in **server** `runtimeConfig.croutonFeedback`, never the
-client bundle. (The env→runtimeConfig wiring for slack/discord/github lands in #965;
-the sinks themselves are built + tested here.)
+client bundle. Configure via the `croutonFeedback.feedback` module option or env:
+
+```ts
+// nuxt.config.ts
+croutonFeedback: {
+  feedback: {
+    sink: 'slack',
+    slackUrl: '…',                 // or webhookUrl / discordUrl
+    github: { appId, privateKey, installationId, repository, pr } // or { token }
+  }
+}
+```
+
+Every field is overridable at runtime by its `NUXT_CROUTON_FEEDBACK_*` env var
+(the empty-string defaults in `module.ts` are what make env mapping work). Prefer
+env for secrets (`…_GITHUB_APP_PRIVATE_KEY`, `…_GITHUB_TOKEN`).
 
 ## Key Files
 

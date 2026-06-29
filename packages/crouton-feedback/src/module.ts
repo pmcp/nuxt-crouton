@@ -4,22 +4,43 @@ import { createSourceStampTransform } from './runtime/transform/sourceStamp'
 /**
  * @fyit/crouton-feedback — in-page feedback toolkit for any Nuxt UI app.
  *
- * Wired so far: the glasses launcher + tool registry + Console (eruda) tool
- * (#962), and the Annotate tool + source-stamp transform + the `/api/_feedback`
- * sink dispatcher (#963, webhook sink only). Still to come — the slack/discord/
- * github sinks (#964) and the full sink-selection config surface (#965).
+ * Wired: the glasses launcher + tool registry + Console (eruda) tool (#962), the
+ * Annotate tool + source-stamp transform + the `/api/_feedback` dispatcher (#963),
+ * the four sinks (#964), and the sink-selection config surface below (#965).
  *
  * The module deliberately depends only on Nuxt + Nuxt UI 4 — NOT on
  * @fyit/crouton-core — so any Nuxt UI app can install it.
  */
 export interface FeedbackModuleOptions {
   /**
-   * Where a sent annotation lands. Fleshed out in #965; declared here so the
-   * `configKey` shape is stable from the first release.
+   * Where a sent annotation lands. Server-side only — credentials/URLs never
+   * reach the client bundle. Every field is overridable at runtime by its
+   * `NUXT_CROUTON_FEEDBACK_*` env var (preferred for secrets).
    */
   feedback?: {
-    /** Built-in destination. Defaults to `'webhook'` once #964/#965 land. */
+    /** Built-in destination. Default `'webhook'`. (`NUXT_CROUTON_FEEDBACK_SINK`) */
     sink?: 'webhook' | 'slack' | 'discord' | 'github'
+    /** `webhook` sink: generic JSON POST target. (`…_WEBHOOK_URL`) */
+    webhookUrl?: string
+    /** `slack` sink: Slack incoming-webhook URL. (`…_SLACK_URL`) */
+    slackUrl?: string
+    /** `discord` sink: Discord webhook URL. (`…_DISCORD_URL`) */
+    discordUrl?: string
+    /** `github` sink: comment as a GitHub App (preferred) or PAT fallback. */
+    github?: {
+      /** App id. (`…_GITHUB_APP_ID`) */
+      appId?: string
+      /** App private key PEM — prefer the env var, don't commit it. (`…_GITHUB_APP_PRIVATE_KEY`) */
+      privateKey?: string
+      /** Installation id. (`…_GITHUB_APP_INSTALLATION_ID`) */
+      installationId?: string
+      /** Interim PAT, honoured only when App creds are absent. (`…_GITHUB_TOKEN`) */
+      token?: string
+      /** "owner/repo". (`…_GITHUB_REPOSITORY`) */
+      repository?: string
+      /** Issue or PR number to comment on. (`…_GITHUB_PR`) */
+      pr?: string | number
+    }
   }
 }
 
@@ -32,7 +53,7 @@ export default defineNuxtModule<FeedbackModuleOptions>({
     }
   },
   defaults: {},
-  setup(_options, nuxt) {
+  setup(options, nuxt) {
     // Enabled in local dev or when a build opts in via
     // NUXT_PUBLIC_CROUTON_FEEDBACK=true. The plugins double-check the flag at
     // runtime, so a production build that doesn't set it ships nothing.
@@ -85,12 +106,25 @@ export default defineNuxtModule<FeedbackModuleOptions>({
       createSourceStampTransform(nuxt.options.rootDir)
     ]
 
-    // Server dispatcher config. Empty-string defaults so the NUXT_CROUTON_FEEDBACK_*
-    // env vars override at runtime (Nuxt only maps env onto keys already present).
-    // The full typed options surface (slack/discord/github routing) lands in #965.
+    // Server dispatcher config, built from module options. Every field is
+    // overridable at runtime by its NUXT_CROUTON_FEEDBACK_* env var — Nuxt only
+    // maps env onto keys that already exist here, so the empty-string defaults are
+    // load-bearing (they make slack/discord/github reachable from env). These live
+    // in SERVER runtimeConfig only — never runtimeConfig.public — so no credential
+    // or URL ships in the client bundle.
+    const fb = options.feedback ?? {}
+    const gh = fb.github ?? {}
     ;(nuxt.options.runtimeConfig as Record<string, any>).croutonFeedback = {
-      sink: process.env.NUXT_CROUTON_FEEDBACK_SINK || 'webhook',
-      webhookUrl: process.env.NUXT_CROUTON_FEEDBACK_WEBHOOK_URL || ''
+      sink: fb.sink || 'webhook',
+      webhookUrl: fb.webhookUrl ?? '',
+      slackUrl: fb.slackUrl ?? '',
+      discordUrl: fb.discordUrl ?? '',
+      githubAppId: gh.appId ?? '',
+      githubAppPrivateKey: gh.privateKey ?? '',
+      githubAppInstallationId: gh.installationId ?? '',
+      githubToken: gh.token ?? '',
+      githubRepository: gh.repository ?? '',
+      githubPr: gh.pr != null ? String(gh.pr) : ''
     }
     addServerHandler({
       route: '/api/_feedback',

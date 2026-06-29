@@ -34,8 +34,38 @@ export default defineNuxtConfig({
 })
 ```
 
-Configuration (the `croutonFeedback.feedback` block, env vars, and the full sink
-list) is documented as it lands — see epic #960.
+The launcher renders in local dev, or in any build that sets
+`NUXT_PUBLIC_CROUTON_FEEDBACK=true` (production builds without it ship nothing).
+
+## Configure where feedback goes
+
+Pick a sink via the `croutonFeedback.feedback` option, or override any field at
+runtime with its `NUXT_CROUTON_FEEDBACK_*` env var (preferred for secrets):
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@nuxt/ui', '@fyit/crouton-feedback'],
+  croutonFeedback: {
+    feedback: {
+      sink: 'webhook',        // 'webhook' | 'slack' | 'discord' | 'github'
+      webhookUrl: 'https://…'
+    }
+  }
+})
+```
+
+| Sink | Option fields | Env vars |
+|------|---------------|----------|
+| `webhook` | `webhookUrl` | `NUXT_CROUTON_FEEDBACK_WEBHOOK_URL` |
+| `slack` | `slackUrl` | `NUXT_CROUTON_FEEDBACK_SLACK_URL` |
+| `discord` | `discordUrl` | `NUXT_CROUTON_FEEDBACK_DISCORD_URL` |
+| `github` | `github.{appId,privateKey,installationId,repository,pr}` or `github.token` | `NUXT_CROUTON_FEEDBACK_GITHUB_APP_ID` / `_APP_PRIVATE_KEY` / `_APP_INSTALLATION_ID` / `_TOKEN` / `_REPOSITORY` / `_PR` |
+| (any) | `sink` | `NUXT_CROUTON_FEEDBACK_SINK` |
+
+Credentials and URLs live only in **server** runtime config — they never reach
+the client bundle. The `github` sink posts as a GitHub App (short-lived token, no
+stored credential), with an interim PAT (`github.token`) fallback.
 
 ## License
 

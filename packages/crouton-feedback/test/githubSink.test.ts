@@ -32,7 +32,7 @@ describe('github sink', () => {
   afterEach(() => { g.fetch = originalFetch; g.$fetch = original$fetch })
 
   it('errors (no network) when neither App creds nor PAT are set', async () => {
-    const res = await githubSink(annotation, '# md', ctx({ repository: 'o/r', pr: '5' }))
+    const res = await githubSink(annotation, '# md', ctx({ githubRepository: 'o/r', githubPr: '5' }))
     expect(res.ok).toBe(false)
     expect(res.error).toMatch(/not configured/i)
     expect(g.$fetch).not.toHaveBeenCalled()
@@ -46,7 +46,7 @@ describe('github sink', () => {
   })
 
   it('posts via the interim PAT (no token mint) to issues/{pr}/comments', async () => {
-    const res = await githubSink(annotation, '# md', ctx({ githubToken: 'pat-123', repository: 'o/r', pr: '5' }))
+    const res = await githubSink(annotation, '# md', ctx({ githubToken: 'pat-123', githubRepository: 'o/r', githubPr: '5' }))
     expect(res.ok).toBe(true)
     expect(res.data?.commentUrl).toContain('issuecomment')
     expect(g.fetch).not.toHaveBeenCalled() // no mint when using the PAT
@@ -59,7 +59,7 @@ describe('github sink', () => {
   it('mints a short-lived App token and posts with it', async () => {
     const res = await githubSink(annotation, '# md', ctx({
       githubAppId: '123', githubAppPrivateKey: privateKey, githubAppInstallationId: '999',
-      repository: 'o/r', pr: '5'
+      githubRepository: 'o/r', githubPr: '5'
     }))
     expect(res.ok).toBe(true)
     expect(g.fetch).toHaveBeenCalledOnce() // minted the installation token
@@ -70,7 +70,7 @@ describe('github sink', () => {
   it('prefers App credentials over the interim PAT', async () => {
     await githubSink(annotation, '# md', ctx({
       githubAppId: '123', githubAppPrivateKey: privateKey, githubAppInstallationId: '999',
-      githubToken: 'pat-should-not-be-used', repository: 'o/r', pr: '5'
+      githubToken: 'pat-should-not-be-used', githubRepository: 'o/r', githubPr: '5'
     }))
     const [, opts] = (g.$fetch as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(opts.headers.Authorization).toBe('Bearer minted-tok')
@@ -78,7 +78,7 @@ describe('github sink', () => {
 
   it('never echoes the token in a failure message', async () => {
     g.$fetch = vi.fn(async () => { throw Object.assign(new Error('boom'), { statusCode: 403 }) })
-    const res = await githubSink(annotation, '# md', ctx({ githubToken: 'super-secret-pat', repository: 'o/r', pr: '5' }))
+    const res = await githubSink(annotation, '# md', ctx({ githubToken: 'super-secret-pat', githubRepository: 'o/r', githubPr: '5' }))
     expect(res.ok).toBe(false)
     expect(res.error).toContain('403')
     expect(res.error).not.toContain('super-secret-pat')
