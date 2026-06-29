@@ -464,13 +464,17 @@ on the **behaviour**, and only then write the code that makes it green. The agre
 contract: "done" = that test passes. This is the third sign-off gate alongside Schema (#314, the
 data model) and UI (#307, the look) — pick the gate by *what the change is*.
 
-**Scope is by where the code currently lives (#779), not its origin or destiny:**
+**Scope is by where the code currently lives (#779), not its origin or destiny.** The
+canonical, queryable source is the **stage model** (`harness.config.mjs`, epic #952): run
+`node scripts/harness-stages.mjs <path>` to see a path's stage and whether `test-first` is
+`on` / `opt-in` / `off` — don't re-derive it from the folder name by hand. The table below is
+the **default profile** rendered for humans (rename `poc`→`spike` etc. in that one file):
 
-| Current home | Test-first |
-|---|---|
-| `packages/*` | **On** (default) — what we maintain; every consuming app inherits its correctness |
-| `apps/*` | **Opt-in** — may be another user's app; their call, not ours to impose |
-| `pocs/*` | **Off** — the incubator must stay fast and safe-to-fail |
+| Current home | Stage | Test-first |
+|---|---|---|
+| `packages/*` | `package` | **On** (default) — what we maintain; every consuming app inherits its correctness |
+| `apps/*` | `app` | **Opt-in** — may be another user's app; their call, not ours to impose |
+| `pocs/*` | `poc` | **Off** — the incubator must stay fast and safe-to-fail |
 
 The gate moves *with the code*: a POC has no fixed identity, so it's exempt while it's a POC, and
 **graduating to `packages/*` is the checkpoint to backfill its tests** (see the `pocs/` note above).

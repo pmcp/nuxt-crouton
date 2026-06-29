@@ -27,12 +27,16 @@ loop and signal as the other two (#310/#572).
 Decide by **where the code currently lives (#779)**, then by **what kind of change** it is. Skip
 loudly (one line saying why + which gate, if any, fits instead) rather than gating everything.
 
-**By location:**
-| Current home | Action |
-|---|---|
-| `packages/*` | **Proceed** (default — what we maintain; every consuming app inherits its correctness) |
-| `apps/*` | **Skip unless the app has explicitly opted in** (may be another user's app — not ours to impose) |
-| `pocs/*` | **Skip** — the incubator must stay fast and safe-to-fail; a POC graduating to `packages/*` is the checkpoint to backfill its tests |
+**By location — resolved from the stage model.** Run `node scripts/harness-stages.mjs <path>`
+(or `gateMode(path, 'test-first')`) for the verdict (`on` / `opt-in` / `off`) rather than matching
+the folder by hand; the canonical source is `harness.config.mjs` (epic #952). The table below is
+the **default profile** rendered for humans:
+
+| Current home | Stage | Action |
+|---|---|---|
+| `packages/*` | `package` | **Proceed** (default — what we maintain; every consuming app inherits its correctness) |
+| `apps/*` | `app` | **Skip unless the app has explicitly opted in** (may be another user's app — not ours to impose) |
+| `pocs/*` | `poc` | **Skip** — the incubator must stay fast and safe-to-fail; a POC graduating to `packages/*` is the checkpoint to backfill its tests |
 
 **By change kind (only once location is in scope):**
 - Collection schema / data model → **skip**, use `/schema-review` (+ the e2e fixture smoke covers generated CRUD).
