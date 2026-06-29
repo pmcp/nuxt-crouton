@@ -1,5 +1,6 @@
 ---
 name: ticket-diagram
+layer: method
 description: Attach a self-contained Excalidraw status diagram to a GitHub epic — read the epic + its sub-issue tree, render boxes-coloured-by-status with dependency arrows to a committed PNG that (a) renders on the GitHub mobile app and (b) has the editable Excalidraw scene embedded inside it, post it as a sticky comment, and round-trip human edits back in from a comment. Use when asked to "diagram an epic", "draw the ticket tree", "show the epic on mobile", "add a status graph to #NN", or to keep an epic's diagram current as its children change.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---

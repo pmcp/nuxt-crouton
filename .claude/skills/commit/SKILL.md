@@ -1,5 +1,6 @@
 ---
 name: commit
+layer: method
 description: Smart, granular git commits following monorepo conventions. Analyzes changes, filters to session-relevant files, groups by intent, and uses conventional commit format. Use when committing code changes.
 allowed-tools: Bash, Read, Grep, Glob
 ---

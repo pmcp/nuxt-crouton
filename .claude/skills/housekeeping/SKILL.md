@@ -1,5 +1,6 @@
 ---
 name: housekeeping
+layer: method
 description: Generate the weekly "🧹 Housekeeping" digest — a render-only report of repo drift that needs a human eye (stale unmerged branches, mislabeled issues, stuck in-progress tickets, epics ready to close, idle PRs, label-coverage gaps). Reports only, never mutates. Use when asked for a "housekeeping report", "repo drift", "what's stale", or to run the weekly sweep by hand.
 ---
 

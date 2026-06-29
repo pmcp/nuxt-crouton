@@ -1,5 +1,6 @@
 ---
 name: provider-swap
+layer: stack
 description: Swap the external provider/library that backs a crouton package (e.g. the map renderer, geocoder, editor engine, storage SDK) while keeping the package's public API stable so consuming apps need no changes. Use when asked to "change the X provider", "replace library Y in package Z", "switch from <vendor A> to <vendor B>" inside packages/. Encodes the keep-the-API-stable playbook + the gotchas (dist .d.ts over docs, generator templates, fixtures, dup-dep type clashes).
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, WebSearch, WebFetch
 ---

@@ -1,5 +1,6 @@
 ---
 name: review
+layer: method
 description: Code Review Assistant. Reviews uncommitted changes or recent commits for pattern violations, security issues, and bugs. Optimized for solo dev moving fast. Use when reviewing code before or after committing.
 argument-hint: "[last N | --scope <package> | --file <path>]"
 allowed-tools: Bash, Read, Grep, Glob, Agent

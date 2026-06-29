@@ -1,5 +1,6 @@
 ---
 name: db-clone
+layer: stack
 description: Copy one Cloudflare D1 database into another of the same app's environments — refresh STAGING from prod, seed a PREVIEW from staging, or (guarded) push staging up to prod. Full mirror via scripts/db-clone.mjs. Use when asked to "clone a db", "refresh staging from prod", "copy prod data to staging", "seed a preview db", or to reconstitute a wiped staging DB. NOT for per-collection seeding (use the app's seedData/seed endpoints) or for schema migrations (use db-migrations).
 allowed-tools: Bash, Read, Grep, Glob
 ---

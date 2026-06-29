@@ -1,5 +1,6 @@
 ---
 name: epic-digest
+layer: method
 description: Generate a daily "where are we?" digest from this repo's GitHub epics — a render-only HTML + plain-text email summarising the last 24h of activity plus a progress snapshot of every open epic. Use when asked for a "daily digest", "epic report", "status rapport", "what moved this week", or "where are we on the epics".
 allowed-tools: mcp__github__search_issues, mcp__github__list_issues, mcp__github__issue_read, Read, Write, Bash
 ---

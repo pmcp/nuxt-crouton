@@ -1,5 +1,6 @@
 ---
 name: a11y
+layer: method
 description: Accessibility review for Vue surfaces — the code-cleaning analog of /code-review and /simplify, pointed at WCAG/ARIA. Reviews just your diff (or a package/file), rates findings by severity, and either comments inline on the PR (--comment) or applies the safe fixes for you (--fix). Steers the depth-aware `a11y` subagent. Use when asked to "check accessibility", "a11y this", "audit ARIA/keyboard", or run /a11y.
 argument-hint: "[quick|standard|deep] [last N | --scope <pkg> | --file <path>] [--comment] [--fix]"
 allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, mcp__github__add_comment_to_pending_review, mcp__github__pull_request_review_write, mcp__github__pull_request_read, mcp__github__add_issue_comment
