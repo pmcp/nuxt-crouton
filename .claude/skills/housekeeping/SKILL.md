@@ -28,6 +28,12 @@ the only thing it writes.
   action each needs (read from the `status:ready-to-close` / `status:needs-postmortem` label
   the labeller stamps — see below): *run the postmortem then close* vs *postmortem done, just
   close*.
+- **🚧 Epics with active work but not marked in-progress** — a sub-issue is
+  `status:in-progress` but the epic isn't, so it reads as "open, not started" (#980). The
+  labeller reconciles this (see below); the digest just surfaces it.
+- **🧭 In-progress under a non-open-epic parent** — `status:in-progress` issues whose parent
+  isn't a currently-open epic: a closed epic left with unfinished work, or a parent missing
+  the `epic` label (#980).
 - **🔀 Idle PRs** — open PRs with no activity in >N days.
 
 ## Pipeline (deterministic — no LLM, no secrets)
@@ -89,17 +95,21 @@ GITHUB_TOKEN=$(gh auth token) node .claude/skills/housekeeping/prune-merged-bran
 GITHUB_TOKEN=$(gh auth token) APPLY=true node .claude/skills/housekeeping/prune-merged-branches.mjs  # delete
 ```
 
-## Epic close-state labels (separate workflow — the only auto-label) (#763)
+## Epic status labels (separate workflow — the only auto-label) (#763 / #980)
 
-The "✅ Epics ready to close" section reads two labels it does **not** set:
-`status:ready-to-close` and `status:needs-postmortem`. They're stamped by a separate daily
+The epic sections above read labels the digest does **not** set: `status:ready-to-close`,
+`status:needs-postmortem`, and `status:in-progress`. They're reconciled by a separate daily
 workflow (`.github/workflows/label-ready-epics.yml` → `scripts/label-ready-epics.mjs`), split
 off by blast radius exactly like the branch janitor — it's the **only** auto-*label* mutation,
-and the digest stays report-only. For each open epic whose sub-issues are all closed it applies
-`status:ready-to-close` if a `<!-- postmortem:done -->` marker exists on a comment (left by the
-`postmortem` skill), else `status:needs-postmortem`; it removes both when the epic no longer
-qualifies. The same labels drive the daily epic-digest email's "Ready to close" band, so both
-digests agree. Dry-run by default; set repo var `LABEL_READY_EPICS_APPLY=true` to write.
+and the digest stays report-only. The labeller **derives** each open epic's status from its
+children (mutually-exclusive, at most one):
+- all sub-issues closed → `status:ready-to-close` if a `<!-- postmortem:done -->` marker exists
+  on a comment (left by the `postmortem` skill), else `status:needs-postmortem`;
+- ≥1 sub-issue `status:in-progress` → `status:in-progress` (the opening side, #980);
+- otherwise (open-but-idle or no children) → none.
+It removes any managed label the epic no longer qualifies for. The same labels drive the daily
+epic-digest email's bands, so both digests agree. Dry-run by default; set repo var
+`LABEL_READY_EPICS_APPLY=true` to write.
 
 ## Tuning
 

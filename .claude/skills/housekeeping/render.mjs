@@ -94,6 +94,28 @@ if (data.staleEpics?.length) {
   sections.push(['✅ Epics ready to close', lines])
 }
 
+if (data.epicsMissingInProgress?.length) {
+  sections.push([
+    '🚧 Epics with active work but not marked in-progress',
+    [
+      'A child is `status:in-progress` but the epic isn\'t — so it reads as "open, not started". `label-ready-epics.mjs --apply` reconciles this:',
+      ...data.epicsMissingInProgress.map(
+        (e) => `- ${link(e.number, e.title, e.url)} — active: ${e.activeChildren.map((n) => `#${n}`).join(', ')}`
+      )
+    ]
+  ])
+}
+
+if (data.orphanedInProgress?.length) {
+  sections.push([
+    '🧭 In-progress under a non-open-epic parent',
+    [
+      '`status:in-progress` issues whose parent isn\'t a currently-open epic — a closed epic left with unfinished work, or a parent missing the `epic` label:',
+      ...data.orphanedInProgress.map((i) => `- ${link(i.number, i.title, i.url)} — parent #${i.parent}`)
+    ]
+  ])
+}
+
 if (data.idlePRs?.length) {
   sections.push([
     '🔀 Idle PRs',
