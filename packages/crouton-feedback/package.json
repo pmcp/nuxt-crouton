@@ -1,0 +1,59 @@
+{
+  "name": "@fyit/crouton-feedback",
+  "version": "0.1.0",
+  "description": "Drop-in in-page feedback toolkit for any Nuxt UI app — a glasses launcher with a mobile console (eruda) and a pin-a-comment Annotate tool that sends to a pluggable destination (webhook / Slack / Discord / GitHub)",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/module.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "nuxt-ui",
+    "feedback",
+    "annotate",
+    "eruda",
+    "devtools"
+  ],
+  "author": "FYIT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git",
+    "directory": "packages/crouton-feedback"
+  },
+  "bugs": {
+    "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues"
+  },
+  "homepage": "https://github.com/FriendlyInternet/nuxt-crouton#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^4.0.0",
+    "eruda": "^3.4.3"
+  },
+  "devDependencies": {
+    "@nuxt/ui": "catalog:",
+    "nuxt": "catalog:",
+    "unbuild": "^3.6.1"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.0.0",
+    "nuxt": "^4.0.0"
+  }
+}
