@@ -110,6 +110,17 @@ export const SPIKE_SET_PAGE_KEY = Symbol('spike-set-page') as InjectionKey<(node
 export const SPIKE_DUPLICATE_KEY = Symbol('spike-duplicate') as InjectionKey<(node: LayoutNode) => void>
 
 /**
+ * Page regions (#953, the "expressiveness boundary" — bounded vocabulary, not free floats). A node can
+ * be PINNED to the top or bottom edge of the page so it renders as a sticky pill/bar while the rest of
+ * the layout flows/scrolls in the middle — the review-flow + pill-top + pill-bottom shape. A bounded
+ * ENUM an agent could equally pick (`top` | `bottom` | undefined = main), kept on the FlowNode data.
+ * The page Preview overlay assembles the regions. Provided by the page, injected by SpikeBlockNode
+ * (node identified by object identity of its `data.node`, like the other node callbacks). `null` clears.
+ */
+export type SpikeRegion = 'top' | 'bottom'
+export const SPIKE_SET_REGION_KEY = Symbol('spike-set-region') as InjectionKey<(node: LayoutNode, region: SpikeRegion | null) => void>
+
+/**
  * Drop-ghost label (#946 ease-apart) — when an internal insert ARMS, the target splices a ghost
  * pane into its layout so the real panes ease apart to open the slot (the renderer's #943 FLIP
  * animates them). The ghost pane block (`__dropghost__`) renders `SpikeGhostPane`, which injects

@@ -29,9 +29,10 @@
 import { ref, inject, computed, watch } from 'vue'
 import { onKeyStroke, onClickOutside } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
+import type { SpikeRegion } from '~/utils/spike-layout'
 
 const props = defineProps<{
-  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean }
+  data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion }
   selected?: boolean
   // Vue Flow sets this true while the node is being dragged across the board, false on drop —
   // drives the light-green drag glow. It fades out via `transition-shadow` after release.
@@ -142,6 +143,11 @@ const reorder = inject(SPIKE_REORDER_KEY, null)
 // Page promotion (#942): promote this node to BE the page, or duplicate it as a draft.
 const setPage = inject(SPIKE_SET_PAGE_KEY, null)
 const duplicate = inject(SPIKE_DUPLICATE_KEY, null)
+// Page regions (#953): pin this node to the top/bottom edge of the page (a sticky pill), or clear it.
+const setRegion = inject(SPIKE_SET_REGION_KEY, null)
+function toggleRegion(region: SpikeRegion) {
+  setRegion?.(props.data.node, props.data.region === region ? null : region)
+}
 const isGroup = computed(() => props.data.node.type === 'split')
 
 // Long-press → jiggle (#941): detach is gated behind a deliberate HOLD, so a merged group's panes
@@ -207,20 +213,23 @@ onClickOutside(cardRef, () => { if (jiggling.value) jiggling.value = false })
 // that surface is the #942 promote/duplicate toolbar now; pulling apart is the deliberate hold.
 const armed = computed(() => !surveying.value && isGroup.value && (jiggling.value || activeIndex.value !== null))
 
-// Top-level pane faces (as % of the card), laid out along the split's axis by footprint — the
-// regions you grab to pull a pane out, and the seams revealed between them on ease-apart.
+// Top-level pane faces (as % of the card), laid out along the split's axis — the regions you grab to
+// pull a pane out, the seams on ease-apart, AND the slot bounds the reorder hit-test reads. They must
+// match what the renderer actually DRAWS: it sizes each splitter panel by `defaultSize` (% along the
+// axis), NOT footprint — so a spacer beside a dense grid renders 50/50, while footprint would've said
+// e.g. 1:4. Using footprint here made the faces drift off the panes (#953, IMG_1061/1062). Mirror the
+// renderer's `child.defaultSize ?? (100 / n)` exactly so faces/seams/reorder-slots line up.
 const panes = computed(() => {
   const n = props.data.node
   if (n.type !== 'split') return []
   const horizontal = n.direction === 'horizontal'
-  const fps = n.children.map(footprint)
-  const total = fps.reduce((s, f) => s + (horizontal ? f.cols : f.rows), 0) || 1
+  const sizes = n.children.map(c => (typeof c.defaultSize === 'number' ? c.defaultSize : 100 / n.children.length))
+  const total = sizes.reduce((s, v) => s + v, 0) || 1
   let acc = 0
   return n.children.map((_, i) => {
-    const span = horizontal ? fps[i]!.cols : fps[i]!.rows
+    const sizePct = (sizes[i]! / total) * 100
     const start = (acc / total) * 100
-    const sizePct = (span / total) * 100
-    acc += span
+    acc += sizes[i]!
     return horizontal
       ? { left: start, top: 0, width: sizePct, height: 100 }
       : { left: 0, top: start, width: 100, height: sizePct }
@@ -426,6 +435,16 @@ watch(() => props.data.node, () => {
       class="pointer-events-none absolute left-2 top-2 z-30 shadow"
     >Page</UBadge>
 
+    <!-- Region badge (#953) — this node is pinned to the page's top/bottom edge (a sticky pill). -->
+    <UBadge
+      v-if="data.region && !surveying"
+      color="primary"
+      variant="subtle"
+      size="sm"
+      icon="i-lucide-pin"
+      class="pointer-events-none absolute right-2 top-2 z-30 shadow"
+    >Pinned {{ data.region }}</UBadge>
+
     <!-- Node actions (#942) — promote this layout to BE the page, or duplicate it as a draft.
          Shown when selected; floated ABOVE the card so it clears the detach faces. `.nodrag` +
          `.stop` so tapping a button neither drags the node nor bubbles to the card. -->
@@ -477,6 +496,30 @@ watch(() => props.data.node, () => {
         @pointerdown.stop
         @click.stop="duplicate?.(data.node)"
       />
+      <!-- Pin this node to the page's top/bottom edge as a sticky pill (#953). Toggle off to return it
+           to the main flow. The Preview assembles pinned nodes as bars + the rest as scrolling main. -->
+      <USeparator orientation="vertical" class="h-5" />
+      <UButton
+        icon="i-lucide-pin"
+        size="xs"
+        :color="data.region === 'top' ? 'primary' : 'neutral'"
+        :variant="data.region === 'top' ? 'soft' : 'ghost'"
+        title="Pin to top"
+        aria-label="Pin to top"
+        @pointerdown.stop
+        @click.stop="toggleRegion('top')"
+      >Top</UButton>
+      <UButton
+        icon="i-lucide-pin"
+        size="xs"
+        :color="data.region === 'bottom' ? 'primary' : 'neutral'"
+        :variant="data.region === 'bottom' ? 'soft' : 'ghost'"
+        :ui="{ leadingIcon: 'rotate-180' }"
+        title="Pin to bottom"
+        aria-label="Pin to bottom"
+        @pointerdown.stop
+        @click.stop="toggleRegion('bottom')"
+      >Bottom</UButton>
     </div>
 
     <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
@@ -488,7 +531,10 @@ watch(() => props.data.node, () => {
       class="nopan nodrag h-full w-full overflow-auto"
       style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
     >
-      <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" />
+      <!-- Survey is READ-ONLY (#953): `interactive: false` drops the splitter resize handles, so you
+           can't accidentally resize panes while previewing a device width. Editing sizes is the edit
+           view's job (double-click), not the survey. -->
+      <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" :interactive="false" />
     </div>
     <CroutonLayoutRenderer v-else :node="renderNode" />
 

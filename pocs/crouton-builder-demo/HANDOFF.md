@@ -134,6 +134,16 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   splitter drags → keypoint sizes. The floating header sits in the author's reserved top band.
 - **Persistence unchanged.** The node's layout rides the page's `zoomTree` `v-model`; `Done` returns.
 
+### Page regions (#953 — the first "bounded vocabulary" expressiveness feature)
+
+A node can be **pinned to the page's top/bottom edge** (a sticky pill/bar) from its action toolbar; the
+badge shows "Pinned top/bottom". **▶ Preview** assembles the running page: pinned-top nodes in a sticky
+top bar, pinned-bottom in a sticky bottom bar, everything else (or the ★ page node) in a scrolling main
+area between — the review-flow + pill-top + pill-bottom shape, with NO free-floating positioning. Region
+is a bounded enum (`top`|`bottom`|undefined=main) on the FlowNode data — agent-pickable, serialisable.
+Composed POC-side (`SpikePagePreview` over `CroutonLayoutRenderer`). Next in this family: per-block
+sizing enums (full-width/height, fit) so a pinned pill is short instead of as tall as its content.
+
 ### Board gestures (direct manipulation)
 
 - **Snap = two-stage dwell-to-arm (#941, #948).** Near a snap point → **soft** (blue, wide, pulsing).
@@ -200,6 +210,12 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
     union of each node's `position + sizeOf` — Vue Flow's own `fitView` (and its controls' ⛶) measure
     the small wrapper and zoom INTO the oversized card. (The Site flow's normal-sized cards are fine, so
     the VF ⛶ is left enabled there.)
+- **Overlays must match the RENDERER's sizing (`defaultSize`), not footprint.** The wiggle/pull faces +
+  reorder slot bounds (`panes` in SpikeBlockNode) are positioned along the split axis by each child's
+  `defaultSize` % — the same value the renderer feeds reka's splitter panels. Footprint (cols/rows) was
+  wrong: a spacer beside a dense grid renders 50/50 but footprint said ~1:4, so the faces drifted off
+  the panes (#953, IMG_1061/1062). Any overlay drawn over the rendered layout has to use the renderer's
+  own sizing source.
 - **Hit-test the RENDERED panes, never the abstract tree.** Anything that maps a screen point to a pane
   (the edit view's block selection + dim overlay) must measure the real DOM (`.croutonpane` leaf
   elements), because the renderer reflows panes via CSS `@container` (a horizontal split STACKS

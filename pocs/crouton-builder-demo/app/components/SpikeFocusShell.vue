@@ -29,6 +29,8 @@ const props = defineProps<{
   modelValue: LayoutTree
   label?: string
   originRect?: { x: number, y: number, width: number, height: number } | null
+  /** Open AT this width (the flow's survey slider) instead of the editor default (#953). null = default. */
+  initialWidth?: number | null
 }>()
 const emit = defineEmits<{ 'update:modelValue': [tree: LayoutTree], close: [] }>()
 
@@ -38,7 +40,9 @@ function update(next: LayoutTree) { emit('update:modelValue', next) }
 // --- width / devices / breakpoints (same model as the package author) -----------------
 const MIN = 320
 const MAX = 1600
-const simWidth = ref(390)
+// Seed the width from the flow's survey slider when one was passed (#953), clamped — so focusing a
+// layout you were previewing at, say, 600px opens at 600px. Falls back to the phone default.
+const simWidth = ref(props.initialWidth ? Math.min(MAX, Math.max(MIN, Math.round(props.initialWidth))) : 390)
 const DEVICES = [
   { label: 'Phone', width: 390, icon: 'i-lucide-smartphone' },
   { label: 'Tablet', width: 768, icon: 'i-lucide-tablet' },

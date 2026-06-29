@@ -86,7 +86,7 @@ const drawer = [
 // `bp` = authored responsive breakpoints for this node's layout (#907 layer 2), set in the
 // breakpoint slider you zoom into. Structural edits (snap/detach) create nodes WITHOUT bp, so
 // authored breakpoints reset when the structure they targeted changes — which is the right thing.
-interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean } }
+interface FlowNode { id: string, type: string, position: { x: number, y: number }, data: { node: LayoutNode, label?: string, bp?: LayoutBreakpoint[], isPage?: boolean, justAdded?: boolean, region?: SpikeRegion } }
 const nodes = ref<FlowNode[]>([])
 let seq = 0
 
@@ -257,9 +257,14 @@ function onNodeDblClick(id: string) {
   const el = nodeEl?.querySelector('.spike-block-node') ?? nodeEl
   const r = el?.getBoundingClientRect()
   originRect.value = r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null
+  // Open the edit view AT the width you're surveying at on the flow (#953) — if the slider is scrubbed
+  // to a device width, focusing a layout should land on that same size, not the editor default. Capture
+  // it BEFORE clearing the survey. null when at edit (max) → the edit view picks its own default.
+  editInitialWidth.value = viewport.value?.width ?? null
   viewport.value = null // editing one node; leave the board-wide survey
   zoomNodeId.value = id
 }
+const editInitialWidth = ref<number | null>(null)
 function closeEdit() {
   zoomNodeId.value = null
   originRect.value = null
@@ -832,8 +837,24 @@ function duplicateNode(node: LayoutNode) {
     },
   }]
 }
+/** Pin a node to the page's top/bottom edge as a sticky region, or clear it (#953). */
+function setRegion(node: LayoutNode, region: SpikeRegion | null) {
+  pushUndo()
+  nodes.value = nodes.value.map(n => n.data.node === node ? { ...n, data: { ...n.data, region: region ?? undefined } } : n)
+}
 provide(SPIKE_SET_PAGE_KEY, setAsPage)
 provide(SPIKE_DUPLICATE_KEY, duplicateNode)
+provide(SPIKE_SET_REGION_KEY, setRegion)
+// Assemble the page for Preview (#953): pinned nodes become top/bottom bars, the rest is the main flow.
+const previewOpen = ref(false)
+const topRegionNodes = computed(() => nodes.value.filter(n => n.data.region === 'top'))
+const bottomRegionNodes = computed(() => nodes.value.filter(n => n.data.region === 'bottom'))
+const mainRegionNodes = computed(() => {
+  const main = nodes.value.filter(n => !n.data.region)
+  // Prefer the ★ page node as the main content when one is set; else show every un-pinned node.
+  const page = main.filter(n => n.data.isPage)
+  return page.length ? page : main
+})
 // Same contract the package's SiteFlow provides — our SpikePageCard injects this to "open the full
 // page" (descend into the board). enterPage is a hoisted function declaration, available here.
 provide('croutonSiteFlowZoom', (id: string) => enterPage(id))
@@ -1045,6 +1066,8 @@ function exitToPages() {
             <UButton icon="i-lucide-undo-2" size="sm" color="neutral" variant="ghost" :disabled="!canUndo" title="Undo (⌘Z)" aria-label="Undo" @click="undo" />
             <UButton icon="i-lucide-plus" size="sm" color="neutral" variant="ghost" title="Add blocks" aria-label="Add blocks" @click="paletteOpen = true" />
             <UButton :icon="hasAI ? 'i-lucide-sparkles' : 'i-lucide-wand-2'" size="sm" color="primary" variant="solid" :disabled="!blockCount" title="Magic arrange" aria-label="Magic" @click="magic" />
+            <!-- Preview the assembled page (#953) — pinned regions as pills, the rest as scrolling main. -->
+            <UButton icon="i-lucide-play" size="sm" color="neutral" variant="ghost" :disabled="!nodes.length" title="Preview page" aria-label="Preview page" @click="previewOpen = true" />
             <UButton v-if="proposals.length" icon="i-lucide-panel-top-open" size="sm" color="neutral" variant="ghost" aria-label="Show layout result" @click="resultOpen = true" />
           </div>
         </div>
@@ -1215,7 +1238,18 @@ function exitToPages() {
       v-model="zoomTree"
       :label="zoomLabel"
       :origin-rect="originRect"
+      :initial-width="editInitialWidth"
       @close="closeEdit"
+    />
+
+    <!-- Page Preview (#953) — assemble the regions into a running page (pinned pills + scrolling main). -->
+    <SpikePagePreview
+      v-if="previewOpen"
+      :top="topRegionNodes"
+      :main="mainRegionNodes"
+      :bottom="bottomRegionNodes"
+      :label="currentPage?.label ?? currentPageLabel"
+      @close="previewOpen = false"
     />
 
     <!-- Version chip (#940): the old header is gone, so this tiny floating chip shows the current
