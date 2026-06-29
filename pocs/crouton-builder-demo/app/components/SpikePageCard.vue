@@ -121,29 +121,26 @@ function open(event: Event) {
         />
       </div>
 
-      <!-- Settings row: the condensed page-settings — status (live/draft) + permissions + layout +
-           nav, the same chips the full page header shows, shrunk to icons. -->
+      <!-- Settings row: the condensed page-settings — status (live/draft) · permissions · layout ·
+           nav. ICONS ONLY (no text labels) — cleaner; the label rides in each icon's title tooltip.
+           Status keeps its colour (green=published, amber=draft, red=archived) as the live/draft cue. -->
       <div
         v-if="statusMeta || visibilityMeta || layoutMeta"
-        class="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-default pt-2 text-[11px]"
+        class="mt-2 flex items-center gap-3 border-t border-default pt-2"
       >
-        <span
+        <UIcon
           v-if="statusMeta"
-          class="flex items-center gap-1 font-medium"
+          :name="statusMeta.icon"
+          class="size-3.5"
           :class="statusMeta.text"
           :title="`Status: ${statusMeta.label}`"
-        >
-          <span class="size-2 rounded-full" :class="statusMeta.dot" />
-          {{ statusMeta.label }}
-        </span>
-        <span
+        />
+        <UIcon
           v-if="visibilityMeta"
-          class="flex items-center gap-1 text-muted"
+          :name="visibilityMeta.icon"
+          class="size-3.5 text-muted"
           :title="`Visibility: ${visibilityMeta.label}`"
-        >
-          <UIcon :name="visibilityMeta.icon" class="size-3.5" />
-          {{ visibilityMeta.label }}
-        </span>
+        />
         <UIcon
           v-if="layoutMeta"
           :name="layoutMeta.icon"
