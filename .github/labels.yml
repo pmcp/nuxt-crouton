@@ -144,6 +144,9 @@
 - name: "poc:loop-station"
   color: "fef2c0"
   description: "POC: pocs/loop-station"
+- name: "poc:crouton-builder"
+  color: "fef2c0"
+  description: "POC: pocs/crouton-builder"
 
 # ── Sandboxes (sandboxes/*) — throwaway, human-eyeball test apps (delete-after) ──
 - name: "sandbox:minimal-theme-demo"
