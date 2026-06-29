@@ -1,8 +1,13 @@
 [
   {
+    "v": 47,
+    "note": "Per-block DISPLAY VARIANTS — a block can now offer bounded layouts of the same data (the Artists list: Rows · Cards · Table). Select a pane in the edit view → a Display chip row lets you (or an agent) flip the variant; the choice is a bounded enum declared on the registry and serialised on the leaf, so it persists and round-trips. This is the 'collection viewer options' ask, kept inside the expressiveness boundary (an enum, not free config).",
+    "commit": ""
+  },
+  {
     "v": 46,
     "note": "Block sizing as DECLARED DATA — each block in the registry now carries a sizing descriptor ({ width, height: 'fill' | 'hug' }), so 'the component decides its own size' is one source the renderer and an agent both read, not per-component CSS. A Top bar / Bottom nav declare height:'hug', so a pinned bar comes out SHORT because the BLOCK says so (not because of where it's pinned) — no per-instance size control. Honoured in the page Preview (a hug block → a short bar, a fill block grows).",
-    "commit": ""
+    "commit": "8936b5d"
   },
   {
     "v": 45,

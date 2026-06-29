@@ -176,6 +176,26 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   field; (2) have the package **renderer honour it INSIDE a split** — make a *pane* hug its content
   between siblings (the Preview only hugs at the region level today).
 
+### Per-block display variants (#970 — bounded "collection viewer options")
+
+A block can expose **display variants** — bounded, enumerated layouts of the *same* data (e.g. the
+Artists list: **rows · cards · table**). It's the "collection viewer options" ask, kept inside the
+expressiveness boundary: a variant is an **enum an agent could equally pick**, not free config.
+
+- **Declared on the registry** as a `variant` **select** field in the block's `configSchema`
+  (`artists-list` in `app/app.config.ts`) — the bounded option list lives in one place the renderer's
+  `sanitizeConfig` enforces (an unknown value is dropped) and an agent reads.
+- **Serialised on the leaf** (`leaf.config.variant`), so the choice persists with the layout and
+  round-trips. Set via `setLeafConfigValue()` (`app/utils/spike-layout.ts`) onto the base root **and**
+  every breakpoint-root override (mirrors `setCollapseRecipe`), so whichever root resolves carries it.
+- **Picked in the edit view**: select a pane → the options panel shows a **Display** chip row
+  (`SpikeFocusShell`); a tap re-renders the block in that variant. The package renderer already merges
+  `config.variant` into the block's props, so the block (`SpikeListBlock`) just reads a `variant` prop.
+- **Graduation note:** this reuses the package's existing per-breakpoint variant channel
+  (`LAYOUT_VARIANTS_KEY`) only at render-merge time; the *leaf-serialised* variant + the in-view picker
+  are POC-side. On graduation, fold the picker into the package author and keep variant declaration on
+  the typed block definition.
+
 ### Board gestures (direct manipulation)
 
 - **Snap = two-stage dwell-to-arm (#941, #948).** Near a snap point → **soft** (blue, wide, pulsing).

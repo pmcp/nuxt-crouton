@@ -212,3 +212,27 @@ export function blockSizing(blockId: string, registry: SizedRegistry): SpikeBloc
 export function nodeHeightSizing(node: LayoutNode, registry: SizedRegistry): SpikeSizing {
   return node.type === 'leaf' ? blockSizing(node.blockId, registry).height : 'fill'
 }
+
+/**
+ * Per-leaf config field read/write (#970 display variants) — a block's `variant` (rows/cards/table) is
+ * a bounded enum SERIALISED on the leaf's `config`, so it persists with the layout and an agent can
+ * read/set it. Read the first matching leaf's value; set it immutably on EVERY matching leaf (mirrors
+ * how `setCollapseRecipe` addresses a block by id across the tree, vs by NodePath).
+ */
+export function leafConfigValue(node: LayoutNode, blockId: string, key: string): unknown {
+  if (node.type === 'leaf') return node.blockId === blockId ? node.config?.[key] : undefined
+  if (node.type === 'nested') return leafConfigValue(node.layout.root, blockId, key)
+  for (const c of node.children) {
+    const v = leafConfigValue(c, blockId, key)
+    if (v !== undefined) return v
+  }
+  return undefined
+}
+
+export function setLeafConfigValue(node: LayoutNode, blockId: string, key: string, value: unknown): LayoutNode {
+  if (node.type === 'leaf') {
+    return node.blockId === blockId ? { ...node, config: { ...(node.config ?? {}), [key]: value } } : node
+  }
+  if (node.type === 'nested') return { ...node, layout: { ...node.layout, root: setLeafConfigValue(node.layout.root, blockId, key, value) } }
+  return { ...node, children: node.children.map(c => setLeafConfigValue(c, blockId, key, value)) }
+}

@@ -20,7 +20,20 @@ export default defineAppConfig({
     // loop, not the block fidelity. Distinct names/icons so the drawer reads right.
     // Distinct demo blocks (#956) — each renders a DIFFERENT, recognizable UI so you can see which
     // block landed where (list vs form vs chart vs toolbar vs nav), instead of every card looking alike.
-    'artists-list': { id: 'artists-list', name: 'Artists · List', description: 'All artists', icon: 'i-lucide-list', component: 'SpikeListBlock', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 50, sizing: { width: 'fill', height: 'fill' } },
+    // Display variants (#970) — `variant` is a BOUNDED ENUM (select) declared on the registry, so the
+    // renderer's `sanitizeConfig` keeps only a known value and the edit-view picker (and an agent) read
+    // one source. Serialised on the leaf's `config.variant`; the block renders rows / cards / table.
+    'artists-list': {
+      id: 'artists-list', name: 'Artists · List', description: 'All artists', icon: 'i-lucide-list', component: 'SpikeListBlock', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 50, sizing: { width: 'fill', height: 'fill' },
+      configSchema: [{
+        name: 'variant', type: 'select', label: 'Display', default: 'rows',
+        options: [
+          { label: 'Rows', value: 'rows' },
+          { label: 'Cards', value: 'cards' },
+          { label: 'Table', value: 'table' },
+        ],
+      }],
+    },
     'artists-form': { id: 'artists-form', name: 'Artists · New', description: 'Create an artist', icon: 'i-lucide-square-pen', component: 'SpikeFormBlock', kind: 'atomic', category: 'form', minWidth: 200, defaultSize: 50, sizing: { width: 'fill', height: 'fill' } },
     'artists-stats': { id: 'artists-stats', name: 'Artists · Stats', description: 'Artist KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 180, defaultSize: 50, sizing: { width: 'fill', height: 'fill' } },
     'artists-chart': { id: 'artists-chart', name: 'Bookings · Chart', description: 'Bookings per week', icon: 'i-lucide-bar-chart-3', component: 'SpikeChartBlock', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 50, sizing: { width: 'fill', height: 'fill' } },
