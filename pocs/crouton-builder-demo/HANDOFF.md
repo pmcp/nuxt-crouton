@@ -143,6 +143,15 @@ area between — the review-flow + pill-top + pill-bottom shape, with NO free-fl
 is a bounded enum (`top`|`bottom`|undefined=main) on the FlowNode data — agent-pickable, serialisable.
 Composed POC-side (`SpikePagePreview` over `CroutonLayoutRenderer`).
 
+**Pinning is CARD-LEVEL (current truth).** You pin a whole node; a pinned bar is its own card, assembled
+in Preview. Two related ideas were considered and **decided against / deferred**:
+- **Per-pane pin** (pin one pane *inside* a composed layout) — **deferred**, not building it now;
+  card-level pinning is enough. (To pin an element that's snapped into a layout, detach it first.)
+- **Per-pane size *lock*** — **dropped.** It only existed to make a pinned bar short, which **intrinsic
+  block sizing now does automatically** (see below). A per-instance size lock would reintroduce the
+  per-instance flex control we deliberately avoid ("the component decides"). A block needing a specific
+  size declares it intrinsically (or via a block variant), not a manual lock.
+
 ### Per-element resize + intrinsic block sizing (#954 — replaces the global slider)
 
 Two decisions that resolve "how do blocks size / how do I preview responsiveness", deliberately the
