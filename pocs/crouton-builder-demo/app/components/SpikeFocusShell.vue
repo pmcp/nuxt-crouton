@@ -248,6 +248,16 @@ function syncDomRegions() {
 }
 // The regions actually used for hit-test + dimming: DOM-measured when available, else the tree.
 const activeRegions = computed(() => (domRegions.value.length ? domRegions.value : regions.value))
+// The dim overlay (focus the selected pane by dimming the others) draws ONLY when we have RELIABLE
+// DOM-measured regions AND the selected block is one of the currently-VISIBLE panes. When a pane is
+// tucked into the gutter (a tab), it isn't a visible pane — and the tree-region fallback is wrong —
+// so dimming would paint a misplaced half-pane (IMG_1063). In that case we skip the overlay entirely
+// (the settings panel still drives selection); a collapsed block just has no on-canvas dim.
+const dimRegions = computed(() => {
+  if (!domRegions.value.length) return []
+  if (!domRegions.value.some(r => r.blockId === selectedBlockId.value)) return []
+  return domRegions.value
+})
 function onLayoutClick(e: MouseEvent) {
   const el = innerRef.value
   if (!el || !multiBlock.value) return
@@ -305,9 +315,9 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
               @layout-change="onResize"
             />
             <!-- selection focus: dim the OTHER panels so the tapped one stands out -->
-            <template v-if="multiBlock && selectedBlockId">
+            <template v-if="multiBlock && selectedBlockId && dimRegions.length">
               <div
-                v-for="(rg, i) in activeRegions"
+                v-for="(rg, i) in dimRegions"
                 v-show="rg.blockId !== selectedBlockId"
                 :key="i"
                 class="pointer-events-none absolute bg-default/55 transition-opacity duration-200"
