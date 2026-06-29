@@ -32,8 +32,12 @@
           "migrations_dir": "server/db/migrations/sqlite"
         }
       ],
+      // Committed-back id: the first deploy auto-provisioned this KV namespace but
+      // failed at Worker init before sync:ids could write the id here, so the retry
+      // tried to re-create it ("already exists" 10014). Pin the provisioned id (the
+      // normal bootstrap→committed step). D1 resolves by database_name, so it needs none.
       "kv_namespaces": [
-        { "binding": "KV" }
+        { "binding": "KV", "id": "ac0f650e55c84594b700aa153855491a" }
       ]
     }
   }
