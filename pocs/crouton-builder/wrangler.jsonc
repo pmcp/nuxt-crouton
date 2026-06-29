@@ -1,0 +1,40 @@
+{
+  // Cloudflare WORKERS config for crouton-builder (#988). Nitro's `cloudflare_module`
+  // preset reads this at build time and writes `.output/server/wrangler.json`, injecting
+  // `main` + the `assets` binding automatically. id-less D1/KV auto-provision on the first
+  // deploy (wrangler 4.45+); the written-back ids are committed afterwards (sync:ids).
+  "name": "crouton-builder",
+  "compatibility_date": "2024-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "crouton-builder-db",
+      "migrations_dir": "server/db/migrations/sqlite"
+    }
+  ],
+  "kv_namespaces": [
+    { "binding": "KV" }
+  ],
+
+  // Staging — its OWN isolated id-less D1 + KV (auto-provision on first
+  // `wrangler deploy --env staging`) + the <name>.pmcp.dev custom domain (#133).
+  // NuxtHub/Nitro strip this `env` block from .output/server/wrangler.json
+  // (nitro#3429), so cf:staging re-injects it post-build via inject-wrangler-env.mjs.
+  "env": {
+    "staging": {
+      "routes": [{ "pattern": "crouton-builder.pmcp.dev", "custom_domain": true }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "crouton-builder-preview-db",
+          "migrations_dir": "server/db/migrations/sqlite"
+        }
+      ],
+      "kv_namespaces": [
+        { "binding": "KV" }
+      ]
+    }
+  }
+}
