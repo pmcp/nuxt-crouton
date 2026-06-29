@@ -261,6 +261,75 @@ export function dropNode(
   return replaceAt(root, path, split) ?? root
 }
 
+// --- Drop-beside-pane (#985) -----------------------------------------------
+// Dropping a block OVER a rendered layout targets the rendered PANE under the
+// cursor and adds the dragged node as a sibling on the nearest side. Two pure
+// outcomes, decided by `applyPaneDrop`: FLATTEN into the parent split when the
+// side runs ALONG its axis (drop right of a block in a row → it joins the row),
+// or WRAP the pane in a new perpendicular split otherwise (so "right of a pane
+// in a vertical stack" works — a column has no pre-existing right-seam). `where`
+// (which pane edge) comes from the renderer's measured pane rects; these apply
+// the `what`. Both immutable; the wrap case reuses `dropNode`.
+
+/** The four directional edges a drop-beside-pane targets (no `center` — that's a swap). */
+export type PaneDropEdge = Exclude<DropEdge, 'center'>
+
+/**
+ * Immutably splice `child` into the split at `path`, at `index`, redistributing
+ * that split's children to even sizes (rounded to 1 dp). Rebuilds only the touched
+ * spine; the untouched siblings keep their own sizes. The FLATTEN primitive behind
+ * `applyPaneDrop`. A non-split node at `path` (or a non-split root) is returned
+ * unchanged; an out-of-range `index` clamps to the end.
+ */
+export function insertAtPath(
+  root: LayoutNode,
+  path: NodePath,
+  index: number,
+  child: LayoutNode,
+): LayoutNode {
+  if (root.type !== 'split') return root
+  if (path.length === 0) {
+    const children = root.children.slice()
+    children.splice(Math.min(index, children.length), 0, child)
+    const size = Math.round((100 / children.length) * 10) / 10
+    return { ...root, children: children.map(c => ({ ...c, defaultSize: size })) }
+  }
+  const [head, ...rest] = path
+  const target = root.children[head!]
+  if (!target) return root
+  const children = root.children.slice()
+  children[head!] = insertAtPath(target, rest, index, child)
+  return { ...root, children }
+}
+
+/**
+ * Add `child` beside the pane at `paneDrop.path` on `paneDrop.edge`. FLATTENS into
+ * the parent split when the edge runs ALONG its axis (drop right of a block in a row
+ * → it joins the row), and WRAPS the pane in a new perpendicular split otherwise (or
+ * for a lone pane, `path === []`, via `dropNode`) — so a block can be added to the
+ * right of a pane that lives in a vertical stack, which the seam-only insert can't reach.
+ */
+export function applyPaneDrop(
+  root: LayoutNode,
+  paneDrop: { path: NodePath, edge: PaneDropEdge },
+  child: LayoutNode,
+): LayoutNode {
+  const { path, edge } = paneDrop
+  const direction = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical'
+  const before = edge === 'left' || edge === 'top'
+  if (path.length > 0) {
+    const parentPath = path.slice(0, -1)
+    const leafIndex = path[path.length - 1]!
+    const parent = getNode(root, parentPath)
+    if (parent && parent.type === 'split' && parent.direction === direction) {
+      // Side runs ALONG the parent split → flatten into the existing row/column.
+      return insertAtPath(root, parentPath, leafIndex + (before ? 0 : 1), child)
+    }
+  }
+  // Perpendicular (or a lone pane) → wrap the pane in a new split.
+  return dropNode(root, path, child, edge)
+}
+
 /**
  * Detach the node at `path` — pop it out to a free card. Returns the removed node and
  * the remaining tree (the parent split collapses to its survivor, as with `removeNode`).
