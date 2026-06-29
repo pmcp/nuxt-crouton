@@ -94,6 +94,17 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   survivors matched by a structure-derived `contentKey`.
 - **`fitOverview` is dead code** — superseded by center-on-add; remove on next cleanup.
 
+## Tooling — per-version preview URLs (#940)
+
+Each iteration can get its OWN immutable Cloudflare Workers preview URL so versions can be opened
+side-by-side, WITHOUT overwriting the live `crouton-builder-demo.pmcp.dev`. Run the **Deploy POCs**
+workflow with `mode=version` (default `deploy` unchanged) → `pnpm run cf:version`
+(`wrangler versions upload`) prints the preview URL (`<version-id>-crouton-builder-demo.<account>.workers.dev`)
+into the run summary. Caveats: preview URLs are on `*.workers.dev` (not the custom domain); a version
+**shares the same D1/KV** as the live Worker (same data, different code); needs a one-time Cloudflare
+dashboard enable of the worker's **workers.dev subdomain + Preview URLs**. (Linking these URLs into the
+in-app changelog so the `vNN` chip jumps between versions is a follow-up.)
+
 ## 🎓 Graduation requirements (must hold in the real package + app)
 
 - **Make page ⇄ flow REAL routing, not one view.** Today `/spike-app` is one route and `selectedPageId`

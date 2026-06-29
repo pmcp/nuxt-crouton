@@ -25,6 +25,22 @@ on:
         description: POC directory name under pocs/ (e.g. library-catalog)
         required: true
         type: string
+      mode:
+        description: >-
+          deploy = overwrite the staging Worker at <app>.pmcp.dev (default,
+          unchanged behaviour). version = upload an IMMUTABLE Cloudflare Workers
+          version WITHOUT activating it, and surface its own per-version preview
+          URL (<version-id>-<worker>.<account>.workers.dev) in the run summary —
+          so each iteration gets a distinct, side-by-side-openable link and the
+          live staging URL is left untouched. See pocs/<app>/HANDOFF.md
+          "Per-version preview URLs" for the caveats (workers.dev only, SHARED
+          D1/KV, needs preview URLs enabled once in the CF dashboard).
+        required: false
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - version
       review_pr:
         description: >-
           Optional PR number to wire the preview-review bridge to (#607). Set it
@@ -88,9 +104,11 @@ jobs:
           echo "Detected matrix: $matrix"
 
   # One deploy-app.yml call per detected POC. Skipped cleanly when nothing opted-in changed.
+  # Skipped entirely for a `mode: version` dispatch — that goes to the `version` job below,
+  # which uploads an immutable preview version instead of overwriting the staging Worker.
   deploy:
     needs: detect
-    if: needs.detect.outputs.any == 'true'
+    if: needs.detect.outputs.any == 'true' && github.event.inputs.mode != 'version'
     permissions:
       contents: read
       pull-requests: write   # reusable workflow comments the preview URL on the PR
@@ -108,3 +126,115 @@ jobs:
       # dispatch use the optional review_pr input; empty → the bridge stays off.
       review-pr: ${{ github.event.pull_request.number || github.event.inputs.review_pr }}
     secrets: inherit
+
+  # ── Per-version preview URLs (immutable, side-by-side iterations) ─────────────
+  # Opt-in via a `mode: version` workflow_dispatch. Instead of `wrangler deploy`
+  # (which overwrites the live <app>.pmcp.dev Worker), this runs
+  # `wrangler versions upload`, which uploads an IMMUTABLE version of the staging
+  # Worker WITHOUT activating it and prints a unique preview URL of the form
+  #   https://<version-id>-<worker>.<account>.workers.dev
+  # So every run yields its own stable link — open multiple iterations side-by-side
+  # and jump between them — and the live staging URL is never touched.
+  #
+  # CAVEATS (also documented in pocs/<app>/HANDOFF.md):
+  #   • Preview URLs are on *.workers.dev, NOT the custom <app>.pmcp.dev domain.
+  #   • A version shares the SAME D1/KV bindings as the live Worker (same data,
+  #     different code). It is not data-isolated.
+  #   • Requires the Worker's workers.dev subdomain + "Preview URLs" enabled — a
+  #     one-time Cloudflare dashboard setting (Workers & Pages → the worker →
+  #     Settings → Domains & Routes / Observability). CI cannot toggle this.
+  #
+  # Self-contained (does NOT route through deploy-app.yml, whose deploy script
+  # overwrites the Worker) — it reuses the same install + layer-build + prepare
+  # setup, then runs the app's own `cf:version` script.
+  version:
+    name: Upload preview version (${{ github.event.inputs.app }})
+    needs: detect
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'version' && needs.detect.outputs.any == 'true' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+    concurrency:
+      # Versions don't activate, so parallel uploads are safe; still serialize per
+      # app to keep the layer/Nuxt caches from racing.
+      group: version-${{ github.event.inputs.app }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NODE_OPTIONS: '--max-old-space-size=8192'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Rebuild native build deps skipped by --ignore-scripts
+        run: pnpm rebuild better-sqlite3 2>/dev/null || true
+
+      # Build the dist-consumed framework layers the app needs (same set + flow as
+      # deploy-app.yml; only packages WITH a build script are built).
+      - name: Build layer packages
+        env:
+          LAYER_PACKAGES: ${{ matrix.layerPackages }}
+        run: |
+          for pkg in $LAYER_PACKAGES @fyit/crouton-devtools; do
+            dir="packages/${pkg#@fyit/}"
+            if [ -d "$dir/dist" ] && [ -n "$(ls -A "$dir/dist" 2>/dev/null)" ]; then
+              echo "Skipping $pkg (already built this run)"
+              continue
+            fi
+            if node -e "process.exit(require('./$dir/package.json').scripts?.build ? 0 : 1)" 2>/dev/null; then
+              echo "Building $pkg"; pnpm --filter "$pkg" build
+            else
+              echo "Skipping $pkg (no build script / pure source layer)"
+            fi
+          done
+
+      - name: Prepare Nuxt (generate tsconfig)
+        run: npx nuxt prepare
+        working-directory: pocs/${{ matrix.app }}
+
+      # Upload an immutable version (build → inject env → wrangler versions upload)
+      # and parse the preview URL wrangler prints, into the run summary + step output.
+      - name: Upload preview version
+        id: version
+        working-directory: pocs/${{ matrix.app }}
+        env:
+          BETTER_AUTH_SECRET: prerender-placeholder
+          BETTER_AUTH_URL: ${{ matrix.stagingUrl }}
+        run: |
+          set -o pipefail
+          pnpm run cf:version | tee version.log
+          # `wrangler versions upload` prints: "Version Preview URL: https://<id>-<worker>.<account>.workers.dev"
+          PREVIEW_URL=$(grep -oiE 'https://[a-z0-9.-]+\.workers\.dev[^[:space:]]*' version.log | tail -1 || true)
+          VERSION_ID=$(grep -oiE 'Worker Version ID:[[:space:]]*[0-9a-f-]+' version.log | grep -oiE '[0-9a-f-]{8,}' | tail -1 || true)
+          echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
+          {
+            echo "### 🔗 Preview version (${{ matrix.app }})"
+            if [ -n "$PREVIEW_URL" ]; then
+              echo "- **Preview URL:** $PREVIEW_URL"
+            else
+              echo "- ⚠️ Could not parse a preview URL from the upload log."
+              echo "  This usually means the Worker's **workers.dev subdomain + Preview URLs** are not enabled yet."
+              echo "  Enable them once in the Cloudflare dashboard (Workers & Pages → the worker → Settings), then re-run."
+            fi
+            [ -n "$VERSION_ID" ] && echo "- **Version ID:** \`$VERSION_ID\`"
+            echo ""
+            echo "_Immutable version — does NOT change the live \`${{ matrix.app }}.pmcp.dev\` Worker. Shares the live Worker's D1/KV (same data)._"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview URL: ${PREVIEW_URL:-<not parsed — enable workers.dev preview URLs in the CF dashboard>}"
