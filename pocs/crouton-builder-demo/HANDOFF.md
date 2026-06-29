@@ -9,6 +9,39 @@
 > Scope of this doc: the **Crouton Builder spike** (`/spike-app`, epic #907). (The app also hosts a
 > throwaway `@fyit/crouton-three` demo at `/three` — see `README.md`; unrelated to the builder.)
 
+## North Star — why this exists (the real goal)
+
+**This builder is the human-in-the-loop surface of an AI app-generation pipeline.** The end state is:
+an AI is asked for a specific app ("a football calendar dashboard"), and it builds the whole thing by
+chaining the crouton pieces — *the builder is where a human and that agent meet on the same artifact.*
+
+The pipeline:
+
+```
+ask: "build a football calendar dashboard"
+  → crouton CLI/MCP generates the COLLECTIONS (schemas, CRUD, API, migrations)
+  → the graph/charts package generates BLOCKS for those collections (list, calendar, stat, chart, form…)
+  → the LAYOUT ENGINE composes those blocks into PAGES — driven by an AGENT, or by a human in THIS builder
+  → a full app
+```
+
+The two composer drivers — agent and human — operate on **one shared artifact: the `LayoutTree`** (the
+tree of layouts → blocks, with their splits/sizes/breakpoints). That shared format is what makes the loop
+close:
+
+- **Agent → human.** The agent proposes a first-cut layout (already what `composeDefault` / the magic
+  arrange does); it lands in the builder as a `LayoutTree`.
+- **Human → agent (the iteration loop).** The human reiterates by direct manipulation — re-dragging
+  blocks, snapping, reordering, resizing, changing the page flow — and the result **serialises back to the
+  same `LayoutTree`** and is **fed back to the agent as the new spec**.
+
+**The round-trip must be persistable to the GitHub ticket (planned).** A human's edited version should be
+**saved back onto the tracking issue** — the serialised `LayoutTree` (layouts · blocks · sizes/breakpoints,
+in a clean, diffable format) posted to the ticket as the **command/spec for the agent** to (re)build from.
+So a "version" in the builder becomes a concrete instruction on the ticket: the agent reads the tree, the
+human edits it visually, the edit goes back to the ticket, the agent acts on it. The builder is the visual
+front-end to an issue-tracked, agent-executed layout spec. (See Graduation requirements.)
+
 ## What it is
 
 Build an app by composing a collection's blocks into a `LayoutTree`, visually, on a Vue Flow canvas.
@@ -69,9 +102,11 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   then pull a pane — tracks your finger 1:1 (zoom-corrected). **Reorder is the default**: slide the pane
   across to another slot (green "Move here") and release to move it there. **Detach** needs a clear pull
   **OUT** of the card — the finger must pass a `DETACH_MARGIN` (~64px) beyond the card edge, so a small
-  overshoot while reordering doesn't tip into a detach (the old razor-thin boundary did — #952). Under
-  the threshold it springs back. Cancel the wiggle by tapping outside / Esc / Done. Gating the gesture
-  behind the hold is what stops a plain select-and-drag from detaching.
+  overshoot while reordering doesn't tip into a detach. Under the threshold it springs back. Cancel the
+  wiggle by tapping outside / Esc / Done. Gating the gesture behind the hold stops a plain select-and-drag
+  from detaching. **Both the slot detection (reorder) and the detach margin measure against the visible
+  card (`.spike-block-node`), NOT `.vue-flow__node`** — see the gotcha below; getting that wrong is what
+  made reorder silently impossible (#952).
 - **Drag glow.** A dragged card carries a light-green halo (Vue Flow `dragging`, forwarded by
   `CroutonFlow`), fading on drop. Snap rings (emerald armed / sky soft) outrank the glow.
 
@@ -94,9 +129,20 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
 
 ## Gotchas / limitations (known, accepted for the POC)
 
+- **Vue Flow geometry gotchas (cost us v32 — found by reproducing headless).** Two traps, both "you're
+  reading the wrong element":
+  - **The node wrapper `.vue-flow__node` is SMALLER than our card.** Our card (`.spike-block-node`,
+    sized `footprint × base`, `overflow-visible`) overflows its Vue Flow node wrapper — the wrapper's
+    measured width can be a fraction of the card's. Any hit-testing of the panes (reorder slot detection,
+    detach margin, the edit-open origin rect) MUST measure against `.spike-block-node`, not
+    `.vue-flow__node`, or every in-card point reads as "outside". (They share the same LEFT edge, which is
+    why detach still worked while reorder couldn't — reorder needs the WIDTH.)
+  - **The zoom transform is on `.vue-flow__transformationpane`, not `.vue-flow__viewport`.**
+    `.vue-flow__viewport` reads `transform: none` → identity → `z=1`. Pinch math read that and never
+    actually zoomed. Read `.vue-flow__transformationpane` for the live `translate()…scale()`.
 - **Pinch uses `setCenter`, not `setViewport`.** Vue Flow exposes `setCenter`/`fitBounds`/`fitView`
-  here, not `setViewport`, so pinch is reconstructed from the live viewport transform. Clean fix:
-  expose `setViewport` from `crouton-flow`.
+  here, not `setViewport`, so pinch is reconstructed from the live transform. Clean fix: expose
+  `setViewport` from `crouton-flow`.
 - **FLIP for structural reflow lives in the package** (`@fyit/crouton-layout`, `useLayoutFlip`, #943):
   panes are keyed by index so a count change rebuilds them — a CSS `flex-grow` transition can't fire.
   `useLayoutFlip` measures-before / tweens-from-old-box, purely additive (no key/size/reka change),
@@ -115,6 +161,20 @@ dashboard enable of the worker's **workers.dev subdomain + Preview URLs**. (Link
 in-app changelog so the `vNN` chip jumps between versions is a follow-up.)
 
 ## 🎓 Graduation requirements (must hold in the real package + app)
+
+- **The agent ⇄ human round-trip (the North Star — see top).** The graduated builder is the visual
+  front-end to an issue-tracked, agent-executed layout spec:
+  - **Serialise the board to a clean, diffable `LayoutTree`** (layouts → blocks → splits/sizes/
+    breakpoints) — the canonical interchange format both the agent and the builder read/write. (The model
+    already exists; what's needed is a stable, human-readable serialisation + the page-flow tree around it.)
+  - **Persist a version back to the GitHub ticket.** A human's edited layout saves onto the tracking
+    issue as the **command/spec** for the agent to (re)build from — so "a version in the builder" becomes a
+    concrete instruction on the ticket. Round it both ways: agent writes the tree → human edits visually →
+    edit posts back → agent reads it. (Mirrors the existing `schema-review` / `ui-proposal` sign-off loops,
+    but the artifact under review is the layout tree.)
+  - This is the whole point of the builder — it's not a standalone design toy, it's the human's seat in an
+    AI app-generation pipeline (crouton collections → graph/charts blocks → layout-engine pages → app).
+
 
 - **Make page ⇄ flow REAL routing, not one view.** Today `/spike-app` is one route and `selectedPageId`
   `v-if`/`v-else`-swaps with a cross-fade — a *visual* transition pretending to be navigation. The real
