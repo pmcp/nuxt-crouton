@@ -1,5 +1,6 @@
 ---
 name: think-aloud
+layer: method
 description: Think through a problem live on the ThinkGraph canvas. Each reasoning step appears as a node in real-time.
 allowed-tools: Bash, Read, Grep, Glob, Agent
 argument-hint: "<question or task to think through>"

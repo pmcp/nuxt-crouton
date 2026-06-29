@@ -1,5 +1,6 @@
 ---
 name: poc-deploy
+layer: stack
 description: Give a pocs/ app a Cloudflare Workers preview deploy so a PR returns a testable staging URL (auth-working). Use when wiring a POC for previews, or when "build X as a poc" needs to end at a clickable link. For launched apps/ apps use the /deploy skill instead.
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob
 ---

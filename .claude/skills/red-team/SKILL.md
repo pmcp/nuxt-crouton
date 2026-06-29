@@ -1,5 +1,6 @@
 ---
 name: red-team
+layer: method
 description: Adversarially probe this monorepo for security flaws at the right depth. Steers the red-team subagent — picks quick/standard/deep from the request, spawns it (fanning out for a wide deep sweep), collates findings into a dated report, and files security/sec:* issues for confirmed high/critical findings. Use when asked to "red-team", "try to hack this", "find security holes", "pentest this package/app", or as the brain behind the CI + daily security runs.
 argument-hint: "[quick|standard|deep] [scope: a path | diff | repo]"
 allowed-tools: Read, Grep, Glob, Bash, Agent, mcp__github__issue_write, mcp__github__search_issues, mcp__github__get_label

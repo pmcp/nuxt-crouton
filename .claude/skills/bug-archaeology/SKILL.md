@@ -1,5 +1,6 @@
 ---
 name: bug-archaeology
+layer: method
 description: When a bug or regression is reported, the FIRST step — before fixing — is to research how and when it was introduced (git archaeology), then record that finding on the tracking issue/PR. Use the moment a bug, error, broken build, or "this used to work" is reported, before writing a fix. Produces a first-bad-commit (or "not a code regression") note you paste onto the issue.
 allowed-tools: Bash, Read, Grep, Glob
 ---

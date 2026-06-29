@@ -13,7 +13,7 @@ export function createAnnotateTool(): FeedbackTool {
   return {
     id: 'annotate',
     label: 'Annotate',
-    icon: 'i-lucide-message-square',
+    icon: 'i-lucide-pen-line',
     order: 2,
     activate: () => start(),
     deactivate: () => stop()

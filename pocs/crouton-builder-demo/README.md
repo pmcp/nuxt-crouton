@@ -14,6 +14,21 @@ layer (TresJS / Three.js for Vue) works end-to-end in a real crouton app.
 Extends `@fyit/crouton-core`, `@fyit/crouton-i18n`, `@fyit/crouton-three`, and
 `@fyit/crouton-pages` (for the 3D Model block + generated `pages` collection).
 
+## Crouton Builder spike — `/spike-app` (epic #907)
+
+Build an app by composing a collection's blocks into a `LayoutTree` on a Vue Flow canvas.
+Two levels on one screen: **Site** (the page flow — `CroutonFlowSiteFlow`, cards = pages) and
+**Page** (the board — double-click a page card to compose its blocks; `Pages ←` returns).
+
+> **Design decisions, gotchas & graduation requirements live in [`HANDOFF.md`](./HANDOFF.md)** — a
+> living, curated handoff doc (the brief the `graduate` skill consumes). Keep it current as you build:
+> capture each signed-off decision, prune what we iterate past.
+
+**Quick verify** at a mobile viewport (390×844): enter a page → arrives fitted (no zoom-out wobble);
+drop 2 blocks → double-click each → both framed fully on-screen; drag a card onto a layout + hold → it
+goes green and the panes ease apart into a card-shaped slot → release to insert; pull a pane out → it
+detaches where you release; add a block → lands right, centred, glowing green; pinch a layout → zooms.
+
 ## Local dev
 
 ```bash

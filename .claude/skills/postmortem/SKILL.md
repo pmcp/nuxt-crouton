@@ -1,5 +1,6 @@
 ---
 name: postmortem
+layer: method
 description: At the close of an epic (or a difficult issue), post a postmortem roundup comment — what went well, what was hard (backed by evidence), and 1–3 concrete proposals to improve the skills/flows — then offer to turn accepted proposals into their own `workflow`-labeled tasks, and end with a `🔭 Next` handoff (a paste-ready next-session prompt + the next epic to start). Use at epic close, after the "verify the whole thing" rollup, or when asked to "do a retro", "postmortem this epic", "what did we learn", "how do we improve the workflow".
 allowed-tools: mcp__github__issue_read, mcp__github__add_issue_comment, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__list_commits, Read, Bash
 ---

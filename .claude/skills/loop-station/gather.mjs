@@ -50,10 +50,28 @@ function walk(dir, test, out = []) {
   return out
 }
 
+// Harness layer (method | stage | stack) of a skill/agent, read from its `layer:`
+// frontmatter (epic #952 / WS1). The classification source of truth is the tags
+// themselves + scripts/harness-layers.mjs; the OVERRIDES below mirror that script's
+// for the two legacy single-file skills that carry no frontmatter. Keep in sync.
+const LAYER_OVERRIDES = { crouton: 'stack', 'i18n-audit': 'stack' }
+const LAYERS = ['method', 'stage', 'stack']
+function layerOf(text, name) {
+  const m = text.match(/^---\n([\s\S]*?)\n---/)
+  if (m) {
+    const mm = m[1].match(/^layer:\s*(.+)$/m)
+    if (mm) {
+      const v = mm[1].replace(/^["']|["']$/g, '').trim()
+      if (LAYERS.includes(v)) return v
+    }
+  }
+  return LAYER_OVERRIDES[name] || null
+}
+
 function collectArtifacts() {
   const arts = []
 
-  // Root CLAUDE.md — the always-on context.
+  // Root CLAUDE.md — the always-on context. No layer (it's the constitution itself).
   const rootClaude = join(ROOT, 'CLAUDE.md')
   if (existsSync(rootClaude)) {
     arts.push({ path: rel(rootClaude), kind: 'claudemd', alwaysOn: true, text: read(rootClaude) })
@@ -67,10 +85,15 @@ function collectArtifacts() {
     for (const ent of readdirSync(skillsDir, { withFileTypes: true })) {
       if (ent.isFile() && ent.name.endsWith('.md')) {
         const p = join(skillsDir, ent.name)
-        arts.push({ path: rel(p), kind: 'skill', name: ent.name.replace(/\.md$/, ''), text: read(p) })
+        const name = ent.name.replace(/\.md$/, '')
+        const text = read(p)
+        arts.push({ path: rel(p), kind: 'skill', name, layer: layerOf(text, name), text })
       } else if (ent.isDirectory()) {
         const p = join(skillsDir, ent.name, 'SKILL.md')
-        if (existsSync(p)) arts.push({ path: rel(p), kind: 'skill', name: ent.name, text: read(p) })
+        if (existsSync(p)) {
+          const text = read(p)
+          arts.push({ path: rel(p), kind: 'skill', name: ent.name, layer: layerOf(text, ent.name), text })
+        }
       }
     }
   }
@@ -79,7 +102,9 @@ function collectArtifacts() {
   // not an agent — exclude it so the agent inventory is just the personas).
   const agentsDir = join(ROOT, '.claude/agents')
   for (const p of walk(agentsDir, (n) => n.endsWith('.md') && n !== 'CLAUDE.md')) {
-    arts.push({ path: rel(p), kind: 'agent', name: rel(p).split('/').pop().replace(/\.md$/, ''), text: read(p) })
+    const name = rel(p).split('/').pop().replace(/\.md$/, '')
+    const text = read(p)
+    arts.push({ path: rel(p), kind: 'agent', name, layer: layerOf(text, name), text })
   }
 
   return arts.sort((a, b) => a.path.localeCompare(b.path))
@@ -151,6 +176,7 @@ async function main() {
       path: a.path,
       kind: a.kind,
       name: a.name,
+      layer: a.layer || null,
       alwaysOn: !!a.alwaysOn,
       bytes: Buffer.byteLength(a.text, 'utf8'),
       lines: a.text.split('\n').length,
@@ -161,6 +187,15 @@ async function main() {
   const alwaysOnTokens = counted.filter((a) => a.alwaysOn).reduce((s, a) => s + a.tokens, 0)
   const byKind = {}
   for (const a of counted) byKind[a.kind] = (byKind[a.kind] || 0) + a.tokens
+  // Budget by harness layer (#952): method/stage/stack for tagged skills+agents;
+  // untagged artifacts (CLAUDE.md, any new skill missing a tag) bucket as `unlayered`
+  // so the per-layer tokens always reconcile against totals.tokens.
+  const byLayer = { method: { tokens: 0, count: 0 }, stage: { tokens: 0, count: 0 }, stack: { tokens: 0, count: 0 }, unlayered: { tokens: 0, count: 0 } }
+  for (const a of counted) {
+    const b = byLayer[a.layer] || byLayer.unlayered
+    b.tokens += a.tokens
+    b.count += 1
+  }
   const totalTokens = counted.reduce((s, a) => s + a.tokens, 0)
 
   const red = redundancy(artifacts.map((a) => ({ path: a.path, text: a.text })))
@@ -181,7 +216,7 @@ async function main() {
   const card = scorecard({ alwaysOnTokens, artifacts: counted, redundancy: red })
 
   return {
-    schema: 1,
+    schema: 2,
     generatedAt: process.env.LOOP_STATION_NOW || new Date().toISOString(),
     commit: gitSha(),
     pr: process.env.LOOP_STATION_PR ? Number(process.env.LOOP_STATION_PR) : null,
@@ -190,7 +225,8 @@ async function main() {
       tokens: totalTokens,
       alwaysOnTokens,
       artifactCount: counted.length,
-      byKind
+      byKind,
+      byLayer
     },
     scorecard: card,
     redundancy: red,

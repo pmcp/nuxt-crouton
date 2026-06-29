@@ -13,6 +13,7 @@ OSS). Drill into `packages/<dir>/CLAUDE.md` for detail once a candidate is spott
 | `@fyit/crouton` | `packages/crouton` | Unified Nuxt CRUD framework with opt-in features |
 | `@fyit/crouton-admin` | `packages/crouton-admin` | Admin dashboard and user management for Nuxt applications using crouton-auth |
 | `@fyit/crouton-ai` | `packages/crouton-ai` | AI integration layer for Nuxt Crouton |
+| `@fyit/crouton-analytics` | `packages/crouton-analytics` | Provider-agnostic usage analytics for nuxt-crouton — PostHog default, swappable backend, lean-loop events |
 | `@fyit/crouton-assets` | `packages/crouton-assets` | Asset management layer extending nuxt-crouton for centralized media library |
 | `@fyit/crouton-atelier` | `packages/crouton-atelier` | Visual app builder for Nuxt Crouton — compose apps from pre-defined blocks |
 | `@fyit/crouton-audio` | `packages/crouton-audio` | Audio player layer for Crouton with waveform visualization (wraps WaveSurfer.js) |

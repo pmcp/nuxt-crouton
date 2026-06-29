@@ -22,11 +22,11 @@ adds its crouton-specific tabs on top.
 
 ## Status
 
-🚧 **Module feature-complete (WS5 / #965).** Both tools work; a sent annotation
+✅ **Epic #960 complete (all 7 workstreams).** Both tools work; a sent annotation
 is dispatched to the configured sink, selectable via module option or env. The
-webhook + slack paths are verified end-to-end against a real URL; discord/github
-are unit-proven (payload shaping, auth, error paths). What remains is integration:
-have `@fyit/crouton-devtools` consume this module (#966) + docs/e2e (#967).
+webhook + slack paths were verified end-to-end against a real URL; discord/github
+are unit-proven (payload shaping, auth, error paths). `@fyit/crouton-devtools`
+consumes this module via `installModule`, and docs + the e2e smoke landed.
 
 | Issue | Brings in | State |
 |-------|-----------|-------|
@@ -34,8 +34,8 @@ have `@fyit/crouton-devtools` consume this module (#966) + docs/e2e (#967).
 | [#963](https://github.com/FriendlyInternet/nuxt-crouton/issues/963) | `FeedbackSink` dispatcher + Annotate + source-stamp transform (webhook sink) | ✅ |
 | [#964](https://github.com/FriendlyInternet/nuxt-crouton/issues/964) | The slack / discord / github sinks — test-first (#774) | ✅ |
 | [#965](https://github.com/FriendlyInternet/nuxt-crouton/issues/965) | Module-option + env config surface for sink selection | ✅ |
-| [#966](https://github.com/FriendlyInternet/nuxt-crouton/issues/966) | Refactor `@fyit/crouton-devtools` to consume this module | ⏳ |
-| [#967](https://github.com/FriendlyInternet/nuxt-crouton/issues/967) | Docs site + e2e fixture smoke + cross-app typecheck | ⏳ |
+| [#966](https://github.com/FriendlyInternet/nuxt-crouton/issues/966) | Refactor `@fyit/crouton-devtools` to consume this module | ✅ |
+| [#967](https://github.com/FriendlyInternet/nuxt-crouton/issues/967) | Docs site + e2e fixture smoke + cross-app typecheck | ✅ |
 
 **Gating:** the launcher + tools register only in local dev or when a build sets
 `NUXT_PUBLIC_CROUTON_FEEDBACK=true` (→ `runtimeConfig.public.croutonFeedback`);

@@ -1,5 +1,6 @@
 ---
 name: schema-review
+layer: stage
 description: Render a crouton collection schema (the field-definition JSON) into a human-readable field table + relationships sketch (HTML + PNG + a terse Markdown table), so a human can sign off on the DATA MODEL before any code is generated. Use when an agent drafts or changes a collection schema (before `crouton config` / `generate_collection`), or when asked to "review a schema", "show the data model", "check these fields".
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---

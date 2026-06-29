@@ -1,5 +1,6 @@
 ---
 name: sync-docs
+layer: method
 description: Analyze code changes and update relevant documentation to stay in sync. Runs automatically before /commit. Assumes docs are outdated — only updates what this change touches, never over-reaches.
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 ---

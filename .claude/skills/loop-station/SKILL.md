@@ -1,5 +1,6 @@
 ---
 name: loop-station
+layer: method
 description: Observe the harness itself — (WS1) measure context budget as a deterministic, trendable inventory (tokens per CLAUDE.md / skill / agent, lexical redundancy, per-CI cold-write totals; committed history.jsonl), and (WS2) reconstruct the real invocation trace (which skills/agents/tools fired and how they nested) from session transcripts. Use for "context budget", "how big is CLAUDE.md / our skills", "is the harness bloating", "how do our agent loops actually run", "trace this session", "loop station".
 ---
 
@@ -39,6 +40,11 @@ Walking root `CLAUDE.md` + every skill (`.claude/skills/**`) + every agent
   judgments). Tune the bands in one place there.
 - **cold-write totals** — for each CI workflow that runs `claude-code-action`,
   what it cold-writes per run (always-on `CLAUDE.md` + its own `prompt:` block).
+- **budget by harness layer** — `totals.byLayer` rolls each skill/agent's tokens up
+  by its `layer:` tag (`method` / `stage` / `stack`; epic #952), with untagged
+  artifacts (CLAUDE.md, an un-tagged new skill) bucketed as `unlayered` so the
+  per-layer tokens reconcile against `totals.tokens`. Quantifies how much of the
+  always-on surface is the portable method vs. the swappable crouton stack.
 
 ## Files
 
