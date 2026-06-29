@@ -199,20 +199,55 @@ async function gather() {
     .map((i) => ({ number: i.number, title: i.title, url: i.html_url, ageDays: ageDays(i.updated_at) }))
     .sort((a, b) => b.ageDays - a.ageDays)
 
-  // Epics whose sub-issues are ALL closed but the epic is still open (stale tracking).
-  // Tag each with the action it needs, read from the label the labeller stamps (#763):
-  // needs-postmortem (run the retro first) vs ready-to-close (postmortem done, just close).
+  // One pass over open epics (sub-issues fetched once each) computes two facts about
+  // the parent↔child status relationship (#763 / #980):
+  //   • staleEpics — ALL children closed but the epic is still open (closing side).
+  //     Tagged with the action it needs from the label the labeller stamps:
+  //     needs-postmortem (run the retro first) vs ready-to-close (postmortem done).
+  //   • epicsMissingInProgress — ≥1 child is `status:in-progress` but the epic itself
+  //     isn't labelled in-progress, so it reads as "open, not started" (the opening
+  //     side, #980).
+  // Both are REPORT-ONLY; scripts/label-ready-epics.mjs is what reconciles the labels.
   const staleEpics = []
+  const epicsMissingInProgress = []
   for (const e of openEpics) {
     const kids = await subIssues(e.number)
+    const names = labelNames(e)
     if (kids.length > 0 && kids.every((k) => k.state === 'closed')) {
-      const names = labelNames(e)
       const state = names.includes('status:ready-to-close')
         ? 'ready-to-close'
         : 'needs-postmortem' // default until/unless a postmortem marker flips the label
       staleEpics.push({ number: e.number, title: e.title, url: e.html_url, children: kids.length, state })
+    } else if (!names.includes('status:in-progress')) {
+      const active = kids.filter(
+        (k) => k.state === 'open' && labelNames(k).includes('status:in-progress')
+      )
+      if (active.length) {
+        epicsMissingInProgress.push({
+          number: e.number,
+          title: e.title,
+          url: e.html_url,
+          activeChildren: active.map((k) => k.number).sort((a, b) => a - b)
+        })
+      }
     }
   }
+
+  // In-progress issues whose parent isn't a currently-open epic — a closed epic left
+  // with an unfinished child, or a parent that should carry the `epic` label but
+  // doesn't (#980). Uses parent_issue_url already on the search payload (zero extra
+  // API calls). Standalone in-progress tasks (no parent) are allowed → skipped.
+  const openEpicNums = new Set(openEpics.map((e) => e.number))
+  const orphanedInProgress = openIssues
+    .filter((i) => labelNames(i).includes('status:in-progress') && i.parent_issue_url)
+    .map((i) => {
+      const parent = Number(i.parent_issue_url.split('/').pop())
+      return Number.isNaN(parent) || openEpicNums.has(parent)
+        ? null
+        : { number: i.number, title: i.title, url: i.html_url, parent }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.parent - b.parent)
 
   // Idle open PRs — draft or not, nothing has moved in N days.
   const idlePRs = openPRs
@@ -226,7 +261,7 @@ async function gather() {
     }))
     .sort((a, b) => b.ageDays - a.ageDays)
 
-  return { unlabeled, stuck, staleEpics, idlePRs }
+  return { unlabeled, stuck, staleEpics, epicsMissingInProgress, orphanedInProgress, idlePRs }
 }
 
 const drift = await gather()
