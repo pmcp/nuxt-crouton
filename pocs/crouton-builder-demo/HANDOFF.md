@@ -59,7 +59,11 @@ tree of layouts → blocks, with their splits/sizes/breakpoints). That shared fo
 close:
 
 - **Agent → human.** The agent proposes a first-cut layout (already what `composeDefault` / the magic
-  arrange does); it lands in the builder as a `LayoutTree`.
+  arrange does); it lands in the builder as a `LayoutTree`. In-app this is **two tiers**: `✨ Magic
+  arrange` (deterministic compose of the placed blocks) and `✨ Magic (AI)` — a free-text *"Describe
+  the app"* intent (`aiIntent`) → an LLM arranges the placed blocks (`magicAI`), shown only when the
+  `crouton-ai` add-on is installed (`hasApp('ai')`, #909). The AI tier is the in-app embodiment of
+  this arrow; both write the same `LayoutTree`.
 - **Human → agent (the iteration loop).** The human reiterates by direct manipulation — re-dragging
   blocks, snapping, reordering, resizing, changing the page flow — and the result **serialises back to the
   same `LayoutTree`** and is **fed back to the agent as the new spec**.
@@ -168,7 +172,10 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
 - **Responsiveness is per-element, not global.** The old board-wide responsive slider is **gone**. Each
   card has a **corner resize handle** (shown when selected) — drag it to set the node's width/height,
   and the card renders **responsively at that width** (its own preview). Opening edit lands at the
-  node's resized width. (`data.width/height` on the FlowNode; `SPIKE_SET_SIZE_KEY`.)
+  node's resized width. (`data.width/height` on the FlowNode; `SPIKE_SET_SIZE_KEY`.) Once a width is
+  set, the card switches to a **read-only responsive preview** (`CroutonLayoutResponsiveRenderer`,
+  `interactive: false`) — splitter drags then resize the *card*, not its internal panes (editing pane
+  sizes is the edit view's job). `previewing = typeof data.width === 'number'` (SpikeBlockNode).
 - **The component decides its own size ("intrinsic sizing"), as DECLARED DATA (#971).** Each block
   carries a **sizing descriptor** on the `croutonLayoutBlocks` registry entry —
   `sizing: { width: 'fill' | 'hug', height: 'fill' | 'hug' }` (defaults to fully `fill`). `hug` = size
@@ -342,6 +349,11 @@ expressiveness boundary: a variant is an **enum an agent could equally pick**, n
 - **Spacer block (#952):** `spacer` → `SpikeSpacer`, a registered layout primitive that renders empty
   space (faint dashed hint in the builder). Add it from the palette; it snaps/reorders/resizes like any
   block to push neighbours around or hold a gap. Small `minWidth` (40) so it can be a thin gutter.
+- **Board state is EPHEMERAL (in-memory only).** Each page's board is cached in a `pageBoards` Map
+  (`spike-app.vue`) and restored when you re-enter that page, but **nothing persists** — a reload
+  starts from `composeDefault`. This is by design for the POC; the durable persistence is the
+  graduation round-trip (serialise the `LayoutTree` onto the ticket / a store), #974. Don't mistake the
+  re-enter restore for saved state.
 
 ## Tooling — per-version preview URLs (#940)
 
@@ -353,6 +365,21 @@ into the run summary. Caveats: preview URLs are on `*.workers.dev` (not the cust
 **shares the same D1/KV** as the live Worker (same data, different code); needs a one-time Cloudflare
 dashboard enable of the worker's **workers.dev subdomain + Preview URLs**. (Linking these URLs into the
 in-app changelog so the `vNN` chip jumps between versions is a follow-up.)
+
+## 🔖 Stable element hooks (graduation vocabulary, WS1 #984)
+
+The reconcile gate added `data-handoff` hooks on the states that are hard to locate from the outside,
+so the doc, an exploratory agent, and the derived e2e tests all target the **same names** — and the
+rebuilt app (#988) **reproduces these verbatim**, so one agent runs identically against the POC and the
+graduated app. (These are the right "references to elements" — not `file:line` code refs, which rot.)
+
+| State | Selector | Where / when |
+|---|---|---|
+| armed snap | `[data-handoff="snap-guide"][data-armed="true"]` | `SpikeBlockNode` edge guide; green once the dwell-arm fires (soft blue = `data-armed="false"`) |
+| ghost slot | `[data-handoff="ghost-pane"]` | `SpikeGhostPane`; the `__dropghost__` ease-apart placeholder |
+| ★ page badge | `[data-handoff="page-badge"]` | `SpikeBlockNode`; the one node that is "the page" |
+| floor readout | `[data-handoff="floor-readout"]` (+ `data-hard-floor` / `data-soft-floor`) | `SpikeBlockNode`; selected card's derived floor |
+| region pills | `[data-handoff="region-pill"]` (+ `data-region`) | `SpikeBlockNode`; pinned top/bottom |
 
 ## 🎓 Graduation requirements (must hold in the real package + app)
 

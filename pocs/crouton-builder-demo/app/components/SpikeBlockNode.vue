@@ -519,6 +519,7 @@ watch(() => props.data.node, () => {
     <!-- "Page" badge — this node is the live layout a user sees (#942). -->
     <UBadge
       v-if="data.isPage"
+      data-handoff="page-badge"
       color="primary"
       variant="solid"
       size="sm"
@@ -529,6 +530,8 @@ watch(() => props.data.node, () => {
     <!-- Region badge (#953) — this node is pinned to the page's top/bottom edge (a sticky pill). -->
     <UBadge
       v-if="data.region"
+      data-handoff="region-pill"
+      :data-region="data.region"
       color="primary"
       variant="subtle"
       size="sm"
@@ -645,6 +648,9 @@ watch(() => props.data.node, () => {
          components' rules, all the way up a layout-of-layouts. -->
     <div
       v-if="selected && !jiggling"
+      data-handoff="floor-readout"
+      :data-hard-floor="derived.hardMinWidth"
+      :data-soft-floor="derived.softMinWidth"
       class="nodrag pointer-events-none absolute -bottom-3 left-2 z-40 flex items-center gap-1 rounded-full border border-default bg-elevated/95 px-2 py-0.5 font-mono text-[10px] text-muted shadow-sm backdrop-blur"
       title="Floor derived from the components' min-widths"
     >
@@ -675,12 +681,16 @@ watch(() => props.data.node, () => {
          the targeted pane's edge (#972). SOFT = blue, wide, pulsing; ARMED = green, crisp, steady. -->
     <div
       v-if="guideEdge"
+      data-handoff="snap-guide"
+      :data-armed="guideArmed"
       class="pointer-events-none absolute z-10 rounded-full"
       :class="guideBarClass"
       :style="guideStyle"
     />
     <div
       v-if="guidePaneDrop && !guideArmedPaneDrop"
+      data-handoff="snap-guide"
+      :data-armed="false"
       class="pointer-events-none absolute z-10 rounded-full"
       :class="guideBarClass"
       :style="guidePaneDropStyle"
