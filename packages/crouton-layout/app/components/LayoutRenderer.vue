@@ -22,7 +22,7 @@ import { useElementSize, unrefElement } from '@vueuse/core'
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import type { LayoutNode, LayoutSplit } from '@fyit/crouton-core/app/types/layout'
 import { isInPlaceCollapse } from '@fyit/crouton-core/app/types/layout'
-import { minWidthResolver, panelMinSizePct } from '../utils/layout-viability'
+import { minWidthResolver, panelMinSizePct, deriveSizing } from '../utils/layout-viability'
 import { siblingKeys } from '../utils/layout-flip'
 import { useLayoutFlip } from '../composables/useLayoutFlip'
 import { isSubtreeCollapsed } from '../utils/layout-responsive'
@@ -124,6 +124,29 @@ const shouldStack = computed(() =>
 function onLayout(sizes: number[]) {
   if (props.node.type === 'split') emit('layoutChange', props.node, sizes)
 }
+
+// --- Hug a pane INSIDE a split (#986 UI half) ------------------------------------
+// A block declares its own sizing (`sizing: { width, height: 'fill' | 'hug' }`); the
+// typed contract derives it (`deriveSizing` — a composite always fills, a leaf uses its
+// descriptor). The Preview already hugs at the REGION level; this honours it one level
+// deeper — a pane whose resolved sizing ALONG the split axis is `hug` sizes to its content
+// (`flex: 0 0 auto`) while the `fill` siblings share the rest. Engages ONLY when a split
+// actually contains a hug pane along its axis, so an all-`fill` layout renders through the
+// reka SplitterGroup below byte-for-byte unchanged. Off for the in-place-collapse path
+// (which owns its own splitter reflow). NB: direct `fill` siblings of a hug pane share
+// space without a draggable seam here — compose them as a sub-split to keep an inner
+// splitter (that sub-split recurses through the SplitterGroup path).
+const hugAlongAxis = computed<boolean[]>(() => {
+  if (props.node.type !== 'split') return []
+  const horizontal = props.node.direction === 'horizontal'
+  return props.node.children.map((child) => {
+    const d = deriveSizing(child, blocks.value)
+    return (horizontal ? d.width : d.height) === 'hug'
+  })
+})
+const hasHug = computed(() =>
+  props.node.type === 'split' && !inPlace.value && !shouldStack.value && hugAlongAxis.value.some(Boolean),
+)
 
 // --- FLIP reflow on structural change (#943) ------------------------------------
 // When this split's children change (a pane detached, a block inserted), reka-ui rebuilds
@@ -243,6 +266,31 @@ watch(
       :key="i"
       data-crouton-pane
       class="croutonpane min-h-72 w-full shrink-0"
+    >
+      <CroutonLayoutRenderer
+        :node="child"
+        :interactive="interactive"
+        @layout-change="(n: LayoutSplit, s: number[]) => emit('layoutChange', n, s)"
+      />
+    </div>
+  </div>
+
+  <!-- Split with a HUG pane (#986 UI half) — a pane whose declared sizing along the
+       split axis is `hug` sizes to its content (`flex:0 0 auto`); `fill` siblings share
+       the rest. A plain flex layout (no reka splitter — you don't drag against a content
+       -sized bar). `groupRef` stays on it so width keeps measuring. -->
+  <div
+    v-else-if="node.type === 'split' && hasHug"
+    ref="groupRef"
+    class="flex h-full w-full gap-px"
+    :class="node.direction === 'horizontal' ? 'flex-row overflow-x-auto' : 'flex-col overflow-y-auto'"
+  >
+    <div
+      v-for="(child, i) in node.children"
+      :key="i"
+      data-crouton-pane
+      class="croutonpane min-h-0 min-w-0"
+      :style="hugAlongAxis[i] ? 'flex:0 0 auto' : 'flex:1 1 0'"
     >
       <CroutonLayoutRenderer
         :node="child"
