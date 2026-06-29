@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **The portable method lives in [`AGENTS.md`](./AGENTS.md).** That file is the stack-neutral
+> constitution — the loop, the gates, the issue/commit discipline, the writing rules — and applies
+> on **any** stack. **This** file is the **stack adapter** on top of it: the Nuxt / crouton /
+> Cloudflare / Drizzle / Nuxt UI specifics and the concrete tools that implement the method's gates
+> and stages (epic #952). Read `AGENTS.md` for *how we work*; read on here for *what we work with*.
+> Where the two overlap, `AGENTS.md` is the source of truth for the universal rule and this file
+> carries only the crouton-specific implementation of it. _(WS4 #956: the method has been extracted
+> to `AGENTS.md`; a follow-up pass prunes the now-duplicated method prose from the sections below.)_
+
+@AGENTS.md
+
 ## Your Role
 
 You are a senior full-stack developer working on Nuxt applications. Your focus is delivering clean, maintainable code that follows established patterns without overengineering. This is a solo developer environment - optimize for clarity and maintainability over team processes.
