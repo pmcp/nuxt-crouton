@@ -166,6 +166,18 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   - **The zoom transform is on `.vue-flow__transformationpane`, not `.vue-flow__viewport`.**
     `.vue-flow__viewport` reads `transform: none` → identity → `z=1`. Pinch math read that and never
     actually zoomed. Read `.vue-flow__transformationpane` for the live `translate()…scale()`.
+  - **Fit must use known geometry, not `fitView`.** `fitBoard`/`fitPage` frame via `fitBounds` over the
+    union of each node's `position + sizeOf` — Vue Flow's own `fitView` (and its controls' ⛶) measure
+    the small wrapper and zoom INTO the oversized card. (The Site flow's normal-sized cards are fine, so
+    the VF ⛶ is left enabled there.)
+- **Hit-test the RENDERED panes, never the abstract tree.** Anything that maps a screen point to a pane
+  (the edit view's block selection + dim overlay) must measure the real DOM (`.croutonpane` leaf
+  elements), because the renderer reflows panes via CSS `@container` (a horizontal split STACKS
+  vertically when narrow) — a reflow the `LayoutTree` never reflects. Tree-derived regions select the
+  wrong pane at narrow widths. SpikeFocusShell reads the innermost `.croutonpane` els in document order
+  and maps them to the tree's depth-first leaf order; falls back to tree regions when counts differ
+  (panes collapsed into the gutter). Clean fix on graduation: have the renderer tag each leaf with
+  `data-block-id` so the mapping is by id, not order. (#952, IMG_1059)
 - **Pinch uses `setCenter`, not `setViewport`.** Vue Flow exposes `setCenter`/`fitBounds`/`fitView`
   here, not `setViewport`, so pinch is reconstructed from the live transform. Clean fix: expose
   `setViewport` from `crouton-flow`.

@@ -212,18 +212,58 @@ const selectedBlock = computed(() => blocks.value.find(b => b.blockId === select
 const multiBlock = computed(() => regions.value.length > 1)
 
 const innerRef = ref<HTMLElement | null>(null)
+// Hit-test the REAL rendered panes, not the abstract tree. The renderer reflows panes via CSS
+// `@container` — a horizontal split STACKS vertically when its panes hit min-width — a reflow the tree
+// never reflects, so tree-derived `regions` pick the wrong pane at narrow widths (selects a vertical
+// sliver; IMG_1059). We read the innermost `.croutonpane` elements (leaf panes) in document order and
+// map them to the tree's leaf blockIds (the same depth-first order `leafRegions` yields). When the
+// counts don't match (panes collapsed into the gutter) we fall back to the tree regions. (#952)
+const domRegions = ref<Region[]>([])
+function leafPaneEls(): HTMLElement[] {
+  const el = innerRef.value
+  if (!el) return []
+  return Array.from(el.querySelectorAll<HTMLElement>('.croutonpane')).filter(p => !p.querySelector('.croutonpane'))
+}
+function syncDomRegions() {
+  const host = innerRef.value
+  const order = regions.value
+  const els = host ? leafPaneEls() : []
+  if (!host || !els.length || els.length !== order.length) { domRegions.value = []; return }
+  const hr = host.getBoundingClientRect()
+  if (!hr.width || !hr.height) { domRegions.value = []; return }
+  domRegions.value = els.map((p, i) => {
+    const r = p.getBoundingClientRect()
+    return {
+      blockId: order[i]!.blockId, label: order[i]!.label,
+      left: ((r.left - hr.left) / hr.width) * 100,
+      top: ((r.top - hr.top) / hr.height) * 100,
+      width: (r.width / hr.width) * 100,
+      height: (r.height / hr.height) * 100,
+    }
+  })
+}
+// The regions actually used for hit-test + dimming: DOM-measured when available, else the tree.
+const activeRegions = computed(() => (domRegions.value.length ? domRegions.value : regions.value))
 function onLayoutClick(e: MouseEvent) {
   const el = innerRef.value
   if (!el || !multiBlock.value) return
+  syncDomRegions() // measure fresh — the layout may have reflowed since the last sync
+  const list = domRegions.value.length ? domRegions.value : regions.value
   const r = el.getBoundingClientRect()
   const px = ((e.clientX - r.left) / r.width) * 100
   const py = ((e.clientY - r.top) / r.height) * 100
-  const hit = regions.value.find(rg => px >= rg.left && px <= rg.left + rg.width && py >= rg.top && py <= rg.top + rg.height)
+  const hit = list.find(rg => px >= rg.left && px <= rg.left + rg.width && py >= rg.top && py <= rg.top + rg.height)
   if (hit) { selectedBlockId.value = hit.blockId; optionsOpen.value = true }
 }
+// Re-measure whenever the layout could have reflowed (width/scale change, mount). nextTick + a short
+// settle for reka's flex sizing + the @container reflow.
+function scheduleSync() { nextTick(syncDomRegions); setTimeout(syncDomRegions, 80) }
+watch([simWidth, () => scale.value], scheduleSync)
+onMounted(scheduleSync)
 watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join('|')], () => {
   if (regions.value.length === 1) selectedBlockId.value = regions.value[0]!.blockId
   else if (selectedBlockId.value && !regions.value.some(r => r.blockId === selectedBlockId.value)) selectedBlockId.value = null
+  scheduleSync()
 }, { immediate: true })
 </script>
 
@@ -263,7 +303,7 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
             <!-- selection focus: dim the OTHER panels so the tapped one stands out -->
             <template v-if="multiBlock && selectedBlockId">
               <div
-                v-for="(rg, i) in regions"
+                v-for="(rg, i) in activeRegions"
                 v-show="rg.blockId !== selectedBlockId"
                 :key="i"
                 class="pointer-events-none absolute bg-default/55 transition-opacity duration-200"
