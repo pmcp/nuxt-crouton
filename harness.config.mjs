@@ -26,6 +26,12 @@
  *   gates          — gate ids REQUIRED at this stage.
  *   optionalGates  — gate ids that are OPT-IN here (offered, not enforced).
  *   deploy         — default deploy target: 'preview' | 'staging' | 'prod-manual' | 'none'.
+ *   editGuard      — true if edits to this stage's paths need explicit approval (shared
+ *                    code). DECLARATIVE here; the PreToolUse hook .claude/hooks/
+ *                    gate-package-edits.sh is the enforcer and hardcodes `packages/*` on
+ *                    purpose — it fires on every Edit/Write, so it must not pay a Node
+ *                    spawn per call just to re-derive what this flag already states (#955).
+ *                    Keep the two in sync: this flag documents intent, the hook enforces it.
  *
  * The DEFAULT profile below reproduces today's behaviour exactly (the #779 table:
  * packages = test-first ON, apps = opt-in, pocs = OFF). A consumer on another stack
@@ -56,7 +62,8 @@ export const stages = {
     paths: ['packages/'],
     gates: ['test-first'],
     optionalGates: [],
-    deploy: 'none'
+    deploy: 'none',
+    editGuard: true
   }
 }
 

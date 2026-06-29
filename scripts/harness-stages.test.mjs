@@ -7,7 +7,7 @@
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { loadStages, stageForPath, gateMode, deployTargetForPath, validate } from './harness-stages.mjs'
+import { loadStages, stageForPath, gateMode, deployTargetForPath, validate, isEditGuarded, editGuardedStages } from './harness-stages.mjs'
 
 const model = await loadStages()
 
@@ -77,6 +77,18 @@ test('longest-prefix wins when a more specific stage path is declared', () => {
   assert.equal(stageForPath('apps/velo/x.ts', custom).name, 'app')
   assert.equal(stageForPath('apps/core/x.ts', custom).name, 'app-core')
   assert.equal(gateMode('apps/core/x.ts', 'test-first', custom), 'on')
+})
+
+test('edit-guard: packages/ is guarded, pocs/ and apps/ are not', () => {
+  assert.equal(isEditGuarded('packages/crouton-core/x.ts', model), true)
+  assert.equal(isEditGuarded('pocs/loop-station/app.vue', model), false)
+  assert.equal(isEditGuarded('apps/velo/x.ts', model), false)
+  assert.deepEqual(editGuardedStages(model), ['package'])
+})
+
+test('validate rejects a non-boolean editGuard', () => {
+  const bad = { stages: { x: { paths: ['x/'], gates: [], optionalGates: [], deploy: 'none', editGuard: 'yes' } } }
+  assert.ok(validate(bad).some((p) => p.includes('editGuard must be a boolean')))
 })
 
 test('validate rejects an unknown gate id', () => {

@@ -73,6 +73,21 @@ export function deployTargetForPath(path, model) {
   return stageForPath(path, model).stage.deploy || 'none'
 }
 
+/** Names of stages whose edits are guarded (shared code needing approval). */
+export function editGuardedStages(model) {
+  return Object.entries(model.stages).filter(([, s]) => s.editGuard === true).map(([name]) => name)
+}
+
+/**
+ * True if this path is in an edit-guarded stage. NOTE: the live enforcer is the bash
+ * PreToolUse hook (gate-package-edits.sh), which hardcodes `packages/*` to avoid a Node
+ * spawn per Edit/Write (#955). This helper is for tooling/tests that want the declarative
+ * answer from the config without paying that cost on the hot path.
+ */
+export function isEditGuarded(path, model) {
+  return stageForPath(path, model).stage.editGuard === true
+}
+
 /** Validate the config shape. Returns an array of problem strings ([] = valid). */
 export function validate(model) {
   const problems = []
@@ -86,6 +101,7 @@ export function validate(model) {
     const overlap = (s.gates || []).filter((g) => (s.optionalGates || []).includes(g))
     if (overlap.length) problems.push(`stage "${name}": gate(s) both required and optional: ${overlap.join(', ')}`)
     if (s.deploy && !DEPLOY_TARGETS.includes(s.deploy)) problems.push(`stage "${name}": unknown deploy target "${s.deploy}"`)
+    if (s.editGuard !== undefined && typeof s.editGuard !== 'boolean') problems.push(`stage "${name}": editGuard must be a boolean`)
   }
   return problems
 }

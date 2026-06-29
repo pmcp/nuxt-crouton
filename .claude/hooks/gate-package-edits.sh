@@ -23,7 +23,13 @@ fi
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 REL_PATH="${FILE_PATH#$PROJECT_DIR/}"
 
-# Only gate packages/
+# Only gate packages/.
+# This is the LIVE ENFORCER of the stage model's edit-guard (harness.config.mjs — the
+# `package` stage's `editGuard: true`; epic #952/#955). It hardcodes `packages/*` ON
+# PURPOSE: this hook fires on EVERY Edit/Write, so it must not spawn Node per call just to
+# re-derive what the config already declares. If you add/rename an edit-guarded stage in
+# harness.config.mjs, update this prefix to match — the deliberate, documented exception
+# to "read the resolver, don't match folders by hand".
 if [[ "$REL_PATH" != packages/* ]]; then
   exit 0
 fi
