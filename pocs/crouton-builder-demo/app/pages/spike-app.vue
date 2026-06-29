@@ -426,12 +426,21 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
   const dl = pos.x, dr = pos.x + md.width, dt = pos.y, db = pos.y + md.height
   for (const o of others) {
     const node = o.data.node
-    if (node.type !== 'split') continue
     const ts = sizeOf(node)
     const tx = o.position.x, ty = o.position.y
     const ox = Math.max(0, Math.min(dr, tx + ts.width) - Math.max(dl, tx))
     const oy = Math.max(0, Math.min(db, ty + ts.height) - Math.max(dt, ty))
-    if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over the split → try edge-snap
+    if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over this node → try edge-snap
+    // A single block (leaf) or a nested app has no inner seams to insert between — but hovering OVER it
+    // should still be snappable: merge BESIDE it into a new split. Pick the edge from which side of the
+    // target's CENTRE the cursor is on (over its right half → merge right, top half → merge top, etc.),
+    // so a single item becomes a drop target just like a combined layout. (#952 follow-up)
+    if (node.type !== 'split') {
+      const relx = (cx - (tx + ts.width / 2)) / ts.width
+      const rely = (cy - (ty + ts.height / 2)) / ts.height
+      const edge: SnapEdge = Math.abs(relx) >= Math.abs(rely) ? (relx >= 0 ? 'right' : 'left') : (rely >= 0 ? 'bottom' : 'top')
+      return { kind: 'edge', target: o, edge }
+    }
     const ccx = clamp(cx, tx, tx + ts.width), ccy = clamp(cy, ty, ty + ts.height)
     const seams: SeamCand[] = []
     collectSeams(node, { x: tx, y: ty, w: ts.width, h: ts.height }, [], seams)

@@ -114,6 +114,11 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   not just onto an outer edge. Triggers on **≥35 % overlap** with the split (not centre-strictly-inside
   — a big card overlapping heavily used to match neither insert nor edge); seam picked from the centre
   **clamped** into the target.
+- **Single items are snap targets too.** Hovering a dragged card **over** a single block (a leaf, or a
+  nested app — anything with no inner seams) snaps it **beside** that block into a new split; the edge is
+  picked from which half of the target's centre you're over (right half → merge right, top half → top…).
+  Before, only multi-pane splits armed on hover-over, so a lone block couldn't be built onto by dragging
+  onto it (only by edge-snapping beside it). The drop reuses the existing `combineNodes` edge-merge.
 - **Ghost mirrors the dragged item; panes ease apart to make room (#946/#947).** On an armed insert the
   target splices a **ghost skeleton with the dragged node's footprint** (every leaf → a dashed
   `__dropghost__` placeholder, splits/nested preserved) and renders that — a 2-row stack opens a *2-row*
