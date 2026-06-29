@@ -24,7 +24,7 @@
  */
 import { markRaw, computed, shallowRef, provide } from 'vue'
 import { createReusableTemplate, onKeyStroke } from '@vueuse/core'
-import type { LayoutNode, LayoutSplit, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
+import type { LayoutNode, LayoutTree, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-bridge'
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
 import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
@@ -362,32 +362,40 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), h
 // Recurse to the DEEPEST split under (cx,cy): walk each split's child sub-rects so a drop can land
 // inside a NESTED layout (a split within a pane), not just the top-level split. Returns that split,
 // its flow-space sub-rect, and the child-index path to it.
-function deepestSplitAt(node: LayoutNode, rect: FlowRect, cx: number, cy: number, path: number[] = []): { node: LayoutSplit, rect: FlowRect, path: number[] } | null {
-  if (node.type !== 'split') return null
+// A candidate insert seam, in flow-space: `main` = the seam line's position on its split's MAIN axis;
+// [c0,c1] = its CROSS-axis span. Carries the split's `path` + the seam `index` within it.
+interface SeamCand { path: number[], index: number, axis: 'horizontal' | 'vertical', main: number, c0: number, c1: number }
+// Collect EVERY insertable seam across ALL splits in the tree (parent AND nested), so the nearest one
+// to the cursor wins — near a top-level gap → the parent; deep inside a child near its seam → the
+// child. (Deepest-split-always-wins made the parent unreachable; #950 follow-up.)
+function collectSeams(node: LayoutNode, rect: FlowRect, path: number[], out: SeamCand[]) {
+  if (node.type !== 'split') return
   const horizontal = node.direction === 'horizontal'
   const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
   const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
+  const bounds = [0]
   let acc = 0
+  for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
+  bounds.forEach((b, index) => out.push(horizontal
+    ? { path, index, axis: 'horizontal', main: rect.x + b * rect.w, c0: rect.y, c1: rect.y + rect.h }
+    : { path, index, axis: 'vertical', main: rect.y + b * rect.h, c0: rect.x, c1: rect.x + rect.w }))
+  acc = 0
   for (let i = 0; i < node.children.length; i++) {
     const frac0 = acc / total, len = sizes[i]! / total
     acc += sizes[i]!
     const cr: FlowRect = horizontal
       ? { x: rect.x + frac0 * rect.w, y: rect.y, w: len * rect.w, h: rect.h }
       : { x: rect.x, y: rect.y + frac0 * rect.h, w: rect.w, h: len * rect.h }
-    if (cx >= cr.x && cx <= cr.x + cr.w && cy >= cr.y && cy <= cr.y + cr.h) {
-      return deepestSplitAt(node.children[i]!, cr, cx, cy, [...path, i]) ?? { node, rect, path }
-    }
+    collectSeams(node.children[i]!, cr, [...path, i], out)
   }
-  return { node, rect, path }
 }
 function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others: FlowNode[]): SnapIntent | null {
   const md = sizeOf(movedNode)
   const cx = pos.x + md.width / 2
   const cy = pos.y + md.height / 2
   // 1) INSERT: the drag OVERLAPS a split target → drop between its panes. Overlap (≥35% of the dragged
-  // area), not strict centre-inside, so a big card overlapping heavily still matches. Then recurse to
-  // the DEEPEST split under the (clamped) centre, so you can drop into a nested layout, and pick the
-  // nearest seam within THAT split. The seam geometry is returned as card-fractions for the guide.
+  // area), not strict centre-inside. Then pick the NEAREST seam across every split (parent + nested):
+  // near a top-level gap targets the parent, near a child's seam targets the child — so both are reachable.
   const dl = pos.x, dr = pos.x + md.width, dt = pos.y, db = pos.y + md.height
   for (const o of others) {
     const node = o.data.node
@@ -398,23 +406,19 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
     const oy = Math.max(0, Math.min(db, ty + ts.height) - Math.max(dt, ty))
     if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over the split → try edge-snap
     const ccx = clamp(cx, tx, tx + ts.width), ccy = clamp(cy, ty, ty + ts.height)
-    const hit = deepestSplitAt(node, { x: tx, y: ty, w: ts.width, h: ts.height }, ccx, ccy)
-    if (!hit) continue
-    const { node: split, rect: r, path } = hit
-    const horizontal = split.direction === 'horizontal'
-    const sizes = split.children.map(c => c.defaultSize ?? (100 / split.children.length))
-    const total = sizes.reduce((a, b) => a + b, 0) || split.children.length
-    const bounds = [0]
-    let acc = 0
-    for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
-    const rel = horizontal ? (clamp(ccx, r.x, r.x + r.w) - r.x) / r.w : (clamp(ccy, r.y, r.y + r.h) - r.y) / r.h
-    let index = 0, bestD = Infinity
-    bounds.forEach((b, i) => { const d = Math.abs(b - rel); if (d < bestD) { bestD = d; index = i } })
-    const seamFrac = bounds[index]!
-    const rxf = (r.x - tx) / ts.width, ryf = (r.y - ty) / ts.height, rwf = r.w / ts.width, rhf = r.h / ts.height
-    const insert: SpikeSnapInsert = horizontal
-      ? { axis: 'horizontal', path, index, pos: rxf + seamFrac * rwf, cross0: ryf, cross1: ryf + rhf }
-      : { axis: 'vertical', path, index, pos: ryf + seamFrac * rhf, cross0: rxf, cross1: rxf + rwf }
+    const seams: SeamCand[] = []
+    collectSeams(node, { x: tx, y: ty, w: ts.width, h: ts.height }, [], seams)
+    let best: SeamCand | null = null, bestD = Infinity
+    for (const s of seams) {
+      const inCross = s.axis === 'horizontal' ? (ccy >= s.c0 && ccy <= s.c1) : (ccx >= s.c0 && ccx <= s.c1)
+      if (!inCross) continue
+      const d = s.axis === 'horizontal' ? Math.abs(ccx - s.main) : Math.abs(ccy - s.main)
+      if (d < bestD) { bestD = d; best = s }
+    }
+    if (!best) continue
+    const insert: SpikeSnapInsert = best.axis === 'horizontal'
+      ? { axis: 'horizontal', path: best.path, index: best.index, pos: (best.main - tx) / ts.width, cross0: (best.c0 - ty) / ts.height, cross1: (best.c1 - ty) / ts.height }
+      : { axis: 'vertical', path: best.path, index: best.index, pos: (best.main - ty) / ts.height, cross0: (best.c0 - tx) / ts.width, cross1: (best.c1 - tx) / ts.width }
     return { kind: 'insert', target: o, insert }
   }
   // 2) EDGE: original side-snap (merge onto a target's outer edge).
