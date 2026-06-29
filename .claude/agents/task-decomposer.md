@@ -1,5 +1,6 @@
 ---
 name: task-decomposer
+layer: method
 description: The recursive heart of the task-decomposition pipeline. Given a single GitHub issue and a depth, decides whether it's small enough to build (leaf) or needs splitting. Leaf → spawns a task-worker. Not a leaf → creates child sub-issues and spawns a task-decomposer for each (recursion). Hard depth + fan-out caps prevent runaway spawning.
 tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Glob, Bash, Agent
 model: sonnet

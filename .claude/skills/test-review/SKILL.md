@@ -1,5 +1,6 @@
 ---
 name: test-review
+layer: stage
 description: Propose the test(s) FIRST and get a human to sign off on the behaviour before writing the code — the test analog of /schema-review and /ui-proposal. For hand-written LOGIC in packages/* (apps opt-in, pocs exempt). Renders the proposed failing test as a reviewable contract, holds for lgtm/approve, then you write the code to make it green. Use when an agent is about to implement packages/* logic, or when asked to "write the test first", "TDD this", "agree on the test", run /test-review.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---

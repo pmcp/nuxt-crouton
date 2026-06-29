@@ -1,5 +1,6 @@
 ---
 name: ecosystem-check
+layer: method
 description: Before building new infrastructure or a non-trivial capability, check whether the Nuxt ecosystem, UnJS, Vite, or other OSS already solves it — within our constraints (Nuxt, OSS, self-hostable, no mandatory SaaS). Use when weighing build-vs-adopt or starting new infra/tooling.
 allowed-tools: Bash, Read, Grep, Glob, WebSearch, WebFetch
 ---

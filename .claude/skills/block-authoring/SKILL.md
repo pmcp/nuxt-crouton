@@ -1,5 +1,6 @@
 ---
 name: block-authoring
+layer: stack
 description: Author a placeable layout block that looks right at ANY pane size. The one hard rule — size to the PANE with container queries (@container), never the viewport — plus list/form playbooks and the sizing contract (minWidth etc.) the viability metric reads. Use when adding/converting a croutonLayoutBlocks block, or when a block overflows/breaks in a narrow pane.
 allowed-tools: Read, Grep, Glob, Edit, Write
 ---

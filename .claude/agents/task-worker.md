@@ -1,5 +1,6 @@
 ---
 name: task-worker
+layer: method
 description: The bottom of the task-decomposition pipeline — the agent that actually implements one leaf issue. Sets the issue in-progress, works on an isolated feature branch (git worktree), runs pnpm typecheck, commits via the /commit skill, and opens a PR that closes the issue. Spawned by task-decomposer; runs in worktree isolation so parallel workers never collide.
 tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__add_issue_comment, mcp__github__create_pull_request, mcp__github__pull_request_read, mcp__github__get_label, Read, Write, Edit, Grep, Glob, Bash, Skill
 model: opus

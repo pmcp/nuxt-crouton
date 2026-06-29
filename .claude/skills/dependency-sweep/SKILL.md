@@ -1,5 +1,6 @@
 ---
 name: dependency-sweep
+layer: method
 description: Run the "get dependencies current" flow for this monorepo — sweep for available updates, triage into safe / deliberate / wait buckets, bump the pnpm catalog, and prove it with the typecheck + e2e gate. Use when asked to "update dependencies", "are we on the latest", "do the quarterly sweep", "bump deps", or when the recurring sweep ticket comes due. We run NO update bot on purpose (#141) — this skill IS the update process.
 allowed-tools: Bash, Read, Edit, Grep, Glob, AskUserQuestion, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__issue_read, mcp__github__search_issues
 ---

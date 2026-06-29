@@ -1,5 +1,6 @@
 ---
 name: deploy-production
+layer: stack
 description: Deploy a crouton app to Cloudflare Workers PRODUCTION (<app>.friendlyinter.net). A deliberate, human-initiated action — separate from the default staging /deploy skill. Use ONLY when explicitly asked to ship/release to production. Never run as part of routine work or an automated flow.
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion
 ---

@@ -1,5 +1,6 @@
 ---
 name: task-decompose
+layer: method
 description: Turn one task into a tree of GitHub issues worked by agents. Creates (or reuses) an epic issue, then launches the recursive orchestrator → decomposer → worker pipeline. Use when asked to "decompose a task", "break this down into issues and work it", "spawn agents to build X", or run via /task-decompose.
 allowed-tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, Read, Grep, Bash, Agent
 ---

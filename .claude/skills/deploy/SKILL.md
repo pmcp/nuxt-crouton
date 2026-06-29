@@ -1,5 +1,6 @@
 ---
 name: deploy
+layer: stack
 description: Deploy a crouton app to Cloudflare Workers STAGING (auto-provisioning) — the DEFAULT deploy, staging only, never production. Handles the staging bootstrap (auto-creates D1+KV, syncs ids, migrates), wiring CI, routine staging deploys, and Pages→Workers migration. For production use the separate /deploy-production skill. Use when deploying any app in apps/.
 allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, AskUserQuestion
 ---

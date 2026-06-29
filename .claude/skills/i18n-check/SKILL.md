@@ -1,5 +1,6 @@
 ---
 name: i18n-check
+layer: stack
 description: Pre-commit i18n check. Scans changed files for untranslated strings, missing locale keys, and locale sync issues. Fast and focused — only checks what changed. Use before committing or as a review add-on.
 argument-hint: "[--scope <app> | --fix]"
 allowed-tools: Bash, Read, Grep, Glob, Edit, Agent

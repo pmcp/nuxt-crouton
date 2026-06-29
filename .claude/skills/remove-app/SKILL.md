@@ -1,5 +1,6 @@
 ---
 name: remove-app
+layer: stack
 description: Cleanly tear down a crouton poc/app — the inverse of /deploy. Removes the code, the Cloudflare Worker + D1 + KV (both env scopes), the app's stray branches, and closes its epic/sub-issues — with a --dry-run first and a typed confirm for anything destructive. Use when asked to "remove an app", "tear down a poc", "delete app X and its resources", or to clean up after an abandoned proof-of-concept. Counterpart to /deploy, /poc-deploy, crouton init.
 allowed-tools: Bash, Read, Grep, Glob, Edit, AskUserQuestion
 ---

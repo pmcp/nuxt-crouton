@@ -1,5 +1,6 @@
 ---
 name: frontend-review
+layer: stack
 description: Front-end conventions review for Vue surfaces — the component-usage analog of /a11y, pointed at Nuxt UI 4 + crouton conventions instead of WCAG. Reviews just your diff (or a package/file) for v3 component names, the v4 overlay pattern, Options API, raw-HTML re-implementations, and hardcoded colors; rates findings by severity; and either comments inline on the PR (--comment) or applies the safe fixes for you (--fix). Steers the depth-aware `frontend-review` subagent. Use when asked to "check the frontend", "are we using Nuxt UI right", "review component usage", "frontend-review this", or run /frontend-review.
 argument-hint: "[quick|standard|deep] [last N | --scope <pkg> | --file <path>] [--comment] [--fix]"
 allowed-tools: Bash, Read, Grep, Glob, Edit, Agent, mcp__github__add_comment_to_pending_review, mcp__github__pull_request_review_write, mcp__github__pull_request_read, mcp__github__add_issue_comment
