@@ -40,6 +40,11 @@ Walking root `CLAUDE.md` + every skill (`.claude/skills/**`) + every agent
   judgments). Tune the bands in one place there.
 - **cold-write totals** — for each CI workflow that runs `claude-code-action`,
   what it cold-writes per run (always-on `CLAUDE.md` + its own `prompt:` block).
+- **budget by harness layer** — `totals.byLayer` rolls each skill/agent's tokens up
+  by its `layer:` tag (`method` / `stage` / `stack`; epic #952), with untagged
+  artifacts (CLAUDE.md, an un-tagged new skill) bucketed as `unlayered` so the
+  per-layer tokens reconcile against `totals.tokens`. Quantifies how much of the
+  always-on surface is the portable method vs. the swappable crouton stack.
 
 ## Files
 
