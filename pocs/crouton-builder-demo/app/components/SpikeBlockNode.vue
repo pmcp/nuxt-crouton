@@ -20,8 +20,8 @@
  *
  * Editing moved OFF the canvas (#907 focus-view redesign): double-clicking a node opens a dedicated
  * full-screen edit view (no Vue Flow camera, so framing is deterministic) — so this node carries NO
- * in-flow editable surface. It stays a read-only card: footprint render, survey render, the snap
- * guide, and the board-level pull-pane detach gesture.
+ * in-flow editable surface. It stays a read-only card: footprint render, per-node width preview, the
+ * snap guide, and the board-level pull-pane detach gesture.
  *
  * No `@vue-flow/core` import (connection handles aren't needed here). `footprint` / `SPIKE_*`
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
@@ -39,13 +39,7 @@ const props = defineProps<{
   dragging?: boolean
 }>()
 
-// Global viewport survey (#907 layer 3): when a device is active, size the card to that device
-// and render the layout AT that width (so the board becomes a wall of phones/tablets/desktops).
-const viewport = inject(SPIKE_VIEWPORT_KEY, null)
-const surveying = computed(() => !!viewport?.value)
-
 const size = computed(() => {
-  if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
   // Per-node resize (#954): once you've dragged the corner, the card is sized to its own width/height
   // and previews responsively at that width. Height falls back to the footprint height.
   if (typeof props.data.width === 'number') {
@@ -59,13 +53,13 @@ const size = computed(() => {
 })
 
 // A LayoutTree wrapper for the responsive renderer — carries any breakpoints authored in the
-// edit view, so the survey resolves the SAME authored responsiveness at the device width.
+// edit view, so the per-node width preview resolves the SAME authored responsiveness.
 const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node, breakpoints: props.data.bp }))
 
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
 // This node is the snap target when the injected preview names its layout node.
-const guideMatch = computed(() => !surveying.value && !!snapPreview?.value && snapPreview.value.node === props.data.node)
+const guideMatch = computed(() => !!snapPreview?.value && snapPreview.value.node === props.data.node)
 // A preview is EITHER an internal insert seam (Phase A) OR an outer edge.
 const guideInsert = computed(() => (guideMatch.value ? snapPreview!.value!.insert ?? null : null))
 const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guideInsert.value ? snapPreview!.value!.edge ?? null : null))
@@ -184,8 +178,8 @@ function onResizeDown(e: PointerEvent) {
 function resetSize() { setSize?.(props.data.node, { width: null }) }
 // Delete this node (block or whole layout) from the canvas (#955).
 const deleteNode = inject(SPIKE_DELETE_KEY, null)
-// Render responsively at the node's own width when one is set (and not in the global survey).
-const previewing = computed(() => !surveying.value && typeof props.data.width === 'number')
+// Render responsively at the node's own width when one is set.
+const previewing = computed(() => typeof props.data.width === 'number')
 const isGroup = computed(() => props.data.node.type === 'split')
 
 // Long-press → jiggle (#941): detach is gated behind a deliberate HOLD, so a merged group's panes
@@ -199,7 +193,7 @@ let pressTimer: number | null = null
 let pressOrigin = { x: 0, y: 0 }
 function clearPress() { if (pressTimer != null) { window.clearTimeout(pressTimer); pressTimer = null } }
 function onCardDown(e: PointerEvent) {
-  if (surveying.value || !isGroup.value) return
+  if (!isGroup.value) return
   if (jiggling.value) { jiggling.value = false; return } // already wiggling → a tap/drag off a face exits
   pressOrigin = { x: e.clientX, y: e.clientY }
   clearPress()
@@ -249,7 +243,7 @@ onClickOutside(cardRef, () => { if (jiggling.value) jiggling.value = false })
 // Show the detach faces only while WIGGLING (or while a pull is mid-flight, so the grabbed pane
 // isn't orphaned if the finger leaves the card). Tapping/selecting no longer auto-arms detach —
 // that surface is the #942 promote/duplicate toolbar now; pulling apart is the deliberate hold.
-const armed = computed(() => !surveying.value && isGroup.value && (jiggling.value || activeIndex.value !== null))
+const armed = computed(() => isGroup.value && (jiggling.value || activeIndex.value !== null))
 
 // Top-level pane faces (as % of the card), laid out along the split's axis — the regions you grab to
 // pull a pane out, the seams on ease-apart, AND the slot bounds the reorder hit-test reads. They must
@@ -465,7 +459,7 @@ watch(() => props.data.node, () => {
   >
     <!-- "Page" badge — this node is the live layout a user sees (#942). -->
     <UBadge
-      v-if="data.isPage && !surveying"
+      v-if="data.isPage"
       color="primary"
       variant="solid"
       size="sm"
@@ -475,7 +469,7 @@ watch(() => props.data.node, () => {
 
     <!-- Region badge (#953) — this node is pinned to the page's top/bottom edge (a sticky pill). -->
     <UBadge
-      v-if="data.region && !surveying"
+      v-if="data.region"
       color="primary"
       variant="subtle"
       size="sm"
@@ -488,7 +482,7 @@ watch(() => props.data.node, () => {
          `.stop` so tapping a button neither drags the node nor bubbles to the card. -->
     <!-- Done — exit wiggle mode (#941). Shown while wiggling; tapping outside the layout also exits. -->
     <div
-      v-if="jiggling && !surveying"
+      v-if="jiggling"
       class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 p-1 shadow-xl backdrop-blur"
     >
       <UButton
@@ -503,7 +497,7 @@ watch(() => props.data.node, () => {
     </div>
 
     <div
-      v-if="selected && !jiggling && !surveying"
+      v-if="selected && !jiggling"
       class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-default bg-elevated/95 p-1 shadow-xl backdrop-blur"
     >
       <UButton
@@ -572,24 +566,13 @@ watch(() => props.data.node, () => {
       />
     </div>
 
-    <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
-    <!-- topology mode renders it plain at its footprint size. -->
-    <!-- Survey: scroll the PREVIEW, don't pan the canvas (#940). `nopan`/`nodrag` keep Vue Flow's
-         hands off the gesture, `overflow-auto` + `touch-action` let an overflowing layout scroll. -->
+    <!-- Per-node width preview (#954): render responsively at the node's own width so it reflows
+         per-element. Scroll the PREVIEW, don't pan the canvas — `nopan`/`nodrag` keep Vue Flow's
+         hands off the gesture, `overflow-auto` + `touch-action` let an overflowing layout scroll.
+         Read-only splitters (`interactive: false`) resize the CARD, not internal panes — editing
+         sizes is the edit view's job (double-click). Plain footprint render otherwise. -->
     <div
-      v-if="surveying"
-      class="nopan nodrag h-full w-full overflow-auto"
-      style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
-    >
-      <!-- Survey is READ-ONLY (#953): `interactive: false` drops the splitter resize handles, so you
-           can't accidentally resize panes while previewing a device width. Editing sizes is the edit
-           view's job (double-click), not the survey. -->
-      <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" :interactive="false" />
-    </div>
-    <!-- Per-node width preview (#954): render responsively at the node's own width so it reflows like
-         the survey did, but per-element. Read-only splitters (resize the CARD, not internal panes). -->
-    <div
-      v-else-if="previewing"
+      v-if="previewing"
       class="nopan nodrag h-full w-full overflow-auto"
       style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
     >
@@ -599,9 +582,9 @@ watch(() => props.data.node, () => {
 
     <!-- Resize handle (#954) — drag the corner to set this node's width (drives responsive reflow) +
          height. The per-element "slider". `.nodrag`/`.stop` keep it off Vue Flow's node drag. Shown when
-         selected (not wiggling/surveying). Double-click clears back to the intrinsic footprint size. -->
+         selected (not wiggling). Double-click clears back to the intrinsic footprint size. -->
     <div
-      v-if="selected && !jiggling && !surveying"
+      v-if="selected && !jiggling"
       class="nodrag absolute -bottom-3 -right-3 z-40 flex size-12 cursor-nwse-resize items-center justify-center touch-none"
       title="Drag to resize · double-click to reset"
       @pointerdown.stop="onResizeDown"

@@ -1,8 +1,13 @@
 [
   {
+    "v": 45,
+    "note": "Cleanup pass — ripped out the dormant survey/viewport code left over after the slider→per-element-resize pivot (and the dead fitOverview), so the board path is one clear model. Chart block bars now render reliably (each bar sits in a definite-height track, so its % height resolves). And the board hides Vue Flow's own ⛶ fit button — it zooms into our oversized cards; the pill Fit is the right one (the Site flow keeps its ⛶).",
+    "commit": ""
+  },
+  {
     "v": 44,
     "note": "Fixed the selection highlight not scrolling with the content in the edit view — a tall layout scrolls inside the frame, so the dim/focus overlay now re-measures on scroll and stays locked to the selected pane.",
-    "commit": ""
+    "commit": "0566812"
   },
   {
     "v": 43,

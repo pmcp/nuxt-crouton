@@ -114,18 +114,16 @@ function undo() {
 // ⌘/Ctrl-Z undoes, on the board only (let inputs/textareas keep their native undo).
 onKeyStroke('z', (e) => {
   if (!(e.metaKey || e.ctrlKey) || e.shiftKey) return
-  if (!selectedPageId.value || viewport.value) return
+  if (!selectedPageId.value) return
   const t = e.target as HTMLElement | null
   if (t && /^(INPUT|TEXTAREA)$/.test(t.tagName)) return
   e.preventDefault()
   undo()
 })
 
-// Camera: re-frame the whole board to an overview after adding a block. CroutonFlow only
-// fits-to-view on mount (when the board is empty), so without this a freshly-added block sits at
-// the default zoom — which on a narrow phone fills the screen. fitView with maxZoom:1 keeps a
-// single block at a comfortable size and shows everything you've added. Survey/focus own the
-// camera, so skip then.
+// Camera: re-frame the whole board after adding a block. CroutonFlow only fits-to-view on mount
+// (when the board is empty), so without this a freshly-added block sits at the default zoom —
+// which on a narrow phone fills the screen. The edit view owns the camera, so skip then.
 const flowRef = ref<{
   fitView?: (o?: Record<string, unknown>) => void
   fitBounds?: (b: { x: number, y: number, width: number, height: number }, o?: Record<string, unknown>) => void
@@ -137,9 +135,8 @@ const flowRef = ref<{
 // node's drag eats it). We read the live viewport transform and re-`setCenter` with the math that
 // keeps the pinched point fixed under the fingers (Vue Flow exposes setCenter but not setViewport).
 function pinchZoom(ratio: number, midX: number, midY: number) {
-  // Pinch zooms the CANVAS — fine during a survey (the slider previewing a device width); only the
-  // full-screen edit view (zoomNodeId) owns the screen and must not be pinched. (Was also bailing on
-  // `viewport`, which killed pinch whenever the slider wasn't at max → "pinch broken in other views".)
+  // Pinch zooms the CANVAS — only the full-screen edit view (zoomNodeId) owns the screen and must
+  // not be pinched.
   if (zoomNodeId.value) return
   const container = document.querySelector('.crouton-vue-flow') as HTMLElement | null
   // The zoom transform lives on `.vue-flow__transformationpane` — `.vue-flow__viewport` has NO
@@ -160,14 +157,6 @@ function pinchZoom(ratio: number, midX: number, midY: number) {
   flowRef.value.setCenter(cx, cy, { zoom: nz, duration: 0 })
 }
 provide(SPIKE_PINCH_KEY, pinchZoom)
-function fitOverview() {
-  if (viewport.value || zoomNodeId.value) return // survey / edit-view own the screen
-  const fit = () => flowRef.value?.fitView?.({ duration: 350, padding: 0.3, maxZoom: 1 })
-  // Fit on nextTick, then once more after the new node's dimensions settle (Vue Flow measures
-  // node size async, so a single immediate fit can frame a stale/zero-width box and miscenter).
-  nextTick(fit)
-  window.setTimeout(fit, 180)
-}
 
 // Live snap preview (#907): while a block is dragged, the target node it will snap to lights
 // up the joining edge. Provided here; SpikeBlockNode injects it and matches by object identity.
@@ -223,20 +212,6 @@ function onReorder(group: LayoutNode, payload: SpikeReorderPayload) {
   nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: next } } : n)
 }
 provide(SPIKE_REORDER_KEY, onReorder)
-
-// Global viewport survey (#907 layer 3) — flip the whole board to a device width to see what every
-// page looks like at that viewport. Read-only: snapping/detach off, nodes tiled & non-draggable.
-const viewport = ref<SpikeViewport | null>(null)
-provide(SPIKE_VIEWPORT_KEY, viewport)
-
-// While surveying, tile the nodes in a row at device size — non-destructive (the real topology
-// positions in `nodes` are untouched, so flipping back to Fit restores your arrangement).
-const flowRows = computed<FlowNode[]>(() => {
-  if (!viewport.value) return nodes.value
-  const vw = viewport.value
-  const GAP = 80
-  return nodes.value.map((n, i) => ({ ...n, position: { x: i * (vw.width + GAP), y: 0 } }))
-})
 
 // Focus EDIT (#907 v2) — double-click a node and its layout ZOOMS UP in place: SpikeFocusShell
 // animates the card from the node's real on-screen rect to centre (a shared-element transition, NOT
@@ -298,10 +273,8 @@ const paletteOpen = ref(false)
 const resultOpen = ref(false)
 
 // The global responsive slider was removed (#954): responsiveness is now PER-ELEMENT — drag a card's
-// resize handle to preview its layout at that width. `viewport` (the old board-wide survey state) is
-// kept only as a dormant null so the SpikeBlockNode survey branch still compiles; nothing sets it.
-// Top-level Fit = zoom the camera to show every node. Doesn't touch the survey width (the slider owns
-// that now) — just frames the board. We frame by the nodes' KNOWN geometry (position + sizeOf), NOT Vue
+// resize handle to preview its layout at that width. Top-level Fit = zoom the camera to show every
+// node — just frames the board. We frame by the nodes' KNOWN geometry (position + sizeOf), NOT Vue
 // Flow's `fitView` — VF measures the `.vue-flow__node` wrapper, which is smaller than our overflowing
 // card, so its fit zooms into a corner of the oversized content. fitBounds on the real union box (like
 // fitPage does for one node) frames correctly. (#952 follow-up — same wrapper-vs-card mismatch.)
@@ -310,9 +283,7 @@ function boardBounds(): { x: number, y: number, width: number, height: number } 
   if (!ns.length) return null
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
   for (const n of ns) {
-    const s = viewport.value
-      ? { width: viewport.value.width, height: viewport.value.height }
-      : sizeOf(n.data.node)
+    const s = sizeOf(n.data.node)
     minX = Math.min(minX, n.position.x); minY = Math.min(minY, n.position.y)
     maxX = Math.max(maxX, n.position.x + s.width); maxY = Math.max(maxY, n.position.y + s.height)
   }
@@ -496,7 +467,6 @@ function clearSnapTimer() { if (snapTimer != null) { window.clearTimeout(snapTim
 function resetSnap() { snapPreview.value = null; snapKey = null; clearSnapTimer() }
 
 function onNodeDragLive(id: string, pos: { x: number, y: number }) {
-  if (viewport.value) { resetSnap(); return } // survey mode is read-only
   const moved = nodes.value.find(n => n.id === id)
   if (!moved) { resetSnap(); return }
   const intent = snapIntent(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
@@ -532,7 +502,6 @@ function onNodeDragLive(id: string, pos: { x: number, y: number }) {
 function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   const armed = snapPreview.value?.armed === true ? snapPreview.value : null // the green candidate at release
   resetSnap() // drag has ended — clear the live guide + dwell timer
-  if (viewport.value) return // survey mode is read-only — don't merge or persist tiled positions
   const rows = rowsRaw as unknown as FlowNode[]
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
   const moved = rows.find((r) => {
@@ -612,7 +581,6 @@ const blockCount = computed(() => currentBlocks().length)
 /** Enter Snap mode — seed the compose canvas from the free nodes (each node's layout + size). */
 function enterSnap() {
   if (mode.value === 'snap') return
-  viewport.value = null // survey is a Free-mode overlay; leave it when switching to Snap
   const ns = nodes.value
   if (ns.length) {
     const minX = Math.min(...ns.map(n => n.position.x))
@@ -870,7 +838,7 @@ function stashCurrentBoard() {
  *  measures node size async, so a single early fit frames a stale (zero/partial) box and the
  *  layout falls off-screen — retry across a few frames until the node is measured. */
 function fitPage() {
-  if (viewport.value || zoomNodeId.value) return
+  if (zoomNodeId.value) return
   const fit = () => {
     const page = nodes.value.find(n => n.data.isPage)
     if (page) {
@@ -894,7 +862,7 @@ function enterPage(id: string) {
   if (!page) return
   stashCurrentBoard()
   // clean transient board state for a fresh entry
-  mode.value = 'free'; viewport.value = null; zoomNodeId.value = null; originRect.value = null
+  mode.value = 'free'; zoomNodeId.value = null; originRect.value = null
   proposals.value = []; resultOpen.value = false; paletteOpen.value = false
   undoStack.value = [] // fresh board context — don't undo across page boundaries
   zoomDir.value = 'in'
@@ -905,7 +873,7 @@ function enterPage(id: string) {
 /** Page → Site: persist the board and go back to the page flow. */
 function exitToPages() {
   stashCurrentBoard()
-  zoomNodeId.value = null; originRect.value = null; viewport.value = null
+  zoomNodeId.value = null; originRect.value = null
   zoomDir.value = 'out'
   selectedPageId.value = null
 }
@@ -1035,19 +1003,22 @@ function exitToPages() {
             </div>
           </div>
         </header>
-        <!-- The flow itself lives inside the container -->
-        <div class="relative min-h-0 flex-1">
+        <!-- The flow itself lives inside the container. `spike-board-canvas` scopes the CSS that hides
+             Vue Flow's own ⛶ fitView button HERE — it measures the small `.vue-flow__node` wrapper and
+             zooms INTO our oversized cards; our pill Fit (fitBounds) is the correct one. The Site
+             flow's normal-sized cards are fine, so its ⛶ stays. (#975) -->
+        <div class="spike-board-canvas relative min-h-0 flex-1">
         <ClientOnly>
           <!-- Free placement: drag blocks from the drawer, position freely -->
           <CroutonFlow
             v-if="mode === 'free'"
             ref="flowRef"
-            :rows="flowRows"
+            :rows="nodes"
             collection="artists"
             :fit-view-on-mount="false"
             data-mode="ephemeral"
             :default-node-component="blockNode"
-            :draggable="viewport === null && !editing"
+            :draggable="!editing"
             allow-drop
             :minimap="false"
             @node-drop="onNodeDrop"
@@ -1294,6 +1265,13 @@ function exitToPages() {
   right: 0.5rem;
   bottom: auto;
   left: auto;
+}
+
+/* Hide Vue Flow's ⛶ fitView button on the BOARD only (#975) — VF's fitView measures the small
+   `.vue-flow__node` wrapper and zooms into our oversized cards; the pill Fit (fitBounds) is correct.
+   The Site flow keeps its ⛶ (normal-sized cards frame fine). Keeps the +/− zoom buttons. */
+.spike-board-canvas :deep(.vue-flow__controls-fitview) {
+  display: none;
 }
 
 /* Page ⇄ Site cross-fade (#940): both views absolute + overlapping, so enter and leave run at the

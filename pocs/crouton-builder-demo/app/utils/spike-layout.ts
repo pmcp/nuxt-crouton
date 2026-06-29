@@ -152,24 +152,6 @@ export const SPIKE_GHOST_LABEL_KEY = Symbol('spike-ghost-label') as InjectionKey
  */
 export const SPIKE_PINCH_KEY = Symbol('spike-pinch') as InjectionKey<(ratio: number, midX: number, midY: number) => void>
 
-/**
- * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
- * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
- * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a
- * read-only survey: while a viewport is active, snapping/detach are off and nodes tile rather
- * than drag. `null` = back to the topology (footprint) view. Provided by the page; SpikeBlockNode
- * injects it to size its card to the device + render via CroutonLayoutResponsiveRenderer at `width`.
- */
-export interface SpikeViewport { label: string, icon: string, width: number, height: number }
-export const SPIKE_VIEWPORT_KEY = Symbol('spike-viewport') as InjectionKey<Ref<SpikeViewport | null>>
-
-/** The device presets the viewport chips offer (width/height in px). */
-export const SPIKE_VIEWPORTS: SpikeViewport[] = [
-  { label: 'Phone', icon: 'i-lucide-smartphone', width: 375, height: 720 },
-  { label: 'Tablet', icon: 'i-lucide-tablet', width: 768, height: 1024 },
-  { label: 'Desktop', icon: 'i-lucide-monitor', width: 1280, height: 800 },
-]
-
 // Focus editing (#907 redesign) lives in a DEDICATED full-screen edit VIEW, not an in-flow
 // camera zoom — so there's no SPIKE_FOCUS/RESIZE injection here anymore. The overlay renders the
 // node's layout through CroutonLayoutBreakpointAuthor (ruler + devices + width slider + collapse
