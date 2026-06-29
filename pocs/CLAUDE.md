@@ -39,6 +39,44 @@ right shape before committing to a shared API.
   work — follow the normal package rules (issue first, approval gate, `pnpm typecheck`
   across apps) at that point.
 
+## Keep a living `HANDOFF.md` — capture decisions as you go
+
+**A POC that's actively iterating toward graduation MUST keep a living `<poc>/HANDOFF.md`,
+curated to *current truth*.** Don't write the handoff from scratch at graduation — build it as
+you go, so it's already done when you call the **`graduate`** skill (which consumes it as its
+handoff brief).
+
+The rule of thumb, every working session:
+
+- **A design decision gets signed off ("ok, this works") → write it into `HANDOFF.md`.** That's
+  the trigger. Not "later", not "at the end" — at sign-off, while it's fresh.
+- **We iterate *past* a decision → edit/delete the superseded version.** `HANDOFF.md` is *not* a
+  changelog. It must always read as *"this is how it should be built,"* never *"here's everything
+  we tried." A stale learning left in is worse than no doc — it misleads the handoff.
+- **What belongs:** what it is, the architecture/data model, the signed-off design decisions
+  (current truth), gotchas/limitations, and the **graduation requirements** (what must hold in the
+  real package + app). Descriptive, not imperative — it's a brief, not agent instructions.
+- **Keep the `README.md` thin:** usage / dev / deploy + a pointer to `HANDOFF.md`. Design decisions
+  live in *one* place (`HANDOFF.md`) so they don't drift.
+
+`pocs/crouton-builder-demo/HANDOFF.md` is the worked example. (Apps that never graduate — pure
+consumer demos — don't need one; this is for POCs incubating a future package.)
+
+**Pair it with a chronological decision log (`changelog.json`).** Where `HANDOFF.md` is the *curated
+current truth* (pruned), a per-POC `changelog.json` is the *append-only history* — one entry per
+iteration `{ v, note, commit }`, newest first — recording **how** we got here (every signed-off
+change + its commit). The two complement each other: the changelog never prunes, the handoff always
+does. Surface it in-app where it's verifiable on the deployed preview (the builder POC shows a `vNN`
+chip that opens the changelog; an entry's `commit` is backfilled when the next entry is added, since
+the hash isn't known until push). `pocs/crouton-builder-demo/app/spike-changelog.json` is the example.
+
+**At handoff, the doc is reconciled against the running POC — both directions.** The `graduate`
+skill's reconcile gate (step 1.5) drives the live app and sorts behaviour into *confirmed /
+contradicted / undocumented*, so the brief is proven complete — the **undocumented** bucket is what
+catches the unknown-unknowns a checklist can't. The running POC is the visual ground truth (no
+screenshot layer needed); stable `data-testid`/`data-handoff` hooks added during that pass are the
+shared vocabulary the doc, the agent, and the derived tests target, and they carry into the rebuild.
+
 ## What lives here right now
 
 A mix of two things:
