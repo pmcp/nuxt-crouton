@@ -26,6 +26,7 @@ export default defineNuxtConfig({
   extends: [
     '@fyit/crouton-core',
     '@fyit/crouton-layout',
+    '@fyit/crouton-flow', // the Vue Flow canvas — the v52 board + Site sitemap
     '@fyit/crouton-i18n',
   ],
 

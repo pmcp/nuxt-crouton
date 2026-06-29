@@ -17,7 +17,9 @@
   },
   "dependencies": {
     "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-collab": "workspace:*",
     "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-flow": "workspace:*",
     "@fyit/crouton-i18n": "workspace:*",
     "@fyit/crouton-layout": "workspace:*",
     "@libsql/client": "catalog:",

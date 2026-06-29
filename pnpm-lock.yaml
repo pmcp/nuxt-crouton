@@ -1664,9 +1664,15 @@ importers:
       '@fyit/crouton':
         specifier: workspace:*
         version: link:../../packages/crouton
+      '@fyit/crouton-collab':
+        specifier: workspace:*
+        version: link:../../packages/crouton-collab
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../../packages/crouton-core
+      '@fyit/crouton-flow':
+        specifier: workspace:*
+        version: link:../../packages/crouton-flow
       '@fyit/crouton-i18n':
         specifier: workspace:*
         version: link:../../packages/crouton-i18n
