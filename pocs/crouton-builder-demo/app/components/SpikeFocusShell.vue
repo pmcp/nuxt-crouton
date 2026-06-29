@@ -18,7 +18,7 @@
  * Composed in the POC from the layout engine's pure utils (same logic the package's BreakpointAuthor
  * uses) so the v-model + resize→keypoint contract is identical — only the presentation is bespoke.
  */
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import type { LayoutTree, LayoutNode, LayoutCollapseEdge, LayoutCollapseAffordance } from '@fyit/crouton-core/app/types/layout'
 import { applySizes, setCollapseRecipe, type NodePath } from '@fyit/crouton-layout/app/utils/layout-edit'
@@ -273,7 +273,22 @@ function onLayoutClick(e: MouseEvent) {
 // settle for reka's flex sizing + the @container reflow.
 function scheduleSync() { nextTick(syncDomRegions); setTimeout(syncDomRegions, 80) }
 watch([simWidth, () => scale.value], scheduleSync)
-onMounted(scheduleSync)
+// Re-measure on SCROLL too (#954, IMG_1065): a tall layout scrolls INSIDE the renderer, but the dim
+// overlay is a sibling positioned by % of the fixed frame — so without this it stays put while the
+// content scrolls. Capture-phase catches the renderer's inner scroll; rAF-throttled so it stays cheap.
+let rafPending = false
+function onScrollSync() {
+  if (rafPending) return
+  rafPending = true
+  requestAnimationFrame(() => { rafPending = false; syncDomRegions() })
+}
+onMounted(() => {
+  scheduleSync()
+  innerRef.value?.addEventListener('scroll', onScrollSync, { capture: true, passive: true })
+})
+onBeforeUnmount(() => {
+  innerRef.value?.removeEventListener('scroll', onScrollSync, { capture: true })
+})
 watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join('|')], () => {
   if (regions.value.length === 1) selectedBlockId.value = regions.value[0]!.blockId
   else if (selectedBlockId.value && !regions.value.some(r => r.blockId === selectedBlockId.value)) selectedBlockId.value = null

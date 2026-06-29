@@ -1,8 +1,13 @@
 [
   {
+    "v": 44,
+    "note": "Fixed the selection highlight not scrolling with the content in the edit view — a tall layout scrolls inside the frame, so the dim/focus overlay now re-measures on scroll and stays locked to the selected pane.",
+    "commit": ""
+  },
+  {
     "v": 43,
     "note": "Removed the global responsive slider — responsiveness is now PER-ELEMENT (drag a card's resize handle to preview its layout at that width). Opening edit now lands at the node's RESIZED width. And blocks decide their own size intrinsically (the Top bar / Bottom nav are short bars), so a pinned Top bar comes out as a proper short pill with content scrolling under it — no per-instance flex controls.",
-    "commit": ""
+    "commit": "a1b205db"
   },
   {
     "v": 42,
