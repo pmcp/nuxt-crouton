@@ -266,11 +266,21 @@ function syncPanes() {
   if (els.length !== n.children.length) { measuredPanes.value = []; return }
   measuredPanes.value = els.map((el) => {
     const r = el.getBoundingClientRect()
+    // CLAMP each pane to the card box (ALL four edges). When the content is taller than the card it
+    // overflows (the body is `overflow-hidden`/`-visible`) and a lower pane's measured rect extends
+    // below — or entirely past — the card, which drew the face sprawling outside it (#972 follow-up,
+    // IMG_1071). Clamping every edge into [0, card] means a face only ever covers the pane's VISIBLE
+    // portion; a pane scrolled fully out collapses to zero size (hidden by `paneRect`).
+    const cw = cr.width, ch = cr.height
+    const left = Math.min(Math.max(0, r.left - cr.left), cw)
+    const top = Math.min(Math.max(0, r.top - cr.top), ch)
+    const right = Math.min(Math.max(0, r.right - cr.left), cw)
+    const bottom = Math.min(Math.max(0, r.bottom - cr.top), ch)
     return {
-      left: ((r.left - cr.left) / cr.width) * 100,
-      top: ((r.top - cr.top) / cr.height) * 100,
-      width: (r.width / cr.width) * 100,
-      height: (r.height / cr.height) * 100,
+      left: (left / cw) * 100,
+      top: (top / ch) * 100,
+      width: ((right - left) / cw) * 100,
+      height: ((bottom - top) / ch) * 100,
     }
   })
 }
@@ -328,6 +338,8 @@ onMounted(scheduleSyncPanes)
 const gap = computed(() => (pulling.value ? 18 : jiggling.value ? 16 : 6))
 
 function paneRect(p: { left: number, top: number, width: number, height: number }) {
+  // A pane clamped to ~nothing (scrolled out of an overflowing card) has no grabbable face (#972).
+  if (p.width < 0.5 || p.height < 0.5) return { display: 'none' }
   return { left: `${p.left}%`, top: `${p.top}%`, width: `${p.width}%`, height: `${p.height}%` }
 }
 function faceStyle(i: number) {

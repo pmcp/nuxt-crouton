@@ -1,8 +1,13 @@
 [
   {
+    "v": 51,
+    "note": "Fixed the wiggle drag-borders spilling OUTSIDE the card when the layout is taller than the card (scrolls/overflows) — the green faces are measured from the rendered panes, and a pane below the fold reported a rect extending past the card, so its border sprawled down the canvas. Faces are now clamped to the card box (a pane scrolled out of view just has no face). Caught from your IMG_1071.",
+    "commit": ""
+  },
+  {
     "v": 50,
     "note": "Drop a block BESIDE a pane inside a layout — drag a block over a composed layout and it now targets the pane under your finger and adds the new block on the side you're nearest (left/right/top/bottom). It flattens into the row when the side runs along it, and wraps the pane perpendicular otherwise — so you can finally add to the RIGHT of a pane that sits in a vertical stack (e.g. right of the chart), which wasn't possible before (no pre-existing seam there). Replaces the old between-seams-only insert with one unified 'add beside the pane you point at' rule.",
-    "commit": ""
+    "commit": "3af5039"
   },
   {
     "v": 49,

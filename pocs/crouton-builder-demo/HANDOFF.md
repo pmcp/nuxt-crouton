@@ -277,7 +277,10 @@ expressiveness boundary: a variant is an **enum an agent could equally pick**, n
   the card box (re-measured on resize/arm/re-render), with the `defaultSize` math kept only as a
   pre-measurement fallback. Same lesson as the edit-view selection — hit-test the real DOM, never the
   abstract tree. (NB: the watch that re-measures eagerly reads `renderNode`, which references the pull
-  state, so it must be declared *after* `activeIndex` et al. or it throws a TDZ error.)
+  state, so it must be declared *after* `activeIndex` et al. or it throws a TDZ error.) **Each measured
+  pane is CLAMPED to the card box on all four edges (#972 follow-up, IMG_1071):** when the content is
+  taller than the card it overflows, so a lower pane's raw rect extends below — clamp keeps a face on
+  the pane's *visible* portion, and a pane scrolled fully out collapses to zero size (hidden by `paneRect`).
 - **Hit-test the RENDERED panes, never the abstract tree.** Anything that maps a screen point to a pane
   (the edit view's block selection + dim overlay) must measure the real DOM (`.croutonpane` leaf
   elements), because the renderer reflows panes via CSS `@container` (a horizontal split STACKS
