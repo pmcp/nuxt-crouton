@@ -127,6 +127,7 @@ const renderNode = computed<LayoutNode>(() => {
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
 const RESISTANCE = 1 // pane tracks the cursor/thumb 1:1 (direct manipulation) → it detaches exactly under your finger; the THRESHOLD + ease-apart + spring-back carry the physical feel, not positional lag
 const detach = inject(SPIKE_DETACH_KEY, null)
+const reorder = inject(SPIKE_REORDER_KEY, null)
 // Page promotion (#942): promote this node to BE the page, or duplicate it as a draft.
 const setPage = inject(SPIKE_SET_PAGE_KEY, null)
 const duplicate = inject(SPIKE_DUPLICATE_KEY, null)
@@ -220,7 +221,8 @@ const activeIndex = ref<number | null>(null) // the pane being pulled
 const pulling = ref(false) // a pull is in progress → the group eases apart
 const springing = ref(false) // released under the threshold → animate the pane back
 const pull = ref({ x: 0, y: 0 }) // resisted (lagging) translate on the grabbed pane
-const past = ref(false) // cursor past the threshold → releasing now will detach
+const past = ref(false) // cursor LEFT the card → releasing now will detach
+const reorderTo = ref<number | null>(null) // cursor over a different sibling slot → releasing reorders to it (#952)
 let origin = { x: 0, y: 0 }
 let faceEl: HTMLElement | null = null // the grabbed pane face — its rect at release = the drop spot
 let moveHandler: ((e: PointerEvent) => void) | null = null
@@ -287,7 +289,24 @@ function onPaneDown(i: number, e: PointerEvent) {
     const rawX = ev.clientX - origin.x
     const rawY = ev.clientY - origin.y
     pull.value = { x: (rawX / zoom) * RESISTANCE, y: (rawY / zoom) * RESISTANCE } // → on-screen = rawΔ × RESISTANCE
-    past.value = Math.hypot(rawX, rawY) > PULL_THRESHOLD // threshold is in real screen px (finger travel)
+    // Drag ACROSS to reorder, drag OUT to detach (#952): if the finger is still inside the card, find
+    // which sibling slot it's over → reorder target; if it's left the card, it's a detach.
+    const cardR = (faceEl?.closest('.vue-flow__node') as HTMLElement | null)?.getBoundingClientRect()
+    const inside = !!cardR && ev.clientX >= cardR.left && ev.clientX <= cardR.right && ev.clientY >= cardR.top && ev.clientY <= cardR.bottom
+    past.value = !inside // out of the card → will detach
+    let target: number | null = null
+    if (inside && cardR && props.data.node.type === 'split') {
+      const horizontal = props.data.node.direction === 'horizontal'
+      const frac = horizontal ? (ev.clientX - cardR.left) / cardR.width : (ev.clientY - cardR.top) / cardR.height
+      const ps = panes.value
+      for (let k = 0; k < ps.length; k++) {
+        const lo = (horizontal ? ps[k]!.left : ps[k]!.top) / 100
+        const hi = lo + (horizontal ? ps[k]!.width : ps[k]!.height) / 100
+        if (frac >= lo && frac < hi) { target = k; break }
+      }
+      if (target === null) target = ps.length - 1
+    }
+    reorderTo.value = (inside && target !== null && target !== activeIndex.value) ? target : null
   }
   upHandler = (ev: PointerEvent) => {
     const dir = { x: ev.clientX - origin.x, y: ev.clientY - origin.y } // raw release direction
@@ -295,9 +314,18 @@ function onPaneDown(i: number, e: PointerEvent) {
     // (WYSIWYG) instead of adjacent to the group. Read the DOM BEFORE cleanup nulls faceEl.
     const dropOffset = computeDropOffset()
     const i2 = activeIndex.value
+    const to = reorderTo.value
+    const wantReorder = !past.value && i2 != null && to != null && to !== i2
     const didDetach = past.value && i2 != null
     cleanup()
-    if (didDetach) {
+    if (wantReorder) {
+      // Reset pull state FIRST (Vue Flow reuses this instance), then ask the page to reorder; the FLIP
+      // reflow animates the rearrange.
+      resetPull()
+      jiggling.value = false
+      reorder?.(props.data.node, { from: i2!, to: to! })
+    }
+    else if (didDetach) {
       // Reset pull state FIRST: Vue Flow reuses this node's component instance (same id), so a
       // leftover activeIndex/pull would strand the next pull's state. Then ask the page to detach.
       resetPull()
@@ -310,6 +338,7 @@ function onPaneDown(i: number, e: PointerEvent) {
       pulling.value = false
       pull.value = { x: 0, y: 0 }
       past.value = false
+      reorderTo.value = null
       window.setTimeout(() => resetPull(), 220)
     }
   }
@@ -323,6 +352,7 @@ function resetPull() {
   springing.value = false
   pull.value = { x: 0, y: 0 }
   past.value = false
+  reorderTo.value = null
 }
 
 function cleanup() {
@@ -473,8 +503,8 @@ watch(() => props.data.node, () => {
           class="group pointer-events-auto absolute flex cursor-grab items-center justify-center rounded-xl ring-1 active:cursor-grabbing"
           :class="[
             activeIndex === i
-              ? (past ? 'z-10 ring-2 ring-primary bg-primary/15 shadow-2xl' : 'z-10 ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
-              : 'ring-2 ring-primary/50 bg-elevated/10 hover:bg-primary/10 hover:ring-primary',
+              ? (past ? 'z-10 ring-2 ring-primary bg-primary/15 shadow-2xl' : reorderTo !== null ? 'z-10 ring-2 ring-emerald-500 bg-emerald-500/15 shadow-2xl' : 'z-10 ring-2 ring-primary/70 bg-elevated/40 shadow-xl')
+              : (reorderTo === i ? 'ring-2 ring-emerald-500 bg-emerald-500/15' : 'ring-2 ring-primary/50 bg-elevated/10 hover:bg-primary/10 hover:ring-primary'),
             activeIndex === i && !springing ? '' : 'transition-all duration-200 ease-out',
             jiggling && activeIndex !== i ? 'spike-face-jiggle' : '',
           ]"
@@ -482,11 +512,24 @@ watch(() => props.data.node, () => {
           @pointerdown.stop="onPaneDown(i, $event)"
         >
           <span
-            class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur transition-opacity"
-            :class="activeIndex === i ? 'text-primary opacity-100' : 'text-muted opacity-0 group-hover:opacity-100'"
+            v-if="activeIndex === i"
+            class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium shadow-sm backdrop-blur"
+            :class="reorderTo !== null && !past ? 'text-emerald-500' : 'text-primary'"
           >
-            <UIcon :name="activeIndex === i && past ? 'i-lucide-hand' : 'i-lucide-grip'" class="size-3" />
-            {{ activeIndex === i ? (past ? 'Release to detach' : 'Pull out…') : 'Pull to detach' }}
+            <UIcon :name="past ? 'i-lucide-hand' : reorderTo !== null ? 'i-lucide-arrow-left-right' : 'i-lucide-grip'" class="size-3" />
+            {{ past ? 'Release to detach' : reorderTo !== null ? 'Move here' : 'Drag across to reorder · out to detach' }}
+          </span>
+          <span
+            v-else-if="reorderTo === i"
+            class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium text-emerald-500 shadow-sm backdrop-blur"
+          >
+            <UIcon name="i-lucide-corner-down-left" class="size-3" />Drop
+          </span>
+          <span
+            v-else
+            class="flex items-center gap-1 rounded-full bg-default/85 px-2 py-1 text-[10px] font-medium text-muted opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100"
+          >
+            <UIcon name="i-lucide-grip" class="size-3" />Pull
           </span>
         </div>
       </div>

@@ -192,6 +192,23 @@ function onDetach(group: LayoutNode, payload: SpikeDetachPayload) {
 }
 provide(SPIKE_DETACH_KEY, onDetach)
 
+// Reorder a pane WITHIN its layout (#952): move child `from` → `to` in the split's children, keeping
+// each child's size. The FLIP reflow animates the rearrange. Identifies the group by object identity.
+function onReorder(group: LayoutNode, payload: SpikeReorderPayload) {
+  if (group.type !== 'split') return
+  const { from, to } = payload
+  if (from === to || from < 0 || to < 0 || from >= group.children.length || to >= group.children.length) return
+  const idx = nodes.value.findIndex(n => n.data.node === group)
+  if (idx === -1) return
+  pushUndo()
+  const children = [...group.children]
+  const [moved] = children.splice(from, 1)
+  children.splice(to, 0, moved!)
+  const next: LayoutNode = { ...group, children }
+  nodes.value = nodes.value.map((n, i) => i === idx ? { ...n, data: { ...n.data, node: next } } : n)
+}
+provide(SPIKE_REORDER_KEY, onReorder)
+
 // Global viewport survey (#907 layer 3) — flip the whole board to a device width to see what every
 // page looks like at that viewport. Read-only: snapping/detach off, nodes tiled & non-draggable.
 const viewport = ref<SpikeViewport | null>(null)

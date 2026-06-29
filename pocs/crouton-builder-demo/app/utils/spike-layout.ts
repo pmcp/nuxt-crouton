@@ -91,6 +91,15 @@ export interface SpikeDetachPayload { index: number, dir: { x: number, y: number
 export const SPIKE_DETACH_KEY = Symbol('spike-detach') as InjectionKey<(group: LayoutNode, payload: SpikeDetachPayload) => void>
 
 /**
+ * Reorder-within-layout (#952) — the sibling of detach. While pulling a pane, if the finger stays
+ * INSIDE the card but over a DIFFERENT slot, releasing MOVES that child to the new index (instead of
+ * popping it out). Same gesture as detach, different destination: drag across to reorder, drag OUT to
+ * detach. The page owns `nodes`, so it provides this; SpikeBlockNode calls it (group by object identity).
+ */
+export interface SpikeReorderPayload { from: number, to: number }
+export const SPIKE_REORDER_KEY = Symbol('spike-reorder') as InjectionKey<(group: LayoutNode, payload: SpikeReorderPayload) => void>
+
+/**
  * Page promotion (#942) — the board is a sandbox of layout candidates + loose draft blocks;
  * exactly ONE node is "the page" (the live layout a user sees, ★-badged). `SET_PAGE` promotes a
  * node to be the page; `DUPLICATE` clones a node as a free draft so you can rearrange a copy and
