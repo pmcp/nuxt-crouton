@@ -369,50 +369,41 @@ function snapAt(movedNode: LayoutNode, pos: { x: number, y: number }, others: Fl
   return { target: others[snap.path[0]!]!, edge: snap.edge, tRect: targets[snap.path[0]!]!.rect, md }
 }
 
-// Where a dragged node wants to land (#941 Phase A): INSERT between the panes of a combined (split)
-// target it's dragged OVER, or EDGE-merge onto a side of a target it's near (the original snap).
+// Where a dragged node wants to land (#972): PANEDROP — dropped OVER a layout, add it beside the pane
+// under the cursor on the side you're nearest; or EDGE-merge onto a side of a NEARBY card (the original
+// proximity snap, for building from loose cards).
 type SnapIntent =
-  | { kind: 'insert', target: FlowNode, insert: SpikeSnapInsert }
+  | { kind: 'panedrop', target: FlowNode, paneDrop: SpikePaneDrop }
   | { kind: 'edge', target: FlowNode, edge: SnapEdge }
 type FlowRect = { x: number, y: number, w: number, h: number }
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
-// Recurse to the DEEPEST split under (cx,cy): walk each split's child sub-rects so a drop can land
-// inside a NESTED layout (a split within a pane), not just the top-level split. Returns that split,
-// its flow-space sub-rect, and the child-index path to it.
-// A candidate insert seam, in flow-space: `main` = the seam line's position on its split's MAIN axis;
-// [c0,c1] = its CROSS-axis span. Carries the split's `path` + the seam `index` within it.
-interface SeamCand { path: number[], index: number, axis: 'horizontal' | 'vertical', main: number, c0: number, c1: number }
-// Collect EVERY insertable seam across ALL splits in the tree (parent AND nested), so the nearest one
-// to the cursor wins — near a top-level gap → the parent; deep inside a child near its seam → the
-// child. (Deepest-split-always-wins made the parent unreachable; #950 follow-up.)
-function collectSeams(node: LayoutNode, rect: FlowRect, path: number[], out: SeamCand[]) {
-  if (node.type !== 'split') return
+// Collect every LEAF pane (and nested app — a single drop target) with its flow-space sub-rect, walking
+// each split's children by their `defaultSize` proportions. The pane under the cursor is the drop
+// target; `[]` means the whole node is one pane (a lone block). Mirrors the renderer's child sizing.
+function collectLeaves(node: LayoutNode, rect: FlowRect, path: number[], out: { path: number[], rect: FlowRect }[]) {
+  if (node.type !== 'split') { out.push({ path, rect }); return } // leaf OR nested app = a drop target
   const horizontal = node.direction === 'horizontal'
   const sizes = node.children.map(c => c.defaultSize ?? (100 / node.children.length))
   const total = sizes.reduce((a, b) => a + b, 0) || node.children.length
-  const bounds = [0]
   let acc = 0
-  for (const s of sizes) { acc += s / total; bounds.push(acc) } // [0, f1, …, 1] — children+1 seams
-  bounds.forEach((b, index) => out.push(horizontal
-    ? { path, index, axis: 'horizontal', main: rect.x + b * rect.w, c0: rect.y, c1: rect.y + rect.h }
-    : { path, index, axis: 'vertical', main: rect.y + b * rect.h, c0: rect.x, c1: rect.x + rect.w }))
-  acc = 0
   for (let i = 0; i < node.children.length; i++) {
     const frac0 = acc / total, len = sizes[i]! / total
     acc += sizes[i]!
     const cr: FlowRect = horizontal
       ? { x: rect.x + frac0 * rect.w, y: rect.y, w: len * rect.w, h: rect.h }
       : { x: rect.x, y: rect.y + frac0 * rect.h, w: rect.w, h: len * rect.h }
-    collectSeams(node.children[i]!, cr, [...path, i], out)
+    collectLeaves(node.children[i]!, cr, [...path, i], out)
   }
 }
 function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others: FlowNode[]): SnapIntent | null {
   const md = sizeOf(movedNode)
   const cx = pos.x + md.width / 2
   const cy = pos.y + md.height / 2
-  // 1) INSERT: the drag OVERLAPS a split target → drop between its panes. Overlap (≥35% of the dragged
-  // area), not strict centre-inside. Then pick the NEAREST seam across every split (parent + nested):
-  // near a top-level gap targets the parent, near a child's seam targets the child — so both are reachable.
+  // 1) PANEDROP: the drag OVERLAPS a target (≥35% of the dragged area) → drop beside the PANE under the
+  // cursor. Find the leaf pane the cursor (clamped into the target) sits in, then the side from which
+  // quadrant of that pane the cursor is over — so you can add to ANY edge of ANY pane, incl. the right
+  // of a pane that lives in a vertical stack (no pre-existing seam needed). A lone block is one pane
+  // (path []). (#972 — replaces the seam-only insert.)
   const dl = pos.x, dr = pos.x + md.width, dt = pos.y, db = pos.y + md.height
   for (const o of others) {
     const node = o.data.node
@@ -421,33 +412,27 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
     const ox = Math.max(0, Math.min(dr, tx + ts.width) - Math.max(dl, tx))
     const oy = Math.max(0, Math.min(db, ty + ts.height) - Math.max(dt, ty))
     if ((ox * oy) / (md.width * md.height) < 0.35) continue // not enough over this node → try edge-snap
-    // A single block (leaf) or a nested app has no inner seams to insert between — but hovering OVER it
-    // should still be snappable: merge BESIDE it into a new split. Pick the edge from which side of the
-    // target's CENTRE the cursor is on (over its right half → merge right, top half → merge top, etc.),
-    // so a single item becomes a drop target just like a combined layout. (#952 follow-up)
-    if (node.type !== 'split') {
-      const relx = (cx - (tx + ts.width / 2)) / ts.width
-      const rely = (cy - (ty + ts.height / 2)) / ts.height
-      const edge: SnapEdge = Math.abs(relx) >= Math.abs(rely) ? (relx >= 0 ? 'right' : 'left') : (rely >= 0 ? 'bottom' : 'top')
-      return { kind: 'edge', target: o, edge }
-    }
     const ccx = clamp(cx, tx, tx + ts.width), ccy = clamp(cy, ty, ty + ts.height)
-    const seams: SeamCand[] = []
-    collectSeams(node, { x: tx, y: ty, w: ts.width, h: ts.height }, [], seams)
-    let best: SeamCand | null = null, bestD = Infinity
-    for (const s of seams) {
-      const inCross = s.axis === 'horizontal' ? (ccy >= s.c0 && ccy <= s.c1) : (ccx >= s.c0 && ccx <= s.c1)
-      if (!inCross) continue
-      const d = s.axis === 'horizontal' ? Math.abs(ccx - s.main) : Math.abs(ccy - s.main)
-      if (d < bestD) { bestD = d; best = s }
+    const leaves: { path: number[], rect: FlowRect }[] = []
+    collectLeaves(node, { x: tx, y: ty, w: ts.width, h: ts.height }, [], leaves)
+    // The pane containing the (clamped) cursor; else the nearest by centre.
+    let hit = leaves.find(l => ccx >= l.rect.x && ccx <= l.rect.x + l.rect.w && ccy >= l.rect.y && ccy <= l.rect.y + l.rect.h)
+    if (!hit) {
+      let bestD = Infinity
+      for (const l of leaves) {
+        const d = Math.hypot(ccx - (l.rect.x + l.rect.w / 2), ccy - (l.rect.y + l.rect.h / 2))
+        if (d < bestD) { bestD = d; hit = l }
+      }
     }
-    if (!best) continue
-    const insert: SpikeSnapInsert = best.axis === 'horizontal'
-      ? { axis: 'horizontal', path: best.path, index: best.index, pos: (best.main - tx) / ts.width, cross0: (best.c0 - ty) / ts.height, cross1: (best.c1 - ty) / ts.height }
-      : { axis: 'vertical', path: best.path, index: best.index, pos: (best.main - ty) / ts.height, cross0: (best.c0 - tx) / ts.width, cross1: (best.c1 - tx) / ts.width }
-    return { kind: 'insert', target: o, insert }
+    if (!hit) continue
+    const lr = hit.rect
+    const relx = (ccx - (lr.x + lr.w / 2)) / lr.w
+    const rely = (ccy - (lr.y + lr.h / 2)) / lr.h
+    const edge: SnapEdge = Math.abs(relx) >= Math.abs(rely) ? (relx >= 0 ? 'right' : 'left') : (rely >= 0 ? 'bottom' : 'top')
+    const rect = { left: ((lr.x - tx) / ts.width) * 100, top: ((lr.y - ty) / ts.height) * 100, width: (lr.w / ts.width) * 100, height: (lr.h / ts.height) * 100 }
+    return { kind: 'panedrop', target: o, paneDrop: { path: hit.path, edge, rect } }
   }
-  // 2) EDGE: original side-snap (merge onto a target's outer edge).
+  // 2) EDGE: proximity side-snap — merge onto the outer edge of a NEARBY (non-overlapping) card.
   const s = snapAt(movedNode, pos, others)
   return s ? { kind: 'edge', target: s.target, edge: s.edge } : null
 }
@@ -463,22 +448,27 @@ function snapIntent(movedNode: LayoutNode, pos: { x: number, y: number }, others
 const SNAP_DWELL_MS = 600
 let snapKey: string | null = null
 let snapTimer: number | null = null
+// The id of the node currently being dragged — the reliable way for onRowsUpdate to know WHICH node
+// moved. (Position-delta detection misses it: Vue Flow mutates node positions in place, so the rows
+// it re-emits on drag-end already equal our stored positions → no delta.) Set live, consumed on release.
+let draggedId: string | null = null
 function clearSnapTimer() { if (snapTimer != null) { window.clearTimeout(snapTimer); snapTimer = null } }
 function resetSnap() { snapPreview.value = null; snapKey = null; clearSnapTimer() }
 
 function onNodeDragLive(id: string, pos: { x: number, y: number }) {
+  draggedId = id
   const moved = nodes.value.find(n => n.id === id)
   if (!moved) { resetSnap(); return }
   const intent = snapIntent(moved.data.node, pos, nodes.value.filter(n => n.id !== id))
   if (!intent) { resetSnap(); return } // out of range → no candidate, dwell resets
-  // Dwell key is COARSE for inserts — keyed on the target only, NOT the seam index — so small
-  // movements that flip the nearest seam don't reset the arm timer; the seam keeps following the
-  // finger live (base carries the current index/frac) and the green arms reliably after the hold.
-  const key = intent.kind === 'insert' ? `ins-${intent.target.id}` : `edge-${intent.target.id}-${intent.edge}`
+  // Dwell key is COARSE for pane-drops — keyed on the target + the PANE (path), NOT the side — so small
+  // movements that flip the nearest edge don't reset the arm timer; the side keeps tracking the finger
+  // live (base carries the current edge) and the green arms reliably after the hold.
+  const key = intent.kind === 'panedrop' ? `pane-${intent.target.id}-${intent.paneDrop.path.join('.')}` : `edge-${intent.target.id}-${intent.edge}`
   const dragLabel = moved.data.label ?? labelFor(moved.data.node)
-  const base: SpikeSnapPreview = intent.kind === 'insert'
-    ? { node: intent.target.data.node, insert: intent.insert, dragLabel, dragNode: moved.data.node }
-    : { node: intent.target.data.node, edge: intent.edge, dragLabel }
+  const base: SpikeSnapPreview = intent.kind === 'panedrop'
+    ? { node: intent.target.data.node, targetId: intent.target.id, paneDrop: intent.paneDrop, dragLabel, dragNode: moved.data.node }
+    : { node: intent.target.data.node, targetId: intent.target.id, edge: intent.edge, dragLabel }
   if (key === snapKey) {
     // Same candidate as last frame — keep the (possibly already-armed) state; don't restart dwell.
     snapPreview.value = { ...base, armed: snapPreview.value?.armed === true }
@@ -503,27 +493,31 @@ function onRowsUpdate(rowsRaw: Record<string, unknown>[]) {
   const armed = snapPreview.value?.armed === true ? snapPreview.value : null // the green candidate at release
   resetSnap() // drag has ended — clear the live guide + dwell timer
   const rows = rowsRaw as unknown as FlowNode[]
+  const dragId = draggedId
+  draggedId = null
+  // Which node moved: prefer the live-tracked drag id (robust); fall back to a position delta.
   const prev = new Map(nodes.value.map(n => [n.id, n.position]))
-  const moved = rows.find((r) => {
-    const p = prev.get(r.id)
-    return p && (p.x !== r.position.x || p.y !== r.position.y)
-  })
+  const moved = (dragId ? rows.find(r => r.id === dragId) : undefined)
+    ?? rows.find((r) => { const p = prev.get(r.id); return p && (p.x !== r.position.x || p.y !== r.position.y) })
   if (!moved) { nodes.value = rows; return }
   pushUndo() // a real move (reposition / merge / insert) is about to apply — snapshot first
   // Released while only SOFT (not held long enough) → just place it; snapping requires the dwell.
   if (!armed) { nodes.value = rows; return }
 
-  // The target FlowNode is the one whose layout node is the armed candidate (node identity is stable
-  // across a drag — only positions change — so this matches what the green guide pointed at).
-  const target = rows.find(r => r.id !== moved.id && r.data.node === armed.node)
+  // The target FlowNode — matched by STABLE id (CroutonFlow re-emits rows on drag-end that don't keep
+  // `data.node` by reference, so the old identity match missed and the drop silently no-op'd). Fall back
+  // to node identity for safety.
+  const target = rows.find(r => r.id !== moved.id && (r.id === armed.targetId || r.data.node === armed.node))
   if (!target) { nodes.value = rows; return }
   const md = sizeOf(moved.data.node)
   // Page (favorited) ALWAYS consumes (#942): if either side is the page, the result stays the page.
   const keepPage = (target.data.isPage || moved.data.isPage) ? { isPage: true } : {}
 
-  // INSERT between the panes — at the targeted split, which may be NESTED (armed.insert.path). (#950)
-  if (armed.insert && target.data.node.type === 'split') {
-    const newNode = insertAtPath(target.data.node, armed.insert.path, armed.insert.index, moved.data.node)
+  // PANEDROP — add the dragged node beside the targeted pane (flatten into the row if the side runs
+  // along it, else wrap the pane perpendicular). Works on any pane edge, incl. the right of a pane in
+  // a vertical stack. The targeted pane may be a lone block (path []). (#972)
+  if (armed.paneDrop) {
+    const newNode = applyPaneDrop(target.data.node, armed.paneDrop, moved.data.node)
     const groupNode: FlowNode = { ...target, data: { node: newNode, ...keepPage } }
     nodes.value = rows.filter(r => r.id !== moved.id && r.id !== target.id).concat(groupNode)
     return

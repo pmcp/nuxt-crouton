@@ -6,6 +6,7 @@
  */
 import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
+import { dropNode } from '@fyit/crouton-layout/app/utils/layout-edit'
 
 export const SPIKE_BASE_W = 256
 export const SPIKE_BASE_H = 184
@@ -23,21 +24,8 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 // `armed` (#941 dwell): false = "snap point here" (soft/blue, just approached); true = held long
 // enough that releasing now WILL snap (green). Two-stage so a snap takes intent, not a brush-past.
 //
-// A preview is EITHER an `edge` snap (merge the dragged node onto a side of the target) OR an
-// `insert` (drop the dragged node BETWEEN the panes of a combined target, Phase A). `insert.frac`
-// is the seam position as a 0..1 fraction along the split axis; the target draws a guide line there.
-// An insert targets a split addressed by `path` (the child-index route from the target node's root —
-// `[]` is the root split, `[1,0]` a split nested two levels deep), at seam `index` within it. The
-// `pos`/`cross0`/`cross1` are the seam's geometry as fractions of the WHOLE target card, so the soft
-// guide bar can draw at the right place AND only across the nested split's sub-region. (#950)
-export interface SpikeSnapInsert {
-  axis: 'horizontal' | 'vertical'
-  path: number[]
-  index: number
-  pos: number
-  cross0: number
-  cross1: number
-}
+// A preview is EITHER an `edge` snap (merge the dragged node onto a side of a NEARBY card) OR a
+// `paneDrop` (drop OVER a layout → add beside the targeted pane, #972 — see SpikePaneDrop below).
 
 /** Resolve the split at `path` within `root` (or null). Walks split children by index. */
 export function splitAtPath(root: LayoutNode, path: number[]): LayoutNode | null {
@@ -67,11 +55,47 @@ export function insertAtPath(root: LayoutNode, path: number[], index: number, ch
   children[head!] = insertAtPath(target, rest, index, child)
   return { ...root, children }
 }
-// `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed insert target
-// can render a "this is where it lands" ghost slab at the seam carrying the incoming item's name.
+/**
+ * Pane-drop (#972) — dropping a block OVER a layout targets the rendered PANE under the cursor and
+ * adds the dragged node as a sibling on the side you're nearest. Unlike `insert` (which only used
+ * seams that already existed), this works on ANY pane edge — so you can add a block to the RIGHT of a
+ * pane that sits in a vertical stack (no pre-existing right-seam), e.g. "right of the chart". It's a
+ * bounded, agent-pickable edit: "insert node X beside pane at `path` on side `edge`". `path` is the
+ * child-index route to the leaf within the target node's root (`[]` = the whole node is one pane);
+ * `rect` is that pane's box as % of the target card, so the guide band draws on the right edge.
+ */
+export interface SpikePaneDrop { path: number[], edge: SnapEdge, rect: { left: number, top: number, width: number, height: number } }
+
+/**
+ * Apply a pane-drop to `root`: add `child` beside the pane at `paneDrop.path` on `paneDrop.edge`.
+ * FLATTENS into the parent row when the side is ALONG the parent split's axis (drop right of a block
+ * in a row → it joins the row), and WRAPS the pane in a new perpendicular split otherwise (drop right
+ * of a pane in a vertical stack → `[pane | child]`). Used for BOTH the ghost preview and the real drop.
+ */
+export function applyPaneDrop(root: LayoutNode, paneDrop: { path: number[], edge: SnapEdge }, child: LayoutNode): LayoutNode {
+  const { path, edge } = paneDrop
+  const direction = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical'
+  const before = edge === 'left' || edge === 'top'
+  if (path.length > 0) {
+    const parentPath = path.slice(0, -1)
+    const leafIndex = path[path.length - 1]!
+    const parent = splitAtPath(root, parentPath)
+    if (parent && parent.type === 'split' && parent.direction === direction) {
+      // Side runs ALONG the parent → flatten into the existing row/column.
+      return insertAtPath(root, parentPath, leafIndex + (before ? 0 : 1), child)
+    }
+  }
+  // Perpendicular (or a lone pane) → wrap the pane in a new split. `dropNode` handles a leaf root too.
+  return dropNode(root, path, child, edge)
+}
+
+// `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed pane-drop target
+// can render a "this is where it lands" ghost slab carrying the incoming item's name.
 // `dragNode` (#947) — the dragged node's actual subtree, so the target can build a ghost skeleton
 // with the SAME footprint (a 2-row stack → a 2-row ghost), making the opened slot match its size.
-export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert, dragLabel?: string, dragNode?: LayoutNode }
+// `targetId` — the target FlowNode's id, so the on-release apply can re-find it by STABLE id (CroutonFlow
+// re-emits rows on drag-end that don't preserve `data.node` by reference, so identity matching missed).
+export interface SpikeSnapPreview { node: LayoutNode, targetId?: string, armed?: boolean, edge?: SnapEdge, paneDrop?: SpikePaneDrop, dragLabel?: string, dragNode?: LayoutNode }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**

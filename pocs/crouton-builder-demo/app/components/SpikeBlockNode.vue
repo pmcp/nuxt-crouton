@@ -60,9 +60,10 @@ const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
 // This node is the snap target when the injected preview names its layout node.
 const guideMatch = computed(() => !!snapPreview?.value && snapPreview.value.node === props.data.node)
-// A preview is EITHER an internal insert seam (Phase A) OR an outer edge.
-const guideInsert = computed(() => (guideMatch.value ? snapPreview!.value!.insert ?? null : null))
-const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guideInsert.value ? snapPreview!.value!.edge ?? null : null))
+// A preview is EITHER a pane-drop (drop OVER this layout — add beside a pane, #972) OR an outer edge
+// (proximity merge from a nearby loose card).
+const guidePaneDrop = computed(() => (guideMatch.value ? snapPreview!.value!.paneDrop ?? null : null))
+const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guidePaneDrop.value ? snapPreview!.value!.edge ?? null : null))
 // Dwell stages (#941): SOFT = just approached (blue, wide — "snap point here"); ARMED = held long
 // enough that releasing now snaps (green, tighter solid line).
 const guideArmed = computed(() => guideMatch.value && snapPreview!.value!.armed === true)
@@ -79,39 +80,35 @@ const guideStyle = computed(() => {
     default: return {}
   }
 })
-// Internal insert seam (#950): a line at the seam, positioned by card-fractions and spanning only
-// the TARGET split's sub-region — so a seam inside a NESTED split draws in the right place, not
-// across the whole card. `pos` is the main-axis position; `cross0..cross1` the cross-axis span.
-const guideInsertStyle = computed(() => {
-  const ins = guideInsert.value
-  if (!ins) return {}
+// Pane-drop guide (#972): a band on the chosen EDGE of the targeted pane — drawn from the pane's rect
+// (% of the card) so it lands on the right pane at any depth, on the side you're nearest.
+const guidePaneDropStyle = computed(() => {
+  const pd = guidePaneDrop.value
+  if (!pd) return {}
   const t = guideArmed.value ? '5px' : '8px'
-  const pos = `${ins.pos * 100}%`
-  const c0 = `${ins.cross0 * 100}%`
-  const c1 = `${(1 - ins.cross1) * 100}%`
-  return ins.axis === 'horizontal'
-    ? { left: pos, top: c0, bottom: c1, width: t, transform: 'translateX(-50%)' }
-    : { top: pos, left: c0, right: c1, height: t, transform: 'translateY(-50%)' }
+  const r = pd.rect
+  switch (pd.edge) {
+    case 'left': return { left: `${r.left}%`, top: `${r.top}%`, height: `${r.height}%`, width: t, transform: 'translateX(-50%)' }
+    case 'right': return { left: `${r.left + r.width}%`, top: `${r.top}%`, height: `${r.height}%`, width: t, transform: 'translateX(-50%)' }
+    case 'top': return { top: `${r.top}%`, left: `${r.left}%`, width: `${r.width}%`, height: t, transform: 'translateY(-50%)' }
+    case 'bottom': return { top: `${r.top + r.height}%`, left: `${r.left}%`, width: `${r.width}%`, height: t, transform: 'translateY(-50%)' }
+    default: return {}
+  }
 })
-// Ease-apart preview (#946): once an internal insert ARMS (green), splice a ghost pane into the
-// layout at the target index and render THAT — the renderer lays out the extra pane and the #943
-// FLIP eases the real panes apart to physically open its slot, the ghost landing in the gap. The
-// ghost block (`__dropghost__` → SpikeGhostPane) shows the incoming item's label, which we provide
-// (the renderer doesn't thread arbitrary config to a block). Reverts on un-arm → panes close back.
-const guideArmedInsert = computed(() => guideArmed.value && !!guideInsert.value)
+// Ease-apart preview (#946): once a pane-drop ARMS (green), apply the SAME edit with a ghost in place
+// of the real node and render THAT — the renderer lays out the extra pane and the #943 FLIP eases the
+// real panes apart to physically open its slot, the ghost landing in the gap. Reverts on un-arm.
+const guideArmedPaneDrop = computed(() => guideArmed.value && !!guidePaneDrop.value)
 const ghostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Drops here')
 provide(SPIKE_GHOST_LABEL_KEY, ghostLabel)
 // Build a ghost SKELETON with the same shape as the dragged node — every leaf becomes a
 // `__dropghost__` placeholder, splits/nested preserved — so its FOOTPRINT matches the dragged item.
-// Inserted into a horizontal split, a 2-row stack stays 2 rows, growing the row to fit (so the
-// opened slot matches the item's size, not a flat 1×1 sliver). Sizes preserved for inner proportions.
 function ghostify(node: LayoutNode): LayoutNode {
   if (node.type === 'leaf') return { type: 'leaf', blockId: '__dropghost__', ...(node.defaultSize !== undefined ? { defaultSize: node.defaultSize } : {}) }
   if (node.type === 'nested') return { type: 'nested', layout: { ...node.layout, root: ghostify(node.layout.root) } }
   return { ...node, children: node.children.map(ghostify) }
 }
 const renderNode = computed<LayoutNode>(() => {
-  const ins = guideInsert.value
   const n = props.data.node
   // Live reorder preview (#952): while pulling a pane toward a different slot (and not detaching), show
   // the panes ALREADY in their reordered order, so you SEE where the block lands as you move — the FLIP
@@ -123,15 +120,13 @@ const renderNode = computed<LayoutNode>(() => {
     if (m) arr.splice(reorderTo.value, 0, m)
     return { ...n, children: arr }
   }
-  if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
-  // The seam may be in a NESTED split — resolve it by path so the ghost opens the slot at the right
-  // depth (#950). Size the ghost to that split's child count, then splice it in via insertAtPath.
-  const targetSplit = splitAtPath(n, ins.path)
-  if (!targetSplit || targetSplit.type !== 'split') return n
+  const pd = guidePaneDrop.value
+  if (!guideArmedPaneDrop.value || !pd) return n
+  // Apply the pane-drop with a ghost skeleton (same shape as the dragged item) so the opened slot
+  // matches its footprint; `applyPaneDrop` flattens-or-wraps exactly like the real drop will.
   const dn = snapPreview?.value?.dragNode
-  const skeleton = dn ? ghostify(dn) : { type: 'leaf' as const, blockId: '__dropghost__' }
-  const ghost: LayoutNode = { ...skeleton, defaultSize: Math.round(100 / (targetSplit.children.length + 1)) }
-  return insertAtPath(n, ins.path, ins.index, ghost)
+  const ghost: LayoutNode = dn ? ghostify(dn) : { type: 'leaf', blockId: '__dropghost__' }
+  return applyPaneDrop(n, pd, ghost)
 })
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
@@ -491,7 +486,7 @@ watch(() => props.data.node, () => {
   <UCard
     ref="cardRef"
     class="spike-block-node transition-[width,height,box-shadow] duration-300 ease-out"
-    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : (dragging || data.justAdded) ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
+    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guidePaneDrop) ? 'ring-2 ring-sky-400/70 shadow-lg' : (dragging || data.justAdded) ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -644,8 +639,8 @@ watch(() => props.data.node, () => {
       </div>
     </div>
 
-    <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop
-         between panes). SOFT = blue, wide, pulsing ("snap point here"); ARMED = green, crisp, steady. -->
+    <!-- Live snap guide (#941): an outer EDGE (merge a nearby card onto a side) or a PANE-DROP band on
+         the targeted pane's edge (#972). SOFT = blue, wide, pulsing; ARMED = green, crisp, steady. -->
     <div
       v-if="guideEdge"
       class="pointer-events-none absolute z-10 rounded-full"
@@ -653,10 +648,10 @@ watch(() => props.data.node, () => {
       :style="guideStyle"
     />
     <div
-      v-if="guideInsert && !guideArmedInsert"
+      v-if="guidePaneDrop && !guideArmedPaneDrop"
       class="pointer-events-none absolute z-10 rounded-full"
       :class="guideBarClass"
-      :style="guideInsertStyle"
+      :style="guidePaneDropStyle"
     />
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame

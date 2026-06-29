@@ -202,17 +202,21 @@ expressiveness boundary: a variant is an **enum an agent could equally pick**, n
   Hold ~0.6 s → **armed** (green, release-to-snap). The arm timer is keyed on the **target only**
   (not the exact seam), so finger jitter that flips the nearest seam doesn't reset it; the seam keeps
   tracking your finger. (No "release to snap" text — the green ring + guide bar say it.)
-- **Insert *between* panes (Phase A).** Over a combined (split) layout, a card inserts between panes,
-  not just onto an outer edge. Triggers on **≥35 % overlap** with the split (not centre-strictly-inside
-  — a big card overlapping heavily used to match neither insert nor edge); seam picked from the centre
-  **clamped** into the target.
-- **Single items are snap targets too.** Hovering a dragged card **over** a single block (a leaf, or a
-  nested app — anything with no inner seams) snaps it **beside** that block into a new split; the edge is
-  picked from which half of the target's centre you're over (right half → merge right, top half → top…).
-  Before, only multi-pane splits armed on hover-over, so a lone block couldn't be built onto by dragging
-  onto it (only by edge-snapping beside it). The drop reuses the existing `combineNodes` edge-merge.
-- **Ghost mirrors the dragged item; panes ease apart to make room (#946/#947).** On an armed insert the
-  target splices a **ghost skeleton with the dragged node's footprint** (every leaf → a dashed
+- **Pane-drop: drop OVER a layout → add beside the targeted pane (#972).** Dragging a card over a
+  composed layout (≥35 % overlap) targets the **rendered pane under the cursor** and adds the dragged
+  node as a **sibling on the side you're nearest** (L/R/T/B by quadrant of that pane). It **flattens
+  into the parent row/column** when the side runs *along* it (drop right of a block in a row → it joins
+  the row), and **wraps the pane in a new perpendicular split** otherwise — so you can add to the
+  **right of a pane that lives in a vertical stack** ("right of the chart"), which the old seam-only
+  insert couldn't reach (a vertical stack has no right-seam). A lone block is one pane (path `[]`).
+  Targeting = `collectLeaves` (tree sub-rects) → leaf under cursor + edge; apply = `applyPaneDrop`
+  (`app/utils/spike-layout.ts`) → `insertAtPath` (flatten) or the package's `dropNode` (wrap). The
+  armed ghost reuses the #946 ease-apart (applies the same edit with a `__dropghost__` skeleton).
+  **The drop commits by tracking the dragged node's id** (`draggedId`) — position-delta detection
+  misses it because Vue Flow mutates node positions in place, so the re-emitted rows show no delta;
+  the target pane node is likewise re-found by **stable id** (`paneDrop`/`targetId`), not by reference.
+- **Ghost mirrors the dragged item; panes ease apart to make room (#946/#947).** On an armed pane-drop the
+  target applies the drop with a **ghost skeleton matching the dragged node's footprint** (every leaf → a dashed
   `__dropghost__` placeholder, splits/nested preserved) and renders that — a 2-row stack opens a *2-row*
   slot, growing the row to fit (not a flat 1×1 sliver). Real panes slide via the FLIP reflow; the card
   grows with a transition. Reverts on un-arm.
