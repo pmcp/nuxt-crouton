@@ -1,5 +1,6 @@
 [
-  { "v": 31, "note": "Site-flow page cards now show their settings condensed — live/draft status (coloured dot) · permissions/visibility · layout · in-nav — and tapping a card opens the full page", "commit": "" },
+  { "v": 32, "note": "Fixed pull-to-reorder — a pane now reorders when you slide it across to another slot; detach only triggers when you pull clearly OUT of the card (past a margin), so a reorder no longer tips into a detach", "commit": "" },
+  { "v": 31, "note": "Site-flow page cards now show their settings condensed — live/draft status (coloured dot) · permissions/visibility · layout · in-nav — and tapping a card opens the full page", "commit": "f0e30baa" },
   { "v": 30, "note": "Fluid reorder — while pulling a pane, drag it ACROSS to another slot to reorder (green 'move here'), or OUT of the card to detach; the panes FLIP into their new order", "commit": "e777ca01" },
   { "v": 29, "note": "Nested drop targets the NEAREST seam across all splits — parent reachable near top-level gaps, child near its own seams (no longer always the child)", "commit": "b0cf52e0" },
   { "v": 28, "note": "Always-on responsive slider drives ALL layouts (no Responsive button; max = edit, scrub = preview); actions moved to a top icon pill; Fit sits left of the slider", "commit": "436e28ef" },

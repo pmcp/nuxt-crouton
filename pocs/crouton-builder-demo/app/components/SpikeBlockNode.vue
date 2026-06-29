@@ -126,6 +126,7 @@ const renderNode = computed<LayoutNode>(() => {
 // --- pull-the-pane-to-detach ----------------------------------------------------------
 const PULL_THRESHOLD = 64 // raw cursor px the pane must travel before it pops free
 const RESISTANCE = 1 // pane tracks the cursor/thumb 1:1 (direct manipulation) → it detaches exactly under your finger; the THRESHOLD + ease-apart + spring-back carry the physical feel, not positional lag
+const DETACH_MARGIN = 64 // px the finger must travel BEYOND the card edge to detach (#952); inside this margin a pull is read as a reorder, so sliding a pane across to a neighbour slot doesn't tip into detach
 const detach = inject(SPIKE_DETACH_KEY, null)
 const reorder = inject(SPIKE_REORDER_KEY, null)
 // Page promotion (#942): promote this node to BE the page, or duplicate it as a draft.
@@ -289,15 +290,24 @@ function onPaneDown(i: number, e: PointerEvent) {
     const rawX = ev.clientX - origin.x
     const rawY = ev.clientY - origin.y
     pull.value = { x: (rawX / zoom) * RESISTANCE, y: (rawY / zoom) * RESISTANCE } // → on-screen = rawΔ × RESISTANCE
-    // Drag ACROSS to reorder, drag OUT to detach (#952): if the finger is still inside the card, find
-    // which sibling slot it's over → reorder target; if it's left the card, it's a detach.
+    // Drag ACROSS to reorder, drag OUT to detach (#952). REORDER is the default for any drag that
+    // stays in (or near) the card — detach only when the finger clearly LEAVES it (past a margin).
+    // The old test flipped to detach the instant the finger crossed the edge by a pixel, so a reorder
+    // drag toward a neighbour slot kept tipping into detach. The margin gives the gesture hysteresis:
+    // small overshoots while sliding a pane across still reorder.
     const cardR = (faceEl?.closest('.vue-flow__node') as HTMLElement | null)?.getBoundingClientRect()
-    const inside = !!cardR && ev.clientX >= cardR.left && ev.clientX <= cardR.right && ev.clientY >= cardR.top && ev.clientY <= cardR.bottom
-    past.value = !inside // out of the card → will detach
+    const outsideBy = cardR
+      ? Math.max(cardR.left - ev.clientX, ev.clientX - cardR.right, cardR.top - ev.clientY, ev.clientY - cardR.bottom, 0)
+      : Infinity
+    const willDetach = outsideBy > DETACH_MARGIN
+    past.value = willDetach
     let target: number | null = null
-    if (inside && cardR && props.data.node.type === 'split') {
+    if (!willDetach && cardR && props.data.node.type === 'split') {
       const horizontal = props.data.node.direction === 'horizontal'
-      const frac = horizontal ? (ev.clientX - cardR.left) / cardR.width : (ev.clientY - cardR.top) / cardR.height
+      // Clamp the finger into the card so a slight overshoot still maps to the nearest edge slot.
+      const cx = Math.min(Math.max(ev.clientX, cardR.left), cardR.right)
+      const cy = Math.min(Math.max(ev.clientY, cardR.top), cardR.bottom)
+      const frac = horizontal ? (cx - cardR.left) / cardR.width : (cy - cardR.top) / cardR.height
       const ps = panes.value
       for (let k = 0; k < ps.length; k++) {
         const lo = (horizontal ? ps[k]!.left : ps[k]!.top) / 100
@@ -306,7 +316,7 @@ function onPaneDown(i: number, e: PointerEvent) {
       }
       if (target === null) target = ps.length - 1
     }
-    reorderTo.value = (inside && target !== null && target !== activeIndex.value) ? target : null
+    reorderTo.value = (!willDetach && target !== null && target !== activeIndex.value) ? target : null
   }
   upHandler = (ev: PointerEvent) => {
     const dir = { x: ev.clientX - origin.x, y: ev.clientY - origin.y } // raw release direction

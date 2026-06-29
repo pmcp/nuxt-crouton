@@ -65,9 +65,12 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   `__dropghost__` placeholder, splits/nested preserved) and renders that — a 2-row stack opens a *2-row*
   slot, growing the row to fit (not a flat 1×1 sliver). Real panes slide via the FLIP reflow; the card
   grows with a transition. Reverts on un-arm.
-- **Detach** (board gesture): long-press a merged node → its panes **wiggle** (grabbable), then pull a
-  pane — tracks your finger 1:1 (zoom-corrected), past a threshold detaches into its own node where you
-  release, under it springs back. Cancel the wiggle by tapping outside / Esc / Done. Gating detach
+- **Detach / reorder** (board gesture): long-press a merged node → its panes **wiggle** (grabbable),
+  then pull a pane — tracks your finger 1:1 (zoom-corrected). **Reorder is the default**: slide the pane
+  across to another slot (green "Move here") and release to move it there. **Detach** needs a clear pull
+  **OUT** of the card — the finger must pass a `DETACH_MARGIN` (~64px) beyond the card edge, so a small
+  overshoot while reordering doesn't tip into a detach (the old razor-thin boundary did — #952). Under
+  the threshold it springs back. Cancel the wiggle by tapping outside / Esc / Done. Gating the gesture
   behind the hold is what stops a plain select-and-drag from detaching.
 - **Drag glow.** A dragged card carries a light-green halo (Vue Flow `dragging`, forwarded by
   `CroutonFlow`), fading on drop. Snap rings (emerald armed / sky soft) outrank the glow.
