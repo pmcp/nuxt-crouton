@@ -112,6 +112,16 @@ function ghostify(node: LayoutNode): LayoutNode {
 const renderNode = computed<LayoutNode>(() => {
   const ins = guideInsert.value
   const n = props.data.node
+  // Live reorder preview (#952): while pulling a pane toward a different slot (and not detaching), show
+  // the panes ALREADY in their reordered order, so you SEE where the block lands as you move — the FLIP
+  // reflow slides them there. The grabbed pane's face floats on top via the pull translate. On release
+  // onReorder commits the same move.
+  if (activeIndex.value !== null && reorderTo.value !== null && !past.value && n.type === 'split') {
+    const arr = [...n.children]
+    const [m] = arr.splice(activeIndex.value, 1)
+    if (m) arr.splice(reorderTo.value, 0, m)
+    return { ...n, children: arr }
+  }
   if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
   // The seam may be in a NESTED split — resolve it by path so the ghost opens the slot at the right
   // depth (#950). Size the ghost to that split's child count, then splice it in via insertAtPath.
