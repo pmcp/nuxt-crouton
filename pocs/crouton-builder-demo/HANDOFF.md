@@ -15,6 +15,27 @@
 an AI is asked for a specific app ("a football calendar dashboard"), and it builds the whole thing by
 chaining the crouton pieces — *the builder is where a human and that agent meet on the same artifact.*
 
+**Positioning: "Lovable, but opinionated."** Same one-prompt-to-app feel, except the output is *always* in
+the house style — heavily **Nuxt UI 4 / crouton-opinionated**, not freeform generated markup. You don't get
+a random UI, you get *your* system's UI, consistently. That consistency is exactly what makes the blocks
+composable and the round-trip (below) safe to automate.
+
+**The full lifecycle — close to end-to-end automation, with a human checkpoint:**
+
+```
+ask → collections → blocks → layout-engine assembles the app → you GET a working app
+   → iterate by direct manipulation ("this, not that") → the edits SAVE (as a LayoutTree on the ticket)
+   → GRADUATE pocs/ → apps/ (the deliberate test-first rebuild)
+```
+
+Each arrow is already a crouton piece; the remaining work is wiring them into one flow and persisting the
+human's iteration back as spec (see round-trip below + Graduation requirements).
+
+**Observability is the other half.** As this automates, you need to *keep an eye on what the skills/agents
+are doing* — an observability layer over the pipeline (which skills ran, what they produced, where a human
+intervened). The builder is the **visual** observability+control point for the layout step specifically;
+the broader system needs the same for the generation steps.
+
 The pipeline:
 
 ```
