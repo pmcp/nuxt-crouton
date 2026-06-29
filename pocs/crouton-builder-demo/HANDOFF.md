@@ -20,6 +20,14 @@ the house style — heavily **Nuxt UI 4 / crouton-opinionated**, not freeform ge
 a random UI, you get *your* system's UI, consistently. That consistency is exactly what makes the blocks
 composable and the round-trip (below) safe to automate.
 
+**It's COMPONENT-DRIVEN: the layout obeys what each component declares about itself** — not arbitrary
+styling imposed on top. A component publishes its rules as data (min-width, `fill`/`hug`, display
+variants), and the builder's job is *arranging components within the bounds each one publishes*. Those
+declared rules ARE the bounded vocabulary a human and an agent both edit against. And it's recursive —
+a composed layout is itself a component that **derives** its own rules from its children (see "Composites
+derive their rules" below), so the contract holds all the way up a layout-of-layouts. (Today only some
+rules are declared; completing the component contract + making it round-trippable is the durable work.)
+
 **The full lifecycle — close to end-to-end automation, with a human checkpoint:**
 
 ```
@@ -161,15 +169,58 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   card has a **corner resize handle** (shown when selected) — drag it to set the node's width/height,
   and the card renders **responsively at that width** (its own preview). Opening edit lands at the
   node's resized width. (`data.width/height` on the FlowNode; `SPIKE_SET_SIZE_KEY`.)
-- **The component decides its own size ("intrinsic sizing").** A block declares how it lays out *once*,
-  in the component — so it behaves the same everywhere it's dropped, and there's **no per-instance
-  align/size UI to build**. A **Top bar / Bottom nav are fixed-height bars**; List/Form/Chart fill. So a
-  pinned Top bar comes out as a **short pill** automatically (the Preview's pinned regions hug the
-  block's intrinsic height via `height:auto` on the pane). The agent picks *blocks*, not flex values.
-- **Graduation note:** truly making a *pane hug its content inside a split* (vs in the Preview regions)
-  is layout-engine work in the `crouton-layout` package renderer; here it's prototyped POC-side. A
-  block-type **sizing descriptor** in the registry (`{ width:'fill'|'hug', height:… }`) is the clean
-  formalisation so the renderer (and an agent) read one declared source.
+- **The component decides its own size ("intrinsic sizing"), as DECLARED DATA (#971).** Each block
+  carries a **sizing descriptor** on the `croutonLayoutBlocks` registry entry —
+  `sizing: { width: 'fill' | 'hug', height: 'fill' | 'hug' }` (defaults to fully `fill`). `hug` = size
+  to content, `fill` = stretch. A **Top bar / Bottom nav declare `height: 'hug'`**; List/Form/Chart/
+  Stats `fill`. So a pinned Top bar comes out as a **short pill** *because the block declares `hug`* —
+  not because of where it's pinned, and with **no per-instance align/size UI**. One source the renderer,
+  the viability metric, and an agent all read; the agent picks *blocks*, not flex values. Read POC-side
+  via `blockSizing()` / `nodeHeightSizing()` (`app/utils/spike-layout.ts`); honoured in the Preview
+  (`SpikePagePreview` maps a `hug`-height node → an `height:auto` pane → short bar, per region).
+- **Composites DERIVE their rules — component-driven, all the way up (#972 follow-up).** A composed
+  layout (a split, or a `nested` layout-of-layouts) is itself a component and **publishes the same
+  contract its children do**, folded bottom-up by `deriveSizing()` (`app/utils/spike-layout.ts`):
+  a **hard floor** = the widest single leaf (a row can always reflow to a column, so this is the
+  absolute min it survives down to) and a **soft floor** = `sum` of children along a horizontal axis /
+  `max` across a vertical one (the comfortable width before it stacks). A leaf *declares* its
+  `minWidth`/`fill`-`hug`; a composite *derives* them, recursively. Prototyped POC-side: the per-element
+  **resize can't drag a card below its hard floor** (so a layout literally can't violate its
+  components' rules), and a selected card shows a **floor readout** (`stacks <Npx · floor Mpx`).
+  - **Considered & deferred — a MANUAL min/max override on a composite.** Sometimes you may want to
+    pin a specific row/layout to its own min or max (not just the derived floor). Deliberately **not
+    built**: composite rules are *derived* for now, and a per-instance min/max settings panel risks
+    reintroducing the per-instance flex control we avoid. **Revisit after graduation** — build it test-
+    first in the real setting only if the derived floors prove insufficient there. (Leaf intrinsic
+    rules stay component-level/declared; per-breakpoint behaviour stays in the responsive editor.)
+- **Graduation note:** the descriptor currently rides the **inferred** app.config type (the POC adds
+  `sizing` to entries without touching the package type). Two pieces remain package work in
+  `crouton-layout`: (1) move `sizing` onto the typed `CroutonLayoutBlockDefinition` so it's a first-class
+  field; (2) have the package **renderer honour it INSIDE a split** — make a *pane* hug its content
+  between siblings (the Preview only hugs at the region level today). (3) **Composite derivation**
+  (`deriveSizing`) belongs in the `crouton-layout` viability engine (it already folds leaf min-widths
+  for stacking) with the derived contract carried **on the `nested` node**, so a parent reads a
+  sub-layout's floor without re-deriving — the formalisation of "a leaf declares, a composite derives".
+
+### Per-block display variants (#970 — bounded "collection viewer options")
+
+A block can expose **display variants** — bounded, enumerated layouts of the *same* data (e.g. the
+Artists list: **rows · cards · table**). It's the "collection viewer options" ask, kept inside the
+expressiveness boundary: a variant is an **enum an agent could equally pick**, not free config.
+
+- **Declared on the registry** as a `variant` **select** field in the block's `configSchema`
+  (`artists-list` in `app/app.config.ts`) — the bounded option list lives in one place the renderer's
+  `sanitizeConfig` enforces (an unknown value is dropped) and an agent reads.
+- **Serialised on the leaf** (`leaf.config.variant`), so the choice persists with the layout and
+  round-trips. Set via `setLeafConfigValue()` (`app/utils/spike-layout.ts`) onto the base root **and**
+  every breakpoint-root override (mirrors `setCollapseRecipe`), so whichever root resolves carries it.
+- **Picked in the edit view**: select a pane → the options panel shows a **Display** chip row
+  (`SpikeFocusShell`); a tap re-renders the block in that variant. The package renderer already merges
+  `config.variant` into the block's props, so the block (`SpikeListBlock`) just reads a `variant` prop.
+- **Graduation note:** this reuses the package's existing per-breakpoint variant channel
+  (`LAYOUT_VARIANTS_KEY`) only at render-merge time; the *leaf-serialised* variant + the in-view picker
+  are POC-side. On graduation, fold the picker into the package author and keep variant declaration on
+  the typed block definition.
 
 ### Board gestures (direct manipulation)
 
@@ -177,17 +228,21 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   Hold ~0.6 s → **armed** (green, release-to-snap). The arm timer is keyed on the **target only**
   (not the exact seam), so finger jitter that flips the nearest seam doesn't reset it; the seam keeps
   tracking your finger. (No "release to snap" text — the green ring + guide bar say it.)
-- **Insert *between* panes (Phase A).** Over a combined (split) layout, a card inserts between panes,
-  not just onto an outer edge. Triggers on **≥35 % overlap** with the split (not centre-strictly-inside
-  — a big card overlapping heavily used to match neither insert nor edge); seam picked from the centre
-  **clamped** into the target.
-- **Single items are snap targets too.** Hovering a dragged card **over** a single block (a leaf, or a
-  nested app — anything with no inner seams) snaps it **beside** that block into a new split; the edge is
-  picked from which half of the target's centre you're over (right half → merge right, top half → top…).
-  Before, only multi-pane splits armed on hover-over, so a lone block couldn't be built onto by dragging
-  onto it (only by edge-snapping beside it). The drop reuses the existing `combineNodes` edge-merge.
-- **Ghost mirrors the dragged item; panes ease apart to make room (#946/#947).** On an armed insert the
-  target splices a **ghost skeleton with the dragged node's footprint** (every leaf → a dashed
+- **Pane-drop: drop OVER a layout → add beside the targeted pane (#972).** Dragging a card over a
+  composed layout (≥35 % overlap) targets the **rendered pane under the cursor** and adds the dragged
+  node as a **sibling on the side you're nearest** (L/R/T/B by quadrant of that pane). It **flattens
+  into the parent row/column** when the side runs *along* it (drop right of a block in a row → it joins
+  the row), and **wraps the pane in a new perpendicular split** otherwise — so you can add to the
+  **right of a pane that lives in a vertical stack** ("right of the chart"), which the old seam-only
+  insert couldn't reach (a vertical stack has no right-seam). A lone block is one pane (path `[]`).
+  Targeting = `collectLeaves` (tree sub-rects) → leaf under cursor + edge; apply = `applyPaneDrop`
+  (`app/utils/spike-layout.ts`) → `insertAtPath` (flatten) or the package's `dropNode` (wrap). The
+  armed ghost reuses the #946 ease-apart (applies the same edit with a `__dropghost__` skeleton).
+  **The drop commits by tracking the dragged node's id** (`draggedId`) — position-delta detection
+  misses it because Vue Flow mutates node positions in place, so the re-emitted rows show no delta;
+  the target pane node is likewise re-found by **stable id** (`paneDrop`/`targetId`), not by reference.
+- **Ghost mirrors the dragged item; panes ease apart to make room (#946/#947).** On an armed pane-drop the
+  target applies the drop with a **ghost skeleton matching the dragged node's footprint** (every leaf → a dashed
   `__dropghost__` placeholder, splits/nested preserved) and renders that — a 2-row stack opens a *2-row*
   slot, growing the row to fit (not a flat 1×1 sliver). Real panes slide via the FLIP reflow; the card
   grows with a transition. Reverts on un-arm.
@@ -237,12 +292,21 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
     union of each node's `position + sizeOf` — Vue Flow's own `fitView` (and its controls' ⛶) measure
     the small wrapper and zoom INTO the oversized card. (The Site flow's normal-sized cards are fine, so
     the VF ⛶ is left enabled there.)
-- **Overlays must match the RENDERER's sizing (`defaultSize`), not footprint.** The wiggle/pull faces +
-  reorder slot bounds (`panes` in SpikeBlockNode) are positioned along the split axis by each child's
-  `defaultSize` % — the same value the renderer feeds reka's splitter panels. Footprint (cols/rows) was
-  wrong: a spacer beside a dense grid renders 50/50 but footprint said ~1:4, so the faces drifted off
-  the panes (#953, IMG_1061/1062). Any overlay drawn over the rendered layout has to use the renderer's
-  own sizing source.
+- **Overlays must MEASURE the rendered panes, not compute them.** The wiggle/pull faces + reorder slot
+  bounds (`panes` in SpikeBlockNode) sit over the layout's top-level panes. Footprint (cols/rows) was
+  wrong first (#953); `defaultSize` % was the next attempt but *also* drifts, because the renderer's
+  real geometry diverges from the tree whenever it reflows — reka enforces per-pane min-widths, a
+  horizontal split **stacks vertically** when narrow (`@container`), nested splits carry their own
+  proportions, and **a resized card renders through the responsive renderer** (so the panes reflow to
+  the resized width while `defaultSize` is unchanged) (#954, IMG_1069). The fix: `panes` MEASURES the
+  shallowest rendered panes (`[data-panel]` / stacked `[data-crouton-pane]`) inside the card as % of
+  the card box (re-measured on resize/arm/re-render), with the `defaultSize` math kept only as a
+  pre-measurement fallback. Same lesson as the edit-view selection — hit-test the real DOM, never the
+  abstract tree. (NB: the watch that re-measures eagerly reads `renderNode`, which references the pull
+  state, so it must be declared *after* `activeIndex` et al. or it throws a TDZ error.) **Each measured
+  pane is CLAMPED to the card box on all four edges (#972 follow-up, IMG_1071):** when the content is
+  taller than the card it overflows, so a lower pane's raw rect extends below — clamp keeps a face on
+  the pane's *visible* portion, and a pane scrolled fully out collapses to zero size (hidden by `paneRect`).
 - **Hit-test the RENDERED panes, never the abstract tree.** Anything that maps a screen point to a pane
   (the edit view's block selection + dim overlay) must measure the real DOM (`.croutonpane` leaf
   elements), because the renderer reflows panes via CSS `@container` (a horizontal split STACKS
@@ -258,7 +322,16 @@ Two decisions that resolve "how do blocks size / how do I preview responsiveness
   panes are keyed by index so a count change rebuilds them — a CSS `flex-grow` transition can't fire.
   `useLayoutFlip` measures-before / tweens-from-old-box, purely additive (no key/size/reka change),
   survivors matched by a structure-derived `contentKey`.
-- **`fitOverview` is dead code** — superseded by center-on-add; remove on next cleanup.
+- **Deploy needs `@fyit/crouton-feedback` declared as a direct dep (#976 fallout).** `crouton-devtools`
+  calls `installModule('@fyit/crouton-feedback')` at build time, resolving it from the *consuming app's*
+  context. Under pnpm's strict `node_modules` a transitive dep isn't reachable from the POC, so
+  `nuxt build` (= the staging deploy) fails with *"Could not load `@fyit/crouton-feedback`"* even though
+  `pnpm dev` is fine. **Two POC-side fixes are needed:** (1) declare `@fyit/crouton-feedback:
+  workspace:*` in the POC's `package.json` so it resolves; AND (2) add `@fyit/crouton-feedback` to
+  `deploy.config.json` `layerPackages` so CI builds its (gitignored) `dist` — the deploy only builds
+  `layerPackages + crouton-devtools`, so without this the module file never exists on the runner.
+  (Systemic — every `crouton-devtools` consumer hits this; the clean fix is in the package: have
+  `crouton-devtools` resolve/build feedback via its OWN resolver, or guard the `installModule`.)
 - **POC block components must be registered GLOBALLY.** `CroutonLayoutRenderer` resolves a leaf's block
   via `<component :is="block.component">` (a runtime string), which only resolves globally-registered
   components. Nuxt's per-file auto-import (`<SpikeSpacer/>`) does NOT make the name resolvable that way,

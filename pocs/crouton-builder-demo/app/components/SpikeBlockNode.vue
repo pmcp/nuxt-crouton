@@ -20,14 +20,14 @@
  *
  * Editing moved OFF the canvas (#907 focus-view redesign): double-clicking a node opens a dedicated
  * full-screen edit view (no Vue Flow camera, so framing is deterministic) — so this node carries NO
- * in-flow editable surface. It stays a read-only card: footprint render, survey render, the snap
- * guide, and the board-level pull-pane detach gesture.
+ * in-flow editable surface. It stays a read-only card: footprint render, per-node width preview, the
+ * snap guide, and the board-level pull-pane detach gesture.
  *
  * No `@vue-flow/core` import (connection handles aren't needed here). `footprint` / `SPIKE_*`
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
-import { ref, inject, computed, watch } from 'vue'
-import { onKeyStroke, onClickOutside } from '@vueuse/core'
+import { ref, inject, computed, watch, nextTick, onMounted } from 'vue'
+import { onKeyStroke, onClickOutside, useElementSize } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import type { SpikeRegion } from '~/utils/spike-layout'
 
@@ -39,13 +39,7 @@ const props = defineProps<{
   dragging?: boolean
 }>()
 
-// Global viewport survey (#907 layer 3): when a device is active, size the card to that device
-// and render the layout AT that width (so the board becomes a wall of phones/tablets/desktops).
-const viewport = inject(SPIKE_VIEWPORT_KEY, null)
-const surveying = computed(() => !!viewport?.value)
-
 const size = computed(() => {
-  if (viewport?.value) return { width: `${viewport.value.width}px`, height: `${viewport.value.height}px` }
   // Per-node resize (#954): once you've dragged the corner, the card is sized to its own width/height
   // and previews responsively at that width. Height falls back to the footprint height.
   if (typeof props.data.width === 'number') {
@@ -59,16 +53,17 @@ const size = computed(() => {
 })
 
 // A LayoutTree wrapper for the responsive renderer — carries any breakpoints authored in the
-// edit view, so the survey resolves the SAME authored responsiveness at the device width.
+// edit view, so the per-node width preview resolves the SAME authored responsiveness.
 const tree = computed(() => ({ renderer: 'panes' as const, root: props.data.node, breakpoints: props.data.bp }))
 
 // --- live snap guide (target edge lights up while a peer is dragged) ------------------
 const snapPreview = inject(SPIKE_SNAP_KEY, null)
 // This node is the snap target when the injected preview names its layout node.
-const guideMatch = computed(() => !surveying.value && !!snapPreview?.value && snapPreview.value.node === props.data.node)
-// A preview is EITHER an internal insert seam (Phase A) OR an outer edge.
-const guideInsert = computed(() => (guideMatch.value ? snapPreview!.value!.insert ?? null : null))
-const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guideInsert.value ? snapPreview!.value!.edge ?? null : null))
+const guideMatch = computed(() => !!snapPreview?.value && snapPreview.value.node === props.data.node)
+// A preview is EITHER a pane-drop (drop OVER this layout — add beside a pane, #972) OR an outer edge
+// (proximity merge from a nearby loose card).
+const guidePaneDrop = computed(() => (guideMatch.value ? snapPreview!.value!.paneDrop ?? null : null))
+const guideEdge = computed<SnapEdge | null>(() => (guideMatch.value && !guidePaneDrop.value ? snapPreview!.value!.edge ?? null : null))
 // Dwell stages (#941): SOFT = just approached (blue, wide — "snap point here"); ARMED = held long
 // enough that releasing now snaps (green, tighter solid line).
 const guideArmed = computed(() => guideMatch.value && snapPreview!.value!.armed === true)
@@ -85,39 +80,35 @@ const guideStyle = computed(() => {
     default: return {}
   }
 })
-// Internal insert seam (#950): a line at the seam, positioned by card-fractions and spanning only
-// the TARGET split's sub-region — so a seam inside a NESTED split draws in the right place, not
-// across the whole card. `pos` is the main-axis position; `cross0..cross1` the cross-axis span.
-const guideInsertStyle = computed(() => {
-  const ins = guideInsert.value
-  if (!ins) return {}
+// Pane-drop guide (#972): a band on the chosen EDGE of the targeted pane — drawn from the pane's rect
+// (% of the card) so it lands on the right pane at any depth, on the side you're nearest.
+const guidePaneDropStyle = computed(() => {
+  const pd = guidePaneDrop.value
+  if (!pd) return {}
   const t = guideArmed.value ? '5px' : '8px'
-  const pos = `${ins.pos * 100}%`
-  const c0 = `${ins.cross0 * 100}%`
-  const c1 = `${(1 - ins.cross1) * 100}%`
-  return ins.axis === 'horizontal'
-    ? { left: pos, top: c0, bottom: c1, width: t, transform: 'translateX(-50%)' }
-    : { top: pos, left: c0, right: c1, height: t, transform: 'translateY(-50%)' }
+  const r = pd.rect
+  switch (pd.edge) {
+    case 'left': return { left: `${r.left}%`, top: `${r.top}%`, height: `${r.height}%`, width: t, transform: 'translateX(-50%)' }
+    case 'right': return { left: `${r.left + r.width}%`, top: `${r.top}%`, height: `${r.height}%`, width: t, transform: 'translateX(-50%)' }
+    case 'top': return { top: `${r.top}%`, left: `${r.left}%`, width: `${r.width}%`, height: t, transform: 'translateY(-50%)' }
+    case 'bottom': return { top: `${r.top + r.height}%`, left: `${r.left}%`, width: `${r.width}%`, height: t, transform: 'translateY(-50%)' }
+    default: return {}
+  }
 })
-// Ease-apart preview (#946): once an internal insert ARMS (green), splice a ghost pane into the
-// layout at the target index and render THAT — the renderer lays out the extra pane and the #943
-// FLIP eases the real panes apart to physically open its slot, the ghost landing in the gap. The
-// ghost block (`__dropghost__` → SpikeGhostPane) shows the incoming item's label, which we provide
-// (the renderer doesn't thread arbitrary config to a block). Reverts on un-arm → panes close back.
-const guideArmedInsert = computed(() => guideArmed.value && !!guideInsert.value)
+// Ease-apart preview (#946): once a pane-drop ARMS (green), apply the SAME edit with a ghost in place
+// of the real node and render THAT — the renderer lays out the extra pane and the #943 FLIP eases the
+// real panes apart to physically open its slot, the ghost landing in the gap. Reverts on un-arm.
+const guideArmedPaneDrop = computed(() => guideArmed.value && !!guidePaneDrop.value)
 const ghostLabel = computed(() => snapPreview?.value?.dragLabel ?? 'Drops here')
 provide(SPIKE_GHOST_LABEL_KEY, ghostLabel)
 // Build a ghost SKELETON with the same shape as the dragged node — every leaf becomes a
 // `__dropghost__` placeholder, splits/nested preserved — so its FOOTPRINT matches the dragged item.
-// Inserted into a horizontal split, a 2-row stack stays 2 rows, growing the row to fit (so the
-// opened slot matches the item's size, not a flat 1×1 sliver). Sizes preserved for inner proportions.
 function ghostify(node: LayoutNode): LayoutNode {
   if (node.type === 'leaf') return { type: 'leaf', blockId: '__dropghost__', ...(node.defaultSize !== undefined ? { defaultSize: node.defaultSize } : {}) }
   if (node.type === 'nested') return { type: 'nested', layout: { ...node.layout, root: ghostify(node.layout.root) } }
   return { ...node, children: node.children.map(ghostify) }
 }
 const renderNode = computed<LayoutNode>(() => {
-  const ins = guideInsert.value
   const n = props.data.node
   // Live reorder preview (#952): while pulling a pane toward a different slot (and not detaching), show
   // the panes ALREADY in their reordered order, so you SEE where the block lands as you move — the FLIP
@@ -129,15 +120,13 @@ const renderNode = computed<LayoutNode>(() => {
     if (m) arr.splice(reorderTo.value, 0, m)
     return { ...n, children: arr }
   }
-  if (!guideArmedInsert.value || !ins || n.type !== 'split') return n
-  // The seam may be in a NESTED split — resolve it by path so the ghost opens the slot at the right
-  // depth (#950). Size the ghost to that split's child count, then splice it in via insertAtPath.
-  const targetSplit = splitAtPath(n, ins.path)
-  if (!targetSplit || targetSplit.type !== 'split') return n
+  const pd = guidePaneDrop.value
+  if (!guideArmedPaneDrop.value || !pd) return n
+  // Apply the pane-drop with a ghost skeleton (same shape as the dragged item) so the opened slot
+  // matches its footprint; `applyPaneDrop` flattens-or-wraps exactly like the real drop will.
   const dn = snapPreview?.value?.dragNode
-  const skeleton = dn ? ghostify(dn) : { type: 'leaf' as const, blockId: '__dropghost__' }
-  const ghost: LayoutNode = { ...skeleton, defaultSize: Math.round(100 / (targetSplit.children.length + 1)) }
-  return insertAtPath(n, ins.path, ins.index, ghost)
+  const ghost: LayoutNode = dn ? ghostify(dn) : { type: 'leaf', blockId: '__dropghost__' }
+  return applyPaneDrop(n, pd, ghost)
 })
 
 // --- pull-the-pane-to-detach ----------------------------------------------------------
@@ -157,8 +146,14 @@ function toggleRegion(region: SpikeRegion) {
 // Per-node resize (#954): the corner handle sets this node's display width/height. When a width is set,
 // the card renders RESPONSIVELY at that width (its own width preview) — the per-element "slider".
 const setSize = inject(SPIKE_SET_SIZE_KEY, null)
-const RESIZE_MIN_W = 240
 const RESIZE_MIN_H = 140
+// Composite sizing (#972 follow-up): the layout's DERIVED floor — folded from its components' declared
+// minWidths. The resize handle can't drag the card below its HARD floor (the widest single block; below
+// that a block would break even after stacking), so a layout literally "follows the rules of its
+// components". `softMinWidth` is where it stops being a row and stacks — shown in the readout.
+const blockRegistry = computed(() => (useAppConfig().croutonLayoutBlocks ?? {}) as Record<string, { sizing?: { width?: string, height?: string }, minWidth?: number }>)
+const derived = computed(() => deriveSizing(props.data.node, blockRegistry.value))
+const resizeFloorW = computed(() => Math.max(80, derived.value.hardMinWidth))
 const resizing = ref(false)
 function onResizeDown(e: PointerEvent) {
   if (e.button !== 0 || !setSize) return
@@ -170,7 +165,7 @@ function onResizeDown(e: PointerEvent) {
   const startH = props.data.height ?? (r ? r.height / zoom : SPIKE_BASE_H)
   const ox = e.clientX, oy = e.clientY
   const move = (ev: PointerEvent) => {
-    const w = Math.max(RESIZE_MIN_W, Math.round(startW + (ev.clientX - ox) / zoom))
+    const w = Math.max(resizeFloorW.value, Math.round(startW + (ev.clientX - ox) / zoom))
     const h = Math.max(RESIZE_MIN_H, Math.round(startH + (ev.clientY - oy) / zoom))
     setSize!(props.data.node, { width: w, height: h })
   }
@@ -184,8 +179,8 @@ function onResizeDown(e: PointerEvent) {
 function resetSize() { setSize?.(props.data.node, { width: null }) }
 // Delete this node (block or whole layout) from the canvas (#955).
 const deleteNode = inject(SPIKE_DELETE_KEY, null)
-// Render responsively at the node's own width when one is set (and not in the global survey).
-const previewing = computed(() => !surveying.value && typeof props.data.width === 'number')
+// Render responsively at the node's own width when one is set.
+const previewing = computed(() => typeof props.data.width === 'number')
 const isGroup = computed(() => props.data.node.type === 'split')
 
 // Long-press → jiggle (#941): detach is gated behind a deliberate HOLD, so a merged group's panes
@@ -199,7 +194,7 @@ let pressTimer: number | null = null
 let pressOrigin = { x: 0, y: 0 }
 function clearPress() { if (pressTimer != null) { window.clearTimeout(pressTimer); pressTimer = null } }
 function onCardDown(e: PointerEvent) {
-  if (surveying.value || !isGroup.value) return
+  if (!isGroup.value) return
   if (jiggling.value) { jiggling.value = false; return } // already wiggling → a tap/drag off a face exits
   pressOrigin = { x: e.clientX, y: e.clientY }
   clearPress()
@@ -249,15 +244,57 @@ onClickOutside(cardRef, () => { if (jiggling.value) jiggling.value = false })
 // Show the detach faces only while WIGGLING (or while a pull is mid-flight, so the grabbed pane
 // isn't orphaned if the finger leaves the card). Tapping/selecting no longer auto-arms detach —
 // that surface is the #942 promote/duplicate toolbar now; pulling apart is the deliberate hold.
-const armed = computed(() => !surveying.value && isGroup.value && (jiggling.value || activeIndex.value !== null))
+const armed = computed(() => isGroup.value && (jiggling.value || activeIndex.value !== null))
 
-// Top-level pane faces (as % of the card), laid out along the split's axis — the regions you grab to
-// pull a pane out, the seams on ease-apart, AND the slot bounds the reorder hit-test reads. They must
-// match what the renderer actually DRAWS: it sizes each splitter panel by `defaultSize` (% along the
-// axis), NOT footprint — so a spacer beside a dense grid renders 50/50, while footprint would've said
-// e.g. 1:4. Using footprint here made the faces drift off the panes (#953, IMG_1061/1062). Mirror the
-// renderer's `child.defaultSize ?? (100 / n)` exactly so faces/seams/reorder-slots line up.
-const panes = computed(() => {
+// Top-level pane faces (as % of the card) — the regions you grab to pull a pane out, the seams on
+// ease-apart, AND the slot bounds the reorder hit-test reads. They MUST sit exactly over the panes the
+// renderer actually draws. Computing them from `defaultSize` drifts whenever the rendered geometry
+// differs — reka enforces each pane's min-width, a horizontal split STACKS vertically when it's too
+// narrow (`@container`), and nested splits carry their own proportions — none of which `defaultSize`
+// reflects (#953/#954, IMG_1069). So we MEASURE the real panes (same lesson as the edit-view
+// selection): the shallowest reka panels (`[data-panel]`) / stacked panes (`[data-crouton-pane]`)
+// inside the card, as % of the card box. Fall back to the `defaultSize` math only until a measurement
+// lands (or if the counts ever disagree — e.g. a pane collapsed into the gutter).
+const measuredPanes = ref<{ left: number, top: number, width: number, height: number }[]>([])
+function cardEl(): HTMLElement | null {
+  return (cardRef.value as { $el?: HTMLElement } | null)?.$el ?? null
+}
+function syncPanes() {
+  const card = cardEl()
+  const n = props.data.node
+  if (!card || n.type !== 'split') { measuredPanes.value = []; return }
+  const cr = card.getBoundingClientRect()
+  if (!cr.width || !cr.height) { measuredPanes.value = []; return }
+  // Shallowest panes only (a pane's own ancestor chain has no other pane) → the TOP-LEVEL row/column,
+  // in document order = the split's child order.
+  const els = Array.from(card.querySelectorAll<HTMLElement>('[data-panel],[data-crouton-pane]'))
+    .filter(el => !el.parentElement?.closest('[data-panel],[data-crouton-pane]'))
+  if (els.length !== n.children.length) { measuredPanes.value = []; return }
+  measuredPanes.value = els.map((el) => {
+    const r = el.getBoundingClientRect()
+    // CLAMP each pane to the card box (ALL four edges). When the content is taller than the card it
+    // overflows (the body is `overflow-hidden`/`-visible`) and a lower pane's measured rect extends
+    // below — or entirely past — the card, which drew the face sprawling outside it (#972 follow-up,
+    // IMG_1071). Clamping every edge into [0, card] means a face only ever covers the pane's VISIBLE
+    // portion; a pane scrolled fully out collapses to zero size (hidden by `paneRect`).
+    const cw = cr.width, ch = cr.height
+    const left = Math.min(Math.max(0, r.left - cr.left), cw)
+    const top = Math.min(Math.max(0, r.top - cr.top), ch)
+    const right = Math.min(Math.max(0, r.right - cr.left), cw)
+    const bottom = Math.min(Math.max(0, r.bottom - cr.top), ch)
+    return {
+      left: (left / cw) * 100,
+      top: (top / ch) * 100,
+      width: ((right - left) / cw) * 100,
+      height: ((bottom - top) / ch) * 100,
+    }
+  })
+}
+// nextTick (DOM settled) + a short follow-up (reka's flex sizing + the @container reflow settle async).
+function scheduleSyncPanes() { nextTick(syncPanes); window.setTimeout(syncPanes, 60) }
+
+// Tree-derived fallback: mirror the renderer's `child.defaultSize ?? (100 / n)` along the split axis.
+const treePanes = computed(() => {
   const n = props.data.node
   if (n.type !== 'split') return []
   const horizontal = n.direction === 'horizontal'
@@ -273,6 +310,12 @@ const panes = computed(() => {
       : { left: 0, top: start, width: 100, height: sizePct }
   })
 })
+const childCount = computed(() => (props.data.node.type === 'split' ? props.data.node.children.length : 0))
+const panes = computed(() => (
+  measuredPanes.value.length === childCount.value && childCount.value > 0
+    ? measuredPanes.value
+    : treePanes.value
+))
 
 // Active pull state.
 const activeIndex = ref<number | null>(null) // the pane being pulled
@@ -286,6 +329,14 @@ let faceEl: HTMLElement | null = null // the grabbed pane face — its rect at r
 let moveHandler: ((e: PointerEvent) => void) | null = null
 let upHandler: ((e: PointerEvent) => void) | null = null
 
+// Re-measure the rendered panes when the card resizes (per-node resize / canvas zoom), when it arms
+// (faces appear), and after the layout re-renders (reorder preview, detach/insert, merge). Declared
+// here — below `activeIndex` etc. — because the watch eagerly reads `renderNode`, which references the
+// pull state; reading it before these are initialized throws a TDZ error. Cheap; only the overlay reads it.
+const { width: cardW, height: cardH } = useElementSize(cardEl)
+watch([cardW, cardH, jiggling, renderNode, () => props.data.width], scheduleSyncPanes)
+onMounted(scheduleSyncPanes)
+
 // Gap each pane insets by: a resting seam (so the seams/frame stay node-draggable) that widens
 // when a pull starts, so the group visibly eases apart the moment you grab a pane.
 // On hold (wiggle), ease the panes APART so the separate layouts read clearly (no blur, just a
@@ -293,6 +344,8 @@ let upHandler: ((e: PointerEvent) => void) | null = null
 const gap = computed(() => (pulling.value ? 18 : jiggling.value ? 16 : 6))
 
 function paneRect(p: { left: number, top: number, width: number, height: number }) {
+  // A pane clamped to ~nothing (scrolled out of an overflowing card) has no grabbable face (#972).
+  if (p.width < 0.5 || p.height < 0.5) return { display: 'none' }
   return { left: `${p.left}%`, top: `${p.top}%`, width: `${p.width}%`, height: `${p.height}%` }
 }
 function faceStyle(i: number) {
@@ -451,7 +504,7 @@ watch(() => props.data.node, () => {
   <UCard
     ref="cardRef"
     class="spike-block-node transition-[width,height,box-shadow] duration-300 ease-out"
-    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guideInsert) ? 'ring-2 ring-sky-400/70 shadow-lg' : (dragging || data.justAdded) ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
+    :class="[guideArmed ? 'ring-2 ring-emerald-500 shadow-lg' : (guideEdge || guidePaneDrop) ? 'ring-2 ring-sky-400/70 shadow-lg' : (dragging || data.justAdded) ? 'spike-drag-glow' : selected ? 'ring-primary shadow-lg' : '', { 'spike-reflowing': reflowing }]"
     :style="size"
     :ui="{ root: 'relative overflow-visible', body: `h-full ${pulling ? 'overflow-visible' : 'overflow-hidden'} rounded-[inherit] p-0 sm:p-0` }"
     @pointerdown="onCardDown"
@@ -465,7 +518,7 @@ watch(() => props.data.node, () => {
   >
     <!-- "Page" badge — this node is the live layout a user sees (#942). -->
     <UBadge
-      v-if="data.isPage && !surveying"
+      v-if="data.isPage"
       color="primary"
       variant="solid"
       size="sm"
@@ -475,7 +528,7 @@ watch(() => props.data.node, () => {
 
     <!-- Region badge (#953) — this node is pinned to the page's top/bottom edge (a sticky pill). -->
     <UBadge
-      v-if="data.region && !surveying"
+      v-if="data.region"
       color="primary"
       variant="subtle"
       size="sm"
@@ -488,7 +541,7 @@ watch(() => props.data.node, () => {
          `.stop` so tapping a button neither drags the node nor bubbles to the card. -->
     <!-- Done — exit wiggle mode (#941). Shown while wiggling; tapping outside the layout also exits. -->
     <div
-      v-if="jiggling && !surveying"
+      v-if="jiggling"
       class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-primary/40 bg-elevated/95 p-1 shadow-xl backdrop-blur"
     >
       <UButton
@@ -503,7 +556,7 @@ watch(() => props.data.node, () => {
     </div>
 
     <div
-      v-if="selected && !jiggling && !surveying"
+      v-if="selected && !jiggling"
       class="nodrag pointer-events-auto absolute -top-10 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-default bg-elevated/95 p-1 shadow-xl backdrop-blur"
     >
       <UButton
@@ -572,24 +625,13 @@ watch(() => props.data.node, () => {
       />
     </div>
 
-    <!-- Survey mode renders the layout AT the device width (authored breakpoints + intrinsic reflow); -->
-    <!-- topology mode renders it plain at its footprint size. -->
-    <!-- Survey: scroll the PREVIEW, don't pan the canvas (#940). `nopan`/`nodrag` keep Vue Flow's
-         hands off the gesture, `overflow-auto` + `touch-action` let an overflowing layout scroll. -->
+    <!-- Per-node width preview (#954): render responsively at the node's own width so it reflows
+         per-element. Scroll the PREVIEW, don't pan the canvas — `nopan`/`nodrag` keep Vue Flow's
+         hands off the gesture, `overflow-auto` + `touch-action` let an overflowing layout scroll.
+         Read-only splitters (`interactive: false`) resize the CARD, not internal panes — editing
+         sizes is the edit view's job (double-click). Plain footprint render otherwise. -->
     <div
-      v-if="surveying"
-      class="nopan nodrag h-full w-full overflow-auto"
-      style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
-    >
-      <!-- Survey is READ-ONLY (#953): `interactive: false` drops the splitter resize handles, so you
-           can't accidentally resize panes while previewing a device width. Editing sizes is the edit
-           view's job (double-click), not the survey. -->
-      <CroutonLayoutResponsiveRenderer :tree="tree" :width="viewport!.width" :interactive="false" />
-    </div>
-    <!-- Per-node width preview (#954): render responsively at the node's own width so it reflows like
-         the survey did, but per-element. Read-only splitters (resize the CARD, not internal panes). -->
-    <div
-      v-else-if="previewing"
+      v-if="previewing"
       class="nopan nodrag h-full w-full overflow-auto"
       style="touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;"
     >
@@ -597,11 +639,25 @@ watch(() => props.data.node, () => {
     </div>
     <CroutonLayoutRenderer v-else :node="renderNode" />
 
+    <!-- Derived sizing readout (#972 follow-up) — the layout's floor, FOLDED from its components'
+         declared min-widths. `floor` = the hard min the resize can't go below; when the layout would
+         stack before then, we also show the soft "stacks <Npx" threshold. Shows it follows its
+         components' rules, all the way up a layout-of-layouts. -->
+    <div
+      v-if="selected && !jiggling"
+      class="nodrag pointer-events-none absolute -bottom-3 left-2 z-40 flex items-center gap-1 rounded-full border border-default bg-elevated/95 px-2 py-0.5 font-mono text-[10px] text-muted shadow-sm backdrop-blur"
+      title="Floor derived from the components' min-widths"
+    >
+      <UIcon name="i-lucide-ruler" class="size-3" />
+      <span v-if="derived.softMinWidth > derived.hardMinWidth">stacks &lt;{{ derived.softMinWidth }} · floor {{ derived.hardMinWidth }}px</span>
+      <span v-else>floor {{ derived.hardMinWidth }}px</span>
+    </div>
+
     <!-- Resize handle (#954) — drag the corner to set this node's width (drives responsive reflow) +
          height. The per-element "slider". `.nodrag`/`.stop` keep it off Vue Flow's node drag. Shown when
-         selected (not wiggling/surveying). Double-click clears back to the intrinsic footprint size. -->
+         selected (not wiggling). Double-click clears back to the intrinsic footprint size. -->
     <div
-      v-if="selected && !jiggling && !surveying"
+      v-if="selected && !jiggling"
       class="nodrag absolute -bottom-3 -right-3 z-40 flex size-12 cursor-nwse-resize items-center justify-center touch-none"
       title="Drag to resize · double-click to reset"
       @pointerdown.stop="onResizeDown"
@@ -615,8 +671,8 @@ watch(() => props.data.node, () => {
       </div>
     </div>
 
-    <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop
-         between panes). SOFT = blue, wide, pulsing ("snap point here"); ARMED = green, crisp, steady. -->
+    <!-- Live snap guide (#941): an outer EDGE (merge a nearby card onto a side) or a PANE-DROP band on
+         the targeted pane's edge (#972). SOFT = blue, wide, pulsing; ARMED = green, crisp, steady. -->
     <div
       v-if="guideEdge"
       class="pointer-events-none absolute z-10 rounded-full"
@@ -624,10 +680,10 @@ watch(() => props.data.node, () => {
       :style="guideStyle"
     />
     <div
-      v-if="guideInsert && !guideArmedInsert"
+      v-if="guidePaneDrop && !guideArmedPaneDrop"
       class="pointer-events-none absolute z-10 rounded-full"
       :class="guideBarClass"
-      :style="guideInsertStyle"
+      :style="guidePaneDropStyle"
     />
     <!-- Detach overlay: armed merged node → grab a pane face and pull it out past the threshold.
          The container is `.nodrag` so Vue Flow pulls the pane, not the node; the seams/frame

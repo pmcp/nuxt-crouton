@@ -9,9 +9,14 @@ const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
     <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
       <UIcon name="i-lucide-bar-chart-3" class="size-3.5" /> Bookings / week
     </div>
-    <div class="flex min-h-0 flex-1 items-end gap-1.5">
+    <!-- Each column is FULL height (default items-stretch); the bar lives in a flex-1 track with a
+         definite height, so the bar's `height: X%` resolves reliably. Anchoring the column to
+         `items-end` collapsed the track to content height → % heights rounded to nothing (#975). -->
+    <div class="flex min-h-0 flex-1 gap-1.5">
       <div v-for="(b, i) in bars" :key="i" class="flex min-w-0 flex-1 flex-col items-center gap-1">
-        <div class="w-full rounded-t bg-primary/70" :style="{ height: `${b}%` }" />
+        <div class="flex min-h-0 w-full flex-1 items-end">
+          <div class="w-full rounded-t bg-primary/70" :style="{ height: `${b}%` }" />
+        </div>
         <span class="text-[10px] text-dimmed">{{ days[i] }}</span>
       </div>
     </div>

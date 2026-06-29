@@ -24,6 +24,13 @@ import type { LayoutTree, LayoutNode, LayoutCollapseEdge, LayoutCollapseAffordan
 import { applySizes, setCollapseRecipe, type NodePath } from '@fyit/crouton-layout/app/utils/layout-edit'
 // resolveLayoutAtWidth / listBlocks / patchBreakpoint / removeBreakpoint are auto-imported from the
 // crouton-layout layer (its `app/utils/layout-responsive` isn't in the package `exports` map).
+// leafConfigValue / setLeafConfigValue are auto-imported from app/utils/spike-layout.
+
+// Display variants (#970) — a block can expose bounded DISPLAY variants (e.g. List: rows/cards/table)
+// as a `variant` select field on its registry `configSchema`. The picker below sets the chosen value on
+// the leaf's `config.variant` (serialised on the leaf, agent-pickable); the renderer merges it into the
+// block's props. One source: the SAME registry an agent reads.
+const { getBlock } = useCroutonLayoutBlocks()
 
 const props = defineProps<{
   modelValue: LayoutTree
@@ -84,6 +91,36 @@ function setRecipe(blockId: string, p: RecipePreset) {
     ...tree.value,
     root: setCollapseRecipe(tree.value.root, blockId, recipe),
     ...(bps ? { breakpoints: bps.map(bp => (bp.root ? { ...bp, root: setCollapseRecipe(bp.root, blockId, recipe) } : bp)) } : {}),
+  })
+}
+
+// --- display variants (#970) — the selected block's bounded `variant` enum (rows/cards/table) -------
+interface VariantOption { label: string, value: string }
+/** The selected block's display-variant options, or null if it declares none. */
+const variantOptions = computed<VariantOption[]>(() => {
+  const id = selectedBlockId.value
+  if (!id) return []
+  const field = getBlock(id)?.configSchema?.find(f => f.name === 'variant' && f.type === 'select')
+  return (field?.options ?? []) as VariantOption[]
+})
+const hasVariants = computed(() => variantOptions.value.length > 1)
+/** The active variant — the leaf's serialised `config.variant`, else the field's declared default. */
+const activeVariant = computed<string>(() => {
+  const id = selectedBlockId.value
+  if (!id) return ''
+  const onLeaf = leafConfigValue(tree.value.root, id, 'variant')
+  if (typeof onLeaf === 'string') return onLeaf
+  const field = getBlock(id)?.configSchema?.find(f => f.name === 'variant')
+  return typeof field?.default === 'string' ? field.default : (variantOptions.value[0]?.value ?? '')
+})
+/** Set the variant on the leaf's config — on the base root AND every breakpoint root override (like
+ *  setRecipe), so whichever root resolves at the current width carries it. Serialised on the leaf. */
+function setVariant(blockId: string, value: string) {
+  const bps = tree.value.breakpoints
+  update({
+    ...tree.value,
+    root: setLeafConfigValue(tree.value.root, blockId, 'variant', value),
+    ...(bps ? { breakpoints: bps.map(bp => (bp.root ? { ...bp, root: setLeafConfigValue(bp.root, blockId, 'variant', value) } : bp)) } : {}),
   })
 }
 
@@ -436,6 +473,22 @@ watch([() => regions.value.length, () => regions.value.map(r => r.blockId).join(
                     >
                       <UIcon :name="r.icon" class="size-3.5 shrink-0" />
                       {{ r.label }}
+                    </button>
+                  </div>
+                  <!-- Display variants (#970) — a bounded enum the block declares; a tap re-renders it in
+                       that variant and serialises the choice on the leaf. Shown only when it has ≥2. -->
+                  <div v-if="hasVariants" class="flex items-center gap-1 overflow-x-auto pb-0.5">
+                    <span class="shrink-0 pr-0.5 text-[10px] uppercase tracking-widest text-muted">Display</span>
+                    <button
+                      v-for="opt in variantOptions"
+                      :key="opt.value"
+                      type="button"
+                      class="flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors active:scale-95"
+                      :class="activeVariant === opt.value ? 'border-primary bg-primary/10 text-primary' : 'border-default text-muted hover:text-default'"
+                      :title="opt.label"
+                      @click="setVariant(selectedBlock!.blockId, opt.value)"
+                    >
+                      {{ opt.label }}
                     </button>
                   </div>
                 </div>

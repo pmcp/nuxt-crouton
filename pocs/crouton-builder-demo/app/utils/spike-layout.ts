@@ -6,6 +6,7 @@
  */
 import type { InjectionKey, Ref, ShallowRef } from 'vue'
 import type { LayoutNode } from '@fyit/crouton-core/app/types/layout'
+import { dropNode } from '@fyit/crouton-layout/app/utils/layout-edit'
 
 export const SPIKE_BASE_W = 256
 export const SPIKE_BASE_H = 184
@@ -23,21 +24,8 @@ export type SnapEdge = 'left' | 'right' | 'top' | 'bottom'
 // `armed` (#941 dwell): false = "snap point here" (soft/blue, just approached); true = held long
 // enough that releasing now WILL snap (green). Two-stage so a snap takes intent, not a brush-past.
 //
-// A preview is EITHER an `edge` snap (merge the dragged node onto a side of the target) OR an
-// `insert` (drop the dragged node BETWEEN the panes of a combined target, Phase A). `insert.frac`
-// is the seam position as a 0..1 fraction along the split axis; the target draws a guide line there.
-// An insert targets a split addressed by `path` (the child-index route from the target node's root —
-// `[]` is the root split, `[1,0]` a split nested two levels deep), at seam `index` within it. The
-// `pos`/`cross0`/`cross1` are the seam's geometry as fractions of the WHOLE target card, so the soft
-// guide bar can draw at the right place AND only across the nested split's sub-region. (#950)
-export interface SpikeSnapInsert {
-  axis: 'horizontal' | 'vertical'
-  path: number[]
-  index: number
-  pos: number
-  cross0: number
-  cross1: number
-}
+// A preview is EITHER an `edge` snap (merge the dragged node onto a side of a NEARBY card) OR a
+// `paneDrop` (drop OVER a layout → add beside the targeted pane, #972 — see SpikePaneDrop below).
 
 /** Resolve the split at `path` within `root` (or null). Walks split children by index. */
 export function splitAtPath(root: LayoutNode, path: number[]): LayoutNode | null {
@@ -67,11 +55,47 @@ export function insertAtPath(root: LayoutNode, path: number[], index: number, ch
   children[head!] = insertAtPath(target, rest, index, child)
   return { ...root, children }
 }
-// `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed insert target
-// can render a "this is where it lands" ghost slab at the seam carrying the incoming item's name.
+/**
+ * Pane-drop (#972) — dropping a block OVER a layout targets the rendered PANE under the cursor and
+ * adds the dragged node as a sibling on the side you're nearest. Unlike `insert` (which only used
+ * seams that already existed), this works on ANY pane edge — so you can add a block to the RIGHT of a
+ * pane that sits in a vertical stack (no pre-existing right-seam), e.g. "right of the chart". It's a
+ * bounded, agent-pickable edit: "insert node X beside pane at `path` on side `edge`". `path` is the
+ * child-index route to the leaf within the target node's root (`[]` = the whole node is one pane);
+ * `rect` is that pane's box as % of the target card, so the guide band draws on the right edge.
+ */
+export interface SpikePaneDrop { path: number[], edge: SnapEdge, rect: { left: number, top: number, width: number, height: number } }
+
+/**
+ * Apply a pane-drop to `root`: add `child` beside the pane at `paneDrop.path` on `paneDrop.edge`.
+ * FLATTENS into the parent row when the side is ALONG the parent split's axis (drop right of a block
+ * in a row → it joins the row), and WRAPS the pane in a new perpendicular split otherwise (drop right
+ * of a pane in a vertical stack → `[pane | child]`). Used for BOTH the ghost preview and the real drop.
+ */
+export function applyPaneDrop(root: LayoutNode, paneDrop: { path: number[], edge: SnapEdge }, child: LayoutNode): LayoutNode {
+  const { path, edge } = paneDrop
+  const direction = edge === 'left' || edge === 'right' ? 'horizontal' : 'vertical'
+  const before = edge === 'left' || edge === 'top'
+  if (path.length > 0) {
+    const parentPath = path.slice(0, -1)
+    const leafIndex = path[path.length - 1]!
+    const parent = splitAtPath(root, parentPath)
+    if (parent && parent.type === 'split' && parent.direction === direction) {
+      // Side runs ALONG the parent → flatten into the existing row/column.
+      return insertAtPath(root, parentPath, leafIndex + (before ? 0 : 1), child)
+    }
+  }
+  // Perpendicular (or a lone pane) → wrap the pane in a new split. `dropNode` handles a leaf root too.
+  return dropNode(root, path, child, edge)
+}
+
+// `dragLabel` (#946 ghost) — a human label for the node being dragged, so the armed pane-drop target
+// can render a "this is where it lands" ghost slab carrying the incoming item's name.
 // `dragNode` (#947) — the dragged node's actual subtree, so the target can build a ghost skeleton
 // with the SAME footprint (a 2-row stack → a 2-row ghost), making the opened slot match its size.
-export interface SpikeSnapPreview { node: LayoutNode, armed?: boolean, edge?: SnapEdge, insert?: SpikeSnapInsert, dragLabel?: string, dragNode?: LayoutNode }
+// `targetId` — the target FlowNode's id, so the on-release apply can re-find it by STABLE id (CroutonFlow
+// re-emits rows on drag-end that don't preserve `data.node` by reference, so identity matching missed).
+export interface SpikeSnapPreview { node: LayoutNode, targetId?: string, armed?: boolean, edge?: SnapEdge, paneDrop?: SpikePaneDrop, dragLabel?: string, dragNode?: LayoutNode }
 export const SPIKE_SNAP_KEY = Symbol('spike-snap') as InjectionKey<ShallowRef<SpikeSnapPreview | null>>
 
 /**
@@ -152,24 +176,6 @@ export const SPIKE_GHOST_LABEL_KEY = Symbol('spike-ghost-label') as InjectionKey
  */
 export const SPIKE_PINCH_KEY = Symbol('spike-pinch') as InjectionKey<(ratio: number, midX: number, midY: number) => void>
 
-/**
- * Global viewport survey (#907, "layer 3") — the flow has no real concept of screen size;
- * size there is just topology. Flipping a viewport makes the WHOLE board render every layout
- * AT that width, so you can scan all your pages as phone/tablet/desktop at a glance. It's a
- * read-only survey: while a viewport is active, snapping/detach are off and nodes tile rather
- * than drag. `null` = back to the topology (footprint) view. Provided by the page; SpikeBlockNode
- * injects it to size its card to the device + render via CroutonLayoutResponsiveRenderer at `width`.
- */
-export interface SpikeViewport { label: string, icon: string, width: number, height: number }
-export const SPIKE_VIEWPORT_KEY = Symbol('spike-viewport') as InjectionKey<Ref<SpikeViewport | null>>
-
-/** The device presets the viewport chips offer (width/height in px). */
-export const SPIKE_VIEWPORTS: SpikeViewport[] = [
-  { label: 'Phone', icon: 'i-lucide-smartphone', width: 375, height: 720 },
-  { label: 'Tablet', icon: 'i-lucide-tablet', width: 768, height: 1024 },
-  { label: 'Desktop', icon: 'i-lucide-monitor', width: 1280, height: 800 },
-]
-
 // Focus editing (#907 redesign) lives in a DEDICATED full-screen edit VIEW, not an in-flow
 // camera zoom — so there's no SPIKE_FOCUS/RESIZE injection here anymore. The overlay renders the
 // node's layout through CroutonLayoutBreakpointAuthor (ruler + devices + width slider + collapse
@@ -191,4 +197,104 @@ export function footprint(node: LayoutNode): { cols: number, rows: number } {
 export function sizeOf(node: LayoutNode): { width: number, height: number } {
   const f = footprint(node)
   return { width: f.cols * SPIKE_BASE_W, height: f.rows * SPIKE_BASE_H }
+}
+
+/**
+ * Block sizing descriptor (#971) — "the component decides its own size" as DECLARED DATA, not
+ * per-instance CSS. Each block declares how it fills a pane per axis: `fill` stretches to the pane,
+ * `hug` sizes to its own content. A Top bar / Bottom nav declare `height: 'hug'`, so they come out as
+ * SHORT bars wherever they land (incl. pinned regions) with NO per-instance size control — the agent
+ * picks the BLOCK, the block's descriptor does the rest. It lives on the `croutonLayoutBlocks` registry
+ * entries (app.config), so one source feeds the renderer, the viability metric, and an agent alike.
+ *
+ * Honoured POC-side in the Preview (a `hug`-height block → an `height:auto` pane → short bar). Making a
+ * pane hug its content INSIDE a split is the `crouton-layout` package renderer's job — graduation work;
+ * the clean formalisation is exactly this descriptor moving onto the typed `CroutonLayoutBlockDefinition`.
+ */
+export type SpikeSizing = 'fill' | 'hug'
+export interface SpikeBlockSizing { width: SpikeSizing, height: SpikeSizing }
+export const SPIKE_DEFAULT_SIZING: SpikeBlockSizing = { width: 'fill', height: 'fill' }
+
+/** A registry shape carrying the optional POC sizing descriptor (the app.config entries). The fields
+ *  are read loosely (app.config literals widen to `string`) and validated to the enum here. */
+type SizedRegistry = Record<string, { sizing?: { width?: string, height?: string }, minWidth?: number } | undefined>
+
+/** Narrow an arbitrary value to a `SpikeSizing` (default `fill`) — robust to widened/tampered data. */
+const asSizing = (v: unknown): SpikeSizing => (v === 'hug' ? 'hug' : 'fill')
+
+/** The sizing a block declares (defaults to fully `fill`). Reads the descriptor off the registry. */
+export function blockSizing(blockId: string, registry: SizedRegistry): SpikeBlockSizing {
+  const s = registry[blockId]?.sizing
+  return { width: asSizing(s?.width), height: asSizing(s?.height) }
+}
+
+/**
+ * How a NODE wants to size on the page's vertical axis. Only a single leaf hugs by its block's
+ * descriptor; a composed split/nested fills (a real layout claims its space). Drives the Preview's
+ * per-region hug/fill so a pinned Top bar is short because the BLOCK says `hug`, not because it's pinned.
+ */
+export function nodeHeightSizing(node: LayoutNode, registry: SizedRegistry): SpikeSizing {
+  return node.type === 'leaf' ? blockSizing(node.blockId, registry).height : 'fill'
+}
+
+/**
+ * Composite sizing derivation (#972 follow-up) — "component-driven, all the way up". A LEAF declares
+ * its rules (minWidth + fill/hug on the registry); a COMPOSITE (split / nested layout) DERIVES its own,
+ * bottom-up, so a layout-of-layouts publishes the same contract its children do and a parent (or an
+ * agent) can reason about it as one unit. The fold is direction-aware, with TWO width floors:
+ *   • softMinWidth — the comfortable width that keeps a horizontal split a ROW: `sum` of children
+ *     along a horizontal axis, `max` across a vertical one. Below it, the renderer stacks the row.
+ *   • hardMinWidth — the absolute floor it can reflow DOWN to: a horizontal split can always stack to
+ *     a column whose width floor is the widest child, so hard = `max` of children's hard floors
+ *     (recursively, the widest single leaf in the subtree).
+ * Height mirrors width with the axes swapped (`sum` vertical, `max` horizontal). `width`/`height`
+ * fill/hug: a composite always `fill`s (a real layout claims its space); a leaf uses its descriptor.
+ *
+ * Prototyped POC-side; the clean home is the `crouton-layout` viability engine (it already folds leaf
+ * min-widths for stacking) + the `nested` node carrying this as its declared contract (graduation).
+ */
+export interface SpikeDerivedSizing { hardMinWidth: number, softMinWidth: number, minHeight: number, width: SpikeSizing, height: SpikeSizing }
+export function deriveSizing(node: LayoutNode, registry: SizedRegistry): SpikeDerivedSizing {
+  if (node.type === 'leaf') {
+    const mw = registry[node.blockId]?.minWidth ?? 0
+    const s = blockSizing(node.blockId, registry)
+    return { hardMinWidth: mw, softMinWidth: mw, minHeight: 0, width: s.width, height: s.height }
+  }
+  if (node.type === 'nested') return deriveSizing(node.layout.root, registry)
+  const kids = node.children.map(c => deriveSizing(c, registry))
+  const horizontal = node.direction === 'horizontal'
+  // Hard floor: the subtree can always reflow to a single column → the widest single leaf.
+  const hardMinWidth = Math.max(0, ...kids.map(k => k.hardMinWidth))
+  // Soft floor: keep the arrangement as-is — sum along the axis, max across it.
+  const softMinWidth = horizontal
+    ? kids.reduce((sum, k) => sum + k.softMinWidth, 0)
+    : Math.max(0, ...kids.map(k => k.softMinWidth))
+  const minHeight = horizontal
+    ? Math.max(0, ...kids.map(k => k.minHeight))
+    : kids.reduce((sum, k) => sum + k.minHeight, 0)
+  return { hardMinWidth, softMinWidth, minHeight, width: 'fill', height: 'fill' }
+}
+
+/**
+ * Per-leaf config field read/write (#970 display variants) — a block's `variant` (rows/cards/table) is
+ * a bounded enum SERIALISED on the leaf's `config`, so it persists with the layout and an agent can
+ * read/set it. Read the first matching leaf's value; set it immutably on EVERY matching leaf (mirrors
+ * how `setCollapseRecipe` addresses a block by id across the tree, vs by NodePath).
+ */
+export function leafConfigValue(node: LayoutNode, blockId: string, key: string): unknown {
+  if (node.type === 'leaf') return node.blockId === blockId ? node.config?.[key] : undefined
+  if (node.type === 'nested') return leafConfigValue(node.layout.root, blockId, key)
+  for (const c of node.children) {
+    const v = leafConfigValue(c, blockId, key)
+    if (v !== undefined) return v
+  }
+  return undefined
+}
+
+export function setLeafConfigValue(node: LayoutNode, blockId: string, key: string, value: unknown): LayoutNode {
+  if (node.type === 'leaf') {
+    return node.blockId === blockId ? { ...node, config: { ...(node.config ?? {}), [key]: value } } : node
+  }
+  if (node.type === 'nested') return { ...node, layout: { ...node.layout, root: setLeafConfigValue(node.layout.root, blockId, key, value) } }
+  return { ...node, children: node.children.map(c => setLeafConfigValue(c, blockId, key, value)) }
 }

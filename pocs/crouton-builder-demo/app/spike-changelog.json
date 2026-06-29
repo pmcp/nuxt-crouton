@@ -1,8 +1,48 @@
 [
   {
+    "v": 52,
+    "note": "Composite layout sizing — a layout now DERIVES its own size rules from its components (folded bottom-up): a 'hard floor' = the widest single block (it can always reflow to a column), and a 'soft floor' = the sum across a row (where it starts to stack). The per-element resize can't shrink a card below its hard floor — so a layout literally can't break its components' rules — and a selected card shows the derived floor ('stacks <Npx · floor Mpx'). Component-driven, all the way up a layout-of-layouts.",
+    "commit": ""
+  },
+  {
+    "v": 51,
+    "note": "Fixed the wiggle drag-borders spilling OUTSIDE the card when the layout is taller than the card (scrolls/overflows) — the green faces are measured from the rendered panes, and a pane below the fold reported a rect extending past the card, so its border sprawled down the canvas. Faces are now clamped to the card box (a pane scrolled out of view just has no face). Caught from your IMG_1071.",
+    "commit": "0613db0"
+  },
+  {
+    "v": 50,
+    "note": "Drop a block BESIDE a pane inside a layout — drag a block over a composed layout and it now targets the pane under your finger and adds the new block on the side you're nearest (left/right/top/bottom). It flattens into the row when the side runs along it, and wraps the pane perpendicular otherwise — so you can finally add to the RIGHT of a pane that sits in a vertical stack (e.g. right of the chart), which wasn't possible before (no pre-existing seam there). Replaces the old between-seams-only insert with one unified 'add beside the pane you point at' rule.",
+    "commit": "3af5039"
+  },
+  {
+    "v": 49,
+    "note": "Fixed the wiggle/detach drag-border SIZING — the green pane faces were computed from the tree's defaultSize, so once you RESIZED a card (which renders it through the responsive renderer, reflowing/stacking the panes) the borders drifted off the real panes. They now MEASURE the actual rendered panes, so the faces sit exactly on them whether or not the card is resized / stacked / nested. (Verified headless: resized narrow → panes stacked → faces aligned with 0px offset.)",
+    "commit": "a542c5f"
+  },
+  {
+    "v": 48,
+    "note": "Deploy fix — the staging build broke because crouton-devtools loads @fyit/crouton-feedback at build time (from #976). Two parts: (1) declare the dep on the POC so pnpm's strict node_modules can resolve it, and (2) add it to the deploy's layerPackages so CI builds its dist (it wasn't in the build set, so the module file never existed). User-invisible; unblocks the preview deploy.",
+    "commit": "91c4326"
+  },
+  {
+    "v": 47,
+    "note": "Per-block DISPLAY VARIANTS — a block can now offer bounded layouts of the same data (the Artists list: Rows · Cards · Table). Select a pane in the edit view → a Display chip row lets you (or an agent) flip the variant; the choice is a bounded enum declared on the registry and serialised on the leaf, so it persists and round-trips. This is the 'collection viewer options' ask, kept inside the expressiveness boundary (an enum, not free config).",
+    "commit": "418bfd1"
+  },
+  {
+    "v": 46,
+    "note": "Block sizing as DECLARED DATA — each block in the registry now carries a sizing descriptor ({ width, height: 'fill' | 'hug' }), so 'the component decides its own size' is one source the renderer and an agent both read, not per-component CSS. A Top bar / Bottom nav declare height:'hug', so a pinned bar comes out SHORT because the BLOCK says so (not because of where it's pinned) — no per-instance size control. Honoured in the page Preview (a hug block → a short bar, a fill block grows).",
+    "commit": "8936b5d"
+  },
+  {
+    "v": 45,
+    "note": "Cleanup pass — ripped out the dormant survey/viewport code left over after the slider→per-element-resize pivot (and the dead fitOverview), so the board path is one clear model. Chart block bars now render reliably (each bar sits in a definite-height track, so its % height resolves). And the board hides Vue Flow's own ⛶ fit button — it zooms into our oversized cards; the pill Fit is the right one (the Site flow keeps its ⛶).",
+    "commit": "fd0c1d5"
+  },
+  {
     "v": 44,
     "note": "Fixed the selection highlight not scrolling with the content in the edit view — a tall layout scrolls inside the frame, so the dim/focus overlay now re-measures on scroll and stays locked to the selected pane.",
-    "commit": ""
+    "commit": "0566812"
   },
   {
     "v": 43,
