@@ -14,7 +14,6 @@ import {
   type AnalyticsConfig,
   type AnalyticsProvider,
   type AnalyticsProps,
-  type PostHogClient,
 } from '../utils/analytics-core'
 
 export interface RecordedEvent { event: string, props: AnalyticsProps, at: string }
@@ -38,12 +37,16 @@ export function useCroutonAnalytics() {
         events.value = [{ ...rec, at: new Date().toISOString() }, ...events.value].slice(0, 50)
       },
       posthogLoader: () => {
-        // @nuxt/scripts auto-imports useScriptPostHog when the module is registered + keyed.
-        const loader = (globalThis as Record<string, unknown>).useScriptPostHog as
-          | (() => { proxy: PostHogClient })
-          | undefined
-        if (typeof loader !== 'function') return undefined
-        return loader().proxy
+        // Inert without a key — resolveProvider then degrades to no-op (app still boots clean).
+        const ph = config?.posthog
+        if (!ph?.key) return undefined
+        // useScriptPostHog is auto-imported by @nuxt/scripts (registered in this layer). It's
+        // SSR-safe (server returns a no-op posthog) and lazy-loads posthog-js on the client.
+        const { proxy } = useScriptPostHog({ apiKey: ph.key, apiHost: ph.host })
+        return {
+          capture: (event, props) => proxy.posthog.capture(event, props),
+          identify: (distinctId, traits) => proxy.posthog.identify?.(distinctId, traits),
+        }
       },
     })
   }
