@@ -26,8 +26,8 @@
  * No `@vue-flow/core` import (connection handles aren't needed here). `footprint` / `SPIKE_*`
  * / `SPIKE_SNAP_KEY` / `SPIKE_DETACH_KEY` are auto-imported from app/utils/spike-layout.
  */
-import { ref, inject, computed, watch } from 'vue'
-import { onKeyStroke, onClickOutside } from '@vueuse/core'
+import { ref, inject, computed, watch, nextTick, onMounted } from 'vue'
+import { onKeyStroke, onClickOutside, useElementSize } from '@vueuse/core'
 import type { LayoutNode, LayoutBreakpoint } from '@fyit/crouton-core/app/types/layout'
 import type { SpikeRegion } from '~/utils/spike-layout'
 
@@ -245,13 +245,45 @@ onClickOutside(cardRef, () => { if (jiggling.value) jiggling.value = false })
 // that surface is the #942 promote/duplicate toolbar now; pulling apart is the deliberate hold.
 const armed = computed(() => isGroup.value && (jiggling.value || activeIndex.value !== null))
 
-// Top-level pane faces (as % of the card), laid out along the split's axis — the regions you grab to
-// pull a pane out, the seams on ease-apart, AND the slot bounds the reorder hit-test reads. They must
-// match what the renderer actually DRAWS: it sizes each splitter panel by `defaultSize` (% along the
-// axis), NOT footprint — so a spacer beside a dense grid renders 50/50, while footprint would've said
-// e.g. 1:4. Using footprint here made the faces drift off the panes (#953, IMG_1061/1062). Mirror the
-// renderer's `child.defaultSize ?? (100 / n)` exactly so faces/seams/reorder-slots line up.
-const panes = computed(() => {
+// Top-level pane faces (as % of the card) — the regions you grab to pull a pane out, the seams on
+// ease-apart, AND the slot bounds the reorder hit-test reads. They MUST sit exactly over the panes the
+// renderer actually draws. Computing them from `defaultSize` drifts whenever the rendered geometry
+// differs — reka enforces each pane's min-width, a horizontal split STACKS vertically when it's too
+// narrow (`@container`), and nested splits carry their own proportions — none of which `defaultSize`
+// reflects (#953/#954, IMG_1069). So we MEASURE the real panes (same lesson as the edit-view
+// selection): the shallowest reka panels (`[data-panel]`) / stacked panes (`[data-crouton-pane]`)
+// inside the card, as % of the card box. Fall back to the `defaultSize` math only until a measurement
+// lands (or if the counts ever disagree — e.g. a pane collapsed into the gutter).
+const measuredPanes = ref<{ left: number, top: number, width: number, height: number }[]>([])
+function cardEl(): HTMLElement | null {
+  return (cardRef.value as { $el?: HTMLElement } | null)?.$el ?? null
+}
+function syncPanes() {
+  const card = cardEl()
+  const n = props.data.node
+  if (!card || n.type !== 'split') { measuredPanes.value = []; return }
+  const cr = card.getBoundingClientRect()
+  if (!cr.width || !cr.height) { measuredPanes.value = []; return }
+  // Shallowest panes only (a pane's own ancestor chain has no other pane) → the TOP-LEVEL row/column,
+  // in document order = the split's child order.
+  const els = Array.from(card.querySelectorAll<HTMLElement>('[data-panel],[data-crouton-pane]'))
+    .filter(el => !el.parentElement?.closest('[data-panel],[data-crouton-pane]'))
+  if (els.length !== n.children.length) { measuredPanes.value = []; return }
+  measuredPanes.value = els.map((el) => {
+    const r = el.getBoundingClientRect()
+    return {
+      left: ((r.left - cr.left) / cr.width) * 100,
+      top: ((r.top - cr.top) / cr.height) * 100,
+      width: (r.width / cr.width) * 100,
+      height: (r.height / cr.height) * 100,
+    }
+  })
+}
+// nextTick (DOM settled) + a short follow-up (reka's flex sizing + the @container reflow settle async).
+function scheduleSyncPanes() { nextTick(syncPanes); window.setTimeout(syncPanes, 60) }
+
+// Tree-derived fallback: mirror the renderer's `child.defaultSize ?? (100 / n)` along the split axis.
+const treePanes = computed(() => {
   const n = props.data.node
   if (n.type !== 'split') return []
   const horizontal = n.direction === 'horizontal'
@@ -267,6 +299,12 @@ const panes = computed(() => {
       : { left: 0, top: start, width: 100, height: sizePct }
   })
 })
+const childCount = computed(() => (props.data.node.type === 'split' ? props.data.node.children.length : 0))
+const panes = computed(() => (
+  measuredPanes.value.length === childCount.value && childCount.value > 0
+    ? measuredPanes.value
+    : treePanes.value
+))
 
 // Active pull state.
 const activeIndex = ref<number | null>(null) // the pane being pulled
@@ -279,6 +317,14 @@ let origin = { x: 0, y: 0 }
 let faceEl: HTMLElement | null = null // the grabbed pane face — its rect at release = the drop spot
 let moveHandler: ((e: PointerEvent) => void) | null = null
 let upHandler: ((e: PointerEvent) => void) | null = null
+
+// Re-measure the rendered panes when the card resizes (per-node resize / canvas zoom), when it arms
+// (faces appear), and after the layout re-renders (reorder preview, detach/insert, merge). Declared
+// here — below `activeIndex` etc. — because the watch eagerly reads `renderNode`, which references the
+// pull state; reading it before these are initialized throws a TDZ error. Cheap; only the overlay reads it.
+const { width: cardW, height: cardH } = useElementSize(cardEl)
+watch([cardW, cardH, jiggling, renderNode, () => props.data.width], scheduleSyncPanes)
+onMounted(scheduleSyncPanes)
 
 // Gap each pane insets by: a resting seam (so the seams/frame stay node-draggable) that widens
 // when a pull starts, so the group visibly eases apart the moment you grab a pane.

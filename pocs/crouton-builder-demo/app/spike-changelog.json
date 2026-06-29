@@ -1,8 +1,13 @@
 [
   {
+    "v": 49,
+    "note": "Fixed the wiggle/detach drag-border SIZING — the green pane faces were computed from the tree's defaultSize, so once you RESIZED a card (which renders it through the responsive renderer, reflowing/stacking the panes) the borders drifted off the real panes. They now MEASURE the actual rendered panes, so the faces sit exactly on them whether or not the card is resized / stacked / nested. (Verified headless: resized narrow → panes stacked → faces aligned with 0px offset.)",
+    "commit": ""
+  },
+  {
     "v": 48,
     "note": "Deploy fix — the staging build broke because crouton-devtools loads @fyit/crouton-feedback at build time (from #976). Two parts: (1) declare the dep on the POC so pnpm's strict node_modules can resolve it, and (2) add it to the deploy's layerPackages so CI builds its dist (it wasn't in the build set, so the module file never existed). User-invisible; unblocks the preview deploy.",
-    "commit": ""
+    "commit": "91c4326"
   },
   {
     "v": 47,

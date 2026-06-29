@@ -262,12 +262,18 @@ expressiveness boundary: a variant is an **enum an agent could equally pick**, n
     union of each node's `position + sizeOf` — Vue Flow's own `fitView` (and its controls' ⛶) measure
     the small wrapper and zoom INTO the oversized card. (The Site flow's normal-sized cards are fine, so
     the VF ⛶ is left enabled there.)
-- **Overlays must match the RENDERER's sizing (`defaultSize`), not footprint.** The wiggle/pull faces +
-  reorder slot bounds (`panes` in SpikeBlockNode) are positioned along the split axis by each child's
-  `defaultSize` % — the same value the renderer feeds reka's splitter panels. Footprint (cols/rows) was
-  wrong: a spacer beside a dense grid renders 50/50 but footprint said ~1:4, so the faces drifted off
-  the panes (#953, IMG_1061/1062). Any overlay drawn over the rendered layout has to use the renderer's
-  own sizing source.
+- **Overlays must MEASURE the rendered panes, not compute them.** The wiggle/pull faces + reorder slot
+  bounds (`panes` in SpikeBlockNode) sit over the layout's top-level panes. Footprint (cols/rows) was
+  wrong first (#953); `defaultSize` % was the next attempt but *also* drifts, because the renderer's
+  real geometry diverges from the tree whenever it reflows — reka enforces per-pane min-widths, a
+  horizontal split **stacks vertically** when narrow (`@container`), nested splits carry their own
+  proportions, and **a resized card renders through the responsive renderer** (so the panes reflow to
+  the resized width while `defaultSize` is unchanged) (#954, IMG_1069). The fix: `panes` MEASURES the
+  shallowest rendered panes (`[data-panel]` / stacked `[data-crouton-pane]`) inside the card as % of
+  the card box (re-measured on resize/arm/re-render), with the `defaultSize` math kept only as a
+  pre-measurement fallback. Same lesson as the edit-view selection — hit-test the real DOM, never the
+  abstract tree. (NB: the watch that re-measures eagerly reads `renderNode`, which references the pull
+  state, so it must be declared *after* `activeIndex` et al. or it throws a TDZ error.)
 - **Hit-test the RENDERED panes, never the abstract tree.** Anything that maps a screen point to a pane
   (the edit view's block selection + dim overlay) must measure the real DOM (`.croutonpane` leaf
   elements), because the renderer reflows panes via CSS `@container` (a horizontal split STACKS
