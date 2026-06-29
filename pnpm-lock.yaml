@@ -1048,6 +1048,9 @@ importers:
       '@fyit/crouton-core':
         specifier: workspace:*
         version: link:../crouton-core
+      '@fyit/crouton-feedback':
+        specifier: workspace:*
+        version: link:../crouton-feedback
       '@nuxt/devtools-kit':
         specifier: ^3.0.0
         version: 3.1.1(magicast@0.5.2)(vite@7.3.5(@types/node@22.19.7)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))

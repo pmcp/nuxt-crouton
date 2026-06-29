@@ -47,6 +47,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@fyit/crouton-feedback": "workspace:*",
     "@nuxt/devtools-kit": "^3.0.0",
     "@nuxt/kit": "^4.0.0",
     "eruda": "^3.4.3"

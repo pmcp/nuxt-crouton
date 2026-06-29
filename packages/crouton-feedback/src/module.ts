@@ -13,6 +13,13 @@ import { createSourceStampTransform } from './runtime/transform/sourceStamp'
  */
 export interface FeedbackModuleOptions {
   /**
+   * Force the toolkit on regardless of the dev/env gate. Set by a host module
+   * that installs this one (e.g. @fyit/crouton-devtools) so the launcher appears
+   * under the host's own gate. When unset, the gate is `dev ||
+   * NUXT_PUBLIC_CROUTON_FEEDBACK=true`.
+   */
+  enabled?: boolean
+  /**
    * Where a sent annotation lands. Server-side only — credentials/URLs never
    * reach the client bundle. Every field is overridable at runtime by its
    * `NUXT_CROUTON_FEEDBACK_*` env var (preferred for secrets).
@@ -54,10 +61,13 @@ export default defineNuxtModule<FeedbackModuleOptions>({
   },
   defaults: {},
   setup(options, nuxt) {
-    // Enabled in local dev or when a build opts in via
-    // NUXT_PUBLIC_CROUTON_FEEDBACK=true. The plugins double-check the flag at
-    // runtime, so a production build that doesn't set it ships nothing.
-    const enabled = nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_FEEDBACK === 'true'
+    // Enabled when a host module forces it (`options.enabled`), in local dev, or
+    // when a build opts in via NUXT_PUBLIC_CROUTON_FEEDBACK=true. The plugins
+    // double-check the flag at runtime, so a production build that doesn't set it
+    // ships nothing.
+    const enabled = options.enabled === true
+      || nuxt.options.dev
+      || process.env.NUXT_PUBLIC_CROUTON_FEEDBACK === 'true'
     if (!enabled) return
 
     const resolver = createResolver(import.meta.url)

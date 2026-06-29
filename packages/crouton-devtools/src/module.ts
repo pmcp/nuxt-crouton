@@ -1,6 +1,5 @@
-import { defineNuxtModule, createResolver, addServerHandler, addPlugin, addImports } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addServerHandler, installModule } from '@nuxt/kit'
 import { addCustomTab } from '@nuxt/devtools-kit'
-import { createCroutonSrcTransform } from './runtime/transform/croutonSrc'
 
 export interface ModuleOptions {}
 
@@ -15,99 +14,55 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {},
   async setup(_options, nuxt) {
     const reviewOn = process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true'
+    const overlayOn = nuxt.options.dev
+      || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true'
+      || reviewOn
 
-    // --- Preview-review source stamping (epic #488, #490) -------------------
-    // Inject `data-crouton-src="<relative .vue path>"` on each component's root
-    // element at COMPILE time, so a click on a deployed staging preview resolves
-    // to the owning source file (the capture half of the agent sign-off loop).
-    //
-    // Gated like the eruda layer: opt-in via NUXT_PUBLIC_CROUTON_REVIEW (set by a
-    // `cf:staging` build), NEVER production. Flag absent → transform not installed
-    // → zero attributes in the build. Runs BEFORE the dev-only early return below
-    // because staging is a non-dev build.
-    if (reviewOn) {
-      const reviewResolver = createResolver(import.meta.url)
+    // --- In-page feedback toolkit → @fyit/crouton-feedback ------------------
+    // The glasses launcher, Console (eruda), Annotate, the source-stamp transform
+    // and the sink dispatcher were extracted into @fyit/crouton-feedback (epic
+    // #960) so any Nuxt UI app can use them. crouton-devtools now INSTALLS that
+    // module under its own gate, so `crouton init` apps need no extra wiring.
+    // Registered before the dev-only early return so a flagged staging build gets
+    // it too; crouton-feedback runtime-gates as well, so production ships nothing.
+    if (overlayOn) {
+      const devtoolsResolver = createResolver(import.meta.url)
 
-      // 1. Stamp components with their source path (#490).
-      nuxt.options.vite ||= {}
-      const vite = nuxt.options.vite as Record<string, any>
-      vite.vue ||= {}
-      vite.vue.template ||= {}
-      vite.vue.template.compilerOptions ||= {}
-      const compilerOptions = vite.vue.template.compilerOptions
-      compilerOptions.nodeTransforms = [
-        ...(compilerOptions.nodeTransforms || []),
-        createCroutonSrcTransform(nuxt.options.rootDir)
-      ]
-
-      // 2. Expose the flag to the client. The in-page feedback UI is now the
-      // Annotate tool in the unified menu (#810) — the standalone overlay FAB
-      // (review-overlay.client) is retired; the launcher block below turns on
-      // under this flag too, so a staging review build gets the menu.
-      nuxt.options.runtimeConfig.public ||= {}
-      ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonReview = true
-
-      // 3. Server bridge: POST /api/_review → GitHub PR comment (#491).
-      // Credentials stay server-side; populated at runtime from Worker env so
-      // nothing ships in the bundle. The bridge posts as the Crouton GitHub App
-      // (#519) — it mints a short-lived installation token from these keys; the
-      // standalone PAT (githubToken) remains only as an interim fallback.
-      // Empty-string defaults exist so the NUXT_CROUTON_REVIEW_* env vars can
-      // override them at runtime (Nuxt only maps env onto keys already present).
-      // repository/pr may be baked from the build env.
+      // Back-compat for the staging review flow (#491/#519): existing deploys set
+      // the credentials as NUXT_CROUTON_REVIEW_* Worker secrets. Keep a
+      // `croutonReview` runtimeConfig namespace so Nuxt still resolves those names
+      // at runtime; the reviewAlias Nitro plugin (below) then copies them into
+      // crouton-feedback's github-sink config per request. Empty-string defaults
+      // are load-bearing — Nuxt only maps env onto keys already present.
       ;(nuxt.options.runtimeConfig as Record<string, any>).croutonReview = {
         githubAppId: '',
         githubAppPrivateKey: '',
         githubAppInstallationId: '',
-        githubToken: '', // interim PAT fallback (#519) — never production
+        githubToken: '',
         repository: process.env.GITHUB_REPOSITORY || '',
         pr: process.env.CROUTON_REVIEW_PR || ''
       }
-      addServerHandler({
-        route: '/api/_review',
-        handler: reviewResolver.resolve('./runtime/server/api/review.post'),
-        method: 'post'
+      if (reviewOn) {
+        nuxt.options.runtimeConfig.public ||= {}
+        ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonReview = true
+      }
+
+      // Install the toolkit, forced on under our gate. On a staging review build
+      // default the sink to `github` so an annotation lands as the PR comment the
+      // subscribed agent keys off (the reviewAlias plugin fills the creds at runtime).
+      await installModule('@fyit/crouton-feedback', {
+        enabled: true,
+        feedback: reviewOn ? { sink: 'github' } : {}
+      })
+
+      // Runtime alias: NUXT_CROUTON_REVIEW_* (croutonReview) → croutonFeedback.
+      nuxt.hook('nitro:config', (nitroConfig) => {
+        nitroConfig.plugins ||= []
+        nitroConfig.plugins.push(devtoolsResolver.resolve('./runtime/server/plugins/reviewAlias'))
       })
     }
 
-    // --- Unified dev-tools launcher + tool registry (#809) ------------------
-    // One neutral glasses launcher → a Nuxt UI dropdown of pluggable tools.
-    // Tools register themselves via useCroutonDevTools().registerTool(); the
-    // launcher only renders the registry, so adding the next tool is one call,
-    // not another floating button. Console + Annotate fold in as the first two
-    // tools (#810).
-    //
-    // Enabled in local dev, when a build opts in via
-    // NUXT_PUBLIC_CROUTON_DEVTOOLS=true, or on a staging review build
-    // (NUXT_PUBLIC_CROUTON_REVIEW=true) so the Annotate tool replaces the old
-    // standalone overlay there. Folder-based auto-on for pocs/fixtures + flag
-    // unification is #811. Registered BEFORE the dev-only early return so a
-    // flagged staging build gets it too; runtime-gated as well, so production
-    // ships nothing.
-    if (nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true' || reviewOn) {
-      const devtoolsResolver = createResolver(import.meta.url)
-      nuxt.options.runtimeConfig.public ||= {}
-      ;(nuxt.options.runtimeConfig.public as Record<string, any>).croutonDevtools = true
-      addImports({
-        name: 'useCroutonDevTools',
-        from: devtoolsResolver.resolve('./runtime/composables/useCroutonDevTools')
-      })
-      addPlugin({
-        src: devtoolsResolver.resolve('./runtime/plugins/crouton-devtools.client'),
-        mode: 'client'
-      })
-      // The first two tools (#810): Console (eruda) + Annotate (pin → /api/_review).
-      addPlugin({
-        src: devtoolsResolver.resolve('./runtime/plugins/tools/console.client'),
-        mode: 'client'
-      })
-      addPlugin({
-        src: devtoolsResolver.resolve('./runtime/plugins/tools/annotate.client'),
-        mode: 'client'
-      })
-    }
-
-    // Only enable in development mode
+    // Only enable the devtools TABS in development mode.
     if (nuxt.options.dev === false) {
       return
     }

@@ -6,22 +6,21 @@ DevTools integration for Nuxt Crouton. Provides visual inspection and management
 
 ## Key Files
 
+> **The in-page feedback toolkit moved to `@fyit/crouton-feedback` (epic #960).**
+> The glasses launcher, the Console (eruda) + Annotate tools, the tool registry,
+> the source-stamp transform, and the sink dispatcher are no longer here — this
+> package **installs** `@fyit/crouton-feedback` under its own gate (`installModule`
+> in `module.ts`), so `crouton init` apps need no extra wiring and the staging
+> review flow is unchanged. crouton-devtools keeps only the **DevTools-tab**
+> surface (collections / operations / events / data-browser) + the operation
+> tracker. Back-compat: `server/plugins/reviewAlias.ts` maps the legacy
+> `NUXT_CROUTON_REVIEW_*` secrets onto crouton-feedback's `github` sink at runtime,
+> so existing staging deploys keep working without a secret rename (#966).
+
 | File | Purpose |
 |------|---------|
-| `src/module.ts` | Nuxt module entry point |
-| `src/runtime/composables/useCroutonDevTools.ts` | Dev-tools **tool registry** — `registerTool()` + reactive `tools`/`toggle` the launcher reads (#809) |
-| `src/runtime/components/CroutonDevTools.vue` | Unified **glasses launcher** → Nuxt UI dropdown of toggleable tools (#809) |
-| `src/runtime/plugins/crouton-devtools.client.ts` | Mounts the launcher into the host app's context (appContext) so global Nuxt UI components resolve (#809) |
-| `src/runtime/overlay/mount.ts` | `mountOverlayInBody()` — shared appContext-mount helper for launcher + Annotate overlay (#809/#810) |
-| `src/runtime/tools/console.ts` | **Console** tool factory — eruda, lazy-loaded on toggle; injectable loader (unit-tested) (#810) |
-| `src/runtime/tools/annotate.ts` | **Annotate** tool factory — maps activate/deactivate → select-mode start/stop (#810) |
-| `src/runtime/composables/useCroutonAnnotate.ts` | Annotate state + DOM select/highlight + POST to `/api/_review` (#810) |
-| `src/runtime/components/CroutonAnnotate.vue` | Annotate overlay — highlight + Nuxt UI comment panel (#810) |
-| `src/runtime/plugins/tools/console.client.ts` · `annotate.client.ts` | Register the two tools (Annotate also mounts its overlay) (#810) |
-| `src/runtime/transform/croutonSrc.ts` | Build-time `data-crouton-src` stamper (preview-review overlay, #490) |
-| `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatReviewComment` (selector / source-file / annotation / Markdown), unit-tested (#489, #491) |
-| `src/runtime/server/api/review.post.ts` | `POST /api/_review` → GitHub PR comment bridge (#491) |
-| `src/runtime/server/utils/githubApp.ts` | Crouton App auth: WebCrypto, dependency-free installation-token mint for the bridge (#519) |
+| `src/module.ts` | Nuxt module entry — installs `@fyit/crouton-feedback` (the overlay toolkit) + registers the DevTools tabs |
+| `src/runtime/server/plugins/reviewAlias.ts` | Nitro plugin: aliases legacy `NUXT_CROUTON_REVIEW_*` config → `croutonFeedback` github sink (back-compat, #966) |
 | `src/runtime/pages/data-browser.vue` | Collection inspector UI |
 | `src/runtime/server-rpc/client.ts` | Embedded DevTools UI (Vue app) |
 | `src/runtime/server-rpc/collections.ts` | Get collections RPC |
