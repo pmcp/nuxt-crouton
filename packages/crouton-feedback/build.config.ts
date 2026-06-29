@@ -1,17 +1,55 @@
 import { defineBuildConfig } from 'unbuild'
 
-// Scaffold build (epic #960, WS1 / #961): only the module entry exists for now.
-// Subsequent workstreams add runtime entries as code is moved in:
-//   #962 → runtime/{components,composables,tools,plugins,overlay}
-//   #963 → runtime/{server,transform}
-// Each is an mkdist entry mirroring @fyit/crouton-devtools' build.config.ts.
+// epic #960. Module entry (rollup) + per-dir mkdist runtime entries. #963 adds
+// runtime/{server,transform} as the Annotate tool + sink dispatcher move in.
 export default defineBuildConfig({
   entries: [
+    // Module entry point
     {
       input: 'src/module.ts',
       outDir: 'dist',
       name: 'module',
       format: 'esm'
+    },
+    // Client plugins: launcher mount + tool registrations (console)
+    {
+      input: 'src/runtime/plugins',
+      outDir: 'dist/runtime/plugins',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Tool registry composable
+    {
+      input: 'src/runtime/composables',
+      outDir: 'dist/runtime/composables',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Tool definitions: Console (eruda) factory
+    {
+      input: 'src/runtime/tools',
+      outDir: 'dist/runtime/tools',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
+    },
+    // Launcher SFC — mkdist compiles the .vue to .mjs (+ .css)
+    {
+      input: 'src/runtime/components',
+      outDir: 'dist/runtime/components',
+      builder: 'mkdist',
+      pattern: ['**/*.vue'],
+      loaders: ['vue', 'js']
+    },
+    // Shared overlay mount helper
+    {
+      input: 'src/runtime/overlay',
+      outDir: 'dist/runtime/overlay',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
     }
   ],
   declaration: true,

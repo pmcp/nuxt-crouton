@@ -6,6 +6,8 @@ export default defineNuxtConfig({
     '@fyit/crouton-feedback'
   ],
 
+  css: ['~/assets/css/main.css'],
+
   devtools: {
     enabled: true
   },

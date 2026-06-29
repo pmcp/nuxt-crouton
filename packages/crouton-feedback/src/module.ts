@@ -1,12 +1,12 @@
-import { defineNuxtModule, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addImports, addPlugin } from '@nuxt/kit'
 
 /**
  * @fyit/crouton-feedback — in-page feedback toolkit for any Nuxt UI app.
  *
- * Scaffold (epic #960, WS1 / #961): this is the empty shell. No runtime code is
- * wired yet — the launcher + Console (eruda) tool arrive in #962, the Annotate
- * tool + the pluggable feedback-sink dispatcher in #963/#964, and the
- * sink-selection config surface (the `feedback` options below) in #965.
+ * Wired so far: the glasses launcher + tool registry + Console (eruda) tool
+ * (epic #960, WS2 / #962). Still to come — the Annotate tool + the pluggable
+ * feedback-sink dispatcher (#963/#964) and the sink-selection config surface
+ * (the `feedback` options below, #965).
  *
  * The module deliberately depends only on Nuxt + Nuxt UI 4 — NOT on
  * @fyit/crouton-core — so any Nuxt UI app can install it.
@@ -31,10 +31,36 @@ export default defineNuxtModule<FeedbackModuleOptions>({
     }
   },
   defaults: {},
-  setup(_options, _nuxt) {
-    // Reserved for the resolver the runtime workstreams will use to register
-    // plugins, components, and the server handler.
-    createResolver(import.meta.url)
-    // No-op until #962 moves the launcher + Console tool in.
+  setup(_options, nuxt) {
+    // Enabled in local dev or when a build opts in via
+    // NUXT_PUBLIC_CROUTON_FEEDBACK=true. The plugins double-check the flag at
+    // runtime, so a production build that doesn't set it ships nothing.
+    const enabled = nuxt.options.dev || process.env.NUXT_PUBLIC_CROUTON_FEEDBACK === 'true'
+    if (!enabled) return
+
+    const resolver = createResolver(import.meta.url)
+
+    // Expose the gate to the client (→ runtimeConfig.public.croutonFeedback),
+    // which the plugins re-check before mounting/registering anything.
+    nuxt.options.runtimeConfig.public ||= {}
+    ;(nuxt.options.runtimeConfig.public as Record<string, unknown>).croutonFeedback = true
+
+    // The registry composable, auto-imported so a tool can register itself.
+    addImports({
+      name: 'useFeedbackTools',
+      from: resolver.resolve('./runtime/composables/useFeedbackTools')
+    })
+
+    // Mount the glasses launcher into the host app's <body> context.
+    addPlugin({
+      src: resolver.resolve('./runtime/plugins/feedback.client'),
+      mode: 'client'
+    })
+
+    // First registered tool: Console (eruda), lazy-imported on first toggle.
+    addPlugin({
+      src: resolver.resolve('./runtime/plugins/tools/console.client'),
+      mode: 'client'
+    })
   }
 })
