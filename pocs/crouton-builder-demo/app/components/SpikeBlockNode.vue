@@ -263,7 +263,7 @@ function computeDropOffset(): { x: number, y: number } | undefined {
   if (!faceEl) return undefined
   // The node wrapper's screen top-left is the group's origin; divide the pane's screen offset from it
   // by the real zoom to get the flow-space offset the page adds to the group's known position.
-  const card = faceEl.closest('.vue-flow__node') as HTMLElement | null
+  const card = faceEl.closest('.spike-block-node') as HTMLElement | null
   if (!card) return undefined
   const faceR = faceEl.getBoundingClientRect()
   const cardR = card.getBoundingClientRect()
@@ -295,7 +295,11 @@ function onPaneDown(i: number, e: PointerEvent) {
     // The old test flipped to detach the instant the finger crossed the edge by a pixel, so a reorder
     // drag toward a neighbour slot kept tipping into detach. The margin gives the gesture hysteresis:
     // small overshoots while sliding a pane across still reorder.
-    const cardR = (faceEl?.closest('.vue-flow__node') as HTMLElement | null)?.getBoundingClientRect()
+    // Use the CARD element, not `.vue-flow__node`: the Vue Flow node wrapper is sized smaller than our
+    // content (the card overflows it — footprint × base, scaled), so its rect is far narrower than the
+    // visible panes. The faces live in the `.spike-block-node` (UCard root) box, so frac/inside MUST be
+    // measured against THAT or every in-card drag reads as "outside" → always detach, never reorder (#952).
+    const cardR = (faceEl?.closest('.spike-block-node') as HTMLElement | null)?.getBoundingClientRect()
     const outsideBy = cardR
       ? Math.max(cardR.left - ev.clientX, ev.clientX - cardR.right, cardR.top - ev.clientY, ev.clientY - cardR.bottom, 0)
       : Infinity

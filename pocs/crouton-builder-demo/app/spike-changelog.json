@@ -1,5 +1,6 @@
 [
-  { "v": 32, "note": "Fixed pull-to-reorder — a pane now reorders when you slide it across to another slot; detach only triggers when you pull clearly OUT of the card (past a margin), so a reorder no longer tips into a detach", "commit": "" },
+  { "v": 33, "note": "Real fixes (found by reproducing in a headless browser): pull-to-reorder WORKS now — it was measuring against Vue Flow's node wrapper, which is smaller than the visible card, so every in-card drag read as 'outside' → always detach; pinch-to-zoom over a layout works (it read the wrong transform element); opening edit flies from the card at the flow's CURRENT zoom; Site-flow cards are icon-only (cleaner)", "commit": "" },
+  { "v": 32, "note": "Attempted reorder fix via a detach margin (didn't work — the real bug was the wrong measurement element, fixed in v33)", "commit": "7bbc9c00" },
   { "v": 31, "note": "Site-flow page cards now show their settings condensed — live/draft status (coloured dot) · permissions/visibility · layout · in-nav — and tapping a card opens the full page", "commit": "f0e30baa" },
   { "v": 30, "note": "Fluid reorder — while pulling a pane, drag it ACROSS to another slot to reorder (green 'move here'), or OUT of the card to detach; the panes FLIP into their new order", "commit": "e777ca01" },
   { "v": 29, "note": "Nested drop targets the NEAREST seam across all splits — parent reachable near top-level gaps, child near its own seams (no longer always the child)", "commit": "b0cf52e0" },

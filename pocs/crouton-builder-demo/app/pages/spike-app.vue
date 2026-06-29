@@ -133,7 +133,10 @@ const flowRef = ref<{
 function pinchZoom(ratio: number, midX: number, midY: number) {
   if (viewport.value || zoomNodeId.value) return
   const container = document.querySelector('.crouton-vue-flow') as HTMLElement | null
-  const vp = container?.querySelector('.vue-flow__viewport') as HTMLElement | null
+  // The zoom transform lives on `.vue-flow__transformationpane` — `.vue-flow__viewport` has NO
+  // transform (it reads `none` → identity → z=1), which made the pinch math read the wrong zoom and
+  // never actually zoom. Read the pane that actually carries `translate()…scale()`. (#948)
+  const vp = container?.querySelector('.vue-flow__transformationpane') as HTMLElement | null
   if (!container || !vp || !flowRef.value?.setCenter) return
   const m = new DOMMatrix(getComputedStyle(vp).transform)
   const z = m.a
@@ -241,8 +244,12 @@ const editing = computed(() => zoomNode.value !== null)
 function onNodeDblClick(id: string) {
   if (mode.value !== 'free') return
   if (!nodes.value.some(nd => nd.id === id)) return
-  // Capture the node's current on-screen rect so the shell can fly the zoom from exactly there.
-  const el = import.meta.client ? document.querySelector(`.vue-flow__node[data-id="${id}"]`) : null
+  // Capture the node's current on-screen rect so the shell flies the zoom from exactly there, at the
+  // flow's CURRENT zoom level. Use the visible CARD (`.spike-block-node`), NOT the `.vue-flow__node`
+  // wrapper — the wrapper is sized smaller than the card (the content overflows it), so its rect would
+  // start the morph from the wrong, tiny box instead of the layout you actually see on the canvas.
+  const nodeEl = import.meta.client ? document.querySelector(`.vue-flow__node[data-id="${id}"]`) : null
+  const el = nodeEl?.querySelector('.spike-block-node') ?? nodeEl
   const r = el?.getBoundingClientRect()
   originRect.value = r ? { x: r.x, y: r.y, width: r.width, height: r.height } : null
   viewport.value = null // editing one node; leave the board-wide survey
