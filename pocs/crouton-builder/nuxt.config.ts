@@ -1,3 +1,9 @@
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const cfStubs = resolve(__dirname, 'server/utils/_cf-stubs')
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 //
 // The GRADUATED builder app (#988) — consumes @fyit/crouton-layout's editable renderer
@@ -51,6 +57,20 @@ export default defineNuxtConfig({
   croutonAuth: {
     methods: {
       passkeys: false,
+    },
+  },
+
+  // Stub the passkey/webauthn chain on Cloudflare Workers. `passkeys: false` disables
+  // the feature, but the tsyringe/reflect-metadata/webauthn code still bundles and crashes
+  // the Worker at init ("tsyringe requires a reflect polyfill") — alias them to empty stubs.
+  nitro: {
+    alias: {
+      '@better-auth/passkey/client': resolve(cfStubs, 'client'),
+      '@better-auth/passkey': cfStubs,
+      'tsyringe': cfStubs,
+      'reflect-metadata': cfStubs,
+      '@peculiar/x509': cfStubs,
+      '@simplewebauthn/server': cfStubs,
     },
   },
 })
