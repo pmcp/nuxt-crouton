@@ -16,10 +16,16 @@ Build an app by composing a collection's blocks into a `LayoutTree`, visually, o
 **Two levels, one screen** ("Decision B" — a *Site* level added **on top of** the polished board, not
 by porting the board into the old zoom shell):
 
-- **Site = the page flow.** `CroutonFlowSiteFlow` renders pages as a wireable sitemap (cards = pages,
-  lines = `parentId`). The view you land on.
-- **Page = the board.** Double-click / ⤡ a page card → `enterPage()` loads that page's `LayoutTree`
-  onto the Vue Flow board, where you compose blocks. `Pages ←` returns.
+- **Site = the page flow.** A `CroutonFlow` canvas renders pages as a wireable sitemap (cards = pages,
+  lines = `parentId`). The view you land on. Cards use a POC card (`SpikePageCard`, injected via
+  `defaultNodeComponent`) instead of the package's `CroutonFlowPageNode`, so each card shows the page's
+  settings **condensed** — live/draft **status** (coloured dot), **visibility/permissions** icon,
+  **layout** and **in-nav** — the same chips the full page header carries, just shrunk. (We override
+  the card POC-side rather than edit the package; on graduation this folds back into
+  `CroutonFlowPageNode`.) Status/visibility/layout meta is shared with the board header via the
+  auto-imported `app/utils/spike-page-meta.ts` so the condensed card and full header never drift.
+- **Page = the board.** Tap a card (or ⤡ / double-click) → `enterPage()` loads that page's `LayoutTree`
+  onto the Vue Flow board, where you compose blocks — "opening the full page". `Pages ←` returns.
 
 ## Signed-off design decisions (current truth)
 

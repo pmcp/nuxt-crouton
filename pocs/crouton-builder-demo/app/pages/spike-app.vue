@@ -29,7 +29,9 @@ import { piecesToTree } from '@fyit/crouton-layout/app/utils/layout-compose-brid
 import { closestSnap, type Rect, type SnapTarget } from '@fyit/crouton-layout/app/utils/layout-snap'
 import { detachNode } from '@fyit/crouton-layout/app/utils/layout-edit'
 import type { ComposePiece } from '@fyit/crouton-layout/app/composables/useCroutonComposeGestures'
+import type { PageStatus, PageVisibility, PageLayout } from '~/utils/spike-page-meta'
 import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
+import SpikePageCard from '~/components/SpikePageCard.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
 // Iteration changelog / decision log (#940) — newest first, externalized to `spike-changelog.json`
@@ -43,6 +45,7 @@ const BUILD = `page-compose-${BUILD_VERSION} · ${BUILD_HISTORY[0]!.note}`
 const versionOpen = ref(false)
 
 const blockNode = markRaw(SpikeBlockNode)
+const spikePageCard = markRaw(SpikePageCard)
 
 const { magicArrange, magicArrangeAI } = useSpikeMagic()
 const { checkViability } = useCroutonLayoutBlocks()
@@ -693,9 +696,8 @@ function reset() {
 // packages/crouton-pages/schemas/pages.json + app/components/Editor/Toolbar.vue). Demo values here;
 // the real builder reads the page row — and at graduation should REUSE the package's toolbar/settings
 // rather than mirror them. Class strings are literal (not `bg-${x}`) so Tailwind's JIT keeps them.
-type PageStatus = 'draft' | 'published' | 'archived'
-type PageVisibility = 'public' | 'members' | 'admin' | 'scoped' | 'hidden'
-type PageLayout = 'default' | 'full-height' | 'full-screen'
+// Page-model enums + display meta (status / visibility / layout) live in app/utils/spike-page-meta
+// (auto-imported) so the board page-shell here AND the Site-flow page card read ONE source of truth.
 interface BuilderPage {
   id: string, label: string, icon?: string, path?: string
   status?: PageStatus, visibility?: PageVisibility, layout?: PageLayout, showInNavigation?: boolean
@@ -718,30 +720,16 @@ const PAGES: BuilderPage[] = [
   { id: 'reports', label: 'Reports', icon: 'i-lucide-bar-chart-3', path: '/reports', status: 'draft', visibility: 'admin', layout: 'full-height', showInNavigation: true, tree: { renderer: 'panes', root: pageSplit('artists-stats', 'artists-list') } },
   { id: 'settings', label: 'Settings', icon: 'i-lucide-settings', path: '/settings', status: 'published', visibility: 'public', layout: 'default', showInNavigation: false, tree: { renderer: 'panes', root: { type: 'leaf', blockId: 'artists-form' } } },
 ]
-// Config copied from crouton-pages' Editor (exact enum values, icons, colors, labels).
-const STATUS_META: Record<PageStatus, { icon: string, label: string, dot: string, text: string }> = {
-  draft: { icon: 'i-lucide-pencil', label: 'Draft', dot: 'bg-warning', text: 'text-warning' },
-  published: { icon: 'i-lucide-check', label: 'Published', dot: 'bg-success', text: 'text-success' },
-  archived: { icon: 'i-lucide-archive', label: 'Archived', dot: 'bg-error', text: 'text-error' },
-}
-const VISIBILITY_META: Record<PageVisibility, { icon: string, label: string }> = {
-  public: { icon: 'i-lucide-globe', label: 'Public' },
-  members: { icon: 'i-lucide-users', label: 'Members' },
-  admin: { icon: 'i-lucide-shield', label: 'Admin only' },
-  scoped: { icon: 'i-lucide-key-round', label: 'Scoped' },
-  hidden: { icon: 'i-lucide-eye-off', label: 'Hidden' },
-}
-const LAYOUT_META: Record<PageLayout, { icon: string, label: string }> = {
-  default: { icon: 'i-lucide-panels-top-left', label: 'Default' },
-  'full-height': { icon: 'i-lucide-rectangle-vertical', label: 'Full height' },
-  'full-screen': { icon: 'i-lucide-maximize', label: 'Full screen' },
-}
-// The same pages as crouton-flow rows (Dashboard is root; others hang off it).
-const pageRows = [
-  { id: 'dashboard', label: 'Dashboard', parentId: null },
-  { id: 'reports', label: 'Reports', parentId: 'dashboard' },
-  { id: 'settings', label: 'Settings', parentId: 'dashboard' },
-]
+// STATUS_META / VISIBILITY_META / LAYOUT_META are auto-imported from app/utils/spike-page-meta.
+// The same pages as crouton-flow rows (Dashboard is root; others hang off it) — ENRICHED from PAGES
+// so the Site-flow cards carry the settings (status · visibility · layout · nav · icon · path) they
+// now display condensed. Parent wiring (parentId) is the sitemap hierarchy.
+const PAGE_PARENTS: Record<string, string | null> = { dashboard: null, reports: 'dashboard', settings: 'dashboard' }
+const pageRows = PAGES.map(p => ({
+  id: p.id, label: p.label, parentId: PAGE_PARENTS[p.id] ?? null,
+  icon: p.icon, path: p.path, status: p.status, visibility: p.visibility,
+  layout: p.layout, showInNavigation: p.showInNavigation,
+}))
 const pageById = (id: unknown) => PAGES.find(p => p.id === String(id))
 
 // Per-page board state — persist the FlowNode[] verbatim so positions, merges, and
@@ -805,6 +793,9 @@ function duplicateNode(node: LayoutNode) {
 }
 provide(SPIKE_SET_PAGE_KEY, setAsPage)
 provide(SPIKE_DUPLICATE_KEY, duplicateNode)
+// Same contract the package's SiteFlow provides — our SpikePageCard injects this to "open the full
+// page" (descend into the board). enterPage is a hoisted function declaration, available here.
+provide('croutonSiteFlowZoom', (id: string) => enterPage(id))
 /** Stash the current board onto the open page so it can be restored on return. */
 function stashCurrentBoard() {
   if (selectedPageId.value) pageBoards.set(selectedPageId.value, nodes.value)
@@ -1083,12 +1074,18 @@ function exitToPages() {
          ⤡ a card → enterPage() loads that page's layout into the spike board above. -->
     <div v-else key="site" class="absolute inset-0">
       <ClientOnly>
-        <CroutonFlowSiteFlow
-          :pages="pageRows"
+        <!-- Site flow built on CroutonFlow directly (not the CroutonFlowSiteFlow preset) so we can
+             inject our richer POC page card (SpikePageCard) — the condensed page with its settings
+             icons — via `defaultNodeComponent`. We provide the same `croutonSiteFlowZoom` contract
+             the card injects, pointing it at enterPage. (#940) -->
+        <CroutonFlow
+          :rows="pageRows"
           collection="pagesPages"
           label-field="label"
           parent-field="parentId"
-          @zoom-into-page="(row: Record<string, unknown>) => enterPage(String(row.id))"
+          :default-node-component="spikePageCard"
+          background-pattern="dots"
+          @node-dbl-click="(id: string) => enterPage(String(id))"
         />
       </ClientOnly>
     </div>
