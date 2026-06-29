@@ -22,16 +22,18 @@ adds its crouton-specific tabs on top.
 
 ## Status
 
-🚧 **Annotate + sink dispatcher landed (WS3 / #963).** Both tools (Console +
-Annotate) work; a sent annotation is dispatched to a pluggable sink — the
-**webhook** sink ships now (verified end-to-end against a real URL). Workstreams:
+🚧 **All four sinks built (WS4 / #964).** Both tools (Console + Annotate) work;
+a sent annotation is dispatched to one of four pluggable sinks. The webhook path
+is verified end-to-end against a real URL; slack/discord/github are unit-proven
+(payload shaping, auth, error paths). What remains is the **config surface** so
+the slack/discord/github destinations are reachable from options/env. Workstreams:
 
 | Issue | Brings in | State |
 |-------|-----------|-------|
 | [#962](https://github.com/FriendlyInternet/nuxt-crouton/issues/962) | Launcher + tool registry + mount + Console (eruda) | ✅ |
 | [#963](https://github.com/FriendlyInternet/nuxt-crouton/issues/963) | `FeedbackSink` dispatcher + Annotate + source-stamp transform (webhook sink) | ✅ |
-| [#964](https://github.com/FriendlyInternet/nuxt-crouton/issues/964) | The slack / discord / github sinks — test-first (#774) | ⏳ |
-| [#965](https://github.com/FriendlyInternet/nuxt-crouton/issues/965) | Module-option + env config surface for sink selection | ⏳ |
+| [#964](https://github.com/FriendlyInternet/nuxt-crouton/issues/964) | The slack / discord / github sinks — test-first (#774) | ✅ |
+| [#965](https://github.com/FriendlyInternet/nuxt-crouton/issues/965) | Module-option + env config surface (lights up slack/discord/github via env) | ⏳ |
 
 **Gating:** the launcher + tools register only in local dev or when a build sets
 `NUXT_PUBLIC_CROUTON_FEEDBACK=true` (→ `runtimeConfig.public.croutonFeedback`);
@@ -44,14 +46,23 @@ source-stamp transform + `/api/_feedback` handler register under the same gate.
 Annotate tool → click element → useAnnotate.buildAnnotation()  (capture.ts, pure)
   → POST /api/_feedback         (server/api/feedback.post.ts — the dispatcher)
     → formatAnnotationMarkdown() + resolveSink(config.sink)
-      → webhook sink            (server/sinks/webhook.ts — POST {annotation, markdown})
+      → one of: webhook | slack | discord | github   (server/sinks/*)
 ```
 
 A click resolves to its source file via the nearest `data-feedback-src` ancestor,
 stamped at build time by the compiler transform (`transform/sourceStamp.ts`). The
-sink is chosen by `croutonFeedback.sink` (env `NUXT_CROUTON_FEEDBACK_SINK`); the
-webhook destination is `NUXT_CROUTON_FEEDBACK_WEBHOOK_URL`. Credentials/URLs stay
-in **server** `runtimeConfig.croutonFeedback`, never the client bundle.
+sink is chosen by `croutonFeedback.sink` (env `NUXT_CROUTON_FEEDBACK_SINK`):
+
+| Sink | Destination | Env |
+|------|-------------|-----|
+| `webhook` | generic JSON `POST {annotation, markdown}` | `NUXT_CROUTON_FEEDBACK_WEBHOOK_URL` |
+| `slack` | Slack incoming webhook (Block Kit) | `NUXT_CROUTON_FEEDBACK_SLACK_URL` |
+| `discord` | Discord webhook (embed) | `NUXT_CROUTON_FEEDBACK_DISCORD_URL` |
+| `github` | issue/PR comment (App token, PAT fallback) | `NUXT_CROUTON_FEEDBACK_GITHUB_*` |
+
+Credentials/URLs stay in **server** `runtimeConfig.croutonFeedback`, never the
+client bundle. (The env→runtimeConfig wiring for slack/discord/github lands in #965;
+the sinks themselves are built + tested here.)
 
 ## Key Files
 
@@ -68,7 +79,8 @@ in **server** `runtimeConfig.croutonFeedback`, never the client bundle.
 | `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatAnnotationMarkdown` (selector / source-file / Markdown). Unit-tested. |
 | `src/runtime/transform/sourceStamp.ts` | Build-time `data-feedback-src` stamper (compiler transform). Unit-tested. |
 | `src/runtime/server/api/feedback.post.ts` | `POST /api/_feedback` → validates + dispatches to the configured sink. |
-| `src/runtime/server/sinks/` | `types.ts` (`FeedbackSink` interface), `webhook.ts` (the webhook sink), `index.ts` (`resolveSink`). |
+| `src/runtime/server/sinks/` | `types.ts` (`FeedbackSink`), `webhook.ts` · `slack.ts` · `discord.ts` · `github.ts` (the four sinks), `index.ts` (`resolveSink`). |
+| `src/runtime/server/utils/githubApp.ts` | Dependency-free WebCrypto App-token mint used by the `github` sink. Unit-tested. |
 | `src/runtime/plugins/feedback.client.ts` | Mounts the launcher into the host app's `<body>` context. |
 | `src/runtime/plugins/tools/console.client.ts` · `annotate.client.ts` | Register the two tools (Annotate also mounts its overlay). |
 | `module.mjs` | Build-less dev entry (re-exports `src/module.ts`). |
