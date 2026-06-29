@@ -18,6 +18,10 @@ export default defineAppConfig({
     'artists-list': { id: 'artists-list', name: 'Artists · List', description: 'All artists', icon: 'i-lucide-list', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 220, defaultSize: 50 },
     'artists-form': { id: 'artists-form', name: 'Artists · New', description: 'Create an artist', icon: 'i-lucide-square-pen', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'form', minWidth: 220, defaultSize: 50 },
     'artists-stats': { id: 'artists-stats', name: 'Artists · Stats', description: 'Artist KPIs', icon: 'i-lucide-bar-chart-3', component: 'CroutonLayoutSpikeStats', kind: 'atomic', category: 'data', minWidth: 200, defaultSize: 50 },
+    // Spacer (#952): a layout primitive that renders empty space — add it to push blocks around or
+    // hold a gap. A real block, so it snaps/reorders/resizes like any other; small minWidth so it can
+    // be a thin gutter. Renders SpikeSpacer (a faint dashed hint in the builder, blank in a real app).
+    'spacer': { id: 'spacer', name: 'Spacer', description: 'Empty space (push blocks around / hold a gap)', icon: 'i-lucide-square-dashed', component: 'SpikeSpacer', kind: 'atomic', category: 'data', minWidth: 40, defaultSize: 20 },
     // Drop-ghost (#946): the placeholder pane spliced in while an internal insert is armed, so the
     // real panes ease apart to open its slot. NOT shown in the drawer (that list is hardcoded). A
     // small minWidth so opening the slot never forces the split to stack.

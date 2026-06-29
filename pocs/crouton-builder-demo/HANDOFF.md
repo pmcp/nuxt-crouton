@@ -186,6 +186,16 @@ Double-click a layout node → a **dedicated full-screen edit VIEW**, not a Vue 
   `useLayoutFlip` measures-before / tweens-from-old-box, purely additive (no key/size/reka change),
   survivors matched by a structure-derived `contentKey`.
 - **`fitOverview` is dead code** — superseded by center-on-add; remove on next cleanup.
+- **POC block components must be registered GLOBALLY.** `CroutonLayoutRenderer` resolves a leaf's block
+  via `<component :is="block.component">` (a runtime string), which only resolves globally-registered
+  components. Nuxt's per-file auto-import (`<SpikeSpacer/>`) does NOT make the name resolvable that way,
+  so a POC block component renders as a dead `<spikespacer>` element. `app/plugins/spike-global-blocks.ts`
+  registers `SpikeSpacer` + `SpikeGhostPane` on `vueApp` so the registry's `component:'…'` resolves.
+  (Package block components like `CroutonLayoutSpikeStats` are already global.) Add any new POC block
+  component there.
+- **Spacer block (#952):** `spacer` → `SpikeSpacer`, a registered layout primitive that renders empty
+  space (faint dashed hint in the builder). Add it from the palette; it snaps/reorders/resizes like any
+  block to push neighbours around or hold a gap. Small `minWidth` (40) so it can be a thin gutter.
 
 ## Tooling — per-version preview URLs (#940)
 

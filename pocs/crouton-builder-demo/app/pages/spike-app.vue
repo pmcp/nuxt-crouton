@@ -76,6 +76,8 @@ const drawer = [
   { blockId: 'artists-list', label: 'Artists · List', icon: 'i-lucide-list' },
   { blockId: 'artists-form', label: 'Artists · New', icon: 'i-lucide-square-pen' },
   { blockId: 'artists-stats', label: 'Artists · Stats', icon: 'i-lucide-bar-chart-3' },
+  // Layout primitive (#952): empty space you can add + snap/resize like a block, to push others around.
+  { blockId: 'spacer', label: 'Spacer', icon: 'i-lucide-square-dashed' },
 ]
 
 // Pre-built Vue Flow nodes (CroutonFlow ephemeral mode renders these directly). A node's
