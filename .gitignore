@@ -145,3 +145,4 @@ loop-station-trace*.jsonl
 writeups/loop-station/traces/
 
 pocs/blog/.data
+pocs/crouton-builder/.data

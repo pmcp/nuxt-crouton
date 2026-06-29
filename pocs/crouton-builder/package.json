@@ -1,0 +1,26 @@
+{
+  "name": "crouton-builder",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare 2>/dev/null || true",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@fyit/crouton": "workspace:*",
+    "@fyit/crouton-core": "workspace:*",
+    "@fyit/crouton-i18n": "workspace:*",
+    "@fyit/crouton-layout": "workspace:*",
+    "nuxt": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}
