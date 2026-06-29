@@ -70,6 +70,14 @@ browser) drives the running POC and reports three buckets:
   **unknown-unknowns**). → add it, or consciously drop it. This is the bucket a checklist misses and
   the whole reason this step exists.
 
+**Drive what's drivable; code-confirm the rest (don't over-promise a full live drive).** Visible /
+static states (a rendered board, a badge, a readout) you can drive and screenshot cheaply with the
+headless browser — do that. But *gesture* states (a dwell-armed snap, a drop-ghost, a detach-pull) are
+impractical to reproduce headlessly; confirm those by **reading the code** and say so honestly in the
+report. The stable hooks below are precisely what let the rebuild's e2e close the loop on the states
+you couldn't drive live — so "both directions" means *visible-driven + gesture-code-confirmed + hooks
+planted*, not a literal end-to-end gesture drive. (Builder graduation, #983 WS1.)
+
 Reconcile until all three are clean: the brief + `HANDOFF.md` must read as *current truth*, complete.
 Only then is the brief safe as the rebuild's single source of truth.
 
@@ -95,6 +103,16 @@ Per `github-tasks`: an **epic** + a **sub-issue per extracted package and the ap
 
 For each `packages/*` unit in the brief:
 
+0. **Survey the target package FIRST — especially a contribution to an *existing* package.** Before
+   writing tests, read what the target `packages/*` already provides (types · validators · utils ·
+   storage · adjacent tested helpers) so you build *on* it, not *over* it. The reconcile gate (1.5)
+   checks the POC against the docs; it does **not** check the brief against the package you're
+   graduating *into*. A brief that says "the model exists, just add X" is routinely half-true — the
+   package often already has the neighbouring pieces (e.g. a sanitiser/validator to pair a new
+   serialiser with, a round-trip-stable bridge, a storage table). Re-scope the unit to the **genuine
+   gap** and reuse the rest (one allowlist, no reinvention). Record the re-scope on the issue.
+   (Builder graduation, #983 WS4: serialisation was narrower than briefed because `sanitizeLayoutTree`
+   + the pieces↔tree bridge + `layout_configs` already existed.)
 1. **Write the failing test(s) first** from the feature checklist → `/test-review`
    (the #774 gate) to sign off on the behaviour. The agreed test is the contract.
 2. **Build to green** — a clean implementation, **re-derived** from the POC, not
