@@ -1,8 +1,13 @@
 [
   {
+    "v": 48,
+    "note": "Deploy fix — the staging build broke because crouton-devtools loads @fyit/crouton-feedback at build time (from #976). Two parts: (1) declare the dep on the POC so pnpm's strict node_modules can resolve it, and (2) add it to the deploy's layerPackages so CI builds its dist (it wasn't in the build set, so the module file never existed). User-invisible; unblocks the preview deploy.",
+    "commit": ""
+  },
+  {
     "v": 47,
     "note": "Per-block DISPLAY VARIANTS — a block can now offer bounded layouts of the same data (the Artists list: Rows · Cards · Table). Select a pane in the edit view → a Display chip row lets you (or an agent) flip the variant; the choice is a bounded enum declared on the registry and serialised on the leaf, so it persists and round-trips. This is the 'collection viewer options' ask, kept inside the expressiveness boundary (an enum, not free config).",
-    "commit": ""
+    "commit": "418bfd1"
   },
   {
     "v": 46,

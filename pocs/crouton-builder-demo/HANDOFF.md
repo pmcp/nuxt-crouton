@@ -283,7 +283,16 @@ expressiveness boundary: a variant is an **enum an agent could equally pick**, n
   panes are keyed by index so a count change rebuilds them — a CSS `flex-grow` transition can't fire.
   `useLayoutFlip` measures-before / tweens-from-old-box, purely additive (no key/size/reka change),
   survivors matched by a structure-derived `contentKey`.
-- **`fitOverview` is dead code** — superseded by center-on-add; remove on next cleanup.
+- **Deploy needs `@fyit/crouton-feedback` declared as a direct dep (#976 fallout).** `crouton-devtools`
+  calls `installModule('@fyit/crouton-feedback')` at build time, resolving it from the *consuming app's*
+  context. Under pnpm's strict `node_modules` a transitive dep isn't reachable from the POC, so
+  `nuxt build` (= the staging deploy) fails with *"Could not load `@fyit/crouton-feedback`"* even though
+  `pnpm dev` is fine. **Two POC-side fixes are needed:** (1) declare `@fyit/crouton-feedback:
+  workspace:*` in the POC's `package.json` so it resolves; AND (2) add `@fyit/crouton-feedback` to
+  `deploy.config.json` `layerPackages` so CI builds its (gitignored) `dist` — the deploy only builds
+  `layerPackages + crouton-devtools`, so without this the module file never exists on the runner.
+  (Systemic — every `crouton-devtools` consumer hits this; the clean fix is in the package: have
+  `crouton-devtools` resolve/build feedback via its OWN resolver, or guard the `installModule`.)
 - **POC block components must be registered GLOBALLY.** `CroutonLayoutRenderer` resolves a leaf's block
   via `<component :is="block.component">` (a runtime string), which only resolves globally-registered
   components. Nuxt's per-file auto-import (`<SpikeSpacer/>`) does NOT make the name resolvable that way,

@@ -1633,6 +1633,9 @@ importers:
       '@fyit/crouton-devtools':
         specifier: workspace:*
         version: link:../../packages/crouton-devtools
+      '@fyit/crouton-feedback':
+        specifier: workspace:*
+        version: link:../../packages/crouton-feedback
       '@fyit/crouton-flow':
         specifier: workspace:*
         version: link:../../packages/crouton-flow
