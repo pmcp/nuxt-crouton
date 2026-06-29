@@ -1,15 +1,24 @@
 import { defineBuildConfig } from 'unbuild'
 
-// epic #960. Module entry (rollup) + per-dir mkdist runtime entries. #963 adds
-// runtime/{server,transform} as the Annotate tool + sink dispatcher move in.
+// epic #960. Module entry (rollup) + per-dir mkdist runtime entries. The
+// source-stamp transform is bundled into the module entry via its import; the
+// server dispatcher + sinks build as mkdist files.
 export default defineBuildConfig({
   entries: [
-    // Module entry point
+    // Module entry point (bundles src/runtime/transform/sourceStamp.ts)
     {
       input: 'src/module.ts',
       outDir: 'dist',
       name: 'module',
       format: 'esm'
+    },
+    // Runtime server: the /api/_feedback dispatcher + sinks
+    {
+      input: 'src/runtime/server',
+      outDir: 'dist/runtime/server',
+      builder: 'mkdist',
+      pattern: ['**/*.ts'],
+      loaders: ['js']
     },
     // Client plugins: launcher mount + tool registrations (console)
     {
@@ -58,7 +67,9 @@ export default defineBuildConfig({
   externals: [
     '@nuxt/kit',
     '@nuxt/schema',
+    '@vue/compiler-core',
     'h3',
+    'nitropack/runtime',
     'vue',
     'nuxt'
   ]
