@@ -602,12 +602,17 @@ watch(() => props.data.node, () => {
          selected (not wiggling/surveying). Double-click clears back to the intrinsic footprint size. -->
     <div
       v-if="selected && !jiggling && !surveying"
-      class="nodrag absolute -bottom-1 -right-1 z-40 size-5 cursor-nwse-resize touch-none"
+      class="nodrag absolute -bottom-3 -right-3 z-40 flex size-12 cursor-nwse-resize items-center justify-center touch-none"
       title="Drag to resize · double-click to reset"
       @pointerdown.stop="onResizeDown"
       @dblclick.stop="resetSize"
     >
-      <div class="absolute bottom-1 right-1 size-3 rounded-sm border-b-2 border-r-2 border-primary/70" :class="resizing ? 'border-primary' : ''" />
+      <div
+        class="flex size-8 items-center justify-center rounded-xl border border-default bg-elevated shadow-lg transition-colors"
+        :class="resizing ? 'ring-2 ring-primary text-primary' : 'text-muted hover:text-primary'"
+      >
+        <UIcon name="i-lucide-move-diagonal-2" class="size-5" />
+      </div>
     </div>
 
     <!-- Live snap guide (#941): an outer EDGE (merge onto a side) or an internal INSERT seam (drop

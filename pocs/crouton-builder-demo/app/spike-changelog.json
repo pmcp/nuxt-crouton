@@ -1,8 +1,13 @@
 [
   {
+    "v": 42,
+    "note": "Bigger resize handle — the per-node corner resize grip is now a clearly grabbable button with a diagonal-resize icon (was a tiny corner mark, hard to hit on mobile).",
+    "commit": ""
+  },
+  {
     "v": 41,
     "note": "Distinct demo blocks — the palette now has visibly different blocks (Artists List with avatars · New form · Stats · Bookings Chart · a Top bar · a Bottom nav · Spacer) instead of every card rendering the same KPI tile. Now you can SEE which block landed where — and the Top bar / Bottom nav are the natural things to pin top/bottom.",
-    "commit": ""
+    "commit": "68657d60"
   },
   {
     "v": 40,
