@@ -1,7 +1,7 @@
 {
-  "name": "@fyit/crouton-devtools",
+  "name": "@fyit/crouton-feedback",
   "version": "0.1.0",
-  "description": "DevTools integration for Nuxt Crouton - visual inspection and management of CRUD collections",
+  "description": "Drop-in in-page feedback toolkit for any Nuxt UI app — a glasses launcher with a mobile console (eruda) and a pin-a-comment Annotate tool that sends to a pluggable destination (webhook / Slack / Discord / GitHub)",
   "type": "module",
   "main": "./dist/module.mjs",
   "types": "./dist/module.d.ts",
@@ -9,14 +9,10 @@
     ".": {
       "types": "./dist/module.d.ts",
       "import": "./dist/module.mjs"
-    },
-    "./eruda": "./eruda/nuxt.config.ts"
+    }
   },
   "files": [
     "dist",
-    "eruda",
-    "src/runtime/pages",
-    "src/runtime/client",
     "README.md"
   ],
   "scripts": {
@@ -27,17 +23,18 @@
   "keywords": [
     "nuxt",
     "nuxt-module",
-    "crouton",
-    "devtools",
-    "crud",
-    "developer-tools"
+    "nuxt-ui",
+    "feedback",
+    "annotate",
+    "eruda",
+    "devtools"
   ],
   "author": "FYIT",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FriendlyInternet/nuxt-crouton.git",
-    "directory": "packages/crouton-devtools"
+    "directory": "packages/crouton-feedback"
   },
   "bugs": {
     "url": "https://github.com/FriendlyInternet/nuxt-crouton/issues"
@@ -47,19 +44,16 @@
     "access": "public"
   },
   "dependencies": {
-    "@fyit/crouton-feedback": "workspace:*",
-    "@nuxt/devtools-kit": "^3.0.0",
     "@nuxt/kit": "^4.0.0",
     "eruda": "^3.4.3"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^3.0.0",
     "@nuxt/ui": "catalog:",
     "nuxt": "catalog:",
     "unbuild": "^3.6.1"
   },
   "peerDependencies": {
-    "@fyit/crouton-core": "workspace:*",
+    "@nuxt/ui": "^4.0.0",
     "nuxt": "^4.0.0"
   }
 }

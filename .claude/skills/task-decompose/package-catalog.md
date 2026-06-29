@@ -28,6 +28,7 @@ OSS). Drill into `packages/<dir>/CLAUDE.md` for detail once a candidate is spott
 | `@fyit/crouton-editor` | `packages/crouton-editor` | Rich text editor layer extending nuxt-crouton (wraps Nuxt UI Editor) |
 | `@fyit/crouton-email` | `packages/crouton-email` | Email infrastructure for Nuxt applications using Vue Email templates and Resend delivery |
 | `@fyit/crouton-events` | `packages/crouton-events` | Event tracking layer for Nuxt Crouton - Audit trail for all CRUD operations |
+| `@fyit/crouton-feedback` | `packages/crouton-feedback` | Drop-in in-page feedback toolkit for any Nuxt UI app — a glasses launcher with a mobile console (eruda) and a pin-a-comment Annotate tool that sends to a pluggable destination (webhook / Slack / Discord / GitHub) |
 | `@fyit/crouton-flow` | `packages/crouton-flow` | Vue Flow integration for nuxt-crouton - graph/DAG visualization for collections |
 | `@fyit/crouton-i18n` | `packages/crouton-i18n` | i18n layer extending nuxt-crouton for multi-language support |
 | `@fyit/crouton-layout` | `packages/crouton-layout` | Deterministic layout engine for Nuxt Crouton — the layout editor, renderer, default-layout compose pass, placeable blocks, and layout_configs storage. Default-on via @fyit/crouton. |
