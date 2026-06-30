@@ -1,0 +1,144 @@
+<!doctype html>
+<!-- WS5 (#874) UI sign-off mockup — the Breakpoints zoom level (L3) of the
+     Crouton Builder. Reflects CroutonLayoutBreakpointAuthor.vue: device chips +
+     width readout + "add breakpoint here", a min-width ruler of checkpoints (each
+     locks upward), a scaled device frame, and per-checkpoint collapse + widget
+     variant overrides. Throwaway / no-build (per the /mockup convention). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WS5 · Breakpoint authoring</title>
+<style>
+  :root {
+    --bg:#0a0a0a; --elevated:#161618; --default:#1e1e22; --border:#2c2c31;
+    --muted:#8a8a93; --text:#ededf0; --primary:#6366f1; --primary-soft:#312e81;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif; }
+  .shell { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  .crumb { position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:20;
+    display:flex; align-items:center; gap:6px; border:1px solid var(--border); background:#161618ee;
+    padding:6px 12px; border-radius:999px; font-size:13px; backdrop-filter:blur(8px); }
+  .dot { width:6px; height:6px; border-radius:999px; background:#60a5fa; }
+  .crumb .sep { color:#55555f; } .crumb .cur { font-weight:600; } .crumb .past { color:var(--muted); }
+  .pane { display:flex; flex-direction:column; gap:12px; padding:64px 16px 16px; height:100%; }
+  .row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+  .chip { display:inline-flex; align-items:center; gap:5px; border:0; border-radius:7px; padding:5px 9px;
+    font-size:12px; cursor:pointer; background:transparent; color:var(--muted); }
+  .chip:hover { color:var(--text); }
+  .chip.on { background:var(--primary-soft); color:#c7d2fe; }
+  .chip.solid { background:var(--primary); color:#fff; }
+  .chip.subtle { background:#1e1e22; color:#a5b4fc; border:1px solid var(--border); }
+  .mono { font-family:ui-monospace,monospace; font-size:12px; color:var(--muted); }
+  .grow { margin-left:auto; }
+  /* ruler */
+  .ruler { position:relative; height:38px; }
+  .track { position:absolute; left:0; right:0; top:50%; height:4px; transform:translateY(-50%);
+    background:var(--border); border-radius:999px; }
+  .fill { position:absolute; top:50%; height:4px; transform:translateY(-50%); background:#6366f155; border-radius:999px; }
+  .handle { position:absolute; top:50%; width:14px; height:14px; transform:translate(-50%,-50%);
+    background:#fff; border-radius:999px; box-shadow:0 1px 4px #000a; z-index:30; }
+  .ck { position:absolute; top:2px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; z-index:20; cursor:pointer; }
+  .ck .pip { width:11px; height:11px; border-radius:999px; border:2px solid var(--elevated); background:var(--muted); }
+  .ck.active .pip { background:var(--primary); }
+  .ck small { margin-top:2px; font-family:ui-monospace,monospace; font-size:9px; color:var(--muted); }
+  /* stage */
+  .stage { flex:1; min-height:0; display:grid; place-items:start center; padding:16px;
+    border:1px dashed var(--border); border-radius:12px; background:#ffffff08; overflow:hidden; }
+  .device { width:768px; height:430px; transform:scale(.62); transform-origin:top center;
+    background:var(--default); border:1px solid var(--border); border-radius:16px; overflow:hidden;
+    box-shadow:0 20px 60px #000a; display:flex; }
+  .visible { flex:1; min-width:0; display:flex; }
+  .col { display:flex; flex-direction:column; }
+  .block { flex:1; min-width:0; padding:14px; border-right:1px solid var(--border); }
+  .block h4 { margin:0 0 8px; font-size:13px; }
+  .skel { height:9px; border-radius:4px; background:var(--border); margin:7px 0; }
+  .skel.s { width:60%; } .skel.m { width:80%; }
+  .card { border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px; background:#ffffff06; }
+  .gutter { width:34px; border-left:1px solid var(--border); background:#ffffff08; display:flex; flex-direction:column; gap:4px; padding:4px; }
+  .tab { flex:1; border:1px solid var(--border); border-radius:6px; background:var(--default); color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:10px;
+    text-transform:uppercase; letter-spacing:.05em; writing-mode:vertical-rl; transform:rotate(180deg); }
+  /* overrides */
+  .overrides { border:1px solid var(--border); border-radius:12px; background:#ffffff05; padding:12px; }
+  .orow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; border:1px solid var(--border);
+    border-radius:9px; background:var(--default); padding:8px 12px; margin-top:8px; }
+  .orow .name { font-weight:600; font-size:13px; }
+  select { background:var(--default); color:var(--text); border:1px solid var(--border);
+    border-radius:6px; padding:3px 6px; font-size:12px; }
+  .icon { width:14px; height:14px; display:inline-block; opacity:.7; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="crumb">
+    <span class="dot"></span>
+    <span class="past">Site</span><span class="sep">›</span>
+    <span class="past">Dashboard</span><span class="sep">›</span>
+    <span class="cur">Responsive</span>
+  </div>
+
+  <div class="pane">
+    <!-- devices + readout + add -->
+    <div class="row">
+      <span class="lbl">responsive</span>
+      <button class="chip">📱 Phone</button>
+      <button class="chip on">▭ Tablet</button>
+      <button class="chip">💻 Laptop</button>
+      <button class="chip">🖥 Desktop</button>
+      <span class="mono grow">768px</span>
+      <button class="chip subtle">✓ Checkpoint here</button>
+    </div>
+
+    <!-- ruler: 320 → 1600, checkpoints at 768 (active) and 1280 -->
+    <div class="ruler">
+      <div class="track"></div>
+      <!-- fill from active checkpoint (768) up to the handle -->
+      <div class="fill" style="left:35%; width:0%;"></div>
+      <div class="ck active" style="left:35%;"><span class="pip"></span><small>768</small></div>
+      <div class="ck" style="left:75%;"><span class="pip"></span><small>1280</small></div>
+      <div class="handle" style="left:35%;"></div>
+    </div>
+
+    <!-- scaled device frame: master-detail with the list collapsed → gutter tab -->
+    <div class="stage">
+      <div class="device">
+        <div class="visible">
+          <div class="block" style="border-right:none;">
+            <h4>Booking · Edit</h4>
+            <div class="card"><div class="skel m"></div><div class="skel s"></div></div>
+            <div class="card"><div class="skel m"></div><div class="skel s"></div></div>
+            <div class="skel"></div><div class="skel m"></div><div class="skel s"></div>
+          </div>
+        </div>
+        <div class="gutter">
+          <div class="tab">‹ Bookings</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- per-checkpoint overrides -->
+    <div class="overrides">
+      <div class="row"><span class="lbl">overrides @ ≥768px</span>
+        <button class="chip grow" style="color:#f87171;">🗑 Remove checkpoint</button></div>
+      <div class="orow">
+        <span class="icon">▢</span><span class="name">Bookings list</span><span class="mono">bookings-list</span>
+        <div class="grow" style="display:flex; gap:8px; align-items:center;">
+          <select><option>Cards</option><option>Default</option><option>List</option><option>Table</option></select>
+          <button class="chip on">▣ Collapsed</button>
+        </div>
+      </div>
+      <div class="orow">
+        <span class="icon">▢</span><span class="name">Booking form</span><span class="mono">entity-form</span>
+        <div class="grow" style="display:flex; gap:8px; align-items:center;">
+          <select><option>Default</option><option>List</option><option>Cards</option><option>Table</option></select>
+          <button class="chip">▢ Collapse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

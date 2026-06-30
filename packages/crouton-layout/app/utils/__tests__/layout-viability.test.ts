@@ -170,6 +170,52 @@ describe('subtreeMinWidth — the renderer’s runtime floor', () => {
   })
 })
 
+describe('nested layouts — viability recurses into sub-layouts (WS2 #871)', () => {
+  // sidebar 320, main 480, stats fluid (0) — from minWidthFor above.
+  const appLayout: LayoutTree = {
+    renderer: 'panes',
+    root: {
+      type: 'split', direction: 'horizontal',
+      children: [
+        { type: 'leaf', blockId: 'sidebar', defaultSize: 25 },
+        { type: 'leaf', blockId: 'main', defaultSize: 75 },
+      ],
+    },
+  }
+
+  it('checks each block against the pane its NESTED container actually gets', () => {
+    // page [nested 50%, stats 50%] at 2000 → nested pane = 1000;
+    // inside: sidebar 25% of 1000 = 250 < 320 → 1 violation; main 750 ≥ 480 ok.
+    const pageLayout: LayoutNode = {
+      type: 'split', direction: 'horizontal',
+      children: [
+        { type: 'nested', layout: appLayout, defaultSize: 50 },
+        { type: 'leaf', blockId: 'stats', defaultSize: 50 },
+      ],
+    }
+    const res = checkLayoutViability(pageLayout, minWidthFor, [2000])
+    expect(res.violations).toHaveLength(1)
+    expect(res.violations[0]).toMatchObject({ blockId: 'sidebar', paneWidth: 250, containerWidth: 2000 })
+  })
+
+  it('a nested app is viable when its pane is wide enough', () => {
+    // nested pane = 0.8 * 2000 = 1600 → sidebar 400 ≥ 320, main 1200 ≥ 480.
+    const pageLayout: LayoutNode = {
+      type: 'split', direction: 'horizontal',
+      children: [
+        { type: 'nested', layout: appLayout, defaultSize: 80 },
+        { type: 'leaf', blockId: 'stats', defaultSize: 20 },
+      ],
+    }
+    expect(checkLayoutViability(pageLayout, minWidthFor, [2000]).viable).toBe(true)
+  })
+
+  it('subtreeMinWidth composes through a nested boundary', () => {
+    // appLayout = horizontal sidebar(320) + main(480) = 800.
+    expect(subtreeMinWidth({ type: 'nested', layout: appLayout }, minWidthFor)).toBe(800)
+  })
+})
+
 describe('panelMinSizePct — px floor → SplitterPanel min-size %', () => {
   const r = minWidthFor
   const sidebar: LayoutNode = { type: 'leaf', blockId: 'sidebar' } // 320px

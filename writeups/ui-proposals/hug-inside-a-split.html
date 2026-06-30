@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!-- ui-proposal — #986 UI half: renderer honours `hug` INSIDE a split. Self-contained, no JS. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Proposal — hug inside a split (#986)</title>
+<style>
+  :root{
+    --page:#0a0e17; --ink:#e8edf6; --muted:#8b97ad;
+    --app-bg:#0b0f1a; --card:#151b27; --card-2:#11161f; --line:#222b3a; --line-soft:#1b2230;
+    --green:#34d399; --green-d:#0e3a2a; --blue:#38bdf8; --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(1100px 500px at 75% -10%, #16213c 0%, var(--page) 55%);
+    color:var(--ink); line-height:1.55; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px; margin:0 auto; padding:40px 20px 80px;}
+  .eyebrow{text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--green); font-weight:700;}
+  h1{font-size:clamp(26px,4vw,36px); margin:6px 0 6px; line-height:1.1;}
+  .lede{color:var(--muted); font-size:16px; max-width:74ch; margin:0 0 28px;}
+  h2.sec{font-size:14px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:36px 0 16px; border-bottom:1px solid var(--line-soft); padding-bottom:8px;}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.88em; background:rgba(52,211,153,.12); color:#a9f0d2; padding:1px 6px; border-radius:6px;}
+
+  .stage{display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start;}
+  .col{display:flex; flex-direction:column; align-items:center; gap:12px; width:300px; max-width:100%;}
+  .col h3{font-size:14px; margin:0; display:flex; align-items:center; gap:8px;}
+  .tag{font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  .tag.bad{color:#f6a; border-color:#5b2740;} .tag.good{color:var(--green); border-color:#1f5e47;}
+  .note{font-size:12px; color:var(--muted); max-width:280px; text-align:center;}
+
+  .frame{width:100%; border-radius:14px; overflow:hidden; border:1px solid #2b3852; box-shadow:0 20px 50px rgba(0,0,0,.5); background:var(--app-bg);}
+  .frame .bar{display:flex; gap:6px; padding:8px 12px; background:#11161f; border-bottom:1px solid var(--line); align-items:center;}
+  .frame .bar i{width:10px; height:10px; border-radius:50%; background:#33405a;}
+  .frame .bar .lbl{margin-left:6px; font-size:11px; color:var(--muted);}
+  .screen{height:340px; display:flex; flex-direction:column; padding:10px; gap:8px;}
+  .screen.row{flex-direction:row;}
+
+  .pane{position:relative; border:1px solid var(--line); border-radius:10px; background:var(--card-2); padding:10px 12px; overflow:hidden; display:flex; flex-direction:column; gap:7px;}
+  .pane .ph{font-size:11px; font-weight:700; color:#cdd6e6; display:flex; align-items:center; gap:6px;}
+  .pane .ph .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+  .pane .ph .sz{margin-left:auto; font-size:9px; font-family:ui-monospace,monospace; color:#6b7b93; font-weight:600;}
+  .line{height:6px; border-radius:4px; background:#26405a;}
+  .line.s{width:55%;}.line.m{width:78%;}.line.l{width:95%;}
+  .fill{flex:1 1 0;} .hug{flex:0 0 auto;}
+  .barpane{flex-direction:row; align-items:center; gap:10px; padding:9px 12px;}
+  .chip{height:9px;width:46px;border-radius:5px;background:#2c4a63;}
+  .chip.g{background:var(--green);opacity:.8;}
+  .navpane{flex-direction:row; justify-content:space-around; align-items:center; padding:8px;}
+  .navi{width:18px;height:18px;border-radius:6px;background:#2c4a63;}
+
+  .changes{margin-top:30px; background:#101725; border:1px solid var(--line); border-radius:16px; padding:20px 22px;}
+  .changes h3{margin:0 0 12px; font-size:16px;}
+  .changes ul{margin:0; padding-left:0; list-style:none; display:grid; gap:10px;}
+  .changes li{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:#cdd6e6;}
+  .changes li b{color:#fff;} .check{color:var(--green); flex:none; margin-top:2px; width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;}
+  footer.fin{margin-top:24px; color:var(--muted); font-size:12.5px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">nuxt-crouton · proposal · #986</span>
+  <h1>The renderer hugs a pane inside a split</h1>
+  <p class="lede">A block declares its own sizing — <code>height: 'hug'</code> on a Top bar / Bottom nav,
+  <code>width: 'hug'</code> on a sidebar — and the typed contract already derives that (the merged pure half
+  of #986). Today the renderer only honours <code>hug</code> at the Preview <i>region</i> level; <b>inside a
+  reka split every pane stretches to an equal share</b>, so a Top bar comes out as a tall slab. This change
+  makes a pane <b>hug its content between its siblings</b>: a <code>hug</code> pane along the split axis sizes
+  to content (<code>flex:0&nbsp;0&nbsp;auto</code>), the <code>fill</code> siblings share the rest. Layouts with
+  no <code>hug</code> pane are byte-for-byte unchanged (reka splitter untouched).</p>
+
+  <h2 class="sec">Vertical split — a Top bar &amp; Bottom nav that hug</h2>
+  <div class="stage">
+    <div class="col">
+      <h3><span class="tag bad">before</span> equal thirds</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">reka split → every pane ⅓</span></div>
+        <div class="screen">
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Top bar<span class="sz">stretched</span></div><div class="chip g"></div></div>
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Artists<span class="sz">fill</span></div><div class="line l"></div><div class="line m"></div><div class="line l"></div></div>
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Bottom nav<span class="sz">stretched</span></div></div>
+        </div>
+      </div>
+      <p class="note">The bars get a full third each — tall, wrong, and not what the block asked for.</p>
+    </div>
+
+    <div class="col">
+      <h3><span class="tag good">after</span> bars hug, main fills</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">hug pane = content height</span></div>
+        <div class="screen">
+          <div class="pane hug barpane"><div class="chip g"></div><div class="chip"></div><div class="chip" style="margin-left:auto"></div><span class="sz" style="font-size:9px;font-family:ui-monospace;color:#6b7b93">height:hug</span></div>
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Artists<span class="sz">fill</span></div><div class="line l"></div><div class="line m"></div><div class="line l"></div><div class="line s"></div><div class="line m"></div></div>
+          <div class="pane hug navpane"><div class="navi"></div><div class="navi"></div><div class="navi"></div><div class="navi"></div></div>
+        </div>
+      </div>
+      <p class="note">Top bar &amp; Bottom nav size to content because the <i>block</i> declares <code>hug</code>; Artists fills between them.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">Horizontal split — a sidebar that hugs its width</h2>
+  <div class="stage">
+    <div class="col" style="width:320px;">
+      <h3><span class="tag bad">before</span> 50/50</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">equal columns</span></div>
+        <div class="screen row">
+          <div class="pane fill navpane" style="flex-direction:column; justify-content:flex-start; gap:10px; align-items:stretch;"><div class="navi" style="width:auto"></div><div class="navi" style="width:auto"></div><div class="navi" style="width:auto"></div></div>
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Content</div><div class="line l"></div><div class="line m"></div></div>
+        </div>
+      </div>
+      <p class="note">A nav rail eats half the width.</p>
+    </div>
+
+    <div class="col" style="width:320px;">
+      <h3><span class="tag good">after</span> rail hugs</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">width:hug rail + fill content</span></div>
+        <div class="screen row">
+          <div class="pane hug navpane" style="flex-direction:column; justify-content:flex-start; gap:10px; align-items:stretch; width:54px;"><div class="navi"></div><div class="navi"></div><div class="navi"></div><span class="sz" style="font-size:8px;font-family:ui-monospace;color:#6b7b93;writing-mode:vertical-rl">width:hug</span></div>
+          <div class="pane fill"><div class="ph"><span class="dot"></span>Content<span class="sz">fill</span></div><div class="line l"></div><div class="line m"></div><div class="line l"></div><div class="line s"></div></div>
+        </div>
+      </div>
+      <p class="note">The rail is its content width; Content takes the rest.</p>
+    </div>
+  </div>
+
+  <div class="changes">
+    <h3>What changes</h3>
+    <ul>
+      <li><svg class="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>A pane hugs inside a split.</b> When a child's resolved sizing along the split axis is <code>hug</code> (vertical→height, horizontal→width), the renderer sizes it to content (<code>flex:0&nbsp;0&nbsp;auto</code>) and lets the <code>fill</code> siblings share the remaining space — the Preview's region-level hug, now one level deeper.</span></li>
+      <li><svg class="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>It reads the typed contract</b> already merged (#986 pure half): <code>sizingResolver</code> / <code>deriveSizing</code> on <code>CroutonLayoutBlockDefinition</code> — the block decides, no per-instance control.</span></li>
+      <li><svg class="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>No drag handle between a hug pane and its neighbour</b> — you don't resize a bar that sizes to its content; the <code>fill</code> panes keep their splitter.</span></li>
+      <li><svg class="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>All-<code>fill</code> layouts are byte-for-byte unchanged.</b> The new path engages only when a split actually contains a hug pane along its axis; otherwise the existing reka <code>SplitterGroup</code> renders exactly as before (the 266-test surface is untouched).</span></li>
+    </ul>
+  </div>
+
+  <footer class="fin">Static mockup (#986 UI half; the pure sizing contract is already merged). Closes #986 once built.
+  Review the "what changes" list in <code>writeups/ui-proposals/hug-inside-a-split.md</code> and reply <b>lgtm</b> / <b>approve</b> to unblock the build.</footer>
+
+</div>
+</body>
+</html>

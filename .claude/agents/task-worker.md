@@ -1,5 +1,6 @@
 ---
 name: task-worker
+layer: method
 description: The bottom of the task-decomposition pipeline — the agent that actually implements one leaf issue. Sets the issue in-progress, works on an isolated feature branch (git worktree), runs pnpm typecheck, commits via the /commit skill, and opens a PR that closes the issue. Spawned by task-decomposer; runs in worktree isolation so parallel workers never collide.
 tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__add_issue_comment, mcp__github__create_pull_request, mcp__github__pull_request_read, mcp__github__get_label, Read, Write, Edit, Grep, Glob, Bash, Skill
 model: opus
@@ -218,10 +219,14 @@ transform, a generator's own logic), you **agree on the test before you write th
 **`test-review`** skill, commit the proposed **failing** test, and **hold** for sign-off — then
 write the implementation to make it green. The test is the contract; "done" = it passes.
 
-- **Scope is by location (#779).** `packages/*` → gate on. `apps/*` → only if the app opted in.
-  `pocs/*` → off (the incubator stays fast; a POC graduating to `packages/*` is where its tests get
-  backfilled). Within `packages/*`, only **logic** fires this gate — a data model routes to the
-  schema gate, how it looks to the UI gate, generated CRUD to the e2e smoke.
+- **Scope is by location (#779), resolved from the stage model.** Run
+  `node scripts/harness-stages.mjs <path>` (or `gateMode(path, 'test-first')` from
+  `scripts/harness-stages.mjs`) to get the verdict — `on` / `opt-in` / `off` — instead of
+  matching the folder by hand. The default profile (`harness.config.mjs`, epic #952):
+  `packages/*` (`package`) → on; `apps/*` (`app`) → opt-in (only if the app opted in);
+  `pocs/*` (`poc`) → off (the incubator stays fast; a POC graduating to `packages/*` is where
+  its tests get backfilled). Within an `on`/`opt-in` stage, only **logic** fires this gate — a
+  data model routes to the schema gate, how it looks to the UI gate, generated CRUD to the e2e smoke.
 - **Review happens on the diff.** The committed failing test (e.g. `*.test.ts` beside the source)
   is the **actionable** surface — the reviewer inline-comments an `it(...)` to change a case. State
   the plain-language edge-case list alongside it so sign-off is about behaviour, not syntax.

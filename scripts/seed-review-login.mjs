@@ -6,16 +6,25 @@
  * the password is hashed by better-auth exactly like a real signup.
  *
  *   node scripts/seed-review-login.mjs --url https://app-staging.workers.dev \
- *     --email review+app-pr12@example.com --password <pw> [--team "Review Team"]
+ *     --email review+app-pr12@example.com --password <pw> [--team "Review Team"] \
+ *     [--seed-team test1 --db app-staging-db]
  *
  * Flow (all via the public auth routes the browser uses):
  *   1. POST /api/auth/sign-up/email   (autoSignIn → session cookie). An existing
  *      user (redeploy) returns USER_ALREADY_EXISTS → treated as already-seeded.
- *   2. GET  /api/auth/get-session     → if there's no active organization (the
- *      allowCreate pattern that otherwise drops you at a "create team" wall),
- *   3. POST /api/auth/organization/create + /set-active so the reviewer lands
- *      INSIDE the app. Apps with autoCreateOnSignup / defaultTeamSlug already
- *      have an active org from the signup hooks → this is skipped.
+ *   2. GET  /api/auth/get-session     → capture the review user's id + whether
+ *      the session already has an active organization.
+ *   3a. --seed-team given (#832): attach the review user to the SEEDED demo org
+ *      (`seedOrgId(slug)`, e.g. test1 → `seed:org:test1`) so the advertised login
+ *      lands in the team the content seed populated — instead of a fresh, EMPTY
+ *      org. The membership has no HTTP join path (no invite), so it's an
+ *      idempotent `member` upsert via `wrangler d1 execute <db> --remote`, then
+ *      POST /set-active. Needs Cloudflare creds in the env (the deploy step has
+ *      them) — staging only, so production is untouched.
+ *   3b. otherwise: if there's no active organization (the allowCreate pattern
+ *      that drops you at a "create team" wall), POST /api/auth/organization/create
+ *      + /set-active so the reviewer lands INSIDE the app. Apps with
+ *      autoCreateOnSignup / defaultTeamSlug already have an active org → skipped.
  *
  * Best-effort by contract: this NEVER throws a non-zero exit for an auth-level
  * problem (it prints a warning and exits 0) so a seed hiccup can't fail a deploy.
@@ -23,6 +32,8 @@
  *
  * Staging only — the caller (deploy-app.yml) gates this to environment != production.
  */
+
+import { execFileSync } from 'node:child_process'
 
 function parseArgs(argv) {
   const out = {}
@@ -33,8 +44,31 @@ function parseArgs(argv) {
     else if (a === '--password') out.password = argv[++i]
     else if (a === '--name') out.name = argv[++i]
     else if (a === '--team') out.team = argv[++i]
+    else if (a === '--seed-team') out.seedTeam = argv[++i]
+    else if (a === '--db') out.db = argv[++i]
   }
   return out
+}
+
+/**
+ * Stable, slug-safe seed id under the `seed:` namespace — inlined here (this is a
+ * plain-node script, can't import the TS `@fyit/crouton-core/shared/seed`). MUST
+ * stay in lockstep with `crouton-core/shared/seed/id.ts` so ids line up with the
+ * content seed (`seedOrgId('test1') === 'seed:org:test1'`).
+ */
+function seedId(...parts) {
+  return [
+    'seed',
+    ...parts.map(p =>
+      String(p).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    )
+  ].join(':')
+}
+const seedOrgId = slug => seedId('org', slug)
+
+/** Single-quote-escape a value for an inline SQLite string literal. */
+function sqlStr(v) {
+  return `'${String(v).replace(/'/g, "''")}'`
 }
 
 function warn(msg) {
@@ -139,18 +173,62 @@ async function main() {
     process.exit(0)
   }
 
-  // 2. Does the session already have an active organization? (autoCreateOnSignup /
-  //    defaultTeamSlug apps do; the allowCreate pattern does not.)
+  // 2. Capture the review user's id + whether the session already has an active org
+  //    (autoCreateOnSignup / defaultTeamSlug apps do; the allowCreate pattern does not).
   let hasActiveOrg = false
+  let userId = null
   try {
     const { json } = await get('/api/auth/get-session')
     hasActiveOrg = !!json?.session?.activeOrganizationId
-    if (hasActiveOrg) info('session already has an active team — no team creation needed.')
+    userId = json?.user?.id || null
+    if (hasActiveOrg) info('session already has an active team.')
   } catch (e) {
     warn(`get-session error: ${e?.message || e}`)
   }
 
-  // 3. No active org → create one so the reviewer lands inside the app, not at a wall.
+  // 3a. --seed-team (#832): attach the review user to the SEEDED demo org so the
+  //     advertised login sees the content the deploy seeded — not an empty team.
+  //     Runs for new AND existing users (idempotent upsert) so redeploys re-pin the
+  //     active org. On success it marks the session as having an active org so the
+  //     fresh-org fallback (3b) is skipped; on failure (e.g. an app that doesn't
+  //     seed test1 → no such org) it falls through to 3b so the reviewer still
+  //     lands inside a team rather than at a create-team wall.
+  if (args.seedTeam && args.db && userId) {
+    const orgId = seedOrgId(args.seedTeam)
+    const memberId = seedId('member', args.seedTeam, email)
+    const createdAt = Math.floor(Date.now() / 1000)
+    // Idempotent member upsert (conflict on the deterministic id → no dupes on
+    // redeploy; createdAt preserved). Mirrors crouton-auth/seed's `member` shape.
+    const sql =
+      `INSERT INTO "member" ("id","userId","organizationId","role","createdAt") ` +
+      `VALUES (${sqlStr(memberId)},${sqlStr(userId)},${sqlStr(orgId)},'owner',${createdAt}) ` +
+      `ON CONFLICT("id") DO UPDATE SET ` +
+      `"userId"=excluded."userId","organizationId"=excluded."organizationId","role"=excluded."role";`
+    try {
+      // execFileSync (no shell) passes the SQL as one argv entry — quotes/JSON
+      // need no escaping. wrangler resolves the D1 db by name account-wide, so
+      // repo-root cwd is fine. CF creds come from the deploy step's env.
+      execFileSync('npx', ['wrangler', 'd1', 'execute', args.db, '--remote', `--command=${sql}`, '--yes'], {
+        stdio: 'inherit',
+        env: process.env
+      })
+      info(`attached ${email} to seeded team "${args.seedTeam}" (${orgId}).`)
+      const { res: sa } = await post('/api/auth/organization/set-active', { organizationId: orgId })
+      if (sa.ok) {
+        info('set seeded team active for the session.')
+        hasActiveOrg = true
+      } else {
+        warn(`set-active returned HTTP ${sa.status} — membership upserted but not active; falling back.`)
+      }
+    } catch (e) {
+      warn(`seeded-team attach failed: ${e?.message || e} — falling back to a fresh review team.`)
+    }
+  } else if (args.seedTeam && args.db && !userId) {
+    warn('no session user id — cannot attach to the seeded team; falling back to a fresh review team.')
+  }
+
+  // 3b. No active org yet → create a fresh one so the reviewer lands inside the
+  //     app, not at a create-team wall (also the fallback when 3a couldn't attach).
   if (signedUp && !hasActiveOrg) {
     const slug = `review-${Math.random().toString(36).slice(2, 8)}`
     try {

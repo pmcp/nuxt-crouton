@@ -1,67 +1,55 @@
 # Claude Code Hooks
 
-This directory contains git hooks for the nuxt-crouton project.
+This directory holds two kinds of hooks for the nuxt-crouton project:
+**runtime hooks** wired into Claude Code via `.claude/settings.json` (they fire
+on tool calls / session start), and a **git hook** (`pre-commit-sync-reminder`).
 
-## Available Hooks
+## Runtime hooks (`.claude/settings.json`)
 
-### pre-commit-sync-reminder
+These are registered under `hooks.PreToolUse` / `hooks.SessionStart` and run
+automatically — no installation step. A `PreToolUse` hook that exits non-zero
+(2) **cancels** the tool call and feeds its stderr back to the agent.
+
+| Hook | Fires on | What it enforces |
+|------|----------|------------------|
+| `gate-package-edits.sh` | `PreToolUse: Edit\|Write` | Blocks edits to `packages/*` unless the package is listed in `.claude/.package-edit-approved` (the packages boundary gate). |
+| `gate-spec-signoff.mjs` | `PreToolUse: Edit\|Write` | Blocks marking a POC `spec.json` entry `status: "settled"` without a populated `signedOff` token — the done-rule backstop (done is *derived* from a sign-off, never self-asserted; #992 WS5). Scoped to `*spec.json`; fail-open on malformed JSON. |
+| `require-comment-provenance.mjs` | `PreToolUse: mcp__github__add_issue_comment` | Blocks an agent GitHub comment whose body doesn't LEAD with a 🤖 provenance header (interactive comments post under @pmcp and must not be mistaken for the human). |
+| `session-start.sh` | `SessionStart` | Prints the ISSUE-FIRST reminder, the headless-browser path, exports the dev auth secret, and runs `pnpm install`. |
+
+To test a `PreToolUse` hook by hand, pipe a fake tool call to it:
+
+```bash
+echo '{"tool_input":{"file_path":"pocs/x/spec.json","content":"[{\"id\":\"a\",\"status\":\"settled\"}]"}}' \
+  | node .claude/hooks/gate-spec-signoff.mjs; echo "exit=$?"   # → exit=2 (blocked)
+```
+
+## Git hook: `pre-commit-sync-reminder`
 
 A git pre-commit hook that displays a reminder when committing changes to:
 - Collection generator (`packages/nuxt-crouton-cli/lib/` or `bin/`)
 - MCP server (`packages/nuxt-crouton-mcp-server/src/`)
 
-The hook reminds developers to check if documentation artifacts need to be updated.
+It reminds developers to check whether documentation artifacts need updating.
 
-## Installation
-
-### Option 1: Manual Installation
+### Installation
 
 ```bash
-# Copy the hook to git hooks directory
+# Option 1 — copy into git's hook dir
 cp .claude/hooks/pre-commit-sync-reminder .git/hooks/pre-commit
-
-# Make it executable
 chmod +x .git/hooks/pre-commit
-```
 
-### Option 2: Using Git Config (Recommended)
-
-```bash
-# Set the hooks directory
+# Option 2 (recommended) — point git at this dir
 git config core.hooksPath .claude/hooks
-
-# Rename the hook file (remove the suffix)
 mv .claude/hooks/pre-commit-sync-reminder .claude/hooks/pre-commit
 chmod +x .claude/hooks/pre-commit
 ```
 
-## Behavior
+The git hook is **non-blocking by default** — it shows the reminder but lets the
+commit proceed (interactive mode asks for confirmation). Bypass with
+`git commit --no-verify`.
 
-When you commit changes to the generator or MCP server, the hook will:
+## Related
 
-1. Display a reminder checklist of documentation to update
-2. List the modified files
-3. (In interactive mode) Ask for confirmation to continue
-
-The hook is **non-blocking by default** - it displays the reminder but allows the commit to proceed. In interactive terminal mode, it asks for confirmation.
-
-## Bypassing the Hook
-
-If you need to skip the hook (e.g., for internal refactors):
-
-```bash
-git commit --no-verify -m "your message"
-```
-
-## Related Commands
-
-- `/sync-check` - Claude Code slash command to verify documentation sync
-- `node scripts/validate-field-types-sync.mjs` - CI validation script
-
-## Customization
-
-The hook checks for files matching these patterns:
-- `packages/nuxt-crouton-cli/(lib|bin)/`
-- `packages/nuxt-crouton-mcp-server/src/`
-
-Modify the grep patterns in the hook script to adjust what triggers the reminder.
+- `/sync-check` — slash command to verify documentation sync
+- `node scripts/validate-field-types-sync.mjs` — CI validation script

@@ -12,6 +12,21 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   devServer: { port: 3014 },
 
+  // crouton-analytics config (#945/#946) — consumes @fyit/crouton-analytics (in extends).
+  // `console` provider so events are observable without a PostHog key; flip to `posthog`
+  // + fill the key to send real events.
+  runtimeConfig: {
+    public: {
+      croutonAnalytics: {
+        provider: 'console', // 'noop' | 'console' | 'posthog'
+        posthog: {
+          key: '', // NUXT_PUBLIC_CROUTON_ANALYTICS_POSTHOG_KEY
+          host: 'https://us.i.posthog.com'
+        }
+      }
+    }
+  },
+
   // crouton-core transitively extends @fyit/crouton-auth (it provides the
   // auth-gated /admin/** pages + the `auth` route middleware). @fyit/crouton-auth
   // is listed explicitly so the auth layer is an unambiguous, first-class
@@ -21,6 +36,7 @@ export default defineNuxtConfig({
     '@fyit/crouton-layout',
     '@fyit/crouton-auth',
     '@fyit/crouton-i18n',
+    '@fyit/crouton-analytics',
     '@fyit/crouton-devtools/eruda',
     './layers/blog'
   ],

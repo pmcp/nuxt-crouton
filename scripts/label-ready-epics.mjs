@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Stamp open epics with their "finished but still open" state — the single source
- * of truth both digests (epic-digest, housekeeping) read. Deterministic, no LLM.
+ * Reconcile each open epic's `status:*` label FROM its children — derive, don't
+ * hand-apply — the single source of truth both digests (epic-digest, housekeeping)
+ * read. Deterministic, no LLM.
  *
  *   GITHUB_TOKEN=... node scripts/label-ready-epics.mjs            # dry-run (default)
  *   GITHUB_TOKEN=... APPLY=true node scripts/label-ready-epics.mjs # actually mutate labels
@@ -11,9 +12,10 @@
  *     comment  → `status:ready-to-close`
  *   - all sub-issues closed (total > 0) AND no postmortem marker
  *                                            → `status:needs-postmortem`
- *   - otherwise (open children, or no children)
- *                                            → neither (remove both if present)
- * An epic carries AT MOST ONE of the two labels at any time.
+ *   - ≥1 sub-issue is `status:in-progress`   → `status:in-progress`  (opening side, #980)
+ *   - otherwise (open-but-idle children, or no children)
+ *                                            → none (remove any managed label present)
+ * The three managed labels are mutually exclusive — an epic carries AT MOST ONE.
  *
  * This is the ONLY piece of the #763 system that MUTATES GitHub — the digests stay
  * report-only. It's split into its own script + workflow by blast radius, exactly like
@@ -36,7 +38,8 @@ if (!token) {
 
 const READY = 'status:ready-to-close'
 const NEEDS = 'status:needs-postmortem'
-const MANAGED = [READY, NEEDS]
+const INPROGRESS = 'status:in-progress'
+const MANAGED = [READY, NEEDS, INPROGRESS]
 const MARKER = 'postmortem:done'
 
 async function gh(path, init) {
@@ -76,13 +79,18 @@ async function hasPostmortem(number) {
   }
 }
 
-// Decide the target label for an epic from its children + postmortem state.
-// null ⇒ epic doesn't qualify (carry neither managed label).
+// Decide the target managed label for an epic from its children + postmortem state.
+//   • all children closed → ready-to-close (postmortem done) | needs-postmortem (not)
+//   • ≥1 child in-progress → in-progress   (the opening side, #980)
+//   • otherwise            → null (carry none of the managed labels)
+// The closing side wins by construction: an all-closed epic has no in-progress child.
 async function targetLabel(epic) {
   const kids = await subIssues(epic.number)
-  const allClosed = kids.length > 0 && kids.every((k) => k.state === 'closed')
-  if (!allClosed) return null
-  return (await hasPostmortem(epic.number)) ? READY : NEEDS
+  if (kids.length > 0 && kids.every((k) => k.state === 'closed')) {
+    return (await hasPostmortem(epic.number)) ? READY : NEEDS
+  }
+  const active = kids.some((k) => k.state === 'open' && labelNames(k).includes(INPROGRESS))
+  return active ? INPROGRESS : null
 }
 
 async function setLabels(number, current, target) {

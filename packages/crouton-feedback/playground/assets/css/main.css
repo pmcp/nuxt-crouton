@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Scan the module's runtime components so their Tailwind classes are generated. */
+@source "../../../src/runtime/**/*.{vue,js,ts}";

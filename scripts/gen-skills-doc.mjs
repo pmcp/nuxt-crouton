@@ -30,6 +30,8 @@ export const META = {
   'task-decompose': { group: 'build', triggers: ['ask', 'flow'] },
   'provider-swap': { group: 'build', triggers: ['ask'] },
   'block-authoring': { group: 'build', triggers: ['ask', 'flow'] },
+  spec: { group: 'build', triggers: ['flow', 'ask'] },
+  graduate: { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   housekeeping: { group: 'plan', triggers: ['ask'] },
@@ -46,15 +48,18 @@ export const META = {
   'bug-archaeology': { group: 'review', triggers: ['flow', 'ask'] },
   'red-team': { group: 'review', triggers: ['ask', 'auto'] },
   a11y: { group: 'review', triggers: ['ask'] },
+  'frontend-review': { group: 'review', triggers: ['ask', 'auto'] },
   deploy: { group: 'deploy', triggers: ['ask'] },
   'deploy-production': { group: 'deploy', triggers: ['ask'] },
   'poc-deploy': { group: 'deploy', triggers: ['ask'] },
   'remove-app': { group: 'deploy', triggers: ['ask'] },
+  conformance: { group: 'verify', triggers: ['flow', 'ask'] },
   'e2e-smoke': { group: 'verify', triggers: ['ask'] },
   'dependency-sweep': { group: 'verify', triggers: ['ask', 'auto'] },
   'db-migrations': { group: 'verify', triggers: ['ask'] },
   'db-clone': { group: 'verify', triggers: ['ask'] },
-  'think-aloud': { group: 'meta', triggers: ['ask'] }
+  'think-aloud': { group: 'meta', triggers: ['ask'] },
+  'loop-station': { group: 'meta', triggers: ['ask', 'auto'] }
 }
 
 export const GROUPS = [

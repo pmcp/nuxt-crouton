@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<!-- ui-proposal — #985 editable renderer that owns its pane handles. Self-contained, no JS. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UI Proposal — Renderer-owned pane handles (#985)</title>
+<style>
+  :root{
+    --page:#0a0e17; --ink:#e8edf6; --muted:#8b97ad;
+    --app-bg:#0b0f1a; --card:#151b27; --card-2:#11161f; --line:#222b3a; --line-soft:#1b2230;
+    --green:#34d399; --green-d:#0e3a2a; --blue:#38bdf8; --amber:#fbbf24; --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(1100px 500px at 75% -10%, #16213c 0%, var(--page) 55%);
+    color:var(--ink); line-height:1.55; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1040px; margin:0 auto; padding:40px 20px 80px;}
+  .eyebrow{text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--green); font-weight:700;}
+  h1{font-size:clamp(26px,4vw,36px); margin:6px 0 6px; line-height:1.1;}
+  .lede{color:var(--muted); font-size:16px; max-width:74ch; margin:0 0 28px;}
+  h2.sec{font-size:14px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:38px 0 16px; border-bottom:1px solid var(--line-soft); padding-bottom:8px;}
+
+  .stage{display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start;}
+  .col{display:flex; flex-direction:column; align-items:center; gap:12px; width:440px; max-width:100%;}
+  .col h3{font-size:15px; margin:0; display:flex; align-items:center; gap:8px;}
+  .tag{font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  .tag.bad{color:#f6a; border-color:#5b2740;} .tag.good{color:var(--green); border-color:#1f5e47;}
+  .note{font-size:12.5px; color:var(--muted); max-width:400px; text-align:center;}
+  .note code,.changes code,.hooks code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.88em; background:rgba(52,211,153,.12); color:#a9f0d2; padding:1px 6px; border-radius:6px;}
+
+  .frame{width:100%; border-radius:14px; overflow:hidden; border:1px solid #2b3852; box-shadow:0 24px 60px rgba(0,0,0,.5); background:var(--app-bg);}
+  .frame .bar{display:flex; gap:6px; padding:9px 14px; background:#11161f; border-bottom:1px solid var(--line); align-items:center;}
+  .frame .bar i{width:11px; height:11px; border-radius:50%; background:#33405a; display:inline-block;}
+  .frame .bar .lbl{margin-left:8px; font-size:11px; color:var(--muted);}
+  .canvas{position:relative; padding:26px; background:
+     linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0/22px 22px,
+     linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0/22px 22px;
+     min-height:320px;}
+
+  /* a composed builder card = the rendered LayoutTree on the board */
+  .bcard{position:relative; background:var(--card-2); border:1px solid #2c3a52; border-radius:14px; box-shadow:0 8px 30px rgba(0,0,0,.35);}
+  .bcard.sel{border-color:var(--green); box-shadow:0 0 0 1px var(--green), 0 8px 30px rgba(0,0,0,.4);}
+  .row{display:flex;} .colpane{display:flex; flex-direction:column;}
+  .pane{position:relative; min-height:58px; padding:10px 11px; overflow:hidden;}
+  .pane + .pane.h{border-left:1px solid var(--line);}
+  .colpane > .pane + .pane{border-top:1px solid var(--line);}
+  .ptitle{font-size:11px; font-weight:700; color:#cdd6e6; display:flex; align-items:center; gap:6px; margin-bottom:7px;}
+  .ptitle .dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+  .line{height:6px; border-radius:4px; background:#26405a; margin:5px 0;}
+  .line.s{width:60%;} .line.m{width:80%;} .line.l{width:96%;}
+  .stat{font-size:18px; font-weight:800; color:#dbe6f5;} .stat small{font-size:10px;color:var(--muted);font-weight:600;display:block;}
+  .ic{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+
+  /* BEFORE: a separate overlay layer of faces, deliberately drifted off the real panes */
+  .overlay{position:absolute; inset:0; pointer-events:none;}
+  .face{position:absolute; border:2px dashed var(--amber); border-radius:9px; background:rgba(251,191,36,.07);}
+  .drift-tag{position:absolute; right:-8px; top:-10px; font-size:9px; font-weight:700; color:#04231a; background:var(--amber); padding:1px 5px; border-radius:6px;}
+
+  /* AFTER: handle rides INSIDE the pane */
+  .grip{position:absolute; top:6px; right:6px; display:flex; gap:3px; padding:3px 5px; border-radius:7px; background:rgba(13,18,28,.8); border:1px solid var(--line); color:var(--muted);}
+  .grip .ic{width:13px;height:13px;}
+  .pidtag{position:absolute; left:6px; bottom:5px; font-size:8.5px; font-family:ui-monospace,monospace; color:#5f7593;}
+  .wiggle{animation:none;}
+
+  /* state chips for the gallery */
+  .pill{position:absolute; font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:999px; display:flex; align-items:center; gap:4px;}
+  .pill.page{top:-9px; left:10px; background:var(--green); color:#04231a; border:1px solid var(--green);}
+  .pill.region{top:-9px; right:10px; background:#0e2c3a; color:var(--blue); border:1px solid #1c4a5e;}
+  .floor{position:absolute; left:8px; bottom:6px; font-size:9px; font-weight:700; color:#9fb4cb; background:rgba(13,18,28,.85); border:1px solid var(--line); border-radius:6px; padding:2px 6px; font-family:ui-monospace,monospace;}
+  .snap{position:absolute; border-radius:8px;}
+  .snap.armed{box-shadow:0 0 0 2px var(--green), 0 0 16px 3px rgba(16,185,129,.5);}
+  .snap.soft{box-shadow:0 0 0 2px var(--blue), 0 0 12px 2px rgba(56,189,248,.4);}
+  .ghost{border:2px dashed var(--green); border-radius:9px; background:rgba(16,185,129,.14); display:flex; align-items:center; justify-content:center; color:#bff3dd; font-size:10px; font-weight:700;}
+  .reorder{border:2px solid var(--green); border-radius:9px; background:rgba(16,185,129,.1); display:flex;align-items:center;justify-content:center; color:var(--green); font-size:10px; font-weight:700;}
+
+  .gallery{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px;}
+  .gcard{background:#101725; border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .gcard .demo{position:relative; height:118px; background:var(--card-2); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; overflow:hidden;}
+  .gcard h4{margin:0 0 3px; font-size:13px;}
+  .gcard p{margin:0; font-size:11.5px; color:var(--muted);}
+  .gcard .sel-mini{font-family:ui-monospace,monospace; font-size:10px; color:#a9f0d2;}
+
+  .changes{margin-top:30px; background:#101725; border:1px solid var(--line); border-radius:16px; padding:20px 22px;}
+  .changes h3{margin:0 0 12px; font-size:16px;}
+  .changes ul{margin:0; padding-left:0; list-style:none; display:grid; gap:10px;}
+  .changes li{display:flex; gap:10px; align-items:flex-start; font-size:14px; color:#cdd6e6;}
+  .changes li b{color:#fff;} .check{color:var(--green); flex:none; margin-top:2px;}
+  footer.fin{margin-top:26px; color:var(--muted); font-size:12.5px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">nuxt-crouton · proposal · #985</span>
+  <h1>The renderer owns its pane handles</h1>
+  <p class="lede">Today a consumer paints a <b>separate overlay layer</b> of grab-faces over a composed
+  card and keeps it aligned by measuring the rendered panes (<code>[data-panel]</code>) and clamping the
+  rects every frame — the v49/v51 measure-and-clamp machinery exists only because the faces are a
+  duplicated layer that <b>drifts</b>. This proposal moves the wiggle / reorder / detach affordances
+  <b>onto the rendered panes themselves</b>: the renderer draws each handle inside its own pane and tags
+  the pane with a stable id. No second layer, nothing to measure, the drift bug class is gone.</p>
+
+  <h2 class="sec">The architecture change — before vs after</h2>
+  <div class="stage">
+
+    <!-- BEFORE -->
+    <div class="col">
+      <h3><span class="tag bad">before</span> overlay layer (drifts)</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">consumer paints an overlay → measures &amp; clamps</span></div>
+        <div class="canvas">
+          <div class="bcard" style="width:380px;">
+            <div class="row">
+              <div class="pane" style="width:46%;">
+                <div class="ptitle"><span class="dot"></span>Artists</div>
+                <div class="line l"></div><div class="line m"></div><div class="line l"></div><div class="line s"></div>
+              </div>
+              <div class="pane h colpane" style="width:54%;">
+                <div class="pane" style="padding:0;border:0;">
+                  <div class="ptitle"><span class="dot"></span>Bookings</div><div class="stat">128<small>this week</small></div>
+                </div>
+                <div class="pane" style="padding:8px 0 0;border-top:1px solid var(--line);">
+                  <div class="ptitle"><span class="dot"></span>New artist</div><div class="line l"></div><div class="line m"></div>
+                </div>
+              </div>
+            </div>
+            <!-- the drifted overlay faces (offset a few px down/right on purpose) -->
+            <div class="overlay">
+              <div class="face" style="left:7px; top:11px; width:44%; height:78%;"></div>
+              <div class="face" style="left:50%; top:9px; width:46%; height:40%;"><span class="drift-tag">drift</span></div>
+              <div class="face" style="left:50%; top:52%; width:46%; height:42%;"></div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:18px;">Faces are absolutely positioned from measured rects. A
+          reflow (<code>@container</code> stack), a min-width clamp, or a responsive resize moves the real
+          panes but not the faces → they sit a few px off, spill outside the card, or hit-test the wrong pane.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="col">
+      <h3><span class="tag good">after</span> handles ride the panes</h3>
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i><span class="lbl">renderer draws the handle inside each pane</span></div>
+        <div class="canvas">
+          <div class="bcard sel" style="width:380px;">
+            <div class="row">
+              <div class="pane" style="width:46%;">
+                <div class="grip"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+                <div class="ptitle"><span class="dot"></span>Artists</div>
+                <div class="line l"></div><div class="line m"></div><div class="line l"></div><div class="line s"></div>
+                <span class="pidtag">data-pane-id="p0"</span>
+              </div>
+              <div class="pane h colpane" style="width:54%;">
+                <div class="pane" style="padding:0;border:0;position:relative;">
+                  <div class="grip"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg></div>
+                  <div class="ptitle"><span class="dot"></span>Bookings</div><div class="stat">128<small>this week</small></div>
+                  <span class="pidtag">data-pane-id="p1.0"</span>
+                </div>
+                <div class="pane" style="padding:8px 0 0;border-top:1px solid var(--line);position:relative;">
+                  <div class="ptitle"><span class="dot"></span>New artist</div><div class="line l"></div><div class="line m"></div>
+                  <span class="pidtag">data-pane-id="p1.1"</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:18px;">Each handle is a child of its pane, so it can't drift —
+          it reflows, stacks, and resizes <b>with</b> the pane. A <code>pointerdown</code> on a grip already
+          knows its own <code>data-pane-id</code> / <code>NodePath</code>; no point→pane mapping, no clamp pass.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">State gallery — the affordances &amp; the data-handoff hooks (reproduced verbatim)</h2>
+  <div class="gallery">
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard sel" style="position:absolute; inset:14px;">
+          <span class="pill page" data-handoff="page-badge"><svg class="ic" style="width:11px;height:11px;color:#04231a" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 17l-6.5 3 2-7L2 9h7z"/></svg>Page</span>
+          <div class="row" style="height:100%"><div class="pane" style="width:50%"><div class="line m"></div><div class="line l"></div></div><div class="pane h" style="width:50%"><div class="line l"></div><div class="line s"></div></div></div>
+        </div>
+      </div>
+      <h4>★ page badge</h4>
+      <p>The one node that is "the page". <span class="sel-mini">[data-handoff="page-badge"]</span></p>
+    </div>
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard" style="position:absolute; inset:14px;">
+          <span class="pill region" data-handoff="region-pill" data-region="top"><svg class="ic" style="width:10px;height:10px" viewBox="0 0 24 24"><path d="M5 4h14M5 9h14M8 14h8M8 19h8"/></svg>Pinned top</span>
+          <div class="colpane" style="height:100%"><div class="pane"><div class="line l"></div></div><div class="pane" style="border-top:1px solid var(--line)"><div class="line m"></div></div></div>
+        </div>
+      </div>
+      <h4>region pill</h4>
+      <p>Pinned top / bottom. <span class="sel-mini">[data-handoff="region-pill"][data-region]</span></p>
+    </div>
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard sel" style="position:absolute; inset:14px;">
+          <div class="row" style="height:100%"><div class="pane" style="width:55%"><div class="line m"></div><div class="line l"></div></div><div class="pane h" style="width:45%"><div class="line s"></div></div></div>
+          <span class="floor" data-handoff="floor-readout" data-hard-floor="640" data-soft-floor="900">stacks &lt;900px · floor 640px</span>
+        </div>
+      </div>
+      <h4>floor readout</h4>
+      <p>Derived hard/soft floor of the selected composite. <span class="sel-mini">[data-handoff="floor-readout"]</span></p>
+    </div>
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard" style="position:absolute; inset:14px;">
+          <div class="row" style="height:100%"><div class="pane" style="width:60%"><div class="line m"></div><div class="line l"></div></div><div class="pane h" style="width:40%"><div class="line s"></div></div></div>
+          <div class="snap armed" data-handoff="snap-guide" data-armed="true" style="right:36%; top:8px; bottom:8px; width:5px; background:var(--green);"></div>
+        </div>
+      </div>
+      <h4>snap guide (armed)</h4>
+      <p>Soft blue → dwell-armed green. <span class="sel-mini">[data-handoff="snap-guide"][data-armed]</span></p>
+    </div>
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard" style="position:absolute; inset:14px;">
+          <div class="row" style="height:100%; gap:6px; padding:6px"><div class="pane" style="width:50%;border:1px solid var(--line);border-radius:8px"><div class="line m"></div></div><div class="ghost" data-handoff="ghost-pane" style="width:50%">drops here</div></div>
+        </div>
+      </div>
+      <h4>ghost pane</h4>
+      <p>Ease-apart placeholder matching the dragged footprint. <span class="sel-mini">[data-handoff="ghost-pane"]</span></p>
+    </div>
+
+    <div class="gcard">
+      <div class="demo">
+        <div class="bcard sel" style="position:absolute; inset:14px;">
+          <div class="row" style="height:100%; gap:6px; padding:6px">
+            <div class="pane" style="width:46%;border:1px solid var(--line);border-radius:8px; transform:rotate(-1.5deg)"><div class="line m"></div></div>
+            <div class="reorder" style="width:54%">Move here</div>
+          </div>
+        </div>
+      </div>
+      <h4>wiggle → reorder / detach</h4>
+      <p>Long-press wiggles panes; pull across to reorder (green slot) or out past the margin to detach.</p>
+    </div>
+  </div>
+
+  <div class="changes">
+    <h3>What changes</h3>
+    <ul>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>The renderer gains an editable mode</b> — each rendered pane carries its own grab-handle (wiggle / reorder / detach) and a stable <code>data-pane-id</code>; the consumer no longer paints a separate overlay layer.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>The overlay-drift bug class is gone</b> — handles ride their panes through every reflow / stack / min-width clamp / responsive resize, so the v49/v51 measure-and-clamp machinery is deleted, not ported.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Detach uses a throwaway floating proxy</b> only during the pull (the one case a pane must leave its slot); reorder stays in-place.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>The five <code>data-handoff</code> hooks are reproduced verbatim</b> — <code>snap-guide[data-armed]</code>, <code>ghost-pane</code>, <code>page-badge</code>, <code>floor-readout[data-hard-floor/data-soft-floor]</code>, <code>region-pill[data-region]</code> — so one exploratory agent runs identically on the POC and the graduated app.</span></li>
+      <li><svg class="ic check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span><b>Look is the POC's proven look</b> (the running v52 is the visual ground truth) — this is an architecture move, not a redesign. Resting panes stay node-draggable; the green primary stays the snap/reorder signal.</span></li>
+    </ul>
+  </div>
+
+  <footer class="fin">Static mockup (no live deploy — packages-only change, no runnable app yet; #988 brings the consuming app).
+  Review the "what changes" list in <code>writeups/ui-proposals/editable-renderer-pane-handles.md</code> and reply <b>lgtm</b> / <b>approve</b> to unblock the build.</footer>
+
+</div>
+</body>
+</html>

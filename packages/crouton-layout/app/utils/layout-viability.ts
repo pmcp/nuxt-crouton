@@ -16,7 +16,11 @@
  * the metric stable and unit-testable.
  */
 import type { LayoutNode, LayoutTree } from '@fyit/crouton-core/app/types/layout'
-import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/layout-block'
+import type { CroutonLayoutBlockRegistry, LayoutAxisSizing, LayoutBlockSizing } from '@fyit/crouton-core/app/types/layout-block'
+import { DEFAULT_BLOCK_SIZING } from '@fyit/crouton-core/app/types/layout-block'
+
+export { DEFAULT_BLOCK_SIZING }
+export type { LayoutBlockSizing, LayoutAxisSizing }
 
 export interface ViabilityViolation {
   /** The block that can't meet its minimum at this container width. */
@@ -53,6 +57,12 @@ interface LeafWidth {
 function leafWidths(node: LayoutNode, width: number): LeafWidth[] {
   if (node.type === 'leaf') {
     return [{ blockId: node.blockId, width }]
+  }
+
+  // Nested: the pane this node occupies IS the container for its sub-layout, so
+  // recurse from the sub-layout's root with the same width (WS2 #871).
+  if (node.type === 'nested') {
+    return leafWidths(node.layout.root, width)
   }
 
   // Split: horizontal divides width by size share; vertical keeps full width.
@@ -114,9 +124,89 @@ export function checkTreeViability(
  */
 export function subtreeMinWidth(node: LayoutNode, minWidthFor: MinWidthResolver): number {
   if (node.type === 'leaf') return minWidthFor(node.blockId)
+  // Nested: a sub-layout's floor is its own root's floor at this pane (WS2 #871).
+  if (node.type === 'nested') return subtreeMinWidth(node.layout.root, minWidthFor)
   const kids = node.children.map(c => subtreeMinWidth(c, minWidthFor))
   if (node.direction === 'vertical') return kids.reduce((a, b) => Math.max(a, b), 0)
   return kids.reduce((a, b) => a + b, 0)
+}
+
+// ─── Typed component contract: fill/hug + composite derivation (#986) ─────────
+
+/** Narrow an arbitrary value to a `LayoutAxisSizing` (default `fill`) — robust to
+ *  widened/tampered registry data (app.config literals widen to `string`). */
+const asAxisSizing = (v: unknown): LayoutAxisSizing => (v === 'hug' ? 'hug' : 'fill')
+
+/** A block's declared fill/hug descriptor (default fully `fill`). */
+export type SizingResolver = (blockId: string) => LayoutBlockSizing
+
+/** Build a `SizingResolver` from a layout-block registry. */
+export function sizingResolver(registry: CroutonLayoutBlockRegistry): SizingResolver {
+  return (id: string) => {
+    const s = registry[id]?.sizing
+    return { width: asAxisSizing(s?.width), height: asAxisSizing(s?.height) }
+  }
+}
+
+/** The sizing a composed subtree publishes — folded bottom-up from its leaves. */
+export interface DerivedSizing {
+  /** Absolute floor it can reflow DOWN to: a split can always stack to a column,
+   *  so this is the widest single leaf in the subtree (recursively). */
+  hardMinWidth: number
+  /** Comfortable floor that keeps the arrangement as-is: sum along a horizontal
+   *  axis, max across a vertical one. Equals `subtreeMinWidth` (reused contract). */
+  softMinWidth: number
+  /** Height floor, mirroring width with the axes swapped (sum vertical / max horizontal). */
+  minHeight: number
+  /** A composite always `fill`s (a real layout claims its space); a leaf uses its descriptor. */
+  width: LayoutAxisSizing
+  height: LayoutAxisSizing
+}
+
+/**
+ * Composite sizing derivation (#986) — "a leaf declares, a composite derives",
+ * component-driven all the way up a layout-of-layouts. A LEAF reports its declared
+ * `minWidth`/`minHeight` + fill/hug; a SPLIT/NESTED folds its children bottom-up so
+ * a parent (or an agent) reasons about a sub-layout as one unit. `softMinWidth`
+ * deliberately mirrors `subtreeMinWidth` (the renderer's runtime floor) so the two
+ * can't drift; `hardMinWidth` is the extra "reflow to a column" floor the renderer
+ * stacks down to. Pure; reads the registry directly (minWidth + minHeight + sizing).
+ */
+export function deriveSizing(node: LayoutNode, registry: CroutonLayoutBlockRegistry): DerivedSizing {
+  if (node.type === 'leaf') {
+    const def = registry[node.blockId]
+    const mw = def?.minWidth ?? 0
+    const s = sizingResolver(registry)(node.blockId)
+    return { hardMinWidth: mw, softMinWidth: mw, minHeight: def?.minHeight ?? 0, width: s.width, height: s.height }
+  }
+  if (node.type === 'nested') return deriveSizing(node.layout.root, registry)
+  const kids = node.children.map(c => deriveSizing(c, registry))
+  const horizontal = node.direction === 'horizontal'
+  const hardMinWidth = Math.max(0, ...kids.map(k => k.hardMinWidth))
+  const softMinWidth = horizontal
+    ? kids.reduce((sum, k) => sum + k.softMinWidth, 0)
+    : Math.max(0, ...kids.map(k => k.softMinWidth))
+  const minHeight = horizontal
+    ? Math.max(0, ...kids.map(k => k.minHeight))
+    : kids.reduce((sum, k) => sum + k.minHeight, 0)
+  return { hardMinWidth, softMinWidth, minHeight, width: 'fill', height: 'fill' }
+}
+
+/** A block's bounded display-variant option list (#986), or `[]` when none declared. */
+export function blockVariants(registry: CroutonLayoutBlockRegistry, blockId: string): string[] {
+  const v = registry[blockId]?.variants
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
+/**
+ * Resolve a (possibly untrusted) variant value against a block's declared options:
+ * a known value is kept; an unknown one falls back to the FIRST declared option;
+ * a block with no variants resolves to `undefined`. The bounded, agent-pickable read.
+ */
+export function resolveVariant(registry: CroutonLayoutBlockRegistry, blockId: string, value: unknown): string | undefined {
+  const opts = blockVariants(registry, blockId)
+  if (opts.length === 0) return undefined
+  return typeof value === 'string' && opts.includes(value) ? value : opts[0]
 }
 
 /**

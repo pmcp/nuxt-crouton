@@ -10,7 +10,9 @@ Vue Flow integration for Nuxt Crouton. Renders collection data as interactive no
 
 | File | Purpose |
 |------|---------|
-| `app/components/Flow.vue` | Main graph component (orchestrates composables) |
+| `app/components/Flow.vue` | Main graph component (orchestrates composables). `defaultNodeComponent` prop injects a node card on the default render path (wrappers in this prefixed package can't use the by-collection-name `{Collection}Node` lookup — the `CroutonFlow` prefix makes it unreachable). |
+| `app/components/SiteFlow.vue` | `CroutonFlowSiteFlow` — the **Site level** of the Crouton Builder (WS3 #872, epic #868). A thin preset over `CroutonFlow` that renders the existing `pages` collection as a wireable sitemap (cards = pages, lines = `parentId`, positions → `flow_configs`, `sync` → Yjs multiplayer — all reused, not new). Injects `PageNode` via `defaultNodeComponent`, `provide`s `croutonSiteFlowZoom`, and emits `zoomIntoPage` (the original page row) so the zoom shell's `#site` slot descends into that page's layout. NOT a new data model — just another *view* of the pages you already have. |
+| `app/components/PageNode.vue` | `CroutonFlowPageNode` — the page-card node type (icon + label + slug + ⤡ zoom affordance, source/target handles). Injects `croutonSiteFlowZoom`; ⤡ or double-click descends the zoom shell into the page. |
 | `app/composables/useFlowDragDrop.ts` | External drag-and-drop onto canvas |
 | `app/composables/useFlowSyncBridge.ts` | Yjs ↔ Vue Flow data bridge |
 | `app/composables/useFlowSync.ts` | Flow sync (wraps useCollabSync) |
@@ -166,6 +168,8 @@ When `sync` is enabled:
 | `dataMode` | `'collection' \| 'ephemeral'` | `'collection'` | Data mode — 'ephemeral' skips collection mutations |
 | `selected` | `string[]` | - | Selected node IDs (enables `v-model:selected`) |
 | `additionalEdges` | `Array<{ id, source, target }>` | `[]` | Extra edges rendered alongside parent-derived edges (e.g. multi-parent synthesis connections) |
+| `defaultNodeComponent` | `Component` | - | Explicit node component for the default render path (overrides `{Collection}Node` name resolution). Used by `CroutonFlowSiteFlow` to inject its page card. Ghost nodes still render as ghosts. |
+| `focusBounds` | `{ x, y, width, height } \| null` | - | Camera focus — set a rect (flow coords) to zoom onto that area, clear it to fit the whole board. Deterministic (no re-measure): maps the rect's WIDTH to a constant fraction (~0.86) of the canvas width via `setCenter`, so scrubbing the rect to a wider device zooms OUT and the content stays ~the same on-screen size (responsive-preview feel). View transform only. Exposes `fitView` / `fitBounds` / `setCenter` via template ref. |
 
 ## Events
 
@@ -173,7 +177,8 @@ When `sync` is enabled:
 |-------|---------|-------------|
 | `nodeClick` | `(nodeId, data)` | Node clicked |
 | `nodeDblClick` | `(nodeId, data)` | Node double-clicked |
-| `nodeMove` | `(nodeId, position)` | Node moved |
+| `nodeMove` | `(nodeId, position)` | Node moved (after drag) |
+| `nodeDrag` | `(nodeId, position)` | Emitted continuously *while* dragging (live position, throttled ~50ms). Not gated on `sync` — use for live snap guides / alignment previews. |
 | `edgeClick` | `(edgeId)` | Edge clicked |
 | `nodeContainerChange` | `(ContainerChangeEvent)` | Node moved into/out of a container group |
 | `connectEnd` | `({ sourceNodeId, sourceHandleType, position, mouseEvent })` | Connection drag ended in empty space (no target handle). Use to show a "create node" menu. |

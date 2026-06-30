@@ -12,8 +12,8 @@ name: A11y (daily sweep)
 # Required repo config: secrets.ANTHROPIC_API_KEY (shared with the other claude workflows).
 
 on:
-  schedule:
-    - cron: '42 6 * * *'   # 06:42 UTC daily (offset from red-team's 06:17 to avoid pile-up)
+  # Daily schedule dropped to cut cost (#823) — rely on the per-PR a11y.yml gate (diff-scoped).
+  # Kept dispatchable for an occasional manual whole-repo sweep.
   workflow_dispatch:        # manual run
 
 concurrency:

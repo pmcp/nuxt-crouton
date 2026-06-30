@@ -1,0 +1,45 @@
+/* Loop Station — chassis + screen palette layered on the KO theme tokens.
+   The KO theme gives the hardware feel (gray chassis, black LED screens); we add
+   the data-viz monospace + a dark page body so panels read like instrument screens. */
+
+:root {
+  --mono: ui-monospace, SFMono-Regular, Menlo, "DejaVu Sans Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body, #__nuxt {
+  margin: 0;
+  /* Dark observatory body — KoPanels (black) read as instrument screens sitting
+     just above the backdrop, with a faint warm glow from the KO accent. */
+  background:
+    radial-gradient(1100px 520px at 18% -12%, #14110f 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #0d1014 0%, transparent 55%),
+    #07080a;
+  color: var(--ko-text-muted, #e2e2e2);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+/* KoPanel content area: give panels a consistent screen padding + rounding.
+   Neutralize the KO chassis content's horizontal borders + force border-box so
+   full-width children (charts, tables) aren't clipped by the panel's overflow. */
+.ko-panel { border-radius: var(--ko-wrapper-radius, 6px); box-shadow: var(--ko-shadow-drop); }
+.ko-panel__content {
+  display: block !important;
+  align-items: stretch !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  border-width: 0 !important;
+  padding: 16px 18px !important;
+}
+
+/* Vue Flow tidy-ups against the dark screen. */
+.vue-flow__edge-text { font-family: var(--mono); }
+.vue-flow__controls { box-shadow: none; }
+.vue-flow__controls-button { background: #171717; border-bottom: 1px solid #2a2a2a; fill: #ccd6e0; }
+.vue-flow__attribution { background: transparent; color: #44515f; }
+
+/* nuxt-charts axis/grid colors readable on the black screen. */
+.unovis-xy-container { --vis-axis-tick-label-color: #6a798b; --vis-axis-grid-color: #1c1c1c; --vis-axis-tick-color: #1c1c1c; }

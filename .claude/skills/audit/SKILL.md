@@ -1,5 +1,6 @@
 ---
 name: audit
+layer: method
 description: Audit packages for documentation completeness, detect drift between code and docs, and maintain documentation quality across the monorepo. Use when checking package docs, running audits, or reviewing documentation health.
 argument-hint: "[package-name | --all | --docs-health | --docs-verify [section]]"
 allowed-tools: Bash, Read, Grep, Glob

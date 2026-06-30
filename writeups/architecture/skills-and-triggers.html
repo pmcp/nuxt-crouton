@@ -205,12 +205,20 @@
         <p class="what">This skill helps generate complete CRUD collections for Nuxt Crouton applications.</p>
       </div>
       <div class="skill">
+        <div class="skill-head"><span class="name">/graduate</span><span class="badges"><span class="b ask">on ask</span><span class="b flow">in flow</span></span></div>
+        <p class="what">Turn a proven POC into a real, crouton-native, documented package(s) + a consuming app — the deliberate "step back and rebuild" checkpoint. SPEC-DRIVEN — the POC discovers a behaviour spec (captured at each sign-off), graduation freezes it as authoritative, the app is rebuilt the crouton way to satisfy it, and nothing is done until it's checked + signed off against two gates (experience + crouton-conformance). Use when a `pocs/*` app is proven and "done", or asked to "graduate this poc", "make it a real app", "extract the package".</p>
+      </div>
+      <div class="skill">
         <div class="skill-head"><span class="name">/provider-swap</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">Swap the external provider/library that backs a crouton package (e.g. the map renderer, geocoder, editor engine, storage SDK) while keeping the package's public API stable so consuming apps need no changes. Use when asked to "change the X provider", "replace library Y in package Z", "switch from &lt;vendor A&gt; to &lt;vendor B&gt;" inside packages/. Encodes the keep-the-API-stable playbook + the gotchas (dist .d.ts over docs, generator templates, fixtures, dup-dep type clashes).</p>
       </div>
       <div class="skill">
         <div class="skill-head"><span class="name">/schema-review</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
         <p class="what">Render a crouton collection schema (the field-definition JSON) into a human-readable field table + relationships sketch (HTML + PNG + a terse Markdown table), so a human can sign off on the DATA MODEL before any code is generated. Use when an agent drafts or changes a collection schema (before `crouton config` / `generate_collection`), or when asked to "review a schema", "show the data model", "check these fields".</p>
+      </div>
+      <div class="skill">
+        <div class="skill-head"><span class="name">/spec</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
+        <p class="what">Capture a POC's signed-off behaviour into its spec ledger (`&lt;poc&gt;/spec.json`) — the structured, walkable behaviour contract graduation freezes as authoritative. Run at the moment a behaviour gets signed off ("ok, this works"), while it's fresh — the same trigger as the HANDOFF.md update, but capturing the *behaviour as a testable entry* rather than the *decision as prose*. Use when a POC behaviour is approved, or asked to "capture this spec", "write the spec entry", "log this to the ledger".</p>
       </div>
       <div class="skill">
         <div class="skill-head"><span class="name">/task-decompose</span><span class="badges"><span class="b ask">on ask</span><span class="b flow">in flow</span></span></div>
@@ -294,6 +302,10 @@
         <p class="what">When a bug or regression is reported, the FIRST step — before fixing — is to research how and when it was introduced (git archaeology), then record that finding on the tracking issue/PR. Use the moment a bug, error, broken build, or "this used to work" is reported, before writing a fix. Produces a first-bad-commit (or "not a code regression") note you paste onto the issue.</p>
       </div>
       <div class="skill">
+        <div class="skill-head"><span class="name">/frontend-review</span><span class="badges"><span class="b ask">on ask</span><span class="b auto">auto</span></span></div>
+        <p class="what">Front-end conventions review for Vue surfaces — the component-usage analog of /a11y, pointed at Nuxt UI 4 + crouton conventions instead of WCAG. Reviews just your diff (or a package/file) for v3 component names, the v4 overlay pattern, Options API, raw-HTML re-implementations, and hardcoded colors; rates findings by severity; and either comments inline on the PR (--comment) or applies the safe fixes for you (--fix). Steers the depth-aware `frontend-review` subagent. Use when asked to "check the frontend", "are we using Nuxt UI right", "review component usage", "frontend-review this", or run /frontend-review.</p>
+      </div>
+      <div class="skill">
         <div class="skill-head"><span class="name">/i18n-audit</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">This skill performs a systematic translation completeness audit across all packages in the monorepo, using parallel subagents. It can also generate fix prompts or auto-fix individual packages.</p>
       </div>
@@ -340,6 +352,10 @@
     <p class="grp-sub">Prove nothing broke; keep the repo current.</p>
     <div class="grid">
       <div class="skill">
+        <div class="skill-head"><span class="name">/conformance</span><span class="badges"><span class="b flow">in flow</span><span class="b ask">on ask</span></span></div>
+        <p class="what">The crouton-conformance gate — the SECOND acceptance axis of graduation (the first is the experience side-by-side, /graduate stage C1). Checks a graduated app is a REAL crouton app — CLI-scaffolded, real collections, consumes the correct packages without reinventing them — by composing the existing probes (frontend-review, a11y, e2e-smoke, typecheck) plus crouton-structural checks, then renders a required, signed-off checklist on the graduation PR. Use at /graduate stage C2, or when asked "is this app crouton-native", "run the conformance gate", "check graduation conformance".</p>
+      </div>
+      <div class="skill">
         <div class="skill-head"><span class="name">/db-clone</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">Copy one Cloudflare D1 database into another of the same app's environments — refresh STAGING from prod, seed a PREVIEW from staging, or (guarded) push staging up to prod. Full mirror via scripts/db-clone.mjs. Use when asked to "clone a db", "refresh staging from prod", "copy prod data to staging", "seed a preview db", or to reconstitute a wiped staging DB. NOT for per-collection seeding (use the app's seedData/seed endpoints) or for schema migrations (use db-migrations).</p>
       </div>
@@ -362,6 +378,10 @@
     <h2><span class="num">7</span> Meta</h2>
     <p class="grp-sub">Thinking & workflow aids.</p>
     <div class="grid">
+      <div class="skill">
+        <div class="skill-head"><span class="name">/loop-station</span><span class="badges"><span class="b ask">on ask</span><span class="b auto">auto</span></span></div>
+        <p class="what">Observe the harness itself — (WS1) measure context budget as a deterministic, trendable inventory (tokens per CLAUDE.md / skill / agent, lexical redundancy, per-CI cold-write totals; committed history.jsonl), and (WS2) reconstruct the real invocation trace (which skills/agents/tools fired and how they nested) from session transcripts. Use for "context budget", "how big is CLAUDE.md / our skills", "is the harness bloating", "how do our agent loops actually run", "trace this session", "loop station".</p>
+      </div>
       <div class="skill">
         <div class="skill-head"><span class="name">/think-aloud</span><span class="badges"><span class="b ask">on ask</span></span></div>
         <p class="what">Think through a problem live on the ThinkGraph canvas. Each reasoning step appears as a node in real-time.</p>

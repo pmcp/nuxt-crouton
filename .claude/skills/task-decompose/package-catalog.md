@@ -13,6 +13,7 @@ OSS). Drill into `packages/<dir>/CLAUDE.md` for detail once a candidate is spott
 | `@fyit/crouton` | `packages/crouton` | Unified Nuxt CRUD framework with opt-in features |
 | `@fyit/crouton-admin` | `packages/crouton-admin` | Admin dashboard and user management for Nuxt applications using crouton-auth |
 | `@fyit/crouton-ai` | `packages/crouton-ai` | AI integration layer for Nuxt Crouton |
+| `@fyit/crouton-analytics` | `packages/crouton-analytics` | Provider-agnostic usage analytics for nuxt-crouton — PostHog default, swappable backend, lean-loop events |
 | `@fyit/crouton-assets` | `packages/crouton-assets` | Asset management layer extending nuxt-crouton for centralized media library |
 | `@fyit/crouton-atelier` | `packages/crouton-atelier` | Visual app builder for Nuxt Crouton — compose apps from pre-defined blocks |
 | `@fyit/crouton-audio` | `packages/crouton-audio` | Audio player layer for Crouton with waveform visualization (wraps WaveSurfer.js) |
@@ -27,6 +28,7 @@ OSS). Drill into `packages/<dir>/CLAUDE.md` for detail once a candidate is spott
 | `@fyit/crouton-editor` | `packages/crouton-editor` | Rich text editor layer extending nuxt-crouton (wraps Nuxt UI Editor) |
 | `@fyit/crouton-email` | `packages/crouton-email` | Email infrastructure for Nuxt applications using Vue Email templates and Resend delivery |
 | `@fyit/crouton-events` | `packages/crouton-events` | Event tracking layer for Nuxt Crouton - Audit trail for all CRUD operations |
+| `@fyit/crouton-feedback` | `packages/crouton-feedback` | Drop-in in-page feedback toolkit for any Nuxt UI app — a glasses launcher with a mobile console (eruda) and a pin-a-comment Annotate tool that sends to a pluggable destination (webhook / Slack / Discord / GitHub) |
 | `@fyit/crouton-flow` | `packages/crouton-flow` | Vue Flow integration for nuxt-crouton - graph/DAG visualization for collections |
 | `@fyit/crouton-i18n` | `packages/crouton-i18n` | i18n layer extending nuxt-crouton for multi-language support |
 | `@fyit/crouton-layout` | `packages/crouton-layout` | Deterministic layout engine for Nuxt Crouton — the layout editor, renderer, default-layout compose pass, placeable blocks, and layout_configs storage. Default-on via @fyit/crouton. |

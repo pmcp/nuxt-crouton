@@ -1,5 +1,6 @@
 ---
 name: e2e-smoke
+layer: stack
 description: Run the Playwright fixture smoke harness to prove a real generated crouton app still boots, authenticates, and does CRUD after a dependency bump or package change. Use when asked to "smoke test", "run e2e", "verify against a fixture", or to check that a packages/ change doesn't break consuming apps.
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion
 ---

@@ -94,6 +94,28 @@ if (data.staleEpics?.length) {
   sections.push(['✅ Epics ready to close', lines])
 }
 
+if (data.epicsMissingInProgress?.length) {
+  sections.push([
+    '🚧 Epics with active work but not marked in-progress',
+    [
+      'A child is `status:in-progress` but the epic isn\'t — so it reads as "open, not started". `label-ready-epics.mjs --apply` reconciles this:',
+      ...data.epicsMissingInProgress.map(
+        (e) => `- ${link(e.number, e.title, e.url)} — active: ${e.activeChildren.map((n) => `#${n}`).join(', ')}`
+      )
+    ]
+  ])
+}
+
+if (data.orphanedInProgress?.length) {
+  sections.push([
+    '🧭 In-progress under a non-open-epic parent',
+    [
+      '`status:in-progress` issues whose parent isn\'t a currently-open epic — a closed epic left with unfinished work, or a parent missing the `epic` label:',
+      ...data.orphanedInProgress.map((i) => `- ${link(i.number, i.title, i.url)} — parent #${i.parent}`)
+    ]
+  ])
+}
+
 if (data.idlePRs?.length) {
   sections.push([
     '🔀 Idle PRs',
@@ -104,8 +126,27 @@ if (data.idlePRs?.length) {
   ])
 }
 
+// Loop Station budget readout (#934, WS4) — one read-only line, always shown when
+// the inventory has produced data. Sourced from the latest committed history.jsonl
+// record (gathered, not recomputed). Omitted when WS1 hasn't run yet.
+function loopStationLine(ls) {
+  if (!ls || ls.alwaysOnTokens == null) return null
+  const k = (n) => (n / 1000).toFixed(1) + 'k'
+  const dot = ls.scorecard === 'green' ? '🟢' : ls.scorecard === 'amber' ? '🟡' : ls.scorecard === 'red' ? '🔴' : '⚪'
+  const delta =
+    ls.deltaTokens == null
+      ? 'baseline'
+      : ls.deltaTokens === 0
+        ? 'Δ +0'
+        : `Δ ${ls.deltaTokens > 0 ? '+' : '−'}${k(Math.abs(ls.deltaTokens))}`
+  const red = ls.redundancyPct == null ? '' : ` · redundancy ${ls.redundancyPct}%`
+  const tk = ls.tokenizer ? ` _(${ls.tokenizer})_` : ''
+  return `📟 **Context budget:** ${k(ls.alwaysOnTokens)} always-on tok${red} · scorecard ${dot} · ${delta}${tk}`
+}
+
 const when = new Date(data.generatedAt).toISOString().slice(0, 10)
-const head = [`## 🧹 Housekeeping — ${when}`, '']
+const lsLine = loopStationLine(data.loopStation)
+const head = [`## 🧹 Housekeeping — ${when}`, '', ...(lsLine ? [lsLine, ''] : [])]
 const body = sections.length
   ? sections.flatMap(([h, lines]) => [`### ${h}`, ...lines, ''])
   : ['✨ Nothing needs your eyes — branches, labels, and issue state look clean.', '']

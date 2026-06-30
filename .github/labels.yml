@@ -11,6 +11,9 @@
 - name: "pkg:crouton-ai"
   color: "1d76db"
   description: "Package: @fyit/crouton-ai"
+- name: "pkg:crouton-analytics"
+  color: "1d76db"
+  description: "Package: @fyit/crouton-analytics"
 - name: "pkg:crouton-assets"
   color: "1d76db"
   description: "Package: @fyit/crouton-assets"
@@ -53,6 +56,9 @@
 - name: "pkg:crouton-events"
   color: "1d76db"
   description: "Package: @fyit/crouton-events"
+- name: "pkg:crouton-feedback"
+  color: "1d76db"
+  description: "Package: @fyit/crouton-feedback"
 - name: "pkg:crouton-flow"
   color: "1d76db"
   description: "Package: @fyit/crouton-flow"
@@ -135,6 +141,12 @@
 - name: "poc:three-demo"
   color: "fef2c0"
   description: "POC: pocs/three-demo"
+- name: "poc:loop-station"
+  color: "fef2c0"
+  description: "POC: pocs/loop-station"
+- name: "poc:crouton-builder"
+  color: "fef2c0"
+  description: "POC: pocs/crouton-builder"
 
 # ── Sandboxes (sandboxes/*) — throwaway, human-eyeball test apps (delete-after) ──
 - name: "sandbox:minimal-theme-demo"
@@ -189,9 +201,15 @@
   color: "0e8a16"
   description: "Hand this issue to the Claude agent pipeline to work it (decompose-on-issue.yml)"
   from_name: "auto-decompose"
+- name: "delegate-pi"
+  color: "5319e7"
+  description: "Hand this issue to the pi.dev agent pipeline on the mac-mini (decompose-on-issue-pidev.yml)"
 - name: "workflow"
   color: "006b75"
   description: "Loop/skill/flow improvement (often minted by a postmortem)"
+- name: "loop-station-advisor"
+  color: "1d76db"
+  description: "Loop Station advisor recommendation (agent-filed, assigned to maintainer) — #933"
 
 # ── Security (red-team agent findings — epic #540) ──
 - name: "security"
@@ -214,6 +232,11 @@
 - name: "a11y"
   color: "0e8a16"
   description: "Accessibility finding/work from the a11y agent + /a11y skill (.claude/agents/a11y)"
+
+# ── Front-end conventions (frontend-review agent/skill findings — epic #834) ──
+- name: "frontend"
+  color: "1d76db"
+  description: "Front-end conventions finding/work from the frontend-review agent + /frontend-review skill (Nuxt UI 4 / crouton component usage)"
 
 # ── Status ──
 - name: "status:in-progress"

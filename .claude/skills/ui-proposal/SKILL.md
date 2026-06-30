@@ -1,5 +1,6 @@
 ---
 name: ui-proposal
+layer: stage
 description: Propose a UI change for human sign-off before building it. The default path deploys a rough live staging preview (with NUXT_PUBLIC_CROUTON_REVIEW=true) so the reviewer pins comments on the real running page. Use --static for the offline HTML/CSS mockup fallback (no deploy available, or speed over fidelity). Invoke for any task that adds/changes a .vue component, a layout, a page, or a theme.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---

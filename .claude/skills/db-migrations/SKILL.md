@@ -1,5 +1,6 @@
 ---
 name: db-migrations
+layer: stack
 description: The migration step and the package-owned-table exception — NOT the normal collection flow. For app collections use the crouton CLI/skill (schema JSON → `crouton config`); reach here when you then need to generate/apply the Drizzle migration and hit the schema.mjs-only-after-build gotcha ("No schema files found"), or when adding a package-owned infra table (the crouton-flow pattern) that does NOT go through `crouton config`.
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 ---
