@@ -169,6 +169,12 @@ only — not visual taste (`/ui-proposal`), accessibility (`/a11y`), or security
   And **push before you block**: if you've written anything, `git push -u origin <branch>`
   first and name that branch under *State so far* — an unpushed worktree is lost on stop, a
   pushed branch is recoverable by the resuming session.
+- **The PING is a TOP-LEVEL comment, never a PR *review* body.** Post the handoff/sign-off via
+  `add_issue_comment` (a top-level issue/PR comment) — that reliably notifies. A PR **review**
+  body (state `COMMENTED`) is a weak surface the owner misses: on #846 pi buried its
+  `reply lgtm/approve` ping inside a review and it nearly went unseen. Put any detailed review
+  or analysis in its own separate artifact; the actionable ask (the handoff block + `@mention` +
+  `status:blocked`) stands alone as a top-level comment.
 - **An @mention is a request for action, not a broadcast.** Only @mention `NOTIFY_HANDLE`
   when you need the human to *do* something: answer a blocking question, give a sign-off,
   or unblock you. **Pure progress/status updates** ("spawning the worker for #NN", "wave 2

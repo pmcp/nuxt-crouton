@@ -109,5 +109,7 @@ You may be running headless — do NOT use `AskUserQuestion` (it times out). If 
 contradictory): `add_issue_comment` on the issue with a concise question + the options
 you're weighing, **@mention the notify handle (`@pmcp` — `NOTIFY_HANDLE` in the
 task-decompose skill)** so they're notified, apply `status:blocked`, and **stop** this
-branch (don't spawn anything). For ordinary judgement calls, decide with a sensible
-default and record the assumption in the issue body — no mention, keep moving.
+branch (don't spawn anything). The ping is a **top-level** `add_issue_comment`, never a PR
+*review* body (state `COMMENTED`) — a review body doesn't reliably notify the owner (#846). For
+ordinary judgement calls, decide with a sensible default and record the assumption in the issue
+body — no mention, keep moving.
