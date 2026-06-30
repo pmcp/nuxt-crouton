@@ -96,7 +96,10 @@ jobs:
           command -v pi >/dev/null 2>&1 || npm i -g @earendil-works/pi-coding-agent
           DATE=$(date -u +%Y%m%d)
           LOG="a11y-pidev-exec-${{ github.run_id }}.log"
-          PROMPT=$(cat <<EOF
+          # Build the prompt in a FILE, not PROMPT=$(cat <<EOF…) — a $()-wrapped heredoc
+          # breaks on an apostrophe in the body (bash quote-tracking), e.g. "repo's".
+          PROMPT_FILE="$RUNNER_TEMP/a11y-pidev-prompt.txt"
+          cat > "$PROMPT_FILE" <<EOF
           Run the **/a11y** skill (.claude/skills/a11y/SKILL.md) at **depth=deep, scope=repo**.
           Sweep the vuejs-accessibility/* eslint rules across every packages/* .vue, and attempt
           best-effort runtime axe via the e2e fixture harness (the a11y.smoke.spec.ts path); if
@@ -111,12 +114,11 @@ jobs:
           git or gh or push anything. Your SINGLE deliverable is the report file above; a later
           workflow step posts it. Report quality is what is being measured here.
           EOF
-          )
           echo "report=writeups/reports/a11y-repo-pidev-${DATE}.md" >> "$GITHUB_OUTPUT"
           echo "exec=$LOG" >> "$GITHUB_OUTPUT"
           START=$(date +%s)
           # Confirmed on the mac-mini (#888): pin provider + load skills via --skill.
-          pi --print --provider anthropic --model "$PI_MODEL" --skill .claude/skills "$PROMPT" 2>&1 | tee "$LOG"
+          pi --print --provider anthropic --model "$PI_MODEL" --skill .claude/skills "$(cat "$PROMPT_FILE")" 2>&1 | tee "$LOG"
           RC=${PIPESTATUS[0]}
           END=$(date +%s)
           echo "wall=$((END-START))" >> "$GITHUB_OUTPUT"
