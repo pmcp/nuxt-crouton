@@ -20,15 +20,23 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `task-orchestrator` | `task-orchestrator.md` | no | no | `sonnet` |
+| `task-orchestrator` | `task-orchestrator.md` | no | no | `haiku` |
 | `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `sonnet` |
 | `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) | `opus` |
 
-**Model split (cost):** orchestrator + decomposer only read/write GitHub issues, so they
-run on **Sonnet**; only `task-worker` writes real code, so it runs on **Opus**. Each
-spawned agent re-pays the base context (system prompt + this repo's large `CLAUDE.md` +
-tool defs), so fan-out is the dominant cost — drop the issue-only agents to `haiku` for a
-cheaper (slightly blunter) split, or raise them to `opus` if decomposition quality slips.
+**Model split (#824) — tier by REASONING difficulty, not by "writes code?":** the
+naive cut ("issue-only roles → cheapest model") is wrong for the **decomposer**. Writing
+code and *reasoning* are different axes, and the decomposer is the pipeline's reasoning
+bottleneck — it applies the LEAF TEST, makes the split-vs-build call, derives coherent
+workstreams, and writes the **acceptance criteria the Opus worker builds against**. A
+blunt decomposer mis-specs the expensive worker, so it stays on **Sonnet** (at least).
+The **orchestrator** is a bounded one-shot (epic → 2–6 workstreams, once per epic), so it
+runs on **Haiku** — the genuinely zero-risk cut. The **worker** writes real code → **Opus**.
+Each spawned agent re-pays the base context (system prompt + this repo's large `CLAUDE.md`
++ tool defs), so fan-out (mostly decomposer invocations) is the dominant cost — which is
+exactly why the decomposer must be *good*, not just cheap. Open question worth measuring:
+whether the decomposer should be **raised to Opus** (and the well-specced worker dropped to
+Sonnet) — the inverse of today's split.
 
 ## The red-team agent (standalone — not part of the pipeline)
 
