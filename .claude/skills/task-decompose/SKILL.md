@@ -175,6 +175,13 @@ surfaces in the GitHub / Claude mobile app):
 - **Epic done** → when the last child merges, the verify-rollup comment on the epic
   also @mentions `NOTIFY_HANDLE` (per `github-tasks`).
 
+**Every actionable ping is a TOP-LEVEL comment.** A blocker question **or a sign-off request**
+goes out as `add_issue_comment` (a top-level issue/PR comment) — that notifies reliably.
+**Never bury the ask in a PR *review* body** (state `COMMENTED`): it's a weak surface the owner
+misses (the #846 sign-off case, where pi's `lgtm/approve` ping sat inside a review). Detailed
+review/analysis can live in its own artifact; the `@mention` + `status:blocked` ask stands alone
+on top.
+
 To change who gets pinged, edit `NOTIFY_HANDLE` here and in `.claude/agents/CLAUDE.md`.
 
 ## Notes
