@@ -24,11 +24,25 @@ name: Decompose on issue (pi.dev variant)
 #     reads CLAUDE_EXEC_FILE, which pi doesn't emit yet (#1004 piece 3 / WS3) — the
 #     gate degrades to the conclusion-based message, PASS/FAIL is unaffected.
 #
-# STILL TODO before this can be promoted past dispatch-only (do NOT skip at rollout):
-#   • «VERIFY» pi's turn-cap flag (claude had `--max-turns 30`) on the box — uncapped
-#     agent loops are a cost/safety risk. Left off here until confirmed.
-#   • BOT-ACTOR GUARD (#1004 piece 2): only needed once this is wired to `issues:
-#     labeled` (to stop a bot-actored re-fire loop). Moot while dispatch-only.
+# WS4 plumbing is now COMPLETE (#1004) — all three pieces present, armed but dormant:
+#   • Piece 1 — PUSH PATH: the Harness App token (below).
+#   • Piece 2 — BOT-ACTOR GUARD: the first job step (re-expresses claude-code-action's
+#     `allowed_bots`). It no-ops under `workflow_dispatch` and ARMS automatically the
+#     moment this flow is promoted to an `issues: labeled` trigger.
+#   • Piece 3 — EXEC-LOG ADAPTER: the artifact-gate reads pi's plain-text run log
+#     (`steps.pi.outputs.exec_log`) and classifies the failure cause (billing / error /
+#     underspecified) — parity with the claude flow's structured-log "why".
+#
+# TWO LOAD-BEARING pi FACTS (verified on the mac-mini this WS):
+#   • NO TURN-CAP FLAG. `pi --help` exposes only model-cycling "Limit" options, not a
+#     claude-style `--max-turns`. The ONLY cost/safety bound is the job `timeout-minutes`
+#     (30) — do NOT assume a per-turn cap exists.
+#   • SINGLE-MODEL. pi runs the whole orchestrator→decomposer→worker pipeline on ONE
+#     `--model`; it cannot reproduce the Claude harness's per-role tiering (#824 — e.g.
+#     planning on Opus). Choose the one model deliberately via the `model` input.
+#
+# PROMOTION past dispatch-only (when ready): add an `issues: labeled` trigger + the
+# `delegate`-label `if:` gate (mirror decompose-on-issue.yml); the bot-actor guard arms itself.
 
 on:
   workflow_dispatch:
@@ -62,6 +76,26 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      # ── BOT-ACTOR GUARD (#1004 piece 2) — re-expresses claude-code-action's `allowed_bots` ──
+      # The claude flow passes `allowed_bots: "nuxt-harness[bot]"`; pi has no such built-in, so we
+      # assert it ourselves as the FIRST step (fail fast, before minting any token). DORMANT under
+      # `workflow_dispatch` — the actor is the human dispatcher, so the `if` skips it. It ARMS the
+      # moment this flow is promoted to an `issues: labeled` trigger: only the Harness App's
+      # label-add (`nuxt-harness[bot]`) may drive the pipeline; any OTHER bot actor — e.g.
+      # `claude[bot]`/`github-actions[bot]` re-firing from a worker's own `status:in-progress`
+      # label change — is rejected here, breaking the bot re-fire loop (#457/#535). Humans pass.
+      - name: Bot-actor guard
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        env:
+          ACTOR: ${{ github.actor }}
+        run: |
+          ALLOWED="nuxt-harness[bot]"
+          if [[ "$ACTOR" == *"[bot]" && "$ACTOR" != "$ALLOWED" ]]; then
+            echo "::error::Bot-actor guard: '$ACTOR' may not drive the pi pipeline (only $ALLOWED). Refusing to run."
+            exit 1
+          fi
+          echo "Bot-actor guard OK (actor: $ACTOR)."
+
       # ── PUSH PATH (#1004 piece 1) — mint a Harness App token so pi's pushes CASCADE ──
       # Same app as automerge-epic-subpr.yml. A GITHUB_TOKEN push would NOT re-trigger
       # downstream workflows (#572); an App-installation token does.
@@ -118,17 +152,21 @@ jobs:
           END=$(date +%s)
           echo "wall=$((END-START))" >> "$GITHUB_OUTPUT"
           echo "conclusion=$([ "$RC" -eq 0 ] && echo success || echo failure)" >> "$GITHUB_OUTPUT"
+          # Piece 3 (exec-log adapter): hand the plain-text run log to the artifact-gate so it can
+          # classify WHY a run produced nothing (pi emits no structured execution_file like claude).
+          echo "exec_log=$LOG" >> "$GITHUB_OUTPUT"
 
-      # ── Artifact-gate (#461) — REUSED VERBATIM from decompose-on-issue.yml ────────
+      # ── Artifact-gate (#461) — PASS/FAIL logic reused from decompose-on-issue.yml ────────
       # Harness-agnostic: PASS/FAIL is GitHub-state via GITHUB_TOKEN (comment / linked
-      # PR / sub-issues / status:blocked). We feed it pi's conclusion; CLAUDE_EXEC_FILE
-      # is empty (pi emits no structured log yet — #1004 piece 3 / WS3), so the "why"
-      # falls back to the conclusion-based message. PASS/FAIL is unaffected.
+      # PR / sub-issues / status:blocked). Piece 3 (#1004) feeds it pi's PLAIN-TEXT run
+      # log (`PI_EXEC_LOG`) instead of claude's structured execution_file, so the failure
+      # "why" is cause-aware (billing / error / underspecified) — parity with the claude
+      # flow. PASS/FAIL is unchanged either way.
       - name: Artifact-gate — fail if the agent produced nothing
         if: always()
         uses: actions/github-script@v7
         env:
-          CLAUDE_EXEC_FILE: ""
+          PI_EXEC_LOG: ${{ steps.pi.outputs.exec_log }}
           CLAUDE_CONCLUSION: ${{ steps.pi.outputs.conclusion }}
           ISSUE_NUMBER: ${{ inputs.issue }}
         with:
@@ -170,10 +208,38 @@ jobs:
               return
             }
 
+            // ── Classify WHY there was no deliverable (#1004 piece 3) ──────────────────
+            // pi emits no structured execution_file like claude-code-action — it emits the
+            // plain-text run log we tee'd to PI_EXEC_LOG. Grep it for the known causes so the
+            // failure comment names the actual problem + fix (mirrors decompose-on-issue.yml's
+            // billing/error/underspecified buckets). The most likely first-run cause is an
+            // out-of-credit PI_PROVIDER_KEY, so detect that explicitly.
+            const fs = require('fs')
             let why = '', action = ''
-            // pi emits no structured execution_file yet (#1004/WS3) — use the conclusion fallback.
-            if (process.env.CLAUDE_CONCLUSION === 'failure') {
-              why = 'the agent step **failed before producing anything** (often a billing/credit, API, or tooling error)'
+            const failed = process.env.CLAUDE_CONCLUSION === 'failure'
+            try {
+              const logFile = process.env.PI_EXEC_LOG
+              if (logFile && fs.existsSync(logFile)) {
+                const log = fs.readFileSync(logFile, 'utf8')
+                const tail = log.length > 600 ? log.slice(-600) : log
+                if (/credit balance is too low|insufficient.*(credit|balance|quota)|billing/i.test(log)) {
+                  why = 'the pi provider call failed — **the Anthropic account behind `PI_PROVIDER_KEY` is out of credit**'
+                  action = 'Top up that account (Console → Billing; enable auto-reload), then re-dispatch.'
+                } else if (failed) {
+                  why = 'the pi agent step **errored** before producing a deliverable'
+                  action = 'Open the run log and fix the logged SDK/tooling error, then re-dispatch.'
+                  if (tail.trim()) why += `. Log tail:\n\n> ${tail.trim().replace(/\n/g, '\n> ')}`
+                } else {
+                  why = 'pi finished its turn without opening a PR, creating sub-issues, or holding for sign-off'
+                  action = 'This usually means the issue is underspecified — add a concrete description + '
+                    + 'acceptance criteria so there is something to build, then re-dispatch.'
+                }
+              }
+            } catch (e) { core.warning(`artifact-gate: could not read pi run log: ${e.message}`) }
+
+            // Fallback when the log is unreadable but the step itself failed.
+            if (!why && failed) {
+              why = 'the pi agent step **failed before producing anything** (often a billing/credit, API, or tooling error)'
               action = 'Open the run log. If it says "Credit balance is too low", top up the Anthropic account '
                 + 'behind `PI_PROVIDER_KEY`. Otherwise fix the logged error, then re-dispatch.'
             }
