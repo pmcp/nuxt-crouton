@@ -28,6 +28,10 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# pi.dev (project-local package installs + ralph-wiggum loop state)
+.pi/npm/
+.ralph/
+
 # OS
 .DS_Store
 Thumbs.db

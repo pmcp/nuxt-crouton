@@ -1,0 +1,24 @@
+{
+  "$comment": "Headless CI profile — only pipeline-critical + telemetry extensions. In CI, ANTHROPIC_API_KEY env var activates the 'anthropic' provider. Locally, pi-claude-cli reads auth.json.",
+  "defaultProvider": "anthropic",
+  "defaultThinkingLevel": "medium",
+  "quietStartup": true,
+  "enableInstallTelemetry": false,
+  "otel": {
+    "enabled": true,
+    "endpoint": "http://localhost:4317",
+    "protocol": "grpc",
+    "captureContent": "metadata_only",
+    "signals": { "traces": true, "metrics": false, "logs": false }
+  },
+  "packages": [
+    "npm:pi-subagents",
+    "npm:pi-mcp-adapter",
+    "npm:pi-claude-cli",
+    "npm:pi-otel",
+    "npm:@jademind/pi-telemetry",
+    "npm:@tmustier/pi-usage-extension",
+    "npm:pi-prompt-template-model",
+    "npm:@tmustier/pi-ralph-wiggum"
+  ]
+}
