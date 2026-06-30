@@ -123,6 +123,32 @@ For each `packages/*` unit in the brief:
    the data-model / UI gates where they apply (`/schema-review` #314, `/ui-proposal`
    #307).
 
+### 3.6 Build the consuming app the CROUTON WAY (scaffold it; don't hand-assemble or port) — HARD LESSON (#988)
+
+**The consuming app is a *real crouton app*, scaffolded through the CLI — not a folder you
+hand-assemble, and NOT a copy of the POC.** This is where the builder graduation went wrong and
+burned a session: the app was hand-built (mirroring a fixture + copying `spike-*` files), which
+(a) skipped the whole point of graduation — rethinking the POC into a clean, optimized, real-data
+app — and (b) silently omitted standard scaffold pieces, so it *built green but 500'd at runtime
+on every request*. The single missing file was **`server/db/schema.ts`** (the entry NuxtHub builds
+the runtime DB schema from); without it every auth/team/i18n query throws. A hand-assembled app
+will be missing exactly the boilerplate the CLI emits, and you won't see it until runtime.
+
+Do instead:
+- **Scaffold via the CLI** (`crouton init` / the `crouton` skill) so the app is a complete,
+  bootable crouton app: `server/db/schema.ts`, `crouton.config.js`, the hub/db wiring, `app.vue`
+  (`<UApp>`), `tsconfig`, the lot. Never reconstruct these by hand.
+- **Generate real COLLECTIONS** (`crouton config` → schema sign-off #314 → generate) and have the
+  builder arrange *those* blocks. The collections ARE the data model the app exists to compose —
+  backend-free demo blocks are a POC crutch, not the graduated app.
+- **Learn from the POC; don't copy it.** Re-derive the behaviour clean and *optimized* — the POC's
+  proven UX is the spec, its code is not. Copying `spike-*` forward re-imports its workarounds and
+  defeats the rebuild. (If you catch yourself `cp`-ing POC files into the app, stop.)
+- **You can't fully verify a deployed app from a sandbox** (egress-blocked preview URL, killed dev
+  servers, CI logs cover build-not-runtime). So getting the scaffold *correct by construction* (CLI,
+  not hand-rolled) matters more than usual — and a runtime 500 on a green build almost always means
+  a missing scaffold file, so diff against a known-good generated app (a fixture) FIRST.
+
 ### 4.5 Parity check on the rebuilt app (gate)
 
 Run the **same exploratory agent from step 1.5** against the *graduated* app and reconcile it to the
