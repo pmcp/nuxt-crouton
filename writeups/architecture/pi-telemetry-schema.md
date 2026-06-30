@@ -55,39 +55,42 @@ Each pi session writes a JSONL file. Every line is a JSON object with a `type` f
 ```
 
 #### `message` (assistant — the cost-bearing line)
+
+> Captured from a REAL Haiku call on the Mac mini (2026-06-30T21:46Z). Content/thinking redacted.
+
 ```json
 {
   "type": "message",
-  "id": "c569bcd9",
-  "parentId": "35aedb10",
-  "timestamp": "2026-06-30T18:09:51.245Z",
+  "id": "3f10dfdb",
+  "parentId": "f5095b7e",
+  "timestamp": "2026-06-30T21:46:23.830Z",
   "message": {
     "role": "assistant",
-    "content": [],
-    "api": "anthropic-messages",
-    "provider": "anthropic",
-    "model": "claude-haiku-4-5",
+    "content": ["<REDACTED — thinking + text>"],
+    "api": "pi-claude-cli",
+    "provider": "pi-claude-cli",
+    "model": "claude-haiku-4-5-20251001",
     "usage": {
-      "input": 1234,
-      "output": 567,
-      "cacheRead": 89012,
-      "cacheWrite": 3456,
-      "totalTokens": 94269,
+      "input": 10,
+      "output": 83,
+      "cacheRead": 0,
+      "cacheWrite": 43751,
+      "totalTokens": 43844,
       "cost": {
-        "input": 0.001234,
-        "output": 0.000567,
-        "cacheRead": 0.008901,
-        "cacheWrite": 0.003456,
-        "total": 0.014158
+        "input": 0.00001,
+        "output": 0.000415,
+        "cacheRead": 0,
+        "cacheWrite": 0.05468875,
+        "total": 0.05511375
       }
     },
     "stopReason": "stop",
-    "timestamp": 1782842990950
+    "timestamp": 1782855980632
   }
 }
 ```
 
-**Privacy note:** `content` is omitted from this sample. Real messages contain the full assistant response — the adapter MUST NOT forward content, only the `usage` + `model` + `provider` + `stopReason` fields.
+**Privacy note:** `content` contains the full assistant response (including `thinking` blocks with signatures). The adapter MUST NOT forward content, only the `usage` + `model` + `provider` + `stopReason` fields.
 
 #### `message` (user)
 ```json
@@ -295,6 +298,64 @@ pi.interaction (root)
 | `context.percent` | number | Context window usage % |
 | `context.pressure` | string | `"normal"` / `"approaching_limit"` / `"near_limit"` / `"at_limit"` |
 | `lastEvent` | string | Most recent pi lifecycle event |
+
+### Real heartbeat sample (captured 2026-06-30T21:46Z)
+
+```json
+{
+  "schemaVersion": 2,
+  "source": "pi-telemetry",
+  "process": {
+    "pid": 37110,
+    "ppid": 36569,
+    "startedAt": 1782855864074,
+    "updatedAt": 1782856021314,
+    "uptimeMs": 157240,
+    "heartbeatSeq": 103,
+    "heartbeatMs": 1500
+  },
+  "system": {
+    "host": "Maartens-Mac-mini.local",
+    "user": "maarten",
+    "platform": "darwin",
+    "arch": "arm64",
+    "nodeVersion": "v22.23.1"
+  },
+  "workspace": {
+    "cwd": "/Users/maarten/nuxt-crouton",
+    "git": { "branch": "chore/653-mac-mini-runner-runbook", "commit": "71fe45ed" }
+  },
+  "session": {
+    "id": "019f1a7d-8aa2-7e25-a8a7-972e876d510b",
+    "file": "<REDACTED — local path>"
+  },
+  "model": {
+    "provider": "pi-claude-cli",
+    "id": "claude-3-5-haiku-20241022",
+    "name": "Claude Haiku 3.5"
+  },
+  "state": {
+    "activity": "waiting_input",
+    "isIdle": true,
+    "hasPendingMessages": false,
+    "waitingForInput": true,
+    "busy": false
+  },
+  "context": {
+    "tokens": 0,
+    "contextWindow": 200000,
+    "percent": 0,
+    "remainingTokens": 200000,
+    "remainingPercent": 100,
+    "pressure": "normal",
+    "closeToLimit": false,
+    "nearLimit": false
+  },
+  "routing": { "tty": "ttys003", "source": "none", "env": {} },
+  "capabilities": { "hasUI": true },
+  "lastEvent": "session_start"
+}
+```
 
 ### Snapshot schema (schemaVersion: 2)
 
