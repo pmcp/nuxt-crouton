@@ -20,15 +20,27 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `task-orchestrator` | `task-orchestrator.md` | no | no | `sonnet` |
-| `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `sonnet` |
+| `task-orchestrator` | `task-orchestrator.md` | no | no | `opus` |
+| `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `opus` |
 | `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) | `opus` |
 
-**Model split (cost):** orchestrator + decomposer only read/write GitHub issues, so they
-run on **Sonnet**; only `task-worker` writes real code, so it runs on **Opus**. Each
-spawned agent re-pays the base context (system prompt + this repo's large `CLAUDE.md` +
-tool defs), so fan-out is the dominant cost — drop the issue-only agents to `haiku` for a
-cheaper (slightly blunter) split, or raise them to `opus` if decomposition quality slips.
+**Model split — tier by REASONING LEVERAGE, not by "writes code?" (#824):** the whole
+pipeline runs on **Opus**, on purpose. The tempting cost cut — "the orchestrator and
+decomposer only read/write GitHub issues, so run them on a cheap model" — is **backwards**:
+*writing code* and *reasoning* are different axes, and the planning roles sit at the top of
+the reasoning one. The **orchestrator** owns the package-reuse call (#292 — build-on-a-package
+vs from-scratch, the #274 reinvent-a-package failure) and the top-level slice that frames the
+**entire** tree; the **decomposer** recursively applies the LEAF TEST and writes the
+**acceptance criteria the worker builds against**. A blunt planner mis-frames or mis-specs
+work, and that error is paid downstream as wasted **Opus-worker** runs (build the wrong thing →
+the artifact-gate catches it late). Crucially, planning is **reasoning-dense but token-light**
+(read an issue/catalog, write a few issues — not large code files), so Opus there costs little
+in absolute tokens while having the highest leverage; better decomposition *reduces* total
+spend by preventing rework. So: spend the strongest model where the decisions are made
+(planning) — it's both the quality move and, system-wide, likely the cheaper one. The
+cost levers live elsewhere (drop fixed daily sweeps; route reports-only flows to Haiku via
+pi), not in blunting the pipeline's brain. (Open question if cost ever bites: the well-specced
+**worker** is the one role that *could* trial **Sonnet** — measure gate pass-rate first.)
 
 ## The red-team agent (standalone — not part of the pipeline)
 
