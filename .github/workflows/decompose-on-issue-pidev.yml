@@ -41,8 +41,10 @@ name: Decompose on issue (pi.dev variant)
 #     `--model`; it cannot reproduce the Claude harness's per-role tiering (#824 — e.g.
 #     planning on Opus). Choose the one model deliberately via the `model` input.
 #
-# PROMOTION past dispatch-only (when ready): add an `issues: labeled` trigger + the
-# `delegate`-label `if:` gate (mirror decompose-on-issue.yml); the bot-actor guard arms itself.
+# PROMOTED past dispatch-only (#1017): now also fires when a human applies the `delegate-pi`
+# label to an issue (mirrors the claude `delegate` flow). The bot-actor guard below is now LIVE
+# on that path; on success the run posts a `🤖 pi: done → PR #N` breadcrumb back on the issue.
+# Manual `workflow_dispatch` (harness=pi) still works for an explicit run on any issue number.
 
 on:
   workflow_dispatch:
@@ -62,11 +64,20 @@ on:
         required: false
         default: "claude-haiku-4-5-20251001"
         type: string
+  # PROMOTED past dispatch-only (#1017): a human applying the `delegate-pi` label starts a pi
+  # run. We fire on EVERY labeled event but the job `if` gates to the exact `delegate-pi` label,
+  # so a worker later adding `status:in-progress` does NOT re-fire (the claude flow's #535 lesson).
+  issues:
+    types: [labeled]
 
 jobs:
   decompose-pi:
-    # AGENT_HARNESS gate (WS7) — default OFF. Dispatch-only is the first lock; this is the second.
-    if: ${{ inputs.harness == 'pi' || vars.AGENT_HARNESS == 'pi' }}
+    # Fire on EITHER: a manual dispatch opting into pi, OR the `delegate-pi` label freshly applied
+    # to an issue (#1017). The specific-label check is what stops a re-fire loop when the worker
+    # adds its own labels (#535). Anything else (other labels, AGENT_HARNESS off) → no run.
+    if: |
+      (github.event_name == 'workflow_dispatch' && (inputs.harness == 'pi' || vars.AGENT_HARNESS == 'pi')) ||
+      (github.event_name == 'issues' && github.event.label.name == 'delegate-pi')
     runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     # No `id-token` — pi uses a provider key, not OIDC. The write scopes are for the
@@ -133,8 +144,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.PI_PROVIDER_KEY }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          PI_MODEL: ${{ inputs.model }}
-          ISSUE: ${{ inputs.issue }}
+          PI_MODEL: ${{ inputs.model || 'claude-haiku-4-5-20251001' }}
+          ISSUE: ${{ inputs.issue || github.event.issue.number }}
         run: |
           set -uo pipefail
           command -v pi >/dev/null 2>&1 || npm i -g @earendil-works/pi-coding-agent
@@ -168,7 +179,8 @@ jobs:
         env:
           PI_EXEC_LOG: ${{ steps.pi.outputs.exec_log }}
           CLAUDE_CONCLUSION: ${{ steps.pi.outputs.conclusion }}
-          ISSUE_NUMBER: ${{ inputs.issue }}
+          ISSUE_NUMBER: ${{ inputs.issue || github.event.issue.number }}
+          TRIGGER: ${{ github.event_name }}
         with:
           script: |
             const issue_number = Number(process.env.ISSUE_NUMBER)
@@ -205,6 +217,23 @@ jobs:
             const signoffHeld = blocked && newComment
             if (linkedPR || signoffHeld || alreadyLinkedPR || alreadyClosed || createdSubIssues) {
               core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld} alreadyLinkedPR=${alreadyLinkedPR} alreadyClosed=${alreadyClosed} createdSubIssues=${createdSubIssues}`)
+              // Result-comment-back (#1017) — only on a label-triggered run (a human is watching the
+              // issue). This comment posts as the Harness App (nuxt-harness[bot]) — an unmistakable
+              // bot account — so it uses the agent-pipeline provenance header, NOT the @pmcp disclaimer.
+              if (process.env.TRIGGER === 'issues') {
+                const freshPR = prRefs
+                  .filter(e => new Date(e.created_at).getTime() >= sinceMs)
+                  .map(e => e.source.issue.number)[0]
+                const what = freshPR
+                  ? `done → PR #${freshPR}`
+                  : (createdSubIssues ? 'decomposed → sub-issues created (see the tree)'
+                    : signoffHeld ? 'held for sign-off (`status:blocked` + a review)'
+                    : 'produced a deliverable — see the run')
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number,
+                  body: `> 🤖 **pi.dev harness** · agent pipeline (CI · mac-mini) · _via the \`delegate-pi\` label_\n\n${what}`,
+                })
+              }
               return
             }
 
