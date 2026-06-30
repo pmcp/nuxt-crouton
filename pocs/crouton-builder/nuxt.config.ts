@@ -14,6 +14,12 @@ export default defineNuxtConfig({
   modules: ['@fyit/crouton'],
   css: ['~/assets/css/main.css'],
 
+  // The builder is an interactive Vue Flow canvas behind auth — SSR buys it nothing and
+  // the heavy client surface (Vue Flow, drag/snap/pinch) is brittle to server-render. Render
+  // it as a SPA: the client hydrates, auth + the /api routes still run server-side. This
+  // eliminates the whole SSR-500 class (the deployed board 500'd on server render). #988
+  ssr: false,
+
   // The layout renderer resolves a leaf's block via `<component :is="name">` (a runtime
   // string), which only resolves GLOBALLY-registered components — so the app's demo
   // blocks register global, by bare filename (BuilderBlock). (Package blocks like
