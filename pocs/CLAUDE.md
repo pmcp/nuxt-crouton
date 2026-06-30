@@ -129,6 +129,10 @@ whole reason to capture at sign-off rather than rebuild it at graduation (the re
 `graduate` skill is the lossy fallback, not the goal). `pocs/crouton-builder-demo` is the POC the
 convention will first be retrofitted onto.
 
+**Enforced (#992 WS5):** a `PreToolUse` hook (`.claude/hooks/gate-spec-signoff.mjs`) blocks any
+edit that flips an entry to `status: "settled"` without a populated `signedOff` — so "done" can't be
+self-asserted by editing one word. Until a human signs off, an entry stays `stopgap`/`new`.
+
 ## What lives here right now
 
 A mix of two things:
