@@ -60,9 +60,9 @@ on:
         type: choice
         options: ["off", "pi"]
       model:
-        description: "Model for pi."
+        description: "Model for pi. Default claude-sonnet-5 — near-Opus coding at ~0.4x Opus cost, and built to finish autonomously (Haiku stalled+asked on the #839 test, #1019). Use Haiku only for trivial/reports."
         required: false
-        default: "claude-haiku-4-5-20251001"
+        default: "claude-sonnet-5"
         type: string
   # PROMOTED past dispatch-only (#1017): a human applying the `delegate-pi` label starts a pi
   # run. We fire on EVERY labeled event but the job `if` gates to the exact `delegate-pi` label,
@@ -144,7 +144,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.PI_PROVIDER_KEY }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          PI_MODEL: ${{ inputs.model || 'claude-haiku-4-5-20251001' }}
+          PI_MODEL: ${{ inputs.model || 'claude-sonnet-5' }}
           ISSUE: ${{ inputs.issue || github.event.issue.number }}
         run: |
           set -uo pipefail
@@ -155,10 +155,19 @@ jobs:
           git config user.email "nuxt-harness[bot]@users.noreply.github.com"
           LOG="decompose-pidev-exec-${{ github.run_id }}.log"
           START=$(date +%s)
+          # Front-load a tool-agnostic NON-INTERACTIVE directive (#1019) so pi does not
+          # stall-and-ask while headless (the #839 failure — pi asked "which option?" and
+          # stopped). Built in a FILE via a QUOTED heredoc (never PROMPT=$(cat <<EOF) — an
+          # apostrophe breaks that substitution, #1001), then the /task-decompose command
+          # with the issue number appended.
+          PROMPT_FILE="decompose-pidev-prompt-${{ github.run_id }}.txt"
+          cat > "$PROMPT_FILE" <<'PI_PROMPT'
+          You are running NON-INTERACTIVELY in CI. No human is attached and there is no terminal to read input from. NEVER pause, ask a question, or wait for confirmation, and do not invoke pi-ask-user. When a choice is ambiguous, pick the most sensible default, record the assumption in an issue or PR comment, and PROCEED. The run only succeeds if it produces a real deliverable: a PR (Closes #N), created sub-issues, or a held sign-off (status:blocked plus a review). Merely listing options or asking what to do is a FAILED run. Given that, do the following now:
+          PI_PROMPT
+          printf '/task-decompose #%s\n' "$ISSUE" >> "$PROMPT_FILE"
           # Confirmed on the mac-mini (#888): pin provider + load skills via --skill.
-          # The skill ("/task-decompose") drives the orchestrator→decomposer→worker pipeline.
           pi --print --provider anthropic --model "$PI_MODEL" --skill .claude/skills \
-            "/task-decompose #${ISSUE}" 2>&1 | tee "$LOG"
+            "$(cat "$PROMPT_FILE")" 2>&1 | tee "$LOG"
           RC=${PIPESTATUS[0]}
           END=$(date +%s)
           echo "wall=$((END-START))" >> "$GITHUB_OUTPUT"
@@ -200,7 +209,11 @@ jobs:
               e.source && e.source.issue && e.source.issue.pull_request
             )
             const linkedPR = prRefs.some(e => new Date(e.created_at).getTime() >= sinceMs)
-            const alreadyLinkedPR = prRefs.length > 0
+            // NOTE (#1019): we deliberately do NOT treat a pre-existing cross-referenced PR as
+            // a pass. On #839 an UNRELATED epic PR (#846) merely cross-referenced the issue and
+            // false-greened a no-op run. A fresh-work run must yield a FRESH deliverable (a PR
+            // opened this run / sub-issues created this run / a sign-off held this run) or a
+            // genuinely closed issue — not a stale link. `alreadyLinkedPR` is intentionally unused.
 
             const issue = await github.rest.issues.get({ ...context.repo, issue_number })
             const blocked = issue.data.labels.some(l => (typeof l === 'string' ? l : l.name) === 'status:blocked')
@@ -215,8 +228,8 @@ jobs:
             } catch (e) { core.warning(`sub-issue check skipped: ${e.message}`) }
 
             const signoffHeld = blocked && newComment
-            if (linkedPR || signoffHeld || alreadyLinkedPR || alreadyClosed || createdSubIssues) {
-              core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld} alreadyLinkedPR=${alreadyLinkedPR} alreadyClosed=${alreadyClosed} createdSubIssues=${createdSubIssues}`)
+            if (linkedPR || signoffHeld || alreadyClosed || createdSubIssues) {
+              core.info(`Artifact-gate OK for #${issue_number}: linkedPR=${linkedPR} signoffHeld=${signoffHeld} alreadyClosed=${alreadyClosed} createdSubIssues=${createdSubIssues}`)
               // Result-comment-back (#1017) — only on a label-triggered run (a human is watching the
               // issue). This comment posts as the Harness App (nuxt-harness[bot]) — an unmistakable
               // bot account — so it uses the agent-pipeline provenance header, NOT the @pmcp disclaimer.
@@ -294,16 +307,20 @@ jobs:
       # we surface them as an artifact + in the log so the convergence is verifiable.
       - name: Capture pi telemetry → WS2 trace + #883 ledger slice (artifacts; non-fatal)
         if: always()
+        env:
+          SINCE: ${{ steps.t0.outputs.ts }}
         run: |
           set +e
           mkdir -p pi-telemetry-out
           SESS_ROOT="$HOME/.pi/agent/sessions"
-          # The most-recently-modified subagent-artifacts dir = this run's telemetry.
-          # darwin (the mac-mini) stat first, linux stat as fallback.
-          TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts 2>/dev/null \
+          # The most-recently-modified subagent-artifacts dir MODIFIED DURING THIS RUN (#1019):
+          # `-newermt "$SINCE"` scopes to dirs touched at/after the run-start timestamp, so we
+          # never mis-attribute a PRIOR run's telemetry (the #839 stale-row bug). `-newermt`
+          # works on both BSD find (the mac-mini) and GNU find (ubuntu fallback).
+          TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts -newermt "$SINCE" 2>/dev/null \
             | xargs -I{} stat -f '%m {}' {} 2>/dev/null | sort -rn | head -n1 | cut -d' ' -f2-)"
           if [ -z "$TELE_DIR" ]; then
-            TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -n1 | cut -d' ' -f2-)"
+            TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts -newermt "$SINCE" -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -n1 | cut -d' ' -f2-)"
           fi
           if [ -n "$TELE_DIR" ] && [ -d "$TELE_DIR" ]; then
             echo "pi telemetry dir: $TELE_DIR"
