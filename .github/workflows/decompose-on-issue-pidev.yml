@@ -255,3 +255,41 @@ jobs:
 
             await github.rest.issues.createComment({ ...context.repo, issue_number, body })
             core.setFailed(`Artifact-gate: pi.dev run on #${issue_number} produced no deliverable.`)
+
+      # ── Telemetry convergence capture (#944) — REAL data from this pi run ──────────
+      # Proves the "one feed → both consumers" loop on a live run: locate this run's pi
+      # subagent telemetry (~/.pi/agent/sessions/.../subagent-artifacts) and run the
+      # adapter to emit BOTH a Loop Station WS2 trace AND the #883 ledger-row slice.
+      # Non-fatal + artifact-only on purpose: it must never fail the headline code-writing
+      # proof, and committing rows to the ledger file from CI is a separate follow-up — here
+      # we surface them as an artifact + in the log so the convergence is verifiable.
+      - name: Capture pi telemetry → WS2 trace + #883 ledger slice (artifacts; non-fatal)
+        if: always()
+        run: |
+          set +e
+          mkdir -p pi-telemetry-out
+          SESS_ROOT="$HOME/.pi/agent/sessions"
+          # The most-recently-modified subagent-artifacts dir = this run's telemetry.
+          # darwin (the mac-mini) stat first, linux stat as fallback.
+          TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts 2>/dev/null \
+            | xargs -I{} stat -f '%m {}' {} 2>/dev/null | sort -rn | head -n1 | cut -d' ' -f2-)"
+          if [ -z "$TELE_DIR" ]; then
+            TELE_DIR="$(find "$SESS_ROOT" -type d -name subagent-artifacts -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -n1 | cut -d' ' -f2-)"
+          fi
+          if [ -n "$TELE_DIR" ] && [ -d "$TELE_DIR" ]; then
+            echo "pi telemetry dir: $TELE_DIR"
+            node .claude/skills/loop-station/pi-telemetry.mjs "$TELE_DIR"          > pi-telemetry-out/pi-trace.jsonl  2>/dev/null
+            node .claude/skills/loop-station/pi-telemetry.mjs "$TELE_DIR" --ledger > pi-telemetry-out/ledger-rows.jsonl 2>/dev/null
+            echo "── #883 ledger-row slice from THIS pi run (model · cost · turns · wall) ──"
+            cat pi-telemetry-out/ledger-rows.jsonl || true
+          else
+            echo "no pi subagent telemetry found — a decompose-only run (sub-issues, no worker) writes none. Skipping."
+          fi
+
+      - name: Upload pi telemetry artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pi-telemetry-${{ github.run_id }}
+          path: pi-telemetry-out/
+          if-no-files-found: ignore
