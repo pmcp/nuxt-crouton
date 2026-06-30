@@ -164,15 +164,17 @@ off** (`lgtm <id>`). The spec is the walk; the live POC is the expected.
 > off through their own new-behaviour gate at A2/B (`/schema-review`, `/ui-proposal`, `/test-review`).
 > C1 certifies the app didn't *lose* the POC; the new-behaviour gates certify what it *added*.
 
-### C2. Crouton-conformance gate (sign-off)
-The app is a real crouton app — a *required, signed-off* checklist:
-- [ ] **CLI-scaffolded** (`crouton init`), not hand-built (standard scaffold present)
-- [ ] **Real collections** (`crouton config` → generate), not stubs
-- [ ] **Consumes the correct packages** — the graduated package(s) + the standard stack, wired the
-      crouton way; **does not reimplement/port what a package provides** (DRY)
-- [ ] passes **`frontend-review`** (Nuxt UI 4 / crouton conventions) + **`a11y`** + **`pnpm typecheck`**
-- [ ] **boots + does CRUD** (`e2e-smoke`)
-- [ ] **docs updated** — package/app `CLAUDE.md`; new package ⇒ `node scripts/gen-package-catalog.mjs` + `pkg:*` label
+### C2. Crouton-conformance gate (sign-off) → run `/conformance`
+Run the **`/conformance`** skill against the app — it owns the full checklist (the single source of
+truth) and renders it as a required, signed-off gate. It certifies the app is a *real crouton app*:
+- **CLI-scaffolded** (`crouton init`), not hand-built — `server/db/schema.ts` present (the #988 500)
+- **Real collections** (`crouton config` → generate), not stub blocks
+- **Consumes the correct packages** without reimplementing what they provide (DRY — the key check)
+- passes **`/frontend-review`** + **`/a11y`** + **`pnpm typecheck`** + **`/e2e-smoke`**
+- **docs updated** — package/app `CLAUDE.md`; new package ⇒ `node scripts/gen-package-catalog.mjs` + `pkg:*` label
+
+`/conformance` composes the existing probes and holds on `status:blocked` until a human signs off this
+axis. (C1 above is the *experience* axis — the side-by-side; C2 here is the *conformance* axis.)
 
 ### Done, checkpoints, promote
 **Done = both axes signed off** — never one, never a proxy. **Tag a checkpoint** at every signed-off
@@ -194,6 +196,6 @@ retire the POC (`/remove-app`) once it supersedes; run `/postmortem` at epic clo
 
 Defers to the **root `CLAUDE.md`** / `AGENTS.md` for workflow/commit/issue conventions (ISSUE-FIRST,
 `/commit`, no-squash, the `packages/` edit gate, test-first #774, **done = a checked + signed-off
-spec entry**). Reuses `/postmortem`, `/test-review`, `/schema-review`, `/ui-proposal`,
-`/frontend-review`, `/a11y`, `/e2e-smoke`, `/deploy`, `/remove-app`, and the `/spec` capture
-(`pocs/CLAUDE.md`). This skill *orchestrates* that checkpoint — it doesn't replace any of them.
+spec entry**). Reuses `/conformance` (the C2 gate), `/postmortem`, `/test-review`, `/schema-review`,
+`/ui-proposal`, `/frontend-review`, `/a11y`, `/e2e-smoke`, `/deploy`, `/remove-app`, and the `/spec`
+capture (`pocs/CLAUDE.md`). This skill *orchestrates* that checkpoint — it doesn't replace any of them.
