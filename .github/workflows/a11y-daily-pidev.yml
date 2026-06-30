@@ -80,10 +80,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # ── The agent: pi.dev, REPORTS-ONLY, scoped to the model key only ──────────────
-      # env carries ONLY the provider key — no GH_TOKEN/GITHUB_TOKEN. «VERIFY» pi's CLI
-      # surface on the runner (print flag / model flag) via `pi --help`; the working
-      # invocation from the spike is `pi --print --model <m> "<prompt>"`. Skills: bridge
-      # .claude/skills → .pi/skills so pi loads them (Agent Skills standard).
+      # env carries ONLY the provider key — no GH_TOKEN/GITHUB_TOKEN. CI pins
+      # `--provider anthropic` with a FUNDED API key (PI_PROVIDER_KEY) — NOT a Claude
+      # subscription (subscription OAuth must never back unattended CI — Anthropic terms;
+      # the box's interactive `pi-claude-cli`/subscription path stays interactive-only).
+      # Invocation + skills confirmed on the mac-mini (#888): the `.pi/skills` symlink
+      # bridge does NOT load — pi's discovery ignores it — so skills are passed via the
+      # explicit `--skill .claude/skills` flag (our SKILL.md format is drop-in portable).
       - id: pi
         env:
           ANTHROPIC_API_KEY: ${{ secrets.PI_PROVIDER_KEY }}
@@ -91,7 +94,6 @@ jobs:
         run: |
           set -uo pipefail
           command -v pi >/dev/null 2>&1 || npm i -g @earendil-works/pi-coding-agent
-          mkdir -p .pi && [ -e .pi/skills ] || ln -s ../.claude/skills .pi/skills
           DATE=$(date -u +%Y%m%d)
           LOG="a11y-pidev-exec-${{ github.run_id }}.log"
           PROMPT=$(cat <<EOF
@@ -113,8 +115,8 @@ jobs:
           echo "report=writeups/reports/a11y-repo-pidev-${DATE}.md" >> "$GITHUB_OUTPUT"
           echo "exec=$LOG" >> "$GITHUB_OUTPUT"
           START=$(date +%s)
-          # «VERIFY» flags — single source of truth for the invocation:
-          pi --print --model "$PI_MODEL" "$PROMPT" 2>&1 | tee "$LOG"
+          # Confirmed on the mac-mini (#888): pin provider + load skills via --skill.
+          pi --print --provider anthropic --model "$PI_MODEL" --skill .claude/skills "$PROMPT" 2>&1 | tee "$LOG"
           RC=${PIPESTATUS[0]}
           END=$(date +%s)
           echo "wall=$((END-START))" >> "$GITHUB_OUTPUT"
