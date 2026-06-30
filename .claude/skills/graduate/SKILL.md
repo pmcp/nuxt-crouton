@@ -23,6 +23,21 @@ time at each "ok this works" (the `/spec` ledger — see `pocs/CLAUDE.md`). **Gr
 the spec flips from discovered to authoritative**: now the spec leads and the code is the
 regenerable output, rebuilt clean to serve it.
 
+**A POC is a floor, not a ceiling — graduation is not a 1:1 port.** A POC *proves the core exists*;
+it deliberately leaves directions, options and additions open, and it *fakes* whatever wasn't the
+point (data, persistence, auth). So the graduated app is a **superset** of the POC, sorted into three
+buckets — only the first is governed by the side-by-side comparison:
+
+| Bucket | What it is | Signed off by |
+|---|---|---|
+| **Preserve** | the proven, signed-off POC experience — the contract | **C1 side-by-side** vs the live POC |
+| **Replace** | a POC stopgap/fake → the real crouton thing (demo blocks → real collections · ephemeral state → persistence) | C1 (same behaviour) + conformance (real impl) |
+| **Add** | completeness the POC left open that a *real* app needs (collections + CRUD, persistence, auth/team scope, empty/error/loading states, edge cases) | the **normal new-behaviour gates** (`/schema-review`, `/ui-proposal`, `/test-review`) — **not C1**, there's no POC to compare |
+
+The trap is treating graduation as "make the app equal the POC": that under-builds (skips the
+**Add** bucket a real app needs) *or* over-preserves (ports the **Replace** fakes forward). Name each
+behaviour's bucket up front (the revision plan, A2) so the right gate governs it.
+
 **Three invariants (read these before touching anything):**
 
 1. **Preserve experience · revise architecture · clean code.** The POC is the *baseline*.
@@ -82,14 +97,20 @@ vocabulary the rebuild reproduces, so the same walk runs on POC *and* app.
 > Needs an environment that can actually run the POC. A sandbox that kills dev servers / blocks the
 > preview URL can't do A1 — the human drives; you draft and reconcile from artifacts.
 
-### A2. Revision plan — record every deliberate divergence (sign-off)
-Two short plans, both signed off *before* building:
+### A2. Revision plan — bucket every behaviour + record every divergence (sign-off)
+Three short plans, all signed off *before* building. First **bucket each behaviour** (Preserve /
+Replace / Add) so the right gate governs it, then:
 - **Architecture revision** — per spec entry (or globally) the clean crouton-native HOW, naming the
   POC shortcut it replaces (demo blocks → real collections · overlay-measured handles → the package's
-  renderer · ephemeral state → real persistence).
-- **Experience revision** — which spec entries we'll *deliberately do differently* and why (a POC
-  "stopgap"/`status: stopgap` entry is *expected* to change; a `settled` entry is the contract). These
-  become the *expected* diffs in C1; everything else unexpected is a bug.
+  renderer · ephemeral state → real persistence). This is the **Replace** bucket.
+- **Experience revision** — which `settled` spec entries we'll *deliberately do differently* and why
+  (a `stopgap` entry is *expected* to change; a `settled` entry is the contract). These become the
+  *expected* diffs in C1; everything else unexpected there is a bug.
+- **Additions** — what the real app must **Add** that the POC left open (a POC is a floor, not a
+  ceiling): real collections + CRUD, persistence, auth/team scope, empty/error/loading states, the
+  edge cases a demo skips. Each lands as a `status: new` spec entry and is signed off through its
+  **own** new-behaviour gate (`/schema-review`, `/ui-proposal`, `/test-review`) — *not* C1, since
+  there's no POC expected-result to compare. Don't let "preserve the POC" quietly cap the app here.
 
 ### A3. Data model — real collections (sign-off)
 Decide the real **collections** (`crouton config` → `/schema-review` #314 → generate). The collections
@@ -131,12 +152,17 @@ For each `packages/*` unit:
 
 ## Stage C — Verify against both gates, then promote (after handoff)
 
-### C1. Experience gate — side-by-side comparison
-Open the **POC and the rebuilt app together** and walk the spec **entry by entry** on both: same
-inventory (palette · gestures · the `data-handoff` hooks · each entry's how-to-test). Every difference
-is triaged — **same** (preserved ✅) · **intentionally different** = a logged A2 decision (✨ ✅) ·
-**unexplained** = drift/regression (🐛 fix). The gate passes at **zero unexplained differences**, and
-each entry is **checked + signed off** (`lgtm <id>`). The spec is the walk; the live POC is the expected.
+### C1. Experience gate — side-by-side comparison (Preserve + Replace only)
+Open the **POC and the rebuilt app together** and walk the **Preserve + Replace** entries (`status:
+settled` / `stopgap`) **entry by entry** on both: same inventory (palette · gestures · the
+`data-handoff` hooks · each entry's how-to-test). Every difference is triaged — **same** (preserved
+✅) · **intentionally different** = a logged A2 decision (✨ ✅) · **unexplained** = drift/regression
+(🐛 fix). The gate passes at **zero unexplained differences**, and each entry is **checked + signed
+off** (`lgtm <id>`). The spec is the walk; the live POC is the expected.
+
+> **Add** entries (`status: new`) are **not** walked here — there's no POC to compare. They were signed
+> off through their own new-behaviour gate at A2/B (`/schema-review`, `/ui-proposal`, `/test-review`).
+> C1 certifies the app didn't *lose* the POC; the new-behaviour gates certify what it *added*.
 
 ### C2. Crouton-conformance gate (sign-off)
 The app is a real crouton app — a *required, signed-off* checklist:
