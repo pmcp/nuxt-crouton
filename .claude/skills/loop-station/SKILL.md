@@ -104,9 +104,21 @@ Both reconstruct **2+-level recursion** (agent→agent→…) to the correct dep
 
 | file | role |
 |------|------|
-| `parse-transcripts.mjs` | parse one session → `trace.jsonl` of `{ts,kind,name,parent,depth,agentId?,durMs?}` (also importable: `parseSession()`) |
+| `parse-transcripts.mjs` | **claude harness:** parse one Claude Code session → `trace.jsonl` of `{ts,kind,name,parent,depth,agentId?,durMs?}` (also importable: `parseSession()`) |
+| `pi-telemetry.mjs` | **pi harness (#944):** adapt pi.dev telemetry (native session JSONL + subagent meta, per `writeups/architecture/pi-telemetry-schema.md`) → the SAME WS2 event shape **and** the #883 ledger slice. `buildPiTrace(dir)` / `runOutcomeToLedgerRecord(outcome)`; CLI: `node pi-telemetry.mjs <dir> [--ledger]` |
+| `pi-telemetry.test.mjs` | runs the adapter against the real captured fixtures (`pocs/loop-station/data/pi-telemetry-sample/`); asserts the ledger slice passes the real `eval-ledger/schema.mjs` validator + payload-freeness |
 | `collect-traces.mjs` | CI collector — discover the run's session across all project dirs, tag events with the run id, write one NDJSON file (meta header + tagged events) for artifact upload |
 | `lib/parse-transcripts.test.mjs` | fixtures for both layouts, 2-level recursion, payload-freeness, defensiveness |
+
+### Harness parity (#944)
+
+WS2 reads whichever harness is active. The data seam (`pocs/loop-station/scripts/prepare-data.mjs`)
+branches on `AGENT_HARNESS`: `pi` → `pi-telemetry.mjs` (live `PI_TELEMETRY_DIR` of subagent metas,
+else the committed real sample); anything else → the claude transcript parser. **One feed, two
+consumers:** the same pi telemetry yields the WS2 trace **and** the `{model,cost,turns,wall}` slice
+for the #883 run-outcome ledger — so the cost ledger *consumes* pi telemetry, it doesn't re-derive
+it. Note: pi's WS2 trace is **agent-granularity** today (one node per subagent); tool-level nesting
+arrives when pi-otel spans are actually collected (schema doc §3, not yet wired).
 
 ## Run by hand
 
