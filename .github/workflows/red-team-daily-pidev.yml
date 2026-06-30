@@ -1,0 +1,142 @@
+name: Red-Team daily (reports-only — pi.dev variant)
+
+# Dormant pi.dev twin of `red-team-daily.yml` — #1006, part of #669. Same private-email
+# disclosure (this is a PUBLIC repo: unfixed vulns must NOT be posted to GitHub), agent
+# step swapped claude-code-action → pi. Sibling of the proven a11y reports-only flow (#867).
+#
+# DORMANT BY DESIGN: workflow_dispatch only + default-OFF AGENT_HARNESS gate + needs a
+# funded PI_PROVIDER_KEY. It cannot fire or bill until explicitly opted in.
+#
+# COST BOUND: pi has NO turn-cap flag (the claude `--max-turns 60` does not port), so the
+# bound is `timeout-minutes` (the job wall-clock) — confirmed on the mini (#1005).
+#
+# Required config (same as red-team-daily.yml): secret RESEND_API_KEY, secret
+# PI_PROVIDER_KEY (pi's model key), vars RESEND_FROM + RED_TEAM_REPORT_EMAIL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      harness:
+        description: "Opt-in flag (WS7). Must be 'pi' to actually run — default 'off' no-ops."
+        required: true
+        default: "off"
+        type: choice
+        options: ["off", "pi"]
+      model:
+        description: "Model for pi."
+        required: false
+        default: "claude-haiku-4-5-20251001"
+        type: string
+
+concurrency:
+  group: red-team-daily-pidev
+  cancel-in-progress: false
+
+jobs:
+  red-team-pidev:
+    if: ${{ inputs.harness == 'pi' || vars.AGENT_HARNESS == 'pi' }}
+    runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    # No id-token (pi uses a provider key). No issues/PR write — disclosure is private email only.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false   # pi gets NO git token — reports-only
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # ── The agent: pi.dev, REPORTS-ONLY, scoped to the model key only ──────────────
+      # env carries ONLY the provider key — no GH_TOKEN. Skills via --skill .claude/skills,
+      # provider pinned to anthropic (funded key, not subscription). Prompt built in a FILE
+      # (a $()-wrapped heredoc breaks on the apostrophe in "repo's" — #1001).
+      - id: pi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.PI_PROVIDER_KEY }}
+          PI_MODEL: ${{ inputs.model }}
+        run: |
+          set -uo pipefail
+          command -v pi >/dev/null 2>&1 || npm i -g @earendil-works/pi-coding-agent
+          DATE=$(date -u +%Y%m%d)
+          LOG="red-team-pidev-exec-${{ github.run_id }}.log"
+          PROMPT_FILE="$RUNNER_TEMP/red-team-pidev-prompt.txt"
+          cat > "$PROMPT_FILE" <<EOF
+          Run the **/red-team** skill (.claude/skills/red-team/SKILL.md) at **depth=deep, scope=repo**.
+          Fan out the red-team subagent across the apps/security-relevant packages, collate ONE
+          whole-repo report to writeups/reports/red-team-repo-pidev-${DATE}.md following
+          writeups/reports/red-team-TEMPLATE.md, and attempt dynamic confirmation of high/critical
+          candidates against a fixtures/ app (reuse the e2e-smoke harness). Only probe this repo's
+          own local fixtures — never any external or production host.
+
+          PRIVATE DISCLOSURE — this is a PUBLIC repo and this run has NO git/gh credentials by
+          design. Do NOT post anything to GitHub (no issue, no comment, no PR), do NOT file
+          security/sec:* issues, do NOT edit any apps/ or packages/ code. Your single deliverable
+          is the report file above; a later workflow step emails it to the maintainer privately.
+          Always write the report, even on a clean sweep.
+          EOF
+          START=$(date +%s)
+          pi --print --provider anthropic --model "$PI_MODEL" --skill .claude/skills "$(cat "$PROMPT_FILE")" 2>&1 | tee "$LOG"
+          RC=${PIPESTATUS[0]}
+          END=$(date +%s)
+          echo "wall=$((END-START))" >> "$GITHUB_OUTPUT"
+          echo "conclusion=$([ "$RC" -eq 0 ] && echo success || echo failure)" >> "$GITHUB_OUTPUT"
+
+      # ── Email the report (Resend) — verbatim from red-team-daily.yml; private disclosure ──
+      - name: Email the report (Resend)
+        if: always()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ vars.RESEND_FROM }}
+          EMAIL_TO: ${{ vars.RED_TEAM_REPORT_EMAIL }}
+          MODEL: ${{ inputs.model }}
+        run: |
+          REPORT=$(ls -t writeups/reports/red-team-repo-pidev-*.md 2>/dev/null | head -1 || true)
+          if [ -z "$REPORT" ]; then
+            echo "::warning::No red-team pi.dev report file was produced — nothing to email."
+            exit 0
+          fi
+          if [ -z "$RESEND_API_KEY" ] || [ -z "$EMAIL_FROM" ] || [ -z "$EMAIL_TO" ]; then
+            echo "::warning::RESEND_API_KEY / RESEND_FROM / RED_TEAM_REPORT_EMAIL not set — skipping email. Report at $REPORT (this run's workspace only)."
+            exit 0
+          fi
+          SUBJECT="🔴 Red-team daily report (pi.dev · ${MODEL}) — $(date -u +%F)"
+          echo "Emailing $REPORT → $EMAIL_TO"
+          jq -n \
+            --arg from "$EMAIL_FROM" \
+            --arg to "$EMAIL_TO" \
+            --arg subject "$SUBJECT" \
+            --rawfile body "$REPORT" \
+            '{from:$from, to:[$to], subject:$subject, text:$body, html:("<pre style=\"font-family:ui-monospace,monospace;white-space:pre-wrap\">"+($body|@html)+"</pre>")}' \
+          | curl -sS -X POST https://api.resend.com/emails \
+              -H "Authorization: Bearer $RESEND_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d @- -w '\nHTTP %{http_code}\n'
+
+      # ── Eval datapoint (#865) — same scoreboard as the a11y pi flow ────────────────
+      - name: Capture eval datapoint
+        if: always()
+        env:
+          MODEL: ${{ inputs.model }}
+          WALL: ${{ steps.pi.outputs.wall }}
+          CONCLUSION: ${{ steps.pi.outputs.conclusion }}
+        run: |
+          {
+            echo "## pi.dev red-team reports-only — eval datapoint (#865)"
+            echo ""
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| flow | red-team (reports-only) |"
+            echo "| harness | pi.dev |"
+            echo "| model | \`${MODEL}\` |"
+            echo "| wall (s) | ${WALL:-n/a} |"
+            echo "| pi conclusion | ${CONCLUSION:-n/a} |"
+            echo "| runner | ${{ runner.name }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
