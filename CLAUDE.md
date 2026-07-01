@@ -121,7 +121,7 @@ its sub-issues is one coherent PR with the commits kept separate.
 
 ### Issue Status Updates
 - Move the issue through its states: open → in-progress → closed (via the PR's `Closes #NN` on merge)
-- **At epic close**: after the `## 🧪 Verify the whole thing` rollup and **before** closing, run the **`postmortem`** skill — a retro (what went well / what was hard / improvement proposals) that mints `workflow` issues so the loop tightens over time (epic #403). See the `github-tasks` skill's epic-close flow.
+- **At epic close**: after the `## 🧪 Verify the whole thing` rollup and **before** closing, run the **`postmortem`** skill — a retro (what went well / what was hard / improvement proposals) that mints `workflow` issues so the loop tightens over time (epic #403). See the `github-tasks` skill's epic-close flow. The postmortem stamps `status:ready-to-close`; the owner then closes the epic in one gesture by commenting **`/close-epic`** on it (`close-epic-on-comment.yml`, gated on that label so it can't fire before the postmortem — #856).
 - `writeups/PROGRESS_TRACKER.md` is an **optional** phase-level rollup, not the per-task tracker — update it only when keeping a phase summary current.
 
 ### Multi-Agent Continuity
