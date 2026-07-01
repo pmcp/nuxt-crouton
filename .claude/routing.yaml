@@ -53,9 +53,8 @@ routes:
     tier: medium
     why: "LEAF test + split issues; no code written. Moved opus→Sonnet 5 with the orchestrator on the same N=4 A/B evidence. Refines #824."
   red-team:
-    tier: large
-    proposed: medium
-    why: security analysis, reports only — opus is overkill, free win to Sonnet
+    tier: medium
+    why: security analysis, reports only — opus was overkill; moved to Sonnet 5 (no code written, daily deep sweep is the cost). Free win per #823/#824.
   a11y:
     tier: medium
     proposed: small

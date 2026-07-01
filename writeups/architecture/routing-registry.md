@@ -18,7 +18,7 @@ Default tier: **medium**
 | `task-worker` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | — | writes code → PR; quality-sensitive — hold on Claude until #865 proves a cheaper model |
 | `task-orchestrator` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | — | reads epic → workstreams; no code written. Moved opus→Sonnet 5 on an N=4 decompose A/B (Sonnet 5 matched/beat Opus 4.8 on 3 of 4 real epics, ~5× cheaper, fewer NEEDS-SPLIT recursion rounds). Refines #824: the strong-but-cheaper model is a peer planner, not the blunt one that decision guarded against. |
 | `task-decomposer` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | — | LEAF test + split issues; no code written. Moved opus→Sonnet 5 with the orchestrator on the same N=4 A/B evidence. Refines #824. |
-| `red-team` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | medium (claude-sonnet-4-6) | security analysis, reports only — opus is overkill, free win to Sonnet |
+| `red-team` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | — | security analysis, reports only — opus was overkill; moved to Sonnet 5 (no code written, daily deep sweep is the cost). Free win per |
 | `a11y` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | small (claude-haiku-4-5) | template review, reports only |
 | `frontend-review` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | small (claude-haiku-4-5) | convention review, reports only |
 

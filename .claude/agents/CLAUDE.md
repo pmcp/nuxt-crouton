@@ -55,7 +55,7 @@ Static-first; at `depth=deep` it may dynamically confirm high/criticals against 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `red-team` | `red-team.md` | no | no (reports only) | `opus` |
+| `red-team` | `red-team.md` | no | no (reports only) | `sonnet` |
 
 It's steered by the **`/red-team` skill** (on demand) and run by
 `.github/workflows/red-team.yml` (per-PR `quick`, fails the check on high+) and
