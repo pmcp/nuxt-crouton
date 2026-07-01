@@ -151,11 +151,13 @@ the horizontal auto-stack. And at tablet width (820px, comfortably above the pan
 the same horizontal compose renders correctly. So the failure is specific to
 **horizontal-arrangement + narrow width + bare renderer.**
 
-**Follow-up.** (a) The bare renderer should carry the same container-width fallback the responsive
+**Follow-up → tracked in [#1058](https://github.com/FriendlyInternet/nuxt-crouton/issues/1058).**
+(a) The bare renderer should carry the same container-width fallback the responsive
 renderer injects (or measure a guaranteed-non-zero ancestor), so `<CroutonLayoutRenderer>` is
 responsive on its own. (b) The compose guidance should point at the responsive renderer for served
 layouts. (c) A viability check at author time could warn when a horizontal split's summed min-widths
-can't fit a phone breakpoint with no authored stack.
+can't fit a phone breakpoint with no authored stack. Confirmed live on a real phone (booking-demo
+staging).
 
 ### Gap 5 — 🟡 The block composition can't reproduce the Panel's single-surface feel or its chrome
 
