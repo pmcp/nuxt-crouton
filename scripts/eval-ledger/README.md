@@ -50,6 +50,12 @@ One JSON object per line:
 **Success** = no gate failed *and* `outcome ∈ {merged, report}` (reports-only flows have no merge,
 so a clean report counts). **The routing metric is cost-per-success**, not raw cost or quality.
 
+**`model` is the provider-qualified id** — `provider/model`, e.g. `anthropic/claude-haiku-4-5-20251001`
+(the form the live pipeline emits). `validate()` trims + lowercases it so the same model logged two
+ways aggregates, but the **provider is preserved on purpose**: this is a *cost* scoreboard, so a
+hosted `anthropic/…` (~$5/Mtok) must stay distinct from a local `ollama/…` (~$0). `append.mjs` warns
+(non-fatal) if a record's `model` has no provider prefix.
+
 ## Use
 
 ```bash

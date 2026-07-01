@@ -63,7 +63,7 @@ export function validate(rec) {
     flow: rec.flow,
     skill: rec.skill ?? null,
     harness: rec.harness,
-    model: rec.model,
+    model: canonicalModel(rec.model),
     cost_usd: num(rec.cost_usd),
     turns: num(rec.turns),
     wall_s: num(rec.wall_s),
@@ -90,6 +90,18 @@ function num(v) {
   if (v === null || v === undefined || v === '') return null
   const n = Number(v)
   return Number.isFinite(n) ? n : null
+}
+
+/**
+ * Canonical model id = the provider-qualified id (`provider/model`) the live pipeline
+ * emits, trimmed + lowercased so the SAME model logged two ways aggregates in the
+ * scoreboard. The provider is deliberately PRESERVED: this is a cost scoreboard, so
+ * `anthropic/claude-haiku-…` (~$5/Mtok) must stay distinct from a local `ollama/…`
+ * (~$0). Only whitespace/case are normalized here — never strip the provider.
+ * @param {any} v
+ */
+export function canonicalModel(v) {
+  return typeof v === 'string' ? v.trim().toLowerCase() : v
 }
 
 /**
