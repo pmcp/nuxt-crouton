@@ -9,13 +9,13 @@ own infra (ThinkGraph/pi) — and how to keep the platform choice reversible.
 
 **Rent the orchestration, own the agents.** Run the agent fan-out on **Claude Code +
 GitHub** (issues = state, Actions = runner, the `Agent` tool = fan-out, worktree
-isolation + `/commit` + PR/merge = built in). Retire `pocs/thinkgraph-worker` as *live
+isolation + `/commit` + PR/merge = built in). Retire `retired/pocs/thinkgraph-worker` as *live
 infra* — keep it as reference. Keep our value (agents, skills, prompts, MCP) in the
 **portable layer** so a future move off-platform stays a weekend, not a rewrite.
 
 ## The call, and why
 
-`pocs/thinkgraph-worker` was the "everything on own infra" attempt: a pi.dev-based
+`retired/pocs/thinkgraph-worker` was the "everything on own infra" attempt: a pi.dev-based
 agent runner (Yjs transport, dispatch server, session manager, worktree orchestration,
 a multi-stage analyst→builder→reviewer→merger pipeline). It works — but ~2,000 lines of
 it are **undifferentiated harness plumbing** we only had to build because we were
