@@ -4,6 +4,24 @@ import type { CroutonLayoutBlockRegistry } from '@fyit/crouton-core/app/types/la
 // Placeable layout block (#709): the bookings calendar as a compound surface the
 // deterministic layout pass reaches for → a "calendar-primary" arrangement. Wide
 // `minWidth` so the viability gate keeps it in a roomy pane.
+//
+// Plus the ATOMIC blocks (#924 gap test): the Panel's sub-surfaces broken out so a
+// user can reassemble the native layout from blocks. They coordinate cross-pane via
+// the shared `useBookingsLayoutFilters` store (the layout tree can't wire pane↔pane
+// — see that composable + the #924 report). All take an optional `scope` config.
+const layoutScopeConfig = [
+  {
+    name: 'scope',
+    type: 'select' as const,
+    label: 'Scope',
+    default: 'team',
+    options: [
+      { label: 'All team bookings', value: 'team' },
+      { label: 'My bookings', value: 'personal' },
+    ],
+  },
+]
+
 const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
   'bookings-calendar': {
     id: 'bookings-calendar',
@@ -15,6 +33,58 @@ const croutonLayoutBlocks: CroutonLayoutBlockRegistry = {
     category: 'bookings',
     minWidth: 520,
     defaultSize: 65,
+  },
+  // Atomic: JUST the calendar grid (no list/filters), self-fetching + shared-filter aware.
+  'bookings-calendar-only': {
+    id: 'bookings-calendar-only',
+    name: 'Calendar (only)',
+    description: 'Just the availability calendar grid',
+    icon: 'i-lucide-calendar-days',
+    component: 'CroutonBookingsLayoutCalendarOnly',
+    kind: 'atomic',
+    category: 'bookings',
+    minWidth: 460,
+    defaultSize: 60,
+    configSchema: layoutScopeConfig,
+  },
+  // Atomic: the bookings list.
+  'bookings-list': {
+    id: 'bookings-list',
+    name: 'Bookings list',
+    description: 'Live list of bookings (respects the shared filter)',
+    icon: 'i-lucide-list',
+    component: 'CroutonBookingsLayoutList',
+    kind: 'atomic',
+    category: 'bookings',
+    minWidth: 300,
+    defaultSize: 40,
+    configSchema: layoutScopeConfig,
+  },
+  // Atomic: the location picker (drives the shared location filter).
+  'bookings-locations': {
+    id: 'bookings-locations',
+    name: 'Locations',
+    description: 'Pick locations to filter by',
+    icon: 'i-lucide-map-pin',
+    component: 'CroutonBookingsLayoutLocations',
+    kind: 'atomic',
+    category: 'bookings',
+    minWidth: 220,
+    defaultSize: 25,
+    configSchema: layoutScopeConfig,
+  },
+  // Atomic: the filter controls (status / location / cancelled → shared store).
+  'bookings-filters': {
+    id: 'bookings-filters',
+    name: 'Filters',
+    description: 'Status / location / cancelled filter controls',
+    icon: 'i-lucide-filter',
+    component: 'CroutonBookingsLayoutFilters',
+    kind: 'atomic',
+    category: 'bookings',
+    minWidth: 240,
+    defaultSize: 25,
+    configSchema: layoutScopeConfig,
   },
 }
 
