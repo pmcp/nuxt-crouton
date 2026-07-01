@@ -15,6 +15,7 @@ const showChangelogTool = import.meta.dev || !!useRuntimeConfig().public.crouton
     </NuxtLayout>
     <ClientOnly>
       <SpikeChangelogTool v-if="showChangelogTool" />
+      <SpecWalk v-if="showChangelogTool" />
     </ClientOnly>
   </UApp>
 </template>
