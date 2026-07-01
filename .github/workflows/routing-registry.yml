@@ -1,22 +1,22 @@
 name: routing-registry
 
-# Keep .claude/routing.yaml, the generated writeups/architecture/routing-registry.md, AND the real
+# Keep .claude/routing.json, the generated writeups/architecture/routing-registry.md, AND the real
 # .claude/agents/*.md model frontmatter in sync (WS6a / #864, guard #1029). `gen-routing.mjs --check`
 # fails if the registry is stale OR if a route's tier drifts from the model an agent actually pins —
-# the exact silent drift that bit us (task-orchestrator/decomposer → opus without a routing.yaml update).
-# gen-routing.mjs imports the `yaml` package (not a Node built-in), so the check installs it first.
+# the exact silent drift that bit us (task-orchestrator/decomposer → opus without a routing.json update).
+# gen-routing.mjs parses .claude/routing.json with a Node built-in (JSON.parse), so no install step is needed.
 
 on:
   pull_request:
     paths:
-      - '.claude/routing.yaml'
+      - '.claude/routing.json'
       - '.claude/agents/**'          # an agent model change is the drift we guard against
       - 'scripts/gen-routing.mjs'
       - 'writeups/architecture/routing-registry.md'
   push:
     branches: [main]
     paths:
-      - '.claude/routing.yaml'
+      - '.claude/routing.json'
       - '.claude/agents/**'
       - 'scripts/gen-routing.mjs'
 
@@ -28,7 +28,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install the yaml parser (gen-routing.mjs imports it)
-        run: npm install yaml --no-save
       - name: Verify routing registry is current + matches agent frontmatter
         run: node scripts/gen-routing.mjs --check

@@ -1,6 +1,6 @@
 # Eval ledger — run-outcome capture + scoreboard (WS6b · #865)
 
-The feedback loop that makes `routing.yaml` (#864) **evidence-based**: every agent run appends
+The feedback loop that makes `routing.json` (#864) **evidence-based**: every agent run appends
 one objective record; the scoreboard rolls those up into **cost-per-success per (model × flow)** —
 the table a human reads to decide "is this cheap model good enough for this flow?".
 
@@ -10,7 +10,7 @@ Golden-task eval is **WS6b.3** (#885). Parent: #865, epic #669.
 ## Why a committed JSONL ledger (not PostHog) for leaf #1
 
 The signals are produced in CI; the metric is reviewed by a human; the routing decision is a
-`routing.yaml` diff. A **committed, append-only JSONL** is therefore the right first sink: diffable,
+`routing.json` diff. A **committed, append-only JSONL** is therefore the right first sink: diffable,
 reviewable, secret-free, no key in CI, and it mirrors the deterministic `epic-digest`/`housekeeping`
 gather→render pattern (no LLM). PostHog (where the cost counter already lands) stays an option for a
 higher-volume sink later — it's just not reviewable/diffable, which is what leaf #1 needs.

@@ -29,7 +29,7 @@ name: A11y (reports-only — pi.dev variant)
 #   • (optional) var AGENT_HARNESS=pi — opt-in without touching the dispatch input.
 #
 # This captures the first #865 eval datapoint: pi's cost + report quality vs the
-# Claude `a11y-daily.yml` baseline, on the tier `routing.yaml` proposes for a11y (small).
+# Claude `a11y-daily.yml` baseline, on the tier `routing.json` proposes for a11y (small).
 
 on:
   workflow_dispatch:
