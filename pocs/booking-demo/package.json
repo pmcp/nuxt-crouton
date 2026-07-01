@@ -32,6 +32,7 @@
   "devDependencies": {
     "@fyit/crouton-cli": "workspace:*",
     "@fyit/crouton-devtools": "workspace:*",
+    "@fyit/crouton-feedback": "workspace:*",
     "drizzle-kit": "^0.31.0",
     "wrangler": "^4.64.0"
   }
