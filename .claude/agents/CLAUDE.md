@@ -20,27 +20,30 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `task-orchestrator` | `task-orchestrator.md` | no | no | `opus` |
-| `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `opus` |
+| `task-orchestrator` | `task-orchestrator.md` | no | no | `sonnet` |
+| `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `sonnet` |
 | `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) | `opus` |
 
-**Model split — tier by REASONING LEVERAGE, not by "writes code?" (#824):** the whole
-pipeline runs on **Opus**, on purpose. The tempting cost cut — "the orchestrator and
-decomposer only read/write GitHub issues, so run them on a cheap model" — is **backwards**:
+**Model split — tier by REASONING LEVERAGE, not by "writes code?" (#824, revised on N=4 evidence):**
 *writing code* and *reasoning* are different axes, and the planning roles sit at the top of
-the reasoning one. The **orchestrator** owns the package-reuse call (#292 — build-on-a-package
-vs from-scratch, the #274 reinvent-a-package failure) and the top-level slice that frames the
-**entire** tree; the **decomposer** recursively applies the LEAF TEST and writes the
-**acceptance criteria the worker builds against**. A blunt planner mis-frames or mis-specs
-work, and that error is paid downstream as wasted **Opus-worker** runs (build the wrong thing →
-the artifact-gate catches it late). Crucially, planning is **reasoning-dense but token-light**
-(read an issue/catalog, write a few issues — not large code files), so Opus there costs little
-in absolute tokens while having the highest leverage; better decomposition *reduces* total
-spend by preventing rework. So: spend the strongest model where the decisions are made
-(planning) — it's both the quality move and, system-wide, likely the cheaper one. The
-cost levers live elsewhere (drop fixed daily sweeps; route reports-only flows to Haiku via
-pi), not in blunting the pipeline's brain. (Open question if cost ever bites: the well-specced
-**worker** is the one role that *could* trial **Sonnet** — measure gate pass-rate first.)
+the reasoning one — so the naive cut ("the orchestrator and decomposer only touch GitHub
+issues, run them on Haiku") is **backwards**: a **blunt** planner mis-frames the tree, and that
+error is paid downstream as wasted **Opus-worker** runs (build the wrong thing → the
+artifact-gate catches it late). The **orchestrator** owns the package-reuse call (#292 —
+build-on-a-package vs from-scratch, the #274 reinvent-a-package failure) and the top-level slice
+that frames the **entire** tree; the **decomposer** recursively applies the LEAF TEST and writes
+the **acceptance criteria the worker builds against**. #824 left one open question: is a
+*strong-but-cheaper* model a blunt planner or a peer? **An N=4 decompose A/B answered it** —
+Opus 4.8 vs **Sonnet 5** on four real epics (human breakdowns hidden, single-judge): Sonnet 5
+**matched or beat Opus 4.8 on 3 of 4**, at ~5× lower token price and with **fewer NEEDS-SPLIT
+recursion rounds** (it produced buildable leaves directly instead of deferring). So it's a
+**peer** planner, not a blunt one — and the orchestrator + decomposer now run on **Sonnet 5**
+(medium tier). The **worker stays on Opus** because it writes the actual code (the one role
+#824 flagged as the Sonnet-trial candidate — still pending a gate-pass-rate measurement). The
+principle is unchanged — spend the strongest model where the hardest decisions are made — the
+evidence just moved the planning roles' price point down. Remaining cost levers live elsewhere
+(drop fixed daily sweeps; route reports-only flows to Haiku via pi). Caveat: N=4, single judge —
+a strong signal, not proof; the #865 eval scoreboard is where this gets validated continuously.
 
 ## The red-team agent (standalone — not part of the pipeline)
 
@@ -52,7 +55,7 @@ Static-first; at `depth=deep` it may dynamically confirm high/criticals against 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `red-team` | `red-team.md` | no | no (reports only) | `opus` |
+| `red-team` | `red-team.md` | no | no (reports only) | `sonnet` |
 
 It's steered by the **`/red-team` skill** (on demand) and run by
 `.github/workflows/red-team.yml` (per-PR `quick`, fails the check on high+) and

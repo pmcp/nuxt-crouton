@@ -64,7 +64,7 @@ jobs:
           {
             echo "> 🤖 **Claude Code** · agent pipeline (CI) · _deterministic scoreboard rollup, updated ${DATE}_"
             echo ""
-            echo "_Last run: [${DATE}](${RUN_URL}) · upserted in place each send (weekly, see \`.github/digests.yml\`). Source: \`writeups/reports/eval-ledger.jsonl\` (#883). Tunes \`.claude/routing.yaml\` (#864)._"
+            echo "_Last run: [${DATE}](${RUN_URL}) · upserted in place each send (weekly, see \`.github/digests.yml\`). Source: \`writeups/reports/eval-ledger.jsonl\` (#883). Tunes \`.claude/routing.json\` (#864)._"
             echo ""
             cat scoreboard.md
           } > "$BODY_FILE"

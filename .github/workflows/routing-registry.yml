@@ -1,22 +1,22 @@
 name: routing-registry
 
-# Keep .claude/routing.yaml, the generated writeups/architecture/routing-registry.md, AND the real
+# Keep .claude/routing.json, the generated writeups/architecture/routing-registry.md, AND the real
 # .claude/agents/*.md model frontmatter in sync (WS6a / #864, guard #1029). `gen-routing.mjs --check`
 # fails if the registry is stale OR if a route's tier drifts from the model an agent actually pins —
-# the exact silent drift that bit us (task-orchestrator/decomposer → opus without a routing.yaml update).
-# The generator uses only Node built-ins, so no install step is needed.
+# the exact silent drift that bit us (task-orchestrator/decomposer → opus without a routing.json update).
+# gen-routing.mjs parses .claude/routing.json with a Node built-in (JSON.parse), so no install step is needed.
 
 on:
   pull_request:
     paths:
-      - '.claude/routing.yaml'
+      - '.claude/routing.json'
       - '.claude/agents/**'          # an agent model change is the drift we guard against
       - 'scripts/gen-routing.mjs'
       - 'writeups/architecture/routing-registry.md'
   push:
     branches: [main]
     paths:
-      - '.claude/routing.yaml'
+      - '.claude/routing.json'
       - '.claude/agents/**'
       - 'scripts/gen-routing.mjs'
 
