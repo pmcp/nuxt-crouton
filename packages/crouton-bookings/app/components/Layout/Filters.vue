@@ -38,7 +38,7 @@ function onEditLocation(loc: { id: string }) {
 </script>
 
 <template>
-  <div class="@container h-full overflow-auto p-2 md:p-3">
+  <div class="@container h-full overflow-auto p-2 @md:p-3">
     <CroutonBookingsPanelFilters
       :locations="locations ?? []"
       :selected-locations="filters.locations"

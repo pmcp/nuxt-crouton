@@ -35,7 +35,7 @@ function isSelected(id: string): boolean {
 </script>
 
 <template>
-  <div class="@container h-full overflow-auto p-2 md:p-3 space-y-1.5">
+  <div class="@container h-full overflow-auto p-2 @md:p-3 space-y-1.5">
     <p
       v-if="!(locations && locations.length)"
       class="text-sm text-muted text-center p-4"

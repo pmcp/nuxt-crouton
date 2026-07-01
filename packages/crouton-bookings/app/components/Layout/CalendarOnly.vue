@@ -22,7 +22,7 @@ const view = ref<'week' | 'month'>(props.view)
 </script>
 
 <template>
-  <div class="@container h-full overflow-auto p-2 md:p-3">
+  <div class="@container h-full overflow-auto p-2 @md:p-3">
     <CroutonBookingsCalendar
       v-model:filters="filters"
       :bookings="calendarBookings ?? []"

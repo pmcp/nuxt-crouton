@@ -23,7 +23,7 @@ const filteredBookings = computed(() => applyFilters(bookings.value ?? []))
 </script>
 
 <template>
-  <div class="@container h-full overflow-auto p-2 md:p-3">
+  <div class="@container h-full overflow-auto p-2 @md:p-3">
     <CroutonBookingsList
       :bookings="filteredBookings"
       :loading="loading"
