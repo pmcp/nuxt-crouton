@@ -1209,6 +1209,10 @@ function exitToPages() {
       :title="BUILD"
       @click="versionOpen = true"
     />
+
+    <!-- Spec-walk reconcile tour (#1039) — rendered here, next to the version chip, because
+         this on-page fixed pattern is the only one proven to show on mobile staging. -->
+    <SpecWalkButton />
     <UModal v-model:open="versionOpen" :ui="{ content: 'sm:max-w-md' }">
       <template #content="{ close }">
         <div class="flex max-h-[82dvh] flex-col">
