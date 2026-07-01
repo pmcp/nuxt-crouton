@@ -15,6 +15,7 @@
  *                  Defaults to one month ago (same day-of-month) when unset.
  */
 import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { META, GROUPS, discover } from '../../../scripts/gen-skills-doc.mjs'
@@ -107,13 +108,76 @@ if (sinceRef) {
   }
 }
 
+// ── loop-station join (#1028 A) ──────────────────────────────────────────────
+// Annotate each skill with its MEASURED token cost + redundancy band from the latest
+// committed context-budget record (loop-station #926), when present. The digest stays a
+// reader/renderer — loop-station is the producer; we never recompute. Degrades to no
+// annotations when the record is absent.
+function skillNameFromPath(p) {
+  const m = String(p).match(/^\.claude\/skills\/(.+)$/)
+  if (!m) return null
+  const seg = m[1].split('/')[0]
+  if (m[1] === seg && seg.endsWith('.md')) return seg.replace(/\.md$/, '') // top-level skill.md
+  if (m[1] === `${seg}/SKILL.md`) return seg // directory skill
+  return null
+}
+function loadBudget() {
+  const p = join(ROOT, 'writeups/loop-station/history.jsonl')
+  if (!existsSync(p)) return null
+  let rec
+  try {
+    const lines = readFileSync(p, 'utf8').trim().split('\n').filter(Boolean)
+    if (!lines.length) return null
+    rec = JSON.parse(lines[lines.length - 1])
+  } catch {
+    return null
+  }
+  const bandByPath = {}
+  for (const o of rec.scorecard?.length?.oversized || []) bandByPath[o.path] = o.band
+  const self = rec.redundancy?.selfByPath || {}
+  const byName = new Map()
+  for (const a of rec.artifacts || []) {
+    if (a.kind !== 'skill') continue
+    const name = a.name || skillNameFromPath(a.path)
+    if (!name) continue
+    byName.set(name, { tokens: a.tokens, band: bandByPath[a.path] || 'green', selfRedundancy: self[a.path] ?? 0 })
+  }
+  // Top restated pairs, skill-vs-skill only, resolved to skill names (the overlap the digest cares about).
+  const topPairs = (rec.redundancy?.topPairs || [])
+    .map((pr) => ({ a: skillNameFromPath(pr.a), b: skillNameFromPath(pr.b), containment: pr.containment }))
+    .filter((pr) => pr.a && pr.b)
+    .slice(0, 3)
+  return {
+    byName,
+    summary: {
+      total: rec.totals?.tokens,
+      skillTokens: rec.totals?.byKind?.skill,
+      alwaysOn: rec.totals?.alwaysOnTokens,
+      redundancyPct: rec.redundancy?.pct,
+      scorecard: rec.scorecard?.overall,
+      tokenizer: rec.tokenizer,
+      commit: rec.commit ? String(rec.commit).slice(0, 8) : undefined,
+      generatedAt: rec.generatedAt,
+      topPairs
+    }
+  }
+}
+const budget = loadBudget()
+if (budget) {
+  for (const g of groups) for (const s of g.skills) {
+    const b = budget.byName.get(s.name)
+    if (b) s.budget = b
+  }
+}
+
 const data = {
   generatedAt: new Date().toISOString(),
   repo: REPO,
   since,
   total: skills.length,
   groups,
-  changed
+  changed,
+  budget: budget ? budget.summary : null
 }
 
 process.stdout.write(JSON.stringify(data, null, 2) + '\n')
