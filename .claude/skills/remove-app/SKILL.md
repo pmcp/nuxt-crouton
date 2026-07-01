@@ -34,7 +34,7 @@ docs references — those land as a normal **PR** on a feature branch.
 
 | # | Surface | Who does it | How |
 |---|---------|-------------|-----|
-| 1 | **Code** — `pocs/<app>` or `apps/<app>` (+ `deploy.config.json`, layers, schemas, the per-app CI caller `deploy-<app>.yml`) | the agent (PR) | `git rm -r`, commit via `/commit`, open PR |
+| 1 | **Code** — `pocs/<app>` or `apps/<app>` (+ `deploy.config.json`, layers, schemas, the per-app CI caller `deploy-<app>.yml`) | the agent (PR) | `git rm -r` (default `--delete`) or `git mv` to `retired/` (`--archive`) — commit via `/commit`, open PR |
 | 2 | **Cloudflare** — Worker + D1 + KV for both scopes (`<app>` and `<app>-staging`) | **CI** (`teardown-app.yml`) | `scripts/teardown-app.mjs` → `wrangler delete` / `d1 delete` / `kv namespace delete` |
 | 3 | **GitHub** — delete the app's branches (`epic/<NN>-<app>`, `feat/*-<app>`, `claude/*-<app>`), close the epic + sub-issues/PRs with a note | **CI** (`teardown-app.yml`) | github-script via the Harness App token |
 | 4 | **Labels** (optional) — drop `app:<app>` / `poc:<app>` from `.github/labels.yml` | the agent (PR) | `Edit` |
@@ -76,10 +76,22 @@ code is already gone).
 
 ### Step 3 — Remove the code (agent, via PR)
 On a feature branch:
+
+**Default (`--delete`)** — delete the code outright:
 ```bash
 git rm -r pocs/<app>                       # or apps/<app>
 git rm -f .github/workflows/deploy-<app>.yml   # the per-app CI caller, if present
 ```
+
+**Archive (`--archive`)** — move the code to `retired/` instead of deleting it:
+```bash
+git mv pocs/<app> retired/pocs/<app>       # or git mv apps/<app> retired/apps/<app>
+git rm -f .github/workflows/deploy-<app>.yml   # the per-app CI caller, if present
+```
+> `--archive` preserves the code as browsable reference under `retired/` while
+> still tearing down all live Cloudflare resources, branches, and issues (Steps 4+).
+> Archive != keep-deployed — the Worker/D1/KV are deleted either way.
+
 Then sweep docs/refs and optionally drop the label:
 ```bash
 grep -rn "<app>" docs writeups --include=*.md --include=*.html
