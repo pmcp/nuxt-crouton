@@ -52,7 +52,18 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
-          claude_args: "--max-turns 30"
+          # --allowedTools is REQUIRED, not optional (#834). This prompt has the top-level
+          # action agent *act as* the subagent and call Bash/Write DIRECTLY (it does not spawn
+          # a sub-agent whose frontmatter tools would auto-grant). In headless CI there is no
+          # human to approve tool use, so without an explicit allowlist every Bash/Write is
+          # DENIED: the agent can read the diff and compute the right verdict but cannot persist
+          # `frontend-review-verdict.json` or post the sticky comment — it burns turns retrying
+          # denied writes, hits max_turns, and the gate step sees no verdict → fails OPEN (a
+          # silent hollow pass). Proven by the epic #834 smoke: identical verdict computed, zero
+          # bytes written. Bash covers `gh` (comment) + writing the verdict; Write/Edit for the
+          # file; Read/Grep/Glob for the scan. Bump max-turns now that turns aren't wasted on
+          # denied retries. NB: a11y.yml / red-team.yml share this exact latent bug.
+          claude_args: "--max-turns 40 --allowedTools Bash,Write,Edit,Read,Grep,Glob"
           prompt: |
             Act as the **frontend-review subagent** defined in `.claude/agents/frontend-review.md`.
             Input: { scope: "diff", depth: "quick", fix: false }.
