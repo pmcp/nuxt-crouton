@@ -1,5 +1,9 @@
+import { readFileSync, existsSync } from 'node:fs'
+import { resolve as resolvePath } from 'node:path'
+import { execSync } from 'node:child_process'
 import { defineNuxtModule, createResolver, addImports, addPlugin, addServerHandler } from '@nuxt/kit'
 import { createSourceStampTransform } from './runtime/transform/sourceStamp'
+import { normalizeChangelog, type ChangelogEntry } from './runtime/tools/changelog-data'
 
 /**
  * @fyit/crouton-feedback — in-page feedback toolkit for any Nuxt UI app.
@@ -48,6 +52,64 @@ export interface FeedbackModuleOptions {
       /** Issue or PR number to comment on. (`…_GITHUB_PR`) */
       pr?: string | number
     }
+  }
+  /**
+   * The **Changelog** tool — a `vNN`-badged launcher row that opens a version
+   * timeline. JSON-first: entries come from a committed `changelog.json`; an
+   * optional build-time git stamp fills the current deployed commit. Omit the
+   * whole block and the tool simply hides itself (no entries).
+   */
+  changelog?: {
+    /** Inline entries, bypassing file lookup. */
+    entries?: ChangelogEntry[]
+    /**
+     * Path (relative to the app root) to a changelog JSON file. When unset, the
+     * module auto-detects `<srcDir>/changelog.json`, `app/changelog.json`, then
+     * `changelog.json`.
+     */
+    path?: string
+    /** Commit-link URL template; `{commit}` is replaced with the hash. */
+    commitUrlTemplate?: string
+    /** Stamp the current git short SHA at build (default true). */
+    stampGitCommit?: boolean
+  }
+}
+
+/** Read + normalize changelog entries from inline options or a JSON file. */
+function readChangelogEntries(
+  opts: NonNullable<FeedbackModuleOptions['changelog']>,
+  rootDir: string,
+  srcDir: string
+): ChangelogEntry[] {
+  if (Array.isArray(opts.entries)) return normalizeChangelog(opts.entries)
+  const candidates = opts.path
+    ? [resolvePath(rootDir, opts.path)]
+    : [
+        resolvePath(srcDir, 'changelog.json'),
+        resolvePath(rootDir, 'app/changelog.json'),
+        resolvePath(rootDir, 'changelog.json')
+      ]
+  for (const file of candidates) {
+    try {
+      if (existsSync(file)) return normalizeChangelog(JSON.parse(readFileSync(file, 'utf8')))
+    } catch {
+      // ignore a malformed/unreadable candidate and try the next
+    }
+  }
+  return []
+}
+
+/** Current short SHA at build; empty string when git is unavailable (e.g. CI). */
+function readGitCommit(rootDir: string): string {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: rootDir,
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
+      .toString()
+      .trim()
+  } catch {
+    return ''
   }
 }
 
@@ -98,6 +160,20 @@ export default defineNuxtModule<FeedbackModuleOptions>({
     // Second tool: Annotate — pin a comment on an element → POST /api/_feedback.
     addPlugin({
       src: resolver.resolve('./runtime/plugins/tools/annotate.client'),
+      mode: 'client'
+    })
+
+    // Third tool: Changelog — a vNN-badged version timeline. JSON-first data
+    // (a committed changelog.json) + an optional build-time git stamp for the
+    // current deployed commit, exposed to the client via runtimeConfig.public.
+    const cl = options.changelog ?? {}
+    ;(nuxt.options.runtimeConfig.public as Record<string, unknown>).croutonChangelog = {
+      entries: readChangelogEntries(cl, nuxt.options.rootDir, nuxt.options.srcDir),
+      commitUrlTemplate: cl.commitUrlTemplate || '',
+      buildCommit: cl.stampGitCommit === false ? '' : readGitCommit(nuxt.options.rootDir)
+    }
+    addPlugin({
+      src: resolver.resolve('./runtime/plugins/tools/changelog.client'),
       mode: 'client'
     })
 

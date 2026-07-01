@@ -45,6 +45,17 @@ export default defineNuxtConfig({
     }
   },
 
+  // Version timeline in the shared glasses launcher (@fyit/crouton-feedback "Changelog" tool, #1048),
+  // configured through crouton-devtools which installs the toolkit. JSON-first: the curated iteration
+  // log lives in app/spike-changelog.json; the module also stamps the deployed short SHA at build to
+  // fill the current entry's commit until it's backfilled on push.
+  croutonDevtools: {
+    changelog: {
+      path: 'app/spike-changelog.json',
+      commitUrlTemplate: 'https://github.com/FriendlyInternet/nuxt-crouton/commit/{commit}'
+    }
+  },
+
   // Passkeys are incompatible with Cloudflare Workers (tsyringe) — disable them.
   croutonAuth: {
     methods: {

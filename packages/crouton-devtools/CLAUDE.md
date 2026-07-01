@@ -129,6 +129,10 @@ tools, the **`data-feedback-src` source-stamp transform**, and the **feedback si
 apps get the launcher with no extra wiring.
 
 - **Where it is now:** `packages/crouton-feedback/` (see its `CLAUDE.md`).
+- **Changelog tool (#1048):** the `croutonDevtools.changelog` option is forwarded
+  into the `installModule` call, so crouton apps configure the version-timeline tool
+  here (a standalone crouton-feedback app would use `croutonFeedback.changelog`).
+  Point it at a committed `changelog.json`; see crouton-feedback's `CLAUDE.md`.
 - **Staging review back-compat (#966):** `src/runtime/server/plugins/reviewAlias.ts`
   maps the legacy `NUXT_CROUTON_REVIEW_*` secrets onto the crouton-feedback github
   sink at runtime, so existing deploys keep posting the Preview-feedback PR comment.
