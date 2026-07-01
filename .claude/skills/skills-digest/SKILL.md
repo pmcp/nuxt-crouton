@@ -86,6 +86,23 @@ exists — the diagram can't silently drift from the real skill set.
 > to catch it. (Excalidraw-PNG — the `ticket-diagram` skill — remains the right tool for *per-epic
 > GitHub-mobile* status diagrams, a different surface.)
 
+## 🧮 Budget annotations (loop-station, #1028 A)
+
+When a committed **loop-station** context-budget record exists (`writeups/loop-station/history.jsonl`,
+epic #926), `gather.mjs` joins each skill's **measured token cost** and **redundancy band** onto the
+digest, and `render.mjs` surfaces:
+
+- a **header line** — total harness context budget (tokens, of which in skills), corpus redundancy %,
+  and the overall scorecard band;
+- a **per-skill token badge** — grey when in-band, **amber/red** when the scorecard flags it oversized;
+- an **`↔ overlap`** badge on skills that appear in loop-station's top restated pairs, plus a
+  **"most-overlapping skills"** callout (e.g. `a11y ↔ frontend-review 44.6%`) — the merge/trim candidates.
+
+This is the digest ↔ observatory wiring: loop-station is the **producer** (it computes tokens/redundancy);
+the digest only **reads the latest record and renders** — it never recomputes. Everything **degrades to a
+no-op** when the record is absent (no header line, no badges; the digest is unchanged). loop-station's own
+`fetch-depth`/commit-back concerns are its business; the digest just reads the committed JSONL.
+
 ## Cadence + delivery (config-as-data)
 
 Declared in `.github/digests.yml`, exactly like the other digests:

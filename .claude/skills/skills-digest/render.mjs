@@ -36,6 +36,11 @@ const outDir = flag('out-dir', 'writeups/reports')
 const repo = data.repo || 'repo'
 const total = data.total ?? (data.groups || []).reduce((n, g) => n + g.skills.length, 0)
 const changed = data.changed || { firstRun: true, added: [], updated: [], removed: [] }
+// loop-station budget annotations (#1028 A) — present only when the digest was gathered
+// against a committed context-budget record; every budget surface is a no-op when absent.
+const budget = data.budget || null
+const dupNames = new Set((budget?.topPairs || []).flatMap((p) => [p.a, p.b]))
+const fmtTok = (n) => (n == null ? '' : n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n))
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 const esc = (s) =>
@@ -60,6 +65,36 @@ const TRIG = {
 const badge = (t) => {
   const c = TRIG[t] || TRIG.ask
   return `<span style="display:inline-block;font:700 10.5px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:${c.fg};background:${c.bg};border:1px solid ${c.bd};border-radius:999px;padding:1px 8px;margin-left:4px;white-space:nowrap;">${c.label}</span>`
+}
+
+// Measured token cost per skill (loop-station). Colour tracks the scorecard band —
+// grey (green/ok), amber/red = oversized, i.e. eating context budget.
+const BAND = {
+  green: { fg: '#64748b', bg: '#f1f5f9', bd: '#e2e8f0' },
+  amber: { fg: '#b45309', bg: '#fdecd2', bd: '#f4d29b' },
+  red: { fg: '#b91c1c', bg: '#fde8e8', bd: '#f3b4b4' }
+}
+const tokenBadge = (b) => {
+  if (!b || b.tokens == null) return ''
+  const c = BAND[b.band] || BAND.green
+  return `<span title="tokens" style="display:inline-block;font:700 10px ui-monospace,Menlo,Consolas,monospace;color:${c.fg};background:${c.bg};border:1px solid ${c.bd};border-radius:999px;padding:1px 7px;margin-left:4px;">${fmtTok(b.tokens)}</span>`
+}
+const dupBadge = (name) =>
+  dupNames.has(name)
+    ? `<span style="display:inline-block;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;color:#b45309;background:#fdecd2;border:1px solid #f4d29b;border-radius:999px;padding:1px 7px;margin-left:4px;">↔ overlap</span>`
+    : ''
+
+// Header one-liner + the "most-overlapping skills" callout — both no-op without a budget record.
+const budgetHeadline = () =>
+  budget
+    ? `<div style="color:#cdeee9;font-size:12.5px;margin-top:6px;">🧮 harness context budget: <strong style="color:#fff;">${fmtTok(budget.total)}</strong> tokens (<strong style="color:#fff;">${fmtTok(budget.skillTokens)}</strong> in skills) · ${budget.redundancyPct}% redundancy · scorecard <strong style="color:#fff;">${esc(budget.scorecard || '?')}</strong></div>`
+    : ''
+const budgetPairs = () => {
+  if (!budget || !(budget.topPairs || []).length) return ''
+  const items = budget.topPairs
+    .map((p) => `<code style="font:700 12px ui-monospace,Menlo,Consolas,monospace;">/${esc(p.a)}</code> ↔ <code style="font:700 12px ui-monospace,Menlo,Consolas,monospace;">/${esc(p.b)}</code> <strong>${p.containment}%</strong>`)
+    .join(' &nbsp;·&nbsp; ')
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 26px;"><tr><td style="padding:11px 14px;background:#fdf4e7;border:1px solid #f4d29b;border-radius:10px;color:#7c4a12;font:12.5px -apple-system,Segoe UI,Roboto,sans-serif;">⚠️ <strong>Most-overlapping skills</strong> (measured — loop-station): ${items} — candidates to merge or trim.</td></tr></table>`
 }
 
 // ── HTML ──────────────────────────────────────────────────────────────────
@@ -124,7 +159,7 @@ const flowSection = () =>
 
 const skillCard = (s) =>
   `<tr><td style="padding:11px 0;border-bottom:1px solid #eef2f7;">
-    <div style="margin-bottom:3px;"><code style="font:700 14px ui-monospace,Menlo,Consolas,monospace;color:#0f172a;">/${esc(s.name)}</code>${(s.triggers || ['ask']).map(badge).join('')}</div>
+    <div style="margin-bottom:3px;"><code style="font:700 14px ui-monospace,Menlo,Consolas,monospace;color:#0f172a;">/${esc(s.name)}</code>${(s.triggers || ['ask']).map(badge).join('')}${tokenBadge(s.budget)}${dupBadge(s.name)}</div>
     <div style="color:#64748b;font:12.5px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;">${esc(s.desc)}</div>
   </td></tr>`
 
@@ -142,9 +177,11 @@ const html = `<!DOCTYPE html>
     <div style="font:700 11px -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9fe9df;">${esc(repo)} · agent flow</div>
     <div style="font:800 24px -apple-system,Segoe UI,Roboto,sans-serif;color:#ffffff;margin-top:4px;">🧩 Skills digest — ${esc(monthYear)}</div>
     <div style="color:#cdeee9;font-size:14px;margin-top:5px;"><strong style="color:#fff;">${total}</strong> skills in <code style="color:#eafcf8;">.claude/skills/</code> · grouped by job, with how each one triggers</div>
+    ${budgetHeadline()}
   </td></tr>
   <tr><td style="padding:24px 26px;">
     ${changedBand()}
+    ${budgetPairs()}
     ${flowSection()}
     ${(data.groups || []).map(groupSection).join('')}
     <p style="margin:34px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">
@@ -178,8 +215,16 @@ const txtFlow =
   ).join('\n') +
   '\n'
 
+const txtBudget = budget
+  ? `🧮 CONTEXT BUDGET: ${fmtTok(budget.total)} tokens (${fmtTok(budget.skillTokens)} in skills) · ${budget.redundancyPct}% redundancy · scorecard ${budget.scorecard || '?'}\n` +
+    ((budget.topPairs || []).length
+      ? `   most-overlapping: ${budget.topPairs.map((p) => `/${p.a} ↔ /${p.b} ${p.containment}%`).join(' · ')}\n`
+      : '')
+  : ''
 const txt =
-  `🧩 SKILLS DIGEST — ${monthYear}\n${repo} · ${total} skills\n\n` +
+  `🧩 SKILLS DIGEST — ${monthYear}\n${repo} · ${total} skills\n` +
+  txtBudget +
+  '\n' +
   txtChanged() +
   '\n' +
   txtFlow +
@@ -188,7 +233,9 @@ const txt =
     .map(
       (g, i) =>
         `${i + 1}. ${g.title.toUpperCase()} (${g.skills.length})\n   ${g.sub}\n` +
-        g.skills.map((s) => `   /${s.name}  [${(s.triggers || ['ask']).join(', ')}]\n     ${s.desc}`).join('\n')
+        g.skills
+          .map((s) => `   /${s.name}  [${(s.triggers || ['ask']).join(', ')}]${s.budget ? ` · ${fmtTok(s.budget.tokens)} tok${s.budget.band !== 'green' ? ` (${s.budget.band})` : ''}` : ''}\n     ${s.desc}`)
+          .join('\n')
     )
     .join('\n\n') +
   `\n\n${BRAND_NAME} · generated ${generated.toISOString().slice(0, 10)} by /skills-digest\n`
