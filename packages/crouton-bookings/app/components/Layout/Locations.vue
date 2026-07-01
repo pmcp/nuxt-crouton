@@ -46,6 +46,7 @@ function isSelected(id: string): boolean {
       v-for="loc in locations ?? []"
       :key="loc.id"
       type="button"
+      :aria-pressed="isSelected(loc.id)"
       class="w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors"
       :class="isSelected(loc.id)
         ? 'bg-primary/10 border-primary text-highlighted'
