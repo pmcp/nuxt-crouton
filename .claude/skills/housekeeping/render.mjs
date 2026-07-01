@@ -126,6 +126,19 @@ if (data.idlePRs?.length) {
   ])
 }
 
+if (data.retiredProjects?.length) {
+  sections.push([
+    '\u{1F5D1} Retired projects',
+    [
+      '`retired/` dirs with a `.retired.json` stamp:',
+      ...data.retiredProjects.map((r) => {
+        const line = `- \`retired/${r.type}s/${r.name}\` — archived ${r.archivedAt} (${r.ageDays}d ago)`
+        return r.pastThreshold ? `${line} → \`/retire-delete ${r.name}\` to fully remove` : line
+      })
+    ]
+  ])
+}
+
 // Loop Station budget readout (#934, WS4) — one read-only line, always shown when
 // the inventory has produced data. Sourced from the latest committed history.jsonl
 // record (gathered, not recomputed). Omitted when WS1 hasn't run yet.

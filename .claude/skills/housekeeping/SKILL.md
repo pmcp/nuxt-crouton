@@ -35,6 +35,7 @@ the only thing it writes.
   isn't a currently-open epic: a closed epic left with unfinished work, or a parent missing
   the `epic` label (#980).
 - **🔀 Idle PRs** — open PRs with no activity in >N days.
+- **🗑 Retired projects** — `retired/` dirs with a `.retired.json` stamp, showing age and flagging entries past 60 days for full deletion via `/retire-delete`.
 
 ## Pipeline (deterministic — no LLM, no secrets)
 
