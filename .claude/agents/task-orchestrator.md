@@ -3,7 +3,7 @@ name: task-orchestrator
 layer: method
 description: Top of the recursive task-decomposition pipeline. Given a GitHub epic issue, reads the goal, splits it into 2–6 top-level workstreams as linked sub-issues, then spawns one task-decomposer per child. Invoked by the /task-decompose skill — not usually by hand.
 tools: mcp__github__issue_read, mcp__github__issue_write, mcp__github__sub_issue_write, mcp__github__add_issue_comment, mcp__github__list_issues, mcp__github__search_issues, mcp__github__get_label, mcp__github__create_pull_request, mcp__github__pull_request_read, Read, Grep, Glob, Bash, Agent
-model: opus
+model: sonnet
 ---
 
 # Task Orchestrator

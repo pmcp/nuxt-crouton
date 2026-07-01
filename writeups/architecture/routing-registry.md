@@ -16,8 +16,8 @@ Default tier: **medium**
 | Agent / flow | Current tier | Claude model | pi / local | $out/Mtok | Proposed | Why |
 |---|---|---|---|---|---|---|
 | `task-worker` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | — | writes code → PR; quality-sensitive — hold on Claude until #865 proves a cheaper model |
-| `task-orchestrator` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | small (claude-haiku-4-5) | reads epic → workstreams; no code written. Pinned to opus today — a cheaper tier is the #865 hypothesis to test, not yet proven. |
-| `task-decomposer` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | small (claude-haiku-4-5) | LEAF test + split issues; no code written. Opus today (same as orchestrator) — cheaper-tier candidate pending #865 eval evidence. |
+| `task-orchestrator` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | — | reads epic → workstreams; no code written. Moved opus→Sonnet 5 on an N=4 decompose A/B (Sonnet 5 matched/beat Opus 4.8 on 3 of 4 real epics, ~5× cheaper, fewer NEEDS-SPLIT recursion rounds). Refines #824: the strong-but-cheaper model is a peer planner, not the blunt one that decision guarded against. |
+| `task-decomposer` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | — | LEAF test + split issues; no code written. Moved opus→Sonnet 5 with the orchestrator on the same N=4 A/B evidence. Refines #824. |
 | `red-team` | large | claude-opus-4-8 | claude-opus-4-8 | $75 | medium (claude-sonnet-4-6) | security analysis, reports only — opus is overkill, free win to Sonnet |
 | `a11y` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | small (claude-haiku-4-5) | template review, reports only |
 | `frontend-review` | medium | claude-sonnet-4-6 | deepseek-v3.2 | $15 | small (claude-haiku-4-5) | convention review, reports only |

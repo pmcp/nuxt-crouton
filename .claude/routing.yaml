@@ -25,7 +25,7 @@ tiers:
     out_per_mtok: 5
     note: reports / triage / decompose — no code written
   medium:
-    claude: sonnet       # claude-sonnet-4-6
+    claude: sonnet       # claude-sonnet-5
     pi: deepseek-v3.2
     out_per_mtok: 15
     note: most work
@@ -47,13 +47,11 @@ routes:
     tier: large
     why: "writes code → PR; quality-sensitive — hold on Claude until #865 proves a cheaper model"
   task-orchestrator:
-    tier: large
-    proposed: small
-    why: "reads epic → workstreams; no code written. Pinned to opus today — a cheaper tier is the #865 hypothesis to test, not yet proven."
+    tier: medium
+    why: "reads epic → workstreams; no code written. Moved opus→Sonnet 5 on an N=4 decompose A/B (Sonnet 5 matched/beat Opus 4.8 on 3 of 4 real epics, ~5× cheaper, fewer NEEDS-SPLIT recursion rounds). Refines #824: the strong-but-cheaper model is a peer planner, not the blunt one that decision guarded against."
   task-decomposer:
-    tier: large
-    proposed: small
-    why: "LEAF test + split issues; no code written. Opus today (same as orchestrator) — cheaper-tier candidate pending #865 eval evidence."
+    tier: medium
+    why: "LEAF test + split issues; no code written. Moved opus→Sonnet 5 with the orchestrator on the same N=4 A/B evidence. Refines #824."
   red-team:
     tier: large
     proposed: medium
