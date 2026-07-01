@@ -60,6 +60,12 @@ if (!res.ok) {
   process.exit(1)
 }
 
+// Nudge the provider-qualified convention (non-fatal): the scoreboard keeps hosted vs
+// local models distinct by provider, so a bare id undercuts the cost comparison.
+if (res.record.model && !res.record.model.includes('/')) {
+  console.error(`⚠ model "${res.record.model}" has no provider prefix — convention is provider-qualified (e.g. anthropic/${res.record.model}). Logging as-is.`)
+}
+
 if (checkOnly) {
   console.log('✓ record valid (not written — --check)')
   process.exit(0)
