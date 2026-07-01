@@ -57,15 +57,31 @@ export function resolveAppDb(app, env, repoRoot) {
 /** Run `npx wrangler …` from repoRoot. Returns stdout when capture is set; throws on non-zero. */
 export function runWrangler(args, { cwd, capture = false } = {}) {
   const full = ['wrangler', ...args]
+  // stderr is ALWAYS piped (not inherited) so wrangler's real error text — e.g.
+  // "This Worker does not exist … [code: 10007]" — ends up in the thrown Error's
+  // message, where callers can classify it (see isAlreadyGone). We re-emit it live
+  // afterwards so console output is unchanged. stdout stays inherit unless captured.
   const res = spawnSync('npx', full, {
     cwd,
     encoding: 'utf8',
-    stdio: capture ? ['inherit', 'pipe', 'inherit'] : 'inherit'
+    stdio: ['inherit', capture ? 'pipe' : 'inherit', 'pipe']
   })
+  if (res.stderr) process.stderr.write(res.stderr)
   if (res.status !== 0) {
-    throw new Error(`wrangler exited with code ${res.status}: npx ${full.join(' ')}`)
+    const detail = (res.stderr ?? '').trim()
+    throw new Error(`wrangler exited with code ${res.status}: npx ${full.join(' ')}${detail ? `\n${detail}` : ''}`)
   }
   return res.stdout ?? ''
+}
+
+/**
+ * True when a wrangler delete failed only because the resource is already gone —
+ * so a re-run is idempotent, not a real failure. Matches the actual Cloudflare
+ * phrasings: Worker "does not exist … [code: 10007]", D1 "Couldn't find DB",
+ * KV "not found". A genuine error (auth 403, network) returns false.
+ */
+export function isAlreadyGone(msg) {
+  return /not found|does not exist|couldn'?t find|could not find|no such|\b10007\b/i.test(String(msg ?? ''))
 }
 
 /** Run a remote SELECT and return the first result set's rows (wrangler --json shape). */
