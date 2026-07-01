@@ -84,7 +84,7 @@ flow back to where humans see them; the postmortem feeds improvements back into 
 | **Postmortem self-improving loop** | retro at epic close → `workflow` issues | ✅ Exists (new) | `postmortem` skill (#403) |
 | **Cloud execution** | agents run in the cloud (this session) | ✅ Exists | Claude Code on web |
 | **Autonomous watch-to-merge** | sticky CI status, auto-merge on green, fix-bot on red | 🟡 **Partial** | #336 |
-| **Self-hosted runner (generic)** | run an agent on your own box via Cloudflare Tunnel | 🟡 Runbook only | `self-hosted-pi-agent-cloudflare-setup.md`, `pocs/thinkgraph-worker` (reference) |
+| **Self-hosted runner (generic)** | run an agent on your own box via Cloudflare Tunnel | 🟡 Runbook only | `self-hosted-pi-agent-cloudflare-setup.md`, `retired/pocs/thinkgraph-worker` (reference) |
 | **`pi` harness option** | provider-agnostic, portable packages over npm/git | 🟡 Evaluated, not adopted | `agent-orchestration-architecture.md` (decided: stay on Claude Code+GitHub for now) |
 | **Mac mini runner** | macOS builds + always-on agent host + **physical tests** | 🔴 **Net-new** | — (generalize the pi runbook) |
 | **Physical CDJ tests** | drive a real CDJ from code, assert, report to ticket | 🔴 Net-new (spike) | #420 |
@@ -168,7 +168,7 @@ is a decision gate before any heavy multi-repo investment in Phase 4.)*
 - **Existing loop:** `writeups/architecture/agent-flow.html` (journey + comments + the
   self-improving loop) · `agent-orchestration-architecture.md` (the rent-vs-own decision).
 - **Self-host:** `writeups/setup/self-hosted-pi-agent-cloudflare-setup.md` ·
-  `pocs/thinkgraph-worker/` (reference code).
+  `retired/pocs/thinkgraph-worker/` (reference code).
 - **Live issues:** postmortem loop **#403** (closed) · `Closes`-gotcha **#416** · physical
   CDJ spike **#420** · watch-to-merge **#336** · digest **#357**.
 - **Skills to know:** `task-decompose`, `github-tasks`, `postmortem`, `ui-proposal`,

@@ -1,14 +1,14 @@
 # Self-Hosted Pi Agent on a Raspberry Pi (Cloudflare ingress) — Runbook
 
 **Date:** 2026-06-17
-**Status:** Reference runbook (harvested from `pocs/thinkgraph-worker` before archive)
+**Status:** Reference runbook (harvested from `retired/pocs/thinkgraph-worker` before archive)
 **Purpose:** How to run a pi.dev coding agent on your own box (a Raspberry Pi) and
 dispatch work to it over the internet via Cloudflare. This is the **self-host
 escape-hatch playbook** — the chosen path is Claude Code + GitHub (see
 `writeups/architecture/agent-orchestration-architecture.md`); keep this for the day a
 hard isolation/cost requirement makes own-infra worth it again.
 
-> Source of truth for the working version: `pocs/thinkgraph-worker/` (`src/index.ts`,
+> Source of truth for the working version: `retired/pocs/thinkgraph-worker/` (`src/index.ts`,
 > `src/config.ts`, `deploy.sh`, `thinkgraph-worker.service`, `.env.example`). This doc
 > generalises that into a reusable recipe and flags the gotchas we hit.
 
@@ -150,11 +150,11 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/nuxt-crouton/pocs/thinkgraph-worker
+WorkingDirectory=/home/pi/nuxt-crouton/retired/pocs/thinkgraph-worker
 ExecStart=/home/pi/.nvm/versions/node/v22/bin/node dist/index.js
 Restart=always
 RestartSec=10
-EnvironmentFile=/home/pi/nuxt-crouton/pocs/thinkgraph-worker/.env
+EnvironmentFile=/home/pi/nuxt-crouton/retired/pocs/thinkgraph-worker/.env
 
 [Install]
 WantedBy=multi-user.target
@@ -168,7 +168,7 @@ sudo systemctl status pi-agent --no-pager -l
 
 ⚠️ **Gotcha (stale paths):** the committed `thinkgraph-worker.service`, `deploy.sh`, and
 `README.md` still point at `apps/thinkgraph-worker` — the worker moved to
-`pocs/thinkgraph-worker`. As-is, `WorkingDirectory`/`EnvironmentFile` don't exist and the
+`retired/pocs/thinkgraph-worker`. As-is, `WorkingDirectory`/`EnvironmentFile` don't exist and the
 service won't start. Update all three paths to `pocs/` (or wherever it lands) before
 deploying.
 
@@ -201,4 +201,4 @@ curl -fsS https://agent.example.com/health   # → {status:'ok', activeSessions,
 ## See also
 
 - Decision context: `writeups/architecture/agent-orchestration-architecture.md`
-- Live reference code (until archived): `pocs/thinkgraph-worker/`
+- Live reference code (until archived): `retired/pocs/thinkgraph-worker/`
