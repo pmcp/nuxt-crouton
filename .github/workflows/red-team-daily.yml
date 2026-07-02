@@ -76,6 +76,9 @@ jobs:
 
             Do NOT edit any `apps/`/`packages/` product code.
 
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
       - name: Email the report (Resend)
         if: always()
         env:

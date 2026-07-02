@@ -38,18 +38,8 @@ jobs:
           claude_args: "--max-turns 25"
           show_full_output: true
 
-      # Loop Station WS2 (#929): reconstruct this ephemeral runner's invocation
-      # trace and ship it as an artifact for the all-runs topology. Read-only,
-      # payload-free (names + ids + durations only), tolerant — never fails the
-      # agent job. Reusable snippet: copy these two steps into any LLM workflow.
-      - name: Collect invocation trace
+      # Loop Station WS2 (#929) / usage rollup (#1064): ship this runner's
+      # payload-free invocation trace as an artifact; the weekly
+      # loop-station-usage.yml aggregates them into the committed usage.jsonl.
+      - uses: ./.github/actions/loop-station-trace
         if: always()
-        run: node .claude/skills/loop-station/collect-traces.mjs --out loop-station-trace.jsonl || true
-
-      - name: Upload invocation trace
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: loop-station-trace-${{ github.run_id }}-${{ github.run_attempt }}
-          path: loop-station-trace.jsonl
-          if-no-files-found: ignore

@@ -155,3 +155,7 @@ jobs:
 
             If you cannot find a confident fix, do NOT guess or push a speculative change — comment on
             issue #${{ steps.gate.outputs.issue_number }}, @mention @pmcp, apply `status:blocked`, and stop.
+
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
