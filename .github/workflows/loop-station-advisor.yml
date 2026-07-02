@@ -58,8 +58,14 @@ jobs:
             You are the **Loop Station advisor** (#933). Read `advisor-findings.json` in
             the repo root — it lists DETERMINISTIC findings about the harness's own
             context budget (always-on tokens, redundancy, scorecard bands, growth since
-            the last merge). For deeper context you may also read
-            `writeups/loop-station/history.jsonl`.
+            the last merge, and — when usage coverage exists — dead-weight skills,
+            #1066). For deeper context you may also read
+            `writeups/loop-station/history.jsonl` and `writeups/loop-station/usage.jsonl`.
+
+            Scope honesty for `dead-weight` findings: the counts cover CI PIPELINE runs
+            only (interactive sessions are not collected yet, #1067), so phrase them as
+            "never fired *in CI* over the covered window (N days)" — never "never used".
+            Cite the finding's `coverageDays` + `runs` evidence.
 
             Your job: turn these findings into ONE concise, actionable GitHub issue for
             the maintainer — "an appointment". Steps:

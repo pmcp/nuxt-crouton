@@ -192,9 +192,19 @@ issue assigned to the maintainer with concrete recommendations.
 
 | file | role |
 |------|------|
-| `advisor.mjs` | **deterministic gate** — reads `history.jsonl`, surfaces candidate findings (scorecard reds, sharp always-on growth, redundancy jumps), decides `actionable`. No LLM, no issue. Importable `analyze()`. |
-| `lib/advisor.test.mjs` | findings logic (reds flag, growth flags, cross-tokenizer deltas are NOT compared, deterministic) |
+| `advisor.mjs` | **deterministic gate** — reads `history.jsonl` + `usage.jsonl`, surfaces candidate findings (scorecard reds, sharp always-on growth, redundancy jumps, dead-weight skills), decides `actionable`. No LLM, no issue. Importable `analyze()` / `usageCoverage()`. |
+| `lib/advisor.test.mjs` | findings logic (reds flag, growth flags, cross-tokenizer deltas are NOT compared, dead-weight coverage gates, deterministic) |
 | `.github/workflows/loop-station-advisor.yml` | weekly: run the gate → **only if actionable** invoke `claude-code-action` to open/update ONE `loop-station-advisor` issue assigned to `pmcp` |
+
+### Dead-weight rule (#1066)
+
+Joins WS1 size × WS-A usage: an **oversized skill** (≥ the scorecard's artifact
+amber band) that **provably never fired** becomes one `dead-weight` finding
+listing the candidates. "Provably" is gated — the rule judges ONLY when the
+usage rollup covers **≥ 60 cumulative days AND ≥ 5 observed runs** (tune in
+`ADVISOR`); anything thinner stays silent with `usage.why` naming the reason,
+because "no data" must never read as "dead". Evidence carries
+`scope: 'pipeline'` — 0 means *never fired in CI*, not never used (#1067).
 
 ## Why the gate is deterministic
 
