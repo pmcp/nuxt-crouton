@@ -13,9 +13,13 @@ jobs:
     # later label change while `delegate` happens to still be on the issue. Otherwise the
     # worker adding `status:in-progress` re-fires this workflow as claude[bot], which then
     # dies on the bot-actor guard (the mystery duplicate failures). Gate on the *added* label.
+    # AGENT_HARNESS guard (#669 WS7 / #1077): when the repo var is 'pi', this claude flow
+    # yields — the same `delegate` events are picked up by decompose-on-issue-pidev.yml
+    # instead. Unset/anything-else ⇒ claude stays the default (one-variable flip back).
     if: |
-      (github.event.action == 'labeled' && github.event.label.name == 'delegate') ||
-      (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'delegate'))
+      vars.AGENT_HARNESS != 'pi' &&
+      ((github.event.action == 'labeled' && github.event.label.name == 'delegate') ||
+       (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'delegate')))
     runs-on: ${{ vars.AGENT_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     # NOTE: permissions MUST live at the job level. GitHub job-level `permissions` fully
