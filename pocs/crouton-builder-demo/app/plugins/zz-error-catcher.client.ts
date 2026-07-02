@@ -35,8 +35,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     const mounted = !!marker
     const open = marker?.getAttribute('data-sw-open') ?? 'n/a'
     const sheet = !!document.querySelector('[data-sw-sheet]')
-    const tool = !!document.querySelector('[data-sw-launcher], .sw-launcher')
-    status.textContent = `SpecWalk · mounted=${mounted ? 'YES' : 'NO'} · open=${open} · sheet=${sheet ? 'YES' : 'NO'}`
+    const sw = (window as unknown as { __SW?: Record<string, unknown> }).__SW || {}
+    status.textContent = `SW · app=${sw.app ? 'Y' : 'N'} import=${sw.imp ? 'Y' : 'N'} panelSetup=${sw.panel ? 'Y' : 'N'} walk=${sw.walk ?? '?'} · mounted=${mounted ? 'YES' : 'NO'} open=${open} sheet=${sheet ? 'YES' : 'NO'}`
   }, 500)
 
   window.addEventListener('error', e => add('js', `${e.message}${e.filename ? ` @ ${e.filename.split('/').pop()}:${e.lineno}` : ''}`))
