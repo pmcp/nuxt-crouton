@@ -15,6 +15,10 @@ on:
       - 'packages/**'
       - 'apps/**'
       - 'pocs/**'
+      # Known-bad smoke fixtures (#1035) are diff-scope-excluded so committing/
+      # touching them never self-flags an ordinary PR — they're exercised by
+      # gate-smoke.yml instead, which scans them directly.
+      - '!.claude/gate-fixtures/**'
 
 concurrency:
   group: red-team-${{ github.event.pull_request.number }}
