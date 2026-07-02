@@ -6,9 +6,12 @@
     "expect": "a CroutonFlow canvas of page cards (lines = parentId); tapping a card (or ⤢ / double-click) opens that page's board; 'Pages ←' returns to the flow",
     "hook": "",
     "howToTest": "1. open /spike-app → see the Site flow of page cards  2. tap a card → its LayoutTree loads onto the board  3. tap 'Pages ←' → back to the flow",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["port the board into the old zoom shell → ❌ added Site as a level on top of the polished board instead (Decision B)"]
+    "consideredRejected": [
+      "port the board into the old zoom shell → ❌ added Site as a level on top of the polished board instead (Decision B)"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "page-model-one-node",
@@ -17,9 +20,10 @@
     "expect": "one node carries the ★ page badge; 'Set as page' promotes another; 'Duplicate' clones one as a free draft; a merge involving the page always consumes (the badge survives)",
     "hook": "page-badge",
     "howToTest": "1. open a board with 2+ nodes → exactly one shows the ★ badge  2. Set as page on another → badge moves  3. merge the page into another node → the result keeps the ★ badge",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "focus-edit-view",
@@ -28,9 +32,12 @@
     "expect": "a full-screen overlay hosting the breakpoint author (min-width ruler, device buttons, width slider, per-block variants, splitter drags); 'Done' returns; the node's layout persists via the page's zoomTree",
     "hook": "",
     "howToTest": "1. double-click a composed node → full-screen edit view opens (no camera wobble)  2. drag a splitter → keypoint sizes change  3. Done → returns, changes persisted",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["camera zoom onto the node → ❌ VF re-measure race framed the 2nd node off-screen at mobile width"]
+    "consideredRejected": [
+      "camera zoom onto the node → ❌ VF re-measure race framed the 2nd node off-screen at mobile width"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "per-element-resize",
@@ -39,9 +46,12 @@
     "expect": "a corner handle sets the node width/height; once a width is set the card switches to a read-only responsive preview (splitter drags then resize the card, not its panes); opening edit lands at that width",
     "hook": "",
     "howToTest": "1. select a card → corner handle appears  2. drag it narrower → the card's content reflows responsively  3. open edit → lands at the resized width",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["global board-wide responsive slider → ❌ replaced by per-element width"]
+    "consideredRejected": [
+      "global board-wide responsive slider → ❌ replaced by per-element width"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "intrinsic-block-sizing",
@@ -50,9 +60,12 @@
     "expect": "the hug block renders short (content height); the fill block stretches; a card can't be resized below its hard floor",
     "hook": "floor-readout",
     "howToTest": "1. add a Top bar block → it renders as a short pill (declares height:hug)  2. add a List → it fills  3. try to resize a card below its floor → it won't go (floor readout shows 'stacks <Npx · floor Mpx')",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["per-instance align/size panel → ❌ the component decides, not the instance"]
+    "consideredRejected": [
+      "per-instance align/size panel → ❌ the component decides, not the instance"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "composite-derive-sizing",
@@ -61,9 +74,12 @@
     "expect": "the card shows a derived floor readout; the per-element resize can't drag it below its hard floor (a layout can't violate its components' rules)",
     "hook": "floor-readout",
     "howToTest": "1. compose a 2-pane row → select it  2. read the derived floor (hard = widest leaf, soft = sum)  3. resize down → stops at the hard floor",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["manual min/max override on a composite → ❌ deferred; risks reintroducing per-instance flex — revisit after graduation if derived floors prove insufficient"]
+    "consideredRejected": [
+      "manual min/max override on a composite → ❌ deferred; risks reintroducing per-instance flex — revisit after graduation if derived floors prove insufficient"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "page-regions-pin",
@@ -74,7 +90,11 @@
     "howToTest": "1. pin a node to top → region pill shows 'Pinned top'  2. pin another to bottom  3. ▶ Preview → sticky top bar + sticky bottom bar + scrolling main",
     "status": "proposed",
     "supersedes": "",
-    "consideredRejected": ["per-pane pin (pin one pane inside a composed layout) → ❌ deferred; pinning is card-level", "per-pane size lock → ❌ dropped; intrinsic hug sizing makes a pinned bar short automatically"]
+    "consideredRejected": [
+      "per-pane pin (pin one pane inside a composed layout) → ❌ deferred; pinning is card-level",
+      "per-pane size lock → ❌ dropped; intrinsic hug sizing makes a pinned bar short automatically"
+    ],
+    "note": "A1 contradiction: clicking ▶ Preview does nothing — the region assembly did not run."
   },
   {
     "id": "display-variants",
@@ -85,7 +105,10 @@
     "howToTest": "1. edit a List block → select its pane  2. Display row offers rows/cards/table  3. pick 'table' → re-renders; reopen → still table (persisted on the leaf)",
     "status": "proposed",
     "supersedes": "",
-    "consideredRejected": ["free display config → ❌ bounded enum only, inside the expressiveness boundary"]
+    "consideredRejected": [
+      "free display config → ❌ bounded enum only, inside the expressiveness boundary"
+    ],
+    "note": "A1 contradiction: the Display variant options were not visible in the edit view."
   },
   {
     "id": "snap-dwell-arm",
@@ -94,9 +117,10 @@
     "expect": "a soft blue guide first, then a green armed ring/guide after the dwell; releasing while armed snaps",
     "hook": "snap-guide",
     "howToTest": "1. drag a card toward another's edge → soft blue guide (data-armed=false)  2. hold ~0.6s → turns green (data-armed=true)  3. release → snaps into place",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "pane-drop-beside",
@@ -105,9 +129,12 @@
     "expect": "the pane under the cursor is targeted; the card joins as a sibling on the nearest side; flatten vs wrap as above; the drop commits by tracking the dragged node's id",
     "hook": "ghost-pane",
     "howToTest": "1. drag a card over a 2-pane row, near the right pane's right edge → it joins the row (flatten)  2. drag over a vertical stack, to the right of a pane → wraps in a new horizontal split",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["seam-only insert → ❌ couldn't add beside a pane in a stack with no matching seam"]
+    "consideredRejected": [
+      "seam-only insert → ❌ couldn't add beside a pane in a stack with no matching seam"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "ghost-ease-apart",
@@ -116,9 +143,10 @@
     "expect": "a dashed ghost matching the dragged footprint appears; panes slide apart and the card grows to fit; un-arming reverts it",
     "hook": "ghost-pane",
     "howToTest": "1. drag a 2-row card over a layout and arm it → a 2-row dashed ghost opens  2. real panes ease apart (FLIP)  3. move away to un-arm → reverts",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "detach-reorder",
@@ -129,7 +157,8 @@
     "howToTest": "1. long-press a merged node → panes wiggle  2. slide a pane to another slot → 'Move here', release → reordered  3. pull a pane far out (>~64px) → detaches as its own node",
     "status": "proposed",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "note": "A1 contradiction: detach/reorder does not work for a layout nested inside a layout."
   },
   {
     "id": "enter-page-fit",
@@ -138,9 +167,12 @@
     "expect": "the page node is framed cleanly and immediately, no zoom-out wobble or off-screen framing",
     "hook": "",
     "howToTest": "1. from the Site flow, open a page → the board frames the page node instantly and centred (no wobble)",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["Vue Flow fitView → ❌ measures the small wrapper, zooms into the oversized card"]
+    "consideredRejected": [
+      "Vue Flow fitView → ❌ measures the small wrapper, zooms into the oversized card"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "add-block-land",
@@ -149,9 +181,12 @@
     "expect": "the new block appears in a clear area (never under a wide/moved layout), camera centres on it, green glow fades",
     "hook": "",
     "howToTest": "1. add a block from the palette → it lands clear to the right, camera centres, green glow fades ~2.5s later",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": ["fixed count×300 stride → ❌ dropped new blocks under wide/moved layouts"]
+    "consideredRejected": [
+      "fixed count×300 stride → ❌ dropped new blocks under wide/moved layouts"
+    ],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "pinch-zoom",
@@ -160,9 +195,10 @@
     "expect": "the board zooms around the pinched point; single-finger still drags/long-presses",
     "hook": "",
     "howToTest": "1. (touch) start a 2-finger pinch on a card → board zooms, pinched point stays under the fingers  2. one finger → still drags",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "drag-glow",
@@ -171,9 +207,10 @@
     "expect": "a light-green halo while dragging, fading on drop; snap rings take visual priority when present",
     "hook": "",
     "howToTest": "1. drag a card → light-green halo  2. bring it near a snap → the snap ring outranks the glow  3. drop → halo fades",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
   {
     "id": "spacer-block",
@@ -182,11 +219,11 @@
     "expect": "an empty space block with a faint dashed hint; behaves like any block (snap/reorder/resize); can be a thin gutter",
     "hook": "",
     "howToTest": "1. add a Spacer → dashed empty block  2. snap it between two blocks → pushes them apart  3. resize narrow → thin gutter",
-    "status": "proposed",
+    "status": "settled",
     "supersedes": "",
-    "consideredRejected": []
+    "consideredRejected": [],
+    "signedOff": "A1 spec-walk · Maarten · 2026-07-02"
   },
-
   {
     "id": "page-site-routing",
     "behaviour": "Page ⇄ Site is REAL routing, not one view. The POC fakes it: /spike-app is one route and selectedPageId v-if/v-else-swaps with a cross-fade (a visual transition pretending to be navigation).",
@@ -207,7 +244,9 @@
     "howToTest": "POC: 1. open/close a page → cross-fade. GRADUATED target: the page card morphs into the board (shared-element)",
     "status": "stopgap",
     "supersedes": "",
-    "consideredRejected": ["mode=out-in → ❌ flashed the dark bg and delayed board mount so fitPage missed"]
+    "consideredRejected": [
+      "mode=out-in → ❌ flashed the dark bg and delayed board mount so fitPage missed"
+    ]
   },
   {
     "id": "board-persistence",
@@ -231,7 +270,6 @@
     "supersedes": "",
     "consideredRejected": []
   },
-
   {
     "id": "round-trip-ticket",
     "behaviour": "Persist a version back to the GitHub ticket: a human's edited layout saves onto the tracking issue as the command/spec for the agent to (re)build from. Agent writes the tree → human edits visually → edit posts back → agent reads it. The North Star — the builder is the human's seat in an agent pipeline.",
