@@ -12,7 +12,6 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useSpecWalk } from '../composables/useSpecWalk'
 
 const { open, idx, walk, verdicts, marked, current, setVerdict, setNote, go, exportText, stepsOf, selectorFor } = useSpecWalk()
-if (import.meta.client) { const w = window as unknown as { __SW?: Record<string, unknown> }; w.__SW = w.__SW || {}; w.__SW.panel = true; w.__SW.walk = walk.length }
 
 const showExport = ref(false)
 const copied = ref(false)
@@ -43,10 +42,6 @@ const noteOf = computed(() => (current.value ? verdicts.value[current.value.id]?
 </script>
 
 <template>
-  <!-- DEBUG marker (#1039): always rendered so a live HUD can read whether the panel is
-       mounted + what `open` it sees. Remove with zz-error-catcher once the panel works. -->
-  <span data-sw-mounted :data-sw-open="String(open)" style="display:none" />
-
   <!-- Non-blocking element outline (hooked entries with a live element only). -->
   <div
     v-if="open && hl.show"
@@ -57,7 +52,6 @@ const noteOf = computed(() => (current.value ? verdicts.value[current.value.id]?
   <!-- Bottom-sheet panel — NO overlay, board stays interactive. -->
   <div
     v-if="open"
-    data-sw-sheet
     class="fixed inset-x-0 bottom-0 z-50 max-h-[52dvh] overflow-y-auto rounded-t-2xl border-t border-default bg-elevated/95 shadow-2xl backdrop-blur"
   >
       <div class="mx-auto flex max-w-2xl flex-col gap-3 p-4">
