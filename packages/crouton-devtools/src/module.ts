@@ -1,7 +1,17 @@
 import { defineNuxtModule, createResolver, addServerHandler, installModule } from '@nuxt/kit'
 import { addCustomTab } from '@nuxt/devtools-kit'
+import type { FeedbackModuleOptions } from '@fyit/crouton-feedback'
 
-export interface ModuleOptions {}
+export interface ModuleOptions {
+  /**
+   * Config for the crouton-feedback **Changelog** tool (#1048), forwarded to the
+   * installed toolkit. Point it at a committed `changelog.json` to get a
+   * `vNN`-badged version timeline in the glasses launcher. Since apps consume the
+   * toolkit *through* crouton-devtools, this is where crouton apps configure it
+   * (a standalone crouton-feedback app would use `croutonFeedback.changelog`).
+   */
+  changelog?: FeedbackModuleOptions['changelog']
+}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -12,7 +22,7 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
   defaults: {},
-  async setup(_options, nuxt) {
+  async setup(options, nuxt) {
     const reviewOn = process.env.NUXT_PUBLIC_CROUTON_REVIEW === 'true'
     const overlayOn = nuxt.options.dev
       || process.env.NUXT_PUBLIC_CROUTON_DEVTOOLS === 'true'
@@ -52,7 +62,8 @@ export default defineNuxtModule<ModuleOptions>({
       // subscribed agent keys off (the reviewAlias plugin fills the creds at runtime).
       await installModule('@fyit/crouton-feedback', {
         enabled: true,
-        feedback: reviewOn ? { sink: 'github' } : {}
+        feedback: reviewOn ? { sink: 'github' } : {},
+        changelog: options.changelog
       })
 
       // Runtime alias: NUXT_CROUTON_REVIEW_* (croutonReview) → croutonFeedback.

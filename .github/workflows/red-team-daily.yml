@@ -17,8 +17,8 @@ name: Red-Team (daily deep sweep)
 # If RESEND_API_KEY / the vars are unset the email step warns and skips (the job stays green).
 
 on:
-  schedule:
-    - cron: '17 6 * * *'   # 06:17 UTC daily, before the working day
+  # Daily schedule dropped to cut cost (#823) — rely on the per-PR red-team.yml gate
+  # (scope:diff, depth:quick). Kept dispatchable for an occasional manual whole-repo sweep.
   workflow_dispatch:        # manual run
 
 concurrency:
@@ -53,7 +53,11 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
-          claude_args: "--max-turns 60"
+          # bypassPermissions REQUIRED (#834): headless CI denies un-allowlisted tools, so the
+          # deep sweep couldn't write its report, update the standing issue, or file security
+          # issues. Broader than the per-PR gate's allowlist because this run also files GitHub
+          # issues (MCP) + writes reports; the gate-package-edits hook still protects packages/.
+          claude_args: "--max-turns 60 --permission-mode bypassPermissions"
           prompt: |
             Run the **`/red-team`** skill (`.claude/skills/red-team/SKILL.md`) at
             **depth=deep, scope=repo**. Fan out the `red-team` subagent across the

@@ -14,6 +14,10 @@ dropdown of toggleable tools:
 - **Annotate** — pin a comment on any page element; on send it builds a
   structured annotation and POSTs it to a **pluggable feedback sink** (webhook /
   Slack / Discord / GitHub), chosen by config.
+- **Changelog** — a `vNN`-badged row that opens a version timeline (#1048).
+  JSON-first: entries come from a committed `changelog.json`; an optional
+  build-time git stamp fills the current deployed commit. Hides itself when the
+  app ships no entries, so it costs nothing until an app provides one.
 
 This package was extracted from `@fyit/crouton-devtools` (epic
 [#960](https://github.com/FriendlyInternet/nuxt-crouton/issues/960)) so the
@@ -80,6 +84,30 @@ Every field is overridable at runtime by its `NUXT_CROUTON_FEEDBACK_*` env var
 (the empty-string defaults in `module.ts` are what make env mapping work). Prefer
 env for secrets (`…_GITHUB_APP_PRIVATE_KEY`, `…_GITHUB_TOKEN`).
 
+## Changelog tool config (#1048)
+
+JSON-first data source. Point the module at a committed changelog file (array of
+`{ v, note, commit? }`, newest first) and, optionally, a commit-link template:
+
+```ts
+// nuxt.config.ts
+croutonFeedback: {
+  changelog: {
+    path: 'app/changelog.json',                                   // or inline `entries: [...]`
+    commitUrlTemplate: 'https://github.com/OWNER/REPO/commit/{commit}',
+    stampGitCommit: true                                          // default; false to skip the git stamp
+  }
+}
+```
+
+When `path` is omitted the module auto-detects `<srcDir>/changelog.json`,
+`app/changelog.json`, then `changelog.json`. At build it reads + normalizes the
+file and (unless `stampGitCommit: false`) runs `git rev-parse --short HEAD`,
+injecting `{ entries, commitUrlTemplate, buildCommit }` into
+`runtimeConfig.public.croutonChangelog`. The build SHA fills the current entry's
+commit until it's backfilled on the next push; when git is absent (some CI
+builds) the stamp is simply empty. No entries ⇒ the tool hides itself.
+
 ## Key Files
 
 | File | Purpose |
@@ -90,6 +118,11 @@ env for secrets (`…_GITHUB_APP_PRIVATE_KEY`, `…_GITHUB_TOKEN`).
 | `src/runtime/overlay/mount.ts` | `mountOverlayInBody()` — appContext-mount helper (launcher + future overlays). |
 | `src/runtime/tools/console.ts` | **Console** tool factory — eruda, lazy-loaded on toggle; injectable loader (unit-tested). |
 | `src/runtime/tools/annotate.ts` | **Annotate** tool factory — maps activate/deactivate → select-mode start/stop. |
+| `src/runtime/tools/changelog.ts` | **Changelog** tool factory — `vNN` badge + open/close the timeline (unit-tested). |
+| `src/runtime/tools/changelog-data.ts` | Pure changelog helpers (`normalizeChangelog` / `latestVersion` / `buildCommitUrl`) — shared by the module (build) + composable (runtime). Unit-tested, no Vue. |
+| `src/runtime/composables/useChangelog.ts` | Reads `runtimeConfig.public.croutonChangelog` (entries + commit template + build SHA); shared open flag for the overlay. |
+| `src/runtime/components/ChangelogOverlay.vue` | The version-timeline modal (newest first, current entry accented, configurable commit links). |
+| `src/runtime/plugins/tools/changelog.client.ts` | Registers the Changelog tool + mounts its overlay. |
 | `src/runtime/composables/useAnnotate.ts` | Annotate state + DOM select/highlight + POST to `/api/_feedback`. |
 | `src/runtime/components/AnnotateOverlay.vue` | Annotate overlay — highlight + Nuxt UI comment panel. |
 | `src/runtime/overlay/capture.ts` | Pure capture helpers + `formatAnnotationMarkdown` (selector / source-file / Markdown). Unit-tested. |

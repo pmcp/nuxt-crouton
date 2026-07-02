@@ -34,15 +34,9 @@ import SpikeBlockNode from '~/components/SpikeBlockNode.vue'
 import SpikePageCard from '~/components/SpikePageCard.vue'
 
 useHead({ title: 'Spike · app on Vue Flow' })
-// Iteration changelog / decision log (#940) — newest first, externalized to `spike-changelog.json`
-// with a commit ref per entry (a chronological record of HOW we got here, complementing the curated
-// HANDOFF.md). The floating chip shows the current number; tapping it opens the former changelogs.
-// On every iteration: bump the stamp by prepending an entry to that JSON (commit filled on push).
-import spikeChangelog from '~/spike-changelog.json'
-const BUILD_HISTORY = spikeChangelog as { v: number, note: string, commit?: string }[]
-const BUILD_VERSION = BUILD_HISTORY[0]!.v
-const BUILD = `page-compose-${BUILD_VERSION} · ${BUILD_HISTORY[0]!.note}`
-const versionOpen = ref(false)
+// Iteration changelog / decision log (#940, #1048): the version timeline now lives in the shared
+// glasses launcher as the @fyit/crouton-feedback "Changelog" tool, fed by `app/spike-changelog.json`
+// (wired via `croutonFeedback.changelog` in nuxt.config). No bespoke on-page chip here anymore.
 
 const blockNode = markRaw(SpikeBlockNode)
 const spikePageCard = markRaw(SpikePageCard)
@@ -1195,62 +1189,6 @@ function exitToPages() {
       :label="currentPage?.label ?? currentPageLabel"
       @close="previewOpen = false"
     />
-
-    <!-- Version chip (#940): the old header is gone, so this tiny floating chip shows the current
-         iteration NUMBER and — tapped — opens the full former-changelog history. On-page (not Nuxt
-         DevTools, which is dev-only and can't show on the mobile staging preview deploys verify on). -->
-    <UButton
-      class="fixed bottom-1 left-1 z-50 font-mono text-[10px]"
-      size="xs"
-      color="neutral"
-      variant="soft"
-      :label="`v${BUILD_VERSION}`"
-      icon="i-lucide-history"
-      :title="BUILD"
-      @click="versionOpen = true"
-    />
-
-    <!-- Spec-walk reconcile tour (#1039) — rendered here, next to the version chip, because
-         this on-page fixed pattern is the only one proven to show on mobile staging. -->
-    <SpecWalkButton />
-    <UModal v-model:open="versionOpen" :ui="{ content: 'sm:max-w-md' }">
-      <template #content="{ close }">
-        <div class="flex max-h-[82dvh] flex-col">
-          <div class="flex items-center justify-between border-b border-default px-4 py-3">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-history" class="size-4 text-muted" />
-              <h3 class="text-sm font-semibold">Changelog</h3>
-              <span class="rounded-full bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">v{{ BUILD_VERSION }}</span>
-            </div>
-            <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Close" @click="close" />
-          </div>
-          <!-- Timeline: a hairline rail down the left, a dot per entry; current entry accented. -->
-          <ol class="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
-            <li
-              v-for="(entry, i) in BUILD_HISTORY"
-              :key="entry.v"
-              class="relative flex gap-3 pb-4 last:pb-0"
-            >
-              <!-- rail + dot -->
-              <div class="relative flex w-10 shrink-0 justify-center">
-                <span v-if="i < BUILD_HISTORY.length - 1" class="absolute left-1/2 top-4 h-full w-px -translate-x-1/2 bg-default" />
-                <span
-                  class="relative z-10 inline-flex h-5 items-center rounded-full px-1.5 font-mono text-[10px] font-semibold tabular-nums ring-2 ring-default"
-                  :class="i === 0 ? 'bg-primary text-inverted ring-primary/30' : 'bg-elevated text-muted'"
-                >{{ entry.v }}</span>
-              </div>
-              <div class="min-w-0 flex-1 pt-0.5">
-                <p class="text-xs leading-snug text-default">{{ entry.note }}</p>
-                <p v-if="entry.commit" class="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-dimmed">
-                  <UIcon name="i-lucide-git-commit-horizontal" class="size-3" />{{ entry.commit }}
-                </p>
-                <span v-if="i === 0" class="ml-2 align-middle text-[10px] font-medium text-primary">· current</span>
-              </div>
-            </li>
-          </ol>
-        </div>
-      </template>
-    </UModal>
   </div>
 </template>
 

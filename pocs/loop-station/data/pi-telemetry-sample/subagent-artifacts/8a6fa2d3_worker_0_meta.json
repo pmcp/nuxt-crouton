@@ -1,0 +1,27 @@
+{
+  "runId": "8a6fa2d3",
+  "agent": "worker",
+  "task": "<REDACTED — full task prompt; the adapter MUST NOT forward this>",
+  "exitCode": 0,
+  "usage": {
+    "input": 459,
+    "output": 9236,
+    "cacheRead": 2772244,
+    "cacheWrite": 77082,
+    "cost": 0.4202159,
+    "turns": 45
+  },
+  "model": "anthropic/claude-haiku-4-5-20251001:high",
+  "attemptedModels": ["anthropic/claude-haiku-4-5-20251001"],
+  "modelAttempts": [
+    {
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "success": true,
+      "exitCode": 0,
+      "usage": { "input": 459, "output": 9236, "cacheRead": 2772244, "cacheWrite": 77082, "cost": 0.4202159, "turns": 45 }
+    }
+  ],
+  "durationMs": 192340,
+  "toolCount": 44,
+  "timestamp": 1782380757684
+}

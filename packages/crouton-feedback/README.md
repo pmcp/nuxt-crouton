@@ -1,15 +1,14 @@
 # @fyit/crouton-feedback
 
-> 🚧 **Early scaffold** — the runtime tools land across epic
-> [#960](https://github.com/FriendlyInternet/nuxt-crouton/issues/960). This shell
-> installs cleanly but does not render the launcher yet.
-
 A **drop-in in-page feedback toolkit for any Nuxt + Nuxt UI 4 app**. It adds one
-neutral **glasses** launcher in the bottom-right corner with two toggleable tools:
+neutral **glasses** launcher in the bottom-right corner with these toggleable tools:
 
 - **Console** — an in-page mobile devtools console (eruda), lazy-loaded on demand.
 - **Annotate** — click any element on the page, write a comment, and send it to
   wherever you want feedback to go.
+- **Changelog** — a `vNN`-badged version timeline, fed by a committed
+  `changelog.json` (see below). Handy on staging previews to see which build
+  you're looking at. Hidden when no changelog is provided.
 
 The send destination is a **pluggable sink** you pick in config:
 
@@ -66,6 +65,27 @@ export default defineNuxtConfig({
 Credentials and URLs live only in **server** runtime config — they never reach
 the client bundle. The `github` sink posts as a GitHub App (short-lived token, no
 stored credential), with an interim PAT (`github.token`) fallback.
+
+## Show a version timeline (Changelog tool)
+
+Provide a committed `changelog.json` — an array of `{ v, note, commit? }`, newest
+first — and the launcher gains a `vNN`-badged **Changelog** row:
+
+```ts
+// nuxt.config.ts
+croutonFeedback: {
+  changelog: {
+    path: 'app/changelog.json',                                   // or inline `entries: [...]`
+    commitUrlTemplate: 'https://github.com/OWNER/REPO/commit/{commit}'
+  }
+}
+```
+
+`path` is optional — the module auto-detects `<srcDir>/changelog.json`,
+`app/changelog.json`, then `changelog.json`. At build it also stamps the current
+`git rev-parse --short HEAD` (disable with `stampGitCommit: false`) to fill the
+current entry's commit until the next push backfills it. No entries ⇒ the tool
+stays hidden.
 
 ## License
 

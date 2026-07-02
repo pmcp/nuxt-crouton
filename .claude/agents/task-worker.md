@@ -190,6 +190,10 @@ deploy pipeline is down). Run the **`ui-proposal`** skill with `--static`. Then:
   post-build before/after screenshot (#311) closes it.
 - **Approval signal is a reply comment** containing `approve` or `lgtm` (case-insensitive).
   A 👍 reaction or `ui-approved` label does **not** unblock the pipeline (#572).
+- **The sign-off request is a TOP-LEVEL comment.** Post it with `add_issue_comment` on the draft
+  PR/issue — **not** a PR *review* body (state `COMMENTED`), which the owner can miss (#846). The
+  detailed review (preview URL, field table, test cases) can live in the PR; the actionable
+  `@mention` + `status:blocked` ask stands alone as a top-level comment so it notifies.
 
 ## Schema sign-off gate (#314)
 

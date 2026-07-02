@@ -1,0 +1,29 @@
+{
+  "_about": "routing.json — the single source of truth for \"what runs on what model\". WS6a of epic #669 (#864). Pairs with the evidence-based eval loop (#865). DESCRIPTIVE today: records the CURRENT model of each agent (mirrors .claude/agents/*.md frontmatter) plus a `proposed` cheaper tier and the rationale. Render with `node scripts/gen-routing.mjs` (writes writeups/architecture/routing-registry.md) or `--check` (CI guard: fails on a stale registry OR a route whose tier drifts from the agent's real frontmatter). NEXT: a sync step that writes the chosen tier back INTO the consumers (agent frontmatter, pi models.json, workflow env) so this becomes PRESCRIPTIVE. Until then, changing a model still means editing the agent file; this is the map + the proposal, reviewed on the sweep and validated by the #865 scoreboard before any demotion. (Was routing.yaml; converted to JSON so the gen-routing.mjs guard needs zero deps — the check job never installs node_modules; #1062.)",
+
+  "_tiers": "Each tier maps to a concrete model per harness. out_per_mtok is the Claude baseline output price ($/Mtok) — the cost lever; pi's cheaper/local equivalents are measured for real by the #865 eval loop, not assumed here. pi_local = the local (~$0) option on the Mac mini (informational; the generator reads `pi`).",
+  "tiers": {
+    "small":  { "claude": "haiku",  "pi": "deepseek-v3.2", "pi_local": "ollama:qwen2.5-coder:7b", "out_per_mtok": 5,  "note": "reports / triage / decompose — no code written" },
+    "medium": { "claude": "sonnet", "pi": "deepseek-v3.2", "out_per_mtok": 15, "note": "most work" },
+    "large":  { "claude": "opus",   "pi": "claude-opus-4-8", "out_per_mtok": 75, "note": "hard build / synthesis — quality-sensitive" }
+  },
+
+  "default": "medium",
+
+  "_routes": "One entry per agent/flow. tier = what it runs on TODAY (must match the agent frontmatter — --check is the guard). proposed = where the cheap-but-good re-tiering would put it, pending the #865 quality measurement. Omit proposed to mean \"no change proposed\".",
+  "routes": {
+    "task-worker":       { "tier": "large",  "why": "writes code → PR; quality-sensitive — hold on Claude until #865 proves a cheaper model" },
+    "task-orchestrator": { "tier": "medium", "why": "reads epic → workstreams; no code written. Moved opus→Sonnet 5 on an N=4 decompose A/B (Sonnet 5 matched/beat Opus 4.8 on 3 of 4 real epics, ~5× cheaper, fewer NEEDS-SPLIT recursion rounds). Refines #824: the strong-but-cheaper model is a peer planner, not the blunt one that decision guarded against." },
+    "task-decomposer":   { "tier": "medium", "why": "LEAF test + split issues; no code written. Moved opus→Sonnet 5 with the orchestrator on the same N=4 A/B evidence. Refines #824." },
+    "red-team":          { "tier": "medium", "why": "security analysis, reports only — opus was overkill; moved to Sonnet 5 (no code written, daily deep sweep is the cost). Free win per #823/#824." },
+    "a11y":              { "tier": "medium", "proposed": "small", "why": "template review, reports only" },
+    "frontend-review":   { "tier": "medium", "proposed": "small", "why": "convention review, reports only" }
+  },
+
+  "_overrides": "Per-flow exceptions that pin an exact model regardless of tier. This is where a one-off flow declares itself VISIBLY instead of burying the decision in a branch.",
+  "overrides": [
+    { "flow": "prototype-example", "model": "claude-opus-4-8", "why": "exploratory prototype flow — quality over cost (replace with your real flow)" }
+  ],
+
+  "_known_gaps": "The top-level workflow loop (claude.yml, decompose-on-issue.yml, fix-ci, the daily sweeps) runs on the claude-code-action DEFAULT model — UNPINNED. Pinning those is a follow-up; once pinned they become routes above."
+}

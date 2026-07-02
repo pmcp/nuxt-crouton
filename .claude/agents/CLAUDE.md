@@ -24,11 +24,26 @@ A recursive "one task → tree of GitHub issues → agents" system. Entry point 
 | `task-decomposer`   | `task-decomposer.md`   | **yes** | no | `sonnet` |
 | `task-worker`       | `task-worker.md`       | no | **yes** (one leaf → one PR) | `opus` |
 
-**Model split (cost):** orchestrator + decomposer only read/write GitHub issues, so they
-run on **Sonnet**; only `task-worker` writes real code, so it runs on **Opus**. Each
-spawned agent re-pays the base context (system prompt + this repo's large `CLAUDE.md` +
-tool defs), so fan-out is the dominant cost — drop the issue-only agents to `haiku` for a
-cheaper (slightly blunter) split, or raise them to `opus` if decomposition quality slips.
+**Model split — tier by REASONING LEVERAGE, not by "writes code?" (#824, revised on N=4 evidence):**
+*writing code* and *reasoning* are different axes, and the planning roles sit at the top of
+the reasoning one — so the naive cut ("the orchestrator and decomposer only touch GitHub
+issues, run them on Haiku") is **backwards**: a **blunt** planner mis-frames the tree, and that
+error is paid downstream as wasted **Opus-worker** runs (build the wrong thing → the
+artifact-gate catches it late). The **orchestrator** owns the package-reuse call (#292 —
+build-on-a-package vs from-scratch, the #274 reinvent-a-package failure) and the top-level slice
+that frames the **entire** tree; the **decomposer** recursively applies the LEAF TEST and writes
+the **acceptance criteria the worker builds against**. #824 left one open question: is a
+*strong-but-cheaper* model a blunt planner or a peer? **An N=4 decompose A/B answered it** —
+Opus 4.8 vs **Sonnet 5** on four real epics (human breakdowns hidden, single-judge): Sonnet 5
+**matched or beat Opus 4.8 on 3 of 4**, at ~5× lower token price and with **fewer NEEDS-SPLIT
+recursion rounds** (it produced buildable leaves directly instead of deferring). So it's a
+**peer** planner, not a blunt one — and the orchestrator + decomposer now run on **Sonnet 5**
+(medium tier). The **worker stays on Opus** because it writes the actual code (the one role
+#824 flagged as the Sonnet-trial candidate — still pending a gate-pass-rate measurement). The
+principle is unchanged — spend the strongest model where the hardest decisions are made — the
+evidence just moved the planning roles' price point down. Remaining cost levers live elsewhere
+(drop fixed daily sweeps; route reports-only flows to Haiku via pi). Caveat: N=4, single judge —
+a strong signal, not proof; the #865 eval scoreboard is where this gets validated continuously.
 
 ## The red-team agent (standalone — not part of the pipeline)
 
@@ -40,7 +55,7 @@ Static-first; at `depth=deep` it may dynamically confirm high/criticals against 
 
 | Agent | File | Recurses? | Writes code? | Model |
 |-------|------|-----------|--------------|-------|
-| `red-team` | `red-team.md` | no | no (reports only) | `opus` |
+| `red-team` | `red-team.md` | no | no (reports only) | `sonnet` |
 
 It's steered by the **`/red-team` skill** (on demand) and run by
 `.github/workflows/red-team.yml` (per-PR `quick`, fails the check on high+) and
@@ -157,6 +172,12 @@ only — not visual taste (`/ui-proposal`), accessibility (`/a11y`), or security
   And **push before you block**: if you've written anything, `git push -u origin <branch>`
   first and name that branch under *State so far* — an unpushed worktree is lost on stop, a
   pushed branch is recoverable by the resuming session.
+- **The PING is a TOP-LEVEL comment, never a PR *review* body.** Post the handoff/sign-off via
+  `add_issue_comment` (a top-level issue/PR comment) — that reliably notifies. A PR **review**
+  body (state `COMMENTED`) is a weak surface the owner misses: on #846 pi buried its
+  `reply lgtm/approve` ping inside a review and it nearly went unseen. Put any detailed review
+  or analysis in its own separate artifact; the actionable ask (the handoff block + `@mention` +
+  `status:blocked`) stands alone as a top-level comment.
 - **An @mention is a request for action, not a broadcast.** Only @mention `NOTIFY_HANDLE`
   when you need the human to *do* something: answer a blocking question, give a sign-off,
   or unblock you. **Pure progress/status updates** ("spawning the worker for #NN", "wave 2

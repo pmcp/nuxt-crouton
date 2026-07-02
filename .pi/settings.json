@@ -1,0 +1,24 @@
+{
+  "$comment": "Headless CI profile (#1019/#1004) — only pipeline-critical + telemetry extensions. pi merges this project file OVER ~/.pi/agent/settings.json, and `packages` (an array) REPLACES the global list, so CI loads exactly these 8 — notably WITHOUT pi-ask-user / pi-interactive-shell, so a headless run can't stall-and-ask (the #839 failure). pi-ralph-wiggum gives the persistence loop. In CI, ANTHROPIC_API_KEY activates the 'anthropic' provider; locally, pi-claude-cli reads auth.json.",
+  "defaultProvider": "anthropic",
+  "defaultThinkingLevel": "medium",
+  "quietStartup": true,
+  "enableInstallTelemetry": false,
+  "otel": {
+    "enabled": true,
+    "endpoint": "http://localhost:4317",
+    "protocol": "grpc",
+    "captureContent": "metadata_only",
+    "signals": { "traces": true, "metrics": false, "logs": false }
+  },
+  "packages": [
+    "npm:pi-subagents",
+    "npm:pi-mcp-adapter",
+    "npm:pi-claude-cli",
+    "npm:pi-otel",
+    "npm:@jademind/pi-telemetry",
+    "npm:@tmustier/pi-usage-extension",
+    "npm:pi-prompt-template-model",
+    "npm:@tmustier/pi-ralph-wiggum"
+  ]
+}

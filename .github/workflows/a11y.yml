@@ -61,7 +61,10 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: true
-          claude_args: "--max-turns 30"
+          # --allowedTools REQUIRED (#834): the prompt has the top-level agent *act as* the
+          # subagent and call Bash/Write directly; headless CI denies un-allowlisted tools, so
+          # without this the agent can't write a11y-verdict.json / post the comment → fails OPEN.
+          claude_args: "--max-turns 40 --allowedTools Bash,Write,Edit,Read,Grep,Glob"
           prompt: |
             Act as the **a11y subagent** defined in `.claude/agents/a11y.md`.
             Input: { scope: "diff", depth: "quick", fix: false }.

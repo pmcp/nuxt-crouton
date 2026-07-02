@@ -33,7 +33,7 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { findWranglerConfig, parseJsonc, runWrangler } from './lib/wrangler-d1.mjs'
+import { findWranglerConfig, isAlreadyGone, parseJsonc, runWrangler } from './lib/wrangler-d1.mjs'
 import { readFileSync } from 'node:fs'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -139,7 +139,7 @@ function tryDelete(label, args) {
     return 'deleted'
   } catch (err) {
     const msg = String(err.message || '')
-    if (/not found|does not exist|could not find|no such/i.test(msg)) {
+    if (isAlreadyGone(msg)) {
       console.log(`    – ${label} not found (already gone)`)
       return 'absent'
     }
