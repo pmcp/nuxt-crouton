@@ -33,6 +33,8 @@ export const META = {
   spec: { group: 'build', triggers: ['flow', 'ask'] },
   graduate: { group: 'build', triggers: ['ask', 'flow'] },
   'github-tasks': { group: 'plan', triggers: ['ask', 'flow'] },
+  'issue-dedup': { group: 'plan', triggers: ['auto', 'ask', 'flow'] },
+  'issue-sanity-check': { group: 'plan', triggers: ['ask', 'flow'] },
   'epic-digest': { group: 'plan', triggers: ['ask'] },
   housekeeping: { group: 'plan', triggers: ['ask'] },
   'skills-digest': { group: 'plan', triggers: ['ask'] },
