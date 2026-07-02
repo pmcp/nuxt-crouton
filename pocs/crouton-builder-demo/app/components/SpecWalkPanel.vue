@@ -12,6 +12,7 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useSpecWalk } from '../composables/useSpecWalk'
 
 const { open, idx, walk, verdicts, marked, current, setVerdict, setNote, go, exportText, stepsOf, selectorFor } = useSpecWalk()
+if (import.meta.client) console.log('[SW-TRACE] SpecWalkPanel setup ran · walk.length =', walk.length, '· open =', open.value)
 
 const showExport = ref(false)
 const copied = ref(false)
