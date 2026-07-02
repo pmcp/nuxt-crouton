@@ -93,4 +93,4 @@ Change the cadence in `digests.yml`, never the workflow cron.
   step (it already computes `model` / `wall` / `conclusion` for the run summary). Tracked on #883.
 - **task-worker / decompose** capture (appending a row from those flows) is the remaining piece —
   the periodic scoreboard post itself ships here (`eval-scoreboard.yml`).
-- **Golden-task eval** rows (`flow: golden-*`, on fixtures, never `main`) are #885.
+- **Golden-task eval** rows (`flow: golden-*`, on fixtures, never `main`) ship in `scripts/eval-golden/` (#885) — 3 deterministic probes (reports-only / small-crud / scaffold) that append here via the same `append.mjs`.
