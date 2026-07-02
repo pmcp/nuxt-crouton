@@ -73,6 +73,26 @@ chose a different design. Four rules now prevent that:
    scaffolds the missing thing itself, and never silently diverges from the epic's stated
    design invariants. Missing prerequisite = blocker, not a DIY.
 
+## `.github/workflows/` boundary — embed-patch, don't block (#1076)
+
+The Harness App token backing this pipeline (and pi's headless runs) deliberately **lacks the
+`workflows` write scope** — decided as a hard, permanent boundary rather than granting it,
+because a token that can edit its own CI can also alter its own guardrails. A commit touching
+`.github/workflows/**` is hard-rejected by GitHub regardless of who/what is running.
+
+If a leaf's work needs a workflow-file change (new trigger, path filter, job):
+
+- Do **not** treat it as a blocker to stop-and-wait on — it's a known limit of your write access,
+  not a missing prerequisite. Commit everything else in the PR normally.
+- Embed the workflow diff verbatim as a `git apply`-able fenced diff block in the PR body under a
+  `## Workflow patch (human applies)` heading (see PR #1075 for the exact shape).
+- Post a plain top-level issue comment (never a PR *review* body) naming the pending patch and
+  @mentioning `NOTIFY_HANDLE`. Add `status:blocked` only if the omitted workflow change is
+  load-bearing for the rest of the PR; otherwise it's an FYI, not a hold.
+- **This is a complete deliverable, not a partial run** — "PR opened + workflow patch embedded
+  for a human" is a first-class PASS, exactly like any other linked-PR run. Don't spend extra
+  turns hunting for a way to write the workflow file anyway.
+
 ## Triggers (manual + automatic)
 
 - **Manual:** run `/task-decompose "<task>"` or `/task-decompose #NN` in any Claude Code

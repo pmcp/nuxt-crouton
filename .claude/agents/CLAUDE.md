@@ -120,6 +120,11 @@ only — not visual taste (`/ui-proposal`), accessibility (`/a11y`), or security
   ("the worker is now creating the schemas…") is **not** doing it: that exact no-op (a run
   that exits `success` having produced nothing) is what the **artifact-gate** in
   `decompose-on-issue.yml` now turns into a **red** run. Do the work, then prove it landed.
+  **One first-class PASS shape worth knowing (#1076):** a PR opened this run + a
+  `.github/workflows/**` patch embedded in its body for a human to apply (the token can't write
+  there — see `task-worker.md` → "`.github/workflows/` boundary") already satisfies the gate via
+  `linkedPR` alone; it is not a partial/no-op run, and no separate gate change was needed to
+  recognize it.
 - **Spawned agents are SYNCHRONOUS — there is NO "background" execution (the #455 root cause).**
   The `Agent`/Task tool runs a sub-agent **to completion and returns its result within your
   turn**. Nothing keeps running after you stop: when your turn ends, the GitHub Action **job
