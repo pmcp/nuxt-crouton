@@ -130,6 +130,43 @@ jobs:
               return
             }
 
+            // ── (e) CHILD deliverables (#1074) ─────────────────────────────────────────
+            // When the labeled issue is ALREADY decomposed, the correct agent behaviour is
+            // "resume the tree, work the remaining open leaf" — so the fresh deliverable
+            // lands on a CHILD issue, invisible to the checks above (the #1050 false-fail:
+            // pi merged a real PR on child #1053 and the gate still went red). Scan the
+            // sub-issue tree for the same fresh-since-t0 signals. Runs ONLY when the
+            // primary checks found nothing, so the extra API calls are the exception.
+            let childDeliverable = ''
+            try {
+              const subs = await github.paginate('GET /repos/{owner}/{repo}/issues/{issue_number}/sub_issues', {
+                ...context.repo, issue_number, per_page: 100,
+              })
+              for (const s of subs) {
+                if (s.state === 'closed' && s.closed_at && new Date(s.closed_at).getTime() >= sinceMs) {
+                  childDeliverable = `child #${s.number} closed this run`; break
+                }
+                const tl = await github.paginate(github.rest.issues.listEventsForTimeline, {
+                  ...context.repo, issue_number: s.number,
+                })
+                if (tl.some(e => e.event === 'cross-referenced' && e.source && e.source.issue &&
+                    e.source.issue.pull_request && new Date(e.created_at).getTime() >= sinceMs)) {
+                  childDeliverable = `PR linked to child #${s.number} this run`; break
+                }
+                const childBlocked = (s.labels || []).some(l => (typeof l === 'string' ? l : l.name) === 'status:blocked')
+                if (childBlocked) {
+                  const cc = await github.paginate(github.rest.issues.listComments, {
+                    ...context.repo, issue_number: s.number, since,
+                  })
+                  if (cc.length > 0) { childDeliverable = `child #${s.number} held for sign-off this run`; break }
+                }
+              }
+            } catch (e) { core.warning(`child-deliverable check skipped: ${e.message}`) }
+            if (childDeliverable) {
+              core.info(`Artifact-gate OK for #${issue_number} via child deliverable: ${childDeliverable}`)
+              return
+            }
+
             // ── Classify WHY there was no deliverable, for an ACTIONABLE comment (#661) ──
             // The old message always read "narrate-the-plan-then-stop no-op" — which sent us
             // chasing the wrong thing when the real cause was a billing_error (#660). Read the
