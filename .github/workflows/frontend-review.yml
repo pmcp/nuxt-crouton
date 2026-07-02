@@ -14,6 +14,10 @@ on:
     paths:
       # Conventions live in templates — only scan PRs that touch .vue files.
       - '**/*.vue'
+      # Known-bad smoke fixtures (#1035) are diff-scope-excluded so committing/
+      # touching them never self-flags an ordinary PR — they're exercised by
+      # gate-smoke.yml instead, which scans them directly.
+      - '!.claude/gate-fixtures/**'
 
 concurrency:
   group: frontend-review-${{ github.event.pull_request.number }}
