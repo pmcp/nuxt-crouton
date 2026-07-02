@@ -1,3 +1,9 @@
+<script setup lang="ts">
+// Explicit import (not auto-import) so the panel is guaranteed registered — a prod build
+// silently drops an unresolved component (the warn is stripped), which is why it wasn't mounting.
+import SpecWalkPanel from '~/components/SpecWalkPanel.vue'
+</script>
+
 <template>
   <UApp>
     <NuxtRouteAnnouncer />
