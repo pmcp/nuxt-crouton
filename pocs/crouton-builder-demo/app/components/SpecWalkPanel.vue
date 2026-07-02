@@ -37,8 +37,8 @@ function track() {
 onMounted(() => { raf = requestAnimationFrame(track) })
 onBeforeUnmount(() => cancelAnimationFrame(raf))
 
-const verdictOf = computed(() => (current.value ? verdicts[current.value.id]?.verdict : undefined))
-const noteOf = computed(() => (current.value ? verdicts[current.value.id]?.note || '' : ''))
+const verdictOf = computed(() => (current.value ? verdicts.value[current.value.id]?.verdict : undefined))
+const noteOf = computed(() => (current.value ? verdicts.value[current.value.id]?.note || '' : ''))
 </script>
 
 <template>
