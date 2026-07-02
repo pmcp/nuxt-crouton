@@ -119,6 +119,6 @@ jobs:
             echo "Creating the standing a11y issue…"
             gh issue create --repo "$REPO" --title "$TITLE" --label a11y --body-file "$BODY_FILE"
           else
-            echo "Updating standing a11y issue #$NUM…"
+            echo "Updating standing a11y issue #${NUM}…"
             gh issue edit "$NUM" --repo "$REPO" --body-file "$BODY_FILE"
           fi
