@@ -190,6 +190,12 @@ After each task: announce completion, STOP. User runs `/clear`. Fresh agent read
 
 **Trunk = staging (#347):** a **merge to `main`** that touches an app's paths auto-deploys its **staging** env (`<app>.pmcp.dev`) — landing code previews itself. The old separate `staging` branch is retired. This can't ever reach production: a `push` event never sets `environment=production` (that input is gated on `workflow_dispatch`), so #318 holds structurally, not just by convention.
 
+**The check ladder (#632)** — which checks gate at which rung of PR → staging → prod. The right check at the right rung: PRs stay fast, prod stays safe. Full panel (exact workflows, path filters, gaps): `writeups/architecture/deployment-topology.html`.
+
+- **Rung 1 — the PR (blocking, cheap+fast):** `ci` (lint + typecheck), `e2e` (fixture smoke, smart-selected), `red-team` (server/app surfaces), `frontend-review` + `a11y` (`.vue`-touching PRs), staging preview deploy + deployed smoke (`scripts/smoke-deployed.mjs`, report-only unless the app sets `smoke.required`). This rung **is** the #336/#339 auto-merge green gate — "green PR" and "safe to land on trunk" mean the same thing.
+- **Rung 2 — merge→`main`, on the deployed `*.pmcp.dev` (integration):** path-filtered staging deploy with remote D1 migrations, deployed smoke against the live URL, `report-failed-deploy.yml` opens an issue on a red post-merge deploy, nightly full-matrix e2e backstop. Being hardened in #1106 (a report-only smoke failure currently leaves the run green).
+- **Rung 3 — before prod (confidence gate):** production is a deliberate manual `workflow_dispatch` only (#318), via the `/deploy-production` skill's pre-flight ("verified on staging first"). CI enforcement — refuse to deploy prod while the staging smoke is red — is #1107.
+
 The pattern, end to end:
 - **`wrangler.jsonc`** (Workers): **no** `pages_build_output_dir`; `compatibility_flags: ["nodejs_compat"]`; bindings `DB` (D1), `KV`/`BLOB` (R2) as needed — **id-less** so the first deploy auto-provisions them; plus an **`env.staging`** block with **separate** staging ids + a `<app>.pmcp.dev` custom-domain `route` (bindings do NOT inherit across envs). `name`/`main`/`assets` are injected by the preset at build.
 - **Build preset**: `NITRO_PRESET=cloudflare_module nuxt build` → output in `.output/`.

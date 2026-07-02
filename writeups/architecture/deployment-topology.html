@@ -394,6 +394,56 @@
     </div>
   </section>
 
+  <section>
+    <h2><span class="step-no">6</span> The check ladder — which check runs when</h2>
+    <p class="section-sub">Epic #632. Three rungs mapped onto <strong>environments</strong>, not branches: cheap blocking checks on the PR, integration checks on the deployed staging after merge, a confidence gate before the manual prod click. The point isn't more checks — it's the <em>right</em> check at the <em>right</em> rung.</p>
+    <div class="card" style="padding:6px 4px;">
+      <table>
+        <thead>
+          <tr><th>Rung</th><th>When</th><th>Checks</th><th>What it proves</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1 · PR</strong><br/><span class="tag">blocking · cheap · fast</span></td>
+            <td>every <span class="mono">pull_request</span></td>
+            <td><span class="mono">ci</span> lint + typecheck (<span class="mono">packages/ apps/ scripts/</span>) · <span class="mono">e2e</span> fixture smoke, smart-selected to affected fixtures (<span class="mono">packages/ fixtures/ e2e/</span>) · <span class="mono">red-team</span> (server/app surfaces) · <span class="mono">frontend-review</span> + <span class="mono">a11y</span> (<span class="mono">.vue</span>-touching PRs) · staging preview deploy + deployed smoke (<span class="mono">scripts/smoke-deployed.mjs</span>, login + CRUD — report-only unless the app sets <span class="mono">smoke.required</span>)</td>
+            <td>Don't let obviously-broken code into <span class="mono">main</span>. This rung <strong>is</strong> the #336/#339 auto-merge green gate: any red check-run blocks auto-merge, so "green PR" = "safe to land on trunk".</td>
+          </tr>
+          <tr>
+            <td><strong>2 · <span class="mono">*.pmcp.dev</span></strong><br/><span class="tag">post-merge · integration</span></td>
+            <td>every merge to <span class="mono">main</span> (path-filtered)</td>
+            <td>staging deploy incl. remote D1 migrations (<span class="mono">deploy-apps.yml</span> → <span class="mono">deploy-app.yml</span>) · deployed smoke against the live shared staging URL · <span class="mono">report-failed-deploy.yml</span> opens an issue when a post-merge deploy goes red · nightly full-matrix <span class="mono">e2e</span> backstop (cron)</td>
+            <td>The <em>integrated, deployed</em> world is healthy — the check the PR's isolated preview can't give you.</td>
+          </tr>
+          <tr>
+            <td><strong>3 · pre-prod</strong><br/><span class="tag">confidence gate · manual</span></td>
+            <td>before <span class="mono">workflow_dispatch</span> env=production</td>
+            <td><span class="mono">/deploy-production</span> skill pre-flight: change verified on staging, prod secrets set, never seeded. Production is <strong>only</strong> reachable via the deliberate dispatch (#318) — never a push side effect.</td>
+            <td>Nothing un-soaked reaches <span class="mono">*.friendlyinter.net</span>. The click stays human; the gate makes it informed.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callouts" style="margin-top:16px;">
+      <div class="callout">
+        <h3>What gates an apps-only PR</h3>
+        <p><span class="mono">ci</span> (its paths include <span class="mono">apps/**</span>) plus the app's own preview deploy + deployed smoke, and <span class="mono">red-team</span>/<span class="mono">a11y</span>/<span class="mono">frontend-review</span> when the diff matches their surfaces. The <span class="mono">e2e</span> <em>fixture</em> smoke doesn't fire — fixtures exercise <span class="mono">packages/</span>, and an apps-only change can't break them.</p>
+      </div>
+      <div class="callout good">
+        <h3>Gates that can't silently rot</h3>
+        <p>The agent gates (<span class="mono">red-team</span>/<span class="mono">a11y</span>/<span class="mono">frontend-review</span>) are themselves smoke-tested against committed known-bad fixtures (<span class="mono">gate-smoke.yml</span>, #1034), so a fail-open gate turns red in CI instead of passing green forever.</p>
+      </div>
+      <div class="callout warn">
+        <h3>Gap → #1106: post-merge smoke failures vanish</h3>
+        <p>The deployed smoke on merge→<span class="mono">main</span> is report-only by default: a failing smoke leaves the workflow <em>green</em>, so <span class="mono">report-failed-deploy.yml</span> (which reacts to red runs) never fires and the break survives as a buried <span class="mono">::warning::</span>. #1106 makes a post-merge smoke failure loud.</p>
+      </div>
+      <div class="callout warn">
+        <h3>Gap → #1107: the prod pre-flight is honour-system</h3>
+        <p>Rung 3 lives in a skill's checklist, not CI — a production dispatch runs zero checks against the current staging. #1107 adds the seatbelt: smoke the live staging URL first and refuse to deploy prod while it's red (with a loud, explicit escape hatch).</p>
+      </div>
+    </div>
+  </section>
+
   <footer>
     Generated for <strong>FriendlyInternet/nuxt-crouton</strong> · Cloudflare Workers (static assets) · NuxtHub = storage abstraction (D1 / KV / R2), not the deploy tool. Diagrams are inline SVG — no JavaScript, renders offline.
   </footer>
