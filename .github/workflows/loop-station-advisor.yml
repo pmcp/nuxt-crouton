@@ -78,3 +78,7 @@ jobs:
             If you POST A COMMENT (when updating), lead it with the CI provenance header:
             `> 🤖 **Claude Code** · agent pipeline (CI) · _Loop Station advisor_`
             (Issue bodies are already clearly agent-authored — no header needed there.)
+
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()

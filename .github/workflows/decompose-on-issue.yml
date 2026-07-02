@@ -53,6 +53,9 @@ jobs:
           # else. (The pinned SHA already supports allowed_bots.)
           allowed_bots: "nuxt-harness[bot]"
 
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
       # ── Artifact-gate (#461) ──────────────────────────────────────────────────
       # A run is only allowed to be GREEN if the agent produced an OBSERVABLE
       # deliverable on the issue during this run: a comment (sign-off / breadcrumb /

@@ -79,6 +79,9 @@ jobs:
             Do NOT edit any `apps/`/`packages/` product code. The report file + any new `a11y`
             issues are the whole job — a later step posts the report to the standing issue.
 
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
       - name: Post report to the standing issue
         if: always()
         env:

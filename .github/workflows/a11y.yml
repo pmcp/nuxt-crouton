@@ -99,6 +99,9 @@ jobs:
             separate, human-invoked path). Do NOT file GitHub issues (the daily sweep owns that).
             Reporting + the verdict file is all.
 
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
       - name: Gate on critical/serious
         if: always()
         run: |

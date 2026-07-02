@@ -84,6 +84,9 @@ jobs:
             Do NOT edit any `apps/`/`packages/` code. Do NOT file GitHub issues (the daily
             sweep and the /red-team skill own issue-filing). Reporting + the verdict file is all.
 
+      # Ship the payload-free invocation trace for the weekly usage rollup (#1064).
+      - uses: ./.github/actions/loop-station-trace
+        if: always()
       - name: Gate on high/critical
         if: always()
         run: |
