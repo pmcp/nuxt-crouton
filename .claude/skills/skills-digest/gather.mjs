@@ -43,6 +43,24 @@ const git = (...args) => {
   }
 }
 
+// ── shallow-clone guard (#1027) ───────────────────────────────────────────────
+// A git-delta producer that diffs history over a time window MUST run on a full clone —
+// a shallow one (actions/checkout's default) doesn't have the `since` baseline commit, so
+// the delta below would silently come back empty/firstRun=true, indistinguishable from
+// "genuinely nothing changed" (the skills-digest went blank every month before #1027 caught
+// it). Fail loud instead of shipping a green-but-wrong digest. Only fires inside an actual
+// git repo (`git rev-parse --is-shallow-repository` returns null outside one, e.g. a tarball
+// checkout) — that case already degrades gracefully below via the existing firstRun fallback.
+const shallow = git('rev-parse', '--is-shallow-repository')
+if (shallow !== null && shallow.trim() === 'true') {
+  console.error(
+    'gather.mjs: refusing to compute a git-delta digest from a SHALLOW clone — ' +
+      `the \`since\` baseline (${since}) commit isn't reachable, so the delta would silently ` +
+      'come back empty. Checkout with `fetch-depth: 0` (see the workflow) and re-run.'
+  )
+  process.exit(1)
+}
+
 // The commit snapshot as of the morning of `since` — the baseline we diff HEAD against.
 const sinceRef = (git('rev-list', '-1', `--before=${since} 00:00:00`, 'HEAD') || '').trim()
 
