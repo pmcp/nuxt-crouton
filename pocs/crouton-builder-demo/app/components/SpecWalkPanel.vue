@@ -42,19 +42,23 @@ const noteOf = computed(() => (current.value ? verdicts.value[current.value.id]?
 </script>
 
 <template>
-  <ClientOnly>
-    <!-- Non-blocking element outline (hooked entries with a live element only). -->
-    <div
-      v-if="open && hl.show"
-      class="pointer-events-none fixed z-40 rounded-md ring-2 ring-primary ring-offset-2 ring-offset-transparent transition-all duration-150"
-      :style="{ left: hl.x + 'px', top: hl.y + 'px', width: hl.w + 'px', height: hl.h + 'px' }"
-    />
+  <!-- DEBUG marker (#1039): always rendered so a live HUD can read whether the panel is
+       mounted + what `open` it sees. Remove with zz-error-catcher once the panel works. -->
+  <span data-sw-mounted :data-sw-open="String(open)" style="display:none" />
 
-    <!-- Bottom-sheet panel — NO overlay, board stays interactive. -->
-    <div
-      v-if="open"
-      class="fixed inset-x-0 bottom-0 z-50 max-h-[52dvh] overflow-y-auto rounded-t-2xl border-t border-default bg-elevated/95 shadow-2xl backdrop-blur"
-    >
+  <!-- Non-blocking element outline (hooked entries with a live element only). -->
+  <div
+    v-if="open && hl.show"
+    class="pointer-events-none fixed z-40 rounded-md ring-2 ring-primary ring-offset-2 ring-offset-transparent transition-all duration-150"
+    :style="{ left: hl.x + 'px', top: hl.y + 'px', width: hl.w + 'px', height: hl.h + 'px' }"
+  />
+
+  <!-- Bottom-sheet panel — NO overlay, board stays interactive. -->
+  <div
+    v-if="open"
+    data-sw-sheet
+    class="fixed inset-x-0 bottom-0 z-50 max-h-[52dvh] overflow-y-auto rounded-t-2xl border-t border-default bg-elevated/95 shadow-2xl backdrop-blur"
+  >
       <div class="mx-auto flex max-w-2xl flex-col gap-3 p-4">
         <!-- header -->
         <div class="flex items-center gap-2">
@@ -114,5 +118,4 @@ const noteOf = computed(() => (current.value ? verdicts.value[current.value.id]?
         </template>
       </div>
     </div>
-  </ClientOnly>
 </template>
